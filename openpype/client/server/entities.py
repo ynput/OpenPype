@@ -1,6 +1,7 @@
 from .graphql import (
     project_graphql_from_fields,
-    projects_graphql_from_fields
+    projects_graphql_from_fields,
+    folders_graphql_from_fields,
 )
 from .server import get_server_api_connection
 
@@ -14,13 +15,42 @@ PROJECT_FIELDS_MAPPING_V3_V4 = {
     "data.active": {"active"},
 }
 
+# TODO this should not be hardcoded but received from server!!!
+FOLDER_ATTRIBS = {
+    "clipIn",
+    "clipOut",
+    "fps",
+    "frameEnd",
+    "handleEnd",
+    "frameStart",
+    "handleStart",
+    "pixelAspect",
+    "resolutionHeight",
+    "resolutionWidth",
+}
+FOLDER_ATTRIBS_FILEDS = {
+    "attrib.{}".format(attr)
+    for attr in FOLDER_ATTRIBS
+}
 FOLDER_FIELDS_MAPPING_V3_V4 = {
     "_id": {"id"},
     "name": {"name"},
-    "data": {"data", "attrib"},
-    "data.code": {"code"},
+    "data": FOLDER_ATTRIBS_FILEDS,
+    "data.visualParent": {"parentId"},
+    "data.parents": {"parents"},
     "data.active": {"active"},
+    "parent": {"projectName"}
 }
+
+# NOTE: There are for v3 compatibility
+DEFAULT_FOLDER_FIELDS = {
+    "id",
+    "name",
+    "parentId",
+    "tasks",
+    "active",
+    "parents",
+} | FOLDER_ATTRIBS_FILEDS
 
 
 def _project_fields_v3_to_v4(fields):
@@ -82,6 +112,87 @@ def _convert_v4_project_to_v3(project):
 
     if data:
         output["data"] = data
+    return output
+
+
+def _folder_fields_v3_to_v4(fields):
+    if not fields:
+        return set(DEFAULT_FOLDER_FIELDS)
+
+    output = set()
+    for field in fields:
+        if field in FOLDER_FIELDS_MAPPING_V3_V4:
+            output |= FOLDER_FIELDS_MAPPING_V3_V4[field]
+
+        elif field.startswith("data"):
+            field_parts = field.split(".")
+            field_parts.pop(0)
+            data_key = ".".join(field_parts)
+            if data_key == "label":
+                output.add("name")
+
+            elif data_key in ("icon", "color"):
+                continue
+
+            elif data_key.startswith("tasks"):
+                output.add("tasks")
+            elif data_key in FOLDER_ATTRIBS:
+                new_field = "attrib" + field[4:]
+                output.add(new_field)
+            else:
+                print(data_key)
+                raise ValueError("Can't query data for field {}".format(field))
+
+        else:
+            raise ValueError("Unknown field mapping for {}".format(field))
+
+    if "id" not in output:
+        output.add("id")
+    return output
+
+
+def _convert_v4_tasks_to_v3(tasks):
+    output = {}
+    for task in tasks:
+        task_name = task["name"]
+        new_task = {
+            "type": task["taskType"]
+        }
+        output[task_name] = new_task
+    return output
+
+
+def _convert_v4_folder_to_v3(folder):
+    output = {
+        "_id": folder["id"],
+        "type": "asset",
+    }
+
+    output_data = folder.get("data") or {}
+
+    if "name" in folder:
+        output["name"] = folder["name"]
+        output_data["label"] = folder["name"]
+
+    for data_key, key in (
+        ("visualParent", "parentId"),
+        ("active", "active")
+    ):
+        if key not in folder:
+            continue
+
+        output_data[data_key] = folder[key]
+
+    if "attrib" in folder:
+        output_data.update(folder["attrib"])
+
+    if "tasks" in folder:
+        if output_data is None:
+            output_data = {}
+        output_data["tasks"] = _convert_v4_tasks_to_v3(folder["tasks"])
+
+    output["data"] = output_data
+
     return output
 
 
@@ -153,8 +264,70 @@ def get_asset_by_name(*args, **kwargs):
     raise NotImplementedError("'get_asset_by_name' not implemented")
 
 
-def get_assets(*args, **kwargs):
-    raise NotImplementedError("'get_assets' not implemented")
+def _get_folders(
+    project_name,
+    asset_ids,
+    asset_names,
+    parent_ids,
+    archived,
+    fields
+):
+    if not project_name:
+        return []
+
+    fields = _folder_fields_v3_to_v4(fields)
+    filters = {}
+    if asset_ids is not None:
+        asset_ids = list(asset_ids)
+        if not asset_ids:
+            return []
+        filters["id"] = asset_ids
+
+    if asset_names is not None:
+        asset_names = list(asset_names)
+        if not asset_names:
+            return []
+        filters["name"] = asset_names
+
+    if parent_ids is not None:
+        parent_ids = list(parent_ids)
+        if not parent_ids:
+            return []
+        filters["parentId"] = parent_ids
+
+    con = get_server_api_connection()
+
+    query = folders_graphql_from_fields(project_name, fields)
+    query_str = query.calculate_query()
+    variables = query.get_variable_values()
+
+    response = con.query(query_str, **variables)
+
+    parsed_data = query.parse_result(response.data["data"])
+    output = []
+
+    folders = parsed_data.get("project", {}).get("folders", [])
+    for folder in folders:
+        output.append(_convert_v4_folder_to_v3(folder))
+    return output
+
+
+def get_assets(
+    project_name,
+    asset_ids=None,
+    asset_names=None,
+    parent_ids=None,
+    archived=False,
+    fields=None
+):
+    return _get_folders(
+        project_name,
+        asset_ids,
+        asset_names,
+        parent_ids,
+        archived,
+        fields
+    )
 
 
 def get_archived_assets(*args, **kwargs):
