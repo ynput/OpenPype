@@ -12,69 +12,37 @@ import pyblish.api
 
 from openpype.client import (
     get_last_version_by_subset_name,
-    get_representations,
+    get_representation_by_name,
 )
 from openpype.pipeline import (
-    get_representation_path,
     legacy_io,
 )
 from openpype.pipeline.farm.patterning import match_aov_pattern
 
 
-def get_resources(project_name, version, extension=None):
-    """Get the files from the specific version."""
+def get_representation_files(project_name, version, representation_name=None):
+    """Get the files for specified representation in the version."""
 
-    # TODO this functions seems to be weird
-    #   - it's looking for representation with one extension or first (any)
-    #       representation from a version?
-    #  - not sure how this should work, maybe it does for specific use cases
-    #       but probably can't be used for all resources from 2D workflows
-    extensions = None
-    if extension:
-        extensions = [extension]
-    repre_docs = list(get_representations(
-        project_name, version_ids=[version["_id"]], extensions=extensions
-    ))
-    assert repre_docs, "This is a bug"
-
-    representation = repre_docs[0]
-    directory = get_representation_path(representation)
-    print("Source: ", directory)
-    resources = sorted(
-        [
-            os.path.normpath(os.path.join(directory, fname))
-            for fname in os.listdir(directory)
-        ]
+    representation = get_representation_by_name(
+        project_name,
+        version_id=version["_id"],
+        representation_name=representation_name,
+        fields=["files", "context.root"]
     )
+    # TODO: This COULD happen if a new publish uses a different file extension
+    #       from a previous publish - so technically isn't a bug?
+    assert representation, "Representation not found. This is a bug."
 
-    return resources
+    context = representation["context"]
+    paths = []
+    for file_info in representation.get("files", []):
+        path = file_info["path"]
+        # Format path
+        # TODO: This should actually format to path accessible on current os
+        path = path.format(**context)
+        paths.append(path)
 
-
-def get_resource_files(resources, frame_range=None):
-    """Get resource files at given path.
-
-    If `frame_range` is specified those outside will be removed.
-
-    Arguments:
-        resources (list): List of resources
-        frame_range (list): Frame range to apply override
-
-    Returns:
-        list of str: list of collected resources
-
-    """
-    res_collections, _ = clique.assemble(resources)
-    assert len(res_collections) == 1, "Multiple collections found"
-    res_collection = res_collections[0]
-
-    # Remove any frames
-    if frame_range is not None:
-        for frame in frame_range:
-            if frame not in res_collection.indexes:
-                continue
-            res_collection.indexes.remove(frame)
-
-    return list(res_collection)
+    return paths
 
 
 class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
@@ -351,66 +319,68 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         project_name = legacy_io.active_project()
 
         # get latest version of subset
-        # this will stop if subset wasn't published yet
-        project_name = legacy_io.active_project()
         version = get_last_version_by_subset_name(
             project_name,
             instance.data.get("subset"),
             asset_name=instance.data.get("asset")
         )
+        if not version:
+            # Ignore with a warning - but continue as a regular publish
+            self.log.warning("No existing version found for extend frames. "
+                             "Extend frames is ignored")
+            return
 
-        # get its files based on extension
-        subset_resources = get_resources(
-            project_name, version, representation.get("ext")
+        # get all files for last publish of this representation
+        last_repre_files = get_representation_files(
+            project_name, version, representation["name"]
         )
-        r_col, _ = clique.assemble(subset_resources)
+        res_collections, _ = clique.assemble(last_repre_files)
+        if not res_collections:
+            self.log.warning("No existing sequences found in previous "
+                             "representation to extend with. "
+                             "Extend frames is ignored.")
+            return
+        res_collection = res_collections[0]
 
         # if override remove all frames we are expecting to be rendered
-        # so we'll copy only those missing from current render
+        # so we'll copy only the existing frames missing from current render
         if instance.data.get("overrideExistingFrame"):
             for frame in range(start, end + 1):
-                if frame not in r_col.indexes:
+                if frame not in res_collection.indexes:
                     continue
-                r_col.indexes.remove(frame)
+                res_collection.indexes.remove(frame)
+        if not res_collection.indexes:
+            self.log.warning("Extend frames is enabled with override existing "
+                             "frames and all frames are being overridden. "
+                             "Extend frames is ignored.")
+            return
 
-        # now we need to translate published names from represenation
-        # back. This is tricky, right now we'll just use same naming
-        # and only switch frame numbers
-        resource_files = []
-        r_filename = os.path.basename(
-            representation.get("files")[0])  # first file
-        op = re.search(self.R_FRAME_NUMBER, r_filename)
-        pre = r_filename[:op.start("frame")]
-        post = r_filename[op.end("frame"):]
-        assert op is not None, "padding string wasn't found"
-        for frame in list(r_col):
-            fn = re.search(self.R_FRAME_NUMBER, frame)
-            # silencing linter as we need to compare to True, not to
-            # type
-            assert fn is not None, "padding string wasn't found"
-            # list of tuples (source, destination)
-            staging = representation.get("stagingDir")
-            staging = self.anatomy.fill_roots(staging)
-            resource_files.append(
-                (frame,
-                 os.path.join(staging,
-                              "{}{}{}".format(pre,
-                                              fn.group("frame"),
-                                              post)))
-            )
+        # now we need to translate published names from representation
+        # back. This is tricky, right now we'll just use same naming as
+        # the regular expected files for this render with the source's frame
+        # number
+        staging = representation.get("stagingDir")
+        staging = self.anatomy.fill_roots(staging)
+        copy_transfers = []
 
-        # test if destination dir exists and create it if not
-        output_dir = os.path.dirname(representation.get("files")[0])
-        if not os.path.isdir(output_dir):
-            os.makedirs(output_dir)
+        for frame, source in zip(res_collection.indexes, res_collection):
+            # TODO: This should actually take basename from expected files
+            #       of the current render - and not from previous publish
+            #       filename
+            filename = os.path.basename(source)
+            destination = os.path.join(staging, filename)
+            copy_transfers.append((source, destination))
+
+        # test if destination staging dir exists and create it if not
+        if not os.path.isdir(staging):
+            os.makedirs(staging)
 
         # copy files
-        for source in resource_files:
-            speedcopy.copy(source[0], source[1])
+        for source, destination in copy_transfers:
+            speedcopy.copy(source, destination)
             self.log.info("  > {}".format(source[1]))
 
-        self.log.info(
-            "Finished copying %i files" % len(resource_files))
+        self.log.info("Finished copying %i files" % len(copy_transfers))
 
     def _create_instances_for_aov(self, instance_data, exp_files):
         """Create instance for each AOV found.
