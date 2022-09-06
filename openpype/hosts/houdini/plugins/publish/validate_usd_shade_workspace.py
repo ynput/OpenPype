@@ -1,5 +1,5 @@
 import pyblish.api
-import openpype.api
+from openpype.pipeline.publish import ValidateContentsOrder
 
 import hou
 
@@ -12,7 +12,7 @@ class ValidateUsdShadeWorkspace(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["houdini"]
     families = ["usdShade"]
     label = "USD Shade Workspace"

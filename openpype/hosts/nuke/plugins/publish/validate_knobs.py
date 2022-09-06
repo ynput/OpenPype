@@ -1,8 +1,11 @@
 import nuke
 import six
 import pyblish.api
-import openpype.api
-from openpype.pipeline import PublishXmlValidationError
+
+from openpype.pipeline.publish import (
+    RepairContextAction,
+    PublishXmlValidationError,
+)
 
 
 class ValidateKnobs(pyblish.api.ContextPlugin):
@@ -24,7 +27,7 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
     order = pyblish.api.ValidatorOrder
     label = "Validate Knobs"
     hosts = ["nuke"]
-    actions = [openpype.api.RepairContextAction]
+    actions = [RepairContextAction]
     optional = True
 
     def process(self, context):

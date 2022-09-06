@@ -1,5 +1,5 @@
 import pyblish.api
-import openpype.api
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateBypassed(pyblish.api.InstancePlugin):
@@ -11,7 +11,7 @@ class ValidateBypassed(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder - 0.1
+    order = ValidateContentsOrder - 0.1
     families = ["*"]
     hosts = ["houdini"]
     label = "Validate ROP Bypass"

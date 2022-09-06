@@ -3,6 +3,10 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    RepairAction,
+)
 from openpype.hosts.maya.api import lib
 import openpype.hosts.maya.api.action
 
@@ -26,11 +30,11 @@ class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
     This validator will ensure they are hidden or unkeyable attributes.
 
     """
-    order = openpype.api.ValidateContentsOrder + 0.05
+    order = ValidateContentsOrder + 0.05
     label = "Rig Controllers (Arnold Attributes)"
     hosts = ["maya"]
     families = ["rig"]
-    actions = [openpype.api.RepairAction,
+    actions = [RepairAction,
                openpype.hosts.maya.api.action.SelectInvalidAction]
 
     attributes = [
