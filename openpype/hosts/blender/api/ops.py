@@ -94,6 +94,7 @@ class MainThreadItem:
     Item store callback (callable variable), arguments and keyword arguments
     for the callback. Item hold information about it's process.
     """
+
     not_set = object()
     sleep_time = 0.1
 
@@ -178,10 +179,7 @@ def _process_app_events() -> Optional[float]:
             _clc, val, tb = main_thread_item.exception
             msg = str(val)
             detail = "\n".join(traceback.format_exception(_clc, val, tb))
-            dialog = QtWidgets.QMessageBox(
-                QtWidgets.QMessageBox.Warning,
-                "Error",
-                msg)
+            dialog = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Error", msg)
             dialog.setMinimumWidth(500)
             dialog.setDetailedText(detail)
             dialog.setWindowFlags(
@@ -225,10 +223,7 @@ class LaunchQtApp(bpy.types.Operator):
         GlobalClass.app = self._app
 
         if not bpy.app.timers.is_registered(_process_app_events):
-            bpy.app.timers.register(
-                _process_app_events,
-                persistent=True
-            )
+            bpy.app.timers.register(_process_app_events, persistent=True)
 
     def execute(self, context):
         """Execute the operator.
@@ -283,7 +278,7 @@ class LaunchQtApp(bpy.types.Operator):
             #     self._window.setWindowFlags(origin_flags)
             #     self._window.show()
 
-        return {'FINISHED'}
+        return {"FINISHED"}
 
     def before_window_show(self):
         return
@@ -309,8 +304,7 @@ class LaunchLoader(LaunchQtApp):
 
     def before_window_show(self):
         self._window.set_context(
-            {"asset": legacy_io.Session["AVALON_ASSET"]},
-            refresh=True
+            {"asset": legacy_io.Session["AVALON_ASSET"]}, refresh=True
         )
 
 
@@ -980,17 +974,21 @@ class LaunchWorkFiles(LaunchQtApp):
 
     def execute(self, context):
         result = super().execute(context)
-        self._window.set_context({
-            "asset": legacy_io.Session["AVALON_ASSET"],
-            "task": legacy_io.Session["AVALON_TASK"]
-        })
+        self._window.set_context(
+            {
+                "asset": legacy_io.Session["AVALON_ASSET"],
+                "task": legacy_io.Session["AVALON_TASK"],
+            }
+        )
         return result
 
     def before_window_show(self):
-        self._window.root = str(Path(
-            os.environ.get("AVALON_WORKDIR", ""),
-            os.environ.get("AVALON_SCENEDIR", ""),
-        ))
+        self._window.root = str(
+            Path(
+                os.environ.get("AVALON_WORKDIR", ""),
+                os.environ.get("AVALON_SCENEDIR", ""),
+            )
+        )
         self._window.refresh()
 
 
@@ -999,7 +997,11 @@ class BuildWorkFile(bpy.types.Operator):
 
     bl_idname = "wm.avalon_builder"
     bl_label = "Build First Workfile"
+    bl_property = "should_save_first_workfile"
     _app: QtWidgets.QApplication
+
+    # Should save property
+    should_save_first_workfile: bpy.props.BoolProperty(name="Save as...", default=True)
 
     def __init__(self):
         print(f"Initialising {self.bl_idname}...")
@@ -1007,12 +1009,9 @@ class BuildWorkFile(bpy.types.Operator):
         GlobalClass.app = self._app
 
         if not bpy.app.timers.is_registered(_process_app_events):
-            bpy.app.timers.register(
-                _process_app_events,
-                persistent=True
-            )
+            bpy.app.timers.register(_process_app_events, persistent=True)
 
-    def _build_first_workfile(self):
+    def _build_first_workfile(self, context):
         # clear all objects and collections
         for obj in set(bpy.data.objects):
             bpy.data.objects.remove(obj)
@@ -1027,13 +1026,26 @@ class BuildWorkFile(bpy.types.Operator):
 
         build_workfile()
 
+        # Saving workfile
+        if self.should_save_first_workfile:
+            print("Saving workfile")
+            from ..plugins.publish.increment_workfile_version import (
+                IncrementWorkfileVersion,
+            )
+
+            IncrementWorkfileVersion().process(context)
+
     def execute(self, context):
-        mti = MainThreadItem(self._build_first_workfile)
+        mti = MainThreadItem(self._build_first_workfile, context)
         execute_in_main_thread(mti)
-        return {'FINISHED'}
+        return {"FINISHED"}
 
     def invoke(self, context, event):
-        return bpy.context.window_manager.invoke_confirm(self, event)
+        return bpy.context.window_manager.invoke_props_dialog(self, width=150)
+        # return bpy.context.window_manager.invoke_confirm(self, event)
+
+    # def draw(self, context):
+    #     layout = self.layout
 
 
 class TOPBAR_MT_avalon(bpy.types.Menu):
@@ -1054,13 +1066,11 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         else:
             pyblish_menu_icon_id = 0
 
-        asset = legacy_io.Session['AVALON_ASSET']
-        task = legacy_io.Session['AVALON_TASK']
+        asset = legacy_io.Session["AVALON_ASSET"]
+        task = legacy_io.Session["AVALON_TASK"]
         context_label = f"{asset}, {task}"
         context_label_item = layout.row()
-        context_label_item.operator(
-            LaunchWorkFiles.bl_idname, text=context_label
-        )
+        context_label_item.operator(LaunchWorkFiles.bl_idname, text=context_label)
         context_label_item.enabled = False
         layout.separator()
         layout.operator(LaunchCreator.bl_idname, text="Create...")
@@ -1355,7 +1365,7 @@ def register():
 
     pcoll = bpy.utils.previews.new()
     pyblish_icon_file = Path(__file__).parent / "icons" / "pyblish-32x32.png"
-    pcoll.load("pyblish_menu_icon", str(pyblish_icon_file.absolute()), 'IMAGE')
+    pcoll.load("pyblish_menu_icon", str(pyblish_icon_file.absolute()), "IMAGE")
     PREVIEW_COLLECTIONS["avalon"] = pcoll
 
     for cls in classes:
