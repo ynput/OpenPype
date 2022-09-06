@@ -291,7 +291,7 @@ To run tests, execute `.\tools\run_tests(.ps1|.sh)`.
 Developer tools
 -------------
 
-In case you wish to add your own tools to  `.\tools` folder without git tracking, it is possible by adding it with `dev_*` suffix (`dev_clear_pyc(.ps1|.sh)`).
+In case you wish to add your own tools to  `.\tools` folder without git tracking, it is possible by adding it with `dev_*` suffix (example: `dev_clear_pyc(.ps1|.sh)`).
 
 
 
