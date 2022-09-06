@@ -1,8 +1,8 @@
 from pprint import pformat
 import pyblish.api
 
-import openpype.api
 from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline.publish import RepairAction
 from openpype.hosts.nuke.api.lib import (
     get_avalon_knob_data,
     WorkfileSettings
@@ -19,7 +19,7 @@ class ValidateScriptAttributes(pyblish.api.InstancePlugin):
     label = "Validatte script attributes"
     hosts = ["nuke"]
     optional = True
-    actions = [openpype.api.RepairAction]
+    actions = [RepairAction]
 
     def process(self, instance):
         root = nuke.root()

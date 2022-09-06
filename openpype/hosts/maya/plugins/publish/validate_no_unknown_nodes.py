@@ -3,6 +3,7 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateNoUnknownNodes(pyblish.api.InstancePlugin):
@@ -16,7 +17,7 @@ class ValidateNoUnknownNodes(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ['maya']
     families = ['model', 'rig']
     optional = True
