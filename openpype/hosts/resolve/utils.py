@@ -17,7 +17,7 @@ def setup(env):
 
     # collect script dirs
     if us_env:
-        log.info(f"Utility Scripts Env: `{us_env}`")
+        log.info("Utility Scripts Env: `{}`".format(us_env))
         us_paths = us_env.split(
             os.pathsep) + us_paths
 
@@ -25,8 +25,8 @@ def setup(env):
     for path in us_paths:
         scripts.update({path: os.listdir(path)})
 
-    log.info(f"Utility Scripts Dir: `{us_paths}`")
-    log.info(f"Utility Scripts: `{scripts}`")
+    log.info("Utility Scripts Dir: `{}`".format(us_paths))
+    log.info("Utility Scripts: `{}`".format(scripts))
 
     # make sure no script file is in folder
     for s in os.listdir(us_dir):
@@ -44,7 +44,7 @@ def setup(env):
             # script in script list
             src = os.path.join(d, s)
             dst = os.path.join(us_dir, s)
-            log.info(f"Copying `{src}` to `{dst}`...")
+            log.info("Copying `{}` to `{}`...".format(src, dst))
             if os.path.isdir(src):
                 shutil.copytree(
                     src, dst, symlinks=False,
