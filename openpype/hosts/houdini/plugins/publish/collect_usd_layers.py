@@ -54,8 +54,10 @@ class CollectUsdLayers(pyblish.api.InstancePlugin):
             layer_inst.data["subset"] = "__stub__"
             layer_inst.data["label"] = label
             layer_inst.data["asset"] = instance.data["asset"]
-            layer_inst.append(instance.data["members"][0])              # include same USD ROP
-            layer_inst.append((layer, save_path))       # include layer data
+            # include same USD ROP
+            layer_inst.append(instance.data["members"][0])
+            # include layer data
+            layer_inst.append((layer, save_path))
 
             # Allow this subset to be grouped into a USD Layer on creation
             layer_inst.data["subsetGroup"] = "USD Layer"
