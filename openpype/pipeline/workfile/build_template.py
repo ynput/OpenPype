@@ -1,3 +1,4 @@
+import os
 from importlib import import_module
 from openpype.lib import classes_from_module
 from openpype.host import HostBase
@@ -30,7 +31,7 @@ def build_workfile_template(*args):
         template_loader.populate_template()
 
 
-def update_workfile_template(args):
+def update_workfile_template(*args):
     template_loader = build_template_loader()
     template_loader.update_missing_containers()
 
@@ -42,7 +43,10 @@ def build_template_loader():
     if isinstance(host, HostBase):
         host_name = host.name
     else:
-        host_name = host.__name__.partition('.')[2]
+        host_name = os.environ.get("AVALON_APP")
+        if not host_name:
+            host_name = host.__name__.split(".")[-2]
+
     module_path = _module_path_format.format(host=host_name)
     module = import_module(module_path)
     if not module:
