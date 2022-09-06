@@ -1,7 +1,6 @@
 import os
 
 import pyblish.api
-
 from openpype.pipeline import publish
 from openpype.hosts.photoshop import api as photoshop
 
