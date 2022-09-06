@@ -66,7 +66,7 @@ R_CLEAN_FRAME_TOKEN = re.compile(r"\.?<f\d>\.?", re.IGNORECASE)
 R_CLEAN_EXT_TOKEN = re.compile(r"\.?<ext>\.?", re.IGNORECASE)
 
 R_SUBSTITUTE_LAYER_TOKEN = re.compile(
-    r"%l|<layer>|<renderlayer>", re.IGNORECASE
+    r"%l|<layer>|<renderlayer>|<pass>", re.IGNORECASE
 )
 R_SUBSTITUTE_CAMERA_TOKEN = re.compile(r"%c|<camera>", re.IGNORECASE)
 R_SUBSTITUTE_SCENE_TOKEN = re.compile(r"%s|<scene>", re.IGNORECASE)
@@ -171,7 +171,8 @@ def get(layer, render_instance=None):
         "vray": RenderProductsVray,
         "redshift": RenderProductsRedshift,
         "renderman": RenderProductsRenderman,
-        "mayahardware2": RenderProductsMayaHardware
+        "mayahardware2": RenderProductsMayaHardware,
+        "_3delight": RenderProducts3Delight,
     }.get(renderer_name.lower(), None)
     if renderer is None:
         raise UnsupportedRendererException(
@@ -343,7 +344,6 @@ class ARenderProducts:
                              key=lambda match: match.end(1))
             separator = file_prefix[matches[0].end(1):matches[1].start(1)]
         return separator
-
 
     def _get_layer_data(self):
         # type: () -> LayerMetadata
@@ -1280,8 +1280,161 @@ class RenderProductsMayaHardware(ARenderProducts):
         for cam in self.get_renderable_cameras():
             product = RenderProduct(productName="beauty", ext=ext, camera=cam)
             products.append(product)
+        return products
+
+
+class RenderProducts3Delight(ARenderProducts):
+    """Expected files for 3Delight renderer.
+
+    Warning:
+        This is very rudimentary and needs more love and testing.
+    """
+
+    renderer = "_3delight"
+
+    def __init__(self, layer, render_instance):
+        super(RenderProducts3Delight, self).__init__(layer, render_instance)
+
+    def get_render_products(self):
+        """3delight puts all render products into a single .exr with
+        the name of the dlRenderSettings as <pass>
+        """
+        cameras = [
+            self.sanitize_camera_name(c)
+            for c in self.get_renderable_cameras()
+        ]
+
+        if not cameras:
+            cameras = [
+                self.sanitize_camera_name(
+                    self.get_renderable_cameras()[0])
+            ]
+        products = []
+
+        default_ext = "exr"
+
+        node = self.get_render_settings(self.layer)
+
+        # for camera in cameras:
+        #    product = RenderProduct(productName=node,
+        #                            ext=default_ext,
+        #                            camera=camera)
+        #    products.append(product)
+
+        prefix_attr = "{}.layerDefaultFilename".format(node)
+        extension = cmds.getAttr("{}.layerDefaultDriver".format(node))
+
+        num_layers = cmds.getAttr(
+            '{}.layerOutputVariables'.format(node),
+            size=True)
+        assert num_layers > 0
+        for i in range(num_layers):
+            output = cmds.getAttr(
+                '{}.layerOutput[{}]'.format(node, i))
+            if not output:
+                continue
+
+            output_var = cmds.getAttr(
+                '{}.layerOutputVariables[{}]'.format(node, i))
+            output_var_tokens = output_var.split('|')
+            aov_name = output_var_tokens[4]
+
+            for camera in cameras:
+                product = RenderProduct(productName=aov_name,
+                                        ext=default_ext,
+                                        camera=camera)
+                products.append(product)
 
         return products
+
+    def _generate_file_sequence(
+            self, layer_data,
+            force_aov_name=None,
+            force_ext=None,
+            force_cameras=None):
+        # type: (LayerMetadata, str, str, list) -> list
+        expected_files = []
+        cameras = force_cameras or layer_data.cameras
+        ext = force_ext or layer_data.defaultExt
+        for cam in cameras:
+            file_prefix = layer_data.filePrefix
+            # 3delight uses the name of the dlRenderSettings file that
+            # generated this.
+            assert layer_data.layerName.endswith("_RL")
+            layerName = layer_data.layerName[:-3]
+            mappings = (
+                (R_SUBSTITUTE_SCENE_TOKEN, layer_data.sceneName),
+                (R_SUBSTITUTE_LAYER_TOKEN, layerName),
+                (R_SUBSTITUTE_CAMERA_TOKEN, self.sanitize_camera_name(cam)),
+                # this is required to remove unfilled aov token, for example
+                # in Redshift
+                (R_REMOVE_AOV_TOKEN, "") if not force_aov_name \
+                else (R_SUBSTITUTE_AOV_TOKEN, force_aov_name),
+
+                (R_CLEAN_FRAME_TOKEN, ""),
+                (R_CLEAN_EXT_TOKEN, ""),
+            )
+
+            for regex, value in mappings:
+                file_prefix = re.sub(regex, value, file_prefix)
+            for frame in range(
+                    int(layer_data.frameStart),
+                    int(layer_data.frameEnd) + 1,
+                    int(layer_data.frameStep),
+            ):
+                frame_str = str(frame).rjust(layer_data.padding, "0")
+                expected_files.append(
+                    "{}.{}.{}".format(file_prefix, frame_str, ext)
+                )
+        return expected_files
+
+    def get_files(self, product):
+        file_list = self._generate_file_sequence(
+            self.layer_data,
+            force_aov_name=product.productName,
+            force_ext=product.ext,
+            force_cameras=[product.camera]
+        )
+        return file_list
+
+    def get_renderer_prefix(self):
+        """ By default, 3delight has filenames like this:
+
+        3delight/<scene>/image/<scene>.<pass>.#.ext
+
+        So we need to grab that, split by the '#' and then remove
+        the period just before the hash.
+        """
+
+        node = self.get_render_settings(self.layer)
+        fname = cmds.getAttr('{}.layerDefaultFilename'.format(node))
+        if not fname.find("#"):
+            return fname
+
+        prefix, postfix = fname.split("#")
+        return prefix[:-1]
+
+    @staticmethod
+    def get_render_settings(layer):
+        # We first need to get the rendersetup layer belonging to this layer.
+        layer = "{}".format(layer)
+        rs_layer = lib_rendersetup.get_rendersetup_layer(layer)
+        if not rs_layer:
+            return None
+        # With that name, we can remove the trailing '_RL' to get the correct
+        # dlRenderSettings class and assert if it doesn't exist.
+        assert rs_layer.endswith("_RL"), \
+            "RenderLayer has wrong suffix [{}] (not '*_RL')".format(rs_layer)
+        dl_render_settings = rs_layer[:-3]
+        # There's a chance that it will be prefixed with "rs_", so remove that
+        # too if it's present.
+        if dl_render_settings.startswith("rs_"):
+            dl_render_settings = dl_render_settings[3:]
+        assert len(cmds.ls(dl_render_settings)) == 1, \
+            "Object '{}' is missing".format(dl_render_settings)
+        assert cmds.nodeType(dl_render_settings) == "dlRenderSettings", \
+            "Object '{}' is wrong type".format(dl_render_settings)
+        return dl_render_settings
 
 
 class AOVError(Exception):

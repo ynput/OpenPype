@@ -100,6 +100,10 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         layer = instance.data['setMembers']
         cameras = instance.data.get("cameras", [])
 
+        if renderer == "_3delight":
+        	# 3delight is different enough to need it do it its own validation
+            return invalid
+
         # Get the node attributes for current renderer
         attrs = lib.RENDER_ATTRS.get(renderer, lib.RENDER_ATTRS['default'])
         prefix = lib.get_attr_in_layer(cls.ImagePrefixes[renderer],

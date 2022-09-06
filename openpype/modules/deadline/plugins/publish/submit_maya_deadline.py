@@ -38,6 +38,7 @@ from openpype.lib import requests_post
 from openpype.hosts.maya.api import lib
 from openpype.pipeline import legacy_io
 
+
 # Documentation for keys available at:
 # https://docs.thinkboxsoftware.com
 #    /products/deadline/8.0/1_User%20Manual/manual
@@ -259,6 +260,26 @@ def get_renderer_variables(renderlayer, root):
         extension = ext_mapping[
             cmds.getAttr("redshiftOptions.imageFormat")
         ]
+    elif renderer.lower() == "_3delight":
+        # 3delight treats rendering settings much differently to other
+        # renderers.
+        from openpype.hosts.maya.api.lib_renderproducts import RenderProducts3Delight as RP3D  # noqa: E501
+        dl_render_settings = RP3D.get_render_settings(renderlayer)
+        assert dl_render_settings, \
+            "Missing dlRenderSettings '{}'".format(renderlayer)
+
+        prefix_attr = '{}.layerDefaultFilename'.format(dl_render_settings)
+        filename_prefix = cmds.getAttr(prefix_attr)
+        if filename_prefix.find("#"):
+            prefix, _postfix = filename_prefix.split("#")
+            filename_prefix = prefix[:-1]
+        extension = cmds.getAttr(
+            "{}.layerDefaultDriver".format(dl_render_settings))
+
+        filename_0 = re.sub('<scene>', scene, filename_prefix, flags=re.IGNORECASE)  # noqa: E501
+        filename_0 = re.sub('<pass>', renderlayer, filename_0, flags=re.IGNORECASE)  # noqa: E501
+        filename_0 = "{}.{}.{}".format(
+            filename_0, "#" * int(padding), extension)
     else:
         # Get the extension, getAttr defaultRenderGlobals.imageFormat
         # returns an index number.
@@ -565,6 +586,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             payload = self._get_vray_render_payload(payload_data)
         elif "assscene" in instance.data["families"]:
             payload = self._get_arnold_render_payload(payload_data)
+        elif "_3delight" in instance.data["families"]:
+            payload = self._get_3delight_render_payload(payload_data)
         else:
             payload = self._get_maya_payload(payload_data)
 
@@ -1044,6 +1067,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         payload["JobInfo"].update(job_info_ext)
         payload["PluginInfo"].update(plugin_info)
         return payload
+
+    def _get_3delight_render_payload(self, data):
+        return self._get_maya_payload(data)
 
     def _submit_export(self, data, format):
         if format == "vray":

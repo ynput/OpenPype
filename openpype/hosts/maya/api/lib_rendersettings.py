@@ -93,12 +93,15 @@ class RenderSettings(object):
         if renderer == "redshift":
             self._set_redshift_settings(width, height)
 
+        if renderer == "_3delight":
+            self._set_3delight_settings(width, height)
+
     def _set_arnold_settings(self, width, height):
         """Sets settings for Arnold."""
         from mtoa.core import createOptions  # noqa
         from mtoa.aovs import AOVInterface  # noqa
         createOptions()
-        arnold_render_presets = self._project_settings["maya"]["RenderSettings"]["arnold_renderer"] # noqa
+        arnold_render_presets = self._project_settings["maya"]["RenderSettings"]["arnold_renderer"]  # noqa
         # Force resetting settings and AOV list to avoid having to deal with
         # AOV checking logic, for now.
         # This is a work around because the standard
@@ -239,3 +242,70 @@ class RenderSettings(object):
                 cmds.setAttr(str(attribute), int(value)) # noqa
             elif (cmds.getAttr(str(attribute), type=True)) == "string":
                 cmds.setAttr(str(attribute), str(value), type = "string") # noqa
+
+    def _set_3delight_settings(self, width, height):
+        """Sets important settings for 3Delight. """
+
+        # resolution
+        cmds.setAttr("defaultResolution.width", width)
+        cmds.setAttr("defaultResolution.height", height)
+        cmds.setAttr("defaultRenderGlobals.animation", 1)
+
+        # frame range
+        start_frame = int(cmds.playbackOptions(query=True,
+                                               animationStartTime=True))
+        end_frame = int(cmds.playbackOptions(query=True,
+                                             animationEndTime=True))
+
+        dl_render_settings = cmds.ls(type="dlRenderSettings")
+        assert len(dl_render_settings) >= 1
+        for dl_render_setting in dl_render_settings:
+            cmds.setAttr(
+                "{}.startFrame".format(dl_render_setting), start_frame)
+            cmds.setAttr(
+                "{}.endFrame".format(dl_render_setting), end_frame)
+
+            # outputOptionsDefault
+            cmds.setAttr(
+                "{}.outputOptionsDefault".format(dl_render_setting), 2)
+
+        """
+        3delight doesn't use maya's render layers to indicate what to render,
+        instead, it uses dlRenderSettings as specified by the connection to
+        dlRenderGlobals1, of which there is only one. Since this is not the 
+        "mayaonic" way, we must insert a pre-render MEL into maya's 
+        "defaultRenderGlobals.preMel", which will help us work this out. We
+        wouldn't this this ... "hack" if deadline allowed us to insert commands
+        into its MayaBatch stuff, or, if it allowed setting up renderers in a
+        sensible way.
+        """
+
+        preMelToInsert = """/*--*3dl_v2*--*/
+currentTime -e `getAttr ("defaultRenderGlobals.startFrame")`;
+string $ls[] = `listConnections renderLayerManager.renderLayerId`;
+for ($i = 0 ; $i<size($ls) ; $i++) 
+{
+    string $cl = $ls[$i];
+    if (!startsWith($cl, "rs_"))
+        continue;
+    if (!endsWith($cl, "_RL"))
+        continue;
+    string $_3l = substring($cl, 4, size($cl)-3);
+    if (getAttr($cl+".renderable"))
+    {
+        string $rg = "dlRenderGlobals1.renderSettings";
+        DL_disconnectNode( $rg );
+        DL_connectNodeToMessagePlug( $_3l, $rg );
+    }
+}
+/*--**--*/"""
+        preMel = cmds.getAttr("defaultRenderGlobals.preMel")
+        print("This is our current 'preMel':[{}]".format(preMel))
+        if preMel:
+            if "/*--*3dl_v2*--*/" in preMel:
+                print("  - we already have the correct preMel, leave it")
+        else:
+            print("  - we need to insert our own preMel")
+            preMel = preMel if preMel else ""
+            mel = "{};{}".format(preMel, preMelToInsert)
+            cmds.setAttr("defaultRenderGlobals.preMel", mel, type="string")

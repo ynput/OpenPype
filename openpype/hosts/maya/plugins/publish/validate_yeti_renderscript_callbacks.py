@@ -55,7 +55,7 @@ class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
 
         callback_lookup = cls.callbacks.get(renderer, {})
         if not callback_lookup:
-            cls.log.warning("Renderer '%s' is not supported in this plugin"
+            cls.log.info("Renderer '%s' is not supported in this plugin"
                             % renderer)
             return False
 

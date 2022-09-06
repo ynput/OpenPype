@@ -145,24 +145,43 @@ class CreateRender(plugin.Creator):
 
             cmds.setAttr("{}.machineList".format(self.instance), lock=True)
             rs = renderSetup.instance()
-            layers = rs.getRenderLayers()
-            if use_selection:
-                self.log.info("Processing existing layers")
-                sets = []
-                for layer in layers:
-                    self.log.info("  - creating set for {}:{}".format(
-                        namespace, layer.name()))
-                    render_set = cmds.sets(
-                        n="{}:{}".format(namespace, layer.name()))
-                    sets.append(render_set)
-                cmds.sets(sets, forceElement=self.instance)
+            if self._get_renderer() == "_3delight":
+                self.log.info("Creating for _3delight")
+                # With 3delight, we have dlRenderSettings, which need to be
+                # assigned layers so they can be processed the same way. We
+                # first create renderLayers with the same name as the
+                # 3delight dlRenderSettings, so they can be us later
+                # extracted.
+                dl_render_settings = cmds.ls(type="dlRenderSettings")
+                for dl_render_setting in dl_render_settings:
+                    render_layer_name = "{}_RL".format(dl_render_setting)
+                    self.log.info(
+                        "  Created {}/{}".format(dl_render_setting,
+                                                 render_layer_name))
+                    render_layer = rs.createRenderLayer(render_layer_name)
+                    collection = render_layer.createCollection(
+                        "defaultCollection")
+                    collection.getSelector().setPattern('*')
+            else:
+                layers = rs.getRenderLayers()
+                if use_selection:
+                    self.log.info("Processing existing layers")
+                    sets = []
+                    for layer in layers:
+                        self.log.info("  - creating set for {}:{}".format(
+                            namespace, layer.name()))
+                        render_set = cmds.sets(
+                            n="{}:{}".format(namespace, layer.name()))
+                        sets.append(render_set)
+                    cmds.sets(sets, forceElement=self.instance)
 
-            # if no render layers are present, create default one with
-            # asterisk selector
-            if not layers:
-                render_layer = rs.createRenderLayer('Main')
-                collection = render_layer.createCollection("defaultCollection")
-                collection.getSelector().setPattern('*')
+                # if no render layers are present, create default one with
+                # asterisk selector
+                if not layers:
+                    render_layer = rs.createRenderLayer('Main')
+                    collection = render_layer.createCollection(
+                        "defaultCollection")
+                    collection.getSelector().setPattern('*')
 
         return self.instance
 
@@ -224,7 +243,7 @@ class CreateRender(plugin.Creator):
                 "maya", {}).get(
                 "RenderSettings", {}).get(
                 "enable_all_lights", False)
-            )
+        )
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
 
@@ -337,7 +356,7 @@ class CreateRender(plugin.Creator):
         params = {"authToken": self._token}
         api_entry = "/api/pools/list"
         response = requests_get(self.MUSTER_REST_URL + api_entry,
-                                      params=params)
+                                params=params)
         if response.status_code != 200:
             if response.status_code == 401:
                 self.log.warning("Authentication token expired.")
@@ -400,3 +419,6 @@ class CreateRender(plugin.Creator):
         if "verify" not in kwargs:
             kwargs["verify"] = not os.getenv("OPENPYPE_DONT_VERIFY_SSL", True)
         return requests.get(*args, **kwargs)
+
+    def _get_renderer(self):
+        return cmds.getAttr('defaultRenderGlobals.currentRenderer').lower()
