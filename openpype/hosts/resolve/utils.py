@@ -31,7 +31,7 @@ def setup(env):
     # make sure no script file is in folder
     for s in os.listdir(us_dir):
         path = os.path.join(us_dir, s)
-        log.info(f"Removing `{path}`...")
+        log.info("Removing `{}`...".format(path))
         if os.path.isdir(path):
             shutil.rmtree(path, onerror=None)
         else:
