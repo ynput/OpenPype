@@ -30,6 +30,7 @@ from .workio import (
 )
 
 from . import lib
+from .c4d_lib import ObjectAttrs, ObjectPath
 
 log = logging.getLogger("openpype.hosts.cinema4d")
 
@@ -115,7 +116,7 @@ def ls(doc=None):
     if not doc:
         doc = c4d.documents.GetActiveDocument()
     for obj in lib.recurse_hierarchy(doc.GetFirstObject()):
-        obj_attrs = lib.ObjectAttrs(obj)
+        obj_attrs = ObjectAttrs(obj)
         print(obj_attrs.get("id"))
         if obj_attrs.get("id") in ids:
             yield obj
@@ -149,7 +150,7 @@ def containerise(name,
 
     container = c4d.BaseObject(c4d.Oselection)
     doc.InsertObject(container)
-    container_attrs = lib.ObjectAttrs(container)
+    container_attrs = ObjectAttrs(container)
     container_attrs["SELECTIONOBJECT_LIST"] = nodes
     container.SetName("%s_%s_%s" % (namespace, name, suffix))
 

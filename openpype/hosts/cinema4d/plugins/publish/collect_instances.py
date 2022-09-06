@@ -1,7 +1,7 @@
 import c4d
 import pyblish.api
 import json
-from openpype.hosts.cinema4d.api import lib
+from openpype.hosts.cinema4d.api import lib, c4d_lib
 
 
 
@@ -79,22 +79,22 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 data["publish"] = data["active"]
 
             # Collect members - c4d.BaseObject
-            members = [members.ObjectFromIndex(doc, idx) for idx in range(members.GetObjectCount())]
+            members = [c4d_lib.ObjectPath(obj=members.ObjectFromIndex(doc, idx)) for idx in range(members.GetObjectCount())]
 
 
             # Collect Children - c4d.BaseObject
-            children = [obj for member in members for obj in lib.recurse_hierarchy(member.GetDown())]
+            children = [c4d_lib.ObjectPath(obj=obj) for member in members for obj in lib.recurse_hierarchy(member.GetDown())]
 
             parents = []
             if data.get("includeParentHierarchy", True):
                 # If `includeParentHierarchy` then include the parents
                 # so they will also be picked up in the instance by validators
-                parents = self.get_all_parents(members)
+                parents = [c4d_lib.ObjectPath(obj=obj) for obj in self.get_all_parents(members)]
             members_hierarchy = list(
                     set(
-                        [lib.serialize_c4d_data(x) for x in members] + \
-                        [lib.serialize_c4d_data(x) for x in children] + \
-                        [lib.serialize_c4d_data(x) for x in parents]
+                        [str(x) for x in members] + \
+                        [str(x) for x in children] + \
+                        [str(x) for x in parents]
                     )
                 )
 

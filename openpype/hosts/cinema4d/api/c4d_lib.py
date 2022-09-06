@@ -446,6 +446,7 @@ all the objects in a project file and find what I am looking for without having
 to write bespoke functions every single time.
 '''
 def c4d_ls(
+    search_list=None,
     name="",
     exact_name=False,
     absolute_path=False,
@@ -455,7 +456,7 @@ def c4d_ls(
     as_string=False,
     visible=False,
     rendered=False,
-    type=None,
+    _type=None,
     exact_type=None,
     tags=False,
     materials=False,
@@ -488,14 +489,14 @@ def c4d_ls(
             if not match:
                 return False
 
-        if type and not isinstance(op_path.obj, type):
+        if _type and not isinstance(op_path.obj, _type):
             return False
         if not isinstance(op_path.obj, c4d.BaseMaterial):
             if visible and not visible_in_viewport(op_path.obj):
                 return False
             if rendered and not visible_in_render(op_path.obj):
                 return False
-        if exact_type and  op_path.obj.GetType() != exact_type:
+        if exact_type and  type(op_path.obj) != exact_type:
             return False
         if selected and op_path.obj not in doc.GetSelection():
             return False
@@ -509,40 +510,46 @@ def c4d_ls(
 
     items = []
 
+    if search_list:
+        if not isinstance(search_list, list):
+            if isinstance(search_list, c4d.InExcludeData):
+                inex_data = search_list
+                search_list = []
+                for idx in range(inex_data.GetObjectCount()):
+                    search_list.append(inex_data.ObjectFromIndex(idx))
+    else:
+        search_list = []
+        if objects or nodes or tags:
+            search_list += [x for x in walk_hierarchy(doc.GetFirstObject())]
+        if materials:
+            search_list += [x for x in walk_hierarchy(doc.GetFirstMaterial())]
+    
+    for op_path in search_list:
 
-    if objects or nodes or tags:
-        for op_path in walk_hierarchy(doc.GetFirstObject()):
+        if objects or materials:
 
-            if objects:
-
-                if _is_valid(op_path):
-                    if as_string:
-                        items.append(str(op_path))
-                    else:
-                        items.append(op_path)
-
-            if tags or nodes:
-                for op_path in walk_hierarchy(op_path.obj.GetFirstTag()):
-                    if tags:
-
-                        if _is_valid(op_path):
-                            if as_string:
-                                items.append(str(op_path))
-                            else:
-                                items.append(op_path)
-                    if nodes and isinstance(op_path.obj, c4d.modules.graphview.XPressoTag):
-                        for op_path in walk_hierarchy(op_path.obj.GetNodeMaster().GetRoot()):
-                            if _is_valid(op_path):
-                                if as_string:
-                                    items.append(str(op_path))
-                                else:
-                                    items.append(op_path)
-    if materials:
-        for op_path in walk_hierarchy(doc.GetFirstMaterial()):
             if _is_valid(op_path):
                 if as_string:
                     items.append(str(op_path))
                 else:
                     items.append(op_path)
+
+        if tags or nodes:
+            for op_path in walk_hierarchy(op_path.obj.GetFirstTag()):
+                if tags:
+
+                    if _is_valid(op_path):
+                        if as_string:
+                            items.append(str(op_path))
+                        else:
+                            items.append(op_path)
+                if nodes and isinstance(op_path.obj, c4d.modules.graphview.XPressoTag):
+                    for op_path in walk_hierarchy(op_path.obj.GetNodeMaster().GetRoot()):
+                        if _is_valid(op_path):
+                            if as_string:
+                                items.append(str(op_path))
+                            else:
+                                items.append(op_path)
+
 
     return items
