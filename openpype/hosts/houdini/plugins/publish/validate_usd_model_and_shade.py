@@ -37,7 +37,7 @@ class ValidateUsdModel(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        rop = instance[0]
+        rop = instance.data["members"][0]
         lop_path = hou_usdlib.get_usd_rop_loppath(rop)
         stage = lop_path.stage(apply_viewport_overrides=False)
 

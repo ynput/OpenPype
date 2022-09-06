@@ -69,7 +69,7 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        rop = instance[0]
+        rop = instance.data["members"][0]
 
         # Collect chunkSize
         chunk_size_parm = rop.parm("chunkSize")

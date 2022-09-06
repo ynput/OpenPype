@@ -14,7 +14,7 @@ class ExtractAlembic(openpype.api.Extractor):
 
     def process(self, instance):
 
-        ropnode = instance[0]
+        ropnode = instance.data["members"][0]
 
         # Get the filename from the filename parameter
         output = ropnode.evalParm("filename")

@@ -37,7 +37,7 @@ class ValidateNoErrors(pyblish.api.InstancePlugin):
         validate_nodes = []
 
         if len(instance) > 0:
-            validate_nodes.append(instance[0])
+            validate_nodes.append(instance.data["members"][0])
         output_node = instance.data.get("output_node")
         if output_node:
             validate_nodes.append(output_node)

@@ -14,7 +14,7 @@ class ExtractRedshiftProxy(openpype.api.Extractor):
 
     def process(self, instance):
 
-        ropnode = instance[0]
+        ropnode = instance.data["members"][0]
 
         # Get the filename from the filename parameter
         # `.evalParm(parameter)` will make sure all tokens are resolved

@@ -35,7 +35,7 @@ class ValidateSopOutputNode(pyblish.api.InstancePlugin):
         output_node = instance.data["output_node"]
 
         if output_node is None:
-            node = instance[0]
+            node = instance.data["members"][0]
             cls.log.error(
                 "SOP Output node in '%s' does not exist. "
                 "Ensure a valid SOP output path is set." % node.path()

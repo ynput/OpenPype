@@ -14,7 +14,7 @@ class ValidateCameraROP(pyblish.api.InstancePlugin):
 
         import hou
 
-        node = instance[0]
+        node = instance.data["members"][0]
         if node.parm("use_sop_path").eval():
             raise RuntimeError(
                 "Alembic ROP for Camera export should not be "

@@ -36,7 +36,7 @@ class ValidateFrameToken(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        node = instance[0]
+        node = instance.data["members"][0]
 
         # Check trange parm, 0 means Render Current Frame
         frame_range = node.evalParm("trange")

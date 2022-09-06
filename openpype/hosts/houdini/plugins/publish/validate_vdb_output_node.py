@@ -36,7 +36,7 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
         if node is None:
             cls.log.error(
                 "SOP path is not correctly set on "
-                "ROP node '%s'." % instance[0].path()
+                "ROP node '%s'." % instance.data["members"][0].path()
             )
             return [instance]
 

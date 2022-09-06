@@ -16,7 +16,7 @@ class ExtractHDA(openpype.api.Extractor):
 
     def process(self, instance):
         self.log.info(pformat(instance.data))
-        hda_node = instance[0]
+        hda_node = instance.data["members"][0]
         hda_def = hda_node.type().definition()
         hda_options = hda_def.options()
         hda_options.setSaveInitialParmsAndContents(True)

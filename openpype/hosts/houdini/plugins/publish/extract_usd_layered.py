@@ -187,7 +187,7 @@ class ExtractUSDLayered(openpype.api.Extractor):
 
         # Main ROP node, either a USD Rop or ROP network with
         # multiple USD ROPs
-        node = instance[0]
+        node = instance.data["members"][0]
 
         # Collect any output dependencies that have not been processed yet
         # during extraction of other instances

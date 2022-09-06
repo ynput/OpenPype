@@ -33,7 +33,7 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
 
         output = instance.data["output_node"]
 
-        rop = instance[0]
+        rop = instance.data["members"][0]
         pattern = rop.parm("prim_to_detail_pattern").eval().strip()
         if not pattern:
             cls.log.debug(

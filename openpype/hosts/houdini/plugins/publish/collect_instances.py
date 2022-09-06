@@ -47,6 +47,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if node.evalParm("id") != "pyblish.avalon.instance":
                 continue
 
+            # instance was created by new creator code, skip it as
+            # it is already collected.
+            if node.parm("creator_identifier"):
+                continue
+
             has_family = node.evalParm("family")
             assert has_family, "'%s' is missing 'family'" % node.name()
 
@@ -78,6 +83,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             instance.data["families"] = [instance.data["family"]]
 
             instance[:] = [node]
+            instance.data["members"] = [node]
             instance.data.update(data)
 
         def sort_by_family(instance):

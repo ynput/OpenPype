@@ -19,7 +19,7 @@ class ValidateUsdShadeWorkspace(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        rop = instance[0]
+        rop = instance.data["members"][0]
         workspace = rop.parent()
 
         definition = workspace.type().definition()

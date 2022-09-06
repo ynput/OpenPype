@@ -19,7 +19,7 @@ class CollectUsdLayers(pyblish.api.InstancePlugin):
             self.log.debug("No output node found..")
             return
 
-        rop_node = instance[0]
+        rop_node = instance.data["members"][0]
 
         save_layers = []
         for layer in usdlib.get_configured_save_layers(rop_node):
@@ -54,7 +54,7 @@ class CollectUsdLayers(pyblish.api.InstancePlugin):
             layer_inst.data["subset"] = "__stub__"
             layer_inst.data["label"] = label
             layer_inst.data["asset"] = instance.data["asset"]
-            layer_inst.append(instance[0])              # include same USD ROP
+            layer_inst.append(instance.data["members"][0])              # include same USD ROP
             layer_inst.append((layer, save_path))       # include layer data
 
             # Allow this subset to be grouped into a USD Layer on creation

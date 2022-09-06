@@ -33,7 +33,7 @@ class ValidateCopOutputNode(pyblish.api.InstancePlugin):
         output_node = instance.data["output_node"]
 
         if output_node is None:
-            node = instance[0]
+            node = instance.data["members"][0]
             cls.log.error(
                 "COP Output node in '%s' does not exist. "
                 "Ensure a valid COP output path is set." % node.path()

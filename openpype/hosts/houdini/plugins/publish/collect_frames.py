@@ -24,7 +24,7 @@ class CollectFrames(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        ropnode = instance[0]
+        ropnode = instance.data["members"][0]
 
         start_frame = instance.data.get("frameStart", None)
         end_frame = instance.data.get("frameEnd", None)

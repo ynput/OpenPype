@@ -34,6 +34,6 @@ class ValidateBypassed(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        rop = instance[0]
+        rop = instance.data["members"][0]
         if hasattr(rop, "isBypassed") and rop.isBypassed():
             return [rop]

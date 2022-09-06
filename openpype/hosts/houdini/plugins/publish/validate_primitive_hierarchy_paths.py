@@ -30,7 +30,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
 
         output = instance.data["output_node"]
 
-        rop = instance[0]
+        rop = instance.data["members"][0]
         build_from_path = rop.parm("build_from_path").eval()
         if not build_from_path:
             cls.log.debug(
