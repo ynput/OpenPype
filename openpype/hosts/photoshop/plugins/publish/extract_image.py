@@ -7,7 +7,15 @@ from openpype.hosts.photoshop import api as photoshop
 
 
 class ExtractImage(pyblish.api.ContextPlugin):
-    """Save scene before extraction."""
+    """Extract all layers (groups) marked for publish.
+
+    Usually publishable instance is created as a wrapper of layer(s). For each
+    publishable instance so many images as there is 'formats' is created.
+
+    Logic tries to hide/unhide layers minimum times.
+
+    Called once for all publishable instances.
+    """
 
     order = publish.Extractor.order - 0.48
     label = "Extract Image"
@@ -27,7 +35,6 @@ class ExtractImage(pyblish.api.ContextPlugin):
         stub.hide_all_others_layers_ids([], layers=all_layers)
 
         with photoshop.maintained_selection():
-            # self.log.info("Extracting %s" % str(list(instance)))
             with photoshop.maintained_visibility(layers=all_layers):
                 for instance in context:
                     if instance.data["family"] not in self.families:
