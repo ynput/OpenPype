@@ -5,13 +5,15 @@ import six
 import logging
 from functools import reduce
 
-from openpype.client import get_asset_by_name
+from openpype.client import (
+    get_asset_by_name,
+    get_linked_assets,
+)
 from openpype.settings import get_project_settings
 from openpype.lib import (
     StringTemplate,
     Logger,
     filter_profiles,
-    get_linked_assets,
 )
 from openpype.pipeline import legacy_io, Anatomy
 from openpype.pipeline.load import (

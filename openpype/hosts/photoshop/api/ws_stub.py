@@ -229,10 +229,11 @@ class PhotoshopServerStub:
 
         return self._get_layers_in_layers(parent_ids)
 
-    def get_layers_in_layers_ids(self, layers_ids):
+    def get_layers_in_layers_ids(self, layers_ids, layers=None):
         """Return all layers that belong to layers (might be groups).
 
         Args:
+            layers_ids <list of Int>
             layers <list of PSItem>:
 
         Returns:
@@ -240,10 +241,13 @@ class PhotoshopServerStub:
         """
         parent_ids = set(layers_ids)
 
-        return self._get_layers_in_layers(parent_ids)
+        return self._get_layers_in_layers(parent_ids, layers)
 
-    def _get_layers_in_layers(self, parent_ids):
-        all_layers = self.get_layers()
+    def _get_layers_in_layers(self, parent_ids, layers=None):
+        if not layers:
+            layers = self.get_layers()
+
+        all_layers = layers
         ret = []
 
         for layer in all_layers:
@@ -394,14 +398,17 @@ class PhotoshopServerStub:
 
         self.hide_all_others_layers_ids(extract_ids)
 
-    def hide_all_others_layers_ids(self, extract_ids):
+    def hide_all_others_layers_ids(self, extract_ids, layers=None):
         """hides all layers that are not part of the list or that are not
         children of this list
 
         Args:
             extract_ids (list): list of integer that should be visible
+            layers (list) of PSItem (used for caching)
         """
-        for layer in self.get_layers():
+        if not layers:
+            layers = self.get_layers()
+        for layer in layers:
             if layer.visible and layer.id not in extract_ids:
                 self.set_visible(layer.id, False)
 

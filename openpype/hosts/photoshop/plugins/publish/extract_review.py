@@ -2,12 +2,15 @@ import os
 import shutil
 from PIL import Image
 
-import openpype.api
-import openpype.lib
+from openpype.lib import (
+    run_subprocess,
+    get_ffmpeg_tool_path,
+)
+from openpype.pipeline import publish
 from openpype.hosts.photoshop import api as photoshop
 
 
-class ExtractReview(openpype.api.Extractor):
+class ExtractReview(publish.Extractor):
     """
         Produce a flattened or sequence image files from all 'image' instances.
 
@@ -72,7 +75,7 @@ class ExtractReview(openpype.api.Extractor):
             })
             processed_img_names = [img_list]
 
-        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
         instance.data["stagingDir"] = staging_dir
 
@@ -93,7 +96,7 @@ class ExtractReview(openpype.api.Extractor):
             thumbnail_path
         ]
         self.log.debug("thumbnail args:: {}".format(args))
-        output = openpype.lib.run_subprocess(args)
+        output = run_subprocess(args)
 
         instance.data["representations"].append({
             "name": "thumbnail",
@@ -116,7 +119,7 @@ class ExtractReview(openpype.api.Extractor):
             mov_path
         ]
         self.log.debug("mov args:: {}".format(args))
-        output = openpype.lib.run_subprocess(args)
+        output = run_subprocess(args)
         self.log.debug(output)
         instance.data["representations"].append({
             "name": "mov",
