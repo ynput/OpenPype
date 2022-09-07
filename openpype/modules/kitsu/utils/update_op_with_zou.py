@@ -15,10 +15,10 @@ from openpype.client import (
     get_assets,
     get_asset_by_id,
     get_asset_by_name,
+    create_project,
 )
 from openpype.pipeline import AvalonMongoDB
-from openpype.api import get_project_settings
-from openpype.lib import create_project
+from openpype.settings import get_project_settings
 from openpype.modules.kitsu.utils.credentials import validate_credentials
 
 
@@ -278,7 +278,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     project_doc = get_project(project_name)
     if not project_doc:
         print(f"Creating project '{project_name}'")
-        project_doc = create_project(project_name, project_name, dbcon=dbcon)
+        project_doc = create_project(project_name, project_name)
 
     # Project data and tasks
     project_data = project_doc["data"] or {}
