@@ -1,5 +1,7 @@
 """Blender operators and menus for use with Avalon."""
 
+from distutils import extension
+from doctest import ELLIPSIS_MARKER
 import os
 from string import digits
 import sys
@@ -32,16 +34,19 @@ from openpype.hosts.blender.api.utils import (
     link_to_collection,
     unlink_from_collection,
 )
-from openpype.pipeline import legacy_io
+from openpype.pipeline import legacy_io, Anatomy
+from openpype.pipeline.constants import AVALON_INSTANCE_ID
 from openpype.pipeline.create.creator_plugins import (
     discover_legacy_creator_plugins,
     get_legacy_creator_by_name,
 )
 from openpype.pipeline.create.subset_name import get_subset_name
+from openpype.pipeline.template_data import get_template_data_with_names
+from openpype.lib.path_tools import version_up
 from openpype.tools.utils import host_tools
 from openpype.hosts.blender.scripts import build_workfile
-
-from .workio import OpenFileCacher
+from openpype.tools.utils.lib import qt_app_context
+from .workio import OpenFileCacher, save_file, work_root
 
 PREVIEW_COLLECTIONS: Dict = dict()
 
@@ -179,7 +184,9 @@ def _process_app_events() -> Optional[float]:
             _clc, val, tb = main_thread_item.exception
             msg = str(val)
             detail = "\n".join(traceback.format_exception(_clc, val, tb))
-            dialog = QtWidgets.QMessageBox(QtWidgets.QMessageBox.Warning, "Error", msg)
+            dialog = QtWidgets.QMessageBox(
+                QtWidgets.QMessageBox.Warning, "Error", msg
+            )
             dialog.setMinimumWidth(500)
             dialog.setDetailedText(detail)
             dialog.setWindowFlags(
@@ -997,11 +1004,11 @@ class BuildWorkFile(bpy.types.Operator):
 
     bl_idname = "wm.avalon_builder"
     bl_label = "Build First Workfile"
-    bl_property = "should_save_first_workfile"
+    # bl_property = "should_save_first_workfile"
     _app: QtWidgets.QApplication
 
     # Should save property
-    should_save_first_workfile: bpy.props.BoolProperty(name="Save as...", default=True)
+    should_save: bpy.props.BoolProperty(name="Save as...", default=True)
 
     def __init__(self):
         print(f"Initialising {self.bl_idname}...")
@@ -1011,7 +1018,7 @@ class BuildWorkFile(bpy.types.Operator):
         if not bpy.app.timers.is_registered(_process_app_events):
             bpy.app.timers.register(_process_app_events, persistent=True)
 
-    def _build_first_workfile(self, context):
+    def _build_first_workfile(self):
         # clear all objects and collections
         for obj in set(bpy.data.objects):
             bpy.data.objects.remove(obj)
@@ -1026,26 +1033,44 @@ class BuildWorkFile(bpy.types.Operator):
 
         build_workfile()
 
-        # Saving workfile
-        if self.should_save_first_workfile:
-            print("Saving workfile")
-            from ..plugins.publish.increment_workfile_version import (
-                IncrementWorkfileVersion,
-            )
-
-            IncrementWorkfileVersion().process(context)
-
     def execute(self, context):
-        mti = MainThreadItem(self._build_first_workfile, context)
+        mti = MainThreadItem(self._build_first_workfile)
         execute_in_main_thread(mti)
+
+        # Saving workfile
+        if self.should_save:
+            print("Saving workfile")
+
+            with qt_app_context():
+                session = legacy_io.Session
+                root = work_root(session)
+
+                # Set work file data for template formatting
+                project_name = session["AVALON_PROJECT"]
+                asset_name = session["AVALON_ASSET"]
+                task_name = session["AVALON_TASK"]
+                host_name = session["AVALON_APP"]
+
+                data = get_template_data_with_names(
+                    project_name, asset_name, task_name, host_name
+                )
+                data.update({"version": 0, "comment": "", "ext": "blend"})
+
+                # Getting file name anatomy
+                anatomy_filled = Anatomy(project_name).format(data)
+                file_path = anatomy_filled["work"]["file"]
+
+                # Saving
+                if file_path:
+                    file_path = version_up(os.path.join(root, file_path))
+                    save_file(file_path, copy=False)
+                else:
+                    print("Failed to save")
+
         return {"FINISHED"}
 
     def invoke(self, context, event):
         return bpy.context.window_manager.invoke_props_dialog(self, width=150)
-        # return bpy.context.window_manager.invoke_confirm(self, event)
-
-    # def draw(self, context):
-    #     layout = self.layout
 
 
 class TOPBAR_MT_avalon(bpy.types.Menu):
@@ -1070,7 +1095,9 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         task = legacy_io.Session["AVALON_TASK"]
         context_label = f"{asset}, {task}"
         context_label_item = layout.row()
-        context_label_item.operator(LaunchWorkFiles.bl_idname, text=context_label)
+        context_label_item.operator(
+            LaunchWorkFiles.bl_idname, text=context_label
+        )
         context_label_item.enabled = False
         layout.separator()
         layout.operator(LaunchCreator.bl_idname, text="Create...")
