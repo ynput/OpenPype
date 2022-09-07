@@ -6,7 +6,7 @@ import collections
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
-from openpype.widgets.attribute_defs import create_widget_for_attr_def
+from openpype.tools.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
 from openpype.tools.flickcharm import FlickCharm
 from openpype.tools.utils import (
@@ -1219,7 +1219,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
     Attributes are defined on creator so are dynamic. Their look and type is
     based on attribute definitions that are defined in
     `~/openpype/pipeline/lib/attribute_definitions.py` and their widget
-    representation in `~/openpype/widgets/attribute_defs/*`.
+    representation in `~/openpype/tools/attribute_defs/*`.
 
     Widgets are disabled if context of instance is not valid.
 
@@ -1341,7 +1341,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
 
     Look and type of attributes is based on attribute definitions that are
     defined in `~/openpype/pipeline/lib/attribute_definitions.py` and their
-    widget representation in `~/openpype/widgets/attribute_defs/*`.
+    widget representation in `~/openpype/tools/attribute_defs/*`.
 
     Widgets are disabled if context of instance is not valid.
 

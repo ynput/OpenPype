@@ -1,6 +1,6 @@
 from Qt import QtWidgets, QtCore
 
-from openpype.widgets.attribute_defs import create_widget_for_attr_def
+from openpype.tools.attribute_defs import create_widget_for_attr_def
 
 
 class PreCreateWidget(QtWidgets.QWidget):
