@@ -1,6 +1,6 @@
 import os
 from openpype.settings import get_project_settings
-from openpype.api import Logger
+from openpype.lib import Logger
 
 
 def create_workspace_mel(workdir, project_name):
