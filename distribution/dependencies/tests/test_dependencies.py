@@ -6,7 +6,8 @@ import pytest
 from distribution.dependencies.dependencies import (
     FileTomlProvider,
     is_valid_toml,
-    merge_tomls
+    merge_tomls,
+    get_full_toml
 )
 
 
@@ -50,6 +51,16 @@ def test_is_valid_toml_invalid(openpype_toml_data):
 
 def test_merge_tomls(openpype_toml_data, addon_toml_data):
     result_toml = merge_tomls(openpype_toml_data, addon_toml_data)
+    _compare_resolved_tomp(result_toml)
+
+
+def test_get_full_toml(openpype_toml_data):
+    addon_urls = ["resources"]
+
+    result_toml = get_full_toml(openpype_toml_data, addon_urls)
+    _compare_resolved_tomp(result_toml)
+
+def _compare_resolved_tomp(result_toml):
     res_dependencies = result_toml["tool"]["poetry"]["dependencies"]
     dep_version = res_dependencies["aiohttp"]
     assert dep_version == "3.6.*"
