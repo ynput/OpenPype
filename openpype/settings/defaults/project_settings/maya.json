@@ -15,20 +15,7 @@
             "destination-path": []
         }
     },
-    "mel-workspace":{
-        "definition":[
-            "workspace -fr \"shaders\" \"renderData/shaders\";",
-            "workspace -fr \"images\" \"renders\";",
-            "workspace -fr \"particles\" \"particles\";",
-            "workspace -fr \"mayaAscii\" \"\";",
-            "workspace -fr \"mayaBinary\" \"\";",
-            "workspace -fr \"scene\" \"\";",
-            "workspace -fr \"alembicCache\" \"cache/alembic\";",
-            "workspace -fr \"renderData\" \"renderData\";",
-            "workspace -fr \"sourceImages\" \"sourceimages\";",
-            "workspace -fr \"fileCache\" \"cache/nCache\";"
-        ]
-    },
+    "mel_workspace": "workspace -fr \"shaders\" \"renderData/shaders\";\nworkspace -fr \"images\" \"renders\";\nworkspace -fr \"particles\" \"particles\";\nworkspace -fr \"mayaAscii\" \"\";\nworkspace -fr \"mayaBinary\" \"\";\nworkspace -fr \"scene\" \"\";\nworkspace -fr \"alembicCache\" \"cache/alembic\";\nworkspace -fr \"renderData\" \"renderData\";\nworkspace -fr \"sourceImages\" \"sourceimages\";\nworkspace -fr \"fileCache\" \"cache/nCache\";\n",
     "scriptsmenu": {
         "name": "OpenPype Tools",
         "definition": [

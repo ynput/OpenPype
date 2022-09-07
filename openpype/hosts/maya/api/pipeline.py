@@ -28,7 +28,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
-from openpype.hosts.maya.lib import load_workspace_mel
+from openpype.hosts.maya.lib import create_workspace_mel
 from . import menu, lib
 from .workio import (
     open_file,
@@ -548,9 +548,10 @@ def on_task_changed():
 
 
 def before_workfile_save(event):
+    project_name = os.getenv("AVALON_PROJECT")
     workdir_path = event["workdir_path"]
     if workdir_path:
-        load_workspace_mel(workdir_path)
+        create_workspace_mel(workdir_path, project_name)
 
 
 class MayaDirmap(HostDirmap):
