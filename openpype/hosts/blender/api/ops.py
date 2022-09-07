@@ -1004,7 +1004,6 @@ class BuildWorkFile(bpy.types.Operator):
 
     bl_idname = "wm.avalon_builder"
     bl_label = "Build First Workfile"
-    # bl_property = "should_save_first_workfile"
     _app: QtWidgets.QApplication
 
     # Should save property
