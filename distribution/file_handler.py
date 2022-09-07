@@ -33,17 +33,45 @@ class RemoteFileHandler:
         return md5 == RemoteFileHandler.calculate_md5(fpath, **kwargs)
 
     @staticmethod
-    def check_integrity(fpath, md5=None):
+    def calculate_sha256(fpath):
+        """Calculate sha256 for content of the file.
+
+        Args:
+             fpath (str): Path to file.
+
+        Returns:
+            str: hex encoded sha256
+
+        """
+        h = hashlib.sha256()
+        b = bytearray(128 * 1024)
+        mv = memoryview(b)
+        with open(fpath, 'rb', buffering=0) as f:
+            for n in iter(lambda: f.readinto(mv), 0):
+                h.update(mv[:n])
+        return h.hexdigest()
+
+    @staticmethod
+    def check_sha256(fpath, sha256, **kwargs):
+        return sha256 == RemoteFileHandler.calculate_sha256(fpath, **kwargs)
+
+    @staticmethod
+    def check_integrity(fpath, hash_value=None, hash_type=None):
         if not os.path.isfile(fpath):
             return False
-        if md5 is None:
+        if hash_value is None:
             return True
-        return RemoteFileHandler.check_md5(fpath, md5)
+        if not hash_type:
+            raise ValueError("Provide hash type, md5 or sha256")
+        if hash_type == 'md5':
+            return RemoteFileHandler.check_md5(fpath, hash_value)
+        if hash_type == "sha256":
+            return RemoteFileHandler.check_sha256(fpath, hash_value)
 
     @staticmethod
     def download_url(
         url, root, filename=None,
-        md5=None, max_redirect_hops=3
+        sha256=None, max_redirect_hops=3
     ):
         """Download a file from a url and place it in root.
         Args:
@@ -51,7 +79,7 @@ class RemoteFileHandler:
             root (str): Directory to place downloaded file in
             filename (str, optional): Name to save the file under.
                 If None, use the basename of the URL
-            md5 (str, optional): MD5 checksum of the download.
+            sha256 (str, optional): sha256 checksum of the download.
                 If None, do not check
             max_redirect_hops (int, optional): Maximum number of redirect
                 hops allowed
@@ -64,7 +92,8 @@ class RemoteFileHandler:
         os.makedirs(root, exist_ok=True)
 
         # check if file is already present locally
-        if RemoteFileHandler.check_integrity(fpath, md5):
+        if RemoteFileHandler.check_integrity(fpath,
+                                             sha256, hash_type="sha256"):
             print('Using downloaded and verified file: ' + fpath)
             return
 
@@ -76,7 +105,7 @@ class RemoteFileHandler:
         file_id = RemoteFileHandler._get_google_drive_file_id(url)
         if file_id is not None:
             return RemoteFileHandler.download_file_from_google_drive(
-                file_id, root, filename, md5)
+                file_id, root, filename, sha256)
 
         # download the file
         try:
@@ -92,20 +121,21 @@ class RemoteFileHandler:
                 raise e
 
         # check integrity of downloaded file
-        if not RemoteFileHandler.check_integrity(fpath, md5):
+        if not RemoteFileHandler.check_integrity(fpath,
+                                                 sha256, hash_type="sha256"):
             raise RuntimeError("File not found or corrupted.")
 
     @staticmethod
     def download_file_from_google_drive(file_id, root,
                                         filename=None,
-                                        md5=None):
+                                        sha256=None):
         """Download a Google Drive file from  and place it in root.
         Args:
             file_id (str): id of file to be downloaded
             root (str): Directory to place downloaded file in
             filename (str, optional): Name to save the file under.
                 If None, use the id of the file.
-            md5 (str, optional): MD5 checksum of the download.
+            sha256 (str, optional): sha256 checksum of the download.
                 If None, do not check
         """
         # Based on https://stackoverflow.com/questions/38511444/python-download-files-from-google-drive-using-url # noqa
@@ -119,8 +149,8 @@ class RemoteFileHandler:
 
         os.makedirs(root, exist_ok=True)
 
-        if os.path.isfile(fpath) and RemoteFileHandler.check_integrity(fpath,
-                                                                       md5):
+        if os.path.isfile(fpath) and RemoteFileHandler.check_integrity(
+                fpath, sha256, hash_type="sha256"):
             print('Using downloaded and verified file: ' + fpath)
         else:
             session = requests.Session()

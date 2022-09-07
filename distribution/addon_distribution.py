@@ -5,6 +5,7 @@ import attr
 import logging
 import requests
 import platform
+import shutil
 
 from distribution.file_handler import RemoteFileHandler
 
@@ -87,7 +88,9 @@ class AddonDownloader:
         """
         if not os.path.exists(addon_path):
             raise ValueError(f"{addon_path} doesn't exist.")
-        if addon_hash != RemoteFileHandler.calculate_md5(addon_path):
+        if not RemoteFileHandler.check_integrity(addon_path,
+                                                 addon_hash,
+                                                 hash_type="sha256"):
             raise ValueError(f"{addon_path} doesn't match expected hash.")
 
     @classmethod
@@ -144,14 +147,14 @@ def get_addons_info(server_endpoint):
     #        "version": "1.0.0",
     #        "addon_url": "c:/projects/openpype_slack_1.0.0.zip",
     #        "type": UrlType.FILESYSTEM,
-    #        "hash": "4f6b8568eb9dd6f510fd7c4dcb676788"})  # noqa
+    #        "hash": "4be25eb6215e91e5894d3c5475aeb1e379d081d3f5b43b4ee15b0891cf5f5658"})  # noqa
     #
     # http_addon = AddonInfo(
     #     **{"name": "openpype_slack",
     #        "version": "1.0.0",
     #        "addon_url": "https://drive.google.com/file/d/1TcuV8c2OV8CcbPeWi7lxOdqWsEqQNPYy/view?usp=sharing",  # noqa
     #        "type": UrlType.HTTP,
-    #        "hash": "4f6b8568eb9dd6f510fd7c4dcb676788"})  # noqa
+    #        "hash": "4be25eb6215e91e5894d3c5475aeb1e379d081d3f5b43b4ee15b0891cf5f5658"})  # noqa
 
     response = requests.get(server_endpoint)
     if not response.ok:
@@ -205,6 +208,9 @@ def update_addon_state(addon_infos, destination_folder, factory,
             except Exception:
                 log.warning(f"Error happened during updating {addon.name}",
                             exc_info=True)
+                if os.path.isdir(addon_dest):
+                    log.debug(f"Cleaning {addon_dest}")
+                    shutil.rmtree(addon_dest)
 
     return download_states
 
@@ -228,17 +234,5 @@ def check_addons(server_endpoint, addon_folder, downloaders):
         raise RuntimeError(f"Unable to update some addons {result}")
 
 
-def cli(args):
-    addon_folder = "c:/projects/testing_addons/pypeclub/openpype/addons"
-
-    downloader_factory = AddonDownloader()
-    downloader_factory.register_format(UrlType.FILESYSTEM, OSAddonDownloader)
-    downloader_factory.register_format(UrlType.HTTP, HTTPAddonDownloader)
-
-    test_endpoint = "https://34e99f0f-f987-4715-95e6-d2d88caa7586.mock.pstmn.io/get_addons_info"  # noqa
-    if os.environ.get("OPENPYPE_SERVER"):  # TODO or from keychain
-        server_endpoint = os.environ.get("OPENPYPE_SERVER") + "get_addons_info"
-    else:
-        server_endpoint = test_endpoint
-
-    check_addons(server_endpoint, addon_folder, downloader_factory)
+def cli(*args):
+    raise NotImplemented

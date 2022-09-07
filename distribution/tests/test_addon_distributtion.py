@@ -51,7 +51,7 @@ def sample_addon_info():
                 }
             }
         ],
-        "hash": "4f6b8568eb9dd6f510fd7c4dcb676788"
+        "hash": "4be25eb6215e91e5894d3c5475aeb1e379d081d3f5b43b4ee15b0891cf5f5658"
     }
     yield addon_info
 
@@ -109,13 +109,13 @@ def test_update_addon_state(printer, sample_addon_info,
     addon_info.hash = "brokenhash"
     result = update_addon_state([addon_info], temp_folder, addon_downloader)
     assert result["openpype_slack_1.0.0"] == UpdateState.FAILED.value, \
-        "Hashes not matching"
+        "Update should failed because of wrong hash"
 
     addon_info.hash = orig_hash
     result = update_addon_state([addon_info], temp_folder, addon_downloader)
     assert result["openpype_slack_1.0.0"] == UpdateState.UPDATED.value, \
-        "Failed updating"
+        "Addon should have been updated"
 
     result = update_addon_state([addon_info], temp_folder, addon_downloader)
     assert result["openpype_slack_1.0.0"] == UpdateState.EXISTS.value, \
-        "Tried to update"
+        "Addon should already exist"
