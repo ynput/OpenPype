@@ -388,6 +388,9 @@ class InstallDialog(QtWidgets.QDialog):
         install_thread.start()
 
     def _installation_finished(self):
+        # TODO we should find out why status can be set to 'None'?
+        # - 'InstallThread.run' should handle all cases so not sure where
+        #       that come from
         status = self._install_thread.result()
         if status is not None and status >= 0:
             self._update_progress(100)
