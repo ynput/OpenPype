@@ -885,6 +885,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             rman_version = cfg().build_info.version()  # type: str
             if int(rman_version.split(".")[0]) > 22:
                 renderer = "renderman22"
+        elif self._instance.data["renderer"] == "_3delight":
+            renderer = "3delightNSI"
+            self.log.info("Renderer we will use is: {}".format(renderer))
 
         plugin_info = {
             "SceneFile": data["filepath"],
