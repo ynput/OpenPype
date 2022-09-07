@@ -18,6 +18,7 @@ def create_workspace_mel(workdir, project_name):
     if not mel_script:
         log = Logger.get_logger("create_workspace_mel")
         log.debug("File 'workspace.mel' not created. Settings value is empty.")
+        return
 
     with open(dst_filepath, "w") as mel_file:
         mel_file.write(mel_script)
