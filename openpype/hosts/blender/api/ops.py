@@ -1007,7 +1007,7 @@ class BuildWorkFile(bpy.types.Operator):
     _app: QtWidgets.QApplication
 
     # Should save property
-    should_save: bpy.props.BoolProperty(name="Save as...", default=True)
+    save_as: bpy.props.BoolProperty(name="Save as...", default=True)
 
     def __init__(self):
         print(f"Initialising {self.bl_idname}...")
@@ -1037,7 +1037,7 @@ class BuildWorkFile(bpy.types.Operator):
         execute_in_main_thread(mti)
 
         # Saving workfile
-        if self.should_save:
+        if self.save_as:
             print("Saving workfile")
 
             with qt_app_context():
