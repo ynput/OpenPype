@@ -30,7 +30,7 @@ class ExtractBlendNodegroup(openpype.api.Extractor):
         for obj in [
             o
             for o in instance
-            if isinstance(obj, bpy.types.Object) and obj.type == "MESH"
+            if isinstance(o, bpy.types.Object) and o.type == "MESH"
         ]:
             if hasattr(obj, "modifiers"):
                 data_blocks.add(obj)
@@ -38,8 +38,13 @@ class ExtractBlendNodegroup(openpype.api.Extractor):
                     group = mod.node_group
                     if group:
                         group.use_fake_user = True
-                        data_blocks.add(group)
                         node_groups.add(group)
+
+        # Add node groups to data
+        data_blocks.update(node_groups)
+
+        # Add collection to library
+        data_blocks.add(instance[-1])
 
         # Write datablock into file
         bpy.data.libraries.write(filepath, data_blocks, path_remap="ABSOLUTE")
