@@ -1,5 +1,6 @@
 import os
 import collections
+import copy
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -43,6 +44,8 @@ class AbstractTemplateLoader:
 
         # Where created objects of placeholder plugins will be stored
         self._placeholder_plugins = None
+        self._loaders_by_name = None
+        self._creators_by_name = None
 
         project_name = legacy_io.active_project()
         asset_name = legacy_io.Session["AVALON_ASSET"]
@@ -180,11 +183,28 @@ class AbstractTemplateLoader:
                     self.log.warning(
                         "Failed to initialize placeholder plugin {}".format(
                             cls.__name__
-                        )
+                        ),
+                        exc_info=True
                     )
 
             self._placeholder_plugins = placeholder_plugins
         return self._placeholder_plugins
+
+    def create_placeholder(self, plugin_identifier, placeholder_data):
+        """Create new placeholder using plugin identifier and data.
+
+        Args:
+            plugin_identifier (str): Identifier of plugin. That's how builder
+                know which plugin should be used.
+            placeholder_data (Dict[str, Any]): Placeholder item data. They
+                should match options required by the plugin.
+
+        Returns:
+            PlaceholderItem: Created placeholder item.
+        """
+
+        plugin = self.placeholder_plugins[plugin_identifier]
+        return plugin.create_placeholder(placeholder_data)
 
     def get_placeholders(self):
         """Collect placeholder items from scene.
@@ -197,7 +217,7 @@ class AbstractTemplateLoader:
         """
 
         placeholders = []
-        for placeholder_plugin in self.placeholder_plugins:
+        for placeholder_plugin in self.placeholder_plugins.values():
             result = placeholder_plugin.collect_placeholders()
             if result:
                 placeholders.extend(result)
@@ -451,6 +471,42 @@ class PlaceholderPlugin(object):
         return self.__class__.__name__
 
     @abstractmethod
+    def create_placeholder(self, placeholder_data):
+        """Create new placeholder in scene and get it's item.
+
+        It matters on the plugin implementation if placeholder will use
+        selection in scene or create new node.
+
+        Args:
+            placeholder_data (Dict[str, Any]): Data that were created
+                based on attribute definitions from 'get_placeholder_options'.
+
+        Returns:
+            PlaceholderItem: Created placeholder item.
+        """
+
+        pass
+
+    @abstractmethod
+    def update_placeholder(self, placeholder_item, placeholder_data):
+        """Update placeholder item with new data.
+
+        New data should be propagated to object of placeholder item itself
+        and also into the scene.
+
+        Reason:
+            Some placeholder plugins may require some special way how the
+            updates should be propagated to object.
+
+        Args:
+            placeholder_item (PlaceholderItem): Object of placeholder that
+                should be updated.
+            placeholder_data (Dict[str, Any]): Data related to placeholder.
+                Should match plugin options.
+        """
+        pass
+
+    @abstractmethod
     def collect_placeholders(self):
         """Collect placeholders from scene.
 
@@ -613,6 +669,14 @@ class PlaceholderItem(object):
         """
 
         return self._data
+
+    def to_dict(self):
+        """Create copy of item's data.
+
+        Returns:
+            Dict[str, Any]: Placeholder data.
+        """
+        return copy.deepcopy(self.data)
 
     @property
     def log(self):
