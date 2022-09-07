@@ -1315,19 +1315,16 @@ class RenderProducts3Delight(ARenderProducts):
 
         node = self.get_render_settings(self.layer)
 
-        # for camera in cameras:
-        #    product = RenderProduct(productName=node,
-        #                            ext=default_ext,
-        #                            camera=camera)
-        #    products.append(product)
-
         prefix_attr = "{}.layerDefaultFilename".format(node)
         extension = cmds.getAttr("{}.layerDefaultDriver".format(node))
 
         num_layers = cmds.getAttr(
-            '{}.layerOutputVariables'.format(node),
-            size=True)
+            '{}.layerOutputVariables'.format(node), size=True)
         assert num_layers > 0
+        
+        # We find the first layer_name (aov), this will be our renderproduct
+        #  name.
+        aov_name = None
         for i in range(num_layers):
             output = cmds.getAttr(
                 '{}.layerOutput[{}]'.format(node, i))
@@ -1336,14 +1333,19 @@ class RenderProducts3Delight(ARenderProducts):
 
             output_var = cmds.getAttr(
                 '{}.layerOutputVariables[{}]'.format(node, i))
+            if not output_var:
+                continue
             output_var_tokens = output_var.split('|')
             aov_name = output_var_tokens[4]
+            break
 
-            for camera in cameras:
-                product = RenderProduct(productName=aov_name,
-                                        ext=default_ext,
-                                        camera=camera)
-                products.append(product)
+        assert aov_name, "Could not find a default layer for AOVs"
+
+        for camera in cameras:
+            product = RenderProduct(productName=aov_name,
+                                    ext=default_ext,
+                                    camera=camera)
+            products.append(product)
 
         return products
 
@@ -1358,7 +1360,7 @@ class RenderProducts3Delight(ARenderProducts):
         ext = force_ext or layer_data.defaultExt
         for cam in cameras:
             file_prefix = layer_data.filePrefix
-            # 3delight uses the name of the dlRenderSettings file that
+            # 3delight uses the name of the dlRenderSettings file that 
             # generated this.
             assert layer_data.layerName.endswith("_RL")
             layerName = layer_data.layerName[:-3]
@@ -1399,7 +1401,7 @@ class RenderProducts3Delight(ARenderProducts):
 
     def get_renderer_prefix(self):
         """ By default, 3delight has filenames like this:
-
+        
         3delight/<scene>/image/<scene>.<pass>.#.ext
 
         So we need to grab that, split by the '#' and then remove
@@ -1435,7 +1437,6 @@ class RenderProducts3Delight(ARenderProducts):
         assert cmds.nodeType(dl_render_settings) == "dlRenderSettings", \
             "Object '{}' is wrong type".format(dl_render_settings)
         return dl_render_settings
-
 
 class AOVError(Exception):
     """Custom exception for determining AOVs."""
