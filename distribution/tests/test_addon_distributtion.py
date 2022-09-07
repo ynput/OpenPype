@@ -51,7 +51,7 @@ def sample_addon_info():
                 }
             }
         ],
-        "hash": "4be25eb6215e91e5894d3c5475aeb1e379d081d3f5b43b4ee15b0891cf5f5658"
+        "hash": "4be25eb6215e91e5894d3c5475aeb1e379d081d3f5b43b4ee15b0891cf5f5658"  # noqa
     }
     yield addon_info
 
