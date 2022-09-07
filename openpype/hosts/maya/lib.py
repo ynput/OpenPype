@@ -1,6 +1,6 @@
 import os
 from openpype.settings import get_project_settings
-
+from openpype.api import Logger
 
 def create_workspace_mel(workdir, project_name):
     dst_filepath = os.path.join(workdir, "workspace.mel")
@@ -15,7 +15,8 @@ def create_workspace_mel(workdir, project_name):
 
     # Skip if mel script in settings is empty
     if not mel_script:
-        return
+        log = Logger.get_logger("create_workspace_mel")
+        log.debug("File 'workspace.mel' not created. Settings value is empty.")
 
     with open(dst_filepath, "w") as mel_file:
         mel_file.write(mel_script)

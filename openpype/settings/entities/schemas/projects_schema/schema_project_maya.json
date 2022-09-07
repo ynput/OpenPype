@@ -8,6 +8,7 @@
         {
             "type": "text",
             "multiline" : true,
+            "use_label_wrap": true,
             "key": "mel_workspace",
             "label": "Maya MEL Workspace"
          },
