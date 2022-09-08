@@ -2629,6 +2629,13 @@ def load_capture_preset(data=None):
     options['viewport_options'] = temp_options
     options['viewport2_options'] = temp_options2
 
+    # CAMERA OPTIONS
+    id = 'Camera Options'
+    camera_options = {}
+    for key, value in preset[id].items():
+        camera_options[key] = value
+    options['camera_options'] = camera_options
+
     # use active sound track
     scene = capture.parse_active_scene()
     options['sound'] = scene['sound']
