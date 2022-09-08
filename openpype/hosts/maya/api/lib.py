@@ -2633,8 +2633,6 @@ def load_capture_preset(data=None):
     scene = capture.parse_active_scene()
     options['sound'] = scene['sound']
 
-    # options['display_options'] = temp_options
-
     return options
 
 
