@@ -7,6 +7,8 @@
   and install all necessary packages from `poetry.lock` or `pyproject.toml`
   needed by OpenPype to be included during application freeze on Windows.
 
+  Script is also used to create new venv at -venv_path from provided -toml_path
+  This will be used for v4 and dependencies tool.
 .EXAMPLE
 
 PS> .\create_env.ps1
@@ -14,13 +16,21 @@ PS> .\create_env.ps1
 .EXAMPLE
 
 Print verbose information from Poetry:
-PS> .\create_env.ps1 --verbose
+PS> .\create_env.ps1 -verbose
+
+.EXAMPLE
+Create new venv from provided toml
+PS> .\create_env.ps -toml_path c:/projects/pyproject.toml -venv_path c:/new_venv
 
 #>
+param (
+    [String] $toml_path,
+    [String] $venv_path,
+    [switch] $verbose
+)
 
-$arguments=$ARGS
-$poetry_verbosity=""
-if($arguments -eq "--verbose") {
+Write-Host "Verbosity $($verbose)" -ForegroundColor DarkGreen
+if ($verbose){
     $poetry_verbosity="-vvv"
 }
 
@@ -167,11 +177,28 @@ if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
     Write-Color -Text "OK" -Color Green
 }
 
-if (-not (Test-Path -PathType Leaf -Path "$($openpype_root)\poetry.lock")) {
+if ($toml_path -or
+    -not (Test-Path -PathType Leaf -Path "$($openpype_root)\poetry.lock")) {
     Write-Color -Text ">>> ", "Installing virtual environment and creating lock." -Color Green, Gray
 } else {
     Write-Color -Text ">>> ", "Installing virtual environment from lock." -Color Green, Gray
 }
+
+if ($toml_path){
+   if (-not (Test-Path $toml_path)) {
+       Write-Color -Text "!!! ", "Toml location provided, but file doesn't exist." -Color Red, Yellow
+       Exit-WithCode 1
+   }
+   if (-not ($venv_path)){
+       Write-Color -Text "!!! ", "Toml location provided, must provide -venv_path." -Color Red, Yellow
+       Exit-WithCode 1
+   }
+   Write-Color -Text ">>> ", "Creating virtual environment at $($venv_path)." -Color Green, White
+   & "$($env:POETRY_HOME)\bin\poetry" run python -m venv $venv_path
+   & Copy-Item -Path $toml_path -Destination $venv_path
+   Set-Location -Path $venv_path
+}
+
 $startTime = [int][double]::Parse((Get-Date -UFormat %s))
 & "$env:POETRY_HOME\bin\poetry" install --no-root $poetry_verbosity --ansi
 if ($LASTEXITCODE -ne 0) {
