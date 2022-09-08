@@ -302,6 +302,9 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             default = lib.RENDER_ATTRS['default']
             render_attrs = lib.RENDER_ATTRS.get(renderer, default)
 
+            # Repair animation must be enabled
+            cmds.setAttr("defaultRenderGlobals.animation", True)
+
             # Repair prefix
             if renderer != "renderman":
                 node = render_attrs["node"]
