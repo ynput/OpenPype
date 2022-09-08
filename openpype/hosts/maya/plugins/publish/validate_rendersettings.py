@@ -199,10 +199,10 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
                 elif default_ext != aov_ext:
                     labels = get_redshift_image_format_labels()
-                    cls.log.error(("AOV file format is not the same "
-                                   "as the one set globally "
-                                   "{} != {}").format(labels[default_ext],
-                                                      labels[aov_ext]))
+                    cls.log.error(
+                        "AOV file format {} does not match global file format "
+                        "{}".format(labels[default_ext], labels[aov_ext])
+                    )
                     invalid = True
 
         if renderer == "renderman":
