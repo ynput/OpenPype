@@ -1,0 +1,505 @@
+import re
+from maya import cmds
+
+from openpype.client import get_representations
+from openpype.lib import attribute_definitions
+from openpype.pipeline import legacy_io
+from openpype.pipeline.workfile.build_template_exceptions import (
+    TemplateAlreadyImported
+)
+from openpype.pipeline.workfile.new_template_loader import (
+    AbstractTemplateLoader,
+    PlaceholderPlugin,
+    PlaceholderItem,
+)
+
+from .lib import read, imprint
+
+PLACEHOLDER_SET = "PLACEHOLDERS_SET"
+
+
+class MayaTemplateLoader(AbstractTemplateLoader):
+    """Concrete implementation of AbstractTemplateLoader for maya"""
+
+    def import_template(self, path):
+        """Import template into current scene.
+        Block if a template is already loaded.
+
+        Args:
+            path (str): A path to current template (usually given by
+            get_template_path implementation)
+
+        Returns:
+            bool: Wether the template was succesfully imported or not
+        """
+
+        if cmds.objExists(PLACEHOLDER_SET):
+            raise TemplateAlreadyImported((
+                "Build template already loaded\n"
+                "Clean scene if needed (File > New Scene)"
+            ))
+
+        cmds.sets(name=PLACEHOLDER_SET, empty=True)
+        cmds.file(path, i=True, returnNewNodes=True)
+
+        cmds.setAttr(PLACEHOLDER_SET + '.hiddenInOutliner', True)
+
+        # This should be handled by creators
+        # for set_name in cmds.listSets(allSets=True):
+        #     if (
+        #         cmds.objExists(set_name)
+        #         and cmds.attributeQuery('id', node=set_name, exists=True)
+        #         and cmds.getAttr(set_name + '.id') == 'pyblish.avalon.instance'
+        #     ):
+        #         if cmds.attributeQuery('asset', node=set_name, exists=True):
+        #             cmds.setAttr(
+        #                 set_name + '.asset',
+        #                 legacy_io.Session['AVALON_ASSET'], type='string'
+        #             )
+
+        return True
+
+    def get_placeholder_plugin_classes(self):
+        return [
+            MayaLoadPlaceholderPlugin
+        ]
+
+    # def template_already_imported(self, err_msg):
+    #     clearButton = "Clear scene and build"
+    #     updateButton = "Update template"
+    #     abortButton = "Abort"
+    #
+    #     title = "Scene already builded"
+    #     message = (
+    #         "It's seems a template was already build for this scene.\n"
+    #         "Error message reveived :\n\n\"{}\"".format(err_msg))
+    #     buttons = [clearButton, updateButton, abortButton]
+    #     defaultButton = clearButton
+    #     cancelButton = abortButton
+    #     dismissString = abortButton
+    #     answer = cmds.confirmDialog(
+    #         t=title,
+    #         m=message,
+    #         b=buttons,
+    #         db=defaultButton,
+    #         cb=cancelButton,
+    #         ds=dismissString)
+    #
+    #     if answer == clearButton:
+    #         cmds.file(newFile=True, force=True)
+    #         self.import_template(self.template_path)
+    #         self.populate_template()
+    #     elif answer == updateButton:
+    #         self.update_missing_containers()
+    #     elif answer == abortButton:
+    #         return
+
+    # def get_loaded_containers_by_id(self):
+    #     try:
+    #         containers = cmds.sets("AVALON_CONTAINERS", q=True)
+    #     except ValueError:
+    #         return None
+    #
+    #     return [
+    #         cmds.getAttr(container + '.representation')
+    #         for container in containers]
+
+
+class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
+    identifier = "maya.load"
+    label = "Maya load"
+
+    def _collect_scene_placeholders(self):
+        # Cache placeholder data to shared data
+        placeholder_nodes = self.builder.get_shared_data("placeholder_nodes")
+        if placeholder_nodes is None:
+            attributes = cmds.ls("*.plugin_identifier", long=True)
+            placeholder_nodes = [
+                self._parse_placeholder_node_data(attribute.rpartition(".")[0])
+                for attribute in attributes
+            ]
+            self.builder.set_shared_data(
+                "placeholder_nodes", placeholder_nodes
+            )
+        return placeholder_nodes
+
+    def _parse_placeholder_node_data(self, node_name):
+        placeholder_data = read(node_name)
+        parent_name = (
+            cmds.getAttr(node_name + ".parent", asString=True)
+            or node_name.rpartition("|")[0]
+            or ""
+        )
+        if parent_name:
+            siblings = cmds.listRelatives(parent_name, children=True)
+        else:
+            siblings = cmds.ls(assemblies=True)
+        node_shortname = node_name.rpartition("|")[2]
+        current_index = cmds.getAttr(node_name + ".index", asString=True)
+        if current_index < 0:
+            current_index = siblings.index(node_shortname)
+
+        placeholder_data.update({
+            "parent": parent_name,
+            "index": current_index
+        })
+        return placeholder_data
+
+    def _create_placeholder_name(self, placeholder_data):
+        # TODO implement placeholder name logic
+        return "Placeholder"
+
+    def create_placeholder(self, placeholder_data):
+        selection = cmds.ls(selection=True)
+        if not selection:
+            raise ValueError("Nothing is selected")
+        if len(selection) > 1:
+            raise ValueError("More then one item are selected")
+
+        placeholder_data["plugin_identifier"] = self.identifier
+
+        placeholder_name = self._create_placeholder_name(placeholder_data)
+
+        placeholder = cmds.spaceLocator(name=placeholder_name)[0]
+
+        # TODO: this can crash if selection can't be used
+        cmds.parent(placeholder, selection[0])
+
+        # get the long name of the placeholder (with the groups)
+        placeholder_full_name = (
+            cmds.ls(selection[0], long=True)[0]
+            + "|"
+            + placeholder.replace("|", "")
+        )
+
+        imprint(placeholder_full_name, placeholder_data)
+
+        # Add helper attributes to keep placeholder info
+        cmds.addAttr(
+            placeholder_full_name,
+            longName="parent",
+            hidden=True,
+            dataType="string"
+        )
+        cmds.addAttr(
+            placeholder_full_name,
+            longName="index",
+            hidden=True,
+            attributeType="short",
+            defaultValue=-1
+        )
+
+        cmds.setAttr(placeholder_full_name + ".parent", "", type="string")
+
+    def update_placeholder(self, placeholder_item, placeholder_data):
+        node_name = placeholder_item.scene_identifier
+        new_values = {}
+        for key, value in placeholder_data.items():
+            placeholder_value = placeholder_item.data.get(key)
+            if value != placeholder_value:
+                new_values[key] = value
+                placeholder_item.data[key] = value
+
+        imprint(node_name, new_values)
+
+    def collect_placeholders(self):
+        filtered_placeholders = []
+        for placeholder_data in self._collect_scene_placeholders():
+            if placeholder_data.get("plugin_identifier") != self.identifier:
+                continue
+
+            filtered_placeholders.append(placeholder_data)
+
+        output = []
+        for placeholder_data in filtered_placeholders:
+            # TODO do data validations and maybe updgrades if are invalid
+            output.append(LoadPlaceholder(placeholder_data))
+        return output
+
+    def process_placeholder(self, placeholder):
+        current_asset_doc = self.current_asset_doc
+        linked_assets = self.linked_assets
+        loader_name = placeholder.data["loader"]
+        loader_args = placeholder.data["loader_args"]
+
+        # TODO check loader existence
+        placeholder_representations = placeholder.get_representations(
+            current_asset_doc,
+            linked_assets
+        )
+
+        if not placeholder_representations:
+            self.log.info((
+                "There's no representation for this placeholder: {}"
+            ).format(placeholder.scene_identifier))
+            return
+
+        loaders_by_name = self.builder.get_loaders_by_name()
+        for representation in placeholder_representations:
+            repre_context = representation["context"]
+            self.log.info(
+                "Loading {} from {} with loader {}\n"
+                "Loader arguments used : {}".format(
+                    repre_context["subset"],
+                    repre_context["asset"],
+                    loader_name,
+                    loader_args
+                )
+            )
+            try:
+                container = self.load(
+                    placeholder, loaders_by_name, representation)
+            except Exception:
+                placeholder.load_failed(representation)
+
+            else:
+                placeholder.load_succeed(container)
+            # TODO find out if 'postload make sense?'
+            # finally:
+            #     self.postload(placeholder)
+
+    def get_placeholder_options(self, options=None):
+        loaders_by_name = self.builder.get_loaders_by_name()
+        loader_names = list(sorted(loaders_by_name.keys()))
+        options = options or {}
+        return [
+            attribute_definitions.UISeparatorDef(),
+            attribute_definitions.UILabelDef("Main attributes"),
+
+            attribute_definitions.EnumDef(
+                "builder_type",
+                label="Asset Builder Type",
+                default=options.get("builder_type"),
+                items=[
+                    ("context_asset", "Current asset"),
+                    ("linked_asset", "Linked assets"),
+                    ("all_assets", "All assets")
+                ],
+                tooltip=(
+                    "Asset Builder Type\n"
+                    "\nBuilder type describe what template loader will look"
+                    " for."
+                    "\ncontext_asset : Template loader will look for subsets"
+                    " of current context asset (Asset bob will find asset)"
+                    "\nlinked_asset : Template loader will look for assets"
+                    " linked to current context asset."
+                    "\nLinked asset are looked in database under"
+                    " field \"inputLinks\""
+                )
+            ),
+            attribute_definitions.TextDef(
+                "family",
+                label="Family",
+                default=options.get("family"),
+                placeholder="model, look, ..."
+            ),
+            attribute_definitions.TextDef(
+                "representation",
+                label="Representation name",
+                default=options.get("representation"),
+                placeholder="ma, abc, ..."
+            ),
+            attribute_definitions.EnumDef(
+                "loader",
+                label="Loader",
+                default=options.get("loader"),
+                items=[
+                    (loader_name, loader_name)
+                    for loader_name in loader_names
+                ],
+                tooltip="""Loader
+Defines what OpenPype loader will be used to load assets.
+Useable loader depends on current host's loader list.
+Field is case sensitive.
+"""
+            ),
+            attribute_definitions.TextDef(
+                "loader_args",
+                label="Loader Arguments",
+                default=options.get("loader_args"),
+                placeholder='{"camera":"persp", "lights":True}',
+                tooltip="""Loader
+Defines a dictionnary of arguments used to load assets.
+Useable arguments depend on current placeholder Loader.
+Field should be a valid python dict. Anything else will be ignored.
+"""
+            ),
+            attribute_definitions.NumberDef(
+                "order",
+                label="Order",
+                default=options.get("order") or 0,
+                decimals=0,
+                minimum=0,
+                maximum=999,
+                tooltip="""Order
+Order defines asset loading priority (0 to 999)
+Priority rule is : "lowest is first to load"."""
+            ),
+            attribute_definitions.UISeparatorDef(),
+            attribute_definitions.UILabelDef("Optional attributes"),
+            attribute_definitions.UISeparatorDef(),
+            attribute_definitions.TextDef(
+                "asset",
+                label="Asset filter",
+                default=options.get("asset"),
+                placeholder="regex filtering by asset name",
+                tooltip=(
+                    "Filtering assets by matching field regex to asset's name"
+                )
+            ),
+            attribute_definitions.TextDef(
+                "subset",
+                label="Subset filter",
+                default=options.get("subset"),
+                placeholder="regex filtering by subset name",
+                tooltip=(
+                    "Filtering assets by matching field regex to subset's name"
+                )
+            ),
+            attribute_definitions.TextDef(
+                "hierarchy",
+                label="Hierarchy filter",
+                default=options.get("hierarchy"),
+                placeholder="regex filtering by asset's hierarchy",
+                tooltip=(
+                    "Filtering assets by matching field asset's hierarchy"
+                )
+            )
+        ]
+
+
+class LoadPlaceholder(PlaceholderItem):
+    """Concrete implementation of AbstractPlaceholder for maya
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(LoadPlaceholder, self).__init__(*args, **kwargs)
+        self._failed_representations = []
+
+    def parent_in_hierarchy(self, container):
+        """Parent loaded container to placeholder's parent.
+
+        ie : Set loaded content as placeholder's sibling
+
+        Args:
+            container (str): Placeholder loaded containers
+        """
+
+        if not container:
+            return
+
+        roots = cmds.sets(container, q=True)
+        nodes_to_parent = []
+        for root in roots:
+            if root.endswith("_RN"):
+                refRoot = cmds.referenceQuery(root, n=True)[0]
+                refRoot = cmds.listRelatives(refRoot, parent=True) or [refRoot]
+                nodes_to_parent.extend(refRoot)
+            elif root not in cmds.listSets(allSets=True):
+                nodes_to_parent.append(root)
+
+            elif not cmds.sets(root, q=True):
+                return
+
+        if self.data['parent']:
+            cmds.parent(nodes_to_parent, self.data['parent'])
+        # Move loaded nodes to correct index in outliner hierarchy
+        placeholder_form = cmds.xform(
+            self._scene_identifier,
+            q=True,
+            matrix=True,
+            worldSpace=True
+        )
+        for node in set(nodes_to_parent):
+            cmds.reorder(node, front=True)
+            cmds.reorder(node, relative=self.data['index'])
+            cmds.xform(node, matrix=placeholder_form, ws=True)
+
+        holding_sets = cmds.listSets(object=self._scene_identifier)
+        if not holding_sets:
+            return
+        for holding_set in holding_sets:
+            cmds.sets(roots, forceElement=holding_set)
+
+    def clean(self):
+        """Hide placeholder, parent them to root
+        add them to placeholder set and register placeholder's parent
+        to keep placeholder info available for future use
+        """
+
+        node = self._scene_identifier
+        if self.data['parent']:
+            cmds.setAttr(node + '.parent', self.data['parent'], type='string')
+        if cmds.getAttr(node + '.index') < 0:
+            cmds.setAttr(node + '.index', self.data['index'])
+
+        holding_sets = cmds.listSets(object=node)
+        if holding_sets:
+            for set in holding_sets:
+                cmds.sets(node, remove=set)
+
+        if cmds.listRelatives(node, p=True):
+            node = cmds.parent(node, world=True)[0]
+        cmds.sets(node, addElement=PLACEHOLDER_SET)
+        cmds.hide(node)
+        cmds.setAttr(node + '.hiddenInOutliner', True)
+
+    def get_representations(self, current_asset_doc, linked_asset_docs):
+        project_name = legacy_io.active_project()
+
+        builder_type = self.data["builder_type"]
+        if builder_type == "context_asset":
+            context_filters = {
+                "asset": [current_asset_doc["name"]],
+                "subset": [re.compile(self.data["subset"])],
+                "hierarchy": [re.compile(self.data["hierarchy"])],
+                "representations": [self.data["representation"]],
+                "family": [self.data["family"]]
+            }
+
+        elif builder_type != "linked_asset":
+            context_filters = {
+                "asset": [re.compile(self.data["asset"])],
+                "subset": [re.compile(self.data["subset"])],
+                "hierarchy": [re.compile(self.data["hierarchy"])],
+                "representation": [self.data["representation"]],
+                "family": [self.data["family"]]
+            }
+
+        else:
+            asset_regex = re.compile(self.data["asset"])
+            linked_asset_names = []
+            for asset_doc in linked_asset_docs:
+                asset_name = asset_doc["name"]
+                if asset_regex.match(asset_name):
+                    linked_asset_names.append(asset_name)
+
+            context_filters = {
+                "asset": linked_asset_names,
+                "subset": [re.compile(self.data["subset"])],
+                "hierarchy": [re.compile(self.data["hierarchy"])],
+                "representation": [self.data["representation"]],
+                "family": [self.data["family"]],
+            }
+
+        return list(get_representations(
+            project_name,
+            context_filters=context_filters
+        ))
+
+    def get_errors(self):
+        if not self._failed_representations:
+            return []
+        message = (
+            "Failed to load {} representations using Loader {}"
+        ).format(
+            len(self._failed_representations),
+            self.data["loader"]
+        )
+        return [message]
+
+    def load_failed(self, representation):
+        self._failed_representations.append(representation)
+
+    def load_succeed(self, container):
+        self.parent_in_hierarchy(container)
