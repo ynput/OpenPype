@@ -91,7 +91,7 @@ class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
 
         return {
             "publish": [os.path.join(current_dir, "plugins", "publish")],
-            "action": [os.path.join(current_dir, "actions")]
+            "actions": [os.path.join(current_dir, "actions")]
         }
 
     def cli(self, click_group):
