@@ -119,8 +119,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 continue
 
             expected_layer_name = match.group(1)
+            self.log.info("Processing '{}' as layer [ {} ]"
+                          "".format(layer, expected_layer_name))
 
-            self.log.info("processing %s" % layer)
             # check if layer is part of renderSetup
             if expected_layer_name not in maya_render_layers:
                 msg = "Render layer [ {} ] is not in " "Render Setup".format(
