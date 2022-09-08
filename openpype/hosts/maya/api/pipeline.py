@@ -31,6 +31,12 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
+from openpype.pipeline.workfile.lock_workfile import (
+    create_workfile_lock,
+    get_username,
+    remove_workfile_lock,
+    is_workfile_locked
+)
 from openpype.hosts.maya import MAYA_ROOT_DIR
 from openpype.hosts.maya.lib import copy_workspace_mel
 
@@ -99,7 +105,10 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         register_event_callback("open", on_open)
         register_event_callback("new", on_new)
         register_event_callback("before.save", on_before_save)
+        register_event_callback("before.close", on_before_close)
+        register_event_callback("before.file.open", before_file_open)
         register_event_callback("taskChanged", on_task_changed)
+        register_event_callback("workfile.open.before", before_workfile_open)
         register_event_callback("workfile.save.before", before_workfile_save)
 
     def open_workfile(self, filepath):
@@ -161,8 +170,25 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
             )
         )
 
-        self._op_events[_on_scene_open] = OpenMaya.MSceneMessage.addCallback(
-            OpenMaya.MSceneMessage.kAfterOpen, _on_scene_open
+        self._op_events[_on_scene_open] = (
+            OpenMaya.MSceneMessage.addCallback(
+                OpenMaya.MSceneMessage.kAfterOpen,
+                _on_scene_open
+            )
+        )
+
+        self._op_events[_before_scene_open] = (
+            OpenMaya.MSceneMessage.addCallback(
+                OpenMaya.MSceneMessage.kBeforeOpen,
+                _before_scene_open
+            )
+        )
+
+        self._op_events[_before_close_maya] = (
+            OpenMaya.MSceneMessage.addCallback(
+                OpenMaya.MSceneMessage.kMayaExiting,
+                _before_close_maya
+            )
         )
 
         self.log.info("Installed event handler _on_scene_save..")
@@ -170,6 +196,8 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         self.log.info("Installed event handler _on_scene_new..")
         self.log.info("Installed event handler _on_maya_initialized..")
         self.log.info("Installed event handler _on_scene_open..")
+        self.log.info("Installed event handler _check_lock_file..")
+        self.log.info("Installed event handler _before_close_maya..")
 
 
 def _set_project():
@@ -216,6 +244,14 @@ def _on_scene_open(*args):
     emit_event("open")
 
 
+def _before_close_maya(*args):
+    emit_event("before.close")
+
+
+def _before_scene_open(*args):
+    emit_event("before.file.open")
+
+
 def _before_scene_save(return_code, client_data):
 
     # Default to allowing the action. Registered
@@ -227,6 +263,12 @@ def _before_scene_save(return_code, client_data):
         "before.save",
         {"return_code": return_code}
     )
+
+
+def _remove_workfile_lock():
+    filepath = current_file()
+    if filepath:
+        remove_workfile_lock(filepath)
 
 
 def uninstall():
@@ -426,6 +468,49 @@ def on_before_save():
     return lib.validate_fps()
 
 
+def after_file_open():
+    """Check if there is a user opening the file"""
+    log.info("Running callback on checking the lock file...")
+
+    # add the lock file when opening the file
+    filepath = current_file()
+
+    if not is_workfile_locked(filepath):
+        create_workfile_lock(filepath)
+
+    else:
+        username = get_username(filepath)
+        reminder = cmds.window(title="Reminder", width=400, height=30)
+        cmds.columnLayout(adjustableColumn=True)
+        cmds.separator()
+        cmds.columnLayout(adjustableColumn=True)
+        comment = " %s is working the same workfile!" % username
+        cmds.text(comment, align='center')
+        cmds.text(vis=False)
+        cmds.rowColumnLayout(numberOfColumns=3,
+                             columnWidth=[(1, 300), (2, 100)],
+                             columnSpacing=[(2, 10)])
+        cmds.separator(vis=False)
+        quit_command = "cmds.quit(force=True);cmds.deleteUI('%s')" % reminder
+        cmds.button(label='Ok', command=quit_command)
+        cmds.showWindow(reminder)
+
+
+def on_before_close():
+    """Delete the lock file after user quitting the Maya Scene"""
+    log.info("Closing Maya...")
+    # delete the lock file
+    filepath = current_file()
+    remove_workfile_lock(filepath)
+
+
+def before_file_open():
+    """check lock file when the file changed"""
+    log.info("check lock file when file changed...")
+    # delete the lock file
+    _remove_workfile_lock()
+
+
 def on_save():
     """Automatically add IDs to new nodes
 
@@ -434,6 +519,8 @@ def on_save():
     """
 
     log.info("Running callback on save..")
+    # remove lockfile if users jumps over from one scene to another
+    _remove_workfile_lock()
 
     # # Update current task for the current scene
     # update_task_from_path(cmds.file(query=True, sceneName=True))
@@ -491,6 +578,9 @@ def on_open():
             dialog.on_clicked.connect(_on_show_inventory)
             dialog.show()
 
+    # create lock file for the maya scene
+    after_file_open()
+
 
 def on_new():
     """Set project resolution and fps when create a new file"""
@@ -544,7 +634,12 @@ def on_task_changed():
     )
 
 
+def before_workfile_open():
+    _remove_workfile_lock()
+
+
 def before_workfile_save(event):
+    _remove_workfile_lock()
     workdir_path = event["workdir_path"]
     if workdir_path:
         copy_workspace_mel(workdir_path)
