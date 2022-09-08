@@ -14,8 +14,7 @@ from openpype.client import (
     get_versions,
     get_hero_versions,
     get_version_by_name,
-    get_representations,
-    get_representations_parents
+    get_representations
 )
 from openpype.pipeline import (
     registered_host,
