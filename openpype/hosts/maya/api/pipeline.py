@@ -44,6 +44,10 @@ from .workio import (
     current_file
 )
 
+from openassetio.hostApi import HostInterface as OpenAssetIOHostInterface
+from openassetio.hostApi import ManagerFactory
+from openpype.pipeline.openassetio import ManagerImplementationFactory
+
 log = logging.getLogger("openpype.hosts.maya")
 
 PLUGINS_DIR = os.path.join(MAYA_ROOT_DIR, "plugins")
@@ -55,12 +59,27 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
 
-class MayaHost(HostBase, IWorkfileHost, ILoadHost):
+class MayaHost(HostBase, IWorkfileHost, ILoadHost, OpenAssetIOHostInterface):
     name = "maya"
+
+    @staticmethod
+    def identifier(self):
+        return "io.openpype.host.maya"
+
+    @staticmethod
+    def displayName(self):
+        return "OpenPype Maya Integration"
 
     def __init__(self):
         super(MayaHost, self).__init__()
         self._op_events = {}
+
+        # initialise OpenAssetIO
+        self.openassetio_manager = ManagerFactory(
+            self,
+            ManagerImplementationFactory(self.log),
+            self.log).createManager("io.openpype.openassetio.manager")
+        self.openassetio_manager.initialize()
 
     def install(self):
         project_name = os.getenv("AVALON_PROJECT")
