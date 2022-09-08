@@ -63,7 +63,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 data.update({"active": not node.isBypassed()})
 
             # temporarily translation of `active` to `publish` till issue has
-            # been resolved, https://github.com/pyblish/pyblish-base/issues/307
+            # been resolved.
+            # https://github.com/pyblish/pyblish-base/issues/307
             if "active" in data:
                 data["publish"] = data["active"]
 
