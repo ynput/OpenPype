@@ -299,7 +299,7 @@ class AbstractTemplateLoader:
             return
 
         placeholder_by_scene_id = {
-            placeholder.identifier: placeholder
+            placeholder.scene_identifier: placeholder
             for placeholder in placeholders
         }
         all_processed = len(placeholders) == 0
@@ -343,11 +343,11 @@ class AbstractTemplateLoader:
             all_processed = True
             collected_placeholders = self.get_placeholders()
             for placeholder in collected_placeholders:
-                if placeholder.identifier in placeholder_by_scene_id:
+                identifier = placeholder.scene_identifier
+                if identifier in placeholder_by_scene_id:
                     continue
 
                 all_processed = False
-                identifier = placeholder.identifier
                 placeholder_by_scene_id[identifier] = placeholder
                 placeholders.append(placeholder)
 
@@ -434,7 +434,6 @@ class AbstractTemplateLoader:
 @six.add_metaclass(ABCMeta)
 class PlaceholderPlugin(object):
     label = None
-    placeholder_options = []
     _log = None
 
     def __init__(self, builder):
@@ -516,14 +515,14 @@ class PlaceholderPlugin(object):
 
         pass
 
-    def get_placeholder_options(self):
+    def get_placeholder_options(self, options=None):
         """Placeholder options for data showed.
 
         Returns:
             List[AbtractAttrDef]: Attribute definitions of placeholder options.
         """
 
-        return self.placeholder_options
+        return []
 
     def prepare_placeholders(self, placeholders):
         """Preparation part of placeholders.
@@ -629,8 +628,9 @@ class PlaceholderItem(object):
         # Keep track about state of Placeholder process
         self._state = 0
 
-        # Exception which happened during processing
-        self._error = None
+        # Error messages to be shown in UI
+        # - all other messages should be logged
+        self._errors = []  # -> List[str]
 
     @property
     def plugin(self):
@@ -676,6 +676,7 @@ class PlaceholderItem(object):
         Returns:
             Dict[str, Any]: Placeholder data.
         """
+
         return copy.deepcopy(self.data)
 
     @property
@@ -710,21 +711,6 @@ class PlaceholderItem(object):
 
         return self._state == 1
 
-    @property
-    def failed(self):
-        """Processing of placeholder failed."""
-
-        return self._error is not None
-
-    @property
-    def error(self):
-        """Exception with which the placeholder process failed.
-
-        Gives ability to access the exception.
-        """
-
-        return self._error
-
     def set_in_progress(self):
         """Change to in progress state."""
 
@@ -735,8 +721,15 @@ class PlaceholderItem(object):
 
         self._state = 2
 
-    def set_error(self, error):
+    def add_error(self, error):
         """Set placeholder item as failed and mark it as finished."""
 
-        self._error = error
-        self.set_finished()
+        self._errors.append(error)
+
+    def get_errors(self):
+        """Exception with which the placeholder process failed.
+
+        Gives ability to access the exception.
+        """
+
+        return self._errors
