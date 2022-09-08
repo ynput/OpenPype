@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "TestAddon"
+version = "1.0.0"
+description = "Test Openpype Addon"
+authors = ["OpenPype Team <info@openpype.io>"]
+license = "MIT License"
+homepage = "https://openpype.io"
+documentation = "https://openpype.io/docs/artist_getting_started"
+repository = "https://github.com/pypeclub/openpype"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.7.*"
+aiohttp = "^3.7"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^3.7.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[openpype]
+
+exclude = [
+    "**/node_modules",
+    "**/__pycache__"
+]

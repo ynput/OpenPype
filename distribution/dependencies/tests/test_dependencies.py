@@ -1,13 +1,15 @@
 import os
 import os.path
-
+import tempfile
 import pytest
+import shutil
 
 from distribution.dependencies.dependencies import (
     FileTomlProvider,
     is_valid_toml,
     merge_tomls,
-    get_full_toml
+    get_full_toml,
+    prepare_new_venv
 )
 
 
@@ -19,8 +21,15 @@ def openpype_toml_data():
 
 
 @pytest.fixture
-def addon_toml_data():
-    provider = FileTomlProvider(os.path.join("resources", "pyproject.toml"))
+def addon_toml_to_compare_data():
+    provider = FileTomlProvider(os.path.join("resources",
+                                             "pyproject.toml"))
+    return provider.get_toml()
+
+@pytest.fixture
+def addon_toml_to_venv_data():
+    provider = FileTomlProvider(os.path.join("resources",
+                                             "pyproject_clean.toml"))
     return provider.get_toml()
 
 
@@ -49,8 +58,8 @@ def test_is_valid_toml_invalid(openpype_toml_data):
         is_valid_toml(openpype_toml_data)
 
 
-def test_merge_tomls(openpype_toml_data, addon_toml_data):
-    result_toml = merge_tomls(openpype_toml_data, addon_toml_data)
+def test_merge_tomls(openpype_toml_data, addon_toml_to_compare_data):
+    result_toml = merge_tomls(openpype_toml_data, addon_toml_to_compare_data)
     _compare_resolved_tomp(result_toml)
 
 
@@ -71,3 +80,14 @@ def _compare_resolved_tomp(result_toml):
     res_dependencies = result_toml["tool"]["poetry"]["dev-dependencies"]
     dep_version = res_dependencies["new_dependency"]
     assert dep_version == "^2.0.0"
+
+
+def test_prepare_new_venv(addon_toml_to_venv_data):
+    tmpdir = tempfile.mkdtemp()
+    print(f"Creating new venv in {tmpdir}")
+    return_code = prepare_new_venv(addon_toml_to_venv_data, tmpdir)
+
+    assert return_code != 1, "Prepare of new venv failed"
+
+    shutil.rmtree(tmpdir)
+
