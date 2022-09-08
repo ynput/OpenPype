@@ -778,6 +778,14 @@ def main():
     if not app:
         app = QtWidgets.QApplication([])
 
+    for attr_name in (
+        "AA_EnableHighDpiScaling",
+        "AA_UseHighDpiPixmaps"
+    ):
+        attr = getattr(QtCore.Qt, attr_name, None)
+        if attr is not None:
+            app.setAttribute(attr)
+
     starter = PypeTrayStarter(app)
 
     # TODO remove when pype.exe will have an icon
