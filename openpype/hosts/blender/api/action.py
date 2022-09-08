@@ -96,3 +96,23 @@ class UpdateContainer(pyblish.api.Action):
         for action, containers in update_actions:
             if containers:
                 action().process(containers)
+
+class SaveDirtyTextures(pyblish.api.Action):
+    """Saves all dirty textures found"""
+    
+    label = "Save all dirty textures"
+    on = "failed"
+    icon = "floppy-disk"
+
+    def process(self, context, plugin):
+        self.log.info("Finding invalid nodes...")
+        invalid_nodes = set(_get_invalid_nodes(context, plugin))
+
+        from openpype.pipeline.legacy_io import Session
+        from .workio import work_root
+        from pathlib import Path 
+
+        for v in invalid_nodes:
+            v.filepath = str(Path(work_root(Session), "{}.png".format(v.name)))
+            v.save()
+            self.log.info("Saved {}".format(v.name))
