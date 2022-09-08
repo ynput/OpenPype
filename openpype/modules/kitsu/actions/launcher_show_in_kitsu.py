@@ -57,7 +57,7 @@ class ShowInKitsu(LauncherAction):
                 )
 
             if task_name:
-                task_data = asset["tasks"][task_name]
+                task_data = asset["data"]["tasks"][task_name]
                 task_zou_data = task_data.get("zou", {})
                 if not task_zou_data:
                     self.log.debug(f"No zou task data for task: {task_name}")
