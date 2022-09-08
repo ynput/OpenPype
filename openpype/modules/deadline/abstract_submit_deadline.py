@@ -519,7 +519,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
 
         instance = self._instance
         workfile_instance = self._get_workfile_instance(instance.context)
-        if not workfile_instance:
+        if workfile_instance is None:
             return
 
         # determine published path from Anatomy.
