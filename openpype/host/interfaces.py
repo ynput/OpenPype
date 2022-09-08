@@ -252,7 +252,7 @@ class IWorkfileHost:
             Remove when all usages are replaced.
         """
 
-        self.save_workfile()
+        self.save_workfile(dst_path)
 
     def open_file(self, filepath):
         """Deprecated variant of 'open_workfile'.
