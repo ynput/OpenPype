@@ -4,7 +4,7 @@
             "follow_workfile_version": false
         },
         "CollectAudio": {
-            "enabled": true,
+            "enabled": false,
             "audio_subset_name": "audioMain"
         },
         "CollectSceneVersion": {
