@@ -289,13 +289,13 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     )
 
 
-def sync_all_projects(login: str, password: str):
+def sync_all_projects(login: str, password: str, ignore_projects: list = None):
     """Update all OP projects in DB with Zou data.
 
     Args:
         login (str): Kitsu user login
         password (str): Kitsu user password
-
+        ignore_projects (list): List of unsynced project names
     Raises:
         gazu.exception.AuthFailedException: Wrong user login and/or password
     """
@@ -311,6 +311,8 @@ def sync_all_projects(login: str, password: str):
     dbcon.install()
     all_projects = gazu.project.all_open_projects()
     for project in all_projects:
+        if ignore_projects and project["name"] in ignore_projects:
+            continue
         sync_project_from_kitsu(dbcon, project)
 
 
