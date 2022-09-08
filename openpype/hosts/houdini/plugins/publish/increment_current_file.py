@@ -1,8 +1,8 @@
 import pyblish.api
 
-from openpype.api import version_up
-from openpype.action import get_errored_plugins_from_data
+from openpype.lib import version_up
 from openpype.pipeline import registered_host
+from openpype.pipeline.publish import get_errored_plugins_from_context
 
 
 class IncrementCurrentFile(pyblish.api.InstancePlugin):
@@ -30,7 +30,7 @@ class IncrementCurrentFile(pyblish.api.InstancePlugin):
             context.data[key] = True
 
         context = instance.context
-        errored_plugins = get_errored_plugins_from_data(context)
+        errored_plugins = get_errored_plugins_from_context(context)
         if any(
             plugin.__name__ == "HoudiniSubmitPublishDeadline"
             for plugin in errored_plugins

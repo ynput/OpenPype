@@ -26,8 +26,8 @@ from .lib import (
     maintained_selection,
     reset_selection,
     get_view_process_node,
-    duplicate_node
-
+    duplicate_node,
+    convert_knob_value_to_correct_type
 )
 
 from .utils import (
@@ -59,6 +59,7 @@ __all__ = (
     "reset_selection",
     "get_view_process_node",
     "duplicate_node",
+    "convert_knob_value_to_correct_type",
 
     "colorspace_exists_on_node",
     "get_colorspace_list"

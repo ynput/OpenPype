@@ -127,7 +127,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     exclude_families = ["render.farm"]
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "version", "representation",
-        "family", "hierarchy", "task", "username"
+        "family", "hierarchy", "task", "username", "user"
     ]
     default_template_name = "publish"
 

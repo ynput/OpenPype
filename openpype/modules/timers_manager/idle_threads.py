@@ -2,7 +2,7 @@ import time
 from Qt import QtCore
 from pynput import mouse, keyboard
 
-from openpype.lib import PypeLogger
+from openpype.lib import Logger
 
 
 class IdleItem:
@@ -31,7 +31,7 @@ class IdleManager(QtCore.QThread):
 
     def __init__(self):
         super(IdleManager, self).__init__()
-        self.log = PypeLogger.get_logger(self.__class__.__name__)
+        self.log = Logger.get_logger(self.__class__.__name__)
         self.signal_reset_timer.connect(self._reset_time)
 
         self.idle_item = IdleItem()

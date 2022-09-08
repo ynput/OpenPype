@@ -1,7 +1,6 @@
 """Host API required Work Files tool"""
 import os
 
-from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
 from . import lib
 
 
@@ -14,7 +13,7 @@ def _active_document():
 
 
 def file_extensions():
-    return HOST_WORKFILE_EXTENSIONS["photoshop"]
+    return [".psd", ".psb"]
 
 
 def has_unsaved_changes():

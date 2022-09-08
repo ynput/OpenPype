@@ -1,6 +1,6 @@
 import pyblish.api
 
-from openpype.api import get_errored_instances_from_context
+from openpype.pipeline.publish import get_errored_instances_from_context
 from .lib import (
     reset_selection,
     select_nodes

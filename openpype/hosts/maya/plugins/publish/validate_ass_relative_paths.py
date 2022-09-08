@@ -4,18 +4,20 @@ import types
 import maya.cmds as cmds
 
 import pyblish.api
-import openpype.api
-import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import (
+    RepairAction,
+    ValidateContentsOrder,
+)
 
 
 class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
     """Ensure exporting ass file has set relative texture paths"""
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ['maya']
     families = ['ass']
     label = "ASS has relative texture paths"
-    actions = [openpype.api.RepairAction]
+    actions = [RepairAction]
 
     def process(self, instance):
         # we cannot ask this until user open render settings as

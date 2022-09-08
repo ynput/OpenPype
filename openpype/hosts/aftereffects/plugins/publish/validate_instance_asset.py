@@ -1,9 +1,9 @@
 import pyblish.api
 
-import openpype.api
-from openpype.pipeline import (
+from openpype.pipeline import legacy_io
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
     PublishXmlValidationError,
-    legacy_io,
 )
 from openpype.hosts.aftereffects.api import get_stub
 
@@ -50,7 +50,7 @@ class ValidateInstanceAsset(pyblish.api.InstancePlugin):
     label = "Validate Instance Asset"
     hosts = ["aftereffects"]
     actions = [ValidateInstanceAssetRepair]
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
 
     def process(self, instance):
         instance_asset = instance.data["asset"]

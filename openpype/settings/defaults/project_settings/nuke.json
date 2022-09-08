@@ -131,7 +131,7 @@
                 "write"
             ]
         },
-        "ValidateInstanceInContext": {
+        "ValidateCorrectAssetName": {
             "enabled": true,
             "optional": true,
             "active": true
@@ -324,6 +324,9 @@
                 "linked_assets": []
             }
         ]
+    },
+    "templated_workfile_build": {
+        "profiles": []
     },
     "filters": {}
 }

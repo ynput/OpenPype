@@ -19,17 +19,19 @@ from openpype.client import (
     get_last_versions,
     get_representations,
 )
-from openpype.api import (
+
+from openpype.host import HostDirmap
+from openpype.tools.utils import host_tools
+from openpype.lib import (
+    env_value_to_bool,
     Logger,
     get_version_from_path,
-    get_current_project_settings,
 )
-from openpype.tools.utils import host_tools
-from openpype.lib import env_value_to_bool
-from openpype.lib.path_tools import HostDirmap
+
 from openpype.settings import (
     get_project_settings,
     get_anatomy_settings,
+    get_current_project_settings,
 )
 from openpype.modules import ModulesManager
 from openpype.pipeline.template_data import get_template_data_with_names
@@ -74,6 +76,23 @@ class Context:
 
     # Seems unused
     _project_doc = None
+
+
+def get_main_window():
+    """Acquire Nuke's main window"""
+    if Context.main_window is None:
+        from Qt import QtWidgets
+
+        top_widgets = QtWidgets.QApplication.topLevelWidgets()
+        name = "Foundry::UI::DockMainWindow"
+        for widget in top_widgets:
+            if (
+                widget.inherits("QMainWindow")
+                and widget.metaObject().className() == name
+            ):
+                Context.main_window = widget
+                break
+    return Context.main_window
 
 
 class Knobby(object):
@@ -1593,26 +1612,33 @@ def set_node_knobs_from_settings(node, knob_settings, **kwargs):
         if not knob_value:
             continue
 
-        # first convert string types to string
-        # just to ditch unicode
-        if isinstance(knob_value, six.text_type):
-            knob_value = str(knob_value)
-
-        # set correctly knob types
-        if knob_type == "bool":
-            knob_value = bool(knob_value)
-        elif knob_type == "decimal_number":
-            knob_value = float(knob_value)
-        elif knob_type == "number":
-            knob_value = int(knob_value)
-        elif knob_type == "text":
-            knob_value = knob_value
-        elif knob_type == "color_gui":
-            knob_value = color_gui_to_int(knob_value)
-        elif knob_type in ["2d_vector", "3d_vector", "color"]:
-            knob_value = [float(v) for v in knob_value]
+        knob_value = convert_knob_value_to_correct_type(
+            knob_type, knob_value)
 
         node[knob_name].setValue(knob_value)
+
+
+def convert_knob_value_to_correct_type(knob_type, knob_value):
+    # first convert string types to string
+    # just to ditch unicode
+    if isinstance(knob_value, six.text_type):
+        knob_value = str(knob_value)
+
+    # set correctly knob types
+    if knob_type == "bool":
+        knob_value = bool(knob_value)
+    elif knob_type == "decimal_number":
+        knob_value = float(knob_value)
+    elif knob_type == "number":
+        knob_value = int(knob_value)
+    elif knob_type == "text":
+        knob_value = knob_value
+    elif knob_type == "color_gui":
+        knob_value = color_gui_to_int(knob_value)
+    elif knob_type in ["2d_vector", "3d_vector", "color"]:
+        knob_value = [float(v) for v in knob_value]
+
+    return knob_value
 
 
 def color_gui_to_int(color_gui):
@@ -1945,15 +1971,25 @@ class WorkfileSettings(object):
             if not write_node:
                 return
 
-            # write all knobs to node
-            for knob in nuke_imageio_writes["knobs"]:
-                value = knob["value"]
-                if isinstance(value, six.text_type):
-                    value = str(value)
-                if str(value).startswith("0x"):
-                    value = int(value, 16)
+            try:
+                # write all knobs to node
+                for knob in nuke_imageio_writes["knobs"]:
+                    value = knob["value"]
+                    if isinstance(value, six.text_type):
+                        value = str(value)
+                    if str(value).startswith("0x"):
+                        value = int(value, 16)
 
-                write_node[knob["name"]].setValue(value)
+                    log.debug("knob: {}| value: {}".format(
+                        knob["name"], value
+                    ))
+                    write_node[knob["name"]].setValue(value)
+            except TypeError:
+                log.warning(
+                    "Legacy workflow didnt work, switching to current")
+
+                set_node_knobs_from_settings(
+                    write_node, nuke_imageio_writes["knobs"])
 
     def set_reads_colorspace(self, read_clrs_inputs):
         """ Setting colorspace to Read nodes
@@ -2010,12 +2046,14 @@ class WorkfileSettings(object):
         # get imageio
         nuke_colorspace = get_nuke_imageio_settings()
 
+        log.info("Setting colorspace to workfile...")
         try:
             self.set_root_colorspace(nuke_colorspace["workfile"])
         except AttributeError:
             msg = "set_colorspace(): missing `workfile` settings in template"
             nuke.message(msg)
 
+        log.info("Setting colorspace to viewers...")
         try:
             self.set_viewers_colorspace(nuke_colorspace["viewer"])
         except AttributeError:
@@ -2023,23 +2061,17 @@ class WorkfileSettings(object):
             nuke.message(msg)
             log.error(msg)
 
+        log.info("Setting colorspace to write nodes...")
         try:
             self.set_writes_colorspace()
         except AttributeError as _error:
             nuke.message(_error)
             log.error(_error)
 
+        log.info("Setting colorspace to read nodes...")
         read_clrs_inputs = nuke_colorspace["regexInputs"].get("inputs", [])
         if read_clrs_inputs:
             self.set_reads_colorspace(read_clrs_inputs)
-
-        try:
-            for key in nuke_colorspace:
-                log.debug("Preset's colorspace key: {}".format(key))
-        except TypeError:
-            msg = "Nuke is not in templates! Contact your supervisor!"
-            nuke.message(msg)
-            log.error(msg)
 
     def reset_frame_range_handles(self):
         """Set frame range to current asset"""
@@ -2227,10 +2259,9 @@ def get_write_node_template_attr(node):
         subset=avalon_knob_data["subset"]
     )
 
+
     # collecting correct data
-    correct_data = OrderedDict({
-        "file": get_render_path(node)
-    })
+    correct_data = OrderedDict()
 
     # adding imageio knob presets
     for k, v in nuke_imageio_writes.items():
@@ -2639,20 +2670,16 @@ def add_scripts_gizmo():
 
 
 class NukeDirmap(HostDirmap):
-    def __init__(self, host_name, project_settings, sync_module, file_name):
+    def __init__(self, file_name, *args, **kwargs):
         """
-            Args:
-                host_name (str): Nuke
-                project_settings (dict): settings of current project
-                sync_module (SyncServerModule): to limit reinitialization
-                file_name (str): full path of referenced file from workfiles
+        Args:
+            file_name (str): full path of referenced file from workfiles
+            *args (tuple): Positional arguments for 'HostDirmap' class
+            **kwargs (dict): Keyword arguments for 'HostDirmap' class
         """
-        self.host_name = host_name
-        self.project_settings = project_settings
-        self.file_name = file_name
-        self.sync_module = sync_module
 
-        self._mapping = None  # cache mapping
+        self.file_name = file_name
+        super(NukeDirmap, self).__init__(*args, **kwargs)
 
     def on_enable_dirmap(self):
         pass
@@ -2672,14 +2699,20 @@ class NukeDirmap(HostDirmap):
 
 class DirmapCache:
     """Caching class to get settings and sync_module easily and only once."""
+    _project_name = None
     _project_settings = None
     _sync_module = None
 
     @classmethod
+    def project_name(cls):
+        if cls._project_name is None:
+            cls._project_name = os.getenv("AVALON_PROJECT")
+        return cls._project_name
+
+    @classmethod
     def project_settings(cls):
         if cls._project_settings is None:
-            cls._project_settings = get_project_settings(
-                os.getenv("AVALON_PROJECT"))
+            cls._project_settings = get_project_settings(cls.project_name())
         return cls._project_settings
 
     @classmethod
@@ -2690,32 +2723,25 @@ class DirmapCache:
 
 
 @contextlib.contextmanager
-def _duplicate_node_temp():
+def node_tempfile():
     """Create a temp file where node is pasted during duplication.
 
     This is to avoid using clipboard for node duplication.
     """
 
-    duplicate_node_temp_path = os.path.join(
-        tempfile.gettempdir(),
-        "openpype_nuke_duplicate_temp_{}".format(os.getpid())
+    tmp_file = tempfile.NamedTemporaryFile(
+        mode="w", prefix="openpype_nuke_temp_", suffix=".nk", delete=False
     )
-
-    # This can happen only if 'duplicate_node' would be
-    if os.path.exists(duplicate_node_temp_path):
-        log.warning((
-            "Temp file for node duplication already exists."
-            " Trying to remove {}"
-        ).format(duplicate_node_temp_path))
-        os.remove(duplicate_node_temp_path)
+    tmp_file.close()
+    node_tempfile_path = tmp_file.name
 
     try:
         # Yield the path where node can be copied
-        yield duplicate_node_temp_path
+        yield node_tempfile_path
 
     finally:
         # Remove the file at the end
-        os.remove(duplicate_node_temp_path)
+        os.remove(node_tempfile_path)
 
 
 def duplicate_node(node):
@@ -2724,7 +2750,7 @@ def duplicate_node(node):
     # select required node for duplication
     node.setSelected(True)
 
-    with _duplicate_node_temp() as filepath:
+    with node_tempfile() as filepath:
         # copy selected to temp filepath
         nuke.nodeCopy(filepath)
 
@@ -2745,10 +2771,14 @@ def dirmap_file_name_filter(file_name):
 
         Checks project settings for potential mapping from source to dest.
     """
-    dirmap_processor = NukeDirmap("nuke",
-                                  DirmapCache.project_settings(),
-                                  DirmapCache.sync_module(),
-                                  file_name)
+
+    dirmap_processor = NukeDirmap(
+        file_name,
+        "nuke",
+        DirmapCache.project_name(),
+        DirmapCache.project_settings(),
+        DirmapCache.sync_module(),
+    )
     dirmap_processor.process_dirmap()
     if os.path.exists(dirmap_processor.file_name):
         return dirmap_processor.file_name
@@ -2795,3 +2825,100 @@ def ls_img_sequence(path):
         }
 
     return False
+
+
+def get_group_io_nodes(nodes):
+    """Get the input and the output of a group of nodes."""
+
+    if not nodes:
+        raise ValueError("there is no nodes in the list")
+
+    input_node = None
+    output_node = None
+
+    if len(nodes) == 1:
+        input_node = output_node = nodes[0]
+
+    else:
+        for node in nodes:
+            if "Input" in node.name():
+                input_node = node
+
+            if "Output" in node.name():
+                output_node = node
+
+            if input_node is not None and output_node is not None:
+                break
+
+        if input_node is None:
+            raise ValueError("No Input found")
+
+        if output_node is None:
+            raise ValueError("No Output found")
+    return input_node, output_node
+
+
+def get_extreme_positions(nodes):
+    """Get the 4 numbers that represent the box of a group of nodes."""
+
+    if not nodes:
+        raise ValueError("there is no nodes in the list")
+
+    nodes_xpos = [n.xpos() for n in nodes] + \
+        [n.xpos() + n.screenWidth() for n in nodes]
+
+    nodes_ypos = [n.ypos() for n in nodes] + \
+        [n.ypos() + n.screenHeight() for n in nodes]
+
+    min_x, min_y = (min(nodes_xpos), min(nodes_ypos))
+    max_x, max_y = (max(nodes_xpos), max(nodes_ypos))
+    return min_x, min_y, max_x, max_y
+
+
+def refresh_node(node):
+    """Correct a bug caused by the multi-threading of nuke.
+
+    Refresh the node to make sure that it takes the desired attributes.
+    """
+
+    x = node.xpos()
+    y = node.ypos()
+    nuke.autoplaceSnap(node)
+    node.setXYpos(x, y)
+
+
+def refresh_nodes(nodes):
+    for node in nodes:
+        refresh_node(node)
+
+
+def get_names_from_nodes(nodes):
+    """Get list of nodes names.
+
+    Args:
+        nodes(List[nuke.Node]): List of nodes to convert into names.
+
+    Returns:
+        List[str]: Name of passed nodes.
+    """
+
+    return [
+        node.name()
+        for node in nodes
+    ]
+
+
+def get_nodes_by_names(names):
+    """Get list of nuke nodes based on their names.
+
+    Args:
+        names (List[str]): List of node names to be found.
+
+    Returns:
+        List[nuke.Node]: List of nodes found by name.
+    """
+
+    return [
+        nuke.toNode(name)
+        for name in names
+    ]

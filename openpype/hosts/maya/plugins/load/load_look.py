@@ -33,7 +33,7 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
         with lib.maintained_selection():
             file_url = self.prepare_root_value(self.fname,
-                                               context["project"]["code"])
+                                               context["project"]["name"])
             nodes = cmds.file(file_url,
                               namespace=namespace,
                               reference=True,

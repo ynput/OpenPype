@@ -1,6 +1,6 @@
-from .standalonepublish_module import StandAlonePublishModule
+from .addon import StandAlonePublishAddon
 
 
 __all__ = (
-    "StandAlonePublishModule",
+    "StandAlonePublishAddon",
 )
