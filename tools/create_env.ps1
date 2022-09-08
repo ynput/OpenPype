@@ -29,7 +29,6 @@ param (
     [switch] $verbose
 )
 
-Write-Host "Verbosity $($verbose)" -ForegroundColor DarkGreen
 if ($verbose){
     $poetry_verbosity="-vvv"
 }
@@ -184,6 +183,9 @@ if ($toml_path -or
     Write-Color -Text ">>> ", "Installing virtual environment from lock." -Color Green, Gray
 }
 
+# set for regular process
+& "$env:POETRY_HOME\bin\poetry" config virtualenvs.create true
+
 if ($toml_path){
    if (-not (Test-Path $toml_path)) {
        Write-Color -Text "!!! ", "Toml location provided, but file doesn't exist." -Color Red, Yellow
@@ -194,7 +196,8 @@ if ($toml_path){
        Exit-WithCode 1
    }
    Write-Color -Text ">>> ", "Creating virtual environment at $($venv_path)." -Color Green, White
-   & "$($env:POETRY_HOME)\bin\poetry" run python -m venv $venv_path
+   & "$env:POETRY_HOME\bin\poetry" run python -m venv $venv_path
+   & "$env:POETRY_HOME\bin\poetry" config virtualenvs.create false
    & Copy-Item -Path $toml_path -Destination $venv_path
    Set-Location -Path $venv_path
 }
