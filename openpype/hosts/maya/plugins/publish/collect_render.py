@@ -102,21 +102,23 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         }
 
         for layer in collected_render_layers:
-            try:
-                if layer.startswith("LAYER_"):
-                    # this is support for legacy mode where render layers
-                    # started with `LAYER_` prefix.
-                    expected_layer_name = re.search(
-                        r"^LAYER_(.*)", layer).group(1)
-                else:
-                    # new way is to prefix render layer name with instance
-                    # namespace.
-                    expected_layer_name = re.search(
-                        r"^.+:(.*)", layer).group(1)
-            except IndexError:
+            if layer.startswith("LAYER_"):
+                # this is support for legacy mode where render layers
+                # started with `LAYER_` prefix.
+                layer_name_pattern = r"^LAYER_(.*)"
+            else:
+                # new way is to prefix render layer name with instance
+                # namespace.
+                layer_name_pattern = r"^.+:(.*)"
+
+            # todo: We should have a more explicit way to link the renderlayer
+            match = re.match(layer_name_pattern, layer)
+            if not match:
                 msg = "Invalid layer name in set [ {} ]".format(layer)
                 self.log.warning(msg)
                 continue
+
+            expected_layer_name = match.group(1)
 
             self.log.info("processing %s" % layer)
             # check if layer is part of renderSetup
