@@ -56,7 +56,7 @@ class CreateProjectFolders(BaseAction):
     pattern_array = re.compile(r"\[.*\]")
     pattern_ftrack = re.compile(r".*\[[.]*ftrack[.]*")
     pattern_ent_ftrack = re.compile(r"ftrack\.[^.,\],\s,]*")
-    pattern_template = re.compile(r"\{.*\}") # ignores OP template strings
+    pattern_template = re.compile(r"\{.*\}")  # ignores OP template strings
     project_root_key = "__project_root__"
 
     def discover(self, session, entities, event):
