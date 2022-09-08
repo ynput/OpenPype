@@ -679,9 +679,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             data["asset"] = asset_docs_by_id[asset_id]["name"]
 
             data["last_version"] = last_version
-
-            loaded = subset_doc["_id"] in subsets_loaded_by_id
-            data["loaded_in_scene"] = "yes" if loaded else "no"
+            data["loaded_in_scene"] = subset_doc["_id"] in subsets_loaded_by_id
 
             # Sync server data
             data.update(
