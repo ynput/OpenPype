@@ -20,10 +20,6 @@ class ShowInKitsu(LauncherAction):
         if not session.get("AVALON_PROJECT"):
             return False
 
-        kitsu_module = self.get_kitsu_module()
-        if not kitsu_module or not kitsu_module.enabled:
-            return False
-
         return True
 
     def process(self, session, **kwargs):
