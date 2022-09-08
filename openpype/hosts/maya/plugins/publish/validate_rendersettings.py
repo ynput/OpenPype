@@ -337,8 +337,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 cmds.optionMenuGrp("vrayRenderElementSeparator",
                                    v=instance.data.get("aovSeparator", "_"))
                 cmds.setAttr(
-                    "{}.fileNameRenderElementSeparator".format(
-                        node),
+                    "{}.fileNameRenderElementSeparator".format(node),
                     instance.data.get("aovSeparator", "_"),
                     type="string"
                 )
