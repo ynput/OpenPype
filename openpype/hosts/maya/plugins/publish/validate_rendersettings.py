@@ -10,6 +10,12 @@ import openpype.api
 from openpype.hosts.maya.api import lib
 
 
+def get_redshift_image_format_labels():
+    """Return nice labels for Redshift image formats."""
+    var = "$g_redshiftImageFormatLabels"
+    return mel.eval("{0}={0}".format(var))
+
+
 class ValidateRenderSettings(pyblish.api.InstancePlugin):
     """Validates the global render settings
 
@@ -191,10 +197,11 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                     pass
 
                 elif default_ext != aov_ext:
+                    labels = get_redshift_image_format_labels()
                     cls.log.error(("AOV file format is not the same "
                                    "as the one set globally "
-                                   "{} != {}").format(default_ext,
-                                                      aov_ext))
+                                   "{} != {}").format(labels[default_ext],
+                                                      labels[aov_ext]))
                     invalid = True
 
         if renderer == "renderman":
