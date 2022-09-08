@@ -36,7 +36,8 @@ from openpype.tools.utils import (
 )
 from openpype.tools.utils.delegates import (
     VersionDelegate,
-    PrettyTimeDelegate
+    PrettyTimeDelegate,
+    LoadedInSceneDelegate
 )
 from openpype.tools.utils.widgets import (
     OptionalMenu,
@@ -233,6 +234,10 @@ class SubsetWidget(QtWidgets.QWidget):
         avail_delegate = AvailabilityDelegate(self.dbcon, view)
         column = model.Columns.index("repre_info")
         view.setItemDelegateForColumn(column, avail_delegate)
+
+        loaded_in_scene_delegate = LoadedInSceneDelegate(view)
+        column = model.Columns.index("loaded_in_scene")
+        view.setItemDelegateForColumn(column, loaded_in_scene_delegate)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
