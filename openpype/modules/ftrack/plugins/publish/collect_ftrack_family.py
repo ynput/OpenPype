@@ -8,7 +8,7 @@ Provides:
 import pyblish.api
 
 from openpype.pipeline import legacy_io
-from openpype.lib.plugin_tools import filter_profiles
+from openpype.lib import filter_profiles
 
 
 class CollectFtrackFamily(pyblish.api.InstancePlugin):

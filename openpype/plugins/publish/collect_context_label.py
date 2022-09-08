@@ -1,5 +1,6 @@
 """
-Requires:
+Optional:
+    context     -> hostName (str)
     context     -> currentFile (str)
 Provides:
     context     -> label (str)
@@ -16,16 +17,27 @@ class CollectContextLabel(pyblish.api.ContextPlugin):
     label = "Context Label"
 
     def process(self, context):
+        # Add ability to use custom context label
+        label = context.data.get("label")
+        if label:
+            self.log.debug("Context label is already set to \"{}\"".format(
+                label
+            ))
+            return
 
-        # Get last registered host
-        host = pyblish.api.registered_hosts()[-1]
+        host_name = context.data.get("hostName")
+        if not host_name:
+            host_name = pyblish.api.registered_hosts()[-1]
+        # Use host name as base for label
+        label = host_name.title()
 
-        # Get scene name from "currentFile"
-        path = context.data.get("currentFile") or "<Unsaved>"
-        base = os.path.basename(path)
+        # Get scene name from "currentFile" and use basename as ending of label
+        path = context.data.get("currentFile")
+        if path:
+            label += " - {}".format(os.path.basename(path))
 
         # Set label
-        label = "{host} - {scene}".format(host=host.title(), scene=base)
-        if host == "standalonepublisher":
-            label = host.title()
         context.data["label"] = label
+        self.log.debug("Context label is changed to \"{}\"".format(
+            label
+        ))

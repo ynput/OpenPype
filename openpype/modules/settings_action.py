@@ -23,6 +23,11 @@ class SettingsAction(OpenPypeModule, ITrayAction):
         """Initialization in tray implementation of ITrayAction."""
         self.create_settings_window()
 
+    def tray_exit(self):
+        # Close settings UI to remove settings lock
+        if self.settings_window:
+            self.settings_window.close()
+
     def on_action_trigger(self):
         """Implementation for action trigger of ITrayAction."""
         self.show_settings_window()

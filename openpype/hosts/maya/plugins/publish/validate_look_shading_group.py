@@ -3,6 +3,10 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import (
+    RepairAction,
+    ValidateContentsOrder,
+)
 
 
 class ValidateShadingEngine(pyblish.api.InstancePlugin):
@@ -11,12 +15,12 @@ class ValidateShadingEngine(pyblish.api.InstancePlugin):
     Shading engines should be named "{surface_shader}SG"
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     families = ["look"]
     hosts = ["maya"]
     label = "Look Shading Engine Naming"
     actions = [
-        openpype.hosts.maya.api.action.SelectInvalidAction, openpype.api.RepairAction
+        openpype.hosts.maya.api.action.SelectInvalidAction, RepairAction
     ]
 
     # The default connections to check

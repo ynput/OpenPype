@@ -7,6 +7,7 @@ import pyblish.api
 
 import openpype.api
 from openpype.pipeline import legacy_io
+from openpype.pipeline.publish import ValidateContentsOrder
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.shader_definition_editor import (
     DEFINITION_FILENAME)
@@ -23,7 +24,7 @@ class ValidateModelName(pyblish.api.InstancePlugin):
 
     """
     optional = True
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["maya"]
     families = ["model"]
     label = "Model Name"

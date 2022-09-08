@@ -85,6 +85,7 @@
                             ],
                             "width": 0,
                             "height": 0,
+                            "scale_pixel_aspect": true,
                             "bg_color": [
                                 0,
                                 0,

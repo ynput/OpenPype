@@ -46,7 +46,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
     ignored_representation_names = []
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "representation",
-        "family", "hierarchy", "task", "username"
+        "family", "hierarchy", "task", "username", "user"
     ]
     # QUESTION/TODO this process should happen on server if crashed due to
     # permissions error on files (files were used or user didn't have perms)
@@ -313,13 +313,9 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                 }
                 repre_context = template_filled.used_values
                 for key in self.db_representation_context_keys:
-                    if (
-                        key in repre_context or
-                        key not in anatomy_data
-                    ):
-                        continue
-
-                    repre_context[key] = anatomy_data[key]
+                    value = anatomy_data.get(key)
+                    if value is not None:
+                        repre_context[key] = value
 
                 # Prepare new repre
                 repre = copy.deepcopy(repre_info["representation"])

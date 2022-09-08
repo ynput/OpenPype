@@ -1,14 +1,13 @@
 import re
 
-from openpype.client import get_projects
+from openpype.client import get_projects, create_project
 from .constants import (
     NAME_ALLOWED_SYMBOLS,
     NAME_REGEX
 )
-from openpype.lib import (
-    create_project,
+from openpype.client.operations import (
     PROJECT_NAME_ALLOWED_SYMBOLS,
-    PROJECT_NAME_REGEX
+    PROJECT_NAME_REGEX,
 )
 from openpype.style import load_stylesheet
 from openpype.pipeline import AvalonMongoDB
@@ -266,7 +265,7 @@ class CreateProjectDialog(QtWidgets.QDialog):
         project_name = self.project_name_input.text()
         project_code = self.project_code_input.text()
         library_project = self.library_project_input.isChecked()
-        create_project(project_name, project_code, library_project, self.dbcon)
+        create_project(project_name, project_code, library_project)
 
         self.done(1)
 

@@ -61,8 +61,8 @@
             "name": "template_publish_plugin",
             "template_data": [
                 {
-                    "key": "ValidateInstanceInContext",
-                    "label": "Validate Instance In Context"
+                    "key": "ValidateCorrectAssetName",
+                    "label": "Validate Correct Asset name"
                 }
             ]
         },

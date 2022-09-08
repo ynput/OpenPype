@@ -2,6 +2,7 @@ import os
 import sys
 import types
 import inspect
+import tempfile
 import xml.etree.ElementTree
 
 import six
@@ -273,3 +274,178 @@ def filter_pyblish_plugins(plugins):
                     option, value, plugin.__name__))
 
                 setattr(plugin, option, value)
+
+
+def find_close_plugin(close_plugin_name, log):
+    if close_plugin_name:
+        plugins = pyblish.api.discover()
+        for plugin in plugins:
+            if plugin.__name__ == close_plugin_name:
+                return plugin
+
+    log.debug("Close plugin not found, app might not close.")
+
+
+def remote_publish(log, close_plugin_name=None, raise_error=False):
+    """Loops through all plugins, logs to console. Used for tests.
+
+        Args:
+            log (openpype.lib.Logger)
+            close_plugin_name (str): name of plugin with responsibility to
+                close host app
+    """
+    # Error exit as soon as any error occurs.
+    error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
+
+    close_plugin = find_close_plugin(close_plugin_name, log)
+
+    for result in pyblish.util.publish_iter():
+        for record in result["records"]:
+            log.info("{}: {}".format(
+                result["plugin"].label, record.msg))
+
+        if result["error"]:
+            error_message = error_format.format(**result)
+            log.error(error_message)
+            if close_plugin:  # close host app explicitly after error
+                context = pyblish.api.Context()
+                close_plugin().process(context)
+            if raise_error:
+                # Fatal Error is because of Deadline
+                error_message = "Fatal Error: " + error_format.format(**result)
+                raise RuntimeError(error_message)
+
+
+def get_errored_instances_from_context(context):
+    """Collect failed instances from pyblish context.
+
+    Args:
+        context (pyblish.api.Context): Publish context where we're looking
+            for failed instances.
+
+    Returns:
+        List[pyblish.lib.Instance]: Instances which failed during processing.
+    """
+
+    instances = list()
+    for result in context.data["results"]:
+        if result["instance"] is None:
+            # When instance is None we are on the "context" result
+            continue
+
+        if result["error"]:
+            instances.append(result["instance"])
+
+    return instances
+
+
+def get_errored_plugins_from_context(context):
+    """Collect failed plugins from pyblish context.
+
+    Args:
+        context (pyblish.api.Context): Publish context where we're looking
+            for failed plugins.
+
+    Returns:
+        List[pyblish.api.Plugin]: Plugins which failed during processing.
+    """
+
+    plugins = list()
+    results = context.data.get("results", [])
+    for result in results:
+        if result["success"] is True:
+            continue
+        plugins.append(result["plugin"])
+
+    return plugins
+
+
+def filter_instances_for_context_plugin(plugin, context):
+    """Filter instances on context by context plugin filters.
+
+    This is for cases when context plugin need similar filtering like instance
+    plugin have, but for some reason must run on context or should find out
+    if there is at least one instance with a family.
+
+    Args:
+        plugin (pyblish.api.Plugin): Plugin with filters.
+        context (pyblish.api.Context): Pyblish context with insances.
+
+    Returns:
+        Iterator[pyblish.lib.Instance]: Iteration of valid instances.
+    """
+
+    instances = []
+    plugin_families = set()
+    all_families = False
+    if plugin.families:
+        instances = context
+        plugin_families = set(plugin.families)
+        all_families = "*" in plugin_families
+
+    for instance in instances:
+        # Ignore inactive instances
+        if (
+            not instance.data.get("publish", True)
+            or not instance.data.get("active", True)
+        ):
+            continue
+
+        family = instance.data.get("family")
+        families = instance.data.get("families") or []
+        if (
+            all_families
+            or (family and family in plugin_families)
+            or any(f in plugin_families for f in families)
+        ):
+            yield instance
+
+
+def context_plugin_should_run(plugin, context):
+    """Return whether the ContextPlugin should run on the given context.
+
+    This is a helper function to work around a bug pyblish-base#250
+    Whenever a ContextPlugin sets specific families it will still trigger even
+    when no instances are present that have those families.
+
+    This actually checks it correctly and returns whether it should run.
+
+    Args:
+        plugin (pyblish.api.Plugin): Plugin with filters.
+        context (pyblish.api.Context): Pyblish context with insances.
+
+    Returns:
+        bool: Context plugin should run based on valid instances.
+    """
+
+    for _ in filter_instances_for_context_plugin(plugin, context):
+        return True
+    return False
+
+
+def get_instance_staging_dir(instance):
+    """Unified way how staging dir is stored and created on instances.
+
+    First check if 'stagingDir' is already set in instance data. If there is
+    not create new in tempdir.
+
+    Note:
+        Staging dir does not have to be necessarily in tempdir so be carefull
+            about it's usage.
+
+    Args:
+        instance (pyblish.lib.Instance): Instance for which we want to get
+            staging dir.
+
+    Returns:
+        str: Path to staging dir of instance.
+    """
+
+    staging_dir = instance.data.get("stagingDir")
+    if not staging_dir:
+        staging_dir = os.path.normpath(
+            tempfile.mkdtemp(prefix="pyblish_tmp_")
+        )
+        instance.data["stagingDir"] = staging_dir
+
+    return staging_dir

@@ -6,6 +6,7 @@ that has project name as a context (e.g. on 'ProjectEntity'?).
 + We will need more specific functions doing wery specific queires really fast.
 """
 
+import re
 import collections
 
 import six
@@ -31,17 +32,37 @@ def _prepare_fields(fields, required_fields=None):
     return output
 
 
-def _convert_id(in_id):
+def convert_id(in_id):
+    """Helper function for conversion of id from string to ObjectId.
+
+    Args:
+        in_id (Union[str, ObjectId, Any]): Entity id that should be converted
+            to right type for queries.
+
+    Returns:
+        Union[ObjectId, Any]: Converted ids to ObjectId or in type.
+    """
+
     if isinstance(in_id, six.string_types):
         return ObjectId(in_id)
     return in_id
 
 
-def _convert_ids(in_ids):
+def convert_ids(in_ids):
+    """Helper function for conversion of ids from string to ObjectId.
+
+    Args:
+        in_ids (Iterable[Union[str, ObjectId, Any]]): List of entity ids that
+            should be converted to right type for queries.
+
+    Returns:
+        List[ObjectId]: Converted ids to ObjectId.
+    """
+
     _output = set()
     for in_id in in_ids:
         if in_id is not None:
-            _output.add(_convert_id(in_id))
+            _output.add(convert_id(in_id))
     return list(_output)
 
 
@@ -57,7 +78,7 @@ def get_projects(active=True, inactive=False, fields=None):
             yield project_doc
 
 
-def get_project(project_name, active=True, inactive=False, fields=None):
+def get_project(project_name, active=True, inactive=True, fields=None):
     # Skip if both are disabled
     if not active and not inactive:
         return None
@@ -114,7 +135,7 @@ def get_asset_by_id(project_name, asset_id, fields=None):
         None: Asset was not found by id.
     """
 
-    asset_id = _convert_id(asset_id)
+    asset_id = convert_id(asset_id)
     if not asset_id:
         return None
 
@@ -195,7 +216,7 @@ def _get_assets(
         query_filter = {"type": {"$in": asset_types}}
 
     if asset_ids is not None:
-        asset_ids = _convert_ids(asset_ids)
+        asset_ids = convert_ids(asset_ids)
         if not asset_ids:
             return []
         query_filter["_id"] = {"$in": asset_ids}
@@ -206,7 +227,7 @@ def _get_assets(
         query_filter["name"] = {"$in": list(asset_names)}
 
     if parent_ids is not None:
-        parent_ids = _convert_ids(parent_ids)
+        parent_ids = convert_ids(parent_ids)
         if not parent_ids:
             return []
         query_filter["data.visualParent"] = {"$in": parent_ids}
@@ -306,7 +327,7 @@ def get_asset_ids_with_subsets(project_name, asset_ids=None):
         "type": "subset"
     }
     if asset_ids is not None:
-        asset_ids = _convert_ids(asset_ids)
+        asset_ids = convert_ids(asset_ids)
         if not asset_ids:
             return []
         subset_query["parent"] = {"$in": asset_ids}
@@ -346,7 +367,7 @@ def get_subset_by_id(project_name, subset_id, fields=None):
         Dict: Subset document which can be reduced to specified 'fields'.
     """
 
-    subset_id = _convert_id(subset_id)
+    subset_id = convert_id(subset_id)
     if not subset_id:
         return None
 
@@ -373,7 +394,7 @@ def get_subset_by_name(project_name, subset_name, asset_id, fields=None):
     if not subset_name:
         return None
 
-    asset_id = _convert_id(asset_id)
+    asset_id = convert_id(asset_id)
     if not asset_id:
         return None
 
@@ -427,13 +448,13 @@ def get_subsets(
         query_filter = {"type": {"$in": subset_types}}
 
     if asset_ids is not None:
-        asset_ids = _convert_ids(asset_ids)
+        asset_ids = convert_ids(asset_ids)
         if not asset_ids:
             return []
         query_filter["parent"] = {"$in": asset_ids}
 
     if subset_ids is not None:
-        subset_ids = _convert_ids(subset_ids)
+        subset_ids = convert_ids(subset_ids)
         if not subset_ids:
             return []
         query_filter["_id"] = {"$in": subset_ids}
@@ -448,7 +469,7 @@ def get_subsets(
         for asset_id, names in names_by_asset_ids.items():
             if asset_id and names:
                 or_query.append({
-                    "parent": _convert_id(asset_id),
+                    "parent": convert_id(asset_id),
                     "name": {"$in": list(names)}
                 })
         if not or_query:
@@ -509,7 +530,7 @@ def get_version_by_id(project_name, version_id, fields=None):
         Dict: Version document which can be reduced to specified 'fields'.
     """
 
-    version_id = _convert_id(version_id)
+    version_id = convert_id(version_id)
     if not version_id:
         return None
 
@@ -536,7 +557,7 @@ def get_version_by_name(project_name, version, subset_id, fields=None):
         Dict: Version document which can be reduced to specified 'fields'.
     """
 
-    subset_id = _convert_id(subset_id)
+    subset_id = convert_id(subset_id)
     if not subset_id:
         return None
 
@@ -566,7 +587,7 @@ def version_is_latest(project_name, version_id):
         bool: True if is latest version from subset else False.
     """
 
-    version_id = _convert_id(version_id)
+    version_id = convert_id(version_id)
     if not version_id:
         return False
     version_doc = get_version_by_id(
@@ -609,13 +630,13 @@ def _get_versions(
         query_filter = {"type": {"$in": version_types}}
 
     if subset_ids is not None:
-        subset_ids = _convert_ids(subset_ids)
+        subset_ids = convert_ids(subset_ids)
         if not subset_ids:
             return []
         query_filter["parent"] = {"$in": subset_ids}
 
     if version_ids is not None:
-        version_ids = _convert_ids(version_ids)
+        version_ids = convert_ids(version_ids)
         if not version_ids:
             return []
         query_filter["_id"] = {"$in": version_ids}
@@ -689,7 +710,7 @@ def get_hero_version_by_subset_id(project_name, subset_id, fields=None):
         Dict: Hero version entity data.
     """
 
-    subset_id = _convert_id(subset_id)
+    subset_id = convert_id(subset_id)
     if not subset_id:
         return None
 
@@ -719,7 +740,7 @@ def get_hero_version_by_id(project_name, version_id, fields=None):
         Dict: Hero version entity data.
     """
 
-    version_id = _convert_id(version_id)
+    version_id = convert_id(version_id)
     if not version_id:
         return None
 
@@ -785,7 +806,7 @@ def get_output_link_versions(project_name, version_id, fields=None):
             links for passed version.
     """
 
-    version_id = _convert_id(version_id)
+    version_id = convert_id(version_id)
     if not version_id:
         return []
 
@@ -811,7 +832,7 @@ def get_last_versions(project_name, subset_ids, fields=None):
         dict[ObjectId, int]: Key is subset id and value is last version name.
     """
 
-    subset_ids = _convert_ids(subset_ids)
+    subset_ids = convert_ids(subset_ids)
     if not subset_ids:
         return {}
 
@@ -897,7 +918,7 @@ def get_last_version_by_subset_id(project_name, subset_id, fields=None):
         Dict: Version document which can be reduced to specified 'fields'.
     """
 
-    subset_id = _convert_id(subset_id)
+    subset_id = convert_id(subset_id)
     if not subset_id:
         return None
 
@@ -970,7 +991,7 @@ def get_representation_by_id(project_name, representation_id, fields=None):
         "type": {"$in": repre_types}
     }
     if representation_id is not None:
-        query_filter["_id"] = _convert_id(representation_id)
+        query_filter["_id"] = convert_id(representation_id)
 
     conn = get_project_connection(project_name)
 
@@ -995,7 +1016,7 @@ def get_representation_by_name(
             to specified 'fields'.
     """
 
-    version_id = _convert_id(version_id)
+    version_id = convert_id(version_id)
     if not version_id or not representation_name:
         return None
     repre_types = ["representation", "archived_representations"]
@@ -1009,17 +1030,70 @@ def get_representation_by_name(
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
+def _flatten_dict(data):
+    flatten_queue = collections.deque()
+    flatten_queue.append(data)
+    output = {}
+    while flatten_queue:
+        item = flatten_queue.popleft()
+        for key, value in item.items():
+            if not isinstance(value, dict):
+                output[key] = value
+                continue
+
+            tmp = {}
+            for subkey, subvalue in value.items():
+                new_key = "{}.{}".format(key, subkey)
+                tmp[new_key] = subvalue
+            flatten_queue.append(tmp)
+    return output
+
+
+def _regex_filters(filters):
+    output = []
+    for key, value in filters.items():
+        regexes = []
+        a_values = []
+        if isinstance(value, re.Pattern):
+            regexes.append(value)
+        elif isinstance(value, (list, tuple, set)):
+            for item in value:
+                if isinstance(item, re.Pattern):
+                    regexes.append(item)
+                else:
+                    a_values.append(item)
+        else:
+            a_values.append(value)
+
+        key_filters = []
+        if len(a_values) == 1:
+            key_filters.append({key: a_values[0]})
+        elif a_values:
+            key_filters.append({key: {"$in": a_values}})
+
+        for regex in regexes:
+            key_filters.append({key: {"$regex": regex}})
+
+        if len(key_filters) == 1:
+            output.append(key_filters[0])
+        else:
+            output.append({"$or": key_filters})
+
+    return output
+
+
 def _get_representations(
     project_name,
     representation_ids,
     representation_names,
     version_ids,
-    extensions,
+    context_filters,
     names_by_version_ids,
     standard,
     archived,
     fields
 ):
+    default_output = []
     repre_types = []
     if standard:
         repre_types.append("representation")
@@ -1027,7 +1101,7 @@ def _get_representations(
         repre_types.append("archived_representation")
 
     if not repre_types:
-        return []
+        return default_output
 
     if len(repre_types) == 1:
         query_filter = {"type": repre_types[0]}
@@ -1035,38 +1109,62 @@ def _get_representations(
         query_filter = {"type": {"$in": repre_types}}
 
     if representation_ids is not None:
-        representation_ids = _convert_ids(representation_ids)
+        representation_ids = convert_ids(representation_ids)
         if not representation_ids:
-            return []
+            return default_output
         query_filter["_id"] = {"$in": representation_ids}
 
     if representation_names is not None:
         if not representation_names:
-            return []
+            return default_output
         query_filter["name"] = {"$in": list(representation_names)}
 
     if version_ids is not None:
-        version_ids = _convert_ids(version_ids)
+        version_ids = convert_ids(version_ids)
         if not version_ids:
-            return []
+            return default_output
         query_filter["parent"] = {"$in": version_ids}
 
-    if extensions is not None:
-        if not extensions:
-            return []
-        query_filter["context.ext"] = {"$in": list(extensions)}
-
+    or_queries = []
     if names_by_version_ids is not None:
         or_query = []
         for version_id, names in names_by_version_ids.items():
             if version_id and names:
                 or_query.append({
-                    "parent": _convert_id(version_id),
+                    "parent": convert_id(version_id),
                     "name": {"$in": list(names)}
                 })
         if not or_query:
+            return default_output
+        or_queries.append(or_query)
+
+    if context_filters is not None:
+        if not context_filters:
             return []
-        query_filter["$or"] = or_query
+        _flatten_filters = _flatten_dict(context_filters)
+        flatten_filters = {}
+        for key, value in _flatten_filters.items():
+            if not key.startswith("context"):
+                key = "context.{}".format(key)
+            flatten_filters[key] = value
+
+        for item in _regex_filters(flatten_filters):
+            for key, value in item.items():
+                if key != "$or":
+                    query_filter[key] = value
+
+                elif value:
+                    or_queries.append(value)
+
+    if len(or_queries) == 1:
+        query_filter["$or"] = or_queries[0]
+    elif or_queries:
+        and_query = []
+        for or_query in or_queries:
+            if isinstance(or_query, list):
+                or_query = {"$or": or_query}
+            and_query.append(or_query)
+        query_filter["$and"] = and_query
 
     conn = get_project_connection(project_name)
 
@@ -1078,7 +1176,7 @@ def get_representations(
     representation_ids=None,
     representation_names=None,
     version_ids=None,
-    extensions=None,
+    context_filters=None,
     names_by_version_ids=None,
     archived=False,
     standard=True,
@@ -1096,8 +1194,8 @@ def get_representations(
             as filter. Filter ignored if 'None' is passed.
         version_ids (Iterable[str]): Subset ids used as parent filter. Filter
             ignored if 'None' is passed.
-        extensions (Iterable[str]): Filter by extension of main representation
-            file (without dot).
+        context_filters (Dict[str, List[str, re.Pattern]]): Filter by
+            representation context fields.
         names_by_version_ids (dict[ObjectId, list[str]]): Complex filtering
             using version ids and list of names under the version.
         archived (bool): Output will also contain archived representations.
@@ -1113,7 +1211,7 @@ def get_representations(
         representation_ids=representation_ids,
         representation_names=representation_names,
         version_ids=version_ids,
-        extensions=extensions,
+        context_filters=context_filters,
         names_by_version_ids=names_by_version_ids,
         standard=True,
         archived=archived,
@@ -1126,7 +1224,7 @@ def get_archived_representations(
     representation_ids=None,
     representation_names=None,
     version_ids=None,
-    extensions=None,
+    context_filters=None,
     names_by_version_ids=None,
     fields=None
 ):
@@ -1142,8 +1240,8 @@ def get_archived_representations(
             as filter. Filter ignored if 'None' is passed.
         version_ids (Iterable[str]): Subset ids used as parent filter. Filter
             ignored if 'None' is passed.
-        extensions (Iterable[str]): Filter by extension of main representation
-            file (without dot).
+        context_filters (Dict[str, List[str, re.Pattern]]): Filter by
+            representation context fields.
         names_by_version_ids (dict[ObjectId, List[str]]): Complex filtering
             using version ids and list of names under the version.
         fields (Iterable[str]): Fields that should be returned. All fields are
@@ -1158,7 +1256,7 @@ def get_archived_representations(
         representation_ids=representation_ids,
         representation_names=representation_names,
         version_ids=version_ids,
-        extensions=extensions,
+        context_filters=context_filters,
         names_by_version_ids=names_by_version_ids,
         standard=False,
         archived=True,
@@ -1181,58 +1279,64 @@ def get_representations_parents(project_name, representations):
         dict[ObjectId, tuple]: Parents by representation id.
     """
 
-    repres_by_version_id = collections.defaultdict(list)
-    versions_by_version_id = {}
-    versions_by_subset_id = collections.defaultdict(list)
-    subsets_by_subset_id = {}
-    subsets_by_asset_id = collections.defaultdict(list)
+    repre_docs_by_version_id = collections.defaultdict(list)
+    version_docs_by_version_id = {}
+    version_docs_by_subset_id = collections.defaultdict(list)
+    subset_docs_by_subset_id = {}
+    subset_docs_by_asset_id = collections.defaultdict(list)
     output = {}
-    for representation in representations:
-        repre_id = representation["_id"]
+    for repre_doc in representations:
+        repre_id = repre_doc["_id"]
+        version_id = repre_doc["parent"]
         output[repre_id] = (None, None, None, None)
-        version_id = representation["parent"]
-        repres_by_version_id[version_id].append(representation)
+        repre_docs_by_version_id[version_id].append(repre_doc)
 
-    versions = get_versions(
-        project_name, version_ids=repres_by_version_id.keys()
+    version_docs = get_versions(
+        project_name,
+        version_ids=repre_docs_by_version_id.keys(),
+        hero=True
     )
-    for version in versions:
-        version_id = version["_id"]
-        subset_id = version["parent"]
-        versions_by_version_id[version_id] = version
-        versions_by_subset_id[subset_id].append(version)
+    for version_doc in version_docs:
+        version_id = version_doc["_id"]
+        subset_id = version_doc["parent"]
+        version_docs_by_version_id[version_id] = version_doc
+        version_docs_by_subset_id[subset_id].append(version_doc)
 
-    subsets = get_subsets(
-        project_name, subset_ids=versions_by_subset_id.keys()
+    subset_docs = get_subsets(
+        project_name, subset_ids=version_docs_by_subset_id.keys()
     )
-    for subset in subsets:
-        subset_id = subset["_id"]
-        asset_id = subset["parent"]
-        subsets_by_subset_id[subset_id] = subset
-        subsets_by_asset_id[asset_id].append(subset)
+    for subset_doc in subset_docs:
+        subset_id = subset_doc["_id"]
+        asset_id = subset_doc["parent"]
+        subset_docs_by_subset_id[subset_id] = subset_doc
+        subset_docs_by_asset_id[asset_id].append(subset_doc)
 
-    assets = get_assets(project_name, asset_ids=subsets_by_asset_id.keys())
-    assets_by_id = {
-        asset["_id"]: asset
-        for asset in assets
+    asset_docs = get_assets(
+        project_name, asset_ids=subset_docs_by_asset_id.keys()
+    )
+    asset_docs_by_id = {
+        asset_doc["_id"]: asset_doc
+        for asset_doc in asset_docs
     }
 
-    project = get_project(project_name)
+    project_doc = get_project(project_name)
 
-    for version_id, representations in repres_by_version_id.items():
-        asset = None
-        subset = None
-        version = versions_by_version_id.get(version_id)
-        if version:
-            subset_id = version["parent"]
-            subset = subsets_by_subset_id.get(subset_id)
-            if subset:
-                asset_id = subset["parent"]
-                asset = assets_by_id.get(asset_id)
+    for version_id, repre_docs in repre_docs_by_version_id.items():
+        asset_doc = None
+        subset_doc = None
+        version_doc = version_docs_by_version_id.get(version_id)
+        if version_doc:
+            subset_id = version_doc["parent"]
+            subset_doc = subset_docs_by_subset_id.get(subset_id)
+            if subset_doc:
+                asset_id = subset_doc["parent"]
+                asset_doc = asset_docs_by_id.get(asset_id)
 
-        for representation in representations:
-            repre_id = representation["_id"]
-            output[repre_id] = (version, subset, asset, project)
+        for repre_doc in repre_docs:
+            repre_id = repre_doc["_id"]
+            output[repre_id] = (
+                version_doc, subset_doc, asset_doc, project_doc
+            )
     return output
 
 
@@ -1277,7 +1381,7 @@ def get_thumbnail_id_from_source(project_name, src_type, src_id):
     if not src_type or not src_id:
         return None
 
-    query_filter = {"_id": _convert_id(src_id)}
+    query_filter = {"_id": convert_id(src_id)}
 
     conn = get_project_connection(project_name)
     src_doc = conn.find_one(query_filter, {"data.thumbnail_id"})
@@ -1304,7 +1408,7 @@ def get_thumbnails(project_name, thumbnail_ids, fields=None):
     """
 
     if thumbnail_ids:
-        thumbnail_ids = _convert_ids(thumbnail_ids)
+        thumbnail_ids = convert_ids(thumbnail_ids)
 
     if not thumbnail_ids:
         return []
@@ -1332,7 +1436,7 @@ def get_thumbnail(project_name, thumbnail_id, fields=None):
 
     if not thumbnail_id:
         return None
-    query_filter = {"type": "thumbnail", "_id": _convert_id(thumbnail_id)}
+    query_filter = {"type": "thumbnail", "_id": convert_id(thumbnail_id)}
     conn = get_project_connection(project_name)
     return conn.find_one(query_filter, _prepare_fields(fields))
 
@@ -1360,7 +1464,7 @@ def get_workfile_info(
 
     query_filter = {
         "type": "workfile",
-        "parent": _convert_id(asset_id),
+        "parent": convert_id(asset_id),
         "task_name": task_name,
         "filename": filename
     }
@@ -1371,7 +1475,7 @@ def get_workfile_info(
 """
 ## Custom data storage:
 - Settings - OP settings overrides and local settings
-- Logging - logs from PypeLogger
+- Logging - logs from Logger
 - Webpublisher - jobs
 - Ftrack - events
 - Maya - Shaders
