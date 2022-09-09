@@ -1,27 +1,21 @@
 # -*- coding: utf-8 -*-
-import hou
-
+"""Creator plugin for creating publishable Houdini Digital Assets."""
 from openpype.client import (
     get_asset_by_name,
     get_subsets,
 )
 from openpype.pipeline import legacy_io
-from openpype.hosts.houdini.api import lib
-from openpype.hosts.houdini.api import plugin
+from openpype.hosts.houdini.api import (lib, plugin)
 
 
-class CreateHDA(plugin.Creator):
+class CreateHDA(plugin.HoudiniCreator):
     """Publish Houdini Digital Asset file."""
 
-    name = "hda"
+    identifier = "hda"
     label = "Houdini Digital Asset (Hda)"
     family = "hda"
     icon = "gears"
     maintain_selection = False
-
-    def __init__(self, *args, **kwargs):
-        super(CreateHDA, self).__init__(*args, **kwargs)
-        self.data.pop("active", None)
 
     def _check_existing(self, subset_name):
         # type: (str) -> bool
@@ -40,28 +34,34 @@ class CreateHDA(plugin.Creator):
         }
         return subset_name.lower() in existing_subset_names_low
 
-    def _process(self, instance):
-        subset_name = self.data["subset"]
-        # get selected nodes
-        out = hou.node("/obj")
-        self.nodes = hou.selectedNodes()
+    def create(self, subset_name, instance_data, pre_create_data):
+        import hou
 
-        if (self.options or {}).get("useSelection") and self.nodes:
-            # if we have `use selection` enabled and we have some
+        instance_data.pop("active", None)
+
+        instance = super(CreateHDA, self).create(
+            subset_name,
+            instance_data,
+            pre_create_data)  # type: CreatedInstance
+
+        instance_node = hou.node(instance.get("instance_node"))
+        out = hou.node("/obj")
+        if self._nodes:
+            # if we have `use selection` enabled, and we have some
             # selected nodes ...
             subnet = out.collapseIntoSubnet(
                 self.nodes,
-                subnet_name="{}_subnet".format(self.name))
+                subnet_name="{}_subnet".format(subset_name))
             subnet.moveToGoodPosition()
             to_hda = subnet
         else:
             to_hda = out.createNode(
-                "subnet", node_name="{}_subnet".format(self.name))
+                "subnet", node_name="{}_subnet".format(subset_name))
         if not to_hda.type().definition():
             # if node type has not its definition, it is not user
             # created hda. We test if hda can be created from the node.
             if not to_hda.canCreateDigitalAsset():
-                raise Exception(
+                raise plugin.OpenPypeCreatorError(
                     "cannot create hda from node {}".format(to_hda))
 
             hda_node = to_hda.createDigitalAsset(
@@ -77,18 +77,5 @@ class CreateHDA(plugin.Creator):
             hda_node = to_hda
 
         hda_node.setName(subset_name)
-
-        # delete node created by Avalon in /out
-        # this needs to be addressed in future Houdini workflow refactor.
-
-        hou.node("/out/{}".format(subset_name)).destroy()
-
-        try:
-            lib.imprint(hda_node, self.data)
-        except hou.OperationFailed:
-            raise plugin.OpenPypeCreatorError(
-                ("Cannot set metadata on asset. Might be that it already is "
-                 "OpenPype asset.")
-            )
 
         return hda_node
