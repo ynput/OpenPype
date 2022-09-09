@@ -22,5 +22,5 @@ class CollectMayaSceneTime(pyblish.api.InstancePlugin):
             "frameStartHandle": cmds.playbackOptions(query=True,
                                                      animationStartTime=True),
             "frameEndHandle": cmds.playbackOptions(query=True,
-                                                   animationEndTime=True),
+                                                   animationEndTime=True)
         })
