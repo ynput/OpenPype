@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
+"""Creator plugin for creating pointcache alembics."""
 from openpype.hosts.houdini.api import plugin
 from openpype.pipeline import CreatedInstance
-
-import hou
 
 
 class CreatePointCache(plugin.HoudiniCreator):
     """Alembic ROP to pointcache"""
-    identifier = "pointcache"
+    identifier = "io.openpype.creators.houdini.pointcache"
     label = "Point Cache"
     family = "pointcache"
     icon = "gears"
 
     def create(self, subset_name, instance_data, pre_create_data):
+        import hou
+
         instance_data.pop("active", None)
         instance_data.update({"node_type": "alembic"})
 
@@ -21,7 +22,7 @@ class CreatePointCache(plugin.HoudiniCreator):
             instance_data,
             pre_create_data)  # type: CreatedInstance
 
-        instance_node = hou.node(instance.get("members")[0])
+        instance_node = hou.node(instance.get("instance_node"))
         parms = {
             "use_sop_path": True,
             "build_from_path": True,
@@ -32,8 +33,8 @@ class CreatePointCache(plugin.HoudiniCreator):
             "filename": "$HIP/pyblish/{}.abc".format(subset_name)
         }
 
-        if instance_node:
-            parms["sop_path"] = instance_node.path()
+        if self._nodes:
+            parms["sop_path"] = self._nodes[0].path()
 
         instance_node.setParms(parms)
         instance_node.parm("trange").set(1)
