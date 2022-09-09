@@ -44,7 +44,7 @@ class MayaTemplateLoader(AbstractTemplateLoader):
         cmds.sets(name=PLACEHOLDER_SET, empty=True)
         cmds.file(path, i=True, returnNewNodes=True)
 
-        cmds.setAttr(PLACEHOLDER_SET + '.hiddenInOutliner', True)
+        cmds.setAttr(PLACEHOLDER_SET + ".hiddenInOutliner", True)
 
         # This should be handled by creators
         # for set_name in cmds.listSets(allSets=True):
@@ -116,10 +116,13 @@ class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
         placeholder_nodes = self.builder.get_shared_data("placeholder_nodes")
         if placeholder_nodes is None:
             attributes = cmds.ls("*.plugin_identifier", long=True)
-            placeholder_nodes = [
-                self._parse_placeholder_node_data(attribute.rpartition(".")[0])
-                for attribute in attributes
-            ]
+            placeholder_nodes = {}
+            for attribute in attributes:
+                node_name = attribute.rpartition(".")[0]
+                placeholder_nodes[node_name] = (
+                    self._parse_placeholder_node_data(node_name)
+                )
+
             self.builder.set_shared_data(
                 "placeholder_nodes", placeholder_nodes
             )
@@ -182,7 +185,6 @@ class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
         placeholder_name = self._create_placeholder_name(placeholder_data)
 
         placeholder = cmds.spaceLocator(name=placeholder_name)[0]
-
         # TODO: this can crash if selection can't be used
         cmds.parent(placeholder, selection[0])
 
@@ -221,20 +223,23 @@ class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
                 new_values[key] = value
                 placeholder_item.data[key] = value
 
+        for key in new_values.keys():
+            cmds.deleteAttr(node_name + "." + key)
+
         imprint(node_name, new_values)
 
     def collect_placeholders(self):
-        filtered_placeholders = []
-        for placeholder_data in self._collect_scene_placeholders():
+        output = []
+        scene_placeholders = self._collect_scene_placeholders()
+        for node_name, placeholder_data in scene_placeholders.items():
             if placeholder_data.get("plugin_identifier") != self.identifier:
                 continue
 
-            filtered_placeholders.append(placeholder_data)
-
-        output = []
-        for placeholder_data in filtered_placeholders:
             # TODO do data validations and maybe updgrades if are invalid
-            output.append(LoadPlaceholder(placeholder_data))
+            output.append(
+                LoadPlaceholder(node_name, placeholder_data, self)
+            )
+
         return output
 
     def process_placeholder(self, placeholder):
@@ -429,8 +434,8 @@ class LoadPlaceholder(PlaceholderItem):
             elif not cmds.sets(root, q=True):
                 return
 
-        if self.data['parent']:
-            cmds.parent(nodes_to_parent, self.data['parent'])
+        if self.data["parent"]:
+            cmds.parent(nodes_to_parent, self.data["parent"])
         # Move loaded nodes to correct index in outliner hierarchy
         placeholder_form = cmds.xform(
             self._scene_identifier,
@@ -440,7 +445,7 @@ class LoadPlaceholder(PlaceholderItem):
         )
         for node in set(nodes_to_parent):
             cmds.reorder(node, front=True)
-            cmds.reorder(node, relative=self.data['index'])
+            cmds.reorder(node, relative=self.data["index"])
             cmds.xform(node, matrix=placeholder_form, ws=True)
 
         holding_sets = cmds.listSets(object=self._scene_identifier)
@@ -470,7 +475,7 @@ class LoadPlaceholder(PlaceholderItem):
             node = cmds.parent(node, world=True)[0]
         cmds.sets(node, addElement=PLACEHOLDER_SET)
         cmds.hide(node)
-        cmds.setAttr(node + '.hiddenInOutliner', True)
+        cmds.setAttr(node + ".hiddenInOutliner", True)
 
     def get_representations(self, current_asset_doc, linked_asset_docs):
         project_name = legacy_io.active_project()
