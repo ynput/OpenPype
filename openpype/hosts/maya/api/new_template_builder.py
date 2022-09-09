@@ -5,7 +5,7 @@ from maya import cmds
 
 from openpype.client import get_representations
 from openpype.lib import attribute_definitions
-from openpype.pipeline import legacy_io
+from openpype.pipeline import legacy_io, registered_host
 from openpype.pipeline.workfile.build_template_exceptions import (
     TemplateAlreadyImported
 )
@@ -13,6 +13,9 @@ from openpype.pipeline.workfile.new_template_loader import (
     AbstractTemplateLoader,
     PlaceholderPlugin,
     PlaceholderItem,
+)
+from openpype.tools.workfile_template_build import (
+    WorkfileBuildPlaceholderDialog,
 )
 
 from .lib import read, imprint
@@ -566,3 +569,45 @@ class LoadPlaceholder(PlaceholderItem):
 
     def load_succeed(self, container):
         self.parent_in_hierarchy(container)
+
+
+def build_workfile_template():
+    builder = MayaTemplateLoader(registered_host())
+    builder.build_template()
+
+
+def update_workfile_template():
+    builder = MayaTemplateLoader(registered_host())
+    builder.update_build_template()
+
+
+def create_placeholder():
+    host = registered_host()
+    builder = MayaTemplateLoader(host)
+    window = WorkfileBuildPlaceholderDialog(host, builder)
+    window.exec_()
+
+
+def update_placeholder():
+    host = registered_host()
+    builder = MayaTemplateLoader(host)
+    placeholder_items_by_id = {
+        placeholder_item.scene_identifier: placeholder_item
+        for placeholder_item in builder.get_placeholders()
+    }
+    placeholder_items = []
+    for node_name in cmds.ls(selection=True, long=True):
+        if node_name in placeholder_items_by_id:
+            placeholder_items.append(placeholder_items_by_id[node_name])
+
+    # TODO show UI at least
+    if len(placeholder_items) == 0:
+        raise ValueError("No node selected")
+
+    if len(placeholder_items) > 1:
+        raise ValueError("Too many selected nodes")
+
+    placeholder_item = placeholder_items[0]
+    window = WorkfileBuildPlaceholderDialog(host, builder)
+    window.set_update_mode(placeholder_item)
+    window.exec_()
