@@ -33,8 +33,8 @@ class CreatePointCache(plugin.HoudiniCreator):
             "filename": "$HIP/pyblish/{}.abc".format(subset_name)
         }
 
-        if self._nodes:
-            parms["sop_path"] = self._nodes[0].path()
+        if self.selected_nodes:
+            parms["sop_path"] = self.selected_nodes[0].path()
 
         instance_node.setParms(parms)
         instance_node.parm("trange").set(1)

@@ -29,8 +29,8 @@ class CreateAlembicCamera(plugin.HoudiniCreator):
             "use_sop_path": False,
         }
 
-        if self._nodes:
-            path = self._nodes[0].path()
+        if self.selected_nodes:
+            path = self.selected_nodes.path()
             # Split the node path into the first root and the remainder
             # So we can set the root and objects parameters correctly
             _, root, remainder = path.split("/", 2)
