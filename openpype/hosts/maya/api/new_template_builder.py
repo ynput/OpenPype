@@ -1,4 +1,6 @@
 import re
+import json
+
 from maya import cmds
 
 from openpype.client import get_representations
@@ -146,8 +148,27 @@ class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
         return placeholder_data
 
     def _create_placeholder_name(self, placeholder_data):
-        # TODO implement placeholder name logic
-        return "Placeholder"
+        placeholder_name_parts = placeholder_data["builder_type"].split("_")
+
+        pos = 1
+        # add famlily in any
+        placeholder_family = placeholder_data["family"]
+        if placeholder_family:
+            placeholder_name_parts.insert(pos, placeholder_family)
+            pos += 1
+
+        # add loader arguments if any
+        loader_args = placeholder_data["loader_args"]
+        if loader_args:
+            loader_args = json.loads(loader_args.replace('\'', '\"'))
+            values = [v for v in loader_args.values()]
+            for value in values:
+                placeholder_name_parts.insert(pos, value)
+                pos += 1
+
+        placeholder_name = "_".join(placeholder_name_parts)
+
+        return placeholder_name.capitalize()
 
     def create_placeholder(self, placeholder_data):
         selection = cmds.ls(selection=True)
