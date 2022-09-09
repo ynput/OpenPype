@@ -227,6 +227,12 @@ class AbstractTemplateLoader:
             key=lambda i: i.order
         ))
 
+    def build_template(self, template_path=None, level_limit=None):
+        if template_path is None:
+            template_path = self.get_template_path()
+        self.import_template(template_path)
+        self.populate_scene_placeholders(level_limit)
+
     @abstractmethod
     def import_template(self, template_path):
         """
