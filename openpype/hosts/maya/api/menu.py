@@ -14,7 +14,7 @@ from openpype.hosts.maya.api import lib, lib_rendersettings
 from .lib import get_main_window, IS_HEADLESS
 from .commands import reset_frame_range
 
-from .new_template_builder import (
+from .workfile_template_builder import (
     create_placeholder,
     update_placeholder,
     build_workfile_template,

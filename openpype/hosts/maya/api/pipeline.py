@@ -35,7 +35,7 @@ from openpype.hosts.maya import MAYA_ROOT_DIR
 from openpype.hosts.maya.lib import copy_workspace_mel
 
 from . import menu, lib
-from .new_template_builder import MayaLoadPlaceholderPlugin
+from .workfile_template_builder import MayaLoadPlaceholderPlugin
 from .workio import (
     open_file,
     save_file,
