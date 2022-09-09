@@ -7,7 +7,8 @@
   and install all necessary packages from `poetry.lock` or `pyproject.toml`
   needed by OpenPype to be included during application freeze on Windows.
 
-  Script is also used to create new venv at -venv_path from provided -toml_path
+  Script is also used to create new venv at -venv_path from provided
+  pyproject.toml inside this folder.
   This will be used for v4 and dependencies tool.
 .EXAMPLE
 
@@ -20,11 +21,10 @@ PS> .\create_env.ps1 -verbose
 
 .EXAMPLE
 Create new venv from provided toml
-PS> .\create_env.ps -toml_path c:/projects/pyproject.toml -venv_path c:/new_venv
+PS> .\create_env.ps -venv_path c:/new_venv
 
 #>
 param (
-    [String] $toml_path,
     [String] $venv_path,
     [switch] $verbose
 )
@@ -176,7 +176,7 @@ if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
     Write-Color -Text "OK" -Color Green
 }
 
-if ($toml_path -or
+if ($venv_path -or
     -not (Test-Path -PathType Leaf -Path "$($openpype_root)\poetry.lock")) {
     Write-Color -Text ">>> ", "Installing virtual environment and creating lock." -Color Green, Gray
 } else {
@@ -186,19 +186,10 @@ if ($toml_path -or
 # set for regular process
 & "$env:POETRY_HOME\bin\poetry" config virtualenvs.create true
 
-if ($toml_path){
-   if (-not (Test-Path $toml_path)) {
-       Write-Color -Text "!!! ", "Toml location provided, but file doesn't exist." -Color Red, Yellow
-       Exit-WithCode 1
-   }
-   if (-not ($venv_path)){
-       Write-Color -Text "!!! ", "Toml location provided, must provide -venv_path." -Color Red, Yellow
-       Exit-WithCode 1
-   }
+if ($venv_path){
    Write-Color -Text ">>> ", "Creating virtual environment at $($venv_path)." -Color Green, White
    & "$env:POETRY_HOME\bin\poetry" run python -m venv $venv_path
    & "$env:POETRY_HOME\bin\poetry" config virtualenvs.create false
-   & Copy-Item -Path $toml_path -Destination $venv_path
    Set-Location -Path $venv_path
 }
 
