@@ -303,6 +303,37 @@ class AbstractTemplateLoader:
         self.import_template(template_path)
         self.populate_scene_placeholders(level_limit)
 
+    def update_template(self):
+        """Go through existing placeholders in scene and update them.
+
+        This could not make sense for all plugin types so this is optional
+        logic for plugins.
+
+        Note:
+            Logic is not importing the template again but using placeholders
+                that were already available. We should maybe change the method
+                name.
+
+        Question:
+            Should this also handle subloops as it is possible that another
+                template is loaded during processing?
+        """
+
+        if not self.placeholder_plugins:
+            self.log.info("There are no placeholder plugins available.")
+            return
+
+        placeholders = self.get_placeholders()
+        if not placeholders:
+            self.log.info("No placeholders were found.")
+            return
+
+        for placeholder in placeholders:
+            plugin = placeholder.plugin
+            plugin.update_template_placeholder(placeholder)
+
+        self.clear_shared_populate_data()
+
     @abstractmethod
     def import_template(self, template_path):
         """
@@ -317,12 +348,6 @@ class AbstractTemplateLoader:
         """
 
         pass
-
-    # def template_already_imported(self, err_msg):
-    #     pass
-    #
-    # def template_loading_failed(self, err_msg):
-    #     pass
 
     def _prepare_placeholders(self, placeholders):
         """Run preparation part for placeholders on plugins.
@@ -413,7 +438,7 @@ class AbstractTemplateLoader:
                     placeholder.set_finished()
 
             # Clear shared data before getting new placeholders
-            self.clear_shared_data()
+            self.clear_shared_populate_data()
 
             iter_counter += 1
             if iter_counter >= level_limit:
@@ -429,6 +454,8 @@ class AbstractTemplateLoader:
                 all_processed = False
                 placeholder_by_scene_id[identifier] = placeholder
                 placeholders.append(placeholder)
+
+        self.refresh()
 
     def _get_build_profiles(self):
         project_settings = get_project_settings(self.project_name)
@@ -582,6 +609,7 @@ class PlaceholderPlugin(object):
             placeholder_data (Dict[str, Any]): Data related to placeholder.
                 Should match plugin options.
         """
+
         pass
 
     @abstractmethod
@@ -638,15 +666,10 @@ class PlaceholderPlugin(object):
 
         pass
 
-    def cleanup_placeholders(self, placeholders):
-        """Cleanup of placeholders after processing.
+    def update_template_placeholder(self, placeholder):
+        """Update scene with current context for passed placeholder.
 
-        Not:
-            Passed placeholders can be failed.
-
-        Args:
-            placeholders (List[PlaceholderItem]): List of placeholders that
-                were be processed.
+        Can be used to re-run placeholder logic (if it make sense).
         """
 
         pass
@@ -655,8 +678,6 @@ class PlaceholderPlugin(object):
         """Receive shared data across plugin and placeholders.
 
         Using shared data from builder but stored under plugin identifier.
-
-        Shared data are cleaned up on specific callbacks.
 
         Args:
             key (str): Key under which are shared data stored.
@@ -678,8 +699,6 @@ class PlaceholderPlugin(object):
         Key should be self explanatory to content.
         - wrong: 'asset'
         - good: 'asset_name'
-
-        Shared data are cleaned up on specific callbacks.
 
         Args:
             key (str): Key under which is key stored.
