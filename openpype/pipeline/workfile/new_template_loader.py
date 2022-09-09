@@ -60,6 +60,7 @@ class AbstractTemplateLoader:
 
         # Shared data across placeholder plugins
         self._shared_data = {}
+        self._shared_populate_data = {}
 
         # Where created objects of placeholder plugins will be stored
         self._placeholder_plugins = None
@@ -121,14 +122,7 @@ class AbstractTemplateLoader:
         self._loaders_by_name = None
         self._creators_by_name = None
         self.clear_shared_data()
-
-    def clear_shared_data(self):
-        """Clear shared data.
-
-        Method only clear shared data to default state.
-        """
-
-        self._shared_data = {}
+        self.clear_shared_populate_data()
 
     def get_loaders_by_name(self):
         if self._loaders_by_name is None:
@@ -146,8 +140,6 @@ class AbstractTemplateLoader:
         This can be used to scroll scene only once to look for placeholder
         items if the storing is unified but each placeholder plugin would have
         to call it again.
-
-        Shared data are cleaned up on specific callbacks.
 
         Args:
             key (str): Key under which are shared data stored.
@@ -169,14 +161,78 @@ class AbstractTemplateLoader:
         - wrong: 'asset'
         - good: 'asset_name'
 
-        Shared data are cleaned up on specific callbacks.
-
         Args:
             key (str): Key under which is key stored.
             value (Any): Value that should be stored under the key.
         """
 
         self._shared_data[key] = value
+
+    def clear_shared_data(self):
+        """Clear shared data.
+
+        Method only clear shared data to default state.
+        """
+
+        self._shared_data = {}
+
+    def clear_shared_populate_data(self):
+        """Receive shared data across plugins and placeholders.
+
+        These data are cleared after each loop of populating of template.
+
+        This can be used to scroll scene only once to look for placeholder
+        items if the storing is unified but each placeholder plugin would have
+        to call it again.
+
+        Args:
+            key (str): Key under which are shared data stored.
+
+        Returns:
+            Union[None, Any]: None if key was not set.
+        """
+
+        self._shared_populate_data = {}
+
+    def get_shared_populate_data(self, key):
+        """Store share populate data across plugins and placeholders.
+
+        These data are cleared after each loop of populating of template.
+
+        Store data that can be afterwards accessed from any future call. It
+        is good practice to check if the same value is not already stored under
+        different key or if the key is not already used for something else.
+
+        Key should be self explanatory to content.
+        - wrong: 'asset'
+        - good: 'asset_name'
+
+        Args:
+            key (str): Key under which is key stored.
+            value (Any): Value that should be stored under the key.
+        """
+
+        return self._shared_populate_data.get(key)
+
+    def set_shared_populate_data(self, key, value):
+        """Store share populate data across plugins and placeholders.
+
+        These data are cleared after each loop of populating of template.
+
+        Store data that can be afterwards accessed from any future call. It
+        is good practice to check if the same value is not already stored under
+        different key or if the key is not already used for something else.
+
+        Key should be self explanatory to content.
+        - wrong: 'asset'
+        - good: 'asset_name'
+
+        Args:
+            key (str): Key under which is key stored.
+            value (Any): Value that should be stored under the key.
+        """
+
+        self._shared_populate_data[key] = value
 
     @property
     def placeholder_plugins(self):
@@ -635,6 +691,48 @@ class PlaceholderPlugin(object):
             plugin_data = {}
         plugin_data[key] = value
         self.builder.set_shared_data(self.identifier, plugin_data)
+
+    def get_plugin_shared_populate_data(self, key):
+        """Receive shared data across plugin and placeholders.
+
+        Using shared populate data from builder but stored under plugin
+        identifier.
+
+        Shared populate data are cleaned up during populate while loop.
+
+        Args:
+            key (str): Key under which are shared data stored.
+
+        Returns:
+            Union[None, Any]: None if key was not set.
+        """
+
+        plugin_data = self.builder.get_shared_populate_data(self.identifier)
+        if plugin_data is None:
+            return None
+        return plugin_data.get(key)
+
+    def set_plugin_shared_populate_data(self, key, value):
+        """Store share data across plugin and placeholders.
+
+        Using shared data from builder but stored under plugin identifier.
+
+        Key should be self explanatory to content.
+        - wrong: 'asset'
+        - good: 'asset_name'
+
+        Shared populate data are cleaned up during populate while loop.
+
+        Args:
+            key (str): Key under which is key stored.
+            value (Any): Value that should be stored under the key.
+        """
+
+        plugin_data = self.builder.get_shared_populate_data(self.identifier)
+        if plugin_data is None:
+            plugin_data = {}
+        plugin_data[key] = value
+        self.builder.set_shared_populate_data(self.identifier, plugin_data)
 
 
 class PlaceholderItem(object):
