@@ -35,7 +35,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
     family_mapping = {
         "camera": "cam",
         "look": "look",
-        "mayaascii": "scene",
+        "mayaAscii": "scene",
         "model": "geo",
         "rig": "rig",
         "setdress": "setdress",
