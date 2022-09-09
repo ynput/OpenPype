@@ -26,6 +26,7 @@ def addon_toml_to_compare_data():
                                              "pyproject.toml"))
     return provider.get_toml()
 
+
 @pytest.fixture
 def addon_toml_to_venv_data():
     provider = FileTomlProvider(os.path.join("resources",
@@ -36,14 +37,14 @@ def addon_toml_to_venv_data():
 def test_existing_file():
     provider = FileTomlProvider(os.path.join("..", "..", "..",
                                              "pyproject.toml"))
-    toml = provider.get_toml()
+    _ = provider.get_toml()
 
 
 def test_not_existing_file():
     dir_name = os.path.dirname(__file__)
     provider = FileTomlProvider(os.path.join(dir_name, "pyproject.toml"))
     with pytest.raises(ValueError):
-        toml = provider.get_toml()
+        _ = provider.get_toml()
 
 
 def test_is_valid_toml(openpype_toml_data):
@@ -69,6 +70,7 @@ def test_get_full_toml(openpype_toml_data):
     result_toml = get_full_toml(openpype_toml_data, addon_urls)
     _compare_resolved_tomp(result_toml)
 
+
 def _compare_resolved_tomp(result_toml):
     res_dependencies = result_toml["tool"]["poetry"]["dependencies"]
     dep_version = res_dependencies["aiohttp"]
@@ -90,4 +92,3 @@ def test_prepare_new_venv(addon_toml_to_venv_data):
     assert return_code != 1, "Prepare of new venv failed"
 
     shutil.rmtree(tmpdir)
-

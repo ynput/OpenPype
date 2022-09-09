@@ -150,7 +150,7 @@ def prepare_new_venv(full_toml_data, venv_folder):
 
 def zip_venv(venv_folder, zip_destination_path):
     """Zips newly created venv to single .zip file."""
-    #RemoteFileHandler.unzip(addon_zip_path, destination)
+    # RemoteFileHandler.unzip(addon_zip_path, destination)
     raise NotImplementedError
 
 
