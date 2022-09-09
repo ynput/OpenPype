@@ -20,10 +20,12 @@ class ValidateNoDirtyTexture(pyblish.api.InstancePlugin):
         invalid = []
         for obj in set(instance):
             if isinstance(obj, bpy.types.Object):
+                # Getting texture images
                 for m in obj.material_slots:
                     images = m.material.texture_paint_images
                     if images:
                         for v in images:
+                            # Checking if the image is dirty
                             if v.is_dirty:
                                 invalid.append(v)
 
