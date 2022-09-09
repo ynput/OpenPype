@@ -1,11 +1,8 @@
-import re
 import json
 
 from maya import cmds
 
-from openpype.client import get_representations
-from openpype.lib import attribute_definitions
-from openpype.pipeline import legacy_io, registered_host
+from openpype.pipeline import registered_host
 from openpype.pipeline.workfile.build_template_exceptions import (
     TemplateAlreadyImported
 )
@@ -13,6 +10,7 @@ from openpype.pipeline.workfile.new_template_loader import (
     AbstractTemplateLoader,
     PlaceholderPlugin,
     PlaceholderItem,
+    PlaceholderLoadMixin,
 )
 from openpype.tools.workfile_template_build import (
     WorkfileBuildPlaceholderDialog,
@@ -52,7 +50,7 @@ class MayaTemplateLoader(AbstractTemplateLoader):
         return True
 
 
-class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
+class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
     identifier = "maya.load"
     label = "Maya load"
 
@@ -203,190 +201,27 @@ class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
 
             # TODO do data validations and maybe updgrades if are invalid
             output.append(
-                LoadPlaceholder(node_name, placeholder_data, self)
+                LoadPlaceholderItem(node_name, placeholder_data, self)
             )
 
         return output
 
     def populate_placeholder(self, placeholder):
-        self._populate_placeholder(placeholder)
+        self.populate_load_placeholder(placeholder)
 
     def update_template_placeholder(self, placeholder):
         repre_ids = self._get_loaded_repre_ids()
-        self._populate_placeholder(placeholder, repre_ids)
-
-    def _populate_placeholder(self, placeholder, ignore_repre_ids=None):
-        if ignore_repre_ids is None:
-            ignore_repre_ids = set()
-
-        current_asset_doc = self.builder.current_asset_doc
-        linked_assets = self.builder.linked_asset_docs
-        loader_name = placeholder.data["loader"]
-        loader_args = placeholder.data["loader_args"]
-
-        # TODO check loader existence
-        placeholder_representations = placeholder.get_representations(
-            current_asset_doc,
-            linked_assets
-        )
-
-        if not placeholder_representations:
-            self.log.info((
-                "There's no representation for this placeholder: {}"
-            ).format(placeholder.scene_identifier))
-            return
-
-        loaders_by_name = self.builder.get_loaders_by_name()
-        for representation in placeholder_representations:
-            repre_id = str(representation["_id"])
-            if repre_id in ignore_repre_ids:
-                continue
-
-            repre_context = representation["context"]
-            self.log.info(
-                "Loading {} from {} with loader {}\n"
-                "Loader arguments used : {}".format(
-                    repre_context["subset"],
-                    repre_context["asset"],
-                    loader_name,
-                    loader_args
-                )
-            )
-            try:
-                container = self.load(
-                    placeholder, loaders_by_name, representation)
-            except Exception:
-                placeholder.load_failed(representation)
-
-            else:
-                placeholder.load_succeed(container)
-            placeholder.clean()
+        self.populate_load_placeholder(placeholder, repre_ids)
 
     def get_placeholder_options(self, options=None):
-        loaders_by_name = self.builder.get_loaders_by_name()
-        loader_items = [
-            (loader_name, loader.label or loader_name)
-            for loader_name, loader in loaders_by_name.items()
-        ]
-
-        loader_items = list(sorted(loader_items, key=lambda i: i[0]))
-        options = options or {}
-        return [
-            attribute_definitions.UISeparatorDef(),
-            attribute_definitions.UILabelDef("Main attributes"),
-            attribute_definitions.UISeparatorDef(),
-
-            attribute_definitions.EnumDef(
-                "builder_type",
-                label="Asset Builder Type",
-                default=options.get("builder_type"),
-                items=[
-                    ("context_asset", "Current asset"),
-                    ("linked_asset", "Linked assets"),
-                    ("all_assets", "All assets")
-                ],
-                tooltip=(
-                    "Asset Builder Type\n"
-                    "\nBuilder type describe what template loader will look"
-                    " for."
-                    "\ncontext_asset : Template loader will look for subsets"
-                    " of current context asset (Asset bob will find asset)"
-                    "\nlinked_asset : Template loader will look for assets"
-                    " linked to current context asset."
-                    "\nLinked asset are looked in database under"
-                    " field \"inputLinks\""
-                )
-            ),
-            attribute_definitions.TextDef(
-                "family",
-                label="Family",
-                default=options.get("family"),
-                placeholder="model, look, ..."
-            ),
-            attribute_definitions.TextDef(
-                "representation",
-                label="Representation name",
-                default=options.get("representation"),
-                placeholder="ma, abc, ..."
-            ),
-            attribute_definitions.EnumDef(
-                "loader",
-                label="Loader",
-                default=options.get("loader"),
-                items=loader_items,
-                tooltip=(
-                    "Loader"
-                    "\nDefines what OpenPype loader will be used to"
-                    " load assets."
-                    "\nUseable loader depends on current host's loader list."
-                    "\nField is case sensitive."
-                )
-            ),
-            attribute_definitions.TextDef(
-                "loader_args",
-                label="Loader Arguments",
-                default=options.get("loader_args"),
-                placeholder='{"camera":"persp", "lights":True}',
-                tooltip=(
-                    "Loader"
-                    "\nDefines a dictionnary of arguments used to load assets."
-                    "\nUseable arguments depend on current placeholder Loader."
-                    "\nField should be a valid python dict."
-                    " Anything else will be ignored."
-                )
-            ),
-            attribute_definitions.NumberDef(
-                "order",
-                label="Order",
-                default=options.get("order") or 0,
-                decimals=0,
-                minimum=0,
-                maximum=999,
-                tooltip=(
-                    "Order"
-                    "\nOrder defines asset loading priority (0 to 999)"
-                    "\nPriority rule is : \"lowest is first to load\"."
-                )
-            ),
-            attribute_definitions.UISeparatorDef(),
-            attribute_definitions.UILabelDef("Optional attributes"),
-            attribute_definitions.UISeparatorDef(),
-            attribute_definitions.TextDef(
-                "asset",
-                label="Asset filter",
-                default=options.get("asset"),
-                placeholder="regex filtering by asset name",
-                tooltip=(
-                    "Filtering assets by matching field regex to asset's name"
-                )
-            ),
-            attribute_definitions.TextDef(
-                "subset",
-                label="Subset filter",
-                default=options.get("subset"),
-                placeholder="regex filtering by subset name",
-                tooltip=(
-                    "Filtering assets by matching field regex to subset's name"
-                )
-            ),
-            attribute_definitions.TextDef(
-                "hierarchy",
-                label="Hierarchy filter",
-                default=options.get("hierarchy"),
-                placeholder="regex filtering by asset's hierarchy",
-                tooltip=(
-                    "Filtering assets by matching field asset's hierarchy"
-                )
-            )
-        ]
+        return self.get_load_plugin_options(self, options)
 
 
-class LoadPlaceholder(PlaceholderItem):
-    """Concrete implementation of AbstractPlaceholder for maya
-    """
+class LoadPlaceholderItem(PlaceholderItem):
+    """Concrete implementation of PlaceholderItem for Maya load plugin."""
 
     def __init__(self, *args, **kwargs):
-        super(LoadPlaceholder, self).__init__(*args, **kwargs)
+        super(LoadPlaceholderItem, self).__init__(*args, **kwargs)
         self._failed_representations = []
 
     def parent_in_hierarchy(self, container):
@@ -456,49 +291,6 @@ class LoadPlaceholder(PlaceholderItem):
         cmds.sets(node, addElement=PLACEHOLDER_SET)
         cmds.hide(node)
         cmds.setAttr(node + ".hiddenInOutliner", True)
-
-    def get_representations(self, current_asset_doc, linked_asset_docs):
-        project_name = legacy_io.active_project()
-
-        builder_type = self.data["builder_type"]
-        if builder_type == "context_asset":
-            context_filters = {
-                "asset": [current_asset_doc["name"]],
-                "subset": [re.compile(self.data["subset"])],
-                "hierarchy": [re.compile(self.data["hierarchy"])],
-                "representations": [self.data["representation"]],
-                "family": [self.data["family"]]
-            }
-
-        elif builder_type != "linked_asset":
-            context_filters = {
-                "asset": [re.compile(self.data["asset"])],
-                "subset": [re.compile(self.data["subset"])],
-                "hierarchy": [re.compile(self.data["hierarchy"])],
-                "representation": [self.data["representation"]],
-                "family": [self.data["family"]]
-            }
-
-        else:
-            asset_regex = re.compile(self.data["asset"])
-            linked_asset_names = []
-            for asset_doc in linked_asset_docs:
-                asset_name = asset_doc["name"]
-                if asset_regex.match(asset_name):
-                    linked_asset_names.append(asset_name)
-
-            context_filters = {
-                "asset": linked_asset_names,
-                "subset": [re.compile(self.data["subset"])],
-                "hierarchy": [re.compile(self.data["hierarchy"])],
-                "representation": [self.data["representation"]],
-                "family": [self.data["family"]],
-            }
-
-        return list(get_representations(
-            project_name,
-            context_filters=context_filters
-        ))
 
     def get_errors(self):
         if not self._failed_representations:

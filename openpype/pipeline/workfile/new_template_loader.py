@@ -1,4 +1,5 @@
 import os
+import re
 import collections
 import copy
 from abc import ABCMeta, abstractmethod
@@ -8,6 +9,7 @@ import six
 from openpype.client import (
     get_asset_by_name,
     get_linked_assets,
+    get_representations,
 )
 from openpype.settings import get_project_settings
 from openpype.host import HostBase
@@ -15,10 +17,15 @@ from openpype.lib import (
     Logger,
     StringTemplate,
     filter_profiles,
+    attribute_definitions,
 )
 from openpype.lib.attribute_definitions import get_attributes_keys
 from openpype.pipeline import legacy_io, Anatomy
-from openpype.pipeline.load import get_loaders_by_name
+from openpype.pipeline.load import (
+    get_loaders_by_name,
+    get_contexts_for_repre_docs,
+    load_with_repre_context,
+)
 from openpype.pipeline.create import get_legacy_creator_by_name
 
 from .build_template_exceptions import (
@@ -942,3 +949,277 @@ class PlaceholderItem(object):
         """
 
         return self._errors
+
+
+class PlaceholderLoadMixin(object):
+    """Mixin prepared for loading placeholder plugins.
+
+    Implementation prepares options for placeholders with
+    'get_load_plugin_options'.
+
+    For placeholder population is implemented 'populate_load_placeholder'.
+
+    Requires that PlaceholderItem has implemented methods:
+    - 'load_failed' - called when loading of one representation failed
+    - 'load_succeed' - called when loading of one representation succeeded
+    - 'clean' - called when placeholder processing finished
+    """
+
+    def get_load_plugin_options(self, options=None):
+        """Unified attribute definitions for load placeholder.
+
+        Common function for placeholder plugins used for loading of
+        repsentations.
+
+        Args:
+            plugin (PlaceholderPlugin): Plugin used for loading of
+                representations.
+            options (Dict[str, Any]): Already available options which are used
+                as defaults for attributes.
+
+        Returns:
+            List[AbtractAttrDef]: Attribute definitions common for load
+                plugins.
+        """
+
+        loaders_by_name = self.builder.get_loaders_by_name()
+        loader_items = [
+            (loader_name, loader.label or loader_name)
+            for loader_name, loader in loaders_by_name.items()
+        ]
+
+        loader_items = list(sorted(loader_items, key=lambda i: i[1]))
+        options = options or {}
+        return [
+            attribute_definitions.UISeparatorDef(),
+            attribute_definitions.UILabelDef("Main attributes"),
+            attribute_definitions.UISeparatorDef(),
+
+            attribute_definitions.EnumDef(
+                "builder_type",
+                label="Asset Builder Type",
+                default=options.get("builder_type"),
+                items=[
+                    ("context_asset", "Current asset"),
+                    ("linked_asset", "Linked assets"),
+                    ("all_assets", "All assets")
+                ],
+                tooltip=(
+                    "Asset Builder Type\n"
+                    "\nBuilder type describe what template loader will look"
+                    " for."
+                    "\ncontext_asset : Template loader will look for subsets"
+                    " of current context asset (Asset bob will find asset)"
+                    "\nlinked_asset : Template loader will look for assets"
+                    " linked to current context asset."
+                    "\nLinked asset are looked in database under"
+                    " field \"inputLinks\""
+                )
+            ),
+            attribute_definitions.TextDef(
+                "family",
+                label="Family",
+                default=options.get("family"),
+                placeholder="model, look, ..."
+            ),
+            attribute_definitions.TextDef(
+                "representation",
+                label="Representation name",
+                default=options.get("representation"),
+                placeholder="ma, abc, ..."
+            ),
+            attribute_definitions.EnumDef(
+                "loader",
+                label="Loader",
+                default=options.get("loader"),
+                items=loader_items,
+                tooltip=(
+                    "Loader"
+                    "\nDefines what OpenPype loader will be used to"
+                    " load assets."
+                    "\nUseable loader depends on current host's loader list."
+                    "\nField is case sensitive."
+                )
+            ),
+            attribute_definitions.TextDef(
+                "loader_args",
+                label="Loader Arguments",
+                default=options.get("loader_args"),
+                placeholder='{"camera":"persp", "lights":True}',
+                tooltip=(
+                    "Loader"
+                    "\nDefines a dictionnary of arguments used to load assets."
+                    "\nUseable arguments depend on current placeholder Loader."
+                    "\nField should be a valid python dict."
+                    " Anything else will be ignored."
+                )
+            ),
+            attribute_definitions.NumberDef(
+                "order",
+                label="Order",
+                default=options.get("order") or 0,
+                decimals=0,
+                minimum=0,
+                maximum=999,
+                tooltip=(
+                    "Order"
+                    "\nOrder defines asset loading priority (0 to 999)"
+                    "\nPriority rule is : \"lowest is first to load\"."
+                )
+            ),
+            attribute_definitions.UISeparatorDef(),
+            attribute_definitions.UILabelDef("Optional attributes"),
+            attribute_definitions.UISeparatorDef(),
+            attribute_definitions.TextDef(
+                "asset",
+                label="Asset filter",
+                default=options.get("asset"),
+                placeholder="regex filtering by asset name",
+                tooltip=(
+                    "Filtering assets by matching field regex to asset's name"
+                )
+            ),
+            attribute_definitions.TextDef(
+                "subset",
+                label="Subset filter",
+                default=options.get("subset"),
+                placeholder="regex filtering by subset name",
+                tooltip=(
+                    "Filtering assets by matching field regex to subset's name"
+                )
+            ),
+            attribute_definitions.TextDef(
+                "hierarchy",
+                label="Hierarchy filter",
+                default=options.get("hierarchy"),
+                placeholder="regex filtering by asset's hierarchy",
+                tooltip=(
+                    "Filtering assets by matching field asset's hierarchy"
+                )
+            )
+        ]
+
+    def parse_loader_args(self, loader_args):
+        """Helper function to parse string of loader arugments.
+
+        Empty dictionary is returned if conversion fails.
+
+        Args:
+            loader_args (str): Loader args filled by user.
+
+        Returns:
+            Dict[str, Any]: Parsed arguments used as dictionary.
+        """
+
+        if not loader_args:
+            return {}
+
+        try:
+            parsed_args = eval(loader_args)
+            if isinstance(parsed_args, dict):
+                return parsed_args
+
+        except Exception as err:
+            print(
+                "Error while parsing loader arguments '{}'.\n{}: {}\n\n"
+                "Continuing with default arguments. . .".format(
+                    loader_args, err.__class__.__name__, err))
+
+        return {}
+
+    def get_representations(self, placeholder):
+        project_name = self.builder.project_name
+        current_asset_doc = self.builder.current_asset_doc
+        linked_asset_docs = self.builder.linked_asset_docs
+
+        builder_type = placeholder.data["builder_type"]
+        if builder_type == "context_asset":
+            context_filters = {
+                "asset": [current_asset_doc["name"]],
+                "subset": [re.compile(placeholder.data["subset"])],
+                "hierarchy": [re.compile(placeholder.data["hierarchy"])],
+                "representations": [placeholder.data["representation"]],
+                "family": [placeholder.data["family"]]
+            }
+
+        elif builder_type != "linked_asset":
+            context_filters = {
+                "asset": [re.compile(placeholder.data["asset"])],
+                "subset": [re.compile(placeholder.data["subset"])],
+                "hierarchy": [re.compile(placeholder.data["hierarchy"])],
+                "representation": [placeholder.data["representation"]],
+                "family": [placeholder.data["family"]]
+            }
+
+        else:
+            asset_regex = re.compile(placeholder.data["asset"])
+            linked_asset_names = []
+            for asset_doc in linked_asset_docs:
+                asset_name = asset_doc["name"]
+                if asset_regex.match(asset_name):
+                    linked_asset_names.append(asset_name)
+
+            context_filters = {
+                "asset": linked_asset_names,
+                "subset": [re.compile(placeholder.data["subset"])],
+                "hierarchy": [re.compile(placeholder.data["hierarchy"])],
+                "representation": [placeholder.data["representation"]],
+                "family": [placeholder.data["family"]],
+            }
+
+        return list(get_representations(
+            project_name,
+            context_filters=context_filters
+        ))
+
+    def populate_load_placeholder(self, placeholder, ignore_repre_ids=None):
+        if ignore_repre_ids is None:
+            ignore_repre_ids = set()
+
+        # TODO check loader existence
+        loader_name = placeholder.data["loader"]
+        loader_args = placeholder.data["loader_args"]
+
+        placeholder_representations = self.get_representations(placeholder)
+
+        filtered_representations = []
+        for representation in placeholder_representations:
+            repre_id = str(representation["_id"])
+            if repre_id not in ignore_repre_ids:
+                filtered_representations.append(representation)
+
+        if not filtered_representations:
+            self.log.info((
+                "There's no representation for this placeholder: {}"
+            ).format(placeholder.scene_identifier))
+            return
+
+        repre_load_contexts = get_contexts_for_repre_docs(
+            self.project_name, filtered_representations
+        )
+        loaders_by_name = self.builder.get_loaders_by_name()
+        for repre_load_context in repre_load_contexts:
+            representation = repre_load_context["representation"]
+            repre_context = representation["context"]
+            self.log.info(
+                "Loading {} from {} with loader {}\n"
+                "Loader arguments used : {}".format(
+                    repre_context["subset"],
+                    repre_context["asset"],
+                    loader_name,
+                    loader_args
+                )
+            )
+            try:
+                container = load_with_repre_context(
+                    loaders_by_name[loader_name],
+                    repre_load_context,
+                    options=self.parse_loader_args(loader_args)
+                )
+
+            except Exception:
+                placeholder.load_failed(representation)
+
+            else:
+                placeholder.load_succeed(container)
+            placeholder.clean()
