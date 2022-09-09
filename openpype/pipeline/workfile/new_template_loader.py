@@ -404,7 +404,7 @@ class AbstractTemplateLoader:
                 placeholder.set_in_progress()
                 placeholder_plugin = placeholder.plugin
                 try:
-                    placeholder_plugin.process_placeholder(placeholder)
+                    placeholder_plugin.populate_placeholder(placeholder)
 
                 except Exception as exc:
                     placeholder.set_error(exc)
@@ -625,7 +625,7 @@ class PlaceholderPlugin(object):
         pass
 
     @abstractmethod
-    def process_placeholder(self, placeholder):
+    def populate_placeholder(self, placeholder):
         """Process single placeholder item.
 
         Processing of placeholders is defined by their order thus can't be
