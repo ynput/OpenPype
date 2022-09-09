@@ -265,6 +265,7 @@ class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
         return [
             attribute_definitions.UISeparatorDef(),
             attribute_definitions.UILabelDef("Main attributes"),
+            attribute_definitions.UISeparatorDef(),
 
             attribute_definitions.EnumDef(
                 "builder_type",
@@ -307,22 +308,26 @@ class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
                     (loader_name, loader_name)
                     for loader_name in loader_names
                 ],
-                tooltip="""Loader
-Defines what OpenPype loader will be used to load assets.
-Useable loader depends on current host's loader list.
-Field is case sensitive.
-"""
+                tooltip=(
+                    "Loader"
+                    "\nDefines what OpenPype loader will be used to"
+                    " load assets."
+                    "\nUseable loader depends on current host's loader list."
+                    "\nField is case sensitive."
+                )
             ),
             attribute_definitions.TextDef(
                 "loader_args",
                 label="Loader Arguments",
                 default=options.get("loader_args"),
                 placeholder='{"camera":"persp", "lights":True}',
-                tooltip="""Loader
-Defines a dictionnary of arguments used to load assets.
-Useable arguments depend on current placeholder Loader.
-Field should be a valid python dict. Anything else will be ignored.
-"""
+                tooltip=(
+                    "Loader"
+                    "\nDefines a dictionnary of arguments used to load assets."
+                    "\nUseable arguments depend on current placeholder Loader."
+                    "\nField should be a valid python dict."
+                    " Anything else will be ignored."
+                )
             ),
             attribute_definitions.NumberDef(
                 "order",
@@ -331,9 +336,11 @@ Field should be a valid python dict. Anything else will be ignored.
                 decimals=0,
                 minimum=0,
                 maximum=999,
-                tooltip="""Order
-Order defines asset loading priority (0 to 999)
-Priority rule is : "lowest is first to load"."""
+                tooltip=(
+                    "Order"
+                    "\nOrder defines asset loading priority (0 to 999)"
+                    "\nPriority rule is : \"lowest is first to load\"."
+                )
             ),
             attribute_definitions.UISeparatorDef(),
             attribute_definitions.UILabelDef("Optional attributes"),
