@@ -269,7 +269,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             nodes = cmds.ls(type=node_type)
 
             if not nodes:
-                cls.log.info("No nodes of type '{}' found.".format(node_type))
+                cls.log.warning(
+                    "No nodes of type '{}' found.".format(node_type))
                 continue
 
             for node in nodes:
