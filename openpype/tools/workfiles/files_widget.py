@@ -10,7 +10,9 @@ from openpype.host import IWorkfileHost
 from openpype.client import get_asset_by_id
 from openpype.pipeline.workfile.lock_workfile import (
     is_workfile_locked,
-    get_username
+    get_user_from_lock,
+    is_workfile_lock_enabled,
+    is_workfile_locked_for_current_process
 )
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.delegates import PrettyTimeDelegate
@@ -456,10 +458,17 @@ class FilesWidget(QtWidgets.QWidget):
             "host_name": self.host_name
         }
 
+    def _is_workfile_locked(self, filepath):
+        if not is_workfile_lock_enabled(self.host_name, self.project_name):
+            return False
+        if not is_workfile_locked(filepath):
+            return False
+        return not is_workfile_locked_for_current_process(filepath)
+
     def open_file(self, filepath):
         host = self.host
-        if is_workfile_locked(filepath):
-            username = get_username(filepath)
+        if self._is_workfile_locked(filepath):
+            username = get_user_from_lock(filepath)
             popup_dialog = QtWidgets.QMessageBox(parent=self)
             popup_dialog.setWindowTitle("Warning")
             popup_dialog.setText(username + " is using the file")

@@ -33,9 +33,10 @@ from openpype.pipeline import (
 from openpype.pipeline.load import any_outdated_containers
 from openpype.pipeline.workfile.lock_workfile import (
     create_workfile_lock,
-    get_username,
+    get_user_from_lock,
     remove_workfile_lock,
-    is_workfile_locked
+    is_workfile_locked,
+    is_workfile_lock_enabled
 )
 from openpype.hosts.maya import MAYA_ROOT_DIR
 from openpype.hosts.maya.lib import copy_workspace_mel
@@ -266,9 +267,19 @@ def _before_scene_save(return_code, client_data):
 
 
 def _remove_workfile_lock():
+    """Remove workfile lock on current file"""
+    if not handle_workfile_locks():
+        return
     filepath = current_file()
     if filepath:
         remove_workfile_lock(filepath)
+
+
+def handle_workfile_locks():
+    if lib.IS_HEADLESS:
+        return False
+    project_name = legacy_io.active_project()
+    return is_workfile_lock_enabled(MayaHost.name, project_name)
 
 
 def uninstall():
@@ -468,8 +479,10 @@ def on_before_save():
     return lib.validate_fps()
 
 
-def after_file_open():
+def check_lock_on_current_file():
     """Check if there is a user opening the file"""
+    if not handle_workfile_locks():
+        return
     log.info("Running callback on checking the lock file...")
 
     # add the lock file when opening the file
@@ -477,23 +490,25 @@ def after_file_open():
 
     if not is_workfile_locked(filepath):
         create_workfile_lock(filepath)
+        return
 
-    else:
-        username = get_username(filepath)
-        reminder = cmds.window(title="Reminder", width=400, height=30)
-        cmds.columnLayout(adjustableColumn=True)
-        cmds.separator()
-        cmds.columnLayout(adjustableColumn=True)
-        comment = " %s is working the same workfile!" % username
-        cmds.text(comment, align='center')
-        cmds.text(vis=False)
-        cmds.rowColumnLayout(numberOfColumns=3,
-                             columnWidth=[(1, 300), (2, 100)],
-                             columnSpacing=[(2, 10)])
-        cmds.separator(vis=False)
-        quit_command = "cmds.quit(force=True);cmds.deleteUI('%s')" % reminder
-        cmds.button(label='Ok', command=quit_command)
-        cmds.showWindow(reminder)
+    username = get_user_from_lock(filepath)
+    reminder = cmds.window(title="Reminder", width=400, height=30)
+    cmds.columnLayout(adjustableColumn=True)
+    cmds.separator()
+    cmds.columnLayout(adjustableColumn=True)
+    comment = " %s is working the same workfile!" % username
+    cmds.text(comment, align='center')
+    cmds.text(vis=False)
+    cmds.rowColumnLayout(numberOfColumns=3,
+                         columnWidth=[(1,200), (2, 100), (3, 100)],
+                         columnSpacing=[(3, 10)])
+    cmds.separator(vis=False)
+    cancel_command = "cmds.file(new=True);cmds.deleteUI('%s')" % reminder
+    ignore_command ="cmds.deleteUI('%s')" % reminder
+    cmds.button(label='Cancel', command=cancel_command)
+    cmds.button(label = "Ignore", command=ignore_command)
+    cmds.showWindow(reminder)
 
 
 def on_before_close():
@@ -501,12 +516,13 @@ def on_before_close():
     log.info("Closing Maya...")
     # delete the lock file
     filepath = current_file()
-    remove_workfile_lock(filepath)
+    if handle_workfile_locks():
+        remove_workfile_lock(filepath)
 
 
 def before_file_open():
     """check lock file when the file changed"""
-    log.info("check lock file when file changed...")
+    log.info("Removing lock on current file before scene open...")
     # delete the lock file
     _remove_workfile_lock()
 
@@ -579,7 +595,7 @@ def on_open():
             dialog.show()
 
     # create lock file for the maya scene
-    after_file_open()
+    check_lock_on_current_file()
 
 
 def on_new():
