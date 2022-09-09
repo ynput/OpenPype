@@ -501,13 +501,13 @@ def check_lock_on_current_file():
     cmds.text(comment, align='center')
     cmds.text(vis=False)
     cmds.rowColumnLayout(numberOfColumns=3,
-                         columnWidth=[(1,200), (2, 100), (3, 100)],
+                         columnWidth=[(1, 200), (2, 100), (3, 100)],
                          columnSpacing=[(3, 10)])
     cmds.separator(vis=False)
     cancel_command = "cmds.file(new=True);cmds.deleteUI('%s')" % reminder
     ignore_command = "cmds.deleteUI('%s')" % reminder
     cmds.button(label='Cancel', command=cancel_command)
-    cmds.button(label = "Ignore", command=ignore_command)
+    cmds.button(label="Ignore", command=ignore_command)
     cmds.showWindow(reminder)
 
 

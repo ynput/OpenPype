@@ -80,7 +80,7 @@ def is_workfile_lock_enabled(host_name, project_name, project_setting=None):
         ["tools"]
         ["Workfiles"]
         ["workfile_lock_profiles"])
-    profile = filter_profiles(workfile_lock_profiles,{"host_name": host_name})
+    profile = filter_profiles(workfile_lock_profiles, {"host_name": host_name})
     if not profile:
         return False
     return profile["enabled"]
