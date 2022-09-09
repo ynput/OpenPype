@@ -73,6 +73,8 @@ def load_apps():
         opfapi.FlameMenuProjectConnect(opfapi.CTX.app_framework))
     opfapi.CTX.flame_apps.append(
         opfapi.FlameMenuTimeline(opfapi.CTX.app_framework))
+    opfapi.CTX.flame_apps.append(
+        opfapi.FlameMenuBatch(opfapi.CTX.app_framework))
     opfapi.CTX.app_framework.log.info("Apps are loaded")
 
 
@@ -191,3 +193,14 @@ def get_timeline_custom_ui_actions():
     openpype_install()
 
     return _build_app_menu("FlameMenuTimeline")
+
+def get_batch_custom_ui_actions():
+    """Hook to create submenu in batch
+
+    Returns:
+        list: menu object
+    """
+    # install openpype and the host
+    openpype_install()
+
+    return _build_app_menu("FlameMenuBatch")
