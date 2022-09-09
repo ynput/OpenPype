@@ -350,7 +350,7 @@ class AbstractTemplateLoader:
         self.import_template(template_path)
         self.populate_scene_placeholders(level_limit)
 
-    def update_template(self):
+    def rebuild_template(self):
         """Go through existing placeholders in scene and update them.
 
         This could not make sense for all plugin types so this is optional

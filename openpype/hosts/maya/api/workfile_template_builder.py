@@ -135,7 +135,7 @@ class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
                 for container in containers
             }
             self.builder.set_shared_populate_data(
-                "loaded_representation_ids"
+                "loaded_representation_ids", loaded_representation_ids
             )
         return loaded_representation_ids
 
@@ -525,7 +525,7 @@ def build_workfile_template(*args):
 
 def update_workfile_template(*args):
     builder = MayaTemplateLoader(registered_host())
-    builder.update_build_template()
+    builder.rebuild_template()
 
 
 def create_placeholder(*args):
