@@ -111,7 +111,12 @@ class HoudiniCreator(NewCreator):
             instance_node = out.createNode(
                 node_type, node_name=subset_name)
             instance_node.moveToGoodPosition()
+
+            # wondering if we'll ever need more than one member here
+            # in Houdini
             instance_data["members"] = [instance_node.path()]
+            instance_data["instance_node"] = instance_node.path()
+
             instance = CreatedInstance(
                 self.family,
                 subset_name,
@@ -136,7 +141,7 @@ class HoudiniCreator(NewCreator):
 
     def update_instances(self, update_list):
         for created_inst, _changes in update_list:
-            instance_node = hou.node(created_inst.get("members")[0])
+            instance_node = hou.node(created_inst.get("instance_node"))
             current_data = read(instance_node)
 
             imprint(
