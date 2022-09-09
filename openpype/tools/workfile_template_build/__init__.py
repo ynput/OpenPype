@@ -1,5 +1,5 @@
-from .window import WorkfileBuildDialog
+from .window import WorkfileBuildPlaceholderDialog
 
 __all__ = (
-    "WorkfileBuildDialog",
+    "WorkfileBuildPlaceholderDialog",
 )

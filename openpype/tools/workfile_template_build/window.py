@@ -6,9 +6,9 @@ from openpype.pipeline import legacy_io
 from openpype.widgets.attribute_defs import AttributeDefinitionsWidget
 
 
-class WorkfileBuildDialog(QtWidgets.QDialog):
+class WorkfileBuildPlaceholderDialog(QtWidgets.QDialog):
     def __init__(self, host, builder, parent=None):
-        super(WorkfileBuildDialog, self).__init__(parent)
+        super(WorkfileBuildPlaceholderDialog, self).__init__(parent)
         self.setWindowTitle("Workfile Placeholder Manager")
 
         self._log = None
@@ -78,7 +78,7 @@ class WorkfileBuildDialog(QtWidgets.QDialog):
     def _clear_content_widget(self):
         while self._content_layout.count() > 0:
             item = self._content_layout.takeAt(0)
-            widget = item.widget
+            widget = item.widget()
             if widget:
                 widget.setVisible(False)
                 widget.deleteLater()
@@ -90,6 +90,7 @@ class WorkfileBuildDialog(QtWidgets.QDialog):
 
     def refresh(self):
         self._first_refreshed = True
+
         self._clear_content_widget()
 
         if not self._builder:
@@ -100,11 +101,19 @@ class WorkfileBuildDialog(QtWidgets.QDialog):
             self._update_ui_visibility()
             return
 
+        placeholder_plugins = self._builder.placeholder_plugins
+
         if self._mode == 1:
+            self._last_selected_plugin
+            plugin = self._builder.placeholder_plugins.get(
+                self._last_selected_plugin
+            )
+            self._create_option_widgets(
+                plugin, self._update_item.to_dict()
+            )
             self._update_ui_visibility()
             return
 
-        placeholder_plugins = builder.placeholder_plugins
         if not placeholder_plugins:
             self._add_message_to_content((
                 "Host \"{}\" does not have implemented plugins"
@@ -142,15 +151,16 @@ class WorkfileBuildDialog(QtWidgets.QDialog):
 
         self._mode = 1
         self._update_item = update_item
-        if not update_item:
-            self._add_message_to_content((
-                "Nothing to update."
-                " (You maybe don't have selected placeholder.)"
-            ))
-        else:
-            self._create_option_widgets(
-                update_item.plugin, update_item.to_dict()
-            )
+        if update_item:
+            self._last_selected_plugin = update_item.plugin.identifier
+            self.refresh()
+            return
+
+        self._clear_content_widget()
+        self._add_message_to_content((
+            "Nothing to update."
+            " (You maybe don't have selected placeholder.)"
+        ))
         self._update_ui_visibility()
 
     def _create_option_widgets(self, plugin, options=None):
@@ -160,6 +170,7 @@ class WorkfileBuildDialog(QtWidgets.QDialog):
         self._content_layout.addWidget(widget, 0)
         self._content_layout.addStretch(1)
         self._attr_defs_widget = widget
+        self._last_selected_plugin = plugin.identifier
 
     def _update_ui_visibility(self):
         create_mode = self._mode == 0
@@ -182,7 +193,6 @@ class WorkfileBuildDialog(QtWidgets.QDialog):
         if plugin_identifier == self._last_selected_plugin:
             return
 
-        self._last_selected_plugin = plugin_identifier
         plugin = self._builder.placeholder_plugins.get(plugin_identifier)
         self._create_option_widgets(plugin)
 
@@ -222,7 +232,7 @@ class WorkfileBuildDialog(QtWidgets.QDialog):
         self.reject()
 
     def showEvent(self, event):
-        super(WorkfileBuildDialog, self).showEvent(event)
+        super(WorkfileBuildPlaceholderDialog, self).showEvent(event)
         if not self._first_refreshed:
             self.refresh()
 
