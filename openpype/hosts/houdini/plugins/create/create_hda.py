@@ -34,6 +34,43 @@ class CreateHDA(plugin.HoudiniCreator):
         }
         return subset_name.lower() in existing_subset_names_low
 
+    def _create_instance_node(
+            self, node_name, parent, node_type="geometry"):
+        parent_node = hou.node("/obj")
+        if self.selected_nodes:
+            # if we have `use selection` enabled, and we have some
+            # selected nodes ...
+            subnet = parent_node.collapseIntoSubnet(
+                self._nodes,
+                subnet_name="{}_subnet".format(node_name))
+            subnet.moveToGoodPosition()
+            to_hda = subnet
+        else:
+            to_hda = parent_node.createNode(
+                "subnet", node_name="{}_subnet".format(node_name))
+        if not to_hda.type().definition():
+            # if node type has not its definition, it is not user
+            # created hda. We test if hda can be created from the node.
+            if not to_hda.canCreateDigitalAsset():
+                raise plugin.OpenPypeCreatorError(
+                    "cannot create hda from node {}".format(to_hda))
+
+            hda_node = to_hda.createDigitalAsset(
+                name=node_name,
+                hda_file_name="$HIP/{}.hda".format(node_name)
+            )
+            hda_node.layoutChildren()
+        elif self._check_existing(node_name):
+            raise plugin.OpenPypeCreatorError(
+                ("subset {} is already published with different HDA"
+                 "definition.").format(node_name))
+        else:
+            hda_node = to_hda
+
+        hda_node.setName(node_name)
+        return hda_node
+
+
     def create(self, subset_name, instance_data, pre_create_data):
         import hou
 
@@ -44,38 +81,4 @@ class CreateHDA(plugin.HoudiniCreator):
             instance_data,
             pre_create_data)  # type: CreatedInstance
 
-        instance_node = hou.node(instance.get("instance_node"))
-        out = hou.node("/obj")
-        if self._nodes:
-            # if we have `use selection` enabled, and we have some
-            # selected nodes ...
-            subnet = out.collapseIntoSubnet(
-                self.nodes,
-                subnet_name="{}_subnet".format(subset_name))
-            subnet.moveToGoodPosition()
-            to_hda = subnet
-        else:
-            to_hda = out.createNode(
-                "subnet", node_name="{}_subnet".format(subset_name))
-        if not to_hda.type().definition():
-            # if node type has not its definition, it is not user
-            # created hda. We test if hda can be created from the node.
-            if not to_hda.canCreateDigitalAsset():
-                raise plugin.OpenPypeCreatorError(
-                    "cannot create hda from node {}".format(to_hda))
-
-            hda_node = to_hda.createDigitalAsset(
-                name=subset_name,
-                hda_file_name="$HIP/{}.hda".format(subset_name)
-            )
-            hda_node.layoutChildren()
-        elif self._check_existing(subset_name):
-            raise plugin.OpenPypeCreatorError(
-                ("subset {} is already published with different HDA"
-                 "definition.").format(subset_name))
-        else:
-            hda_node = to_hda
-
-        hda_node.setName(subset_name)
-
-        return hda_node
+        return instance
