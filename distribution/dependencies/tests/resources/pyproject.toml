@@ -23,6 +23,41 @@ build-backend = "poetry.core.masonry.api"
 
 [openpype]
 
+[openpype.thirdparty.ffmpeg.windows]
+version = "4.6"
+url = "https://distribute.openpype.io/thirdparty/ffmpeg-4.4-windows.zip"
+hash = "dd51ba29d64ee238e7c4c3c7301b19754c3f0ee2e2a729c20a0e2789e72db925"
+
+[openpype.thirdparty.ffmpeg.linux]
+version = "4.6"
+url = "https://distribute.openpype.io/thirdparty/ffmpeg-4.3-linux.tgz"
+hash = "10b9beda57cfbb69b9ed0ce896c0c8d99227b26ca8b9f611040c4752e365cbe9"
+
+[openpype.thirdparty.ffmpeg.darwin]
+version = "4.6"
+url = "https://distribute.openpype.io/thirdparty/ffmpeg-4.3-macos.tgz"
+hash = "95f43568338c275f80dc0cab1e1836a2e2270f856f0e7b204440d881dd74fbdb"
+
+[openpype.thirdparty.oiio.windows]
+version = "2.1.0"
+url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.3.66-windows.zip"
+hash = "b9950f5d2fa3720b52b8be55bacf5f56d33f9e029d38ee86534995f3d8d253d2"
+
+[openpype.thirdparty.oiio.linux]
+version = "2.1.0"
+url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.66-linux-centos7.tgz"
+hash = "3894dec7e4e521463891a869586850e8605f5fd604858b674c87323bf33e273d"
+
+[openpype.thirdparty.oiio.darwin]
+version = "2.1.0"
+url = "https://distribute.openpype.io/thirdparty/oiio-2.2.66-darwin.tgz"
+hash = "sha256:..."
+
+[openpype.thirdparty.ocioconfig]
+version = "1.0.0"
+url = "https://distribute.openpype.io/thirdparty/OpenColorIO-Configs-1.0.2.zip"
+hash = "4ac17c1f7de83465e6f51dd352d7117e07e765b66d00443257916c828e35b6ce"
+
 exclude = [
     "**/node_modules",
     "**/__pycache__"

@@ -67,6 +67,11 @@ def merge_tomls(main_toml, addon_toml):
 
     Looks for mininimal compatible version from both tomls.
 
+    Handles sections:
+        - ["tool"]["poetry"]["dependencies"]
+        - ["tool"]["poetry"][""-dependencies"]
+        - ["openpype"]["thirdparty"]
+
     Returns:
         (dict): updated 'main_toml' with additional/updated dependencies
     """
@@ -84,6 +89,27 @@ def merge_tomls(main_toml, addon_toml):
             main_poetry[dependency] = str(dep_version)
 
         main_toml["tool"]["poetry"][key] = main_poetry
+
+    # handle thirdparty
+    platform_name = platform.system().lower()
+
+    addon_poetry = addon_toml["openpype"]["thirdparty"]
+    for dependency, dep_info in addon_poetry.items():
+        main_poetry = main_toml["openpype"]["thirdparty"]  # reset level
+        if main_poetry.get(dependency):
+            if dep_info.get(platform_name):
+                dep_version = dep_info[platform_name]["version"]
+                main_version = main_poetry[dependency][platform_name]["version"]
+            else:
+                dep_version = dep_info["version"]
+                main_version = main_poetry[dependency]["version"]
+
+            if version.parse(dep_version) > version.parse(main_version):
+                dep_info = main_poetry[dependency]
+
+        main_poetry[dependency] = dep_info
+
+    main_toml["openpype"]["thirdparty"] = main_poetry
 
     return main_toml
 
