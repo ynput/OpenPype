@@ -261,6 +261,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             if "." not in attr:
                 cls.log.warning("Skipping invalid attribute defined in "
                                 "validation settings: '{}'".format(attr))
+                continue
 
             node_type, attribute_name = attr.split(".", 1)
 
