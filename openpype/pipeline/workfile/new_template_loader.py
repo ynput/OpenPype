@@ -233,7 +233,7 @@ class AbstractTemplateLoader:
         Import template in current host.
 
         Should load the content of template into scene so
-        'process_scene_placeholders' can be started.
+        'populate_scene_placeholders' can be started.
 
         Args:
             template_path (str): Fullpath for current task and
@@ -270,7 +270,7 @@ class AbstractTemplateLoader:
             plugin = plugins_by_identifier[identifier]
             plugin.prepare_placeholders(placeholders)
 
-    def process_scene_placeholders(self, level_limit=None):
+    def populate_scene_placeholders(self, level_limit=None):
         """Find placeholders in scene using plugins and process them.
 
         This should happen after 'import_template'.
@@ -285,8 +285,7 @@ class AbstractTemplateLoader:
         placeholder's 'scene_identifier'.
 
         Args:
-            level_limit (int): Level of loops that can happen. By default
-                if is possible to have infinite nested placeholder processing.
+            level_limit (int): Level of loops that can happen. Default is 1000.
         """
 
         if not self.placeholder_plugins:
@@ -297,6 +296,11 @@ class AbstractTemplateLoader:
         if not placeholders:
             self.log.warning("No placeholders were found.")
             return
+
+        # Avoid infinite loop
+        # - 1000 iterations of placeholders processing must be enough
+        if not level_limit:
+            level_limit = 1000
 
         placeholder_by_scene_id = {
             placeholder.scene_identifier: placeholder
@@ -335,10 +339,9 @@ class AbstractTemplateLoader:
             # Clear shared data before getting new placeholders
             self.clear_shared_data()
 
-            if level_limit:
-                iter_counter += 1
-                if iter_counter >= level_limit:
-                    break
+            iter_counter += 1
+            if iter_counter >= level_limit:
+                break
 
             all_processed = True
             collected_placeholders = self.get_placeholders()
