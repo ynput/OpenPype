@@ -9,16 +9,17 @@ import maya.cmds as cmds
 from openpype.settings import get_project_settings
 from openpype.pipeline import legacy_io
 from openpype.pipeline.workfile import BuildWorkfile
-from openpype.pipeline.workfile.build_template import (
-    build_workfile_template,
-    update_workfile_template
-)
 from openpype.tools.utils import host_tools
 from openpype.hosts.maya.api import lib, lib_rendersettings
 from .lib import get_main_window, IS_HEADLESS
 from .commands import reset_frame_range
-from .lib_template_builder import create_placeholder, update_placeholder
 
+from .new_template_builder import (
+    create_placeholder,
+    update_placeholder,
+    build_workfile_template,
+    update_workfile_template,
+)
 
 log = logging.getLogger(__name__)
 
