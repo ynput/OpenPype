@@ -108,11 +108,9 @@ class SaveDirtyTextures(pyblish.api.Action):
         self.log.info("Finding invalid nodes...")
         invalid_nodes = set(_get_invalid_nodes(context, plugin))
 
-        from openpype.pipeline.legacy_io import Session
-        from .workio import work_root
-        from pathlib import Path 
-
+        # Saves the texture image
         for v in invalid_nodes:
-            v.filepath = str(Path(work_root(Session), "{}.png".format(v.name)))
+            v.filepath_raw = f"//{v.name}.png"
+            v.file_format = "PNG"
             v.save()
-            self.log.info("Saved {}".format(v.name))
+            print(f"Saved {v.name}")
