@@ -162,12 +162,12 @@ def install():
         cmds.menuItem(
             "Create Placeholder",
             parent=builder_menu,
-            command=lambda *args: create_placeholder()
+            command=create_placeholder
         )
         cmds.menuItem(
             "Update Placeholder",
             parent=builder_menu,
-            command=lambda *args: update_placeholder()
+            command=update_placeholder
         )
         cmds.menuItem(
             "Build Workfile from template",

@@ -571,24 +571,24 @@ class LoadPlaceholder(PlaceholderItem):
         self.parent_in_hierarchy(container)
 
 
-def build_workfile_template():
+def build_workfile_template(*args):
     builder = MayaTemplateLoader(registered_host())
     builder.build_template()
 
 
-def update_workfile_template():
+def update_workfile_template(*args):
     builder = MayaTemplateLoader(registered_host())
     builder.update_build_template()
 
 
-def create_placeholder():
+def create_placeholder(*args):
     host = registered_host()
     builder = MayaTemplateLoader(host)
     window = WorkfileBuildPlaceholderDialog(host, builder)
     window.exec_()
 
 
-def update_placeholder():
+def update_placeholder(*args):
     host = registered_host()
     builder = MayaTemplateLoader(host)
     placeholder_items_by_id = {
