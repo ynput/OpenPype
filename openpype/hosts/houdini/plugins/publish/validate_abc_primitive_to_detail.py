@@ -1,8 +1,8 @@
+# -*- coding: utf-8 -*-
 import pyblish.api
 
 from collections import defaultdict
-
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
@@ -16,7 +16,7 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
 
     """
 
-    order = ValidateContentsOrder + 0.1
+    order = pyblish.api.ValidatorOrder + 0.1
     families = ["pointcache"]
     hosts = ["houdini"]
     label = "Validate Primitive to Detail (Abc)"
@@ -24,15 +24,24 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
-                "Primitives found with inconsistent primitive "
-                "to detail attributes. See log."
+            raise PublishValidationError(
+                ("Primitives found with inconsistent primitive "
+                 "to detail attributes. See log."),
+                title=self.label
             )
 
     @classmethod
     def get_invalid(cls, instance):
 
-        output = instance.data["output_node"]
+        output_node = instance.data.get("output_node")
+        if output_node is None:
+            node = instance.data["members"][0]
+            cls.log.error(
+                "SOP Output node in '%s' does not exist. "
+                "Ensure a valid SOP output path is set." % node.path()
+            )
+
+            return [node.path()]
 
         rop = instance.data["members"][0]
         pattern = rop.parm("prim_to_detail_pattern").eval().strip()
@@ -67,7 +76,7 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
 
         # Check if the primitive attribute exists
         frame = instance.data.get("frameStart", 0)
-        geo = output.geometryAtFrame(frame)
+        geo = output_node.geometryAtFrame(frame)
 
         # If there are no primitives on the start frame then it might be
         # something that is emitted over time. As such we can't actually
@@ -86,7 +95,7 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
                 "Geometry Primitives are missing "
                 "path attribute: `%s`" % path_attr
             )
-            return [output.path()]
+            return [output_node.path()]
 
         # Ensure at least a single string value is present
         if not attrib.strings():
@@ -94,7 +103,7 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
                 "Primitive path attribute has no "
                 "string values: %s" % path_attr
             )
-            return [output.path()]
+            return [output_node.path()]
 
         paths = None
         for attr in pattern.split(" "):
@@ -130,4 +139,4 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
                         "Path has multiple values: %s (path: %s)"
                         % (list(values), path)
                     )
-                    return [output.path()]
+                    return [output_node.path()]

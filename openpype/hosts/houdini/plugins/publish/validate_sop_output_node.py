@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import pyblish.api
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateSopOutputNode(pyblish.api.InstancePlugin):
@@ -24,10 +24,9 @@ class ValidateSopOutputNode(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise PublishXmlValidationError(
-                self,
-                message="Output node(s) `%s` are incorrect. " % invalid,
-                title=self.label
+            raise PublishValidationError(
+                "Output node(s) are incorrect",
+                title="Invalid output node(s)"
             )
 
     @classmethod
@@ -35,7 +34,7 @@ class ValidateSopOutputNode(pyblish.api.InstancePlugin):
 
         import hou
 
-        output_node = instance.data["output_node"]
+        output_node = instance.data.get("output_node")
 
         if output_node is None:
             node = instance.data["members"][0]

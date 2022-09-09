@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
 import pyblish.api
 from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline import PublishValidationError
 
 
 class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
@@ -19,16 +21,24 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
-                "See log for details. " "Invalid nodes: {0}".format(invalid)
+            raise PublishValidationError(
+                "See log for details. " "Invalid nodes: {0}".format(invalid),
+                title=self.label
             )
 
     @classmethod
     def get_invalid(cls, instance):
 
-        import hou
+        output_node = instance.data.get("output_node")
 
-        output = instance.data["output_node"]
+        if output_node is None:
+            node = instance.data["members"][0]
+            cls.log.error(
+                "SOP Output node in '%s' does not exist. "
+                "Ensure a valid SOP output path is set." % node.path()
+            )
+
+            return [node.path()]
 
         rop = instance.data["members"][0]
         build_from_path = rop.parm("build_from_path").eval()
@@ -52,7 +62,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
 
         # Check if the primitive attribute exists
         frame = instance.data.get("frameStart", 0)
-        geo = output.geometryAtFrame(frame)
+        geo = output_node.geometryAtFrame(frame)
 
         # If there are no primitives on the current frame then we can't
         # check whether the path names are correct. So we'll just issue a
@@ -73,7 +83,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
                 "Geometry Primitives are missing "
                 "path attribute: `%s`" % path_attr
             )
-            return [output.path()]
+            return [output_node.path()]
 
         # Ensure at least a single string value is present
         if not attrib.strings():
@@ -81,7 +91,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
                 "Primitive path attribute has no "
                 "string values: %s" % path_attr
             )
-            return [output.path()]
+            return [output_node.path()]
 
         paths = geo.primStringAttribValues(path_attr)
         # Ensure all primitives are set to a valid path
@@ -93,4 +103,4 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
                 "Prims have no value for attribute `%s` "
                 "(%s of %s prims)" % (path_attr, len(invalid_prims), num_prims)
             )
-            return [output.path()]
+            return [output_node.path()]

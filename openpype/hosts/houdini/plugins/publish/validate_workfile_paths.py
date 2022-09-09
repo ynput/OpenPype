@@ -2,22 +2,30 @@
 import openpype.api
 import pyblish.api
 import hou
+from openpype.pipeline import (
+    PublishValidationError,
+    OptionalPyblishPluginMixin
+)
+from openpype.pipeline.publish import RepairAction
 
 
-class ValidateWorkfilePaths(pyblish.api.InstancePlugin):
+class ValidateWorkfilePaths(
+        pyblish.api.InstancePlugin, OptionalPyblishPluginMixin):
     """Validate workfile paths so they are absolute."""
 
     order = pyblish.api.ValidatorOrder
     families = ["workfile"]
     hosts = ["houdini"]
     label = "Validate Workfile Paths"
-    actions = [openpype.api.RepairAction]
+    actions = [RepairAction]
     optional = True
 
     node_types = ["file", "alembic"]
     prohibited_vars = ["$HIP", "$JOB"]
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
         invalid = self.get_invalid()
         self.log.info(
             "node types to check: {}".format(", ".join(self.node_types)))
@@ -29,13 +37,18 @@ class ValidateWorkfilePaths(pyblish.api.InstancePlugin):
                 self.log.error(
                     "{}: {}".format(param.path(), param.unexpandedString()))
 
-            raise RuntimeError("Invalid paths found")
+            raise PublishValidationError(
+                "Invalid paths found", title=self.label)
 
     @classmethod
     def get_invalid(cls):
         invalid = []
         for param, _ in hou.fileReferences():
+            # it might return None for some reason
+            if not param:
+                continue
             # skip nodes we are not interested in
+            cls.log.debug(param)
             if param.node().type().name() not in cls.node_types:
                 continue
 
