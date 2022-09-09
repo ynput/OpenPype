@@ -5,7 +5,10 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
-from openpype.client import get_asset_by_name
+from openpype.client import (
+    get_asset_by_name,
+    get_linked_assets,
+)
 from openpype.settings import get_project_settings
 from openpype.host import HostBase
 from openpype.lib import (
@@ -67,11 +70,50 @@ class AbstractTemplateLoader:
         self._loaders_by_name = None
         self._creators_by_name = None
 
-        self.current_asset = asset_name
-        self.project_name = project_name
-        self.task_name = task_name
-        self.current_asset_doc = current_asset_doc
-        self.task_type = task_type
+        self._current_asset_doc = None
+        self._linked_asset_docs = None
+        self._task_type = None
+
+    @property
+    def project_name(self):
+        return legacy_io.active_project()
+
+    @property
+    def current_asset_name(self):
+        return legacy_io.Session["AVALON_ASSET"]
+
+    @property
+    def current_task_name(self):
+        return legacy_io.Session["AVALON_TASK"]
+
+    @property
+    def current_asset_doc(self):
+        if self._current_asset_doc is None:
+            self._current_asset_doc = get_asset_by_name(
+                self.project_name, self.current_asset_name
+            )
+        return self._current_asset_doc
+
+    @property
+    def linked_asset_docs(self):
+        if self._linked_asset_docs is None:
+            self._linked_asset_docs = get_linked_assets(
+                self.current_asset_doc
+            )
+        return self._linked_asset_docs
+
+    @property
+    def current_task_type(self):
+        asset_doc = self.current_asset_doc
+        if not asset_doc:
+            return None
+        return (
+            asset_doc
+            .get("data", {})
+            .get("tasks", {})
+            .get(self.current_task_name, {})
+            .get("type")
+        )
 
     def get_placeholder_plugin_classes(self):
         """Get placeholder plugin classes that can be used to build template.
@@ -121,6 +163,11 @@ class AbstractTemplateLoader:
         self._placeholder_plugins = None
         self._loaders_by_name = None
         self._creators_by_name = None
+
+        self._current_asset_doc = None
+        self._linked_asset_docs = None
+        self._task_type = None
+
         self.clear_shared_data()
         self.clear_shared_populate_data()
 
@@ -432,10 +479,18 @@ class AbstractTemplateLoader:
                     placeholder_plugin.populate_placeholder(placeholder)
 
                 except Exception as exc:
-                    placeholder.set_error(exc)
+                    self.log.warning(
+                        (
+                            "Failed to process placeholder {} with plugin {}"
+                        ).format(
+                            placeholder.scene_identifier,
+                            placeholder_plugin.__class__.__name__
+                        ),
+                        exc_info=True
+                    )
+                    placeholder.set_failed(exc)
 
-                else:
-                    placeholder.set_finished()
+                placeholder.set_finished()
 
             # Clear shared data before getting new placeholders
             self.clear_shared_populate_data()
@@ -467,10 +522,10 @@ class AbstractTemplateLoader:
         )
 
     def get_template_path(self):
-        project_name = self.project_name
         host_name = self.host_name
-        task_name = self.task_name
-        task_type = self.task_type
+        project_name = self.project_name
+        task_name = self.current_task_name
+        task_type = self.current_task_type
 
         build_profiles = self._get_build_profiles()
         profile = filter_profiles(
@@ -871,6 +926,9 @@ class PlaceholderItem(object):
         """Change to finished state."""
 
         self._state = 2
+
+    def set_failed(self, exception):
+        self.add_error(str(exception))
 
     def add_error(self, error):
         """Set placeholder item as failed and mark it as finished."""
