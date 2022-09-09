@@ -61,11 +61,6 @@ class MayaTemplateLoader(AbstractTemplateLoader):
 
         return True
 
-    def get_placeholder_plugin_classes(self):
-        return [
-            MayaLoadPlaceholderPlugin
-        ]
-
     # def template_already_imported(self, err_msg):
     #     clearButton = "Clear scene and build"
     #     updateButton = "Update template"
@@ -113,7 +108,9 @@ class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
 
     def _collect_scene_placeholders(self):
         # Cache placeholder data to shared data
-        placeholder_nodes = self.builder.get_shared_data("placeholder_nodes")
+        placeholder_nodes = self.builder.get_shared_populate_data(
+            "placeholder_nodes"
+        )
         if placeholder_nodes is None:
             attributes = cmds.ls("*.plugin_identifier", long=True)
             placeholder_nodes = {}
@@ -123,7 +120,7 @@ class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
                     self._parse_placeholder_node_data(node_name)
                 )
 
-            self.builder.set_shared_data(
+            self.builder.set_shared_populate_data(
                 "placeholder_nodes", placeholder_nodes
             )
         return placeholder_nodes
