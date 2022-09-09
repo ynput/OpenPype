@@ -96,7 +96,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
         source_start_handles = instance.data["sourceStartH"]
         source_end_handles = instance.data["sourceEndH"]
 
-       # retime if needed
+        # retime if needed
         if r_speed != 1.0:
             if retimed_handles:
                 # handles are retimed
