@@ -286,7 +286,12 @@ class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
 
     def get_placeholder_options(self, options=None):
         loaders_by_name = self.builder.get_loaders_by_name()
-        loader_names = list(sorted(loaders_by_name.keys()))
+        loader_items = [
+            (loader_name, loader.label or loader_name)
+            for loader_name, loader in loaders_by_name.items()
+        ]
+
+        loader_items = list(sorted(loader_items, key=lambda i: i[0]))
         options = options or {}
         return [
             attribute_definitions.UISeparatorDef(),
@@ -330,10 +335,7 @@ class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
                 "loader",
                 label="Loader",
                 default=options.get("loader"),
-                items=[
-                    (loader_name, loader_name)
-                    for loader_name in loader_names
-                ],
+                items=loader_items,
                 tooltip=(
                     "Loader"
                     "\nDefines what OpenPype loader will be used to"
