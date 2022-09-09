@@ -10,7 +10,7 @@ import platform
 
 @six.add_metaclass(abc.ABCMeta)
 class AbstractTomlProvider:
-
+    """Interface class to base real toml data providers."""
     @abc.abstractmethod
     def get_toml(self):
         """
@@ -24,7 +24,7 @@ class AbstractTomlProvider:
 
 
 class FileTomlProvider(AbstractTomlProvider):
-
+    """Class that parses toml from 'source_url' into dictionary."""
     def __init__(self, source_url):
         self.source_url = source_url
 
@@ -112,6 +112,16 @@ def get_full_toml(base_toml_data, addon_folders):
 
 
 def prepare_new_venv(full_toml_data, venv_folder):
+    """Let Poetry create new venv in 'venv_folder' from 'full_toml_data'.
+
+    Args:
+        full_toml_data (dict): toml representation calculated based on basic
+            .toml + all addon tomls
+        venv_folder (str): path where venv should be created
+    Raises:
+        RuntimeError: Exception is raised if process finished with nonzero
+            return code.
+    """
     toml_path = os.path.join(venv_folder, "pyproject.toml")
 
     with open(toml_path, 'w') as fp:
@@ -136,6 +146,23 @@ def prepare_new_venv(full_toml_data, venv_folder):
     ]
 
     run_subprocess(cmd_args)
+
+
+def zip_venv(venv_folder, zip_destination_path):
+    """Zips newly created venv to single .zip file."""
+    #RemoteFileHandler.unzip(addon_zip_path, destination)
+    raise NotImplementedError
+
+
+def upload_zip_venv(zip_path, server_endpoint):
+    """Uploads zipped venv to the server for distribution.
+
+    Args:
+        zip_path (str): local path to zipped venv
+        server_endpoint (str)
+
+    """
+    raise NotImplementedError
 
 
 # TODO copy from openpype.lib.execute, could be imported directly??
