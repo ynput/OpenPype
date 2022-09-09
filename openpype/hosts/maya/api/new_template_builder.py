@@ -272,8 +272,8 @@ class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
         if ignore_repre_ids is None:
             ignore_repre_ids = set()
 
-        current_asset_doc = self.current_asset_doc
-        linked_assets = self.linked_assets
+        current_asset_doc = self.builder.current_asset_doc
+        linked_assets = self.builder.linked_asset_docs
         loader_name = placeholder.data["loader"]
         loader_args = placeholder.data["loader_args"]
 
