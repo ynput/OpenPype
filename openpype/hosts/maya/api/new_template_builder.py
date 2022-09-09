@@ -173,6 +173,25 @@ class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
 
         return placeholder_name.capitalize()
 
+    def _get_loaded_repre_ids(self):
+        loaded_representation_ids = self.builder.get_shared_populate_data(
+            "loaded_representation_ids"
+        )
+        if loaded_representation_ids is None:
+            try:
+                containers = cmds.sets("AVALON_CONTAINERS", q=True)
+            except ValueError:
+                containers = []
+
+            loaded_representation_ids = {
+                cmds.getAttr(container + ".representation")
+                for container in containers
+            }
+            self.builder.set_shared_populate_data(
+                "loaded_representation_ids"
+            )
+        return loaded_representation_ids
+
     def create_placeholder(self, placeholder_data):
         selection = cmds.ls(selection=True)
         if not selection:
@@ -242,7 +261,17 @@ class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
 
         return output
 
-    def process_placeholder(self, placeholder):
+    def populate_placeholder(self, placeholder):
+        self._populate_placeholder(placeholder)
+
+    def update_template_placeholder(self, placeholder):
+        repre_ids = self._get_loaded_repre_ids()
+        self._populate_placeholder(placeholder, repre_ids)
+
+    def _populate_placeholder(self, placeholder, ignore_repre_ids=None):
+        if ignore_repre_ids is None:
+            ignore_repre_ids = set()
+
         current_asset_doc = self.current_asset_doc
         linked_assets = self.linked_assets
         loader_name = placeholder.data["loader"]
@@ -262,6 +291,10 @@ class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
 
         loaders_by_name = self.builder.get_loaders_by_name()
         for representation in placeholder_representations:
+            repre_id = str(representation["_id"])
+            if repre_id in ignore_repre_ids:
+                continue
+
             repre_context = representation["context"]
             self.log.info(
                 "Loading {} from {} with loader {}\n"
@@ -280,9 +313,7 @@ class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
 
             else:
                 placeholder.load_succeed(container)
-            # TODO find out if 'postload make sense?'
-            # finally:
-            #     self.postload(placeholder)
+            placeholder.clean()
 
     def get_placeholder_options(self, options=None):
         loaders_by_name = self.builder.get_loaders_by_name()
