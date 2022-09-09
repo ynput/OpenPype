@@ -505,7 +505,7 @@ def check_lock_on_current_file():
                          columnSpacing=[(3, 10)])
     cmds.separator(vis=False)
     cancel_command = "cmds.file(new=True);cmds.deleteUI('%s')" % reminder
-    ignore_command ="cmds.deleteUI('%s')" % reminder
+    ignore_command = "cmds.deleteUI('%s')" % reminder
     cmds.button(label='Cancel', command=cancel_command)
     cmds.button(label = "Ignore", command=ignore_command)
     cmds.showWindow(reminder)

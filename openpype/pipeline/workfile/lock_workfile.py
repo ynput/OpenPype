@@ -70,6 +70,7 @@ def _get_process_id():
         os.environ["OPENPYPE_PROCESS_ID"] = process_id
     return process_id
 
+
 def is_workfile_lock_enabled(host_name, project_name, project_setting=None):
     if project_setting is None:
         project_setting = get_project_settings(project_name)
