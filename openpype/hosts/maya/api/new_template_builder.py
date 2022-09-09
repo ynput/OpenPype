@@ -49,60 +49,7 @@ class MayaTemplateLoader(AbstractTemplateLoader):
 
         cmds.setAttr(PLACEHOLDER_SET + ".hiddenInOutliner", True)
 
-        # This should be handled by creators
-        # for set_name in cmds.listSets(allSets=True):
-        #     if (
-        #         cmds.objExists(set_name)
-        #         and cmds.attributeQuery('id', node=set_name, exists=True)
-        #         and cmds.getAttr(set_name + '.id') == 'pyblish.avalon.instance'
-        #     ):
-        #         if cmds.attributeQuery('asset', node=set_name, exists=True):
-        #             cmds.setAttr(
-        #                 set_name + '.asset',
-        #                 legacy_io.Session['AVALON_ASSET'], type='string'
-        #             )
-
         return True
-
-    # def template_already_imported(self, err_msg):
-    #     clearButton = "Clear scene and build"
-    #     updateButton = "Update template"
-    #     abortButton = "Abort"
-    #
-    #     title = "Scene already builded"
-    #     message = (
-    #         "It's seems a template was already build for this scene.\n"
-    #         "Error message reveived :\n\n\"{}\"".format(err_msg))
-    #     buttons = [clearButton, updateButton, abortButton]
-    #     defaultButton = clearButton
-    #     cancelButton = abortButton
-    #     dismissString = abortButton
-    #     answer = cmds.confirmDialog(
-    #         t=title,
-    #         m=message,
-    #         b=buttons,
-    #         db=defaultButton,
-    #         cb=cancelButton,
-    #         ds=dismissString)
-    #
-    #     if answer == clearButton:
-    #         cmds.file(newFile=True, force=True)
-    #         self.import_template(self.template_path)
-    #         self.populate_template()
-    #     elif answer == updateButton:
-    #         self.update_missing_containers()
-    #     elif answer == abortButton:
-    #         return
-
-    # def get_loaded_containers_by_id(self):
-    #     try:
-    #         containers = cmds.sets("AVALON_CONTAINERS", q=True)
-    #     except ValueError:
-    #         return None
-    #
-    #     return [
-    #         cmds.getAttr(container + '.representation')
-    #         for container in containers]
 
 
 class MayaLoadPlaceholderPlugin(PlaceholderPlugin):
