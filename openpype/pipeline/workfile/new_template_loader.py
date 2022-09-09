@@ -174,7 +174,7 @@ class AbstractTemplateLoader:
 
         if self._placeholder_plugins is None:
             placeholder_plugins = {}
-            for cls in self.get_placeholder_plugin_classes():
+            for cls in self.host.get_placeholder_plugin_classes():
                 try:
                     plugin = cls(self)
                     placeholder_plugins[plugin.identifier] = plugin
