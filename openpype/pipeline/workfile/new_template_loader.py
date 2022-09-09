@@ -8,7 +8,12 @@ import six
 from openpype.client import get_asset_by_name
 from openpype.settings import get_project_settings
 from openpype.host import HostBase
-from openpype.lib import Logger, StringTemplate, filter_profiles
+from openpype.lib import (
+    Logger,
+    StringTemplate,
+    filter_profiles,
+)
+from openpype.lib.attribute_definitions import get_attributes_keys
 from openpype.pipeline import legacy_io, Anatomy
 from openpype.pipeline.load import get_loaders_by_name
 from openpype.pipeline.create import get_legacy_creator_by_name
@@ -31,12 +36,26 @@ class AbstractTemplateLoader:
     _log = None
 
     def __init__(self, host):
-        # Store host
-        self._host = host
+        # Prepare context information
+        project_name = legacy_io.active_project()
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        task_name = legacy_io.Session["AVALON_TASK"]
+        current_asset_doc = get_asset_by_name(project_name, asset_name)
+        task_type = (
+            current_asset_doc
+            .get("data", {})
+            .get("tasks", {})
+            .get(task_name, {})
+            .get("type")
+        )
+
+        # Get host name
         if isinstance(host, HostBase):
             host_name = host.name
         else:
             host_name = os.environ.get("AVALON_APP")
+
+        self._host = host
         self._host_name = host_name
 
         # Shared data across placeholder plugins
@@ -47,29 +66,24 @@ class AbstractTemplateLoader:
         self._loaders_by_name = None
         self._creators_by_name = None
 
-        project_name = legacy_io.active_project()
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-
         self.current_asset = asset_name
         self.project_name = project_name
-        self.task_name = legacy_io.Session["AVALON_TASK"]
-        self.current_asset_doc = get_asset_by_name(project_name, asset_name)
-        self.task_type = (
-            self.current_asset_doc
-            .get("data", {})
-            .get("tasks", {})
-            .get(self.task_name, {})
-            .get("type")
-        )
+        self.task_name = task_name
+        self.current_asset_doc = current_asset_doc
+        self.task_type = task_type
 
-    @abstractmethod
     def get_placeholder_plugin_classes(self):
         """Get placeholder plugin classes that can be used to build template.
+
+        Default implementation looks for 'get_placeholder_plugin_classes' on
+        host.
 
         Returns:
             List[PlaceholderPlugin]: Plugin classes available for host.
         """
 
+        if hasattr(self._host, "get_placeholder_plugin_classes"):
+            return self._host.get_placeholder_plugin_classes()
         return []
 
     @property
@@ -174,7 +188,7 @@ class AbstractTemplateLoader:
 
         if self._placeholder_plugins is None:
             placeholder_plugins = {}
-            for cls in self.host.get_placeholder_plugin_classes():
+            for cls in self.get_placeholder_plugin_classes():
                 try:
                     plugin = cls(self)
                     placeholder_plugins[plugin.identifier] = plugin
