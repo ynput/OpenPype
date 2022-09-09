@@ -74,7 +74,7 @@ def load_apps():
     opfapi.CTX.flame_apps.append(
         opfapi.FlameMenuTimeline(opfapi.CTX.app_framework))
     opfapi.CTX.flame_apps.append(
-        opfapi.FlameMenuBatch(opfapi.CTX.app_framework))
+        opfapi.FlameMenuUniversal(opfapi.CTX.app_framework))
     opfapi.CTX.app_framework.log.info("Apps are loaded")
 
 
