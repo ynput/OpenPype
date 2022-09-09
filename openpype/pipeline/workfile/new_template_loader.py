@@ -75,15 +75,15 @@ class AbstractTemplateLoader:
     def get_placeholder_plugin_classes(self):
         """Get placeholder plugin classes that can be used to build template.
 
-        Default implementation looks for 'get_placeholder_plugin_classes' on
-        host.
+        Default implementation looks for method
+            'get_workfile_build_placeholder_plugins' on host.
 
         Returns:
             List[PlaceholderPlugin]: Plugin classes available for host.
         """
 
-        if hasattr(self._host, "get_placeholder_plugin_classes"):
-            return self._host.get_placeholder_plugin_classes()
+        if hasattr(self._host, "get_workfile_build_placeholder_plugins"):
+            return self._host.get_workfile_build_placeholder_plugins()
         return []
 
     @property
