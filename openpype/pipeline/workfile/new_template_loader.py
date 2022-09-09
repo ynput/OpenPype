@@ -547,6 +547,17 @@ class PlaceholderPlugin(object):
 
         return []
 
+    def get_placeholder_keys(self):
+        """Get placeholder keys that are stored in scene.
+
+        Returns:
+            Set[str]: Key of placeholder keys that are stored in scene.
+        """
+
+        option_keys = get_attributes_keys(self.get_placeholder_options())
+        option_keys.add("plugin_identifier")
+        return option_keys
+
     def prepare_placeholders(self, placeholders):
         """Preparation part of placeholders.
 

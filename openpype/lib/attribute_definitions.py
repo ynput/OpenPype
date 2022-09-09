@@ -9,6 +9,27 @@ import six
 import clique
 
 
+def get_attributes_keys(attribute_definitions):
+    """Collect keys from list of attribute definitions.
+
+    Args:
+        attribute_definitions (List[AbtractAttrDef]): Objects of attribute
+            definitions.
+
+    Returns:
+        Set[str]: Keys that will be created using passed attribute definitions.
+    """
+
+    keys = set()
+    if not attribute_definitions:
+        return keys
+
+    for attribute_def in attribute_definitions:
+        if not isinstance(attribute_def, UIDef):
+            keys.add(attribute_def.key)
+    return keys
+
+
 class AbstractAttrDefMeta(ABCMeta):
     """Meta class to validate existence of 'key' attribute.
 
