@@ -94,23 +94,41 @@ class Creator(LegacyCreator):
 
 @six.add_metaclass(ABCMeta)
 class HoudiniCreator(NewCreator):
-    _nodes = []
+    selected_nodes = []
+
+    def _create_instance_node(
+            self, node_name, parent,
+            node_type="geometry"):
+        # type: (str, str, str) -> hou.Node
+        """Create node representing instance.
+
+        Arguments:
+            node_name (str): Name of the new node.
+            parent (str): Name of the parent node.
+            node_type (str, optional): Type of the node.
+
+        Returns:
+            hou.Node: Newly created instance node.
+
+        """
+        parent_node = hou.node(parent)
+        instance_node = parent_node.createNode(
+            node_type, node_name=node_name)
+        instance_node.moveToGoodPosition()
+        return instance_node
 
     def create(self, subset_name, instance_data, pre_create_data):
         try:
             if pre_create_data.get("use_selection"):
-                self._nodes = hou.selectedNodes()
+                self.selected_nodes = hou.selectedNodes()
 
             # Get the node type and remove it from the data, not needed
             node_type = instance_data.pop("node_type", None)
             if node_type is None:
                 node_type = "geometry"
 
-            # Get out node
-            out = hou.node("/out")
-            instance_node = out.createNode(
-                node_type, node_name=subset_name)
-            instance_node.moveToGoodPosition()
+            instance_node = self._create_instance_node(
+                subset_name, "/out", node_type, pre_create_data)
 
             # wondering if we'll ever need more than one member here
             # in Houdini
