@@ -194,6 +194,7 @@ def get_timeline_custom_ui_actions():
 
     return _build_app_menu("FlameMenuTimeline")
 
+
 def get_batch_custom_ui_actions():
     """Hook to create submenu in batch
 
@@ -203,4 +204,16 @@ def get_batch_custom_ui_actions():
     # install openpype and the host
     openpype_install()
 
-    return _build_app_menu("FlameMenuBatch")
+    return _build_app_menu("FlameMenuUniversal")
+
+
+def get_media_panel_custom_ui_actions():
+    """Hook to create submenu in desktop
+
+    Returns:
+        list: menu object
+    """
+    # install openpype and the host
+    openpype_install()
+
+    return _build_app_menu("FlameMenuUniversal")

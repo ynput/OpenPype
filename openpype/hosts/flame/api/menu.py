@@ -203,7 +203,7 @@ class FlameMenuTimeline(_FlameMenuApp):
             self.log.info('Rescan Python Hooks')
 
 
-class FlameMenuBatch(_FlameMenuApp):
+class FlameMenuUniversal(_FlameMenuApp):
 
     # flameMenuProjectconnect app takes care of the preferences dialog as well
 
