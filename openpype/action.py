@@ -72,16 +72,18 @@ def get_errored_plugins_from_data(context):
     return get_errored_plugins_from_context(context)
 
 
-# 'RepairAction' and 'RepairContextAction' were moved to
-#   'openpype.pipeline.publish' please change you imports.
-# There is no "reasonable" way hot mark these classes as deprecated to show
-#   warning of wrong import.
-# Deprecated since 3.14.* will be removed in 3.16.*
 class RepairAction(pyblish.api.Action):
     """Repairs the action
 
     To process the repairing this requires a static `repair(instance)` method
     is available on the plugin.
+
+    Deprecated:
+        'RepairAction' and 'RepairContextAction' were moved to
+        'openpype.pipeline.publish' please change you imports.
+        There is no "reasonable" way hot mark these classes as deprecated
+        to show warning of wrong import. Deprecated since 3.14.* will be
+        removed in 3.16.*
 
     """
     label = "Repair"
@@ -103,12 +105,18 @@ class RepairAction(pyblish.api.Action):
             plugin.repair(instance)
 
 
-# Deprecated since 3.14.* will be removed in 3.16.*
 class RepairContextAction(pyblish.api.Action):
     """Repairs the action
 
     To process the repairing this requires a static `repair(instance)` method
     is available on the plugin.
+
+    Deprecated:
+        'RepairAction' and 'RepairContextAction' were moved to
+        'openpype.pipeline.publish' please change you imports.
+        There is no "reasonable" way hot mark these classes as deprecated
+        to show warning of wrong import. Deprecated since 3.14.* will be
+        removed in 3.16.*
 
     """
     label = "Repair"
