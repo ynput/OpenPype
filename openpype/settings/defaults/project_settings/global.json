@@ -3,6 +3,10 @@
         "CollectAnatomyInstanceData": {
             "follow_workfile_version": false
         },
+        "CollectAudio": {
+            "enabled": false,
+            "audio_subset_name": "audioMain"
+        },
         "CollectSceneVersion": {
             "hosts": [
                 "aftereffects",
