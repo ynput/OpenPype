@@ -57,6 +57,18 @@
         }
     },
     "publish": {
+        "ValidateWorkfilePaths": {
+            "enabled": true,
+            "optional": true,
+            "node_types": [
+                "file",
+                "alembic"
+            ],
+            "prohibited_vars": [
+                "$HIP",
+                "$JOB"
+            ]
+        },
         "ValidateContainers": {
             "enabled": true,
             "optional": true,

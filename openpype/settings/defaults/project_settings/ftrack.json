@@ -56,7 +56,7 @@
                     "Not Ready"
                 ],
                 "__ignore__": [
-                    "in prgoress",
+                    "in progress",
                     "omitted",
                     "on hold"
                 ]
@@ -95,10 +95,6 @@
             "enabled": true,
             "mapping": {},
             "asset_types_to_skip": []
-        },
-        "first_version_status": {
-            "enabled": true,
-            "status": ""
         },
         "next_task_update": {
             "enabled": true,
@@ -301,7 +297,9 @@
                         "traypublisher"
                     ],
                     "families": [
-                        "plate"
+                        "plate",
+                        "review",
+                        "audio"
                     ],
                     "task_types": [],
                     "tasks": [],
@@ -432,6 +430,9 @@
             "enabled": false,
             "custom_attribute_keys": []
         },
+        "IntegrateHierarchyToFtrack": {
+            "create_task_status_profiles": []
+        },
         "IntegrateFtrackNote": {
             "enabled": true,
             "note_template": "{intent}: {comment}",
@@ -446,6 +447,9 @@
         "ValidateFtrackAttributes": {
             "enabled": false,
             "ftrack_custom_attributes": {}
+        },
+        "IntegrateFtrackComponentOverwrite": {
+            "enabled": true
         },
         "IntegrateFtrackInstance": {
             "family_mapping": {
@@ -483,7 +487,11 @@
                 "usd": "usd"
             },
             "keep_first_subset_name_for_review": true,
-            "asset_versions_status_profiles": []
+            "asset_versions_status_profiles": [],
+            "additional_metadata_keys": []
+        },
+        "IntegrateFtrackFarmStatus": {
+            "farm_status_profiles": []
         }
     }
 }

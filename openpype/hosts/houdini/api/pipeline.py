@@ -13,7 +13,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
-import openpype.hosts.houdini
+from openpype.hosts.houdini import HOUDINI_HOST_DIR
 from openpype.hosts.houdini.api import lib, shelves
 
 from openpype.lib import (
@@ -28,8 +28,7 @@ log = logging.getLogger("openpype.hosts.houdini")
 AVALON_CONTAINERS = "/obj/AVALON_CONTAINERS"
 IS_HEADLESS = not hasattr(hou, "ui")
 
-HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.houdini.__file__))
-PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PLUGINS_DIR = os.path.join(HOUDINI_HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
@@ -66,7 +65,7 @@ def install():
 
     self._has_been_setup = True
     # add houdini vendor packages
-    hou_pythonpath = os.path.join(os.path.dirname(HOST_DIR), "vendor")
+    hou_pythonpath = os.path.join(HOUDINI_HOST_DIR, "vendor")
 
     sys.path.append(hou_pythonpath)
 

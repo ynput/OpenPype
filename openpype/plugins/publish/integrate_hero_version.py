@@ -46,7 +46,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
     ignored_representation_names = []
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "representation",
-        "family", "hierarchy", "task", "username"
+        "family", "hierarchy", "task", "username", "user"
     ]
     # QUESTION/TODO this process should happen on server if crashed due to
     # permissions error on files (files were used or user didn't have perms)
@@ -71,7 +71,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         template_key = self._get_template_key(instance)
 
         anatomy = instance.context.data["anatomy"]
-        project_name = legacy_io.Session["AVALON_PROJECT"]
+        project_name = anatomy.project_name
         if template_key not in anatomy.templates:
             self.log.warning((
                 "!!! Anatomy of project \"{}\" does not have set"
@@ -313,13 +313,9 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                 }
                 repre_context = template_filled.used_values
                 for key in self.db_representation_context_keys:
-                    if (
-                        key in repre_context or
-                        key not in anatomy_data
-                    ):
-                        continue
-
-                    repre_context[key] = anatomy_data[key]
+                    value = anatomy_data.get(key)
+                    if value is not None:
+                        repre_context[key] = value
 
                 # Prepare new repre
                 repre = copy.deepcopy(repre_info["representation"])
@@ -454,7 +450,6 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     )
 
             if bulk_writes:
-                project_name = legacy_io.Session["AVALON_PROJECT"]
                 legacy_io.database[project_name].bulk_write(
                     bulk_writes
                 )
@@ -517,11 +512,10 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             anatomy_filled = anatomy.format(template_data)
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
-            project_name = legacy_io.Session["AVALON_PROJECT"]
             self.log.warning((
                 "Deprecation warning: Anatomy does not have set `folder`"
                 " key underneath `publish` (in global of for project `{}`)."
-            ).format(project_name))
+            ).format(anatomy.project_name))
 
             file_path = anatomy_filled[template_key]["path"]
             # Directory

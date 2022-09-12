@@ -2,11 +2,9 @@
 import os
 import nuke
 
-from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
-
 
 def file_extensions():
-    return HOST_WORKFILE_EXTENSIONS["nuke"]
+    return [".nk"]
 
 
 def has_unsaved_changes():

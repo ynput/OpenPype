@@ -63,6 +63,8 @@ class RenderInstance(object):
 
     family = attr.ib(default="renderlayer")
     families = attr.ib(default=["renderlayer"])  # list of families
+    # True if should be rendered on farm, eg not integrate
+    farm = attr.ib(default=False)
 
     # format settings
     multipartExr = attr.ib(default=False)  # flag for multipart exrs

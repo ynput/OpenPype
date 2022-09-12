@@ -110,11 +110,7 @@ module.exports = {
                 "admin_hosts_tvpaint"
             ],
         },
-        {
-            type: "category",
-            label: "Releases",
-            items: ["changelog", "update_notes"],
-        },
+        "admin_releases",
         {
             type: "category",
             collapsed: false,
@@ -153,6 +149,7 @@ module.exports = {
         "dev_build",
         "dev_testing",
         "dev_contribute",
+        "dev_settings",
         {
             type: "category",
             label: "Hosts integrations",
