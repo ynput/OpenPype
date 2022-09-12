@@ -6,6 +6,9 @@ from packaging import version
 import subprocess
 import logging
 import platform
+import requests
+
+from common.openpype_common.distribution.file_handler import RemoteFileHandler
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -170,16 +173,32 @@ def prepare_new_venv(full_toml_data, venv_folder):
     cmd_args = [
         executable,
         create_env_script_path,
-        "-venv_path", venv_folder
+        "-venv_path", os.path.join(venv_folder, ".venv")
     ]
 
     run_subprocess(cmd_args)
 
 
+def prepare_venv_zip_name(version_file_path):
+    if not version_file_path.exists():
+        return None
+
+    version = {}
+    with open(version_file_path, "r") as fp:
+        exec(fp.read(), version)
+
+    # TODO full version or just 3.14 ?
+    version_str = version['__version__']
+
+    file_name = "openpype-{}-{}.zip".format(version_str,
+                                            platform.system().lower())
+
+    return file_name
+
+
 def zip_venv(venv_folder, zip_destination_path):
     """Zips newly created venv to single .zip file."""
-    # RemoteFileHandler.unzip(addon_zip_path, destination)
-    raise NotImplementedError
+    RemoteFileHandler.zip(venv_folder, zip_destination_path)
 
 
 def upload_zip_venv(zip_path, server_endpoint):
@@ -190,7 +209,39 @@ def upload_zip_venv(zip_path, server_endpoint):
         server_endpoint (str)
 
     """
-    raise NotImplementedError
+    if not os.path.exists(zip_path):
+        raise RuntimeError(f"{zip_path} doesn't exist")
+
+    CHUNK_SIZE = 6000000
+
+    def read_in_chunks(file_object, CHUNK_SIZE):
+        while True:
+            data = file_object.read(CHUNK_SIZE)
+            if not data:
+                break
+            yield data
+
+    content_size = os.stat(zip_path).st_size
+
+    with open(zip_path, "rb") as fp:
+        index = 0
+        offset = 0
+        headers = {}
+
+        for chunk in read_in_chunks(fp, CHUNK_SIZE):
+            offset = index + len(chunk)
+            headers['Content-Range'] = 'bytes %s-%s/%s' % (
+                index, offset - 1, content_size)
+            index = offset
+            try:
+
+                file = {"file": chunk}
+                r = requests.post(server_endpoint, files=file, headers=headers)
+                print(r.json())
+                print(
+                    "r: %s, Content-Range: %s" % (r, headers['Content-Range']))
+            except Exception as e:
+                print(e)
 
 
 # TODO copy from openpype.lib.execute, could be imported directly??

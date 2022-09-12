@@ -10,7 +10,8 @@ from common.openpype_common.distribution.dependencies.dependencies import (
     is_valid_toml,
     merge_tomls,
     get_full_toml,
-    prepare_new_venv
+    prepare_new_venv,
+    zip_venv
 )
 
 
@@ -107,10 +108,17 @@ def _compare_resolved_tomp(result_toml):
 
 
 def test_prepare_new_venv(addon_toml_to_venv_data):
+    """Creates zip of simple venv from mock addon pyproject data"""
     tmpdir = tempfile.mkdtemp()
     print(f"Creating new venv in {tmpdir}")
     return_code = prepare_new_venv(addon_toml_to_venv_data, tmpdir)
 
     assert return_code != 1, "Prepare of new venv failed"
+
+    venv_zip_path = os.path.join(tmpdir, 'openpype-4.4-windows.zip')
+    zip_venv(os.path.join(tmpdir, ".venv"),
+             venv_zip_path)
+
+    assert os.path.exists(venv_zip_path)
 
     shutil.rmtree(tmpdir)

@@ -9,6 +9,7 @@ import itertools
 import hashlib
 import tarfile
 import zipfile
+import shutil
 
 
 USER_AGENT = "openpype"
@@ -215,6 +216,16 @@ class RemoteFileHandler:
                 raise SystemExit("corrupted archive")
             tar_file.extractall(destination_path)
             tar_file.close()
+
+    @staticmethod
+    def zip(source_path, destination_path):
+        os.chdir(os.path.dirname(source_path))
+        shutil.make_archive(os.path.basename(source_path), "zip", source_path)
+        with zipfile.ZipFile(os.path.basename(source_path) + ".zip") as zr:
+            if zr.testzip() is not None:
+                raise Exception("File archive is corrupted.")
+        shutil.move(os.path.basename(source_path) + ".zip", destination_path)
+        print(f"Saved '{source_path}' to '{destination_path}'")
 
     @staticmethod
     def _urlretrieve(url, filename, chunk_size):
