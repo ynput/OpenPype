@@ -2,7 +2,7 @@ import pytest
 import attr
 import tempfile
 
-from distribution.addon_distribution import (
+from common.openpype_common.distribution.addon_distribution import (
     AddonDownloader,
     UrlType,
     OSAddonDownloader,
