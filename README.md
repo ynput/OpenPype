@@ -53,10 +53,11 @@ Building OpenPype
 To build OpenPype you currently need [Python 3.9](https://www.python.org/downloads/) as we are following
 [vfx platform](https://vfxplatform.com). Because of some Linux distros comes with newer Python version
 already, you need to install **3.9** version and make use of it. You can use perhaps [pyenv](https://github.com/pyenv/pyenv) for this on Linux.
+**Note**: We do not support 3.9.0 because of [this bug](https://github.com/python/cpython/pull/22670). Please, use higher versions of 3.9.x.
 
 ### Windows
 
-You will need [Python 3.9](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads).
+You will need [Python >= 3.9.1](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads).
 More tools might be needed for installing dependencies (for example for **OpenTimelineIO**) - mostly
 development tools like [CMake](https://cmake.org/) and [Visual Studio](https://visualstudio.microsoft.com/cs/downloads/)
 
@@ -82,7 +83,7 @@ OpenPype is build using [CX_Freeze](https://cx-freeze.readthedocs.io/en/latest) 
 
 ### macOS
 
-You will need [Python 3.9](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll need also other tools to build
+You will need [Python >= 3.9](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll need also other tools to build
 some OpenPype dependencies like [CMake](https://cmake.org/) and **XCode Command Line Tools** (or some other build system).
 
 Easy way of installing everything necessary is to use [Homebrew](https://brew.sh):
@@ -145,7 +146,7 @@ sudo ./tools/docker_build.sh centos7
 If all is successful, you'll find built OpenPype in `./build/` folder.
 
 #### Manual build
-You will need [Python 3.9](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll also need [curl](https://curl.se) on systems that doesn't have one preinstalled.
+You will need [Python >= 3.9](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll also need [curl](https://curl.se) on systems that doesn't have one preinstalled.
 
 To build Python related stuff, you need Python header files installed (`python3-dev` on Ubuntu for example).
 

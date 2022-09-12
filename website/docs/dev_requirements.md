@@ -56,6 +56,7 @@ To run mongoDB on server, use your server distribution tools to set it up (on Li
 ## Python
 
 **Python 3.9.x** is the recommended version to use (as per [VFX platform CY2022](https://vfxplatform.com/)).
+**Note**: We do not support 3.9.0 because of [this bug](https://github.com/python/cpython/pull/22670). Please, use higher versions of 3.9.x.
 
 If you're planning to run openPYPE on workstations from built executables (highly recommended), you will only need python for building and development, however, if you'd like to run from source centrally, every user will need python installed.
 
