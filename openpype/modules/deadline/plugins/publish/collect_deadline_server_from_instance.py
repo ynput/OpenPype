@@ -13,7 +13,7 @@ class CollectDeadlineServerFromInstance(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.415
     label = "Deadline Webservice from the Instance"
-    families = ["rendering"]
+    families = ["rendering", "renderlayer"]
 
     def process(self, instance):
         instance.data["deadlineUrl"] = self._collect_deadline_url(instance)

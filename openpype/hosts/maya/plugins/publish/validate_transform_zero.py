@@ -3,6 +3,7 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateTransformZero(pyblish.api.Validator):
@@ -14,7 +15,7 @@ class ValidateTransformZero(pyblish.api.Validator):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["maya"]
     families = ["model"]
     category = "geometry"

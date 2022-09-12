@@ -5,7 +5,7 @@ import pyblish.api
 
 from openpype.client import get_asset_by_name
 from openpype.pipeline import legacy_io
-from openpype.api import get_errored_instances_from_context
+from openpype.pipeline.publish import get_errored_instances_from_context
 
 
 class GenerateUUIDsOnInvalidAction(pyblish.api.Action):

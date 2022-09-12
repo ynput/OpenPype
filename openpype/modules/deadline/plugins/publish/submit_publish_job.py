@@ -700,9 +700,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         self.context = context
         self.anatomy = instance.context.data["anatomy"]
 
-        if hasattr(instance, "_log"):
-            data['_log'] = instance._log
-
         asset = data.get("asset") or legacy_io.Session["AVALON_ASSET"]
         subset = data.get("subset")
 

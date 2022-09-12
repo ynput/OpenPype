@@ -9,11 +9,11 @@ import platform
 from Qt import QtCore, QtGui, QtWidgets
 
 import openpype.version
-from openpype.api import (
-    resources,
-    get_system_settings
+from openpype import resources, style
+from openpype.lib import (
+    get_openpype_execute_args,
+    Logger,
 )
-from openpype.lib import get_openpype_execute_args, Logger
 from openpype.lib.openpype_version import (
     op_version_control_available,
     get_expected_version,
@@ -25,8 +25,8 @@ from openpype.lib.openpype_version import (
     get_openpype_version,
 )
 from openpype.modules import TrayModulesManager
-from openpype import style
 from openpype.settings import (
+    get_system_settings,
     SystemSettings,
     ProjectSettings,
     DefaultsNotDefined
@@ -774,9 +774,23 @@ class PypeTrayStarter(QtCore.QObject):
 
 
 def main():
+    log = Logger.get_logger(__name__)
     app = QtWidgets.QApplication.instance()
     if not app:
         app = QtWidgets.QApplication([])
+
+    for attr_name in (
+        "AA_EnableHighDpiScaling",
+        "AA_UseHighDpiPixmaps"
+    ):
+        attr = getattr(QtCore.Qt, attr_name, None)
+        if attr is None:
+            log.debug((
+                "Missing QtCore.Qt attribute \"{}\"."
+                " UI quality may be affected."
+            ).format(attr_name))
+        else:
+            app.setAttribute(attr)
 
     starter = PypeTrayStarter(app)
 
