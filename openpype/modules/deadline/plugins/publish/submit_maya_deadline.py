@@ -760,6 +760,7 @@ def _format_tiles(
     assert type(tiles_y) is int, "tiles_y must be an integer"
     assert type(width) is int, "width must be an integer"
     assert type(height) is int, "height must be an integer"
+
     out = {"JobInfo": {}, "PluginInfo": {}}
     cfg = OrderedDict()
     w_space = width // tiles_x
@@ -793,7 +794,6 @@ def _format_tiles(
             # Plugin Info
             out["PluginInfo"]["RegionPrefix{}".format(str(tile))] = \
                 "/{}".format(tile_prefix).join(prefix.rsplit("/", 1))
-
             out["PluginInfo"]["RegionTop{}".format(tile)] = top
             out["PluginInfo"]["RegionBottom{}".format(tile)] = bottom
             out["PluginInfo"]["RegionLeft{}".format(tile)] = left
@@ -805,7 +805,6 @@ def _format_tiles(
             cfg["Tile{}FileName".format(tile)] = new_filename
             cfg["Tile{}X".format(tile)] = left
             cfg["Tile{}Y".format(tile)] = top
-
             cfg["Tile{}Width".format(tile)] = w_space
             cfg["Tile{}Height".format(tile)] = h_space
 
