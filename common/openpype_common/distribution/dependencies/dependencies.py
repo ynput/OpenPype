@@ -162,7 +162,7 @@ def prepare_new_venv(full_toml_data, venv_folder):
         ext = "sh"
         executable = "bash"
 
-    pype_root = os.path.abspath('../../..')
+    pype_root = os.path.abspath('../../../../..')
     create_env_script_path = os.path.join(pype_root, "tools",
                                           f"create_env.{ext}")
     cmd_args = [
