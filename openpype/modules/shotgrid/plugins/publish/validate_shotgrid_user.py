@@ -1,5 +1,5 @@
 import pyblish.api
-import openpype.api
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateShotgridUser(pyblish.api.ContextPlugin):
@@ -8,7 +8,7 @@ class ValidateShotgridUser(pyblish.api.ContextPlugin):
     """
 
     label = "Validate Shotgrid User"
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
 
     def process(self, context):
         sg = context.data.get("shotgridSession")

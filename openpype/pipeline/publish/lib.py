@@ -2,14 +2,198 @@ import os
 import sys
 import types
 import inspect
+import copy
+import tempfile
 import xml.etree.ElementTree
 
 import six
 import pyblish.plugin
 import pyblish.api
 
-from openpype.lib import Logger
-from openpype.settings import get_project_settings, get_system_settings
+from openpype.lib import Logger, filter_profiles
+from openpype.settings import (
+    get_project_settings,
+    get_system_settings,
+)
+
+from .contants import (
+    DEFAULT_PUBLISH_TEMPLATE,
+    DEFAULT_HERO_PUBLISH_TEMPLATE,
+)
+
+
+def get_template_name_profiles(
+    project_name, project_settings=None, logger=None
+):
+    """Receive profiles for publish template keys.
+
+    At least one of arguments must be passed.
+
+    Args:
+        project_name (str): Name of project where to look for templates.
+        project_settings(Dic[str, Any]): Prepared project settings.
+
+    Returns:
+        List[Dict[str, Any]]: Publish template profiles.
+    """
+
+    if not project_name and not project_settings:
+        raise ValueError((
+            "Both project name and project settings are missing."
+            " At least one must be entered."
+        ))
+
+    if not project_settings:
+        project_settings = get_project_settings(project_name)
+
+    profiles = (
+        project_settings
+        ["global"]
+        ["tools"]
+        ["publish"]
+        ["template_name_profiles"]
+    )
+    if profiles:
+        return copy.deepcopy(profiles)
+
+    # Use legacy approach for cases new settings are not filled yet for the
+    #   project
+    legacy_profiles = (
+        project_settings
+        ["global"]
+        ["publish"]
+        ["IntegrateAssetNew"]
+        ["template_name_profiles"]
+    )
+    if legacy_profiles:
+        if not logger:
+            logger = Logger.get_logger("get_template_name_profiles")
+
+        logger.warning((
+            "Project \"{}\" is using legacy access to publish template."
+            " It is recommended to move settings to new location"
+            " 'project_settings/global/tools/publish/template_name_profiles'."
+        ).format(project_name))
+
+    # Replace "tasks" key with "task_names"
+    profiles = []
+    for profile in copy.deepcopy(legacy_profiles):
+        profile["task_names"] = profile.pop("tasks", [])
+        profiles.append(profile)
+    return profiles
+
+
+def get_hero_template_name_profiles(
+    project_name, project_settings=None, logger=None
+):
+    """Receive profiles for hero publish template keys.
+
+    At least one of arguments must be passed.
+
+    Args:
+        project_name (str): Name of project where to look for templates.
+        project_settings(Dic[str, Any]): Prepared project settings.
+
+    Returns:
+        List[Dict[str, Any]]: Publish template profiles.
+    """
+
+    if not project_name and not project_settings:
+        raise ValueError((
+            "Both project name and project settings are missing."
+            " At least one must be entered."
+        ))
+
+    if not project_settings:
+        project_settings = get_project_settings(project_name)
+
+    profiles = (
+        project_settings
+        ["global"]
+        ["tools"]
+        ["publish"]
+        ["hero_template_name_profiles"]
+    )
+    if profiles:
+        return copy.deepcopy(profiles)
+
+    # Use legacy approach for cases new settings are not filled yet for the
+    #   project
+    legacy_profiles = copy.deepcopy(
+        project_settings
+        ["global"]
+        ["publish"]
+        ["IntegrateHeroVersion"]
+        ["template_name_profiles"]
+    )
+    if legacy_profiles:
+        if not logger:
+            logger = Logger.get_logger("get_hero_template_name_profiles")
+
+        logger.warning((
+            "Project \"{}\" is using legacy access to hero publish template."
+            " It is recommended to move settings to new location"
+            " 'project_settings/global/tools/publish/"
+            "hero_template_name_profiles'."
+        ).format(project_name))
+    return legacy_profiles
+
+
+def get_publish_template_name(
+    project_name,
+    host_name,
+    family,
+    task_name,
+    task_type,
+    project_settings=None,
+    hero=False,
+    logger=None
+):
+    """Get template name which should be used for passed context.
+
+    Publish templates are filtered by host name, family, task name and
+    task type.
+
+    Default template which is used at if profiles are not available or profile
+    has empty value is defined by 'DEFAULT_PUBLISH_TEMPLATE' constant.
+
+    Args:
+        project_name (str): Name of project where to look for settings.
+        host_name (str): Name of host integration.
+        family (str): Family for which should be found template.
+        task_name (str): Task name on which is intance working.
+        task_type (str): Task type on which is intance working.
+        project_setting (Dict[str, Any]): Prepared project settings.
+        logger (logging.Logger): Custom logger used for 'filter_profiles'
+            function.
+
+    Returns:
+        str: Template name which should be used for integration.
+    """
+
+    template = None
+    filter_criteria = {
+        "hosts": host_name,
+        "families": family,
+        "task_names": task_name,
+        "task_types": task_type,
+    }
+    if hero:
+        default_template = DEFAULT_HERO_PUBLISH_TEMPLATE
+        profiles = get_hero_template_name_profiles(
+            project_name, project_settings, logger
+        )
+
+    else:
+        profiles = get_template_name_profiles(
+            project_name, project_settings, logger
+        )
+        default_template = DEFAULT_PUBLISH_TEMPLATE
+
+    profile = filter_profiles(profiles, filter_criteria, logger=logger)
+    if profile:
+        template = profile["template_name"]
+    return template or default_template
 
 
 class DiscoverResult:
@@ -313,3 +497,138 @@ def remote_publish(log, close_plugin_name=None, raise_error=False):
                 # Fatal Error is because of Deadline
                 error_message = "Fatal Error: " + error_format.format(**result)
                 raise RuntimeError(error_message)
+
+
+def get_errored_instances_from_context(context):
+    """Collect failed instances from pyblish context.
+
+    Args:
+        context (pyblish.api.Context): Publish context where we're looking
+            for failed instances.
+
+    Returns:
+        List[pyblish.lib.Instance]: Instances which failed during processing.
+    """
+
+    instances = list()
+    for result in context.data["results"]:
+        if result["instance"] is None:
+            # When instance is None we are on the "context" result
+            continue
+
+        if result["error"]:
+            instances.append(result["instance"])
+
+    return instances
+
+
+def get_errored_plugins_from_context(context):
+    """Collect failed plugins from pyblish context.
+
+    Args:
+        context (pyblish.api.Context): Publish context where we're looking
+            for failed plugins.
+
+    Returns:
+        List[pyblish.api.Plugin]: Plugins which failed during processing.
+    """
+
+    plugins = list()
+    results = context.data.get("results", [])
+    for result in results:
+        if result["success"] is True:
+            continue
+        plugins.append(result["plugin"])
+
+    return plugins
+
+
+def filter_instances_for_context_plugin(plugin, context):
+    """Filter instances on context by context plugin filters.
+
+    This is for cases when context plugin need similar filtering like instance
+    plugin have, but for some reason must run on context or should find out
+    if there is at least one instance with a family.
+
+    Args:
+        plugin (pyblish.api.Plugin): Plugin with filters.
+        context (pyblish.api.Context): Pyblish context with insances.
+
+    Returns:
+        Iterator[pyblish.lib.Instance]: Iteration of valid instances.
+    """
+
+    instances = []
+    plugin_families = set()
+    all_families = False
+    if plugin.families:
+        instances = context
+        plugin_families = set(plugin.families)
+        all_families = "*" in plugin_families
+
+    for instance in instances:
+        # Ignore inactive instances
+        if (
+            not instance.data.get("publish", True)
+            or not instance.data.get("active", True)
+        ):
+            continue
+
+        family = instance.data.get("family")
+        families = instance.data.get("families") or []
+        if (
+            all_families
+            or (family and family in plugin_families)
+            or any(f in plugin_families for f in families)
+        ):
+            yield instance
+
+
+def context_plugin_should_run(plugin, context):
+    """Return whether the ContextPlugin should run on the given context.
+
+    This is a helper function to work around a bug pyblish-base#250
+    Whenever a ContextPlugin sets specific families it will still trigger even
+    when no instances are present that have those families.
+
+    This actually checks it correctly and returns whether it should run.
+
+    Args:
+        plugin (pyblish.api.Plugin): Plugin with filters.
+        context (pyblish.api.Context): Pyblish context with insances.
+
+    Returns:
+        bool: Context plugin should run based on valid instances.
+    """
+
+    for _ in filter_instances_for_context_plugin(plugin, context):
+        return True
+    return False
+
+
+def get_instance_staging_dir(instance):
+    """Unified way how staging dir is stored and created on instances.
+
+    First check if 'stagingDir' is already set in instance data. If there is
+    not create new in tempdir.
+
+    Note:
+        Staging dir does not have to be necessarily in tempdir so be carefull
+            about it's usage.
+
+    Args:
+        instance (pyblish.lib.Instance): Instance for which we want to get
+            staging dir.
+
+    Returns:
+        str: Path to staging dir of instance.
+    """
+
+    staging_dir = instance.data.get("stagingDir")
+    if not staging_dir:
+        staging_dir = os.path.normpath(
+            tempfile.mkdtemp(prefix="pyblish_tmp_")
+        )
+        instance.data["stagingDir"] = staging_dir
+
+    return staging_dir

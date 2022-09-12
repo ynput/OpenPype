@@ -18,7 +18,12 @@ import os
 import clique
 import opentimelineio as otio
 from pyblish import api
-import openpype
+
+from openpype.lib import (
+    get_ffmpeg_tool_path,
+    run_subprocess,
+)
+from openpype.pipeline import publish
 from openpype.pipeline.editorial import (
     otio_range_to_frame_range,
     trim_media_range,
@@ -28,7 +33,7 @@ from openpype.pipeline.editorial import (
 )
 
 
-class ExtractOTIOReview(openpype.api.Extractor):
+class ExtractOTIOReview(publish.Extractor):
     """
     Extract OTIO timeline into one concuted image sequence file.
 
@@ -334,7 +339,7 @@ class ExtractOTIOReview(openpype.api.Extractor):
             otio.time.TimeRange: trimmed available range
         """
         # get rendering app path
-        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
         # create path  and frame start to destination
         output_path, out_frame_start = self._get_ffmpeg_output()
@@ -397,7 +402,7 @@ class ExtractOTIOReview(openpype.api.Extractor):
         ])
         # execute
         self.log.debug("Executing: {}".format(" ".join(command)))
-        output = openpype.api.run_subprocess(
+        output = run_subprocess(
             command, logger=self.log
         )
         self.log.debug("Output: {}".format(output))

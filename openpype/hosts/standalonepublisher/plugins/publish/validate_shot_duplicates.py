@@ -1,14 +1,17 @@
 import pyblish.api
 
-import openpype.api
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishXmlValidationError,
+)
+
 
 class ValidateShotDuplicates(pyblish.api.ContextPlugin):
     """Validating no duplicate names are in context."""
 
     label = "Validate Shot Duplicates"
     hosts = ["standalonepublisher"]
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
 
     def process(self, context):
         shot_names = []

@@ -4,6 +4,7 @@ import openpype.api
 from maya import cmds
 
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import RepairAction
 
 
 class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
@@ -29,7 +30,7 @@ class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
     label = "Assembly Model Transforms"
     families = ["assembly"]
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
-               openpype.api.RepairAction]
+               RepairAction]
 
     prompt_message = ("You are about to reset the matrix to the default values."
                       " This can alter the look of your scene. "
@@ -47,7 +48,7 @@ class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
         from openpype.hosts.maya.api import lib
 
         # Get all transforms in the loaded containers
-        container_roots = cmds.listRelatives(instance.data["hierarchy"],
+        container_roots = cmds.listRelatives(instance.data["nodesHierarchy"],
                                              children=True,
                                              type="transform",
                                              fullPath=True)
