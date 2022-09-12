@@ -1,19 +1,58 @@
 import os
 import re
-import abc
-import json
 import logging
-import six
 import platform
+import functools
+import warnings
 
 import clique
 
-from openpype.client import get_project
-from openpype.settings import get_project_settings
-
-from .profiles_filtering import filter_profiles
-
 log = logging.getLogger(__name__)
+
+
+class PathToolsDeprecatedWarning(DeprecationWarning):
+    pass
+
+
+def deprecated(new_destination):
+    """Mark functions as deprecated.
+
+    It will result in a warning being emitted when the function is used.
+    """
+
+    func = None
+    if callable(new_destination):
+        func = new_destination
+        new_destination = None
+
+    def _decorator(decorated_func):
+        if new_destination is None:
+            warning_message = (
+                " Please check content of deprecated function to figure out"
+                " possible replacement."
+            )
+        else:
+            warning_message = " Please replace your usage with '{}'.".format(
+                new_destination
+            )
+
+        @functools.wraps(decorated_func)
+        def wrapper(*args, **kwargs):
+            warnings.simplefilter("always", PathToolsDeprecatedWarning)
+            warnings.warn(
+                (
+                    "Call to deprecated function '{}'"
+                    "\nFunction was moved or removed.{}"
+                ).format(decorated_func.__name__, warning_message),
+                category=PathToolsDeprecatedWarning,
+                stacklevel=4
+            )
+            return decorated_func(*args, **kwargs)
+        return wrapper
+
+    if func is None:
+        return _decorator
+    return _decorator(func)
 
 
 def format_file_size(file_size, suffix=None):
@@ -232,107 +271,69 @@ def get_last_version_from_path(path_dir, filter):
     return None
 
 
+@deprecated("openpype.pipeline.project_folders.concatenate_splitted_paths")
 def concatenate_splitted_paths(split_paths, anatomy):
-    pattern_array = re.compile(r"\[.*\]")
-    output = []
-    for path_items in split_paths:
-        clean_items = []
-        if isinstance(path_items, str):
-            path_items = [path_items]
+    """
+    Deprecated:
+        Function will be removed after release version 3.16.*
+    """
 
-        for path_item in path_items:
-            if not re.match(r"{.+}", path_item):
-                path_item = re.sub(pattern_array, "", path_item)
-            clean_items.append(path_item)
+    from openpype.pipeline.project_folders import concatenate_splitted_paths
 
-        # backward compatibility
-        if "__project_root__" in path_items:
-            for root, root_path in anatomy.roots.items():
-                if not os.path.exists(str(root_path)):
-                    log.debug("Root {} path path {} not exist on \
-                        computer!".format(root, root_path))
-                    continue
-                clean_items = ["{{root[{}]}}".format(root),
-                               r"{project[name]}"] + clean_items[1:]
-                output.append(os.path.normpath(os.path.sep.join(clean_items)))
-            continue
-
-        output.append(os.path.normpath(os.path.sep.join(clean_items)))
-
-    return output
+    return concatenate_splitted_paths(split_paths, anatomy)
 
 
+@deprecated
 def get_format_data(anatomy):
-    project_doc = get_project(anatomy.project_name, fields=["data.code"])
-    project_code = project_doc["data"]["code"]
+    """
+    Deprecated:
+        Function will be removed after release version 3.16.*
+    """
 
-    return {
-        "root": anatomy.roots,
-        "project": {
-            "name": anatomy.project_name,
-            "code": project_code
-        },
-    }
+    from openpype.pipeline.template_data import get_project_template_data
+
+    data = get_project_template_data(project_name=anatomy.project_name)
+    data["root"] = anatomy.roots
+    return data
 
 
+@deprecated("openpype.pipeline.project_folders.fill_paths")
 def fill_paths(path_list, anatomy):
-    format_data = get_format_data(anatomy)
-    filled_paths = []
+    """
+    Deprecated:
+        Function will be removed after release version 3.16.*
+    """
 
-    for path in path_list:
-        new_path = path.format(**format_data)
-        filled_paths.append(new_path)
+    from openpype.pipeline.project_folders import fill_paths
 
-    return filled_paths
+    return fill_paths(path_list, anatomy)
 
 
+@deprecated("openpype.pipeline.project_folders.create_project_folders")
 def create_project_folders(basic_paths, project_name):
-    from openpype.pipeline import Anatomy
-    anatomy = Anatomy(project_name)
+    """
+    Deprecated:
+        Function will be removed after release version 3.16.*
+    """
 
-    concat_paths = concatenate_splitted_paths(basic_paths, anatomy)
-    filled_paths = fill_paths(concat_paths, anatomy)
+    from openpype.pipeline.project_folders import create_project_folders
 
-    # Create folders
-    for path in filled_paths:
-        if os.path.exists(path):
-            log.debug("Folder already exists: {}".format(path))
-        else:
-            log.debug("Creating folder: {}".format(path))
-            os.makedirs(path)
+    return create_project_folders(project_name, basic_paths)
 
 
-def _list_path_items(folder_structure):
-    output = []
-    for key, value in folder_structure.items():
-        if not value:
-            output.append(key)
-        else:
-            paths = _list_path_items(value)
-            for path in paths:
-                if not isinstance(path, (list, tuple)):
-                    path = [path]
-
-                item = [key]
-                item.extend(path)
-                output.append(item)
-
-    return output
-
-
+@deprecated("openpype.pipeline.project_folders.get_project_basic_paths")
 def get_project_basic_paths(project_name):
-    project_settings = get_project_settings(project_name)
-    folder_structure = (
-        project_settings["global"]["project_folder_structure"]
-    )
-    if not folder_structure:
-        return []
+    """
+    Deprecated:
+        Function will be removed after release version 3.16.*
+    """
 
-    if isinstance(folder_structure, str):
-        folder_structure = json.loads(folder_structure)
-    return _list_path_items(folder_structure)
+    from openpype.pipeline.project_folders import get_project_basic_paths
+
+    return get_project_basic_paths(project_name)
 
 
+@deprecated("openpype.pipeline.workfile.create_workdir_extra_folders")
 def create_workdir_extra_folders(
     workdir, host_name, task_type, task_name, project_name,
     project_settings=None
@@ -349,37 +350,18 @@ def create_workdir_extra_folders(
         project_name (str): Name of project on which task is.
         project_settings (dict): Prepared project settings. Are loaded if not
             passed.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
-    # Load project settings if not set
-    if not project_settings:
-        project_settings = get_project_settings(project_name)
 
-    # Load extra folders profiles
-    extra_folders_profiles = (
-        project_settings["global"]["tools"]["Workfiles"]["extra_folders"]
+    from openpype.pipeline.project_folders import create_workdir_extra_folders
+
+    return create_workdir_extra_folders(
+        workdir,
+        host_name,
+        task_type,
+        task_name,
+        project_name,
+        project_settings
     )
-    # Skip if are empty
-    if not extra_folders_profiles:
-        return
-
-    # Prepare profiles filters
-    filter_data = {
-        "task_types": task_type,
-        "task_names": task_name,
-        "hosts": host_name
-    }
-    profile = filter_profiles(extra_folders_profiles, filter_data)
-    if profile is None:
-        return
-
-    for subfolder in profile["folders"]:
-        # Make sure backslashes are converted to forwards slashes
-        #   and does not start with slash
-        subfolder = subfolder.replace("\\", "/").lstrip("/")
-        # Skip empty strings
-        if not subfolder:
-            continue
-
-        fullpath = os.path.join(workdir, subfolder)
-        if not os.path.exists(fullpath):
-            os.makedirs(fullpath)

@@ -318,10 +318,9 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
     @staticmethod
     def create_otio_time_range_from_timeline_item_data(track_item):
-        speed = track_item.playbackSpeed()
         timeline = phiero.get_current_sequence()
         frame_start = int(track_item.timelineIn())
-        frame_duration = int((track_item.duration() - 1) / speed)
+        frame_duration = int(track_item.duration())
         fps = timeline.framerate().toFloat()
 
         return hiero_export.create_otio_time_range(
