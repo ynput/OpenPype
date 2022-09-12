@@ -32,7 +32,7 @@ class ExtractAssembly(publish.Extractor):
             json.dump(instance.data["scenedata"], filepath, ensure_ascii=False)
 
         self.log.info("Extracting point cache ..")
-        cmds.select(instance.data["hierarchy"])
+        cmds.select(instance.data["nodesHierarchy"])
 
         # Run basic alembic exporter
         extract_alembic(file=hierarchy_path,
