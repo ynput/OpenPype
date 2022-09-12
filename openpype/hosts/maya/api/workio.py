@@ -2,11 +2,9 @@
 import os
 from maya import cmds
 
-from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
-
 
 def file_extensions():
-    return HOST_WORKFILE_EXTENSIONS["maya"]
+    return [".ma", ".mb"]
 
 
 def has_unsaved_changes():

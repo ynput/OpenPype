@@ -3,6 +3,10 @@
         "CollectAnatomyInstanceData": {
             "follow_workfile_version": false
         },
+        "CollectAudio": {
+            "enabled": false,
+            "audio_subset_name": "audioMain"
+        },
         "CollectSceneVersion": {
             "hosts": [
                 "aftereffects",
@@ -85,6 +89,7 @@
                             ],
                             "width": 0,
                             "height": 0,
+                            "scale_pixel_aspect": true,
                             "bg_color": [
                                 0,
                                 0,

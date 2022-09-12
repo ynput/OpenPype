@@ -60,8 +60,7 @@ class RenderSettings(object):
         try:
             aov_separator = self._aov_chars[(
                 self._project_settings["maya"]
-                                      ["create"]
-                                      ["CreateRender"]
+                                      ["RenderSettings"]
                                       ["aov_separator"]
             )]
         except KeyError:

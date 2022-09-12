@@ -12,8 +12,6 @@ import platform
 from tests.lib.db_handler import DBHandler
 from tests.lib.file_handler import RemoteFileHandler
 
-from openpype.lib.remote_publish import find_variant_key
-
 
 class BaseTest:
     """Empty base test class"""
@@ -210,7 +208,10 @@ class PublishTest(ModuleUnitTest):
 
         application_manager = ApplicationManager()
         if not app_variant:
-            app_variant = find_variant_key(application_manager, self.APP)
+            variant = (
+                application_manager.find_latest_available_variant_for_group(
+                    self.APP))
+            app_variant = variant.name
 
         yield "{}/{}".format(self.APP, app_variant)
 

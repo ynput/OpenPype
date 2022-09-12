@@ -21,6 +21,27 @@
         {
             "type": "dict",
             "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "CollectAudio",
+            "label": "Collect Audio",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "key": "audio_subset_name",
+                    "label": "Name of audio variant",
+                    "type": "text",
+                    "placeholder": "audioMain"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "CollectSceneVersion",
             "label": "Collect Version from Workfile",
             "is_group": true,
@@ -318,6 +339,15 @@
                                             "default": 0,
                                             "minimum": 0,
                                             "maximum": 100000
+                                        },
+                                        {
+                                            "type": "label",
+                                            "label": "Rescale input when it's pixel aspect ratio is not 1. Usefull for anamorph reviews."
+                                        },
+                                        {
+                                            "key": "scale_pixel_aspect",
+                                            "label": "Scale pixel aspect",
+                                            "type": "boolean"
                                         },
                                         {
                                             "type": "label",

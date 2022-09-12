@@ -19,6 +19,7 @@ from .pipeline import (
     show_tools_dialog,
     show_tools_popup,
     instantiate,
+    UnrealHost,
 )
 
 __all__ = [
@@ -36,5 +37,6 @@ __all__ = [
     "show_experimental_tools",
     "show_tools_dialog",
     "show_tools_popup",
-    "instantiate"
+    "instantiate",
+    "UnrealHost",
 ]

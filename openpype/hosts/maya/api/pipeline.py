@@ -9,14 +9,17 @@ import maya.api.OpenMaya as om
 import pyblish.api
 
 from openpype.settings import get_project_settings
-from openpype.host import HostBase, IWorkfileHost, ILoadHost
-import openpype.hosts.maya
+from openpype.host import (
+    HostBase,
+    IWorkfileHost,
+    ILoadHost,
+    HostDirmap,
+)
 from openpype.tools.utils import host_tools
 from openpype.lib import (
     register_event_callback,
     emit_event
 )
-from openpype.lib.path_tools import HostDirmap
 from openpype.pipeline import (
     legacy_io,
     register_loader_plugin_path,
@@ -28,7 +31,9 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
+from openpype.hosts.maya import MAYA_ROOT_DIR
 from openpype.hosts.maya.lib import create_workspace_mel
+
 from . import menu, lib
 from .workio import (
     open_file,
@@ -41,8 +46,7 @@ from .workio import (
 
 log = logging.getLogger("openpype.hosts.maya")
 
-HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.maya.__file__))
-PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PLUGINS_DIR = os.path.join(MAYA_ROOT_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
@@ -59,9 +63,12 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         self._op_events = {}
 
     def install(self):
-        project_settings = get_project_settings(legacy_io.active_project())
+        project_name = legacy_io.active_project()
+        project_settings = get_project_settings(project_name)
         # process path mapping
-        dirmap_processor = MayaDirmap("maya", project_settings)
+        project_name = legacy_io.active_project()
+        project_settings = get_project_settings(project_name)
+        dirmap_processor = MayaDirmap("maya", project_name, project_settings)
         dirmap_processor.process_dirmap()
 
         pyblish.api.register_plugin_path(PUBLISH_PATH)
@@ -344,21 +351,13 @@ def containerise(name,
         ("id", AVALON_CONTAINER_ID),
         ("name", name),
         ("namespace", namespace),
-        ("loader", str(loader)),
+        ("loader", loader),
         ("representation", context["representation"]["_id"]),
     ]
 
     for key, value in data:
-        if not value:
-            continue
-
-        if isinstance(value, (int, float)):
-            cmds.addAttr(container, longName=key, attributeType="short")
-            cmds.setAttr(container + "." + key, value)
-
-        else:
-            cmds.addAttr(container, longName=key, dataType="string")
-            cmds.setAttr(container + "." + key, value, type="string")
+        cmds.addAttr(container, longName=key, dataType="string")
+        cmds.setAttr(container + "." + key, str(value), type="string")
 
     main_container = cmds.ls(AVALON_CONTAINERS, type="objectSet")
     if not main_container:

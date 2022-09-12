@@ -10,20 +10,20 @@ from openpype.host import IWorkfileHost
 from openpype.client import get_asset_by_id
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.delegates import PrettyTimeDelegate
-from openpype.lib import (
-    emit_event,
-    create_workdir_extra_folders,
-)
-from openpype.lib.avalon_context import (
-    update_current_task,
-    compute_session_changes
-)
+from openpype.lib import emit_event
 from openpype.pipeline import (
     registered_host,
     legacy_io,
     Anatomy,
 )
-from openpype.pipeline.workfile import get_workfile_template_key
+from openpype.pipeline.context_tools import (
+    compute_session_changes,
+    change_current_context
+)
+from openpype.pipeline.workfile import (
+    get_workfile_template_key,
+    create_workdir_extra_folders,
+)
 
 from .model import (
     WorkAreaFilesModel,
@@ -408,8 +408,8 @@ class FilesWidget(QtWidgets.QWidget):
         )
         changes = compute_session_changes(
             session,
-            asset=self._get_asset_doc(),
-            task=self._task_name,
+            self._get_asset_doc(),
+            self._task_name,
             template_key=self.template_key
         )
         session.update(changes)
@@ -422,8 +422,8 @@ class FilesWidget(QtWidgets.QWidget):
         session = legacy_io.Session.copy()
         changes = compute_session_changes(
             session,
-            asset=self._get_asset_doc(),
-            task=self._task_name,
+            self._get_asset_doc(),
+            self._task_name,
             template_key=self.template_key
         )
         if not changes:
@@ -431,9 +431,9 @@ class FilesWidget(QtWidgets.QWidget):
             # to avoid any unwanted Task Changed callbacks to be triggered.
             return
 
-        update_current_task(
-            asset=self._get_asset_doc(),
-            task=self._task_name,
+        change_current_context(
+            self._get_asset_doc(),
+            self._task_name,
             template_key=self.template_key
         )
 

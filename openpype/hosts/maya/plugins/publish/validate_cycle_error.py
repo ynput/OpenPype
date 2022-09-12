@@ -5,12 +5,13 @@ import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.lib import maintained_selection
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateCycleError(pyblish.api.InstancePlugin):
     """Validate nodes produce no cycle errors."""
 
-    order = openpype.api.ValidateContentsOrder + 0.05
+    order = ValidateContentsOrder + 0.05
     label = "Cycle Errors"
     hosts = ["maya"]
     families = ["rig"]

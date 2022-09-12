@@ -15,10 +15,10 @@ from openpype.client import (
     get_assets,
     get_asset_by_id,
     get_asset_by_name,
+    create_project,
 )
 from openpype.pipeline import AvalonMongoDB
-from openpype.api import get_project_settings
-from openpype.lib import create_project
+from openpype.settings import get_project_settings
 from openpype.modules.kitsu.utils.credentials import validate_credentials
 
 
@@ -166,50 +166,21 @@ def update_op_assets(
 
         # Substitute item type for general classification (assets or shots)
         if item_type in ["Asset", "AssetType"]:
-            substitute_item_type = "assets"
+            entity_root_asset_name = "Assets"
         elif item_type in ["Episode", "Sequence"]:
-            substitute_item_type = "shots"
-        else:
-            substitute_item_type = f"{item_type.lower()}s"
-        entity_parent_folders = [
-            f
-            for f in project_module_settings["entities_root"]
-            .get(substitute_item_type)
-            .split("/")
-            if f
-        ]
+            entity_root_asset_name = "Shots"
 
         # Root parent folder if exist
         visual_parent_doc_id = (
             asset_doc_ids[parent_zou_id]["_id"] if parent_zou_id else None
         )
         if visual_parent_doc_id is None:
-            # Find root folder docs
-            root_folder_docs = get_assets(
+            # Find root folder doc ("Assets" or "Shots")
+            root_folder_doc = get_asset_by_name(
                 project_name,
-                asset_names=[entity_parent_folders[-1]],
+                asset_name=entity_root_asset_name,
                 fields=["_id", "data.root_of"],
             )
-            # NOTE: Not sure why it's checking for entity type?
-            #   OP3 does not support multiple assets with same names so type
-            #       filtering is irelevant.
-            # This way mimics previous implementation:
-            # ```
-            # root_folder_doc = dbcon.find_one(
-            #     {
-            #         "type": "asset",
-            #         "name": entity_parent_folders[-1],
-            #         "data.root_of": substitute_item_type,
-            #     },
-            #     ["_id"],
-            # )
-            # ```
-            root_folder_doc = None
-            for folder_doc in root_folder_docs:
-                root_of = folder_doc.get("data", {}).get("root_of")
-                if root_of == substitute_item_type:
-                    root_folder_doc = folder_doc
-                    break
 
             if root_folder_doc:
                 visual_parent_doc_id = root_folder_doc["_id"]
@@ -240,7 +211,7 @@ def update_op_assets(
             item_name = item["name"]
 
         # Set root folders parents
-        item_data["parents"] = entity_parent_folders + item_data["parents"]
+        item_data["parents"] = [entity_root_asset_name] + item_data["parents"]
 
         # Update 'data' different in zou DB
         updated_data = {
@@ -278,7 +249,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     project_doc = get_project(project_name)
     if not project_doc:
         print(f"Creating project '{project_name}'")
-        project_doc = create_project(project_name, project_name, dbcon=dbcon)
+        project_doc = create_project(project_name, project_name)
 
     # Project data and tasks
     project_data = project_doc["data"] or {}
@@ -318,13 +289,13 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     )
 
 
-def sync_all_projects(login: str, password: str):
+def sync_all_projects(login: str, password: str, ignore_projects: list = None):
     """Update all OP projects in DB with Zou data.
 
     Args:
         login (str): Kitsu user login
         password (str): Kitsu user password
-
+        ignore_projects (list): List of unsynced project names
     Raises:
         gazu.exception.AuthFailedException: Wrong user login and/or password
     """
@@ -340,6 +311,8 @@ def sync_all_projects(login: str, password: str):
     dbcon.install()
     all_projects = gazu.project.all_open_projects()
     for project in all_projects:
+        if ignore_projects and project["name"] in ignore_projects:
+            continue
         sync_project_from_kitsu(dbcon, project)
 
 
@@ -396,54 +369,30 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     zou_ids_and_asset_docs[project["id"]] = project_doc
 
     # Create entities root folders
-    project_module_settings = get_project_settings(project_name)["kitsu"]
-    for entity_type, root in project_module_settings["entities_root"].items():
-        parent_folders = root.split("/")
-        direct_parent_doc = None
-        for i, folder in enumerate(parent_folders, 1):
-            parent_doc = get_asset_by_name(
-                project_name, folder, fields=["_id", "data.root_of"]
-            )
-            # NOTE: Not sure why it's checking for entity type?
-            #   OP3 does not support multiple assets with same names so type
-            #       filtering is irelevant.
-            #   Also all of the entities could find be queried at once using
-            #       'get_assets'.
-            # This way mimics previous implementation:
-            # ```
-            # parent_doc = dbcon.find_one(
-            #   {"type": "asset", "name": folder, "data.root_of": entity_type}
-            # )
-            # ```
-            if (
-                parent_doc
-                and parent_doc.get("data", {}).get("root_of") != entity_type
-            ):
-                parent_doc = None
-
-            if not parent_doc:
-                direct_parent_doc = dbcon.insert_one(
-                    {
-                        "name": folder,
-                        "type": "asset",
-                        "schema": "openpype:asset-3.0",
-                        "data": {
-                            "root_of": entity_type,
-                            "parents": parent_folders[:i],
-                            "visualParent": direct_parent_doc.inserted_id
-                            if direct_parent_doc
-                            else None,
-                            "tasks": {},
-                        },
-                    }
-                )
+    to_insert = [
+        {
+            "name": r,
+            "type": "asset",
+            "schema": "openpype:asset-3.0",
+            "data": {
+                "root_of": r,
+                "tasks": {},
+            },
+        }
+        for r in ["Assets", "Shots"]
+        if not get_asset_by_name(
+            project_name, r, fields=["_id", "data.root_of"]
+        )
+    ]
 
     # Create
-    to_insert = [
-        create_op_asset(item)
-        for item in all_entities
-        if item["id"] not in zou_ids_and_asset_docs.keys()
-    ]
+    to_insert.extend(
+        [
+            create_op_asset(item)
+            for item in all_entities
+            if item["id"] not in zou_ids_and_asset_docs.keys()
+        ]
+    )
     if to_insert:
         # Insert doc in DB
         dbcon.insert_many(to_insert)

@@ -49,7 +49,6 @@ from .plugin import (
     ValidateContentsOrder,
     ValidateSceneOrder,
     ValidateMeshOrder,
-    ValidationException
 )
 
 # temporary fix, might
@@ -93,8 +92,6 @@ __all__ = [
     "get_errored_instances_from_context",
     "RepairAction",
     "RepairContextAction",
-
-    "ValidationException",
 
     # get contextual data
     "version_up",

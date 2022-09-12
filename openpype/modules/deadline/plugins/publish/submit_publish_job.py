@@ -296,6 +296,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             for assembly_id in instance.data.get("assemblySubmissionJobs"):
                 payload["JobInfo"]["JobDependency{}".format(job_index)] = assembly_id  # noqa: E501
                 job_index += 1
+        elif instance.data.get("bakingSubmissionJobs"):
+            self.log.info("Adding baking submission jobs as dependencies...")
+            job_index = 0
+            for assembly_id in instance.data["bakingSubmissionJobs"]:
+                payload["JobInfo"]["JobDependency{}".format(job_index)] = assembly_id  # noqa: E501
+                job_index += 1
         else:
             payload["JobInfo"]["JobDependency0"] = job["_id"]
 
@@ -693,9 +699,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         context = instance.context
         self.context = context
         self.anatomy = instance.context.data["anatomy"]
-
-        if hasattr(instance, "_log"):
-            data['_log'] = instance._log
 
         asset = data.get("asset") or legacy_io.Session["AVALON_ASSET"]
         subset = data.get("subset")

@@ -24,7 +24,7 @@ from openpype.settings.constants import (
     METADATA_KEYS,
     M_DYNAMIC_KEY_LABEL
 )
-from . import PypeLogger
+from .log import Logger
 from .profiles_filtering import filter_profiles
 from .local_settings import get_openpype_username
 
@@ -138,7 +138,7 @@ def get_logger():
     """Global lib.applications logger getter."""
     global _logger
     if _logger is None:
-        _logger = PypeLogger.get_logger(__name__)
+        _logger = Logger.get_logger(__name__)
     return _logger
 
 
@@ -373,7 +373,7 @@ class ApplicationManager:
     """
 
     def __init__(self, system_settings=None):
-        self.log = PypeLogger.get_logger(self.__class__.__name__)
+        self.log = Logger.get_logger(self.__class__.__name__)
 
         self.app_groups = {}
         self.applications = {}
@@ -468,6 +468,19 @@ class ApplicationManager:
             self.tool_groups[tool_group_name] = group
             for tool in group:
                 self.tools[tool.full_name] = tool
+
+    def find_latest_available_variant_for_group(self, group_name):
+        group = self.app_groups.get(group_name)
+        if group is None or not group.enabled:
+            return None
+
+        output = None
+        for _, variant in reversed(sorted(group.variants.items())):
+            executable = variant.find_executable()
+            if executable:
+                output = variant
+                break
+        return output
 
     def launch(self, app_name, **data):
         """Launch procedure.
@@ -735,7 +748,7 @@ class LaunchHook:
 
         Always should be called
         """
-        self.log = PypeLogger().get_logger(self.__class__.__name__)
+        self.log = Logger.get_logger(self.__class__.__name__)
 
         self.launch_context = launch_context
 
@@ -877,7 +890,7 @@ class ApplicationLaunchContext:
 
         # Logger
         logger_name = "{}-{}".format(self.__class__.__name__, self.app_name)
-        self.log = PypeLogger.get_logger(logger_name)
+        self.log = Logger.get_logger(logger_name)
 
         self.executable = executable
 
@@ -950,6 +963,63 @@ class ApplicationLaunchContext:
             )
         self.kwargs["env"] = value
 
+    def _collect_addons_launch_hook_paths(self):
+        """Helper to collect application launch hooks from addons.
+
+        Module have to have implemented 'get_launch_hook_paths' method which
+        can expect appliction as argument or nothing.
+
+        Returns:
+            List[str]: Paths to launch hook directories.
+        """
+
+        expected_types = (list, tuple, set)
+
+        output = []
+        for module in self.modules_manager.get_enabled_modules():
+            # Skip module if does not have implemented 'get_launch_hook_paths'
+            func = getattr(module, "get_launch_hook_paths", None)
+            if func is None:
+                continue
+
+            func = module.get_launch_hook_paths
+            if hasattr(inspect, "signature"):
+                sig = inspect.signature(func)
+                expect_args = len(sig.parameters) > 0
+            else:
+                expect_args = len(inspect.getargspec(func)[0]) > 0
+
+            # Pass application argument if method expect it.
+            try:
+                if expect_args:
+                    hook_paths = func(self.application)
+                else:
+                    hook_paths = func()
+            except Exception:
+                self.log.warning(
+                    "Failed to call 'get_launch_hook_paths'",
+                    exc_info=True
+                )
+                continue
+
+            if not hook_paths:
+                continue
+
+            # Convert string to list
+            if isinstance(hook_paths, six.string_types):
+                hook_paths = [hook_paths]
+
+            # Skip invalid types
+            if not isinstance(hook_paths, expected_types):
+                self.log.warning((
+                    "Result of `get_launch_hook_paths`"
+                    " has invalid type {}. Expected {}"
+                ).format(type(hook_paths), expected_types))
+                continue
+
+            output.extend(hook_paths)
+        return output
+
     def paths_to_launch_hooks(self):
         """Directory paths where to look for launch hooks."""
         # This method has potential to be part of application manager (maybe).
@@ -957,32 +1027,24 @@ class ApplicationLaunchContext:
 
         # TODO load additional studio paths from settings
         import openpype
-        pype_dir = os.path.dirname(os.path.abspath(openpype.__file__))
+        openpype_dir = os.path.dirname(os.path.abspath(openpype.__file__))
 
-        # --- START: Backwards compatibility ---
-        hooks_dir = os.path.join(pype_dir, "hooks")
+        global_hooks_dir = os.path.join(openpype_dir, "hooks")
 
-        subfolder_names = ["global"]
-        if self.host_name:
-            subfolder_names.append(self.host_name)
-        for subfolder_name in subfolder_names:
-            path = os.path.join(hooks_dir, subfolder_name)
-            if (
-                os.path.exists(path)
-                and os.path.isdir(path)
-                and path not in paths
-            ):
-                paths.append(path)
-        # --- END: Backwards compatibility ---
-
-        subfolders_list = [
-            ["hooks"]
+        hooks_dirs = [
+            global_hooks_dir
         ]
         if self.host_name:
-            subfolders_list.append(["hosts", self.host_name, "hooks"])
+            # If host requires launch hooks and is module then launch hooks
+            #   should be collected using 'collect_launch_hook_paths'
+            #   - module have to implement 'get_launch_hook_paths'
+            host_module = self.modules_manager.get_host_module(self.host_name)
+            if not host_module:
+                hooks_dirs.append(os.path.join(
+                    openpype_dir, "hosts", self.host_name, "hooks"
+                ))
 
-        for subfolders in subfolders_list:
-            path = os.path.join(pype_dir, *subfolders)
+        for path in hooks_dirs:
             if (
                 os.path.exists(path)
                 and os.path.isdir(path)
@@ -991,7 +1053,7 @@ class ApplicationLaunchContext:
                 paths.append(path)
 
         # Load modules paths
-        paths.extend(self.modules_manager.collect_launch_hook_paths())
+        paths.extend(self._collect_addons_launch_hook_paths())
 
         return paths
 
@@ -1304,6 +1366,7 @@ def get_app_environments_for_context(
         dict: Environments for passed context and application.
     """
 
+    from openpype.modules import ModulesManager
     from openpype.pipeline import AvalonMongoDB, Anatomy
 
     # Avalon database connection
@@ -1316,8 +1379,6 @@ def get_app_environments_for_context(
     asset_doc = get_asset_by_name(project_name, asset_name)
 
     if modules_manager is None:
-        from openpype.modules import ModulesManager
-
         modules_manager = ModulesManager()
 
     # Prepare app object which can be obtained only from ApplciationManager
@@ -1344,7 +1405,7 @@ def get_app_environments_for_context(
     })
 
     prepare_app_environments(data, env_group, modules_manager)
-    prepare_context_environments(data, env_group)
+    prepare_context_environments(data, env_group, modules_manager)
 
     # Discard avalon connection
     dbcon.uninstall()
@@ -1503,8 +1564,10 @@ def prepare_app_environments(
     final_env = None
     # Add host specific environments
     if app.host_name and implementation_envs:
-        module = __import__("openpype.hosts", fromlist=[app.host_name])
-        host_module = getattr(module, app.host_name, None)
+        host_module = modules_manager.get_host_module(app.host_name)
+        if not host_module:
+            module = __import__("openpype.hosts", fromlist=[app.host_name])
+            host_module = getattr(module, app.host_name, None)
         add_implementation_envs = None
         if host_module:
             add_implementation_envs = getattr(
@@ -1563,7 +1626,7 @@ def apply_project_environments_value(
     return env
 
 
-def prepare_context_environments(data, env_group=None):
+def prepare_context_environments(data, env_group=None, modules_manager=None):
     """Modify launch environments with context data for launched host.
 
     Args:
@@ -1658,10 +1721,10 @@ def prepare_context_environments(data, env_group=None):
     data["env"]["AVALON_APP"] = app.host_name
     data["env"]["AVALON_WORKDIR"] = workdir
 
-    _prepare_last_workfile(data, workdir)
+    _prepare_last_workfile(data, workdir, modules_manager)
 
 
-def _prepare_last_workfile(data, workdir):
+def _prepare_last_workfile(data, workdir, modules_manager):
     """last workfile workflow preparation.
 
     Function check if should care about last workfile workflow and tries
@@ -1676,7 +1739,12 @@ def _prepare_last_workfile(data, workdir):
             result will be stored.
         workdir (str): Path to folder where workfiles should be stored.
     """
+
+    from openpype.modules import ModulesManager
     from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
+
+    if not modules_manager:
+        modules_manager = ModulesManager()
 
     log = data["log"]
 
@@ -1725,7 +1793,12 @@ def _prepare_last_workfile(data, workdir):
     # Last workfile path
     last_workfile_path = data.get("last_workfile_path") or ""
     if not last_workfile_path:
-        extensions = HOST_WORKFILE_EXTENSIONS.get(app.host_name)
+        host_module = modules_manager.get_host_module(app.host_name)
+        if host_module:
+            extensions = host_module.get_workfile_extensions()
+        else:
+            extensions = HOST_WORKFILE_EXTENSIONS.get(app.host_name)
+
         if extensions:
             from openpype.pipeline.workfile import (
                 get_workfile_template_key,
