@@ -361,6 +361,8 @@ class PublishableClip:
     index_from_segment_default = False
     use_shot_name_default = False
     include_handles_default = False
+    retimed_handles_default = True
+    retimed_framerange_default = True
 
     def __init__(self, segment, **kwargs):
         self.rename_index = kwargs["rename_index"]
@@ -496,6 +498,14 @@ class PublishableClip:
             "audio", {}).get("value") or False
         self.include_handles = self.ui_inputs.get(
             "includeHandles", {}).get("value") or self.include_handles_default
+        self.retimed_handles = (
+            self.ui_inputs.get("retimedHandles", {}).get("value")
+            or self.retimed_handles_default
+        )
+        self.retimed_framerange = (
+            self.ui_inputs.get("retimedFramerange", {}).get("value")
+            or self.retimed_framerange_default
+        )
 
         # build subset name from layer name
         if self.subset_name == "[ track name ]":

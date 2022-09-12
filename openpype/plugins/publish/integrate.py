@@ -138,7 +138,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     # the database even if not used by the destination template
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "version", "representation",
-        "family", "hierarchy", "username", "output"
+        "family", "hierarchy", "username", "user", "output"
     ]
     skip_host_families = []
 
