@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.14.2-nightly.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.14.2](https://github.com/pypeclub/OpenPype/tree/3.14.2) (2022-09-12)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.1...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.1...3.14.2)
 
 **🆕 New features**
 
@@ -45,10 +45,11 @@
 - Maya: Refactor submit deadline to use AbstractSubmitDeadline [\#3759](https://github.com/pypeclub/OpenPype/pull/3759)
 - General: Change publish template settings location [\#3755](https://github.com/pypeclub/OpenPype/pull/3755)
 - General: Move hostdirname functionality into host [\#3749](https://github.com/pypeclub/OpenPype/pull/3749)
-- General: Move publish utils to pipeline [\#3745](https://github.com/pypeclub/OpenPype/pull/3745)
+- Photoshop: Defined photoshop as addon [\#3736](https://github.com/pypeclub/OpenPype/pull/3736)
 - Houdini: Define houdini as addon [\#3735](https://github.com/pypeclub/OpenPype/pull/3735)
 - Fusion: Defined fusion as addon [\#3733](https://github.com/pypeclub/OpenPype/pull/3733)
 - Flame: Defined flame as addon [\#3732](https://github.com/pypeclub/OpenPype/pull/3732)
+- Blender: Define blender as module [\#3729](https://github.com/pypeclub/OpenPype/pull/3729)
 - Resolve: Define resolve as addon [\#3727](https://github.com/pypeclub/OpenPype/pull/3727)
 
 **Merged pull requests:**
@@ -72,7 +73,6 @@
 - Unreal: Define unreal as module and use host class [\#3701](https://github.com/pypeclub/OpenPype/pull/3701)
 - Settings: Lock settings UI session [\#3700](https://github.com/pypeclub/OpenPype/pull/3700)
 - General: Benevolent context label collector [\#3686](https://github.com/pypeclub/OpenPype/pull/3686)
-- Ftrack: Addiotional component metadata [\#3685](https://github.com/pypeclub/OpenPype/pull/3685)
 
 **🐛 Bug fixes**
 
@@ -91,13 +91,12 @@
 **🔀 Refactored code**
 
 - General: Move delivery logic to pipeline [\#3751](https://github.com/pypeclub/OpenPype/pull/3751)
+- General: Move publish utils to pipeline [\#3745](https://github.com/pypeclub/OpenPype/pull/3745)
 - General: Host addons cleanup [\#3744](https://github.com/pypeclub/OpenPype/pull/3744)
 - Webpublisher: Webpublisher is used as addon [\#3740](https://github.com/pypeclub/OpenPype/pull/3740)
-- Photoshop: Defined photoshop as addon [\#3736](https://github.com/pypeclub/OpenPype/pull/3736)
 - Harmony: Defined harmony as addon [\#3734](https://github.com/pypeclub/OpenPype/pull/3734)
 - General: Module interfaces cleanup [\#3731](https://github.com/pypeclub/OpenPype/pull/3731)
 - AfterEffects: Move AE functions from general lib [\#3730](https://github.com/pypeclub/OpenPype/pull/3730)
-- Blender: Define blender as module [\#3729](https://github.com/pypeclub/OpenPype/pull/3729)
 - AfterEffects: Define AfterEffects as module [\#3728](https://github.com/pypeclub/OpenPype/pull/3728)
 - General: Replace PypeLogger with Logger [\#3725](https://github.com/pypeclub/OpenPype/pull/3725)
 - Nuke: Define nuke as module [\#3724](https://github.com/pypeclub/OpenPype/pull/3724)
@@ -118,6 +117,10 @@
 ## [3.14.0](https://github.com/pypeclub/OpenPype/tree/3.14.0) (2022-08-18)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.14.0-nightly.1...3.14.0)
+
+**🚀 Enhancements**
+
+- Ftrack: Addiotional component metadata [\#3685](https://github.com/pypeclub/OpenPype/pull/3685)
 
 **🐛 Bug fixes**
 
