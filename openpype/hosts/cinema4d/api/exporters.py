@@ -1,6 +1,15 @@
 import c4d
 import contextlib
 
+'''
+C4D handles all imports and exports of file types through import/export plugins.
+There is a special convoluted way to get the settings for the plugins by supplying
+the plugin ID and getting a dict that with the settings that can be set.
+
+By default exporters sticky the previous settings, so for consistency and reliability
+set each possible setting each time. Use the exporter_settings statement to return the 
+settings to their previous state.
+'''
 
 def get_export_settings(exporter_id):
     plug = c4d.plugins.FindPlugin(exporter_id, c4d.PLUGINTYPE_SCENESAVER)

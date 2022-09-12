@@ -697,7 +697,10 @@ def visible_in_render(obj):
 '''
 Vaguely based on the maya ls, mainly I just wanted a unified way to iterate over
 all the objects in a project file and find what I am looking for without having
-to write bespoke functions every single time.
+to write bespoke functions every single time. 
+
+I don't know if this level of complexity is worthwhile. I will probably change this
+back into something simpler.
 '''
 def ls(
     search_list=None,

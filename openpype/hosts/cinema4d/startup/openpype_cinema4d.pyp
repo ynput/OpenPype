@@ -43,6 +43,7 @@ reset_frame_range_id = 1059870
 reset_scene_resolution_id = 1059871
 reset_colorspace_id = 1059874
 experimental_tools_id = 1059872
+document_changed_id = 1060025
 
 class Loader(c4d.plugins.CommandData):
     def Execute(self, doc):
@@ -237,4 +238,4 @@ if __name__ == '__main__':
         experimental_tools_id, "Experimental Tools", c4d.PLUGINFLAG_HIDEPLUGINMENU, experiment_bmp, "", ExperimentalTools()
         )
 
-    c4d.plugins.RegisterMessagePlugin(id=1060025, str="", info=0, dat=DocumentChanged())
+    c4d.plugins.RegisterMessagePlugin(id=document_changed_id, str="", info=0, dat=DocumentChanged())

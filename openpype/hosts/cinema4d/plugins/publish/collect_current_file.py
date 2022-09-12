@@ -3,7 +3,7 @@ import c4d
 import pyblish.api
 from openpype.hosts.cinema4d import api
 
-class CollectBlenderCurrentFile(pyblish.api.ContextPlugin):
+class CollectCinema4DrCurrentFile(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
 
     order = pyblish.api.CollectorOrder - 0.5

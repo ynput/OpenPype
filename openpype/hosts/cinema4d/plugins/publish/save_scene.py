@@ -1,5 +1,6 @@
 import pyblish.api
-import os
+import c4d
+from openpype.hosts.cinema4d import api
 
 class SaveCurrentScene(pyblish.api.ContextPlugin):
     """Save current scene
@@ -12,8 +13,7 @@ class SaveCurrentScene(pyblish.api.ContextPlugin):
     #families = []
 
     def process(self, context):
-        import c4d
-        from openpype.hosts.cinema4d import api
+
         doc = c4d.documents.GetActiveDocument()
 
         

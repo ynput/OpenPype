@@ -116,7 +116,7 @@ def ls(doc=None):
     if not doc:
         doc = c4d.documents.GetActiveDocument()
     for obj in lib.walk_hierarchy(doc.GetFirstObject()):
-        print(obj.get("id"))
+        #print(obj.get("id"))
         if obj.get("id") in ids:
             yield obj
 
