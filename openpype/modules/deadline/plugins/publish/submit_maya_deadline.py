@@ -754,7 +754,12 @@ def _format_tiles(
                       used for assembler configuration.
 
     """
-    tile = 0
+    # Math used requires integers for correct output - as such
+    # we ensure our inputs are correct.
+    assert type(tiles_x) is int, "tiles_x must be an integer"
+    assert type(tiles_y) is int, "tiles_y must be an integer"
+    assert type(width) is int, "width must be an integer"
+    assert type(height) is int, "height must be an integer"
     out = {"JobInfo": {}, "PluginInfo": {}}
     cfg = OrderedDict()
     w_space = width // tiles_x
@@ -762,6 +767,7 @@ def _format_tiles(
 
     cfg["TilesCropped"] = "False"
 
+    tile = 0
     for tile_x in range(1, tiles_x + 1):
         for tile_y in reversed(range(1, tiles_y + 1)):
             tile_prefix = "_tile_{}x{}_{}x{}_".format(
@@ -769,28 +775,31 @@ def _format_tiles(
                 tiles_x,
                 tiles_y
             )
-            out_tile_index = "OutputFilename{}Tile{}".format(
-                str(index), tile
-            )
+
             new_filename = "{}/{}{}".format(
                 os.path.dirname(filename),
                 tile_prefix,
                 os.path.basename(filename)
             )
-            out["JobInfo"][out_tile_index] = new_filename
-            out["PluginInfo"]["RegionPrefix{}".format(str(tile))] = \
-                "/{}".format(tile_prefix).join(prefix.rsplit("/", 1))
 
-            top = int(height) - (tile_y * h_space)
-            bottom = int(height) - ((tile_y - 1) * h_space) - 1
+            top = height - (tile_y * h_space)
+            bottom = height - ((tile_y - 1) * h_space) - 1
             left = (tile_x - 1) * w_space
             right = (tile_x * w_space) - 1
+
+            # Job info
+            out["JobInfo"]["OutputFilename{}Tile{}".format(index, tile)] = new_filename  # noqa: E501
+
+            # Plugin Info
+            out["PluginInfo"]["RegionPrefix{}".format(str(tile))] = \
+                "/{}".format(tile_prefix).join(prefix.rsplit("/", 1))
 
             out["PluginInfo"]["RegionTop{}".format(tile)] = top
             out["PluginInfo"]["RegionBottom{}".format(tile)] = bottom
             out["PluginInfo"]["RegionLeft{}".format(tile)] = left
             out["PluginInfo"]["RegionRight{}".format(tile)] = right
 
+            # Tile config
             cfg["Tile{}".format(tile)] = new_filename
             cfg["Tile{}Tile".format(tile)] = new_filename
             cfg["Tile{}FileName".format(tile)] = new_filename
@@ -801,5 +810,5 @@ def _format_tiles(
             cfg["Tile{}Height".format(tile)] = h_space
 
             tile += 1
-            
+
     return out, cfg
