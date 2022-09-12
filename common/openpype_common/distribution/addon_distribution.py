@@ -7,7 +7,7 @@ import requests
 import platform
 import shutil
 
-from distribution.file_handler import RemoteFileHandler
+from common.openpype_common.distribution.file_handler import RemoteFileHandler
 
 
 class UrlType(Enum):
