@@ -18,6 +18,10 @@ from .pipeline import (
 
     ls,
 
+    list_instances,
+    remove_instance,
+    select_instance,
+
     containerise,
     parse_container,
     update_container,
@@ -50,6 +54,10 @@ __all__ = (
     "uninstall",
 
     "ls",
+
+    "list_instances",
+    "remove_instance",
+    "select_instance",
 
     "containerise",
     "parse_container",

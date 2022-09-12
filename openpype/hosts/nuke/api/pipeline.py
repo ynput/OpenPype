@@ -39,6 +39,7 @@ from .lib import (
     check_inventory_versions,
     set_avalon_knob_data,
     read_avalon_data,
+    get_avalon_knob_data
 )
 from .lib_template_builder import (
     create_placeholder, update_placeholder
@@ -431,7 +432,6 @@ def ls():
     """
     all_nodes = nuke.allNodes(recurseGroups=False)
 
-    # TODO: add readgeo, readcamera, readimage
     nodes = [n for n in all_nodes]
 
     for n in nodes:
@@ -439,3 +439,64 @@ def ls():
         container = parse_container(n)
         if container:
             yield container
+
+
+def list_instances():
+    """List all created instances to publish from current workfile.
+
+    For SubsetManager
+
+    Returns:
+        (list) of dictionaries matching instances format
+    """
+    instances = []
+    for node in nuke.allNodes():
+
+        if node.Class() in ["Viewer", "Dot"]:
+            continue
+
+        try:
+            if node["disable"].value():
+                continue
+        except Exception as E:
+            log.warning(E)
+
+        # get data from avalon knob
+        avalon_knob_data = get_avalon_knob_data(
+            node, ["avalon:", "ak:"])
+
+        if not avalon_knob_data:
+            continue
+
+        if avalon_knob_data["id"] != "pyblish.avalon.instance":
+            continue
+
+        # add node name
+        avalon_knob_data["name"] = node.name()
+
+        instances.append(avalon_knob_data)
+
+    return instances
+
+
+def remove_instance(instance):
+    """Remove instance from current workfile metadata.
+
+    For SubsetManager
+
+    Args:
+        instance (dict): instance representation from subsetmanager model
+    """
+    node = nuke.toNode(instance["name"])
+    nuke.delete(node)
+
+
+def select_instance(instance):
+    """
+        Select instance in Node View
+
+        Args:
+            instance (dict): instance representation from subsetmanager model
+    """
+    node = nuke.toNode(instance["name"])
+    node["selected"].setValue(True)
