@@ -1273,5 +1273,154 @@
             }
         }
     },
+
+    "cinema4d": {
+        "enabled": true,
+        "label": "Cinema4D",
+        "icon": "{}/app_icons/cinema4d.png",
+        "host_name": "cinema4d",
+        "environment": {
+        },
+        "variants": {
+            "20": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\MAXON\\Cinema 4D R20\\CINEMA 4D.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "21": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Maxon Cinema 4D R21\\Cinema 4D.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "22": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Maxon Cinema 4D R22\\Cinema 4D.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [ ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "23": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Maxon Cinema 4D R23\\Cinema 4D.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "24": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Maxon Cinema 4D R24\\Cinema 4D.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "25": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Maxon Cinema 4D R25\\Cinema 4D.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "26": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Maxon Cinema 4D R26\\Cinema 4D.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "2023": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Maxon Cinema 4D 2023\\Cinema 4D.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "20": "20",
+                "21": "21",
+                "22": "22",
+                "23": "23",
+                "24": "24",
+                "25": "25",
+                "26": "26",
+                "2023": "2023"
+            }
+        }
+    },
     "additional_apps": {}
 }

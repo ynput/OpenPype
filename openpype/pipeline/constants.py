@@ -15,5 +15,6 @@ HOST_WORKFILE_EXTENSIONS = {
     "photoshop": [".psd", ".psb"],
     "premiere": [".prproj"],
     "resolve": [".drp"],
-    "aftereffects": [".aep"]
+    "aftereffects": [".aep"],
+    "cinema4d":[".c4d"]
 }
