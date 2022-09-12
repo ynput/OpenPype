@@ -23,12 +23,13 @@ class CollectOtioFrameRanges(pyblish.api.InstancePlugin):
     label = "Collect OTIO Frame Ranges"
     order = pyblish.api.CollectorOrder - 0.08
     families = ["shot", "clip"]
-    hosts = ["resolve", "hiero", "flame"]
+    hosts = ["resolve", "hiero", "flame", "traypublisher"]
 
     def process(self, instance):
         # get basic variables
         otio_clip = instance.data["otioClip"]
         workfile_start = instance.data["workfileFrameStart"]
+        workfile_source_duration = instance.data.get("notRetimedFramerange")
 
         # get ranges
         otio_tl_range = otio_clip.range_in_parent()
@@ -53,6 +54,11 @@ class CollectOtioFrameRanges(pyblish.api.InstancePlugin):
         frame_start = workfile_start
         frame_end = frame_start + otio.opentime.to_frames(
             otio_tl_range.duration, otio_tl_range.duration.rate) - 1
+
+        # in case of retimed clip and frame range should not be retimed
+        if workfile_source_duration:
+            frame_end = frame_start + otio.opentime.to_frames(
+                otio_src_range.duration, otio_src_range.duration.rate) - 1
 
         data = {
             "frameStart": frame_start,

@@ -3,6 +3,7 @@ from Qt import QtWidgets, QtCore
 import qtawesome
 
 from openpype.client import (
+    get_projects,
     get_project,
     get_asset_by_id,
 )
@@ -291,9 +292,7 @@ class AssetWidget(QtWidgets.QWidget):
     def _set_projects(self):
         project_names = list()
 
-        for doc in self.dbcon.projects(projection={"name": 1},
-                                       only_active=True):
-
+        for doc in get_projects(fields=["name"]):
             project_name = doc.get("name")
             if project_name:
                 project_names.append(project_name)
@@ -320,8 +319,7 @@ class AssetWidget(QtWidgets.QWidget):
     def on_project_change(self):
         projects = list()
 
-        for project in self.dbcon.projects(projection={"name": 1},
-                                           only_active=True):
+        for project in get_projects(fields=["name"]):
             projects.append(project['name'])
         project_name = self.combo_projects.currentText()
         if project_name in projects:

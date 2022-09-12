@@ -2,7 +2,9 @@ import os
 import copy
 import logging
 
+from openpype.client import get_project
 from . import legacy_io
+from .anatomy import Anatomy
 from .plugin_discover import (
     discover,
     register_plugin,
@@ -72,26 +74,22 @@ class ThumbnailResolver(object):
 
 
 class TemplateResolver(ThumbnailResolver):
-
     priority = 90
 
     def process(self, thumbnail_entity, thumbnail_type):
-
-        if not os.environ.get("AVALON_THUMBNAIL_ROOT"):
-            return
-
         template = thumbnail_entity["data"].get("template")
         if not template:
             self.log.debug("Thumbnail entity does not have set template")
             return
 
-        project = self.dbcon.find_one(
-            {"type": "project"},
-            {
-                "name": True,
-                "data.code": True
-            }
-        )
+        thumbnail_root_format_key = "{thumbnail_root}"
+        thumbnail_root = os.environ.get("AVALON_THUMBNAIL_ROOT") or ""
+        # Check if template require thumbnail root and if is avaiable
+        if thumbnail_root_format_key in template and not thumbnail_root:
+            return
+
+        project_name = self.dbcon.active_project()
+        project = get_project(project_name, fields=["name", "data.code"])
 
         template_data = copy.deepcopy(
             thumbnail_entity["data"].get("template_data") or {}
@@ -99,12 +97,16 @@ class TemplateResolver(ThumbnailResolver):
         template_data.update({
             "_id": str(thumbnail_entity["_id"]),
             "thumbnail_type": thumbnail_type,
-            "thumbnail_root": os.environ.get("AVALON_THUMBNAIL_ROOT"),
+            "thumbnail_root": thumbnail_root,
             "project": {
                 "name": project["name"],
                 "code": project["data"].get("code")
-            }
+            },
         })
+        # Add anatomy roots if is in template
+        if "{root" in template:
+            anatomy = Anatomy(project_name)
+            template_data["root"] = anatomy.roots
 
         try:
             filepath = os.path.normpath(template.format(**template_data))

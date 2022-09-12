@@ -131,12 +131,17 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
                 "fps": self.fps,
                 "workfileFrameStart": workfile_start,
                 "sourceFirstFrame": int(first_frame),
+                "notRetimedHandles": (
+                    not marker_data.get("retimedHandles")),
+                "notRetimedFramerange": (
+                    not marker_data.get("retimedFramerange")),
                 "path": file_path,
                 "flameAddTasks": self.add_tasks,
                 "tasks": {
                     task["name"]: {"type": task["type"]}
                     for task in self.add_tasks},
-                "representations": []
+                "representations": [],
+                "newAssetPublishing": True
             })
             self.log.debug("__ inst_data: {}".format(pformat(inst_data)))
 

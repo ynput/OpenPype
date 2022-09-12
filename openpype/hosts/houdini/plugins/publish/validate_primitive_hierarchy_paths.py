@@ -1,5 +1,5 @@
 import pyblish.api
-import openpype.api
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
@@ -11,7 +11,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder + 0.1
+    order = ValidateContentsOrder + 0.1
     families = ["pointcache"]
     hosts = ["houdini"]
     label = "Validate Prims Hierarchy Path"

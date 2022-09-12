@@ -6,11 +6,6 @@ import collections
 
 import six
 
-from .log import PypeLogger
-
-log = PypeLogger.get_logger(__name__)
-
-
 KEY_PATTERN = re.compile(r"(\{.*?[^{0]*\})")
 KEY_PADDING_PATTERN = re.compile(r"([^:]+)\S+[><]\S+")
 SUB_DICT_PATTERN = re.compile(r"([^\[\]]+)")
@@ -211,15 +206,28 @@ class StringTemplate(object):
                 if counted_symb > -1:
                     parts = tmp_parts.pop(counted_symb)
                     counted_symb -= 1
+                    # If part contains only single string keep value
+                    #   unchanged
                     if parts:
                         # Remove optional start char
                         parts.pop(0)
-                        if counted_symb < 0:
-                            out_parts = new_parts
-                        else:
-                            out_parts = tmp_parts[counted_symb]
-                        # Store temp parts
-                        out_parts.append(OptionalPart(parts))
+
+                    if not parts:
+                        value = "<>"
+                    elif (
+                        len(parts) == 1
+                        and isinstance(parts[0], six.string_types)
+                    ):
+                        value = "<{}>".format(parts[0])
+                    else:
+                        value = OptionalPart(parts)
+
+                    if counted_symb < 0:
+                        out_parts = new_parts
+                    else:
+                        out_parts = tmp_parts[counted_symb]
+                    # Store value
+                    out_parts.append(value)
                     continue
 
             if counted_symb < 0:
@@ -402,6 +410,19 @@ class TemplateResult(str):
         cls = self.__class__
         return cls(
             str(self),
+            self.template,
+            self.solved,
+            self.used_values,
+            self.missing_keys,
+            self.invalid_types
+        )
+
+    def normalized(self):
+        """Convert to normalized path."""
+
+        cls = self.__class__
+        return cls(
+            os.path.normpath(self),
             self.template,
             self.solved,
             self.used_values,
@@ -780,6 +801,7 @@ class OptionalPart:
         parts(list): Parts of template. Can contain 'str', 'OptionalPart' or
             'FormattingPart'.
     """
+
     def __init__(self, parts):
         self._parts = parts
 

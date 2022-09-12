@@ -6,13 +6,18 @@ from Qt import QtWidgets, QtGui
 import maya.utils
 import maya.cmds as cmds
 
-from openpype.api import BuildWorkfile
 from openpype.settings import get_project_settings
 from openpype.pipeline import legacy_io
+from openpype.pipeline.workfile import BuildWorkfile
+from openpype.pipeline.workfile.build_template import (
+    build_workfile_template,
+    update_workfile_template
+)
 from openpype.tools.utils import host_tools
-from openpype.hosts.maya.api import lib
+from openpype.hosts.maya.api import lib, lib_rendersettings
 from .lib import get_main_window, IS_HEADLESS
 from .commands import reset_frame_range
+from .lib_template_builder import create_placeholder, update_placeholder
 
 
 log = logging.getLogger(__name__)
@@ -44,6 +49,7 @@ def install():
             parent="MayaWindow"
         )
 
+        renderer = cmds.getAttr('defaultRenderGlobals.currentRenderer').lower()
         # Create context menu
         context_label = "{}, {}".format(
             legacy_io.Session["AVALON_ASSET"],
@@ -119,6 +125,12 @@ def install():
             "Set Colorspace",
             command=lambda *args: lib.set_colorspace(),
         )
+
+        cmds.menuItem(
+            "Set Render Settings",
+            command=lambda *args: lib_rendersettings.RenderSettings().set_default_renderer_settings()    # noqa
+        )
+
         cmds.menuItem(divider=True, parent=MENU_NAME)
         cmds.menuItem(
             "Build First Workfile",
@@ -139,6 +151,34 @@ def install():
                 parent_widget
             )
         )
+
+        builder_menu = cmds.menuItem(
+            "Template Builder",
+            subMenu=True,
+            tearOff=True,
+            parent=MENU_NAME
+        )
+        cmds.menuItem(
+            "Create Placeholder",
+            parent=builder_menu,
+            command=lambda *args: create_placeholder()
+        )
+        cmds.menuItem(
+            "Update Placeholder",
+            parent=builder_menu,
+            command=lambda *args: update_placeholder()
+        )
+        cmds.menuItem(
+            "Build Workfile from template",
+            parent=builder_menu,
+            command=build_workfile_template
+        )
+        cmds.menuItem(
+            "Update Workfile from template",
+            parent=builder_menu,
+            command=update_workfile_template
+        )
+
         cmds.setParent(MENU_NAME, menu=True)
 
     def add_scripts_menu():

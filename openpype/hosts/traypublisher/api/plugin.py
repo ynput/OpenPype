@@ -1,6 +1,7 @@
 from openpype.lib.attribute_definitions import FileDef
-from openpype.pipeline import (
+from openpype.pipeline.create import (
     Creator,
+    HiddenCreator,
     CreatedInstance
 )
 
@@ -10,7 +11,6 @@ from .pipeline import (
     remove_instances,
     HostContext,
 )
-
 
 IMAGE_EXTENSIONS = [
     ".ani", ".anim", ".apng", ".art", ".bmp", ".bpg", ".bsave", ".cal",
@@ -35,6 +35,42 @@ VIDEO_EXTENSIONS = [
 REVIEW_EXTENSIONS = IMAGE_EXTENSIONS + VIDEO_EXTENSIONS
 
 
+class HiddenTrayPublishCreator(HiddenCreator):
+    host_name = "traypublisher"
+
+    def collect_instances(self):
+        for instance_data in list_instances():
+            creator_id = instance_data.get("creator_identifier")
+            if creator_id == self.identifier:
+                instance = CreatedInstance.from_existing(
+                    instance_data, self
+                )
+                self._add_instance_to_context(instance)
+
+    def update_instances(self, update_list):
+        update_instances(update_list)
+
+    def remove_instances(self, instances):
+        remove_instances(instances)
+        for instance in instances:
+            self._remove_instance_from_context(instance)
+
+    def _store_new_instance(self, new_instance):
+        """Tray publisher specific method to store instance.
+
+        Instance is stored into "workfile" of traypublisher and also add it
+        to CreateContext.
+
+        Args:
+            new_instance (CreatedInstance): Instance that should be stored.
+        """
+
+        # Host implementation of storing metadata about instance
+        HostContext.add_instance(new_instance.data_to_store())
+        # Add instance to current context
+        self._add_instance_to_context(new_instance)
+
+
 class TrayPublishCreator(Creator):
     create_allow_context_change = True
     host_name = "traypublisher"
@@ -56,10 +92,6 @@ class TrayPublishCreator(Creator):
         for instance in instances:
             self._remove_instance_from_context(instance)
 
-    def get_pre_create_attr_defs(self):
-        # Use same attributes as for instance attrobites
-        return self.get_instance_attr_defs()
-
     def _store_new_instance(self, new_instance):
         """Tray publisher specific method to store instance.
 
@@ -80,15 +112,6 @@ class SettingsCreator(TrayPublishCreator):
     create_allow_context_change = True
 
     extensions = []
-
-    def collect_instances(self):
-        for instance_data in list_instances():
-            creator_id = instance_data.get("creator_identifier")
-            if creator_id == self.identifier:
-                instance = CreatedInstance.from_existing(
-                    instance_data, self
-                )
-                self._add_instance_to_context(instance)
 
     def create(self, subset_name, data, pre_create_data):
         # Pass precreate data to creator attributes
@@ -119,6 +142,10 @@ class SettingsCreator(TrayPublishCreator):
                 extensions_label="Single reviewable item"
             )
         ]
+
+    def get_pre_create_attr_defs(self):
+        # Use same attributes as for instance attrobites
+        return self.get_instance_attr_defs()
 
     @classmethod
     def from_settings(cls, item_data):

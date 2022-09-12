@@ -4,8 +4,8 @@ import pyblish.api
 import copy
 from datetime import datetime
 
+from openpype.client import OpenPypeMongoConnection
 from openpype.lib.plugin_tools import prepare_template_data
-from openpype.lib import OpenPypeMongoConnection
 
 
 class IntegrateSlackAPI(pyblish.api.InstancePlugin):
@@ -95,13 +95,15 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         Reviews might be large, so allow only adding link to message instead of
         uploading only.
         """
+
         fill_data = copy.deepcopy(instance.context.data["anatomyData"])
 
+        username = fill_data.get("user")
         fill_pairs = [
             ("asset", instance.data.get("asset", fill_data.get("asset"))),
             ("subset", instance.data.get("subset", fill_data.get("subset"))),
-            ("username", instance.data.get("username",
-                                           fill_data.get("username"))),
+            ("user", username),
+            ("username", username),
             ("app", instance.data.get("app", fill_data.get("app"))),
             ("family", instance.data.get("family", fill_data.get("family"))),
             ("version", str(instance.data.get("version",
@@ -110,13 +112,19 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         if review_path:
             fill_pairs.append(("review_filepath", review_path))
 
-        task_data = instance.data.get("task")
-        if not task_data:
-            task_data = fill_data.get("task")
-        for key, value in task_data.items():
-            fill_key = "task[{}]".format(key)
-            fill_pairs.append((fill_key, value))
-        fill_pairs.append(("task", task_data["name"]))
+        task_data = fill_data.get("task")
+        if task_data:
+            if (
+                "{task}" in message_templ
+                or "{Task}" in message_templ
+                or "{TASK}" in message_templ
+            ):
+                fill_pairs.append(("task", task_data["name"]))
+
+            else:
+                for key, value in task_data.items():
+                    fill_key = "task[{}]".format(key)
+                    fill_pairs.append((fill_key, value))
 
         self.log.debug("fill_pairs ::{}".format(fill_pairs))
         multiple_case_variants = prepare_template_data(fill_pairs)

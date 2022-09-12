@@ -9,7 +9,6 @@ from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayModule,
     IPluginPaths,
-    ILaunchHookPaths,
     ISettingsChangeListener
 )
 from openpype.settings import SaveWarningExc
@@ -21,7 +20,6 @@ class FtrackModule(
     OpenPypeModule,
     ITrayModule,
     IPluginPaths,
-    ILaunchHookPaths,
     ISettingsChangeListener
 ):
     name = "ftrack"
@@ -85,7 +83,8 @@ class FtrackModule(
         }
 
     def get_launch_hook_paths(self):
-        """Implementation of `ILaunchHookPaths`."""
+        """Implementation for applications launch hooks."""
+
         return os.path.join(FTRACK_MODULE_DIR, "launch_hooks")
 
     def modify_application_launch_arguments(self, application, env):

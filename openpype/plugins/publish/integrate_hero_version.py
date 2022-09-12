@@ -14,14 +14,12 @@ from openpype.client import (
     get_archived_representations,
     get_representations,
 )
-from openpype.lib import (
-    create_hard_link,
-    filter_profiles
-)
+from openpype.lib import create_hard_link
 from openpype.pipeline import (
     schema,
     legacy_io,
 )
+from openpype.pipeline.publish import get_publish_template_name
 
 
 class IntegrateHeroVersion(pyblish.api.InstancePlugin):
@@ -46,7 +44,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
     ignored_representation_names = []
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "representation",
-        "family", "hierarchy", "task", "username"
+        "family", "hierarchy", "task", "username", "user"
     ]
     # QUESTION/TODO this process should happen on server if crashed due to
     # permissions error on files (files were used or user didn't have perms)
@@ -68,10 +66,11 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             )
             return
 
-        template_key = self._get_template_key(instance)
-
         anatomy = instance.context.data["anatomy"]
-        project_name = legacy_io.Session["AVALON_PROJECT"]
+        project_name = anatomy.project_name
+
+        template_key = self._get_template_key(project_name, instance)
+
         if template_key not in anatomy.templates:
             self.log.warning((
                 "!!! Anatomy of project \"{}\" does not have set"
@@ -313,13 +312,9 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                 }
                 repre_context = template_filled.used_values
                 for key in self.db_representation_context_keys:
-                    if (
-                        key in repre_context or
-                        key not in anatomy_data
-                    ):
-                        continue
-
-                    repre_context[key] = anatomy_data[key]
+                    value = anatomy_data.get(key)
+                    if value is not None:
+                        repre_context[key] = value
 
                 # Prepare new repre
                 repre = copy.deepcopy(repre_info["representation"])
@@ -454,7 +449,6 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     )
 
             if bulk_writes:
-                project_name = legacy_io.Session["AVALON_PROJECT"]
                 legacy_io.database[project_name].bulk_write(
                     bulk_writes
                 )
@@ -517,11 +511,10 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             anatomy_filled = anatomy.format(template_data)
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
-            project_name = legacy_io.Session["AVALON_PROJECT"]
             self.log.warning((
                 "Deprecation warning: Anatomy does not have set `folder`"
                 " key underneath `publish` (in global of for project `{}`)."
-            ).format(project_name))
+            ).format(anatomy.project_name))
 
             file_path = anatomy_filled[template_key]["path"]
             # Directory
@@ -533,30 +526,24 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
 
         return publish_folder
 
-    def _get_template_key(self, instance):
+    def _get_template_key(self, project_name, instance):
         anatomy_data = instance.data["anatomyData"]
-        task_data = anatomy_data.get("task") or {}
-        task_name = task_data.get("name")
-        task_type = task_data.get("type")
+        task_info = anatomy_data.get("task") or {}
         host_name = instance.context.data["hostName"]
+
         # TODO raise error if Hero not set?
         family = self.main_family_from_instance(instance)
-        key_values = {
-            "families": family,
-            "task_names": task_name,
-            "task_types": task_type,
-            "hosts": host_name
-        }
-        profile = filter_profiles(
-            self.template_name_profiles,
-            key_values,
+
+        return get_publish_template_name(
+            project_name,
+            host_name,
+            family,
+            task_info.get("name"),
+            task_info.get("type"),
+            project_settings=instance.context.data["project_settings"],
+            hero=True,
             logger=self.log
         )
-        if profile:
-            template_name = profile["template_name"]
-        else:
-            template_name = self._default_template_name
-        return template_name
 
     def main_family_from_instance(self, instance):
         """Returns main family of entered instance."""

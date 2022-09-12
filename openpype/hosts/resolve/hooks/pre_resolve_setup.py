@@ -1,7 +1,7 @@
 import os
-import importlib
+
 from openpype.lib import PreLaunchHook
-from openpype.hosts.resolve.api import utils
+from openpype.hosts.resolve.utils import setup
 
 
 class ResolvePrelaunch(PreLaunchHook):
@@ -43,18 +43,6 @@ class ResolvePrelaunch(PreLaunchHook):
             self.launch_context.env.get("PRE_PYTHON_SCRIPT", ""))
         self.launch_context.env["PRE_PYTHON_SCRIPT"] = pre_py_sc
         self.log.debug(f"-- pre_py_sc: `{pre_py_sc}`...")
-        try:
-            __import__("openpype.hosts.resolve")
-            __import__("pyblish")
 
-        except ImportError:
-            self.log.warning(
-                "pyblish: Could not load Resolve integration.",
-                exc_info=True
-            )
-
-        else:
-            # Resolve Setup integration
-            importlib.reload(utils)
-            self.log.debug(f"-- utils.__file__: `{utils.__file__}`")
-            utils.setup(self.launch_context.env)
+        # Resolve Setup integration
+        setup(self.launch_context.env)

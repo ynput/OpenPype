@@ -1,7 +1,7 @@
 """Loads publishing context from json and continues in publish process.
 
 Requires:
-    anatomy -> context["anatomy"] *(pyblish.api.CollectorOrder - 0.11)
+    anatomy -> context["anatomy"] *(pyblish.api.CollectorOrder - 0.4)
 
 Provides:
     context, instances -> All data from previous publishing process.
@@ -12,7 +12,7 @@ import json
 
 import pyblish.api
 
-from openpype.pipeline import legacy_io
+from openpype.pipeline import legacy_io, KnownPublishError
 
 
 class CollectRenderedFiles(pyblish.api.ContextPlugin):
@@ -20,7 +20,12 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
     This collector will try to find json files in provided
     `OPENPYPE_PUBLISH_DATA`. Those files _MUST_ share same context.
 
+    Note:
+        We should split this collector and move the part which handle reading
+            of file and it's context from session data before collect anatomy
+            and instance creation dependent on anatomy can be done here.
     """
+
     order = pyblish.api.CollectorOrder - 0.2
     # Keep "filesequence" for backwards compatibility of older jobs
     targets = ["filesequence", "farm"]
@@ -118,23 +123,20 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
     def process(self, context):
         self._context = context
 
-        assert os.environ.get("OPENPYPE_PUBLISH_DATA"), (
-            "Missing `OPENPYPE_PUBLISH_DATA`")
+        if not os.environ.get("OPENPYPE_PUBLISH_DATA"):
+            raise KnownPublishError("Missing `OPENPYPE_PUBLISH_DATA`")
+
+        # QUESTION
+        #   Do we support (or want support) multiple files in the variable?
+        #   - what if they have different context?
         paths = os.environ["OPENPYPE_PUBLISH_DATA"].split(os.pathsep)
 
-        project_name = os.environ.get("AVALON_PROJECT")
-        if project_name is None:
-            raise AssertionError(
-                "Environment `AVALON_PROJECT` was not found."
-                "Could not set project `root` which may cause issues."
-            )
-
-        # TODO root filling should happen after collect Anatomy
+        # Using already collected Anatomy
+        anatomy = context.data["anatomy"]
         self.log.info("Getting root setting for project \"{}\"".format(
-            project_name
+            anatomy.project_name
         ))
 
-        anatomy = context.data["anatomy"]
         self.log.info("anatomy: {}".format(anatomy.roots))
         try:
             session_is_set = False

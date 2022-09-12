@@ -70,7 +70,7 @@ class CollectAssembly(pyblish.api.InstancePlugin):
             data[representation_id].append(instance_data)
 
         instance.data["scenedata"] = dict(data)
-        instance.data["hierarchy"] = list(set(hierarchy_nodes))
+        instance.data["nodesHierarchy"] = list(set(hierarchy_nodes))
 
     def get_file_rule(self, rule):
         return mel.eval('workspace -query -fileRuleEntry "{}"'.format(rule))

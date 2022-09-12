@@ -2,8 +2,10 @@ import os
 
 import pyblish.api
 
-import openpype.api
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishXmlValidationError,
+)
 
 
 class ValidateSources(pyblish.api.InstancePlugin):
@@ -13,7 +15,7 @@ class ValidateSources(pyblish.api.InstancePlugin):
         got deleted between starting of SP and now.
 
     """
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     label = "Check source files"
 
     optional = True  # only for unforeseeable cases

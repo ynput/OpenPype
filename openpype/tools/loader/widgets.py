@@ -17,6 +17,7 @@ from openpype.client import (
     get_thumbnail_id_from_source,
     get_thumbnail,
 )
+from openpype.client.operations import OperationsSession, REMOVED_VALUE
 from openpype.pipeline import HeroVersionType, Anatomy
 from openpype.pipeline.thumbnail import get_thumbnail_binary
 from openpype.pipeline.load import (
@@ -434,7 +435,8 @@ class SubsetWidget(QtWidgets.QWidget):
 
         # Get all representation->loader combinations available for the
         # index under the cursor, so we can list the user the options.
-        available_loaders = discover_loader_plugins()
+        project_name = self.dbcon.active_project()
+        available_loaders = discover_loader_plugins(project_name)
         if self.tool_name:
             available_loaders = lib.remove_tool_name_from_loaders(
                 available_loaders, self.tool_name
@@ -566,12 +568,12 @@ class SubsetWidget(QtWidgets.QWidget):
 
             # Trigger
             project_name = self.dbcon.active_project()
-            subset_names_by_version_id = collections.defaultdict(set)
+            subset_name_by_version_id = dict()
             for item in items:
                 version_id = item["version_document"]["_id"]
-                subset_names_by_version_id[version_id].add(item["subset"])
+                subset_name_by_version_id[version_id] = item["subset"]
 
-            version_ids = set(subset_names_by_version_id.keys())
+            version_ids = set(subset_name_by_version_id.keys())
             repre_docs = get_representations(
                 project_name,
                 representation_names=[representation_name],
@@ -583,14 +585,15 @@ class SubsetWidget(QtWidgets.QWidget):
             for repre_doc in repre_docs:
                 repre_ids.append(repre_doc["_id"])
 
+                # keep only version ids without representation with that name
                 version_id = repre_doc["parent"]
-                if version_id not in version_ids:
-                    version_ids.remove(version_id)
+                version_ids.discard(version_id)
 
-            for version_id in version_ids:
+            if version_ids:
+                # report versions that didn't have valid representation
                 joined_subset_names = ", ".join([
-                    '"{}"'.format(subset)
-                    for subset in subset_names_by_version_id[version_id]
+                    '"{}"'.format(subset_name_by_version_id[version_id])
+                    for version_id in version_ids
                 ])
                 self.echo("Subsets {} don't have representation '{}'".format(
                     joined_subset_names, representation_name
@@ -612,26 +615,30 @@ class SubsetWidget(QtWidgets.QWidget):
             box.show()
 
     def group_subsets(self, name, asset_ids, items):
-        field = "data.subsetGroup"
+        subset_ids = {
+            item["_id"]
+            for item in items
+            if item.get("_id")
+        }
+        if not subset_ids:
+            return
 
         if name:
-            update = {"$set": {field: name}}
             self.echo("Group subsets to '%s'.." % name)
         else:
-            update = {"$unset": {field: ""}}
             self.echo("Ungroup subsets..")
 
-        subsets = list()
-        for item in items:
-            subsets.append(item["subset"])
+        project_name = self.dbcon.active_project()
+        op_session = OperationsSession()
+        for subset_id in subset_ids:
+            op_session.update_entity(
+                project_name,
+                "subset",
+                subset_id,
+                {"data.subsetGroup": name or REMOVED_VALUE}
+            )
 
-        for asset_id in asset_ids:
-            filtr = {
-                "type": "subset",
-                "parent": asset_id,
-                "name": {"$in": subsets},
-            }
-            self.dbcon.update_many(filtr, update)
+        op_session.commit()
 
     def echo(self, message):
         print(message)
@@ -1330,7 +1337,8 @@ class RepresentationWidget(QtWidgets.QWidget):
         selected_side = self._get_selected_side(point_index, rows)
         # Get all representation->loader combinations available for the
         # index under the cursor, so we can list the user the options.
-        available_loaders = discover_loader_plugins()
+        project_name = self.dbcon.active_project()
+        available_loaders = discover_loader_plugins(project_name)
 
         filtered_loaders = []
         for loader in available_loaders:
@@ -1544,6 +1552,11 @@ def _load_representations_by_loader(loader, repre_contexts,
         return
 
     for repre_context in repre_contexts.values():
+        version_doc = repre_context["version"]
+        if version_doc["type"] == "hero_version":
+            version_name = "Hero"
+        else:
+            version_name = version_doc.get("name")
         try:
             if data_by_repre_id:
                 _id = repre_context["representation"]["_id"]
@@ -1561,7 +1574,7 @@ def _load_representations_by_loader(loader, repre_contexts,
                 None,
                 repre_context["representation"]["name"],
                 repre_context["subset"]["name"],
-                repre_context["version"]["name"]
+                version_name
             ))
 
         except Exception as exc:
@@ -1574,7 +1587,7 @@ def _load_representations_by_loader(loader, repre_contexts,
                 formatted_traceback,
                 repre_context["representation"]["name"],
                 repre_context["subset"]["name"],
-                repre_context["version"]["name"]
+                version_name
             ))
     return error_info
 

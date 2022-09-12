@@ -28,6 +28,7 @@ from Qt import QtWidgets, QtCore
 from openpype.widgets.nice_checkbox import NiceCheckbox
 
 from openpype.tools.utils import BaseClickableFrame
+from openpype.tools.utils.lib import html_escape
 from .widgets import (
     AbstractInstanceView,
     ContextWarningLabel,
@@ -307,7 +308,7 @@ class InstanceCardWidget(CardWidget):
         self._last_variant = variant
         self._last_subset_name = subset_name
         # Make `variant` bold
-        label = self.instance.label
+        label = html_escape(self.instance.label)
         found_parts = set(re.findall(variant, label, re.IGNORECASE))
         if found_parts:
             for part in found_parts:

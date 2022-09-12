@@ -1,9 +1,12 @@
 # from pprint import pformat
-from openpype.hosts import resolve
-from openpype.hosts.resolve.api import lib
+from openpype.hosts.resolve.api import plugin, lib
+from openpype.hosts.resolve.api.lib import (
+    get_video_track_names,
+    create_bin,
+)
 
 
-class CreateShotClip(resolve.Creator):
+class CreateShotClip(plugin.Creator):
     """Publishable clip"""
 
     label = "Create Publishable Clip"
@@ -11,7 +14,7 @@ class CreateShotClip(resolve.Creator):
     icon = "film"
     defaults = ["Main"]
 
-    gui_tracks = resolve.get_video_track_names()
+    gui_tracks = get_video_track_names()
     gui_name = "OpenPype publish attributes creator"
     gui_info = "Define sequential rename and fill hierarchy data."
     gui_inputs = {
@@ -250,7 +253,7 @@ class CreateShotClip(resolve.Creator):
         sq_markers = self.timeline.GetMarkers()
 
         # create media bin for compound clips (trackItems)
-        mp_folder = resolve.create_bin(self.timeline.GetName())
+        mp_folder = create_bin(self.timeline.GetName())
 
         kwargs = {
             "ui_inputs": widget.result,
@@ -264,6 +267,6 @@ class CreateShotClip(resolve.Creator):
             self.rename_index = i
             self.log.info(track_item_data)
             # convert track item to timeline media pool item
-            track_item = resolve.PublishClip(
+            track_item = plugin.PublishClip(
                 self, track_item_data, **kwargs).convert()
             track_item.SetClipColor(lib.publish_clip_color)
