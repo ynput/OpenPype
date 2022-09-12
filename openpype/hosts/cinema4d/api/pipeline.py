@@ -30,7 +30,7 @@ from .workio import (
 )
 
 from . import lib
-from .c4d_lib import ObjectAttrs, ObjectPath
+
 
 log = logging.getLogger("openpype.hosts.cinema4d")
 
@@ -115,10 +115,9 @@ def ls(doc=None):
     ids = {AVALON_CONTAINER_ID}
     if not doc:
         doc = c4d.documents.GetActiveDocument()
-    for obj in lib.recurse_hierarchy(doc.GetFirstObject()):
-        obj_attrs = ObjectAttrs(obj)
-        print(obj_attrs.get("id"))
-        if obj_attrs.get("id") in ids:
+    for obj in lib.walk_hierarchy(doc.GetFirstObject()):
+        print(obj.get("id"))
+        if obj.get("id") in ids:
             yield obj
 
 
@@ -150,7 +149,7 @@ def containerise(name,
 
     container = c4d.BaseObject(c4d.Oselection)
     doc.InsertObject(container)
-    container_attrs = ObjectAttrs(container)
+    container_attrs = lib.ObjectAttrs(container)
     container_attrs["SELECTIONOBJECT_LIST"] = nodes
     container.SetName("%s_%s_%s" % (namespace, name, suffix))
 
@@ -170,9 +169,9 @@ def containerise(name,
         container_attrs.add_attr(key, value, exists_ok=True)
 
     main_container = None
-    for path, obj in lib.recurse_hierarchy(doc.GetFirstObject()):
-        if path.match("*AVALON_CONTAINERS") and obj.GetType() == c4d.Oselection:
-            main_container = obj
+    for obj_path in lib.walk_hierarchy(doc.GetFirstObject()):
+        if obj_path.re_match("*AVALON_CONTAINERS") and obj_path.obj.GetType() == c4d.Oselection:
+            main_container = obj_path.obj
             break
 
     if not main_container:

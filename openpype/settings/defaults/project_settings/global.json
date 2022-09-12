@@ -16,7 +16,8 @@
                 "nuke",
                 "photoshop",
                 "resolve",
-                "tvpaint"
+                "tvpaint",
+                "cinema4d"
             ],
             "skip_hosts_headless_publish": []
         },

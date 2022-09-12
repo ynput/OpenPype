@@ -3,6 +3,7 @@ import os
 import c4d
 
 from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
+from .lib import set_doc_session
 
 
 def file_extensions():
@@ -15,18 +16,25 @@ def has_unsaved_changes(doc=None):
     return doc.GetChanged()
 
 
-def save_file(filepath):
-    doc = c4d.documents.GetActiveDocument()
-    c4d.documents.SaveDocument(doc, filepath, c4d.SAVEDOCUMENTFLAGS_NONE, c4d.FORMAT_C4DEXPORT)
+def save_file(filepath=None, doc=None):
+    if not doc:
+        doc = c4d.documents.GetActiveDocument()
+    if filepath:
+        doc.SetDocumentPath(os.path.dirname(filepath))
+        doc.SetDocumentName(os.path.basename(filepath))
+    
+    c4d.CallCommand(12098) #save
+    set_doc_session()
 
 
 def open_file(filepath):
-    return c4d.documents.LoadFile(filepath)
+    fp = c4d.documents.LoadFile(filepath)
+    return fp
 
 
 def current_file():
     doc = c4d.documents.GetActiveDocument()
-    current_name = doc.GetDocumentName() + file_extensions()[0]
+    current_name = doc.GetDocumentName()
     current_filepath = os.path.join(doc.GetDocumentPath(), current_name)
     if not current_filepath:
         return None

@@ -1,7 +1,7 @@
 import c4d
 import pyblish.api
 import json
-from openpype.hosts.cinema4d.api import lib, c4d_lib
+from openpype.hosts.cinema4d.api import lib
 
 
 
@@ -34,10 +34,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
             doc = c4d.documents.GetActiveDocument()
 
         objectset = set()
-        for obj in lib.recurse_hierarchy(doc.GetFirstObject()):
-            obj_attr = lib.ObjectAttrs(obj)
-            if obj_attr.get("id"):
-                objectset.add(obj_attr)
+        for obj in lib.walk_hierarchy(doc.GetFirstObject()):
+            if obj.attrs.get("id"):
+                objectset.add(obj.attrs)
 
 
         ctx_frame_start = context.data['frameStart']
@@ -79,17 +78,17 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 data["publish"] = data["active"]
 
             # Collect members - c4d.BaseObject
-            members = [c4d_lib.ObjectPath(obj=members.ObjectFromIndex(doc, idx)) for idx in range(members.GetObjectCount())]
+            members = [lib.ObjectPath(obj=members.ObjectFromIndex(doc, idx)) for idx in range(members.GetObjectCount())]
 
 
             # Collect Children - c4d.BaseObject
-            children = [c4d_lib.ObjectPath(obj=obj) for member in members for obj in lib.recurse_hierarchy(member.GetDown())]
+            children = [lib.ObjectPath(obj=obj) for member in members for obj in lib.walk_hierarchy(member.obj.GetDown())]
 
             parents = []
             if data.get("includeParentHierarchy", True):
                 # If `includeParentHierarchy` then include the parents
                 # so they will also be picked up in the instance by validators
-                parents = [c4d_lib.ObjectPath(obj=obj) for obj in self.get_all_parents(members)]
+                parents = [lib.ObjectPath(obj=obj) for obj in self.get_all_parents(members)]
             members_hierarchy = list(
                     set(
                         [str(x) for x in members] + \
@@ -178,7 +177,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
         parents = []
         for node in nodes:
-            parent = node.GetUp()
+            parent = node.obj.GetUp()
             while parent:
                 parents.append(parent)
                 parent = parent.GetUp()

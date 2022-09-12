@@ -1,8 +1,10 @@
+from .lib import WorkfileSettings
+
 def reset_frame_range():
-    print("Not Implemented")
+    WorkfileSettings().set_frame_range_handles()
 
 def reset_colorspace():
     print("Not Implemented")
 
 def reset_resolution():
-    print("Not Implemented")
+    WorkfileSettings().set_resolution()

@@ -1394,6 +1394,22 @@
                 },
                 "environment": {}
             },
+            "2023": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Maxon Cinema 4D 2023\\Cinema 4D.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
             "__dynamic_keys_labels__": {
                 "20": "20",
                 "21": "21",
@@ -1401,7 +1417,8 @@
                 "23": "23",
                 "24": "24",
                 "25": "25",
-                "26": "26"
+                "26": "26",
+                "2023": "2023"
             }
         }
     },

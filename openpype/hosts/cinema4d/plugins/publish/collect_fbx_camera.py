@@ -1,3 +1,4 @@
+'''
 import pyblish.api
 
 
@@ -16,3 +17,5 @@ class CollectFbxCamera(pyblish.api.InstancePlugin):
             instance.data["families"].append("fbx")
 
         instance.data["cameras"] = True
+
+'''

@@ -24,7 +24,7 @@ import c4d
 from openpype.pipeline import install_host
 from openpype.hosts.cinema4d.api import Cinema4DHost
 from openpype.hosts.cinema4d.api.lib import get_main_window
-from openpype.hosts.cinema4d.api import lib
+from openpype.hosts.cinema4d.api import lib, OnDocumentChanged
 from openpype.hosts.cinema4d.api.commands import reset_frame_range, reset_colorspace, reset_resolution
 from openpype.api import BuildWorkfile
 from openpype.settings import get_current_project_settings
@@ -114,6 +114,20 @@ class ExperimentalTools(c4d.plugins.CommandData):
         )
         return True
 
+class DocumentChanged(c4d.plugins.MessageData):
+    last_doc = None
+    def CoreMessage(self, id, bc):
+        doc = c4d.documents.GetActiveDocument()
+        if not doc:
+            return True
+        try:
+            if doc != self.last_doc:
+                self.last_doc = doc
+                OnDocumentChanged()
+        except ReferenceError:
+            self.last_doc = doc
+            OnDocumentChanged()
+        return True
 
 def EnhanceMainMenu():
     mainMenu = c4d.gui.GetMenuResource("M_EDITOR")
@@ -222,3 +236,5 @@ if __name__ == '__main__':
     c4d.plugins.RegisterCommandPlugin(
         experimental_tools_id, "Experimental Tools", c4d.PLUGINFLAG_HIDEPLUGINMENU, experiment_bmp, "", ExperimentalTools()
         )
+
+    c4d.plugins.RegisterMessagePlugin(id=1060025, str="", info=0, dat=DocumentChanged())
