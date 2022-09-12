@@ -664,9 +664,13 @@
                     }
                 },
                 {
+                    "type": "label",
+                    "label": "<b>NOTE:</b> Publish template profiles settings were moved to <a href=\"settings://project_settings/global/tools/publish/template_name_profiles\"><b>Tools/Publish/Template name profiles</b></a>. Please move values there."
+                },
+                {
                     "type": "list",
                     "key": "template_name_profiles",
-                    "label": "Template name profiles",
+                    "label": "Template name profiles (DEPRECATED)",
                     "use_label_wrap": true,
                     "object_type": {
                         "type": "dict",
@@ -772,9 +776,13 @@
                     "object_type": "text"
                 },
                 {
+                    "type": "label",
+                    "label": "<b>NOTE:</b> Hero publish template profiles settings were moved to <a href=\"settings://project_settings/global/tools/publish/hero_template_name_profiles\"><b>Tools/Publish/Hero template name profiles</b></a>. Please move values there."
+                },
+                {
                     "type": "list",
                     "key": "template_name_profiles",
-                    "label": "Template name profiles",
+                    "label": "Template name profiles (DEPRECATED)",
                     "use_label_wrap": true,
                     "object_type": {
                         "type": "dict",
