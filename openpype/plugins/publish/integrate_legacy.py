@@ -15,7 +15,6 @@ from bson.objectid import ObjectId
 from pymongo import DeleteOne, InsertOne
 import pyblish.api
 
-import openpype.api
 from openpype.client import (
     get_asset_by_name,
     get_subset_by_id,
@@ -25,14 +24,17 @@ from openpype.client import (
     get_representations,
     get_archived_representations,
 )
-from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib import (
     prepare_template_data,
     create_hard_link,
     StringTemplate,
-    TemplateUnsolved
+    TemplateUnsolved,
+    source_hash,
+    filter_profiles,
+    get_local_site_id,
 )
 from openpype.pipeline import legacy_io
+from openpype.pipeline.publish import get_publish_template_name
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
@@ -138,7 +140,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     integrated_file_sizes = {}
 
     # Attributes set by settings
-    template_name_profiles = None
     subset_grouping_profiles = None
 
     def process(self, instance):
@@ -388,21 +389,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         family = self.main_family_from_instance(instance)
 
-        key_values = {
-            "families": family,
-            "tasks": task_name,
-            "hosts": instance.context.data["hostName"],
-            "task_types": task_type
-        }
-        profile = filter_profiles(
-            self.template_name_profiles,
-            key_values,
+        template_name = get_publish_template_name(
+            project_name,
+            instance.context.data["hostName"],
+            family,
+            task_name=task_info.get("name"),
+            task_type=task_info.get("type"),
+            project_settings=instance.context.data["project_settings"],
             logger=self.log
         )
-
-        template_name = "publish"
-        if profile:
-            template_name = profile["template_name"]
 
         published_representations = {}
         for idx, repre in enumerate(repres):
@@ -1058,7 +1053,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         for _src, dest in resources:
             path = self.get_rootless_path(anatomy, dest)
             dest = self.get_dest_temp_url(dest)
-            file_hash = openpype.api.source_hash(dest)
+            file_hash = source_hash(dest)
             if self.TMP_FILE_EXT and \
                ',{}'.format(self.TMP_FILE_EXT) in file_hash:
                 file_hash = file_hash.replace(',{}'.format(self.TMP_FILE_EXT),
@@ -1168,7 +1163,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     def _get_sites(self, sync_project_presets):
         """Returns tuple (local_site, remote_site)"""
-        local_site_id = openpype.api.get_local_site_id()
+        local_site_id = get_local_site_id()
         local_site = sync_project_presets["config"]. \
             get("active_site", "studio").strip()
 
