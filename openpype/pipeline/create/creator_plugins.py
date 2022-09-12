@@ -9,7 +9,7 @@ from abc import (
 import six
 
 from openpype.settings import get_system_settings, get_project_settings
-from openpype.lib import get_subset_name_with_asset_doc
+from .subset_name import get_subset_name
 from openpype.pipeline.plugin_discover import (
     discover,
     register_plugin,
@@ -75,6 +75,7 @@ class BaseCreator:
     ):
         # Reference to CreateContext
         self.create_context = create_context
+        self.project_settings = project_settings
 
         # Creator is running in headless mode (without UI elemets)
         # - we may use UI inside processing this attribute should be checked
@@ -276,14 +277,15 @@ class BaseCreator:
             variant, task_name, asset_doc, project_name, host_name
         )
 
-        return get_subset_name_with_asset_doc(
+        return get_subset_name(
             self.family,
             variant,
             task_name,
             asset_doc,
             project_name,
             host_name,
-            dynamic_data=dynamic_data
+            dynamic_data=dynamic_data,
+            project_settings=self.project_settings
         )
 
     def get_instance_attr_defs(self):

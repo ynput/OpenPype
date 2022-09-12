@@ -41,7 +41,7 @@ It can be built and ran on all common platforms. We develop and test on the foll
 - **Linux**
     - **Ubuntu** 20.04 LTS
     - **Centos** 7
-- **Mac OSX** 
+- **Mac OSX**
     - **10.15** Catalina
     - **11.1** Big Sur (using Rosetta2)
 
@@ -286,6 +286,14 @@ Running tests
 To run tests, execute `.\tools\run_tests(.ps1|.sh)`.
 
 **Note that it needs existing virtual environment.**
+
+
+Developer tools
+-------------
+
+In case you wish to add your own tools to  `.\tools` folder without git tracking, it is possible by adding it with `dev_*` suffix (example: `dev_clear_pyc(.ps1|.sh)`).
+
+
 
 ## Contributors ✨
 

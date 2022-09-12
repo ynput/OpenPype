@@ -8,10 +8,10 @@ from openpype.client import (
     get_subsets,
     get_last_versions,
     get_representations,
+    get_linked_assets,
 )
 from openpype.settings import get_project_settings
 from openpype.lib import (
-    get_linked_assets,
     filter_profiles,
     Logger,
 )
