@@ -99,7 +99,9 @@ def merge_tomls(main_toml, addon_toml):
         if main_poetry.get(dependency):
             if dep_info.get(platform_name):
                 dep_version = dep_info[platform_name]["version"]
-                main_version = main_poetry[dependency][platform_name]["version"]
+                main_version = (main_poetry[dependency]
+                                           [platform_name]
+                                           ["version"])
             else:
                 dep_version = dep_info["version"]
                 main_version = main_poetry[dependency]["version"]

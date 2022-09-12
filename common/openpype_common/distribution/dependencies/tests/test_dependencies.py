@@ -13,6 +13,7 @@ from common.openpype_common.distribution.dependencies.dependencies import (
     prepare_new_venv
 )
 
+
 @pytest.fixture
 def openpype_toml_data():
     provider = FileTomlProvider(os.path.join("..", "..", "..", "..", "..",
@@ -33,10 +34,12 @@ def addon_toml_to_venv_data():
                                              "pyproject_clean.toml"))
     return provider.get_toml()
 
+
 def test_existing_file():
     provider = FileTomlProvider(os.path.join("..", "..", "..", "..", "..",
                                              "pyproject.toml"))
     _ = provider.get_toml()
+
 
 def test_not_existing_file():
     dir_name = os.path.dirname(__file__)
@@ -44,9 +47,11 @@ def test_not_existing_file():
     with pytest.raises(ValueError):
         _ = provider.get_toml()
 
+
 def test_is_valid_toml(openpype_toml_data):
 
     assert is_valid_toml(openpype_toml_data), "Must contain all required keys"
+
 
 def test_is_valid_toml_invalid(openpype_toml_data):
     openpype_toml_data.pop("tool")
@@ -58,6 +63,7 @@ def test_is_valid_toml_invalid(openpype_toml_data):
 def test_merge_tomls(openpype_toml_data, addon_toml_to_compare_data):
     result_toml = merge_tomls(openpype_toml_data, addon_toml_to_compare_data)
     _compare_resolved_tomp(result_toml)
+
 
 def test_get_full_toml(openpype_toml_data):
     addon_urls = ["resources"]
@@ -98,6 +104,7 @@ def _compare_resolved_tomp(result_toml):
                                    ["ocioconfig"])
     dep_version = res_dependencies["version"]
     assert dep_version == "1.0.0"
+
 
 def test_prepare_new_venv(addon_toml_to_venv_data):
     tmpdir = tempfile.mkdtemp()
