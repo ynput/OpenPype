@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.14.2-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.14.2-nightly.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.1...HEAD)
 
@@ -8,7 +8,6 @@
 
 - Nuke: Build workfile by template [\#3763](https://github.com/pypeclub/OpenPype/pull/3763)
 - Houdini: Publishing workfiles [\#3697](https://github.com/pypeclub/OpenPype/pull/3697)
-- Global: making collect audio plugin global [\#3679](https://github.com/pypeclub/OpenPype/pull/3679)
 
 **🚀 Enhancements**
 
@@ -18,6 +17,7 @@
 - Photoshop: attempt to speed up ExtractImage [\#3793](https://github.com/pypeclub/OpenPype/pull/3793)
 - SyncServer: Added cli commands for sync server [\#3765](https://github.com/pypeclub/OpenPype/pull/3765)
 - Kitsu: Drop 'entities root' setting. [\#3739](https://github.com/pypeclub/OpenPype/pull/3739)
+- git: update gitignore [\#3722](https://github.com/pypeclub/OpenPype/pull/3722)
 
 **🐛 Bug fixes**
 
@@ -42,6 +42,8 @@
 - General: Move queries of asset and representation links [\#3770](https://github.com/pypeclub/OpenPype/pull/3770)
 - General: Move create project folders to pipeline [\#3768](https://github.com/pypeclub/OpenPype/pull/3768)
 - General: Create project function moved to client code [\#3766](https://github.com/pypeclub/OpenPype/pull/3766)
+- Maya: Refactor submit deadline to use AbstractSubmitDeadline [\#3759](https://github.com/pypeclub/OpenPype/pull/3759)
+- General: Change publish template settings location [\#3755](https://github.com/pypeclub/OpenPype/pull/3755)
 - General: Move hostdirname functionality into host [\#3749](https://github.com/pypeclub/OpenPype/pull/3749)
 - General: Move publish utils to pipeline [\#3745](https://github.com/pypeclub/OpenPype/pull/3745)
 - Houdini: Define houdini as addon [\#3735](https://github.com/pypeclub/OpenPype/pull/3735)
@@ -65,12 +67,12 @@
 **🚀 Enhancements**
 
 - General: Thumbnail can use project roots [\#3750](https://github.com/pypeclub/OpenPype/pull/3750)
-- git: update gitignore [\#3722](https://github.com/pypeclub/OpenPype/pull/3722)
 - Settings: Remove settings lock on tray exit [\#3720](https://github.com/pypeclub/OpenPype/pull/3720)
 - General: Added helper getters to modules manager [\#3712](https://github.com/pypeclub/OpenPype/pull/3712)
 - Unreal: Define unreal as module and use host class [\#3701](https://github.com/pypeclub/OpenPype/pull/3701)
 - Settings: Lock settings UI session [\#3700](https://github.com/pypeclub/OpenPype/pull/3700)
 - General: Benevolent context label collector [\#3686](https://github.com/pypeclub/OpenPype/pull/3686)
+- Ftrack: Addiotional component metadata [\#3685](https://github.com/pypeclub/OpenPype/pull/3685)
 
 **🐛 Bug fixes**
 
@@ -84,7 +86,7 @@
 - Settings: Fix project overrides save [\#3708](https://github.com/pypeclub/OpenPype/pull/3708)
 - Workfiles tool: Fix published workfile filtering [\#3704](https://github.com/pypeclub/OpenPype/pull/3704)
 - PS, AE: Provide default variant value for workfile subset [\#3703](https://github.com/pypeclub/OpenPype/pull/3703)
-- Webpublisher: added check for empty context [\#3682](https://github.com/pypeclub/OpenPype/pull/3682)
+- Flame: retime is working on clip publishing [\#3684](https://github.com/pypeclub/OpenPype/pull/3684)
 
 **🔀 Refactored code**
 
@@ -117,15 +119,9 @@
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.14.0-nightly.1...3.14.0)
 
-**🚀 Enhancements**
-
-- Ftrack: Addiotional component metadata [\#3685](https://github.com/pypeclub/OpenPype/pull/3685)
-- Ftrack: Set task status on farm publishing [\#3680](https://github.com/pypeclub/OpenPype/pull/3680)
-
 **🐛 Bug fixes**
 
 - General: Switch from hero version to versioned works [\#3691](https://github.com/pypeclub/OpenPype/pull/3691)
-- Flame: retime is working on clip publishing [\#3684](https://github.com/pypeclub/OpenPype/pull/3684)
 
 ## [3.13.0](https://github.com/pypeclub/OpenPype/tree/3.13.0) (2022-08-09)
 
