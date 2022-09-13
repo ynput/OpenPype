@@ -45,6 +45,7 @@ class ExtractOpenGL(openpype.api.Extractor):
             "stagingDir": staging_dir,
             "frameStart": instance.data["frameStart"],
             "frameEnd": instance.data["frameEnd"],
+            "tags": ["review"]
         }
 
         if "representations" not in instance.data:
