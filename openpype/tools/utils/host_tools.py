@@ -272,7 +272,7 @@ class HostToolsHelper:
             dialog.showNormal()
 
     def get_publisher_tool(self, parent):
-        """Create, cache and return scene inventory tool window."""
+        """Create, cache and return publisher window."""
 
         if self._publisher_tool is None:
             from openpype.tools.publisher import PublisherWindow
