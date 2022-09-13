@@ -251,15 +251,19 @@ def remove_existing_from_venv(base_venv_path, addons_venv_path):
                                                checked_subfolders)))
 
     removed = set()
-    for item in os.listdir(os.path.join(addons_venv_path, checked_subfolders)):
+    installed_path = os.path.join(addons_venv_path, checked_subfolders)
+    for item in os.listdir(installed_path):
         if item in base_content:
             if item.startswith("_"):
                 print(f"Keep internal {item}")
                 continue
-            path = os.path.join(addons_venv_path, item)
+            path = os.path.join(installed_path, item)
             removed.add(item)
             print(f"Removing {path}")
-            shutil.rmtree(path)
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            if os.path.isfile(path):
+                os.remove(path)
 
     return removed
 

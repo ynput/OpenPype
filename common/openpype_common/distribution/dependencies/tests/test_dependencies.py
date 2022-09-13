@@ -12,13 +12,13 @@ from common.openpype_common.distribution.dependencies.dependencies import (
     get_full_toml,
     prepare_new_venv,
     zip_venv,
-    upload_zip_venv,
     get_venv_zip_name,
     lock_to_toml_data,
     remove_existing_from_venv
 )
 
 ROOT_FOLDER = os.path.abspath(os.path.join("..", "..", "..", "..", ".."))
+PURGE_TMP = True
 
 @pytest.fixture
 def openpype_toml_data():
@@ -46,6 +46,12 @@ def tmpdir():
     tmpdir = tempfile.mkdtemp(prefix="openpype_test_")
 
     yield tmpdir
+
+    if PURGE_TMP:
+        try:
+            shutil.rmtree(tmpdir)
+        except PermissionError:
+            print(f"Couldn't delete {tmpdir}")
 
 
 def test_existing_file():
@@ -148,6 +154,7 @@ def test_lock_to_toml_data():
 
     assert is_valid_toml(toml_data), "Must contain all required keys"
 
+
 # @pytest.mark.skip(reason="no way of currently testing this")
 def test_prepare_new_venv(addon_toml_to_venv_data, tmpdir):
     """Creates zip of simple venv from mock addon pyproject data"""
@@ -155,6 +162,9 @@ def test_prepare_new_venv(addon_toml_to_venv_data, tmpdir):
     return_code = prepare_new_venv(addon_toml_to_venv_data, tmpdir)
 
     assert return_code != 1, "Prepare of new venv failed"
+
+    inst_lib = os.path.join(tmpdir, '.venv', 'Lib', 'site-packages', 'aiohttp')
+    assert os.path.exists(inst_lib), "aiohttp should be installed"
 
 
 def test_remove_existing_from_venv(tmpdir):
@@ -176,12 +186,3 @@ def test_get_venv_zip_name(tmpdir):
              venv_zip_path)
 
     assert os.path.exists(venv_zip_path)
-
-
-def test_teardown(tmpdir):
-    """Explicitly tear down of tmpdir
-
-    Exposed this way for testing during development.
-    """
-    if os.path.exists(tmpdir):
-        shutil.rmtree(tmpdir)
