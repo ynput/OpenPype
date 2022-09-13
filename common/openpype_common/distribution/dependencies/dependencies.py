@@ -206,6 +206,31 @@ def get_venv_zip_name(lock_file_path):
     return "openpype-{}-{}-{}.zip".format(platform, python_version, hash)
 
 
+def lock_to_toml_data(lock_path):
+    """Create toml file with explicit version from lock file.
+
+    Should be used to compare addon venv with client venv and purge existing
+    libraries.
+
+    Args:
+        lock_path (str): path to base lock file (from build)
+    Returns:
+        (dict): dictionary representation of toml data with explicit library
+            versions
+    Raises:
+        (FileNotFound)
+    """
+    parsed = FileTomlProvider(lock_path).get_toml()
+
+    dependencies = {}
+    for package_info in parsed["package"]:
+        dependencies[package_info["name"]] = package_info["version"]
+
+    toml = {"tool": {"poetry": {"dependencies": {}}}}
+    toml["tool"]["poetry"]["dependencies"] = dependencies
+
+    return toml
+
 
 def zip_venv(venv_folder, zip_destination_path):
     """Zips newly created venv to single .zip file."""

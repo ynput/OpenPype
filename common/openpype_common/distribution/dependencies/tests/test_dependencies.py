@@ -13,7 +13,8 @@ from common.openpype_common.distribution.dependencies.dependencies import (
     prepare_new_venv,
     zip_venv,
     upload_zip_venv,
-    get_venv_zip_name
+    get_venv_zip_name,
+    lock_to_toml_data
 )
 
 
@@ -124,4 +125,16 @@ def test_get_venv_zip_name():
     assert test_file_1_name != test_file_2_name, \
         "Different file must result in different name"
 
-    shutil.rmtree(tmpdir)
+    with pytest.raises(FileNotFoundError):
+        get_venv_zip_name(test_file_1_path+".ntext")
+
+
+def test_lock_to_toml_data():
+    lock_file_path = os.path.join("resources", "poetry.lock")
+
+    toml_data = lock_to_toml_data(lock_file_path)
+
+    assert (toml_data["tool"]["poetry"]["dependencies"]["acre"] == "1.0.0",
+        "Wrong version, must be '1.0.0'")
+
+    assert is_valid_toml(toml_data), "Must contain all required keys"
