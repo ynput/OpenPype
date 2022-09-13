@@ -36,8 +36,14 @@ from .build_template_exceptions import (
 
 
 @six.add_metaclass(ABCMeta)
-class AbstractTemplateLoader:
-    """Abstraction of Template Loader.
+class AbstractTemplateBuilder(object):
+    """Abstraction of Template Builder.
+
+    Builder cares about context, shared data, cache, discovery of plugins
+    and trigger logic. Provides public api for host workfile build systen.
+
+    Rest of logic is based on plugins that care about collection and creation
+    of placeholder items.
 
     Args:
         host (Union[HostBase, ModuleType]): Implementation of host.

@@ -6,8 +6,8 @@ from openpype.pipeline import registered_host
 from openpype.pipeline.workfile.build_template_exceptions import (
     TemplateAlreadyImported
 )
-from openpype.pipeline.workfile.new_template_loader import (
-    AbstractTemplateLoader,
+from openpype.pipeline.workfile.workfile_template_builder import (
+    AbstractTemplateBuilder,
     PlaceholderPlugin,
     PlaceholderItem,
     PlaceholderLoadMixin,
@@ -21,8 +21,8 @@ from .lib import read, imprint
 PLACEHOLDER_SET = "PLACEHOLDERS_SET"
 
 
-class MayaTemplateLoader(AbstractTemplateLoader):
-    """Concrete implementation of AbstractTemplateLoader for maya"""
+class MayaTemplateBuilder(AbstractTemplateBuilder):
+    """Concrete implementation of AbstractTemplateBuilder for maya"""
 
     def import_template(self, path):
         """Import template into current scene.
@@ -313,25 +313,25 @@ class LoadPlaceholderItem(PlaceholderItem):
 
 
 def build_workfile_template(*args):
-    builder = MayaTemplateLoader(registered_host())
+    builder = MayaTemplateBuilder(registered_host())
     builder.build_template()
 
 
 def update_workfile_template(*args):
-    builder = MayaTemplateLoader(registered_host())
+    builder = MayaTemplateBuilder(registered_host())
     builder.rebuild_template()
 
 
 def create_placeholder(*args):
     host = registered_host()
-    builder = MayaTemplateLoader(host)
+    builder = MayaTemplateBuilder(host)
     window = WorkfileBuildPlaceholderDialog(host, builder)
     window.exec_()
 
 
 def update_placeholder(*args):
     host = registered_host()
-    builder = MayaTemplateLoader(host)
+    builder = MayaTemplateBuilder(host)
     placeholder_items_by_id = {
         placeholder_item.scene_identifier: placeholder_item
         for placeholder_item in builder.get_placeholders()
