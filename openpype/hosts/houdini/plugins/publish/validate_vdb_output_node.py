@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
 import pyblish.api
 import hou
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
@@ -17,7 +18,7 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
 
     """
 
-    order = ValidateContentsOrder + 0.1
+    order = pyblish.api.ValidatorOrder + 0.1
     families = ["vdbcache"]
     hosts = ["houdini"]
     label = "Validate Output Node (VDB)"
@@ -25,8 +26,9 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
-                "Node connected to the output node is not" " of type VDB!"
+            raise PublishValidationError(
+                "Node connected to the output node is not" " of type VDB!",
+                title=self.label
             )
 
     @classmethod

@@ -1,38 +1,36 @@
+# -*- coding: utf-8 -*-
+"""Creator plugin for creating VDB Caches."""
 from openpype.hosts.houdini.api import plugin
+from openpype.pipeline import CreatedInstance
 
 
-class CreateVDBCache(plugin.Creator):
+class CreateVDBCache(plugin.HoudiniCreator):
     """OpenVDB from Geometry ROP"""
-
+    identifier = "io.openpype.creators.houdini.vdbcache"
     name = "vbdcache"
     label = "VDB Cache"
     family = "vdbcache"
     icon = "cloud"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateVDBCache, self).__init__(*args, **kwargs)
+    def create(self, subset_name, instance_data, pre_create_data):
+        import hou
 
-        # Remove the active, we are checking the bypass flag of the nodes
-        self.data.pop("active", None)
+        instance_data.pop("active", None)
+        instance_data.update({"node_type": "geometry"})
 
-        # Set node type to create for output
-        self.data["node_type"] = "geometry"
+        instance = super(CreateVDBCache, self).create(
+            subset_name,
+            instance_data,
+            pre_create_data)  # type: CreatedInstance
 
-    def _process(self, instance):
-        """Creator main entry point.
-
-        Args:
-            instance (hou.Node): Created Houdini instance.
-
-        """
+        instance_node = hou.node(instance.get("instance_node"))
         parms = {
-            "sopoutput": "$HIP/pyblish/%s.$F4.vdb" % self.name,
+            "sopoutput": "$HIP/pyblish/{}.$F4.vdb".format(subset_name),
             "initsim": True,
             "trange": 1
         }
 
-        if self.nodes:
-            node = self.nodes[0]
-            parms.update({"soppath": node.path()})
+        if self.selected_nodes:
+            parms["soppath"] = self.selected_nodes[0].path()
 
-        instance.setParms(parms)
+        instance_node.setParms(parms)
