@@ -1,13 +1,12 @@
 import os
 from pprint import pformat
 import re
+import json
 import six
 import platform
 import tempfile
 import contextlib
 from collections import OrderedDict
-
-import clique
 
 import nuke
 from Qt import QtCore, QtWidgets
@@ -64,6 +63,7 @@ EXCLUDED_KNOB_TYPE_ON_READ = (
     26,  # Text Knob (But for backward compatibility, still be read
          #  if value is not an empty string.)
 )
+JSON_PREFIX = "JSON:::"
 
 
 class Context:
@@ -95,8 +95,38 @@ def get_main_window():
     return Context.main_window
 
 
+def write_create_data(node, knobname, data):
+    knob_value = JSON_PREFIX + json.dumps(data)
+    if knobname in node.knobs():
+        knob = node[knobname]
+        knob.setValue(knob_value)
+        return
+
+    knob = nuke.String_Knob(knobname)
+    knob.setValue(knob_value)
+    knob.setFlag(nuke.INVISIBLE)
+    node.addKnob(knob)
+
+
+def read_create_data(node, knobname):
+    if knobname not in node.knobs():
+        log.debug("get knob: {}".format(node[knobname]))
+        return
+
+    rawdata = node[knobname].getValue()
+    if (
+        isinstance(rawdata, six.string_types)
+        and rawdata.startswith(JSON_PREFIX)
+    ):
+        try:
+            return json.loads(rawdata[len(JSON_PREFIX):])
+        except json.JSONDecodeError:
+            return
+
+
 class Knobby(object):
-    """For creating knob which it's type isn't mapped in `create_knobs`
+    """[DEPRICATED] For creating knob which it's type isn't
+                    mapped in `create_knobs`
 
     Args:
         type (string): Nuke knob type name
@@ -121,9 +151,15 @@ class Knobby(object):
             knob.setFlag(flag)
         return knob
 
+    @staticmethod
+    def nice_naming(key):
+        """Convert camelCase name into UI Display Name"""
+        words = re.findall('[A-Z][^A-Z]*', key[0].upper() + key[1:])
+        return " ".join(words)
+
 
 def create_knobs(data, tab=None):
-    """Create knobs by data
+    """[DEPRICATED] Create knobs by data
 
     Depending on the type of each dict value and creates the correct Knob.
 
@@ -217,7 +253,7 @@ def create_knobs(data, tab=None):
 
 
 def imprint(node, data, tab=None):
-    """Store attributes with value on node
+    """[DEPRICATED] Store attributes with value on node
 
     Parse user data into Node knobs.
     Use `collections.OrderedDict` to ensure knob order.
@@ -273,7 +309,7 @@ def imprint(node, data, tab=None):
 
 
 def add_publish_knob(node):
-    """Add Publish knob to node
+    """[DEPRICATED] Add Publish knob to node
 
     Arguments:
         node (nuke.Node): nuke node to be processed
@@ -291,7 +327,7 @@ def add_publish_knob(node):
 
 
 def set_avalon_knob_data(node, data=None, prefix="avalon:"):
-    """ Sets data into nodes's avalon knob
+    """[DEPRICATED] Sets data into nodes's avalon knob
 
     Arguments:
         node (nuke.Node): Nuke node to imprint with data,
@@ -353,7 +389,7 @@ def set_avalon_knob_data(node, data=None, prefix="avalon:"):
 
 
 def get_avalon_knob_data(node, prefix="avalon:"):
-    """ Gets a data from nodes's avalon knob
+    """[DEPRICATED]  Gets a data from nodes's avalon knob
 
     Arguments:
         node (obj): Nuke node to search for data,
@@ -393,7 +429,7 @@ def get_avalon_knob_data(node, prefix="avalon:"):
 
 
 def fix_data_for_node_create(data):
-    """Fixing data to be used for nuke knobs
+    """[DEPRICATED] Fixing data to be used for nuke knobs
     """
     for k, v in data.items():
         if isinstance(v, six.text_type):
@@ -404,7 +440,7 @@ def fix_data_for_node_create(data):
 
 
 def add_write_node_legacy(name, **kwarg):
-    """Adding nuke write node
+    """[DEPRICATED] Adding nuke write node
     Arguments:
         name (str): nuke node name
         kwarg (attrs): data for nuke knobs
@@ -567,7 +603,7 @@ def get_nuke_imageio_settings():
 
 
 def get_created_node_imageio_setting_legacy(nodeclass, creator, subset):
-    ''' Get preset data for dataflow (fileType, compression, bitDepth)
+    '''[DEPRICATED]  Get preset data for dataflow (fileType, compression, bitDepth)
     '''
 
     assert any([creator, nodeclass]), nuke.message(
@@ -2809,48 +2845,6 @@ def dirmap_file_name_filter(file_name):
     if os.path.exists(dirmap_processor.file_name):
         return dirmap_processor.file_name
     return file_name
-
-
-# ------------------------------------
-# This function seems to be deprecated
-# ------------------------------------
-def ls_img_sequence(path):
-    """Listing all available coherent image sequence from path
-
-    Arguments:
-        path (str): A nuke's node object
-
-    Returns:
-        data (dict): with nuke formated path and frameranges
-    """
-    file = os.path.basename(path)
-    dirpath = os.path.dirname(path)
-    base, ext = os.path.splitext(file)
-    name, padding = os.path.splitext(base)
-
-    # populate list of files
-    files = [
-        f for f in os.listdir(dirpath)
-        if name in f
-        if ext in f
-    ]
-
-    # create collection from list of files
-    collections, reminder = clique.assemble(files)
-
-    if len(collections) > 0:
-        head = collections[0].format("{head}")
-        padding = collections[0].format("{padding}") % 1
-        padding = "#" * len(padding)
-        tail = collections[0].format("{tail}")
-        file = head + padding + tail
-
-        return {
-            "path": os.path.join(dirpath, file).replace("\\", "/"),
-            "frames": collections[0].format("[{ranges}]")
-        }
-
-    return False
 
 
 def get_group_io_nodes(nodes):

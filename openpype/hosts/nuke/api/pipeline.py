@@ -1,7 +1,6 @@
 import nuke
 
 import os
-import json
 import importlib
 from collections import OrderedDict
 
@@ -35,8 +34,6 @@ from openpype.tools.utils import host_tools
 from .command import viewer_update_and_undo_stop
 from .lib import (
     Context,
-    imprint,
-    Knobby,
     get_main_window,
     add_publish_knob,
     WorkfileSettings,
@@ -49,7 +46,9 @@ from .lib import (
     on_script_load,
     dirmap_file_name_filter,
     add_scripts_menu,
-    add_scripts_gizmo
+    add_scripts_gizmo,
+    read_create_data,
+    write_create_data
 )
 from .lib_template_builder import (
     create_placeholder, update_placeholder
@@ -137,21 +136,11 @@ class NukeHost(
 
     def get_context_data(self):
         root_node = nuke.root()
-        context_value = root_node["publish_context"].getValue()
-        return json.loads(context_value)
+        return read_create_data(root_node, "publish_context")
 
     def update_context_data(self, data, changes):
         root_node = nuke.root()
-        imprint(
-            root_node,
-            {
-                "publish_context": Knobby(
-                    "String_Knob",
-                    json.dumps(data),
-                    flags=[nuke.INVISIBLE]
-                )
-            }
-        )
+        write_create_data(root_node, "publish_context", data)
 
 
 def add_nuke_callbacks():
