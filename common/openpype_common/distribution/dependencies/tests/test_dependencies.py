@@ -11,7 +11,9 @@ from common.openpype_common.distribution.dependencies.dependencies import (
     merge_tomls,
     get_full_toml,
     prepare_new_venv,
-    zip_venv
+    zip_venv,
+    upload_zip_venv,
+    get_venv_zip_name
 )
 
 
@@ -107,18 +109,19 @@ def _compare_resolved_tomp(result_toml):
     assert dep_version == "1.0.0"
 
 
-def test_prepare_new_venv(addon_toml_to_venv_data):
-    """Creates zip of simple venv from mock addon pyproject data"""
-    tmpdir = tempfile.mkdtemp()
-    print(f"Creating new venv in {tmpdir}")
-    return_code = prepare_new_venv(addon_toml_to_venv_data, tmpdir)
+def test_get_venv_zip_name():
+    test_file_1_path = os.path.join("resources", "pyproject.toml")
 
-    assert return_code != 1, "Prepare of new venv failed"
+    test_file_1_name = get_venv_zip_name(test_file_1_path)
+    test_file_2_name = get_venv_zip_name(test_file_1_path)
 
-    venv_zip_path = os.path.join(tmpdir, 'openpype-4.4-windows.zip')
-    zip_venv(os.path.join(tmpdir, ".venv"),
-             venv_zip_path)
+    assert test_file_1_name == test_file_2_name, \
+        "Same file must result in same name"
 
-    assert os.path.exists(venv_zip_path)
+    test_file_2_path = os.path.join("resources", "pyproject_clean.toml")
+    test_file_2_name = get_venv_zip_name(test_file_2_path)
+
+    assert test_file_1_name != test_file_2_name, \
+        "Different file must result in different name"
 
     shutil.rmtree(tmpdir)

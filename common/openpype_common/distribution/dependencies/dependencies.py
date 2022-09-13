@@ -7,6 +7,9 @@ import subprocess
 import logging
 import platform
 import requests
+import sys
+import sysconfig
+import hashlib
 
 from common.openpype_common.distribution.file_handler import RemoteFileHandler
 
@@ -179,21 +182,29 @@ def prepare_new_venv(full_toml_data, venv_folder):
     run_subprocess(cmd_args)
 
 
-def prepare_venv_zip_name(version_file_path):
-    if not version_file_path.exists():
-        return None
+def get_venv_zip_name(lock_file_path):
+    """Creates zip file name for new venv.
 
-    version = {}
-    with open(version_file_path, "r") as fp:
-        exec(fp.read(), version)
+    File name contains python version used when generating venv, platform and
+    hash of installed libraries from .lock file
 
-    # TODO full version or just 3.14 ?
-    version_str = version['__version__']
+    Args:
+        lock_file_path (str)
+    Returns:
+        (str):
+        example 'openpype-win-amd64-python3.7.9-d64f07e555c5dd65034c9186192869e78b08390d.zip'  # noqa
+        File name is far below max file name size limit so far, so no need to
+        some clever trimming for now
+    """
+    ver = sys.version_info
+    platform = sysconfig.get_platform()
+    python_version = "python{}.{}.{}".format(ver.major, ver.minor, ver.micro)
 
-    file_name = "openpype-{}-{}.zip".format(version_str,
-                                            platform.system().lower())
+    with open(lock_file_path) as fp:
+        hash = hashlib.sha1(fp.read().encode('utf-8')).hexdigest()
 
-    return file_name
+    return "openpype-{}-{}-{}.zip".format(platform, python_version, hash)
+
 
 
 def zip_venv(venv_folder, zip_destination_path):
