@@ -6,7 +6,7 @@ import platform
 import click
 
 from openpype.modules import OpenPypeModule
-from openpype_interfaces import (
+from openpype.modules.interfaces import (
     ITrayModule,
     IPluginPaths,
     ISettingsChangeListener

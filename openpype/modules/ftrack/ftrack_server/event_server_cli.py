@@ -20,9 +20,11 @@ from openpype.lib import (
     get_openpype_version,
     get_build_version,
 )
-from openpype_modules.ftrack import FTRACK_MODULE_DIR
+from openpype_modules.ftrack import (
+    FTRACK_MODULE_DIR,
+    check_ftrack_url,
+)
 from openpype_modules.ftrack.lib import credentials
-from openpype_modules.ftrack.ftrack_server.lib import check_ftrack_url
 from openpype_modules.ftrack.ftrack_server import socket_thread
 
 
