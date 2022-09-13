@@ -22,9 +22,6 @@ from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
     register_inventory_action_path,
-    deregister_loader_plugin_path,
-    deregister_creator_plugin_path,
-    deregister_inventory_action_path,
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.workfile import BuildWorkfile
@@ -138,12 +135,13 @@ class NukeHost(
     def get_context_data(self):
         pass
 
-    def update_context_data(self, data, changes):
+    def update_context_data(self, data):
         pass
 
 
 def add_nuke_callbacks():
-
+    """ Adding all available nuke callbacks
+    """
     workfile_settings = WorkfileSettings()
     # Set context settings.
     nuke.addOnCreate(
@@ -163,7 +161,7 @@ def add_nuke_callbacks():
 
     nuke.addFilenameFilter(dirmap_file_name_filter)
 
-    log.info('Automatic syncing of write file knob to script version')
+    log.info("Added Nuke callbacks ...")
 
 
 def reload_config():
