@@ -205,7 +205,7 @@ class WorkfileBuildPlaceholderDialog(QtWidgets.QDialog):
         try:
             plugin.update_placeholder(self._update_item, options)
             self.accept()
-        except Exception as exc:
+        except Exception:
             self.log.warning("Something went wrong", exc_info=True)
             dialog = QtWidgets.QMessageBox(self)
             dialog.setWindowTitle("Something went wrong")
@@ -221,7 +221,7 @@ class WorkfileBuildPlaceholderDialog(QtWidgets.QDialog):
         try:
             plugin.create_placeholder(options)
             self.accept()
-        except Exception as exc:
+        except Exception:
             self.log.warning("Something went wrong", exc_info=True)
             dialog = QtWidgets.QMessageBox(self)
             dialog.setWindowTitle("Something went wrong")
