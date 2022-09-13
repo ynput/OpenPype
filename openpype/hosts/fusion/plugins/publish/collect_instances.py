@@ -85,7 +85,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "frameStartHandle": context.data["frameStartHandle"],
                 "frameEndHandle": context.data["frameStartHandle"],
                 "fps": context.data["fps"],
-                "families": ["render", "review", "ftrack"],
+                "families": ["render", "review"],
                 "family": "render",
                 "active": active,
                 "publish": active   # backwards compatibility
