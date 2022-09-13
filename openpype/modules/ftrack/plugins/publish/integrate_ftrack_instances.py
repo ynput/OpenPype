@@ -82,6 +82,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             for map_family, map_value in self.family_mapping.items():
                 if map_family.lower() == family_low:
                     asset_type = map_value
+                    break
 
         if not asset_type:
             asset_type = "upload"
