@@ -15,7 +15,7 @@ from openpype.settings import SaveWarningExc
 from openpype.lib import Logger
 
 FTRACK_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
-_PLACEHOLDER = object()
+_URL_NOT_SET = object()
 
 
 class FtrackModule(
@@ -31,7 +31,7 @@ class FtrackModule(
 
         self.enabled = ftrack_settings["enabled"]
         self._settings_ftrack_url = ftrack_settings["ftrack_server"]
-        self._ftrack_url = _PLACEHOLDER
+        self._ftrack_url = _URL_NOT_SET
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         low_platform = platform.system().lower()
@@ -64,7 +64,7 @@ class FtrackModule(
         self._timers_manager_module = None
 
     def get_ftrack_url(self):
-        if self._ftrack_url is _PLACEHOLDER:
+        if self._ftrack_url is _URL_NOT_SET:
             self._ftrack_url = resolve_ftrack_url(
                 self._settings_ftrack_url,
                 logger=self.log
