@@ -22,10 +22,6 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.workfile import BuildWorkfile
-from openpype.pipeline.workfile.build_template import (
-    build_workfile_template,
-    update_workfile_template
-)
 from openpype.tools.utils import host_tools
 
 from .command import viewer_update_and_undo_stop
@@ -40,8 +36,12 @@ from .lib import (
     set_avalon_knob_data,
     read_avalon_data,
 )
-from .lib_template_builder import (
-    create_placeholder, update_placeholder
+from .workfile_template_builder import (
+    NukePlaceholderLoadPlugin,
+    build_workfile_template,
+    update_workfile_template,
+    create_placeholder,
+    update_placeholder,
 )
 
 log = Logger.get_logger(__name__)
