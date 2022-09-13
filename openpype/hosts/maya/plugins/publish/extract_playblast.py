@@ -79,8 +79,10 @@ class ExtractPlayblast(openpype.api.Extractor):
             preset['height'] = asset_height
         preset['start_frame'] = start
         preset['end_frame'] = end
-        camera_option = preset.get("camera_option", {})
-        camera_option["depthOfField"] = cmds.getAttr(
+
+        # Enforce persisting camera depth of field
+        camera_options = preset.setdefault("camera_options", {})
+        camera_options["depthOfField"] = cmds.getAttr(
             "{0}.depthOfField".format(camera))
 
         stagingdir = self.staging_dir(instance)
