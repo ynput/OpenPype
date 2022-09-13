@@ -66,8 +66,6 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         project_name = legacy_io.active_project()
         project_settings = get_project_settings(project_name)
         # process path mapping
-        project_name = legacy_io.active_project()
-        project_settings = get_project_settings(project_name)
         dirmap_processor = MayaDirmap("maya", project_name, project_settings)
         dirmap_processor.process_dirmap()
 
