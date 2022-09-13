@@ -231,7 +231,7 @@ def _install_menu():
     )
     menu.addCommand(
         "Publish...",
-        lambda: host_tools.show_publish(parent=main_window)
+        lambda: host_tools.show_publisher(parent=main_window)
     )
     menu.addCommand(
         "Manage...",
