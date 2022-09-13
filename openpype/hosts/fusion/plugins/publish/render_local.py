@@ -20,6 +20,8 @@ class Fusionlocal(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
+        # This plug-in runs only once and thus assumes all instances
+        # currently will render the same frame range
         context = instance.context
         key = "__hasRun{}".format(self.__class__.__name__)
         if context.data.get(key, False):
@@ -28,8 +30,8 @@ class Fusionlocal(pyblish.api.InstancePlugin):
             context.data[key] = True
 
         current_comp = context.data["currentComp"]
-        frame_start = current_comp.GetAttrs("COMPN_RenderStart")
-        frame_end = current_comp.GetAttrs("COMPN_RenderEnd")
+        frame_start = context.data["frameStartHandle"]
+        frame_end = context.data["frameEndHandle"]
         path = instance.data["path"]
         output_dir = instance.data["outputDir"]
 
@@ -40,7 +42,11 @@ class Fusionlocal(pyblish.api.InstancePlugin):
         self.log.info("End frame: {}".format(frame_end))
 
         with comp_lock_and_undo_chunk(current_comp):
-            result = current_comp.Render()
+            result = current_comp.Render({
+                "Start": frame_start,
+                "End": frame_end,
+                "Wait": True
+            })
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
