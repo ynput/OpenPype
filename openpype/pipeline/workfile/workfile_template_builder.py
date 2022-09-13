@@ -1064,10 +1064,9 @@ class PlaceholderLoadMixin(object):
 
     For placeholder population is implemented 'populate_load_placeholder'.
 
-    Requires that PlaceholderItem has implemented methods:
+    PlaceholderItem can have implemented methods:
     - 'load_failed' - called when loading of one representation failed
     - 'load_succeed' - called when loading of one representation succeeded
-    - 'clean' - called when placeholder processing finished
     """
 
     def get_load_plugin_options(self, options=None):
@@ -1397,12 +1396,20 @@ class PlaceholderLoadMixin(object):
 
             except Exception:
                 failed = True
-                placeholder.load_failed(representation)
+                self.load_failed(placeholder, representation)
 
             else:
                 failed = False
-                placeholder.load_succeed(container)
+                self.load_succeed(placeholder, container)
             self.cleanup_placeholder(placeholder, failed)
+
+    def load_failed(self, placeholder, representation):
+        if hasattr(placeholder, "load_failed"):
+            placeholder.load_failed(representation)
+
+    def load_succeed(self, placeholder, container):
+        if hasattr(placeholder, "load_succeed"):
+            placeholder.load_succeed(container)
 
     def cleanup_placeholder(self, placeholder, failed):
         """Cleanup placeholder after load of single representation.
@@ -1417,3 +1424,28 @@ class PlaceholderLoadMixin(object):
         """
 
         pass
+
+
+class LoadPlaceholderItem(PlaceholderItem):
+    """PlaceholderItem for plugin which is loading representations.
+
+    Connected to 'PlaceholderLoadMixin'.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(LoadPlaceholderItem, self).__init__(*args, **kwargs)
+        self._failed_representations = []
+
+    def get_errors(self):
+        if not self._failed_representations:
+            return []
+        message = (
+            "Failed to load {} representations using Loader {}"
+        ).format(
+            len(self._failed_representations),
+            self.data["loader"]
+        )
+        return [message]
+
+    def load_failed(self, representation):
+        self._failed_representations.append(representation)

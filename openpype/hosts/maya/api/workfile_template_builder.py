@@ -7,7 +7,7 @@ from openpype.pipeline.workfile.workfile_template_builder import (
     TemplateAlreadyImported,
     AbstractTemplateBuilder,
     PlaceholderPlugin,
-    PlaceholderItem,
+    LoadPlaceholderItem,
     PlaceholderLoadMixin,
 )
 from openpype.tools.workfile_template_build import (
@@ -239,15 +239,10 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         cmds.hide(node)
         cmds.setAttr(node + ".hiddenInOutliner", True)
 
+    def load_succeed(self, placeholder, container):
+        self._parent_in_hierarhchy(placeholder, container)
 
-class LoadPlaceholderItem(PlaceholderItem):
-    """Concrete implementation of PlaceholderItem for Maya load plugin."""
-
-    def __init__(self, *args, **kwargs):
-        super(LoadPlaceholderItem, self).__init__(*args, **kwargs)
-        self._failed_representations = []
-
-    def parent_in_hierarchy(self, container):
+    def _parent_in_hierarchy(self, placeholder, container):
         """Parent loaded container to placeholder's parent.
 
         ie : Set loaded content as placeholder's sibling
@@ -272,42 +267,25 @@ class LoadPlaceholderItem(PlaceholderItem):
             elif not cmds.sets(root, q=True):
                 return
 
-        if self.data["parent"]:
-            cmds.parent(nodes_to_parent, self.data["parent"])
+        if placeholder.data["parent"]:
+            cmds.parent(nodes_to_parent, placeholder.data["parent"])
         # Move loaded nodes to correct index in outliner hierarchy
         placeholder_form = cmds.xform(
-            self._scene_identifier,
+            placeholder.scene_identifier,
             q=True,
             matrix=True,
             worldSpace=True
         )
         for node in set(nodes_to_parent):
             cmds.reorder(node, front=True)
-            cmds.reorder(node, relative=self.data["index"])
+            cmds.reorder(node, relative=placeholder.data["index"])
             cmds.xform(node, matrix=placeholder_form, ws=True)
 
-        holding_sets = cmds.listSets(object=self._scene_identifier)
+        holding_sets = cmds.listSets(object=placeholder.scene_identifier)
         if not holding_sets:
             return
         for holding_set in holding_sets:
             cmds.sets(roots, forceElement=holding_set)
-
-    def get_errors(self):
-        if not self._failed_representations:
-            return []
-        message = (
-            "Failed to load {} representations using Loader {}"
-        ).format(
-            len(self._failed_representations),
-            self.data["loader"]
-        )
-        return [message]
-
-    def load_failed(self, representation):
-        self._failed_representations.append(representation)
-
-    def load_succeed(self, container):
-        self.parent_in_hierarchy(container)
 
 
 def build_workfile_template(*args):

@@ -6,7 +6,7 @@ from openpype.pipeline import registered_host
 from openpype.pipeline.workfile.workfile_template_builder import (
     AbstractTemplateBuilder,
     PlaceholderPlugin,
-    PlaceholderItem,
+    LoadPlaceholderItem,
     PlaceholderLoadMixin,
 )
 from openpype.tools.workfile_template_build import (
@@ -177,7 +177,7 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
             placeholder_data = self._parse_placeholder_node_data(node)
             # TODO do data validations and maybe updgrades if are invalid
             output.append(
-                NukeLoadPlaceholderItem(node_name, placeholder_data, self)
+                LoadPlaceholderItem(node_name, placeholder_data, self)
             )
 
         return output
@@ -533,31 +533,6 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
                         node_copy.setInput(idx, last_output)
 
         siblings_input.setInput(0, copy_output)
-
-
-class NukeLoadPlaceholderItem(PlaceholderItem):
-    """Concrete implementation of PlaceholderItem for Maya load plugin."""
-
-    def __init__(self, *args, **kwargs):
-        super(NukeLoadPlaceholderItem, self).__init__(*args, **kwargs)
-        self._failed_representations = []
-
-    def get_errors(self):
-        if not self._failed_representations:
-            return []
-        message = (
-            "Failed to load {} representations using Loader {}"
-        ).format(
-            len(self._failed_representations),
-            self.data["loader"]
-        )
-        return [message]
-
-    def load_failed(self, representation):
-        self._failed_representations.append(representation)
-
-    def load_succeed(self, container):
-        pass
 
 
 def build_workfile_template(*args):
