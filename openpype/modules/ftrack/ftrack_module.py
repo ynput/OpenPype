@@ -520,8 +520,9 @@ def check_ftrack_url(url, log_errors=True, logger=None):
 
     if ftrack_url:
         logger.debug("Ftrack server \"{}\" is accessible.".format(ftrack_url))
+
     elif log_errors:
-        logger.error("Entered Ftrack URL \"{}\" is not accessible!".format(url))
+        logger.error("Ftrack server \"{}\" is not accessible!".format(url))
 
     return ftrack_url
 
