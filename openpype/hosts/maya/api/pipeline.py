@@ -33,7 +33,6 @@ from openpype.pipeline import (
 from openpype.pipeline.load import any_outdated_containers
 from openpype.pipeline.workfile.lock_workfile import (
     create_workfile_lock,
-    get_user_from_lock,
     remove_workfile_lock,
     is_workfile_locked,
     is_workfile_lock_enabled

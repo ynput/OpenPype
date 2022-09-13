@@ -30,7 +30,7 @@ from openpype.pipeline.context_tools import (
     change_current_context
 )
 from openpype.pipeline.workfile import get_workfile_template_key
-from openpype.tools.workfiles.lock_dialog import WorkfileLockDialog
+
 
 from .model import (
     WorkAreaFilesModel,
