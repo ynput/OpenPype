@@ -85,9 +85,10 @@ def test_merge_tomls(openpype_toml_data, addon_toml_to_compare_data):
 
 
 def test_get_full_toml(openpype_toml_data):
-    addon_urls = ["resources"]
+    with open(os.path.join("resources", "pyproject.toml")) as fp:
+        addon_tomls = [fp.read()]
 
-    result_toml = get_full_toml(openpype_toml_data, addon_urls)
+    result_toml = get_full_toml(openpype_toml_data, addon_tomls)
     _compare_resolved_tomp(result_toml)
 
 

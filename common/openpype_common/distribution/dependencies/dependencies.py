@@ -126,7 +126,7 @@ def merge_tomls(main_toml, addon_toml):
     return main_toml
 
 
-def get_full_toml(base_toml_data, addon_folders):
+def get_full_toml(base_toml_data, addon_tomls):
     """Loops through list of local addon folder paths to create full .toml
 
     Full toml is used to calculate set of python dependencies for all enabled
@@ -134,17 +134,13 @@ def get_full_toml(base_toml_data, addon_folders):
 
     Args:
         base_toml_data (dict): content of pyproject.toml in the root
-        addon_folders (list): of local paths to addons
+        addon_tomls (list): content of addon pyproject.toml
     Returns:
         (dict) updated base .toml
     """
-    for addon_folder in addon_folders:
-        addon_toml_path = os.path.join(addon_folder, "pyproject.toml")
-        if not os.path.exists(addon_toml_path):
-            print(f"{addon_toml_path} doesn't exist, no dependencies added.")
-            continue
-        addon_toml = FileTomlProvider(addon_toml_path).get_toml()
-        base_toml_data = merge_tomls(base_toml_data, addon_toml)
+    for addon_toml in addon_tomls:
+        addon_toml_data = toml.loads(addon_toml)
+        base_toml_data = merge_tomls(base_toml_data, addon_toml_data)
 
     return base_toml_data
 
