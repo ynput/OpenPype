@@ -128,7 +128,7 @@ class HoudiniCreator(NewCreator):
                 node_type = "geometry"
 
             instance_node = self._create_instance_node(
-                subset_name, "/out", node_type, pre_create_data)
+                subset_name, "/out", node_type)
 
             # wondering if we'll ever need more than one member here
             # in Houdini
