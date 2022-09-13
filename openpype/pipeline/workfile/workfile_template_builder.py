@@ -11,7 +11,10 @@ from openpype.client import (
     get_linked_assets,
     get_representations,
 )
-from openpype.settings import get_project_settings
+from openpype.settings import (
+    get_project_settings,
+    get_system_settings,
+)
 from openpype.host import HostBase
 from openpype.lib import (
     Logger,
@@ -86,6 +89,9 @@ class AbstractTemplateBuilder(object):
         self._loaders_by_name = None
         self._creators_by_name = None
 
+        self._system_settings = None
+        self._project_settings = None
+
         self._current_asset_doc = None
         self._linked_asset_docs = None
         self._task_type = None
@@ -101,6 +107,18 @@ class AbstractTemplateBuilder(object):
     @property
     def current_task_name(self):
         return legacy_io.Session["AVALON_TASK"]
+
+    @property
+    def system_settings(self):
+        if self._system_settings is None:
+            self._system_settings = get_system_settings()
+        return self._system_settings
+
+    @property
+    def project_settings(self):
+        if self._project_settings is None:
+            self._project_settings = get_project_settings(self.project_name)
+        return self._project_settings
 
     @property
     def current_asset_doc(self):
@@ -183,6 +201,9 @@ class AbstractTemplateBuilder(object):
         self._current_asset_doc = None
         self._linked_asset_docs = None
         self._task_type = None
+
+        self._system_settings = None
+        self._project_settings = None
 
         self.clear_shared_data()
         self.clear_shared_populate_data()
@@ -529,9 +550,8 @@ class AbstractTemplateBuilder(object):
         self.refresh()
 
     def _get_build_profiles(self):
-        project_settings = get_project_settings(self.project_name)
         return (
-            project_settings
+            self.project_settings
             [self.host_name]
             ["templated_workfile_build"]
             ["profiles"]
