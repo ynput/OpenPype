@@ -1,12 +1,8 @@
-import json
 import collections
 
 import nuke
 
 from openpype.pipeline import registered_host
-from openpype.pipeline.workfile.build_template_exceptions import (
-    TemplateAlreadyImported
-)
 from openpype.pipeline.workfile.new_template_loader import (
     AbstractTemplateLoader,
     PlaceholderPlugin,
