@@ -14,13 +14,15 @@ from common.openpype_common.distribution.dependencies.dependencies import (
     zip_venv,
     upload_zip_venv,
     get_venv_zip_name,
-    lock_to_toml_data
+    lock_to_toml_data,
+    remove_existing_from_venv
 )
 
+ROOT_FOLDER = os.path.abspath(os.path.join("..", "..", "..", "..", ".."))
 
 @pytest.fixture
 def openpype_toml_data():
-    provider = FileTomlProvider(os.path.join("..", "..", "..", "..", "..",
+    provider = FileTomlProvider(os.path.join(ROOT_FOLDER,
                                              "pyproject.toml"))
     return provider.get_toml()
 
@@ -39,8 +41,15 @@ def addon_toml_to_venv_data():
     return provider.get_toml()
 
 
+@pytest.fixture(scope="module")
+def tmpdir():
+    tmpdir = tempfile.mkdtemp(prefix="openpype_test_")
+
+    yield tmpdir
+
+
 def test_existing_file():
-    provider = FileTomlProvider(os.path.join("..", "..", "..", "..", "..",
+    provider = FileTomlProvider(os.path.join(ROOT_FOLDER,
                                              "pyproject.toml"))
     _ = provider.get_toml()
 
@@ -138,3 +147,41 @@ def test_lock_to_toml_data():
         "Wrong version, must be '1.0.0'")
 
     assert is_valid_toml(toml_data), "Must contain all required keys"
+
+# @pytest.mark.skip(reason="no way of currently testing this")
+def test_prepare_new_venv(addon_toml_to_venv_data, tmpdir):
+    """Creates zip of simple venv from mock addon pyproject data"""
+    print(f"Creating new venv in {tmpdir}")
+    return_code = prepare_new_venv(addon_toml_to_venv_data, tmpdir)
+
+    assert return_code != 1, "Prepare of new venv failed"
+
+
+def test_remove_existing_from_venv(tmpdir):
+    base_venv_path = os.path.join(ROOT_FOLDER, ".venv")
+    addon_venv_path = os.path.join(tmpdir, ".venv")
+
+    assert os.path.exists(base_venv_path), "Base venv must exist"
+    assert os.path.exists(addon_venv_path), "Addon venv must exist"
+
+    removed = remove_existing_from_venv(base_venv_path, addon_venv_path)
+
+    assert "aiohttp" in removed, "aiohttp is in base, should be removed"
+
+
+def test_get_venv_zip_name(tmpdir):
+    zip_file_name = get_venv_zip_name(os.path.join(tmpdir, "poetry.lock"))
+    venv_zip_path = os.path.join(tmpdir, zip_file_name)
+    zip_venv(os.path.join(tmpdir, ".venv"),
+             venv_zip_path)
+
+    assert os.path.exists(venv_zip_path)
+
+
+def test_teardown(tmpdir):
+    """Explicitly tear down of tmpdir
+
+    Exposed this way for testing during development.
+    """
+    if os.path.exists(tmpdir):
+        shutil.rmtree(tmpdir)

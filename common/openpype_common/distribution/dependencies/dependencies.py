@@ -1,4 +1,5 @@
 import os.path
+import shutil
 import toml
 import abc
 import six
@@ -181,7 +182,6 @@ def prepare_new_venv(full_toml_data, venv_folder):
         create_env_script_path,
         "-venv_path", os.path.join(venv_folder, ".venv")
     ]
-
     run_subprocess(cmd_args)
 
 
@@ -233,6 +233,35 @@ def lock_to_toml_data(lock_path):
     toml["tool"]["poetry"]["dependencies"] = dependencies
 
     return toml
+
+
+def remove_existing_from_venv(base_venv_path, addons_venv_path):
+    """Loop through calculated addon venv and remove already installed libs.
+
+    Args:
+        base_venv_path (str): path to base venv of build
+        addons_venv_path (str): path to newly created merged venv for active
+            addons
+    Returns:
+        (set) of folder/file paths that were removed from addon venv, used only
+            for testing
+    """
+    checked_subfolders = os.path.join("Lib", "site-packages")
+    base_content = set(os.listdir(os.path.join(base_venv_path,
+                                               checked_subfolders)))
+
+    removed = set()
+    for item in os.listdir(os.path.join(addons_venv_path, checked_subfolders)):
+        if item in base_content:
+            if item.startswith("_"):
+                print(f"Keep internal {item}")
+                continue
+            path = os.path.join(addons_venv_path, item)
+            removed.add(item)
+            print(f"Removing {path}")
+            shutil.rmtree(path)
+
+    return removed
 
 
 def zip_venv(venv_folder, zip_destination_path):
