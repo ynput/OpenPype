@@ -560,7 +560,7 @@ class AbstractTemplateBuilder(object):
 
         path = profile["path"]
         if not path:
-            raise TemplateLoadingFailed((
+            raise TemplateLoadFailed((
                 "Template path is not set.\n"
                 "Path need to be set in {}\\Template Workfile Build "
                 "Settings\\Profiles"
