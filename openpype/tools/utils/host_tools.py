@@ -194,7 +194,6 @@ class HostToolsHelper:
             library_loader_tool.showNormal()
             library_loader_tool.refresh()
 
-
     def show_publish(self, parent=None):
         """Try showing the most desirable publish GUI
 
@@ -205,7 +204,6 @@ class HostToolsHelper:
 
         pyblish_show = self._discover_pyblish_gui()
         return pyblish_show(parent)
-
 
     def _discover_pyblish_gui(self):
         """Return the most desirable of the currently registered GUIs"""
