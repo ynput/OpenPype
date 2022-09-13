@@ -46,19 +46,6 @@ class AbstractTemplateLoader:
     _log = None
 
     def __init__(self, host):
-        # Prepare context information
-        project_name = legacy_io.active_project()
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-        task_name = legacy_io.Session["AVALON_TASK"]
-        current_asset_doc = get_asset_by_name(project_name, asset_name)
-        task_type = (
-            current_asset_doc
-            .get("data", {})
-            .get("tasks", {})
-            .get(task_name, {})
-            .get("type")
-        )
-
         # Get host name
         if isinstance(host, HostBase):
             host_name = host.name
@@ -1172,6 +1159,34 @@ class PlaceholderLoadMixin(object):
             context_filters=context_filters
         ))
 
+    def _reduce_last_version_repre_docs(self, representations):
+        """Reduce representations to last verison."""
+
+        mapping = {}
+        for repre_doc in representations:
+            repre_context = repre_doc["context"]
+
+            asset_name = repre_context["asset"]
+            subset_name = repre_context["subset"]
+            version = repre_context.get("version", -1)
+
+            if asset_name not in mapping:
+                mapping[asset_name] = {}
+
+            subset_mapping = mapping[asset_name]
+            if subset_name not in subset_mapping:
+                subset_mapping[subset_name] = collections.defaultdict(list)
+
+            version_mapping = subset_mapping[subset_name]
+            version_mapping[version].append(repre_doc)
+
+        output = []
+        for subset_mapping in mapping.values():
+            for version_mapping in subset_mapping.values():
+                last_version = tuple(sorted(version_mapping.keys()))[-1]
+                output.extend(version_mapping[last_version])
+        return output
+
     def populate_load_placeholder(self, placeholder, ignore_repre_ids=None):
         if ignore_repre_ids is None:
             ignore_repre_ids = set()
@@ -1183,7 +1198,9 @@ class PlaceholderLoadMixin(object):
         placeholder_representations = self.get_representations(placeholder)
 
         filtered_representations = []
-        for representation in placeholder_representations:
+        for representation in self._reduce_last_version_repre_docs(
+            placeholder_representations
+        ):
             repre_id = str(representation["_id"])
             if repre_id not in ignore_repre_ids:
                 filtered_representations.append(representation)
