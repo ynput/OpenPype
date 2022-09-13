@@ -3,10 +3,8 @@ import json
 from maya import cmds
 
 from openpype.pipeline import registered_host
-from openpype.pipeline.workfile.build_template_exceptions import (
-    TemplateAlreadyImported
-)
 from openpype.pipeline.workfile.workfile_template_builder import (
+    TemplateAlreadyImported,
     AbstractTemplateBuilder,
     PlaceholderPlugin,
     PlaceholderItem,

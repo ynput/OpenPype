@@ -28,11 +28,27 @@ from openpype.pipeline.load import (
 )
 from openpype.pipeline.create import get_legacy_creator_by_name
 
-from .build_template_exceptions import (
-    TemplateProfileNotFound,
-    TemplateLoadingFailed,
-    TemplateNotFound,
-)
+
+class TemplateNotFound(Exception):
+    """Exception raised when template does not exist."""
+    pass
+
+
+class TemplateProfileNotFound(Exception):
+    """Exception raised when current profile
+    doesn't match any template profile"""
+    pass
+
+
+class TemplateAlreadyImported(Exception):
+    """Error raised when Template was already imported by host for
+    this session"""
+    pass
+
+
+class TemplateLoadFailed(Exception):
+    """Error raised whend Template loader was unable to load the template"""
+    pass
 
 
 @six.add_metaclass(ABCMeta)
