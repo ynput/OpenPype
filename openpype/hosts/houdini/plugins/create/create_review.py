@@ -8,6 +8,13 @@ class CreateReview(plugin.Creator):
     family = "review"
     icon = "video-camera"
 
+    # Default settings for the ROP
+    # todo: expose in OpenPype settings?
+    override_resolution = True
+    width = 1280
+    height = 720
+    aspect = 1.0
+
     def __init__(self, *args, **kwargs):
         super(CreateReview, self).__init__(*args, **kwargs)
 
@@ -36,8 +43,17 @@ class CreateReview(plugin.Creator):
             # to expression of $FSTART and $FEND so we preserve that behavior
             # but do set the range to the frame range of the playbar
             "f1": frame_range[0],
-            "f2": frame_range[1]
+            "f2": frame_range[1],
         }
+
+        if self.override_resolution:
+            # Override resolution
+            parms.update({
+                "tres": True,   # Override Camera Resolution
+                "res0": self.width,
+                "res1": self.height,
+                "aspect": self.aspect
+            })
 
         if self.nodes:
             # todo: allow only object paths?
