@@ -141,6 +141,12 @@ def _show_workfiles():
     host_tools.show_workfiles(parent=None, on_top=False)
 
 
+def get_workfile_build_placeholder_plugins():
+    return [
+        NukePlaceholderLoadPlugin
+    ]
+
+
 def _install_menu():
     # uninstall original avalon menu
     main_window = get_main_window()
