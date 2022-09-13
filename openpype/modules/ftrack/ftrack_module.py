@@ -12,8 +12,10 @@ from openpype_interfaces import (
     ISettingsChangeListener
 )
 from openpype.settings import SaveWarningExc
+from openpype.lib import Logger
 
 FTRACK_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
+_PLACEHOLDER = object()
 
 
 class FtrackModule(
@@ -28,17 +30,8 @@ class FtrackModule(
         ftrack_settings = settings[self.name]
 
         self.enabled = ftrack_settings["enabled"]
-        # Add http schema
-        ftrack_url = ftrack_settings["ftrack_server"].strip("/ ")
-        if ftrack_url:
-            if "http" not in ftrack_url:
-                ftrack_url = "https://" + ftrack_url
-
-            # Check if "ftrack.app" is part os url
-            if "ftrackapp.com" not in ftrack_url:
-                ftrack_url = ftrack_url + ".ftrackapp.com"
-
-        self.ftrack_url = ftrack_url
+        self._settings_ftrack_url = ftrack_settings["ftrack_server"]
+        self._ftrack_url = _PLACEHOLDER
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         low_platform = platform.system().lower()
@@ -69,6 +62,16 @@ class FtrackModule(
         # TimersManager connection
         self.timers_manager_connector = None
         self._timers_manager_module = None
+
+    def get_ftrack_url(self):
+        if self._ftrack_url is _PLACEHOLDER:
+            self._ftrack_url = check_ftrack_url(
+                self._settings_ftrack_url,
+                logger=self.log
+            )
+        return self._ftrack_url
+
+    ftrack_url = property(get_ftrack_url)
 
     def get_global_environments(self):
         """Ftrack's global environments."""
@@ -477,6 +480,50 @@ class FtrackModule(
 
     def cli(self, click_group):
         click_group.add_command(cli_main)
+
+
+def _check_ftrack_url(url):
+    import requests
+
+    try:
+        result = requests.get(url, allow_redirects=False)
+    except requests.exceptions.RequestException:
+        return False
+
+    if (result.status_code != 200 or "FTRACK_VERSION" not in result.headers):
+        return False
+    return True
+
+
+def check_ftrack_url(url, log_errors=True, logger=None):
+    """Checks if Ftrack server is responding"""
+
+    if logger is None:
+        logger = Logger.get_logger(__name__)
+
+    url = url.strip("/ ")
+    if not url:
+        logger.error("Ftrack URL is not set!")
+        return None
+
+    if not url.startswith("http"):
+        url = "https://" + url
+
+    ftrack_url = None
+    if not url.endswith("ftrackapp.com"):
+        ftrackapp_url = url + ".ftrackapp.com"
+        if _check_ftrack_url(ftrackapp_url):
+            ftrack_url = ftrackapp_url
+
+    if not ftrack_url and _check_ftrack_url(url):
+        ftrack_url = url
+
+    if ftrack_url:
+        logger.debug("Ftrack server \"{}\" is accessible.".format(ftrack_url))
+    elif log_errors:
+        logger.error("Entered Ftrack URL \"{}\" is not accesible!".format(url))
+
+    return ftrack_url
 
 
 @click.group(FtrackModule.name, help="Ftrack module related commands.")
