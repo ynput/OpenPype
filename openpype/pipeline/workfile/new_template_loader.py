@@ -605,6 +605,10 @@ class PlaceholderPlugin(object):
         return self._builder
 
     @property
+    def project_name(self):
+        return self._builder.project_name
+
+    @property
     def log(self):
         """Dynamically created logger for the plugin."""
 
@@ -956,7 +960,7 @@ class PlaceholderLoadMixin(object):
         """Unified attribute definitions for load placeholder.
 
         Common function for placeholder plugins used for loading of
-        repsentations.
+        repsentations. Use it in 'get_placeholder_options'.
 
         Args:
             plugin (PlaceholderPlugin): Plugin used for loading of
@@ -1125,7 +1129,7 @@ class PlaceholderLoadMixin(object):
                 "asset": [current_asset_doc["name"]],
                 "subset": [re.compile(placeholder.data["subset"])],
                 "hierarchy": [re.compile(placeholder.data["hierarchy"])],
-                "representations": [placeholder.data["representation"]],
+                "representation": [placeholder.data["representation"]],
                 "family": [placeholder.data["family"]]
             }
 
@@ -1188,6 +1192,23 @@ class PlaceholderLoadMixin(object):
         return output
 
     def populate_load_placeholder(self, placeholder, ignore_repre_ids=None):
+        """Load placeholder is goind to load matching representations.
+
+        Note:
+            Ignore repre ids is to avoid loading the same representation again
+            on load. But the representation can be loaded with different loader
+            and there could be published new version of matching subset for the
+            representation. We should maybe expect containers.
+
+            Also import loaders don't have containers at all...
+
+        Args:
+            placeholder (PlaceholderItem): Placeholder item with information
+                about requested representations.
+            ignore_repre_ids (Iterable[Union[str, ObjectId]]): Representation
+                ids that should be skipped.
+        """
+
         if ignore_repre_ids is None:
             ignore_repre_ids = set()
 
@@ -1215,7 +1236,7 @@ class PlaceholderLoadMixin(object):
             self.project_name, filtered_representations
         )
         loaders_by_name = self.builder.get_loaders_by_name()
-        for repre_load_context in repre_load_contexts:
+        for repre_load_context in repre_load_contexts.values():
             representation = repre_load_context["representation"]
             repre_context = representation["context"]
             self.log.info(
