@@ -1,3 +1,16 @@
+"""Workfile build mechanism using workfile templates.
+
+Build templates are manually prepared using plugin definitions which create
+placeholders inside the template which are populated on import.
+
+This approach is very explicit to achive very specific build logic that can be
+targeted by task types and names.
+
+Placeholders are created using placeholder plugins which should care about
+logic and data of placeholder items. 'PlaceholderItem' is used to keep track
+about it's progress.
+"""
+
 import os
 import re
 import collections
@@ -63,6 +76,13 @@ class AbstractTemplateBuilder(object):
 
     Rest of logic is based on plugins that care about collection and creation
     of placeholder items.
+
+    Population of placeholders happens in loops. Each loop will collect all
+    available placeholders, skip already populated, and populate the rest.
+
+    Builder item has 2 types of shared data. Refresh lifetime which are cleared
+    on refresh and populate lifetime which are cleared after loop of
+    placeholder population.
 
     Args:
         host (Union[HostBase, ModuleType]): Implementation of host.
@@ -382,6 +402,20 @@ class AbstractTemplateBuilder(object):
         ))
 
     def build_template(self, template_path=None, level_limit=None):
+        """Main callback for building workfile from template path.
+
+        Todo:
+            Handle report of populated placeholders from
+                'populate_scene_placeholders' to be shown to a user.
+
+        Args:
+            template_path (str): Path to a template file with placeholders.
+                Template from settings 'get_template_path' used when not
+                passed.
+            level_limit (int): Limit of populate loops. Related to
+                'populate_scene_placeholders' method.
+        """
+
         if template_path is None:
             template_path = self.get_template_path()
         self.import_template(template_path)
@@ -492,6 +526,8 @@ class AbstractTemplateBuilder(object):
             for placeholder in placeholders
         }
         all_processed = len(placeholders) == 0
+        # Counter is checked at the ned of a loop so the loop happens at least
+        #   once.
         iter_counter = 0
         while not all_processed:
             filtered_placeholders = []
@@ -550,6 +586,12 @@ class AbstractTemplateBuilder(object):
         self.refresh()
 
     def _get_build_profiles(self):
+        """Get build profiles for workfile build template path.
+
+        Returns:
+            List[Dict[str, Any]]: Profiles for template path resolving.
+        """
+
         return (
             self.project_settings
             [self.host_name]
@@ -558,6 +600,22 @@ class AbstractTemplateBuilder(object):
         )
 
     def get_template_path(self):
+        """Unified way how template path is received usign settings.
+
+        Method is dependent on '_get_build_profiles' which should return filter
+        profiles to resolve path to a template. Default implementation looks
+        into host settings:
+        - 'project_settings/{host name}/templated_workfile_build/profiles'
+
+        Returns:
+            str: Path to a template file with placeholders.
+
+        Raises:
+            TemplateProfileNotFound: When profiles are not filled.
+            TemplateLoadFailed: Profile was found but path is not set.
+            TemplateNotFound: Path was set but file does not exists.
+        """
+
         host_name = self.host_name
         project_name = self.project_name
         task_name = self.current_task_name
@@ -630,6 +688,14 @@ class AbstractTemplateBuilder(object):
 
 @six.add_metaclass(ABCMeta)
 class PlaceholderPlugin(object):
+    """Plugin which care about handling of placeholder items logic.
+
+    Plugin create and update placeholders in scene and populate them on
+    template import. Populating means that based on placeholder data happens
+    a logic in the scene. Most common logic is to load representation using
+    loaders or to create instances in scene.
+    """
+
     label = None
     _log = None
 
@@ -641,7 +707,7 @@ class PlaceholderPlugin(object):
         """Access to builder which initialized the plugin.
 
         Returns:
-            AbstractTemplateLoader: Loader of template build.
+            AbstractTemplateBuilder: Loader of template build.
         """
 
         return self._builder
@@ -852,8 +918,12 @@ class PlaceholderPlugin(object):
 class PlaceholderItem(object):
     """Item representing single item in scene that is a placeholder to process.
 
+    Items are always created and updated by their plugins. Each plugin can use
+    modified class of 'PlacehoderItem' but only to add more options instead of
+    new other.
+
     Scene identifier is used to avoid processing of the palceholder item
-    multiple times.
+    multiple times so must be unique across whole workfile builder.
 
     Args:
         scene_identifier (str): Unique scene identifier. If placeholder is
@@ -893,7 +963,7 @@ class PlaceholderItem(object):
         """Access to builder.
 
         Returns:
-            AbstractTemplateLoader: Builder which is the top part of
+            AbstractTemplateBuilder: Builder which is the top part of
                 placeholder.
         """
 
@@ -936,6 +1006,8 @@ class PlaceholderItem(object):
 
     @property
     def order(self):
+        """Order of item processing."""
+
         order = self._data.get("order")
         if order is None:
             return self.default_order
@@ -1160,7 +1232,25 @@ class PlaceholderLoadMixin(object):
 
         return {}
 
-    def get_representations(self, placeholder):
+    def _get_representations(self, placeholder):
+        """Prepared query of representations based on load options.
+
+        This function is directly connected to options defined in
+        'get_load_plugin_options'.
+
+        Note:
+            This returns all representation documents from all versions of
+                matching subset. To filter for last version use
+                '_reduce_last_version_repre_docs'.
+
+        Args:
+            placeholder (PlaceholderItem): Item which should be populated.
+
+        Returns:
+            List[Dict[str, Any]]: Representation documents matching filters
+                from placeholder data.
+        """
+
         project_name = self.builder.project_name
         current_asset_doc = self.builder.current_asset_doc
         linked_asset_docs = self.builder.linked_asset_docs
@@ -1263,7 +1353,7 @@ class PlaceholderLoadMixin(object):
         loader_name = placeholder.data["loader"]
         loader_args = placeholder.data["loader_args"]
 
-        placeholder_representations = self.get_representations(placeholder)
+        placeholder_representations = self._get_representations(placeholder)
 
         filtered_representations = []
         for representation in self._reduce_last_version_repre_docs(
@@ -1306,11 +1396,24 @@ class PlaceholderLoadMixin(object):
                 )
 
             except Exception:
+                failed = True
                 placeholder.load_failed(representation)
 
             else:
+                failed = False
                 placeholder.load_succeed(container)
-            self.cleanup_placeholder(placeholder)
+            self.cleanup_placeholder(placeholder, failed)
 
-    def cleanup_placeholder(self, placeholder):
+    def cleanup_placeholder(self, placeholder, failed):
+        """Cleanup placeholder after load of single representation.
+
+        Can be called multiple times during placeholder item populating and is
+        called even if loading failed.
+
+        Args:
+            placeholder (PlaceholderItem): Item which was just used to load
+                representation.
+            failed (bool): Loading of representation failed.
+        """
+
         pass
