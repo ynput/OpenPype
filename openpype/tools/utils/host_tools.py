@@ -273,7 +273,8 @@ class HostToolsHelper:
 
     def get_publisher_tool(self, parent):
         """Create, cache and return scene inventory tool window."""
-        if self._scene_inventory_tool is None:
+
+        if self._publisher_tool is None:
             from openpype.tools.publisher import PublisherWindow
 
             host = registered_host()
