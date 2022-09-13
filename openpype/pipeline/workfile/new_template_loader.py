@@ -1163,6 +1163,11 @@ class PlaceholderLoadMixin(object):
             context_filters=context_filters
         ))
 
+    def _before_repre_load(self, placeholder, representation):
+        """Can be overriden. Is called before representation is loaded."""
+
+        pass
+
     def _reduce_last_version_repre_docs(self, representations):
         """Reduce representations to last verison."""
 
@@ -1239,6 +1244,9 @@ class PlaceholderLoadMixin(object):
         for repre_load_context in repre_load_contexts.values():
             representation = repre_load_context["representation"]
             repre_context = representation["context"]
+            self._before_repre_load(
+                placeholder, representation
+            )
             self.log.info(
                 "Loading {} from {} with loader {}\n"
                 "Loader arguments used : {}".format(
