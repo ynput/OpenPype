@@ -185,7 +185,7 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
     def populate_placeholder(self, placeholder):
         self.populate_load_placeholder(placeholder)
 
-    def update_template_placeholder(self, placeholder):
+    def repopulate_placeholder(self, placeholder):
         repre_ids = self._get_loaded_repre_ids()
         self.populate_load_placeholder(placeholder, repre_ids)
 

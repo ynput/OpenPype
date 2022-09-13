@@ -377,7 +377,7 @@ class AbstractTemplateBuilder(object):
 
         for placeholder in placeholders:
             plugin = placeholder.plugin
-            plugin.update_template_placeholder(placeholder)
+            plugin.repopulate_placeholder(placeholder)
 
         self.clear_shared_populate_data()
 
@@ -725,7 +725,7 @@ class PlaceholderPlugin(object):
 
         pass
 
-    def update_template_placeholder(self, placeholder):
+    def repopulate_placeholder(self, placeholder):
         """Update scene with current context for passed placeholder.
 
         Can be used to re-run placeholder logic (if it make sense).
