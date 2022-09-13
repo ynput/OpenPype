@@ -50,8 +50,8 @@ class CreateReview(plugin.Creator):
             # Override resolution
             parms.update({
                 "tres": True,   # Override Camera Resolution
-                "res0": self.width,
-                "res1": self.height,
+                "res1": self.width,
+                "res2": self.height,
                 "aspect": self.aspect
             })
 
