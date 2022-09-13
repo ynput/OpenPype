@@ -74,11 +74,14 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         version_number = int(instance_version)
 
         family = instance.data["family"]
-        family_low = family.lower()
 
+        # Perform case-insensitive family mapping
+        family_low = family.lower()
         asset_type = instance.data.get("ftrackFamily")
-        if not asset_type and family_low in self.family_mapping:
-            asset_type = self.family_mapping[family_low]
+        if not asset_type:
+            for map_family, map_value in self.family_mapping.items():
+                if map_family.lower() == family_low:
+                    asset_type = map_value
 
         if not asset_type:
             asset_type = "upload"
