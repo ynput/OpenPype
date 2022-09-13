@@ -495,7 +495,7 @@ def _check_ftrack_url(url):
     return True
 
 
-def resolve_ftrack_url(url, log_errors=True, logger=None):
+def resolve_ftrack_url(url, logger=None):
     """Checks if Ftrack server is responding."""
 
     if logger is None:
@@ -521,7 +521,7 @@ def resolve_ftrack_url(url, log_errors=True, logger=None):
     if ftrack_url:
         logger.debug("Ftrack server \"{}\" is accessible.".format(ftrack_url))
 
-    elif log_errors:
+    else:
         logger.error("Ftrack server \"{}\" is not accessible!".format(url))
 
     return ftrack_url
