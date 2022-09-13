@@ -14,6 +14,9 @@ import hashlib
 from common.openpype_common.distribution.file_handler import RemoteFileHandler
 
 
+ROOT_FOLDER = '../../../../..'
+
+
 @six.add_metaclass(abc.ABCMeta)
 class AbstractTomlProvider:
     """Interface class to base real toml data providers."""
@@ -170,7 +173,7 @@ def prepare_new_venv(full_toml_data, venv_folder):
         ext = "sh"
         executable = "bash"
 
-    pype_root = os.path.abspath('../../../../..')
+    pype_root = os.path.abspath(ROOT_FOLDER)
     create_env_script_path = os.path.join(pype_root, "tools",
                                           f"create_env.{ext}")
     cmd_args = [
