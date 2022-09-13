@@ -10,7 +10,6 @@ from openpype.host import IWorkfileHost
 from openpype.client import get_asset_by_id
 from openpype.pipeline.workfile.lock_workfile import (
     is_workfile_locked,
-    get_user_from_lock,
     is_workfile_lock_enabled,
     is_workfile_locked_for_current_process
 )
@@ -20,6 +19,7 @@ from openpype.lib import (
     emit_event,
     create_workdir_extra_folders,
 )
+from openpype.tools.workfiles.lock_dialog import WorkfileLockDialog
 from openpype.pipeline import (
     registered_host,
     legacy_io,
@@ -30,6 +30,7 @@ from openpype.pipeline.context_tools import (
     change_current_context
 )
 from openpype.pipeline.workfile import get_workfile_template_key
+from openpype.tools.workfiles.lock_dialog import WorkfileLockDialog
 
 from .model import (
     WorkAreaFilesModel,
@@ -468,15 +469,8 @@ class FilesWidget(QtWidgets.QWidget):
     def open_file(self, filepath):
         host = self.host
         if self._is_workfile_locked(filepath):
-            username = get_user_from_lock(filepath)
-            popup_dialog = QtWidgets.QMessageBox(parent=self)
-            popup_dialog.setWindowTitle("Warning")
-            popup_dialog.setText(username + " is using the file")
-            popup_dialog.setStandardButtons(popup_dialog.Ok)
-
-            result = popup_dialog.exec_()
-            if result == popup_dialog.Ok:
-                return False
+            # add lockfile dialog
+            WorkfileLockDialog(filepath, parent=self)
 
         if isinstance(host, IWorkfileHost):
             has_unsaved_changes = host.workfile_has_unsaved_changes()

@@ -480,6 +480,7 @@ def on_before_save():
 
 
 def check_lock_on_current_file():
+
     """Check if there is a user opening the file"""
     if not handle_workfile_locks():
         return
@@ -492,23 +493,15 @@ def check_lock_on_current_file():
         create_workfile_lock(filepath)
         return
 
-    username = get_user_from_lock(filepath)
-    reminder = cmds.window(title="Reminder", width=400, height=30)
-    cmds.columnLayout(adjustableColumn=True)
-    cmds.separator()
-    cmds.columnLayout(adjustableColumn=True)
-    comment = " %s is working the same workfile!" % username
-    cmds.text(comment, align='center')
-    cmds.text(vis=False)
-    cmds.rowColumnLayout(numberOfColumns=3,
-                         columnWidth=[(1, 200), (2, 100), (3, 100)],
-                         columnSpacing=[(3, 10)])
-    cmds.separator(vis=False)
-    cancel_command = "cmds.file(new=True);cmds.deleteUI('%s')" % reminder
-    ignore_command = "cmds.deleteUI('%s')" % reminder
-    cmds.button(label='Cancel', command=cancel_command)
-    cmds.button(label="Ignore", command=ignore_command)
-    cmds.showWindow(reminder)
+    # add lockfile dialog
+    from Qt import QtWidgets
+    from openpype.tools.workfiles.lock_dialog import WorkfileLockDialog
+
+    top_level_widgets = {w.objectName(): w for w in
+                         QtWidgets.QApplication.topLevelWidgets()}
+    parent = top_level_widgets.get("MayaWindow", None)
+    workfile_dialog = WorkfileLockDialog(filepath, parent=parent)
+    workfile_dialog.show()
 
 
 def on_before_close():

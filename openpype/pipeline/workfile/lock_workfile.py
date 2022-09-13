@@ -26,6 +26,11 @@ def is_workfile_locked(filepath):
     return True
 
 
+def get_workfile_lock_data(filepath):
+    lock_filepath = _get_lock_file(filepath)
+    return _read_lock_file(lock_filepath)
+
+
 def is_workfile_locked_for_current_process(filepath):
     if not is_workfile_locked(filepath):
         return False
@@ -47,15 +52,6 @@ def create_workfile_lock(filepath):
     info["process_id"] = _get_process_id()
     with open(lock_filepath, "w") as stream:
         json.dump(info, stream)
-
-
-def get_user_from_lock(filepath):
-    lock_filepath = _get_lock_file(filepath)
-    if not os.path.exists(lock_filepath):
-        return
-    data = _read_lock_file(lock_filepath)
-    username = data["username"]
-    return username
 
 
 def remove_workfile_lock(filepath):
