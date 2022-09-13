@@ -4,16 +4,17 @@ import logging
 from typing import List
 
 import pyblish.api
-from avalon import api
 
 from openpype.pipeline import (
-    LegacyCreator,
     register_loader_plugin_path,
+    register_creator_plugin_path,
     deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
 from openpype.tools.utils import host_tools
 import openpype.hosts.unreal
+from openpype.host import HostBase, ILoadHost
 
 import unreal  # noqa
 
@@ -27,6 +28,32 @@ PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
+
+
+class UnrealHost(HostBase, ILoadHost):
+    """Unreal host implementation.
+
+    For some time this class will re-use functions from module based
+    implementation for backwards compatibility of older unreal projects.
+    """
+
+    name = "unreal"
+
+    def install(self):
+        install()
+
+    def get_containers(self):
+        return ls()
+
+    def show_tools_popup(self):
+        """Show tools popup with actions leading to show other tools."""
+
+        show_tools_popup()
+
+    def show_tools_dialog(self):
+        """Show tools dialog with actions leading to show other tools."""
+
+        show_tools_dialog()
 
 
 def install():
@@ -47,9 +74,10 @@ def install():
     print("installing OpenPype for Unreal ...")
     print("-=" * 40)
     logger.info("installing OpenPype for Unreal")
+    pyblish.api.register_host("unreal")
     pyblish.api.register_plugin_path(str(PUBLISH_PATH))
     register_loader_plugin_path(str(LOAD_PATH))
-    api.register_plugin_path(LegacyCreator, str(CREATE_PATH))
+    register_creator_plugin_path(str(CREATE_PATH))
     _register_callbacks()
     _register_events()
 
@@ -58,7 +86,7 @@ def uninstall():
     """Uninstall Unreal configuration for Avalon."""
     pyblish.api.deregister_plugin_path(str(PUBLISH_PATH))
     deregister_loader_plugin_path(str(LOAD_PATH))
-    api.deregister_plugin_path(LegacyCreator, str(CREATE_PATH))
+    deregister_creator_plugin_path(str(CREATE_PATH))
 
 
 def _register_callbacks():
@@ -73,30 +101,6 @@ def _register_events():
     TODO: Implement callbacks if supported by UE4
     """
     pass
-
-
-class Creator(LegacyCreator):
-    hosts = ["unreal"]
-    asset_types = []
-
-    def process(self):
-        nodes = list()
-
-        with unreal.ScopedEditorTransaction("OpenPype Creating Instance"):
-            if (self.options or {}).get("useSelection"):
-                self.log.info("setting ...")
-                print("settings ...")
-                nodes = unreal.EditorUtilityLibrary.get_selected_assets()
-
-                asset_paths = [a.get_path_name() for a in nodes]
-                self.name = move_assets_to_path(
-                    "/Game", self.name, asset_paths
-                )
-
-            instance = create_publish_instance("/Game", self.name)
-            imprint(instance, self.data)
-
-        return instance
 
 
 def ls():
@@ -416,3 +420,24 @@ def cast_map_to_str_dict(umap) -> dict:
 
     """
     return {str(key): str(value) for (key, value) in umap.items()}
+
+
+def get_subsequences(sequence: unreal.LevelSequence):
+    """Get list of subsequences from sequence.
+
+    Args:
+        sequence (unreal.LevelSequence): Sequence
+
+    Returns:
+        list(unreal.LevelSequence): List of subsequences
+
+    """
+    tracks = sequence.get_master_tracks()
+    subscene_track = None
+    for t in tracks:
+        if t.get_class() == unreal.MovieSceneSubTrack.static_class():
+            subscene_track = t
+            break
+    if subscene_track is not None and subscene_track.get_sections():
+        return subscene_track.get_sections()
+    return []

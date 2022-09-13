@@ -52,6 +52,7 @@ class FamilyDescriptionWidget(QtWidgets.QWidget):
         family.setAlignment(QtCore.Qt.AlignBottom | QtCore.Qt.AlignLeft)
 
         help = QtWidgets.QLabel("help")
+        help.setWordWrap(True)
         help.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
 
         label_layout.addWidget(family)

@@ -24,6 +24,15 @@ if($arguments -eq "--verbose") {
     $poetry_verbosity="-vvv"
 }
 
+$current_dir = Get-Location
+$script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+$openpype_root = (Get-Item $script_dir).parent.FullName
+
+& git submodule update --init --recursive
+# Install PSWriteColor to support colorized output to terminal
+$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\tools\modules\powershell"
+
+
 function Exit-WithCode($exitcode) {
    # Only exit this host process if it's a child of another PowerShell parent process...
    $parentPID = (Get-CimInstance -ClassName Win32_Process -Filter "ProcessId=$PID" | Select-Object -Property ParentProcessId).ParentProcessId
@@ -36,40 +45,36 @@ function Exit-WithCode($exitcode) {
 
 function Show-PSWarning() {
     if ($PSVersionTable.PSVersion.Major -lt 7) {
-        Write-Host "!!! " -NoNewline -ForegroundColor Red
-        Write-Host "You are using old version of PowerShell. $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)"
-        Write-Host "Please update to at least 7.0 - " -NoNewline -ForegroundColor Gray
-        Write-Host "https://github.com/PowerShell/PowerShell/releases" -ForegroundColor White
+        Write-Color -Text "!!! ", "You are using old version of PowerShell - ",  "$($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)" -Color Red, Yellow, White
+        Write-Color -Text "    Please update to at least 7.0 - ", "https://github.com/PowerShell/PowerShell/releases" -Color Yellow, White
         Exit-WithCode 1
     }
 }
 
 
 function Install-Poetry() {
-    Write-Host ">>> " -NoNewline -ForegroundColor Green
-    Write-Host "Installing Poetry ... "
+    Write-Color -Text ">>> ", "Installing Poetry ... " -Color Green, Gray
     $python = "python"
     if (Get-Command "pyenv" -ErrorAction SilentlyContinue) {
         if (-not (Test-Path -PathType Leaf -Path "$($openpype_root)\.python-version")) {
             $result = & pyenv global
             if ($result -eq "no global version configured") {
-                Write-Host "!!! " -NoNewline -ForegroundColor Red
-                Write-Host "Using pyenv but having no local or global version of Python set."
+                Write-Color -Text "!!! ", "Using pyenv but having no local or global version of Python set." -Color Red, Yellow
                 Exit-WithCode 1
             }
         }
         $python = & pyenv which python
-        
+
     }
 
     $env:POETRY_HOME="$openpype_root\.poetry"
-    (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | & $($python) -
+    $env:POETRY_VERSION="1.1.15"
+    (Invoke-WebRequest -Uri https://install.python-poetry.org/ -UseBasicParsing).Content | & $($python) -
 }
 
 
 function Test-Python() {
-    Write-Host ">>> " -NoNewline -ForegroundColor green
-    Write-Host "Detecting host Python ... " -NoNewline
+    Write-Color -Text ">>> ", "Detecting host Python ... " -Color Green, Gray -NoNewline
     $python = "python"
     if (Get-Command "pyenv" -ErrorAction SilentlyContinue) {
         $pyenv_python = & pyenv which python
@@ -97,21 +102,16 @@ print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
     }
     # We are supporting python 3.7 only
     if (($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
-      Write-Host "FAILED Version [ $p ] is old and unsupported" -ForegroundColor red
+      Write-Color -Text "FAILED ", "Version ", "[", $p ,"]",  "is old and unsupported" -Color Red, Yellow, Cyan, White, Cyan, Yellow
       Set-Location -Path $current_dir
       Exit-WithCode 1
     } elseif (($matches[1] -eq 3) -and ($matches[2] -gt 7)) {
-        Write-Host "WARNING Version [ $p ] is unsupported, use at your own risk." -ForegroundColor yellow
-        Write-Host "*** " -NoNewline -ForegroundColor yellow
-        Write-Host "OpenPype supports only Python 3.7" -ForegroundColor white
+        Write-Color -Text "WARNING Version ", "[",  $p, "]",  " is unsupported, use at your own risk." -Color Yellow, Cyan, White, Cyan, Yellow
+        Write-Color -Text "*** ", "OpenPype supports only Python 3.7" -Color Yellow, White
     } else {
-        Write-Host "OK [ $p ]" -ForegroundColor green
+        Write-Color "OK ", "[",  $p, "]" -Color Green, Cyan, White, Cyan
     }
 }
-
-$current_dir = Get-Location
-$script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$openpype_root = (Get-Item $script_dir).parent.FullName
 
 if (-not (Test-Path 'env:POETRY_HOME')) {
     $env:POETRY_HOME = "$openpype_root\.poetry"
@@ -150,41 +150,39 @@ $version_file = Get-Content -Path "$($openpype_root)\openpype\version.py"
 $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
 $openpype_version = $result[0].Groups['version'].Value
 if (-not $openpype_version) {
-  Write-Host "!!! " -ForegroundColor yellow -NoNewline
-  Write-Host "Cannot determine OpenPype version."
+  Write-Color -Text "!!! ", "Cannot determine OpenPype version." -Color Red, Yellow
   Set-Location -Path $current_dir
   Exit-WithCode 1
 }
-Write-Host ">>> " -NoNewline -ForegroundColor Green
-Write-Host "Found OpenPype version " -NoNewline
-Write-Host "[ $($openpype_version) ]" -ForegroundColor Green
+Write-Color -Text ">>> ", "Found OpenPype version ", "[ ", $($openpype_version), " ]" -Color Green, Gray, Cyan, White, Cyan
 
 Test-Python
 
-Write-Host ">>> " -NoNewline -ForegroundColor Green
-Write-Host "Reading Poetry ... " -NoNewline
+Write-Color -Text ">>> ", "Reading Poetry ... " -Color Green, Gray -NoNewline
 if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
-    Write-Host "NOT FOUND" -ForegroundColor Yellow
+    Write-Color -Text "NOT FOUND" -Color Yellow
     Install-Poetry
-    Write-Host "INSTALLED" -ForegroundColor Cyan
+    Write-Color -Text "INSTALLED" -Color Cyan
 } else {
-    Write-Host "OK" -ForegroundColor Green
+    Write-Color -Text "OK" -Color Green
 }
 
 if (-not (Test-Path -PathType Leaf -Path "$($openpype_root)\poetry.lock")) {
-    Write-Host ">>> " -NoNewline -ForegroundColor green
-    Write-Host "Installing virtual environment and creating lock."
+    Write-Color -Text ">>> ", "Installing virtual environment and creating lock." -Color Green, Gray
 } else {
-    Write-Host ">>> " -NoNewline -ForegroundColor green
-    Write-Host "Installing virtual environment from lock."
+    Write-Color -Text ">>> ", "Installing virtual environment from lock." -Color Green, Gray
 }
+$startTime = [int][double]::Parse((Get-Date -UFormat %s))
 & "$env:POETRY_HOME\bin\poetry" install --no-root $poetry_verbosity --ansi
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "!!! " -ForegroundColor yellow -NoNewline
-    Write-Host "Poetry command failed."
+    Write-Color -Text "!!! ", "Poetry command failed." -Color Red, Yellow
     Set-Location -Path $current_dir
     Exit-WithCode 1
 }
+$endTime = [int][double]::Parse((Get-Date -UFormat %s))
 Set-Location -Path $current_dir
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Virtual environment created."
+try
+{
+    New-BurntToastNotification -AppLogo "$openpype_root/openpype/resources/icons/openpype_icon.png" -Text "OpenPype", "Virtual environment created.", "All done in $( $endTime - $startTime ) secs."
+} catch {}
+Write-Color -Text ">>> ", "Virtual environment created." -Color Green, White

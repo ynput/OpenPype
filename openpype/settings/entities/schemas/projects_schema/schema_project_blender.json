@@ -12,6 +12,10 @@
                 "workfile_builder/builder_on_start",
                 "workfile_builder/profiles"
             ]
+        },
+        {
+            "type": "schema",
+            "name": "schema_blender_publish"
         }
     ]
 }

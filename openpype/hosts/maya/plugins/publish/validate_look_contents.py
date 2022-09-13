@@ -1,6 +1,7 @@
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateLookContents(pyblish.api.InstancePlugin):
@@ -17,7 +18,7 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     families = ['look']
     hosts = ['maya']
     label = 'Look Data Contents'
@@ -78,14 +79,13 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
 
         # Check if attributes are on a node with an ID, crucial for rebuild!
         for attr_changes in lookdata["attributes"]:
-            if not attr_changes["uuid"]:
+            if not attr_changes["uuid"] and not attr_changes["attributes"]:
                 cls.log.error("Node '%s' has no cbId, please set the "
                               "attributes to its children if it has any"
                               % attr_changes["name"])
                 invalid.add(instance.name)
 
         return list(invalid)
-
     @classmethod
     def validate_looks(cls, instance):
 

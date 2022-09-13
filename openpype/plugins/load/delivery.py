@@ -3,20 +3,21 @@ from collections import defaultdict
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from avalon.api import AvalonMongoDB
-
-from openpype.pipeline import load
-from openpype.api import Anatomy, config
+from openpype.client import get_representations
+from openpype.pipeline import load, Anatomy
 from openpype import resources, style
 
-from openpype.lib.delivery import (
-    sizeof_fmt,
-    path_from_representation,
+from openpype.lib import (
+    format_file_size,
+    collect_frames,
+    get_datetime_data,
+)
+from openpype.pipeline.load import get_representation_path_with_anatomy
+from openpype.pipeline.delivery import (
     get_format_dict,
     check_destination_path,
-    process_single_file,
-    process_sequence,
-    collect_frames
+    deliver_single_file,
+    deliver_sequence,
 )
 
 
@@ -70,17 +71,13 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
 
         self.setStyleSheet(style.load_stylesheet())
 
-        project = contexts[0]["project"]["name"]
-        self.anatomy = Anatomy(project)
+        project_name = contexts[0]["project"]["name"]
+        self.anatomy = Anatomy(project_name)
         self._representations = None
         self.log = log
         self.currently_uploaded = 0
 
-        self.dbcon = AvalonMongoDB()
-        self.dbcon.Session["AVALON_PROJECT"] = project
-        self.dbcon.install()
-
-        self._set_representations(contexts)
+        self._set_representations(project_name, contexts)
 
         dropdown = QtWidgets.QComboBox()
         self.templates = self._get_templates(self.anatomy)
@@ -165,14 +162,16 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
 
         selected_repres = self._get_selected_repres()
 
-        datetime_data = config.get_datetime_data()
+        datetime_data = get_datetime_data()
         template_name = self.dropdown.currentText()
         format_dict = get_format_dict(self.anatomy, self.root_line_edit.text())
         for repre in self._representations:
             if repre["name"] not in selected_repres:
                 continue
 
-            repre_path = path_from_representation(repre, self.anatomy)
+            repre_path = get_representation_path_with_anatomy(
+                repre, self.anatomy
+            )
 
             anatomy_data = copy.deepcopy(repre["context"])
             new_report_items = check_destination_path(str(repre["_id"]),
@@ -207,7 +206,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                     args[0] = src_path
                     if frame:
                         anatomy_data["frame"] = frame
-                    new_report_items, uploaded = process_single_file(*args)
+                    new_report_items, uploaded = deliver_single_file(*args)
                     report_items.update(new_report_items)
                     self._update_progress(uploaded)
             else:  # fallback for Pype2 and representations without files
@@ -216,9 +215,9 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                     repre["context"]["frame"] = len(str(frame)) * "#"
 
                 if not frame:
-                    new_report_items, uploaded = process_single_file(*args)
+                    new_report_items, uploaded = deliver_single_file(*args)
                 else:
-                    new_report_items, uploaded = process_sequence(*args)
+                    new_report_items, uploaded = deliver_sequence(*args)
                 report_items.update(new_report_items)
                 self._update_progress(uploaded)
 
@@ -240,13 +239,12 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
 
         return templates
 
-    def _set_representations(self, contexts):
+    def _set_representations(self, project_name, contexts):
         version_ids = [context["version"]["_id"] for context in contexts]
 
-        repres = list(self.dbcon.find({
-            "type": "representation",
-            "parent": {"$in": version_ids}
-        }))
+        repres = list(get_representations(
+            project_name, version_ids=version_ids
+        ))
 
         self._representations = repres
 
@@ -269,8 +267,9 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
 
     def _prepare_label(self):
         """Provides text with no of selected files and their size."""
-        label = "{} files, size {}".format(self.files_selected,
-                                           sizeof_fmt(self.size_selected))
+        label = "{} files, size {}".format(
+            self.files_selected,
+            format_file_size(self.size_selected))
         return label
 
     def _get_selected_repres(self):

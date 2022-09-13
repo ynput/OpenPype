@@ -1,5 +1,10 @@
-import os
+from .addon import (
+    FusionAddon,
+    FUSION_HOST_DIR,
+)
 
-HOST_DIR = os.path.dirname(
-    os.path.abspath(__file__)
+
+__all__ = (
+    "FusionAddon",
+    "FUSION_HOST_DIR",
 )

@@ -1,16 +1,18 @@
 import os
 from maya import cmds
-from avalon import api
 
 from openpype.api import get_project_settings
-from openpype.lib import get_creator_by_name
-from openpype.pipeline import legacy_create
+from openpype.pipeline import legacy_io
+from openpype.pipeline.create import (
+    legacy_create,
+    get_legacy_creator_by_name,
+)
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
-    """Load the model"""
+    """Reference file"""
 
     families = ["model",
                 "pointcache",
@@ -22,7 +24,8 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 "camera",
                 "rig",
                 "camerarig",
-                "xgen"]
+                "xgen",
+                "staticMesh"]
     representations = ["ma", "abc", "fbx", "mb"]
 
     label = "Reference"
@@ -48,7 +51,9 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
-            nodes = cmds.file(self.fname,
+            file_url = self.prepare_root_value(self.fname,
+                                               context["project"]["name"])
+            nodes = cmds.file(file_url,
                               namespace=namespace,
                               sharedReferenceFile=False,
                               reference=True,
@@ -142,13 +147,15 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         roots = cmds.ls(self[:], assemblies=True, long=True)
         assert roots, "No root nodes in rig, this is a bug."
 
-        asset = api.Session["AVALON_ASSET"]
+        asset = legacy_io.Session["AVALON_ASSET"]
         dependency = str(context["representation"]["_id"])
 
         self.log.info("Creating subset: {}".format(namespace))
 
         # Create the animation instance
-        creator_plugin = get_creator_by_name(self.animation_creator_name)
+        creator_plugin = get_legacy_creator_by_name(
+            self.animation_creator_name
+        )
         with maintained_selection():
             cmds.select([output, controls] + roots, noExpand=True)
             legacy_create(

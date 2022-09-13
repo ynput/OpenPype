@@ -92,14 +92,18 @@ def check_credentials(username, api_key, ftrack_server=None):
     if not ftrack_server or not username or not api_key:
         return False
 
+    user_exists = False
     try:
         session = ftrack_api.Session(
             server_url=ftrack_server,
             api_key=api_key,
             api_user=username
         )
+        # Validated that the username actually exists
+        user = session.query("User where username is \"{}\"".format(username))
+        user_exists = user is not None
         session.close()
 
     except Exception:
-        return False
-    return True
+        pass
+    return user_exists

@@ -5,6 +5,7 @@ Renamed classes and functions
 - 'create'  -> 'legacy_create'
 """
 
+import os
 import logging
 import collections
 
@@ -36,6 +37,48 @@ class LegacyCreator(object):
         self.data["active"] = True
 
         self.data.update(data or {})
+
+    @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        """Apply OpenPype settings to a plugin class."""
+
+        host_name = os.environ.get("AVALON_APP")
+        plugin_type = "create"
+        plugin_type_settings = (
+            project_settings
+            .get(host_name, {})
+            .get(plugin_type, {})
+        )
+        global_type_settings = (
+            project_settings
+            .get("global", {})
+            .get(plugin_type, {})
+        )
+        if not global_type_settings and not plugin_type_settings:
+            return
+
+        plugin_name = cls.__name__
+
+        plugin_settings = None
+        # Look for plugin settings in host specific settings
+        if plugin_name in plugin_type_settings:
+            plugin_settings = plugin_type_settings[plugin_name]
+
+        # Look for plugin settings in global settings
+        elif plugin_name in global_type_settings:
+            plugin_settings = global_type_settings[plugin_name]
+
+        if not plugin_settings:
+            return
+
+        print(">>> We have preset for {}".format(plugin_name))
+        for option, value in plugin_settings.items():
+            if option == "enabled" and value is False:
+                setattr(cls, "active", False)
+                print("  - is disabled by preset")
+            else:
+                setattr(cls, option, value)
+                print("  - setting `{}`: `{}`".format(option, value))
 
     def process(self):
         pass
@@ -142,7 +185,8 @@ def legacy_create(Creator, name, asset, options=None, data=None):
         Name of instance
 
     """
-    from avalon.api import registered_host
+    from openpype.pipeline import registered_host
+
     host = registered_host()
     plugin = Creator(name, asset, options, data)
 

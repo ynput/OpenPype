@@ -2,17 +2,21 @@ import os
 import sys
 import six
 
-import openpype.api
+from openpype.lib import (
+    get_ffmpeg_tool_path,
+    run_subprocess,
+)
+from openpype.pipeline import publish
 from openpype.hosts.aftereffects.api import get_stub
 
 
-class ExtractLocalRender(openpype.api.Extractor):
+class ExtractLocalRender(publish.Extractor):
     """Render RenderQueue locally."""
 
-    order = openpype.api.Extractor.order - 0.47
+    order = publish.Extractor.order - 0.47
     label = "Extract Local Render"
     hosts = ["aftereffects"]
-    families = ["render"]
+    families = ["renderLocal", "render.local"]
 
     def process(self, instance):
         stub = get_stub()
@@ -53,7 +57,7 @@ class ExtractLocalRender(openpype.api.Extractor):
 
         instance.data["representations"] = [repre_data]
 
-        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
         # Generate thumbnail.
         thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
 
@@ -66,7 +70,7 @@ class ExtractLocalRender(openpype.api.Extractor):
         ]
         self.log.debug("Thumbnail args:: {}".format(args))
         try:
-            output = openpype.lib.run_subprocess(args)
+            output = run_subprocess(args)
         except TypeError:
             self.log.warning("Error in creating thumbnail")
             six.reraise(*sys.exc_info())

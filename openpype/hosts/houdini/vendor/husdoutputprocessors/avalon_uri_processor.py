@@ -1,18 +1,11 @@
+import os
 import hou
 import husdoutputprocessors.base as base
-import os
-import re
-import logging
 
 import colorbleed.usdlib as usdlib
 
-
-def _get_project_publish_template():
-    """Return publish template from database for current project"""
-    from avalon import io
-    project = io.find_one({"type": "project"},
-                          projection={"config.template.publish": True})
-    return project["config"]["template"]["publish"]
+from openpype.client import get_asset_by_name
+from openpype.pipeline import legacy_io, Anatomy
 
 
 class AvalonURIOutputProcessor(base.OutputProcessorBase):
@@ -31,7 +24,6 @@ class AvalonURIOutputProcessor(base.OutputProcessorBase):
             ever created in a Houdini session. Therefore be very careful
             about what data gets put in this object.
         """
-        self._template = None
         self._use_publish_paths = False
         self._cache = dict()
 
@@ -56,14 +48,11 @@ class AvalonURIOutputProcessor(base.OutputProcessorBase):
         return self._parameters
 
     def beginSave(self, config_node, t):
-        self._template = _get_project_publish_template()
-
         parm = self._parms["use_publish_paths"]
         self._use_publish_paths = config_node.parm(parm).evalAtTime(t)
         self._cache.clear()
 
     def endSave(self):
-        self._template = None
         self._use_publish_paths = None
         self._cache.clear()
 
@@ -133,23 +122,20 @@ class AvalonURIOutputProcessor(base.OutputProcessorBase):
 
         """
 
-        from avalon import api, io
-
-        PROJECT = api.Session["AVALON_PROJECT"]
-        asset_doc = io.find_one({"name": asset,
-                                 "type": "asset"})
+        PROJECT = legacy_io.Session["AVALON_PROJECT"]
+        anatomy = Anatomy(PROJECT)
+        asset_doc = get_asset_by_name(PROJECT, asset)
         if not asset_doc:
             raise RuntimeError("Invalid asset name: '%s'" % asset)
 
-        root = api.registered_root()
-        path = self._template.format(**{
-            "root": root,
+        formatted_anatomy = anatomy.format({
             "project": PROJECT,
             "asset": asset_doc["name"],
             "subset": subset,
             "representation": ext,
             "version": 0  # stub version zero
         })
+        path = formatted_anatomy["publish"]["path"]
 
         # Remove the version folder
         subset_folder = os.path.dirname(os.path.dirname(path))

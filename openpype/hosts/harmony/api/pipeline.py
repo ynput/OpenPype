@@ -2,28 +2,26 @@ import os
 from pathlib import Path
 import logging
 
-from bson.objectid import ObjectId
 import pyblish.api
 
-from avalon import io
-import avalon.api
-
-from openpype import lib
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
-    LegacyCreator,
     register_loader_plugin_path,
+    register_creator_plugin_path,
     deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
-import openpype.hosts.harmony
+from openpype.pipeline.load import get_outdated_containers
+from openpype.pipeline.context_tools import get_current_project_asset
+
+from openpype.hosts.harmony import HARMONY_HOST_DIR
 import openpype.hosts.harmony.api as harmony
 
 
 log = logging.getLogger("openpype.hosts.harmony")
 
-HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.harmony.__file__))
-PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PLUGINS_DIR = os.path.join(HARMONY_HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
@@ -51,7 +49,9 @@ def get_asset_settings():
         dict: Scene data.
 
     """
-    asset_data = lib.get_asset()["data"]
+
+    asset_doc = get_current_project_asset()
+    asset_data = asset_doc["data"]
     fps = asset_data.get("fps")
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")
@@ -105,22 +105,10 @@ def check_inventory():
     If it does it will colorize outdated nodes and display warning message
     in Harmony.
     """
-    if not lib.any_outdated():
-        return
 
-    host = avalon.api.registered_host()
-    outdated_containers = []
-    for container in host.ls():
-        representation = container['representation']
-        representation_doc = io.find_one(
-            {
-                "_id": ObjectId(representation),
-                "type": "representation"
-            },
-            projection={"parent": True}
-        )
-        if representation_doc and not lib.is_latest(representation_doc):
-            outdated_containers.append(container)
+    outdated_containers = get_outdated_containers()
+    if not outdated_containers:
+        return
 
     # Colour nodes.
     outdated_nodes = []
@@ -186,7 +174,7 @@ def install():
     pyblish.api.register_host("harmony")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     register_loader_plugin_path(LOAD_PATH)
-    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
     log.info(PUBLISH_PATH)
 
     # Register callbacks.
@@ -200,7 +188,7 @@ def install():
 def uninstall():
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     deregister_loader_plugin_path(LOAD_PATH)
-    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
 
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):

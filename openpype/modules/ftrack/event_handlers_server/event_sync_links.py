@@ -1,7 +1,7 @@
 from pymongo import UpdateOne
 from bson.objectid import ObjectId
 
-from avalon.api import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB
 
 from openpype_modules.ftrack.lib import (
     CUST_ATTR_ID_KEY,

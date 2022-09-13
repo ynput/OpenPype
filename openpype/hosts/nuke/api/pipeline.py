@@ -5,40 +5,47 @@ from collections import OrderedDict
 import nuke
 
 import pyblish.api
-import avalon.api
 
 import openpype
 from openpype.api import (
     Logger,
-    BuildWorkfile,
     get_current_project_settings
 )
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
-    LegacyCreator,
     register_loader_plugin_path,
+    register_creator_plugin_path,
     register_inventory_action_path,
     deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
     deregister_inventory_action_path,
     AVALON_CONTAINER_ID,
+)
+from openpype.pipeline.workfile import BuildWorkfile
+from openpype.pipeline.workfile.build_template import (
+    build_workfile_template,
+    update_workfile_template
 )
 from openpype.tools.utils import host_tools
 
 from .command import viewer_update_and_undo_stop
 from .lib import (
+    Context,
+    get_main_window,
     add_publish_knob,
     WorkfileSettings,
     process_workfile_builder,
     launch_workfiles_app,
     check_inventory_versions,
     set_avalon_knob_data,
-    read,
-    Context
+    read_avalon_data,
+)
+from .lib_template_builder import (
+    create_placeholder, update_placeholder
 )
 
 log = Logger.get_logger(__name__)
 
-AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.nuke.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
@@ -54,23 +61,6 @@ if os.getenv("PYBLISH_GUI", None):
     pyblish.api.register_gui(os.getenv("PYBLISH_GUI", None))
 
 
-def get_main_window():
-    """Acquire Nuke's main window"""
-    if Context.main_window is None:
-        from Qt import QtWidgets
-
-        top_widgets = QtWidgets.QApplication.topLevelWidgets()
-        name = "Foundry::UI::DockMainWindow"
-        for widget in top_widgets:
-            if (
-                widget.inherits("QMainWindow")
-                and widget.metaObject().className() == name
-            ):
-                Context.main_window = widget
-                break
-    return Context.main_window
-
-
 def reload_config():
     """Attempt to reload pipeline at run-time.
 
@@ -79,11 +69,11 @@ def reload_config():
     """
 
     for module in (
-        "{}.api".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.actions".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.menu".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.plugin".format(AVALON_CONFIG),
-        "{}.hosts.nuke.api.lib".format(AVALON_CONFIG),
+        "openpype.api",
+        "openpype.hosts.nuke.api.actions",
+        "openpype.hosts.nuke.api.menu",
+        "openpype.hosts.nuke.api.plugin",
+        "openpype.hosts.nuke.api.lib",
     ):
         log.info("Reloading module: {}...".format(module))
 
@@ -106,7 +96,7 @@ def install():
     log.info("Registering Nuke plug-ins..")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     register_loader_plugin_path(LOAD_PATH)
-    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
     register_inventory_action_path(INVENTORY_PATH)
 
     # Register Avalon event for workfiles loading.
@@ -121,8 +111,9 @@ def install():
     nuke.addOnCreate(workfile_settings.set_context_settings, nodeClass="Root")
     nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
     nuke.addOnCreate(process_workfile_builder, nodeClass="Root")
-    nuke.addOnCreate(launch_workfiles_app, nodeClass="Root")
+
     _install_menu()
+    launch_workfiles_app()
 
 
 def uninstall():
@@ -132,7 +123,7 @@ def uninstall():
     pyblish.deregister_host("nuke")
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     deregister_loader_plugin_path(LOAD_PATH)
-    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
     deregister_inventory_action_path(INVENTORY_PATH)
 
     pyblish.api.deregister_callback(
@@ -140,6 +131,14 @@ def uninstall():
 
     reload_config()
     _uninstall_menu()
+
+
+def _show_workfiles():
+    # Make sure parent is not set
+    # - this makes Workfiles tool as separated window which
+    #   avoid issues with reopening
+    # - it is possible to explicitly change on top flag of the tool
+    host_tools.show_workfiles(parent=None, on_top=False)
 
 
 def _install_menu():
@@ -158,7 +157,7 @@ def _install_menu():
     menu.addSeparator()
     menu.addCommand(
         "Work Files...",
-        lambda: host_tools.show_workfiles(parent=main_window)
+        _show_workfiles
     )
 
     menu.addSeparator()
@@ -211,6 +210,24 @@ def _install_menu():
         lambda: BuildWorkfile().process()
     )
 
+    menu_template = menu.addMenu("Template Builder")  # creating template menu
+    menu_template.addCommand(
+        "Build Workfile from template",
+        lambda: build_workfile_template()
+    )
+    menu_template.addCommand(
+        "Update Workfile",
+        lambda: update_workfile_template()
+    )
+    menu_template.addSeparator()
+    menu_template.addCommand(
+        "Create Place Holder",
+        lambda: create_placeholder()
+    )
+    menu_template.addCommand(
+        "Update Place Holder",
+        lambda: update_placeholder()
+    )
     menu.addSeparator()
     menu.addCommand(
         "Experimental tools...",
@@ -360,7 +377,7 @@ def parse_container(node):
         dict: The container schema data for this container node.
 
     """
-    data = read(node)
+    data = read_avalon_data(node)
 
     # (TODO) Remove key validation when `ls` has re-implemented.
     #

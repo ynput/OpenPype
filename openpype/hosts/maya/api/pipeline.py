@@ -1,39 +1,52 @@
 import os
-import sys
 import errno
 import logging
+import contextlib
 
 from maya import utils, cmds, OpenMaya
 import maya.api.OpenMaya as om
 
 import pyblish.api
-import avalon.api
 
-from avalon.lib import find_submodule
-
-import openpype.hosts.maya
+from openpype.settings import get_project_settings
+from openpype.host import (
+    HostBase,
+    IWorkfileHost,
+    ILoadHost,
+    HostDirmap,
+)
 from openpype.tools.utils import host_tools
 from openpype.lib import (
-    any_outdated,
     register_event_callback,
     emit_event
 )
-from openpype.lib.path_tools import HostDirmap
 from openpype.pipeline import (
-    LegacyCreator,
+    legacy_io,
     register_loader_plugin_path,
     register_inventory_action_path,
+    register_creator_plugin_path,
     deregister_loader_plugin_path,
     deregister_inventory_action_path,
+    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
-from openpype.hosts.maya.lib import copy_workspace_mel
+from openpype.pipeline.load import any_outdated_containers
+from openpype.hosts.maya import MAYA_ROOT_DIR
+from openpype.hosts.maya.lib import create_workspace_mel
+
 from . import menu, lib
+from .workio import (
+    open_file,
+    save_file,
+    file_extensions,
+    has_unsaved_changes,
+    work_root,
+    current_file
+)
 
 log = logging.getLogger("openpype.hosts.maya")
 
-HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.maya.__file__))
-PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PLUGINS_DIR = os.path.join(MAYA_ROOT_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
@@ -41,50 +54,124 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
-self = sys.modules[__name__]
-self._ignore_lock = False
-self._events = {}
 
+class MayaHost(HostBase, IWorkfileHost, ILoadHost):
+    name = "maya"
 
-def install():
-    from openpype.settings import get_project_settings
+    def __init__(self):
+        super(MayaHost, self).__init__()
+        self._op_events = {}
 
-    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
-    # process path mapping
-    dirmap_processor = MayaDirmap("maya", project_settings)
-    dirmap_processor.process_dirmap()
+    def install(self):
+        project_name = legacy_io.active_project()
+        project_settings = get_project_settings(project_name)
+        # process path mapping
+        project_name = legacy_io.active_project()
+        project_settings = get_project_settings(project_name)
+        dirmap_processor = MayaDirmap("maya", project_name, project_settings)
+        dirmap_processor.process_dirmap()
 
-    pyblish.api.register_plugin_path(PUBLISH_PATH)
-    pyblish.api.register_host("mayabatch")
-    pyblish.api.register_host("mayapy")
-    pyblish.api.register_host("maya")
+        pyblish.api.register_plugin_path(PUBLISH_PATH)
+        pyblish.api.register_host("mayabatch")
+        pyblish.api.register_host("mayapy")
+        pyblish.api.register_host("maya")
 
-    register_loader_plugin_path(LOAD_PATH)
-    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
-    register_inventory_action_path(INVENTORY_PATH)
-    log.info(PUBLISH_PATH)
+        register_loader_plugin_path(LOAD_PATH)
+        register_creator_plugin_path(CREATE_PATH)
+        register_inventory_action_path(INVENTORY_PATH)
+        self.log.info(PUBLISH_PATH)
 
-    log.info("Installing callbacks ... ")
-    register_event_callback("init", on_init)
+        self.log.info("Installing callbacks ... ")
+        register_event_callback("init", on_init)
 
-    # Callbacks below are not required for headless mode, the `init` however
-    # is important to load referenced Alembics correctly at rendertime.
-    if lib.IS_HEADLESS:
-        log.info(("Running in headless mode, skipping Maya "
-                 "save/open/new callback installation.."))
-        return
+        if lib.IS_HEADLESS:
+            self.log.info((
+                "Running in headless mode, skipping Maya save/open/new"
+                " callback installation.."
+            ))
 
-    _set_project()
-    _register_callbacks()
+            return
 
-    menu.install()
+        _set_project()
+        self._register_callbacks()
 
-    register_event_callback("save", on_save)
-    register_event_callback("open", on_open)
-    register_event_callback("new", on_new)
-    register_event_callback("before.save", on_before_save)
-    register_event_callback("taskChanged", on_task_changed)
-    register_event_callback("workfile.save.before", before_workfile_save)
+        menu.install()
+
+        register_event_callback("save", on_save)
+        register_event_callback("open", on_open)
+        register_event_callback("new", on_new)
+        register_event_callback("before.save", on_before_save)
+        register_event_callback("taskChanged", on_task_changed)
+        register_event_callback("workfile.save.before", before_workfile_save)
+
+    def open_workfile(self, filepath):
+        return open_file(filepath)
+
+    def save_workfile(self, filepath=None):
+        return save_file(filepath)
+
+    def work_root(self, session):
+        return work_root(session)
+
+    def get_current_workfile(self):
+        return current_file()
+
+    def workfile_has_unsaved_changes(self):
+        return has_unsaved_changes()
+
+    def get_workfile_extensions(self):
+        return file_extensions()
+
+    def get_containers(self):
+        return ls()
+
+    @contextlib.contextmanager
+    def maintained_selection(self):
+        with lib.maintained_selection():
+            yield
+
+    def _register_callbacks(self):
+        for handler, event in self._op_events.copy().items():
+            if event is None:
+                continue
+
+            try:
+                OpenMaya.MMessage.removeCallback(event)
+                self._op_events[handler] = None
+            except RuntimeError as exc:
+                self.log.info(exc)
+
+        self._op_events[_on_scene_save] = OpenMaya.MSceneMessage.addCallback(
+            OpenMaya.MSceneMessage.kBeforeSave, _on_scene_save
+        )
+
+        self._op_events[_before_scene_save] = (
+            OpenMaya.MSceneMessage.addCheckCallback(
+                OpenMaya.MSceneMessage.kBeforeSaveCheck,
+                _before_scene_save
+            )
+        )
+
+        self._op_events[_on_scene_new] = OpenMaya.MSceneMessage.addCallback(
+            OpenMaya.MSceneMessage.kAfterNew, _on_scene_new
+        )
+
+        self._op_events[_on_maya_initialized] = (
+            OpenMaya.MSceneMessage.addCallback(
+                OpenMaya.MSceneMessage.kMayaInitialized,
+                _on_maya_initialized
+            )
+        )
+
+        self._op_events[_on_scene_open] = OpenMaya.MSceneMessage.addCallback(
+            OpenMaya.MSceneMessage.kAfterOpen, _on_scene_open
+        )
+
+        self.log.info("Installed event handler _on_scene_save..")
+        self.log.info("Installed event handler _before_scene_save..")
+        self.log.info("Installed event handler _on_scene_new..")
+        self.log.info("Installed event handler _on_maya_initialized..")
+        self.log.info("Installed event handler _on_scene_open..")
 
 
 def _set_project():
@@ -94,7 +181,7 @@ def _set_project():
         None
 
     """
-    workdir = avalon.api.Session["AVALON_WORKDIR"]
+    workdir = legacy_io.Session["AVALON_WORKDIR"]
 
     try:
         os.makedirs(workdir)
@@ -106,44 +193,6 @@ def _set_project():
             raise
 
     cmds.workspace(workdir, openWorkspace=True)
-
-
-def _register_callbacks():
-    for handler, event in self._events.copy().items():
-        if event is None:
-            continue
-
-        try:
-            OpenMaya.MMessage.removeCallback(event)
-            self._events[handler] = None
-        except RuntimeError as e:
-            log.info(e)
-
-    self._events[_on_scene_save] = OpenMaya.MSceneMessage.addCallback(
-        OpenMaya.MSceneMessage.kBeforeSave, _on_scene_save
-    )
-
-    self._events[_before_scene_save] = OpenMaya.MSceneMessage.addCheckCallback(
-        OpenMaya.MSceneMessage.kBeforeSaveCheck, _before_scene_save
-    )
-
-    self._events[_on_scene_new] = OpenMaya.MSceneMessage.addCallback(
-        OpenMaya.MSceneMessage.kAfterNew, _on_scene_new
-    )
-
-    self._events[_on_maya_initialized] = OpenMaya.MSceneMessage.addCallback(
-        OpenMaya.MSceneMessage.kMayaInitialized, _on_maya_initialized
-    )
-
-    self._events[_on_scene_open] = OpenMaya.MSceneMessage.addCallback(
-        OpenMaya.MSceneMessage.kAfterOpen, _on_scene_open
-    )
-
-    log.info("Installed event handler _on_scene_save..")
-    log.info("Installed event handler _before_scene_save..")
-    log.info("Installed event handler _on_scene_new..")
-    log.info("Installed event handler _on_maya_initialized..")
-    log.info("Installed event handler _on_scene_open..")
 
 
 def _on_maya_initialized(*args):
@@ -189,7 +238,7 @@ def uninstall():
     pyblish.api.deregister_host("maya")
 
     deregister_loader_plugin_path(LOAD_PATH)
-    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
     deregister_inventory_action_path(INVENTORY_PATH)
 
     menu.uninstall()
@@ -268,21 +317,8 @@ def ls():
 
     """
     container_names = _ls()
-
-    has_metadata_collector = False
-    config_host = find_submodule(avalon.api.registered_config(), "maya")
-    if hasattr(config_host, "collect_container_metadata"):
-        has_metadata_collector = True
-
     for container in sorted(container_names):
-        data = parse_container(container)
-
-        # Collect custom data if attribute is present
-        if has_metadata_collector:
-            metadata = config_host.collect_container_metadata(container)
-            data.update(metadata)
-
-        yield data
+        yield parse_container(container)
 
 
 def containerise(name,
@@ -315,21 +351,13 @@ def containerise(name,
         ("id", AVALON_CONTAINER_ID),
         ("name", name),
         ("namespace", namespace),
-        ("loader", str(loader)),
+        ("loader", loader),
         ("representation", context["representation"]["_id"]),
     ]
 
     for key, value in data:
-        if not value:
-            continue
-
-        if isinstance(value, (int, float)):
-            cmds.addAttr(container, longName=key, attributeType="short")
-            cmds.setAttr(container + "." + key, value)
-
-        else:
-            cmds.addAttr(container, longName=key, dataType="string")
-            cmds.setAttr(container + "." + key, value, type="string")
+        cmds.addAttr(container, longName=key, dataType="string")
+        cmds.setAttr(container + "." + key, str(value), type="string")
 
     main_container = cmds.ls(AVALON_CONTAINERS, type="objectSet")
     if not main_container:
@@ -441,7 +469,7 @@ def on_open():
     lib.validate_fps()
     lib.fix_incompatible_containers()
 
-    if any_outdated():
+    if any_outdated_containers():
         log.warning("Scene has outdated content.")
 
         # Find maya main window
@@ -462,7 +490,7 @@ def on_open():
             dialog.setWindowTitle("Maya scene has outdated content")
             dialog.setMessage("There are outdated containers in "
                               "your Maya scene.")
-            dialog.on_show.connect(_on_show_inventory)
+            dialog.on_clicked.connect(_on_show_inventory)
             dialog.show()
 
 
@@ -487,10 +515,9 @@ def on_task_changed():
     # Run
     menu.update_menu_task_label()
 
-    workdir = avalon.api.Session["AVALON_WORKDIR"]
+    workdir = legacy_io.Session["AVALON_WORKDIR"]
     if os.path.exists(workdir):
         log.info("Updating Maya workspace for task change to %s", workdir)
-
         _set_project()
 
         # Set Maya fileDialog's start-dir to /scenes
@@ -508,9 +535,9 @@ def on_task_changed():
         lib.update_content_on_context_change()
 
     msg = "  project: {}\n  asset: {}\n  task:{}".format(
-        avalon.api.Session["AVALON_PROJECT"],
-        avalon.api.Session["AVALON_ASSET"],
-        avalon.api.Session["AVALON_TASK"]
+        legacy_io.active_project(),
+        legacy_io.Session["AVALON_ASSET"],
+        legacy_io.Session["AVALON_TASK"]
     )
 
     lib.show_message(
@@ -520,9 +547,10 @@ def on_task_changed():
 
 
 def before_workfile_save(event):
+    project_name = legacy_io.active_project()
     workdir_path = event["workdir_path"]
     if workdir_path:
-        copy_workspace_mel(workdir_path)
+        create_workspace_mel(workdir_path, project_name)
 
 
 class MayaDirmap(HostDirmap):

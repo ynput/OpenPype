@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Creator for Unreal Static Meshes."""
 from openpype.hosts.maya.api import plugin, lib
-from avalon.api import Session
 from openpype.api import get_project_settings
+from openpype.pipeline import legacy_io
 from maya import cmds  # noqa
 
 
@@ -10,7 +10,7 @@ class CreateUnrealStaticMesh(plugin.Creator):
     """Unreal Static Meshes with collisions."""
     name = "staticMeshMain"
     label = "Unreal - Static Mesh"
-    family = "unrealStaticMesh"
+    family = "staticMesh"
     icon = "cube"
     dynamic_subset_keys = ["asset"]
 
@@ -18,7 +18,7 @@ class CreateUnrealStaticMesh(plugin.Creator):
         """Constructor."""
         super(CreateUnrealStaticMesh, self).__init__(*args, **kwargs)
         self._project_settings = get_project_settings(
-            Session["AVALON_PROJECT"])
+            legacy_io.Session["AVALON_PROJECT"])
 
     @classmethod
     def get_dynamic_data(
@@ -27,11 +27,11 @@ class CreateUnrealStaticMesh(plugin.Creator):
         dynamic_data = super(CreateUnrealStaticMesh, cls).get_dynamic_data(
             variant, task_name, asset_id, project_name, host_name
         )
-        dynamic_data["asset"] = Session.get("AVALON_ASSET")
-
+        dynamic_data["asset"] = legacy_io.Session.get("AVALON_ASSET")
         return dynamic_data
 
     def process(self):
+        self.name = "{}_{}".format(self.family, self.name)
         with lib.undo_chunk():
             instance = super(CreateUnrealStaticMesh, self).process()
             content = cmds.sets(instance, query=True)

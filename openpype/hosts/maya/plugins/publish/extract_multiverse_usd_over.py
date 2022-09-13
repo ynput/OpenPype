@@ -7,11 +7,26 @@ from maya import cmds
 
 
 class ExtractMultiverseUsdOverride(openpype.api.Extractor):
-    """Extractor for USD Override by Multiverse."""
+    """Extractor for Multiverse USD Override data.
+
+    This will extract settings for a Multiverse Write Override operation:
+    they are visible in the Maya set node created by a Multiverse USD
+    Override instance creator.
+
+    The input data contained in the set is:
+
+    - a single Multiverse Compound node with any number of overrides (typically
+      set in MEOW)
+
+    Upon publish a .usda override file will be written.
+    """
 
     label = "Extract Multiverse USD Override"
     hosts = ["maya"]
-    families = ["usdOverride"]
+    families = ["mvUsdOverride"]
+    scene_type = "usd"
+    # Order of `fileFormat` must match create_multiverse_usd_over.py
+    file_formats = ["usda", "usd"]
 
     @property
     def options(self):
@@ -58,12 +73,15 @@ class ExtractMultiverseUsdOverride(openpype.api.Extractor):
         }
 
     def process(self, instance):
-        # Load plugin firstly
+        # Load plugin first
         cmds.loadPlugin("MultiverseForMaya", quiet=True)
 
         # Define output file path
         staging_dir = self.staging_dir(instance)
-        file_name = "{}.usda".format(instance.name)
+        file_format = instance.data.get("fileFormat", 0)
+        if file_format in range(len(self.file_formats)):
+            self.scene_type = self.file_formats[file_format]
+        file_name = "{0}.{1}".format(instance.name, self.scene_type)
         file_path = os.path.join(staging_dir, file_name)
         file_path = file_path.replace("\\", "/")
 
@@ -78,7 +96,7 @@ class ExtractMultiverseUsdOverride(openpype.api.Extractor):
             members = instance.data("setMembers")
             members = cmds.ls(members,
                               dag=True,
-                              shapes=True,
+                              shapes=False,
                               type="mvUsdCompoundShape",
                               noIntermediate=True,
                               long=True)
@@ -128,10 +146,10 @@ class ExtractMultiverseUsdOverride(openpype.api.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            "name": "usd",
-            "ext": "usd",
-            "files": file_name,
-            "stagingDir": staging_dir
+            'name': self.scene_type,
+            'ext': self.scene_type,
+            'files': file_name,
+            'stagingDir': staging_dir
         }
         instance.data["representations"].append(representation)
 

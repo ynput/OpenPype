@@ -1,6 +1,5 @@
 import os
 import sys
-import importlib
 import traceback
 from typing import Callable, Dict, Iterator, List, Optional
 
@@ -10,13 +9,15 @@ from . import lib
 from . import ops
 
 import pyblish.api
-import avalon.api
-from avalon import io, schema
 
+from openpype.client import get_asset_by_name
 from openpype.pipeline import (
-    LegacyCreator,
+    schema,
+    legacy_io,
     register_loader_plugin_path,
+    register_creator_plugin_path,
     deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
 from openpype.api import Logger
@@ -54,7 +55,7 @@ def install():
     pyblish.api.register_plugin_path(str(PUBLISH_PATH))
 
     register_loader_plugin_path(str(LOAD_PATH))
-    avalon.api.register_plugin_path(LegacyCreator, str(CREATE_PATH))
+    register_creator_plugin_path(str(CREATE_PATH))
 
     lib.append_user_scripts()
 
@@ -76,25 +77,23 @@ def uninstall():
     pyblish.api.deregister_plugin_path(str(PUBLISH_PATH))
 
     deregister_loader_plugin_path(str(LOAD_PATH))
-    avalon.api.deregister_plugin_path(LegacyCreator, str(CREATE_PATH))
+    deregister_creator_plugin_path(str(CREATE_PATH))
 
     if not IS_HEADLESS:
         ops.unregister()
 
 
 def set_start_end_frames():
-    asset_name = io.Session["AVALON_ASSET"]
-    asset_doc = io.find_one({
-        "type": "asset",
-        "name": asset_name
-    })
+    project_name = legacy_io.active_project()
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    asset_doc = get_asset_by_name(project_name, asset_name)
 
     scene = bpy.context.scene
 
     # Default scene settings
     frameStart = scene.frame_start
     frameEnd = scene.frame_end
-    fps = scene.render.fps
+    fps = scene.render.fps / scene.render.fps_base
     resolution_x = scene.render.resolution_x
     resolution_y = scene.render.resolution_y
 
@@ -117,7 +116,8 @@ def set_start_end_frames():
 
     scene.frame_start = frameStart
     scene.frame_end = frameEnd
-    scene.render.fps = fps
+    scene.render.fps = round(fps)
+    scene.render.fps_base = round(fps) / fps
     scene.render.resolution_x = resolution_x
     scene.render.resolution_y = resolution_y
 
@@ -188,7 +188,7 @@ def _on_task_changed():
     # `directory` attribute, so it opens in that directory (does it?).
     # https://docs.blender.org/api/blender2.8/bpy.types.Operator.html#calling-a-file-selector
     # https://docs.blender.org/api/blender2.8/bpy.types.WindowManager.html#bpy.types.WindowManager.fileselect_add
-    workdir = avalon.api.Session["AVALON_WORKDIR"]
+    workdir = legacy_io.Session["AVALON_WORKDIR"]
     log.debug("New working directory: %s", workdir)
 
 
@@ -197,27 +197,6 @@ def _register_events():
 
     register_event_callback("taskChanged", _on_task_changed)
     log.info("Installed event callback for 'taskChanged'...")
-
-
-def reload_pipeline(*args):
-    """Attempt to reload pipeline at run-time.
-
-    Warning:
-        This is primarily for development and debugging purposes and not well
-        tested.
-
-    """
-
-    avalon.api.uninstall()
-
-    for module in (
-        "avalon.io",
-        "avalon.lib",
-        "avalon.pipeline",
-        "avalon.api",
-    ):
-        module = importlib.import_module(module)
-        importlib.reload(module)
 
 
 def _discover_gui() -> Optional[Callable]:

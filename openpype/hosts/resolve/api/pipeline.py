@@ -4,21 +4,27 @@ Basic avalon integration
 import os
 import contextlib
 from collections import OrderedDict
-from avalon import api as avalon
-from avalon import schema
+
 from pyblish import api as pyblish
-from openpype.api import Logger
+
+from openpype.lib import Logger
 from openpype.pipeline import (
-    LegacyCreator,
+    schema,
     register_loader_plugin_path,
+    register_creator_plugin_path,
     deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
-from . import lib
-from . import PLUGINS_DIR
 from openpype.tools.utils import host_tools
-log = Logger().get_logger(__name__)
 
+from . import lib
+from .utils import get_resolve_module
+
+log = Logger.get_logger(__name__)
+
+HOST_DIR = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
@@ -37,7 +43,6 @@ def install():
     See the Maya equivalent for inspiration on how to implement this.
 
     """
-    from .. import get_resolve_module
 
     log.info("openpype.hosts.resolve installed")
 
@@ -46,7 +51,7 @@ def install():
     log.info("Registering DaVinci Resovle plug-ins..")
 
     register_loader_plugin_path(LOAD_PATH)
-    avalon.register_plugin_path(LegacyCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
 
     # register callback for switching publishable
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
@@ -70,7 +75,7 @@ def uninstall():
     log.info("Deregistering DaVinci Resovle plug-ins..")
 
     deregister_loader_plugin_path(LOAD_PATH)
-    avalon.deregister_plugin_path(LegacyCreator, CREATE_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
 
     # register callback for switching publishable
     pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)

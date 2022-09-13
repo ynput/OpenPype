@@ -9,24 +9,24 @@ import platform
 from Qt import QtCore, QtGui, QtWidgets
 
 import openpype.version
-from openpype.api import (
-    Logger,
-    resources,
-    get_system_settings
-)
+from openpype import resources, style
 from openpype.lib import (
     get_openpype_execute_args,
+    Logger,
+)
+from openpype.lib.openpype_version import (
     op_version_control_available,
+    get_expected_version,
+    get_installed_version,
     is_current_version_studio_latest,
     is_current_version_higher_than_expected,
     is_running_from_build,
     is_running_staging,
-    get_expected_version,
-    get_openpype_version
+    get_openpype_version,
 )
 from openpype.modules import TrayModulesManager
-from openpype import style
 from openpype.settings import (
+    get_system_settings,
     SystemSettings,
     ProjectSettings,
     DefaultsNotDefined
@@ -329,6 +329,25 @@ class TrayManager:
                 self._version_dialog.close()
             return
 
+        installed_version = get_installed_version()
+        expected_version = get_expected_version()
+
+        # Request new build if is needed
+        if (
+            # Backwards compatibility
+            not hasattr(expected_version, "is_compatible")
+            or not expected_version.is_compatible(installed_version)
+        ):
+            if (
+                self._version_dialog is not None
+                and self._version_dialog.isVisible()
+            ):
+                self._version_dialog.close()
+
+            dialog = BuildVersionDialog()
+            dialog.exec_()
+            return
+
         if self._version_dialog is None:
             self._version_dialog = VersionUpdateDialog()
             self._version_dialog.restart_requested.connect(
@@ -338,7 +357,6 @@ class TrayManager:
                 self._outdated_version_ignored
             )
 
-        expected_version = get_expected_version()
         current_version = get_openpype_version()
         current_is_higher = is_current_version_higher_than_expected()
 
@@ -756,9 +774,23 @@ class PypeTrayStarter(QtCore.QObject):
 
 
 def main():
+    log = Logger.get_logger(__name__)
     app = QtWidgets.QApplication.instance()
     if not app:
         app = QtWidgets.QApplication([])
+
+    for attr_name in (
+        "AA_EnableHighDpiScaling",
+        "AA_UseHighDpiPixmaps"
+    ):
+        attr = getattr(QtCore.Qt, attr_name, None)
+        if attr is None:
+            log.debug((
+                "Missing QtCore.Qt attribute \"{}\"."
+                " UI quality may be affected."
+            ).format(attr_name))
+        else:
+            app.setAttribute(attr)
 
     starter = PypeTrayStarter(app)
 

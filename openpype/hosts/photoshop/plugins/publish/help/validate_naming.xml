@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Subset name</title>
+<description>
+## Invalid subset or layer name
+
+Subset or layer name cannot contain specific characters (spaces etc) which could cause issue when subset name is used in a published file name.
+    {msg}
+
+### How to repair?
+
+You can fix this with "repair" button on the right.
+</description>
+<detail>
+### __Detailed Info__ (optional)
+
+Not all characters are available in a file names on all OS. Wrong characters could be configured in Settings.
+</detail>
+</error>
+</root>

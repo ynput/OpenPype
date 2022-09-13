@@ -1,5 +1,15 @@
+import os
 import logging
 
+from openpype.settings import get_system_settings, get_project_settings
+from openpype.pipeline import legacy_io
+from openpype.pipeline.plugin_discover import (
+    discover,
+    register_plugin,
+    register_plugin_path,
+    deregister_plugin,
+    deregister_plugin_path
+)
 from .utils import get_representation_path_from_context
 
 
@@ -30,10 +40,51 @@ class LoaderPlugin(list):
         self.fname = self.filepath_from_context(context)
 
     @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        host_name = os.environ.get("AVALON_APP")
+        plugin_type = "load"
+        plugin_type_settings = (
+            project_settings
+            .get(host_name, {})
+            .get(plugin_type, {})
+        )
+        global_type_settings = (
+            project_settings
+            .get("global", {})
+            .get(plugin_type, {})
+        )
+        if not global_type_settings and not plugin_type_settings:
+            return
+
+        plugin_name = cls.__name__
+
+        plugin_settings = None
+        # Look for plugin settings in host specific settings
+        if plugin_name in plugin_type_settings:
+            plugin_settings = plugin_type_settings[plugin_name]
+
+        # Look for plugin settings in global settings
+        elif plugin_name in global_type_settings:
+            plugin_settings = global_type_settings[plugin_name]
+
+        if not plugin_settings:
+            return
+
+        print(">>> We have preset for {}".format(plugin_name))
+        for option, value in plugin_settings.items():
+            if option == "enabled" and value is False:
+                setattr(cls, "active", False)
+                print("  - is disabled by preset")
+            else:
+                setattr(cls, option, value)
+                print("  - setting `{}`: `{}`".format(option, value))
+
+    @classmethod
     def get_representations(cls):
         return cls.representations
 
-    def filepath_from_context(self, context):
+    @classmethod
+    def filepath_from_context(cls, context):
         return get_representation_path_from_context(context)
 
     def load(self, context, name=None, namespace=None, options=None):
@@ -101,31 +152,39 @@ class SubsetLoaderPlugin(LoaderPlugin):
         pass
 
 
-def discover_loader_plugins():
-    import avalon.api
+def discover_loader_plugins(project_name=None):
+    from openpype.lib import Logger
 
-    return avalon.api.discover(LoaderPlugin)
+    log = Logger.get_logger("LoaderDiscover")
+    plugins = discover(LoaderPlugin)
+    if not project_name:
+        project_name = legacy_io.active_project()
+    system_settings = get_system_settings()
+    project_settings = get_project_settings(project_name)
+    for plugin in plugins:
+        try:
+            plugin.apply_settings(project_settings, system_settings)
+        except Exception:
+            log.warning(
+                "Failed to apply settings to loader {}".format(
+                    plugin.__name__
+                ),
+                exc_info=True
+            )
+    return plugins
 
 
 def register_loader_plugin(plugin):
-    import avalon.api
-
-    return avalon.api.register_plugin(LoaderPlugin, plugin)
-
-
-def deregister_loader_plugin_path(path):
-    import avalon.api
-
-    avalon.api.deregister_plugin_path(LoaderPlugin, path)
-
-
-def register_loader_plugin_path(path):
-    import avalon.api
-
-    return avalon.api.register_plugin_path(LoaderPlugin, path)
+    return register_plugin(LoaderPlugin, plugin)
 
 
 def deregister_loader_plugin(plugin):
-    import avalon.api
+    deregister_plugin(LoaderPlugin, plugin)
 
-    avalon.api.deregister_plugin(LoaderPlugin, plugin)
+
+def deregister_loader_plugin_path(path):
+    deregister_plugin_path(LoaderPlugin, path)
+
+
+def register_loader_plugin_path(path):
+    return register_plugin_path(LoaderPlugin, path)

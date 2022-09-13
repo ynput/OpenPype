@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Skeletal Mesh Top Node</title>
+<description>## Skeletal meshes needs common root
+
+Skeletal meshes and their joints must be under one common root.
+
+### How to repair?
+
+Make sure all geometry and joints resides under same root.
+</description>
+</error>
+</root>

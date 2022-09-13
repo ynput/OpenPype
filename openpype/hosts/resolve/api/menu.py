@@ -3,12 +3,12 @@ import sys
 
 from Qt import QtWidgets, QtCore
 
+from openpype.tools.utils import host_tools
+
 from .pipeline import (
     publish,
     launch_workfiles_app
 )
-
-from openpype.tools.utils import host_tools
 
 
 def load_stylesheet():

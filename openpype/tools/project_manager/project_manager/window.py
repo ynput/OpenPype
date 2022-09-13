@@ -1,5 +1,12 @@
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype import resources
+from openpype.style import load_stylesheet
+from openpype.widgets import PasswordDialog
+from openpype.lib import is_admin_password_required, Logger
+from openpype.pipeline import AvalonMongoDB
+from openpype.pipeline.project_folders import create_project_folders
+
 from . import (
     ProjectModel,
     ProjectProxyFilter,
@@ -13,17 +20,6 @@ from . import (
 )
 from .widgets import ConfirmProjectDeletion
 from .style import ResourceCache
-from openpype.style import load_stylesheet
-from openpype.lib import is_admin_password_required
-from openpype.widgets import PasswordDialog
-
-from openpype import resources
-from openpype.api import (
-    get_project_basic_paths,
-    create_project_folders,
-    Logger
-)
-from avalon.api import AvalonMongoDB
 
 
 class ProjectManagerWindow(QtWidgets.QWidget):
@@ -184,14 +180,14 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self.resize(1200, 600)
         self.setStyleSheet(load_stylesheet())
 
-    def _set_project(self, project_name=None):
+    def _set_project(self, project_name=None, force=False):
         self._create_folders_btn.setEnabled(project_name is not None)
         self._remove_projects_btn.setEnabled(project_name is not None)
         self._add_asset_btn.setEnabled(project_name is not None)
         self._add_task_btn.setEnabled(project_name is not None)
         self._save_btn.setEnabled(project_name is not None)
         self._project_proxy_model.set_filter_default(project_name is not None)
-        self.hierarchy_view.set_project(project_name)
+        self.hierarchy_view.set_project(project_name, force)
 
     def _current_project(self):
         row = self._project_combobox.currentIndex()
@@ -229,11 +225,11 @@ class ProjectManagerWindow(QtWidgets.QWidget):
                 self._project_combobox.setCurrentIndex(row)
 
         selected_project = self._current_project()
-        self._set_project(selected_project)
+        self._set_project(selected_project, True)
 
     def _on_project_change(self):
         selected_project = self._current_project()
-        self._set_project(selected_project)
+        self._set_project(selected_project, False)
 
     def _on_project_refresh(self):
         self.refresh_projects()
@@ -245,7 +241,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self.hierarchy_view.add_asset()
 
     def _on_add_task(self):
-        self.hierarchy_view.add_task()
+        self.hierarchy_view.add_task_and_edit()
 
     def _on_create_folders(self):
         project_name = self._current_project()
@@ -259,12 +255,8 @@ class ProjectManagerWindow(QtWidgets.QWidget):
                           qm.Yes | qm.No)
         if ans == qm.Yes:
             try:
-                # Get paths based on presets
-                basic_paths = get_project_basic_paths(project_name)
-                if not basic_paths:
-                    pass
                 # Invoking OpenPype API to create the project folders
-                create_project_folders(basic_paths, project_name)
+                create_project_folders(project_name)
             except Exception as exc:
                 self.log.warning(
                     "Cannot create starting folders: {}".format(exc),

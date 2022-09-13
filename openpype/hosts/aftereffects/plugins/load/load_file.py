@@ -1,12 +1,11 @@
 import re
 
-from openpype import lib
-
 from openpype.pipeline import get_representation_path
 from openpype.hosts.aftereffects.api import (
     AfterEffectsLoader,
     containerise
 )
+from openpype.hosts.aftereffects.api.lib import get_unique_layer_name
 
 
 class FileLoader(AfterEffectsLoader):
@@ -28,7 +27,7 @@ class FileLoader(AfterEffectsLoader):
         stub = self.get_stub()
         layers = stub.get_items(comps=True, folders=True, footages=True)
         existing_layers = [layer.name for layer in layers]
-        comp_name = lib.get_unique_layer_name(
+        comp_name = get_unique_layer_name(
             existing_layers, "{}_{}".format(context["asset"]["name"], name))
 
         import_options = {}
@@ -87,7 +86,7 @@ class FileLoader(AfterEffectsLoader):
         if namespace_from_container != layer_name:
             layers = stub.get_items(comps=True)
             existing_layers = [layer.name for layer in layers]
-            layer_name = lib.get_unique_layer_name(
+            layer_name = get_unique_layer_name(
                 existing_layers,
                 "{}_{}".format(context["asset"], context["subset"]))
         else:  # switching version - keep same name
@@ -96,9 +95,9 @@ class FileLoader(AfterEffectsLoader):
         # with aftereffects.maintained_selection():  # TODO
         stub.replace_item(layer.id, path, stub.LOADED_ICON + layer_name)
         stub.imprint(
-            layer, {"representation": str(representation["_id"]),
-                    "name": context["subset"],
-                    "namespace": layer_name}
+            layer.id, {"representation": str(representation["_id"]),
+                       "name": context["subset"],
+                       "namespace": layer_name}
         )
 
     def remove(self, container):
@@ -109,7 +108,7 @@ class FileLoader(AfterEffectsLoader):
         """
         stub = self.get_stub()
         layer = container.pop("layer")
-        stub.imprint(layer, {})
+        stub.imprint(layer.id, {})
         stub.delete_item(layer.id)
 
     def switch(self, container, representation):

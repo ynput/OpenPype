@@ -1,16 +1,20 @@
 import os
+import sys
 import glob
 import logging
 
 from Qt import QtWidgets, QtCore
 
-import avalon.api
-from avalon import io
 import qtawesome as qta
 
+from openpype.client import get_assets
 from openpype import style
+from openpype.pipeline import (
+    install_host,
+    legacy_io,
+)
 from openpype.hosts.fusion import api
-from openpype.lib.avalon_context import get_workdir_from_session
+from openpype.pipeline.context_tools import get_workdir_from_session
 
 log = logging.getLogger("Fusion Switch Shot")
 
@@ -139,7 +143,7 @@ class App(QtWidgets.QWidget):
         # Clear any existing items
         self._assets.clear()
 
-        asset_names = [a["name"] for a in self.collect_assets()]
+        asset_names = self.collect_asset_names()
         completer = QtWidgets.QCompleter(asset_names)
 
         self._assets.setCompleter(completer)
@@ -162,8 +166,14 @@ class App(QtWidgets.QWidget):
         items = glob.glob("{}/*.comp".format(directory))
         return items
 
-    def collect_assets(self):
-        return list(io.find({"type": "asset"}, {"name": True}))
+    def collect_asset_names(self):
+        project_name = legacy_io.active_project()
+        asset_docs = get_assets(project_name, fields=["name"])
+        asset_names = {
+            asset_doc["name"]
+            for asset_doc in asset_docs
+        }
+        return list(asset_names)
 
     def populate_comp_box(self, files):
         """Ensure we display the filename only but the path is stored as well
@@ -181,8 +191,7 @@ class App(QtWidgets.QWidget):
 
 
 if __name__ == '__main__':
-    import sys
-    avalon.api.install(api)
+    install_host(api)
 
     app = QtWidgets.QApplication(sys.argv)
     window = App()

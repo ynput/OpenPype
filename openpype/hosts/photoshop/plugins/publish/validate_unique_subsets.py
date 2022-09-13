@@ -1,6 +1,9 @@
 import collections
 import pyblish.api
-import openpype.api
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishXmlValidationError,
+)
 
 
 class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
@@ -10,7 +13,7 @@ class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
 
     label = "Validate Subset Uniqueness"
     hosts = ["photoshop"]
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     families = ["image"]
 
     def process(self, context):
@@ -27,4 +30,10 @@ class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
              if count > 1]
         msg = ("Instance subset names {} are not unique. ".format(non_unique) +
                "Remove duplicates via SubsetManager.")
-        assert not non_unique, msg
+        formatting_data = {
+            "non_unique": ",".join(non_unique)
+        }
+
+        if non_unique:
+            raise PublishXmlValidationError(self, msg,
+                                            formatting_data=formatting_data)

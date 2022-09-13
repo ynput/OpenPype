@@ -1,6 +1,6 @@
 import collections
 import qargparse
-from avalon.pipeline import get_representation_context
+from openpype.pipeline import get_representation_context
 from openpype.hosts.tvpaint.api import lib, pipeline, plugin
 
 

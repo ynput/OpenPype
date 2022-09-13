@@ -1,27 +1,26 @@
 import os
 from Qt import QtWidgets
-from bson.objectid import ObjectId
 
 import pyblish.api
-import avalon.api
-from avalon import io
 
 from openpype.api import Logger
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
-    LegacyCreator,
+    legacy_io,
     register_loader_plugin_path,
+    register_creator_plugin_path,
     deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
-import openpype.hosts.photoshop
+from openpype.pipeline.load import any_outdated_containers
+from openpype.hosts.photoshop import PHOTOSHOP_HOST_DIR
 
 from . import lib
 
 log = Logger.get_logger(__name__)
 
-HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.photoshop.__file__))
-PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PLUGINS_DIR = os.path.join(PHOTOSHOP_HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
@@ -29,25 +28,14 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 def check_inventory():
-    if not lib.any_outdated():
+    if not any_outdated_containers():
         return
 
-    host = avalon.api.registered_host()
-    outdated_containers = []
-    for container in host.ls():
-        representation = container['representation']
-        representation_doc = io.find_one(
-            {
-                "_id": ObjectId(representation),
-                "type": "representation"
-            },
-            projection={"parent": True}
-        )
-        if representation_doc and not lib.is_latest(representation_doc):
-            outdated_containers.append(container)
-
     # Warn about outdated containers.
-    print("Starting new QApplication..")
+    _app = QtWidgets.QApplication.instance()
+    if not _app:
+        print("Starting new QApplication..")
+        _app = QtWidgets.QApplication([])
 
     message_box = QtWidgets.QMessageBox()
     message_box.setIcon(QtWidgets.QMessageBox.Warning)
@@ -75,7 +63,7 @@ def install():
 
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     register_loader_plugin_path(LOAD_PATH)
-    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
     log.info(PUBLISH_PATH)
 
     pyblish.api.register_callback(
@@ -88,7 +76,7 @@ def install():
 def uninstall():
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     deregister_loader_plugin_path(LOAD_PATH)
-    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
 
 
 def ls():
@@ -148,13 +136,9 @@ def list_instances():
     instances = []
     layers_meta = stub.get_layers_metadata()
     if layers_meta:
-        for key, instance in layers_meta.items():
-            schema = instance.get("schema")
-            if schema and "container" in schema:
-                continue
-
-            instance['uuid'] = key
-            instances.append(instance)
+        for instance in layers_meta:
+            if instance.get("id") == "pyblish.avalon.instance":
+                instances.append(instance)
 
     return instances
 
@@ -175,11 +159,18 @@ def remove_instance(instance):
     if not stub:
         return
 
-    stub.remove_instance(instance.get("uuid"))
-    layer = stub.get_layer(instance.get("uuid"))
-    if layer:
-        stub.rename_layer(instance.get("uuid"),
-                          layer.name.replace(stub.PUBLISH_ICON, ''))
+    inst_id = instance.get("instance_id") or instance.get("uuid")  # legacy
+    if not inst_id:
+        log.warning("No instance identifier for {}".format(instance))
+        return
+
+    stub.remove_instance(inst_id)
+
+    if instance.get("members"):
+        item = stub.get_layer(instance["members"][0])
+        if item:
+            stub.rename_layer(item.id,
+                              item.name.replace(stub.PUBLISH_ICON, ''))
 
 
 def _get_stub():
@@ -231,6 +222,33 @@ def containerise(
         "members": [str(layer.id)]
     }
     stub = lib.stub()
-    stub.imprint(layer, data)
+    stub.imprint(layer.id, data)
 
     return layer
+
+
+def get_context_data():
+    """Get stored values for context (validation enable/disable etc)"""
+    meta = _get_stub().get_layers_metadata()
+    for item in meta:
+        if item.get("id") == "publish_context":
+            item.pop("id")
+            return item
+
+    return {}
+
+
+def update_context_data(data, changes):
+    """Store value needed for context"""
+    item = data
+    item["id"] = "publish_context"
+    _get_stub().imprint(item["id"], item)
+
+
+def get_context_title():
+    """Returns title for Creator window"""
+
+    project_name = legacy_io.Session["AVALON_PROJECT"]
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    task_name = legacy_io.Session["AVALON_TASK"]
+    return "{}/{}/{}".format(project_name, asset_name, task_name)

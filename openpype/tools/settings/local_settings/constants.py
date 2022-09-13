@@ -9,6 +9,7 @@ LABEL_DISCARD_CHANGES = "Discard changes"
 # TODO move to settings constants
 LOCAL_GENERAL_KEY = "general"
 LOCAL_PROJECTS_KEY = "projects"
+LOCAL_ENV_KEY = "environments"
 LOCAL_APPS_KEY = "applications"
 
 # Roots key constant

@@ -2,7 +2,6 @@ import os
 
 import qargparse
 
-from openpype.pipeline import get_representation_path_from_context
 from openpype.hosts.photoshop import api as photoshop
 from openpype.hosts.photoshop.api import get_unique_layer_name
 
@@ -63,7 +62,7 @@ class ImageFromSequenceLoader(photoshop.PhotoshopLoader):
         """
         files = []
         for context in repre_contexts:
-            fname = get_representation_path_from_context(context)
+            fname = cls.filepath_from_context(context)
             _, file_extension = os.path.splitext(fname)
 
             for file_name in os.listdir(os.path.dirname(fname)):

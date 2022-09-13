@@ -15,16 +15,75 @@
             "destination-path": []
         }
     },
+    "scriptsmenu": {
+        "name": "OpenPype Tools",
+        "definition": [
+            {
+                "type": "action",
+                "sourcetype": "python",
+                "title": "OpenPype Docs",
+                "command": "import webbrowser;webbrowser.open(url='https://openpype.io/docs/artist_hosts_nuke_tut')",
+                "tooltip": "Open the OpenPype Nuke user doc page"
+            }
+        ]
+    },
+    "gizmo": [
+        {
+            "toolbar_menu_name": "OpenPype Gizmo",
+            "gizmo_source_dir": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "toolbar_icon_path": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            },
+            "gizmo_definition": [
+                {
+                    "gizmo_toolbar_path": "/path/to/menu",
+                    "sub_gizmo_list": [
+                        {
+                            "sourcetype": "python",
+                            "title": "Gizmo Note",
+                            "command": "nuke.nodes.StickyNote(label='You can create your own toolbar menu in the Nuke GizmoMenu of OpenPype')",
+                            "shortcut": ""
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
     "create": {
         "CreateWriteRender": {
             "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
             "defaults": [
                 "Main",
                 "Mask"
-            ]
+            ],
+            "knobs": [],
+            "prenodes": {
+                "Reformat01": {
+                    "nodeclass": "Reformat",
+                    "dependent": "",
+                    "knobs": [
+                        {
+                            "type": "text",
+                            "name": "resize",
+                            "value": "none"
+                        },
+                        {
+                            "type": "bool",
+                            "name": "black_outside",
+                            "value": true
+                        }
+                    ]
+                }
+            }
         },
         "CreateWritePrerender": {
-            "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}",
+            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
             "use_range_limit": true,
             "defaults": [
                 "Key01",
@@ -33,7 +92,32 @@
                 "Branch01",
                 "Part01"
             ],
-            "reviewable": false
+            "reviewable": false,
+            "knobs": [],
+            "prenodes": {}
+        },
+        "CreateWriteStill": {
+            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{ext}",
+            "defaults": [
+                "ImageFrame",
+                "MPFrame",
+                "LayoutFrame"
+            ],
+            "knobs": [],
+            "prenodes": {
+                "FrameHold01": {
+                    "nodeclass": "FrameHold",
+                    "dependent": "",
+                    "knobs": [
+                        {
+                            "type": "formatable",
+                            "name": "first_frame",
+                            "template": "{frame}",
+                            "to_type": "number"
+                        }
+                    ]
+                }
+            }
         }
     },
     "publish": {
@@ -43,10 +127,11 @@
                 "camera",
                 "gizmo",
                 "source",
-                "render"
+                "render",
+                "write"
             ]
         },
-        "ValidateInstanceInContext": {
+        "ValidateCorrectAssetName": {
             "enabled": true,
             "optional": true,
             "active": true
@@ -81,6 +166,9 @@
         },
         "ExtractThumbnail": {
             "enabled": true,
+            "use_rendered": true,
+            "bake_viewer_process": true,
+            "bake_viewer_input_process": true,
             "nodes": {
                 "Reformat": [
                     [
@@ -106,6 +194,9 @@
                 ]
             }
         },
+        "ExtractReviewData": {
+            "enabled": false
+        },
         "ExtractReviewDataLut": {
             "enabled": false
         },
@@ -117,27 +208,26 @@
                     "filter": {
                         "task_types": [],
                         "families": [],
-                        "sebsets": []
+                        "subsets": []
                     },
-                    "extension": "mov",
+                    "read_raw": false,
                     "viewer_process_override": "",
                     "bake_viewer_process": true,
                     "bake_viewer_input_process": true,
-                    "add_tags": [],
                     "reformat_node_add": false,
                     "reformat_node_config": [
                         {
-                            "type": "string",
+                            "type": "text",
                             "name": "type",
                             "value": "to format"
                         },
                         {
-                            "type": "string",
+                            "type": "text",
                             "name": "format",
                             "value": "HD_1080"
                         },
                         {
-                            "type": "string",
+                            "type": "text",
                             "name": "filter",
                             "value": "Lanczos6"
                         },
@@ -151,12 +241,28 @@
                             "name": "pbb",
                             "value": false
                         }
-                    ]
+                    ],
+                    "extension": "mov",
+                    "add_tags": []
                 }
             }
         },
         "ExtractSlateFrame": {
-            "viewer_lut_raw": false
+            "viewer_lut_raw": false,
+            "key_value_mapping": {
+                "f_submission_note": [
+                    true,
+                    "{comment}"
+                ],
+                "f_submitting_for": [
+                    true,
+                    "{intent[value]}"
+                ],
+                "f_vfx_scope_of_work": [
+                    false,
+                    ""
+                ]
+            }
         },
         "IncrementScriptVersion": {
             "enabled": true,
@@ -181,7 +287,11 @@
         "LoadClip": {
             "enabled": true,
             "_representations": [],
-            "node_name_template": "{class_name}_{ext}"
+            "node_name_template": "{class_name}_{ext}",
+            "options_defaults": {
+                "start_at_workfile": true,
+                "add_retime": true
+            }
         }
     },
     "workfile_builder": {
@@ -202,17 +312,21 @@
                         "repre_names": [
                             "exr",
                             "dpx",
-                            "mov"
+                            "mov",
+                            "mp4",
+                            "h264"
                         ],
                         "loaders": [
-                            "LoadSequence",
-                            "LoadMov"
+                            "LoadClip"
                         ]
                     }
                 ],
                 "linked_assets": []
             }
         ]
+    },
+    "templated_workfile_build": {
+        "profiles": []
     },
     "filters": {}
 }

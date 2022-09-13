@@ -3,6 +3,10 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import (
+    RepairAction,
+    ValidateMeshOrder,
+)
 
 
 def pairs(iterable):
@@ -12,28 +16,41 @@ def pairs(iterable):
         yield i, y
 
 
-def get_invalid_sets(shape):
-    """Get sets that are considered related but do not contain the shape.
+def get_invalid_sets(shapes):
+    """Return invalid sets for the given shapes.
 
-    In some scenarios Maya keeps connections to multiple shaders
-    even if just a single one is assigned on the full object.
+    This takes a list of shape nodes to cache the set members for overlapping
+    sets in the queries. This avoids many Maya set member queries.
 
-    These are related sets returned by `maya.cmds.listSets` that don't
-    actually have the shape as member.
+    Returns:
+        dict: Dictionary of shapes and their invalid sets, e.g.
+            {"pCubeShape": ["set1", "set2"]}
 
     """
 
-    invalid = []
-    sets = cmds.listSets(object=shape, t=1, extendToShape=False) or []
-    for s in sets:
-        members = cmds.sets(s, query=True, nodesOnly=True)
-        if not members:
-            invalid.append(s)
-            continue
+    cache = dict()
+    invalid = dict()
 
-        members = set(cmds.ls(members, long=True))
-        if shape not in members:
-            invalid.append(s)
+    # Collect the sets from the shape
+    for shape in shapes:
+        invalid_sets = []
+        sets = cmds.listSets(object=shape, t=1, extendToShape=False) or []
+        for set_ in sets:
+
+            members = cache.get(set_, None)
+            if members is None:
+                members = set(cmds.ls(cmds.sets(set_,
+                                                query=True,
+                                                nodesOnly=True), long=True))
+                cache[set_] = members
+
+            # If the shape is not actually present as a member of the set
+            # consider it invalid
+            if shape not in members:
+                invalid_sets.append(set_)
+
+        if invalid_sets:
+            invalid[shape] = invalid_sets
 
     return invalid
 
@@ -73,12 +90,12 @@ class ValidateMeshShaderConnections(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateMeshOrder
+    order = ValidateMeshOrder
     hosts = ['maya']
     families = ['model']
     label = "Mesh Shader Connections"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
-               openpype.api.RepairAction]
+               RepairAction]
 
     def process(self, instance):
         """Process all the nodes in the instance 'objectSet'"""
@@ -92,15 +109,9 @@ class ValidateMeshShaderConnections(pyblish.api.InstancePlugin):
     @staticmethod
     def get_invalid(instance):
 
-        shapes = cmds.ls(instance[:], dag=1, leaf=1, shapes=1, long=True)
-
-        # todo: allow to check anything that can have a shader
-        shapes = cmds.ls(shapes, noIntermediate=True, long=True, type="mesh")
-
-        invalid = []
-        for shape in shapes:
-            if get_invalid_sets(shape):
-                invalid.append(shape)
+        nodes = instance[:]
+        shapes = cmds.ls(nodes, noIntermediate=True, long=True, type="mesh")
+        invalid = get_invalid_sets(shapes).keys()
 
         return invalid
 
@@ -108,7 +119,7 @@ class ValidateMeshShaderConnections(pyblish.api.InstancePlugin):
     def repair(cls, instance):
 
         shapes = cls.get_invalid(instance)
-        for shape in shapes:
-            invalid_sets = get_invalid_sets(shape)
+        invalid = get_invalid_sets(shapes)
+        for shape, invalid_sets in invalid.items():
             for set_node in invalid_sets:
                 disconnect(shape, set_node)

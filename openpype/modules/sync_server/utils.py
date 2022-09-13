@@ -1,10 +1,17 @@
 import time
-from openpype.api import Logger
-log = Logger().get_logger("SyncServer")
+
+from openpype.lib import Logger
+
+log = Logger.get_logger("SyncServer")
 
 
 class ResumableError(Exception):
     """Error which could be temporary, skip current loop, try next time"""
+    pass
+
+
+class SiteAlreadyPresentError(Exception):
+    """Representation has already site skeleton present."""
     pass
 
 

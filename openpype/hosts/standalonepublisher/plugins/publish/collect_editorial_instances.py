@@ -1,8 +1,12 @@
 import os
+from copy import deepcopy
+
 import opentimelineio as otio
 import pyblish.api
+
 from openpype import lib as plib
-from copy import deepcopy
+from openpype.pipeline.context_tools import get_current_project_asset
+
 
 class CollectInstances(pyblish.api.InstancePlugin):
     """Collect instances from editorial's OTIO sequence"""
@@ -48,7 +52,7 @@ class CollectInstances(pyblish.api.InstancePlugin):
 
         # get timeline otio data
         timeline = instance.data["otio_timeline"]
-        fps = plib.get_asset()["data"]["fps"]
+        fps = get_current_project_asset()["data"]["fps"]
 
         tracks = timeline.each_child(
             descended_from_type=otio.schema.Track
@@ -166,7 +170,8 @@ class CollectInstances(pyblish.api.InstancePlugin):
                     "frameStart": frame_start,
                     "frameEnd": frame_end,
                     "frameStartH": frame_start - handle_start,
-                    "frameEndH": frame_end + handle_end
+                    "frameEndH": frame_end + handle_end,
+                    "newAssetPublishing": True
                 }
 
                 for data_key in instance_data_filter:

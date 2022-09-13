@@ -4,17 +4,41 @@ import copy
 import getpass
 import logging
 import inspect
+import collections
 import numbers
 
-import six
-from bson.objectid import ObjectId
-
-from avalon import io, schema
-from avalon.api import Session, registered_root
-
-from openpype.lib import Anatomy
+from openpype.host import ILoadHost
+from openpype.client import (
+    get_project,
+    get_assets,
+    get_subsets,
+    get_versions,
+    get_version_by_id,
+    get_last_version_by_subset_id,
+    get_hero_version_by_subset_id,
+    get_version_by_name,
+    get_last_versions,
+    get_representations,
+    get_representation_by_id,
+    get_representation_by_name,
+    get_representation_parents
+)
+from openpype.lib import (
+    StringTemplate,
+    TemplateUnsolved,
+)
+from openpype.pipeline import (
+    schema,
+    legacy_io,
+    Anatomy,
+)
 
 log = logging.getLogger(__name__)
+
+ContainersFilterResult = collections.namedtuple(
+    "ContainersFilterResult",
+    ["latest", "outdated", "not_foud", "invalid"]
+)
 
 
 class HeroVersionType(object):
@@ -41,6 +65,11 @@ class IncompatibleLoaderError(ValueError):
     pass
 
 
+class InvalidRepresentationContext(ValueError):
+    """Representation path can't be received using representation document."""
+    pass
+
+
 def get_repres_contexts(representation_ids, dbcon=None):
     """Return parenthood context for representation.
 
@@ -51,40 +80,29 @@ def get_repres_contexts(representation_ids, dbcon=None):
 
     Returns:
         dict: The full representation context by representation id.
-            keys are repre_id, value is dictionary with full:
-                                                        asset_doc
-                                                        version_doc
-                                                        subset_doc
-                                                        repre_doc
-
+            keys are repre_id, value is dictionary with full documents of
+            asset, subset, version and representation.
     """
+
     if not dbcon:
-        dbcon = io
+        dbcon = legacy_io
 
     contexts = {}
     if not representation_ids:
         return contexts
 
-    _representation_ids = []
-    for repre_id in representation_ids:
-        if isinstance(repre_id, six.string_types):
-            repre_id = ObjectId(repre_id)
-        _representation_ids.append(repre_id)
+    project_name = dbcon.active_project()
+    repre_docs = get_representations(project_name, representation_ids)
 
-    repre_docs = dbcon.find({
-        "type": "representation",
-        "_id": {"$in": _representation_ids}
-    })
     repre_docs_by_id = {}
     version_ids = set()
     for repre_doc in repre_docs:
         version_ids.add(repre_doc["parent"])
         repre_docs_by_id[repre_doc["_id"]] = repre_doc
 
-    version_docs = dbcon.find({
-        "type": {"$in": ["version", "hero_version"]},
-        "_id": {"$in": list(version_ids)}
-    })
+    version_docs = get_versions(
+        project_name, version_ids, hero=True
+    )
 
     version_docs_by_id = {}
     hero_version_docs = []
@@ -98,10 +116,7 @@ def get_repres_contexts(representation_ids, dbcon=None):
         subset_ids.add(version_doc["parent"])
 
     if versions_for_hero:
-        _version_docs = dbcon.find({
-            "type": "version",
-            "_id": {"$in": list(versions_for_hero)}
-        })
+        _version_docs = get_versions(project_name, versions_for_hero)
         _version_data_by_id = {
             version_doc["_id"]: version_doc["data"]
             for version_doc in _version_docs
@@ -113,26 +128,20 @@ def get_repres_contexts(representation_ids, dbcon=None):
             version_data = copy.deepcopy(_version_data_by_id[version_id])
             version_docs_by_id[hero_version_id]["data"] = version_data
 
-    subset_docs = dbcon.find({
-        "type": "subset",
-        "_id": {"$in": list(subset_ids)}
-    })
+    subset_docs = get_subsets(project_name, subset_ids)
     subset_docs_by_id = {}
     asset_ids = set()
     for subset_doc in subset_docs:
         subset_docs_by_id[subset_doc["_id"]] = subset_doc
         asset_ids.add(subset_doc["parent"])
 
-    asset_docs = dbcon.find({
-        "type": "asset",
-        "_id": {"$in": list(asset_ids)}
-    })
+    asset_docs = get_assets(project_name, asset_ids)
     asset_docs_by_id = {
         asset_doc["_id"]: asset_doc
         for asset_doc in asset_docs
     }
 
-    project_doc = dbcon.find_one({"type": "project"})
+    project_doc = get_project(project_name)
 
     for repre_id, repre_doc in repre_docs_by_id.items():
         version_doc = version_docs_by_id[repre_doc["parent"]]
@@ -166,38 +175,27 @@ def get_subset_contexts(subset_ids, dbcon=None):
         dict: The full representation context by representation id.
     """
     if not dbcon:
-        dbcon = io
+        dbcon = legacy_io
 
     contexts = {}
     if not subset_ids:
         return contexts
 
-    _subset_ids = set()
-    for subset_id in subset_ids:
-        if isinstance(subset_id, six.string_types):
-            subset_id = ObjectId(subset_id)
-        _subset_ids.add(subset_id)
-
-    subset_docs = dbcon.find({
-        "type": "subset",
-        "_id": {"$in": list(_subset_ids)}
-    })
+    project_name = dbcon.active_project()
+    subset_docs = get_subsets(project_name, subset_ids)
     subset_docs_by_id = {}
     asset_ids = set()
     for subset_doc in subset_docs:
         subset_docs_by_id[subset_doc["_id"]] = subset_doc
         asset_ids.add(subset_doc["parent"])
 
-    asset_docs = dbcon.find({
-        "type": "asset",
-        "_id": {"$in": list(asset_ids)}
-    })
+    asset_docs = get_assets(project_name, asset_ids)
     asset_docs_by_id = {
         asset_doc["_id"]: asset_doc
         for asset_doc in asset_docs
     }
 
-    project_doc = dbcon.find_one({"type": "project"})
+    project_doc = get_project(project_name)
 
     for subset_id, subset_doc in subset_docs_by_id.items():
         asset_doc = asset_docs_by_id[subset_doc["parent"]]
@@ -223,20 +221,30 @@ def get_representation_context(representation):
 
     Returns:
         dict: The full representation context.
-
     """
 
     assert representation is not None, "This is a bug"
 
-    if isinstance(representation, (six.string_types, ObjectId)):
-        representation = io.find_one(
-            {"_id": ObjectId(str(representation))})
+    project_name = legacy_io.active_project()
+    if not isinstance(representation, dict):
+        representation = get_representation_by_id(
+            project_name, representation
+        )
 
-    version, subset, asset, project = io.parenthood(representation)
+    if not representation:
+        raise AssertionError("Representation was not found in database")
 
-    assert all([representation, version, subset, asset, project]), (
-        "This is a bug"
+    version, subset, asset, project = get_representation_parents(
+        project_name, representation
     )
+    if not version:
+        raise AssertionError("Version was not found in database")
+    if not subset:
+        raise AssertionError("Subset was not found in database")
+    if not asset:
+        raise AssertionError("Asset was not found in database")
+    if not project:
+        raise AssertionError("Project was not found in database")
 
     context = {
         "project": {
@@ -377,6 +385,20 @@ def get_loader_identifier(loader):
     return loader.__name__
 
 
+def get_loaders_by_name():
+    from .plugins import discover_loader_plugins
+
+    loaders_by_name = {}
+    for loader in discover_loader_plugins():
+        loader_name = loader.__name__
+        if loader_name in loaders_by_name:
+            raise KeyError(
+                "Duplicated loader name {} !".format(loader_name)
+            )
+        loaders_by_name[loader_name] = loader
+    return loaders_by_name
+
+
 def _get_container_loader(container):
     """Return the Loader corresponding to the container"""
     from .plugins import discover_loader_plugins
@@ -404,42 +426,36 @@ def update_container(container, version=-1):
     """Update a container"""
 
     # Compute the different version from 'representation'
-    current_representation = io.find_one({
-        "_id": ObjectId(container["representation"])
-    })
+    project_name = legacy_io.active_project()
+    current_representation = get_representation_by_id(
+        project_name, container["representation"]
+    )
 
     assert current_representation is not None, "This is a bug"
 
-    current_version, subset, asset, project = io.parenthood(
-        current_representation)
-
+    current_version = get_version_by_id(
+        project_name, current_representation["parent"], fields=["parent"]
+    )
     if version == -1:
-        new_version = io.find_one({
-            "type": "version",
-            "parent": subset["_id"]
-        }, sort=[("name", -1)])
+        new_version = get_last_version_by_subset_id(
+            project_name, current_version["parent"], fields=["_id"]
+        )
+
+    elif isinstance(version, HeroVersionType):
+        new_version = get_hero_version_by_subset_id(
+            project_name, current_version["parent"], fields=["_id"]
+        )
+
     else:
-        if isinstance(version, HeroVersionType):
-            version_query = {
-                "parent": subset["_id"],
-                "type": "hero_version"
-            }
-        else:
-            version_query = {
-                "parent": subset["_id"],
-                "type": "version",
-                "name": version
-            }
-        new_version = io.find_one(version_query)
+        new_version = get_version_by_name(
+            project_name, version, current_version["parent"], fields=["_id"]
+        )
 
     assert new_version is not None, "This is a bug"
 
-    new_representation = io.find_one({
-        "type": "representation",
-        "parent": new_version["_id"],
-        "name": current_representation["name"]
-    })
-
+    new_representation = get_representation_by_name(
+        project_name, current_representation["name"], new_version["_id"]
+    )
     assert new_representation is not None, "Representation wasn't found"
 
     path = get_representation_path(new_representation)
@@ -481,10 +497,10 @@ def switch_container(container, representation, loader_plugin=None):
         ))
 
     # Get the new representation to switch to
-    new_representation = io.find_one({
-        "type": "representation",
-        "_id": representation["_id"],
-    })
+    project_name = legacy_io.active_project()
+    new_representation = get_representation_by_id(
+        project_name, representation["_id"]
+    )
 
     new_context = get_representation_context(new_representation)
     if not is_compatible_loader(loader_plugin, new_context):
@@ -500,12 +516,58 @@ def get_representation_path_from_context(context):
     representation = context['representation']
     project_doc = context.get("project")
     root = None
-    session_project = Session.get("AVALON_PROJECT")
+    session_project = legacy_io.Session.get("AVALON_PROJECT")
     if project_doc and project_doc["name"] != session_project:
         anatomy = Anatomy(project_doc["name"])
         root = anatomy.roots
 
     return get_representation_path(representation, root)
+
+
+def get_representation_path_with_anatomy(repre_doc, anatomy):
+    """Receive representation path using representation document and anatomy.
+
+    Anatomy is used to replace 'root' key in representation file. Ideally
+    should be used instead of 'get_representation_path' which is based on
+    "current context".
+
+    Future notes:
+        We want also be able store resources into representation and I can
+        imagine the result should also contain paths to possible resources.
+
+    Args:
+        repre_doc (Dict[str, Any]): Representation document.
+        anatomy (Anatomy): Project anatomy object.
+
+    Returns:
+        Union[None, TemplateResult]: None if path can't be received
+
+    Raises:
+        InvalidRepresentationContext: When representation data are probably
+            invalid or not available.
+    """
+
+    try:
+        template = repre_doc["data"]["template"]
+
+    except KeyError:
+        raise InvalidRepresentationContext((
+            "Representation document does not"
+            " contain template in data ('data.template')"
+        ))
+
+    try:
+        context = repre_doc["context"]
+        context["root"] = anatomy.roots
+        path = StringTemplate.format_strict_template(template, context)
+
+    except TemplateUnsolved as exc:
+        raise InvalidRepresentationContext((
+            "Couldn't resolve representation template with available data."
+            " Reason: {}".format(str(exc))
+        ))
+
+    return path.normalized()
 
 
 def get_representation_path(representation, root=None, dbcon=None):
@@ -526,12 +588,12 @@ def get_representation_path(representation, root=None, dbcon=None):
 
     """
 
-    from openpype.lib import StringTemplate, TemplateUnsolved
-
     if dbcon is None:
-        dbcon = io
+        dbcon = legacy_io
 
     if root is None:
+        from openpype.pipeline import registered_root
+
         root = registered_root()
 
     def path_from_represenation():
@@ -705,3 +767,165 @@ def loaders_from_representation(loaders, representation):
 
     context = get_representation_context(representation)
     return loaders_from_repre_context(loaders, context)
+
+
+def any_outdated_containers(host=None, project_name=None):
+    """Check if there are any outdated containers in scene."""
+
+    if get_outdated_containers(host, project_name):
+        return True
+    return False
+
+
+def get_outdated_containers(host=None, project_name=None):
+    """Collect outdated containers from host scene.
+
+    Currently registered host and project in global session are used if
+    arguments are not passed.
+
+    Args:
+        host (ModuleType): Host implementation with 'ls' function available.
+        project_name (str): Name of project in which context we are.
+    """
+
+    if host is None:
+        from openpype.pipeline import registered_host
+
+        host = registered_host()
+
+    if project_name is None:
+        project_name = legacy_io.active_project()
+
+    if isinstance(host, ILoadHost):
+        containers = host.get_containers()
+    else:
+        containers = host.ls()
+    return filter_containers(containers, project_name).outdated
+
+
+def filter_containers(containers, project_name):
+    """Filter containers and split them into 4 categories.
+
+    Categories are 'latest', 'outdated', 'invalid' and 'not_found'.
+    The 'lastest' containers are from last version, 'outdated' are not,
+    'invalid' are invalid containers (invalid content) and 'not_foud' has
+    some missing entity in database.
+
+    Args:
+        containers (Iterable[dict]): List of containers referenced into scene.
+        project_name (str): Name of project in which context shoud look for
+            versions.
+
+    Returns:
+        ContainersFilterResult: Named tuple with 'latest', 'outdated',
+            'invalid' and 'not_found' containers.
+    """
+
+    # Make sure containers is list that won't change
+    containers = list(containers)
+
+    outdated_containers = []
+    uptodate_containers = []
+    not_found_containers = []
+    invalid_containers = []
+    output = ContainersFilterResult(
+        uptodate_containers,
+        outdated_containers,
+        not_found_containers,
+        invalid_containers
+    )
+    # Query representation docs to get it's version ids
+    repre_ids = {
+        container["representation"]
+        for container in containers
+        if container["representation"]
+    }
+    if not repre_ids:
+        if containers:
+            invalid_containers.extend(containers)
+        return output
+
+    repre_docs = get_representations(
+        project_name,
+        representation_ids=repre_ids,
+        fields=["_id", "parent"]
+    )
+    # Store representations by stringified representation id
+    repre_docs_by_str_id = {}
+    repre_docs_by_version_id = collections.defaultdict(list)
+    for repre_doc in repre_docs:
+        repre_id = str(repre_doc["_id"])
+        version_id = repre_doc["parent"]
+        repre_docs_by_str_id[repre_id] = repre_doc
+        repre_docs_by_version_id[version_id].append(repre_doc)
+
+    # Query version docs to get it's subset ids
+    # - also query hero version to be able identify if representation
+    #   belongs to existing version
+    version_docs = get_versions(
+        project_name,
+        version_ids=repre_docs_by_version_id.keys(),
+        hero=True,
+        fields=["_id", "parent", "type"]
+    )
+    verisons_by_id = {}
+    versions_by_subset_id = collections.defaultdict(list)
+    hero_version_ids = set()
+    for version_doc in version_docs:
+        version_id = version_doc["_id"]
+        # Store versions by their ids
+        verisons_by_id[version_id] = version_doc
+        # There's no need to query subsets for hero versions
+        #   - they are considered as latest?
+        if version_doc["type"] == "hero_version":
+            hero_version_ids.add(version_id)
+            continue
+        subset_id = version_doc["parent"]
+        versions_by_subset_id[subset_id].append(version_doc)
+
+    last_versions = get_last_versions(
+        project_name,
+        subset_ids=versions_by_subset_id.keys(),
+        fields=["_id"]
+    )
+    # Figure out which versions are outdated
+    outdated_version_ids = set()
+    for subset_id, last_version_doc in last_versions.items():
+        for version_doc in versions_by_subset_id[subset_id]:
+            version_id = version_doc["_id"]
+            if version_id != last_version_doc["_id"]:
+                outdated_version_ids.add(version_id)
+
+    # Based on all collected data figure out which containers are outdated
+    #   - log out if there are missing representation or version documents
+    for container in containers:
+        container_name = container["objectName"]
+        repre_id = container["representation"]
+        if not repre_id:
+            invalid_containers.append(container)
+            continue
+
+        repre_doc = repre_docs_by_str_id.get(repre_id)
+        if not repre_doc:
+            log.debug((
+                "Container '{}' has an invalid representation."
+                " It is missing in the database."
+            ).format(container_name))
+            not_found_containers.append(container)
+            continue
+
+        version_id = repre_doc["parent"]
+        if version_id in outdated_version_ids:
+            outdated_containers.append(container)
+
+        elif version_id not in verisons_by_id:
+            log.debug((
+                "Representation on container '{}' has an invalid version."
+                " It is missing in the database."
+            ).format(container_name))
+            not_found_containers.append(container)
+
+        else:
+            uptodate_containers.append(container)
+
+    return output

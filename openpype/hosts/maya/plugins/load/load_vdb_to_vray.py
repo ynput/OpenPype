@@ -74,6 +74,7 @@ def _fix_duplicate_vvg_callbacks():
 
 
 class LoadVDBtoVRay(load.LoaderPlugin):
+    """Load OpenVDB in a V-Ray Volume Grid"""
 
     families = ["vdbcache"]
     representations = ["vdb"]

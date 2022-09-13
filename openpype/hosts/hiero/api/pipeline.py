@@ -5,22 +5,20 @@ import os
 import contextlib
 from collections import OrderedDict
 
-from avalon import api as avalon
-from avalon import schema
 from pyblish import api as pyblish
-from openpype.api import Logger
+from openpype.lib import Logger
 from openpype.pipeline import (
-    LegacyCreator,
+    schema,
+    register_creator_plugin_path,
     register_loader_plugin_path,
+    deregister_creator_plugin_path,
     deregister_loader_plugin_path,
     AVALON_CONTAINER_ID,
 )
 from openpype.tools.utils import host_tools
 from . import lib, menu, events
 
-log = Logger().get_logger(__name__)
-
-AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
+log = Logger.get_logger(__name__)
 
 # plugin paths
 API_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -34,14 +32,7 @@ AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
 
 def install():
-    """
-    Installing Hiero integration for avalon
-
-    Args:
-        config (obj): avalon config module `pype` in our case, it is not
-        used but required by avalon.api.install()
-
-    """
+    """Installing Hiero integration."""
 
     # adding all events
     events.register_events()
@@ -50,13 +41,14 @@ def install():
     pyblish.register_host("hiero")
     pyblish.register_plugin_path(PUBLISH_PATH)
     register_loader_plugin_path(LOAD_PATH)
-    avalon.register_plugin_path(LegacyCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
 
     # register callback for switching publishable
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
 
     # install menu
     menu.menu_install()
+    menu.add_scripts_menu()
 
     # register hiero events
     events.register_hiero_events()
@@ -71,7 +63,7 @@ def uninstall():
     pyblish.deregister_host("hiero")
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     deregister_loader_plugin_path(LOAD_PATH)
-    avalon.deregister_plugin_path(LegacyCreator, CREATE_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
 
     # register callback for switching publishable
     pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
@@ -152,6 +144,11 @@ def parse_container(track_item, validate=True):
     """
     # convert tag metadata to normal keys names
     data = lib.get_track_item_pype_data(track_item)
+    if (
+        not data
+        or data.get("id") != "pyblish.avalon.container"
+    ):
+        return
 
     if validate and data and data.get("schema"):
         schema.validate(data)
@@ -254,15 +251,10 @@ def reload_config():
     import importlib
 
     for module in (
-        "avalon",
-        "avalon.lib",
-        "avalon.pipeline",
-        "pyblish",
-        "pypeapp",
-        "{}.api".format(AVALON_CONFIG),
-        "{}.hosts.hiero.lib".format(AVALON_CONFIG),
-        "{}.hosts.hiero.menu".format(AVALON_CONFIG),
-        "{}.hosts.hiero.tags".format(AVALON_CONFIG)
+        "openpype.api",
+        "openpype.hosts.hiero.lib",
+        "openpype.hosts.hiero.menu",
+        "openpype.hosts.hiero.tags"
     ):
         log.info("Reloading module: {}...".format(module))
         try:

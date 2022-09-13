@@ -2,8 +2,6 @@ from collections import OrderedDict
 
 import nuke
 
-import avalon.api
-from openpype import api as pype
 from openpype.hosts.nuke.api import plugin
 from openpype.hosts.nuke.api.lib import (
     set_avalon_knob_data

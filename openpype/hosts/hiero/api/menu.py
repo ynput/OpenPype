@@ -1,14 +1,17 @@
 import os
 import sys
+
 import hiero.core
-from openpype.api import Logger
-from openpype.tools.utils import host_tools
-from avalon.api import Session
 from hiero.ui import findMenuAction
 
-from . import tags
+from openpype.api import Logger
+from openpype.pipeline import legacy_io
+from openpype.tools.utils import host_tools
 
-log = Logger().get_logger(__name__)
+from . import tags
+from openpype.settings import get_project_settings
+
+log = Logger.get_logger(__name__)
 
 self = sys.modules[__name__]
 self._change_context_menu = None
@@ -24,8 +27,10 @@ def update_menu_task_label():
         log.warning("Can't find menuItem: {}".format(object_name))
         return
 
-    label = "{}, {}".format(Session["AVALON_ASSET"],
-                            Session["AVALON_TASK"])
+    label = "{}, {}".format(
+        legacy_io.Session["AVALON_ASSET"],
+        legacy_io.Session["AVALON_TASK"]
+    )
 
     menu = found_menu.menu()
     self._change_context_menu = label
@@ -37,6 +42,7 @@ def menu_install():
     Installing menu into Hiero
 
     """
+
     from Qt import QtGui
     from . import (
         publish, launch_workfiles_app, reload_config,
@@ -51,7 +57,8 @@ def menu_install():
     menu_name = os.environ['AVALON_LABEL']
 
     context_label = "{0}, {1}".format(
-        Session["AVALON_ASSET"], Session["AVALON_TASK"]
+        legacy_io.Session["AVALON_ASSET"],
+        legacy_io.Session["AVALON_TASK"]
     )
 
     self._change_context_menu = context_label
@@ -133,3 +140,30 @@ def menu_install():
     exeprimental_action.triggered.connect(
         lambda: host_tools.show_experimental_tools_dialog(parent=main_window)
     )
+
+
+def add_scripts_menu():
+    try:
+        from . import launchforhiero
+    except ImportError:
+
+        log.warning(
+            "Skipping studio.menu install, because "
+            "'scriptsmenu' module seems unavailable."
+        )
+        return
+
+    # load configuration of custom menu
+    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+    config = project_settings["hiero"]["scriptsmenu"]["definition"]
+    _menu = project_settings["hiero"]["scriptsmenu"]["name"]
+
+    if not config:
+        log.warning("Skipping studio menu, no definition found.")
+        return
+
+    # run the launcher for Hiero menu
+    studio_menu = launchforhiero.main(title=_menu.title())
+
+    # apply configuration
+    studio_menu.build_from_configuration(studio_menu, config)

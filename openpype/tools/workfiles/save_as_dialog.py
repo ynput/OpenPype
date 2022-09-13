@@ -5,12 +5,12 @@ import logging
 
 from Qt import QtWidgets, QtCore
 
-from avalon import api, io
-
-from openpype.lib import (
-    get_last_workfile_with_version,
-    get_workdir_data,
+from openpype.pipeline import (
+    registered_host,
+    legacy_io,
 )
+from openpype.pipeline.workfile import get_last_workfile_with_version
+from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.tools.utils import PlaceholderLineEdit
 
 log = logging.getLogger(__name__)
@@ -20,30 +20,14 @@ def build_workfile_data(session):
     """Get the data required for workfile formatting from avalon `session`"""
 
     # Set work file data for template formatting
+    project_name = session["AVALON_PROJECT"]
     asset_name = session["AVALON_ASSET"]
     task_name = session["AVALON_TASK"]
     host_name = session["AVALON_APP"]
-    project_doc = io.find_one(
-        {"type": "project"},
-        {
-            "name": True,
-            "data.code": True,
-            "config.tasks": True,
-        }
-    )
 
-    asset_doc = io.find_one(
-        {
-            "type": "asset",
-            "name": asset_name
-        },
-        {
-            "name": True,
-            "data.tasks": True,
-            "data.parents": True
-        }
+    data = get_template_data_with_names(
+        project_name, asset_name, task_name, host_name
     )
-    data = get_workdir_data(project_doc, asset_doc, task_name, host_name)
     data.update({
         "version": 1,
         "comment": "",
@@ -65,7 +49,7 @@ class CommentMatcher(object):
             return
 
         # Create a regex group for extensions
-        extensions = api.registered_host().file_extensions()
+        extensions = registered_host().file_extensions()
         any_extension = "(?:{})".format(
             "|".join(re.escape(ext[1:]) for ext in extensions)
         )
@@ -193,18 +177,21 @@ class SaveAsDialog(QtWidgets.QDialog):
 
     """
 
-    def __init__(self, parent, root, anatomy, template_key, session=None):
+    def __init__(
+        self, parent, root, anatomy, template_key, extensions, session=None
+    ):
         super(SaveAsDialog, self).__init__(parent=parent)
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
 
         self.result = None
-        self.host = api.registered_host()
+        self.host = registered_host()
         self.root = root
         self.work_file = None
+        self._extensions = extensions
 
         if not session:
             # Fallback to active session
-            session = api.Session
+            session = legacy_io.Session
 
         self.data = build_workfile_data(session)
 
@@ -257,7 +244,7 @@ class SaveAsDialog(QtWidgets.QDialog):
         # Add styled delegate to use stylesheets
         ext_delegate = QtWidgets.QStyledItemDelegate()
         ext_combo.setItemDelegate(ext_delegate)
-        ext_combo.addItems(self.host.file_extensions())
+        ext_combo.addItems(self._extensions)
 
         # Build inputs
         inputs_layout = QtWidgets.QFormLayout(inputs_widget)
@@ -279,7 +266,7 @@ class SaveAsDialog(QtWidgets.QDialog):
             if current_filepath:
                 # We match the current filename against the current session
                 # instead of the session where the user is saving to.
-                current_data = build_workfile_data(api.Session)
+                current_data = build_workfile_data(legacy_io.Session)
                 matcher = CommentMatcher(anatomy, template_key, current_data)
                 comment = matcher.parse_comment(current_filepath)
                 if comment:
@@ -336,7 +323,7 @@ class SaveAsDialog(QtWidgets.QDialog):
 
     def get_existing_comments(self):
         matcher = CommentMatcher(self.anatomy, self.template_key, self.data)
-        host_extensions = set(self.host.file_extensions())
+        host_extensions = set(self._extensions)
         comments = set()
         if os.path.isdir(self.root):
             for fname in os.listdir(self.root):
@@ -392,7 +379,7 @@ class SaveAsDialog(QtWidgets.QDialog):
         return anatomy_filled[self.template_key]["file"]
 
     def refresh(self):
-        extensions = self.host.file_extensions()
+        extensions = list(self._extensions)
         extension = self.data["ext"]
         if extension is None:
             # Define saving file extension

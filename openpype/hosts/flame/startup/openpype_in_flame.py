@@ -3,18 +3,19 @@ import sys
 from Qt import QtWidgets
 from pprint import pformat
 import atexit
-import openpype
-import avalon
+
 import openpype.hosts.flame.api as opfapi
+from openpype.pipeline import (
+    install_host,
+    registered_host,
+)
 
 
 def openpype_install():
     """Registering OpenPype in context
     """
-    openpype.install()
-    avalon.api.install(opfapi)
-    print("Avalon registered hosts: {}".format(
-        avalon.api.registered_host()))
+    install_host(opfapi)
+    print("Registered host: {}".format(registered_host()))
 
 
 # Exception handler
@@ -72,6 +73,8 @@ def load_apps():
         opfapi.FlameMenuProjectConnect(opfapi.CTX.app_framework))
     opfapi.CTX.flame_apps.append(
         opfapi.FlameMenuTimeline(opfapi.CTX.app_framework))
+    opfapi.CTX.flame_apps.append(
+        opfapi.FlameMenuUniversal(opfapi.CTX.app_framework))
     opfapi.CTX.app_framework.log.info("Apps are loaded")
 
 
@@ -190,3 +193,27 @@ def get_timeline_custom_ui_actions():
     openpype_install()
 
     return _build_app_menu("FlameMenuTimeline")
+
+
+def get_batch_custom_ui_actions():
+    """Hook to create submenu in batch
+
+    Returns:
+        list: menu object
+    """
+    # install openpype and the host
+    openpype_install()
+
+    return _build_app_menu("FlameMenuUniversal")
+
+
+def get_media_panel_custom_ui_actions():
+    """Hook to create submenu in desktop
+
+    Returns:
+        list: menu object
+    """
+    # install openpype and the host
+    openpype_install()
+
+    return _build_app_menu("FlameMenuUniversal")

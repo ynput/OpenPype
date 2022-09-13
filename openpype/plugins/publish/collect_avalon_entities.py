@@ -1,36 +1,38 @@
 """Collect Anatomy and global anatomy data.
 
 Requires:
-    session -> AVALON_PROJECT, AVALON_ASSET
+    session -> AVALON_ASSET
+    context -> projectName
 
 Provides:
-    context -> projectEntity - project entity from database
-    context -> assetEntity - asset entity from database
+    context -> projectEntity - Project document from database.
+    context -> assetEntity - Asset document from database only if 'asset' is
+        set in context.
 """
 
-from avalon import io, api
 import pyblish.api
+
+from openpype.client import get_project, get_asset_by_name
+from openpype.pipeline import legacy_io, KnownPublishError
 
 
 class CollectAvalonEntities(pyblish.api.ContextPlugin):
-    """Collect Anatomy into Context"""
+    """Collect Anatomy into Context."""
 
     order = pyblish.api.CollectorOrder - 0.1
     label = "Collect Avalon Entities"
 
     def process(self, context):
-        io.install()
-        project_name = api.Session["AVALON_PROJECT"]
-        asset_name = api.Session["AVALON_ASSET"]
-        task_name = api.Session["AVALON_TASK"]
+        legacy_io.install()
+        project_name = context.data["projectName"]
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        task_name = legacy_io.Session["AVALON_TASK"]
 
-        project_entity = io.find_one({
-            "type": "project",
-            "name": project_name
-        })
-        assert project_entity, (
-            "Project '{0}' was not found."
-        ).format(project_name)
+        project_entity = get_project(project_name)
+        if not project_entity:
+            raise KnownPublishError(
+                "Project '{0}' was not found.".format(project_name)
+            )
         self.log.debug("Collected Project \"{}\"".format(project_entity))
 
         context.data["projectEntity"] = project_entity
@@ -38,11 +40,8 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
         if not asset_name:
             self.log.info("Context is not set. Can't collect global data.")
             return
-        asset_entity = io.find_one({
-            "type": "asset",
-            "name": asset_name,
-            "parent": project_entity["_id"]
-        })
+
+        asset_entity = get_asset_by_name(project_name, asset_name)
         assert asset_entity, (
             "No asset found by the name '{0}' in project '{1}'"
         ).format(asset_name, project_name)

@@ -24,7 +24,11 @@ openpype_console --use-version=3.0.0-foo+bar
 
 `--list-versions [--use-staging]` - to list available versions.
 
-`--validate-version` to validate integrity of given version
+`--validate-version` - to validate integrity of given version
+
+`--verbose` `<level>` - change log verbose level of OpenPype loggers
+
+`--debug` - set debug flag affects logging
 
 For more information [see here](admin_use.md#run-openpype).
 
@@ -36,46 +40,22 @@ For more information [see here](admin_use.md#run-openpype).
 | module | Run command line arguments for modules. |  |
 | repack-version | Tool to re-create version zip. | [📑](#repack-version-arguments) |
 | tray | Launch OpenPype Tray. | [📑](#tray-arguments)
-| eventserver | This should be ideally used by system service (such as systemd or upstart on linux and window service). | [📑](#eventserver-arguments) |
 | launch | Launch application in Pype environment. | [📑](#launch-arguments) |
 | publish | Pype takes JSON from provided path and use it to publish data in it. | [📑](#publish-arguments) |
 | extractenvironments | Extract environment variables for entered context to a json file. | [📑](#extractenvironments-arguments) |
 | run | Execute given python script within OpenPype environment. | [📑](#run-arguments) |
+| interactive | Start python like interactive console session. | |
 | projectmanager | Launch Project Manager UI | [📑](#projectmanager-arguments) |
 | settings | Open Settings UI | [📑](#settings-arguments) |
-| standalonepublisher | Open Standalone Publisher UI | [📑](#standalonepublisher-arguments) |
 
 ---
 ### `tray` arguments {#tray-arguments}
-| Argument | Description |
-| --- | --- |
-| `--debug` | print verbose information useful for debugging (works with `openpype_console`) |
 
-To launch Tray with debugging information:
 ```shell
-openpype_console tray --debug
+openpype_console tray
 ```
 ---
-### `launch` arguments {#eventserver-arguments}
-You have to set either proper environment variables to provide URL and credentials or use
-option to specify them.
 
-| Argument | Description |
-| --- | --- |
-| `--debug` | print debug info |
-| `--ftrack-url` | URL to ftrack server (can be set with `FTRACK_SERVER`) |
-| `--ftrack-user` |user name to log in to ftrack (can be set with `FTRACK_API_USER`) |
-| `--ftrack-api-key` | ftrack api key (can be set with `FTRACK_API_KEY`) |
-| `--legacy` | run event server without mongo storing |
-| `--clockify-api-key` | Clockify API key (can be set with `CLOCKIFY_API_KEY`) |
-| `--clockify-workspace` | Clockify workspace (can be set with `CLOCKIFY_WORKSPACE`) |
-
-To run ftrack event server:
-```shell
-openpype_console eventserver --ftrack-url=<url> --ftrack-user=<user> --ftrack-api-key=<key>
-```
-
----
 ### `launch` arguments {#launch-arguments}
 
 | Argument | Description |
@@ -98,12 +78,16 @@ pype launch --app python --project my_project --asset my_asset --task my_task
 ---
 ### `publish` arguments {#publish-arguments}
 
+Run publishing based on metadata passed in json file e.g. on farm.
+
 | Argument | Description |
 | --- | --- |
-| `--debug` | print more verbose information |
+| `--targets` | define publishing targets (e.g. "farm") |
+| `--gui` (`-g`) | Show publishing |
+| Positional argument | Path to metadata json file |
 
 ```shell
-pype publish <PATH_TO_JSON>
+openpype publish <PATH_TO_JSON> --targes farm
 ```
 
 ---
@@ -155,12 +139,6 @@ openpypeconsole settings
 ```
 
 ---
-### `standalonepublisher` arguments {#standalonepublisher-arguments}
-`standalonepublisher` has no command-line arguments.
-```shell
-openpype_console standalonepublisher
-```
-
 ### `repack-version` arguments {#repack-version-arguments}
 Takes path to unzipped and possibly modified OpenPype version. Files will be
 zipped, checksums recalculated and version will be determined by folder name

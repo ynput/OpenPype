@@ -4,8 +4,9 @@ from contextlib import contextmanager
 
 import six
 
-from avalon import api, io
-from openpype.api import get_asset
+from openpype.client import get_asset_by_name
+from openpype.pipeline import legacy_io
+from openpype.pipeline.context_tools import get_current_project_asset
 
 
 import hou
@@ -15,7 +16,7 @@ log = logging.getLogger(__name__)
 
 def get_asset_fps():
     """Return current asset fps."""
-    return get_asset()["data"].get("fps")
+    return get_current_project_asset()["data"].get("fps")
 
 
 def set_id(node, unique_id, overwrite=False):
@@ -74,12 +75,13 @@ def generate_ids(nodes, asset_id=None):
     """
 
     if asset_id is None:
+        project_name = legacy_io.active_project()
+        asset_name = legacy_io.Session["AVALON_ASSET"]
         # Get the asset ID from the database for the asset of current context
-        asset_data = io.find_one({"type": "asset",
-                                  "name": api.Session["AVALON_ASSET"]},
-                                 projection={"_id": True})
-        assert asset_data, "No current asset found in Session"
-        asset_id = asset_data['_id']
+        asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
+
+        assert asset_doc, "No current asset found in Session"
+        asset_id = asset_doc['_id']
 
     node_ids = []
     for node in nodes:
@@ -126,6 +128,8 @@ def get_output_parameter(node):
     elif node_type == "arnold":
         if node.evalParm("ar_ass_export_enable"):
             return node.parm("ar_ass_file")
+    elif node_type == "Redshift_Proxy_Output":
+        return node.parm("RS_archive_file")
 
     raise TypeError("Node type '%s' not supported" % node_type)
 
@@ -155,7 +159,7 @@ def validate_fps():
         if parent is None:
             pass
         else:
-            dialog = popup.Popup(parent=parent)
+            dialog = popup.PopupUpdateKeys(parent=parent)
             dialog.setModal(True)
             dialog.setWindowTitle("Houdini scene does not match project FPS")
             dialog.setMessage("Scene %i FPS does not match project %i FPS" %
@@ -163,7 +167,7 @@ def validate_fps():
             dialog.setButtonText("Fix")
 
             # on_show is the Fix button clicked callback
-            dialog.on_clicked.connect(lambda: set_scene_fps(fps))
+            dialog.on_clicked_state.connect(lambda: set_scene_fps(fps))
 
             dialog.show()
 
@@ -424,26 +428,29 @@ def maintained_selection():
 def reset_framerange():
     """Set frame range to current asset"""
 
-    asset_name = api.Session["AVALON_ASSET"]
-    asset = io.find_one({"name": asset_name, "type": "asset"})
+    project_name = legacy_io.active_project()
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    # Get the asset ID from the database for the asset of current context
+    asset_doc = get_asset_by_name(project_name, asset_name)
+    asset_data = asset_doc["data"]
 
-    frame_start = asset["data"].get("frameStart")
-    frame_end = asset["data"].get("frameEnd")
+    frame_start = asset_data.get("frameStart")
+    frame_end = asset_data.get("frameEnd")
     # Backwards compatibility
     if frame_start is None or frame_end is None:
-        frame_start = asset["data"].get("edit_in")
-        frame_end = asset["data"].get("edit_out")
+        frame_start = asset_data.get("edit_in")
+        frame_end = asset_data.get("edit_out")
 
     if frame_start is None or frame_end is None:
         log.warning("No edit information found for %s" % asset_name)
         return
 
-    handles = asset["data"].get("handles") or 0
-    handle_start = asset["data"].get("handleStart")
+    handles = asset_data.get("handles") or 0
+    handle_start = asset_data.get("handleStart")
     if handle_start is None:
         handle_start = handles
 
-    handle_end = asset["data"].get("handleEnd")
+    handle_end = asset_data.get("handleEnd")
     if handle_end is None:
         handle_end = handles
 

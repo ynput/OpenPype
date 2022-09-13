@@ -4,18 +4,26 @@ import re
 import pyblish.api
 
 from openpype.lib import prepare_template_data
-from openpype.lib.plugin_tools import parse_json, get_batch_asset_task_info
 from openpype.hosts.photoshop import api as photoshop
+from openpype.settings import get_project_settings
 
 
 class CollectColorCodedInstances(pyblish.api.ContextPlugin):
-    """Creates instances for configured color code of a layer.
+    """Creates instances for layers marked by configurable color.
 
     Used in remote publishing when artists marks publishable layers by color-
-    coding.
+    coding. Top level layers (group) must be marked by specific color to be
+    published as an instance of 'image' family.
 
     Can add group for all publishable layers to allow creation of flattened
     image. (Cannot contain special background layer as it cannot be grouped!)
+
+    Based on value `create_flatten_image` from Settings:
+    - "yes": create flattened 'image' subset of all publishable layers + create
+        'image' subset per publishable layer
+    - "only": create ONLY flattened 'image' subset of all publishable layers
+    - "no": do not create flattened 'image' subset at all,
+        only separate subsets per marked layer.
 
     Identifier:
         id (str): "pyblish.avalon.instance"
@@ -32,8 +40,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
     # TODO check if could be set globally, probably doesn't make sense when
     # flattened template cannot
     subset_template_name = ""
-    create_flatten_image = False
-    # probably not possible to configure this globally
+    create_flatten_image = "no"
     flatten_subset_template = ""
 
     def process(self, context):
@@ -46,13 +53,23 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
 
         existing_subset_names = self._get_existing_subset_names(context)
 
-        asset_name, task_name, variant = self._parse_batch(batch_dir)
+        # from CollectBatchData
+        asset_name = context.data["asset"]
+        task_name = context.data["task"]
+        variant = context.data["variant"]
+        project_name = context.data["projectEntity"]["name"]
+
+        naming_conventions = get_project_settings(project_name).get(
+            "photoshop", {}).get(
+            "publish", {}).get(
+            "ValidateNaming", {})
 
         stub = photoshop.stub()
         layers = stub.get_layers()
 
         publishable_layers = []
         created_instances = []
+        family_from_settings = None
         for layer in layers:
             self.log.debug("Layer:: {}".format(layer))
             if layer.parents:
@@ -71,28 +88,37 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
                 self.log.debug("!!! Not found family or template, skip")
                 continue
 
+            if not family_from_settings:
+                family_from_settings = resolved_family
+
             fill_pairs = {
                 "variant": variant,
                 "family": resolved_family,
                 "task": task_name,
-                "layer": layer.name
+                "layer": layer.clean_name
             }
 
             subset = resolved_subset_template.format(
                 **prepare_template_data(fill_pairs))
+
+            subset = self._clean_subset_name(stub, naming_conventions,
+                                             subset, layer)
 
             if subset in existing_subset_names:
                 self.log.info(
                     "Subset {} already created, skipping.".format(subset))
                 continue
 
-            instance = self._create_instance(context, layer, resolved_family,
-                                             asset_name, subset, task_name)
+            if self.create_flatten_image != "flatten_only":
+                instance = self._create_instance(context, layer,
+                                                 resolved_family,
+                                                 asset_name, subset, task_name)
+                created_instances.append(instance)
+
             existing_subset_names.append(subset)
             publishable_layers.append(layer)
-            created_instances.append(instance)
 
-        if self.create_flatten_image and publishable_layers:
+        if self.create_flatten_image != "no" and publishable_layers:
             self.log.debug("create_flatten_image")
             if not self.flatten_subset_template:
                 self.log.warning("No template for flatten image")
@@ -104,7 +130,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
 
             first_layer = publishable_layers[0]  # dummy layer
             first_layer.name = subset
-            family = created_instances[0].data["family"]  # inherit family
+            family = family_from_settings  # inherit family
             instance = self._create_instance(context, first_layer,
                                              family,
                                              asset_name, subset, task_name)
@@ -130,25 +156,6 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
 
         return existing_subset_names
 
-    def _parse_batch(self, batch_dir):
-        """Parses asset_name, task_name, variant from batch manifest."""
-        task_data = None
-        if batch_dir and os.path.exists(batch_dir):
-            task_data = parse_json(os.path.join(batch_dir,
-                                                "manifest.json"))
-        if not task_data:
-            raise ValueError(
-                "Cannot parse batch meta in {} folder".format(batch_dir))
-        variant = task_data["variant"]
-
-        asset, task_name, task_type = get_batch_asset_task_info(
-            task_data["context"])
-
-        if not task_name:
-            task_name = task_type
-
-        return asset, task_name, variant
-
     def _create_instance(self, context, layer, family,
                          asset, subset, task_name):
         instance = context.create_instance(layer.name)
@@ -158,6 +165,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
         instance.data["task"] = task_name
         instance.data["subset"] = subset
         instance.data["layer"] = layer
+        instance.data["families"] = []
 
         return instance
 
@@ -203,3 +211,21 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
         self.log.debug("resolved_subset_template {}".format(
             resolved_subset_template))
         return family, resolved_subset_template
+
+    def _clean_subset_name(self, stub, naming_conventions, subset, layer):
+        """Cleans invalid characters from subset name and layer name."""
+        if re.search(naming_conventions["invalid_chars"], subset):
+            subset = re.sub(
+                naming_conventions["invalid_chars"],
+                naming_conventions["replace_char"],
+                subset
+            )
+            layer_name = re.sub(
+                naming_conventions["invalid_chars"],
+                naming_conventions["replace_char"],
+                layer.clean_name
+            )
+            layer.name = layer_name
+            stub.rename_layer(layer.id, layer_name)
+
+        return subset
