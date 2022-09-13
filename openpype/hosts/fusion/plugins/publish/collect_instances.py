@@ -4,19 +4,21 @@ import pyblish.api
 
 
 def get_comp_render_range(comp):
-    """Return comp's start and end render range."""
+    """Return comp's start-end render range and global start-end range."""
     comp_attrs = comp.GetAttrs()
     start = comp_attrs["COMPN_RenderStart"]
     end = comp_attrs["COMPN_RenderEnd"]
+    global_start = comp_attrs["COMPN_GlobalStart"]
+    global_end = comp_attrs["COMPN_GlobalEnd"]
 
     # Whenever render ranges are undefined fall back
     # to the comp's global start and end
     if start == -1000000000:
-        start = comp_attrs["COMPN_GlobalEnd"]
+        start = global_start
     if end == -1000000000:
-        end = comp_attrs["COMPN_GlobalStart"]
+        end = global_end
 
-    return start, end
+    return start, end, global_start, global_end
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -42,9 +44,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
         tools = comp.GetToolList(False).values()
         savers = [tool for tool in tools if tool.ID == "Saver"]
 
-        start, end = get_comp_render_range(comp)
+        start, end, global_start, global_end = get_comp_render_range(comp)
         context.data["frameStart"] = int(start)
         context.data["frameEnd"] = int(end)
+        context.data["frameStartHandle"] = int(global_start)
+        context.data["frameEndHandle"] = int(global_end)
 
         for tool in savers:
             path = tool["Clip"][comp.TIME_UNDEFINED]
@@ -78,6 +82,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "label": label,
                 "frameStart": context.data["frameStart"],
                 "frameEnd": context.data["frameEnd"],
+                "frameStartHandle": context.data["frameStartHandle"],
+                "frameEndHandle": context.data["frameStartHandle"],
                 "fps": context.data["fps"],
                 "families": ["render", "review", "ftrack"],
                 "family": "render",
