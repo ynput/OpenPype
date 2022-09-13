@@ -189,6 +189,7 @@ if ($venv_path -or
 if ($venv_path){
    Write-Color -Text ">>> ", "Creating virtual environment at $($venv_path)." -Color Green, White
    & "$env:POETRY_HOME\bin\poetry" run python -m venv $venv_path
+   $env:VIRTUAL_ENV = $venv_path
    & "$env:POETRY_HOME\bin\poetry" config virtualenvs.create false
    Set-Location -Path $venv_path
 }
