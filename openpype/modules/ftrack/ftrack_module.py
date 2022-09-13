@@ -65,7 +65,7 @@ class FtrackModule(
 
     def get_ftrack_url(self):
         if self._ftrack_url is _PLACEHOLDER:
-            self._ftrack_url = check_ftrack_url(
+            self._ftrack_url = resolve_ftrack_url(
                 self._settings_ftrack_url,
                 logger=self.log
             )
@@ -495,8 +495,8 @@ def _check_ftrack_url(url):
     return True
 
 
-def check_ftrack_url(url, log_errors=True, logger=None):
-    """Checks if Ftrack server is responding"""
+def resolve_ftrack_url(url, log_errors=True, logger=None):
+    """Checks if Ftrack server is responding."""
 
     if logger is None:
         logger = Logger.get_logger(__name__)

@@ -22,7 +22,7 @@ from openpype.lib import (
 )
 from openpype_modules.ftrack import (
     FTRACK_MODULE_DIR,
-    check_ftrack_url,
+    resolve_ftrack_url,
 )
 from openpype_modules.ftrack.lib import credentials
 from openpype_modules.ftrack.ftrack_server import socket_thread
@@ -116,7 +116,7 @@ def legacy_server(ftrack_url):
 
     while True:
         if not ftrack_accessible:
-            ftrack_accessible = check_ftrack_url(ftrack_url)
+            ftrack_accessible = resolve_ftrack_url(ftrack_url)
 
         # Run threads only if Ftrack is accessible
         if not ftrack_accessible and not printed_ftrack_error:
@@ -259,7 +259,7 @@ def main_loop(ftrack_url):
     while True:
         # Check if accessible Ftrack and Mongo url
         if not ftrack_accessible:
-            ftrack_accessible = check_ftrack_url(ftrack_url)
+            ftrack_accessible = resolve_ftrack_url(ftrack_url)
 
         if not mongo_accessible:
             mongo_accessible = check_mongo_url(mongo_uri)
@@ -443,7 +443,7 @@ def run_event_server(
         os.environ["CLOCKIFY_API_KEY"] = clockify_api_key
 
     # Check url regex and accessibility
-    ftrack_url = check_ftrack_url(ftrack_url)
+    ftrack_url = resolve_ftrack_url(ftrack_url)
     if not ftrack_url:
         print('Exiting! < Please enter Ftrack server url >')
         return 1

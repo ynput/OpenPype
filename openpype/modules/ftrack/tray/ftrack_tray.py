@@ -8,7 +8,7 @@ from Qt import QtCore, QtWidgets, QtGui
 import ftrack_api
 from openpype import resources
 from openpype.lib import Logger
-from openpype_modules.ftrack import check_ftrack_url, FTRACK_MODULE_DIR
+from openpype_modules.ftrack import resolve_ftrack_url, FTRACK_MODULE_DIR
 from openpype_modules.ftrack.ftrack_server import socket_thread
 from openpype_modules.ftrack.lib import credentials
 from . import login_dialog
@@ -151,7 +151,7 @@ class FtrackTrayWrapper:
 
             # Check if accessible Ftrack and Mongo url
             if not ftrack_accessible:
-                ftrack_accessible = check_ftrack_url(ftrack_url)
+                ftrack_accessible = resolve_ftrack_url(ftrack_url)
 
             # Run threads only if Ftrack is accessible
             if not ftrack_accessible:
