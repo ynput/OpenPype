@@ -19,11 +19,8 @@ from openpype.client.operations import (
     CURRENT_PROJECT_SCHEMA,
     CURRENT_PROJECT_CONFIG_SCHEMA,
 )
-from openpype.api import (
-    Logger,
-    get_anatomy_settings
-)
-from openpype.lib import ApplicationManager
+from openpype.settings import get_anatomy_settings
+from openpype.lib import ApplicationManager, Logger
 from openpype.pipeline import AvalonMongoDB, schema
 
 from .constants import CUST_ATTR_ID_KEY, FPS_KEYS
