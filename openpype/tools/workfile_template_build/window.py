@@ -126,8 +126,8 @@ class WorkfileBuildPlaceholderDialog(QtWidgets.QDialog):
         self._last_selected_plugin = None
         self._plugins_combo.clear()
         for identifier, plugin in placeholder_plugins.items():
-            label = plugin.label or plugin.identifier
-            self._plugins_combo.addItem(label, plugin.identifier)
+            label = plugin.label or identifier
+            self._plugins_combo.addItem(label, identifier)
 
         index = self._plugins_combo.findData(last_selected_plugin)
         if index < 0:
