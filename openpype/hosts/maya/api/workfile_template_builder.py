@@ -216,6 +216,31 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
     def get_placeholder_options(self, options=None):
         return self.get_load_plugin_options(self, options)
 
+    def cleanup_placeholder(self, placeholder):
+        """Hide placeholder, parent them to root
+        add them to placeholder set and register placeholder's parent
+        to keep placeholder info available for future use
+        """
+
+        node = placeholder._scene_identifier
+        node_parent = placeholder.data["parent"]
+        if node_parent:
+            cmds.setAttr(node + ".parent", node_parent, type="string")
+
+        if cmds.getAttr(node + ".index") < 0:
+            cmds.setAttr(node + ".index", placeholder.data["index"])
+
+        holding_sets = cmds.listSets(object=node)
+        if holding_sets:
+            for set in holding_sets:
+                cmds.sets(node, remove=set)
+
+        if cmds.listRelatives(node, p=True):
+            node = cmds.parent(node, world=True)[0]
+        cmds.sets(node, addElement=PLACEHOLDER_SET)
+        cmds.hide(node)
+        cmds.setAttr(node + ".hiddenInOutliner", True)
+
 
 class LoadPlaceholderItem(PlaceholderItem):
     """Concrete implementation of PlaceholderItem for Maya load plugin."""
@@ -268,29 +293,6 @@ class LoadPlaceholderItem(PlaceholderItem):
             return
         for holding_set in holding_sets:
             cmds.sets(roots, forceElement=holding_set)
-
-    def clean(self):
-        """Hide placeholder, parent them to root
-        add them to placeholder set and register placeholder's parent
-        to keep placeholder info available for future use
-        """
-
-        node = self._scene_identifier
-        if self.data['parent']:
-            cmds.setAttr(node + '.parent', self.data['parent'], type='string')
-        if cmds.getAttr(node + '.index') < 0:
-            cmds.setAttr(node + '.index', self.data['index'])
-
-        holding_sets = cmds.listSets(object=node)
-        if holding_sets:
-            for set in holding_sets:
-                cmds.sets(node, remove=set)
-
-        if cmds.listRelatives(node, p=True):
-            node = cmds.parent(node, world=True)[0]
-        cmds.sets(node, addElement=PLACEHOLDER_SET)
-        cmds.hide(node)
-        cmds.setAttr(node + ".hiddenInOutliner", True)
 
     def get_errors(self):
         if not self._failed_representations:

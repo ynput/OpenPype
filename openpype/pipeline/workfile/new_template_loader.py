@@ -1268,4 +1268,7 @@ class PlaceholderLoadMixin(object):
 
             else:
                 placeholder.load_succeed(container)
-            placeholder.clean()
+            self.cleanup_placeholder(placeholder)
+
+    def cleanup_placeholder(self, placeholder):
+        pass
