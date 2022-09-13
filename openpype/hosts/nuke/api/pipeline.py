@@ -1,12 +1,18 @@
+import nuke
+
 import os
 import importlib
 from collections import OrderedDict
 
-import nuke
-
 import pyblish.api
 
 import openpype
+from openpype.host import (
+    HostBase,
+    IWorkfileHost,
+    ILoadHost,
+    INewPublisher
+)
 from openpype.api import (
     Logger,
     get_current_project_settings
@@ -39,10 +45,22 @@ from .lib import (
     check_inventory_versions,
     set_avalon_knob_data,
     read_avalon_data,
-    get_avalon_knob_data
+    get_avalon_knob_data,
+    on_script_load,
+    dirmap_file_name_filter,
+    add_scripts_menu,
+    add_scripts_gizmo
 )
 from .lib_template_builder import (
     create_placeholder, update_placeholder
+)
+from .workio import (
+    open_file,
+    save_file,
+    file_extensions,
+    has_unsaved_changes,
+    work_root,
+    current_file
 )
 
 log = Logger.get_logger(__name__)
@@ -60,6 +78,92 @@ MENU_LABEL = os.environ["AVALON_LABEL"]
 # registering pyblish gui regarding settings in presets
 if os.getenv("PYBLISH_GUI", None):
     pyblish.api.register_gui(os.getenv("PYBLISH_GUI", None))
+
+
+class NukeHost(
+    HostBase, IWorkfileHost, ILoadHost, INewPublisher
+):
+    name = "nuke"
+
+    def open_workfile(self, filepath):
+        return open_file(filepath)
+
+    def save_workfile(self, filepath=None):
+        return save_file(filepath)
+
+    def work_root(self, session):
+        return work_root(session)
+
+    def get_current_workfile(self):
+        return current_file()
+
+    def workfile_has_unsaved_changes(self):
+        return has_unsaved_changes()
+
+    def get_workfile_extensions(self):
+        return file_extensions()
+
+    def get_containers(self):
+        return ls()
+
+    def install(self):
+        ''' Installing all requarements for Nuke host
+        '''
+
+        pyblish.api.register_host("nuke")
+
+        self.log.info("Registering Nuke plug-ins..")
+        pyblish.api.register_plugin_path(PUBLISH_PATH)
+        register_loader_plugin_path(LOAD_PATH)
+        register_creator_plugin_path(CREATE_PATH)
+        register_inventory_action_path(INVENTORY_PATH)
+
+        # Register Avalon event for workfiles loading.
+        register_event_callback("workio.open_file", check_inventory_versions)
+        register_event_callback("taskChanged", change_context_label)
+
+        pyblish.api.register_callback(
+            "instanceToggled", on_pyblish_instance_toggled)
+
+        _install_menu()
+
+        # add script menu
+        add_scripts_menu()
+        add_scripts_gizmo()
+
+        add_nuke_callbacks()
+
+        launch_workfiles_app()
+
+    def get_context_data(self):
+        pass
+
+    def update_context_data(self, data, changes):
+        pass
+
+
+def add_nuke_callbacks():
+
+    workfile_settings = WorkfileSettings()
+    # Set context settings.
+    nuke.addOnCreate(
+        workfile_settings.set_context_settings, nodeClass="Root")
+    nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
+    nuke.addOnCreate(process_workfile_builder, nodeClass="Root")
+
+    # fix ffmpeg settings on script
+    nuke.addOnScriptLoad(on_script_load)
+
+    # set checker for last versions on loaded containers
+    nuke.addOnScriptLoad(check_inventory_versions)
+    nuke.addOnScriptSave(check_inventory_versions)
+
+    # # set apply all workfile settings on script load and save
+    nuke.addOnScriptLoad(WorkfileSettings().set_context_settings)
+
+    nuke.addFilenameFilter(dirmap_file_name_filter)
+
+    log.info('Automatic syncing of write file knob to script version')
 
 
 def reload_config():
@@ -86,52 +190,6 @@ def reload_config():
             from importlib import reload
             log.warning("Cannot reload module: {}".format(e))
             reload(module)
-
-
-def install():
-    ''' Installing all requarements for Nuke host
-    '''
-
-    pyblish.api.register_host("nuke")
-
-    log.info("Registering Nuke plug-ins..")
-    pyblish.api.register_plugin_path(PUBLISH_PATH)
-    register_loader_plugin_path(LOAD_PATH)
-    register_creator_plugin_path(CREATE_PATH)
-    register_inventory_action_path(INVENTORY_PATH)
-
-    # Register Avalon event for workfiles loading.
-    register_event_callback("workio.open_file", check_inventory_versions)
-    register_event_callback("taskChanged", change_context_label)
-
-    pyblish.api.register_callback(
-        "instanceToggled", on_pyblish_instance_toggled)
-    workfile_settings = WorkfileSettings()
-
-    # Set context settings.
-    nuke.addOnCreate(workfile_settings.set_context_settings, nodeClass="Root")
-    nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
-    nuke.addOnCreate(process_workfile_builder, nodeClass="Root")
-
-    _install_menu()
-    launch_workfiles_app()
-
-
-def uninstall():
-    '''Uninstalling host's integration
-    '''
-    log.info("Deregistering Nuke plug-ins..")
-    pyblish.deregister_host("nuke")
-    pyblish.api.deregister_plugin_path(PUBLISH_PATH)
-    deregister_loader_plugin_path(LOAD_PATH)
-    deregister_creator_plugin_path(CREATE_PATH)
-    deregister_inventory_action_path(INVENTORY_PATH)
-
-    pyblish.api.deregister_callback(
-        "instanceToggled", on_pyblish_instance_toggled)
-
-    reload_config()
-    _uninstall_menu()
 
 
 def _show_workfiles():
@@ -242,15 +300,6 @@ def _install_menu():
 
     # adding shortcuts
     add_shortcuts_from_presets()
-
-
-def _uninstall_menu():
-    menubar = nuke.menu("Nuke")
-    menu = menubar.findItem(MENU_LABEL)
-
-    for item in menu.items():
-        log.info("Removing menu item: {}".format(item.name()))
-        menu.removeItem(item.name())
 
 
 def change_context_label():

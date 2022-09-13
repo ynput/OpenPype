@@ -6,15 +6,12 @@ from .workio import (
     current_file,
     work_root,
 )
-
 from .command import (
     viewer_update_and_undo_stop
 )
-
 from .plugin import OpenPypeCreator
 from .pipeline import (
-    install,
-    uninstall,
+    NukeHost,
 
     ls,
 
@@ -33,7 +30,6 @@ from .lib import (
     duplicate_node,
     convert_knob_value_to_correct_type
 )
-
 from .utils import (
     colorspace_exists_on_node,
     get_colorspace_list
@@ -50,8 +46,7 @@ __all__ = (
     "viewer_update_and_undo_stop",
 
     "OpenPypeCreator",
-    "install",
-    "uninstall",
+    "NukeHost",
 
     "ls",
 
