@@ -32,7 +32,7 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.maya import MAYA_ROOT_DIR
-from openpype.hosts.maya.lib import copy_workspace_mel
+from openpype.hosts.maya.lib import create_workspace_mel
 
 from . import menu, lib
 from .workio import (
@@ -63,7 +63,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         self._op_events = {}
 
     def install(self):
-        project_name = os.getenv("AVALON_PROJECT")
+        project_name = legacy_io.active_project()
         project_settings = get_project_settings(project_name)
         # process path mapping
         dirmap_processor = MayaDirmap("maya", project_name, project_settings)
@@ -349,21 +349,13 @@ def containerise(name,
         ("id", AVALON_CONTAINER_ID),
         ("name", name),
         ("namespace", namespace),
-        ("loader", str(loader)),
+        ("loader", loader),
         ("representation", context["representation"]["_id"]),
     ]
 
     for key, value in data:
-        if not value:
-            continue
-
-        if isinstance(value, (int, float)):
-            cmds.addAttr(container, longName=key, attributeType="short")
-            cmds.setAttr(container + "." + key, value)
-
-        else:
-            cmds.addAttr(container, longName=key, dataType="string")
-            cmds.setAttr(container + "." + key, value, type="string")
+        cmds.addAttr(container, longName=key, dataType="string")
+        cmds.setAttr(container + "." + key, str(value), type="string")
 
     main_container = cmds.ls(AVALON_CONTAINERS, type="objectSet")
     if not main_container:
@@ -541,7 +533,7 @@ def on_task_changed():
         lib.update_content_on_context_change()
 
     msg = "  project: {}\n  asset: {}\n  task:{}".format(
-        legacy_io.Session["AVALON_PROJECT"],
+        legacy_io.active_project(),
         legacy_io.Session["AVALON_ASSET"],
         legacy_io.Session["AVALON_TASK"]
     )
@@ -553,9 +545,10 @@ def on_task_changed():
 
 
 def before_workfile_save(event):
+    project_name = legacy_io.active_project()
     workdir_path = event["workdir_path"]
     if workdir_path:
-        copy_workspace_mel(workdir_path)
+        create_workspace_mel(workdir_path, project_name)
 
 
 class MayaDirmap(HostDirmap):
