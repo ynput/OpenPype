@@ -204,8 +204,8 @@ def convert_value_by_type_name(value_type, value, logger=None):
             )
         return output
 
-    logger.info((
-        "MISSING IMPLEMENTATION:"
+    logger.debug((
+        "Dev note (missing implementation):"
         " Unknown attrib type \"{}\". Value: {}"
     ).format(value_type, value))
     return value
@@ -263,8 +263,8 @@ def parse_oiio_xml_output(xml_string, logger=None):
         # - feel free to add more tags
         else:
             value = child.text
-            logger.info((
-                "MISSING IMPLEMENTATION:"
+            logger.debug((
+                "Dev note (missing implementation):"
                 " Unknown tag \"{}\". Value \"{}\""
             ).format(tag_name, value))
 
