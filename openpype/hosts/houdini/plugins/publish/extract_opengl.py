@@ -8,7 +8,7 @@ from openpype.hosts.houdini.api.lib import render_rop
 class ExtractOpenGL(openpype.api.Extractor):
 
     order = pyblish.api.ExtractorOrder
-    label = "Extract OpenGL (Review)"
+    label = "Extract OpenGL"
     families = ["review"]
     hosts = ["houdini"]
     optional = True
