@@ -730,7 +730,7 @@
                     "grid": false,
                     "hairSystems": true,
                     "handles": false,
-                    "hud": false,
+                    "headsUpDisplay": false,
                     "ikHandles": false,
                     "imagePlane": true,
                     "joints": false,

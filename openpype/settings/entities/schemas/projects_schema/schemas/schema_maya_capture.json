@@ -440,8 +440,13 @@
                         },
                         {
                             "type": "boolean",
-                            "key": "hud",
+                            "key": "headsUpDisplay",
                             "label": "HUD"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "hulls",
+                            "label": "hulls"
                         },
                         {
                             "type": "boolean",
