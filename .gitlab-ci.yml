@@ -54,7 +54,8 @@ workflow:
     - git --version
     - git --exec-path
     - ls C:\Program` Files\Git\mingw64\ssl\certs
-    - git config --global http.sslCAInfo "C:\Program Files\Git\mingw64\ssl\certs\ca-bundle.crt"
+    # - git config --global http.sslCAInfo "C:\Program Files\Git\mingw64\ssl\certs\ca-bundle.crt"
+    - git config --global http.sslVerify false
     # setup python 3.7.9
     # - $env:PATH="c:\prod\softprod\apps\python\3.7.9\windows\;C:\prod\softprod\apps\git-bash\latest\windows\cmd\;"+$env:PATH
     # - [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
