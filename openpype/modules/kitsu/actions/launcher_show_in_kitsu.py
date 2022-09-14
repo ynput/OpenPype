@@ -44,7 +44,7 @@ class ShowInKitsu(LauncherAction):
         asset_zou_name = None
         asset_zou_id = None
         asset_zou_type = 'Assets'
-        zou_sub_type = ['AssetType','Sequence']
+        zou_sub_type = ['AssetType', 'Sequence']
         if asset_name:
             asset_zou_name = asset_name
             asset_fields = ["data.zou.id", "data.zou.type"]
@@ -59,11 +59,10 @@ class ShowInKitsu(LauncherAction):
 
             if asset_zou_data:
                 asset_zou_type = asset_zou_data["type"]
-                if not asset_zou_type in zou_sub_type:
+                if asset_zou_type not in zou_sub_type:
                     asset_zou_id = asset_zou_data["id"]
             else:
                 asset_zou_type = asset_name
-                
 
             if task_name:
                 task_data = asset["data"]["tasks"][task_name]
@@ -71,7 +70,7 @@ class ShowInKitsu(LauncherAction):
                 if not task_zou_data:
                     self.log.debug(f"No zou task data for task: {task_name}")
                 task_zou_id = task_zou_data["id"]
- 
+
         # Define URL
         url = self.get_url(project_id=project_zou_id,
                            asset_name=asset_zou_name,
@@ -92,8 +91,8 @@ class ShowInKitsu(LauncherAction):
                 asset_type=None,
                 task_id=None):
 
-        shots_url = ['Shots','Sequence','Shot']
-        sub_type = ['AssetType','Sequence']
+        shots_url = ['Shots', 'Sequence', 'Shot']
+        sub_type = ['AssetType', 'Sequence']
         kitsu_module = self.get_kitsu_module()
 
         # Get kitsu url with /api stripped
@@ -103,7 +102,7 @@ class ShowInKitsu(LauncherAction):
 
         sub_url = f"/productions/{project_id}"
         asset_type_url = "Assets"
-        
+
         # Add redirection url for shots_url list
         if asset_type in shots_url:
             asset_type_url = 'Shots'
