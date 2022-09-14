@@ -731,7 +731,7 @@
                     "grid": false,
                     "hairSystems": true,
                     "handles": false,
-                    "hud": false,
+                    "headsUpDisplay": false,
                     "hulls": false,
                     "ikHandles": false,
                     "imagePlane": true,

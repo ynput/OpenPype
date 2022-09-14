@@ -441,8 +441,8 @@
                         },
                         {
                             "type": "boolean",
-                            "key": "hud",
-                            "label": "hud"
+                            "key": "headsUpDisplay",
+                            "label": "headsUpDisplay"
                         },
                         {
                             "type": "boolean",
