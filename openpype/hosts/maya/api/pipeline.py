@@ -155,8 +155,11 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
             OpenMaya.MSceneMessage.kBeforeSave, _on_scene_save
         )
 
-        self._op_events[_after_scene_save] = OpenMaya.MSceneMessage.addCallback(
-            OpenMaya.MSceneMessage.kAfterSave, _after_scene_save
+        self._op_events[_after_scene_save] = (
+            OpenMaya.MSceneMessage.addCallback(
+                OpenMaya.MSceneMessage.kAfterSave,
+                _after_scene_save
+            )
         )
 
         self._op_events[_before_scene_save] = (
@@ -243,8 +246,10 @@ def _on_maya_initialized(*args):
 def _on_scene_new(*args):
     emit_event("new")
 
+
 def _after_scene_save(*arg):
     emit_event("after.save")
+
 
 def _on_scene_save(*args):
     emit_event("save")
@@ -508,14 +513,10 @@ def check_lock_on_current_file():
 
     if is_workfile_locked(filepath):
         # add lockfile dialog
-        try:
-            workfile_dialog.close()
-            workfile_dialog.deleteLater()
-        except:
-            workfile_dialog = WorkfileLockDialog(filepath)
-            if not workfile_dialog.exec_():
-                cmds.file(new=True)
-                return
+        workfile_dialog = WorkfileLockDialog(filepath)
+        if not workfile_dialog.exec_():
+            cmds.file(new=True)
+            return
 
     create_workfile_lock(filepath)
 
