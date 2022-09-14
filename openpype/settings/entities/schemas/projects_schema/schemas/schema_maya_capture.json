@@ -381,11 +381,6 @@
                         },
                         {
                             "type": "boolean",
-                            "key": "controlVertices",
-                            "label": "NURBS CVs"
-                        },
-                        {
-                            "type": "boolean",
                             "key": "deformers",
                             "label": "Deformers"
                         },
@@ -437,17 +432,12 @@
                         {
                             "type": "boolean",
                             "key": "handles",
-                            "label": "handles"
+                            "label": "Handles"
                         },
                         {
                             "type": "boolean",
                             "key": "hud",
                             "label": "HUD"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "hulls",
-                            "label": "NURBS Hulls"
                         },
                         {
                             "type": "boolean",
@@ -501,8 +491,18 @@
                         },
                         {
                             "type": "boolean",
+                            "key": "controlVertices",
+                            "label": "NURBS CVs"
+                        },
+                        {
+                            "type": "boolean",
                             "key": "nurbsCurves",
                             "label": "NURBS Curves"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "hulls",
+                            "label": "NURBS Hulls"
                         },
                         {
                             "type": "boolean",
