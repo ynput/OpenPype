@@ -37,8 +37,7 @@ from openpype.tools.utils import (
 )
 from openpype.tools.utils.delegates import (
     VersionDelegate,
-    PrettyTimeDelegate,
-    LoadedInSceneDelegate
+    PrettyTimeDelegate
 )
 from openpype.tools.utils.widgets import (
     OptionalMenu,
@@ -59,6 +58,7 @@ from .model import (
     ITEM_ID_ROLE
 )
 from . import lib
+from .delegates import LoadedInSceneDelegate
 
 from openpype.tools.utils.constants import (
     LOCAL_PROVIDER_ROLE,
