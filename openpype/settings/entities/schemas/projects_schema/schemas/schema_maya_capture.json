@@ -432,11 +432,6 @@
                         },
                         {
                             "type": "boolean",
-                            "key": "hulls",
-                            "label": "hulls"
-                        },
-                        {
-                            "type": "boolean",
                             "key": "ikHandles",
                             "label": "IK Handles"
                         },
