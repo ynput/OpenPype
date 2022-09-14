@@ -66,7 +66,7 @@ workflow:
     # - $env:POETRY_VERSION="1.1.15"
     # - (Invoke-WebRequest -Uri https://install.python-poetry.org/ -UseBasicParsing).Content | python -
     # - .poetry/bin/poetry update -vvv
-    - C:\prod\softprod\apps\git-bash\latest\windows\cmd\git.exe clone --recurse-submodules -- https://github.com/ActiveState/appdirs.git  C:\Gitlab-Runner\builds\zfeUa-YX\0\quad\openpype\OpenPype\.venv\src\appdirs
+    # - C:\prod\softprod\apps\git-bash\latest\windows\cmd\git.exe clone --recurse-submodules -- https://github.com/ActiveState/appdirs.git  C:\Gitlab-Runner\builds\zfeUa-YX\0\quad\openpype\OpenPype\.venv\src\appdirs
     - .\tools\create_env.ps1 --verbose
     # - poetry env use
     - .\tools\fetch_thirdparty_libs.ps1
