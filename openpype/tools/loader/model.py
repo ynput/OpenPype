@@ -25,6 +25,7 @@ from openpype.pipeline import (
 from openpype.style import get_default_entity_icon_color
 from openpype.tools.utils.models import TreeModel, Item
 from openpype.tools.utils import lib
+from openpype.host import ILoadHost
 
 from openpype.modules import ModulesManager
 from openpype.tools.utils.constants import (
@@ -573,9 +574,8 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
                     containers = self._host.get_containers()
                 else:
                     containers = self._host.ls()
-                    
-                repre_ids = {con.get("representation")
-                             for con in self._host.ls()}
+
+                repre_ids = {con.get("representation") for con in containers}
                 self._loaded_representation_ids = repre_ids
                 self._host_loaded_refresh_time = time.time()
 
