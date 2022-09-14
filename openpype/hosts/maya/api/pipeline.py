@@ -493,7 +493,7 @@ def check_lock_on_current_file():
         # add lockfile dialog
         from Qt import QtWidgets
         top_level_widgets = {w.objectName(): w for w in
-                            QtWidgets.QApplication.topLevelWidgets()}
+                             QtWidgets.QApplication.topLevelWidgets()}
         parent = top_level_widgets.get("MayaWindow", None)
         workfile_dialog = WorkfileLockDialog(filepath, parent=parent)
         if not workfile_dialog.exec_():
@@ -501,6 +501,7 @@ def check_lock_on_current_file():
             return
 
     create_workfile_lock(filepath)
+
 
 def on_before_close():
     """Delete the lock file after user quitting the Maya Scene"""
