@@ -167,7 +167,7 @@ class AttributeValues:
         return self._data.pop(key, default)
 
     def reset_values(self):
-        self._data = []
+        self._data = {}
 
     def mark_stored(self):
         self._origin_data = copy.deepcopy(self._data)
