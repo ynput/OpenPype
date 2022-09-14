@@ -56,7 +56,7 @@ def convert_value_by_type_name(value_type, value):
         return float(value)
 
     # Vectors will probably have more types
-    if value_type == "vec2f":
+    if value_type in ("vec2f", "float2"):
         return [float(item) for item in value.split(",")]
 
     # Matrix should be always have square size of element 3x3, 4x4
