@@ -153,19 +153,6 @@
                             "decimal": 0,
                             "minimum": 0,
                             "maximum": 99999
-                        },
-                        {
-                            "type": "number",
-                            "key": "percent",
-                            "label": "Percent",
-                            "decimal": 1,
-                            "minimum": 0,
-                            "maximum": 200
-                        },
-                        {
-                            "type": "text",
-                            "key": "mode",
-                            "label": "Mode"
                         }
                     ]
                 },
