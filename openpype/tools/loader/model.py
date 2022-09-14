@@ -569,6 +569,11 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         if self._host:
             time_since_refresh = time.time() - self._host_loaded_refresh_time
             if time_since_refresh > self._host_loaded_refresh_timeout:
+                if isinstance(self._host, ILoadHost):
+                    containers = self._host.get_containers()
+                else:
+                    containers = self._host.ls()
+                    
                 repre_ids = {con.get("representation")
                              for con in self._host.ls()}
                 self._loaded_representation_ids = repre_ids
