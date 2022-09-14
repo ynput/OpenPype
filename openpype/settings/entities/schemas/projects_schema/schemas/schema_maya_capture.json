@@ -94,18 +94,6 @@
                         }
                     ]
                 },
-
-                {
-                    "type": "dict",
-                    "key": "PanZoom",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "pan_zoom",
-                            "label": "              Pan Zoom"
-                        }
-                    ]
-                },
                 {
                     "type": "splitter"
                 },

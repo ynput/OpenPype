@@ -678,9 +678,6 @@
                     "isolate_view": true,
                     "off_screen": true
                 },
-                "PanZoom": {
-                    "pan_zoom": true
-                },
                 "Renderer": {
                     "rendererName": "vp2Renderer"
                 },
