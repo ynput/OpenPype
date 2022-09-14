@@ -686,9 +686,7 @@
                 },
                 "Resolution": {
                     "width": 1920,
-                    "height": 1080,
-                    "percent": 1.0,
-                    "mode": "Custom"
+                    "height": 1080
                 },
                 "Viewport Options": {
                     "override_viewport_options": true,
