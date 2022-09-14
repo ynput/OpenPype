@@ -21,6 +21,7 @@ from common.openpype_common.distribution.dependencies.dependencies import (
 ROOT_FOLDER = os.path.abspath(os.path.join("..", "..", "..", "..", ".."))
 PURGE_TMP = True
 
+
 @pytest.fixture
 def openpype_toml_data():
     provider = FileTomlProvider(os.path.join(ROOT_FOLDER,
@@ -30,6 +31,7 @@ def openpype_toml_data():
 
 @pytest.fixture
 def addon_toml_to_compare_data():
+    """Test file contains dummy data to test version compare"""
     provider = FileTomlProvider(os.path.join("resources",
                                              "pyproject.toml"))
     return provider.get_toml()
@@ -37,6 +39,7 @@ def addon_toml_to_compare_data():
 
 @pytest.fixture
 def addon_toml_to_venv_data():
+    """Test file contains 'close to live' toml for single addon."""
     provider = FileTomlProvider(os.path.join("resources",
                                              "pyproject_clean.toml"))
     return provider.get_toml()
@@ -143,7 +146,7 @@ def test_get_venv_zip_name():
         "Different file must result in different name"
 
     with pytest.raises(FileNotFoundError):
-        get_venv_zip_name(test_file_1_path+".ntext")
+        get_venv_zip_name(test_file_1_path + ".ntext")
 
 
 def test_lock_to_toml_data():
@@ -152,12 +155,11 @@ def test_lock_to_toml_data():
     toml_data = lock_to_toml_data(lock_file_path)
 
     assert (toml_data["tool"]["poetry"]["dependencies"]["acre"] == "1.0.0",
-        "Wrong version, must be '1.0.0'")
+            "Wrong version, must be '1.0.0'")
 
     assert is_valid_toml(toml_data), "Must contain all required keys"
 
 
-@pytest.mark.skip(reason="no way of currently testing this")
 def test_prepare_new_venv(addon_toml_to_venv_data, tmpdir):
     """Creates zip of simple venv from mock addon pyproject data"""
     print(f"Creating new venv in {tmpdir}")
@@ -168,8 +170,9 @@ def test_prepare_new_venv(addon_toml_to_venv_data, tmpdir):
     inst_lib = os.path.join(tmpdir, '.venv', 'Lib', 'site-packages', 'aiohttp')
     assert os.path.exists(inst_lib), "aiohttp should be installed"
 
-@pytest.mark.skip(reason="no way of currently testing this")
+
 def test_remove_existing_from_venv(tmpdir):
+    """New venv shouldn't contain libraries already in build venv."""
     base_venv_path = os.path.join(ROOT_FOLDER, ".venv")
     addon_venv_path = os.path.join(tmpdir, ".venv")
 
@@ -180,8 +183,8 @@ def test_remove_existing_from_venv(tmpdir):
 
     assert "aiohttp" in removed, "aiohttp is in base, should be removed"
 
-@pytest.mark.skip(reason="no way of currently testing this")
-def test_get_venv_zip_name(tmpdir):
+
+def test_zip_venv(tmpdir):
     zip_file_name = get_venv_zip_name(os.path.join(tmpdir, "poetry.lock"))
     venv_zip_path = os.path.join(tmpdir, zip_file_name)
     zip_venv(os.path.join(tmpdir, ".venv"),
@@ -192,10 +195,10 @@ def test_get_venv_zip_name(tmpdir):
 
 def test_ServerTomlProvider():
     # TODO switch to mocks without test server
-    server_endpoint = "https://34e99f0f-f987-4715-95e6-d2d88caa7586.mock.pstmn.io/get_addons_tomls"
+    server_endpoint = "https://34e99f0f-f987-4715-95e6-d2d88caa7586.mock.pstmn.io/get_addons_tomls"  # noqa
     tomls = ServerTomlProvider(server_endpoint).get_tomls()
 
     assert len(tomls) == 1, "One addon should have dependencies"
 
     assert (tomls[0]["tool"]["poetry"]["dependencies"]["python"] == "^3.10",
-        "Missing dependency")
+            "Missing dependency")
