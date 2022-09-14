@@ -49,9 +49,11 @@ workflow:
     - shell
     - windows
   script:
-    - echo "Buil then copy to $env:OP_VERSION_PATH"
+    - echo "Build then copy to $env:OP_VERSION_PATH"
     # - Get-ChildItem -Path Env:\
-    - git --exec-path
+    - git --version
+    - git --exec-pathC:\Program Files\Git\mingw64\ssl\certs
+    - ls C:\Program Files\Git\mingw64\ssl\certs
     # setup python 3.7.9
     # - $env:PATH="c:\prod\softprod\apps\python\3.7.9\windows\;C:\prod\softprod\apps\git-bash\latest\windows\cmd\;"+$env:PATH
     # - [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
