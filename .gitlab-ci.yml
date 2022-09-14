@@ -1,99 +1,126 @@
-# This file is a template, and might need editing before it works on your project.
-# To contribute improvements to CI/CD templates, please follow the Development guide at:
-# https://docs.gitlab.com/ee/development/cicd/templates.html
-# This specific template is located at:
-# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Getting-Started.gitlab-ci.yml
-
-# This is a sample GitLab CI/CD configuration file that should run without any modifications.
-# It demonstrates a basic 3 stage CI/CD pipeline. Instead of real tests or scripts,
-# it uses echo commands to simulate the pipeline execution.
-#
-# A pipeline is composed of independent jobs that run scripts, grouped into stages.
-# Stages run in sequential order, but jobs within stages run in parallel.
-#
-# For more information, see: https://docs.gitlab.com/ee/ci/yaml/index.html#stages
-
 stages:
   - build
   - test
   - deploy
+  - staging
+  - production
 
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  OP_APP_DIR: '/prod/softprod/apps/openpype'
+  OP_STAGING_PATH: "$OP_APP_DIR/STAGING"
+  OP_PROD_PATH: '$OP_APP_DIR/LATEST'
+  OP_VERSION_PATH: '$OP_APP_DIR/VERSION_NOT_SET'
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG != ""
+      variables:
+        OP_VERSION_PATH: "$OP_APP_DIR/$CI_COMMIT_TAG"
+    - if: $CI_COMMIT_TAG == null || $CI_COMMIT_TAG ==""
+      variables:
+        OP_VERSION_PATH: "$OP_APP_DIR/$CI_COMMIT_BRANCH/$CI_COMMIT_SHORT_SHA"
+    - when: always
 
 .build-centos:
   stage: build
-  tags: 
+  tags:
     - shell
     - centos
   script:
-    # Add python from soft prod 
-    - export PATH="/prod/softprod/apps/python/3.7.9/linux/bin:$PATH"
+    # Add python from soft prod
+    - echo "Buil then copy to $OP_VERSION_PATH"
+    - export PYTHEMP=$(mktemp -d -t ci-XXXXXXXXXX -p ./)
+    - rsync -rtl --chmod a+w /prod/softprod/apps/python/3.7.9/linux $PYTHEMP/
+    - export PATH="$PYTHEMP/linux/bin:$PATH"
     # Create virtual environment in ./venv
     - ./tools/create_env.sh
     # Get PySide2, ffmpeg, oiio and other tools needed
     - ./tools/fetch_thirdparty_libs.sh
-    # build pype executables in .\build\
+    # Build pype executables in ./build
     - ./tools/build.sh
-    # - tar cvzfp ./build.tar.gz ./build
-  # cache:
-  #   key: "$CI_COMMIT_REF_SLUG"
-  #   paths:
-  #     - ./build
+    # Copy build in softprod
+    - mkdir -p $OP_VERSION_PATH/linux
+    - rsync -rptl ./build/exe.linux-x86_64-3.7/ $OP_VERSION_PATH/linux/
 
-  # artifacts:
-  #   paths:
-  #     - ./build.tar.gz
-  #   expire_in: 1 day
-
-build-centos-on-tags:
-  extends: .build-centos
-  only: [tags]
-
-build-centos-manual:
-  extends: .build-centos
-  when: manual
-
-build-windows:
+.build-windows:
   stage: build
-  only:
-    - tags
-  tags: 
+  tags:
     - shell
     - windows
   script:
-    - $env:PATH="c:\prod\softprod\apps\python\3.7.9\windows;%PATH%"
-    - python -v
-    - .\tools\create_env.ps1
+    - echo "Buil then copy to $env:OP_VERSION_PATH"
+    # - Get-ChildItem -Path Env:\
+    - $env:PATH="c:\prod\softprod\apps\python\3.7.9\windows\;C:\prod\softprod\apps\git-bash\latest\windows\cmd\;"+$env:PATH
+    - .\tools\create_env.ps1 #--verbose
+    # - poetry env use
     - .\tools\fetch_thirdparty_libs.ps1
+    # - gcm *host*
     - .\tools\build.ps1
+    - Copy-Item -Force -Recurse .\build\exe.win-amd64-3.7 $env:OP_VERSION_PATH/windows
 
-deploy-centos-staged:
-  extends: build-centos-on-tags
-  stage: deploy
-  environment:
-    name: staging
-  only:
-    - tags
-  needs: [build-centos-on-tags]
-  tags: 
+build-centos-on-tags:
+  extends: .build-centos
+  variables:
+    VERSION: $CI_COMMIT_TAG
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: always
+
+build-centos-manual:
+  extends: .build-centos
+  variables:
+    VERSION: $CI_COMMIT_REF_SLUG
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH == "cicd"
+      when: manual
+
+build-windows-on-tags:
+  extends: .build-windows
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: always
+
+build-windows-manual:
+  extends: .build-windows
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH == "cicd"
+      when: manual
+
+.deploy-staged:
+  stage: staging
+  needs: [build-windows-on-tags, build-centos-on-tags]
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: always
+  tags:
     - shell
     - centos
   script:
-    # - tar xzfp ./build.tar.gz
-    - ls ./build/
-    - version=$(git describe --match v?.* --all --always | sed -e 's/tags\///g')
-    - mkdir -p /prod/softprod/apps/openpype/$version/linux/
-    - rsync -rptl ./build/exe.linux-x86_64-3.7/ /prod/softprod/apps/openpype/$version/linux/
+    - ln -sf $OP_VERSION_PATH $OP_STAGING_PATH
 
-deploy-centos-prod:
+deploy-staged-on-tags:
+  extends: .deploy-staged
+  needs: [ {job: build-centos-on-tags, optional: false }, {job: build-windows-on-tags, optional: false } ]
+  rules:
+    - if: $CI_COMMIT_TAG
+
+deploy-staged-manual:
+  extends: .deploy-staged
+  needs: [ {job: build-centos-manual, optional: true }, {job: build-windows-manual, optional: true } ]
+  rules:
+    - if: $CI_COMMIT_BRANCH == "cicd"
+
+deploy-prod:
   when: manual
-  stage: deploy
-  environment:
-    name: production
-  only:
-    - tags
-  needs: [deploy-centos-staged]
-  tags: 
+  stage: production
+  needs: [{job: deploy-staged-on-tags, optional: true }, {job: deploy-staged-manual, optional: true }]
+  tags:
     - shell
     - centos
   script:
-    - pwd
+    - ln -sf $OP_VERSION_PATH $OP_PROD_PATH
