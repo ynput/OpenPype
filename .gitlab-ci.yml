@@ -109,6 +109,7 @@ build-windows-manual:
     - shell
     - centos
   script:
+    - echo "Set staging link $OP_STAGING_PATH to $OP_VERSION_PATH"
     - ln -sfn $OP_VERSION_PATH $OP_STAGING_PATH
 
 deploy-staged-on-tags:
@@ -131,4 +132,5 @@ deploy-prod:
     - shell
     - centos
   script:
+    - echo "Set prod link $OP_PROD_PATH to $OP_VERSION_PATH"
     - ln -sfn $OP_VERSION_PATH $OP_PROD_PATH
