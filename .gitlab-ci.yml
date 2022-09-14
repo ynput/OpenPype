@@ -51,7 +51,12 @@ workflow:
   script:
     - echo "Buil then copy to $env:OP_VERSION_PATH"
     # - Get-ChildItem -Path Env:\
-    - $env:PATH="c:\prod\softprod\apps\python\3.7.9\windows\;C:\prod\softprod\apps\git-bash\latest\windows\cmd\;"+$env:PATH
+    - git --exec-path
+    # setup python 3.7.9
+    # - $env:PATH="c:\prod\softprod\apps\python\3.7.9\windows\;C:\prod\softprod\apps\git-bash\latest\windows\cmd\;"+$env:PATH
+    # - [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    # - Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.7.9/python-3.7.9-amd64.exe" -OutFile "c:/temp/python-3.7.9.exe"
+    # - c:/temp/python-3.7.9.exe /quiet InstallAllUsers=0 PrependPath=1 Include_test=0
 
     # - $env:POETRY_HOME="$pwd\.poetry"
     # - $env:POETRY_VERSION="1.1.15"
