@@ -169,6 +169,9 @@ class AttributeValues:
     def reset_values(self):
         self._data = []
 
+    def mark_stored(self):
+        self._origin_data = copy.deepcopy(self._data)
+
     @property
     def attr_defs(self):
         """Pointer to attribute definitions."""
@@ -303,6 +306,9 @@ class PublishAttributes:
 
         for name in self._plugin_names_order:
             yield name
+
+    def mark_stored(self):
+        self._origin_data = copy.deepcopy(self._data)
 
     def data_to_store(self):
         """Convert attribute values to "data to store"."""
@@ -623,6 +629,25 @@ class CreatedInstance:
                 changes[key] = (old_value, None)
         return changes
 
+    def mark_stored(self):
+        """Should be called when instance data are stored.
+
+        Origin data are replaced by current data so changes are cleared.
+        """
+
+        orig_keys = set(self._orig_data.keys())
+        for key, value in self._data.items():
+            orig_keys.discard(key)
+            if key in ("creator_attributes", "publish_attributes"):
+                continue
+            self._orig_data[key] = copy.deepcopy(value)
+
+        for key in orig_keys:
+            self._orig_data.pop(key)
+
+        self.creator_attributes.mark_stored()
+        self.publish_attributes.mark_stored()
+
     @property
     def creator_attributes(self):
         return self._data["creator_attributes"]
@@ -636,6 +661,18 @@ class CreatedInstance:
         return self._data["publish_attributes"]
 
     def data_to_store(self):
+        """Collect data that contain json parsable types.
+
+        It is possible to recreate the instance using these data.
+
+        Todo:
+            We probably don't need OrderedDict. When data are loaded they
+                are not ordered anymore.
+
+        Returns:
+            OrderedDict: Ordered dictionary with instance data.
+        """
+
         output = collections.OrderedDict()
         for key, value in self._data.items():
             if key in ("creator_attributes", "publish_attributes"):
