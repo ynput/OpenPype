@@ -15,10 +15,7 @@ from openpype.pipeline.workfile.lock_workfile import (
 )
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.delegates import PrettyTimeDelegate
-from openpype.lib import (
-    emit_event,
-    create_workdir_extra_folders,
-)
+from openpype.lib import emit_event
 from openpype.tools.workfiles.lock_dialog import WorkfileLockDialog
 from openpype.pipeline import (
     registered_host,
@@ -29,8 +26,10 @@ from openpype.pipeline.context_tools import (
     compute_session_changes,
     change_current_context
 )
-from openpype.pipeline.workfile import get_workfile_template_key
-
+from openpype.pipeline.workfile import (
+    get_workfile_template_key,
+    create_workdir_extra_folders,
+)
 
 from .model import (
     WorkAreaFilesModel,
@@ -470,7 +469,9 @@ class FilesWidget(QtWidgets.QWidget):
         host = self.host
         if self._is_workfile_locked(filepath):
             # add lockfile dialog
-            WorkfileLockDialog(filepath, parent=self)
+            dialog = WorkfileLockDialog(filepath, parent=self)
+            if not dialog.exec_():
+                return
 
         if isinstance(host, IWorkfileHost):
             has_unsaved_changes = host.workfile_has_unsaved_changes()

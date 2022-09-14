@@ -16,6 +16,7 @@ from openpype.host import (
     HostDirmap,
 )
 from openpype.tools.utils import host_tools
+from openpype.tools.workfiles.lock_dialog import WorkfileLockDialog
 from openpype.lib import (
     register_event_callback,
     emit_event
@@ -38,7 +39,7 @@ from openpype.pipeline.workfile.lock_workfile import (
     is_workfile_lock_enabled
 )
 from openpype.hosts.maya import MAYA_ROOT_DIR
-from openpype.hosts.maya.lib import copy_workspace_mel
+from openpype.hosts.maya.lib import create_workspace_mel
 
 from . import menu, lib
 from .workio import (
@@ -69,7 +70,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         self._op_events = {}
 
     def install(self):
-        project_name = os.getenv("AVALON_PROJECT")
+        project_name = legacy_io.active_project()
         project_settings = get_project_settings(project_name)
         # process path mapping
         dirmap_processor = MayaDirmap("maya", project_name, project_settings)
@@ -488,20 +489,18 @@ def check_lock_on_current_file():
     # add the lock file when opening the file
     filepath = current_file()
 
-    if not is_workfile_locked(filepath):
-        create_workfile_lock(filepath)
-        return
+    if is_workfile_locked(filepath):
+        # add lockfile dialog
+        from Qt import QtWidgets
+        top_level_widgets = {w.objectName(): w for w in
+                            QtWidgets.QApplication.topLevelWidgets()}
+        parent = top_level_widgets.get("MayaWindow", None)
+        workfile_dialog = WorkfileLockDialog(filepath, parent=parent)
+        if not workfile_dialog.exec_():
+            cmds.file(new=True)
+            return
 
-    # add lockfile dialog
-    from Qt import QtWidgets
-    from openpype.tools.workfiles.lock_dialog import WorkfileLockDialog
-
-    top_level_widgets = {w.objectName(): w for w in
-                         QtWidgets.QApplication.topLevelWidgets()}
-    parent = top_level_widgets.get("MayaWindow", None)
-    workfile_dialog = WorkfileLockDialog(filepath, parent=parent)
-    workfile_dialog.show()
-
+    create_workfile_lock(filepath)
 
 def on_before_close():
     """Delete the lock file after user quitting the Maya Scene"""
@@ -631,7 +630,7 @@ def on_task_changed():
         lib.update_content_on_context_change()
 
     msg = "  project: {}\n  asset: {}\n  task:{}".format(
-        legacy_io.Session["AVALON_PROJECT"],
+        legacy_io.active_project(),
         legacy_io.Session["AVALON_ASSET"],
         legacy_io.Session["AVALON_TASK"]
     )
@@ -647,10 +646,11 @@ def before_workfile_open():
 
 
 def before_workfile_save(event):
+    project_name = legacy_io.active_project()
     _remove_workfile_lock()
     workdir_path = event["workdir_path"]
     if workdir_path:
-        copy_workspace_mel(workdir_path)
+        create_workspace_mel(workdir_path, project_name)
 
 
 class MayaDirmap(HostDirmap):

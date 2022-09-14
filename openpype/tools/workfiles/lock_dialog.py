@@ -38,18 +38,10 @@ class WorkfileLockDialog(QtWidgets.QDialog):
         main_layout.addSpacing(10)
         main_layout.addWidget(btns_widget, 0)
 
-        cancel_btn.clicked.connect(self._on_cancel_click)
-        ignore_btn.clicked.connect(self._on_ignore_click)
+        cancel_btn.clicked.connect(self.reject)
+        ignore_btn.clicked.connect(self.accept)
 
     def showEvent(self, event):
         super(WorkfileLockDialog, self).showEvent(event)
 
         self.setStyleSheet(load_stylesheet())
-
-    def _on_ignore_click(self):
-        # Result is '1'
-        self.accept()
-
-    def _on_cancel_click(self):
-        # Result is '0'
-        self.reject()
