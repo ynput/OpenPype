@@ -141,7 +141,7 @@
                         {
                             "type": "number",
                             "key": "width",
-                            "label": "Width",
+                            "label": "                  Width",
                             "decimal": 0,
                             "minimum": 0,
                             "maximum": 99999
