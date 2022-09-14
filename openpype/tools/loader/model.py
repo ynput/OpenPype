@@ -138,8 +138,8 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         "duration",
         "handles",
         "step",
-        "repre_info",
-        "loaded_in_scene"
+        "loaded_in_scene",
+        "repre_info"
     ]
 
     column_labels_mapping = {
@@ -153,8 +153,8 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         "duration": "Duration",
         "handles": "Handles",
         "step": "Step",
-        "repre_info": "Availability",
-        "loaded_in_scene": "In scene"
+        "loaded_in_scene": "In scene",
+        "repre_info": "Availability"
     }
 
     SortAscendingRole = QtCore.Qt.UserRole + 2
