@@ -27,8 +27,19 @@ class AbstractTomlProvider:
             Returns dict containing toml information
 
 
-            Returns:
-                (dict)
+        Returns:
+            (dict)
+        """
+        pass
+
+    @abc.abstractmethod
+    def get_tomls(self):
+        """
+            Returns list of dict containing toml information
+
+        Some providers (http) are returning all tomls in one go.
+        Returns:
+            (list) of (dict)
         """
         pass
 
@@ -45,6 +56,45 @@ class FileTomlProvider(AbstractTomlProvider):
 
         with open(self.source_url) as fp:
             return toml.load(fp)
+
+    def get_tomls(self):
+        raise NotImplementedError
+
+
+class ServerTomlProvider(AbstractTomlProvider):
+    """Class that parses tomls from 'server_endpoint' into dictionary."""
+    def __init__(self, server_endpoint):
+        self.server_endpoint = server_endpoint
+
+    def get_toml(self):
+        raise NotImplementedError
+
+    def get_tomls(self):
+        tomls = []
+
+        response = requests.get(self.server_endpoint)
+
+        for addon in response.json()["addons"]:
+            for _version_key, addon_ver in addon.get("versions", {}).items():
+                # TODO how to choose version
+                if not addon_ver.get("clientPyproject"):
+                    continue
+                tomls.append(addon_ver["clientPyproject"])
+
+        return tomls
+
+
+def get_addon_tomls(server_url):
+    """Provides list of dict containing addon tomls.
+
+    Args:
+        server_url (str): host name with port, without endpoint
+    Returns:
+        (list) of (dict)
+    """
+    server_endpoint = server_url + "/api/addons?details=1"
+
+    return ServerTomlProvider(server_endpoint).get_tomls()
 
 
 def is_valid_toml(toml):

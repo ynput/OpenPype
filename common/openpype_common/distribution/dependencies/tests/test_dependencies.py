@@ -7,6 +7,7 @@ import platform
 
 from common.openpype_common.distribution.dependencies.dependencies import (
     FileTomlProvider,
+    ServerTomlProvider,
     is_valid_toml,
     merge_tomls,
     get_full_toml,
@@ -187,3 +188,14 @@ def test_get_venv_zip_name(tmpdir):
              venv_zip_path)
 
     assert os.path.exists(venv_zip_path)
+
+
+def test_ServerTomlProvider():
+    # TODO switch to mocks without test server
+    server_endpoint = "https://34e99f0f-f987-4715-95e6-d2d88caa7586.mock.pstmn.io/get_addons_tomls"
+    tomls = ServerTomlProvider(server_endpoint).get_tomls()
+
+    assert len(tomls) == 1, "One addon should have dependencies"
+
+    assert (tomls[0]["tool"]["poetry"]["dependencies"]["python"] == "^3.10",
+        "Missing dependency")
