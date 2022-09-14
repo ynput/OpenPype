@@ -71,7 +71,7 @@ def convert_value_by_type_name(value_type, value):
         elif parts_len == 4:
             divisor = 2
         elif parts_len == 9:
-            divisor == 3
+            divisor = 3
         elif parts_len == 16:
             divisor = 4
         else:
