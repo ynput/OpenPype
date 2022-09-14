@@ -138,6 +138,11 @@
                     "label": "Collect Version",
                     "children": [
                         {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
                             "type": "label",
                             "label": "Synchronize version for image and review instances by workfile version."
                         },
