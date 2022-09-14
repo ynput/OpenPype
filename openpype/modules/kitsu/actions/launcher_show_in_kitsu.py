@@ -90,8 +90,8 @@ class ShowInKitsu(LauncherAction):
                 asset_type=None,
                 task_id=None):
 
-        shots_url = ['Shots', 'Sequence', 'Shot']
-        sub_type = ['AssetType', 'Sequence']
+        shots_url = {'Shots', 'Sequence', 'Shot'}
+        sub_type = {'AssetType', 'Sequence'}
         kitsu_module = self.get_kitsu_module()
 
         # Get kitsu url with /api stripped
