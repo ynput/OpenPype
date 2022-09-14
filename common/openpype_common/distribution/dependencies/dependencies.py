@@ -1,5 +1,6 @@
 import os.path
 import shutil
+import tempfile
 import toml
 import abc
 import six
@@ -228,7 +229,7 @@ def prepare_new_venv(full_toml_data, venv_folder):
         create_env_script_path,
         "-venv_path", os.path.join(venv_folder, ".venv")
     ]
-    run_subprocess(cmd_args)
+    return run_subprocess(cmd_args)
 
 
 def get_venv_zip_name(lock_file_path):
@@ -429,3 +430,45 @@ def run_subprocess(*args, **kwargs):
         raise RuntimeError(exc_msg)
 
     return full_output
+
+
+def main(server_url):
+    """Main endpoint to trigger full process.
+
+    Pulls all active addons info from server, provides their pyproject.toml
+    (if available), takes base (build) pyproject.toml, adds tomls from addons.
+    Builds new venv with dependencies only for addons (dependencies already
+    present in build are filtered out).
+    Uploads zipped venv back to server.
+
+    Args:
+        server_url (string): hostname + port for v4 Server
+            default value is http://localhost:5000
+    """
+
+    tmpdir = tempfile.mktemp()
+
+    base_toml_data = FileTomlProvider(os.path.join(ROOT_FOLDER,
+                                      "pyproject.toml")).get_toml()
+
+    addon_tomls = get_addon_tomls(server_url)
+    full_toml_data = get_full_toml(base_toml_data, addon_tomls)
+    return_code = prepare_new_venv(full_toml_data, tmpdir)
+
+    if return_code != 0:
+        raise RuntimeError("Preparation of venv failed!")
+
+    base_venv_path = os.path.join(ROOT_FOLDER, ".venv")
+    addon_venv_path = os.path.join(tmpdir, ".venv")
+
+    remove_existing_from_venv(base_venv_path, addon_venv_path)
+    zip_file_name = get_venv_zip_name(os.path.join(tmpdir, "poetry.lock"))
+    venv_zip_path = os.path.join(tmpdir, zip_file_name)
+    zip_venv(os.path.join(tmpdir, ".venv"),
+             venv_zip_path)
+
+    # WIP - not real endpoint on v4
+    server_endpoint = server_url + "/api/addons?upload_dependencies"
+    upload_zip_venv(venv_zip_path, server_endpoint)
+
+    shutil.rmtree(tmpdir)

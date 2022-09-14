@@ -157,7 +157,7 @@ def test_lock_to_toml_data():
     assert is_valid_toml(toml_data), "Must contain all required keys"
 
 
-# @pytest.mark.skip(reason="no way of currently testing this")
+@pytest.mark.skip(reason="no way of currently testing this")
 def test_prepare_new_venv(addon_toml_to_venv_data, tmpdir):
     """Creates zip of simple venv from mock addon pyproject data"""
     print(f"Creating new venv in {tmpdir}")
@@ -168,7 +168,7 @@ def test_prepare_new_venv(addon_toml_to_venv_data, tmpdir):
     inst_lib = os.path.join(tmpdir, '.venv', 'Lib', 'site-packages', 'aiohttp')
     assert os.path.exists(inst_lib), "aiohttp should be installed"
 
-
+@pytest.mark.skip(reason="no way of currently testing this")
 def test_remove_existing_from_venv(tmpdir):
     base_venv_path = os.path.join(ROOT_FOLDER, ".venv")
     addon_venv_path = os.path.join(tmpdir, ".venv")
@@ -180,7 +180,7 @@ def test_remove_existing_from_venv(tmpdir):
 
     assert "aiohttp" in removed, "aiohttp is in base, should be removed"
 
-
+@pytest.mark.skip(reason="no way of currently testing this")
 def test_get_venv_zip_name(tmpdir):
     zip_file_name = get_venv_zip_name(os.path.join(tmpdir, "poetry.lock"))
     venv_zip_path = os.path.join(tmpdir, zip_file_name)
