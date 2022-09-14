@@ -106,11 +106,13 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         register_event_callback("open", on_open)
         register_event_callback("new", on_new)
         register_event_callback("before.save", on_before_save)
+        register_event_callback("after.save", on_after_save)
         register_event_callback("before.close", on_before_close)
         register_event_callback("before.file.open", before_file_open)
         register_event_callback("taskChanged", on_task_changed)
         register_event_callback("workfile.open.before", before_workfile_open)
         register_event_callback("workfile.save.before", before_workfile_save)
+        register_event_callback("workfile.save.after", after_workfile_save)
 
     def open_workfile(self, filepath):
         return open_file(filepath)
@@ -151,6 +153,10 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
 
         self._op_events[_on_scene_save] = OpenMaya.MSceneMessage.addCallback(
             OpenMaya.MSceneMessage.kBeforeSave, _on_scene_save
+        )
+
+        self._op_events[_after_scene_save] = OpenMaya.MSceneMessage.addCallback(
+            OpenMaya.MSceneMessage.kAfterSave, _after_scene_save
         )
 
         self._op_events[_before_scene_save] = (
@@ -194,6 +200,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
 
         self.log.info("Installed event handler _on_scene_save..")
         self.log.info("Installed event handler _before_scene_save..")
+        self.log.info("Insatall event handler _on_after_save..")
         self.log.info("Installed event handler _on_scene_new..")
         self.log.info("Installed event handler _on_maya_initialized..")
         self.log.info("Installed event handler _on_scene_open..")
@@ -236,6 +243,8 @@ def _on_maya_initialized(*args):
 def _on_scene_new(*args):
     emit_event("new")
 
+def _after_scene_save(*arg):
+    emit_event("after.save")
 
 def _on_scene_save(*args):
     emit_event("save")
@@ -271,6 +280,7 @@ def _remove_workfile_lock():
     if not handle_workfile_locks():
         return
     filepath = current_file()
+    log.info("Removing lock on current file {}...".format(filepath))
     if filepath:
         remove_workfile_lock(filepath)
 
@@ -479,6 +489,13 @@ def on_before_save():
     return lib.validate_fps()
 
 
+def on_after_save():
+    """Check if there is a lockfile after save"""
+    filepath = current_file()
+    if not is_workfile_locked(filepath):
+        create_workfile_lock(filepath)
+
+
 def check_lock_on_current_file():
 
     """Check if there is a user opening the file"""
@@ -491,14 +508,14 @@ def check_lock_on_current_file():
 
     if is_workfile_locked(filepath):
         # add lockfile dialog
-        from Qt import QtWidgets
-        top_level_widgets = {w.objectName(): w for w in
-                             QtWidgets.QApplication.topLevelWidgets()}
-        parent = top_level_widgets.get("MayaWindow", None)
-        workfile_dialog = WorkfileLockDialog(filepath, parent=parent)
-        if not workfile_dialog.exec_():
-            cmds.file(new=True)
-            return
+        try:
+            workfile_dialog.close()
+            workfile_dialog.deleteLater()
+        except:
+            workfile_dialog = WorkfileLockDialog(filepath)
+            if not workfile_dialog.exec_():
+                cmds.file(new=True)
+                return
 
     create_workfile_lock(filepath)
 
@@ -514,7 +531,6 @@ def on_before_close():
 
 def before_file_open():
     """check lock file when the file changed"""
-    log.info("Removing lock on current file before scene open...")
     # delete the lock file
     _remove_workfile_lock()
 
@@ -652,6 +668,13 @@ def before_workfile_save(event):
     workdir_path = event["workdir_path"]
     if workdir_path:
         create_workspace_mel(workdir_path, project_name)
+
+
+def after_workfile_save(event):
+    workfile_name = event["filename"]
+    if workfile_name:
+        if not is_workfile_locked(workfile_name):
+            create_workfile_lock(workfile_name)
 
 
 class MayaDirmap(HostDirmap):

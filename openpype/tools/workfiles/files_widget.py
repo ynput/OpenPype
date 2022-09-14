@@ -469,9 +469,7 @@ class FilesWidget(QtWidgets.QWidget):
         host = self.host
         if self._is_workfile_locked(filepath):
             # add lockfile dialog
-            dialog = WorkfileLockDialog(filepath, parent=self)
-            if not dialog.exec_():
-                return
+            WorkfileLockDialog(filepath)
 
         if isinstance(host, IWorkfileHost):
             has_unsaved_changes = host.workfile_has_unsaved_changes()
