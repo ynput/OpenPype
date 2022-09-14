@@ -51,8 +51,8 @@ workflow:
   script:
     - echo "Buil then copy to $env:OP_VERSION_PATH"
     # - Get-ChildItem -Path Env:\
+    - $env:PATH="c:\prod\softprod\apps\python\3.7.9\windows\;C:\prod\softprod\apps\git-bash\latest\windows\cmd\;"+$env:PATH
 
-    # - $env:PATH="c:\prod\softprod\apps\python\3.7.9\windows\;C:\prod\softprod\apps\git-bash\latest\windows\cmd\;"+$env:PATH
     # - $env:POETRY_HOME="$pwd\.poetry"
     # - $env:POETRY_VERSION="1.1.15"
     # - (Invoke-WebRequest -Uri https://install.python-poetry.org/ -UseBasicParsing).Content | python -
