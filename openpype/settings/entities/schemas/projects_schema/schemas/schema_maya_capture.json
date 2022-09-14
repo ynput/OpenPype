@@ -370,6 +370,10 @@
                             "type": "splitter"
                         },
                         {
+                            "type": "label",
+                            "label": "<b>Show</b>"
+                        },
+                        {
                             "type": "boolean",
                             "key": "cameras",
                             "label": "Cameras"
