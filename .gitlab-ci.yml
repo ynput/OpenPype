@@ -28,8 +28,8 @@ workflow:
     - shell
     - centos
   script:
-    # Add python from soft prod
     - echo "Buil then copy to $OP_VERSION_PATH"
+    # Add python 3.7.9 from softprod
     - export PYTHEMP=$(mktemp -d -t ci-XXXXXXXXXX -p ./)
     - rsync -rtl --chmod a+w /prod/softprod/apps/python/3.7.9/linux $PYTHEMP/
     - export PATH="$PYTHEMP/linux/bin:$PATH"
@@ -41,6 +41,7 @@ workflow:
     - ./tools/build.sh
     # Copy build in softprod
     - mkdir -p $OP_VERSION_PATH/linux
+    # Copy to softprod
     - rsync -rptl ./build/exe.linux-x86_64-3.7/ $OP_VERSION_PATH/linux/
 
 .build-windows:
@@ -50,28 +51,18 @@ workflow:
     - windows
   script:
     - echo "Build then copy to $env:OP_VERSION_PATH"
-    # - Get-ChildItem -Path Env:\
-    - git --version
-    - git --exec-path
-    - ls C:\Program` Files\Git\mingw64\ssl\certs
-    # - git config --global http.sslCAInfo "C:\Program Files\Git\mingw64\ssl\certs\ca-bundle.crt"
+    # Add python 3.7.9 from softprod
+    - $env:PATH="c:\prod\softprod\apps\python\3.7.9\windows\;"+$env:PATH
+    # Setup git from softprod and remove git ssl verification
+    - $env:PATH="c:\prod\softprod\apps\git-bash\latest\windows\cmd\;"+$env:PATH
     - git config --global http.sslVerify false
-    # setup python 3.7.9
-    - $env:PATH="c:\prod\softprod\apps\python\3.7.9\windows\;C:\prod\softprod\apps\git-bash\latest\windows\cmd\;"+$env:PATH
-    # - [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    # - Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.7.9/python-3.7.9-amd64.exe" -OutFile "c:/temp/python-3.7.9.exe"
-    # - c:/temp/python-3.7.9.exe /quiet InstallAllUsers=0 PrependPath=1 Include_test=0
-
-    # - $env:POETRY_HOME="$pwd\.poetry"
-    # - $env:POETRY_VERSION="1.1.15"
-    # - (Invoke-WebRequest -Uri https://install.python-poetry.org/ -UseBasicParsing).Content | python -
-    # - .poetry/bin/poetry update -vvv
-    # - C:\prod\softprod\apps\git-bash\latest\windows\cmd\git.exe clone --recurse-submodules -- https://github.com/ActiveState/appdirs.git  C:\Gitlab-Runner\builds\zfeUa-YX\0\quad\openpype\OpenPype\.venv\src\appdirs
-    - .\tools\create_env.ps1 --verbose
-    # - poetry env use
+    # Create virtual environment in ./venv
+    - .\tools\create_env.ps1
+    # Get PySide2, ffmpeg, oiio and other tools needed
     - .\tools\fetch_thirdparty_libs.ps1
-    # - gcm *host*
+    # Build pype executables in ./build
     - .\tools\build.ps1
+    # Copy to softprod
     - Copy-Item -Force -Recurse .\build\exe.win-amd64-3.7 $env:OP_VERSION_PATH/windows
 
 build-centos-on-tags:
