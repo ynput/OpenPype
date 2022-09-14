@@ -157,7 +157,7 @@
                         {
                             "type": "number",
                             "key": "percent",
-                            "label": "percent",
+                            "label": "Percent",
                             "decimal": 1,
                             "minimum": 0,
                             "maximum": 200
