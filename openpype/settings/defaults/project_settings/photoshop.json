@@ -15,6 +15,9 @@
         "CollectInstances": {
             "flatten_subset_template": ""
         },
+        "CollectVersion": {
+            "sync_workfile_version": true
+        },
         "ValidateContainers": {
             "enabled": true,
             "optional": true,
