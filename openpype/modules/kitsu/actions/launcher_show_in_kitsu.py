@@ -39,7 +39,6 @@ class ShowInKitsu(LauncherAction):
             raise RuntimeError(f"Project {project_name} has no "
                                f"connected ftrack id.")
 
-        asset_zou_data = None
         task_zou_id = None
         asset_zou_name = None
         asset_zou_id = None
