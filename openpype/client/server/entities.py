@@ -1,7 +1,10 @@
+import collections
+
 from .graphql import (
     project_graphql_query,
     projects_graphql_query,
     folders_graphql_query,
+    subsets_graphql_query,
 )
 from .server import get_server_api_connection
 
@@ -51,6 +54,28 @@ DEFAULT_FOLDER_FIELDS = {
     "active",
     "parents",
 } | FOLDER_ATTRIBS_FIELDS
+
+SUBSET_ATTRIBS = {
+    "subsetGroup",
+}
+SUBSET_ATTRIBS_FIELDS = {
+    "attrib.{}".format(attr)
+    for attr in SUBSET_ATTRIBS
+}
+DEFAULT_SUBSET_FIELDS = {
+    "id",
+    "name",
+    "active",
+    "family",
+    "folderId",
+} | SUBSET_ATTRIBS_FIELDS
+
+SUBSET_FIELDS_MAPPING_V3_V4 = {
+    "_id": {"id"},
+    "name": {"name"},
+    "data.active": {"active"},
+    "parent": {"folderId"}
+}
 
 
 def _project_fields_v3_to_v4(fields):
@@ -196,6 +221,69 @@ def _convert_v4_folder_to_v3(folder):
     return output
 
 
+def _subset_fields_v3_to_v4(fields):
+    if not fields:
+        return set(DEFAULT_SUBSET_FIELDS)
+
+    output = set()
+    for field in fields:
+        if field in SUBSET_FIELDS_MAPPING_V3_V4:
+            output |= SUBSET_FIELDS_MAPPING_V3_V4[field]
+
+        elif field == "data":
+            output.add("family")
+            output.add("attrib.subsetGroup")
+
+        elif field.startswith("data"):
+            field_parts = field.split(".")
+            field_parts.pop(0)
+            data_key = ".".join(field_parts)
+            if data_key == "subsetGroup":
+                output.add("attrib.subsetGroup")
+
+            elif data_key in ("family", "families"):
+                output.add("family")
+
+            else:
+                print(data_key)
+                raise ValueError("Can't query data for field {}".format(field))
+
+        else:
+            raise ValueError("Unknown field mapping for {}".format(field))
+
+    if "id" not in output:
+        output.add("id")
+    return output
+
+
+def _convert_v4_subset_to_v3(subset):
+    output = {
+        "_id": subset["id"],
+        "type": "subset",
+    }
+
+    output_data = subset.get("data") or {}
+
+    if "name" in subset:
+        output["name"] = subset["name"]
+
+    if "active" in subset:
+        output_data["active"] = subset["active"]
+
+    if "attrib" in subset:
+        attrib = subset["attrib"]
+        output_data.update(attrib)
+
+    family = subset.get("family")
+    if family:
+        output_data["family"] = family
+        output_data["families"] = [family]
+
+    output["data"] = output_data
+
+    return output
+
+
 def _get_projects(active=None, library=None, fields=None):
     con = get_server_api_connection()
     fields = _project_fields_v3_to_v4(fields)
@@ -211,6 +299,162 @@ def _get_projects(active=None, library=None, fields=None):
     for project in parsed_data["projects"]:
         output.append(project)
     return output
+
+
+def _get_folders(
+    project_name,
+    folder_ids,
+    folder_names,
+    parent_ids,
+    archived,
+    fields
+):
+    if not project_name:
+        return []
+
+    fields = _folder_fields_v3_to_v4(fields)
+    filters = {
+        "projectName", project_name
+    }
+    if folder_ids is not None:
+        folder_ids = set(folder_ids)
+        if not folder_ids:
+            return []
+        filters["folderIds"] = list(folder_ids)
+
+    if folder_names is not None:
+        folder_names = set(folder_names)
+        if not folder_names:
+            return []
+        filters["folderNames"] = list(folder_names)
+
+    if parent_ids is not None:
+        parent_ids = set(parent_ids)
+        if not parent_ids:
+            return []
+        filters["parentFolderIds"] = list(parent_ids)
+
+    con = get_server_api_connection()
+
+    query = folders_graphql_query(fields)
+    for attr, filter_value in filters.items():
+        query.set_variable_value(attr, filter_value)
+
+    query_str = query.calculate_query()
+    variables = query.get_variables_values()
+
+    response = con.query(query_str, **variables)
+
+    parsed_data = query.parse_result(response.data["data"])
+    output = []
+
+    folders = parsed_data.get("project", {}).get("folders", [])
+    for folder in folders:
+        output.append(_convert_v4_folder_to_v3(folder))
+    return output
+
+
+def _get_subsets(
+    project_name,
+    subset_ids=None,
+    subset_names=None,
+    folder_ids=None,
+    names_by_folder_ids=None,
+    archived=False,
+    fields=None
+):
+    if not project_name:
+        return []
+
+    if subset_ids is not None:
+        subset_ids = set(subset_ids)
+        if not subset_ids:
+            return []
+
+    filter_subset_names = None
+    if subset_names is not None:
+        filter_subset_names = set(subset_names)
+        if not filter_subset_names:
+            return []
+
+    filter_folder_ids = None
+    if folder_ids is not None:
+        filter_folder_ids = set(folder_ids)
+        if not filter_folder_ids:
+            return []
+
+    # This will disable 'folder_ids' and 'subset_names' filters
+    #   - maybe could be enhanced in future?
+    if names_by_folder_ids is not None:
+        filter_subset_names = set()
+        filter_folder_ids = set()
+
+        for folder_id, names in names_by_folder_ids.items():
+            if folder_id and names:
+                filter_folder_ids.add(folder_id)
+                filter_subset_names |= set(names)
+
+        if not filter_subset_names or not filter_folder_ids:
+            return []
+
+    # Convert fields and add minimum required fields
+    fields = _subset_fields_v3_to_v4(fields)
+    for key in (
+        "id",
+        "active"
+    ):
+        fields.add(key)
+
+    # Add 'name' and 'folderId' if 'name_by_asset_ids' filter is entered
+    if names_by_folder_ids:
+        fields.add("name")
+        fields.add("folderId")
+
+    # Prepare filters for query
+    filters = {
+        "projectName": project_name
+    }
+    if filter_folder_ids:
+        filters["folderIds"] = list(filter_folder_ids)
+
+    if subset_ids:
+        filters["subsetIds"] = list(subset_ids)
+
+    if filter_subset_names:
+        filters["subsetNames"] = list(filter_subset_names)
+
+    query = subsets_graphql_query(fields)
+    for attr, filter_value in filters.items():
+        query.set_variable_value(attr, filter_value)
+
+    query_str = query.calculate_query()
+    variables = query.get_variables_values()
+
+    con = get_server_api_connection()
+    response = con.query(query_str, **variables)
+
+    parsed_data = query.parse_result(response.data["data"])
+
+    subsets = parsed_data.get("project", {}).get("subsets", [])
+
+    # Filter subsets by 'names_by_folder_ids'
+    if names_by_folder_ids:
+        subsets_by_folder_id = collections.defaultdict(list)
+        for subset in subsets:
+            folder_id = subset["folderId"]
+            subsets_by_folder_id[folder_id].append(subset)
+
+        filtered_subsets = []
+        for folder_id, names in names_by_folder_ids.items():
+            for folder_subset in subsets_by_folder_id[folder_id]:
+                if folder_subset["name"] in names:
+                    filtered_subsets.append(subset)
+        subsets = filtered_subsets
+
+    return [
+        _convert_v4_subset_to_v3(subset)
+        for subset in subsets
+    ]
 
 
 def get_projects(active=True, inactive=False, library=None, fields=None):
@@ -265,58 +509,6 @@ def get_asset_by_name(*args, **kwargs):
     raise NotImplementedError("'get_asset_by_name' not implemented")
 
 
-def _get_folders(
-    project_name,
-    folder_ids,
-    folder_names,
-    parent_ids,
-    archived,
-    fields
-):
-    if not project_name:
-        return []
-
-    fields = _folder_fields_v3_to_v4(fields)
-    filters = {}
-    if folder_ids is not None:
-        folder_ids = set(folder_ids)
-        if not folder_ids:
-            return []
-        filters["folderIds"] = list(folder_ids)
-
-    if folder_names is not None:
-        folder_names = set(folder_names)
-        if not folder_names:
-            return []
-        filters["folderNames"] = list(folder_names)
-
-    if parent_ids is not None:
-        parent_ids = set(parent_ids)
-        if not parent_ids:
-            return []
-        filters["parentFolderIds"] = list(parent_ids)
-
-    con = get_server_api_connection()
-
-    query = folders_graphql_query(fields)
-    query.set_variable_value("projectName", project_name)
-    for attr, filter_value in filters.items():
-        query.set_variable_value(attr, filter_value)
-
-    query_str = query.calculate_query()
-    variables = query.get_variables_values()
-
-    response = con.query(query_str, **variables)
-
-    parsed_data = query.parse_result(response.data["data"])
-    output = []
-
-    folders = parsed_data.get("project", {}).get("folders", [])
-    for folder in folders:
-        output.append(_convert_v4_folder_to_v3(folder))
-    return output
-
-
 def get_assets(
     project_name,
     asset_ids=None,
@@ -351,8 +543,25 @@ def get_subset_by_name(*args, **kwargs):
     raise NotImplementedError("'get_subset_by_name' not implemented")
 
 
-def get_subsets(*args, **kwargs):
-    raise NotImplementedError("'get_subsets' not implemented")
+def get_subsets(
+    project_name,
+    subset_ids=None,
+    subset_names=None,
+    asset_ids=None,
+    names_by_asset_ids=None,
+    archived=False,
+    fields=None
+):
+    return _get_subsets(
+        project_name,
+        subset_ids,
+        subset_names,
+        asset_ids,
+        names_by_asset_ids,
+        archived,
+        fields
+    )
+
 
 
 def get_subset_families(*args, **kwargs):
