@@ -102,7 +102,7 @@ def loader_shift(loader, frame, relative=True):
         shift = frame - old_in
 
     if not shift:
-        return
+        return 0
 
     # Shifting global in will try to automatically compensate for the change
     # in the "ClipTimeStart" and "HoldFirstFrame" inputs, so we preserve those
