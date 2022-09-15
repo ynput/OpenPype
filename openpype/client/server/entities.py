@@ -1,7 +1,7 @@
 from .graphql import (
-    project_graphql_from_fields,
-    projects_graphql_from_fields,
-    folders_graphql_from_fields,
+    project_graphql_query,
+    projects_graphql_query,
+    folders_graphql_query,
 )
 from .server import get_server_api_connection
 
@@ -28,14 +28,14 @@ FOLDER_ATTRIBS = {
     "resolutionHeight",
     "resolutionWidth",
 }
-FOLDER_ATTRIBS_FILEDS = {
+FOLDER_ATTRIBS_FIELDS = {
     "attrib.{}".format(attr)
     for attr in FOLDER_ATTRIBS
 }
 FOLDER_FIELDS_MAPPING_V3_V4 = {
     "_id": {"id"},
     "name": {"name"},
-    "data": FOLDER_ATTRIBS_FILEDS,
+    "data": FOLDER_ATTRIBS_FIELDS,
     "data.visualParent": {"parentId"},
     "data.parents": {"parents"},
     "data.active": {"active"},
@@ -50,7 +50,7 @@ DEFAULT_FOLDER_FIELDS = {
     "tasks",
     "active",
     "parents",
-} | FOLDER_ATTRIBS_FILEDS
+} | FOLDER_ATTRIBS_FIELDS
 
 
 def _project_fields_v3_to_v4(fields):
@@ -202,7 +202,7 @@ def _get_projects(active=None, library=None, fields=None):
     if not fields:
         return con.get_rest_projects(active, library)
 
-    query = projects_graphql_from_fields(fields)
+    query = projects_graphql_query(fields)
     query_str = query.calculate_query()
     response = con.query(query_str)
     parsed_data = query.parse_result(response.data["data"])
@@ -241,7 +241,8 @@ def get_project(project_name, active=True, inactive=False, fields=None):
             con.get_rest_project(project_name)
         )
 
-    query = project_graphql_from_fields(project_name, fields)
+    query = project_graphql_query(fields)
+    query.set_variable_value("projectName", project_name)
 
     query_str = query.calculate_query()
     variables = query.get_variable_values()
@@ -266,8 +267,8 @@ def get_asset_by_name(*args, **kwargs):
 
 def _get_folders(
     project_name,
-    asset_ids,
-    asset_names,
+    folder_ids,
+    folder_names,
     parent_ids,
     archived,
     fields
@@ -277,29 +278,33 @@ def _get_folders(
 
     fields = _folder_fields_v3_to_v4(fields)
     filters = {}
-    if asset_ids is not None:
-        asset_ids = list(asset_ids)
-        if not asset_ids:
+    if folder_ids is not None:
+        folder_ids = set(folder_ids)
+        if not folder_ids:
             return []
-        filters["id"] = asset_ids
+        filters["folderIds"] = list(folder_ids)
 
-    if asset_names is not None:
-        asset_names = list(asset_names)
-        if not asset_names:
+    if folder_names is not None:
+        folder_names = set(folder_names)
+        if not folder_names:
             return []
-        filters["name"] = asset_names
+        filters["folderNames"] = list(folder_names)
 
     if parent_ids is not None:
-        parent_ids = list(parent_ids)
+        parent_ids = set(parent_ids)
         if not parent_ids:
             return []
-        filters["parentId"] = parent_ids
+        filters["parentFolderIds"] = list(parent_ids)
 
     con = get_server_api_connection()
 
-    query = folders_graphql_from_fields(project_name, fields)
+    query = folders_graphql_query(fields)
+    query.set_variable_value("projectName", project_name)
+    for attr, filter_value in filters.items():
+        query.set_variable_value(attr, filter_value)
+
     query_str = query.calculate_query()
-    variables = query.get_variable_values()
+    variables = query.get_variables_values()
 
     response = con.query(query_str, **variables)
 

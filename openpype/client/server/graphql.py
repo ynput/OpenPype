@@ -27,9 +27,9 @@ def fields_to_dict(fields):
     return output
 
 
-def project_graphql_from_fields(project_name, fields):
+def project_graphql_query(fields):
     query = GraphQlQuery("ProjectQuery")
-    project_name_var = query.add_variable("projectName", str, project_name)
+    project_name_var = query.add_variable("projectName", "String!")
     project_query = query.add_field("project")
     project_query.filter("name", project_name_var)
 
@@ -53,7 +53,7 @@ def project_graphql_from_fields(project_name, fields):
     return query
 
 
-def projects_graphql_from_fields(fields):
+def projects_graphql_query(fields):
     query = GraphQlQuery("ProjectsQuery")
     projects_query = query.add_field("projects", has_edges=True)
 
@@ -75,13 +75,19 @@ def projects_graphql_from_fields(fields):
     return query
 
 
-def folders_graphql_from_fields(project_name, fields):
+def folders_graphql_query(fields):
     query = GraphQlQuery("FoldersQuery")
-    project_name_var = query.add_variable("projectName", str, project_name)
+    project_name_var = query.add_variable("projectName", "String!")
     project_query = query.add_field("project")
     project_query.filter("name", project_name_var)
 
     folders_query = project_query.add_field("folders", has_edges=True)
+    folder_ids_var = query.add_variable("folderIds", "[String!]")
+    parent_folder_ids_var = query.add_variable("parentFolderIds", "[String!]")
+    folder_names_var = query.add_variable("folderNames", "[String!]")
+    folders_query.filter("ids", folder_ids_var)
+    folders_query.filter("parentIds", parent_folder_ids_var)
+    folders_query.filter("names", folder_names_var)
 
     fields = set(fields)
     if "tasks" in fields:
@@ -106,12 +112,6 @@ def folders_graphql_from_fields(project_name, fields):
         for k, v in value.items():
             query_queue.append((k, v, field))
     return query
-
-
-def value_type_to_string(value_type):
-    if value_type in six.string_types:
-        return "String"
-    raise TypeError("Unknown conversion for {}".format(str(value_type)))
 
 
 class QueryVariable(object):
@@ -156,21 +156,32 @@ class GraphQlQuery:
     def add_variable(self, key, value_type, value=None):
         variable = QueryVariable(key)
         self._variables[key] = {
-            "type": value_type, "variable": variable, "value": value
+            "type": value_type,
+            "variable": variable,
+            "value": value
         }
         return variable
 
     def get_variable(self, key):
         return self._variables[key]["variable"]
 
+    def get_variable_value(self, key, default=None):
+        variable_item = self._variables.get(key)
+        if variable_item:
+            return variable_item["value"]
+        return default
+
     def set_variable_value(self, key, value):
         self._variables[key]["value"] = value
 
-    def get_variable_values(self):
-        return {
-            key: item["value"]
-            for key, item in self._variables.items()
-        }
+    def get_variables_values(self):
+        output = {}
+        for key, item in self._variables.items():
+            value = item["value"]
+            if value is not None:
+                output[key] = item["value"]
+
+        return output
 
     def add_obj_field(self, field):
         if field in self._children:
@@ -190,10 +201,11 @@ class GraphQlQuery:
 
         variables = []
         for key, item in self._variables.items():
+            if item["value"] is None:
+                continue
+
             variables.append(
-                "{}: {}!".format(
-                    item["variable"], value_type_to_string(item["type"])
-                )
+                "{}: {}".format(item["variable"], item["type"])
             )
 
         variables_str = ""
@@ -247,13 +259,14 @@ class GraphQlQueryItem:
             offset = self.offset * 2
         return self.indent + offset
 
+    def get_variable_value(self, *args, **kwargs):
+        return self._parent.get_variable_value(*args, **kwargs)
+
     def filter(self, key, value):
-        if isinstance(value, QueryVariable):
-            value = str(value)
-        self._filters[key] = value
+        self.add_filter(key, value)
 
     def add_filter(self, key, value):
-        self.filter(key, value)
+        self._filters[key] = value
 
     def set_parent(self, parent):
         if self._parent is parent:
@@ -279,6 +292,11 @@ class GraphQlQueryItem:
 
         filters = []
         for key, value in self._filters.items():
+            if isinstance(value, QueryVariable):
+                if self.get_variable_value(value.variable_name) is None:
+                    continue
+                value = str(value)
+
             single_filter = None
             if not isinstance(value, six.string_types):
                 try:
@@ -296,6 +314,8 @@ class GraphQlQueryItem:
 
             filters.append(single_filter)
 
+        if not filters:
+            return ""
         return "({})".format(", ".join(filters))
 
     def calculate_query(self):
