@@ -81,6 +81,7 @@ def folders_graphql_query(fields):
     folder_ids_var = query.add_variable("folderIds", "[String!]")
     parent_folder_ids_var = query.add_variable("parentFolderIds", "[String!]")
     folder_names_var = query.add_variable("folderNames", "[String!]")
+    has_subsets_var = query.add_variable("folderHasSubsets", "Boolean!")
 
     project_query = query.add_field("project")
     project_query.filter("name", project_name_var)
@@ -89,6 +90,7 @@ def folders_graphql_query(fields):
     folders_query.filter("ids", folder_ids_var)
     folders_query.filter("parentIds", parent_folder_ids_var)
     folders_query.filter("names", folder_names_var)
+    folders_query.filter("hasSubsets", has_subsets_var)
 
     fields = set(fields)
     if "tasks" in fields:
