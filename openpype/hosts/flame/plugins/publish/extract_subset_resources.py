@@ -167,7 +167,7 @@ class ExtractSubsetResources(openpype.api.Extractor):
                     - (r_handle_start + r_handle_end)
                 )
             })
-            if not_retimed_handles:
+            if not retimed_handles:
                 instance.data["versionData"].update({
                     "handleStart": handle_start,
                     "handleEnd": handle_end
