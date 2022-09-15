@@ -538,12 +538,24 @@ def get_asset_ids_with_subsets(*args, **kwargs):
     raise NotImplementedError("'get_asset_ids_with_subsets' not implemented")
 
 
-def get_subset_by_id(*args, **kwargs):
-    raise NotImplementedError("'get_subset_by_id' not implemented")
+
+def get_subset_by_id(project_name, subset_id, fields=None):
+    subsets = get_subsets(project_name, subset_ids=[subset_id], fields=fields)
+    if subsets:
+        return subsets[0]
+    return None
 
 
-def get_subset_by_name(*args, **kwargs):
-    raise NotImplementedError("'get_subset_by_name' not implemented")
+def get_subset_by_name(project_name, subset_name, asset_id, fields=None):
+    subsets = get_subsets(
+        project_name,
+        subset_names=[subset_name],
+        asset_ids=[asset_id],
+        fields=fields
+    )
+    if subsets:
+        return subsets[0]
+    return None
 
 
 def get_subsets(
