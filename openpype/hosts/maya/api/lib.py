@@ -2489,14 +2489,17 @@ def load_capture_preset(data=None):
 
     # DISPLAY OPTIONS
     disp_options = {}
-    for key in data['Display Options']:
+    for key, value in data['Display Options'].items():
         if key.startswith('background'):
-            disp_options[key] = data['Display Options'][key]
-            if len(disp_options[key]) == 4:
-                disp_options[key][0] = (float(disp_options[key][0])/255)
-                disp_options[key][1] = (float(disp_options[key][1])/255)
-                disp_options[key][2] = (float(disp_options[key][2])/255)
-                disp_options[key].pop()
+            # Convert background, backgroundTop, backgroundBottom colors
+            if len(value) == 4:
+                # Ignore alpha + convert RGB to float
+                value = [
+                    float(value[0]) / 255,
+                    float(value[1]) / 255,
+                    float(value[2]) / 255
+                ]
+            disp_options[key] = value
         else:
             disp_options['displayGradient'] = True
 
