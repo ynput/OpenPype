@@ -2462,28 +2462,16 @@ def load_capture_preset(data=None):
     import capture
 
     preset = data
-
     options = dict()
 
-    # CODEC
-    id = 'Codec'
-    for key in preset[id]:
-        options[str(key)] = preset[id][key]
-
-    # GENERIC
-    id = 'Generic'
-    for key in preset[id]:
-        options[str(key)] = preset[id][key]
-
-    # RESOLUTION
-    id = 'Resolution'
-    options['height'] = preset[id]['height']
-    options['width'] = preset[id]['width']
+    # Straight key-value match from settings to capture arguments
+    for settings_key in ["Codec", "Generic", "Resolution"]:
+        for key, value in preset[settings_key].items():
+            options[key] = value
 
     # DISPLAY OPTIONS
-    id = 'Display Options'
     disp_options = {}
-    for key in preset[id]:
+    for key in preset['Display Options']:
         if key.startswith('background'):
             disp_options[key] = preset['Display Options'][key]
             if len(disp_options[key]) == 4:
@@ -2497,142 +2485,78 @@ def load_capture_preset(data=None):
     options['display_options'] = disp_options
 
     # VIEWPORT OPTIONS
-    temp_options = {}
-    id = 'Renderer'
-    for key in preset[id]:
-        temp_options[str(key)] = preset[id][key]
+    viewport_options = {}
+    viewport2_options = {}
 
-    temp_options2 = {}
-    id = 'Viewport Options'
-    for key in preset[id]:
+    for key, value in preset['Renderer'].items():
+        viewport_options[key] = value
+
+    # Viewport Options has a mixture of Viewport2 Options and Viewport Options
+    # to pass along to capture. So we'll need to differentiate between the two
+    VIEWPORT2_OPTIONS = {
+        "textureMaxResolution",
+        "renderDepthOfField",
+        "ssaoEnable",
+        "ssaoSamples",
+        "ssaoAmount",
+        "ssaoRadius",
+        "ssaoFilterRadius",
+        "hwFogStart",
+        "hwFogEnd",
+        "hwFogAlpha",
+        "hwFogFalloff",
+        "hwFogColorR",
+        "hwFogColorG",
+        "hwFogColorB",
+        "hwFogDensity",
+        "motionBlurEnable",
+        "motionBlurSampleCount",
+        "motionBlurShutterOpenFraction",
+        "lineAAEnable"
+    }
+    for key, value in preset['Viewport Options'].items():
+
+        # There are some keys we want to ignore
+        if key in {"override_viewport_options", "high_quality"}:
+            continue
+
+        # First handle special cases where we do value conversion to
+        # separate option values
         if key == 'textureMaxResolution':
-            if preset[id][key] > 0:
-                temp_options2['textureMaxResolution'] = preset[id][key]
-                temp_options2['enableTextureMaxRes'] = True
-                temp_options2['textureMaxResMode'] = 1
+            viewport2_options['textureMaxResolution'] = value
+            if value > 0:
+                viewport2_options['enableTextureMaxRes'] = True
+                viewport2_options['textureMaxResMode'] = 1
             else:
-                temp_options2['textureMaxResolution'] = preset[id][key]
-                temp_options2['enableTextureMaxRes'] = False
-                temp_options2['textureMaxResMode'] = 0
+                viewport2_options['enableTextureMaxRes'] = False
+                viewport2_options['textureMaxResMode'] = 0
 
-        if key == 'multiSample':
-            if preset[id][key] > 0:
-                temp_options2['multiSampleEnable'] = True
-                temp_options2['multiSampleCount'] = preset[id][key]
-            else:
-                temp_options2['multiSampleEnable'] = False
-                temp_options2['multiSampleCount'] = preset[id][key]
+        elif key == 'multiSample':
+            viewport2_options['multiSampleEnable'] = value > 0
+            viewport2_options['multiSampleCount'] = value
 
-        if key == 'renderDepthOfField':
-            temp_options2['renderDepthOfField'] = preset[id][key]
+        elif key == 'alphaCut':
+            viewport2_options['transparencyAlgorithm'] = 5
+            viewport2_options['transparencyQuality'] = 1
 
-        if key == 'ssaoEnable':
-            if preset[id][key] is True:
-                temp_options2['ssaoEnable'] = True
-            else:
-                temp_options2['ssaoEnable'] = False
+        elif key == 'hwFogFalloff':
+            # Settings enum value string to integer
+            viewport2_options['hwFogFalloff'] = int(value)
 
-        if key == 'ssaoSamples':
-            temp_options2['ssaoSamples'] = preset[id][key]
+        # Then handle Viewport 2.0 Options
+        elif key in VIEWPORT2_OPTIONS:
+            viewport2_options[key] = value
 
-        if key == 'ssaoAmount':
-            temp_options2['ssaoAmount'] = preset[id][key]
-
-        if key == 'ssaoRadius':
-            temp_options2['ssaoRadius'] = preset[id][key]
-
-        if key == 'hwFogDensity':
-            temp_options2['hwFogDensity'] = preset[id][key]
-
-        if key == 'ssaoFilterRadius':
-            temp_options2['ssaoFilterRadius'] = preset[id][key]
-
-        if key == 'alphaCut':
-            temp_options2['transparencyAlgorithm'] = 5
-            temp_options2['transparencyQuality'] = 1
-
-        if key == 'headsUpDisplay':
-            temp_options['headsUpDisplay'] = True
-
-        if key == 'fogging':
-            temp_options['fogging'] = preset[id][key] or False
-
-        if key == 'hwFogStart':
-            temp_options2['hwFogStart'] = preset[id][key]
-
-        if key == 'hwFogEnd':
-            temp_options2['hwFogEnd'] = preset[id][key]
-
-        if key == 'hwFogAlpha':
-            temp_options2['hwFogAlpha'] = preset[id][key]
-
-        if key == 'hwFogFalloff':
-            temp_options2['hwFogFalloff'] = int(preset[id][key])
-
-        if key == 'hwFogColorR':
-            temp_options2['hwFogColorR'] = preset[id][key]
-
-        if key == 'hwFogColorG':
-            temp_options2['hwFogColorG'] = preset[id][key]
-
-        if key == 'hwFogColorB':
-            temp_options2['hwFogColorB'] = preset[id][key]
-
-        if key == 'motionBlurEnable':
-            if preset[id][key] is True:
-                temp_options2['motionBlurEnable'] = True
-            else:
-                temp_options2['motionBlurEnable'] = False
-
-        if key == 'motionBlurSampleCount':
-            temp_options2['motionBlurSampleCount'] = preset[id][key]
-
-        if key == 'motionBlurShutterOpenFraction':
-            temp_options2['motionBlurShutterOpenFraction'] = preset[id][key]
-
-        if key == 'lineAAEnable':
-            if preset[id][key] is True:
-                temp_options2['lineAAEnable'] = True
-            else:
-                temp_options2['lineAAEnable'] = False
-
+        # Then assume remainder is Viewport Options
         else:
-            temp_options[str(key)] = preset[id][key]
+            viewport_options[key] = value
 
-    for key in ['override_viewport_options',
-                'high_quality',
-                'alphaCut',
-                'gpuCacheDisplayFilter',
-                'multiSample',
-                'ssaoEnable',
-                'ssaoSamples',
-                'ssaoAmount',
-                'ssaoFilterRadius',
-                'ssaoRadius',
-                'hwFogStart',
-                'hwFogEnd',
-                'hwFogAlpha',
-                'hwFogFalloff',
-                'hwFogColorR',
-                'hwFogColorG',
-                'hwFogColorB',
-                'hwFogDensity',
-                'textureMaxResolution',
-                'motionBlurEnable',
-                'motionBlurSampleCount',
-                'motionBlurShutterOpenFraction',
-                'lineAAEnable',
-                'renderDepthOfField'
-                ]:
-        temp_options.pop(key, None)
-
-    options['viewport_options'] = temp_options
-    options['viewport2_options'] = temp_options2
+    options['viewport_options'] = viewport_options
+    options['viewport2_options'] = viewport2_options
 
     # CAMERA OPTIONS
-    id = 'Camera Options'
     camera_options = {}
-    for key, value in preset[id].items():
+    for key, value in preset['Camera Options'].items():
         camera_options[key] = value
     options['camera_options'] = camera_options
 
