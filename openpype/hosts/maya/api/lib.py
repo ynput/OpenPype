@@ -2459,6 +2459,19 @@ def bake_to_world_space(nodes,
 
 
 def load_capture_preset(data=None):
+    """Convert OpenPype Extract Playblast settings to `capture` arguments
+
+    Input data is the settings from:
+        `project_settings/maya/publish/ExtractPlayblast/capture_preset`
+
+    Args:
+        data (dict): Capture preset settings from OpenPype settings
+
+    Returns:
+        dict: `capture.capture` compatible keyword arguments
+
+    """
+
     import capture
 
     options = dict()
