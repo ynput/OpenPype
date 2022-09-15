@@ -1,4 +1,5 @@
 import collections
+import datetime
 
 from .graphql import (
     GraphQlQuery,
@@ -6,6 +7,7 @@ from .graphql import (
     projects_graphql_query,
     folders_graphql_query,
     subsets_graphql_query,
+    versions_graphql_query,
 )
 from .server import get_server_api_connection
 
@@ -85,6 +87,46 @@ SUBSET_FIELDS_MAPPING_V3_V4 = {
     "parent": {"folderId"}
 }
 
+# --- Version entity ---
+VERSION_ATTRIBS = {
+    "fps",
+    "resolutionWidth",
+    "resolutionHeight",
+    "pixelAspect",
+    "clipIn",
+    "clipOut",
+    "families",
+    "frameStart",
+    "frameEnd",
+    "handleStart",
+    "handleEnd",
+    "intent",
+    "source",
+    "comment",
+    "machine",
+    "colorSpace"
+}
+VERSION_ATTRIBS_FIELDS = {
+    "attrib.{}".format(attr)
+    for attr in VERSION_ATTRIBS
+}
+DEFAULT_VERSION_FIELDS = {
+    "id",
+    "name",
+    "version",
+    "active",
+    "subsetId",
+    "taskId",
+    "author",
+    "thumbnailId",
+    "createdAt",
+    "updatedAt",
+} | VERSION_ATTRIBS_FIELDS
+VERSION_FIELDS_MAPPING_V3_V4 = {
+    "_id": {"id"},
+    "name": {"version"},
+    "parent": {"subsetId"}
+}
 
 # CURRENT_PROJECT_CONFIG_SCHEMA = "openpype:config-2.0"
 # CURRENT_REPRESENTATION_SCHEMA = "openpype:representation-2.0"
@@ -219,7 +261,8 @@ def _convert_v4_folder_to_v3(folder):
 
     for data_key, key in (
         ("visualParent", "parentId"),
-        ("active", "active")
+        ("active", "active"),
+        ("thumbnail_id", "thumbnailId")
     ):
         if key not in folder:
             continue
@@ -253,7 +296,7 @@ def _subset_fields_v3_to_v4(fields):
 
         elif field == "data":
             output.add("family")
-            output.add("attrib.subsetGroup")
+            output |= SUBSET_ATTRIBS
 
         elif field.startswith("data"):
             field_parts = field.split(".")
@@ -302,6 +345,93 @@ def _convert_v4_subset_to_v3(subset):
     if family:
         output_data["family"] = family
         output_data["families"] = [family]
+
+    output["data"] = output_data
+
+    return output
+
+
+def _version_fields_v3_to_v4(fields):
+    if not fields:
+        return set(DEFAULT_VERSION_FIELDS)
+
+    output = set()
+    for field in fields:
+        if field in ("type", "schema", "version_id"):
+            continue
+
+        if field in VERSION_FIELDS_MAPPING_V3_V4:
+            output |= VERSION_FIELDS_MAPPING_V3_V4[field]
+
+        elif field == "data":
+            output |= VERSION_ATTRIBS_FIELDS
+            output |= {
+                "author",
+                "createdAt",
+                "thumbnailId",
+            }
+
+        elif field.startswith("data"):
+            field_parts = field.split(".")
+            field_parts.pop(0)
+            data_key = ".".join(field_parts)
+            if data_key == "thumbnail_id":
+                output.add("thumbnailId")
+
+            elif data_key == "time":
+                output.add("createdAt")
+
+            elif data_key == "author":
+                output.add("author")
+
+            elif data_key in ("tags", ):
+                continue
+
+            else:
+                print(data_key)
+                raise ValueError("Can't query data for field {}".format(field))
+
+        else:
+            raise ValueError("Unknown field mapping for {}".format(field))
+
+    if "id" not in output:
+        output.add("id")
+    return output
+
+
+def _convert_v4_version_to_v3(version):
+    version_num = version["version"]
+    doc_type = "version"
+    schema = "openpype:version-3.0"
+    if version_num < 0:
+        doc_type = "hero_version"
+        schema = "openpype:hero_version-1.0"
+
+    output = {
+        "_id": version["id"],
+        "type": doc_type,
+        "name": version_num,
+        "schema": schema
+    }
+    if "subsetId" in version:
+        output["parent"] = version["subsetId"]
+
+    output_data = version.get("data") or {}
+    if "attrib" in version:
+        output_data.update(version["attrib"])
+
+    for key, data_key in (
+        ("active", "active"),
+        ("thumbnailId", "thumbnail_id"),
+        ("author", "author")
+    ):
+        if key in version:
+            output_data[data_key] = version[key]
+
+    if "createdAt" in version:
+        # TODO probably will need a conversion?
+        created_at = datetime.datetime.fromtimestamp(version["createdAt"])
+        output_data["time"] = created_at.strftime("%Y%m%dT%H%M%SZ")
 
     output["data"] = output_data
 
@@ -484,6 +614,131 @@ def _get_subsets(
     ]
 
 
+def _get_v4_versions(
+    project_name,
+    version_ids=None,
+    subset_ids=None,
+    versions=None,
+    hero=True,
+    standard=True,
+    latest=None,
+    fields=None
+):
+    if not fields:
+        fields = set(DEFAULT_VERSION_FIELDS)
+
+    filters = {
+        "projectName": project_name
+    }
+    if version_ids is not None:
+        version_ids = set(version_ids)
+        if not version_ids:
+            return []
+        filters["versionIds"] = list(version_ids)
+
+    if subset_ids is not None:
+        subset_ids = set(subset_ids)
+        if not subset_ids:
+            return []
+        filters["subsetIds"] = list(subset_ids)
+
+    # TODO versions can't be used as fitler at this moment!
+    if versions is not None:
+        versions = set(versions)
+        if not versions:
+            return []
+        # filters["versions"] = list(versions)
+
+    if not hero and not standard:
+        return []
+
+    if hero and not standard:
+        filters["heroOnly"] = True
+    elif hero and latest:
+        filters["heroOrLatestOnly"] = True
+    elif latest:
+        filters["latestOnly"] = True
+
+    for key in ("id", "version"):
+        fields.add(key)
+
+    if hero:
+        fields.add("subsetId")
+
+    con = get_server_api_connection()
+    query = versions_graphql_query(fields)
+
+    for attr, filter_value in filters.items():
+        query.set_variable_value(attr, filter_value)
+
+    query_str = query.calculate_query()
+    variables = query.get_variables_values()
+
+    response = con.query(query_str, **variables)
+
+    parsed_data = query.parse_result(response.data["data"])
+    return parsed_data.get("project", {}).get("versions", [])
+
+
+def _get_versions(
+    project_name,
+    version_ids=None,
+    subset_ids=None,
+    versions=None,
+    hero=True,
+    standard=True,
+    latest=None,
+    fields=None
+):
+    fields = _version_fields_v3_to_v4(fields)
+    queried_versions = _get_v4_versions(
+        project_name,
+        version_ids,
+        subset_ids,
+        versions,
+        hero,
+        standard,
+        latest,
+        fields
+    )
+
+    versions = []
+    hero_versions = []
+    for version in queried_versions:
+        if version["version"] < 0:
+            hero_versions.append(version)
+        else:
+            versions.append(_convert_v4_version_to_v3(version))
+
+    if hero_versions:
+        subset_ids = {
+            version["subsetId"]
+            for version in hero_versions
+        }
+        hero_eq_versions = _get_v4_versions(
+            project_name,
+            subset_ids=subset_ids,
+            fields=["id", "version", "subsetId"],
+            hero=False
+        )
+        hero_eq_by_subset_id = collections.defaultdict(list)
+        for version in hero_eq_versions:
+            hero_eq_by_subset_id[version["subsetId"]].append(version)
+
+        for hero_version in hero_versions:
+            abs_version = abs(hero_version["version"])
+            subset_id = hero_version["subsetId"]
+            version_id = None
+            for version in hero_eq_by_subset_id.get(subset_id, []):
+                if version["version"] == abs_version:
+                    version_id = version["id"]
+                    break
+            conv_hero = _convert_v4_version_to_v3(hero_version)
+            conv_hero["version_id"] = version_id
+
+    return versions
+
+
 def get_projects(active=True, inactive=False, library=None, fields=None):
     if not active and not inactive:
         return []
@@ -518,6 +773,7 @@ def get_project(project_name, active=True, inactive=False, fields=None):
 
     query_str = query.calculate_query()
     variables = query.get_variables_values()
+
     response = con.query(query_str, **variables)
     parsed_data = query.parse_result(response.data["data"])
     data = parsed_data["project"]
@@ -665,8 +921,23 @@ def get_version_by_name(*args, **kwargs):
     raise NotImplementedError("'get_version_by_name' not implemented")
 
 
-def get_versions(*args, **kwargs):
-    raise NotImplementedError("'get_versions' not implemented")
+def get_versions(
+    project_name,
+    version_ids=None,
+    subset_ids=None,
+    versions=None,
+    hero=False,
+    fields=None
+):
+    return _get_versions(
+        project_name,
+        version_ids,
+        subset_ids,
+        versions,
+        hero=hero,
+        standard=True,
+        fields=fields
+    )
 
 
 def get_hero_version_by_id(*args, **kwargs):
@@ -677,12 +948,33 @@ def get_hero_version_by_subset_id(*args, **kwargs):
     raise NotImplementedError("'get_hero_version_by_subset_id' not implemented")
 
 
-def get_hero_versions(*args, **kwargs):
-    raise NotImplementedError("'get_hero_versions' not implemented")
+def get_hero_versions(
+    project_name,
+    subset_ids=None,
+    version_ids=None,
+    fields=None
+):
+    return _get_versions(
+        project_name,
+        version_ids=version_ids,
+        subset_ids=subset_ids,
+        hero=True,
+        standard=False,
+        fields=fields
+    )
 
 
-def get_last_versions(*args, **kwargs):
-    raise NotImplementedError("'get_last_versions' not implemented")
+def get_last_versions(project_name, subset_ids, fields=None):
+    versions = _get_versions(
+        project_name,
+        subset_ids=subset_ids,
+        latest=True,
+        fields=fields
+    )
+    return {
+        version["parent"]: version
+        for version in versions
+    }
 
 
 def get_last_version_by_subset_id(*args, **kwargs):
