@@ -5,7 +5,7 @@ import itertools
 
 from maya import cmds
 
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
 
 
@@ -78,7 +78,7 @@ def unlock(plug):
             cmds.disconnectAttr(source, destination)
 
 
-class ExtractCameraMayaScene(openpype.api.Extractor):
+class ExtractCameraMayaScene(publish.Extractor):
     """Extract a Camera as Maya Scene.
 
     This will create a duplicate of the camera that will be baked *with*

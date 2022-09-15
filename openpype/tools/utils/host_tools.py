@@ -194,7 +194,6 @@ class HostToolsHelper:
             library_loader_tool.showNormal()
             library_loader_tool.refresh()
 
-
     def show_publish(self, parent=None):
         """Try showing the most desirable publish GUI
 
@@ -205,7 +204,6 @@ class HostToolsHelper:
 
         pyblish_show = self._discover_pyblish_gui()
         return pyblish_show(parent)
-
 
     def _discover_pyblish_gui(self):
         """Return the most desirable of the currently registered GUIs"""
@@ -272,8 +270,9 @@ class HostToolsHelper:
             dialog.showNormal()
 
     def get_publisher_tool(self, parent):
-        """Create, cache and return scene inventory tool window."""
-        if self._scene_inventory_tool is None:
+        """Create, cache and return publisher window."""
+
+        if self._publisher_tool is None:
             from openpype.tools.publisher import PublisherWindow
 
             host = registered_host()

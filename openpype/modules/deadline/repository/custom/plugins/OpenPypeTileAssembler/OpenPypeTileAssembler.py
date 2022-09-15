@@ -71,7 +71,7 @@ def convert_value_by_type_name(value_type, value):
         elif parts_len == 4:
             divisor = 2
         elif parts_len == 9:
-            divisor == 3
+            divisor = 3
         elif parts_len == 16:
             divisor = 4
         else:
@@ -453,7 +453,7 @@ class OpenPypeTileAssembler(DeadlinePlugin):
             # Swap to have input as foreground
             args.append("--swap")
             # Paste foreground to background
-            args.append("--paste +{}+{}".format(pos_x, pos_y))
+            args.append("--paste {x:+d}{y:+d}".format(x=pos_x, y=pos_y))
 
         args.append("-o")
         args.append(output_path)

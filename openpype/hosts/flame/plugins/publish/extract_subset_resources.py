@@ -90,26 +90,38 @@ class ExtractSubsetResources(openpype.api.Extractor):
         handle_end = instance.data["handleEnd"]
         handles = max(handle_start, handle_end)
         include_handles = instance.data.get("includeHandles")
+        retimed_handles = instance.data.get("retimedHandles")
 
         # get media source range with handles
         source_start_handles = instance.data["sourceStartH"]
         source_end_handles = instance.data["sourceEndH"]
+
         # retime if needed
         if r_speed != 1.0:
-            source_start_handles = (
-                instance.data["sourceStart"] - r_handle_start)
-            source_end_handles = (
-                source_start_handles
-                + (r_source_dur - 1)
-                + r_handle_start
-                + r_handle_end
-            )
+            if retimed_handles:
+                # handles are retimed
+                source_start_handles = (
+                    instance.data["sourceStart"] - r_handle_start)
+                source_end_handles = (
+                    source_start_handles
+                    + (r_source_dur - 1)
+                    + r_handle_start
+                    + r_handle_end
+                )
+            else:
+                # handles are not retimed
+                source_end_handles = (
+                    source_start_handles
+                    + (r_source_dur - 1)
+                    + handle_start
+                    + handle_end
+                )
 
         # get frame range with handles for representation range
         frame_start_handle = frame_start - handle_start
         repre_frame_start = frame_start_handle
         if include_handles:
-            if r_speed == 1.0:
+            if r_speed == 1.0 or not retimed_handles:
                 frame_start_handle = frame_start
             else:
                 frame_start_handle = (

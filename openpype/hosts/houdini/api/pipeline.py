@@ -18,7 +18,7 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.houdini import HOUDINI_HOST_DIR
-from openpype.hosts.houdini.api import lib
+from openpype.hosts.houdini.api import lib, shelves
 
 from openpype.lib import (
     register_event_callback,
@@ -81,6 +81,7 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
         # TODO: make sure this doesn't trigger when
         #       opening with last workfile.
         _set_context_settings()
+        shelves.generate_shelves()
 
     def has_unsaved_changes(self):
         return hou.hipFile.hasUnsavedChanges()
