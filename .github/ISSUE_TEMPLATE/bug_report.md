@@ -6,6 +6,8 @@ labels: bug
 assignees: ''
 
 ---
+**Running version**
+openpype-v3.14.1-nightly.2
 
 **Describe the bug**
 A clear and concise description of what the bug is.
