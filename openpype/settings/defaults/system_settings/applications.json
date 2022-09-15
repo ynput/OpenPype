@@ -730,6 +730,21 @@
             "OPENPYPE_LOG_NO_COLORS": "Yes"
         },
         "variants": {
+            "18": {
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Blackmagic Design\\Fusion 18\\Fusion.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
             "17": {
                 "executables": {
                     "windows": [
