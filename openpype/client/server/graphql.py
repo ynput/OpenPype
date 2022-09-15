@@ -149,6 +149,48 @@ def subsets_graphql_query(fields):
     return query
 
 
+def versions_graphql_query(fields):
+    query = GraphQlQuery("VersionsQuery")
+
+    project_name_var = query.add_variable("projectName", "String!")
+    subset_ids_var = query.add_variable("subsetIds", "[String!]")
+    version_ids_var = query.add_variable("versionIds", "[String!]")
+    versions_var = query.add_variable("versions", "[Int]")
+    hero_only_var = query.add_variable("heroOnly", "Boolean")
+    latest_only_var = query.add_variable("latestOnly", "Boolean")
+    hero_or_latest_only_var = query.add_variable(
+        "heroOrLatestOnly", "Boolean"
+    )
+
+    project_query = query.add_field("project")
+    project_query.filter("name", project_name_var)
+
+    subsets_query = project_query.add_field("versions", has_edges=True)
+    subsets_query.filter("ids", version_ids_var)
+    subsets_query.filter("subsetIds", subset_ids_var)
+    subsets_query.filter("versions", versions_var)
+    subsets_query.filter("heroOnly", hero_only_var)
+    subsets_query.filter("latestOnly", latest_only_var)
+    subsets_query.filter("heroOrLatestOnly", hero_or_latest_only_var)
+
+    nested_fields = fields_to_dict(set(fields))
+
+    query_queue = collections.deque()
+    for key, value in nested_fields.items():
+        query_queue.append((key, value, subsets_query))
+
+    while query_queue:
+        item = query_queue.popleft()
+        key, value, parent = item
+        field = parent.add_field(key)
+        if value is ALL_SUBFIELDS:
+            continue
+
+        for k, v in value.items():
+            query_queue.append((k, v, field))
+    return query
+
+
 class QueryVariable(object):
     def __init__(self, variable_name):
         self._variable_name = variable_name
