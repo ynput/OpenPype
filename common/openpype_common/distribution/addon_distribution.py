@@ -32,8 +32,16 @@ class MultiPlatformPath(object):
 @attr.s
 class AddonSource(object):
     type = attr.ib()
-    url = attr.ib(default=None)
+
+
+@attr.s
+class LocalAddonSource(AddonSource):
     path = attr.ib(default=attr.Factory(MultiPlatformPath))
+
+
+@attr.s
+class WebAddonSource(AddonSource):
+    url = attr.ib(default=None)
 
 
 @attr.s
@@ -41,11 +49,32 @@ class AddonInfo(object):
     """Object matching json payload from Server"""
     name = attr.ib()
     version = attr.ib()
-    sources = attr.ib(default=attr.Factory(list), type=AddonSource)
+    sources = attr.ib(default=attr.Factory(list))
     hash = attr.ib(default=None)
     description = attr.ib(default=None)
     license = attr.ib(default=None)
     authors = attr.ib(default=None)
+
+    @classmethod
+    def from_dict(cls, data):
+        sources = []
+        for source in data.get("sources", []):
+            if source.get("type") == UrlType.FILESYSTEM.value:
+                source_addon = LocalAddonSource(type=source["type"],
+                                                path=source["path"])
+            if source.get("type") == UrlType.HTTP.value:
+                source_addon = WebAddonSource(type=source["type"],
+                                              url=source["url"])
+
+            sources.append(source_addon)
+
+        return cls(name=data.get("name"),
+                   version=data.get("version"),
+                   hash=data.get("hash"),
+                   description=data.get("description"),
+                   sources=sources,
+                   license=data.get("license"),
+                   authors=data.get("authors"))
 
 
 class AddonDownloader:

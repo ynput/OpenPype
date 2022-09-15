@@ -75,7 +75,7 @@ def test_get_downloader(printer, addon_downloader):
 def test_addon_info(printer, sample_addon_info):
     valid_minimum = {"name": "openpype_slack", "version": "1.0.0"}
 
-    assert AddonInfo(**valid_minimum), "Missing required fields"
+    assert AddonInfo.from_dict(valid_minimum), "Missing required fields"
     assert AddonInfo(name=valid_minimum["name"],
                      version=valid_minimum["version"]), \
         "Missing required fields"
@@ -84,7 +84,7 @@ def test_addon_info(printer, sample_addon_info):
         # TODO should be probably implemented
         assert AddonInfo(valid_minimum), "Wrong argument format"
 
-    addon = AddonInfo(**sample_addon_info)
+    addon = AddonInfo.from_dict(sample_addon_info)
     assert addon, "Should be created"
     assert addon.name == "openpype_slack", "Incorrect name"
     assert addon.version == "1.0.0", "Incorrect version"
@@ -95,10 +95,10 @@ def test_addon_info(printer, sample_addon_info):
     addon_as_dict = attr.asdict(addon)
     assert addon_as_dict["name"], "Dict approach should work"
 
-    with pytest.raises(AttributeError):
+    with pytest.raises(TypeError):
         # TODO should be probably implemented as . not dict
         first_source = addon.sources[0]
-        assert first_source.type == "http", "Not implemented"
+        assert first_source["type"] == "http", "Not implemented"
 
 
 def test_update_addon_state(printer, sample_addon_info,
