@@ -86,6 +86,12 @@ SUBSET_FIELDS_MAPPING_V3_V4 = {
 }
 
 
+# CURRENT_PROJECT_CONFIG_SCHEMA = "openpype:config-2.0"
+# CURRENT_REPRESENTATION_SCHEMA = "openpype:representation-2.0"
+# CURRENT_WORKFILE_INFO_SCHEMA = "openpype:workfile-1.0"
+# CURRENT_THUMBNAIL_SCHEMA = "openpype:thumbnail-1.0"
+
+
 def _project_fields_v3_to_v4(fields):
     # TODO config fields
     # - config.apps
@@ -120,9 +126,9 @@ def _convert_v4_project_to_v3(project):
 
     project_name = project["name"]
     output = {
-        # Fake id
         "_id": project_name,
-        "name": project_name
+        "name": project_name,
+        "schema": "openpype:project-3.0"
     }
     if "config" in project:
         output["config"] = project["config"]
@@ -202,6 +208,7 @@ def _convert_v4_folder_to_v3(folder):
     output = {
         "_id": folder["id"],
         "type": "asset",
+        "schema": "openpype:asset-3.0"
     }
 
     output_data = folder.get("data") or {}
@@ -274,6 +281,7 @@ def _convert_v4_subset_to_v3(subset):
     output = {
         "_id": subset["id"],
         "type": "subset",
+        "schema": "openpype:subset-3.0"
     }
     if "folderId" in subset:
         output["parent"] = subset["folderId"]
