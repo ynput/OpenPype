@@ -10,6 +10,7 @@ from .graphql import (
 from .server import get_server_api_connection
 
 
+# --- Project entity ---
 PROJECT_FIELDS_MAPPING_V3_V4 = {
     "_id": {"name"},
     "name": {"name"},
@@ -20,6 +21,7 @@ PROJECT_FIELDS_MAPPING_V3_V4 = {
 }
 
 # TODO this should not be hardcoded but received from server!!!
+# --- Folder entity ---
 FOLDER_ATTRIBS = {
     "clipIn",
     "clipOut",
@@ -39,7 +41,7 @@ FOLDER_ATTRIBS_FIELDS = {
 FOLDER_FIELDS_MAPPING_V3_V4 = {
     "_id": {"id"},
     "name": {"name"},
-    "data": FOLDER_ATTRIBS_FIELDS,
+    "data": FOLDER_ATTRIBS_FIELDS | {"parentId", "parents", "active", "tasks"},
     "data.visualParent": {"parentId"},
     "data.parents": {"parents"},
     "data.active": {"active"},
@@ -56,6 +58,7 @@ DEFAULT_FOLDER_FIELDS = {
     "parents",
 } | FOLDER_ATTRIBS_FIELDS
 
+# --- Subset entity ---
 SUBSET_ATTRIBS = {
     "subsetGroup",
 }
@@ -352,7 +355,10 @@ def _get_folders(
     output = []
 
     folders = parsed_data.get("project", {}).get("folders", [])
+    expect_parent_id = "parentId" in fields
     for folder in folders:
+        if expect_parent_id and "parentId" not in folder:
+            folder["parentId"] = None
         output.append(_convert_v4_folder_to_v3(folder))
     return output
 
