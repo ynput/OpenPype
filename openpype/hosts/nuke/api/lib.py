@@ -64,6 +64,8 @@ EXCLUDED_KNOB_TYPE_ON_READ = (
          #  if value is not an empty string.)
 )
 JSON_PREFIX = "JSON:::"
+ROOT_DATA_KNOB = "publish_context"
+INSTANCE_DATA_KNOB = "publish_instance"
 
 
 class Context:
@@ -95,22 +97,32 @@ def get_main_window():
     return Context.main_window
 
 
-def write_create_data(node, knobname, data):
-    knob_value = JSON_PREFIX + json.dumps(data)
+def write_node_data(node, knobname, data):
+    # if exists then update data
     if knobname in node.knobs():
-        knob = node[knobname]
-        knob.setValue(knob_value)
+        log.debug("Updating knobname `{}` on node `{}`".format(
+            knobname, node.name()
+        ))
+        update_node_data(node, knobname, data)
         return
 
+    log.debug("Creating knobname `{}` on node `{}`".format(
+            knobname, node.name()
+        ))
+    # else create new
+    knob_value = JSON_PREFIX + json.dumps(data)
     knob = nuke.String_Knob(knobname)
     knob.setValue(knob_value)
     knob.setFlag(nuke.INVISIBLE)
     node.addKnob(knob)
 
 
-def read_create_data(node, knobname):
+def read_node_data(node, knobname):
+
     if knobname not in node.knobs():
-        log.debug("get knob: {}".format(node[knobname]))
+        log.warnig("Knobname `{}` does not exist on node `{}`".format(
+            knobname, node.name()
+        ))
         return
 
     rawdata = node[knobname].getValue()
@@ -122,6 +134,14 @@ def read_create_data(node, knobname):
             return json.loads(rawdata[len(JSON_PREFIX):])
         except json.JSONDecodeError:
             return
+
+
+def update_node_data(node, knobname, data):
+    knob = node[knobname]
+    node_data = read_node_data(node, knobname)
+    node_data.update(data)
+    knob_value = JSON_PREFIX + json.dumps(node_data)
+    knob.setValue(knob_value)
 
 
 class Knobby(object):
@@ -2168,11 +2188,14 @@ class WorkfileSettings(object):
             node['frame_range_lock'].setValue(True)
 
         # adding handle_start/end to root avalon knob
-        if not set_avalon_knob_data(self._root_node, {
-            "handleStart": int(handle_start),
-            "handleEnd": int(handle_end)
-        }):
-            log.warning("Cannot set Avalon knob to Root node!")
+        write_node_data(
+            self._root_node,
+            INSTANCE_DATA_KNOB,
+            {
+                "handleStart": int(handle_start),
+                "handleEnd": int(handle_end)
+            }
+        )
 
     def reset_resolution(self):
         """Set resolution to project resolution."""
@@ -2295,7 +2318,6 @@ def get_write_node_template_attr(node):
         subset=avalon_knob_data["subset"]
     )
 
-
     # collecting correct data
     correct_data = OrderedDict()
 
@@ -2347,10 +2369,11 @@ def get_dependent_nodes(nodes):
 
 
 def find_free_space_to_paste_nodes(
-        nodes,
-        group=nuke.root(),
-        direction="right",
-        offset=300):
+    nodes,
+    group=nuke.root(),
+    direction="right",
+    offset=300
+):
     """
     For getting coordinates in DAG (node graph) for placing new nodes
 

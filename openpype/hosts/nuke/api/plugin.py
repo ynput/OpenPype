@@ -1,15 +1,23 @@
+import nuke
+
 import os
+import sys
+import six
 import random
 import string
 from collections import OrderedDict
 from abc import abstractmethod
-
-import nuke
+from abc import (
+    ABCMeta
+)
 
 from openpype.api import get_current_project_settings
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
+    CreatorError,
+    Creator as NewCreator,
+    CreatedInstance
 )
 from .lib import (
     Knobby,
@@ -21,6 +29,115 @@ from .lib import (
     set_node_knobs_from_settings,
     get_view_process_node
 )
+from .pipeline import (
+    list_instances
+)
+
+
+class OpenPypeCreatorError(CreatorError):
+    pass
+
+
+@six.add_metaclass(ABCMeta)
+class NukeCreator(NewCreator):
+    selected_nodes = []
+
+    def _create_instance_node(
+        self,
+        node_name,
+        knobs=None,
+        parent=None,
+        node_type="NoOp"
+    ):
+        """Create node representing instance.
+
+        Arguments:
+            node_name (str): Name of the new node.
+            knobs (OrderedDict): knobs name and values
+            parent (str): Name of the parent node.
+            node_type (str, optional): Type of the node.
+
+        Returns:
+            nuke.Node: Newly created instance node.
+
+        """
+        node_knobs = knobs or {}
+
+        # set parent node
+        parent_node = nuke.root()
+        if parent:
+            parent_node = nuke.toNode(parent)
+
+        with parent_node:
+            created_node = nuke.createNode(node_type)
+            created_node["name"].setValue(node_name)
+
+            for key, values in node_knobs.items():
+                if key in created_node.knobs():
+                    created_node["key"].setValue(values)
+
+        return created_node
+
+    # def create(self, subset_name, instance_data, pre_create_data):
+    #     try:
+    #         if pre_create_data.get("use_selection"):
+    #             self.selected_nodes = nuke.selectedNodes()
+
+    #         # Get the node type and remove it from the data, not needed
+    #         _node_type = instance_data.pop("node_type", None)
+    #         if _node_type is None:
+    #             _node_type = "NoOp"
+
+    #         instance_node = self._create_instance_node(
+    #             subset_name, node_type=_node_type, pre_create_data)
+
+    #         instance_data["instance_node"] = instance_node.path()
+
+    #         instance = CreatedInstance(
+    #             self.family,
+    #             subset_name,
+    #             instance_data,
+    #             self)
+    #         self._add_instance_to_context(instance)
+    #         imprint(instance_node, instance.data_to_store())
+    #         return instance
+
+    #     except hou.Error as er:
+    #         six.reraise(
+    #             OpenPypeCreatorError,
+    #             OpenPypeCreatorError("Creator error: {}".format(er)),
+    #             sys.exc_info()[2])
+
+    # def collect_instances(self):
+    #     for instance_data in list_instances(creator_id=self.identifier):
+    #         created_instance = CreatedInstance.from_existing(
+    #             instance_data, self
+    #         )
+    #         self._add_instance_to_context(created_instance)
+
+    # def update_instances(self, update_list):
+    #     for created_inst, _changes in update_list:
+    #         instance_node = created_inst.pop("instance_node", None)
+    #         current_data = created_inst.data
+
+    #         imprint(
+    #             instance_node,
+    #             {
+    #                 key: value[1] for key, value in _changes.items()
+    #                 if current_data.get(key) != value[1]
+    #             },
+    #             update=True
+    #         )
+
+    # def remove_instances(self, instances):
+    #     for instance in instances:
+    #         remove_instance(instance)
+    #         self._remove_instance_from_context(instance)
+
+    # def get_pre_create_attr_defs(self):
+    #     return [
+    #         BoolDef("use_selection", label="Use selection")
+    #     ]
 
 
 class OpenPypeCreator(LegacyCreator):

@@ -34,6 +34,7 @@ from openpype.tools.utils import host_tools
 from .command import viewer_update_and_undo_stop
 from .lib import (
     Context,
+    ROOT_DATA_KNOB,
     get_main_window,
     add_publish_knob,
     WorkfileSettings,
@@ -47,8 +48,8 @@ from .lib import (
     dirmap_file_name_filter,
     add_scripts_menu,
     add_scripts_gizmo,
-    read_create_data,
-    write_create_data
+    read_node_data,
+    write_node_data
 )
 from .lib_template_builder import (
     create_placeholder, update_placeholder
@@ -136,11 +137,11 @@ class NukeHost(
 
     def get_context_data(self):
         root_node = nuke.root()
-        return read_create_data(root_node, "publish_context")
+        return read_node_data(root_node, ROOT_DATA_KNOB)
 
     def update_context_data(self, data, changes):
         root_node = nuke.root()
-        write_create_data(root_node, "publish_context", data)
+        write_node_data(root_node, ROOT_DATA_KNOB, data)
 
 
 def add_nuke_callbacks():
@@ -492,7 +493,7 @@ def ls():
             yield container
 
 
-def list_instances():
+def list_instances(creator_id=None):
     """List all created instances to publish from current workfile.
 
     For SubsetManager
@@ -514,7 +515,7 @@ def list_instances():
 
         # get data from avalon knob
         avalon_knob_data = get_avalon_knob_data(
-            node, ["avalon:", "ak:"])
+            node)
 
         if not avalon_knob_data:
             continue
@@ -522,8 +523,13 @@ def list_instances():
         if avalon_knob_data["id"] != "pyblish.avalon.instance":
             continue
 
+        if creator_id and avalon_knob_data["identifier"] != creator_id:
+            continue
+
         # add node name
-        avalon_knob_data["name"] = node.name()
+        avalon_knob_data.update({
+            "instance_node": node
+        })
 
         instances.append(avalon_knob_data)
 
