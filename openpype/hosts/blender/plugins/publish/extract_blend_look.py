@@ -84,7 +84,7 @@ class ExtractBlendLook(openpype.api.Extractor):
 
         # Get images and process resources
         images = self._get_images_from_materials(materials)
-        transfers, hashes, remapped = self.process_resources(instance, images)
+        transfers, hashes, remapped = self._process_resources(instance, images)
 
         data_blocks.add(collection)
 
@@ -121,9 +121,9 @@ class ExtractBlendLook(openpype.api.Extractor):
             f"Extracted instance '{instance.name}' to: {representation}"
         )
 
-    def process_resources(
+    def _process_resources(
         self, instance: dict, images: set
-    ) -> Tuple[List[Tuple[str, str]], dict, Set[bpy.types.Image, Path]]:
+    ) -> Tuple[List[Tuple[str, str]], dict, Set[Tuple[bpy.types.Image, Path]]]:
         """Extract the textures to transfer, copy them to the resource directory and remap the node paths.
 
         Args:
@@ -131,7 +131,7 @@ class ExtractBlendLook(openpype.api.Extractor):
             images (set): Blender Images to publish
 
         Returns:
-            Tuple[Tuple[str, str], dict, Set[bpy.types.Image, Path]]:
+            Tuple[Tuple[str, str], dict, Set[Tuple[bpy.types.Image, Path]]]:
                 (Files to copy and transfer with published blend,
                 source hashes for later file optim,
                 remapped images with source file path)
@@ -141,8 +141,12 @@ class ExtractBlendLook(openpype.api.Extractor):
         hashes = {}
         remapped = set()
         for image in images:
-            sourcepath = Path(bpy.path.abspath(image.filepath))
+            # Check image is not internal
+            if not image.filepath:
+                continue
 
+            # Get source and destination paths
+            sourcepath = Path(bpy.path.abspath(image.filepath))
             destination = Path(instance.data["resourcesDir"], sourcepath.name)
 
             transfers.append((sourcepath.as_posix(), destination.as_posix()))
