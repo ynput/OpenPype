@@ -493,7 +493,7 @@ def get_project(project_name, active=True, inactive=False, fields=None):
     query.set_variable_value("projectName", project_name)
 
     query_str = query.calculate_query()
-    variables = query.get_variable_values()
+    variables = query.get_variables_values()
     response = con.query(query_str, **variables)
     parsed_data = query.parse_result(response.data["data"])
     data = parsed_data["project"]
@@ -541,9 +541,28 @@ def get_archived_assets(*args, **kwargs):
     raise NotImplementedError("'get_archived_assets' not implemented")
 
 
-def get_asset_ids_with_subsets(*args, **kwargs):
-    raise NotImplementedError("'get_asset_ids_with_subsets' not implemented")
+def get_asset_ids_with_subsets(project_name, asset_ids=None):
+    if asset_ids is not None:
+        asset_ids = set(asset_ids)
+        if not asset_ids:
+            return set()
 
+    query = folders_graphql_query({"id"})
+    query.set_variable_value("projectName", project_name)
+    query.set_variable_value("folderHasSubsets", True)
+    if asset_ids:
+        query.set_variable_value("folderIds", list(asset_ids))
+
+    con = get_server_api_connection()
+    query_str = query.calculate_query()
+    variables = query.get_variables_values()
+    response = con.query(query_str, **variables)
+    parsed_data = query.parse_result(response.data["data"])
+    folders = parsed_data.get("project", {}).get("folders", [])
+    return {
+        folder["id"]
+        for folder in folders
+    }
 
 
 def get_subset_by_id(project_name, subset_id, fields=None):
