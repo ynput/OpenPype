@@ -317,7 +317,7 @@ def _get_folders(
 
     fields = _folder_fields_v3_to_v4(fields)
     filters = {
-        "projectName", project_name
+        "projectName": project_name
     }
     if folder_ids is not None:
         folder_ids = set(folder_ids)
@@ -478,9 +478,10 @@ def get_project(project_name, active=True, inactive=False, fields=None):
     if not active and not inactive:
         return None
 
-    con = get_server_api_connection()
     if active and inactive:
         active = None
+
+    con = get_server_api_connection()
 
     fields = _project_fields_v3_to_v4(fields)
     if not fields:
@@ -504,12 +505,18 @@ def get_whole_project(*args, **kwargs):
     raise NotImplementedError("'get_whole_project' not implemented")
 
 
-def get_asset_by_id(*args, **kwargs):
-    raise NotImplementedError("'get_asset_by_id' not implemented")
+def get_asset_by_id(project_name, asset_id, fields=None):
+    assets = get_assets(project_name, asset_ids=[asset_id], fields=fields)
+    if assets:
+        return assets[0]
+    return None
 
 
-def get_asset_by_name(*args, **kwargs):
-    raise NotImplementedError("'get_asset_by_name' not implemented")
+def get_asset_by_name(project_name, asset_name, fields=None):
+    assets = get_assets(project_name, asset_names=[asset_name], fields=fields)
+    if assets:
+        return assets[0]
+    return None
 
 
 def get_assets(
