@@ -17,10 +17,10 @@ from openpype.pipeline import (
     switch_container,
     legacy_io,
 )
+from openpype.pipeline.context_tools import get_current_project_asset
+
 from .pipeline import get_current_comp, comp_lock_and_undo_chunk
-from openpype.api import (
-    get_asset
-)
+
 self = sys.modules[__name__]
 self._project = None
 
@@ -70,7 +70,7 @@ def update_frame_range(start, end, comp=None, set_render_range=True, **kwargs):
 
 
 def set_framerange():
-    asset_doc = get_asset()
+    asset_doc = get_current_project_asset()
     start = asset_doc["data"]["frameStart"]
     end = asset_doc["data"]["frameEnd"]
 

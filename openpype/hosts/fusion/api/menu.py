@@ -2,9 +2,7 @@ import sys
 
 from Qt import QtWidgets, QtCore
 
-from avalon import api
 from openpype.tools.utils import host_tools
-
 from openpype.style import load_stylesheet
 from openpype.lib import register_event_callback
 from openpype.hosts.fusion.scripts import (
@@ -14,6 +12,7 @@ from openpype.hosts.fusion.scripts import (
 from openpype.hosts.fusion.api import (
     set_framerange
 )
+from openpype.pipeline import legacy_io
 
 from .pulse import FusionPulse
 
@@ -129,7 +128,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_task_changed(self):
         # Update current context label
-        label = api.Session["AVALON_ASSET"]
+        label = legacy_io.Session["AVALON_ASSET"]
         self.asset_label.setText(label)
 
     def register_callback(self, name, fn):
