@@ -1,44 +1,43 @@
+# -*- coding: utf-8 -*-
+"""Creator plugin for creating composite sequences."""
 from openpype.hosts.houdini.api import plugin
+from openpype.pipeline import CreatedInstance
 
 
-class CreateCompositeSequence(plugin.Creator):
+class CreateCompositeSequence(plugin.HoudiniCreator):
     """Composite ROP to Image Sequence"""
 
+    identifier = "io.openpype.creators.houdini.imagesequence"
     label = "Composite (Image Sequence)"
     family = "imagesequence"
     icon = "gears"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateCompositeSequence, self).__init__(*args, **kwargs)
+    def create(self, subset_name, instance_data, pre_create_data):
+        import hou
+        from pprint import pformat
 
-        # Remove the active, we are checking the bypass flag of the nodes
-        self.data.pop("active", None)
+        instance_data.pop("active", None)
+        instance_data.update({"node_type": "comp"})
 
-        # Type of ROP node to create
-        self.data.update({"node_type": "comp"})
+        instance = super(CreateCompositeSequence, self).create(
+            subset_name,
+            instance_data,
+            pre_create_data)  # type: CreatedInstance
 
-    def _process(self, instance):
-        """Creator main entry point.
+        self.log.info(pformat(instance))
+        print(pformat(instance))
+        instance_node = hou.node(instance.get("instance_node"))
 
-        Args:
-            instance (hou.Node): Created Houdini instance.
+        filepath = "$HIP/pyblish/{}.$F4.exr".format(subset_name)
+        parms = {
+            "copoutput": filepath
+        }
 
-        """
-        parms = {"copoutput": "$HIP/pyblish/%s.$F4.exr" % self.name}
-
-        if self.nodes:
-            node = self.nodes[0]
-            parms.update({"coppath": node.path()})
-
-        instance.setParms(parms)
+        instance_node.setParms(parms)
 
         # Lock any parameters in this list
         to_lock = ["prim_to_detail_pattern"]
         for name in to_lock:
-            try:
-                parm = instance.parm(name)
-                parm.lock(True)
-            except AttributeError:
-                # missing lock pattern
-                self.log.debug(
-                    "missing lock pattern {}".format(name))
+            parm = instance_node.parm(name)
+            parm.lock(True)
+
