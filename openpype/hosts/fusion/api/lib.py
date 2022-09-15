@@ -25,7 +25,8 @@ self = sys.modules[__name__]
 self._project = None
 
 
-def update_frame_range(start, end, comp=None, set_render_range=True, **kwargs):
+def update_frame_range(start, end, comp=None, set_render_range=True,
+                       handle_start=0, handle_end=0):
     """Set Fusion comp's start and end frame range
 
     Args:
@@ -34,7 +35,8 @@ def update_frame_range(start, end, comp=None, set_render_range=True, **kwargs):
         comp (object, Optional): comp object from fusion
         set_render_range (bool, Optional): When True this will also set the
             composition's render start and end frame.
-        kwargs (dict): additional kwargs
+        handle_start (float, int, Optional): frame handles before start frame
+        handle_end (float, int, Optional): frame handles after end frame
 
     Returns:
         None
@@ -44,19 +46,14 @@ def update_frame_range(start, end, comp=None, set_render_range=True, **kwargs):
     if not comp:
         comp = get_current_comp()
 
+    # Convert any potential none type to zero
+    handle_start = handle_start or 0
+    handle_end = handle_end or 0
+
     attrs = {
-        "COMPN_GlobalStart": start,
-        "COMPN_GlobalEnd": end
+        "COMPN_GlobalStart": start - handle_start,
+        "COMPN_GlobalEnd": end + handle_end
     }
-
-    # exclude handles if any found in kwargs
-    if kwargs.get("handle_start"):
-        handle_start = kwargs.get("handle_start")
-        attrs["COMPN_GlobalStart"] = int(start - handle_start)
-
-    if kwargs.get("handle_end"):
-        handle_end = kwargs.get("handle_end")
-        attrs["COMPN_GlobalEnd"] = int(end + handle_end)
 
     # set frame range
     if set_render_range:
@@ -73,12 +70,11 @@ def set_framerange():
     asset_doc = get_current_project_asset()
     start = asset_doc["data"]["frameStart"]
     end = asset_doc["data"]["frameEnd"]
-
-    data = {
-        "handle_start": asset_doc["data"]["handleStart"],
-        "handle_end": asset_doc["data"]["handleEnd"]
-    }
-    update_frame_range(start, end, set_render_range=True, **data)
+    handle_start = asset_doc["data"]["handleStart"],
+    handle_end = asset_doc["data"]["handleEnd"],
+    update_frame_range(start, end, set_render_range=True,
+                       handle_start=handle_start,
+                       handle_end=handle_end)
 
 
 def get_additional_data(container):
