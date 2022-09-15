@@ -734,7 +734,7 @@ def _format_tiles(
         Result for tile 0 for 4x4 will be:
         `maya/<Scene>/<RenderLayer>/_tile_1x1_4x4_<RenderLayer>_<RenderPass>`
 
-    Calculating coordinates is tricky as in Job they are defined as top,
+        Calculating coordinates is tricky as in Job they are defined as top,
     left, bottom, right with zero being in top-left corner. But Assembler
     configuration file takes tile coordinates as X, Y, Width and Height and
     zero is bottom left corner.
@@ -743,13 +743,13 @@ def _format_tiles(
         filename (str): Filename to process as tiles.
         index (int): Index of that file if it is sequence.
         tiles_x (int): Number of tiles in X.
-        tiles_y (int): Number if tikes in Y.
+        tiles_y (int): Number of tiles in Y.
         width (int): Width resolution of final image.
         height (int):  Height resolution of final image.
         prefix (str): Image prefix.
 
     Returns:
-        (dict, dict): Tuple of two dictionaires - first can be used to
+        (dict, dict): Tuple of two dictionaries - first can be used to
                       extend JobInfo, second has tiles x, y, width and height
                       used for assembler configuration.
 
@@ -776,21 +776,24 @@ def _format_tiles(
                 tiles_x,
                 tiles_y
             )
-            top = height - (tile_y * h_space)
-            bottom = height - ((tile_y - 1) * h_space) - 1
-            left = (tile_x - 1) * w_space
-            right = (tile_x * w_space) - 1
 
-            # Job Info
             new_filename = "{}/{}{}".format(
                 os.path.dirname(filename),
                 tile_prefix,
                 os.path.basename(filename)
             )
-            out["JobInfo"]["OutputFilename{}Tile{}".format(index, tile)] = new_filename   # noqa
+
+            top = height - (tile_y * h_space)
+            bottom = height - ((tile_y - 1) * h_space) - 1
+            left = (tile_x - 1) * w_space
+            right = (tile_x * w_space) - 1
+
+            # Job info
+            out["JobInfo"]["OutputFilename{}Tile{}".format(index, tile)] = new_filename  # noqa: E501
 
             # Plugin Info
-            out["PluginInfo"]["RegionPrefix{}".format(tile)] = "/{}".format(tile_prefix).join(prefix.rsplit("/", 1))  # noqa: E501
+            out["PluginInfo"]["RegionPrefix{}".format(str(tile))] = \
+                "/{}".format(tile_prefix).join(prefix.rsplit("/", 1))
             out["PluginInfo"]["RegionTop{}".format(tile)] = top
             out["PluginInfo"]["RegionBottom{}".format(tile)] = bottom
             out["PluginInfo"]["RegionLeft{}".format(tile)] = left
