@@ -262,6 +262,8 @@ def _convert_v4_subset_to_v3(subset):
         "_id": subset["id"],
         "type": "subset",
     }
+    if "folderId" in subset:
+        output["parent"] = subset["folderId"]
 
     output_data = subset.get("data") or {}
 
