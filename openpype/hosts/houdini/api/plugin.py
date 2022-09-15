@@ -14,7 +14,7 @@ from openpype.pipeline import (
 )
 from openpype.lib import BoolDef
 from openpype.hosts.houdini.api import list_instances, remove_instance
-from .lib import imprint, read
+from .lib import imprint, read, get_frame_data
 
 
 class OpenPypeCreatorError(CreatorError):

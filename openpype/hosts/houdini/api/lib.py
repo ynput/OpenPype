@@ -530,3 +530,30 @@ def get_template_from_value(key, value):
         raise TypeError("Unsupported type: %r" % type(value))
 
     return parm
+
+
+def get_frame_data(node):
+    """Get the frame data: start frame, end frame and steps.
+
+    Args:
+        node(hou.Node)
+
+    Returns:
+        dict: frame data for star, end and steps.
+
+    """
+    data = {}
+
+    if node.parm("trange") is None:
+
+        return data
+
+    if node.evalParm("trange") == 0:
+        self.log.debug("trange is 0")
+        return data
+
+    data["frameStart"] = node.evalParm("f1")
+    data["frameEnd"] = node.evalParm("f2")
+    data["steps"] = node.evalParm("f3")
+
+    return data
