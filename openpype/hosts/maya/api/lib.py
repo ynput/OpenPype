@@ -2460,14 +2460,20 @@ def bake_to_world_space(nodes,
 
 def load_capture_preset(data=None):
     import capture
-
     preset = data
+
     options = dict()
+    viewport_options = dict()
+    viewport2_options = dict()
+    camera_options = dict()
 
     # Straight key-value match from settings to capture arguments
-    for settings_key in ["Codec", "Generic", "Resolution"]:
-        for key, value in preset[settings_key].items():
-            options[key] = value
+    options.update(preset["Codec"])
+    options.update(preset["Generic"])
+    options.update(preset["Resolution"])
+
+    camera_options.update(preset['Camera Options'])
+    viewport_options.update(preset["Renderer"])
 
     # DISPLAY OPTIONS
     disp_options = {}
@@ -2483,13 +2489,6 @@ def load_capture_preset(data=None):
             disp_options['displayGradient'] = True
 
     options['display_options'] = disp_options
-
-    # VIEWPORT OPTIONS
-    viewport_options = {}
-    viewport2_options = {}
-
-    for key, value in preset['Renderer'].items():
-        viewport_options[key] = value
 
     # Viewport Options has a mixture of Viewport2 Options and Viewport Options
     # to pass along to capture. So we'll need to differentiate between the two
@@ -2553,11 +2552,6 @@ def load_capture_preset(data=None):
 
     options['viewport_options'] = viewport_options
     options['viewport2_options'] = viewport2_options
-
-    # CAMERA OPTIONS
-    camera_options = {}
-    for key, value in preset['Camera Options'].items():
-        camera_options[key] = value
     options['camera_options'] = camera_options
 
     # use active sound track
