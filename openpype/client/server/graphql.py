@@ -78,13 +78,14 @@ def projects_graphql_query(fields):
 def folders_graphql_query(fields):
     query = GraphQlQuery("FoldersQuery")
     project_name_var = query.add_variable("projectName", "String!")
+    folder_ids_var = query.add_variable("folderIds", "[String!]")
+    parent_folder_ids_var = query.add_variable("parentFolderIds", "[String!]")
+    folder_names_var = query.add_variable("folderNames", "[String!]")
+
     project_query = query.add_field("project")
     project_query.filter("name", project_name_var)
 
     folders_query = project_query.add_field("folders", has_edges=True)
-    folder_ids_var = query.add_variable("folderIds", "[String!]")
-    parent_folder_ids_var = query.add_variable("parentFolderIds", "[String!]")
-    folder_names_var = query.add_variable("folderNames", "[String!]")
     folders_query.filter("ids", folder_ids_var)
     folders_query.filter("parentIds", parent_folder_ids_var)
     folders_query.filter("names", folder_names_var)
@@ -101,6 +102,40 @@ def folders_graphql_query(fields):
     query_queue = collections.deque()
     for key, value in nested_fields.items():
         query_queue.append((key, value, folders_query))
+
+    while query_queue:
+        item = query_queue.popleft()
+        key, value, parent = item
+        field = parent.add_field(key)
+        if value is ALL_SUBFIELDS:
+            continue
+
+        for k, v in value.items():
+            query_queue.append((k, v, field))
+    return query
+
+
+def subsets_graphql_query(fields):
+    query = GraphQlQuery("SubsetsQuery")
+
+    project_name_var = query.add_variable("projectName", "String!")
+    folder_ids_var = query.add_variable("folderIds", "[String!]")
+    subset_ids_var = query.add_variable("subsetIds", "[String!]")
+    subset_names_var = query.add_variable("subsetNames", "[String!]")
+
+    project_query = query.add_field("project")
+    project_query.filter("name", project_name_var)
+
+    subsets_query = project_query.add_field("subsets", has_edges=True)
+    subsets_query.filter("ids", subset_ids_var)
+    subsets_query.filter("names", subset_names_var)
+    subsets_query.filter("folderIds", folder_ids_var)
+
+    nested_fields = fields_to_dict(set(fields))
+
+    query_queue = collections.deque()
+    for key, value in nested_fields.items():
+        query_queue.append((key, value, subsets_query))
 
     while query_queue:
         item = query_queue.popleft()
