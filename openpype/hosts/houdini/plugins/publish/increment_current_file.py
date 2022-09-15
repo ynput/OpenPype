@@ -27,4 +27,4 @@ class IncrementCurrentFile(pyblish.api.ContextPlugin):
         ), "Collected filename from current scene name."
 
         new_filepath = version_up(current_file)
-        host.save(new_filepath)
+        host.save_file(new_filepath)
