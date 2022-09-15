@@ -1,9 +1,12 @@
+# -*- coding: utf-8 -*-
+"""Creator plugin for creating Arnold ASS files."""
 from openpype.hosts.houdini.api import plugin
 
 
-class CreateArnoldAss(plugin.Creator):
+class CreateArnoldAss(plugin.HoudiniCreator):
     """Arnold .ass Archive"""
 
+    identifier = "io.openpype.creators.houdini.ass"
     label = "Arnold ASS"
     family = "ass"
     icon = "magic"
@@ -12,42 +15,40 @@ class CreateArnoldAss(plugin.Creator):
     # Default extension: `.ass` or `.ass.gz`
     ext = ".ass"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateArnoldAss, self).__init__(*args, **kwargs)
+    def create(self, subset_name, instance_data, pre_create_data):
+        import hou
 
-        # Remove the active, we are checking the bypass flag of the nodes
-        self.data.pop("active", None)
+        instance_data.pop("active", None)
+        instance_data.update({"node_type": "arnold"})
 
-        self.data.update({"node_type": "arnold"})
+        instance = super(CreateArnoldAss, self).create(
+            subset_name,
+            instance_data,
+            pre_create_data)  # type: CreatedInstance
 
-    def process(self):
-        node = super(CreateArnoldAss, self).process()
+        instance_node = hou.node(instance.get("instance_node"))
 
-        basename = node.name()
-        node.setName(basename + "_ASS", unique_name=True)
+        basename = instance_node.name()
+        instance_node.setName(basename + "_ASS", unique_name=True)
 
         # Hide Properties Tab on Arnold ROP since that's used
         # for rendering instead of .ass Archive Export
-        parm_template_group = node.parmTemplateGroup()
+        parm_template_group = instance_node.parmTemplateGroup()
         parm_template_group.hideFolder("Properties", True)
-        node.setParmTemplateGroup(parm_template_group)
+        instance_node.setParmTemplateGroup(parm_template_group)
 
-        filepath = '$HIP/pyblish/`chs("subset")`.$F4{}'.format(self.ext)
+        filepath = "$HIP/pyblish/{}.$F4{}".format(subset_name, self.ext)
         parms = {
             # Render frame range
             "trange": 1,
-
             # Arnold ROP settings
             "ar_ass_file": filepath,
-            "ar_ass_export_enable": 1
+            "ar_ass_export_enable": 1,
+            "filename": filepath
         }
-        node.setParms(parms)
 
-        # Lock the ASS export attribute
-        node.parm("ar_ass_export_enable").lock(True)
-
-        # Lock some Avalon attributes
-        to_lock = ["family", "id"]
+        # Lock any parameters in this list
+        to_lock = ["ar_ass_export_enable", "family", "id"]
         for name in to_lock:
-            parm = node.parm(name)
+            parm = instance_node.parm(name)
             parm.lock(True)
