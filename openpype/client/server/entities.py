@@ -1,6 +1,7 @@
 import collections
 
 from .graphql import (
+    GraphQlQuery,
     project_graphql_query,
     projects_graphql_query,
     folders_graphql_query,
@@ -563,9 +564,33 @@ def get_subsets(
     )
 
 
+def get_subset_families(project_name, subset_ids=None):
+    if subset_ids is not None:
+        subsets = get_subsets(
+            project_name,
+            subset_ids=subset_ids,
+            fields=["data.family"]
+        )
+        return {
+            subset["data"]["family"]
+            for subset in subsets
+        }
 
-def get_subset_families(*args, **kwargs):
-    raise NotImplementedError("'get_subset_families' not implemented")
+    query = GraphQlQuery("SubsetFamilies")
+    project_name_var = query.add_variable(
+        "projectName", "String!", project_name
+    )
+    project_query = query.add_field("project")
+    project_query.filter("name", project_name_var)
+    project_query.add_field("subsetFamilies")
+    query_str = query.calculate_query()
+    variables = query.get_variables_values()
+
+    con = get_server_api_connection()
+    response = con.query(query_str, **variables)
+
+    parsed_data = query.parse_result(response.data["data"])
+    return set(parsed_data.get("project", {}).get("subsetFamilies", []))
 
 
 def get_version_by_id(*args, **kwargs):
