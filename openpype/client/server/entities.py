@@ -1027,8 +1027,35 @@ def get_thumbnails(*args, **kwargs):
     raise NotImplementedError("'get_thumbnails' not implemented")
 
 
-def get_thumbnail_id_from_source(*args, **kwargs):
-    raise NotImplementedError("'get_thumbnail_id_from_source' not implemented")
+def get_thumbnail_id_from_source(project_name, src_type, src_id):
+    """Receive thumbnail id from source entity.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        src_type (str): Type of source entity ('asset', 'version').
+        src_id (Union[str, ObjectId]): Id of source entity.
+
+    Returns:
+        ObjectId: Thumbnail id assigned to entity.
+        None: If Source entity does not have any thumbnail id assigned.
+    """
+
+    if not src_type or not src_id:
+        return None
+
+    if src_type == "subset":
+        subset = get_subset_by_id(
+            project_name, src_id, fields=["data.thumbnail_id"]
+        ) or {}
+        return subset.get("data", {}).get("thumbnail_id")
+
+    if src_type == "subset":
+        subset = get_asset_by_id(
+            project_name, src_id, fields=["data.thumbnail_id"]
+        ) or {}
+        return subset.get("data", {}).get("thumbnail_id")
+
+    return None
 
 
 def get_workfile_info(*args, **kwargs):
