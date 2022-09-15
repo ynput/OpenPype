@@ -427,6 +427,35 @@
                 }
             ]
         },
+
+        {
+            "key": "fusion",
+            "type": "dict",
+            "label": "Fusion",
+            "children": [
+                {
+                    "key": "ocio",
+                    "type": "dict",
+                    "label": "OCIO",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Set OCIO variable for Fusion"
+                        },
+                        {
+                            "type": "path",
+                            "key": "configFilePath",
+                            "label": "OCIO Config File Path",
+                            "multiplatform": true,
+                            "multipath": true
+                        }
+                    ]
+                }
+            ]
+        },
         {
             "key": "flame",
             "type": "dict",
