@@ -33,6 +33,13 @@ class FusionPrelaunch(PreLaunchHook):
         self.log.info(f"Setting {py36_var}: '{py36_dir}'...")
         self.launch_context.env[py36_var] = py36_dir
 
+        # TODO: Set this for EITHER Fu16-17 OR Fu18+, don't do both
+        # Fusion 18+ does not look in FUSION16_PYTHON36_HOME anymore
+        # but instead uses FUSION_PYTHON3_HOME and requires the Python to
+        # be available on PATH to work. So let's enforce that for now.
+        self.launch_context.env["FUSION_PYTHON3_HOME"] = py36_dir
+        self.launch_context.env["PATH"] += ";" + py36_dir
+
         # Add our Fusion Master Prefs which is the only way to customize
         # Fusion to define where it can read custom scripts and tools from
         self.log.info(f"Setting OPENPYPE_FUSION: {HOST_DIR}")
