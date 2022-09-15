@@ -2483,7 +2483,7 @@ def load_capture_preset(data=None):
     # DISPLAY OPTIONS
     id = 'Display Options'
     disp_options = {}
-    for key in preset['Display Options']:
+    for key in preset[id]:
         if key.startswith('background'):
             disp_options[key] = preset['Display Options'][key]
             if len(disp_options[key]) == 4:

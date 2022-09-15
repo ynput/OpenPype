@@ -101,6 +101,7 @@ module.exports = {
             items: [
                 "admin_hosts_blender",
                 "admin_hosts_hiero",
+                "admin_hosts_houdini",
                 "admin_hosts_maya",
                 "admin_hosts_nuke",
                 "admin_hosts_resolve",
@@ -142,7 +143,7 @@ module.exports = {
             ],
         },
     ],
-     Dev: [
+    Dev: [
         "dev_introduction",
         "dev_requirements",
         "dev_build",
@@ -157,5 +158,5 @@ module.exports = {
                 "dev_publishing"
             ]
         }
-     ]
+    ]
 };

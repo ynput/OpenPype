@@ -276,6 +276,22 @@ class CreateShotClip(opfapi.Creator):
                         "target": "tag",
                         "toolTip": "By default handles are excluded",  # noqa
                         "order": 3
+                    },
+                    "retimedHandles": {
+                        "value": True,
+                        "type": "QCheckBox",
+                        "label": "Retimed handles",
+                        "target": "tag",
+                        "toolTip": "By default handles are retimed.",  # noqa
+                        "order": 4
+                    },
+                    "retimedFramerange": {
+                        "value": True,
+                        "type": "QCheckBox",
+                        "label": "Retimed framerange",
+                        "target": "tag",
+                        "toolTip": "By default framerange is retimed.",  # noqa
+                        "order": 5
                     }
                 }
             }

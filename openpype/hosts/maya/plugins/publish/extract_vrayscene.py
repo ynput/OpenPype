@@ -3,14 +3,14 @@
 import os
 import re
 
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.maya.api.render_setup_tools import export_in_rs_layer
 from openpype.hosts.maya.api.lib import maintained_selection
 
 from maya import cmds
 
 
-class ExtractVrayscene(openpype.api.Extractor):
+class ExtractVrayscene(publish.Extractor):
     """Extractor for vrscene."""
 
     label = "VRay Scene (.vrscene)"
