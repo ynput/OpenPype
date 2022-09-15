@@ -1,4 +1,4 @@
-Goal is that most of functions here are called on (or with) an object
+"""Goal is that most of functions here are called on (or with) an object
 that has project name as a context (e.g. on 'ProjectEntity'?).
 
 + We will need more specific functions doing wery specific queires really fast.
