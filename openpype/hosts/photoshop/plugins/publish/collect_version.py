@@ -19,7 +19,6 @@ class CollectVersion(pyblish.api.InstancePlugin):
     families = ["image", "review"]
 
     # controlled by Settings
-    optional = True
     sync_workfile_version = False
 
     def process(self, instance):
