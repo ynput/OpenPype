@@ -30,7 +30,7 @@ class CollectOtioFrameRanges(pyblish.api.InstancePlugin):
         # get basic variables
         otio_clip = instance.data["otioClip"]
         workfile_start = instance.data["workfileFrameStart"]
-        workfile_source_duration = instance.data.get("notRetimedFramerange")
+        workfile_source_duration = instance.data.get("shotDurationFromSource")
 
         # get ranges
         otio_tl_range = otio_clip.range_in_parent()
