@@ -2460,7 +2460,6 @@ def bake_to_world_space(nodes,
 
 def load_capture_preset(data=None):
     import capture
-    preset = data
 
     options = dict()
     viewport_options = dict()
@@ -2468,18 +2467,18 @@ def load_capture_preset(data=None):
     camera_options = dict()
 
     # Straight key-value match from settings to capture arguments
-    options.update(preset["Codec"])
-    options.update(preset["Generic"])
-    options.update(preset["Resolution"])
+    options.update(data["Codec"])
+    options.update(data["Generic"])
+    options.update(data["Resolution"])
 
-    camera_options.update(preset['Camera Options'])
-    viewport_options.update(preset["Renderer"])
+    camera_options.update(data['Camera Options'])
+    viewport_options.update(data["Renderer"])
 
     # DISPLAY OPTIONS
     disp_options = {}
-    for key in preset['Display Options']:
+    for key in data['Display Options']:
         if key.startswith('background'):
-            disp_options[key] = preset['Display Options'][key]
+            disp_options[key] = data['Display Options'][key]
             if len(disp_options[key]) == 4:
                 disp_options[key][0] = (float(disp_options[key][0])/255)
                 disp_options[key][1] = (float(disp_options[key][1])/255)
@@ -2513,7 +2512,7 @@ def load_capture_preset(data=None):
         "motionBlurShutterOpenFraction",
         "lineAAEnable"
     }
-    for key, value in preset['Viewport Options'].items():
+    for key, value in data['Viewport Options'].items():
 
         # There are some keys we want to ignore
         if key in {"override_viewport_options", "high_quality"}:
