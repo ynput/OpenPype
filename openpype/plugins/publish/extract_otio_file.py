@@ -16,6 +16,8 @@ class ExtractOTIOFile(publish.Extractor):
     hosts = ["resolve", "hiero", "traypublisher"]
 
     def process(self, instance):
+        if not instance.context.data.get("otioTimeline"):
+            return
         # create representation data
         if "representations" not in instance.data:
             instance.data["representations"] = []
