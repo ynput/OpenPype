@@ -37,8 +37,6 @@ def project_graphql_query(fields):
 
     query_queue = collections.deque()
     for key, value in nested_fields.items():
-        if key in ("name", ):
-            continue
         query_queue.append((key, value, project_query))
 
     while query_queue:
