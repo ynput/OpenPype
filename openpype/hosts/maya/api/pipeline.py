@@ -112,7 +112,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         register_event_callback("taskChanged", on_task_changed)
         register_event_callback("workfile.open.before", before_workfile_open)
         register_event_callback("workfile.save.before", before_workfile_save)
-        register_event_callback("workfile.save.after", after_workfile_save)
+        register_event_callback("workfile.save.before", after_workfile_save)
 
     def open_workfile(self, filepath):
         return open_file(filepath)
@@ -203,7 +203,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
 
         self.log.info("Installed event handler _on_scene_save..")
         self.log.info("Installed event handler _before_scene_save..")
-        self.log.info("Insatall event handler _on_after_save..")
+        self.log.info("Installed event handler _on_after_save..")
         self.log.info("Installed event handler _on_scene_new..")
         self.log.info("Installed event handler _on_maya_initialized..")
         self.log.info("Installed event handler _on_scene_open..")
@@ -496,9 +496,7 @@ def on_before_save():
 
 def on_after_save():
     """Check if there is a lockfile after save"""
-    filepath = current_file()
-    if not is_workfile_locked(filepath):
-        create_workfile_lock(filepath)
+    check_lock_on_current_file()
 
 
 def check_lock_on_current_file():
@@ -621,6 +619,7 @@ def on_new():
             "from openpype.hosts.maya.api import lib;"
             "lib.add_render_layer_change_observer()")
         lib.set_context_settings()
+    _remove_workfile_lock()
 
 
 def on_task_changed():
@@ -660,12 +659,14 @@ def on_task_changed():
 
 
 def before_workfile_open():
-    _remove_workfile_lock()
+    if handle_workfile_locks():
+        _remove_workfile_lock()
 
 
 def before_workfile_save(event):
     project_name = legacy_io.active_project()
-    _remove_workfile_lock()
+    if handle_workfile_locks():
+        _remove_workfile_lock()
     workdir_path = event["workdir_path"]
     if workdir_path:
         create_workspace_mel(workdir_path, project_name)
@@ -673,9 +674,10 @@ def before_workfile_save(event):
 
 def after_workfile_save(event):
     workfile_name = event["filename"]
-    if workfile_name:
-        if not is_workfile_locked(workfile_name):
-            create_workfile_lock(workfile_name)
+    if handle_workfile_locks():
+        if workfile_name:
+            if not is_workfile_locked(workfile_name):
+                create_workfile_lock(workfile_name)
 
 
 class MayaDirmap(HostDirmap):
