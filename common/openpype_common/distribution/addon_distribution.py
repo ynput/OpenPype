@@ -71,7 +71,7 @@ class AddonDownloader:
         Args:
             source (dict): {type:"http", "url":"https://} ...}
             destination (str): local folder to unzip
-        Retursn:
+        Returns:
             (str) local path to addon zip file
         """
         pass
@@ -235,4 +235,4 @@ def check_addons(server_endpoint, addon_folder, downloaders):
 
 
 def cli(*args):
-    raise NotImplemented
+    raise NotImplementedError
