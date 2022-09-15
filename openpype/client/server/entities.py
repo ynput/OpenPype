@@ -41,10 +41,14 @@ FOLDER_ATTRIBS_FIELDS = {
 FOLDER_FIELDS_MAPPING_V3_V4 = {
     "_id": {"id"},
     "name": {"name"},
-    "data": FOLDER_ATTRIBS_FIELDS | {"parentId", "parents", "active", "tasks"},
+    "label": {"name"},
+    "data": {
+        "parentId", "parents", "active", "tasks", "thumbnailId"
+    } | FOLDER_ATTRIBS_FIELDS,
     "data.visualParent": {"parentId"},
     "data.parents": {"parents"},
     "data.active": {"active"},
+    "data.thumbnail_id": {"thumbnailId"},
     "parent": {"projectName"}
 }
 
@@ -150,6 +154,9 @@ def _folder_fields_v3_to_v4(fields):
 
     output = set()
     for field in fields:
+        if field in ("schema", "type"):
+            continue
+
         if field in FOLDER_FIELDS_MAPPING_V3_V4:
             output |= FOLDER_FIELDS_MAPPING_V3_V4[field]
 
@@ -231,6 +238,9 @@ def _subset_fields_v3_to_v4(fields):
 
     output = set()
     for field in fields:
+        if field in ("schema", "type"):
+            continue
+
         if field in SUBSET_FIELDS_MAPPING_V3_V4:
             output |= SUBSET_FIELDS_MAPPING_V3_V4[field]
 
