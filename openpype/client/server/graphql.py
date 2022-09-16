@@ -191,6 +191,40 @@ def versions_graphql_query(fields):
     return query
 
 
+def representations_graphql_query(fields):
+    query = GraphQlQuery("RepresentationsQuery")
+
+    project_name_var = query.add_variable("projectName", "String!")
+    repre_ids_var = query.add_variable("representationIds", "[String!]")
+    repre_names_var = query.add_variable("representationNames", "[String!]")
+    version_ids_var = query.add_variable("versionIds", "[String!]")
+
+    project_query = query.add_field("project")
+    project_query.filter("name", project_name_var)
+
+    repres_query = project_query.add_field("representations", has_edges=True)
+    repres_query.filter("ids", repre_ids_var)
+    repres_query.filter("versionIds", version_ids_var)
+    repres_query.filter("representationNames", repre_names_var)
+
+    nested_fields = fields_to_dict(set(fields))
+
+    query_queue = collections.deque()
+    for key, value in nested_fields.items():
+        query_queue.append((key, value, repres_query))
+
+    while query_queue:
+        item = query_queue.popleft()
+        key, value, parent = item
+        field = parent.add_field(key)
+        if value is ALL_SUBFIELDS:
+            continue
+
+        for k, v in value.items():
+            query_queue.append((k, v, field))
+    return query
+
+
 class QueryVariable(object):
     def __init__(self, variable_name):
         self._variable_name = variable_name
@@ -426,6 +460,11 @@ class GraphQlQueryItem:
         return "\n".join(output)
 
     def parse_result(self, data):
+        if not isinstance(data, dict):
+            raise TypeError("{} Expected 'dict' type got '{}'".format(
+                self._name, str(type(data))
+            ))
+
         value = data.get(self._name)
         if value is None:
             if self._has_edges:
