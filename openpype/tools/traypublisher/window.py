@@ -20,6 +20,7 @@ from openpype.tools.utils.models import (
     ProjectModel,
     ProjectSortFilterProxy
 )
+from openpype.tools.utils import PlaceholderLineEdit
 
 
 class StandaloneOverlayWidget(QtWidgets.QFrame):
@@ -61,7 +62,7 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
         btns_layout.addWidget(cancel_btn, 0)
         btns_layout.addWidget(confirm_btn, 0)
 
-        txt_filter = QtWidgets.QLineEdit()
+        txt_filter = PlaceholderLineEdit(content_widget)
         txt_filter.setPlaceholderText("Quick filter projects..")
         txt_filter.setClearButtonEnabled(True)
         txt_filter.addAction(qtawesome.icon("fa.filter", color="gray"),
@@ -88,12 +89,11 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
         projects_view.doubleClicked.connect(self._on_double_click)
         confirm_btn.clicked.connect(self._on_confirm_click)
         cancel_btn.clicked.connect(self._on_cancel_click)
-        txt_filter.textChanged.connect(
-            lambda: projects_proxy.setFilterRegularExpression(
-                txt_filter.text()))
+        txt_filter.textChanged.connect(self._on_text_changed)
 
         self._projects_view = projects_view
         self._projects_model = projects_model
+        self._projects_proxy = projects_proxy
         self._cancel_btn = cancel_btn
         self._confirm_btn = confirm_btn
         self._txt_filter = txt_filter
@@ -114,6 +114,10 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
 
     def _on_cancel_click(self):
         self._set_project(self._project_name)
+
+    def _on_text_changed(self):
+        self._projects_proxy.setFilterRegularExpression(
+            self._txt_filter.text())
 
     def set_selected_project(self):
         index = self._projects_view.currentIndex()
