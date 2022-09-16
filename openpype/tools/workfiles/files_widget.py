@@ -578,7 +578,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         src = self._get_selected_filepath()
         dst = os.path.join(self._workfiles_root, work_file)
-        shutil.copy(src, dst)
+        shutil.copyfile(src, dst)
 
         self.workfile_created.emit(dst)
 
@@ -675,7 +675,7 @@ class FilesWidget(QtWidgets.QWidget):
             else:
                 self.host.save_file(filepath)
         else:
-            shutil.copy(src_path, filepath)
+            shutil.copyfile(src_path, filepath)
             if isinstance(self.host, IWorkfileHost):
                 self.host.open_workfile(filepath)
             else:
