@@ -6,7 +6,8 @@
                 "windows": "",
                 "darwin": "",
                 "linux": ""
-            }
+            },
+            "shelf_definition": []
         }
     ],
     "create": {
