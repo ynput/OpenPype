@@ -8,6 +8,7 @@ from .graphql import (
     folders_graphql_query,
     subsets_graphql_query,
     versions_graphql_query,
+    representations_graphql_query,
 )
 from .server import get_server_api_connection
 
@@ -104,7 +105,7 @@ VERSION_ATTRIBS = {
     "source",
     "comment",
     "machine",
-    "colorSpace"
+    "colorSpace",
 }
 VERSION_ATTRIBS_FIELDS = {
     "attrib.{}".format(attr)
@@ -128,8 +129,50 @@ VERSION_FIELDS_MAPPING_V3_V4 = {
     "parent": {"subsetId"}
 }
 
+# --- Representation entity ---
+REPRESENTATION_ATTRIBS = {
+    "clipIn",
+    "clipOut",
+    "extension",
+    "fps",
+    "frameEnd",
+    "frameStart",
+    "handleEnd",
+    "handleStart",
+    "pixelAspect",
+    "resolutionHeight",
+    "resolutionWidth",
+    "path",
+    "template",
+}
+REPRESENTATION_ATTRIBS_FIELDS = {
+    "attrib.{}".format(attr)
+    for attr in REPRESENTATION_ATTRIBS
+}
+REPRESENTATION_FILES_FIELDS = {
+    "files.baseName",
+    "files.hash",
+    "files.id",
+    "files.path",
+    "files.size",
+}
+DEFAULT_REPRESENTATION_FIELDS = {
+    "id",
+    "name",
+    "context",
+    "createdAt",
+    "active",
+    "versionId",
+} | REPRESENTATION_ATTRIBS_FIELDS | REPRESENTATION_FILES_FIELDS
+REPRESENTATION_FIELDS_MAPPING_V3_V4 = {
+    "_id": {"id"},
+    "name": {"name"},
+    "parent": {"versionId"},
+    "context": {"context"},
+    "files": {"files"},
+}
+
 # CURRENT_PROJECT_CONFIG_SCHEMA = "openpype:config-2.0"
-# CURRENT_REPRESENTATION_SCHEMA = "openpype:representation-2.0"
 # CURRENT_WORKFILE_INFO_SCHEMA = "openpype:workfile-1.0"
 # CURRENT_THUMBNAIL_SCHEMA = "openpype:thumbnail-1.0"
 
@@ -438,6 +481,72 @@ def _convert_v4_version_to_v3(version):
     return output
 
 
+def _representation_fields_v3_to_v4(fields):
+    if not fields:
+        return None
+    output = set()
+    for field in fields:
+        if field in ("type", "schema"):
+            continue
+
+        if field in REPRESENTATION_FIELDS_MAPPING_V3_V4:
+            output |= REPRESENTATION_FIELDS_MAPPING_V3_V4[field]
+
+        elif field.startswith("context"):
+            output.add("context")
+
+        # TODO: 'files' can have specific attributes but the keys in v3 and v4
+        #   are not the same (content is not the same)
+        elif field.startswith("files"):
+            output |= REPRESENTATION_FILES_FIELDS
+
+        elif field.startswith("data"):
+            fields |= REPRESENTATION_ATTRIBS_FIELDS
+
+        else:
+            raise ValueError("Unknown field mapping for {}".format(field))
+
+    if "id" not in output:
+        output.add("id")
+    return output
+
+
+def _convert_v4_representation_to_v3(representation):
+    output = {
+        "_id": representation["id"],
+        "type": "representation",
+        "schema": "openpype:representation-2.0",
+    }
+    for v3_key, v4_key in (
+        ("name", "name"),
+        ("files", "files"),
+        ("context", "context"),
+        ("parent", "versionId")
+    ):
+        if v4_key in representation:
+            output[v3_key] = representation[v4_key]
+
+    if "files" in output and not output["files"]:
+        # Fake studio files
+        output["files"].append({
+            "name": "studio",
+            "created_dt": datetime.datetime.now()
+        })
+    output_data = representation.get("data") or {}
+    if "attrib" in representation:
+        output_data.update(representation["attrib"])
+
+    for key, data_key in (
+        ("active", "active"),
+    ):
+        if key in representation:
+            output_data[data_key] = representation[key]
+
+    output["data"] = output_data
+
+    return output
+
+
 def _get_projects(active=None, library=None, fields=None):
     con = get_server_api_connection()
     fields = _project_fields_v3_to_v4(fields)
@@ -737,6 +846,83 @@ def _get_versions(
             conv_hero["version_id"] = version_id
 
     return versions
+
+
+def _get_v4_representations(
+    project_name,
+    representation_ids=None,
+    representation_names=None,
+    version_ids=None,
+    names_by_version_ids=None,
+    active=None,
+    fields=None
+):
+    if not fields:
+        fields = DEFAULT_REPRESENTATION_FIELDS
+    fields = set(fields)
+
+    if active is not None:
+        fields.add("active")
+
+    filters = {
+        "projectName": project_name
+    }
+
+    if representation_ids is not None:
+        representation_ids = set(representation_ids)
+        if not representation_ids:
+            return []
+        filters["representationIds"] = list(representation_ids)
+
+    version_ids_filter = None
+    representaion_names_filter = None
+    if names_by_version_ids is not None:
+        version_ids_filter = set()
+        representaion_names_filter = set()
+        for version_id, names in names_by_version_ids.items():
+            version_ids_filter.add(version_id)
+            representaion_names_filter |= set(names)
+
+        if not version_ids_filter or not representaion_names_filter:
+            return []
+
+    else:
+        if representation_names is not None:
+            representaion_names_filter = set(representation_names)
+            if not representaion_names_filter:
+                return []
+
+        if version_ids is not None:
+            version_ids_filter = set(version_ids)
+            if not version_ids_filter:
+                return []
+
+    if version_ids_filter:
+        filters["versionIds"] = list(version_ids_filter)
+
+    if representaion_names_filter:
+        filters["representationNames"] = list(representaion_names_filter)
+
+    con = get_server_api_connection()
+    query = representations_graphql_query(fields)
+
+    for attr, filter_value in filters.items():
+        query.set_variable_value(attr, filter_value)
+
+    query_str = query.calculate_query()
+    variables = query.get_variables_values()
+
+    response = con.query(query_str, variables)
+
+    parsed_data = query.parse_result(response.data["data"])
+    representations = parsed_data.get("project", {}).get("representations", [])
+    if active is None:
+        representations = [
+            repre
+            for repre in representations
+            if repre["active"] == active
+        ]
+    return representations
 
 
 def get_projects(active=True, inactive=False, library=None, fields=None):
@@ -1057,8 +1243,46 @@ def get_representation_by_name(*args, **kwargs):
     raise NotImplementedError("'get_representation_by_name' not implemented")
 
 
-def get_representations(*args, **kwargs):
-    raise NotImplementedError("'get_representations' not implemented")
+def get_representations(
+    project_name,
+    representation_ids=None,
+    representation_names=None,
+    version_ids=None,
+    context_filters=None,
+    names_by_version_ids=None,
+    archived=False,
+    standard=True,
+    fields=None
+):
+    if context_filters is not None:
+        # TODO should we add the support?
+        # - there was ability to fitler using regex
+        raise ValueError("OP v4 can't filter by representation context.")
+
+    if not archived and not standard:
+        return []
+
+    if archived and not standard:
+        active = False
+    elif not archived and standard:
+        active = True
+    else:
+        active = None
+
+    fields = _representation_fields_v3_to_v4(fields)
+    representations = _get_v4_representations(
+        project_name,
+        representation_ids,
+        representation_names,
+        version_ids,
+        names_by_version_ids,
+        active,
+        fields
+    )
+    return [
+        _convert_v4_representation_to_v3(repre)
+        for repre in representations
+    ]
 
 
 def get_representation_parents(*args, **kwargs):
