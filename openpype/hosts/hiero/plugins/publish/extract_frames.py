@@ -1,9 +1,14 @@
 import os
 import pyblish.api
-import openpype
+
+from openpype.lib import (
+    get_oiio_tools_path,
+    run_subprocess,
+)
+from openpype.pipeline import publish
 
 
-class ExtractFrames(openpype.api.Extractor):
+class ExtractFrames(publish.Extractor):
     """Extracts frames"""
 
     order = pyblish.api.ExtractorOrder
@@ -13,7 +18,7 @@ class ExtractFrames(openpype.api.Extractor):
     movie_extensions = ["mov", "mp4"]
 
     def process(self, instance):
-        oiio_tool_path = openpype.lib.get_oiio_tools_path()
+        oiio_tool_path = get_oiio_tools_path()
         staging_dir = self.staging_dir(instance)
         output_template = os.path.join(staging_dir, instance.data["name"])
         sequence = instance.context.data["activeTimeline"]
@@ -43,7 +48,7 @@ class ExtractFrames(openpype.api.Extractor):
                 args.extend(["--powc", "0.45,0.45,0.45,1.0"])
 
             args.extend([input_path, "-o", output_path])
-            output = openpype.api.run_subprocess(args)
+            output = run_subprocess(args)
 
             failed_output = "oiiotool produced no output."
             if failed_output in output:
