@@ -1,5 +1,9 @@
 import pyblish.api
-
+from openpype.pipeline.workfile.lock_workfile import(
+    is_workfile_lock_enabled,
+    remove_workfile_lock
+)
+from openpype.pipeline import legacy_io
 
 class SaveCurrentScene(pyblish.api.ContextPlugin):
     """Save current scene
@@ -23,5 +27,8 @@ class SaveCurrentScene(pyblish.api.ContextPlugin):
                            "are no modifications..")
             return
 
+        active_project = legacy_io.active_project()
+        if is_workfile_lock_enabled("maya", active_project):
+            remove_workfile_lock(current)
         self.log.info("Saving current file..")
         cmds.file(save=True, force=True)
