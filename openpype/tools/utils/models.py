@@ -356,10 +356,12 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
 
     def filterAcceptsRow(self, source_row, source_parent):
         index = self.sourceModel().index(source_row, 0, source_parent)
+        string_pattern = self.filterRegularExpression().pattern()
         if self._filter_enabled:
             result = self._custom_index_filter(index)
             if result is not None:
-                return result
+                project_name = index.data(PROJECT_NAME_ROLE)
+                return string_pattern in project_name
 
         return super(ProjectSortFilterProxy, self).filterAcceptsRow(
             source_row, source_parent
