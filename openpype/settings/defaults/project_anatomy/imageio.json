@@ -236,16 +236,6 @@
             "viewTransform": "sRGB gamma"
         }
     },
-    "fusion": {
-        "ocio": {
-            "enabled": false,
-            "configFilePath": {
-                "windows": [],
-                "darwin": [],
-                "linux": []
-            }
-        }
-    },
     "flame": {
         "project": {
             "colourPolicy": "ACES 1.1",
