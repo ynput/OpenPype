@@ -330,6 +330,19 @@ class ProjectModel(QtGui.QStandardItemModel):
         if new_items:
             root_item.appendRows(new_items)
 
+    def get_index(self, project_name):
+        """
+            Get index of 'project_name' value.
+
+            Args:
+                project_name (str):
+            Returns:
+                (QModelIndex)
+        """
+        val = self._items_by_name.get(project_name)
+        if val:
+            return self.indexFromItem(val)
+
 
 class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
     def __init__(self, *args, **kwargs):
