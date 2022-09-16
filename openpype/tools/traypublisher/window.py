@@ -115,8 +115,9 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
         if project_name:
             index = self._projects_model.get_index(project_name)
             if index:
-                mode = QtCore.QItemSelectionModel.Select | \
-                       QtCore.QItemSelectionModel.Rows
+                mode = (
+                    QtCore.QItemSelectionModel.Select
+                    | QtCore.QItemSelectionModel.Rows)
                 self._projects_view.selectionModel().select(index, mode)
 
         self._cancel_btn.setVisible(self._project_name is not None)
