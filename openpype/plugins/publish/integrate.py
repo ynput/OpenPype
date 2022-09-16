@@ -5,6 +5,9 @@ import copy
 import clique
 import six
 
+from bson.objectid import ObjectId
+import pyblish.api
+
 from openpype.client.operations import (
     OperationsSession,
     new_subset_document,
@@ -14,8 +17,6 @@ from openpype.client.operations import (
     prepare_version_update_data,
     prepare_representation_update_data,
 )
-from bson.objectid import ObjectId
-import pyblish.api
 
 from openpype.client import (
     get_representations,
@@ -23,10 +24,12 @@ from openpype.client import (
     get_version_by_name,
 )
 from openpype.lib import source_hash
-from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib.file_transaction import FileTransaction
 from openpype.pipeline import legacy_io
-from openpype.pipeline.publish import KnownPublishError
+from openpype.pipeline.publish import (
+    KnownPublishError,
+    get_publish_template_name,
+)
 
 log = logging.getLogger(__name__)
 
@@ -135,7 +138,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     # the database even if not used by the destination template
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "version", "representation",
-        "family", "hierarchy", "username", "output"
+        "family", "hierarchy", "username", "user", "output"
     ]
     skip_host_families = []
 
@@ -792,52 +795,26 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
     def get_template_name(self, instance):
         """Return anatomy template name to use for integration"""
-        # Define publish template name from profiles
-        filter_criteria = self.get_profile_filter_criteria(instance)
-        template_name_profiles = self._get_template_name_profiles(instance)
-        profile = filter_profiles(
-            template_name_profiles,
-            filter_criteria,
-            logger=self.log
-        )
-
-        if profile:
-            return profile["template_name"]
-        return self.default_template_name
-
-    def _get_template_name_profiles(self, instance):
-        """Receive profiles for publish template keys.
-
-        Reuse template name profiles from legacy integrator. Goal is to move
-        the profile settings out of plugin settings but until that happens we
-        want to be able set it at one place and don't break backwards
-        compatibility (more then once).
-        """
-
-        return (
-            instance.context.data["project_settings"]
-            ["global"]
-            ["publish"]
-            ["IntegrateAssetNew"]
-            ["template_name_profiles"]
-        )
-
-    def get_profile_filter_criteria(self, instance):
-        """Return filter criteria for `filter_profiles`"""
 
         # Anatomy data is pre-filled by Collectors
-        anatomy_data = instance.data["anatomyData"]
+
+        project_name = legacy_io.active_project()
 
         # Task can be optional in anatomy data
-        task = anatomy_data.get("task", {})
+        host_name = instance.context.data["hostName"]
+        anatomy_data = instance.data["anatomyData"]
+        family = anatomy_data["family"]
+        task_info = anatomy_data.get("task") or {}
 
-        # Return filter criteria
-        return {
-            "families": anatomy_data["family"],
-            "tasks": task.get("name"),
-            "task_types": task.get("type"),
-            "hosts": instance.context.data["hostName"],
-        }
+        return get_publish_template_name(
+            project_name,
+            host_name,
+            family,
+            task_name=task_info.get("name"),
+            task_type=task_info.get("type"),
+            project_settings=instance.context.data["project_settings"],
+            logger=self.log
+        )
 
     def get_rootless_path(self, anatomy, path):
         """Returns, if possible, path without absolute portion from root

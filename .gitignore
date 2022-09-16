@@ -107,3 +107,6 @@ website/.docusaurus
 mypy.ini
 
 tools/run_eventserver.*
+
+#  Developer tools
+tools/dev_*

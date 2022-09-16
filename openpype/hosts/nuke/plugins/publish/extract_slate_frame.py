@@ -6,7 +6,7 @@ import copy
 import pyblish.api
 import six
 
-import openpype
+from openpype.pipeline import publish
 from openpype.hosts.nuke.api import (
     maintained_selection,
     duplicate_node,
@@ -14,7 +14,7 @@ from openpype.hosts.nuke.api import (
 )
 
 
-class ExtractSlateFrame(openpype.api.Extractor):
+class ExtractSlateFrame(publish.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
     must be run after extract_render_local.py

@@ -2,11 +2,11 @@ import os
 
 from maya import cmds
 
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.maya.api.lib import maintained_selection
 
 
-class ExtractMultiverseUsdComposition(openpype.api.Extractor):
+class ExtractMultiverseUsdComposition(publish.Extractor):
     """Extractor of Multiverse USD Composition data.
 
     This will extract settings for a Multiverse Write Composition operation:

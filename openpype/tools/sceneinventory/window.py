@@ -89,7 +89,8 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         view.setColumnWidth(1, 55)   # version
         view.setColumnWidth(2, 55)   # count
         view.setColumnWidth(3, 150)  # family
-        view.setColumnWidth(4, 100)  # namespace
+        view.setColumnWidth(4, 120)  # group
+        view.setColumnWidth(5, 150)  # loader
 
         # apply delegates
         version_delegate = VersionDelegate(legacy_io, self)
