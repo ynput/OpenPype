@@ -1073,12 +1073,14 @@ def get_archived_representations(*args, **kwargs):
     raise NotImplementedError("'get_archived_representations' not implemented")
 
 
-def get_thumbnail(*args, **kwargs):
-    raise NotImplementedError("'get_thumbnail' not implemented")
+def get_thumbnail(project_name, thumbnail_id, fields=None):
+    # TODO thumbnails are handled in a different way
+    return None
 
 
-def get_thumbnails(*args, **kwargs):
-    raise NotImplementedError("'get_thumbnails' not implemented")
+def get_thumbnails(project_name, thumbnail_ids, fields=None):
+    # TODO thumbnails are handled in a different way
+    return []
 
 
 def get_thumbnail_id_from_source(project_name, src_type, src_id):
@@ -1112,5 +1114,8 @@ def get_thumbnail_id_from_source(project_name, src_type, src_id):
     return None
 
 
-def get_workfile_info(*args, **kwargs):
-    raise NotImplementedError("'get_workfile_info' not implemented")
+def get_workfile_info(
+    project_name, asset_id, task_name, filename, fields=None
+):
+    # TODO workfile info not implemented in v4 yet
+    return None
