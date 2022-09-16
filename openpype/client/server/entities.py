@@ -503,10 +503,7 @@ def _get_folders(
     output = []
 
     folders = parsed_data.get("project", {}).get("folders", [])
-    expect_parent_id = "parentId" in fields
     for folder in folders:
-        if expect_parent_id and "parentId" not in folder:
-            folder["parentId"] = None
         output.append(_convert_v4_folder_to_v3(folder))
     return output
 

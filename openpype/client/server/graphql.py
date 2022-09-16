@@ -430,6 +430,9 @@ class GraphQlQueryItem:
         if value is None:
             if self._has_edges:
                 return []
+
+            if self._name in data:
+                return {self._name: None}
             return {}
 
         if self._has_edges:
