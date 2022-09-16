@@ -448,7 +448,15 @@ class GraphQlQueryItem:
         if not self._children:
             return {self._name: value}
 
-        output = {}
-        for child in self._children:
-            output.update(child.parse_result(value))
+        if isinstance(value, list):
+            output = []
+            for item in value:
+                item_value = {}
+                for child in self._children:
+                    item_value.update(child.parse_result(item))
+                output.append(item_value)
+        else:
+            output = {}
+            for child in self._children:
+                output.update(child.parse_result(value))
         return {self._name: output}
