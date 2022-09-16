@@ -118,7 +118,7 @@ def preview_fname(folder, scene, layer, padding, ext):
     """
 
     # Following hardcoded "<Scene>/<Scene>_<Layer>/<Layer>"
-    output = "maya/{scene}/{layer}/{layer}.{number}.{ext}".format(
+    output = "{scene}/{layer}/{layer}.{number}.{ext}".format(
         scene=scene,
         layer=layer,
         number="#" * padding,
