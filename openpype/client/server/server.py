@@ -171,8 +171,8 @@ class APIBase(object):
         if self._access_token:
             return self.post("auth/logout")
 
-    def query(self, query, **kwargs):
-        data = {"query": query, "variables": kwargs}
+    def query(self, query, variables=None):
+        data = {"query": query, "variables": variables or {}}
         response = requests.post(
             self._graphl_url, json=data, headers=self.headers
         )
