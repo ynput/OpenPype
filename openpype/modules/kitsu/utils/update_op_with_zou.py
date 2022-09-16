@@ -18,7 +18,7 @@ from openpype.client import (
     create_project,
 )
 from openpype.pipeline import AvalonMongoDB
-from openpype.settings import get_project_settings
+from openpype.settings import get_project_settings, get_anatomy_settings
 from openpype.modules.kitsu.utils.credentials import validate_credentials
 
 
@@ -82,7 +82,7 @@ def update_op_assets(
         List[Dict[str, dict]]: List of (doc_id, update_dict) tuples
     """
     project_name = project_doc["name"]
-    project_module_settings = get_project_settings(project_name)["kitsu"]
+    # project_module_settings = get_project_settings(project_name)["kitsu"]
 
     assets_with_update = []
     for item in entities_list:
@@ -230,7 +230,6 @@ def update_op_assets(
                     },
                 )
             )
-
     return assets_with_update
 
 
@@ -263,13 +262,21 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         # Update Zou
         gazu.project.update_project(project)
 
+    project_attributes = get_anatomy_settings(project_name)['attributes']
+    if "x" in project["resolution"]:
+        resolutionWidth = int(project["resolution"].split("x")[0])
+        resolutionHeight = int(project["resolution"].split("x")[1])
+    else:
+        resolutionWidth = project_attributes['resolutionWidth']
+        resolutionHeight = project_attributes['resolutionHeight']
+
     # Update data
     project_data.update(
         {
             "code": project_code,
             "fps": float(project["fps"]),
-            "resolutionWidth": int(project["resolution"].split("x")[0]),
-            "resolutionHeight": int(project["resolution"].split("x")[1]),
+            "resolutionWidth": resolutionWidth,
+            "resolutionHeight": resolutionHeight,
             "zou_id": project["id"],
         }
     )
