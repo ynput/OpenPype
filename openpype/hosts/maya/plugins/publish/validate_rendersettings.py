@@ -16,10 +16,10 @@ from openpype.hosts.maya.api import lib
 class ValidateRenderSettings(pyblish.api.InstancePlugin):
     """Validates the global render settings
 
-    * File Name Prefix must start with: `maya/<Scene>`
+    * File Name Prefix must start with: `<Scene>`
         all other token are customizable but sane values for Arnold are:
 
-        `maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>`
+        `<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>`
 
         <Camera> token is supported also, useful for multiple renderable
         cameras per render layer.
@@ -58,12 +58,12 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     }
 
     ImagePrefixTokens = {
-        'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa: E501
-        'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa: E501
-        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',
-        'vray': 'maya/<Scene>/<Layer>/<Layer>',
+        'mentalray': '<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa: E501
+        'arnold': '<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa: E501
+        'redshift': '<Scene>/<RenderLayer>/<RenderLayer>',
+        'vray': '<Scene>/<Layer>/<Layer>',
         'renderman': '<layer>{aov_separator}<aov>.<f4>.<ext>',
-        'mayahardware2': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',
+        'mayahardware2': '<Scene>/<RenderLayer>/<RenderLayer>',
     }
 
     _aov_chars = {
@@ -74,7 +74,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
     redshift_AOV_prefix = "<BeautyPath>/<BeautyFile>{aov_separator}<RenderPass>"  # noqa: E501
 
-    renderman_dir_prefix = "maya/<scene>/<layer>"
+    renderman_dir_prefix = "<scene>/<layer>"
 
     R_AOV_TOKEN = re.compile(
         r'%a|<aov>|<renderpass>', re.IGNORECASE)
@@ -84,8 +84,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     R_SCENE_TOKEN = re.compile(r'%s|<scene>', re.IGNORECASE)
 
     DEFAULT_PADDING = 4
-    VRAY_PREFIX = "maya/<Scene>/<Layer>/<Layer>"
-    DEFAULT_PREFIX = "maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>"
+    VRAY_PREFIX = "<Scene>/<Layer>/<Layer>"
+    DEFAULT_PREFIX = "<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>"
 
     def process(self, instance):
 
@@ -116,7 +116,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         prefix = prefix.replace(
             "{aov_separator}", instance.data.get("aovSeparator", "_"))
 
-        required_prefix = "maya/<scene>"
+        required_prefix = "<scene>"
         default_prefix = cls.ImagePrefixTokens[renderer]
 
         if not anim_override:
