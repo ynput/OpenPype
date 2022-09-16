@@ -143,8 +143,8 @@
                         },
                         {
                             "type": "boolean",
-                            "key": "sync_workfile_version",
-                            "label": "Synchronize version with workfile"
+                            "key": "enabled",
+                            "label": "Enabled"
                         }
                     ]
                 },

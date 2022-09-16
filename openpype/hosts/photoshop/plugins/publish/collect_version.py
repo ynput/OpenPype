@@ -18,11 +18,7 @@ class CollectVersion(pyblish.api.InstancePlugin):
     hosts = ["photoshop"]
     families = ["image", "review"]
 
-    # controlled by Settings
-    sync_workfile_version = False
-
     def process(self, instance):
-        if self.sync_workfile_version:
-            workfile_version = instance.context.data["version"]
-            self.log.debug(f"Applying version {workfile_version}")
-            instance.data["version"] = workfile_version
+        workfile_version = instance.context.data["version"]
+        self.log.debug(f"Applying version {workfile_version}")
+        instance.data["version"] = workfile_version

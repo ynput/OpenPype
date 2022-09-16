@@ -16,7 +16,7 @@
             "flatten_subset_template": ""
         },
         "CollectVersion": {
-            "sync_workfile_version": true
+            "enabled": false
         },
         "ValidateContainers": {
             "enabled": true,
