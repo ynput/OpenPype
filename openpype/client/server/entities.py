@@ -913,12 +913,28 @@ def get_subset_families(project_name, subset_ids=None):
     return set(parsed_data.get("project", {}).get("subsetFamilies", []))
 
 
-def get_version_by_id(*args, **kwargs):
-    raise NotImplementedError("'get_version_by_id' not implemented")
+def get_version_by_id(project_name, version_id, fields=None):
+    versions = get_versions(
+        project_name,
+        version_ids=[version_id],
+        fields=fields,
+        hero=True
+    )
+    if versions:
+        return versions[0]
+    return None
 
 
-def get_version_by_name(*args, **kwargs):
-    raise NotImplementedError("'get_version_by_name' not implemented")
+def get_version_by_name(project_name, version, subset_id, fields=None):
+    versions = get_versions(
+        project_name,
+        subset_ids=[subset_id],
+        versions=[version],
+        fields=fields
+    )
+    if versions:
+        return versions[0]
+    return None
 
 
 def get_versions(
@@ -940,12 +956,26 @@ def get_versions(
     )
 
 
-def get_hero_version_by_id(*args, **kwargs):
-    raise NotImplementedError("'get_hero_version_by_id' not implemented")
+def get_hero_version_by_id(project_name, version_id, fields=None):
+    versions = get_hero_versions(
+        project_name,
+        version_ids=[version_id],
+        fields=fields
+    )
+    if versions:
+        return versions[0]
+    return None
 
 
-def get_hero_version_by_subset_id(*args, **kwargs):
-    raise NotImplementedError("'get_hero_version_by_subset_id' not implemented")
+def get_hero_version_by_subset_id(project_name, subset_id, fields=None):
+    versions = get_hero_versions(
+        project_name,
+        subset_ids=[subset_id],
+        fields=fields
+    )
+    if versions:
+        return versions[0]
+    return None
 
 
 def get_hero_versions(
@@ -977,13 +1007,37 @@ def get_last_versions(project_name, subset_ids, fields=None):
     }
 
 
-def get_last_version_by_subset_id(*args, **kwargs):
-    raise NotImplementedError("'get_last_version_by_subset_id' not implemented")
+def get_last_version_by_subset_id(project_name, subset_id, fields=None):
+    versions = _get_versions(
+        project_name,
+        subset_ids=[subset_id],
+        latest=True,
+        fields=fields
+    )
+    if not versions:
+        return versions[0]
+    return None
 
 
-def get_last_version_by_subset_name(*args, **kwargs):
-    raise NotImplementedError(
-        "'get_last_version_by_subset_name' not implemented"
+def get_last_version_by_subset_name(
+    project_name, subset_name, asset_id=None, asset_name=None, fields=None
+):
+    if not asset_id and not asset_name:
+        return None
+
+    if not asset_id:
+        asset = get_asset_by_name(project_name, asset_name, fields=["_id"])
+        if not asset:
+            return None
+        asset_id = asset["_id"]
+
+    subset = get_subset_by_name(
+        project_name, subset_name, asset_id, fields=["_id"]
+    )
+    if not subset:
+        return None
+    return get_last_version_by_subset_id(
+        project_name, subset["id"], fields=fields
     )
 
 
