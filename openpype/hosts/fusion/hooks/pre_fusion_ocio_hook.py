@@ -12,10 +12,10 @@ class FusionPreLaunchOCIO(PreLaunchHook):
         """Hook entry method."""
 
         # get image io
-        project_anatomy = self.data["anatomy"]
+        project_settings = self.data["project_settings"]
 
         # make sure anatomy settings are having flame key
-        imageio_fusion = project_anatomy["imageio"].get("fusion")
+        imageio_fusion = project_settings.get("fusion", {}).get("imageio")
         if not imageio_fusion:
             raise ApplicationLaunchFailed((
                 "Anatomy project settings are missing `fusion` key. "
