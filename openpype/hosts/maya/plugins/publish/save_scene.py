@@ -1,6 +1,5 @@
 import pyblish.api
-
-from openpype.pipeline.workfile.lock_workfile import(
+from openpype.pipeline.workfile.lock_workfile import (
     is_workfile_lock_enabled,
     remove_workfile_lock
 )
