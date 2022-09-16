@@ -497,7 +497,7 @@ def _get_folders(
     query_str = query.calculate_query()
     variables = query.get_variables_values()
 
-    response = con.query(query_str, **variables)
+    response = con.query(query_str, variables)
 
     parsed_data = query.parse_result(response.data["data"])
     output = []
@@ -585,7 +585,7 @@ def _get_subsets(
     variables = query.get_variables_values()
 
     con = get_server_api_connection()
-    response = con.query(query_str, **variables)
+    response = con.query(query_str, variables)
 
     parsed_data = query.parse_result(response.data["data"])
 
@@ -644,7 +644,7 @@ def _get_v4_versions(
         versions = set(versions)
         if not versions:
             return []
-        # filters["versions"] = list(versions)
+        filters["versions"] = list(versions)
 
     if not hero and not standard:
         return []
@@ -671,7 +671,7 @@ def _get_v4_versions(
     query_str = query.calculate_query()
     variables = query.get_variables_values()
 
-    response = con.query(query_str, **variables)
+    response = con.query(query_str, variables)
 
     parsed_data = query.parse_result(response.data["data"])
     return parsed_data.get("project", {}).get("versions", [])
@@ -708,15 +708,18 @@ def _get_versions(
             versions.append(_convert_v4_version_to_v3(version))
 
     if hero_versions:
-        subset_ids = {
-            version["subsetId"]
-            for version in hero_versions
-        }
+        subset_ids = set()
+        versions_nums = set()
+        for hero_version in hero_versions:
+            versions_nums.add(abs(hero_version["version"]))
+            subset_ids.add(hero_version["subsetId"])
+
         hero_eq_versions = _get_v4_versions(
             project_name,
             subset_ids=subset_ids,
+            versions=versions_nums,
+            hero=False,
             fields=["id", "version", "subsetId"],
-            hero=False
         )
         hero_eq_by_subset_id = collections.defaultdict(list)
         for version in hero_eq_versions:
@@ -771,7 +774,7 @@ def get_project(project_name, active=True, inactive=False, fields=None):
     query_str = query.calculate_query()
     variables = query.get_variables_values()
 
-    response = con.query(query_str, **variables)
+    response = con.query(query_str, variables)
     parsed_data = query.parse_result(response.data["data"])
     data = parsed_data["project"]
     data["name"] = project_name
@@ -833,7 +836,7 @@ def get_asset_ids_with_subsets(project_name, asset_ids=None):
     con = get_server_api_connection()
     query_str = query.calculate_query()
     variables = query.get_variables_values()
-    response = con.query(query_str, **variables)
+    response = con.query(query_str, variables)
     parsed_data = query.parse_result(response.data["data"])
     folders = parsed_data.get("project", {}).get("folders", [])
     return {
@@ -904,7 +907,7 @@ def get_subset_families(project_name, subset_ids=None):
     variables = query.get_variables_values()
 
     con = get_server_api_connection()
-    response = con.query(query_str, **variables)
+    response = con.query(query_str, variables)
 
     parsed_data = query.parse_result(response.data["data"])
     return set(parsed_data.get("project", {}).get("subsetFamilies", []))
