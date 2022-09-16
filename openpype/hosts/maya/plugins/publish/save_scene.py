@@ -3,7 +3,7 @@ from openpype.pipeline.workfile.lock_workfile import (
     is_workfile_lock_enabled,
     remove_workfile_lock
 )
-from openpype.pipeline import legacy_io
+
 
 class SaveCurrentScene(pyblish.api.ContextPlugin):
     """Save current scene
