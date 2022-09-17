@@ -25,13 +25,6 @@ class RenderSettings(object):
         'redshift': 'defaultRenderGlobals.imageFilePrefix'
     }
 
-    _image_prefixes = {
-        'vray': get_current_project_settings()["maya"]["RenderSettings"]["vray_renderer"]["image_prefix"], # noqa
-        'arnold': get_current_project_settings()["maya"]["RenderSettings"]["arnold_renderer"]["image_prefix"],  # noqa
-        'renderman': 'maya/<Scene>/<layer>/<layer>{aov_separator}<aov>',
-        'redshift': get_current_project_settings()["maya"]["RenderSettings"]["redshift_renderer"]["image_prefix"]  # noqa
-    }
-
     _aov_chars = {
         "dot": ".",
         "dash": "-",
@@ -41,6 +34,28 @@ class RenderSettings(object):
     @classmethod
     def get_image_prefix_attr(cls, renderer):
         return cls._image_prefix_nodes[renderer]
+
+    def get_image_prefix(self, renderer):
+        """Get image prefix rule for the renderer from project settings"""
+
+        if renderer == "renderman":
+            # todo: implement in settings
+            return 'maya/<Scene>/<layer>/<layer>{aov_separator}<aov>'
+
+        render_settings = self._project_settings["maya"]["RenderSettings"]
+        renderer_key = "{}_renderer".format(renderer)
+        if renderer_key not in render_settings:
+            print("Renderer {} has no render "
+                  "settings implementation.".format(renderer))
+            return
+
+        renderer_settings = render_settings[renderer_key]
+        renderer_image_prefix = renderer_settings.get("image_prefix")
+        if renderer_image_prefix is None:
+            print("Renderer {} has no image prefix setting.".format(renderer))
+            return
+
+        return renderer_image_prefix
 
     def __init__(self, project_settings=None):
         self._project_settings = project_settings
@@ -71,13 +86,11 @@ class RenderSettings(object):
             start_frame = cmds.getAttr("defaultRenderGlobals.startFrame")
             cmds.currentTime(start_frame, edit=True)
 
-        if renderer in self._image_prefix_nodes:
-            prefix = self._image_prefixes[renderer]
+        prefix = self.get_image_prefix(renderer)
+        if prefix:
             prefix = prefix.replace("{aov_separator}", aov_separator)
-            cmds.setAttr(self._image_prefix_nodes[renderer],
-                        prefix, type="string")  # noqa
-        else:
-            print("{0} isn't a supported renderer to autoset settings.".format(renderer)) # noqa
+            attr = self.get_image_prefix_attr(renderer)
+            cmds.setAttr(attr, prefix, type="string")
 
         # TODO: handle not having res values in the doc
         width = asset_doc["data"].get("resolutionWidth")
