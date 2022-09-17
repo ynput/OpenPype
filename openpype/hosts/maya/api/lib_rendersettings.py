@@ -226,7 +226,7 @@ class RenderSettings(object):
             labels = [cmds.menuItem(i, query=True, label=True) for i in items]
             try:
                 sep_idx = labels.index(aov_separator)
-            except ValueError as e:
+            except ValueError:
                 six.reraise(
                     CreatorError,
                     CreatorError(
