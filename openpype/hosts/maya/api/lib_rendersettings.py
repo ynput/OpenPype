@@ -56,6 +56,12 @@ class RenderSettings(object):
         """
         # project_settings/maya/RenderSettings/{renderer}_renderer/image_prefix
 
+        def _format_prefix(prefix):
+            if format_aov_separator:
+                prefix = prefix.replace("{aov_separator}",
+                                        self.get_aov_separator())
+            return prefix
+
         # todo: do not hardcode, implement in settings
         hardcoded_prefixes = {
             "renderman": 'maya/<Scene>/<layer>/<layer>{aov_separator}<aov>',
@@ -63,7 +69,8 @@ class RenderSettings(object):
             'mayahardware2': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',
         }
         if renderer in hardcoded_prefixes:
-            return hardcoded_prefixes[renderer]
+            prefix = hardcoded_prefixes[renderer]
+            return _format_prefix(prefix)
 
         render_settings = self._project_settings["maya"]["RenderSettings"]
         renderer_key = "{}_renderer".format(renderer)
@@ -78,7 +85,7 @@ class RenderSettings(object):
             print("Renderer {} has no image prefix setting.".format(renderer))
             return
 
-        return renderer_image_prefix
+        return _format_prefix(renderer_image_prefix)
 
     def __init__(self, project_settings=None):
         self._project_settings = project_settings
