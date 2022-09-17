@@ -222,19 +222,19 @@ class RenderSettings(object):
         aov_separator = self.get_aov_separator()
         MENU = "vrayRenderElementSeparator"
         if cmds.optionMenuGrp(MENU, query=True, exists=True):
-            items = cmds.optionMenuGrp(MENU, query=True, ill=True)
-            separators = [cmds.menuItem(i, query=True, label=True) for i in items]  # noqa: E501
+            items = cmds.optionMenuGrp(MENU, query=True, itemListLong=True)
+            labels = [cmds.menuItem(i, query=True, label=True) for i in items]
             try:
-                sep_idx = separators.index(aov_separator)
+                sep_idx = labels.index(aov_separator)
             except ValueError as e:
                 six.reraise(
                     CreatorError,
                     CreatorError(
                         "AOV character {} not in {}".format(
-                            aov_separator, separators)),
+                            aov_separator, labels)),
                     sys.exc_info()[2])
-
-            cmds.optionMenuGrp(MENU, edit=True, select=sep_idx + 1)
+            else:
+                cmds.optionMenuGrp(MENU, edit=True, select=sep_idx + 1)
 
         # Set the render element attribute as string. This is also what V-Ray
         # sets whenever the `vrayRenderElementSeparator` menu items switch
