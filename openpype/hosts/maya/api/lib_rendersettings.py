@@ -158,7 +158,6 @@ class RenderSettings(object):
         aovs = arnold_render_presets["aov_list"]
         img_tiled = arnold_render_presets["tiled"]
         multi_exr = arnold_render_presets["multilayer_exr"]
-        additional_options = arnold_render_presets["additional_options"]
         for aov in aovs:
             AOVInterface('defaultArnoldRenderOptions').addAOV(aov)
 
@@ -194,12 +193,14 @@ class RenderSettings(object):
             ["RenderSettings"]
             ["redshift_renderer"]
         )
-        additional_options = redshift_render_presets["additional_options"]
         ext = redshift_render_presets["image_format"]
+
+        # Set image format
         img_exts = ["iff", "exr", "tif", "png", "tga", "jpg"]
         img_ext = img_exts.index(ext)
-
         cmds.setAttr("redshiftOptions.imageFormat", img_ext)
+
+        additional_options = redshift_render_presets["additional_options"]
         self._additional_attribs_setter(additional_options)
 
     def _set_vray_settings(self, width, height):
@@ -253,7 +254,6 @@ class RenderSettings(object):
         cmds.setAttr("{}.height".format(node), height)
 
         additional_options = vray_render_presets["additional_options"]
-
         self._additional_attribs_setter(additional_options)
 
     @staticmethod
