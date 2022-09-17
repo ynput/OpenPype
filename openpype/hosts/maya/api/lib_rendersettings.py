@@ -110,32 +110,31 @@ class RenderSettings(object):
                 'defaultRenderGlobals.currentRenderer').lower()
 
         asset_doc = get_current_project_asset()
-        aov_separator = self.get_aov_separator()
-        reset_frame = self._project_settings["maya"]["RenderSettings"]["reset_current_frame"] # noqa
-
-        if reset_frame:
-            start_frame = cmds.getAttr("defaultRenderGlobals.startFrame")
-            cmds.currentTime(start_frame, edit=True)
-
-        prefix = self.get_default_image_prefix(renderer)
-        if prefix:
-            prefix = prefix.replace("{aov_separator}", aov_separator)
-            attr = self.get_image_prefix_attr(renderer)
-            cmds.setAttr(attr, prefix, type="string")
-
         # TODO: handle not having res values in the doc
         width = asset_doc["data"].get("resolutionWidth")
         height = asset_doc["data"].get("resolutionHeight")
 
+        # Set renderer specific settings first because some might reset
+        # renderer defaults and thus override e.g. prefixes, etc.
         if renderer == "arnold":
-            # set renderer settings for Arnold from project settings
             self._set_arnold_settings(width, height)
-
-        if renderer == "vray":
-            self._set_vray_settings(aov_separator, width, height)
-
-        if renderer == "redshift":
+        elif renderer == "vray":
+            self._set_vray_settings(width, height)
+        elif renderer == "redshift":
             self._set_redshift_settings(width, height)
+
+        # Reset current frame
+        reset_frame = self._project_settings["maya"]["RenderSettings"]["reset_current_frame"] # noqa
+        if reset_frame:
+            start_frame = cmds.getAttr("defaultRenderGlobals.startFrame")
+            cmds.currentTime(start_frame, edit=True)
+
+        # Set image file prefix
+        prefix = self.get_default_image_prefix(renderer,
+                                               format_aov_separator=True)
+        if prefix:
+            attr = self.get_image_prefix_attr(renderer)
+            cmds.setAttr(attr, prefix, type="string")
 
     def _set_arnold_settings(self, width, height):
         """Sets settings for Arnold."""
@@ -153,7 +152,6 @@ class RenderSettings(object):
         AOVInterface().removeAOVs(current_aovs)
         mel.eval("unifiedRenderGlobalsRevertToDefault")
         img_ext = arnold_render_presets["image_format"]
-        img_prefix = arnold_render_presets["image_prefix"]
         aovs = arnold_render_presets["aov_list"]
         img_tiled = arnold_render_presets["tiled"]
         multi_exr = arnold_render_presets["multilayer_exr"]
@@ -161,13 +159,7 @@ class RenderSettings(object):
         for aov in aovs:
             AOVInterface('defaultArnoldRenderOptions').addAOV(aov)
 
-        cmds.setAttr("defaultResolution.width", width)
-        cmds.setAttr("defaultResolution.height", height)
-
         self._set_global_output_settings()
-
-        cmds.setAttr(
-            "defaultRenderGlobals.imageFilePrefix", img_prefix, type="string")
 
         cmds.setAttr(
             "defaultArnoldDriver.ai_translator", img_ext, type="string")
@@ -208,12 +200,10 @@ class RenderSettings(object):
 
         self._set_global_output_settings()
         cmds.setAttr("redshiftOptions.imageFormat", img_ext)
-        cmds.setAttr("defaultResolution.width", width)
-        cmds.setAttr("defaultResolution.height", height)
         self._additional_attribs_setter(additional_options)
 
-    def _set_vray_settings(self, aov_separator, width, height):
-        # type: (str, int, int) -> None
+    def _set_vray_settings(self, width, height):
+        # type: (int, int) -> None
         """Sets important settings for Vray."""
         settings = cmds.ls(type="VRaySettingsNode")
         node = settings[0] if settings else cmds.createNode("VRaySettingsNode")
@@ -227,6 +217,7 @@ class RenderSettings(object):
         # First we need to explicitly set the UI items in Render Settings
         # because that is also what V-Ray updates to when that Render Settings
         # UI did initialize before and refreshes again.
+        aov_separator = self.get_aov_separator()
         MENU = "vrayRenderElementSeparator"
         if cmds.optionMenuGrp(MENU, query=True, exists=True):
             items = cmds.optionMenuGrp(MENU, query=True, ill=True)
