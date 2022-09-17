@@ -245,7 +245,8 @@ class RenderSettings(object):
         )
 
         # Set render file format to exr
-        cmds.setAttr("{}.imageFormatStr".format(node), "exr", type="string")
+        ext = vray_render_presets["image_format"]
+        cmds.setAttr("{}.imageFormatStr".format(node), ext, type="string")
 
         # animType
         cmds.setAttr("{}.animType".format(node), 1)
