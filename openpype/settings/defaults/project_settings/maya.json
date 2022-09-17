@@ -678,25 +678,20 @@
                     "isolate_view": true,
                     "off_screen": true
                 },
-                "PanZoom": {
-                    "pan_zoom": true
-                },
                 "Renderer": {
                     "rendererName": "vp2Renderer"
                 },
                 "Resolution": {
                     "width": 1920,
-                    "height": 1080,
-                    "percent": 1.0,
-                    "mode": "Custom"
+                    "height": 1080
                 },
                 "Viewport Options": {
                     "override_viewport_options": true,
                     "displayLights": "default",
+                    "displayTextures": true,
                     "textureMaxResolution": 1024,
                     "renderDepthOfField": true,
                     "shadows": true,
-                    "textures": true,
                     "twoSidedLighting": true,
                     "lineAAEnable": true,
                     "multiSample": 8,
@@ -719,7 +714,6 @@
                     "motionBlurShutterOpenFraction": 0.2,
                     "cameras": false,
                     "clipGhosts": false,
-                    "controlVertices": false,
                     "deformers": false,
                     "dimensions": false,
                     "dynamicConstraints": false,
@@ -731,8 +725,7 @@
                     "grid": false,
                     "hairSystems": true,
                     "handles": false,
-                    "hud": false,
-                    "hulls": false,
+                    "headsUpDisplay": false,
                     "ikHandles": false,
                     "imagePlane": true,
                     "joints": false,
@@ -743,7 +736,9 @@
                     "nCloths": false,
                     "nParticles": false,
                     "nRigids": false,
+                    "controlVertices": false,
                     "nurbsCurves": false,
+                    "hulls": false,
                     "nurbsSurfaces": false,
                     "particleInstancers": false,
                     "pivots": false,
@@ -751,7 +746,8 @@
                     "pluginShapes": false,
                     "polymeshes": true,
                     "strokes": false,
-                    "subdivSurfaces": false
+                    "subdivSurfaces": false,
+                    "textures": false
                 },
                 "Camera Options": {
                     "displayGateMask": false,
