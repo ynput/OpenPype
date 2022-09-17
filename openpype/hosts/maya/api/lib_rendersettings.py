@@ -6,11 +6,9 @@ import six
 import sys
 
 from openpype.api import (
-    get_project_settings,
     get_current_project_settings
 )
 
-from openpype.pipeline import legacy_io
 from openpype.pipeline import CreatorError
 from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.hosts.maya.api.commands import reset_frame_range
@@ -60,9 +58,7 @@ class RenderSettings(object):
     def __init__(self, project_settings=None):
         self._project_settings = project_settings
         if not self._project_settings:
-            self._project_settings = get_project_settings(
-                legacy_io.Session["AVALON_PROJECT"]
-            )
+            self._project_settings = get_current_project_settings()
 
     def set_default_renderer_settings(self, renderer=None):
         """Set basic settings based on renderer."""
