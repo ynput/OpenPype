@@ -228,6 +228,8 @@ class RenderSettings(object):
                 cmds.setAttr(attribute, int(value))
             elif attribute_type == "string":
                 cmds.setAttr(attribute, str(value), type="string")
+            elif attribute_type in {"double", "doubleAngle", "doubleLinear"}:
+                cmds.setAttr(attribute, float(value))
             else:
                 self.log.error(
                     "Attribute {attribute} can not be set due to unsupported "
