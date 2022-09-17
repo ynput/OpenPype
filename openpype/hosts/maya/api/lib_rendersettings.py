@@ -57,6 +57,10 @@ class RenderSettings(object):
         # project_settings/maya/RenderSettings/{renderer}_renderer/image_prefix
 
         def _format_prefix(prefix):
+            """Format `{aov_separator}` in prefix.
+
+            Only does something if `format_aov_separator` is enabled
+            """
             if format_aov_separator:
                 prefix = prefix.replace("{aov_separator}",
                                         self.get_aov_separator())
