@@ -20,7 +20,9 @@ class RenderSettings(object):
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
         'renderman': 'defaultRenderGlobals.imageFilePrefix',
-        'redshift': 'defaultRenderGlobals.imageFilePrefix'
+        'redshift': 'defaultRenderGlobals.imageFilePrefix',
+        'mentalray': 'defaultRenderGlobals.imageFilePrefix',
+        'mayahardware2': 'defaultRenderGlobals.imageFilePrefix'
     }
 
     _aov_chars = {
@@ -29,16 +31,39 @@ class RenderSettings(object):
         "underscore": "_"
     }
 
+    def get_aov_separator(self):
+        # project_settings/maya/RenderSettings/aov_separator
+        try:
+            aov_separator = self._aov_chars[(
+                self._project_settings["maya"]
+                ["RenderSettings"]
+                ["aov_separator"]
+            )]
+        except KeyError:
+            aov_separator = "_"
+        return aov_separator
+
     @classmethod
     def get_image_prefix_attr(cls, renderer):
         return cls._image_prefix_nodes[renderer]
 
-    def get_image_prefix(self, renderer):
-        """Get image prefix rule for the renderer from project settings"""
+    def get_default_image_prefix(self, renderer, format_aov_separator=True):
+        """Get image prefix rule for the renderer from project settings
 
-        if renderer == "renderman":
-            # todo: implement in settings
-            return 'maya/<Scene>/<layer>/<layer>{aov_separator}<aov>'
+        When `format_aov_separator` is not enabled the {aov_separator} token
+        will be preserved from settings.
+
+        """
+        # project_settings/maya/RenderSettings/{renderer}_renderer/image_prefix
+
+        # todo: do not hardcode, implement in settings
+        hardcoded_prefixes = {
+            "renderman": 'maya/<Scene>/<layer>/<layer>{aov_separator}<aov>',
+            'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa: E501
+            'mayahardware2': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',
+        }
+        if renderer in hardcoded_prefixes:
+            return hardcoded_prefixes[renderer]
 
         render_settings = self._project_settings["maya"]["RenderSettings"]
         renderer_key = "{}_renderer".format(renderer)
@@ -67,22 +92,14 @@ class RenderSettings(object):
                 'defaultRenderGlobals.currentRenderer').lower()
 
         asset_doc = get_current_project_asset()
-        # project_settings/maya/create/CreateRender/aov_separator
-        try:
-            aov_separator = self._aov_chars[(
-                self._project_settings["maya"]
-                                      ["RenderSettings"]
-                                      ["aov_separator"]
-            )]
-        except KeyError:
-            aov_separator = "_"
+        aov_separator = self.get_aov_separator()
         reset_frame = self._project_settings["maya"]["RenderSettings"]["reset_current_frame"] # noqa
 
         if reset_frame:
             start_frame = cmds.getAttr("defaultRenderGlobals.startFrame")
             cmds.currentTime(start_frame, edit=True)
 
-        prefix = self.get_image_prefix(renderer)
+        prefix = self.get_default_image_prefix(renderer)
         if prefix:
             prefix = prefix.replace("{aov_separator}", aov_separator)
             attr = self.get_image_prefix_attr(renderer)
