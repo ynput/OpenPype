@@ -248,7 +248,7 @@ class RenderSettings(object):
         ext = vray_render_presets["image_format"]
         cmds.setAttr("{}.imageFormatStr".format(node), ext, type="string")
 
-        # animType
+        # Set common > animation to "standard" to ensure frame range renders
         cmds.setAttr("{}.animType".format(node), 1)
 
         # resolution
