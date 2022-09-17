@@ -123,6 +123,9 @@ class RenderSettings(object):
         elif renderer == "redshift":
             self._set_redshift_settings(width, height)
 
+        # Set global output settings
+        self._set_global_output_settings()
+
         # Reset current frame
         reset_frame = self._project_settings["maya"]["RenderSettings"]["reset_current_frame"] # noqa
         if reset_frame:
@@ -158,8 +161,6 @@ class RenderSettings(object):
         additional_options = arnold_render_presets["additional_options"]
         for aov in aovs:
             AOVInterface('defaultArnoldRenderOptions').addAOV(aov)
-
-        self._set_global_output_settings()
 
         cmds.setAttr(
             "defaultArnoldDriver.ai_translator", img_ext, type="string")
@@ -198,7 +199,6 @@ class RenderSettings(object):
         img_exts = ["iff", "exr", "tif", "png", "tga", "jpg"]
         img_ext = img_exts.index(ext)
 
-        self._set_global_output_settings()
         cmds.setAttr("redshiftOptions.imageFormat", img_ext)
         self._additional_attribs_setter(additional_options)
 
