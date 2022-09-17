@@ -31,6 +31,11 @@ class RenderSettings(object):
         "underscore": "_"
     }
 
+    def __init__(self, project_settings=None):
+        self._project_settings = project_settings
+        if not self._project_settings:
+            self._project_settings = get_current_project_settings()
+
     def get_aov_separator(self):
         # project_settings/maya/RenderSettings/aov_separator
         try:
@@ -97,11 +102,6 @@ class RenderSettings(object):
             return
 
         return _format_prefix(renderer_image_prefix)
-
-    def __init__(self, project_settings=None):
-        self._project_settings = project_settings
-        if not self._project_settings:
-            self._project_settings = get_current_project_settings()
 
     def set_default_renderer_settings(self, renderer=None):
         """Set basic settings based on renderer."""
