@@ -85,8 +85,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         # Get the node attributes for current renderer
         attrs = lib.RENDER_ATTRS.get(renderer, lib.RENDER_ATTRS['default'])
-        prefix = lib.get_attr_in_layer(cls.ImagePrefixes[renderer],
-                                       layer=layer)
+        prefix = lib.get_attr_in_layer(
+            render_settings.get_image_prefix_attr(renderer), layer=layer)
         padding = lib.get_attr_in_layer("{node}.{padding}".format(**attrs),
                                         layer=layer)
 
