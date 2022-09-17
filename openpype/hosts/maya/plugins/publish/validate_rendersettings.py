@@ -83,12 +83,11 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         render_settings = RenderSettings(
             project_settings=instance.context.data["project_settings"])
 
-        # Get the node attributes for current renderer
-        attrs = lib.RENDER_ATTRS.get(renderer, lib.RENDER_ATTRS['default'])
+        # Get current image prefix and padding set in scene
         prefix = lib.get_attr_in_layer(
             render_settings.get_image_prefix_attr(renderer), layer=layer)
-        padding = lib.get_attr_in_layer("{node}.{padding}".format(**attrs),
-                                        layer=layer)
+        padding = lib.get_attr_in_layer(
+            render_settings.get_padding_attr(renderer), layer=layer)
 
         anim_override = lib.get_attr_in_layer("defaultRenderGlobals.animation",
                                               layer=layer)
@@ -277,8 +276,6 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         aov_separator = render_settings.get_aov_separator()
 
         with lib.renderlayer(layer_node):
-            default = lib.RENDER_ATTRS['default']
-            render_attrs = lib.RENDER_ATTRS.get(renderer, default)
 
             if renderer != "renderman":
                 # Repair prefix
@@ -286,7 +283,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 cmds.setAttr(prefix_attr, default_prefix, type="string")
 
                 # Repair padding
-                padding_attr = "{node}.{padding}".format(**render_attrs)
+                padding_attr = render_settings.get_padding_attr(renderer)
                 cmds.setAttr(padding_attr, cls.DEFAULT_PADDING)
             else:
                 # renderman handles stuff differently

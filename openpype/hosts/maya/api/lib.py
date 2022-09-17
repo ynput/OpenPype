@@ -58,19 +58,6 @@ SHAPE_ATTRS = {"castsShadows",
                "doubleSided",
                "opposite"}
 
-RENDER_ATTRS = {"vray": {
-    "node": "vraySettings",
-    "prefix": "fileNamePrefix",
-    "padding": "fileNamePadding",
-    "ext": "imageFormatStr"
-},
-    "default": {
-    "node": "defaultRenderGlobals",
-    "prefix": "imageFilePrefix",
-    "padding": "extensionPadding"
-}
-}
-
 
 DEFAULT_MATRIX = [1.0, 0.0, 0.0, 0.0,
                   0.0, 1.0, 0.0, 0.0,

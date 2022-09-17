@@ -47,6 +47,13 @@ class RenderSettings(object):
     def get_image_prefix_attr(cls, renderer):
         return cls._image_prefix_nodes[renderer]
 
+    @staticmethod
+    def get_padding_attr(renderer):
+        if renderer == "vray":
+            return "vraySettings.fileNamePadding"
+        else:
+            return "defaultRenderGlobals.extensionPadding"
+
     def get_default_image_prefix(self, renderer, format_aov_separator=True):
         """Get image prefix rule for the renderer from project settings
 

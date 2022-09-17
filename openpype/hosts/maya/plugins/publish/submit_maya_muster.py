@@ -10,6 +10,7 @@ from maya import cmds
 import pyblish.api
 from openpype.lib import requests_post
 from openpype.hosts.maya.api import lib
+from openpype.hosts.maya.api.lib_rendersettings import RenderSettings
 from openpype.pipeline import legacy_io
 from openpype.api import get_system_settings
 
@@ -67,10 +68,8 @@ def get_renderer_variables(renderlayer=None):
     """
 
     renderer = lib.get_renderer(renderlayer or lib.get_current_renderlayer())
-    render_attrs = lib.RENDER_ATTRS.get(renderer, lib.RENDER_ATTRS["default"])
 
-    padding = cmds.getAttr("{}.{}".format(render_attrs["node"],
-                                          render_attrs["padding"]))
+    padding = cmds.getAttr(RenderSettings.get_padding_attr(renderer))
 
     filename_0 = cmds.renderSettings(fullPath=True, firstImageName=True)[0]
 
