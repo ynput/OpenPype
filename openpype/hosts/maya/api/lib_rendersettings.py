@@ -5,6 +5,7 @@ import maya.mel as mel
 import six
 import sys
 
+from openpype.lib import Logger
 from openpype.api import (
     get_project_settings,
     get_current_project_settings
@@ -37,6 +38,8 @@ class RenderSettings(object):
         "dash": "-",
         "underscore": "_"
     }
+
+    log = Logger.get_logger("RenderSettings")
 
     @classmethod
     def get_image_prefix_attr(cls, renderer):
@@ -219,9 +222,16 @@ class RenderSettings(object):
     def _additional_attribs_setter(self, additional_attribs):
         for item in additional_attribs:
             attribute, value = item
-            if (cmds.getAttr(str(attribute), type=True)) == "long":
-                cmds.setAttr(str(attribute), int(value))
-            elif (cmds.getAttr(str(attribute), type=True)) == "bool":
-                cmds.setAttr(str(attribute), int(value)) # noqa
-            elif (cmds.getAttr(str(attribute), type=True)) == "string":
-                cmds.setAttr(str(attribute), str(value), type = "string") # noqa
+            attribute = str(attribute)  # ensure str conversion from settings
+            attribute_type = cmds.getAttr(attribute, type=True)
+            if attribute_type in {"long", "bool"}:
+                cmds.setAttr(attribute, int(value))
+            elif attribute_type == "string":
+                cmds.setAttr(attribute, str(value), type="string")
+            else:
+                self.log.error(
+                    "Attribute {attribute} can not be set due to unsupported "
+                    "type: {attribute_type}".format(
+                        attribute=attribute,
+                        attribute_type=attribute_type)
+                )
