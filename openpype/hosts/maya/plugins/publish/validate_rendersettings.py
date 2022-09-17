@@ -286,7 +286,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 cmds.setAttr(prefix_attr, default_prefix, type="string")
 
                 # Repair padding
-                padding_attr = "{0[node]}.{0[padding]}".format(render_attrs)
+                padding_attr = "{node}.{padding}".format(**render_attrs)
                 cmds.setAttr(padding_attr, cls.DEFAULT_PADDING)
             else:
                 # renderman handles stuff differently
