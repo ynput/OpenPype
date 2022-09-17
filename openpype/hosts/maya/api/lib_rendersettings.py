@@ -174,6 +174,7 @@ class RenderSettings(object):
         # allow fullstops in custom attributes. Then checks for
         # type of MtoA attribute passed to adjust the `setAttr`
         # command accordingly.
+        additional_options = arnold_render_presets["additional_options"]
         self._additional_attribs_setter(additional_options)
         for item in additional_options:
             attribute, value = item
