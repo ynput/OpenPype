@@ -217,7 +217,6 @@ class RenderSettings(object):
         cmds.setAttr("defaultRenderGlobals.extensionPadding", 4)
 
     def _additional_attribs_setter(self, additional_attribs):
-        print(additional_attribs)
         for item in additional_attribs:
             attribute, value = item
             if (cmds.getAttr(str(attribute), type=True)) == "long":
