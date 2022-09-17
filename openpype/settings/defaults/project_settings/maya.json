@@ -49,7 +49,7 @@
         "vray_renderer": {
             "image_prefix": "maya/<scene>/<Layer>/<Layer>",
             "engine": "1",
-            "image_format": "png",
+            "image_format": "exr",
             "aov_list": [],
             "additional_options": []
         },
@@ -57,7 +57,7 @@
             "image_prefix": "maya/<Scene>/<RenderLayer>/<RenderLayer>",
             "primary_gi_engine": "0",
             "secondary_gi_engine": "0",
-            "image_format": "iff",
+            "image_format": "exr",
             "multilayer_exr": true,
             "force_combine": true,
             "aov_list": [],
