@@ -15,6 +15,12 @@ from openpype.hosts.maya.api.commands import reset_frame_range
 
 
 class RenderSettings(object):
+    """Render Settings defined in OpenPype project settings per renderer.
+
+    Based on the Project Settings this allows you to query and set the render
+    setting defaults for the current project.
+
+    """
 
     _image_prefix_nodes = {
         'vray': 'vraySettings.fileNamePrefix',
