@@ -286,8 +286,12 @@ class RenderSettings(object):
             raise TypeError("Item must be string type")
 
         setting = self._project_settings["maya"]["RenderSettings"]
-        for path in item.split("/"):
-            setting = setting[path]
+        try:
+            for path in item.split("/"):
+                setting = setting[path]
+        except KeyError:
+            settings_path = "project_settings/maya/RenderSettings/" + item
+            raise KeyError(settings_path)
 
         return setting
 
