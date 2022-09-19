@@ -132,6 +132,19 @@
                     ]
                 },
                 {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CollectReview",
+                    "label": "Collect Review",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "publish",
+                            "label": "Publish review"
+                        }
+                    ]
+                },
+                {
                     "type": "schema_template",
                     "name": "template_publish_plugin",
                     "template_data": [

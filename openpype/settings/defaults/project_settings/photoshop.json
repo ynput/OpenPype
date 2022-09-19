@@ -15,6 +15,9 @@
         "CollectInstances": {
             "flatten_subset_template": ""
         },
+        "CollectReview": {
+            "publish": true
+        },
         "ValidateContainers": {
             "enabled": true,
             "optional": true,
