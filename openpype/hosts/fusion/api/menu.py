@@ -17,6 +17,9 @@ from openpype.pipeline import legacy_io
 
 from .pulse import FusionPulse
 
+self = sys.modules[__name__]
+self.menu = None
+
 
 class Spacer(QtWidgets.QWidget):
     def __init__(self, height, *args, **kwargs):
@@ -202,6 +205,7 @@ def launch_openpype_menu():
     pype_menu.setStyleSheet(stylesheet)
 
     pype_menu.show()
+    self.menu = pype_menu
 
     result = app.exec_()
     print("Shutting down..")
