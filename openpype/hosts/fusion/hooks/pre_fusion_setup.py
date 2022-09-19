@@ -4,48 +4,58 @@ from openpype.hosts.fusion import FUSION_HOST_DIR
 
 
 class FusionPrelaunch(PreLaunchHook):
-    """
-    This hook will check if current workfile path has Fusion
-    project inside.
+    """Prepares OpenPype Fusion environment
+
+    Requires FUSION_PYTHON3_HOME to be defined in the environment for Fusion
+    to point at a valid Python 3 build for Fusion. That is Python 3.3-3.10
+    for Fusion 18 and Fusion 3.6 for Fusion 16 and 17.
+
+    This also sets FUSION16_MasterPrefs to apply the fusion master prefs
+    as set in openpype/hosts/fusion/deploy/fusion_shared.prefs to enable
+    the OpenPype menu and force Python 3 over Python 2.
+
     """
     app_groups = ["fusion"]
 
     def execute(self):
-        # making sure python 3.6 is installed at provided path
-        py36_var = "FUSION16_PYTHON36_HOME"
-        fusion_python36_home = self.launch_context.env.get(py36_var, "")
+        # making sure python 3 is installed at provided path
+        # Py 3.3-3.10 for Fusion 18+ or Py 3.6 for Fu 16-17
+        py3_var = "FUSION_PYTHON3_HOME"
+        fusion_python3_home = self.launch_context.env.get(py3_var, "")
 
-        self.log.info(f"Looking for Python 3.6 in: {fusion_python36_home}")
-        for path in fusion_python36_home.split(os.pathsep):
+        self.log.info(f"Looking for Python 3 in: {fusion_python3_home}")
+        for path in fusion_python3_home.split(os.pathsep):
             # Allow defining multiple paths to allow "fallback" to other
             # path. But make to set only a single path as final variable.
-            py36_dir = os.path.normpath(path)
-            if os.path.isdir(py36_dir):
+            py3_dir = os.path.normpath(path)
+            if os.path.isdir(py3_dir):
                 break
         else:
             raise ApplicationLaunchFailed(
-                "Python 3.6 is not installed at the provided path.\n"
-                "Either make sure the environments in fusion settings has"
-                " 'PYTHON36' set corectly or make sure Python 3.6 is installed"
-                f" in the given path.\n\nPYTHON36: {fusion_python36_home}"
+                "Python 3 is not installed at the provided path.\n"
+                "Make sure the environment in fusion settings has "
+                "'FUSION_PYTHON3_HOME' set correctly and make sure "
+                "Python 3 is installed in the given path."
+                f"\n\nPYTHON36: {fusion_python3_home}"
             )
 
-        self.log.info(f"Setting {py36_var}: '{py36_dir}'...")
-        self.launch_context.env[py36_var] = py36_dir
+        self.log.info(f"Setting {py3_var}: '{py3_dir}'...")
+        self.launch_context.env[py3_var] = py3_dir
 
-        # TODO: Set this for EITHER Fu16-17 OR Fu18+, don't do both
-        # Fusion 18+ does not look in FUSION16_PYTHON36_HOME anymore
-        # but instead uses FUSION_PYTHON3_HOME and requires the Python to
-        # be available on PATH to work. So let's enforce that for now.
-        self.launch_context.env["FUSION_PYTHON3_HOME"] = py36_dir
-        self.launch_context.env["PATH"] += ";" + py36_dir
+        # Fusion 18+ requires FUSION_PYTHON3_HOME to also be on PATH
+        self.launch_context.env["PATH"] += ";" + py3_dir
+
+        # Fusion 16 and 17 use FUSION16_PYTHON36_HOME instead of
+        # FUSION_PYTHON3_HOME and will only work with a Python 3.6 version
+        # TODO: Detect Fusion version to only set for specific Fusion build
+        self.launch_context.env["FUSION16_PYTHON36_HOME"] = py3_dir
 
         # Add our Fusion Master Prefs which is the only way to customize
         # Fusion to define where it can read custom scripts and tools from
         self.log.info(f"Setting OPENPYPE_FUSION: {FUSION_HOST_DIR}")
         self.launch_context.env["OPENPYPE_FUSION"] = FUSION_HOST_DIR
 
-        pref_var = "FUSION16_MasterPrefs"   # used by both Fu16 and Fu17
+        pref_var = "FUSION16_MasterPrefs"   # used by Fusion 16, 17 and 18
         prefs = os.path.join(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
         self.log.info(f"Setting {pref_var}: {prefs}")
         self.launch_context.env[pref_var] = prefs
