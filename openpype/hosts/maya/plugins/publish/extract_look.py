@@ -13,8 +13,8 @@ from maya import cmds  # noqa
 
 import pyblish.api
 
-import openpype.api
-from openpype.pipeline import legacy_io
+from openpype.lib import source_hash
+from openpype.pipeline import legacy_io, publish
 from openpype.hosts.maya.api import lib
 
 # Modes for transfer
@@ -161,7 +161,7 @@ def no_workspace_dir():
         os.rmdir(fake_workspace_dir)
 
 
-class ExtractLook(openpype.api.Extractor):
+class ExtractLook(publish.Extractor):
     """Extract Look (Maya Scene + JSON)
 
     Only extracts the sets (shadingEngines and alike) alongside a .json file
@@ -505,7 +505,7 @@ class ExtractLook(openpype.api.Extractor):
         args = []
         if do_maketx:
             args.append("maketx")
-        texture_hash = openpype.api.source_hash(filepath, *args)
+        texture_hash = source_hash(filepath, *args)
 
         # If source has been published before with the same settings,
         # then don't reprocess but hardlink from the original
