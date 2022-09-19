@@ -82,7 +82,7 @@ def update_op_assets(
         List[Dict[str, dict]]: List of (doc_id, update_dict) tuples
     """
     project_name = project_doc["name"]
-    # project_module_settings = get_project_settings(project_name)["kitsu"]
+    project_module_settings = get_project_settings(project_name)["kitsu"]
 
     assets_with_update = []
     for item in entities_list:
