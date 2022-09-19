@@ -3,6 +3,7 @@ import pyblish.api
 import openpype.api
 from openpype.client import get_assets
 from openpype.pipeline import legacy_io
+from openpype.pipeline.publish import ValidatePipelineOrder
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
 
@@ -18,7 +19,7 @@ class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidatePipelineOrder
+    order = ValidatePipelineOrder
     label = 'Node Ids in Database'
     hosts = ['maya']
     families = ["*"]

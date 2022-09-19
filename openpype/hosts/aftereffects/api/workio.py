@@ -1,12 +1,11 @@
 """Host API required Work Files tool"""
 import os
 
-from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
 from .launch_logic import get_stub
 
 
 def file_extensions():
-    return HOST_WORKFILE_EXTENSIONS["aftereffects"]
+    return [".aep"]
 
 
 def has_unsaved_changes():

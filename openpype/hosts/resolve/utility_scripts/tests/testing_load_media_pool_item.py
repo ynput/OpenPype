@@ -1,13 +1,17 @@
 #! python3
 from openpype.pipeline import install_host
-import openpype.hosts.resolve as bmdvr
+from openpype.hosts.resolve import api as bmdvr
+from openpype.hosts.resolve.api.lib import (
+    create_media_pool_item,
+    create_timeline_item,
+)
 
 
 def file_processing(fpath):
-    media_pool_item = bmdvr.create_media_pool_item(fpath)
+    media_pool_item = create_media_pool_item(fpath)
     print(media_pool_item)
 
-    track_item = bmdvr.create_timeline_item(media_pool_item)
+    track_item = create_timeline_item(media_pool_item)
     print(track_item)
 
 

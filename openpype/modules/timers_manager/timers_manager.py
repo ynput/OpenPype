@@ -6,11 +6,13 @@ from openpype.client import get_asset_by_name
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayService,
-    ILaunchHookPaths
+    IPluginPaths
 )
 from openpype.lib.events import register_event_callback
 
 from .exceptions import InvalidContextError
+
+TIMER_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class ExampleTimersManagerConnector:
@@ -33,6 +35,7 @@ class ExampleTimersManagerConnector:
     }
     ```
     """
+
     # Not needed at all
     def __init__(self, module):
         # Store timer manager module to be able call it's methods when needed
@@ -72,7 +75,11 @@ class ExampleTimersManagerConnector:
             self._timers_manager_module.timer_stopped(self._module.id)
 
 
-class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
+class TimersManager(
+    OpenPypeModule,
+    ITrayService,
+    IPluginPaths
+):
     """ Handles about Timers.
 
     Should be able to start/stop all timers at once.
@@ -176,11 +183,18 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
         )
 
     def get_launch_hook_paths(self):
-        """Implementation of `ILaunchHookPaths`."""
-        return os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "launch_hooks"
-        )
+        """Implementation for applications launch hooks."""
+
+        return [
+            os.path.join(TIMER_MODULE_DIR, "launch_hooks")
+        ]
+
+    def get_plugin_paths(self):
+        """Implementation of `IPluginPaths`."""
+
+        return {
+            "publish": [os.path.join(TIMER_MODULE_DIR, "plugins", "publish")]
+        }
 
     @staticmethod
     def get_timer_data_for_context(
@@ -388,6 +402,7 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
             logger (logging.Logger): Logger object. Using 'print' if not
                 passed.
         """
+
         webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
         if not webserver_url:
             msg = "Couldn't find webserver url"
@@ -414,6 +429,36 @@ class TimersManager(OpenPypeModule, ITrayService, ILaunchHookPaths):
         }
 
         return requests.post(rest_api_url, json=data)
+
+    @staticmethod
+    def stop_timer_with_webserver(logger=None):
+        """Prepared method for calling stop timers on REST api.
+
+        Args:
+            logger (logging.Logger): Logger used for logging messages.
+        """
+
+        webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
+        if not webserver_url:
+            msg = "Couldn't find webserver url"
+            if logger is not None:
+                logger.warning(msg)
+            else:
+                print(msg)
+            return
+
+        rest_api_url = "{}/timers_manager/stop_timer".format(webserver_url)
+        try:
+            import requests
+        except Exception:
+            msg = "Couldn't start timer ('requests' is not available)"
+            if logger is not None:
+                logger.warning(msg)
+            else:
+                print(msg)
+            return
+
+        return requests.post(rest_api_url)
 
     def on_host_install(self, host, host_name, project_name):
         self.log.debug("Installing task changed callback")

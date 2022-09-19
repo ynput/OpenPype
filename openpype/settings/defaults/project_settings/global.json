@@ -3,6 +3,10 @@
         "CollectAnatomyInstanceData": {
             "follow_workfile_version": false
         },
+        "CollectAudio": {
+            "enabled": false,
+            "audio_subset_name": "audioMain"
+        },
         "CollectSceneVersion": {
             "hosts": [
                 "aftereffects",
@@ -85,6 +89,7 @@
                             ],
                             "width": 0,
                             "height": 0,
+                            "scale_pixel_aspect": true,
                             "bg_color": [
                                 0,
                                 0,
@@ -402,7 +407,8 @@
                     "enabled": false
                 }
             ],
-            "extra_folders": []
+            "extra_folders": [],
+            "workfile_lock_profiles": []
         },
         "loader": {
             "family_filter_profiles": [
@@ -413,6 +419,10 @@
                     "filter_families": []
                 }
             ]
+        },
+        "publish": {
+            "template_name_profiles": [],
+            "hero_template_name_profiles": []
         }
     },
     "project_folder_structure": "{\"__project_root__\": {\"prod\": {}, \"resources\": {\"footage\": {\"plates\": {}, \"offline\": {}}, \"audio\": {}, \"art_dept\": {}}, \"editorial\": {}, \"assets\": {\"characters\": {}, \"locations\": {}}, \"shots\": {}}}",

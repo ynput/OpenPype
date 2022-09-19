@@ -2,6 +2,7 @@ import os
 import sys
 import contextlib
 import collections
+import traceback
 
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
@@ -35,6 +36,19 @@ def center_window(window):
     if geo.y() < screen_geo.y():
         geo.setY(screen_geo.y())
     window.move(geo.topLeft())
+
+
+def html_escape(text):
+    """Basic escape of html syntax symbols in text."""
+
+    return (
+        text
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&#x27;")
+    )
 
 
 def set_style_property(widget, property_name, property_value):
@@ -430,10 +444,6 @@ class FamilyConfigCache:
         if profiles:
             # Make sure connection is installed
             # - accessing attribute which does not have auto-install
-            self.dbcon.install()
-            database = getattr(self.dbcon, "database", None)
-            if database is None:
-                database = self.dbcon._database
             asset_doc = get_asset_by_name(
                 project_name, asset_name, fields=["data.tasks"]
             ) or {}
@@ -634,7 +644,11 @@ class DynamicQThread(QtCore.QThread):
 def create_qthread(func, *args, **kwargs):
     class Thread(QtCore.QThread):
         def run(self):
-            func(*args, **kwargs)
+            try:
+                func(*args, **kwargs)
+            except BaseException:
+                traceback.print_exception(*sys.exc_info())
+                raise
     return Thread()
 
 

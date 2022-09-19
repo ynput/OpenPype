@@ -3,8 +3,8 @@ import json
 import pyblish.api
 
 from openpype.client import get_asset_by_name
-from openpype.lib import get_subset_name_with_asset_doc
 from openpype.pipeline import legacy_io
+from openpype.pipeline.create import get_subset_name
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -39,13 +39,14 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         # Use empty variant value
         variant = ""
         task_name = legacy_io.Session["AVALON_TASK"]
-        subset_name = get_subset_name_with_asset_doc(
+        subset_name = get_subset_name(
             family,
             variant,
             task_name,
             asset_doc,
             project_name,
-            host_name
+            host_name,
+            project_settings=context.data["project_settings"]
         )
 
         # Create Workfile instance

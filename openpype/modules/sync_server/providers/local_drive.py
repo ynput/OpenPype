@@ -82,7 +82,7 @@ class LocalDriveHandler(AbstractProvider):
         return editable
 
     def upload_file(self, source_path, target_path,
-                    server, collection, file, representation, site,
+                    server, project_name, file, representation, site,
                     overwrite=False, direction="Upload"):
         """
             Copies file from 'source_path' to 'target_path'
@@ -95,7 +95,7 @@ class LocalDriveHandler(AbstractProvider):
             thread = threading.Thread(target=self._copy,
                                       args=(source_path, target_path))
             thread.start()
-            self._mark_progress(collection, file, representation, server,
+            self._mark_progress(project_name, file, representation, server,
                                 site, source_path, target_path, direction)
         else:
             if os.path.exists(target_path):
@@ -105,13 +105,14 @@ class LocalDriveHandler(AbstractProvider):
         return os.path.basename(target_path)
 
     def download_file(self, source_path, local_path,
-                      server, collection, file, representation, site,
+                      server, project_name, file, representation, site,
                       overwrite=False):
         """
             Download a file form 'source_path' to 'local_path'
         """
         return self.upload_file(source_path, local_path,
-                                server, collection, file, representation, site,
+                                server, project_name, file,
+                                representation, site,
                                 overwrite, direction="Download")
 
     def delete_file(self, path):
@@ -188,7 +189,7 @@ class LocalDriveHandler(AbstractProvider):
         except shutil.SameFileError:
             print("same files, skipping")
 
-    def _mark_progress(self, collection, file, representation, server, site,
+    def _mark_progress(self, project_name, file, representation, server, site,
                        source_path, target_path, direction):
         """
             Updates progress field in DB by values 0-1.
@@ -204,7 +205,7 @@ class LocalDriveHandler(AbstractProvider):
                 status_val = target_file_size / source_file_size
                 last_tick = time.time()
                 log.debug(direction + "ed %d%%." % int(status_val * 100))
-                server.update_db(collection=collection,
+                server.update_db(project_name=project_name,
                                  new_file_id=None,
                                  file=file,
                                  representation=representation,

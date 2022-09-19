@@ -154,7 +154,7 @@ def convert_value_by_type_name(value_type, value, logger=None):
         elif parts_len == 4:
             divisor = 2
         elif parts_len == 9:
-            divisor == 3
+            divisor = 3
         elif parts_len == 16:
             divisor = 4
         else:
@@ -938,3 +938,40 @@ def convert_ffprobe_fps_value(str_value):
         fps = int(fps)
 
     return str(fps)
+
+
+def convert_ffprobe_fps_to_float(value):
+    """Convert string value of frame rate to float.
+
+    Copy of 'convert_ffprobe_fps_value' which raises exceptions on invalid
+    value, does not convert value to string and does not return "Unknown"
+    string.
+
+    Args:
+        value (str): Value to be converted.
+
+    Returns:
+        Float: Converted frame rate in float. If divisor in value is '0' then
+            '0.0' is returned.
+
+    Raises:
+        ValueError: Passed value is invalid for conversion.
+    """
+
+    if not value:
+        raise ValueError("Got empty value.")
+
+    items = value.split("/")
+    if len(items) == 1:
+        return float(items[0])
+
+    if len(items) > 2:
+        raise ValueError((
+            "FPS expression contains multiple dividers \"{}\"."
+        ).format(value))
+
+    dividend = float(items.pop(0))
+    divisor = float(items.pop(0))
+    if divisor == 0.0:
+        return 0.0
+    return dividend / divisor

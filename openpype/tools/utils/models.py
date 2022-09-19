@@ -3,6 +3,7 @@ import logging
 
 import Qt
 from Qt import QtCore, QtGui
+from openpype.client import get_projects
 from .constants import (
     PROJECT_IS_ACTIVE_ROLE,
     PROJECT_NAME_ROLE,
@@ -296,29 +297,29 @@ class ProjectModel(QtGui.QStandardItemModel):
             self._default_item = item
 
         project_names = set()
-        if self.dbcon is not None:
-            for project_doc in self.dbcon.projects(
-                projection={"name": 1, "data.active": 1},
-                only_active=self._only_active
-            ):
-                project_name = project_doc["name"]
-                project_names.add(project_name)
-                if project_name in self._items_by_name:
-                    item = self._items_by_name[project_name]
-                else:
-                    item = QtGui.QStandardItem(project_name)
+        project_docs = get_projects(
+            inactive=not self._only_active,
+            fields=["name", "data.active"]
+        )
+        for project_doc in project_docs:
+            project_name = project_doc["name"]
+            project_names.add(project_name)
+            if project_name in self._items_by_name:
+                item = self._items_by_name[project_name]
+            else:
+                item = QtGui.QStandardItem(project_name)
 
-                    self._items_by_name[project_name] = item
-                    new_items.append(item)
+                self._items_by_name[project_name] = item
+                new_items.append(item)
 
-                is_active = project_doc.get("data", {}).get("active", True)
-                item.setData(project_name, PROJECT_NAME_ROLE)
-                item.setData(is_active, PROJECT_IS_ACTIVE_ROLE)
+            is_active = project_doc.get("data", {}).get("active", True)
+            item.setData(project_name, PROJECT_NAME_ROLE)
+            item.setData(is_active, PROJECT_IS_ACTIVE_ROLE)
 
-                if not is_active:
-                    font = item.font()
-                    font.setItalic(True)
-                    item.setFont(font)
+            if not is_active:
+                font = item.font()
+                font.setItalic(True)
+                item.setFont(font)
 
         root_item = self.invisibleRootItem()
         for project_name in tuple(self._items_by_name.keys()):
@@ -328,6 +329,19 @@ class ProjectModel(QtGui.QStandardItemModel):
 
         if new_items:
             root_item.appendRows(new_items)
+
+    def find_project(self, project_name):
+        """
+            Get index of 'project_name' value.
+
+            Args:
+                project_name (str):
+            Returns:
+                (QModelIndex)
+        """
+        val = self._items_by_name.get(project_name)
+        if val:
+            return self.indexFromItem(val)
 
 
 class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):

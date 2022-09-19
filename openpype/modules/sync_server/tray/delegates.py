@@ -1,8 +1,7 @@
 import os
 from Qt import QtCore, QtWidgets, QtGui
 
-from openpype.lib import PypeLogger
-from . import lib
+from openpype.lib import Logger
 
 from openpype.tools.utils.constants import (
     LOCAL_PROVIDER_ROLE,
@@ -16,7 +15,7 @@ from openpype.tools.utils.constants import (
     EDIT_ICON_ROLE
 )
 
-log = PypeLogger().get_logger("SyncServer")
+log = Logger.get_logger("SyncServer")
 
 
 class PriorityDelegate(QtWidgets.QStyledItemDelegate):

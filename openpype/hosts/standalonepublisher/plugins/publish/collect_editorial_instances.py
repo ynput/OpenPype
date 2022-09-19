@@ -170,7 +170,8 @@ class CollectInstances(pyblish.api.InstancePlugin):
                     "frameStart": frame_start,
                     "frameEnd": frame_end,
                     "frameStartH": frame_start - handle_start,
-                    "frameEndH": frame_end + handle_end
+                    "frameEndH": frame_end + handle_end,
+                    "newAssetPublishing": True
                 }
 
                 for data_key in instance_data_filter:
