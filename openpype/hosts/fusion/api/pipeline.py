@@ -2,9 +2,7 @@
 Basic avalon integration
 """
 import os
-import sys
 import logging
-import contextlib
 
 import pyblish.api
 
