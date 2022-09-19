@@ -1,7 +1,5 @@
 """Blender operators and menus for use with Avalon."""
 
-from distutils import extension
-from doctest import ELLIPSIS_MARKER
 import os
 from string import digits
 import sys
