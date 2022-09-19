@@ -23,6 +23,12 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.fusion import FUSION_HOST_DIR
+from openpype.tools.utils import host_tools
+
+from .lib import (
+    get_current_comp,
+    comp_lock_and_undo_chunk
+)
 
 log = Logger.get_logger(__name__)
 
@@ -247,19 +253,3 @@ def parse_container(tool):
     return container
 
 
-def get_current_comp():
-    """Hack to get current comp in this session"""
-    fusion = getattr(sys.modules["__main__"], "fusion", None)
-    return fusion.CurrentComp if fusion else None
-
-
-@contextlib.contextmanager
-def comp_lock_and_undo_chunk(comp, undo_queue_name="Script CMD"):
-    """Lock comp and open an undo chunk during the context"""
-    try:
-        comp.Lock()
-        comp.StartUndo(undo_queue_name)
-        yield
-    finally:
-        comp.Unlock()
-        comp.EndUndo()

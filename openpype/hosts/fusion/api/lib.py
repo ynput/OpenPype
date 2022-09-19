@@ -19,8 +19,6 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.context_tools import get_current_project_asset
 
-from .pipeline import get_current_comp, comp_lock_and_undo_chunk
-
 self = sys.modules[__name__]
 self._project = None
 
@@ -232,3 +230,21 @@ def get_frame_path(path):
         padding = 4  # default Fusion padding
 
     return filename, padding, ext
+
+
+def get_current_comp():
+    """Hack to get current comp in this session"""
+    fusion = getattr(sys.modules["__main__"], "fusion", None)
+    return fusion.CurrentComp if fusion else None
+
+
+@contextlib.contextmanager
+def comp_lock_and_undo_chunk(comp, undo_queue_name="Script CMD"):
+    """Lock comp and open an undo chunk during the context"""
+    try:
+        comp.Lock()
+        comp.StartUndo(undo_queue_name)
+        yield
+    finally:
+        comp.Unlock()
+        comp.EndUndo()
