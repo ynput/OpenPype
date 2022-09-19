@@ -156,7 +156,12 @@ def on_after_open(_event):
         comp = get_current_comp()
 
         def _on_show_scene_inventory():
-            comp.CurrentFrame.ActivateFrame()   # ensure that comp is active
+            # ensure that comp is active
+            frame = comp.CurrentFrame
+            if not frame:
+                print("Comp is closed, skipping show scene inventory")
+                return
+            frame.ActivateFrame()   # raise comp window
             host_tools.show_scene_inventory()
 
         from openpype.widgets import popup
