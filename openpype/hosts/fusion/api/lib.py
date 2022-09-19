@@ -77,6 +77,21 @@ def set_framerange():
                        handle_end=handle_end)
 
 
+def set_resolution():
+    """Set Comp's defaults"""
+    asset_doc = get_current_project_asset()
+    width = asset_doc["data"]["resolutionWidth"]
+    height = asset_doc["data"]["resolutionHeight"]
+    comp = get_current_comp()
+
+    print("Setting comp frame format resolution to {}x{}".format(width,
+                                                                 height))
+    comp.SetPrefs({
+        "Comp.FrameFormat.Width": width,
+        "Comp.FrameFormat.Height": height,
+    })
+
+
 def get_additional_data(container):
     """Get Fusion related data for the container
 

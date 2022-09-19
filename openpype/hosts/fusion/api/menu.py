@@ -9,8 +9,9 @@ from openpype.hosts.fusion.scripts import (
     set_rendermode,
     duplicate_with_inputs
 )
-from openpype.hosts.fusion.api import (
-    set_framerange
+from openpype.hosts.fusion.api.lib import (
+    set_framerange,
+    set_resolution
 )
 from openpype.pipeline import legacy_io
 
@@ -185,6 +186,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_set_resolution_clicked(self):
         print("Clicked Reset Resolution")
+        set_resolution()
 
     def on_set_framerange_clicked(self):
         print("Clicked Reset Framerange")
