@@ -648,7 +648,7 @@ def rename_filepaths_by_frame_start(
     """Change frames in filenames of finished images to new frame start."""
     # Skip if source first frame is same as destination first frame
     if range_start == new_frame_start:
-        return
+        return {}
 
     # Calculate frame end
     new_frame_end = range_end + (new_frame_start - range_start)
