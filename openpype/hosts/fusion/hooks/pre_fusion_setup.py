@@ -1,6 +1,6 @@
 import os
 from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
-from openpype.hosts.fusion import HOST_DIR
+from openpype.hosts.fusion import FUSION_HOST_DIR
 
 
 class FusionPrelaunch(PreLaunchHook):
@@ -42,8 +42,8 @@ class FusionPrelaunch(PreLaunchHook):
 
         # Add our Fusion Master Prefs which is the only way to customize
         # Fusion to define where it can read custom scripts and tools from
-        self.log.info(f"Setting OPENPYPE_FUSION: {HOST_DIR}")
-        self.launch_context.env["OPENPYPE_FUSION"] = HOST_DIR
+        self.log.info(f"Setting OPENPYPE_FUSION: {FUSION_HOST_DIR}")
+        self.launch_context.env["OPENPYPE_FUSION"] = FUSION_HOST_DIR
 
         pref_var = "FUSION16_MasterPrefs"   # used by both Fu16 and Fu17
         prefs = os.path.join(HOST_DIR, "deploy", "fusion_shared.prefs")
