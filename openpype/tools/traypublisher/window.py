@@ -19,6 +19,25 @@ from openpype.tools.utils.models import (
     ProjectModel,
     ProjectSortFilterProxy
 )
+import appdirs
+from openpype.lib import JSONSettingRegistry
+
+
+class TrayPublisherRegistry(JSONSettingRegistry):
+    """Class handling OpenPype general settings registry.
+
+    Attributes:
+        vendor (str): Name used for path construction.
+        product (str): Additional name used for path construction.
+
+    """
+
+    def __init__(self):
+        self.vendor = "pypeclub"
+        self.product = "openpype"
+        name = "tray_publisher"
+        path = appdirs.user_data_dir(self.product, self.vendor)
+        super(TrayPublisherRegistry, self).__init__(name, path)
 
 
 class StandaloneOverlayWidget(QtWidgets.QFrame):
@@ -82,6 +101,7 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
 
         self._projects_view = projects_view
         self._projects_model = projects_model
+        self._projects_proxy = projects_proxy
         self._cancel_btn = cancel_btn
         self._confirm_btn = confirm_btn
 
@@ -90,6 +110,24 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
 
     def showEvent(self, event):
         self._projects_model.refresh()
+
+        setting_registry = TrayPublisherRegistry()
+        try:
+            project_name = setting_registry.get_item("project_name")
+        except ValueError:
+            project_name = None
+
+        if project_name:
+            index = None
+            src_index = self._projects_model.find_project(project_name)
+            if src_index is not None:
+                index = self._projects_proxy.mapFromSource(src_index)
+            if index:
+                mode = (
+                    QtCore.QItemSelectionModel.Select
+                    | QtCore.QItemSelectionModel.Rows)
+                self._projects_view.selectionModel().select(index, mode)
+
         self._cancel_btn.setVisible(self._project_name is not None)
         super(StandaloneOverlayWidget, self).showEvent(event)
 
@@ -118,6 +156,9 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
         self.host.set_project_name(project_name)
         self.setVisible(False)
         self.project_selected.emit(project_name)
+
+        setting_registry = TrayPublisherRegistry()
+        setting_registry.set_item("project_name", project_name)
 
 
 class TrayPublishWindow(PublisherWindow):
