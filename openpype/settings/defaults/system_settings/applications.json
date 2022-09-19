@@ -706,28 +706,11 @@
         "icon": "{}/app_icons/fusion.png",
         "host_name": "fusion",
         "environment": {
-            "FUSION_UTILITY_SCRIPTS_SOURCE_DIR": [],
-            "FUSION_UTILITY_SCRIPTS_DIR": {
-                "windows": "{PROGRAMDATA}/Blackmagic Design/Fusion/Scripts/Comp",
-                "darwin": "/Library/Application Support/Blackmagic Design/Fusion/Scripts/Comp",
-                "linux": "/opt/Fusion/Scripts/Comp"
-            },
-            "PYTHON36": {
+            "FUSION_PYTHON3_HOME": {
                 "windows": "{LOCALAPPDATA}/Programs/Python/Python36",
                 "darwin": "~/Library/Python/3.6/bin",
                 "linux": "/opt/Python/3.6/bin"
-            },
-            "PYTHONPATH": [
-                "{PYTHON36}/Lib/site-packages",
-                "{VIRTUAL_ENV}/Lib/site-packages",
-                "{PYTHONPATH}"
-            ],
-            "PATH": [
-                "{PYTHON36}",
-                "{PYTHON36}/Scripts",
-                "{PATH}"
-            ],
-            "OPENPYPE_LOG_NO_COLORS": "Yes"
+            }
         },
         "variants": {
             "18": {
