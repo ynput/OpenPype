@@ -5,6 +5,7 @@ import contextlib
 
 from Qt import QtGui
 
+from openpype.lib import Logger
 from openpype.client import (
     get_asset_by_name,
     get_subset_by_name,
@@ -89,6 +90,49 @@ def set_asset_resolution():
         "Comp.FrameFormat.Width": width,
         "Comp.FrameFormat.Height": height,
     })
+
+
+def validate_comp_prefs():
+    """Validate current comp defaults with asset settings.
+
+    Validates fps, resolutionWidth, resolutionHeight, aspectRatio.
+
+    This does *not* validate frameStart, frameEnd, handleStart and handleEnd.
+    """
+
+    log = Logger.get_logger("validate_comp_prefs")
+
+    fields = [
+        "data.fps",
+        "data.resolutionWidth",
+        "data.resolutionHeight",
+        "data.pixelAspect"
+    ]
+    asset_data = get_current_project_asset(fields=fields)["data"]
+
+    comp = get_current_comp()
+    comp_frame_format_prefs = comp.GetPrefs("Comp.FrameFormat")
+
+    # Pixel aspect ratio in Fusion is set as AspectX and AspectY so we convert
+    # the data to something that is more sensible to Fusion
+    asset_data["pixelAspectX"] = asset_data.pop("pixelAspect")
+    asset_data["pixelAspectY"] = 1.0
+
+    for key, comp_key, label in [
+        ("fps", "Rate", "FPS"),
+        ("resolutionWidth", "Width", "Resolution Width"),
+        ("resolutionHeight", "Height", "Resolution Height"),
+        ("pixelAspectX", "AspectX", "Pixel Aspect Ratio X"),
+        ("pixelAspectY", "AspectY", "Pixel Aspect Ratio Y")
+    ]:
+        value = asset_data[key]
+        current_value = comp_frame_format_prefs.get(comp_key)
+        if value != current_value:
+            # todo: Actually show dialog to user instead of just logging
+            log.warning(
+                "Invalid pref {}: {} (should be: {})".format(comp_key,
+                                                             current_value,
+                                                             value))
 
 
 def get_additional_data(container):

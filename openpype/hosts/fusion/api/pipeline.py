@@ -25,7 +25,8 @@ from openpype.tools.utils import host_tools
 
 from .lib import (
     get_current_comp,
-    comp_lock_and_undo_chunk
+    comp_lock_and_undo_chunk,
+    validate_comp_prefs
 )
 
 log = Logger.get_logger(__name__)
@@ -88,6 +89,7 @@ def install():
     # Fusion integration currently does not attach to direct callbacks of
     # the application. So we use workfile callbacks to allow similar behavior
     # on save and open
+    register_event_callback("workfile.save.before", on_before_save)
     register_event_callback("workfile.open.after", on_after_open)
 
 
@@ -138,7 +140,12 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
                 tool.SetAttrs({"TOOLB_PassThrough": passthrough})
 
 
+def on_before_save(_event):
+    validate_comp_prefs()
+
+
 def on_after_open(_event):
+    validate_comp_prefs()
 
     if any_outdated_containers():
         log.warning("Scene has outdated content.")
