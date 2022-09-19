@@ -330,7 +330,7 @@ class ProjectModel(QtGui.QStandardItemModel):
         if new_items:
             root_item.appendRows(new_items)
 
-    def get_index(self, project_name):
+    def find_project(self, project_name):
         """
             Get index of 'project_name' value.
 
