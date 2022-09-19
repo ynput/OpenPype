@@ -2,7 +2,7 @@ import collections
 
 import six
 
-ALL_SUBFIELDS = object()
+FIELD_VALUE = object()
 
 
 def fields_to_dict(fields):
@@ -15,15 +15,15 @@ def fields_to_dict(fields):
         last = hierarchy.pop(-1)
         value = output
         for part in hierarchy:
-            if value is ALL_SUBFIELDS:
+            if value is FIELD_VALUE:
                 break
 
             if part not in value:
                 value[part] = {}
             value = value[part]
 
-        if value is not ALL_SUBFIELDS:
-            value[last] = ALL_SUBFIELDS
+        if value is not FIELD_VALUE:
+            value[last] = FIELD_VALUE
     return output
 
 
@@ -43,7 +43,7 @@ def project_graphql_query(fields):
         item = query_queue.popleft()
         key, value, parent = item
         field = parent.add_field(key)
-        if value is ALL_SUBFIELDS:
+        if value is FIELD_VALUE:
             continue
 
         for k, v in value.items():
@@ -65,7 +65,7 @@ def projects_graphql_query(fields):
         item = query_queue.popleft()
         key, value, parent = item
         field = parent.add_field(key)
-        if value is ALL_SUBFIELDS:
+        if value is FIELD_VALUE:
             continue
 
         for k, v in value.items():
@@ -107,7 +107,7 @@ def folders_graphql_query(fields):
         item = query_queue.popleft()
         key, value, parent = item
         field = parent.add_field(key)
-        if value is ALL_SUBFIELDS:
+        if value is FIELD_VALUE:
             continue
 
         for k, v in value.items():
@@ -141,7 +141,7 @@ def subsets_graphql_query(fields):
         item = query_queue.popleft()
         key, value, parent = item
         field = parent.add_field(key)
-        if value is ALL_SUBFIELDS:
+        if value is FIELD_VALUE:
             continue
 
         for k, v in value.items():
@@ -183,7 +183,7 @@ def versions_graphql_query(fields):
         item = query_queue.popleft()
         key, value, parent = item
         field = parent.add_field(key)
-        if value is ALL_SUBFIELDS:
+        if value is FIELD_VALUE:
             continue
 
         for k, v in value.items():
@@ -217,7 +217,7 @@ def representations_graphql_query(fields):
         item = query_queue.popleft()
         key, value, parent = item
         field = parent.add_field(key)
-        if value is ALL_SUBFIELDS:
+        if value is FIELD_VALUE:
             continue
 
         for k, v in value.items():
