@@ -70,8 +70,8 @@ def set_framerange():
     asset_doc = get_current_project_asset()
     start = asset_doc["data"]["frameStart"]
     end = asset_doc["data"]["frameEnd"]
-    handle_start = asset_doc["data"]["handleStart"],
-    handle_end = asset_doc["data"]["handleEnd"],
+    handle_start = asset_doc["data"]["handleStart"]
+    handle_end = asset_doc["data"]["handleEnd"]
     update_frame_range(start, end, set_render_range=True,
                        handle_start=handle_start,
                        handle_end=handle_end)
