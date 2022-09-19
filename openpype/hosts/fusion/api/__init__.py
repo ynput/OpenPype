@@ -24,7 +24,7 @@ from .lib import (
     maintained_selection,
     get_additional_data,
     update_frame_range,
-    set_framerange
+    set_asset_framerange
 )
 
 from .menu import launch_openpype_menu
@@ -54,7 +54,7 @@ __all__ = [
     "maintained_selection",
     "get_additional_data",
     "update_frame_range",
-    "set_framerange",
+    "set_asset_framerange",
 
     # menu
     "launch_openpype_menu",

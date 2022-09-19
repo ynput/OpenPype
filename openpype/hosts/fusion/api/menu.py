@@ -10,8 +10,8 @@ from openpype.hosts.fusion.scripts import (
     duplicate_with_inputs
 )
 from openpype.hosts.fusion.api.lib import (
-    set_framerange,
-    set_resolution
+    set_asset_framerange,
+    set_asset_resolution
 )
 from openpype.pipeline import legacy_io
 
@@ -186,11 +186,11 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_set_resolution_clicked(self):
         print("Clicked Reset Resolution")
-        set_resolution()
+        set_asset_resolution()
 
     def on_set_framerange_clicked(self):
         print("Clicked Reset Framerange")
-        set_framerange()
+        set_asset_framerange()
 
 
 def launch_openpype_menu():

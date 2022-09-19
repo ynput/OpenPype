@@ -66,7 +66,7 @@ def update_frame_range(start, end, comp=None, set_render_range=True,
         comp.SetAttrs(attrs)
 
 
-def set_framerange():
+def set_asset_framerange():
     asset_doc = get_current_project_asset()
     start = asset_doc["data"]["frameStart"]
     end = asset_doc["data"]["frameEnd"]
@@ -77,7 +77,7 @@ def set_framerange():
                        handle_end=handle_end)
 
 
-def set_resolution():
+def set_asset_resolution():
     """Set Comp's defaults"""
     asset_doc = get_current_project_asset()
     width = asset_doc["data"]["resolutionWidth"]
