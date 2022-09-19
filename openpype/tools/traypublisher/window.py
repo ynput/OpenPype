@@ -101,6 +101,7 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
 
         self._projects_view = projects_view
         self._projects_model = projects_model
+        self._projects_proxy = projects_proxy
         self._cancel_btn = cancel_btn
         self._confirm_btn = confirm_btn
 
