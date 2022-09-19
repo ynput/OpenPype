@@ -167,7 +167,7 @@ def on_after_open(_event):
         from openpype.widgets import popup
         from openpype.style import load_stylesheet
         dialog = popup.Popup(parent=menu.menu)
-        dialog.setWindowTitle("Fusion comp  has outdated content")
+        dialog.setWindowTitle("Fusion comp has outdated content")
         dialog.setMessage("There are outdated containers in "
                           "your Fusion comp.")
         dialog.on_clicked.connect(_on_show_scene_inventory)
