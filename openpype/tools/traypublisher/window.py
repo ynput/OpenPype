@@ -103,6 +103,8 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
 
     def showEvent(self, event):
         self._projects_model.refresh()
+        # Sort projects after refresh
+        self._projects_proxy.sort(0)
         self._cancel_btn.setVisible(self._project_name is not None)
         super(StandaloneOverlayWidget, self).showEvent(event)
 
