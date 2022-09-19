@@ -112,7 +112,11 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
         self._projects_model.refresh()
 
         setting_registry = TrayPublisherRegistry()
-        project_name = setting_registry.get_item("project_name")
+        try:
+            project_name = setting_registry.get_item("project_name")
+        except ValueError:
+            project_name = None
+
         if project_name:
             index = None
             src_index = self._projects_model.find_project(project_name)
