@@ -8,7 +8,10 @@ import contextlib
 
 import pyblish.api
 
-from openpype.lib import Logger
+from openpype.lib import (
+    Logger,
+    register_event_callback
+)
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
@@ -18,6 +21,7 @@ from openpype.pipeline import (
     deregister_inventory_action_path,
     AVALON_CONTAINER_ID,
 )
+from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.fusion import FUSION_HOST_DIR
 
 log = Logger.get_logger(__name__)
@@ -77,6 +81,11 @@ def install():
         "instanceToggled", on_pyblish_instance_toggled
     )
 
+    # Fusion integration currently does not attach to direct callbacks of
+    # the application. So we use workfile callbacks to allow similar behavior
+    # on save and open
+    register_event_callback("workfile.open.after", on_after_open)
+
 
 def uninstall():
     """Uninstall all that was installed
@@ -123,6 +132,34 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
             current = attrs["TOOLB_PassThrough"]
             if current != passthrough:
                 tool.SetAttrs({"TOOLB_PassThrough": passthrough})
+
+
+def on_after_open(_event):
+
+    if any_outdated_containers():
+        log.warning("Scene has outdated content.")
+
+        # Find OpenPype menu to attach to
+        from . import menu
+
+        comp = get_current_comp()
+
+        def _on_show_scene_inventory():
+            comp.CurrentFrame.ActivateFrame()   # ensure that comp is active
+            host_tools.show_scene_inventory()
+
+        from openpype.widgets import popup
+        from openpype.style import load_stylesheet
+        dialog = popup.Popup(parent=menu.menu)
+        dialog.setWindowTitle("Fusion comp  has outdated content")
+        dialog.setMessage("There are outdated containers in "
+                          "your Fusion comp.")
+        dialog.on_clicked.connect(_on_show_scene_inventory)
+
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
+        dialog.setStyleSheet(load_stylesheet())
 
 
 def ls():
