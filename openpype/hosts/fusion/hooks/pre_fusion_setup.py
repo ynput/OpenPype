@@ -46,6 +46,6 @@ class FusionPrelaunch(PreLaunchHook):
         self.launch_context.env["OPENPYPE_FUSION"] = FUSION_HOST_DIR
 
         pref_var = "FUSION16_MasterPrefs"   # used by both Fu16 and Fu17
-        prefs = os.path.join(HOST_DIR, "deploy", "fusion_shared.prefs")
+        prefs = os.path.join(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
         self.log.info(f"Setting {pref_var}: {prefs}")
         self.launch_context.env[pref_var] = prefs
