@@ -361,7 +361,9 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
             result = self._custom_index_filter(index)
             if result is not None:
                 project_name = index.data(PROJECT_NAME_ROLE)
-                return string_pattern in project_name
+                if project_name is None:
+                    return result
+                return string_pattern.lower() in project_name.lower()
 
         return super(ProjectSortFilterProxy, self).filterAcceptsRow(
             source_row, source_parent
