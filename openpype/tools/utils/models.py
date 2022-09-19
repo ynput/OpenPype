@@ -337,7 +337,6 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
         self._filter_enabled = True
         # Disable case sensitivity
         self.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        self._filter_enabled = True
 
     def lessThan(self, left_index, right_index):
         if left_index.data(PROJECT_NAME_ROLE) is None:
