@@ -19,7 +19,6 @@ from .workio import (
 
 from .lib import (
     maintained_selection,
-    get_additional_data,
     update_frame_range,
     set_asset_framerange,
     get_current_comp,
@@ -48,7 +47,6 @@ __all__ = [
 
     # lib
     "maintained_selection",
-    "get_additional_data",
     "update_frame_range",
     "set_asset_framerange",
     "get_current_comp",

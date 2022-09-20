@@ -177,26 +177,6 @@ def validate_comp_prefs(comp=None):
         dialog.setStyleSheet(load_stylesheet())
 
 
-def get_additional_data(container):
-    """Get Fusion related data for the container
-
-    Args:
-        container(dict): the container found by the ls() function
-
-    Returns:
-        dict
-    """
-
-    tool = container["_tool"]
-    tile_color = tool.TileColor
-    if tile_color is None:
-        return {}
-
-    return {"color": QtGui.QColor.fromRgbF(tile_color["R"],
-                                           tile_color["G"],
-                                           tile_color["B"])}
-
-
 def switch_item(container,
                 asset_name=None,
                 subset_name=None,
