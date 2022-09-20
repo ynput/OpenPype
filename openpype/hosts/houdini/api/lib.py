@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
+import os
 import uuid
 import logging
 from contextlib import contextmanager
@@ -557,3 +558,23 @@ def get_frame_data(node):
     data["steps"] = node.evalParm("f3")
 
     return data
+
+
+def splitext(name, allowed_multidot_extensions):
+    # type: (str, list) -> tuple
+    """Split file name to name and extension.
+
+    Args:
+        name (str): File name to split.
+        allowed_multidot_extensions (list of str): List of allowed multidot
+            extensions.
+
+    Returns:
+        tuple: Name and extension.
+    """
+
+    for ext in allowed_multidot_extensions:
+        if name.endswith(ext):
+            return name[:-len(ext)], ext
+
+    return os.path.splitext(name)
