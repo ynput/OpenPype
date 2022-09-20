@@ -42,6 +42,4 @@ class CreateUSD(plugin.HoudiniCreator):
             "family",
             "id",
         ]
-        for name in to_lock:
-            parm = instance_node.parm(name)
-            parm.lock(True)
+        self.lock_parameters(instance_node, to_lock)

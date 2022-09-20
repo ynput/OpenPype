@@ -41,6 +41,4 @@ class CreatePointCache(plugin.HoudiniCreator):
 
         # Lock any parameters in this list
         to_lock = ["prim_to_detail_pattern"]
-        for name in to_lock:
-            parm = instance_node.parm(name)
-            parm.lock(True)
+        self.lock_parameters(instance_node, to_lock)

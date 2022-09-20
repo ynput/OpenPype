@@ -13,8 +13,7 @@ class CreateCompositeSequence(plugin.HoudiniCreator):
     icon = "gears"
 
     def create(self, subset_name, instance_data, pre_create_data):
-        import hou
-        from pprint import pformat
+        import hou  # noqa
 
         instance_data.pop("active", None)
         instance_data.update({"node_type": "comp"})
@@ -24,10 +23,7 @@ class CreateCompositeSequence(plugin.HoudiniCreator):
             instance_data,
             pre_create_data)  # type: CreatedInstance
 
-        self.log.info(pformat(instance))
-        print(pformat(instance))
         instance_node = hou.node(instance.get("instance_node"))
-
         filepath = "$HIP/pyblish/{}.$F4.exr".format(subset_name)
         parms = {
             "copoutput": filepath
@@ -37,7 +33,4 @@ class CreateCompositeSequence(plugin.HoudiniCreator):
 
         # Lock any parameters in this list
         to_lock = ["prim_to_detail_pattern"]
-        for name in to_lock:
-            parm = instance_node.parm(name)
-            parm.lock(True)
-
+        self.lock_parameters(instance_node, to_lock)

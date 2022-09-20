@@ -49,6 +49,4 @@ class CreateArnoldAss(plugin.HoudiniCreator):
 
         # Lock any parameters in this list
         to_lock = ["ar_ass_export_enable", "family", "id"]
-        for name in to_lock:
-            parm = instance_node.parm(name)
-            parm.lock(True)
+        self.lock_parameters(instance_node, to_lock)

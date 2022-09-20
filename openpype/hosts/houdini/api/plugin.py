@@ -150,6 +150,21 @@ class HoudiniCreator(NewCreator):
                 OpenPypeCreatorError("Creator error: {}".format(er)),
                 sys.exc_info()[2])
 
+    def lock_parameters(self, node, parameters):
+        """Lock list of specified parameters on the node.
+
+        Args:
+            node (hou.Node): Houdini node to lock parameters on.
+            parameters (list of str): List of parameter names.
+
+        """
+        for name in parameters:
+            try:
+                parm = node.parm(name)
+                parm.lock(True)
+            except AttributeError:
+                self.log.debug("missing lock pattern {}".format(name))
+
     def collect_instances(self):
         for instance in list_instances(creator_id=self.identifier):
             created_instance = CreatedInstance.from_existing(
