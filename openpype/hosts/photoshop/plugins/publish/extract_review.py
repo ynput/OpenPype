@@ -87,9 +87,10 @@ class ExtractReview(publish.Extractor):
         self._generate_thumbnail(ffmpeg_path, instance, source_files_pattern,
                                  staging_dir)
 
-        no_of_frames = len(img_list)
-        self._generate_mov(ffmpeg_path, instance, fps, no_of_frames,
-                           source_files_pattern, staging_dir)
+        no_of_frames = len(processed_img_names)
+        if no_of_frames > 1:
+            self._generate_mov(ffmpeg_path, instance, fps, no_of_frames,
+                               source_files_pattern, staging_dir)
 
         self.log.info(f"Extracted {instance} to {staging_dir}")
 
