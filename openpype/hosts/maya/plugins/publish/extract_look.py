@@ -79,8 +79,8 @@ def maketx(source, destination, args, logger):
     Args:
         source (str): Path to source file.
         destination (str): Writing destination path.
-        args: Additional arguments for `maketx`.
-        logger
+        args (list): Additional arguments for `maketx`.
+        logger (logging.Logger): Logger to log messages to.
 
     Returns:
         str: Output of `maketx` command.
