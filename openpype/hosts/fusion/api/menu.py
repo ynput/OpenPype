@@ -22,23 +22,6 @@ self = sys.modules[__name__]
 self.menu = None
 
 
-class Spacer(QtWidgets.QWidget):
-    def __init__(self, height, *args, **kwargs):
-        super(Spacer, self).__init__(*args, **kwargs)
-
-        self.setFixedHeight(height)
-
-        real_spacer = QtWidgets.QWidget(self)
-        real_spacer.setObjectName("Spacer")
-        real_spacer.setFixedHeight(height)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(real_spacer)
-
-        self.setLayout(layout)
-
-
 class OpenPypeMenu(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super(OpenPypeMenu, self).__init__(*args, **kwargs)
@@ -86,28 +69,28 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
         layout.addWidget(asset_label)
 
-        layout.addWidget(Spacer(15, self))
+        layout.addSpacing(20)
 
         layout.addWidget(workfiles_btn)
 
-        layout.addWidget(Spacer(15, self))
+        layout.addSpacing(20)
 
         layout.addWidget(create_btn)
         layout.addWidget(load_btn)
         layout.addWidget(publish_btn)
         layout.addWidget(manager_btn)
 
-        layout.addWidget(Spacer(15, self))
+        layout.addSpacing(20)
 
         layout.addWidget(libload_btn)
 
-        layout.addWidget(Spacer(15, self))
+        layout.addSpacing(20)
 
         layout.addWidget(set_framerange_btn)
         layout.addWidget(set_resolution_btn)
         layout.addWidget(rendermode_btn)
 
-        layout.addWidget(Spacer(15, self))
+        layout.addSpacing(20)
 
         layout.addWidget(duplicate_with_inputs_btn)
 
