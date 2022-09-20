@@ -39,7 +39,7 @@
         "aov_separator": "underscore",
         "reset_current_frame": false,
         "arnold_renderer": {
-            "image_prefix": "maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>",
+            "image_prefix": "maya/<Scene>/<RenderLayer>/<RenderLayer>",
             "image_format": "exr",
             "multilayer_exr": true,
             "tiled": true,
