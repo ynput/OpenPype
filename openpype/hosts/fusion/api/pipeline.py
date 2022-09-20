@@ -48,7 +48,7 @@ class CompLogHandler(logging.Handler):
 
 
 def install():
-    """Install fusion-specific functionality of avalon-core.
+    """Install fusion-specific functionality of OpenPype.
 
     This is where you install menus and register families, data
     and loaders into fusion.
