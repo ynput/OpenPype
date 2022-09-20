@@ -181,6 +181,28 @@ class RenderSettings(object):
         cmds.setAttr(
             "defaultArnoldDriver.mergeAOVs", multi_exr)
 
+        # When MergeAOV is enabled (=Multilayer EXR) there should be no
+        # <renderpass> token and no {aov_separator}. When MergeAOV is disabled
+        # both tokens must be present
+        prefix = self.get_default_image_prefix("arnold",
+                                               format_aov_separator=False)
+        aov_tokens = (
+                int("{aov_separator}" in prefix) +
+                int("<renderpass>" in prefix.lower())
+        )
+        if multi_exr and aov_tokens > 0:
+            self.log.error("Settings define invalid combination of Image "
+                           "Prefix Template and Multilayer (exr). "
+                           "Merge AOVs is disabled but a {{aov_separator}} or "
+                           "<renderpass> token exists in prefix: "
+                           "{}".format(prefix))
+        elif not multi_exr and aov_tokens < 2:
+            self.log.error("Settings define invalid combination of Image "
+                           "Prefix Template and Multilayer (exr). "
+                           "Merge AOVs is enabled but {{aov_separator}} or "
+                           "<renderpass> token do not exist prefix: "
+                           "{}".format(prefix))
+
         additional_options = arnold_render_presets["additional_options"]
         self._additional_attribs_setter(additional_options)
 
