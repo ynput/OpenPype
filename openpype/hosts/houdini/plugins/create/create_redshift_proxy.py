@@ -1,18 +1,20 @@
+# -*- coding: utf-8 -*-
+"""Creator plugin for creating Redshift proxies."""
 from openpype.hosts.houdini.api import plugin
+from openpype.pipeline import CreatedInstance
 
 
-class CreateRedshiftProxy(plugin.Creator):
+class CreateRedshiftProxy(plugin.HoudiniCreator):
     """Redshift Proxy"""
-
+    identifier = "io.openpype.creators.houdini.redshiftproxy"
     label = "Redshift Proxy"
     family = "redshiftproxy"
     icon = "magic"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateRedshiftProxy, self).__init__(*args, **kwargs)
-
+    def create(self, subset_name, instance_data, pre_create_data):
+        import hou  # noqa
         # Remove the active, we are checking the bypass flag of the nodes
-        self.data.pop("active", None)
+        instance_data.pop("active", None)
 
         # Redshift provides a `Redshift_Proxy_Output` node type which shows
         # a limited set of parameters by default and is set to extract a
@@ -21,28 +23,26 @@ class CreateRedshiftProxy(plugin.Creator):
         # why this happens.
         # TODO: Somehow enforce so that it only shows the original limited
         #       attributes of the Redshift_Proxy_Output node type
-        self.data.update({"node_type": "Redshift_Proxy_Output"})
+        instance_data.update({"node_type": "Redshift_Proxy_Output"})
 
-    def _process(self, instance):
-        """Creator main entry point.
+        instance = super(CreateRedshiftProxy, self).create(
+            subset_name,
+            instance_data,
+            pre_create_data)  # type: CreatedInstance
 
-        Args:
-            instance (hou.Node): Created Houdini instance.
+        instance_node = hou.node(instance.get("instance_node"))
 
-        """
         parms = {
-            "RS_archive_file": '$HIP/pyblish/`chs("subset")`.$F4.rs',
+            "RS_archive_file": '$HIP/pyblish/`{}.$F4.rs'.format(subset_name),
         }
 
-        if self.nodes:
-            node = self.nodes[0]
-            path = node.path()
-            parms["RS_archive_sopPath"] = path
+        if self.selected_nodes:
+            parms["RS_archive_sopPath"] = self.selected_nodes[0].path()
 
-        instance.setParms(parms)
+        instance_node.setParms(parms)
 
         # Lock some Avalon attributes
-        to_lock = ["family", "id"]
+        to_lock = ["family", "id", "prim_to_detail_pattern"]
         for name in to_lock:
-            parm = instance.parm(name)
+            parm = instance_node.parm(name)
             parm.lock(True)
