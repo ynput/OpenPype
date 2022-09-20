@@ -84,6 +84,67 @@ class ExtractReview(publish.Extractor):
         source_files_pattern = self._check_and_resize(processed_img_names,
                                                       source_files_pattern,
                                                       staging_dir)
+        self._generate_thumbnail(ffmpeg_path, instance, source_files_pattern,
+                                 staging_dir)
+
+        no_of_frames = len(img_list)
+        self._generate_mov(ffmpeg_path, instance, fps, no_of_frames,
+                           source_files_pattern, staging_dir)
+
+        self.log.info(f"Extracted {instance} to {staging_dir}")
+
+    def _generate_mov(self, ffmpeg_path, instance, fps, no_of_frames,
+                      source_files_pattern, staging_dir):
+        """Generates .mov to upload to Ftrack.
+
+        Args:
+            ffmpeg_path (str): path to ffmpeg
+            instance (Pyblish Instance)
+            fps (str)
+            no_of_frames (int):
+            source_files_pattern (str): name of source file
+            staging_dir (str): temporary location to store thumbnail
+        Updates:
+            instance - adds representation portion
+        """
+        # Generate mov.
+        mov_path = os.path.join(staging_dir, "review.mov")
+        self.log.info(f"Generate mov review: {mov_path}")
+        args = [
+            ffmpeg_path,
+            "-y",
+            "-i", source_files_pattern,
+            "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
+            "-vframes", str(no_of_frames),
+            mov_path
+        ]
+        self.log.debug("mov args:: {}".format(args))
+        output = run_subprocess(args)
+        self.log.debug(output)
+        instance.data["representations"].append({
+            "name": "mov",
+            "ext": "mov",
+            "files": os.path.basename(mov_path),
+            "stagingDir": staging_dir,
+            "frameStart": 1,
+            "frameEnd": no_of_frames,
+            "fps": fps,
+            "preview": True,
+            "tags": self.mov_options['tags']
+        })
+
+    def _generate_thumbnail(self, ffmpeg_path, instance, source_files_pattern,
+                            staging_dir):
+        """Generates scaled down thumbnail and adds it as representation.
+
+        Args:
+            ffmpeg_path (str): path to ffmpeg
+            instance (Pyblish Instance)
+            source_files_pattern (str): name of source file
+            staging_dir (str): temporary location to store thumbnail
+        Updates:
+            instance - adds representation portion
+        """
         # Generate thumbnail
         thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
         self.log.info(f"Generate thumbnail {thumbnail_path}")
@@ -97,7 +158,6 @@ class ExtractReview(publish.Extractor):
         ]
         self.log.debug("thumbnail args:: {}".format(args))
         output = run_subprocess(args)
-
         instance.data["representations"].append({
             "name": "thumbnail",
             "ext": "jpg",
@@ -105,40 +165,6 @@ class ExtractReview(publish.Extractor):
             "stagingDir": staging_dir,
             "tags": ["thumbnail"]
         })
-
-        # Generate mov.
-        mov_path = os.path.join(staging_dir, "review.mov")
-        self.log.info(f"Generate mov review: {mov_path}")
-        img_number = len(img_list)
-        args = [
-            ffmpeg_path,
-            "-y",
-            "-i", source_files_pattern,
-            "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
-            "-vframes", str(img_number),
-            mov_path
-        ]
-        self.log.debug("mov args:: {}".format(args))
-        output = run_subprocess(args)
-        self.log.debug(output)
-        instance.data["representations"].append({
-            "name": "mov",
-            "ext": "mov",
-            "files": os.path.basename(mov_path),
-            "stagingDir": staging_dir,
-            "frameStart": 1,
-            "frameEnd": img_number,
-            "fps": fps,
-            "preview": True,
-            "tags": self.mov_options['tags']
-        })
-
-        # Required for extract_review plugin (L222 onwards).
-        instance.data["frameStart"] = 1
-        instance.data["frameEnd"] = img_number
-        instance.data["fps"] = 25
-
-        self.log.info(f"Extracted {instance} to {staging_dir}")
 
     def _check_and_resize(self, processed_img_names, source_files_pattern,
                           staging_dir):
