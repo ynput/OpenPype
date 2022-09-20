@@ -51,10 +51,6 @@ class RenderSettings(object):
 
     log = Logger.get_logger("RenderSettings")
 
-    @classmethod
-    def get_image_prefix_attr(cls, renderer):
-        return cls._image_prefix_nodes[renderer]
-
     def __init__(self, project_settings=None):
         self._project_settings = project_settings
         if not self._project_settings:
