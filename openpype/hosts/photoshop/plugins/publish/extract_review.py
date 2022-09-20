@@ -195,20 +195,6 @@ class ExtractReview(publish.Extractor):
 
         return source_files_pattern
 
-    def _copy_image_to_staging_dir(self, staging_dir, img_list):
-        copy_files = []
-        for i, img_src in enumerate(img_list):
-            img_filename = self.output_seq_filename % i
-            img_dst = os.path.join(staging_dir, img_filename)
-
-            self.log.debug(
-                "Copying file .. {} -> {}".format(img_src, img_dst)
-            )
-            shutil.copy(img_src, img_dst)
-            copy_files.append(img_filename)
-
-        return copy_files
-
     def _get_layers_from_image_instances(self, instance):
         layers = []
         for image_instance in instance.context:
