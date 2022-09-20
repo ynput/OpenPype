@@ -36,22 +36,7 @@
                 "layout"
             ]
         },
-        "ExtractBlendAnimation": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ExtractCamera": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
         "ExtractFBX": {
-            "enabled": true,
-            "optional": true,
-            "active": false
-        },
-        "ExtractAnimationFBX": {
             "enabled": true,
             "optional": true,
             "active": false
@@ -60,6 +45,21 @@
             "enabled": true,
             "optional": true,
             "active": false
+        },
+        "ExtractBlendAnimation": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ExtractAnimationFBX": {
+            "enabled": true,
+            "optional": true,
+            "active": false
+        },
+        "ExtractCamera": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         },
         "ExtractLayout": {
             "enabled": true,

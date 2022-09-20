@@ -14,14 +14,12 @@ from openpype.client import (
     get_archived_representations,
     get_representations,
 )
-from openpype.lib import (
-    create_hard_link,
-    filter_profiles
-)
+from openpype.lib import create_hard_link
 from openpype.pipeline import (
     schema,
     legacy_io,
 )
+from openpype.pipeline.publish import get_publish_template_name
 
 
 class IntegrateHeroVersion(pyblish.api.InstancePlugin):
@@ -68,10 +66,11 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             )
             return
 
-        template_key = self._get_template_key(instance)
-
         anatomy = instance.context.data["anatomy"]
         project_name = anatomy.project_name
+
+        template_key = self._get_template_key(project_name, instance)
+
         if template_key not in anatomy.templates:
             self.log.warning((
                 "!!! Anatomy of project \"{}\" does not have set"
@@ -527,30 +526,24 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
 
         return publish_folder
 
-    def _get_template_key(self, instance):
+    def _get_template_key(self, project_name, instance):
         anatomy_data = instance.data["anatomyData"]
-        task_data = anatomy_data.get("task") or {}
-        task_name = task_data.get("name")
-        task_type = task_data.get("type")
+        task_info = anatomy_data.get("task") or {}
         host_name = instance.context.data["hostName"]
+
         # TODO raise error if Hero not set?
         family = self.main_family_from_instance(instance)
-        key_values = {
-            "families": family,
-            "task_names": task_name,
-            "task_types": task_type,
-            "hosts": host_name
-        }
-        profile = filter_profiles(
-            self.template_name_profiles,
-            key_values,
+
+        return get_publish_template_name(
+            project_name,
+            host_name,
+            family,
+            task_info.get("name"),
+            task_info.get("type"),
+            project_settings=instance.context.data["project_settings"],
+            hero=True,
             logger=self.log
         )
-        if profile:
-            template_name = profile["template_name"]
-        else:
-            template_name = self._default_template_name
-        return template_name
 
     def main_family_from_instance(self, instance):
         """Returns main family of entered instance."""
@@ -584,8 +577,11 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             return
 
         except OSError as exc:
-            # re-raise exception if different than cross drive path
-            if exc.errno != errno.EXDEV:
+            # re-raise exception if different than
+            # EXDEV - cross drive path
+            # EINVAL - wrong format, must be NTFS
+            self.log.debug("Hardlink failed with errno:'{}'".format(exc.errno))
+            if exc.errno not in [errno.EXDEV, errno.EINVAL]:
                 raise
 
         shutil.copy(src_path, dst_path)

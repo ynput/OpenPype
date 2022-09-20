@@ -14,7 +14,7 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.houdini import HOUDINI_HOST_DIR
-from openpype.hosts.houdini.api import lib
+from openpype.hosts.houdini.api import lib, shelves
 
 from openpype.lib import (
     register_event_callback,
@@ -73,6 +73,7 @@ def install():
     # so it initializes into the correct scene FPS, Frame Range, etc.
     # todo: make sure this doesn't trigger when opening with last workfile
     _set_context_settings()
+    shelves.generate_shelves()
 
 
 def uninstall():
