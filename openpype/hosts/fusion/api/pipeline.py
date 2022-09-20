@@ -89,7 +89,6 @@ def install():
     # Fusion integration currently does not attach to direct callbacks of
     # the application. So we use workfile callbacks to allow similar behavior
     # on save and open
-    register_event_callback("workfile.save.before", on_before_save)
     register_event_callback("workfile.open.after", on_after_open)
 
 
@@ -140,10 +139,6 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
                 tool.SetAttrs({"TOOLB_PassThrough": passthrough})
 
 
-def on_before_save(_event):
-    validate_comp_prefs()
-
-
 def on_after_open(_event):
     validate_comp_prefs()
 
@@ -171,7 +166,6 @@ def on_after_open(_event):
         dialog.setMessage("There are outdated containers in "
                           "your Fusion comp.")
         dialog.on_clicked.connect(_on_show_scene_inventory)
-
         dialog.show()
         dialog.raise_()
         dialog.activateWindow()
