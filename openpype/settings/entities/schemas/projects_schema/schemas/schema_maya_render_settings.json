@@ -70,6 +70,10 @@
                   "type": "boolean"
                 },
                 {
+                  "label": "When <b>Multilayer (exr)</b> is disabled the <b>Image prefix template</b> must contain both <i>{aov_separator}</i> and <i>&lt;RenderPass&gt;</i> token",
+                  "type": "label"
+                },
+                {
                   "key": "tiled",
                   "label": "Tiled (tif, exr)",
                   "type": "boolean"
