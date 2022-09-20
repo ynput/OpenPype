@@ -3,6 +3,7 @@ Basic avalon integration
 """
 import os
 import logging
+import contextlib
 
 import pyblish.api
 
@@ -14,14 +15,13 @@ from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
     register_inventory_action_path,
-    deregister_loader_plugin_path,
-    deregister_creator_plugin_path,
-    deregister_inventory_action_path,
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.fusion import FUSION_HOST_DIR
+from openpype.host import HostBase, IWorkfileHost, ILoadHost, INewPublisher
 from openpype.tools.utils import host_tools
+
 
 from .lib import (
     get_current_comp,
@@ -47,71 +47,99 @@ class CompLogHandler(logging.Handler):
             comp.Print(entry)
 
 
-def install():
-    """Install fusion-specific functionality of OpenPype.
+class FusionHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
+    name = "fusion"
 
-    This is where you install menus and register families, data
-    and loaders into fusion.
+    def install(self):
+        """Install fusion-specific functionality of OpenPype.
 
-    It is called automatically when installing via
-    `openpype.pipeline.install_host(openpype.hosts.fusion.api)`
+        This is where you install menus and register families, data
+        and loaders into fusion.
 
-    See the Maya equivalent for inspiration on how to implement this.
+        It is called automatically when installing via
+        `openpype.pipeline.install_host(openpype.hosts.fusion.api)`
 
-    """
-    # Remove all handlers associated with the root logger object, because
-    # that one always logs as "warnings" incorrectly.
-    for handler in logging.root.handlers[:]:
-        logging.root.removeHandler(handler)
+        See the Maya equivalent for inspiration on how to implement this.
 
-    # Attach default logging handler that prints to active comp
-    logger = logging.getLogger()
-    formatter = logging.Formatter(fmt="%(message)s\n")
-    handler = CompLogHandler()
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-    logger.setLevel(logging.DEBUG)
+        """
+        # Remove all handlers associated with the root logger object, because
+        # that one always logs as "warnings" incorrectly.
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
 
-    pyblish.api.register_host("fusion")
-    pyblish.api.register_plugin_path(PUBLISH_PATH)
-    log.info("Registering Fusion plug-ins..")
+        # Attach default logging handler that prints to active comp
+        logger = logging.getLogger()
+        formatter = logging.Formatter(fmt="%(message)s\n")
+        handler = CompLogHandler()
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        logger.setLevel(logging.DEBUG)
 
-    register_loader_plugin_path(LOAD_PATH)
-    register_creator_plugin_path(CREATE_PATH)
-    register_inventory_action_path(INVENTORY_PATH)
+        pyblish.api.register_host("fusion")
+        pyblish.api.register_plugin_path(PUBLISH_PATH)
+        log.info("Registering Fusion plug-ins..")
 
-    pyblish.api.register_callback(
-        "instanceToggled", on_pyblish_instance_toggled
-    )
+        register_loader_plugin_path(LOAD_PATH)
+        register_creator_plugin_path(CREATE_PATH)
+        register_inventory_action_path(INVENTORY_PATH)
 
-    # Fusion integration currently does not attach to direct callbacks of
-    # the application. So we use workfile callbacks to allow similar behavior
-    # on save and open
-    register_event_callback("workfile.open.after", on_after_open)
+        pyblish.api.register_callback("instanceToggled",
+                                      on_pyblish_instance_toggled)
 
+        # Fusion integration currently does not attach to direct callbacks of
+        # the application. So we use workfile callbacks to allow similar
+        # behavior on save and open
+        register_event_callback("workfile.open.after", on_after_open)
 
-def uninstall():
-    """Uninstall all that was installed
+    # region workfile io api
+    def has_unsaved_changes(self):
+        comp = get_current_comp()
+        return comp.GetAttrs()["COMPB_Modified"]
 
-    This is where you undo everything that was done in `install()`.
-    That means, removing menus, deregistering families and  data
-    and everything. It should be as though `install()` was never run,
-    because odds are calling this function means the user is interested
-    in re-installing shortly afterwards. If, for example, he has been
-    modifying the menu or registered families.
+    def get_workfile_extensions(self):
+        return [".comp"]
 
-    """
-    pyblish.api.deregister_host("fusion")
-    pyblish.api.deregister_plugin_path(PUBLISH_PATH)
-    log.info("Deregistering Fusion plug-ins..")
+    def save_workfile(self, dst_path=None):
+        comp = get_current_comp()
+        comp.Save(dst_path)
 
-    deregister_loader_plugin_path(LOAD_PATH)
-    deregister_creator_plugin_path(CREATE_PATH)
-    deregister_inventory_action_path(INVENTORY_PATH)
+    def open_workfile(self, filepath):
+        # Hack to get fusion, see
+        #   openpype.hosts.fusion.api.pipeline.get_current_comp()
+        fusion = getattr(sys.modules["__main__"], "fusion", None)
 
-    pyblish.api.deregister_callback(
-        "instanceToggled", on_pyblish_instance_toggled
-    )
+        return fusion.LoadComp(filepath)
+
+    def get_current_workfile(self):
+        comp = get_current_comp()
+        current_filepath = comp.GetAttrs()["COMPS_FileName"]
+        if not current_filepath:
+            return None
+
+        return current_filepath
+
+    def work_root(self, session):
+        work_dir = session["AVALON_WORKDIR"]
+        scene_dir = session.get("AVALON_SCENEDIR")
+        if scene_dir:
+            return os.path.join(work_dir, scene_dir)
+        else:
+            return work_dir
+    # endregion
+
+    @contextlib.contextmanager
+    def maintained_selection(self):
+        from .lib import maintained_selection
+        return maintained_selection()
+
+    def get_containers(self):
+        return ls()
+
+    def update_context_data(self, data, changes):
+        print(data, changes)
+
+    def get_context_data(self):
+        return {}
 
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):
@@ -254,3 +282,43 @@ def parse_container(tool):
     return container
 
 
+def list_instances(creator_id=None):
+    """Return created instances in current workfile which will be published.
+
+    Returns:
+        (list) of dictionaries matching instances format
+    """
+
+    comp = get_current_comp()
+    tools = comp.GetToolList(False, "Loader").values()
+
+    instance_signature = {
+        "id": "pyblish.avalon.instance",
+        "identifier": creator_id
+    }
+    instances = []
+    for tool in tools:
+
+        data = tool.GetData('openpype')
+        if not isinstance(data, dict):
+            return
+
+        if creator_id and data.get("identifier") != creator_id:
+            continue
+
+        if data.get("id") != instance_signature["id"]:
+            continue
+
+        instances.append(tool)
+
+    return instances
+
+
+def remove_instance(instance):
+    """Remove instance from current workfile.
+
+    Args:
+        instance (dict): instance representation from subsetmanager model
+    """
+    # Assume instance is a Fusion tool directly
+    instance.Delete()

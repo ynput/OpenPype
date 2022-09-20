@@ -144,7 +144,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
         host_tools.show_creator()
 
     def on_publish_clicked(self):
-        host_tools.show_publish()
+        host_tools.show_publisher()
 
     def on_load_clicked(self):
         host_tools.show_loader(use_context=True)
