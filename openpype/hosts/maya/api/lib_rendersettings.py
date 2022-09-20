@@ -187,8 +187,8 @@ class RenderSettings(object):
         prefix = self.get_default_image_prefix("arnold",
                                                format_aov_separator=False)
         aov_tokens = (
-                int("{aov_separator}" in prefix) +
-                int("<renderpass>" in prefix.lower())
+            int("{aov_separator}" in prefix) +
+            int("<renderpass>" in prefix.lower())
         )
         if multi_exr and aov_tokens > 0:
             self.log.error("Settings define invalid combination of Image "
