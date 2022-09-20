@@ -18,6 +18,9 @@
         "CollectReview": {
             "publish": true
         },
+        "CollectVersion": {
+            "enabled": false
+        },
         "ValidateContainers": {
             "enabled": true,
             "optional": true,
