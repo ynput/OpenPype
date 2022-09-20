@@ -1,6 +1,6 @@
 import sys
 
-from Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.tools.utils import host_tools
 from openpype.style import load_stylesheet
@@ -14,6 +14,7 @@ from openpype.hosts.fusion.api.lib import (
     set_asset_resolution
 )
 from openpype.pipeline import legacy_io
+from openpype.resources import get_openpype_icon_filepath
 
 from .pulse import FusionPulse
 
@@ -43,6 +44,10 @@ class OpenPypeMenu(QtWidgets.QWidget):
         super(OpenPypeMenu, self).__init__(*args, **kwargs)
 
         self.setObjectName("OpenPypeMenu")
+
+        icon_path = get_openpype_icon_filepath()
+        icon = QtGui.QIcon(icon_path)
+        self.setWindowIcon(icon)
 
         self.setWindowFlags(
             QtCore.Qt.Window
