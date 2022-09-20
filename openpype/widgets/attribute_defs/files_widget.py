@@ -237,9 +237,27 @@ class FilesModel(QtGui.QStandardItemModel):
         self._filenames_by_dirpath = collections.defaultdict(set)
         self._items_by_dirpath = collections.defaultdict(list)
 
+        self.rowsAboutToBeRemoved.connect(self._on_about_to_be_removed)
+        self.rowsInserted.connect(self._on_insert)
+
     @property
     def id(self):
         return self._id
+
+    def _on_about_to_be_removed(self, parent_index, start, end):
+        # Make sure items are removed from cache
+        for row in range(start, end + 1):
+            index = self.index(row, 0, parent_index)
+            item_id = index.data(ITEM_ID_ROLE)
+            if item_id is not None:
+                self._items_by_id.pop(item_id, None)
+
+    def _on_insert(self, parent_index, start, end):
+        for row in range(start, end + 1):
+            index = self.index(start, end, parent_index)
+            item_id = index.data(ITEM_ID_ROLE)
+            if item_id not in self._items_by_id:
+                self._items_by_id[item_id] = self.item(row)
 
     def set_multivalue(self, multivalue):
         """Disable filtering."""
@@ -354,6 +372,10 @@ class FilesModel(QtGui.QStandardItemModel):
             src_item_id = index.data(ITEM_ID_ROLE)
             src_item = self._items_by_id.get(src_item_id)
 
+        src_row = None
+        if src_item:
+            src_row = src_item.row()
+
         # Take out items that should be moved
         items = []
         for item_id in item_ids:
@@ -367,10 +389,12 @@ class FilesModel(QtGui.QStandardItemModel):
             return False
 
         # Calculate row where items should be inserted
-        if src_item:
-            src_row = src_item.row()
-        else:
-            src_row = root.rowCount()
+        row_count = root.rowCount()
+        if src_row is None:
+            src_row = row_count
+
+        if src_row > row_count:
+            src_row = row_count
 
         root.insertRow(src_row, items)
         return True
