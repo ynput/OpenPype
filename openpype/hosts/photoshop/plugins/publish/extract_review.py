@@ -49,7 +49,7 @@ class ExtractReview(publish.Extractor):
 
         if self.make_image_sequence and len(layers) > 1:
             self.log.info("Extract layers to image sequence.")
-            img_list = self._saves_sequences_layers(staging_dir, layers)
+            img_list = self._save_sequence_images(staging_dir, layers)
 
             instance.data["representations"].append({
                 "name": "jpg",
@@ -64,7 +64,7 @@ class ExtractReview(publish.Extractor):
             processed_img_names = img_list
         else:
             self.log.info("Extract layers to flatten image.")
-            img_list = self._saves_flattened_layers(staging_dir, layers)
+            img_list = self._save_flatten_image(staging_dir, layers)
 
             instance.data["representations"].append({
                 "name": "jpg",
@@ -196,6 +196,11 @@ class ExtractReview(publish.Extractor):
         return source_files_pattern
 
     def _get_layers_from_image_instances(self, instance):
+        """Collect all layers from 'instance'.
+
+        Returns:
+            (list) of PSItem
+        """
         layers = []
         for image_instance in instance.context:
             if image_instance.data["family"] != "image":
@@ -207,7 +212,12 @@ class ExtractReview(publish.Extractor):
 
         return sorted(layers)
 
-    def _saves_flattened_layers(self, staging_dir, layers):
+    def _save_flatten_image(self, staging_dir, layers):
+        """Creates flat image from 'layers' into 'staging_dir'.
+
+        Returns:
+            (str): path to new image
+        """
         img_filename = self.output_seq_filename % 0
         output_image_path = os.path.join(staging_dir, img_filename)
         stub = photoshop.stub()
@@ -221,7 +231,13 @@ class ExtractReview(publish.Extractor):
 
         return img_filename
 
-    def _saves_sequences_layers(self, staging_dir, layers):
+    def _save_sequence_images(self, staging_dir, layers):
+        """Creates separate flat images from 'layers' into 'staging_dir'.
+
+        Used as source for multi frames .mov to review at once.
+        Returns:
+            (list): paths to new images
+        """
         stub = photoshop.stub()
 
         list_img_filename = []
