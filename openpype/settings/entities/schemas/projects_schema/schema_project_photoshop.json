@@ -140,7 +140,7 @@
                         {
                             "type": "boolean",
                             "key": "publish",
-                            "label": "Publish review"
+                            "label": "Active"
                         }
                     ]
                 },
