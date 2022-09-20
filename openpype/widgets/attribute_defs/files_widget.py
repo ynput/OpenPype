@@ -683,12 +683,13 @@ class FilesWidget(QtWidgets.QFrame):
         files_proxy_model.setSourceModel(files_model)
         files_view = FilesView(self)
         files_view.setModel(files_proxy_model)
-        files_view.setVisible(False)
 
-        layout = QtWidgets.QHBoxLayout(self)
+        layout = QtWidgets.QStackedLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(empty_widget, 1)
-        layout.addWidget(files_view, 1)
+        layout.setStackingMode(layout.StackAll)
+        layout.addWidget(empty_widget)
+        layout.addWidget(files_view)
+        layout.setCurrentWidget(empty_widget)
 
         files_proxy_model.rowsInserted.connect(self._on_rows_inserted)
         files_proxy_model.rowsRemoved.connect(self._on_rows_removed)
@@ -707,6 +708,8 @@ class FilesWidget(QtWidgets.QFrame):
         self._files_view = files_view
 
         self._widgets_by_id = {}
+
+        self._layout = layout
 
     def _set_multivalue(self, multivalue):
         if self._multivalue == multivalue:
@@ -849,29 +852,6 @@ class FilesWidget(QtWidgets.QFrame):
 
         menu.popup(pos)
 
-    def sizeHint(self):
-        # Get size hints of widget and visible widgets
-        result = super(FilesWidget, self).sizeHint()
-        if not self._files_view.isVisible():
-            not_visible_hint = self._files_view.sizeHint()
-        else:
-            not_visible_hint = self._empty_widget.sizeHint()
-
-        # Get margins of this widget
-        margins = self.layout().contentsMargins()
-
-        # Change size hint based on result of maximum size hint of widgets
-        result.setWidth(max(
-            result.width(),
-            not_visible_hint.width() + margins.left() + margins.right()
-        ))
-        result.setHeight(max(
-            result.height(),
-            not_visible_hint.height() + margins.top() + margins.bottom()
-        ))
-
-        return result
-
     def dragEnterEvent(self, event):
         if self._multivalue:
             return
@@ -903,7 +883,6 @@ class FilesWidget(QtWidgets.QFrame):
         mime_data = event.mimeData()
         if mime_data.hasUrls():
             event.accept()
-            # event.setDropAction(QtCore.Qt.CopyAction)
             filepaths = []
             for url in mime_data.urls():
                 filepath = url.toLocalFile()
@@ -975,6 +954,9 @@ class FilesWidget(QtWidgets.QFrame):
 
     def _update_visibility(self):
         files_exists = self._files_proxy_model.rowCount() > 0
-        self._files_view.setVisible(files_exists)
-        self._empty_widget.setVisible(not files_exists)
+        if files_exists:
+            current_widget = self._files_view
+        else:
+            current_widget = self._empty_widget
+        self._layout.setCurrentWidget(current_widget)
         self._files_view.update_remove_btn_visibility()
