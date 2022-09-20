@@ -132,6 +132,23 @@
                     ]
                 },
                 {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CollectVersion",
+                    "label": "Collect Version",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Synchronize version for image and review instances by workfile version."
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        }
+                    ]
+                },
+                {
                     "type": "schema_template",
                     "name": "template_publish_plugin",
                     "template_data": [

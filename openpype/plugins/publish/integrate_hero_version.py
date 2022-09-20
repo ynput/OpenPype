@@ -577,8 +577,11 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             return
 
         except OSError as exc:
-            # re-raise exception if different than cross drive path
-            if exc.errno != errno.EXDEV:
+            # re-raise exception if different than
+            # EXDEV - cross drive path
+            # EINVAL - wrong format, must be NTFS
+            self.log.debug("Hardlink failed with errno:'{}'".format(exc.errno))
+            if exc.errno not in [errno.EXDEV, errno.EINVAL]:
                 raise
 
         shutil.copy(src_path, dst_path)
