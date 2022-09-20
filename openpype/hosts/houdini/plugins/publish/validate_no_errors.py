@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
 import pyblish.api
 import hou
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline import PublishValidationError
 
 
 def cook_in_range(node, start, end):
@@ -28,7 +29,7 @@ def get_errors(node):
 class ValidateNoErrors(pyblish.api.InstancePlugin):
     """Validate the Instance has no current cooking errors."""
 
-    order = ValidateContentsOrder
+    order = pyblish.api.ValidatorOrder
     hosts = ["houdini"]
     label = "Validate no errors"
 
@@ -62,4 +63,6 @@ class ValidateNoErrors(pyblish.api.InstancePlugin):
             errors = get_errors(node)
             if errors:
                 self.log.error(errors)
-                raise RuntimeError("Node has errors: %s" % node.path())
+                raise PublishValidationError(
+                    "Node has errors: {}".format(node.path()),
+                    title=self.label)

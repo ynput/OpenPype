@@ -58,10 +58,11 @@ class ValidateSopOutputNode(pyblish.api.InstancePlugin):
         # For the sake of completeness also assert the category type
         # is Sop to avoid potential edge case scenarios even though
         # the isinstance check above should be stricter than this category
-        assert output_node.type().category().name() == "Sop", (
-            "Output node %s is not of category Sop. This is a bug.."
-            % output_node.path()
-        )
+        if output_node.type().category().name() != "Sop":
+            raise PublishValidationError(
+                ("Output node {} is not of category Sop. "
+                 "This is a bug.").format(output_node.path()),
+                title=cls.label)
 
         # Ensure the node is cooked and succeeds to cook so we can correctly
         # check for its geometry data.

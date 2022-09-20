@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 import os
 import pyblish.api
 
 from openpype.hosts.houdini.api import lib
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateFileExtension(pyblish.api.InstancePlugin):
@@ -29,8 +31,9 @@ class ValidateFileExtension(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
-                "ROP node has incorrect " "file extension: %s" % invalid
+            raise PublishValidationError(
+                "ROP node has incorrect file extension: {}".format(invalid),
+                title=self.label
             )
 
     @classmethod
@@ -53,7 +56,9 @@ class ValidateFileExtension(pyblish.api.InstancePlugin):
         for family in families:
             extension = cls.family_extensions.get(family, None)
             if extension is None:
-                raise RuntimeError("Unsupported family: %s" % family)
+                raise PublishValidationError(
+                    "Unsupported family: {}".format(family),
+                    title=cls.label)
 
             if output_extension != extension:
                 return [node.path()]

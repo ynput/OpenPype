@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 import pyblish.api
 
 import hou
 from openpype.pipeline.publish import RepairContextAction
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateRemotePublishEnabled(pyblish.api.ContextPlugin):
@@ -18,10 +20,12 @@ class ValidateRemotePublishEnabled(pyblish.api.ContextPlugin):
 
         node = hou.node("/out/REMOTE_PUBLISH")
         if not node:
-            raise RuntimeError("Missing REMOTE_PUBLISH node.")
+            raise PublishValidationError(
+                "Missing REMOTE_PUBLISH node.", title=self.label)
 
         if node.isBypassed():
-            raise RuntimeError("REMOTE_PUBLISH must not be bypassed.")
+            raise PublishValidationError(
+                "REMOTE_PUBLISH must not be bypassed.", title=self.label)
 
     @classmethod
     def repair(cls, context):
@@ -29,7 +33,8 @@ class ValidateRemotePublishEnabled(pyblish.api.ContextPlugin):
 
         node = hou.node("/out/REMOTE_PUBLISH")
         if not node:
-            raise RuntimeError("Missing REMOTE_PUBLISH node.")
+            raise PublishValidationError(
+                "Missing REMOTE_PUBLISH node.", title=cls.label)
 
         cls.log.info("Disabling bypass on /out/REMOTE_PUBLISH")
         node.bypass(False)

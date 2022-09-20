@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
 import pyblish.api
+
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateCopOutputNode(pyblish.api.InstancePlugin):
@@ -20,9 +23,10 @@ class ValidateCopOutputNode(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
-                "Output node(s) `%s` are incorrect. "
-                "See plug-in log for details." % invalid
+            raise PublishValidationError(
+                ("Output node(s) `{}` are incorrect. "
+                 "See plug-in log for details.").format(invalid),
+                title=self.label
             )
 
     @classmethod
@@ -54,7 +58,8 @@ class ValidateCopOutputNode(pyblish.api.InstancePlugin):
         # For the sake of completeness also assert the category type
         # is Cop2 to avoid potential edge case scenarios even though
         # the isinstance check above should be stricter than this category
-        assert output_node.type().category().name() == "Cop2", (
-            "Output node %s is not of category Cop2. This is a bug.."
-            % output_node.path()
-        )
+        if output_node.type().category().name() != "Cop2":
+            raise PublishValidationError(
+                ("Output node %s is not of category Cop2. "
+                 "This is a bug...").format(output_node.path()),
+                title=cls.label)

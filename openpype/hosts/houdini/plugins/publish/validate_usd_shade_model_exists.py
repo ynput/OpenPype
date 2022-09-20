@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import re
 
 import pyblish.api
@@ -5,6 +6,7 @@ import pyblish.api
 from openpype.client import get_subset_by_name
 from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateUSDShadeModelExists(pyblish.api.InstancePlugin):
@@ -32,7 +34,8 @@ class ValidateUSDShadeModelExists(pyblish.api.InstancePlugin):
             project_name, model_subset, asset_doc["_id"], fields=["_id"]
         )
         if not subset_doc:
-            raise RuntimeError(
-                "USD Model subset not found: "
-                "%s (%s)" % (model_subset, asset_name)
+            raise PublishValidationError(
+                ("USD Model subset not found: "
+                 "{} ({})").format(model_subset, asset_name),
+                title=self.label
             )

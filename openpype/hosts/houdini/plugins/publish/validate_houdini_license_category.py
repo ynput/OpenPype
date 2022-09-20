@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 import pyblish.api
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateHoudiniCommercialLicense(pyblish.api.InstancePlugin):
@@ -24,7 +26,7 @@ class ValidateHoudiniCommercialLicense(pyblish.api.InstancePlugin):
 
         license = hou.licenseCategory()
         if license != hou.licenseCategoryType.Commercial:
-            raise RuntimeError(
-                "USD Publishing requires a full Commercial "
-                "license. You are on: %s" % license
-            )
+            raise PublishValidationError(
+                ("USD Publishing requires a full Commercial "
+                 "license. You are on: {}").format(license),
+                title=self.label)
