@@ -140,15 +140,14 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
 
 
 def on_after_open(_event):
-    validate_comp_prefs()
+    comp = get_current_comp()
+    validate_comp_prefs(comp)
 
     if any_outdated_containers():
         log.warning("Scene has outdated content.")
 
         # Find OpenPype menu to attach to
         from . import menu
-
-        comp = get_current_comp()
 
         def _on_show_scene_inventory():
             # ensure that comp is active

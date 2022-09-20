@@ -92,13 +92,16 @@ def set_asset_resolution():
     })
 
 
-def validate_comp_prefs():
+def validate_comp_prefs(comp=None):
     """Validate current comp defaults with asset settings.
 
     Validates fps, resolutionWidth, resolutionHeight, aspectRatio.
 
     This does *not* validate frameStart, frameEnd, handleStart and handleEnd.
     """
+
+    if comp is None:
+        comp = get_current_comp()
 
     log = Logger.get_logger("validate_comp_prefs")
 
@@ -112,7 +115,6 @@ def validate_comp_prefs():
     asset_doc = get_current_project_asset(fields=fields)
     asset_data = asset_doc["data"]
 
-    comp = get_current_comp()
     comp_frame_format_prefs = comp.GetPrefs("Comp.FrameFormat")
 
     # Pixel aspect ratio in Fusion is set as AspectX and AspectY so we convert
