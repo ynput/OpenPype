@@ -138,11 +138,13 @@ class DropEmpty(QtWidgets.QWidget):
             allowed_items = [item + "s" for item in allowed_items]
 
         if not allowed_items:
+            self._drop_label_widget.setVisible(False)
             self._items_label_widget.setText(
                 "It is not allowed to add anything here!"
             )
             return
 
+        self._drop_label_widget.setVisible(True)
         items_label = "Multiple "
         if self._single_item:
             items_label = "Single "
