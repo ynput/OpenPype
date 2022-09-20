@@ -138,31 +138,24 @@ class OpenPypeMenu(QtWidgets.QWidget):
         self._callbacks[:] = []
 
     def on_workfile_clicked(self):
-        print("Clicked Workfile")
         host_tools.show_workfiles()
 
     def on_create_clicked(self):
-        print("Clicked Create")
         host_tools.show_creator()
 
     def on_publish_clicked(self):
-        print("Clicked Publish")
         host_tools.show_publish()
 
     def on_load_clicked(self):
-        print("Clicked Load")
         host_tools.show_loader(use_context=True)
 
     def on_manager_clicked(self):
-        print("Clicked Manager")
         host_tools.show_scene_inventory()
 
     def on_libload_clicked(self):
-        print("Clicked Library")
         host_tools.show_library_loader()
 
     def on_rendermode_clicked(self):
-        print("Clicked Set Render Mode")
         if self.render_mode_widget is None:
             window = set_rendermode.SetRenderMode()
             window.setStyleSheet(load_stylesheet())
@@ -172,15 +165,12 @@ class OpenPypeMenu(QtWidgets.QWidget):
             self.render_mode_widget.show()
 
     def on_duplicate_with_inputs_clicked(self):
-        print("Clicked Duplicate with input connections")
         duplicate_with_inputs.duplicate_with_input_connections()
 
     def on_set_resolution_clicked(self):
-        print("Clicked Reset Resolution")
         set_asset_resolution()
 
     def on_set_framerange_clicked(self):
-        print("Clicked Reset Framerange")
         set_asset_framerange()
 
 
