@@ -21,6 +21,17 @@ class RenderSettings(object):
     Based on the Project Settings this allows you to query and set the render
     setting defaults for the current project.
 
+    The RenderSettings can query the `project_settings/maya/RenderSettings`
+    entries by accessing its items. It also allows to get a setting values
+    nested down using a forward slash `/` in the item. For example:
+        >>> settings = RenderSettings()
+        >>> # project_settings/maya/RenderSettings/aov_separator
+        >>> settings["aov_separator"]
+        >>> # project_settings/maya/RenderSettings/arnold_renderer/image_format
+        >>> settings["arnold_renderer/image_format"]
+        >>> # or with a default value fallback if setting does not exist
+        >>> settings.get("arnold_renderer/image_format", default=True)
+
     """
 
     _image_prefix_nodes = {
@@ -51,15 +62,8 @@ class RenderSettings(object):
 
     def get_aov_separator(self):
         # project_settings/maya/RenderSettings/aov_separator
-        try:
-            aov_separator = self._aov_chars[(
-                self._project_settings["maya"]
-                ["RenderSettings"]
-                ["aov_separator"]
-            )]
-        except KeyError:
-            aov_separator = "_"
-        return aov_separator
+        aov_separator_name = self["aov_separator"]
+        return self._aov_chars.get(aov_separator_name, "_")
 
     @classmethod
     def get_image_prefix_attr(cls, renderer):
@@ -101,14 +105,13 @@ class RenderSettings(object):
             prefix = hardcoded_prefixes[renderer]
             return _format_prefix(prefix)
 
-        render_settings = self._project_settings["maya"]["RenderSettings"]
         renderer_key = "{}_renderer".format(renderer)
-        if renderer_key not in render_settings:
+        if renderer_key not in self:
             print("Renderer {} has no render "
                   "settings implementation.".format(renderer))
             return
 
-        renderer_settings = render_settings[renderer_key]
+        renderer_settings = self[renderer_key]
         renderer_image_prefix = renderer_settings.get("image_prefix")
         if renderer_image_prefix is None:
             print("Renderer {} has no image prefix setting.".format(renderer))
@@ -140,8 +143,7 @@ class RenderSettings(object):
         self._set_global_output_settings()
 
         # Reset current frame
-        reset_frame = self._project_settings["maya"]["RenderSettings"]["reset_current_frame"] # noqa
-        if reset_frame:
+        if self["reset_current_frame"]:
             start_frame = cmds.getAttr("defaultRenderGlobals.startFrame")
             cmds.currentTime(start_frame, edit=True)
 
@@ -157,7 +159,7 @@ class RenderSettings(object):
         from mtoa.core import createOptions  # noqa
         from mtoa.aovs import AOVInterface  # noqa
         createOptions()
-        arnold_render_presets = self._project_settings["maya"]["RenderSettings"]["arnold_renderer"] # noqa
+        arnold_render_presets = self["arnold_renderer"]
         # Force resetting settings and AOV list to avoid having to deal with
         # AOV checking logic, for now.
         # This is a work around because the standard
@@ -190,12 +192,7 @@ class RenderSettings(object):
 
     def _set_redshift_settings(self, width, height):
         """Sets settings for Redshift."""
-        redshift_render_presets = (
-            self._project_settings
-            ["maya"]
-            ["RenderSettings"]
-            ["redshift_renderer"]
-        )
+        redshift_render_presets = self["redshift_renderer"]
         ext = redshift_render_presets["image_format"]
 
         # Set image format
@@ -211,12 +208,7 @@ class RenderSettings(object):
         """Sets important settings for Vray."""
         settings = cmds.ls(type="VRaySettingsNode")
         node = settings[0] if settings else cmds.createNode("VRaySettingsNode")
-        vray_render_presets = (
-            self._project_settings
-            ["maya"]
-            ["RenderSettings"]
-            ["vray_renderer"]
-        )
+        vray_render_presets = self["vray_renderer"]
         # Set aov separator
         # First we need to explicitly set the UI items in Render Settings
         # because that is also what V-Ray updates to when that Render Settings
@@ -286,3 +278,30 @@ class RenderSettings(object):
                         attribute=attribute,
                         attribute_type=attribute_type)
                 )
+
+    def get(self, item, default=None):
+        try:
+            return self[item]
+        except KeyError:
+            return default
+
+    def __getitem__(self, item):
+        if not isinstance(item, six.string_types):
+            raise TypeError("Item must be string type")
+
+        setting = self._project_settings["maya"]["RenderSettings"]
+        try:
+            for path in item.split("/"):
+                setting = setting[path]
+        except KeyError:
+            settings_path = "project_settings/maya/RenderSettings/" + item
+            raise KeyError(settings_path)
+
+        return setting
+
+    def __contains__(self, item):
+        try:
+            self[item]
+        except KeyError:
+            return False
+        return True
