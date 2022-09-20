@@ -594,6 +594,13 @@ class FilesView(QtWidgets.QListView):
 
         self._remove_btn.setVisible(not multivalue)
 
+    def update_remove_btn_visibility(self):
+        model = self.model()
+        visible = False
+        if model:
+            visible = model.rowCount() > 0
+        self._remove_btn.setVisible(visible)
+
     def has_selected_item_ids(self):
         """Is any index selected."""
         for index in self.selectionModel().selectedIndexes():
@@ -657,6 +664,7 @@ class FilesView(QtWidgets.QListView):
     def showEvent(self, event):
         super(FilesView, self).showEvent(event)
         self._update_remove_btn()
+        self.update_remove_btn_visibility()
 
 
 class FilesWidget(QtWidgets.QFrame):
@@ -968,3 +976,4 @@ class FilesWidget(QtWidgets.QFrame):
         files_exists = self._files_proxy_model.rowCount() > 0
         self._files_view.setVisible(files_exists)
         self._empty_widget.setVisible(not files_exists)
+        self._files_view.update_remove_btn_visibility()
