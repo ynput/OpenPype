@@ -646,9 +646,6 @@ def rename_filepaths_by_frame_start(
     filepaths_by_frame, range_start, range_end, new_frame_start
 ):
     """Change frames in filenames of finished images to new frame start."""
-    # Skip if source first frame is same as destination first frame
-    if range_start == new_frame_start:
-        return {}
 
     # Calculate frame end
     new_frame_end = range_end + (new_frame_start - range_start)
@@ -669,14 +666,17 @@ def rename_filepaths_by_frame_start(
         source_range = range(range_start, range_end + 1)
         output_range = range(new_frame_start, new_frame_end + 1)
 
+    # Skip if source first frame is same as destination first frame
     new_dst_filepaths = {}
     for src_frame, dst_frame in zip(source_range, output_range):
-        src_filepath = filepaths_by_frame[src_frame]
-        src_dirpath = os.path.dirname(src_filepath)
+        src_filepath = os.path.normpath(filepaths_by_frame[src_frame])
+        dirpath, src_filename = os.path.split(src_filepath)
         dst_filename = filename_template.format(frame=dst_frame)
-        dst_filepath = os.path.join(src_dirpath, dst_filename)
+        dst_filepath = os.path.join(dirpath, dst_filename)
 
-        os.rename(src_filepath, dst_filepath)
+        if src_filename != dst_filename:
+            os.rename(src_filepath, dst_filepath)
 
         new_dst_filepaths[dst_frame] = dst_filepath
+
     return new_dst_filepaths
