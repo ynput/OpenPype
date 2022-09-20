@@ -195,22 +195,6 @@ class ExtractReview(publish.Extractor):
 
         return source_files_pattern
 
-    def _get_image_path_from_instances(self, instance):
-        img_list = []
-
-        for instance in sorted(instance.context):
-            if instance.data["family"] != "image":
-                continue
-
-            for rep in instance.data["representations"]:
-                img_path = os.path.join(
-                    rep["stagingDir"],
-                    rep["files"]
-                )
-                img_list.append(img_path)
-
-        return img_list
-
     def _copy_image_to_staging_dir(self, staging_dir, img_list):
         copy_files = []
         for i, img_src in enumerate(img_list):
