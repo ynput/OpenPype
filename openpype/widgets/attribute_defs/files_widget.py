@@ -784,6 +784,8 @@ class FilesWidget(QtWidgets.QFrame):
         if not self._in_set_value:
             self.value_changed.emit()
 
+        self._update_visibility()
+
     def _on_rows_removed(self, parent_index, start_row, end_row):
         available_item_ids = set()
         for row in range(self._files_proxy_model.rowCount()):
@@ -803,6 +805,7 @@ class FilesWidget(QtWidgets.QFrame):
 
         if not self._in_set_value:
             self.value_changed.emit()
+        self._update_visibility()
 
     def _on_split_request(self):
         if self._multivalue:
@@ -966,11 +969,9 @@ class FilesWidget(QtWidgets.QFrame):
 
     def _add_filepaths(self, filepaths):
         self._files_model.add_filepaths(filepaths)
-        self._update_visibility()
 
     def _remove_item_by_ids(self, item_ids):
         self._files_model.remove_item_by_ids(item_ids)
-        self._update_visibility()
 
     def _update_visibility(self):
         files_exists = self._files_proxy_model.rowCount() > 0
