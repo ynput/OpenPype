@@ -245,7 +245,13 @@ class FilesModel(QtGui.QStandardItemModel):
         return self._id
 
     def _on_about_to_be_removed(self, parent_index, start, end):
-        # Make sure items are removed from cache
+        """Make sure that removed items are removed from items mapping.
+
+        Connected with '_on_insert'. When user drag item and drop it to same
+        view the item is actually removed and creted again but it happens in
+        inner calls of Qt.
+        """
+
         for row in range(start, end + 1):
             index = self.index(row, 0, parent_index)
             item_id = index.data(ITEM_ID_ROLE)
@@ -253,6 +259,13 @@ class FilesModel(QtGui.QStandardItemModel):
                 self._items_by_id.pop(item_id, None)
 
     def _on_insert(self, parent_index, start, end):
+        """Make sure new added items are stored in items mapping.
+
+        Connected to '_on_about_to_be_removed'. Some items are not created
+        using '_create_item' but are recreated using Qt. So the item is not in
+        mapping and if it would it would not lead to same item pointer.
+        """
+
         for row in range(start, end + 1):
             index = self.index(start, end, parent_index)
             item_id = index.data(ITEM_ID_ROLE)
