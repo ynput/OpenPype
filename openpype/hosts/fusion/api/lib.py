@@ -103,12 +103,14 @@ def validate_comp_prefs():
     log = Logger.get_logger("validate_comp_prefs")
 
     fields = [
+        "name",
         "data.fps",
         "data.resolutionWidth",
         "data.resolutionHeight",
         "data.pixelAspect"
     ]
-    asset_data = get_current_project_asset(fields=fields)["data"]
+    asset_doc = get_current_project_asset(fields=fields)
+    asset_data = asset_doc["data"]
 
     comp = get_current_comp()
     comp_frame_format_prefs = comp.GetPrefs("Comp.FrameFormat")
@@ -118,21 +120,59 @@ def validate_comp_prefs():
     asset_data["pixelAspectX"] = asset_data.pop("pixelAspect")
     asset_data["pixelAspectY"] = 1.0
 
-    for key, comp_key, label in [
+    validations = [
         ("fps", "Rate", "FPS"),
         ("resolutionWidth", "Width", "Resolution Width"),
         ("resolutionHeight", "Height", "Resolution Height"),
         ("pixelAspectX", "AspectX", "Pixel Aspect Ratio X"),
         ("pixelAspectY", "AspectY", "Pixel Aspect Ratio Y")
-    ]:
-        value = asset_data[key]
-        current_value = comp_frame_format_prefs.get(comp_key)
-        if value != current_value:
+    ]
+
+    invalid = []
+    for key, comp_key, label in validations:
+        asset_value = asset_data[key]
+        comp_value = comp_frame_format_prefs.get(comp_key)
+        if asset_value != comp_value:
             # todo: Actually show dialog to user instead of just logging
             log.warning(
-                "Invalid pref {}: {} (should be: {})".format(comp_key,
-                                                             current_value,
-                                                             value))
+                "Comp {pref} {value} does not match asset "
+                "'{asset_name}' {pref} {asset_value}".format(
+                    pref=label,
+                    value=comp_value,
+                    asset_name=asset_doc["name"],
+                    asset_value=asset_value)
+            )
+
+            invalid_msg = "{} {} should be {}".format(label,
+                                                      comp_value,
+                                                      asset_value)
+            invalid.append(invalid_msg)
+
+    if invalid:
+
+        def _on_repair():
+            attributes = dict()
+            for key, comp_key, _label in validations:
+                value = asset_data[key]
+                comp_key_full = "Comp.FrameFormat.{}".format(comp_key)
+                attributes[comp_key_full] = value
+            comp.SetPrefs(attributes)
+
+        from . import menu
+        from openpype.widgets import popup
+        from openpype.style import load_stylesheet
+        dialog = popup.Popup(parent=menu.menu)
+        dialog.setWindowTitle("Fusion comp has invalid configuration")
+
+        msg = "Comp preferences mismatches '{}'".format(asset_doc["name"])
+        msg += "\n" + "\n".join(invalid)
+        dialog.setMessage(msg)
+        dialog.setButtonText("Repair")
+        dialog.on_clicked.connect(_on_repair)
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
+        dialog.setStyleSheet(load_stylesheet())
 
 
 def get_additional_data(container):
