@@ -3,17 +3,17 @@ import contextlib
 
 from maya import cmds
 
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.maya.api.lib import maintained_selection
 
 
-class ExtractAssProxy(openpype.api.Extractor):
+class ExtractAssProxy(publish.Extractor):
     """Extract proxy model as Maya Ascii to use as arnold standin
 
 
     """
 
-    order = openpype.api.Extractor.order + 0.2
+    order = publish.Extractor.order + 0.2
     label = "Ass Proxy (Maya ASCII)"
     hosts = ["maya"]
     families = ["ass"]

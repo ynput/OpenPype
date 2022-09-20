@@ -238,6 +238,31 @@
                             }
                         ]
                     }
+                },
+                {
+                    "type": "list",
+                    "key": "workfile_lock_profiles",
+                    "label": "Workfile lock profiles",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "hosts-enum",
+                                "key": "host_name",
+                                "label": "Hosts",
+                                "multiselection": true
+                            },
+                            {
+                                "type": "splitter"
+                            },
+                            {
+                                "key": "enabled",
+                                "label": "Enabled",
+                                "type": "boolean"
+                            }
+                        ]
+                    }
                 }
             ]
         },
