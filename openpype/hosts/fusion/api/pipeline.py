@@ -60,7 +60,7 @@ def install():
 
     """
     # Remove all handlers associated with the root logger object, because
-    # that one sometimes logs as "warnings" incorrectly.
+    # that one always logs as "warnings" incorrectly.
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
 
@@ -71,8 +71,6 @@ def install():
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
-
-    log.info("openpype.hosts.fusion installed")
 
     pyblish.api.register_host("fusion")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
