@@ -51,8 +51,7 @@ FOLDER_FIELDS_MAPPING_V3_V4 = {
     "data.visualParent": {"parentId"},
     "data.parents": {"parents"},
     "data.active": {"active"},
-    "data.thumbnail_id": {"thumbnailId"},
-    "parent": {"projectName"}
+    "data.thumbnail_id": {"thumbnailId"}
 }
 
 # NOTE: There are for v3 compatibility
@@ -245,7 +244,7 @@ def _folder_fields_v3_to_v4(fields):
 
     output = set()
     for field in fields:
-        if field in ("schema", "type"):
+        if field in ("schema", "type", "parent"):
             continue
 
         if field in FOLDER_FIELDS_MAPPING_V3_V4:
@@ -289,9 +288,10 @@ def _convert_v4_tasks_to_v3(tasks):
     return output
 
 
-def _convert_v4_folder_to_v3(folder):
+def _convert_v4_folder_to_v3(folder, project_name):
     output = {
         "_id": folder["id"],
+        "parent": project_name,
         "type": "asset",
         "schema": "openpype:asset-3.0"
     }
