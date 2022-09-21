@@ -282,6 +282,7 @@ def parse_container(tool):
     return container
 
 
+# TODO: Function below is currently unused prototypes
 def list_instances(creator_id=None):
     """Return created instances in current workfile which will be published.
 
@@ -290,7 +291,7 @@ def list_instances(creator_id=None):
     """
 
     comp = get_current_comp()
-    tools = comp.GetToolList(False, "Loader").values()
+    tools = comp.GetToolList(False).values()
 
     instance_signature = {
         "id": "pyblish.avalon.instance",
@@ -301,7 +302,7 @@ def list_instances(creator_id=None):
 
         data = tool.GetData('openpype')
         if not isinstance(data, dict):
-            return
+            continue
 
         if data.get("id") != instance_signature["id"]:
             continue
@@ -314,6 +315,7 @@ def list_instances(creator_id=None):
     return instances
 
 
+# TODO: Function below is currently unused prototypes
 def remove_instance(instance):
     """Remove instance from current workfile.
 
@@ -321,4 +323,4 @@ def remove_instance(instance):
         instance (dict): instance representation from subsetmanager model
     """
     # Assume instance is a Fusion tool directly
-    instance.Delete()
+    instance["tool"].Delete()
