@@ -60,7 +60,7 @@ class CreateSaver(Creator):
         instance = CreatedInstance(
             family=self.family,
             subset_name=subset_name,
-            instance_data=instance_data,
+            data=instance_data,
             creator=self)
         self._add_instance_to_context(instance)
 
