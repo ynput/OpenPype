@@ -14,7 +14,7 @@ from openpype.pipeline import (
 )
 from openpype.lib import BoolDef
 from openpype.hosts.houdini.api import list_instances, remove_instance
-from .lib import imprint, read, get_frame_data
+from .lib import imprint, read
 
 
 class OpenPypeCreatorError(CreatorError):
@@ -96,8 +96,9 @@ class Creator(LegacyCreator):
 class HoudiniCreator(NewCreator):
     selected_nodes = []
 
+    @staticmethod
     def _create_instance_node(
-            self, node_name, parent,
+            node_name, parent,
             node_type="geometry"):
         # type: (str, str, str) -> hou.Node
         """Create node representing instance.

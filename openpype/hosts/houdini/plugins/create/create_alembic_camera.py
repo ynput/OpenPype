@@ -5,7 +5,7 @@ from openpype.pipeline import CreatedInstance
 
 
 class CreateAlembicCamera(plugin.HoudiniCreator):
-    """Single baked camera from Alembic ROP"""
+    """Single baked camera from Alembic ROP."""
 
     identifier = "io.openpype.creators.houdini.camera"
     label = "Camera (Abc)"
@@ -40,5 +40,7 @@ class CreateAlembicCamera(plugin.HoudiniCreator):
 
         # Lock the Use Sop Path setting so the
         # user doesn't accidentally enable it.
-        instance_node.parm("use_sop_path").lock(True)
+        to_lock = ["use_sop_path"]
+        self.lock_parameters(instance_node, to_lock)
+
         instance_node.parm("trange").set(1)

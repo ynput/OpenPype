@@ -56,5 +56,5 @@ class ValidateCameraROP(pyblish.api.InstancePlugin):
         if camera.type().name() != "cam":
             raise PublishValidationError(
                 ("Object set in Alembic ROP is not a camera: "
-                "{} (type: {})").format(camera, camera.type().name()),
+                 "{} (type: {})").format(camera, camera.type().name()),
                 title=self.label)

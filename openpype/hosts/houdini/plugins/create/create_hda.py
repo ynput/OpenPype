@@ -5,7 +5,7 @@ from openpype.client import (
     get_subsets,
 )
 from openpype.pipeline import legacy_io
-from openpype.hosts.houdini.api import (lib, plugin)
+from openpype.hosts.houdini.api import plugin
 
 
 class CreateHDA(plugin.HoudiniCreator):
@@ -36,6 +36,8 @@ class CreateHDA(plugin.HoudiniCreator):
 
     def _create_instance_node(
             self, node_name, parent, node_type="geometry"):
+        import hou
+
         parent_node = hou.node("/obj")
         if self.selected_nodes:
             # if we have `use selection` enabled, and we have some
@@ -70,15 +72,12 @@ class CreateHDA(plugin.HoudiniCreator):
         hda_node.setName(node_name)
         return hda_node
 
-
     def create(self, subset_name, instance_data, pre_create_data):
-        import hou
-
         instance_data.pop("active", None)
 
         instance = super(CreateHDA, self).create(
             subset_name,
             instance_data,
-            pre_create_data)  # type: CreatedInstance
+            pre_create_data)  # type: plugin.CreatedInstance
 
         return instance

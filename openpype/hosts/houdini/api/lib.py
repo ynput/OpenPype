@@ -20,6 +20,7 @@ self._parent = None
 log = logging.getLogger(__name__)
 JSON_PREFIX = "JSON:::"
 
+
 def get_asset_fps():
     """Return current asset fps."""
     return get_current_project_asset()["data"].get("fps")
@@ -418,6 +419,8 @@ def read(node):
     """
     # `spareParms` returns a tuple of hou.Parm objects
     data = {}
+    if not node:
+        return data
     for parameter in node.spareParms():
         value = parameter.eval()
         # test if value is json encoded dict

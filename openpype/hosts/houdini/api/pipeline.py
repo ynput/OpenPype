@@ -91,10 +91,11 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
 
     def save_workfile(self, dst_path=None):
         # Force forwards slashes to avoid segfault
-        filepath = dst_path.replace("\\", "/")
-        hou.hipFile.save(file_name=filepath,
+        if dst_path:
+            dst_path = dst_path.replace("\\", "/")
+        hou.hipFile.save(file_name=dst_path,
                          save_to_recent_files=True)
-        return filepath
+        return dst_path
 
     def open_workfile(self, filepath):
         # Force forwards slashes to avoid segfault

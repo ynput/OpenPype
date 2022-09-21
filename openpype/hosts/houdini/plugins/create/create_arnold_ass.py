@@ -24,7 +24,7 @@ class CreateArnoldAss(plugin.HoudiniCreator):
         instance = super(CreateArnoldAss, self).create(
             subset_name,
             instance_data,
-            pre_create_data)  # type: CreatedInstance
+            pre_create_data)  # type: plugin.CreatedInstance
 
         instance_node = hou.node(instance.get("instance_node"))
 
@@ -46,6 +46,8 @@ class CreateArnoldAss(plugin.HoudiniCreator):
             "ar_ass_export_enable": 1,
             "filename": filepath
         }
+
+        instance_node.setParms(parms)
 
         # Lock any parameters in this list
         to_lock = ["ar_ass_export_enable", "family", "id"]
