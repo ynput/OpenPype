@@ -31,7 +31,7 @@ def project_graphql_query(fields):
     query = GraphQlQuery("ProjectQuery")
     project_name_var = query.add_variable("projectName", "String!")
     project_query = query.add_field("project")
-    project_query.filter("name", project_name_var)
+    project_query.set_filter("name", project_name_var)
 
     nested_fields = fields_to_dict(fields)
 
@@ -82,13 +82,13 @@ def folders_graphql_query(fields):
     has_subsets_var = query.add_variable("folderHasSubsets", "Boolean!")
 
     project_query = query.add_field("project")
-    project_query.filter("name", project_name_var)
+    project_query.set_filter("name", project_name_var)
 
     folders_query = project_query.add_field("folders", has_edges=True)
-    folders_query.filter("ids", folder_ids_var)
-    folders_query.filter("parentIds", parent_folder_ids_var)
-    folders_query.filter("names", folder_names_var)
-    folders_query.filter("hasSubsets", has_subsets_var)
+    folders_query.set_filter("ids", folder_ids_var)
+    folders_query.set_filter("parentIds", parent_folder_ids_var)
+    folders_query.set_filter("names", folder_names_var)
+    folders_query.set_filter("hasSubsets", has_subsets_var)
 
     fields = set(fields)
     if "tasks" in fields:
@@ -124,12 +124,12 @@ def subsets_graphql_query(fields):
     subset_names_var = query.add_variable("subsetNames", "[String!]")
 
     project_query = query.add_field("project")
-    project_query.filter("name", project_name_var)
+    project_query.set_filter("name", project_name_var)
 
     subsets_query = project_query.add_field("subsets", has_edges=True)
-    subsets_query.filter("ids", subset_ids_var)
-    subsets_query.filter("names", subset_names_var)
-    subsets_query.filter("folderIds", folder_ids_var)
+    subsets_query.set_filter("ids", subset_ids_var)
+    subsets_query.set_filter("names", subset_names_var)
+    subsets_query.set_filter("folderIds", folder_ids_var)
 
     nested_fields = fields_to_dict(set(fields))
 
@@ -163,15 +163,15 @@ def versions_graphql_query(fields):
     )
 
     project_query = query.add_field("project")
-    project_query.filter("name", project_name_var)
+    project_query.set_filter("name", project_name_var)
 
     subsets_query = project_query.add_field("versions", has_edges=True)
-    subsets_query.filter("ids", version_ids_var)
-    subsets_query.filter("subsetIds", subset_ids_var)
-    subsets_query.filter("versions", versions_var)
-    subsets_query.filter("heroOnly", hero_only_var)
-    subsets_query.filter("latestOnly", latest_only_var)
-    subsets_query.filter("heroOrLatestOnly", hero_or_latest_only_var)
+    subsets_query.set_filter("ids", version_ids_var)
+    subsets_query.set_filter("subsetIds", subset_ids_var)
+    subsets_query.set_filter("versions", versions_var)
+    subsets_query.set_filter("heroOnly", hero_only_var)
+    subsets_query.set_filter("latestOnly", latest_only_var)
+    subsets_query.set_filter("heroOrLatestOnly", hero_or_latest_only_var)
 
     nested_fields = fields_to_dict(set(fields))
 
@@ -200,12 +200,12 @@ def representations_graphql_query(fields):
     version_ids_var = query.add_variable("versionIds", "[String!]")
 
     project_query = query.add_field("project")
-    project_query.filter("name", project_name_var)
+    project_query.set_filter("name", project_name_var)
 
     repres_query = project_query.add_field("representations", has_edges=True)
-    repres_query.filter("ids", repre_ids_var)
-    repres_query.filter("versionIds", version_ids_var)
-    repres_query.filter("representationNames", repre_names_var)
+    repres_query.set_filter("ids", repre_ids_var)
+    repres_query.set_filter("versionIds", version_ids_var)
+    repres_query.set_filter("representationNames", repre_names_var)
 
     nested_fields = fields_to_dict(set(fields))
 
@@ -373,10 +373,8 @@ class GraphQlQueryItem:
     def get_variable_value(self, *args, **kwargs):
         return self._parent.get_variable_value(*args, **kwargs)
 
-    def filter(self, key, value):
-        self.add_filter(key, value)
 
-    def add_filter(self, key, value):
+    def set_filter(self, key, value):
         self._filters[key] = value
 
     def set_parent(self, parent):
