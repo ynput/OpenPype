@@ -29,20 +29,12 @@ class CreateSaver(Creator):
         file_format = "OpenEXRFormat"
 
         comp = get_current_comp()
-
-        workdir = os.path.normpath(legacy_io.Session["AVALON_WORKDIR"])
-
-        filename = "{}..exr".format(subset_name)
-        filepath = os.path.join(workdir, "render", filename)
-
         with comp_lock_and_undo_chunk(comp):
             args = (-32768, -32768)  # Magical position numbers
             saver = comp.AddTool("Saver", *args)
-            saver.SetAttrs({"TOOLS_Name": subset_name})
 
-            # Setting input attributes is different from basic attributes
-            # Not confused with "MainInputAttributes" which
-            saver["Clip"] = filepath
+            self._update_tool_with_data(saver, data=instance_data)
+
             saver["OutputFormat"] = file_format
 
             # Check file format settings are available
@@ -53,6 +45,9 @@ class CreateSaver(Creator):
             # Set file format attributes
             saver[file_format]["Depth"] = 1  # int8 | int16 | float32 | other
             saver[file_format]["SaveAlpha"] = 0
+
+            # Fusion data for the instance data
+            instance_data["tool_name"] = saver.Name
 
         self._imprint(saver, instance_data)
 
@@ -70,49 +65,17 @@ class CreateSaver(Creator):
 
         comp = get_current_comp()
         tools = comp.GetToolList(False, "Saver").values()
-
-        # Allow regular non-managed savers to also be picked up
-        project = legacy_io.Session["AVALON_PROJECT"]
-        asset = legacy_io.Session["AVALON_ASSET"]
-        task = legacy_io.Session["AVALON_TASK"]
-
         for tool in tools:
 
-            path = tool["Clip"][comp.TIME_UNDEFINED]
-            fname = os.path.basename(path)
-            fname, _ext = os.path.splitext(fname)
-            subset = fname.rstrip(".")
+            data = self.get_managed_tool_data(tool)
+            if not data:
+                data = self._collect_unmanaged_saver(tool)
 
-            attrs = tool.GetAttrs()
-            passthrough = attrs["TOOLB_PassThrough"]
-            variant = subset[len("render"):]
-
-            # TODO: this should not be done this way - this should actually
-            #       get the data as stored on the tool explicitly (however)
-            #       that would disallow any 'regular saver' to be collected
-            #       unless the instance data is stored on it to begin with
-            instance = {
-                # Required data
-                "project": project,
-                "asset": asset,
-                "subset": subset,
-                "task": task,
-                "variant": variant,
-                "active": not passthrough,
-                "family": self.family,
-
-                # Fusion data
-                "tool_name": tool.Name
-            }
-
-            # Use the explicit data on the saver (if any)
-            data = tool.GetData("openpype")
-            if data:
-                instance.update(data)
+            # Collect non-stored data
+            data["tool_name"] = tool.Name
 
             # Add instance
-            created_instance = CreatedInstance.from_existing(instance, self)
-
+            created_instance = CreatedInstance.from_existing(data, self)
             self._add_instance_to_context(created_instance)
 
     def get_icon(self):
@@ -121,9 +84,18 @@ class CreateSaver(Creator):
     def update_instances(self, update_list):
         for update in update_list:
             instance = update.instance
-            changes = update.changes
+
+            # Get the new values after the changes by key, ignore old value
+            new_data = {
+                key: new for key, (_old, new) in update.changes.items()
+            }
+
             tool = self._get_instance_tool(instance)
-            self._imprint(tool, changes)
+            self._update_tool_with_data(tool, new_data)
+            self._imprint(tool, new_data)
+
+            # Ensure tool name is up-to-date
+            instance["tool_name"] = tool.Name
 
     def remove_instances(self, instances):
         for instance in instances:
@@ -136,19 +108,91 @@ class CreateSaver(Creator):
             self._remove_instance_from_context(instance)
 
     def _imprint(self, tool, data):
-
         # Save all data in a "openpype.{key}" = value data
         for key, value in data.items():
             tool.SetData("openpype.{}".format(key), value)
 
     def _get_instance_tool(self, instance):
         # finds tool name of instance in currently active comp
-        # TODO: assign `tool` as some sort of lifetime data or alike so that
-        #  the actual tool can be retrieved in current session. We can't store
-        #  it in the instance itself since instance needs to be serializable
+        # TODO: assign `tool` as 'lifetime' data instead of name so the
+        #  tool can be retrieved in current session. We can't store currently
+        #  in the CreatedInstance data because it needs to be serializable
         comp = get_current_comp()
         tool_name = instance["tool_name"]
-        print(tool_name)
         return {
             tool.Name: tool for tool in comp.GetToolList(False).values()
         }.get(tool_name)
+
+    def _update_tool_with_data(self, tool, data):
+        """Update tool node name and output path based on subset data"""
+        if "subset" not in data:
+            return
+
+        original_subset = tool.GetData("openpype.subset")
+        subset = data["subset"]
+        if original_subset != subset:
+            # Subset change detected
+            # Update output filepath
+            workdir = os.path.normpath(legacy_io.Session["AVALON_WORKDIR"])
+            filename = "{}..exr".format(subset)
+            filepath = os.path.join(workdir, "render", subset, filename)
+            tool["Clip"] = filepath
+
+            # Rename tool
+            if tool.Name != subset:
+                print(f"Renaming {tool.Name} -> {subset}")
+                tool.SetAttrs({"TOOLS_Name": subset})
+
+    def _collect_unmanaged_saver(self, tool):
+
+        # TODO: this should not be done this way - this should actually
+        #       get the data as stored on the tool explicitly (however)
+        #       that would disallow any 'regular saver' to be collected
+        #       unless the instance data is stored on it to begin with
+
+        print("Collecting unmanaged saver..")
+        comp = tool.Comp()
+
+        # Allow regular non-managed savers to also be picked up
+        project = legacy_io.Session["AVALON_PROJECT"]
+        asset = legacy_io.Session["AVALON_ASSET"]
+        task = legacy_io.Session["AVALON_TASK"]
+
+        path = tool["Clip"][comp.TIME_UNDEFINED]
+        fname = os.path.basename(path)
+        fname, _ext = os.path.splitext(fname)
+        subset = fname.rstrip(".")
+
+        attrs = tool.GetAttrs()
+        passthrough = attrs["TOOLB_PassThrough"]
+        variant = subset[len("render"):]
+        return {
+            # Required data
+            "project": project,
+            "asset": asset,
+            "subset": subset,
+            "task": task,
+            "variant": variant,
+            "active": not passthrough,
+            "family": self.family,
+
+            # Unique identifier for instance and this creator
+            "id": "pyblish.avalon.instance",
+            "creator_identifier": self.identifier
+        }
+
+    def get_managed_tool_data(self, tool):
+        """Return data of the tool if it matches creator identifier"""
+        data = tool.GetData('openpype')
+        if not isinstance(data, dict):
+            return
+
+        required = {
+            "id": "pyblish.avalon.instance",
+            "creator_identifier": self.identifier
+        }
+        for key, value in required.items():
+            if key not in data or data[key] != value:
+                return
+
+        return data
