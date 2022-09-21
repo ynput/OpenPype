@@ -301,21 +301,6 @@ class APIBase(object):
 
 
 class ServerAPI(APIBase):
-    def get_projects_basic(self):
-        projects_query = """
-        query ProjectsBasic {
-            projects {
-                edges { node {
-                    name
-                    active
-                    library
-                }}
-            }
-        }
-        """
-        data = self.query(projects_query).data
-        return data["data"]["projects"]["edges"]
-
     def get_rest_project(self, project_name):
         response = self.get("projects/{}".format(project_name))
         return response.data
