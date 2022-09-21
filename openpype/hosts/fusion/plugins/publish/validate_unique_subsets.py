@@ -40,8 +40,8 @@ class ValidateUniqueSubsets(pyblish.api.ContextPlugin):
 
         return invalid
 
-    def process(self, instance):
-        invalid = self.get_invalid(instance)
+    def process(self, context):
+        invalid = self.get_invalid(context)
         if invalid:
             raise PublishValidationError("Multiple instances are set to "
                                          "the same asset > subset.",
