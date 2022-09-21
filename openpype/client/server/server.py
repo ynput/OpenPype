@@ -199,10 +199,10 @@ class APIBase(object):
     def get_schemas(self):
         """Get components schema.
 
-        Name of components does not match entity type names e.g. 'project' is under
-        'ProjectModel'. We should find out some mapping. Also there are properties
-        which don't have information about reference to object e.g. 'config' has
-        just object definition without reference schema.
+        Name of components does not match entity type names e.g. 'project' is
+        under 'ProjectModel'. We should find out some mapping. Also there
+        are properties which don't have information about reference to object
+        e.g. 'config' has just object definition without reference schema.
 
         Returns:
             Dict[str, Any]: Component schemas.
