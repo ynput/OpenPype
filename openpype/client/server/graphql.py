@@ -1,4 +1,6 @@
+import copy
 import collections
+import numbers
 
 import six
 
@@ -264,6 +266,13 @@ class GraphQlQuery:
     def child_indent(self):
         return self.indent
 
+    @property
+    def need_query(self):
+        for child in self._children:
+            if child.need_query:
+                return True
+        return False
+
     def add_variable(self, key, value_type, value=None):
         variable = QueryVariable(key)
         self._variables[key] = {
@@ -332,13 +341,32 @@ class GraphQlQuery:
 
         return "\n".join(output)
 
-    def parse_result(self, data):
+    def parse_result(self, data, result):
         if not data:
-            return None
+            return
 
-        output = {}
         for child in self._children:
-            output.update(child.parse_result(data))
+            child.parse_result(data, result)
+
+    def cleanup_result(self, data):
+        if not data:
+            return
+
+        for child in self._children:
+            child.cleanup_result(data)
+
+    def query(self, con):
+        output = {}
+        while self.need_query:
+            response = con.query(
+                self.calculate_query(),
+                self.get_variables_values()
+            )
+            if response.errors:
+                raise ValueError("QueryFailed {}".format(str(response.errors)))
+            self.parse_result(response.data["data"], output)
+        self.cleanup_result(output)
+
         return output
 
 
@@ -347,6 +375,11 @@ class GraphQlQueryItem:
         if has_edges is None:
             has_edges = False
 
+        if isinstance(parent, GraphQlQuery):
+            query_item = parent
+        else:
+            query_item = parent.query_item
+
         self._name = name
         self._parent = parent
         self._has_edges = has_edges
@@ -354,14 +387,32 @@ class GraphQlQueryItem:
         self._filters = {}
 
         self._children = []
+        self._cursor = None
+        self._need_query = True
+
+        self._query_item = query_item
 
     @property
     def offset(self):
-        return self._parent.offset
+        return self._query_item.offset
 
     @property
     def indent(self):
         return self._parent.child_indent + self.offset
+
+    @property
+    def query_item(self):
+        return self._query_item
+
+    @property
+    def need_query(self):
+        if self._need_query:
+            return True
+
+        for child in self._children:
+            if child.need_query:
+                return True
+        return False
 
     @property
     def child_indent(self):
@@ -370,12 +421,46 @@ class GraphQlQueryItem:
             offset = self.offset * 2
         return self.indent + offset
 
-    def get_variable_value(self, *args, **kwargs):
-        return self._parent.get_variable_value(*args, **kwargs)
+    @property
+    def has_edges(self):
+        return self._has_edges
 
+    @property
+    def child_has_edges(self):
+        for child in self._children:
+            if child.has_edges or child.child_has_edges:
+                return True
+        return False
+
+    @property
+    def path(self):
+        if isinstance(self._parent, GraphQlQuery):
+            return self._name
+        return "/".join((self._parent.path, self._name))
+
+    def reset_cursor(self):
+        # Reset cursor only for edges
+        if self._has_edges:
+            self._cursor = None
+            self._need_query = True
+
+        for child in self._children:
+            child.reset_cursor()
+
+    def get_variable_value(self, *args, **kwargs):
+        return self._query_item.get_variable_value(*args, **kwargs)
+
+    def set_variable_value(self, *args, **kwargs):
+        return self._query_item.set_variable_value(*args, **kwargs)
 
     def set_filter(self, key, value):
         self._filters[key] = value
+
+    def has_filter(self, key):
+        return key in self._filters
+
+    def remove_filter(self, key):
+        self._filters.pop(key, None)
 
     def set_parent(self, parent):
         if self._parent is parent:
@@ -395,39 +480,58 @@ class GraphQlQueryItem:
         self.add_obj_field(item)
         return item
 
+    def _filter_value_to_str(self, value):
+        if isinstance(value, QueryVariable):
+            if self.get_variable_value(value.variable_name) is None:
+                return None
+            return str(value)
+
+        if isinstance(value, numbers.Number):
+            return str(value)
+
+        if isinstance(value, six.string_types):
+            return '"{}"'.format(value)
+
+        if isinstance(value, (list, set, tuple)):
+            return "[{}]".format(
+                ", ".join(
+                    self._filter_value_to_str(item)
+                    for item in iter(value)
+                )
+            )
+        raise TypeError(
+            "Unknown type to convert '{}'".format(str(type(value)))
+        )
+
     def _filters_to_string(self):
-        if not self._filters:
-            return ""
+        filters = copy.deepcopy(self._filters)
+        if self._has_edges:
+            filters["first"] = 300
 
-        filters = []
-        for key, value in self._filters.items():
-            if isinstance(value, QueryVariable):
-                if self.get_variable_value(value.variable_name) is None:
-                    continue
-                value = str(value)
-
-            single_filter = None
-            if not isinstance(value, six.string_types):
-                try:
-                    single_filter = "[{}]".format(
-                        ", ".join(
-                            '"{}"'.format(item)
-                            for item in iter(value)
-                        )
-                    )
-                except TypeError:
-                    pass
-
-            if single_filter is None:
-                single_filter = "{}: {}".format(key, value)
-
-            filters.append(single_filter)
+        if self._cursor:
+            filters["after"] = self._cursor
 
         if not filters:
             return ""
-        return "({})".format(", ".join(filters))
+
+        filter_items = []
+        for key, value in filters.items():
+            string_value = self._filter_value_to_str(value)
+            if string_value is None:
+                continue
+
+            filter_items.append("{}: {}".format(key, string_value))
+
+        if not filter_items:
+            return ""
+        return "({})".format(", ".join(filter_items))
 
     def calculate_query(self):
+        if self._has_edges and not self._children:
+            raise ValueError("Missing child definitions for edges {}".format(
+                self.path
+            ))
+
         offset = self.indent * " "
         header = "{}{}{}".format(offset, self._name, self._filters_to_string())
         if not self._children:
@@ -452,48 +556,155 @@ class GraphQlQueryItem:
 
         if self._has_edges:
             output.append(node_offset + "}")
+            if self.child_has_edges:
+                output.append(node_offset + "cursor")
+            output.append(edges_offset + "}")
+
+            # Add page information
+            output.append(edges_offset + "pageInfo {")
+            for page_key in (
+                "endCursor",
+                "hasNextPage",
+            ):
+                output.append(node_offset + page_key)
             output.append(edges_offset + "}")
         output.append(offset + "}")
 
         return "\n".join(output)
 
-    def parse_result(self, data):
+    def _fake_children_parse(self):
+        for child in self._children:
+            child.parse_result({}, {})
+
+    def _get_cursor_key(self):
+        return "__cursor__{}".format(self._name)
+
+    def _parse_result_with_edges(self, data, output):
+        if self._name in output:
+            node_values = output[self._name]
+        else:
+            node_values = []
+            output[self._name] = node_values
+
+        handle_cursors = self.child_has_edges
+        if handle_cursors:
+            cursor_key = self._get_cursor_key()
+            if cursor_key in output:
+                nodes_by_cursor = output[cursor_key]
+            else:
+                nodes_by_cursor = {}
+                output[cursor_key] = nodes_by_cursor
+
+        value = data.get(self._name)
+        if value is None:
+            self._need_query = False
+            return
+
+        page_info = value["pageInfo"]
+        new_cursor = page_info["endCursor"]
+        self._need_query = page_info["hasNextPage"]
+        edges = value["edges"]
+        # Fake result parse
+        if not edges:
+            self._fake_children_parse()
+
+        for edge in edges:
+            if not handle_cursors:
+                edge_value = {}
+                node_values.append(edge_value)
+            else:
+                edge_cursor = edge["cursor"]
+                edge_value = nodes_by_cursor.get(edge_cursor)
+                if edge_value is None:
+                    edge_value = {}
+                    nodes_by_cursor[edge_cursor] = edge_value
+                    node_values.append(edge_value)
+
+            for child in self._children:
+                child.parse_result(edge["node"], edge_value)
+
+        if not self._need_query:
+            return
+
+        change_cursor = True
+        for child in self._children:
+            if child.need_query:
+                change_cursor = False
+
+        if change_cursor:
+            for child in self._children:
+                child.reset_cursor()
+            self._cursor = new_cursor
+
+    def _parse_result(self, data, output):
+        self._need_query = False
+        value = data.get(self._name)
+        if value is None:
+            self._fake_children_parse()
+            if self._name in data:
+                output[self._name] = None
+            return
+
+        if not self._children:
+            output[self._name] = value
+            return
+
+        output_value = output.get(self._name)
+        if isinstance(value, dict):
+            if output_value is None:
+                output_value = {}
+                output[self._name] = output_value
+
+            for child in self._children:
+                child.parse_result(value, output_value)
+            return
+
+        if output_value is None:
+            output_value = []
+            output[self._name] = output_value
+
+        if not value:
+            self._fake_children_parse()
+            return
+
+        diff = len(value) - len(output_value)
+        if diff > 0:
+            for _ in range(diff):
+                output_value.append({})
+
+        for idx, item in enumerate(value):
+            item_value = output_value[idx]
+            for child in self._children:
+                child.parse_result(item, item_value)
+
+    def parse_result(self, data, output):
         if not isinstance(data, dict):
             raise TypeError("{} Expected 'dict' type got '{}'".format(
                 self._name, str(type(data))
             ))
 
-        value = data.get(self._name)
-        if value is None:
-            if self._has_edges:
-                return []
-
-            if self._name in data:
-                return {self._name: None}
-            return {}
-
         if self._has_edges:
-            node_values = []
-            if self._children:
-                for edge in value["edges"]:
-                    edge_value = {}
-                    for child in self._children:
-                        edge_value.update(child.parse_result(edge["node"]))
-                    node_values.append(edge_value)
-            return {self._name: node_values}
-
-        if not self._children:
-            return {self._name: value}
-
-        if isinstance(value, list):
-            output = []
-            for item in value:
-                item_value = {}
-                for child in self._children:
-                    item_value.update(child.parse_result(item))
-                output.append(item_value)
+            self._parse_result_with_edges(data, output)
         else:
-            output = {}
+            self._parse_result(data, output)
+
+    def cleanup_result(self, data):
+        if not isinstance(data, dict):
+            raise TypeError("{} Expected 'dict' type got '{}'".format(
+                self._name, str(type(data))
+            ))
+
+        if self._has_edges and self.child_has_edges:
+            cursor_key = self._get_cursor_key()
+            data.pop(cursor_key)
+        value = data.get(self._name)
+        if not value:
+            return
+
+        if isinstance(value, dict):
             for child in self._children:
-                output.update(child.parse_result(value))
-        return {self._name: output}
+                child.cleanup_result(value)
+        elif isinstance(value, (list, tuple, set)):
+            for item in value:
+                for child in self._children:
+                    child.cleanup_result(item)
