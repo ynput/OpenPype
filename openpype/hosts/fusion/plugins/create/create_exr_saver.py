@@ -4,9 +4,7 @@ import qtawesome
 
 from openpype.hosts.fusion.api import (
     get_current_comp,
-    comp_lock_and_undo_chunk,
-    remove_instance,
-    list_instances
+    comp_lock_and_undo_chunk
 )
 
 from openpype.pipeline import (
@@ -16,24 +14,19 @@ from openpype.pipeline import (
 )
 
 
-class CreateOpenEXRSaver(Creator):
+class CreateSaver(Creator):
     identifier = "io.openpype.creators.fusion.saver"
-    name = "openexrDefault"
-    label = "Create OpenEXR Saver"
+    name = "saver"
+    label = "Create Saver"
     family = "render"
     default_variants = ["Main"]
 
-    description = "Fusion Saver to generate EXR image sequence"
-
-    selected_nodes = []
+    description = "Fusion Saver to generate image sequence"
 
     def create(self, subset_name, instance_data, pre_create_data):
 
+        # TODO: Add pre_create attributes to choose file format?
         file_format = "OpenEXRFormat"
-
-        print(subset_name)
-        print(instance_data)
-        print(pre_create_data)
 
         comp = get_current_comp()
 
@@ -61,9 +54,7 @@ class CreateOpenEXRSaver(Creator):
             saver[file_format]["Depth"] = 1  # int8 | int16 | float32 | other
             saver[file_format]["SaveAlpha"] = 0
 
-        # Save all data in a "openpype.{key}" = value data
-        for key, value in instance_data.items():
-            saver.SetData("openpype.{}".format(key), value)
+        self._imprint(saver, instance_data)
 
     def collect_instances(self):
 
@@ -112,28 +103,42 @@ class CreateOpenEXRSaver(Creator):
             # Add instance
             created_instance = CreatedInstance.from_existing(instance, self)
 
-            # TODO: move this to lifetime data or alike
-            #       (Doing this before CreatedInstance.from_existing wouldn't
-            #        work because `tool` isn't JSON serializable)
-            created_instance["tool"] = tool
-
             self._add_instance_to_context(created_instance)
 
     def get_icon(self):
         return qtawesome.icon("fa.eye", color="white")
 
     def update_instances(self, update_list):
-        # TODO: Not sure what to do here?
-        print(update_list)
+        for update in update_list:
+            instance = update.instance
+            changes = update.changes
+            tool = self._get_instance_tool(instance)
+            self._imprint(tool, changes)
 
     def remove_instances(self, instances):
         for instance in instances:
-
             # Remove the tool from the scene
-            remove_instance(instance)
+            tool = self._get_instance_tool(instance)
+            if tool:
+                tool.Delete()
 
             # Remove the collected CreatedInstance to remove from UI directly
             self._remove_instance_from_context(instance)
 
-    def get_pre_create_attr_defs(self):
-        return []
+    def _imprint(self, tool, data):
+
+        # Save all data in a "openpype.{key}" = value data
+        for key, value in data.items():
+            tool.SetData("openpype.{}".format(key), value)
+
+    def _get_instance_tool(self, instance):
+        # finds tool name of instance in currently active comp
+        # TODO: assign `tool` as some sort of lifetime data or alike so that
+        #  the actual tool can be retrieved in current session. We can't store
+        #  it in the instance itself since instance needs to be serializable
+        comp = get_current_comp()
+        tool_name = instance["tool_name"]
+        print(tool_name)
+        return {
+            tool.Name: tool for tool in comp.GetToolList(False).values()
+        }.get(tool_name)
