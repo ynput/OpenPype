@@ -30,7 +30,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     """
 
     order = pyblish.api.CollectorOrder
-    label = "Collect Instances"
+    label = "Collect Instances Data"
     hosts = ["fusion"]
 
     def process(self, context):
@@ -39,67 +39,47 @@ class CollectInstances(pyblish.api.ContextPlugin):
         from openpype.hosts.fusion.api.lib import get_frame_path
 
         comp = context.data["currentComp"]
-
-        # Get all savers in the comp
-        tools = comp.GetToolList(False).values()
-        savers = [tool for tool in tools if tool.ID == "Saver"]
-
         start, end, global_start, global_end = get_comp_render_range(comp)
         context.data["frameStart"] = int(start)
         context.data["frameEnd"] = int(end)
         context.data["frameStartHandle"] = int(global_start)
         context.data["frameEndHandle"] = int(global_end)
 
-        for tool in savers:
+        # Comp tools by name
+        tools = {tool.Name: tool for tool in comp.GetToolList(False).values()}
+
+        for instance in context:
+
+            tool_name = instance.data["tool_name"]
+            tool = tools[tool_name]
+
             path = tool["Clip"][comp.TIME_UNDEFINED]
-
-            tool_attrs = tool.GetAttrs()
-            active = not tool_attrs["TOOLB_PassThrough"]
-
-            if not path:
-                self.log.warning("Skipping saver because it "
-                                 "has no path set: {}".format(tool.Name))
-                continue
-
             filename = os.path.basename(path)
             head, padding, tail = get_frame_path(filename)
             ext = os.path.splitext(path)[1]
             assert tail == ext, ("Tail does not match %s" % ext)
-            subset = head.rstrip("_. ")   # subset is head of the filename
 
             # Include start and end render frame in label
+            subset = instance.data["subset"]
             label = "{subset} ({start}-{end})".format(subset=subset,
                                                       start=int(start),
                                                       end=int(end))
-
-            instance = context.create_instance(subset)
             instance.data.update({
-                "asset": os.environ["AVALON_ASSET"],  # todo: not a constant
-                "subset": subset,
                 "path": path,
                 "outputDir": os.path.dirname(path),
-                "ext": ext,  # todo: should be redundant
+                "ext": ext,  # todo: should be redundant?
                 "label": label,
+                # todo: Allow custom frame range per instance
                 "frameStart": context.data["frameStart"],
                 "frameEnd": context.data["frameEnd"],
                 "frameStartHandle": context.data["frameStartHandle"],
                 "frameEndHandle": context.data["frameStartHandle"],
                 "fps": context.data["fps"],
                 "families": ["render", "review"],
-                "family": "render",
-                "active": active,
-                "publish": active   # backwards compatibility
+                "family": "render"
             })
 
+            # Add tool itself as member
             instance.append(tool)
 
             self.log.info("Found: \"%s\" " % path)
-
-        # Sort/grouped by family (preserving local index)
-        context[:] = sorted(context, key=self.sort_by_family)
-
-        return context
-
-    def sort_by_family(self, instance):
-        """Sort by family"""
-        return instance.data.get("families", instance.data.get("family"))
