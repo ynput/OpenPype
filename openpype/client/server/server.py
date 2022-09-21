@@ -173,15 +173,12 @@ class APIBase(object):
 
     def query(self, query, variables=None):
         data = {"query": query, "variables": variables or {}}
-        response = requests.post(
-            self._graphl_url, json=data, headers=self.headers
-        )
-        self._do_rest_request(
+        response = self._do_rest_request(
             RequestTypes.post,
             self._graphl_url,
             json=data
         )
-        return GraphQlResponse(response.json())
+        return GraphQlResponse(response)
 
     def get_server_schema(self):
         """Get server schema with info, url paths, components etc.
