@@ -52,7 +52,6 @@ class OpenPypeMenu(QtWidgets.QWidget):
         asset_label.setAlignment(QtCore.Qt.AlignHCenter)
 
         workfiles_btn = QtWidgets.QPushButton("Workfiles...", self)
-        create_btn = QtWidgets.QPushButton("Create...", self)
         publish_btn = QtWidgets.QPushButton("Publish...", self)
         load_btn = QtWidgets.QPushButton("Load...", self)
         manager_btn = QtWidgets.QPushButton("Manage...", self)
@@ -75,7 +74,6 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
         layout.addSpacing(20)
 
-        layout.addWidget(create_btn)
         layout.addWidget(load_btn)
         layout.addWidget(publish_btn)
         layout.addWidget(manager_btn)
@@ -100,7 +98,6 @@ class OpenPypeMenu(QtWidgets.QWidget):
         self.asset_label = asset_label
 
         workfiles_btn.clicked.connect(self.on_workfile_clicked)
-        create_btn.clicked.connect(self.on_create_clicked)
         publish_btn.clicked.connect(self.on_publish_clicked)
         load_btn.clicked.connect(self.on_load_clicked)
         manager_btn.clicked.connect(self.on_manager_clicked)
@@ -139,9 +136,6 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_workfile_clicked(self):
         host_tools.show_workfiles()
-
-    def on_create_clicked(self):
-        host_tools.show_creator()
 
     def on_publish_clicked(self):
         host_tools.show_publisher()
