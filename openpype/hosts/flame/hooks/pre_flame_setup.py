@@ -126,12 +126,14 @@ class FlamePrelaunch(PreLaunchHook):
         for dirtm in dirs_to_modify:
             for root, dirs, files in os.walk(dirtm):
                 try:
-                    for d in dirs:
-                        os.chmod(os.path.join(root, d), self.permisisons)
-                    for f in files:
-                        os.chmod(os.path.join(root, f), self.permisisons)
-                except OSError as _E:
-                    self.log.warning("Not able to open files: {}".format(_E))
+                    for name in set(dirs) | set(files):
+                        path = os.path.join(root, name)
+                        st = os.stat(path)
+                        if oct(st.st_mode) != self.permissions:
+                            os.chmod(path, self.permisisons)
+
+                except OSError as exc:
+                    self.log.warning("Not able to open files: {}".format(exc))
 
 
     def _get_flame_fps(self, fps_num):
