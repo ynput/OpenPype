@@ -29,7 +29,8 @@ class ValidateSaverPassthrough(pyblish.api.ContextPlugin):
             self.log.info("Reset pyblish to collect your current scene state, "
                           "that should fix error.")
             raise PublishValidationError(
-                "Invalid instances: {0}".format(invalid_instances))
+                "Invalid instances: {0}".format(invalid_instances),
+                title=self.label)
 
     def is_invalid(self, instance):
 
