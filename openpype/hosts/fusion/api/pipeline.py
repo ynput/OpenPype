@@ -303,10 +303,10 @@ def list_instances(creator_id=None):
         if not isinstance(data, dict):
             return
 
-        if creator_id and data.get("identifier") != creator_id:
+        if data.get("id") != instance_signature["id"]:
             continue
 
-        if data.get("id") != instance_signature["id"]:
+        if creator_id and data.get("identifier") != creator_id:
             continue
 
         instances.append(tool)
