@@ -42,14 +42,16 @@ class ExtractThumbnail(openpype.api.Extractor):
 
         preset = presets.get(family, {})
 
-        preset.update({
-            "camera": camera,
-            "start_frame": start,
-            "end_frame": start,
-            "filename": path,
-            "overwrite": True,
-            "isolate": isolate,
-        })
+        preset.update(
+            {
+                "camera": camera,
+                "start_frame": start,
+                "end_frame": start,
+                "filename": path,
+                "overwrite": True,
+                "isolate": isolate,
+            }
+        )
         preset.setdefault("height", preset.setdefault("width", 512))
         preset.setdefault(
             "image_settings",
@@ -58,6 +60,16 @@ class ExtractThumbnail(openpype.api.Extractor):
                 "color_mode": "RGB",
                 "quality": 100,
             },
+        )
+
+        # Keep current display shading
+        current_area = next(
+            (a for a in bpy.context.screen.areas if a.type == "VIEW_3D"), None
+        )
+        shading_type = current_area.spaces[0].shading.type if current_area else "SOLID"
+        preset.setdefault(
+            "display_options",
+            {"shading": {"type": shading_type}},
         )
 
         with maintained_time():
@@ -74,12 +86,12 @@ class ExtractThumbnail(openpype.api.Extractor):
             "ext": "jpg",
             "files": thumbnail,
             "stagingDir": stagingdir,
-            "thumbnail": True
+            "thumbnail": True,
         }
         instance.data["representations"].append(representation)
 
     def _fix_output_path(self, filepath):
-        """"Workaround to return correct filepath.
+        """ "Workaround to return correct filepath.
 
         To workaround this we just glob.glob() for any file extensions and
         assume the latest modified file is the correct file and return it.
