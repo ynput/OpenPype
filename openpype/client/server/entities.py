@@ -554,9 +554,7 @@ def _get_projects(active=None, library=None, fields=None):
         return con.get_rest_projects(active, library)
 
     query = projects_graphql_query(fields)
-    query_str = query.calculate_query()
-    response = con.query(query_str)
-    parsed_data = query.parse_result(response.data["data"])
+    parsed_data = query.query(con)
 
     output = []
     for project in parsed_data["projects"]:
@@ -576,6 +574,26 @@ def _get_folders(
         return []
 
     fields = _folder_fields_v3_to_v4(fields)
+    parsed_data = get_v4_folders(
+        project_name, folder_ids, folder_names, parent_ids, fields=fields
+    )
+    output = []
+    for folder in parsed_data["project"]["folders"]:
+        output.append(_convert_v4_folder_to_v3(folder, project_name))
+    return output
+
+
+def get_v4_folders(
+    project_name,
+    folder_ids=None,
+    folder_names=None,
+    parent_ids=None,
+    archived=False,
+    fields=None
+):
+    if not project_name:
+        return []
+
     filters = {
         "projectName": project_name
     }
@@ -597,24 +615,12 @@ def _get_folders(
             return []
         filters["parentFolderIds"] = list(parent_ids)
 
-    con = get_server_api_connection()
-
     query = folders_graphql_query(fields)
     for attr, filter_value in filters.items():
         query.set_variable_value(attr, filter_value)
 
-    query_str = query.calculate_query()
-    variables = query.get_variables_values()
-
-    response = con.query(query_str, variables)
-
-    parsed_data = query.parse_result(response.data["data"])
-    output = []
-
-    folders = parsed_data.get("project", {}).get("folders", [])
-    for folder in folders:
-        output.append(_convert_v4_folder_to_v3(folder))
-    return output
+    con = get_server_api_connection()
+    return query.query(con)
 
 
 def _get_subsets(
@@ -690,13 +696,8 @@ def _get_subsets(
     for attr, filter_value in filters.items():
         query.set_variable_value(attr, filter_value)
 
-    query_str = query.calculate_query()
-    variables = query.get_variables_values()
-
     con = get_server_api_connection()
-    response = con.query(query_str, variables)
-
-    parsed_data = query.parse_result(response.data["data"])
+    parsed_data = query.query(con)
 
     subsets = parsed_data.get("project", {}).get("subsets", [])
 
@@ -771,18 +772,14 @@ def _get_v4_versions(
     if hero:
         fields.add("subsetId")
 
-    con = get_server_api_connection()
     query = versions_graphql_query(fields)
 
     for attr, filter_value in filters.items():
         query.set_variable_value(attr, filter_value)
 
-    query_str = query.calculate_query()
-    variables = query.get_variables_values()
+    con = get_server_api_connection()
+    parsed_data = query.query(con)
 
-    response = con.query(query_str, variables)
-
-    parsed_data = query.parse_result(response.data["data"])
     return parsed_data.get("project", {}).get("versions", [])
 
 
@@ -903,18 +900,14 @@ def _get_v4_representations(
     if representaion_names_filter:
         filters["representationNames"] = list(representaion_names_filter)
 
-    con = get_server_api_connection()
     query = representations_graphql_query(fields)
 
     for attr, filter_value in filters.items():
         query.set_variable_value(attr, filter_value)
 
-    query_str = query.calculate_query()
-    variables = query.get_variables_values()
+    con = get_server_api_connection()
+    parsed_data = query.query(con)
 
-    response = con.query(query_str, variables)
-
-    parsed_data = query.parse_result(response.data["data"])
     representations = parsed_data.get("project", {}).get("representations", [])
     if active is None:
         representations = [
@@ -957,11 +950,8 @@ def get_project(project_name, active=True, inactive=False, fields=None):
     query = project_graphql_query(fields)
     query.set_variable_value("projectName", project_name)
 
-    query_str = query.calculate_query()
-    variables = query.get_variables_values()
+    parsed_data = query.query(con)
 
-    response = con.query(query_str, variables)
-    parsed_data = query.parse_result(response.data["data"])
     data = parsed_data["project"]
     data["name"] = project_name
     return _convert_v4_project_to_v3(data)
@@ -1020,10 +1010,7 @@ def get_asset_ids_with_subsets(project_name, asset_ids=None):
         query.set_variable_value("folderIds", list(asset_ids))
 
     con = get_server_api_connection()
-    query_str = query.calculate_query()
-    variables = query.get_variables_values()
-    response = con.query(query_str, variables)
-    parsed_data = query.parse_result(response.data["data"])
+    parsed_data = query.query(con)
     folders = parsed_data.get("project", {}).get("folders", [])
     return {
         folder["id"]
@@ -1089,13 +1076,10 @@ def get_subset_families(project_name, subset_ids=None):
     project_query = query.add_field("project")
     project_query.set_filter("name", project_name_var)
     project_query.add_field("subsetFamilies")
-    query_str = query.calculate_query()
-    variables = query.get_variables_values()
 
     con = get_server_api_connection()
-    response = con.query(query_str, variables)
+    parsed_data = query.query(con)
 
-    parsed_data = query.parse_result(response.data["data"])
     return set(parsed_data.get("project", {}).get("subsetFamilies", []))
 
 
