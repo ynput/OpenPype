@@ -56,6 +56,16 @@ class CreateSaver(Creator):
 
         self._imprint(saver, instance_data)
 
+        # Register the CreatedInstance
+        instance = CreatedInstance(
+            family=self.family,
+            subset_name=subset_name,
+            instance_data=instance_data,
+            creator=self)
+        self._add_instance_to_context(instance)
+
+        return instance
+
     def collect_instances(self):
 
         comp = get_current_comp()
