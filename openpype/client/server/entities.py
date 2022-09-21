@@ -1087,7 +1087,7 @@ def get_subset_families(project_name, subset_ids=None):
         "projectName", "String!", project_name
     )
     project_query = query.add_field("project")
-    project_query.filter("name", project_name_var)
+    project_query.set_filter("name", project_name_var)
     project_query.add_field("subsetFamilies")
     query_str = query.calculate_query()
     variables = query.get_variables_values()
