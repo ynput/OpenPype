@@ -129,7 +129,7 @@ class FlamePrelaunch(PreLaunchHook):
                     for name in set(dirs) | set(files):
                         path = os.path.join(root, name)
                         st = os.stat(path)
-                        if oct(st.st_mode) != self.permissions:
+                        if oct(st.st_mode) != self.permisisons:
                             os.chmod(path, self.permisisons)
 
                 except OSError as exc:
