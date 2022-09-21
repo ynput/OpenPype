@@ -1,4 +1,5 @@
 import pyblish.api
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateSaverHasInput(pyblish.api.InstancePlugin):
@@ -25,5 +26,8 @@ class ValidateSaverHasInput(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Saver has no incoming connection: "
-                               "{} ({})".format(instance, invalid[0].Name))
+            saver_name = invalid[0].Name
+            raise PublishValidationError(
+                "Saver has no incoming connection: {} ({})".format(instance,
+                                                                   saver_name),
+                title=self.label)

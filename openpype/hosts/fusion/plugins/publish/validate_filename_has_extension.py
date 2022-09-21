@@ -1,6 +1,7 @@
 import os
 
 import pyblish.api
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateFilenameHasExtension(pyblish.api.InstancePlugin):
@@ -20,7 +21,8 @@ class ValidateFilenameHasExtension(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Found Saver without an extension")
+            raise PublishValidationError("Found Saver without an extension",
+                                         title=self.label)
 
     @classmethod
     def get_invalid(cls, instance):
