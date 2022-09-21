@@ -22,7 +22,7 @@ class FlamePrelaunch(PreLaunchHook):
     in environment var FLAME_SCRIPT_DIR.
     """
     app_groups = ["flame"]
-    permisisons = 0o777
+    permissions = 0o777
 
     wtc_script_path = os.path.join(
         opflame.HOST_DIR, "api", "scripts", "wiretap_com.py")
@@ -129,8 +129,8 @@ class FlamePrelaunch(PreLaunchHook):
                     for name in set(dirs) | set(files):
                         path = os.path.join(root, name)
                         st = os.stat(path)
-                        if oct(st.st_mode) != self.permisisons:
-                            os.chmod(path, self.permisisons)
+                        if oct(st.st_mode) != self.permissions:
+                            os.chmod(path, self.permissions)
 
                 except OSError as exc:
                     self.log.warning("Not able to open files: {}".format(exc))
