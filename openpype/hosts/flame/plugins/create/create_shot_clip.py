@@ -23,7 +23,7 @@ class CreateShotClip(opfapi.Creator):
                 # nested dictionary (only one level allowed
                 # for sections and dict)
                 for _k, _v in v["value"].items():
-                    if presets.get(_k, None) is not None:
+                    if presets.get(_k) is not None:
                         gui_inputs[k][
                             "value"][_k]["value"] = presets[_k]
 
