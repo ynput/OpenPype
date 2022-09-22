@@ -1,11 +1,11 @@
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.photoshop import api as photoshop
 
 
-class ExtractSaveScene(openpype.api.Extractor):
+class ExtractSaveScene(publish.Extractor):
     """Save scene before extraction."""
 
-    order = openpype.api.Extractor.order - 0.49
+    order = publish.Extractor.order - 0.49
     label = "Extract Save Scene"
     hosts = ["photoshop"]
     families = ["workfile"]

@@ -56,7 +56,7 @@ def convert_value_by_type_name(value_type, value):
         return float(value)
 
     # Vectors will probably have more types
-    if value_type == "vec2f":
+    if value_type in ("vec2f", "float2"):
         return [float(item) for item in value.split(",")]
 
     # Matrix should be always have square size of element 3x3, 4x4
@@ -71,7 +71,7 @@ def convert_value_by_type_name(value_type, value):
         elif parts_len == 4:
             divisor = 2
         elif parts_len == 9:
-            divisor == 3
+            divisor = 3
         elif parts_len == 16:
             divisor = 4
         else:
@@ -127,7 +127,7 @@ def convert_value_by_type_name(value_type, value):
         return output
 
     print((
-        "MISSING IMPLEMENTATION:"
+        "Dev note (missing implementation):"
         " Unknown attrib type \"{}\". Value: {}"
     ).format(value_type, value))
     return value
@@ -183,7 +183,7 @@ def parse_oiio_xml_output(xml_string):
         else:
             value = child.text
             print((
-                "MISSING IMPLEMENTATION:"
+                "Dev note (missing implementation):"
                 " Unknown tag \"{}\". Value \"{}\""
             ).format(tag_name, value))
 
@@ -453,7 +453,7 @@ class OpenPypeTileAssembler(DeadlinePlugin):
             # Swap to have input as foreground
             args.append("--swap")
             # Paste foreground to background
-            args.append("--paste +{}+{}".format(pos_x, pos_y))
+            args.append("--paste {x:+d}{y:+d}".format(x=pos_x, y=pos_y))
 
         args.append("-o")
         args.append(output_path)
