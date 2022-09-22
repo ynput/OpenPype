@@ -162,6 +162,7 @@ class ExtractReview(publish.Extractor):
         instance.data["representations"].append({
             "name": "thumbnail",
             "ext": "jpg",
+            "outputName": "thumb",
             "files": os.path.basename(thumbnail_path),
             "stagingDir": staging_dir,
             "tags": ["thumbnail", "delete"]
