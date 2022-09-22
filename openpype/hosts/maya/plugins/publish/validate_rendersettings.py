@@ -195,9 +195,6 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                     cls.log.error("Wrong image prefix [ {} ] - "
                                   "You can't use '<renderpass>' token "
                                   "with merge AOVs turned on".format(prefix))
-                default_prefix = re.sub(R_AOV_TOKEN, "", default_prefix)
-                # remove aov token from prefix to pass validation
-                default_prefix = default_prefix.split("{aov_separator}")[0]
             elif not re.search(R_AOV_TOKEN, prefix):
                 invalid = True
                 cls.log.error("Wrong image prefix [ {} ] - "
