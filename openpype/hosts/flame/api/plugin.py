@@ -751,17 +751,18 @@ class OpenClipSolver(flib.MediaInfoFile):
         self.log.info("Building new openClip")
         self.log.debug(">> self.clip_data: {}".format(self.clip_data))
 
-        # clip data comming from MediaInfoFile
-        tmp_xml_feeds = self.clip_data.find('tracks/track/feeds')
-        tmp_xml_feeds.set('currentVersion', self.feed_version_name)
-        for tmp_feed in tmp_xml_feeds:
-            tmp_feed.set('vuid', self.feed_version_name)
+        for tmp_xml_track in self.clip_data.iter("track"):
+            tmp_xml_feeds = tmp_xml_track.find('feeds')
+            tmp_xml_feeds.set('currentVersion', self.feed_version_name)
 
-            # add colorspace if any is set
-            if self.feed_colorspace:
-                self._add_colorspace(tmp_feed, self.feed_colorspace)
+            for tmp_feed in tmp_xml_track.iter("feed"):
+                tmp_feed.set('vuid', self.feed_version_name)
 
-            self._clear_handler(tmp_feed)
+                # add colorspace if any is set
+                if self.feed_colorspace:
+                    self._add_colorspace(tmp_feed, self.feed_colorspace)
+
+                self._clear_handler(tmp_feed)
 
         tmp_xml_versions_obj = self.clip_data.find('versions')
         tmp_xml_versions_obj.set('currentVersion', self.feed_version_name)
@@ -812,6 +813,7 @@ class OpenClipSolver(flib.MediaInfoFile):
 
         feed_added = False
         if not self._feed_exists(out_xml, new_path):
+
             tmp_xml_feed.set('vuid', self.feed_version_name)
             # Append new temp file feed to .clip source out xml
             out_track = out_xml.find("tracks/track")
