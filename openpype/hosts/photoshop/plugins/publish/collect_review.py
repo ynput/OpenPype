@@ -25,6 +25,8 @@ class CollectReview(pyblish.api.ContextPlugin):
     hosts = ["photoshop"]
     order = pyblish.api.CollectorOrder + 0.1
 
+    publish = True
+
     def process(self, context):
         family = "review"
         subset = get_subset_name(
@@ -45,5 +47,6 @@ class CollectReview(pyblish.api.ContextPlugin):
             "family": family,
             "families": [],
             "representations": [],
-            "asset": os.environ["AVALON_ASSET"]
+            "asset": os.environ["AVALON_ASSET"],
+            "publish": self.publish
         })
