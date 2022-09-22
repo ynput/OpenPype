@@ -191,17 +191,15 @@ class RenderSettings(object):
             int("<renderpass>" in prefix.lower())
         )
         if multi_exr and aov_tokens > 0:
-            self.log.error("Settings define invalid combination of Image "
-                           "Prefix Template and Multilayer (exr). "
-                           "Merge AOVs is disabled but a {{aov_separator}} or "
-                           "<renderpass> token exists in prefix: "
-                           "{}".format(prefix))
+            self.log.error("Invalid settings found. You can't use "
+                           "{{aov_separator}} or <RenderPass> token in Image"
+                           "Prefix Template when Multilayer (exr) is enabled:"
+                           " {}".format(prefix))
         elif not multi_exr and aov_tokens < 2:
-            self.log.error("Settings define invalid combination of Image "
-                           "Prefix Template and Multilayer (exr). "
-                           "Merge AOVs is enabled but {{aov_separator}} or "
-                           "<renderpass> token do not exist prefix: "
-                           "{}".format(prefix))
+            self.log.error("Invalid settings found. You must use "
+                           "{{aov_separator}} and <RenderPass> token in Image "
+                           "Prefix Template when Multilayer (exr) is disabled:"
+                           " {}".format(prefix))
 
         additional_options = arnold_render_presets["additional_options"]
         self._additional_attribs_setter(additional_options)
