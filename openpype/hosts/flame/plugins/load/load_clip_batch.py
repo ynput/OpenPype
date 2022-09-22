@@ -2,7 +2,7 @@ import os
 import flame
 from pprint import pformat
 import openpype.hosts.flame.api as opfapi
-from openpype.lib import StringTemplate, Logger
+from openpype.lib import StringTemplate
 
 
 class LoadClipBatch(opfapi.ClipLoader):
@@ -23,8 +23,6 @@ class LoadClipBatch(opfapi.ClipLoader):
     # settings
     reel_name = "OP_LoadedReel"
     clip_name_template = "{asset}_{subset}<_{output}>"
-
-    log = Logger.get_logger(__file__)
 
     def load(self, context, name, namespace, options):
 

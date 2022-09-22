@@ -678,6 +678,7 @@ class ClipLoader(LoaderPlugin):
     `update` logic.
 
     """
+    log = log
 
     options = [
         qargparse.Boolean(
