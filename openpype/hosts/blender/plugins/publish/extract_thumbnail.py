@@ -91,7 +91,7 @@ class ExtractThumbnail(openpype.api.Extractor):
         instance.data["representations"].append(representation)
 
     def _fix_output_path(self, filepath):
-        """ "Workaround to return correct filepath.
+        """Workaround to return correct filepath.
 
         To workaround this we just glob.glob() for any file extensions and
         assume the latest modified file is the correct file and return it.
