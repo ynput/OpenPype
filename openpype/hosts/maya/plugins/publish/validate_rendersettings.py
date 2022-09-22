@@ -213,21 +213,23 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             cls.log.error("Expecting padding of {} ( {} )".format(
                 cls.DEFAULT_PADDING, "0" * cls.DEFAULT_PADDING))
 
-        # load validation definitions from settings
-        validation_settings = (
-            instance.context.data["project_settings"]["maya"]["publish"]["ValidateRenderSettings"].get(  # noqa: E501
-                "{}_render_attributes".format(renderer)) or []
-        )
-
         # Validate render setup include all lights
         settings_lights_flag = render_settings.get("enable_all_lights", False)
         instance_lights_flag = instance.data.get("renderSetupIncludeLights")
         if settings_lights_flag != instance_lights_flag:
             cls.log.warning('Instance flag for "Render Setup Include Lights" is set to {0} and Settings flag is set to {1}'.format(instance_lights_flag, settings_lights_flag)) # noqa
 
-        # go through definitions and test if such node.attribute exists.
-        # if so, compare its value from the one required.
-        for attr, value in OrderedDict(validation_settings).items():
+        # Validate render settings attributes per renderer
+        attr_validations = (
+            instance.context.data["project_settings"]
+                                 ["maya"]
+                                 ["publish"]
+                                 ["ValidateRenderSettings"]
+        ).get("{}_render_attributes".format(renderer)) or []
+        for attr, value in attr_validations:
+            # go through definitions and test if such node.attribute exists.
+            # if so, compare its value from the one required.
+
             # first get node of that type
             cls.log.debug("{}: {}".format(attr, value))
             node_type = attr.split(".")[0]
