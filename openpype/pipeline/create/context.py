@@ -7,6 +7,10 @@ from uuid import uuid4
 from contextlib import contextmanager
 
 from openpype.client import get_assets
+from openpype.settings import (
+    get_system_settings,
+    get_project_settings
+)
 from openpype.host import INewPublisher
 from openpype.pipeline import legacy_io
 from openpype.pipeline.mongodb import (
@@ -18,11 +22,6 @@ from .creator_plugins import (
     Creator,
     AutoCreator,
     discover_creator_plugins,
-)
-
-from openpype.api import (
-    get_system_settings,
-    get_project_settings
 )
 
 UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
@@ -402,6 +401,7 @@ class CreatedInstance:
         self.creator = creator
 
         # Instance members may have actions on them
+        # TODO implement members logic
         self._members = []
 
         # Data that can be used for lifetime of object
