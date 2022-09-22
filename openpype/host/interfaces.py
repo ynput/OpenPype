@@ -282,7 +282,7 @@ class IWorkfileHost:
         return self.workfile_has_unsaved_changes()
 
 
-class INewPublisher:
+class IPublishHost:
     """Functions related to new creation system in new publisher.
 
     New publisher is not storing information only about each created instance
@@ -306,7 +306,7 @@ class INewPublisher:
                 workflow.
         """
 
-        if isinstance(host, INewPublisher):
+        if isinstance(host, IPublishHost):
             return []
 
         required = [
@@ -330,7 +330,7 @@ class INewPublisher:
             MissingMethodsError: If there are missing methods on host
                 implementation.
         """
-        missing = INewPublisher.get_missing_publish_methods(host)
+        missing = IPublishHost.get_missing_publish_methods(host)
         if missing:
             raise MissingMethodsError(host, missing)
 
@@ -368,3 +368,7 @@ class INewPublisher:
         """
 
         pass
+
+
+class INewPublisher(IPublishHost):
+    pass

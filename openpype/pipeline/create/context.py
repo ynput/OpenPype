@@ -11,7 +11,7 @@ from openpype.settings import (
     get_system_settings,
     get_project_settings
 )
-from openpype.host import INewPublisher
+from openpype.host import IPublishHost
 from openpype.pipeline import legacy_io
 from openpype.pipeline.mongodb import (
     AvalonMongoDB,
@@ -794,7 +794,7 @@ class CreateContext:
         """
 
         missing = set(
-            INewPublisher.get_missing_publish_methods(host)
+            IPublishHost.get_missing_publish_methods(host)
         )
         return missing
 
