@@ -775,6 +775,15 @@ class OpenClipSolver(flib.MediaInfoFile):
 
         self.write_clip_data_to_file(self.out_file, self.clip_data)
 
+    def _get_xml_track_obj_by_uid(self, xml_data, uid):
+        # loop all tracks of input xml data
+        for xml_track in xml_data.iter("track"):
+            track_uid = xml_track.get("uid")
+
+            # get matching uids
+            if uid == track_uid:
+                return xml_track
+
     def _update_open_clip(self):
         self.log.info("Updating openClip ..")
 
@@ -784,53 +793,75 @@ class OpenClipSolver(flib.MediaInfoFile):
         self.log.debug(">> out_xml: {}".format(out_xml))
         self.log.debug(">> self.clip_data: {}".format(self.clip_data))
 
-        # Get new feed from tmp file
-        tmp_xml_feed = self.clip_data.find('tracks/track/feeds/feed')
+        # loop tmp tracks
+        updated_any = []
+        for tmp_xml_track in self.clip_data.iter("track"):
+            # get tmp track uid
+            tmp_track_uid = tmp_xml_track.get("uid")
+            # get out data track by uid
+            out_track_element = self._get_xml_track_obj_by_uid(
+                out_xml, tmp_track_uid)
 
-        self._clear_handler(tmp_xml_feed)
+            # loop tmp feeds
+            for tmp_xml_feed in tmp_xml_track.iter("feed"):
+                new_path_obj = tmp_xml_feed.find(
+                    "spans/span/path")
+                new_path = new_path_obj.text
 
-        # update fps from MediaInfoFile class
-        if self.fps:
-            tmp_feed_fps_obj = tmp_xml_feed.find(
-                "startTimecode/rate")
-            tmp_feed_fps_obj.text = str(self.fps)
+                # check if feed path already exists in track's feeds
+                if (
+                    out_track_element
+                    and not self._feed_exists(out_track_element, new_path)
+                ):
+                    continue
 
-        # update start_frame from MediaInfoFile class
-        if self.start_frame:
-            tmp_feed_nb_ticks_obj = tmp_xml_feed.find(
-                "startTimecode/nbTicks")
-            tmp_feed_nb_ticks_obj.text = str(self.start_frame)
+                # rename versions on feeds
+                tmp_xml_feed.set('vuid', self.feed_version_name)
+                self._clear_handler(tmp_xml_feed)
 
-        # update drop_mode from MediaInfoFile class
-        if self.drop_mode:
-            tmp_feed_drop_mode_obj = tmp_xml_feed.find(
-                "startTimecode/dropMode")
-            tmp_feed_drop_mode_obj.text = str(self.drop_mode)
+                # update fps from MediaInfoFile class
+                if self.fps:
+                    tmp_feed_fps_obj = tmp_xml_feed.find(
+                        "startTimecode/rate")
+                    tmp_feed_fps_obj.text = str(self.fps)
 
-        new_path_obj = tmp_xml_feed.find(
-            "spans/span/path")
-        new_path = new_path_obj.text
+                # update start_frame from MediaInfoFile class
+                if self.start_frame:
+                    tmp_feed_nb_ticks_obj = tmp_xml_feed.find(
+                        "startTimecode/nbTicks")
+                    tmp_feed_nb_ticks_obj.text = str(self.start_frame)
 
-        feed_added = False
-        if not self._feed_exists(out_xml, new_path):
+                # update drop_mode from MediaInfoFile class
+                if self.drop_mode:
+                    tmp_feed_drop_mode_obj = tmp_xml_feed.find(
+                        "startTimecode/dropMode")
+                    tmp_feed_drop_mode_obj.text = str(self.drop_mode)
 
-            tmp_xml_feed.set('vuid', self.feed_version_name)
-            # Append new temp file feed to .clip source out xml
-            out_track = out_xml.find("tracks/track")
-            # add colorspace if any is set
-            if self.feed_colorspace:
-                self._add_colorspace(tmp_xml_feed, self.feed_colorspace)
+                # add colorspace if any is set
+                if self.feed_colorspace:
+                    self._add_colorspace(tmp_xml_feed, self.feed_colorspace)
 
-            out_feeds = out_track.find('feeds')
-            out_feeds.set('currentVersion', self.feed_version_name)
-            out_feeds.append(tmp_xml_feed)
+                # then append/update feed to correct track in output
+                if out_track_element:
+                    # update already present track
+                    out_feeds = out_track_element.find('feeds')
+                    out_feeds.set('currentVersion', self.feed_version_name)
+                    out_feeds.append(tmp_xml_feed)
 
-            self.log.info(
-                "Appending new feed: {}".format(
-                    self.feed_version_name))
-            feed_added = True
+                    self.log.info(
+                        "Appending new feed: {}".format(
+                            self.feed_version_name))
+                else:
+                    # create new track as it doesnt exists yet
+                    # set current version to feeds on tmp
+                    tmp_xml_feeds = tmp_xml_track.find('feeds')
+                    tmp_xml_feeds.set('currentVersion', self.feed_version_name)
+                    out_tracks = out_xml.find("tracks")
+                    out_tracks.append(tmp_xml_track)
 
-        if feed_added:
+                updated_any.append(True)
+
+        if any(updated_any):
             # Append vUID to versions
             out_xml_versions_obj = out_xml.find('versions')
             out_xml_versions_obj.set(
