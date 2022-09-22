@@ -164,7 +164,7 @@ class ExtractReview(publish.Extractor):
             "ext": "jpg",
             "files": os.path.basename(thumbnail_path),
             "stagingDir": staging_dir,
-            "tags": ["thumbnail"]
+            "tags": ["thumbnail", "delete"]
         })
 
     def _check_and_resize(self, processed_img_names, source_files_pattern,
