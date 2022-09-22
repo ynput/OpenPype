@@ -9,7 +9,7 @@ from openpype.lib.transcoding import (
     convert_ffprobe_fps_to_float,
 )
 from openpype.lib.profiles_filtering import filter_profiles
-
+from openpype.lib.transcoding import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
 
 class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
     """Collect ftrack component data (not integrate yet).
@@ -121,6 +121,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         review_representations = []
         thumbnail_representations = []
         other_representations = []
+        has_movie_review = False
         for repre in instance_repres:
             self.log.debug("Representation {}".format(repre))
             repre_tags = repre.get("tags") or []
@@ -129,6 +130,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
             elif "ftrackreview" in repre_tags:
                 review_representations.append(repre)
+                if repre["ext"] in VIDEO_EXTENSIONS:
+                    has_movie_review = True
 
             else:
                 other_representations.append(repre)
@@ -177,34 +180,15 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             component_list.append(thumbnail_item)
 
         if first_thumbnail_component is not None:
-            width = first_thumbnail_component_repre.get("width")
-            height = first_thumbnail_component_repre.get("height")
-            if not width or not height:
-                component_path = first_thumbnail_component["component_path"]
-                streams = []
-                try:
-                    streams = get_ffprobe_streams(component_path)
-                except Exception:
-                    self.log.debug((
-                        "Failed to retrieve information about intput {}"
-                    ).format(component_path))
+            metadata = self._prepare_image_component_metadata(
+                first_thumbnail_component_repre,
+                first_thumbnail_component["component_path"]
+            )
 
-                for stream in streams:
-                    if "width" in stream and "height" in stream:
-                        width = stream["width"]
-                        height = stream["height"]
-                        break
-
-            if width and height:
+            if metadata:
                 component_data = first_thumbnail_component["component_data"]
                 component_data["name"] = "ftrackreview-image"
-                component_data["metadata"] = {
-                    "ftr_meta": json.dumps({
-                        "width": width,
-                        "height": height,
-                        "format": "image"
-                    })
-                }
+                component_data["metadata"] = metadata
 
         # Create review components
         # Change asset name of each new component for review
@@ -213,6 +197,11 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         extended_asset_name = ""
         multiple_reviewable = len(review_representations) > 1
         for repre in review_representations:
+            if repre["ext"] in IMAGE_EXTENSIONS and has_movie_review:
+                self.log.debug("Movie repre has priority "
+                               "from {}".format(repre))
+                continue
+
             repre_path = self._get_repre_path(instance, repre, False)
             if not repre_path:
                 self.log.warning(
@@ -261,12 +250,22 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             # Change location
             review_item["component_path"] = repre_path
             # Change component data
-            review_item["component_data"] = {
-                # Default component name is "main".
-                "name": "ftrackreview-mp4",
-                "metadata": self._prepare_component_metadata(
+
+            if repre["ext"] in VIDEO_EXTENSIONS:
+                review_type = "ftrackreview-mp4"
+                metadata = self._prepare_video_component_metadata(
                     instance, repre, repre_path, True
                 )
+            else:
+                review_type = "ftrackreview-image"
+                metadata = self._prepare_image_component_metadata(
+                    repre, repre_path
+                )
+
+            review_item["component_data"] = {
+                # Default component name is "main".
+                "name": review_type,
+                "metadata": metadata
             }
 
             if is_first_review_repre:
@@ -422,7 +421,18 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         return matching_profile["status"] or None
 
     def _prepare_component_metadata(
-        self, instance, repre, component_path, is_review
+        self, instance, repre, component_path, is_review=None
+    ):
+        if repre["ext"] in VIDEO_EXTENSIONS:
+            return self._prepare_video_component_metadata(instance, repre,
+                                                          component_path,
+                                                          is_review)
+        else:
+            return self._prepare_image_component_metadata(repre,
+                                                          component_path)
+
+    def _prepare_video_component_metadata(
+        self, instance, repre, component_path, is_review=None
     ):
         metadata = {}
         if "openpype_version" in self.additional_metadata_keys:
@@ -435,8 +445,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             streams = get_ffprobe_streams(component_path)
         except Exception:
             self.log.debug((
-                "Failed to retrieve information about intput {}"
-            ).format(component_path))
+                               "Failed to retrieve information about input {}"
+                           ).format(component_path))
 
         # Find video streams
         video_streams = [
@@ -482,7 +492,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             except ValueError:
                 self.log.warning((
                     "Could not convert ffprobe fps to float \"{}\""
-                ).format(input_framerate))
+                                 ).format(input_framerate))
                 continue
 
             stream_width = tmp_width
@@ -553,4 +563,34 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             "frameOut": frame_out,
             "frameRate": float(fps)
         })
+        return metadata
+
+    def _prepare_image_component_metadata(self, repre, component_path):
+        width = repre.get("width")
+        height = repre.get("height")
+        if not width or not height:
+            streams = []
+            try:
+                streams = get_ffprobe_streams(component_path)
+            except Exception:
+                self.log.debug((
+                    "Failed to retrieve information about intput {}"
+                               ).format(component_path))
+
+            for stream in streams:
+                if "width" in stream and "height" in stream:
+                    width = stream["width"]
+                    height = stream["height"]
+                    break
+
+        metadata = {}
+        if width and height:
+            metadata = {
+                "ftr_meta": json.dumps({
+                    "width": width,
+                    "height": height,
+                    "format": "image"
+                })
+            }
+
         return metadata
