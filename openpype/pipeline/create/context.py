@@ -404,6 +404,9 @@ class CreatedInstance:
         # Instance members may have actions on them
         self._members = []
 
+        # Data that can be used for lifetime of object
+        self._lifetime_data = {}
+
         # Create a copy of passed data to avoid changing them on the fly
         data = copy.deepcopy(data or {})
         # Store original value of passed data
@@ -595,6 +598,26 @@ class CreatedInstance:
         """
 
         return self
+
+    @property
+    def lifetime_data(self):
+        """Data stored for lifetime of instance object.
+
+        These data are not stored to scene and will be lost on object
+        deletion.
+
+        Can be used to store objects. In some host implementations is not
+        possible to reference to object in scene with some unique identifier
+        (e.g. node in Fusion.). In that case it is handy to store the object
+        here. Should be used that way only if instance data are stored on the
+        node itself.
+
+        Returns:
+            Dict[str, Any]: Dictionary object where you can store data related
+                to instance for lifetime of instance object.
+        """
+
+        return self._lifetime_data
 
     def changes(self):
         """Calculate and return changes."""
