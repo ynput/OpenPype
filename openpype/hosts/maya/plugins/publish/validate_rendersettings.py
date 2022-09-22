@@ -183,6 +183,12 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         if renderer == "arnold":
             multipart = cmds.getAttr("defaultArnoldDriver.mergeAOVs")
+            multipart_default = render_settings.get(
+                "arnold_renderer/multilayer_exr", True)
+            if multipart != multipart_default:
+                cls.log.warning("Warning: Merge AOVs differs from project "
+                                "recommended: {}".format(multipart_default))
+
             if multipart:
                 if re.search(R_AOV_TOKEN, prefix):
                     invalid = True
