@@ -12,6 +12,10 @@ from openpype.pipeline.publish import (
 )
 from openpype.hosts.maya.api import lib
 from openpype.hosts.maya.api.lib_rendersettings import RenderSettings
+from openpype.hosts.maya.api.lib_renderproducts import (
+    R_AOV_TOKEN,
+    R_LAYER_TOKEN
+)
 
 
 class ValidateRenderSettings(pyblish.api.InstancePlugin):
@@ -53,10 +57,6 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
     renderman_dir_prefix = "maya/<scene>/<layer>"
 
-    R_AOV_TOKEN = re.compile(
-        r'%a|<aov>|<renderpass>', re.IGNORECASE)
-    R_LAYER_TOKEN = re.compile(
-        r'%l|<layer>|<renderlayer>', re.IGNORECASE)
     R_CAMERA_TOKEN = re.compile(r'%c|Camera>')
     R_SCENE_TOKEN = re.compile(r'%s|<scene>', re.IGNORECASE)
 
@@ -104,7 +104,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             cls.log.error("Animation needs to be enabled. Use the same "
                           "frame for start and end to render single frame")
 
-        if not re.search(cls.R_LAYER_TOKEN, prefix):
+        if not re.search(R_LAYER_TOKEN, prefix):
             invalid = True
             cls.log.error("Wrong image prefix [ {} ] - "
                           "doesn't have: '<renderlayer>' or "
@@ -135,7 +135,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             redshift_AOV_prefix = cls.redshift_AOV_prefix.replace(
                 "{aov_separator}", aov_separator
             )
-            if re.search(cls.R_AOV_TOKEN, prefix):
+            if re.search(R_AOV_TOKEN, prefix):
                 invalid = True
                 cls.log.error(("Do not use AOV token [ {} ] - "
                                "Redshift is using image prefixes per AOV so "
@@ -184,16 +184,15 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         if renderer == "arnold":
             multipart = cmds.getAttr("defaultArnoldDriver.mergeAOVs")
             if multipart:
-                if re.search(cls.R_AOV_TOKEN, prefix):
+                if re.search(R_AOV_TOKEN, prefix):
                     invalid = True
                     cls.log.error("Wrong image prefix [ {} ] - "
                                   "You can't use '<renderpass>' token "
                                   "with merge AOVs turned on".format(prefix))
-                default_prefix = re.sub(
-                    cls.R_AOV_TOKEN, "", default_prefix)
+                default_prefix = re.sub(R_AOV_TOKEN, "", default_prefix)
                 # remove aov token from prefix to pass validation
                 default_prefix = default_prefix.split("{aov_separator}")[0]
-            elif not re.search(cls.R_AOV_TOKEN, prefix):
+            elif not re.search(R_AOV_TOKEN, prefix):
                 invalid = True
                 cls.log.error("Wrong image prefix [ {} ] - "
                               "doesn't have: '<renderpass>' or "
