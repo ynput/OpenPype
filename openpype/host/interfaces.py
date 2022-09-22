@@ -371,4 +371,14 @@ class IPublishHost:
 
 
 class INewPublisher(IPublishHost):
+    """Legacy interface replaced by 'IPublishHost'.
+
+    Deprecated:
+        'INewPublisher' is replaced by 'IPublishHost' please change your
+        imports.
+        There is no "reasonable" way hot mark these classes as deprecated
+        to show warning of wrong import. Deprecated since 3.14.* will be
+        removed in 3.15.*
+    """
+
     pass
