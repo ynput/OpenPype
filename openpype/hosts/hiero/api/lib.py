@@ -1089,7 +1089,7 @@ def check_inventory_versions(track_items=None):
     # Find representations based on found containers
     repre_docs = get_representations(
         project_name,
-        repre_ids=repre_ids,
+        representation_ids=repre_ids,
         fields=["_id", "parent"]
     )
     # Store representations by id and collect version ids
