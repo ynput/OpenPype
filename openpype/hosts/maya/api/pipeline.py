@@ -16,6 +16,7 @@ from openpype.host import (
     HostDirmap,
 )
 from openpype.tools.utils import host_tools
+from openpype.tools.workfiles.lock_dialog import WorkfileLockDialog
 from openpype.lib import (
     register_event_callback,
     emit_event
@@ -31,8 +32,14 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
+from openpype.pipeline.workfile.lock_workfile import (
+    create_workfile_lock,
+    remove_workfile_lock,
+    is_workfile_locked,
+    is_workfile_lock_enabled
+)
 from openpype.hosts.maya import MAYA_ROOT_DIR
-from openpype.hosts.maya.lib import copy_workspace_mel
+from openpype.hosts.maya.lib import create_workspace_mel
 
 from . import menu, lib
 from .workio import (
@@ -63,7 +70,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         self._op_events = {}
 
     def install(self):
-        project_name = os.getenv("AVALON_PROJECT")
+        project_name = legacy_io.active_project()
         project_settings = get_project_settings(project_name)
         # process path mapping
         dirmap_processor = MayaDirmap("maya", project_name, project_settings)
@@ -99,8 +106,13 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         register_event_callback("open", on_open)
         register_event_callback("new", on_new)
         register_event_callback("before.save", on_before_save)
+        register_event_callback("after.save", on_after_save)
+        register_event_callback("before.close", on_before_close)
+        register_event_callback("before.file.open", before_file_open)
         register_event_callback("taskChanged", on_task_changed)
+        register_event_callback("workfile.open.before", before_workfile_open)
         register_event_callback("workfile.save.before", before_workfile_save)
+        register_event_callback("workfile.save.before", after_workfile_save)
 
     def open_workfile(self, filepath):
         return open_file(filepath)
@@ -143,6 +155,13 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
             OpenMaya.MSceneMessage.kBeforeSave, _on_scene_save
         )
 
+        self._op_events[_after_scene_save] = (
+            OpenMaya.MSceneMessage.addCallback(
+                OpenMaya.MSceneMessage.kAfterSave,
+                _after_scene_save
+            )
+        )
+
         self._op_events[_before_scene_save] = (
             OpenMaya.MSceneMessage.addCheckCallback(
                 OpenMaya.MSceneMessage.kBeforeSaveCheck,
@@ -161,15 +180,35 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
             )
         )
 
-        self._op_events[_on_scene_open] = OpenMaya.MSceneMessage.addCallback(
-            OpenMaya.MSceneMessage.kAfterOpen, _on_scene_open
+        self._op_events[_on_scene_open] = (
+            OpenMaya.MSceneMessage.addCallback(
+                OpenMaya.MSceneMessage.kAfterOpen,
+                _on_scene_open
+            )
+        )
+
+        self._op_events[_before_scene_open] = (
+            OpenMaya.MSceneMessage.addCallback(
+                OpenMaya.MSceneMessage.kBeforeOpen,
+                _before_scene_open
+            )
+        )
+
+        self._op_events[_before_close_maya] = (
+            OpenMaya.MSceneMessage.addCallback(
+                OpenMaya.MSceneMessage.kMayaExiting,
+                _before_close_maya
+            )
         )
 
         self.log.info("Installed event handler _on_scene_save..")
         self.log.info("Installed event handler _before_scene_save..")
+        self.log.info("Installed event handler _on_after_save..")
         self.log.info("Installed event handler _on_scene_new..")
         self.log.info("Installed event handler _on_maya_initialized..")
         self.log.info("Installed event handler _on_scene_open..")
+        self.log.info("Installed event handler _check_lock_file..")
+        self.log.info("Installed event handler _before_close_maya..")
 
 
 def _set_project():
@@ -208,12 +247,24 @@ def _on_scene_new(*args):
     emit_event("new")
 
 
+def _after_scene_save(*arg):
+    emit_event("after.save")
+
+
 def _on_scene_save(*args):
     emit_event("save")
 
 
 def _on_scene_open(*args):
     emit_event("open")
+
+
+def _before_close_maya(*args):
+    emit_event("before.close")
+
+
+def _before_scene_open(*args):
+    emit_event("before.file.open")
 
 
 def _before_scene_save(return_code, client_data):
@@ -227,6 +278,23 @@ def _before_scene_save(return_code, client_data):
         "before.save",
         {"return_code": return_code}
     )
+
+
+def _remove_workfile_lock():
+    """Remove workfile lock on current file"""
+    if not handle_workfile_locks():
+        return
+    filepath = current_file()
+    log.info("Removing lock on current file {}...".format(filepath))
+    if filepath:
+        remove_workfile_lock(filepath)
+
+
+def handle_workfile_locks():
+    if lib.IS_HEADLESS:
+        return False
+    project_name = legacy_io.active_project()
+    return is_workfile_lock_enabled(MayaHost.name, project_name)
 
 
 def uninstall():
@@ -349,21 +417,13 @@ def containerise(name,
         ("id", AVALON_CONTAINER_ID),
         ("name", name),
         ("namespace", namespace),
-        ("loader", str(loader)),
+        ("loader", loader),
         ("representation", context["representation"]["_id"]),
     ]
 
     for key, value in data:
-        if not value:
-            continue
-
-        if isinstance(value, (int, float)):
-            cmds.addAttr(container, longName=key, attributeType="short")
-            cmds.setAttr(container + "." + key, value)
-
-        else:
-            cmds.addAttr(container, longName=key, dataType="string")
-            cmds.setAttr(container + "." + key, value, type="string")
+        cmds.addAttr(container, longName=key, dataType="string")
+        cmds.setAttr(container + "." + key, str(value), type="string")
 
     main_container = cmds.ls(AVALON_CONTAINERS, type="objectSet")
     if not main_container:
@@ -434,6 +494,46 @@ def on_before_save():
     return lib.validate_fps()
 
 
+def on_after_save():
+    """Check if there is a lockfile after save"""
+    check_lock_on_current_file()
+
+
+def check_lock_on_current_file():
+
+    """Check if there is a user opening the file"""
+    if not handle_workfile_locks():
+        return
+    log.info("Running callback on checking the lock file...")
+
+    # add the lock file when opening the file
+    filepath = current_file()
+
+    if is_workfile_locked(filepath):
+        # add lockfile dialog
+        workfile_dialog = WorkfileLockDialog(filepath)
+        if not workfile_dialog.exec_():
+            cmds.file(new=True)
+            return
+
+    create_workfile_lock(filepath)
+
+
+def on_before_close():
+    """Delete the lock file after user quitting the Maya Scene"""
+    log.info("Closing Maya...")
+    # delete the lock file
+    filepath = current_file()
+    if handle_workfile_locks():
+        remove_workfile_lock(filepath)
+
+
+def before_file_open():
+    """check lock file when the file changed"""
+    # delete the lock file
+    _remove_workfile_lock()
+
+
 def on_save():
     """Automatically add IDs to new nodes
 
@@ -442,6 +542,8 @@ def on_save():
     """
 
     log.info("Running callback on save..")
+    # remove lockfile if users jumps over from one scene to another
+    _remove_workfile_lock()
 
     # # Update current task for the current scene
     # update_task_from_path(cmds.file(query=True, sceneName=True))
@@ -499,6 +601,9 @@ def on_open():
             dialog.on_clicked.connect(_on_show_inventory)
             dialog.show()
 
+    # create lock file for the maya scene
+    check_lock_on_current_file()
+
 
 def on_new():
     """Set project resolution and fps when create a new file"""
@@ -514,6 +619,7 @@ def on_new():
             "from openpype.hosts.maya.api import lib;"
             "lib.add_render_layer_change_observer()")
         lib.set_context_settings()
+    _remove_workfile_lock()
 
 
 def on_task_changed():
@@ -541,7 +647,7 @@ def on_task_changed():
         lib.update_content_on_context_change()
 
     msg = "  project: {}\n  asset: {}\n  task:{}".format(
-        legacy_io.Session["AVALON_PROJECT"],
+        legacy_io.active_project(),
         legacy_io.Session["AVALON_ASSET"],
         legacy_io.Session["AVALON_TASK"]
     )
@@ -552,10 +658,26 @@ def on_task_changed():
     )
 
 
+def before_workfile_open():
+    if handle_workfile_locks():
+        _remove_workfile_lock()
+
+
 def before_workfile_save(event):
+    project_name = legacy_io.active_project()
+    if handle_workfile_locks():
+        _remove_workfile_lock()
     workdir_path = event["workdir_path"]
     if workdir_path:
-        copy_workspace_mel(workdir_path)
+        create_workspace_mel(workdir_path, project_name)
+
+
+def after_workfile_save(event):
+    workfile_name = event["filename"]
+    if handle_workfile_locks():
+        if workfile_name:
+            if not is_workfile_locked(workfile_name):
+                create_workfile_lock(workfile_name)
 
 
 class MayaDirmap(HostDirmap):

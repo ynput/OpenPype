@@ -3,14 +3,14 @@ import glob
 
 import capture
 
+from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
-import openpype.api
 
 from maya import cmds
 import pymel.core as pm
 
 
-class ExtractThumbnail(openpype.api.Extractor):
+class ExtractThumbnail(publish.Extractor):
     """Extract viewport thumbnail.
 
     Takes review camera and creates a thumbnail based on viewport

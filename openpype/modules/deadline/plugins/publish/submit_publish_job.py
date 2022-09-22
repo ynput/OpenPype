@@ -700,9 +700,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         self.context = context
         self.anatomy = instance.context.data["anatomy"]
 
-        if hasattr(instance, "_log"):
-            data['_log'] = instance._log
-
         asset = data.get("asset") or legacy_io.Session["AVALON_ASSET"]
         subset = data.get("subset")
 
@@ -781,7 +778,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "resolutionHeight": data.get("resolutionHeight", 1080),
             "multipartExr": data.get("multipartExr", False),
             "jobBatchName": data.get("jobBatchName", ""),
-            "useSequenceForReview": data.get("useSequenceForReview", True)
+            "useSequenceForReview": data.get("useSequenceForReview", True),
+            # map inputVersions `ObjectId` -> `str` so json supports it
+            "inputVersions": list(map(str, data.get("inputVersions", [])))
         }
 
         # skip locking version if we are creating v01

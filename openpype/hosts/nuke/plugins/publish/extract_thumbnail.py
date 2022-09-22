@@ -2,7 +2,8 @@ import sys
 import os
 import nuke
 import pyblish.api
-import openpype
+
+from openpype.pipeline import publish
 from openpype.hosts.nuke.api import (
     maintained_selection,
     get_view_process_node
@@ -13,7 +14,7 @@ if sys.version_info[0] >= 3:
     unicode = str
 
 
-class ExtractThumbnail(openpype.api.Extractor):
+class ExtractThumbnail(publish.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
     must be run after extract_render_local.py
