@@ -115,7 +115,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             cls.log.error("Wrong image prefix [ {} ] - "
                           "doesn't have: '<Camera>' token".format(prefix))
             cls.log.error(
-                "Note that to needs to have capital 'C' at the beginning")
+                "Note that it needs to have capital 'C' at the beginning")
 
         # renderer specific checks
         if renderer == "vray":
