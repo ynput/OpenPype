@@ -784,6 +784,8 @@ class OpenClipSolver(flib.MediaInfoFile):
         # loop all tracks of input xml data
         for xml_track in xml_data.iter("track"):
             track_uid = xml_track.get("uid")
+            self.log.debug(
+                ">> track_uid:uid: {}:{}".format(track_uid, uid))
 
             # get matching uids
             if uid == track_uid:
@@ -803,9 +805,13 @@ class OpenClipSolver(flib.MediaInfoFile):
         for tmp_xml_track in self.clip_data.iter("track"):
             # get tmp track uid
             tmp_track_uid = tmp_xml_track.get("uid")
+            self.log.debug(">> tmp_track_uid: {}".format(tmp_track_uid))
+
             # get out data track by uid
             out_track_element = self._get_xml_track_obj_by_uid(
                 out_xml, tmp_track_uid)
+            self.log.debug(
+                ">> out_track_element: {}".format(out_track_element))
 
             # loop tmp feeds
             for tmp_xml_feed in tmp_xml_track.iter("feed"):
@@ -848,6 +854,7 @@ class OpenClipSolver(flib.MediaInfoFile):
 
                 # then append/update feed to correct track in output
                 if out_track_element:
+                    self.log.debug("updating track element ..")
                     # update already present track
                     out_feeds = out_track_element.find('feeds')
                     out_feeds.set('currentVersion', self.feed_version_name)
@@ -857,6 +864,7 @@ class OpenClipSolver(flib.MediaInfoFile):
                         "Appending new feed: {}".format(
                             self.feed_version_name))
                 else:
+                    self.log.debug("adding new track element ..")
                     # create new track as it doesnt exists yet
                     # set current version to feeds on tmp
                     tmp_xml_feeds = tmp_xml_track.find('feeds')
