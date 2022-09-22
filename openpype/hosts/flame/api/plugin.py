@@ -694,8 +694,12 @@ class OpenClipSolver(flib.MediaInfoFile):
 
     log = log
 
-    def __init__(self, openclip_file_path, feed_data):
+    def __init__(self, openclip_file_path, feed_data, logger=None):
         self.out_file = openclip_file_path
+
+        # replace log if any
+        if logger:
+            self.log = logger
 
         # new feed variables:
         feed_path = feed_data.pop("path")
@@ -703,7 +707,7 @@ class OpenClipSolver(flib.MediaInfoFile):
         # initialize parent class
         super(OpenClipSolver, self).__init__(
             feed_path,
-            **feed_data
+            logger=logger
         )
 
         # get other metadata
