@@ -822,7 +822,7 @@ class OpenClipSolver(flib.MediaInfoFile):
                 # check if feed path already exists in track's feeds
                 if (
                     out_track_element is not None
-                    and not self._feed_exists(out_track_element, new_path)
+                    and self._feed_exists(out_track_element, new_path)
                 ):
                     continue
 
