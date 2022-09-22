@@ -177,6 +177,8 @@ REPRESENTATION_FIELDS_MAPPING_V3_V4 = {
 
 
 def _project_fields_v3_to_v4(fields):
+    """Convert fields from v3 to v4 structure."""
+
     # TODO config fields
     # - config.apps
     # - config.groups
@@ -205,6 +207,15 @@ def _project_fields_v3_to_v4(fields):
 
 
 def _convert_v4_project_to_v3(project):
+    """Convert Project entity data from v4 structure to v3 structure.
+
+    Args:
+        project (Dict[str, Any]): Project entity queried from v4 server.
+
+    Returns:
+        Dict[str, Any]: Project converted to v3 structure.
+    """
+
     if not project:
         return project
 
@@ -240,7 +251,7 @@ def _convert_v4_project_to_v3(project):
 
 def _folder_fields_v3_to_v4(fields):
     if not fields:
-        return set(DEFAULT_FOLDER_FIELDS)
+        return None
 
     output = set()
     for field in fields:
@@ -562,27 +573,6 @@ def _get_projects(active=None, library=None, fields=None):
     return output
 
 
-def _get_folders(
-    project_name,
-    folder_ids,
-    folder_names,
-    parent_ids,
-    archived,
-    fields
-):
-    if not project_name:
-        return []
-
-    fields = _folder_fields_v3_to_v4(fields)
-    parsed_data = get_v4_folders(
-        project_name, folder_ids, folder_names, parent_ids, fields=fields
-    )
-    output = []
-    for folder in parsed_data["project"]["folders"]:
-        output.append(_convert_v4_folder_to_v3(folder, project_name))
-    return output
-
-
 def get_v4_folders(
     project_name,
     folder_ids=None,
@@ -614,6 +604,9 @@ def get_v4_folders(
         if not parent_ids:
             return []
         filters["parentFolderIds"] = list(parent_ids)
+
+    if not fields:
+        fields = set(DEFAULT_FOLDER_FIELDS)
 
     query = folders_graphql_query(fields)
     for attr, filter_value in filters.items():
@@ -983,14 +976,17 @@ def get_assets(
     archived=False,
     fields=None
 ):
-    return _get_folders(
-        project_name,
-        asset_ids,
-        asset_names,
-        parent_ids,
-        archived,
-        fields
+    if not project_name:
+        return []
+
+    fields = _folder_fields_v3_to_v4(fields)
+    parsed_data = get_v4_folders(
+        project_name, asset_ids, asset_names, parent_ids, fields=fields
     )
+    output = []
+    for folder in parsed_data["project"]["folders"]:
+        output.append(_convert_v4_folder_to_v3(folder, project_name))
+    return output
 
 
 def get_archived_assets(*args, **kwargs):
