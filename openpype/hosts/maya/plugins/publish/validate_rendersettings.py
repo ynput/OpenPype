@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Maya validator for render settings."""
 import re
-from collections import OrderedDict
 
 from maya import cmds, mel
 
