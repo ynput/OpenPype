@@ -15,6 +15,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
     legacy_io,
 )
+from openpype.api import get_current_project_settings
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as upipeline
 
@@ -147,7 +148,7 @@ class ExistingLayoutLoader(plugin.Loader):
         name = ""
         if family == 'rig':
             name = "SkeletalMeshFBXLoader"
-        elif family == 'model':
+        elif family == 'model' or family == 'staticMesh':
             name = "StaticMeshFBXLoader"
         elif family == 'camera':
             name = "CameraLoader"
@@ -200,7 +201,8 @@ class ExistingLayoutLoader(plugin.Loader):
             loader = self._get_abc_loader(loaders, family)
 
         if not loader:
-            raise AssertionError(f"No valid loader found for {representation}")
+            self.log.error(f"No valid loader found for {representation}")
+            return []
 
         # This option is necessary to avoid importing the assets with a
         # different conversion compared to the other assets. For ABC files,
@@ -220,6 +222,9 @@ class ExistingLayoutLoader(plugin.Loader):
         return assets
 
     def _process(self, lib_path):
+        data = get_current_project_settings()
+        delete_unmatched = data["unreal"]["delete_unmatched_assets"]
+
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
         actors = EditorLevelLibrary.get_all_level_actors()
@@ -264,15 +269,17 @@ class ExistingLayoutLoader(plugin.Loader):
 
                 # Get the original path of the file from which the asset has
                 # been imported.
-                actor.set_actor_label(lasset.get('instance_name'))
                 smc = actor.get_editor_property('static_mesh_component')
                 mesh = smc.get_editor_property('static_mesh')
                 import_data = mesh.get_editor_property('asset_import_data')
                 filename = import_data.get_first_filename()
                 path = Path(filename)
 
-                if path.name not in repr_data.get('data').get('path'):
+                if (not path.name or
+                        path.name not in repr_data.get('data').get('path')):
                     continue
+
+                actor.set_actor_label(lasset.get('instance_name'))
 
                 mesh_path = Path(mesh.get_path_name()).parent.as_posix()
 
@@ -352,7 +359,9 @@ class ExistingLayoutLoader(plugin.Loader):
             if not actor.get_class().get_name() == 'StaticMeshActor':
                 continue
             if actor not in actors_matched:
-                EditorLevelLibrary.destroy_actor(actor)
+                self.log.warning(f"Actor {actor.get_name()} not matched.")
+                if delete_unmatched:
+                    EditorLevelLibrary.destroy_actor(actor)
 
         return containers
 
