@@ -132,7 +132,9 @@ def get_linked_representation_id(
 
     match = {
         "_id": version_id,
-        "type": {"$in": ["version", "hero_version"]}
+        # Links are not stored to hero versions at this moment so filter
+        #   is limited to just versions
+        "type": "version"
     }
 
     graph_lookup = {
