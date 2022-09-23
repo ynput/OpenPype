@@ -189,7 +189,7 @@ def _process_referenced_pipeline_result(result, link_type):
     referenced_version_ids = set()
     correctly_linked_ids = set()
     for item in result:
-        input_links = item["data"].get("inputLinks")
+        input_links = item.get("data", {}).get("inputLinks")
         if not input_links:
             continue
 
@@ -205,7 +205,7 @@ def _process_referenced_pipeline_result(result, link_type):
             continue
 
         for output in sorted(outputs_recursive, key=lambda o: o["depth"]):
-            output_links = output["data"].get("inputLinks")
+            output_links = output.get("data", {}).get("inputLinks")
             if not output_links:
                 continue
 
