@@ -58,10 +58,12 @@ FOLDER_FIELDS_MAPPING_V3_V4 = {
 DEFAULT_FOLDER_FIELDS = {
     "id",
     "name",
+    "path",
     "parentId",
     "tasks",
     "active",
     "parents",
+    "thumbnailId"
 } | FOLDER_ATTRIBS_FIELDS
 
 # --- Subset entity ---
