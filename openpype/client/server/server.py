@@ -499,23 +499,12 @@ class ServerAPI(ServerAPIBase):
 class GlobalContext:
     _connection = None
 
-    @staticmethod
-    def get_url():
-        return os.environ.get("OPENPYPE_SERVER_URL")
-
-    @staticmethod
-    def get_token(url):
-        return os.environ.get("OPENPYPE_TOKEN")
-
     @classmethod
     def get_server_api_connection(cls):
         if cls._connection is None:
             # Fill to start work
             # NOTE: This is not how it should be in production !!!
-            url = cls.get_url()
-            token = cls.get_token(url)
-            con = ServerAPI(url, token)
-            con.login(username, password)
+            con = ServerAPI()
             cls._connection = con
         return cls._connection
 
