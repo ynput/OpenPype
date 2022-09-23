@@ -55,7 +55,7 @@ class NukeTemplateBuilder(AbstractTemplateBuilder):
 
 
 class NukePlaceholderPlugin(PlaceholderPlugin):
-    noce_color = 4278190335
+    node_color = 4278190335
 
     def _collect_scene_placeholders(self):
         # Cache placeholder data to shared data
