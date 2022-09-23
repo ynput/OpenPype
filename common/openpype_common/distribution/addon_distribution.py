@@ -45,11 +45,17 @@ class WebAddonSource(AddonSource):
 
 
 @attr.s
+class VersionData(object):
+    version_data = attr.ib(default=None)
+
+
+@attr.s
 class AddonInfo(object):
     """Object matching json payload from Server"""
     name = attr.ib()
     version = attr.ib()
-    sources = attr.ib(default=attr.Factory(list))
+    title = attr.ib(default=None)
+    sources = attr.ib(default=attr.Factory(dict))
     hash = attr.ib(default=None)
     description = attr.ib(default=None)
     license = attr.ib(default=None)
@@ -58,7 +64,16 @@ class AddonInfo(object):
     @classmethod
     def from_dict(cls, data):
         sources = []
-        for source in data.get("sources", []):
+
+        production_version = data.get("productionVersion")
+        if not production_version:
+            return
+
+        # server payload contains info about all versions
+        # active addon must have 'productionVersion' and matching version info
+        version_data = data.get("versions", {})[production_version]
+
+        for source in version_data.get("clientSourceInfo", []):
             if source.get("type") == UrlType.FILESYSTEM.value:
                 source_addon = LocalAddonSource(type=source["type"],
                                                 path=source["path"])
@@ -69,10 +84,11 @@ class AddonInfo(object):
             sources.append(source_addon)
 
         return cls(name=data.get("name"),
-                   version=data.get("version"),
+                   version=production_version,
+                   sources=sources,
                    hash=data.get("hash"),
                    description=data.get("description"),
-                   sources=sources,
+                   title=data.get("title"),
                    license=data.get("license"),
                    authors=data.get("authors"))
 
@@ -228,8 +244,9 @@ def update_addon_state(addon_infos, destination_folder, factory,
         for source in addon.sources:
             download_states[full_name] = UpdateState.FAILED.value
             try:
-                downloader = factory.get_downloader(source["type"])
-                zip_file_path = downloader.download(source, addon_dest)
+                downloader = factory.get_downloader(source.type)
+                zip_file_path = downloader.download(attr.asdict(source),
+                                                    addon_dest)
                 downloader.check_hash(zip_file_path, addon.hash)
                 downloader.unzip(zip_file_path, addon_dest)
                 download_states[full_name] = UpdateState.UPDATED.value

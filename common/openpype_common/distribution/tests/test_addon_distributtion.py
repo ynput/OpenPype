@@ -35,23 +35,50 @@ def temp_folder():
 @pytest.fixture
 def sample_addon_info():
     addon_info = {
-        "name": "openpype_slack",
-        "version": "1.0.0",
-        "sources": [
-            {
-                "type": "http",
-                "url": "https://drive.google.com/file/d/1TcuV8c2OV8CcbPeWi7lxOdqWsEqQNPYy/view?usp=sharing"  # noqa
-            },
-            {
-                "type": "filesystem",
-                "path": {
-                    "windows": ["P:/sources/some_file.zip", "W:/sources/some_file.zip"],  # noqa
-                    "linux": ["/mnt/srv/sources/some_file.zip"],
-                    "darwin": ["/Volumes/srv/sources/some_file.zip"]
-                }
+       "versions": {
+            "1.0.0": {
+                 "clientPyproject": {
+                      "tool": {
+                           "poetry": {
+                            "dependencies": {
+                             "nxtools": "^1.6",
+                             "orjson": "^3.6.7",
+                             "typer": "^0.4.1",
+                             "email-validator": "^1.1.3",
+                             "python": "^3.10",
+                             "fastapi": "^0.73.0"
+                            }
+                       }
+                  }
+                 },
+                 "hasSettings": True,
+                 "clientSourceInfo": [
+                     {
+                         "type": "http",
+                         "url": "https://drive.google.com/file/d/1TcuV8c2OV8CcbPeWi7lxOdqWsEqQNPYy/view?usp=sharing"  # noqa
+                     },
+                     {
+                         "type": "filesystem",
+                         "path": {
+                             "windows": ["P:/sources/some_file.zip",
+                                         "W:/sources/some_file.zip"],  # noqa
+                             "linux": ["/mnt/srv/sources/some_file.zip"],
+                             "darwin": ["/Volumes/srv/sources/some_file.zip"]
+                         }
+                     }
+                 ],
+                 "frontendScopes": {
+                      "project": {
+                       "sidebar": "hierarchy"
+                      }
+                 }
             }
-        ],
-        "hash": "4be25eb6215e91e5894d3c5475aeb1e379d081d3f5b43b4ee15b0891cf5f5658"  # noqa
+       },
+       "description": "",
+       "title": "Slack addon",
+       "name": "openpype_slack",
+       "productionVersion": "1.0.0",
+       "hash": "4be25eb6215e91e5894d3c5475aeb1e379d081d3f5b43b4ee15b0891cf5f5658"  # noqa
     }
     yield addon_info
 
@@ -73,16 +100,39 @@ def test_get_downloader(printer, addon_downloader):
 
 
 def test_addon_info(printer, sample_addon_info):
-    valid_minimum = {"name": "openpype_slack", "version": "1.0.0"}
+    """Tests parsing of expected payload from v4 server into AadonInfo."""
+    valid_minimum = {
+        "name": "openpype_slack",
+         "productionVersion": "1.0.0",
+         "versions": {
+             "1.0.0": {
+                 "clientSourceInfo": [
+                     {
+                         "type": "filesystem",
+                         "path": {
+                             "windows": [
+                                 "P:/sources/some_file.zip",
+                                 "W:/sources/some_file.zip"],
+                             "linux": [
+                                 "/mnt/srv/sources/some_file.zip"],
+                             "darwin": [
+                                 "/Volumes/srv/sources/some_file.zip"]  # noqa
+                         }
+                     }
+                 ]
+             }
+         }
+    }
 
     assert AddonInfo.from_dict(valid_minimum), "Missing required fields"
-    assert AddonInfo(name=valid_minimum["name"],
-                     version=valid_minimum["version"]), \
-        "Missing required fields"
 
-    with pytest.raises(TypeError):
-        # TODO should be probably implemented
-        assert AddonInfo(valid_minimum), "Wrong argument format"
+    valid_minimum["versions"].pop("1.0.0")
+    with pytest.raises(KeyError):
+        assert not AddonInfo.from_dict(valid_minimum), "Must fail without version data"  # noqa
+
+    valid_minimum.pop("productionVersion")
+    assert not AddonInfo.from_dict(
+        valid_minimum), "none if not productionVersion"  # noqa
 
     addon = AddonInfo.from_dict(sample_addon_info)
     assert addon, "Should be created"
@@ -95,15 +145,11 @@ def test_addon_info(printer, sample_addon_info):
     addon_as_dict = attr.asdict(addon)
     assert addon_as_dict["name"], "Dict approach should work"
 
-    with pytest.raises(TypeError):
-        # TODO should be probably implemented as . not dict
-        first_source = addon.sources[0]
-        assert first_source["type"] == "http", "Not implemented"
-
 
 def test_update_addon_state(printer, sample_addon_info,
                             temp_folder, addon_downloader):
-    addon_info = AddonInfo(**sample_addon_info)
+    """Tests possible cases of addon update."""
+    addon_info = AddonInfo.from_dict(sample_addon_info)
     orig_hash = addon_info.hash
 
     addon_info.hash = "brokenhash"
