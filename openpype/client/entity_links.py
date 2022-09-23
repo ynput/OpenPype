@@ -2,6 +2,7 @@ from .mongo import get_project_connection
 from .entities import (
     get_assets,
     get_asset_by_id,
+    get_version_by_id,
     get_representation_by_id,
     convert_id,
 )
@@ -126,6 +127,12 @@ def get_linked_representation_id(
 
     if not version_id:
         return []
+
+    version_doc = get_version_by_id(
+        project_name, version_id, fields=["type", "version_id"]
+    )
+    if version_doc["type"] == "hero_version":
+        version_id = version_doc["version_id"]
 
     if max_depth is None:
         max_depth = 0
