@@ -3,6 +3,8 @@ from collections import defaultdict
 import pyblish.api
 from openpype.pipeline import PublishValidationError
 
+from openpype.hosts.fusion.api.action import SelectInvalidAction
+
 
 class ValidateUniqueSubsets(pyblish.api.ContextPlugin):
     """Ensure all instances have a unique subset name"""
@@ -11,6 +13,7 @@ class ValidateUniqueSubsets(pyblish.api.ContextPlugin):
     label = "Validate Unique Subsets"
     families = ["render"]
     hosts = ["fusion"]
+    actions = [SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, context):
@@ -37,6 +40,9 @@ class ValidateUniqueSubsets(pyblish.api.ContextPlugin):
                             instances=instances
                     ))
                     invalid.extend(instances)
+
+        # Return tools for the invalid instances so they can be selected
+        invalid = [instance.data["tool"] for instance in invalid]
 
         return invalid
 

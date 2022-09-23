@@ -1,6 +1,8 @@
 import pyblish.api
 from openpype.pipeline import PublishValidationError
 
+from openpype.hosts.fusion.api.action import SelectInvalidAction
+
 
 class ValidateSaverPassthrough(pyblish.api.ContextPlugin):
     """Validate saver passthrough is similar to Pyblish publish state"""
@@ -9,6 +11,7 @@ class ValidateSaverPassthrough(pyblish.api.ContextPlugin):
     label = "Validate Saver Passthrough"
     families = ["render"]
     hosts = ["fusion"]
+    actions = [SelectInvalidAction]
 
     def process(self, context):
 
