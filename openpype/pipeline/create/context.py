@@ -7,7 +7,11 @@ from uuid import uuid4
 from contextlib import contextmanager
 
 from openpype.client import get_assets
-from openpype.host import INewPublisher
+from openpype.settings import (
+    get_system_settings,
+    get_project_settings
+)
+from openpype.host import IPublishHost
 from openpype.pipeline import legacy_io
 from openpype.pipeline.mongodb import (
     AvalonMongoDB,
@@ -18,11 +22,6 @@ from .creator_plugins import (
     Creator,
     AutoCreator,
     discover_creator_plugins,
-)
-
-from openpype.api import (
-    get_system_settings,
-    get_project_settings
 )
 
 UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
@@ -402,7 +401,11 @@ class CreatedInstance:
         self.creator = creator
 
         # Instance members may have actions on them
+        # TODO implement members logic
         self._members = []
+
+        # Data that can be used for lifetime of object
+        self._lifetime_data = {}
 
         # Create a copy of passed data to avoid changing them on the fly
         data = copy.deepcopy(data or {})
@@ -596,6 +599,26 @@ class CreatedInstance:
 
         return self
 
+    @property
+    def lifetime_data(self):
+        """Data stored for lifetime of instance object.
+
+        These data are not stored to scene and will be lost on object
+        deletion.
+
+        Can be used to store objects. In some host implementations is not
+        possible to reference to object in scene with some unique identifier
+        (e.g. node in Fusion.). In that case it is handy to store the object
+        here. Should be used that way only if instance data are stored on the
+        node itself.
+
+        Returns:
+            Dict[str, Any]: Dictionary object where you can store data related
+                to instance for lifetime of instance object.
+        """
+
+        return self._lifetime_data
+
     def changes(self):
         """Calculate and return changes."""
 
@@ -771,7 +794,7 @@ class CreateContext:
         """
 
         missing = set(
-            INewPublisher.get_missing_publish_methods(host)
+            IPublishHost.get_missing_publish_methods(host)
         )
         return missing
 
