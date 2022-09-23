@@ -1,6 +1,8 @@
 import pyblish.api
 from openpype.pipeline import PublishValidationError
 
+from openpype.hosts.fusion.api.action import SelectInvalidAction
+
 
 class ValidateSaverHasInput(pyblish.api.InstancePlugin):
     """Validate saver has incoming connection
@@ -13,6 +15,7 @@ class ValidateSaverHasInput(pyblish.api.InstancePlugin):
     label = "Validate Saver Has Input"
     families = ["render"]
     hosts = ["fusion"]
+    actions = [SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):
