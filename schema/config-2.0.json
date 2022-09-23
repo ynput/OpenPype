@@ -23,9 +23,6 @@
         "roots": {
             "type": "object"
         },
-        "imageio": {
-            "type": "object"
-        },
         "tasks": {
             "type": "object",
             "items": {
