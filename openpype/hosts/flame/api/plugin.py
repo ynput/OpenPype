@@ -801,7 +801,7 @@ class OpenClipSolver(flib.MediaInfoFile):
         self.log.debug(">> self.clip_data: {}".format(self.clip_data))
 
         # loop tmp tracks
-        updated_any = []
+        updated_any = False
         for tmp_xml_track in self.clip_data.iter("track"):
             # get tmp track uid
             tmp_track_uid = tmp_xml_track.get("uid")
@@ -831,25 +831,25 @@ class OpenClipSolver(flib.MediaInfoFile):
                 self._clear_handler(tmp_xml_feed)
 
                 # update fps from MediaInfoFile class
-                if self.fps:
+                if self.fps is not None:
                     tmp_feed_fps_obj = tmp_xml_feed.find(
                         "startTimecode/rate")
                     tmp_feed_fps_obj.text = str(self.fps)
 
                 # update start_frame from MediaInfoFile class
-                if self.start_frame:
+                if self.start_frame is not None:
                     tmp_feed_nb_ticks_obj = tmp_xml_feed.find(
                         "startTimecode/nbTicks")
                     tmp_feed_nb_ticks_obj.text = str(self.start_frame)
 
                 # update drop_mode from MediaInfoFile class
-                if self.drop_mode:
+                if self.drop_mode is not None:
                     tmp_feed_drop_mode_obj = tmp_xml_feed.find(
                         "startTimecode/dropMode")
                     tmp_feed_drop_mode_obj.text = str(self.drop_mode)
 
                 # add colorspace if any is set
-                if self.feed_colorspace:
+                if self.feed_colorspace is not None:
                     self._add_colorspace(tmp_xml_feed, self.feed_colorspace)
 
                 # then append/update feed to correct track in output
@@ -872,9 +872,9 @@ class OpenClipSolver(flib.MediaInfoFile):
                     out_tracks = out_xml.find("tracks")
                     out_tracks.append(tmp_xml_track)
 
-                updated_any.append(True)
+                updated_any = True
 
-        if any(updated_any):
+        if updated_any:
             # Append vUID to versions
             out_xml_versions_obj = out_xml.find('versions')
             out_xml_versions_obj.set(
