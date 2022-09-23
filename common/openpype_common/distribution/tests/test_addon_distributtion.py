@@ -4,13 +4,13 @@ import tempfile
 
 from common.openpype_common.distribution.addon_distribution import (
     AddonDownloader,
-    UrlType,
     OSAddonDownloader,
     HTTPAddonDownloader,
     AddonInfo,
     update_addon_state,
     UpdateState
 )
+from common.openpype_common.distribution.addon_info import UrlType
 
 
 @pytest.fixture
