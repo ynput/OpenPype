@@ -81,6 +81,7 @@ def folders_graphql_query(fields):
     project_name_var = query.add_variable("projectName", "String!")
     folder_ids_var = query.add_variable("folderIds", "[String!]")
     parent_folder_ids_var = query.add_variable("parentFolderIds", "[String!]")
+    folder_paths_var = query.add_variable("folderPaths", "[String!]")
     folder_names_var = query.add_variable("folderNames", "[String!]")
     has_subsets_var = query.add_variable("folderHasSubsets", "Boolean!")
 
@@ -91,6 +92,7 @@ def folders_graphql_query(fields):
     folders_query.set_filter("ids", folder_ids_var)
     folders_query.set_filter("parentIds", parent_folder_ids_var)
     folders_query.set_filter("names", folder_names_var)
+    folders_query.set_filter("paths", folder_paths_var)
     folders_query.set_filter("hasSubsets", has_subsets_var)
 
     fields = set(fields)
