@@ -183,6 +183,12 @@ class ServerAPIBase(object):
         self._access_token = None
         self._token_validated = False
 
+    def get_user_info(self):
+        response = self.get("users/me")
+        if response.status != 200:
+            raise UnauthorizedError("User is not authorized.")
+        return response.data
+
     @property
     def log(self):
         if self._log is None:
