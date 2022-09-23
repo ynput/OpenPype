@@ -183,6 +183,12 @@ class ServerAPIBase(object):
             self.validate_token()
         return self._token_is_valid
 
+    def validate_server_availability(self):
+        if not self.is_server_available:
+            raise ServerNotReached("Server \"{}\" can't be reached".format(
+                self._base_url
+            ))
+
     def validate_token(self):
         try:
             self.get_user_info()
@@ -229,10 +235,7 @@ class ServerAPIBase(object):
 
         self.reset_token()
 
-        if not self.is_server_available:
-            raise ServerNotReached("Server \"{}\" can't be reached".format(
-                self._base_url
-            ))
+        self.validate_server_availability()
 
         response = self.post(
             "auth/login",
@@ -381,32 +384,59 @@ class ServerAPIBase(object):
             params=kwargs
         )
 
-
-class ServerAPI(ServerAPIBase):
-    def __init__(self, url, token=None):
-        super(ServerAPI, self).__init__(url, token)
-        if not self.has_valid_token:
-            stored_token = load_token(url)
-            if stored_token:
-                self._access_token = stored_token
-
-    def login(self, username, password):
-        previous_token = self._access_token
-        super(ServerAPI, self).login(username, password)
-        if previous_token != self._access_token:
-            store_token(self._base_url, self._access_token)
-
     def get_rest_project(self, project_name):
+        """Receive project by name.
+
+        This call returns project with anatomy data.
+
+        Args:
+            project_name (str): Name of project.
+
+        Returns:
+            Union[Dict[str, Any], None]: Project entity data or 'None' if
+                project was not found.
+        """
+
         response = self.get("projects/{}".format(project_name))
-        return response.data
+        if response.status == 200:
+            return response.data
+        return None
 
     def get_rest_projects(self, active=None, library=None):
+        """Receive available project entity data.
+
+        User must be logged in.
+
+        Args:
+            active (bool): Filter active/inactive projects. Both are returned
+                if 'None' is passed.
+            library (bool): Filter standard/library projects. Both are
+                returned if 'None' is passed.
+
+        Returns:
+            List[Dict[str, Any]]: List of available projects.
+        """
+
         for project_name in self.get_project_names(active, library):
             project = self.get_rest_project(project_name)
             if project:
                 yield project
 
     def get_project_names(self, active=None, library=None):
+        """Receive available project names.
+
+        User must be logged in.
+
+        Args:
+            active (bool): Filter active/inactive projects. Both are returned
+                if 'None' is passed.
+            library (bool): Filter standard/library projects. Both are
+                returned if 'None' is passed.
+
+        Returns:
+            List[str]: List of available project names.
+        """
+
         query_keys = {}
         if active is not None:
             query_keys["active"] = "true" if active else "false"
@@ -430,11 +460,40 @@ class ServerAPI(ServerAPIBase):
                 project_names.append(project["name"])
         return project_names
 
-    def get_project(self, project_name):
-        output = self.get("projects/{}".format(project_name)).data
-        if output.get("code") == 404:
-            return None
-        return output
+
+class ServerAPI(ServerAPIBase):
+    def __init__(self):
+        url = self.get_url()
+        token = self.get_token()
+
+        used_stored_token = False
+        if not token:
+            used_stored_token = True
+            token = load_token(url)
+        super(ServerAPI, self).__init__(url, token)
+
+        self.validate_server_availability()
+
+        if not used_stored_token and not self.has_valid_token:
+            self._access_token = load_token(url)
+
+        if self.has_valid_token:
+            os.environ["OPENPYPE_TOKEN"] = self._access_token
+
+    def login(self, username, password):
+        previous_token = self._access_token
+        super(ServerAPI, self).login(username, password)
+        if self.has_valid_token and previous_token != self._access_token:
+            store_token(self._base_url, self._access_token)
+            os.environ["OPENPYPE_TOKEN"] = self._access_token
+
+    @staticmethod
+    def get_url():
+        return os.environ.get("OPENPYPE_SERVER_URL")
+
+    @staticmethod
+    def get_token(url):
+        return os.environ.get("OPENPYPE_TOKEN")
 
 
 class GlobalContext:
