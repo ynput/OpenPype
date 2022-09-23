@@ -405,7 +405,7 @@ class CreatedInstance:
         self._members = []
 
         # Data that can be used for lifetime of object
-        self._lifetime_data = {}
+        self._transient_data = {}
 
         # Create a copy of passed data to avoid changing them on the fly
         data = copy.deepcopy(data or {})
@@ -600,7 +600,7 @@ class CreatedInstance:
         return self
 
     @property
-    def lifetime_data(self):
+    def transient_data(self):
         """Data stored for lifetime of instance object.
 
         These data are not stored to scene and will be lost on object
@@ -617,7 +617,7 @@ class CreatedInstance:
                 to instance for lifetime of instance object.
         """
 
-        return self._lifetime_data
+        return self._transient_data
 
     def changes(self):
         """Calculate and return changes."""
