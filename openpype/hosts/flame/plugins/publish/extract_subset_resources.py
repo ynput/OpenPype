@@ -79,10 +79,10 @@ class ExtractSubsetResources(openpype.api.Extractor):
         retimed_data = self._get_retimed_attributes(instance)
 
         # get individual keys
-        r_handle_start = retimed_data["handle_start"]
-        r_handle_end = retimed_data["handle_end"]
-        r_source_dur = retimed_data["source_duration"]
-        r_speed = retimed_data["speed"]
+        retimed_handle_start = retimed_data["handle_start"]
+        retimed_handle_end = retimed_data["handle_end"]
+        retimed_source_duration = retimed_data["source_duration"]
+        retimed_speed = retimed_data["speed"]
 
         # get handles value - take only the max from both
         handle_start = instance.data["handleStart"]
@@ -96,23 +96,23 @@ class ExtractSubsetResources(openpype.api.Extractor):
         source_end_handles = instance.data["sourceEndH"]
 
         # retime if needed
-        if r_speed != 1.0:
+        if retimed_speed != 1.0:
             if retimed_handles:
                 # handles are retimed
                 source_start_handles = (
-                    instance.data["sourceStart"] - r_handle_start)
+                    instance.data["sourceStart"] - retimed_handle_start)
                 source_end_handles = (
                     source_start_handles
-                    + (r_source_dur - 1)
-                    + r_handle_start
-                    + r_handle_end
+                    + (retimed_source_duration - 1)
+                    + retimed_handle_start
+                    + retimed_handle_end
                 )
 
             else:
                 # handles are not retimed
                 source_end_handles = (
                     source_start_handles
-                    + (r_source_dur - 1)
+                    + (retimed_source_duration - 1)
                     + handle_start
                     + handle_end
                 )
@@ -121,11 +121,11 @@ class ExtractSubsetResources(openpype.api.Extractor):
         frame_start_handle = frame_start - handle_start
         repre_frame_start = frame_start_handle
         if include_handles:
-            if r_speed == 1.0 or not retimed_handles:
+            if retimed_speed == 1.0 or not retimed_handles:
                 frame_start_handle = frame_start
             else:
                 frame_start_handle = (
-                    frame_start - handle_start) + r_handle_start
+                    frame_start - handle_start) + retimed_handle_start
 
         self.log.debug("_ frame_start_handle: {}".format(
             frame_start_handle))
@@ -163,29 +163,29 @@ class ExtractSubsetResources(openpype.api.Extractor):
             instance.data["versionData"].update(version_data)
 
         # version data start frame
-        vd_frame_start = frame_start
+        version_frame_start = frame_start
         if include_handles:
-            vd_frame_start = frame_start_handle
-
-        if r_speed != 1.0:
-            instance.data["versionData"].update({
-                "frameStart": vd_frame_start,
-                "frameEnd": (
-                    (vd_frame_start + source_duration_handles - 1)
-                    - (r_handle_start + r_handle_end)
-                )
-            })
-            if not retimed_handles:
+            version_frame_start = frame_start_handle
+        if retimed_speed != 1.0:
+            if retimed_handles:
+                instance.data["versionData"].update({
+                    "frameStart": version_frame_start,
+                    "frameEnd": (
+                        (version_frame_start + source_duration_handles - 1)
+                        - (retimed_handle_start + retimed_handle_end)
+                    )
+                })
+            else:
                 instance.data["versionData"].update({
                     "handleStart": handle_start,
                     "handleEnd": handle_end,
-                    "frameStart": vd_frame_start,
+                    "frameStart": version_frame_start,
                     "frameEnd": (
-                        (vd_frame_start + source_duration_handles - 1)
+                        (version_frame_start + source_duration_handles - 1)
                         - (handle_start + handle_end)
                     )
                 })
-        self.log.debug("_ i_version_data: {}".format(
+        self.log.debug("_ version_data: {}".format(
             instance.data["versionData"]
         ))
 
