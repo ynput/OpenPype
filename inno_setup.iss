@@ -48,8 +48,8 @@ Source: "build\{#build}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdir
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\openpype_gui.exe"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\openpype_gui.exe"; Tasks: desktopicon
+Name: "{autoprograms}\{#MyAppName} {#AppVer}"; Filename: "{app}\openpype_gui.exe"
+Name: "{autodesktop}\{#MyAppName} {#AppVer}"; Filename: "{app}\openpype_gui.exe"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\openpype_gui.exe"; Description: "{cm:LaunchProgram,OpenPype}"; Flags: nowait postinstall skipifsilent
