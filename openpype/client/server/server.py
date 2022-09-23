@@ -189,9 +189,10 @@ class ServerAPIBase(object):
             self._log = logging.getLogger(self.__class__.__name__)
         return self._log
 
-    @property
-    def headers(self):
-        headers = {"Content-Type": "application/json"}
+    def get_headers(self, content_type=None):
+        if content_type is None:
+            content_type = "application/json"
+        headers = {"Content-Type": content_type}
         if self._access_token:
             headers["Authorization"] = "Bearer {}".format(self._access_token)
         return headers
@@ -265,7 +266,7 @@ class ServerAPIBase(object):
 
     def _do_rest_request(self, function, url, **kwargs):
         if "headers" not in kwargs:
-            kwargs["headers"] = self.headers
+            kwargs["headers"] = self.get_headers()
 
         if isinstance(function, RequestType):
             function = self._base_functions_mapping[function]
