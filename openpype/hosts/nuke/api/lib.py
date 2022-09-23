@@ -563,7 +563,7 @@ def get_node_path(path, padding=4):
 
 
 def get_nuke_imageio_settings():
-    return get_anatomy_settings(Context.project_name)["imageio"]["nuke"]
+    return get_project_settings(Context.project_name)["nuke"]["imageio"]
 
 
 def get_created_node_imageio_setting_legacy(nodeclass, creator, subset):
