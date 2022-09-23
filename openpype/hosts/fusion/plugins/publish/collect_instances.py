@@ -45,13 +45,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
         context.data["frameStartHandle"] = int(global_start)
         context.data["frameEndHandle"] = int(global_end)
 
-        # Comp tools by name
-        tools = {tool.Name: tool for tool in comp.GetToolList(False).values()}
-
         for instance in context:
 
-            tool_name = instance.data["tool_name"]
-            tool = tools[tool_name]
+            tool = instance.data["transientData"]["tool"]
 
             path = tool["Clip"][comp.TIME_UNDEFINED]
             filename = os.path.basename(path)
@@ -76,7 +72,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "frameEndHandle": context.data["frameStartHandle"],
                 "fps": context.data["fps"],
                 "families": ["render", "review"],
-                "family": "render"
+                "family": "render",
+
+                # Backwards compatibility: embed tool in instance.data
+                "tool": tool
             })
 
             # Add tool itself as member
