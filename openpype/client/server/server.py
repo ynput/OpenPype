@@ -1,10 +1,8 @@
 import os
 import json
 import logging
-import collections
 from http import HTTPStatus
 import requests
-import six
 
 JSONDecodeError = getattr(json, "JSONDecodeError", ValueError)
 
@@ -41,7 +39,12 @@ def load_tokens():
 
 def store_token(url, token):
     tokens = load_tokens()
-    tokens[url] = token
+    if token is not None:
+        tokens[url] = token
+    elif url in tokens:
+        tokens.pop(url, None)
+    else:
+        return
     dirpath = os.path.dirname(os.path.abspath(__file__))
     filepath = os.path.join(dirpath, "token.json")
     if not os.path.exists(dirpath):
@@ -189,7 +192,7 @@ class ServerAPIBase(object):
             self._token_is_valid = False
         return self._token_is_valid
 
-    def invalidate_token(self):
+    def reset_token(self):
         self._access_token = None
         self._token_validated = False
 
@@ -224,7 +227,7 @@ class ServerAPIBase(object):
             if current_username == username:
                 return
 
-        self.invalidate_token()
+        self.reset_token()
 
         if not self.is_server_available:
             raise ServerNotReached("Server \"{}\" can't be reached".format(
@@ -246,6 +249,8 @@ class ServerAPIBase(object):
 
     def logout(self):
         if self._access_token:
+            self.reset_token()
+            store_token(self._base_url, None)
             return self.post("auth/logout")
 
     def query(self, query, variables=None):
