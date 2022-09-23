@@ -214,7 +214,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
     def get_placeholder_options(self, options=None):
         return self.get_load_plugin_options(options)
 
-    def cleanup_placeholder(self, placeholder):
+    def cleanup_placeholder(self, placeholder, failed):
         """Hide placeholder, parent them to root
         add them to placeholder set and register placeholder's parent
         to keep placeholder info available for future use
