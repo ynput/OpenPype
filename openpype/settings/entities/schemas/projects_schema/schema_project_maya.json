@@ -6,6 +6,13 @@
     "is_file": true,
     "children": [
         {
+            "type": "text",
+            "multiline" : true,
+            "use_label_wrap": true,
+            "key": "mel_workspace",
+            "label": "Maya MEL Workspace"
+         },
+        {
             "type": "dict-modifiable",
             "key": "ext_mapping",
             "label": "Extension Mapping",

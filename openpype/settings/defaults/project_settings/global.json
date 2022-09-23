@@ -407,7 +407,8 @@
                     "enabled": false
                 }
             ],
-            "extra_folders": []
+            "extra_folders": [],
+            "workfile_lock_profiles": []
         },
         "loader": {
             "family_filter_profiles": [

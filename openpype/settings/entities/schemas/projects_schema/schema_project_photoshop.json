@@ -132,6 +132,35 @@
                     ]
                 },
                 {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CollectReview",
+                    "label": "Collect Review",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "publish",
+                            "label": "Active"
+                         }
+                     ]
+                 },
+                 {
+                    "type": "dict",
+                    "key": "CollectVersion",
+                    "label": "Collect Version",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Synchronize version for image and review instances by workfile version."
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        }
+                    ]
+                },
+                {
                     "type": "schema_template",
                     "name": "template_publish_plugin",
                     "template_data": [
