@@ -9,6 +9,22 @@ import six
 JSONDecodeError = getattr(json, "JSONDecodeError", ValueError)
 
 
+class ServerError(Exception):
+    pass
+
+
+class UnauthorizedError(ServerError):
+    pass
+
+
+class AuthenticationError(ServerError):
+    pass
+
+
+class ServerNotReached(ServerError):
+    pass
+
+
 def store_token(token):
     filepath = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
@@ -110,19 +126,22 @@ class GraphQlResponse:
         return "<{}>".format(self.__class__.__name__)
 
 
-class APIBase(object):
+class ServerAPIBase(object):
     """
     Args:
         base_url(str): Example: http://localhost:5000
     """
 
-    def __init__(self, base_url):
+    def __init__(self, base_url, token=None):
         base_url = base_url.rstrip("/")
         self._base_url = base_url
         self._rest_url = "{}/api".format(base_url)
         self._graphl_url = "{}/graphql".format(base_url)
         self._log = None
-        self._access_token = None
+        self._access_token = token
+        self._token_is_valid = None
+        self._server_available = None
+
         self._base_functions_mapping = {
             RequestTypes.get: requests.get,
             RequestTypes.post: requests.post,
@@ -130,6 +149,39 @@ class APIBase(object):
             RequestTypes.patch: requests.patch,
             RequestTypes.delete: requests.delete
         }
+
+    @property
+    def access_token(self):
+        return self._access_token
+
+    @property
+    def is_server_available(self):
+        if self._server_available is None:
+            response = self.get(self._base_url)
+            self._server_available = response.status == 200
+        return self._server_available
+
+    @property
+    def has_valid_token(self):
+        if self._access_token is None:
+            return False
+
+        if self._token_is_valid is None:
+            self.validate_token()
+        return self._token_is_valid
+
+    def validate_token(self):
+        try:
+            self.get_user_info()
+            self._token_is_valid = True
+
+        except UnauthorizedError:
+            self._token_is_valid = False
+        return self._token_is_valid
+
+    def invalidate_token(self):
+        self._access_token = None
+        self._token_validated = False
 
     @property
     def log(self):
@@ -300,7 +352,7 @@ class APIBase(object):
         )
 
 
-class ServerAPI(APIBase):
+class ServerAPI(ServerAPIBase):
     def get_rest_project(self, project_name):
         response = self.get("projects/{}".format(project_name))
         return response.data
