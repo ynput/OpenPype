@@ -37,7 +37,7 @@ log = logging.getLogger(__name__)
 
 ContainersFilterResult = collections.namedtuple(
     "ContainersFilterResult",
-    ["latest", "outdated", "not_foud", "invalid"]
+    ["latest", "outdated", "not_found", "invalid"]
 )
 
 
@@ -808,7 +808,7 @@ def filter_containers(containers, project_name):
 
     Categories are 'latest', 'outdated', 'invalid' and 'not_found'.
     The 'lastest' containers are from last version, 'outdated' are not,
-    'invalid' are invalid containers (invalid content) and 'not_foud' has
+    'invalid' are invalid containers (invalid content) and 'not_found' has
     some missing entity in database.
 
     Args:
