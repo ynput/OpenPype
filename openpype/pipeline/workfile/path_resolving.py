@@ -265,6 +265,10 @@ def get_last_workfile_with_version(
         if not match:
             continue
 
+        if not match.groups():
+            output_filenames.append(filename)
+            continue
+
         file_version = int(match.group(1))
         if version is None or file_version > version:
             output_filenames[:] = []
