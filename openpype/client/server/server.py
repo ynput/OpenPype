@@ -150,6 +150,9 @@ class ServerAPIBase(object):
     """
 
     def __init__(self, base_url, token=None):
+        if not base_url:
+            raise ValueError("Invalid server URL {}".format(str(base_url)))
+
         base_url = base_url.rstrip("/")
         self._base_url = base_url
         self._rest_url = "{}/api".format(base_url)
