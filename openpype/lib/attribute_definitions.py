@@ -30,6 +30,28 @@ def get_attributes_keys(attribute_definitions):
     return keys
 
 
+def get_default_values(attribute_definitions):
+    """Receive default values for attribute definitions.
+
+    Args:
+        attribute_definitions (List[AbtractAttrDef]): Attribute definitions for
+            which default values should be collected.
+
+    Returns:
+        Dict[str, Any]: Default values for passet attribute definitions.
+    """
+
+    output = {}
+    if not attribute_definitions:
+        return output
+
+    for attr_def in attribute_definitions:
+        # Skip UI definitions
+        if not isinstance(attr_def, UIDef):
+            output[attr_def.key] = attr_def.default
+    return output
+
+
 class AbstractAttrDefMeta(ABCMeta):
     """Meta class to validate existence of 'key' attribute.
 
