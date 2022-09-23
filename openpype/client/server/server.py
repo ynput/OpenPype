@@ -51,7 +51,7 @@ def store_token(url, token):
         os.makedirs(dirpath)
 
     with open(filepath, "w") as stream:
-        json.dump(tokens, stream)
+        json.dump(tokens, stream, indent=4)
 
 
 def load_token(url):
@@ -383,13 +383,18 @@ class ServerAPIBase(object):
 
 
 class ServerAPI(ServerAPIBase):
-    def __init__(self, url):
-        token = load_token(url)
+    def __init__(self, url, token=None):
         super(ServerAPI, self).__init__(url, token)
+        if not self.has_valid_token:
+            stored_token = load_token(url)
+            if stored_token:
+                self._access_token = stored_token
 
-    def login(self, name, password):
-        super(ServerAPI, self).login()
-        store_token(self._base_url, self._access_token)
+    def login(self, username, password):
+        previous_token = self._access_token
+        super(ServerAPI, self).login(username, password)
+        if previous_token != self._access_token:
+            store_token(self._base_url, self._access_token)
 
     def get_rest_project(self, project_name):
         response = self.get("projects/{}".format(project_name))
@@ -436,11 +441,11 @@ class GlobalContext:
     _connection = None
 
     @staticmethod
-    def get_url(cls):
+    def get_url():
         return os.environ.get("OPENPYPE_SERVER_URL")
 
     @staticmethod
-    def get_token(cls, url):
+    def get_token(url):
         return os.environ.get("OPENPYPE_TOKEN")
 
     @classmethod
