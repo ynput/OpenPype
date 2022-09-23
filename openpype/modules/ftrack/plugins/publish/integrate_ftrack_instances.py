@@ -9,7 +9,7 @@ from openpype.lib.transcoding import (
     convert_ffprobe_fps_to_float,
 )
 from openpype.lib.profiles_filtering import filter_profiles
-from openpype.lib.transcoding import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
+from openpype.lib.transcoding import VIDEO_EXTENSIONS
 
 
 class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
@@ -454,9 +454,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         try:
             streams = get_ffprobe_streams(component_path)
         except Exception:
-            self.log.debug((
-                               "Failed to retrieve information about input {}"
-                           ).format(component_path))
+            self.log.debug(
+                "Failed to retrieve information about " 
+                "input {}".format(component_path))
 
         # Find video streams
         video_streams = [
@@ -500,9 +500,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     input_framerate
                 )
             except ValueError:
-                self.log.warning((
-                    "Could not convert ffprobe fps to float \"{}\""
-                                 ).format(input_framerate))
+                self.log.warning(
+                    "Could not convert ffprobe "
+                    "fps to float \"{}\"".format(input_framerate))
                 continue
 
             stream_width = tmp_width
@@ -583,9 +583,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             try:
                 streams = get_ffprobe_streams(component_path)
             except Exception:
-                self.log.debug((
-                    "Failed to retrieve information about intput {}"
-                               ).format(component_path))
+                self.log.debug(
+                    "Failed to retrieve information "
+                    "about input {}".format(component_path))
 
             for stream in streams:
                 if "width" in stream and "height" in stream:

@@ -120,8 +120,7 @@ class ExtractReview(publish.Extractor):
             mov_path
         ]
         self.log.debug("mov args:: {}".format(args))
-        output = run_subprocess(args)
-        self.log.debug(output)
+        _output = run_subprocess(args)
         instance.data["representations"].append({
             "name": "mov",
             "ext": "mov",
@@ -158,7 +157,7 @@ class ExtractReview(publish.Extractor):
             thumbnail_path
         ]
         self.log.debug("thumbnail args:: {}".format(args))
-        output = run_subprocess(args)
+        _output = run_subprocess(args)
         instance.data["representations"].append({
             "name": "thumbnail",
             "ext": "jpg",
