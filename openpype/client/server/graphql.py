@@ -229,20 +229,33 @@ def representations_graphql_query(fields):
 
 
 class QueryVariable(object):
+    """Object representing single varible used in GraphQlQuery.
+
+    Variable definition is in GraphQl query header but it's value is used
+    in fields.
+
+    Args:
+        variable_name (str): Name of variable in query.
+    """
+
     def __init__(self, variable_name):
         self._variable_name = variable_name
         self._name = "${}".format(variable_name)
 
     @property
     def name(self):
+        """Name used in field filter."""
+
         return self._name
 
     @property
     def variable_name(self):
+        """Name of variable in query definition."""
+
         return self._variable_name
 
     def __hash__(self):
-        return self._name.__has__()
+        return self._name.__hash__()
 
     def __str__(self):
         return self._name
