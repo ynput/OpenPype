@@ -80,30 +80,22 @@ class ExistingLayoutLoader(plugin.Loader):
         raise NotImplementedError(
             f"Unreal version {ue_major} not supported")
 
-    @staticmethod
-    def _transform_from_basis(transform, basis, conversion):
-        """Transform a transform from a basis to a new basis."""
-        # Get the basis matrix
-        basis_matrix = unreal.Matrix(
-            basis[0],
-            basis[1],
-            basis[2],
-            basis[3]
-        )
-        transform_matrix = unreal.Matrix(
-            transform[0],
-            transform[1],
-            transform[2],
-            transform[3]
-        )
-
-        new_transform = (
-            basis_matrix.get_inverse() * transform_matrix * basis_matrix)
-
-        return conversion.inverse() * new_transform.transform()
-
     def _get_transform(self, ext, import_data, lasset):
         conversion = unreal.Matrix.IDENTITY.transform()
+        fbx_tuning = unreal.Matrix.IDENTITY.transform()
+
+        basis = unreal.Matrix(
+            lasset.get('basis')[0],
+            lasset.get('basis')[1],
+            lasset.get('basis')[2],
+            lasset.get('basis')[3]
+        ).transform()
+        transform = unreal.Matrix(
+            lasset.get('transform_matrix')[0],
+            lasset.get('transform_matrix')[1],
+            lasset.get('transform_matrix')[2],
+            lasset.get('transform_matrix')[3]
+        ).transform()
 
         # Check for the conversion settings. We cannot access
         # the alembic conversion settings, so we assume that
@@ -111,11 +103,15 @@ class ExistingLayoutLoader(plugin.Loader):
         if ext == '.fbx':
             loc = import_data.import_translation
             rot = import_data.import_rotation.to_vector()
-            scale = import_data.import_scale
+            scale = import_data.import_uniform_scale
             conversion = unreal.Transform(
                 location=[loc.x, loc.y, loc.z],
                 rotation=[rot.x, rot.y, rot.z],
-                scale=[scale, scale, scale]
+                scale=[-scale, scale, scale]
+            )
+            fbx_tuning = unreal.Transform(
+                rotation=[180.0, 0.0, 90.0],
+                scale=[1.0, 1.0, 1.0]
             )
         elif ext == '.abc':
             # This is the standard conversion settings for
@@ -126,12 +122,8 @@ class ExistingLayoutLoader(plugin.Loader):
                 scale=[1.0, -1.0, 1.0]
             )
 
-        transform = self._transform_from_basis(
-            lasset.get('transform_matrix'),
-            lasset.get('basis'),
-            conversion
-        )
-        return transform
+        new_transform = (basis.inverse() * transform * basis)
+        return fbx_tuning * conversion.inverse() * new_transform
 
     def _spawn_actor(self, obj, lasset):
         actor = EditorLevelLibrary.spawn_actor_from_object(
