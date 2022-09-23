@@ -20,7 +20,7 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.fusion import FUSION_HOST_DIR
-from openpype.host import HostBase, IWorkfileHost, ILoadHost, INewPublisher
+from openpype.host import HostBase, IWorkfileHost, ILoadHost, IPublishHost
 from openpype.tools.utils import host_tools
 
 
@@ -48,7 +48,7 @@ class CompLogHandler(logging.Handler):
             comp.Print(entry)
 
 
-class FusionHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
+class FusionHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     name = "fusion"
 
     def install(self):
