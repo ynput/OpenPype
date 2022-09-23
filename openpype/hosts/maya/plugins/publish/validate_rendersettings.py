@@ -201,7 +201,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                     labels = get_redshift_image_format_labels()
                     cls.log.error(
                         "AOV file format {} does not match global file format "
-                        "{}".format(labels[default_ext], labels[aov_ext])
+                        "{}".format(labels[aov_ext], labels[default_ext])
                     )
                     invalid = True
 
