@@ -25,25 +25,35 @@ class ServerNotReached(ServerError):
     pass
 
 
-def store_token(token):
+# TODO use keyring
+def load_tokens():
     filepath = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
-        "token"
+        "token.json"
     )
-    with open(filepath, "w") as stream:
-        stream.write(token)
-
-
-def load_token():
-    filepath = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "token"
-    )
-    if os.path.exists(filepath):
+    try:
         with open(filepath, "r") as stream:
-            token = stream.read()
-        return str(token)
-    return ""
+            tokens = json.load(stream)
+    except BaseException:
+        tokens = {}
+    return tokens
+
+
+def store_token(url, token):
+    tokens = load_tokens()
+    tokens[url] = token
+    dirpath = os.path.dirname(os.path.abspath(__file__))
+    filepath = os.path.join(dirpath, "token.json")
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)
+
+    with open(filepath, "w") as stream:
+        json.dump(tokens, stream)
+
+
+def load_token(url):
+    tokens = load_tokens()
+    return tokens.get(url)
 
 
 class RequestType:
@@ -203,28 +213,36 @@ class ServerAPIBase(object):
             headers["Authorization"] = "Bearer {}".format(self._access_token)
         return headers
 
-    def login(self, name, password):
-        token = load_token()
-        if token:
-            self._access_token = token
-            response = self.get("users/me")
-            if response.status == 200 and response.data["name"] == name:
-                return
-            self._access_token = None
-            store_token("")
+    def login(self, username, password):
+        if self.has_valid_token:
+            try:
+                user_info = self.get_user_info()
+            except UnauthorizedError:
+                user_info = {}
 
-        response = self._do_rest_request(
-            RequestTypes.get,
-            self._rest_url
-        )
+            current_username = user_info.get("name")
+            if current_username == username:
+                return
+
+        self.invalidate_token()
+
+        if not self.is_server_available:
+            raise ServerNotReached("Server \"{}\" can't be reached".format(
+                self._base_url
+            ))
+
         response = self.post(
             "auth/login",
-            name=name,
+            name=username,
             password=password
         )
+        token = None
         if response:
-            self._access_token = response["token"]
-            store_token(self._access_token)
+            token = response["token"]
+        self._access_token = token
+
+        if not self.has_valid_token:
+            raise AuthenticationError("Invalid credentials")
 
     def logout(self):
         if self._access_token:
@@ -360,6 +378,14 @@ class ServerAPIBase(object):
 
 
 class ServerAPI(ServerAPIBase):
+    def __init__(self, url):
+        token = load_token(url)
+        super(ServerAPI, self).__init__(url, token)
+
+    def login(self, name, password):
+        super(ServerAPI, self).login()
+        store_token(self._base_url, self._access_token)
+
     def get_rest_project(self, project_name):
         response = self.get("projects/{}".format(project_name))
         return response.data
