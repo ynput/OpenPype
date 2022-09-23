@@ -2,7 +2,9 @@ import os
 import json
 import logging
 from http import HTTPStatus
+
 import requests
+import appdirs
 
 JSONDecodeError = getattr(json, "JSONDecodeError", ValueError)
 
@@ -24,11 +26,13 @@ class ServerNotReached(ServerError):
 
 
 # TODO use keyring
+def _get_token_path():
+    dirpath = appdirs.user_data_dir("openpype", "pypeclub")
+    return os.path.join(dirpath, "server_tokens.json")
+
+
 def load_tokens():
-    filepath = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "token.json"
-    )
+    filepath = _get_token_path()
     try:
         with open(filepath, "r") as stream:
             tokens = json.load(stream)
@@ -45,8 +49,8 @@ def store_token(url, token):
         tokens.pop(url, None)
     else:
         return
-    dirpath = os.path.dirname(os.path.abspath(__file__))
-    filepath = os.path.join(dirpath, "token.json")
+    filepath = _get_token_path()
+    dirpath = os.path.dirname(filepath)
     if not os.path.exists(dirpath):
         os.makedirs(dirpath)
 
