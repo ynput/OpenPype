@@ -134,6 +134,18 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "CollectReview",
+                    "label": "Collect Review",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "publish",
+                            "label": "Active"
+                         }
+                     ]
+                 },
+                 {
+                    "type": "dict",
                     "key": "CollectVersion",
                     "label": "Collect Version",
                     "children": [
