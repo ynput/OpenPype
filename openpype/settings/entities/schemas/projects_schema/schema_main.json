@@ -43,6 +43,10 @@
                             }
                         ]
                     }
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_anatomy_imageio"
                 }
             ]
         },
