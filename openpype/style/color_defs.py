@@ -296,7 +296,7 @@ class HSLColor:
         if "%" in sat_str:
             sat = float(sat_str.rstrip("%")) / 100
         else:
-            sat = float(sat)
+            sat = float(sat_str)
 
         if "%" in light_str:
             light = float(light_str.rstrip("%")) / 100
@@ -350,7 +350,7 @@ class HSLAColor:
         if "%" in sat_str:
             sat = float(sat_str.rstrip("%")) / 100
         else:
-            sat = float(sat)
+            sat = float(sat_str)
 
         if "%" in light_str:
             light = float(light_str.rstrip("%")) / 100
