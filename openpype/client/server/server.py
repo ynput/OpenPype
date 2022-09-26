@@ -6,6 +6,8 @@ from http import HTTPStatus
 import requests
 import appdirs
 
+from .graphql import INTROSPECTION_QUERY
+
 JSONDecodeError = getattr(json, "JSONDecodeError", ValueError)
 
 
@@ -302,6 +304,9 @@ class ServerAPIBase(object):
 
         server_schema = self.get_server_schema()
         return server_schema["components"]["schemas"]
+
+    def get_graphql_schema(self):
+        return self.query(INTROSPECTION_QUERY).data
 
     def _do_rest_request(self, function, url, **kwargs):
         if "headers" not in kwargs:
