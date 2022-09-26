@@ -53,10 +53,7 @@ def generate_shelves():
             )
             continue
 
-        shelf_set = get_or_create_shelf_set(shelf_set_name)
-
         shelves_definition = shelf_set_config.get('shelf_definition')
-
         if not shelves_definition:
             log.debug(
                 "No shelf definition found for shelf set named '{}'".format(
@@ -65,6 +62,7 @@ def generate_shelves():
             )
             continue
 
+        shelf_set = get_or_create_shelf_set(shelf_set_name)
         for shelf_definition in shelves_definition:
             shelf_name = shelf_definition.get('shelf_name')
             if not shelf_name:
