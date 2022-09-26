@@ -2,7 +2,8 @@ import pyblish.api
 from openpype.pipeline.publish import get_errored_instances_from_context
 from openpype.hosts.nuke.api.lib import (
     get_write_node_template_attr,
-    set_node_knobs_from_settings
+    set_node_knobs_from_settings,
+    color_gui_to_int
 )
 from openpype.pipeline import PublishXmlValidationError
 
@@ -76,8 +77,11 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
 
             # fix type differences
             if type(node_value) in (int, float):
-                value = float(value)
-                node_value = float(node_value)
+                if isinstance(value, list):
+                    value = color_gui_to_int(value)
+                else:
+                    value = float(value)
+                    node_value = float(node_value)
             else:
                 value = str(value)
                 node_value = str(node_value)

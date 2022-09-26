@@ -10,7 +10,7 @@ import glob
 import platform
 
 from tests.lib.db_handler import DBHandler
-from tests.lib.file_handler import RemoteFileHandler
+from distribution.file_handler import RemoteFileHandler
 
 
 class BaseTest:

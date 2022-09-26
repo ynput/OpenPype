@@ -5,13 +5,11 @@ import json
 from maya import cmds
 from maya.api import OpenMaya as om
 
-from bson.objectid import ObjectId
-
-from openpype.pipeline import legacy_io
-import openpype.api
+from openpype.client import get_representation_by_id
+from openpype.pipeline import legacy_io, publish
 
 
-class ExtractLayout(openpype.api.Extractor):
+class ExtractLayout(publish.Extractor):
     """Extract a layout."""
 
     label = "Extract Layout"
@@ -30,6 +28,8 @@ class ExtractLayout(openpype.api.Extractor):
             instance.data["representations"] = []
 
         json_data = []
+        # TODO representation queries can be refactored to be faster
+        project_name = legacy_io.active_project()
 
         for asset in cmds.sets(str(instance), query=True):
             # Find the container
@@ -43,11 +43,11 @@ class ExtractLayout(openpype.api.Extractor):
 
             representation_id = cmds.getAttr(f"{container}.representation")
 
-            representation = legacy_io.find_one(
-                {
-                    "type": "representation",
-                    "_id": ObjectId(representation_id)
-                }, projection={"parent": True, "context.family": True})
+            representation = get_representation_by_id(
+                project_name,
+                representation_id,
+                fields=["parent", "context.family"]
+            )
 
             self.log.info(representation)
 
@@ -102,9 +102,10 @@ class ExtractLayout(openpype.api.Extractor):
             for i in range(0, len(t_matrix_list), row_length):
                 t_matrix.append(t_matrix_list[i:i + row_length])
 
-            json_element["transform_matrix"] = []
-            for row in t_matrix:
-                json_element["transform_matrix"].append(list(row))
+            json_element["transform_matrix"] = [
+                list(row)
+                for row in t_matrix
+            ]
 
             basis_list = [
                 1, 0, 0, 0,

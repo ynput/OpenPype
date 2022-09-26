@@ -1,13 +1,14 @@
 import os
-from pprint import pformat
 import re
+from pprint import pformat
 import pyblish.api
-import openpype
+
+from openpype.pipeline import publish
 from openpype.hosts.nuke.api import plugin
 from openpype.hosts.nuke.api.lib import maintained_selection
 
 
-class ExtractReviewDataMov(openpype.api.Extractor):
+class ExtractReviewDataMov(publish.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
     must be run after extract_render_local.py
