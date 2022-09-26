@@ -21,6 +21,9 @@ from openpype.pipeline import AvalonMongoDB
 from openpype.settings import get_project_settings
 from openpype.modules.kitsu.utils.credentials import validate_credentials
 
+from openpype.lib import Logger
+
+log = Logger.get_logger(__name__)
 
 # Accepted namin pattern for OP
 naming_pattern = re.compile("^[a-zA-Z0-9_.]*$")
@@ -247,7 +250,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     project_name = project["name"]
     project_doc = get_project(project_name)
     if not project_doc:
-        print(f"Creating project '{project_name}'")
+        log.info(f"Creating project '{project_name}'")
         project_doc = create_project(project_name, project_name)
 
     # Project data and tasks
@@ -271,10 +274,13 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         }
     )
 
-    proj_res = project["resolution"]
-    if "x" in proj_res:
-        project_data['resolutionWidth'] = int(proj_res.split("x")[0])
-        project_data['resolutionHeight'] = int(proj_res.split("x")[1])
+    match_res = re.match(r"(\d+)x(\d+)", project["resolution"])
+    if match_res:
+        project_data['resolutionWidth'] = match_res.group(1)
+        project_data['resolutionHeight'] = match_res.group(2)
+    else:
+        log.warning(f"\'{project['resolution']}\' does not match the expected "\
+            "format for the resolution, for example: 1920x1080")
 
     return UpdateOne(
         {"_id": project_doc["_id"]},
@@ -336,7 +342,7 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     if not project:
         project = gazu.project.get_project_by_name(project["name"])
 
-    print(f"Synchronizing {project['name']}...")
+    log.info(f"Synchronizing {project['name']}...")
 
     # Get all assets from zou
     all_assets = gazu.asset.all_assets_for_project(project)
