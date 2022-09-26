@@ -144,10 +144,9 @@ def get_or_create_shelf(shelf_label):
     """
     all_shelves = hou.shelves.shelves().values()
 
-    shelf = [s for s in all_shelves if s.label() == shelf_label]
-
+    shelf = next((s for s in all_shelves if s.label() == shelf_label), None)
     if shelf:
-        return shelf[0]
+        return shelf
 
     shelf_name = shelf_label.replace(' ', '_').lower()
     new_shelf = hou.shelves.newShelf(
