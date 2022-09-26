@@ -20,9 +20,7 @@ def generate_shelves():
     shelves_set_config = project_settings["houdini"]["shelves"]
 
     if not shelves_set_config:
-        log.debug(
-            "No custom shelves found in project settings."
-        )
+        log.debug("No custom shelves found in project settings.")
         return
 
     for shelf_set_config in shelves_set_config:
@@ -39,9 +37,7 @@ def generate_shelves():
 
         shelf_set_name = shelf_set_config.get('shelf_set_name')
         if not shelf_set_name:
-            log.warning(
-                "No name found in shelf set definition."
-            )
+            log.warning("No name found in shelf set definition.")
             continue
 
         shelves_definition = shelf_set_config.get('shelf_definition')
@@ -57,9 +53,7 @@ def generate_shelves():
         for shelf_definition in shelves_definition:
             shelf_name = shelf_definition.get('shelf_name')
             if not shelf_name:
-                log.warning(
-                    "No name found in shelf definition."
-                )
+                log.warning("No name found in shelf definition.")
                 continue
 
             shelf = get_or_create_shelf(shelf_name)
@@ -175,9 +169,7 @@ def get_or_create_tool(tool_definition, shelf):
 
     if not os.path.exists(tool_definition['script']):
         log.warning(
-            "This path doesn't exist - {}".format(
-                tool_definition['script']
-            )
+            "This path doesn't exist - {}".format(tool_definition['script'])
         )
         return
 
