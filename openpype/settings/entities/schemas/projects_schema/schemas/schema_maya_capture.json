@@ -349,10 +349,9 @@
                             "label": "<b>Show</b>"
                         },
                         {
-                            "type": "boolean",
-                            "key": "xray",
-                            "label": "Toggle X-Ray Mode"
-                        },
+                            "type": "label",
+                            "label": "<b>Shading</b>"
+                        }, 
                         {
                             "type": "boolean",
                             "key": "udm",
@@ -365,13 +364,18 @@
                         },
                         {
                             "type": "boolean",
+                            "key": "xray",
+                            "label": "X-Ray"
+                        },
+                        {
+                            "type": "boolean",
                             "key": "jointXray",
-                            "label": "Toggle Joint X-Ray Mode"
+                            "label": "X-Ray Joints"
                         },
                         {
                             "type": "boolean",
                             "key": "backfaceCulling",
-                            "label": "Enable Back Face Culling"
+                            "label": "Backface Culling"
                         },
                         {
                             "type": "boolean",
