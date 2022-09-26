@@ -153,7 +153,8 @@ class BaseCreator:
             instance (CreatedInstance): New created instance.
         """
 
-        self.create_context.creator_adds_instance(instance)
+        if instance.id not in self._instances_by_id:
+            self.create_context.creator_adds_instance(instance)
 
     def _remove_instance_from_context(self, instance):
         """Helper method to remove instance from create context.
