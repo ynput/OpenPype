@@ -3,6 +3,7 @@ from collections import defaultdict
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import ValidatePipelineOrder
 
 
 class ValidateUniqueRelationshipMembers(pyblish.api.InstancePlugin):
@@ -20,7 +21,7 @@ class ValidateUniqueRelationshipMembers(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidatePipelineOrder
+    order = ValidatePipelineOrder
     label = 'Look members unique'
     hosts = ['maya']
     families = ['look']

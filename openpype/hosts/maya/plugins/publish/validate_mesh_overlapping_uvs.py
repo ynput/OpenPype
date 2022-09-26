@@ -6,6 +6,7 @@ import maya.api.OpenMaya as om
 import pymel.core as pm
 
 from six.moves import xrange
+from openpype.pipeline.publish import ValidateMeshOrder
 
 
 class GetOverlappingUVs(object):
@@ -232,7 +233,7 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
     It is optional to warn publisher about it.
     """
 
-    order = openpype.api.ValidateMeshOrder
+    order = ValidateMeshOrder
     hosts = ['maya']
     families = ['model']
     category = 'geometry'

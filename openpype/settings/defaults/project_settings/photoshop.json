@@ -8,12 +8,18 @@
     },
     "publish": {
         "CollectColorCodedInstances": {
-            "create_flatten_image": false,
+            "create_flatten_image": "no",
             "flatten_subset_template": "",
             "color_code_mapping": []
         },
         "CollectInstances": {
             "flatten_subset_template": ""
+        },
+        "CollectReview": {
+            "publish": true
+        },
+        "CollectVersion": {
+            "enabled": false
         },
         "ValidateContainers": {
             "enabled": true,

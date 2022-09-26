@@ -244,7 +244,6 @@ class Controller(QtCore.QObject):
         self.context.optional = False
 
         self.context.data["publish"] = True
-        self.context.data["label"] = "Context"
         self.context.data["name"] = "context"
 
         self.context.data["host"] = reversed(pyblish.api.registered_hosts())

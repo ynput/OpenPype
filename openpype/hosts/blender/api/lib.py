@@ -234,7 +234,7 @@ def lsattrs(attrs: Dict) -> List:
 def read(node: bpy.types.bpy_struct_meta_idprop):
     """Return user-defined attributes from `node`"""
 
-    data = dict(node.get(pipeline.AVALON_PROPERTY))
+    data = dict(node.get(pipeline.AVALON_PROPERTY, {}))
 
     # Ignore hidden/internal data
     data = {

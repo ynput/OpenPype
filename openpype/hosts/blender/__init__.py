@@ -1,6 +1,6 @@
-from .module import BlenderModule
+from .addon import BlenderAddon
 
 
 __all__ = (
-    "BlenderModule",
+    "BlenderAddon",
 )

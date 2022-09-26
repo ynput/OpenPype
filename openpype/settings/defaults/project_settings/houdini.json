@@ -1,4 +1,15 @@
 {
+    "shelves": [
+        {
+            "shelf_set_name": "OpenPype Shelves",
+            "shelf_set_source_path": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            },
+            "shelf_definition": []
+        }
+    ],
     "create": {
         "CreateArnoldAss": {
             "enabled": true,
@@ -47,6 +58,18 @@
         }
     },
     "publish": {
+        "ValidateWorkfilePaths": {
+            "enabled": true,
+            "optional": true,
+            "node_types": [
+                "file",
+                "alembic"
+            ],
+            "prohibited_vars": [
+                "$HIP",
+                "$JOB"
+            ]
+        },
         "ValidateContainers": {
             "enabled": true,
             "optional": true,

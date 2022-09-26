@@ -3,7 +3,7 @@ import requests
 
 import pyblish.api
 
-from openpype.lib.delivery import collect_frames
+from openpype.lib import collect_frames
 from openpype_modules.deadline.abstract_submit_deadline import requests_get
 
 

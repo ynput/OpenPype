@@ -1,6 +1,7 @@
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateLookContents(pyblish.api.InstancePlugin):
@@ -17,7 +18,7 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     families = ['look']
     hosts = ['maya']
     label = 'Look Data Contents'

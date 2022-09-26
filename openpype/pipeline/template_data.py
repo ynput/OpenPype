@@ -28,11 +28,14 @@ def get_general_template_data(system_settings=None):
     }
 
 
-def get_project_template_data(project_doc):
+def get_project_template_data(project_doc=None, project_name=None):
     """Extract data from project document that are used in templates.
 
     Project document must have 'name' and (at this moment) optional
         key 'data.code'.
+
+    One of 'project_name' or 'project_doc' must be passed. With prepared
+    project document is function much faster because don't have to query.
 
     Output contains formatting keys:
     - 'project[name]'   - Project name
@@ -40,15 +43,22 @@ def get_project_template_data(project_doc):
 
     Args:
         project_doc (Dict[str, Any]): Queried project document.
+        project_name (str): Name of project.
 
     Returns:
         Dict[str, Dict[str, str]]: Template data based on project document.
     """
 
+    if not project_name:
+        project_name = project_doc["name"]
+
+    if not project_doc:
+        project_doc = get_project(project_name, fields=["data.code"])
+
     project_code = project_doc.get("data", {}).get("code")
     return {
         "project": {
-            "name": project_doc["name"],
+            "name": project_name,
             "code": project_code
         }
     }

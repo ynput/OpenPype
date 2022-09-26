@@ -1,10 +1,10 @@
-from .module import (
+from .addon import (
     NUKE_ROOT_DIR,
-    NukeModule,
+    NukeAddon,
 )
 
 
 __all__ = (
     "NUKE_ROOT_DIR",
-    "NukeModule",
+    "NukeAddon",
 )

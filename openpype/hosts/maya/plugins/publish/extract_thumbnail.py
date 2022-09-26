@@ -3,14 +3,14 @@ import glob
 
 import capture
 
+from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
-import openpype.api
 
 from maya import cmds
 import pymel.core as pm
 
 
-class ExtractThumbnail(openpype.api.Extractor):
+class ExtractThumbnail(publish.Extractor):
     """Extract viewport thumbnail.
 
     Takes review camera and creates a thumbnail based on viewport
@@ -100,9 +100,9 @@ class ExtractThumbnail(openpype.api.Extractor):
         # camera.
         if preset.pop("isolate_view", False) and instance.data.get("isolate"):
             preset["isolate"] = instance.data["setMembers"]
-        
+
         # Show or Hide Image Plane
-        image_plane = instance.data.get("imagePlane", True)       
+        image_plane = instance.data.get("imagePlane", True)
         if "viewport_options" in preset:
             preset["viewport_options"]["imagePlane"] = image_plane
         else:
@@ -117,7 +117,7 @@ class ExtractThumbnail(openpype.api.Extractor):
             # Update preset with current panel setting
             # if override_viewport_options is turned off
             if not override_viewport_options:
-                panel = cmds.getPanel(with_focus=True)
+                panel = cmds.getPanel(withFocus=True)
                 panel_preset = capture.parse_active_view()
                 preset.update(panel_preset)
                 cmds.setFocus(panel)
