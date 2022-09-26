@@ -279,8 +279,8 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
         project_data['resolutionWidth'] = match_res.group(1)
         project_data['resolutionHeight'] = match_res.group(2)
     else:
-        log.warning(f"\'{project['resolution']}\' does not match the expected "\
-            "format for the resolution, for example: 1920x1080")
+        log.warning(f"\'{project['resolution']}\' does not match the "
+            "expected format for the resolution, for example: 1920x1080")
 
     return UpdateOne(
         {"_id": project_doc["_id"]},
