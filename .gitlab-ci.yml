@@ -7,10 +7,11 @@ stages:
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
-  OP_APP_DIR: '/prod/softprod/apps/openpype'
-  OP_STAGING_PATH: "$OP_APP_DIR/staging"
-  OP_PROD_PATH: '$OP_APP_DIR/latest'
-  OP_VERSION_PATH: '$OP_APP_DIR/VERSION_NOT_SET'
+  OP_APP_DIR: /prod/softprod/apps/openpype
+  OP_STAGING_PATH: $OP_APP_DIR/staging
+  OP_PROD_PATH: $OP_APP_DIR/latest
+  OP_VERSION_PATH: $OP_APP_DIR/VERSION_NOT_SET
+  DEADLINE_CUSTOM: /prod/softprod/apps/deadline/repo/custom/plugins
 
 workflow:
   rules:
@@ -126,3 +127,11 @@ deploy-prod:
   script:
     - echo "Set prod link $OP_PROD_PATH to $OP_VERSION_PATH"
     - ln -sfn $OP_VERSION_PATH $OP_PROD_PATH
+
+deploy-deadline:
+  stage: production
+  needs: [deploy-prod]
+  tags: [shell, centos]
+  script:
+    - echo "Deadline plugins $OP_PROD_PATH/linux/openpype/modules/deadline/repository/custom to deadline directory $DEADLINE_CUSTOM"
+    - cp -a $OP_PROD_PATH/linux/openpype/modules/deadline/repository/custom $DEADLINE_CUSTOM
