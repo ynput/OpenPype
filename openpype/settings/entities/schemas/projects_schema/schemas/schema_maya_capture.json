@@ -354,12 +354,12 @@
                         }, 
                         {
                             "type": "boolean",
-                            "key": "udm",
+                            "key": "useDefaultMaterial",
                             "label": "Use Default Material"
                         },
                         {
                             "type": "boolean",
-                            "key": "wos",
+                            "key": "wireframeOnShaded",
                             "label": "Wireframe On Shaded"
                         },
                         {
