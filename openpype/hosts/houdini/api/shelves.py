@@ -80,8 +80,8 @@ def generate_shelves():
                     tool_definition[key] for key in mandatory_attributes
                 ):
                     log.warning(
-                        "You need to specify at least the name and \
-the script path of the tool.")
+                        "You need to specify at least the name and the "
+                        "script path of the tool.")
                     continue
 
                 tool = get_or_create_tool(tool_definition, shelf)
