@@ -51,7 +51,7 @@ def generate_shelves():
             log.warning(
                 "No name found in shelf set definition."
             )
-            return
+            continue
 
         shelf_set = get_or_create_shelf_set(shelf_set_name)
 
@@ -63,7 +63,7 @@ def generate_shelves():
                     shelf_set_name
                 )
             )
-            return
+            continue
 
         for shelf_definition in shelves_definition:
             shelf_name = shelf_definition.get('shelf_name')
@@ -71,7 +71,7 @@ def generate_shelves():
                 log.warning(
                     "No name found in shelf definition."
                 )
-                return
+                continue
 
             shelf = get_or_create_shelf(shelf_name)
 
@@ -81,7 +81,7 @@ def generate_shelves():
                         shelf_name
                     )
                 )
-                return
+                continue
 
             mandatory_attributes = {'name', 'script'}
             for tool_definition in shelf_definition.get('tools_list'):
@@ -98,7 +98,7 @@ the script path of the tool.")
                 tool = get_or_create_tool(tool_definition, shelf)
 
                 if not tool:
-                    return
+                    continue
 
                 # Add the tool to the shelf if not already in it
                 if tool not in shelf.tools():
