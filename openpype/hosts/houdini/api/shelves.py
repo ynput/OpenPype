@@ -1,7 +1,6 @@
 import os
 import logging
 import platform
-import six
 
 from openpype.settings import get_project_settings
 
@@ -9,16 +8,10 @@ import hou
 
 log = logging.getLogger("openpype.hosts.houdini.shelves")
 
-if six.PY2:
-    FileNotFoundError = IOError
-
 
 def generate_shelves():
     """This function generates complete shelves from shelf set to tools
     in Houdini from openpype project settings houdini shelf definition.
-
-    Raises:
-        FileNotFoundError: Raised when the shelf set filepath does not exist
     """
     current_os = platform.system().lower()
 
