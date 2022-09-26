@@ -19,6 +19,8 @@ class _Cache:
     disabled_entity_icon_color = None
     deprecated_entity_font_color = None
 
+    objected_colors = None
+
 
 def get_style_image_path(image_name):
     # All filenames are lowered
@@ -81,10 +83,15 @@ def get_objected_colors():
     Returns:
         dict: Parsed color objects by keys in data.
     """
+    if _Cache.objected_colors is not None:
+        return _Cache.objected_colors
+
     colors_data = get_colors_data()
     output = {}
     for key, value in colors_data.items():
         output[key] = _convert_color_values_to_objects(value)
+
+    _Cache.objected_colors = output
     return output
 
 
