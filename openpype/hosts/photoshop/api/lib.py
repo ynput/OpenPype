@@ -64,10 +64,15 @@ def maintained_selection():
 
 
 @contextlib.contextmanager
-def maintained_visibility():
-    """Maintain visibility during context."""
+def maintained_visibility(layers=None):
+    """Maintain visibility during context.
+
+    Args:
+        layers (list) of PSItem (used for caching)
+    """
     visibility = {}
-    layers = stub().get_layers()
+    if not layers:
+        layers = stub().get_layers()
     for layer in layers:
         visibility[layer.id] = layer.visible
     try:

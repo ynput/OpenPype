@@ -1,12 +1,12 @@
 import os
 
-import openpype.api
-
 from maya import cmds
+
+from openpype.pipeline import publish
 from openpype.hosts.maya.api.lib import maintained_selection
 
 
-class ExtractAssStandin(openpype.api.Extractor):
+class ExtractAssStandin(publish.Extractor):
     """Extract the content of the instance to a ass file
 
     Things to pay attention to:
