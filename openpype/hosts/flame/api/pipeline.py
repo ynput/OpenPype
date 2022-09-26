@@ -90,8 +90,7 @@ def containerise(flame_clip_segment,
 def ls():
     """List available containers.
     """
-    # TODO: ls
-    pass
+    return []
 
 
 def parse_container(tl_segment, validate=True):
@@ -106,6 +105,7 @@ def update_container(tl_segment, data=None):
     """
     # TODO: update_container
     pass
+
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle node passthrough states on instance toggles."""

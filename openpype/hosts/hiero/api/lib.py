@@ -13,14 +13,10 @@ import hiero
 
 from Qt import QtWidgets
 
-from openpype.client import (
-    get_project,
-    get_versions,
-    get_last_versions,
-    get_representations,
-)
+from openpype.client import get_project
 from openpype.settings import get_anatomy_settings
 from openpype.pipeline import legacy_io, Anatomy
+from openpype.pipeline.load import filter_containers
 from openpype.lib import Logger
 from . import tags
 
@@ -1055,6 +1051,10 @@ def sync_clip_name_to_data_asset(track_items_list):
             print("asset was changed in clip: {}".format(ti_name))
 
 
+def set_track_color(track_item, color):
+    track_item.source().binItem().setColor(color)
+
+
 def check_inventory_versions(track_items=None):
     """
     Actual version color idetifier of Loaded containers
@@ -1066,68 +1066,29 @@ def check_inventory_versions(track_items=None):
     """
     from . import parse_container
 
-    track_item = track_items or get_track_items()
+    track_items = track_items or get_track_items()
     # presets
     clip_color_last = "green"
     clip_color = "red"
 
-    item_with_repre_id = []
-    repre_ids = set()
+    containers = []
     # Find all containers and collect it's node and representation ids
-    for track_item in track_item:
+    for track_item in track_items:
         container = parse_container(track_item)
         if container:
-            repre_id = container["representation"]
-            repre_ids.add(repre_id)
-            item_with_repre_id.append((track_item, repre_id))
+            containers.append(container)
 
     # Skip if nothing was found
-    if not repre_ids:
+    if not containers:
         return
 
     project_name = legacy_io.active_project()
-    # Find representations based on found containers
-    repre_docs = get_representations(
-        project_name,
-        repre_ids=repre_ids,
-        fields=["_id", "parent"]
-    )
-    # Store representations by id and collect version ids
-    repre_docs_by_id = {}
-    version_ids = set()
-    for repre_doc in repre_docs:
-        # Use stringed representation id to match value in containers
-        repre_id = str(repre_doc["_id"])
-        repre_docs_by_id[repre_id] = repre_doc
-        version_ids.add(repre_doc["parent"])
+    filter_result = filter_containers(containers, project_name)
+    for container in filter_result.latest:
+        set_track_color(container["_track_item"], clip_color)
 
-    version_docs = get_versions(
-        project_name, version_ids, fields=["_id", "name", "parent"]
-    )
-    # Store versions by id and collect subset ids
-    version_docs_by_id = {}
-    subset_ids = set()
-    for version_doc in version_docs:
-        version_docs_by_id[version_doc["_id"]] = version_doc
-        subset_ids.add(version_doc["parent"])
-
-    # Query last versions based on subset ids
-    last_versions_by_subset_id = get_last_versions(
-        project_name, subset_ids=subset_ids, fields=["_id", "parent"]
-    )
-
-    for item in item_with_repre_id:
-        # Some python versions of nuke can't unfold tuple in for loop
-        track_item, repre_id = item
-
-        repre_doc = repre_docs_by_id[repre_id]
-        version_doc = version_docs_by_id[repre_doc["parent"]]
-        last_version_doc = last_versions_by_subset_id[version_doc["parent"]]
-        # Check if last version is same as current version
-        if version_doc["_id"] == last_version_doc["_id"]:
-            track_item.source().binItem().setColor(clip_color_last)
-        else:
-            track_item.source().binItem().setColor(clip_color)
+    for container in filter_result.outdated:
+        set_track_color(container["_track_item"], clip_color_last)
 
 
 def selection_changed_timeline(event):
