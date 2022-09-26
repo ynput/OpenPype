@@ -519,7 +519,7 @@ class GraphQlQuery:
 
         output = {}
         while self.need_query:
-            response = con.query(
+            response = con.query_graphl(
                 self.calculate_query(),
                 self.get_variables_values()
             )
