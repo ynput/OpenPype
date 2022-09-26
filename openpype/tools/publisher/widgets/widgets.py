@@ -16,6 +16,7 @@ from openpype.tools.utils import (
     BaseClickableFrame,
     set_style_property,
 )
+from openpype.style import get_objected_colors
 from openpype.pipeline.create import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
     TaskNotSetError,
@@ -125,9 +126,11 @@ class PublishIconBtn(IconButton):
     def __init__(self, pixmap_path, *args, **kwargs):
         super(PublishIconBtn, self).__init__(*args, **kwargs)
 
-        icon = self.generate_icon(pixmap_path,
-                                  enabled_color=QtCore.Qt.white,
-                                  disabled_color=QtGui.QColor("#5b6779"))
+        colors = get_objected_colors()
+        icon = self.generate_icon(
+            pixmap_path,
+            enabled_color=colors["font"].get_qcolor(),
+            disabled_color=colors["font-disabled"].get_qcolor())
         self.setIcon(icon)
 
     def generate_icon(self, pixmap_path, enabled_color, disabled_color):
