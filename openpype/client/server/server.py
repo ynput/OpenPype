@@ -265,7 +265,7 @@ class ServerAPIBase(object):
             store_token(self._base_url, None)
             return self.post("auth/logout")
 
-    def query(self, query, variables=None):
+    def query_graphl(self, query, variables=None):
         data = {"query": query, "variables": variables or {}}
         response = self._do_rest_request(
             RequestTypes.post,
