@@ -81,6 +81,13 @@ class BaseCreator:
         # - we may use UI inside processing this attribute should be checked
         self.headless = headless
 
+        self.apply_settings(project_settings, system_settings)
+
+    def apply_settings(self, project_settings, system_settings):
+        """Method called on initialization of plugin to apply settings."""
+
+        pass
+
     @property
     def identifier(self):
         """Identifier of creator (must be unique).

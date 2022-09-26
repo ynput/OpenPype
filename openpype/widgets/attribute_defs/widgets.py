@@ -108,10 +108,12 @@ class AttributeDefinitionsWidget(QtWidgets.QWidget):
 
         row = 0
         for attr_def in attr_defs:
-            if attr_def.key in self._current_keys:
-                raise KeyError("Duplicated key \"{}\"".format(attr_def.key))
+            if not isinstance(attr_def, UIDef):
+                if attr_def.key in self._current_keys:
+                    raise KeyError(
+                        "Duplicated key \"{}\"".format(attr_def.key))
 
-            self._current_keys.add(attr_def.key)
+                self._current_keys.add(attr_def.key)
             widget = create_widget_for_attr_def(attr_def, self)
 
             expand_cols = 2
