@@ -3,6 +3,8 @@ import os
 import pyblish.api
 from openpype.pipeline import PublishValidationError
 
+from openpype.hosts.fusion.api.action import SelectInvalidAction
+
 
 class ValidateFilenameHasExtension(pyblish.api.InstancePlugin):
     """Ensure the Saver has an extension in the filename path
@@ -17,6 +19,7 @@ class ValidateFilenameHasExtension(pyblish.api.InstancePlugin):
     label = "Validate Filename Has Extension"
     families = ["render"]
     hosts = ["fusion"]
+    actions = [SelectInvalidAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)

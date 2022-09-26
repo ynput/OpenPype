@@ -3,6 +3,8 @@ import pyblish.api
 from openpype.pipeline.publish import RepairAction
 from openpype.pipeline import PublishValidationError
 
+from openpype.hosts.fusion.api.action import SelectInvalidAction
+
 
 class ValidateCreateFolderChecked(pyblish.api.InstancePlugin):
     """Valid if all savers have the input attribute CreateDir checked on
@@ -16,6 +18,7 @@ class ValidateCreateFolderChecked(pyblish.api.InstancePlugin):
     label = "Validate Create Folder Checked"
     families = ["render"]
     hosts = ["fusion"]
+    actions = [SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):

@@ -46,9 +46,6 @@ class CreateSaver(Creator):
             saver[file_format]["Depth"] = 1  # int8 | int16 | float32 | other
             saver[file_format]["SaveAlpha"] = 0
 
-            # Fusion data for the instance data
-            instance_data["tool_name"] = saver.Name
-
         self._imprint(saver, instance_data)
 
         # Register the CreatedInstance
@@ -57,6 +54,10 @@ class CreateSaver(Creator):
             subset_name=subset_name,
             data=instance_data,
             creator=self)
+
+        # Insert the transient data
+        instance.transient_data["tool"] = saver
+
         self._add_instance_to_context(instance)
 
         return instance
@@ -71,11 +72,12 @@ class CreateSaver(Creator):
             if not data:
                 data = self._collect_unmanaged_saver(tool)
 
-            # Collect non-stored data
-            data["tool_name"] = tool.Name
-
             # Add instance
             created_instance = CreatedInstance.from_existing(data, self)
+
+            # Collect transient data
+            created_instance.transient_data["tool"] = tool
+
             self._add_instance_to_context(created_instance)
 
     def get_icon(self):
@@ -90,17 +92,15 @@ class CreateSaver(Creator):
                 key: new for key, (_old, new) in update.changes.items()
             }
 
-            tool = self._get_instance_tool(instance)
+            tool = instance.transient_data["tool"]
             self._update_tool_with_data(tool, new_data)
             self._imprint(tool, new_data)
-
-            # Ensure tool name is up-to-date
-            instance["tool_name"] = tool.Name
 
     def remove_instances(self, instances):
         for instance in instances:
             # Remove the tool from the scene
-            tool = self._get_instance_tool(instance)
+
+            tool = instance.transient_data["tool"]
             if tool:
                 tool.Delete()
 
@@ -111,17 +111,6 @@ class CreateSaver(Creator):
         # Save all data in a "openpype.{key}" = value data
         for key, value in data.items():
             tool.SetData("openpype.{}".format(key), value)
-
-    def _get_instance_tool(self, instance):
-        # finds tool name of instance in currently active comp
-        # TODO: assign `tool` as 'lifetime' data instead of name so the
-        #  tool can be retrieved in current session. We can't store currently
-        #  in the CreatedInstance data because it needs to be serializable
-        comp = get_current_comp()
-        tool_name = instance["tool_name"]
-        return {
-            tool.Name: tool for tool in comp.GetToolList(False).values()
-        }.get(tool_name)
 
     def _update_tool_with_data(self, tool, data):
         """Update tool node name and output path based on subset data"""

@@ -3,6 +3,8 @@ import pyblish.api
 from openpype.pipeline.publish import RepairAction
 from openpype.pipeline import PublishValidationError
 
+from openpype.hosts.fusion.api.action import SelectInvalidAction
+
 
 class ValidateBackgroundDepth(pyblish.api.InstancePlugin):
     """Validate if all Background tool are set to float32 bit"""
@@ -13,6 +15,8 @@ class ValidateBackgroundDepth(pyblish.api.InstancePlugin):
     hosts = ["fusion"]
     families = ["render"]
     optional = True
+
+    actions = [SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):
