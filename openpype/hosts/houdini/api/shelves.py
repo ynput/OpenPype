@@ -122,7 +122,7 @@ def get_or_create_shelf_set(shelf_set_label):
     shelf_set = next((shelf for shelf in all_shelves_sets if
                       shelf.label() == shelf_set_label), None)
     if shelf_set:
-        return shelf_set[0]
+        return shelf_set
 
     shelf_set_name = shelf_set_label.replace(' ', '_').lower()
     new_shelf_set = hou.shelves.newShelfSet(
