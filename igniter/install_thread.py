@@ -101,8 +101,7 @@ class InstallThread(QThread):
             self._set_result(1)
             return
 
-        if detected and not OpenPypeVersion.get_installed_version().is_compatible(
-                detected[-1]):
+        if detected and not OpenPypeVersion.get_installed_version().is_compatible(detected[-1]):  # noqa: E501
             self.message.emit((
                 f"Latest detected version {detected[-1]} "
                 "is not compatible with the currently running "
@@ -132,8 +131,7 @@ class InstallThread(QThread):
                 self._set_result(0)
                 return
 
-            if OpenPypeVersion(version=local_version).get_main_version() == detected[
-                -1].get_main_version():  # noqa
+            if OpenPypeVersion(version=local_version).get_main_version() == detected[-1].get_main_version():  # noqa: E501
                 self.message.emit((
                     f"Latest installed version is the same as "
                     f"currently running {local_version}"
