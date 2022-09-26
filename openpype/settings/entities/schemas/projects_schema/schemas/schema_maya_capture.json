@@ -352,6 +352,34 @@
                             "type": "boolean",
                             "key": "xray",
                             "label": "Toggle X-Ray Mode"
+<<<<<<< Updated upstream
+=======
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "udm",
+                            "label": "Use Default Material"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "wos",
+                            "label": "Wireframe On Shaded"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "jointXray",
+                            "label": "Toggle Joint X-Ray Mode"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "backfaceCulling",
+                            "label": "Enable Back Face Culling"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "cameras",
+                            "label": "cameras"
+>>>>>>> Stashed changes
                         },
                         {
                             "type": "boolean",
