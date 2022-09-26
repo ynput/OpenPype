@@ -170,15 +170,15 @@ def get_or_create_tool(tool_definition, shelf):
     existing_tools = shelf.tools()
     tool_label = tool_definition.get('label')
 
-    existing_tool = [
-        tool for tool in existing_tools if tool.label() == tool_label
-    ]
-
+    existing_tool = next(
+        (tool for tool in existing_tools if tool.label() == tool_label),
+        None
+    )
     if existing_tool:
         tool_definition.pop('name', None)
         tool_definition.pop('label', None)
-        existing_tool[0].setData(**tool_definition)
-        return existing_tool[0]
+        existing_tool.setData(**tool_definition)
+        return existing_tool
 
     tool_name = tool_label.replace(' ', '_').lower()
 
