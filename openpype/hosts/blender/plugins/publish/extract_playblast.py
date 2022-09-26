@@ -40,7 +40,7 @@ class ExtractPlayblast(openpype.api.Extractor):
         end = instance.data.get("frameEnd", bpy.context.scene.frame_end)
 
         self.log.info(f"start: {start}, end: {end}")
-        assert end > start, "Invalid time range !"
+        assert end >= start, "Invalid time range !"
 
         # get cameras
         camera = instance.data("review_camera", None)
