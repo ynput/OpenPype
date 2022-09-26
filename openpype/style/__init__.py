@@ -19,6 +19,7 @@ class _Cache:
     disabled_entity_icon_color = None
     deprecated_entity_font_color = None
 
+    colors_data = None
     objected_colors = None
 
 
@@ -48,8 +49,13 @@ def _get_colors_raw_data():
 
 def get_colors_data():
     """Only color data from stylesheet data."""
+    if _Cache.colors_data is not None:
+        return _Cache.colors_data
+
     data = _get_colors_raw_data()
-    return data.get("color") or {}
+    color_data = data.get("color") or {}
+    _Cache.colors_data = color_data
+    return color_data
 
 
 def _convert_color_values_to_objects(value):
