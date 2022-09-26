@@ -34,14 +34,12 @@ def generate_shelves():
 
     for shelf_set_config in shelves_set_config:
         shelf_set_filepath = shelf_set_config.get('shelf_set_source_path')
-
-        if shelf_set_filepath[current_os]:
-            if not os.path.isfile(shelf_set_filepath[current_os]):
-                raise FileNotFoundError(
-                    "This path doesn't exist - {}".format(
-                        shelf_set_filepath[current_os]
-                    )
-                )
+        shelf_set_os_filepath = shelf_set_filepath[current_os]
+        if shelf_set_os_filepath:
+            if not os.path.isfile(shelf_set_os_filepath):
+                log.error("Shelf path doesn't exist - "
+                          "{}".format(shelf_set_os_filepath))
+                continue
 
             hou.shelves.newShelfSet(file_path=shelf_set_filepath[current_os])
             continue
