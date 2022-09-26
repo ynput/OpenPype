@@ -79,7 +79,8 @@ build-centos-manual:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-
+    - if: $CI_COMMIT_BRANCH == "cicd"
+      when: manual
 
 build-windows-on-tags:
   extends: .build-windows
