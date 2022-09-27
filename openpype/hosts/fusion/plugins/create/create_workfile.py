@@ -102,7 +102,10 @@ class FusionWorkfileCreator(AutoCreator):
         ))
 
         instance = CreatedInstance(
-            self.family, subset_name, data, self
+            family=self.family,
+            subset_name=subset_name,
+            data=data,
+            creator=self
         )
         instance.transient_data["comp"] = comp
         self._add_instance_to_context(instance)
