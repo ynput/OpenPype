@@ -1,7 +1,7 @@
 import os
 import requests
 from urllib.parse import urlparse
-from .credentials import load_token, get_last_server
+from .credentials import get_last_server, load_token, store_token
 
 
 class UrlError(Exception):
@@ -163,6 +163,29 @@ def login(url, username, password):
         token = response.json()["token"]
 
     return token
+
+
+def logout(url, token):
+    """Logout from server and throw token away.
+
+    Args:
+        url (str): Url from which should be logged out.
+        token (str): Token which should be used to log out.
+    """
+
+    current_token = load_token(url)
+    # Remove token from keyring
+    if current_token == token:
+        store_token(url, None)
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer {}".format(token)
+    }
+    requests.post(
+        url + "/api/auth/logout",
+        headers=headers
+    )
 
 
 def load_environments():
