@@ -3,8 +3,6 @@ import requests
 from urllib.parse import urlparse
 from .credentials import load_token, get_last_server
 
-EXAMPLE_URL = "https://openpype.server.com"
-
 
 class UrlError(Exception):
     def __init__(self, message, hints=None):
@@ -31,8 +29,7 @@ def validate_url(url):
     modified_url = stripperd_url.rstrip("/")
     parsed_url = _try_parse_url(modified_url)
     universal_hints = [
-        "does the url work browser?",
-        "example url \"{}\"".format(EXAMPLE_URL)
+        "does the url work in browser?"
     ]
     if parsed_url is None:
         raise UrlError(
