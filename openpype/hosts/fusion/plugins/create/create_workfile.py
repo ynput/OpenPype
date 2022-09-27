@@ -47,7 +47,6 @@ class FusionWorkfileCreator(AutoCreator):
             creator=self
         )
         instance.transient_data["comp"] = comp
-        instance.transient_data["tool"] = None
 
         self._add_instance_to_context(instance)
 
@@ -106,7 +105,6 @@ class FusionWorkfileCreator(AutoCreator):
             self.family, subset_name, data, self
         )
         instance.transient_data["comp"] = comp
-        instance.transient_data["tool"] = None
         self._add_instance_to_context(instance)
 
         self._imprint(comp, data)
