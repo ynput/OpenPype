@@ -73,7 +73,14 @@ class TokenKeyring:
     def set_value(self, value):
         import keyring
 
-        keyring.set_password(self._keyring_key, self.username_key, value)
+        if value is not None:
+            keyring.set_password(self._keyring_key, self.username_key, value)
+            return
+
+        try:
+            keyring.delete_password(self._keyring_key, self.username_key)
+        except keyring.errors.PasswordDeleteError:
+            pass
 
 
 def load_token(url):
