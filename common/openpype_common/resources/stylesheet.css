@@ -38,19 +38,37 @@ QPushButton:disabled {
     background: #434a56;
 }
 
-QAbstractSpinBox, QLineEdit, QPlainTextEdit, QTextEdit {
+QLineEdit {
     border: 1px solid #373D48;
     border-radius: 0.3em;
     background: #21252B;
     padding: 0.1em;
 }
 
-QAbstractSpinBox:disabled, QLineEdit:disabled, QPlainTextEdit:disabled, QTextEdit:disabled {
+QLineEdit:disabled {
     background: #2C313A;
 }
-QAbstractSpinBox:hover, QLineEdit:hover, QPlainTextEdit:hover, QTextEdit:hover{
+QLineEdit:hover {
     border-color: rgba(168, 175, 189, .3);
 }
-QAbstractSpinBox:focus, QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus{
+QLineEdit:focus {
     border-color: rgb(92, 173, 214);
+}
+
+QLineEdit[state="invalid"] {
+    border-color: #AA5050;
+}
+
+#Separator {
+    background: rgba(75, 83, 98, 127);
+}
+
+#PasswordBtn {
+    border: none;
+    padding: 0.1em;
+    background: transparent;
+}
+
+#PasswordBtn:hover {
+    background: #434a56;
 }

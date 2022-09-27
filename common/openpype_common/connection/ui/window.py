@@ -1,6 +1,21 @@
 from Qt import QtWidgets, QtCore, QtGui
-from openpype_common.connection import validate_url, UrlError, login
-from openpype_common.resources import get_icon_path, load_stylesheet
+
+from openpype_common.resources import (
+    get_resource_path,
+    get_icon_path,
+    load_stylesheet,
+)
+from openpype_common.connection.server import (
+    validate_url,
+    UrlError,
+    login,
+)
+
+from .widgets import (
+    PressHoverButton,
+    PlaceholderLineEdit,
+)
+from .lib import set_style_property
 
 
 class ServerLoginWindow(QtWidgets.QDialog):
@@ -15,78 +30,95 @@ class ServerLoginWindow(QtWidgets.QDialog):
         self.setWindowIcon(icon)
         self.setWindowTitle("Login to server")
 
-        # Content - whare are inputs
-        content_widget = QtWidgets.QWidget(self)
-        # Message - messages for users (e.g. invalid url etc.)
-        message_label = QtWidgets.QLabel(self)
-        message_label.setWordWrap(True)
-        message_label.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
-
         # --- URL page ---
         # TODO: add some details what is expected to fill
-        url_widget = QtWidgets.QWidget(content_widget)
+        url_widget = QtWidgets.QWidget(self)
 
-        url_input = QtWidgets.QLineEdit(url_widget)
+        url_input = PlaceholderLineEdit(url_widget)
+        url_input.setPlaceholderText("< https://openpype.server.com >")
 
         url_layout = QtWidgets.QFormLayout(url_widget)
         url_layout.setContentsMargins(0, 0, 0, 0)
         url_layout.addRow("URL:", url_input)
 
+        url_cred_sep = QtWidgets.QFrame(self)
+        url_cred_sep.setObjectName("Separator")
+        url_cred_sep.setMinimumHeight(2)
+        url_cred_sep.setMaximumHeight(2)
+
         # --- Login page ---
-        login_widget = QtWidgets.QWidget(content_widget)
+        login_widget = QtWidgets.QWidget(self)
 
         user_cred_widget = QtWidgets.QWidget(login_widget)
-        username_input = QtWidgets.QLineEdit(user_cred_widget)
-        password_input = QtWidgets.QLineEdit(user_cred_widget)
+        username_input = PlaceholderLineEdit(user_cred_widget)
+        username_input.setPlaceholderText("< Artist >")
+
+        password_widget = QtWidgets.QWidget(user_cred_widget)
+        password_input = PlaceholderLineEdit(password_widget)
+        password_input.setPlaceholderText("< *********** >")
         password_input.setEchoMode(password_input.Password)
+
+        show_password_icon_path = get_resource_path("eye.png")
+        show_password_icon = QtGui.QIcon(show_password_icon_path)
+        show_password_btn = PressHoverButton(password_widget)
+        show_password_btn.setObjectName("PasswordBtn")
+        show_password_btn.setIcon(show_password_icon)
+        show_password_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+
+        password_layout = QtWidgets.QHBoxLayout(password_widget)
+        password_layout.setContentsMargins(0, 0, 0, 0)
+        password_layout.addWidget(password_input, 1)
+        password_layout.addWidget(show_password_btn, 0)
 
         # --- Credentials inputs ---
         user_cred_layout = QtWidgets.QFormLayout(user_cred_widget)
         user_cred_layout.setContentsMargins(0, 0, 0, 0)
         user_cred_layout.addRow("Username:", username_input)
-        user_cred_layout.addRow("Password:", password_input)
+        user_cred_layout.addRow("Password:", password_widget)
 
         login_layout = QtWidgets.QVBoxLayout(login_widget)
         login_layout.setContentsMargins(0, 0, 0, 0)
         login_layout.addWidget(user_cred_widget, 1)
 
-        content_layout = QtWidgets.QVBoxLayout(content_widget)
-        content_layout.setContentsMargins(0, 0, 0, 0)
-        content_layout.addWidget(url_widget, 0)
-        content_layout.addWidget(login_widget, 0)
-        content_layout.addStretch(1)
+        cred_msg_sep = QtWidgets.QFrame(self)
+        cred_msg_sep.setObjectName("Separator")
+        cred_msg_sep.setMinimumHeight(2)
+        cred_msg_sep.setMaximumHeight(2)
+
+        # --- Messages ---
+        # Messages for users (e.g. invalid url etc.)
+        message_label = QtWidgets.QLabel(self)
+        message_label.setWordWrap(True)
+        message_label.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
 
         footer_widget = QtWidgets.QWidget(self)
-        connect_btn = QtWidgets.QPushButton("Connect", footer_widget)
-        change_server_btn = QtWidgets.QPushButton("Change URL", footer_widget)
         login_btn = QtWidgets.QPushButton("Login", footer_widget)
 
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
         footer_layout.setContentsMargins(0, 0, 0, 0)
-        footer_layout.addWidget(change_server_btn, 0)
         footer_layout.addStretch(1)
-        footer_layout.addWidget(connect_btn, 0)
         footer_layout.addWidget(login_btn, 0)
 
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.addWidget(content_widget, 0)
+        main_layout.addWidget(url_widget, 0)
+        main_layout.addWidget(url_cred_sep, 0)
+        main_layout.addWidget(login_widget, 0)
+        main_layout.addWidget(cred_msg_sep, 0)
         main_layout.addWidget(message_label, 0)
         main_layout.addStretch(1)
         main_layout.addWidget(footer_widget, 0)
 
         url_input.textChanged.connect(self._on_url_change)
         url_input.returnPressed.connect(self._on_url_enter_press)
-        connect_btn.clicked.connect(self._on_connect_click)
         username_input.returnPressed.connect(self._on_username_enter_press)
         password_input.returnPressed.connect(self._on_password_enter_press)
-        change_server_btn.clicked.connect(self._on_change_server_click)
+        show_password_btn.change_state.connect(self._on_show_password)
         login_btn.clicked.connect(self._on_login_click)
 
         self._message_label = message_label
 
         self._url_widget = url_widget
         self._url_input = url_input
-        self._connect_btn = connect_btn
 
         self._login_widget = login_widget
 
@@ -94,29 +126,33 @@ class ServerLoginWindow(QtWidgets.QDialog):
         self._username_input = username_input
         self._password_input = password_input
 
-        self._change_server_btn = change_server_btn
         self._login_btn = login_btn
 
+        self._url_is_valid = None
+        self._credentials_are_valid = None
         self._result = (None, None)
         self._first_show = True
-        self._page = 0
-        self._update_visibilities()
 
     def showEvent(self, event):
         super().showEvent(event)
         if self._first_show:
             self._first_show = False
-            self.setStyleSheet(load_stylesheet())
-            self.resize(self.default_width, self.default_height)
-            self._center_window()
-            self._url_input.setFocus(QtCore.Qt.OtherFocusReason)
-            # self._url_input.setText("https://")
+            self._on_first_show()
+
+    def _on_first_show(self):
+        self.setStyleSheet(load_stylesheet())
+        self.resize(self.default_width, self.default_height)
+        self._center_window()
+
+        if self._url_input.text():
+            widget = self._username_input
+        else:
+            widget = self._url_input
+
+        self._set_input_focus(widget)
 
     def result(self):
         return self._result
-    # def resizeEvent(self, event):
-    #     super().resizeEvent(event)
-    #     print(self.size())
 
     def _center_window(self):
         """Move window to center of it's screen."""
@@ -132,24 +168,46 @@ class ServerLoginWindow(QtWidgets.QDialog):
 
     def _on_url_change(self, text):
         if not text:
-            self._connect_btn.setEnabled(False)
+            self._login_btn.setEnabled(False)
         else:
-            self._connect_btn.setEnabled(True)
+            self._login_btn.setEnabled(True)
+        self._set_url_valid(None)
+        self._set_credentials_valid(None)
+
+    def _set_url_valid(self, valid):
+        if valid is self._url_is_valid:
+            return
+
+        self._url_is_valid = valid
+        self._set_input_valid_state(self._url_input, valid)
+
+    def _set_credentials_valid(self, valid):
+        if self._credentials_are_valid is valid:
+            return
+
+        self._credentials_are_valid = valid
+        self._set_input_valid_state(self._username_input, valid)
+        self._set_input_valid_state(self._password_input, valid)
 
     def _on_url_enter_press(self):
-        self._validate_url()
-
-    def _on_connect_click(self):
-        self._validate_url()
+        self._set_input_focus(self._username_input)
 
     def _on_username_enter_press(self):
-        self._password_input.setFocus(QtCore.Qt.OtherFocusReason)
+        self._set_input_focus(self._password_input)
 
     def _on_password_enter_press(self):
         self._login()
 
-    def _on_change_server_click(self):
-        self._go_to_url()
+    def _on_show_password(self, show_password):
+        if show_password:
+            placeholder_text = "< MySecret124 >"
+            echo_mode = QtWidgets.QLineEdit.Normal
+        else:
+            placeholder_text = "< *********** >"
+            echo_mode = QtWidgets.QLineEdit.Password
+
+        self._password_input.setEchoMode(echo_mode)
+        self._password_input.setPlaceholderText(placeholder_text)
 
     def _on_login_click(self):
         self._login()
@@ -158,8 +216,7 @@ class ServerLoginWindow(QtWidgets.QDialog):
         """Use url from input, try connect and change window state on success.
 
         Todos:
-            Change colors of inputs/buttons if connection fails. Maybe add
-                some message?
+            Threaded check.
         """
 
         url = self._url_input.text()
@@ -183,54 +240,67 @@ class ServerLoginWindow(QtWidgets.QDialog):
             self._set_message("Unexpected error happened!")
 
         if valid_url is None:
-            return
+            return False
 
         self._url_input.setText(valid_url)
-        self._go_to_login()
+        return True
 
     def _login(self):
+        if not self._url_is_valid:
+            self._set_url_valid(self._validate_url())
+
+        if not self._url_is_valid:
+            self._set_input_focus(self._url_input)
+            self._set_credentials_valid(None)
+            return
+
+        self._clear_message()
+
         url = self._url_input.text()
         username = self._username_input.text()
         password = self._password_input.text()
         try:
             token = login(url, username, password)
         except Exception as exc:
+            # TODO handle unexpected errors
             print(exc)
             token = None
 
         if token is not None:
             self._result = (url, token)
-            self.close()
-
-    def _set_page(self, page):
-        if self._page == page:
+            self.accept()
             return
 
-        self._page = page
-        self._update_visibilities()
+        self._set_credentials_valid(False)
+        message_lines = ["<b>Invalid credentials</b>"]
+        if not username.strip():
+            message_lines.append("- Username is not filled")
 
-    def _go_to_url(self):
-        self._set_page(0)
-        self._url_input.setFocus(QtCore.Qt.OtherFocusReason)
-        self._clear_message()
+        if not password.strip():
+            message_lines.append("- Password is not filled")
 
-    def _go_to_login(self):
-        self._set_page(1)
-        self._username_input.setFocus(QtCore.Qt.OtherFocusReason)
-        self._clear_message()
+        if username and password:
+            message_lines.append("- Check your credentials")
+
+        self._set_message("<br/>".join(message_lines))
+        self._set_input_focus(self._username_input)
+
+    def _set_input_focus(self, widget):
+        widget.setFocus(QtCore.Qt.MouseFocusReason)
+
+    def _set_input_valid_state(self, widget, valid):
+        state = ""
+        if valid:
+            state = "valid"
+        elif not valid:
+            state = "invalid"
+        set_style_property(widget, "state", state)
 
     def _set_message(self, message):
         self._message_label.setText(message)
 
     def _clear_message(self):
         self._message_label.setText("")
-
-    def _update_visibilities(self):
-        self._url_widget.setVisible(self._page == 0)
-        self._connect_btn.setVisible(self._page == 0)
-        self._login_widget.setVisible(self._page == 1)
-        self._login_btn.setVisible(self._page == 1)
-        self._change_server_btn.setVisible(self._page == 1)
 
     def set_url(self, url):
         self._url_input.setText(url)
