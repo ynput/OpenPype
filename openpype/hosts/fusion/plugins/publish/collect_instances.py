@@ -46,24 +46,12 @@ class CollectInstances(pyblish.api.ContextPlugin):
         context.data["frameEndHandle"] = int(global_end)
 
         for instance in context:
-
-            tool = instance.data["transientData"]["tool"]
-
-            path = tool["Clip"][comp.TIME_UNDEFINED]
-            filename = os.path.basename(path)
-            head, padding, tail = get_frame_path(filename)
-            ext = os.path.splitext(path)[1]
-            assert tail == ext, ("Tail does not match %s" % ext)
-
             # Include start and end render frame in label
             subset = instance.data["subset"]
             label = "{subset} ({start}-{end})".format(subset=subset,
                                                       start=int(start),
                                                       end=int(end))
             instance.data.update({
-                "path": path,
-                "outputDir": os.path.dirname(path),
-                "ext": ext,  # todo: should be redundant?
                 "label": label,
                 # todo: Allow custom frame range per instance
                 "frameStart": context.data["frameStart"],
@@ -71,14 +59,32 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "frameStartHandle": context.data["frameStartHandle"],
                 "frameEndHandle": context.data["frameStartHandle"],
                 "fps": context.data["fps"],
-                "families": ["render", "review"],
-                "family": "render",
-
-                # Backwards compatibility: embed tool in instance.data
-                "tool": tool
             })
 
-            # Add tool itself as member
-            instance.append(tool)
+            if instance.data["family"] == "render":
+                # TODO: This should probably move into a collector of
+                #       its own for the "render" family
+                # This is only the case for savers currently but not
+                # for workfile instances. So we assume saver here.
+                tool = instance.data["transientData"]["tool"]
+                path = tool["Clip"][comp.TIME_UNDEFINED]
 
-            self.log.info("Found: \"%s\" " % path)
+                filename = os.path.basename(path)
+                head, padding, tail = get_frame_path(filename)
+                ext = os.path.splitext(path)[1]
+                assert tail == ext, ("Tail does not match %s" % ext)
+
+                instance.data.update({
+                    "path": path,
+                    "outputDir": os.path.dirname(path),
+                    "ext": ext,  # todo: should be redundant?
+
+                    "families": ["render", "review"],
+                    "family": "render",
+
+                    # Backwards compatibility: embed tool in instance.data
+                    "tool": tool
+                })
+
+                # Add tool itself as member
+                instance.append(tool)
