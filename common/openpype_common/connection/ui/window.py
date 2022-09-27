@@ -1,3 +1,4 @@
+import traceback
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype_common.resources import (
@@ -152,6 +153,12 @@ class ServerLoginWindow(QtWidgets.QDialog):
         self._set_input_focus(widget)
 
     def result(self):
+        """Result url and token or login.
+
+        Returns:
+            Union[Tuple[str, str], Tuple[None, None]]: Url and token used for
+                login if was successfull otherwise are both set to None.
+        """
         return self._result
 
     def _center_window(self):
@@ -225,7 +232,7 @@ class ServerLoginWindow(QtWidgets.QDialog):
             valid_url = validate_url(url)
 
         except UrlError as exc:
-            parts = ["<b>{}</b>".format(str(exc))]
+            parts = ["<b>{}</b>".format(exc.title)]
             for hint in exc.hints:
                 parts.append("- {}".format(hint))
             self._set_message("<br/>".join(parts))
@@ -235,9 +242,8 @@ class ServerLoginWindow(QtWidgets.QDialog):
             raise
 
         except BaseException:
-            # TODO handle any other error
-            # - add traceback somewhere
-            self._set_message("Unexpected error happened!")
+            self._set_unexpected_error()
+            return
 
         if valid_url is None:
             return False
@@ -261,10 +267,9 @@ class ServerLoginWindow(QtWidgets.QDialog):
         password = self._password_input.text()
         try:
             token = login(url, username, password)
-        except Exception as exc:
-            # TODO handle unexpected errors
-            print(exc)
-            token = None
+        except BaseException:
+            self._set_unexpected_error()
+            return
 
         if token is not None:
             self._result = (url, token)
@@ -302,12 +307,34 @@ class ServerLoginWindow(QtWidgets.QDialog):
     def _clear_message(self):
         self._message_label.setText("")
 
+    def _set_unexpected_error(self):
+        # TODO add traceback somewhere
+        # - maybe a button to show or copy?
+        traceback.print_exc()
+        lines = [
+            "<b>Unexpected error happened</b>",
+            "- Can be caused by wrong url (leading elsewhere)"
+        ]
+        self._set_message("<br/>".join(lines))
+
     def set_url(self, url):
         self._url_input.setText(url)
         self._validate_url()
 
 
 def ask_to_login(url=None):
+    """Ask user to login using Qt dialog.
+
+    Function creates new QApplication if is not created yet.
+
+    Args:
+        url (str): Server url that will be prefilled in dialog.
+
+    Returns:
+        Tuple[str, str]: Returns Url and user's token. Url can be changed
+            during dialog lifetime that's why the url is returned.
+    """
+
     app_instance = QtWidgets.QApplication.instance()
     if app_instance is None:
         for attr_name in (
@@ -327,10 +354,14 @@ def ask_to_login(url=None):
         window.exec_()
         return window.result()
 
+    # Use QTimer to exec dialog if application is not running yet
+    # - it is not possible to call 'exec_' on dialog without running app
+    #   - it is but the window is stuck
     if app_instance.startingUp():
         timer = QtCore.QTimer()
         timer.setSingleShot(True)
         timer.timeout.connect(_exec_window)
         timer.start()
+        # This can became main Qt loop. Maybe should live elsewhere
         app_instance.exec_()
     return _exec_window()
