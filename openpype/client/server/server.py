@@ -104,7 +104,7 @@ class FolderNotFound(MissingEntityError):
 class RestApiResponse(object):
     """API Response."""
 
-    def __init__(self, status_code=200, **data):
+    def __init__(self, status_code, data):
         self.status = status_code
         self.data = data
 
@@ -320,12 +320,12 @@ class ServerAPIBase(object):
         except ConnectionRefusedError:
             response = RestApiResponse(
                 500,
-                detail="Unable to connect the server. Connection refused"
+                {"detail": "Unable to connect the server. Connection refused"}
             )
         except requests.exceptions.ConnectionError:
             response = RestApiResponse(
                 500,
-                detail="Unable to connect the server. Connection error"
+                {"detail": "Unable to connect the server. Connection error"}
             )
         else:
             if response.text == "":
@@ -337,12 +337,13 @@ class ServerAPIBase(object):
                 except JSONDecodeError:
                     response = RestApiResponse(
                         500,
-                        detail="The response is not a JSON: {}".format(
-                            response.text
-                        )
+                        {
+                            "detail": "The response is not a JSON: {}".format(
+                                response.text)
+                        }
                     )
                 else:
-                    response = RestApiResponse(response.status_code, **data)
+                    response = RestApiResponse(response.status_code, data)
         self.log.debug("Response {}".format(str(response)))
         return response
 
