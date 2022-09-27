@@ -38,7 +38,8 @@ class ValidateUniqueSubsets(pyblish.api.ContextPlugin):
                             asset=asset,
                             subset=subset,
                             instances=instances
-                    ))
+                        )
+                    )
                     invalid.extend(instances)
 
         # Return tools for the invalid instances so they can be selected
