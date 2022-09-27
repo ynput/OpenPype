@@ -4,7 +4,6 @@ import logging
 from http import HTTPStatus
 
 import requests
-import appdirs
 
 from .graphql import INTROSPECTION_QUERY
 
@@ -25,44 +24,6 @@ class AuthenticationError(ServerError):
 
 class ServerNotReached(ServerError):
     pass
-
-
-# TODO use keyring
-def _get_token_path():
-    dirpath = appdirs.user_data_dir("openpype", "pypeclub")
-    return os.path.join(dirpath, "server_tokens.json")
-
-
-def load_tokens():
-    filepath = _get_token_path()
-    try:
-        with open(filepath, "r") as stream:
-            tokens = json.load(stream)
-    except BaseException:
-        tokens = {}
-    return tokens
-
-
-def store_token(url, token):
-    tokens = load_tokens()
-    if token is not None:
-        tokens[url] = token
-    elif url in tokens:
-        tokens.pop(url, None)
-    else:
-        return
-    filepath = _get_token_path()
-    dirpath = os.path.dirname(filepath)
-    if not os.path.exists(dirpath):
-        os.makedirs(dirpath)
-
-    with open(filepath, "w") as stream:
-        json.dump(tokens, stream, indent=4)
-
-
-def load_token(url):
-    tokens = load_tokens()
-    return tokens.get(url)
 
 
 class RequestType:
@@ -179,8 +140,8 @@ class ServerAPIBase(object):
     @property
     def is_server_available(self):
         if self._server_available is None:
-            response = self.get(self._base_url)
-            self._server_available = response.status == 200
+            response = requests.get(self._base_url)
+            self._server_available = response.status_code == 200
         return self._server_available
 
     @property
@@ -261,9 +222,10 @@ class ServerAPIBase(object):
 
     def logout(self):
         if self._access_token:
+            from openpype_common.connection import logout
+
+            logout(self._base_url, self._access_token)
             self.reset_token()
-            store_token(self._base_url, None)
-            return self.post("auth/logout")
 
     def query_graphl(self, query, variables=None):
         data = {"query": query, "variables": variables or {}}
@@ -479,25 +441,14 @@ class ServerAPI(ServerAPIBase):
         url = self.get_url()
         token = self.get_token()
 
-        used_stored_token = False
-        if not token:
-            used_stored_token = True
-            token = load_token(url)
         super(ServerAPI, self).__init__(url, token)
 
         self.validate_server_availability()
-
-        if not used_stored_token and not self.has_valid_token:
-            self._access_token = load_token(url)
-
-        if self.has_valid_token:
-            os.environ["OPENPYPE_TOKEN"] = self._access_token
 
     def login(self, username, password):
         previous_token = self._access_token
         super(ServerAPI, self).login(username, password)
         if self.has_valid_token and previous_token != self._access_token:
-            store_token(self._base_url, self._access_token)
             os.environ["OPENPYPE_TOKEN"] = self._access_token
 
     @staticmethod
@@ -505,7 +456,7 @@ class ServerAPI(ServerAPIBase):
         return os.environ.get("OPENPYPE_SERVER_URL")
 
     @staticmethod
-    def get_token(url):
+    def get_token():
         return os.environ.get("OPENPYPE_TOKEN")
 
 
@@ -515,10 +466,7 @@ class GlobalContext:
     @classmethod
     def get_server_api_connection(cls):
         if cls._connection is None:
-            # Fill to start work
-            # NOTE: This is not how it should be in production !!!
-            con = ServerAPI()
-            cls._connection = con
+            cls._connection = ServerAPI()
         return cls._connection
 
 
