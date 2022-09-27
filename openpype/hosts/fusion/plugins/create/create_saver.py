@@ -17,7 +17,7 @@ from openpype.pipeline import (
 class CreateSaver(Creator):
     identifier = "io.openpype.creators.fusion.saver"
     name = "saver"
-    label = "Create Saver"
+    label = "Saver"
     family = "render"
     default_variants = ["Main"]
 
