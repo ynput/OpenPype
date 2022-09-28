@@ -82,11 +82,25 @@ def _convert_color_values_to_objects(value):
     return parse_color(value)
 
 
-def get_objected_colors():
+def get_objected_colors(*keys):
     """Colors parsed from stylesheet data into color definitions.
 
+    You can pass multiple arguments to get a key from the data dict's colors.
+    Because this functions returns a deep copy of the cached data this allows
+    a much smaller dataset to be copied and thus result in a faster function.
+    It is however a micro-optimization in the area of 0.001s and smaller.
+
+    For example:
+        >>> get_colors_data()           # copy of full colors dict
+        >>> get_colors_data("font")
+        >>> get_colors_data("loader", "asset-view")
+
+    Args:
+        *keys: Each key argument will return a key nested deeper in the
+            objected colors data.
+
     Returns:
-        dict: Parsed color objects by keys in data.
+        Any: Parsed color objects by keys in data.
     """
     if _Cache.objected_colors is None:
         colors_data = get_colors_data()
@@ -96,7 +110,10 @@ def get_objected_colors():
 
         _Cache.objected_colors = output
 
-    return copy.deepcopy(_Cache.objected_colors)
+    output = _Cache.objected_colors
+    for key in keys:
+        output = output[key]
+    return copy.deepcopy(output)
 
 
 def _load_stylesheet():
