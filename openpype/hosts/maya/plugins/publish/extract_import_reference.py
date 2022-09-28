@@ -1,5 +1,5 @@
-import os
 
+import os
 import pyblish.api
 from openpype.pipeline import publish, legacy_io
 from openpype.settings import get_project_settings
@@ -10,7 +10,7 @@ def _get_project_setting():
     project_setting = get_project_settings(project_name)
     maya_enabled = (
         project_setting["maya"]["publish"]["ImportReference"]["enabled"]
-        )
+    )
     use_published = (
         project_setting["deadline"]["publish"]["MayaSubmitDeadline"]["use_published"] # noqa
     )
