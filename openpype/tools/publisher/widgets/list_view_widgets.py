@@ -54,7 +54,7 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, parent):
         super(ListItemDelegate, self).__init__(parent)
 
-        colors_data = get_objected_colors("publisher", "list-view-group")
+        group_color_info = get_objected_colors("publisher", "list-view-group")
 
         self._group_colors = {
             key: value.get_qcolor()
