@@ -101,7 +101,7 @@ class ImportReference(publish.Extractor):
                       shader=True,
                       expressions=True,
                       constructionHistory=True
-            )
+                    )
 
         if "files" not in instance.data:
             instance.data["files"] = []
