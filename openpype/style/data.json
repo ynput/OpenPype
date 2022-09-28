@@ -91,6 +91,7 @@
             "error": "#AA5050",
             "success": "#458056",
             "warning": "#ffc671",
+            "tab-bg": "#16191d",
             "list-view-group": {
                 "bg": "#434a56",
                 "bg-hover": "rgba(168, 175, 189, 0.3)",

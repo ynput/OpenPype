@@ -33,6 +33,10 @@ from .list_view_widgets import (
     InstanceListView
 )
 
+from .tabs_widget import (
+    PublisherTabsWidget
+)
+
 
 __all__ = (
     "get_icon_path",
@@ -57,4 +61,6 @@ __all__ = (
 
     "InstanceCardView",
     "InstanceListView",
+
+    "PublisherTabsWidget",
 )
