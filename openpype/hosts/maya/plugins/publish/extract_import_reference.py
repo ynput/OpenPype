@@ -1,3 +1,5 @@
+import os
+
 import pyblish.api
 
 from openpype.pipeline import publish, legacy_io
@@ -37,7 +39,6 @@ class ImportReference(publish.Extractor):
     tmp_format = "_tmp"
 
     def process(self, instance):
-        import os
         from maya import cmds
 
         ext_mapping = (
