@@ -137,11 +137,14 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
             src_index = self._projects_model.find_project(project_name)
             if src_index is not None:
                 index = self._projects_proxy.mapFromSource(src_index)
-            if index:
-                mode = (
-                    QtCore.QItemSelectionModel.Select
-                    | QtCore.QItemSelectionModel.Rows)
-                self._projects_view.selectionModel().select(index, mode)
+
+            if index is not None:
+                selection_model = self._projects_view.selectionModel()
+                selection_model.select(
+                    index,
+                    QtCore.QItemSelectionModel.SelectCurrent
+                )
+                self._projects_view.setCurrentIndex(index)
 
         self._cancel_btn.setVisible(self._project_name is not None)
         super(StandaloneOverlayWidget, self).showEvent(event)
@@ -239,15 +242,15 @@ class TrayPublishWindow(PublisherWindow):
 
     def _on_project_select(self, project_name):
         # TODO register project specific plugin paths
-        self.controller.save_changes()
-        self.controller.reset_project_data_cache()
+        self._controller.save_changes()
+        self._controller.reset_project_data_cache()
 
         self.reset()
-        if not self.controller.instances:
+        if not self._controller.instances:
             self._go_to_create_tab()
 
     def _on_tray_publish_save(self):
-        self.controller.save_changes()
+        self._controller.save_changes()
         print("NOT YET IMPLEMENTED")
 
 
