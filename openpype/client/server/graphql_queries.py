@@ -95,18 +95,54 @@ def folders_graphql_query(fields):
     folders_query.set_filter("paths", folder_paths_var)
     folders_query.set_filter("hasSubsets", has_subsets_var)
 
-    fields = set(fields)
-    if "tasks" in fields:
-        fields.remove("tasks")
-        tasks_query = folders_query.add_field("tasks", has_edges=True)
-        tasks_query.add_field("name")
-        tasks_query.add_field("taskType")
-
     nested_fields = fields_to_dict(fields)
 
     query_queue = collections.deque()
     for key, value in nested_fields.items():
         query_queue.append((key, value, folders_query))
+
+    while query_queue:
+        item = query_queue.popleft()
+        key, value, parent = item
+        field = parent.add_field(key)
+        if value is FIELD_VALUE:
+            continue
+
+        for k, v in value.items():
+            query_queue.append((k, v, field))
+    return query
+
+
+def folders_tasks_graphql_query(fields):
+    query = GraphQlQuery("FoldersQuery")
+    project_name_var = query.add_variable("projectName", "String!")
+    folder_ids_var = query.add_variable("folderIds", "[String!]")
+    parent_folder_ids_var = query.add_variable("parentFolderIds", "[String!]")
+    folder_paths_var = query.add_variable("folderPaths", "[String!]")
+    folder_names_var = query.add_variable("folderNames", "[String!]")
+    has_subsets_var = query.add_variable("folderHasSubsets", "Boolean!")
+
+    project_field = query.add_field("project")
+    project_field.set_filter("name", project_name_var)
+
+    folders_field = project_field.add_field("folders", has_edges=True)
+    folders_field.set_filter("ids", folder_ids_var)
+    folders_field.set_filter("parentIds", parent_folder_ids_var)
+    folders_field.set_filter("names", folder_names_var)
+    folders_field.set_filter("paths", folder_paths_var)
+    folders_field.set_filter("hasSubsets", has_subsets_var)
+
+    fields = set(fields)
+    fields.discard("tasks")
+    tasks_field = folders_field.add_field("tasks", has_edges=True)
+    tasks_field.add_field("name")
+    tasks_field.add_field("taskType")
+
+    nested_fields = fields_to_dict(fields)
+
+    query_queue = collections.deque()
+    for key, value in nested_fields.items():
+        query_queue.append((key, value, folders_field))
 
     while query_queue:
         item = query_queue.popleft()
