@@ -244,7 +244,7 @@ class TrayPublishWindow(PublisherWindow):
 
         self.reset()
         if not self.controller.instances:
-            self._on_create_clicked()
+            self._go_to_create_tab()
 
     def _on_tray_publish_save(self):
         self.controller.save_changes()
