@@ -19,9 +19,12 @@ class PulseThread(QtCore.QThread):
         while True:
             if self.isInterruptionRequested():
                 return
-            try:
-                app.Test()
-            except Exception:
+
+            # We don't need to call Test because PyRemoteObject of the app
+            # will actually fail to even resolve the Test function if it has
+            # gone down. So we can actually already just check by confirming
+            # the method is still getting resolved. (Optimization)
+            if app.Test is None:
                 self.no_response.emit()
 
             self.msleep(interval)
