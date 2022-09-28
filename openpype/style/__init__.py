@@ -1,4 +1,5 @@
 import os
+import copy
 import json
 import collections
 import six
@@ -49,13 +50,11 @@ def _get_colors_raw_data():
 
 def get_colors_data():
     """Only color data from stylesheet data."""
-    if _Cache.colors_data is not None:
-        return _Cache.colors_data
-
-    data = _get_colors_raw_data()
-    color_data = data.get("color") or {}
-    _Cache.colors_data = color_data
-    return color_data
+    if _Cache.colors_data is None:
+        data = _get_colors_raw_data()
+        color_data = data.get("color") or {}
+        _Cache.colors_data = color_data
+    return copy.deepcopy(_Cache.colors_data)
 
 
 def _convert_color_values_to_objects(value):
@@ -89,16 +88,15 @@ def get_objected_colors():
     Returns:
         dict: Parsed color objects by keys in data.
     """
-    if _Cache.objected_colors is not None:
-        return _Cache.objected_colors
+    if _Cache.objected_colors is None:
+        colors_data = get_colors_data()
+        output = {}
+        for key, value in colors_data.items():
+            output[key] = _convert_color_values_to_objects(value)
 
-    colors_data = get_colors_data()
-    output = {}
-    for key, value in colors_data.items():
-        output[key] = _convert_color_values_to_objects(value)
+        _Cache.objected_colors = output
 
-    _Cache.objected_colors = output
-    return output
+    return copy.deepcopy(_Cache.objected_colors)
 
 
 def _load_stylesheet():
