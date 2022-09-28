@@ -1,6 +1,7 @@
-
 import os
+
 import pyblish.api
+
 from openpype.pipeline import publish, legacy_io
 from openpype.settings import get_project_settings
 
