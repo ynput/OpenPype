@@ -16,8 +16,8 @@ from .constants import (
     REPRESENTATION_FILES_FIELDS,
     DEFAULT_REPRESENTATION_FIELDS,
 )
-from .graphql import (
-    GraphQlQuery,
+from .graphql import GraphQlQuery
+from .graphql_queries import (
     project_graphql_query,
     projects_graphql_query,
     folders_graphql_query,
@@ -1426,11 +1426,18 @@ def get_representations(
     ]
 
 
-def get_representation_parents(*args, **kwargs):
-    raise NotImplementedError("'get_representation_parents' not implemented")
+def get_representation_parents(project_name, representation):
+    if not representation:
+        return None
+
+    repre_id = representation["_id"]
+    parents_by_repre_id = get_representations_parents(
+        project_name, [representation]
+    )
+    return parents_by_repre_id[repre_id]
 
 
-def get_representations_parents(*args, **kwargs):
+def get_representations_parents(project_name, representations):
     raise NotImplementedError("'get_representations_parents' not implemented")
 
 
