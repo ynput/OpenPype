@@ -90,7 +90,7 @@ def set_asset_resolution():
     })
 
 
-def validate_comp_prefs(comp=None):
+def validate_comp_prefs(comp=None, force_repair=False):
     """Validate current comp defaults with asset settings.
 
     Validates fps, resolutionWidth, resolutionHeight, aspectRatio.
@@ -133,20 +133,21 @@ def validate_comp_prefs(comp=None):
         asset_value = asset_data[key]
         comp_value = comp_frame_format_prefs.get(comp_key)
         if asset_value != comp_value:
-            # todo: Actually show dialog to user instead of just logging
-            log.warning(
-                "Comp {pref} {value} does not match asset "
-                "'{asset_name}' {pref} {asset_value}".format(
-                    pref=label,
-                    value=comp_value,
-                    asset_name=asset_doc["name"],
-                    asset_value=asset_value)
-            )
-
             invalid_msg = "{} {} should be {}".format(label,
                                                       comp_value,
                                                       asset_value)
             invalid.append(invalid_msg)
+
+            if not force_repair:
+                # Do not log warning if we force repair anyway
+                log.warning(
+                    "Comp {pref} {value} does not match asset "
+                    "'{asset_name}' {pref} {asset_value}".format(
+                        pref=label,
+                        value=comp_value,
+                        asset_name=asset_doc["name"],
+                        asset_value=asset_value)
+                )
 
     if invalid:
 
@@ -157,6 +158,11 @@ def validate_comp_prefs(comp=None):
                 comp_key_full = "Comp.FrameFormat.{}".format(comp_key)
                 attributes[comp_key_full] = value
             comp.SetPrefs(attributes)
+
+        if force_repair:
+            log.info("Applying default Comp preferences..")
+            _on_repair()
+            return
 
         from . import menu
         from openpype.widgets import popup

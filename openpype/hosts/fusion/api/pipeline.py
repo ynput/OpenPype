@@ -143,7 +143,7 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
 
 def on_new(event):
     comp = event["Rets"]["comp"]
-    validate_comp_prefs(comp)
+    validate_comp_prefs(comp, force_repair=True)
 
 
 def on_save(event):
