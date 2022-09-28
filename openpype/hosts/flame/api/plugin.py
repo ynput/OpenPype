@@ -9,13 +9,14 @@ from Qt import QtCore, QtWidgets
 import openpype.api as openpype
 import qargparse
 from openpype import style
+from openpype.lib import Logger
 from openpype.pipeline import LegacyCreator, LoaderPlugin
 
 from . import constants
 from . import lib as flib
 from . import pipeline as fpipeline
 
-log = openpype.Logger.get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 class CreatorWidget(QtWidgets.QDialog):
