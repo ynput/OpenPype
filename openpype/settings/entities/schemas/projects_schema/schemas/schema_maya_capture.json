@@ -349,8 +349,6 @@
                             "label": "<b>Show</b>"
                         },
                         {
-                            "type": "label",
-                        {
                             "type": "boolean",
                             "key": "useDefaultMaterial",
                             "label": "Use Default Material"
@@ -379,7 +377,6 @@
                             "type": "boolean",
                             "key": "cameras",
                             "label": "cameras"
->>>>>>> Stashed changes
                         },
                         {
                             "type": "boolean",
