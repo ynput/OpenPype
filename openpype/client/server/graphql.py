@@ -1,5 +1,4 @@
 import copy
-import collections
 import numbers
 from abc import ABCMeta, abstractproperty, abstractmethod
 
@@ -250,7 +249,7 @@ class GraphQlQuery:
             raise ValueError("Missing fields to query")
 
         variables = []
-        for key, item in self._variables.items():
+        for item in self._variables.values():
             if item["value"] is None:
                 continue
 
