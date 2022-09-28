@@ -70,7 +70,7 @@ class ImportReference(publish.Extractor):
 
         self.log.info("Performing extraction..")
         current = cmds.file(query=True, sceneName=True)
-        cmds.file(save=True, force=True
+        cmds.file(save=True, force=True)
 
         self.log.info("Performing extraction..")
 
