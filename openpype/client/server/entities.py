@@ -1454,12 +1454,29 @@ def version_is_latest(project_name, version_id):
     return latest_version["id"] == version_id
 
 
-def get_representation_by_id(*args, **kwargs):
-    raise NotImplementedError("'get_representation_by_id' not implemented")
+def get_representation_by_id(project_name, representation_id, fields=None):
+    representations = get_representations(
+        project_name,
+        representation_ids=[representation_id],
+        fields=fields
+    )
+    if representations:
+        return representations[0]
+    return None
 
 
-def get_representation_by_name(*args, **kwargs):
-    raise NotImplementedError("'get_representation_by_name' not implemented")
+def get_representation_by_name(
+    project_name, representation_name, version_id, fields=None
+):
+    representations = get_representations(
+        project_name,
+        representation_names=[representation_name],
+        version_ids=[version_id],
+        fields=fields
+    )
+    if representations:
+        return representations[0]
+    return None
 
 
 def get_representations(
