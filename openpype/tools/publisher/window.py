@@ -226,7 +226,17 @@ class PublisherWindow(QtWidgets.QDialog):
     def set_context_label(self, label):
         self._context_label.setText(label)
 
+    def _update_publish_details_widget(self, force=False):
+        if not force and self._tabs_widget.current_tab() != "details":
+            return
+
+        report_data = self.controller.get_publish_report()
+        self._publish_details_widget.set_report_data(report_data)
+
     def _on_tab_change(self, old_tab, new_tab):
+        if old_tab == "details":
+            self._publish_details_widget.close_details_popup()
+
         if new_tab in ("create", "publish"):
             animate = True
             if old_tab not in ("create", "publish"):
@@ -240,7 +250,7 @@ class PublisherWindow(QtWidgets.QDialog):
             self._content_stacked_layout.setCurrentWidget(
                 self._publish_details_widget
             )
-
+            self._update_publish_details_widget()
 
         # TODO handle rest of conditions
 
@@ -298,8 +308,8 @@ class PublisherWindow(QtWidgets.QDialog):
         self._create_tab.setEnabled(True)
         self._comment_input.setVisible(True)
         self._set_publish_visibility(False)
-
         self._set_footer_enabled(False)
+        self._update_publish_details_widget()
 
     def _on_publish_start(self):
         self._reset_btn.setEnabled(False)
@@ -334,6 +344,7 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self._validate_btn.setEnabled(validate_enabled)
         self._publish_btn.setEnabled(publish_enabled)
+        self._update_publish_details_widget()
 
     def _validate_create_instances(self):
         if not self._controller.host_is_valid:
@@ -359,3 +370,4 @@ class PublisherWindow(QtWidgets.QDialog):
 
         context_title = self.controller.get_context_title()
         self.set_context_label(context_title)
+        self._update_publish_details_widget()

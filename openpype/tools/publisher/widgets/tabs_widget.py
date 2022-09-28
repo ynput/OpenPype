@@ -50,13 +50,13 @@ class PublisherTabsWidget(QtWidgets.QFrame):
 
         self._btns_layout = btns_layout
 
-        self._current_button = None
+        self._current_identifier = None
         self._buttons_by_identifier = {}
 
     def is_current_tab(self, identifier):
         if isinstance(identifier, PublisherTabBtn):
             identifier = identifier.identifier
-        return self._current_button == identifier
+        return self._current_identifier == identifier
 
     def add_tab(self, label, identifier):
         button = PublisherTabBtn(identifier, label, self)
@@ -64,7 +64,7 @@ class PublisherTabsWidget(QtWidgets.QFrame):
         self._btns_layout.addWidget(button, 0)
         self._buttons_by_identifier[identifier] = button
 
-        if self._current_button is None:
+        if self._current_identifier is None:
             self.set_current_tab(identifier)
         return button
 
@@ -72,21 +72,24 @@ class PublisherTabsWidget(QtWidgets.QFrame):
         if isinstance(identifier, PublisherTabBtn):
             identifier = identifier.identifier
 
-        if identifier == self._current_button:
+        if identifier == self._current_identifier:
             return
 
         new_btn = self._buttons_by_identifier.get(identifier)
         if new_btn is None:
             return
 
-        old_identifier = self._current_button
+        old_identifier = self._current_identifier
         old_btn = self._buttons_by_identifier.get(old_identifier)
-        self._current_button = identifier
+        self._current_identifier = identifier
 
         if old_btn is not None:
             old_btn.deactivate()
         new_btn.activate()
         self.tab_changed.emit(old_identifier, identifier)
+
+    def current_tab(self):
+        return self._current_identifier
 
     def _on_tab_click(self, identifier):
         self.set_current_tab(identifier)
