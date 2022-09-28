@@ -13,13 +13,13 @@ from .widgets import (
 from .create_widget import CreateWidget
 
 
-class CreateOverviewWidget(QtWidgets.QFrame):
+class OverviewWidget(QtWidgets.QFrame):
     active_changed = QtCore.Signal()
     instance_context_changed = QtCore.Signal()
     create_requested = QtCore.Signal()
 
     def __init__(self, controller, parent):
-        super(CreateOverviewWidget, self).__init__(parent)
+        super(OverviewWidget, self).__init__(parent)
 
         self._refreshing_instances = False
         self._controller = controller

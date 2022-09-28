@@ -11,7 +11,8 @@ from openpype.tools.utils import (
 from .publish_report_viewer import PublishReportViewerWidget
 from .control import PublisherController
 from .widgets import (
-    CreateOverviewWidget,
+    OverviewWidget,
+    ValidationsWidget,
     PublishFrame,
 
     PublisherTabsWidget,
@@ -124,9 +125,11 @@ class PublisherWindow(QtWidgets.QDialog):
         content_layout.addWidget(content_stacked_widget, 1)
 
         # Overview - create and attributes part
-        overview_widget = CreateOverviewWidget(
+        overview_widget = OverviewWidget(
             controller, content_stacked_widget
         )
+
+        report_widget = ValidationsWidget(controller, parent)
 
         # Details - Publish details
         publish_details_widget = PublishReportViewerWidget(
@@ -145,6 +148,7 @@ class PublisherWindow(QtWidgets.QDialog):
             QtWidgets.QStackedLayout.StackAll
         )
         content_stacked_layout.addWidget(overview_widget)
+        content_stacked_layout.addWidget(report_widget)
         content_stacked_layout.addWidget(publish_details_widget)
         content_stacked_layout.addWidget(publish_frame)
 
@@ -189,6 +193,7 @@ class PublisherWindow(QtWidgets.QDialog):
         self._content_stacked_layout = content_stacked_layout
 
         self._overview_widget = overview_widget
+        self._report_widget = report_widget
         self._publish_details_widget = publish_details_widget
         self._publish_frame = publish_frame
 
@@ -252,7 +257,10 @@ class PublisherWindow(QtWidgets.QDialog):
             )
             self._update_publish_details_widget()
 
-        # TODO handle rest of conditions
+        elif new_tab == "report":
+            self._content_stacked_layout.setCurrentWidget(
+                self._report_widget
+            )
 
     def _on_context_or_active_change(self):
         self._validate_create_instances()
@@ -319,6 +327,8 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self._comment_input.setVisible(False)
         self._create_tab.setEnabled(False)
+
+        self._report_widget.clear()
         if self._tabs_widget.is_current_tab(self._create_tab):
             self._tabs_widget.set_current_tab("publish")
 
@@ -345,6 +355,9 @@ class PublisherWindow(QtWidgets.QDialog):
         self._validate_btn.setEnabled(validate_enabled)
         self._publish_btn.setEnabled(publish_enabled)
         self._update_publish_details_widget()
+
+        validation_errors = self._controller.get_validation_errors()
+        self._report_widget.set_errors(validation_errors)
 
     def _validate_create_instances(self):
         if not self._controller.host_is_valid:

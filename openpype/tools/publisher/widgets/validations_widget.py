@@ -400,7 +400,7 @@ class VerticallScrollArea(QtWidgets.QScrollArea):
         return super(VerticallScrollArea, self).eventFilter(obj, event)
 
 
-class ValidationsWidget(QtWidgets.QWidget):
+class ValidationsWidget(QtWidgets.QFrame):
     """Widgets showing validation error.
 
     This widget is shown if validation error/s happened during validation part.
@@ -418,10 +418,9 @@ class ValidationsWidget(QtWidgets.QWidget):
     │         Publish buttons       │
     └───────────────────────────────┘
     """
+
     def __init__(self, controller, parent):
         super(ValidationsWidget, self).__init__(parent)
-
-        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         errors_scroll = VerticallScrollArea(self)
         errors_scroll.setWidgetResizable(True)

@@ -11,7 +11,8 @@ from .widgets import (
 )
 from .publish_widget import PublishFrame
 from .tabs_widget import PublisherTabsWidget
-from .overview_widget import CreateOverviewWidget
+from .overview_widget import OverviewWidget
+from .validations_widget import ValidationsWidget
 
 
 __all__ = (
@@ -27,5 +28,6 @@ __all__ = (
     "PublishFrame",
 
     "PublisherTabsWidget",
-    "CreateOverviewWidget",
+    "OverviewWidget",
+    "ValidationsWidget",
 )
