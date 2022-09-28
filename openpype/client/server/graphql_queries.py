@@ -120,6 +120,42 @@ def folders_graphql_query(fields):
     return query
 
 
+def tasks_graphql_query(fields):
+    query = GraphQlQuery("TasksQuery")
+    project_name_var = query.add_variable("projectName", "String!")
+    task_ids_var = query.add_variable("taskIds", "[String!]")
+    task_names_var = query.add_variable("taskNames", "[String!]")
+    task_types_var = query.add_variable("taskTypes", "[String!]")
+    folder_ids_var = query.add_variable("folderIds", "[String!]")
+
+    project_field = query.add_field("project")
+    project_field.set_filter("name", project_name_var)
+
+    tasks_field = project_field.add_field("folders", has_edges=True)
+    tasks_field.set_filter("ids", task_ids_var)
+    # WARNING: At moment when this been created 'names' filter is not supported
+    tasks_field.set_filter("names", task_names_var)
+    tasks_field.set_filter("taskTypes", task_types_var)
+    tasks_field.set_filter("folderIds", folder_ids_var)
+
+    nested_fields = fields_to_dict(fields)
+
+    query_queue = collections.deque()
+    for key, value in nested_fields.items():
+        query_queue.append((key, value, tasks_field))
+
+    while query_queue:
+        item = query_queue.popleft()
+        key, value, parent = item
+        field = parent.add_field(key)
+        if value is FIELD_VALUE:
+            continue
+
+        for k, v in value.items():
+            query_queue.append((k, v, field))
+    return query
+
+
 def subsets_graphql_query(fields):
     query = GraphQlQuery("SubsetsQuery")
 

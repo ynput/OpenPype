@@ -22,6 +22,7 @@ from .graphql_queries import (
     project_graphql_query,
     projects_graphql_query,
     folders_graphql_query,
+    tasks_graphql_query,
     subsets_graphql_query,
     versions_graphql_query,
     representations_graphql_query,
@@ -689,6 +690,69 @@ def get_v4_folders(
         folder
         for folder in folders
         if folder["active"] is active
+    ]
+
+
+def get_v4_tasks(
+    project_name,
+    task_ids=None,
+    task_names=None,
+    task_types=None,
+    folder_ids=None,
+    active=None,
+    fields=None
+):
+    if not project_name:
+        return []
+
+    filters = {
+        "projectName": project_name
+    }
+
+    if task_ids is not None:
+        task_ids = set(task_ids)
+        if not task_ids:
+            return []
+        filters["taskIds"] = list(task_ids)
+
+    if task_names is not None:
+        task_names = set(task_names)
+        if not task_names:
+            return []
+        filters["taskNames"] = list(task_names)
+
+    if task_types is not None:
+        task_types = set(task_types)
+        if not task_types:
+            return []
+        filters["taskTypes"] = list(task_types)
+
+    if folder_ids is not None:
+        folder_ids = set(folder_ids)
+        if not folder_ids:
+            return []
+        filters["folderIds"] = list(folder_ids)
+
+    if not fields:
+        fields = DEFAULT_FOLDER_FIELDS
+    fields = set(fields)
+    if active is not None:
+        fields.add("active")
+
+    query = tasks_graphql_query(fields)
+    for attr, filter_value in filters.items():
+        query.set_variable_value(attr, filter_value)
+
+    con = get_server_api_connection()
+    parsed_data = query.query(con)
+    tasks = parsed_data["project"]["tasks"]
+
+    if active is None:
+        return tasks
+    return [
+        task
+        for task in tasks
+        if task["active"] is active
     ]
 
 

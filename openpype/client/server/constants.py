@@ -1,3 +1,4 @@
+# --- Folders ---
 FOLDER_ATTRIBS = {
     "clipIn",
     "clipOut",
@@ -35,7 +36,32 @@ DEFAULT_FOLDER_FIELDS = {
     "thumbnailId"
 } | FOLDER_ATTRIBS_FIELDS
 
+# --- Tasks ---
+TASK_ATTRIBS = {
+    "clipIn",
+    "clipOut",
+    "fps",
+    "frameStart",
+    "frameEnd",
+    "handleEnd",
+    "handleStart",
+    "newAttribute",
+    "pixelAspect",
+    "resolutionHeight",
+    "resolutionWidth",
+}
+TASK_ATTRIBS_FIELDS = {
+    "attrib.{}".format(attr)
+    for attr in TASK_ATTRIBS
+}
+DEFAULT_TASK_FIELDS = {
+    "id",
+    "name",
+    "taskType",
+    "assignees",
+} | TASK_ATTRIBS_FIELDS
 
+# --- Subsets ---
 SUBSET_ATTRIBS = {
     "subsetGroup",
 }
@@ -51,6 +77,7 @@ DEFAULT_SUBSET_FIELDS = {
     "folderId",
 } | SUBSET_ATTRIBS_FIELDS
 
+# --- Versions ---
 VERSION_ATTRIBS = {
     "fps",
     "resolutionWidth",
@@ -86,6 +113,7 @@ DEFAULT_VERSION_FIELDS = {
     "updatedAt",
 } | VERSION_ATTRIBS_FIELDS
 
+# --- Representations ---
 REPRESENTATION_ATTRIBS = {
     "clipIn",
     "clipOut",
