@@ -53,6 +53,11 @@ class PublisherTabsWidget(QtWidgets.QFrame):
         self._current_button = None
         self._buttons_by_identifier = {}
 
+    def is_current_tab(self, identifier):
+        if isinstance(identifier, PublisherTabBtn):
+            identifier = identifier.identifier
+        return self._current_button == identifier
+
     def add_tab(self, label, identifier):
         button = PublisherTabBtn(identifier, label, self)
         button.tab_clicked.connect(self._on_tab_click)
@@ -61,8 +66,12 @@ class PublisherTabsWidget(QtWidgets.QFrame):
 
         if self._current_button is None:
             self.set_current_tab(identifier)
+        return button
 
     def set_current_tab(self, identifier):
+        if isinstance(identifier, PublisherTabBtn):
+            identifier = identifier.identifier
+
         if identifier == self._current_button:
             return
 

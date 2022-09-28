@@ -15,8 +15,6 @@ from .widgets import (
 
     PublisherTabsWidget,
 
-    CreateDialog,
-
     StopBtn,
     ResetBtn,
     ValidateBtn,
@@ -76,7 +74,7 @@ class PublisherWindow(QtWidgets.QDialog):
 
         # Tabs widget under header
         tabs_widget = PublisherTabsWidget(self)
-        tabs_widget.add_tab("Create", "create")
+        create_tab = tabs_widget.add_tab("Create", "create")
         tabs_widget.add_tab("Publish", "publish")
         tabs_widget.add_tab("Report", "report")
         tabs_widget.add_tab("Details", "details")
@@ -137,8 +135,6 @@ class PublisherWindow(QtWidgets.QDialog):
         main_layout.addWidget(content_stacked_widget, 1)
         main_layout.addWidget(footer_widget, 0)
 
-        creator_window = CreateDialog(controller, parent=self)
-
         tabs_widget.tab_changed.connect(self._on_tab_change)
         create_overview_widget.active_changed.connect(
             self._on_context_or_active_change
@@ -165,6 +161,7 @@ class PublisherWindow(QtWidgets.QDialog):
         self._header_layout = header_layout
 
         self._tabs_widget = tabs_widget
+        self._create_tab = create_tab
 
         self._content_stacked_widget = content_stacked_widget
         self.content_stacked_layout = content_stacked_layout
@@ -181,8 +178,6 @@ class PublisherWindow(QtWidgets.QDialog):
         self.publish_btn = publish_btn
 
         self._controller = controller
-
-        self.creator_window = creator_window
 
     @property
     def controller(self):
@@ -208,7 +203,10 @@ class PublisherWindow(QtWidgets.QDialog):
         self.context_label.setText(label)
 
     def _on_tab_change(self, prev_tab, new_tab):
-        print(prev_tab, new_tab)
+        if new_tab in ("create", "publish"):
+            self._create_overview_widget.set_state(prev_tab, new_tab)
+
+        # TODO handle rest of conditions
 
     def _on_context_or_active_change(self):
         self._validate_create_instances()
@@ -222,23 +220,9 @@ class PublisherWindow(QtWidgets.QDialog):
     def _set_publish_visibility(self, visible):
         if visible:
             widget = self.publish_frame
-            publish_frame_visible = True
         else:
             widget = self._create_overview_widget
-            publish_frame_visible = False
         self.content_stacked_layout.setCurrentWidget(widget)
-        self._set_publish_frame_visible(publish_frame_visible)
-
-    def _set_publish_frame_visible(self, publish_frame_visible):
-        """Publish frame visibility has changed.
-
-        Also used in TrayPublisher to be able handle start/end of publish
-        widget overlay.
-        """
-
-        # Hide creator dialog if visible
-        if publish_frame_visible and self.creator_window.isVisible():
-            self.creator_window.close()
 
     def _on_reset_clicked(self):
         self._controller.reset()
@@ -264,7 +248,6 @@ class PublisherWindow(QtWidgets.QDialog):
         self._controller.publish()
 
     def _set_footer_enabled(self, enabled):
-        self.comment_input.setEnabled(enabled)
         self.reset_btn.setEnabled(True)
         if enabled:
             self.stop_btn.setEnabled(False)
@@ -276,6 +259,8 @@ class PublisherWindow(QtWidgets.QDialog):
             self.publish_btn.setEnabled(enabled)
 
     def _on_publish_reset(self):
+        self._create_tab.setEnabled(True)
+        self.comment_input.setVisible(True)
         self._set_publish_visibility(False)
 
         self._set_footer_enabled(False)
@@ -285,6 +270,11 @@ class PublisherWindow(QtWidgets.QDialog):
         self.stop_btn.setEnabled(True)
         self.validate_btn.setEnabled(False)
         self.publish_btn.setEnabled(False)
+
+        self.comment_input.setVisible(False)
+        self._create_tab.setEnabled(False)
+        if self._tabs_widget.is_current_tab(self._create_tab):
+            self._tabs_widget.set_current_tab("publish")
 
     def _on_publish_validated(self):
         self.validate_btn.setEnabled(False)

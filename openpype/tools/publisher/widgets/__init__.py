@@ -10,7 +10,6 @@ from .widgets import (
     PublishBtn,
 )
 from .publish_widget import PublishFrame
-from .create_dialog import CreateDialog
 from .tabs_widget import PublisherTabsWidget
 from .overview_widget import CreateOverviewWidget
 
@@ -25,8 +24,6 @@ __all__ = (
     "PublishBtn",
 
     "PublishFrame",
-
-    "CreateDialog",
 
     "PublisherTabsWidget",
     "CreateOverviewWidget",
