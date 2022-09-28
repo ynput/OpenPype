@@ -868,6 +868,10 @@ PublisherTabBtn {
     padding: 0.5em 1em 0.5em 1em;
 }
 
+PublisherTabBtn:disabled {
+    background: {color:bg-inputs};
+}
+
 PublisherTabBtn:hover {
     background: {color:bg-buttons};
 }
