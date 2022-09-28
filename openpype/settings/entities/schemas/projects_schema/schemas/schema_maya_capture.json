@@ -223,6 +223,31 @@
                         },
                         {
                             "type": "boolean",
+                            "key": "useDefaultMaterial",
+                            "label": "Use Default Material"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "wireframeOnShaded",
+                            "label": "Wireframe On Shaded"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "xray",
+                            "label": "X-Ray"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "jointXray",
+                            "label": "X-Ray Joints"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "backfaceCulling",
+                            "label": "Backface Culling"
+                        },
+                        {
+                            "type": "boolean",
                             "key": "ssaoEnable",
                             "label": "Screen Space Ambient Occlusion"
                         },
@@ -347,56 +372,6 @@
                         {
                             "type": "label",
                             "label": "<b>Show</b>"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "useDefaultMaterial",
-                            "label": "Use Default Material"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "wireframeOnShaded",
-                            "label": "Wireframe On Shaded"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "xray",
-                            "label": "X-Ray"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "jointXray",
-                            "label": "X-Ray Joints"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "backfaceCulling",
-                            "label": "Backface Culling"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "cameras",
-                            "label": "cameras"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "udm",
-                            "label": "Use Default Material"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "wos",
-                            "label": "Wireframe On Shaded"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "jointXray",
-                            "label": "Toggle Joint X-Ray Mode"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "backfaceCulling",
-                            "label": "Enable Back Face Culling"
                         },
                         {
                             "type": "boolean",
