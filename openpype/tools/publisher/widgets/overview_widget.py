@@ -10,6 +10,7 @@ from .widgets import (
     RemoveInstanceBtn,
     ChangeViewBtn
 )
+from .create_widget import CreateWidget
 
 
 class CreateOverviewWidget(QtWidgets.QFrame):
@@ -20,9 +21,13 @@ class CreateOverviewWidget(QtWidgets.QFrame):
     def __init__(self, controller, parent):
         super(CreateOverviewWidget, self).__init__(parent)
 
-        self._controller = controller
         self._refreshing_instances = False
+        self._controller = controller
 
+        create_widget = CreateWidget(controller, self)
+
+        # --- Created Subsets/Instances ---
+        # Common widget for creation and overview
         subset_views_widget = BorderedLabelWidget(
             "Subsets to publish", self
         )
@@ -39,6 +44,7 @@ class CreateOverviewWidget(QtWidgets.QFrame):
         delete_btn = RemoveInstanceBtn(self)
         change_view_btn = ChangeViewBtn(self)
 
+        # --- Overview ---
         # Subset details widget
         subset_attributes_wrap = BorderedLabelWidget(
             "Publish options", self
@@ -73,6 +79,7 @@ class CreateOverviewWidget(QtWidgets.QFrame):
         subset_content_widget = QtWidgets.QWidget(self)
         subset_content_layout = QtWidgets.QHBoxLayout(subset_content_widget)
         subset_content_layout.setContentsMargins(0, 0, 0, 0)
+        subset_content_layout.addWidget(create_widget, 7)
         subset_content_layout.addWidget(subset_views_widget, 3)
         subset_content_layout.addWidget(subset_attributes_wrap, 7)
 
@@ -86,6 +93,7 @@ class CreateOverviewWidget(QtWidgets.QFrame):
         main_layout.setContentsMargins(marings)
         main_layout.addWidget(subset_content_widget, 1)
 
+        # --- Calbacks for instances/subsets view ---
         create_btn.clicked.connect(self._on_create_clicked)
         delete_btn.clicked.connect(self._on_delete_clicked)
         change_view_btn.clicked.connect(self._on_change_view_clicked)
@@ -109,18 +117,38 @@ class CreateOverviewWidget(QtWidgets.QFrame):
             self._on_instance_context_change
         )
 
+        # --- Controller callbacks ---
         controller.add_publish_reset_callback(self._on_publish_reset)
         controller.add_instances_refresh_callback(self._on_instances_refresh)
 
-        self.subset_content_widget = subset_content_widget
+        self._subset_content_widget = subset_content_widget
 
-        self.subset_view_cards = subset_view_cards
-        self.subset_list_view = subset_list_view
-        self.subset_views_layout = subset_views_layout
+        self._subset_view_cards = subset_view_cards
+        self._subset_list_view = subset_list_view
+        self._subset_views_layout = subset_views_layout
 
-        self.delete_btn = delete_btn
+        self._delete_btn = delete_btn
 
-        self.subset_attributes_widget = subset_attributes_widget
+        self._subset_attributes_widget = subset_attributes_widget
+        self._create_widget = create_widget
+        self._subset_attributes_wrap = subset_attributes_wrap
+
+        # Start in create mode
+        self._current_state = "create"
+        subset_attributes_wrap.setVisible(False)
+
+    def set_state(self, old_state, new_state):
+        if new_state == self._current_state:
+            return
+
+        self._current_state = new_state
+
+        self._create_widget.setVisible(
+            self._current_state == "create"
+        )
+        self._subset_attributes_wrap.setVisible(
+            self._current_state == "publish"
+        )
 
     def _on_create_clicked(self):
         """Pass signal to parent widget which should care about changing state.
@@ -167,9 +195,9 @@ class CreateOverviewWidget(QtWidgets.QFrame):
         instances, context_selected = self.get_selected_items()
 
         # Disable delete button if nothing is selected
-        self.delete_btn.setEnabled(len(instances) > 0)
+        self._delete_btn.setEnabled(len(instances) > 0)
 
-        self.subset_attributes_widget.set_current_instances(
+        self._subset_attributes_widget.set_current_instances(
             instances, context_selected
         )
 
@@ -179,29 +207,29 @@ class CreateOverviewWidget(QtWidgets.QFrame):
         self.active_changed.emit()
 
     def _on_instance_context_change(self):
-        current_idx = self.subset_views_layout.currentIndex()
-        for idx in range(self.subset_views_layout.count()):
+        current_idx = self._subset_views_layout.currentIndex()
+        for idx in range(self._subset_views_layout.count()):
             if idx == current_idx:
                 continue
-            widget = self.subset_views_layout.widget(idx)
+            widget = self._subset_views_layout.widget(idx)
             if widget.refreshed:
                 widget.set_refreshed(False)
 
-        current_widget = self.subset_views_layout.widget(current_idx)
+        current_widget = self._subset_views_layout.widget(current_idx)
         current_widget.refresh_instance_states()
 
         self.instance_context_changed.emit()
 
     def get_selected_items(self):
-        view = self.subset_views_layout.currentWidget()
+        view = self._subset_views_layout.currentWidget()
         return view.get_selected_items()
 
     def _change_view_type(self):
-        idx = self.subset_views_layout.currentIndex()
-        new_idx = (idx + 1) % self.subset_views_layout.count()
-        self.subset_views_layout.setCurrentIndex(new_idx)
+        idx = self._subset_views_layout.currentIndex()
+        new_idx = (idx + 1) % self._subset_views_layout.count()
+        self._subset_views_layout.setCurrentIndex(new_idx)
 
-        new_view = self.subset_views_layout.currentWidget()
+        new_view = self._subset_views_layout.currentWidget()
         if not new_view.refreshed:
             new_view.refresh()
             new_view.set_refreshed(True)
@@ -216,11 +244,11 @@ class CreateOverviewWidget(QtWidgets.QFrame):
 
         self._refreshing_instances = True
 
-        for idx in range(self.subset_views_layout.count()):
-            widget = self.subset_views_layout.widget(idx)
+        for idx in range(self._subset_views_layout.count()):
+            widget = self._subset_views_layout.widget(idx)
             widget.set_refreshed(False)
 
-        view = self.subset_views_layout.currentWidget()
+        view = self._subset_views_layout.currentWidget()
         view.refresh()
         view.set_refreshed(True)
 
@@ -232,7 +260,7 @@ class CreateOverviewWidget(QtWidgets.QFrame):
     def _on_publish_reset(self):
         """Context in controller has been refreshed."""
 
-        self.subset_content_widget.setEnabled(self._controller.host_is_valid)
+        self._subset_content_widget.setEnabled(self._controller.host_is_valid)
 
     def _on_instances_refresh(self):
         """Controller refreshed instances."""
@@ -242,5 +270,5 @@ class CreateOverviewWidget(QtWidgets.QFrame):
         # Give a change to process Resize Request
         QtWidgets.QApplication.processEvents()
         # Trigger update geometry of
-        widget = self.subset_views_layout.currentWidget()
+        widget = self._subset_views_layout.currentWidget()
         widget.updateGeometry()
