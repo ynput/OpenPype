@@ -13,6 +13,7 @@ from .publish_widget import PublishFrame
 from .tabs_widget import PublisherTabsWidget
 from .overview_widget import CreateOverviewWidget
 
+
 __all__ = (
     "get_icon_path",
     "get_pixmap",

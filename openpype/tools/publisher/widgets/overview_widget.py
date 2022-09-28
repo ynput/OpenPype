@@ -85,12 +85,7 @@ class CreateOverviewWidget(QtWidgets.QFrame):
 
         # Subset frame layout
         main_layout = QtWidgets.QVBoxLayout(self)
-        marings = main_layout.contentsMargins()
-        marings.setLeft(marings.left() * 2)
-        marings.setRight(marings.right() * 2)
-        marings.setTop(marings.top() * 2)
-        marings.setBottom(0)
-        main_layout.setContentsMargins(marings)
+        main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(subset_content_widget, 1)
 
         # --- Calbacks for instances/subsets view ---
@@ -137,7 +132,7 @@ class CreateOverviewWidget(QtWidgets.QFrame):
         self._current_state = "create"
         subset_attributes_wrap.setVisible(False)
 
-    def set_state(self, old_state, new_state):
+    def set_state(self, new_state, animate):
         if new_state == self._current_state:
             return
 

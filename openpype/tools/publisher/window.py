@@ -8,6 +8,7 @@ from openpype.tools.utils import (
     PlaceholderLineEdit,
     PixmapLabel
 )
+from .publish_report_viewer import PublishReportViewerWidget
 from .control import PublisherController
 from .widgets import (
     CreateOverviewWidget,
@@ -79,13 +80,6 @@ class PublisherWindow(QtWidgets.QDialog):
         tabs_widget.add_tab("Report", "report")
         tabs_widget.add_tab("Details", "details")
 
-        # Content
-        content_stacked_widget = QtWidgets.QWidget(self)
-
-        create_overview_widget = CreateOverviewWidget(
-            controller, content_stacked_widget
-        )
-
         # Footer
         footer_widget = QtWidgets.QWidget(self)
         footer_bottom_widget = QtWidgets.QWidget(footer_widget)
@@ -113,17 +107,45 @@ class PublisherWindow(QtWidgets.QDialog):
         footer_layout.addWidget(comment_input, 0)
         footer_layout.addWidget(footer_bottom_widget, 0)
 
+        # Content
+        # - wrap stacked widget under one more widget to be able propagate
+        #   margins (QStackedLayout can't have margins)
+        content_widget = QtWidgets.QWidget(self)
+
+        content_stacked_widget = QtWidgets.QWidget(content_widget)
+
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        marings = content_layout.contentsMargins()
+        marings.setLeft(marings.left() * 2)
+        marings.setRight(marings.right() * 2)
+        marings.setTop(marings.top() * 2)
+        marings.setBottom(0)
+        content_layout.setContentsMargins(marings)
+        content_layout.addWidget(content_stacked_widget, 1)
+
+        # Overview - create and attributes part
+        overview_widget = CreateOverviewWidget(
+            controller, content_stacked_widget
+        )
+
+        # Details - Publish details
+        publish_details_widget = PublishReportViewerWidget(
+            content_stacked_widget
+        )
+
         # Create publish frame
         publish_frame = PublishFrame(controller, content_stacked_widget)
 
         content_stacked_layout = QtWidgets.QStackedLayout(
             content_stacked_widget
         )
+
         content_stacked_layout.setContentsMargins(0, 0, 0, 0)
         content_stacked_layout.setStackingMode(
             QtWidgets.QStackedLayout.StackAll
         )
-        content_stacked_layout.addWidget(create_overview_widget)
+        content_stacked_layout.addWidget(overview_widget)
+        content_stacked_layout.addWidget(publish_details_widget)
         content_stacked_layout.addWidget(publish_frame)
 
         # Add main frame to this window
@@ -132,17 +154,17 @@ class PublisherWindow(QtWidgets.QDialog):
         main_layout.setSpacing(0)
         main_layout.addWidget(header_widget, 0)
         main_layout.addWidget(tabs_widget, 0)
-        main_layout.addWidget(content_stacked_widget, 1)
+        main_layout.addWidget(content_widget, 1)
         main_layout.addWidget(footer_widget, 0)
 
         tabs_widget.tab_changed.connect(self._on_tab_change)
-        create_overview_widget.active_changed.connect(
+        overview_widget.active_changed.connect(
             self._on_context_or_active_change
         )
-        create_overview_widget.instance_context_changed.connect(
+        overview_widget.instance_context_changed.connect(
             self._on_context_or_active_change
         )
-        create_overview_widget.create_requested.connect(
+        overview_widget.create_requested.connect(
             self._on_create_request
         )
 
@@ -164,18 +186,20 @@ class PublisherWindow(QtWidgets.QDialog):
         self._create_tab = create_tab
 
         self._content_stacked_widget = content_stacked_widget
-        self.content_stacked_layout = content_stacked_layout
-        self._create_overview_widget = create_overview_widget
-        self.publish_frame = publish_frame
+        self._content_stacked_layout = content_stacked_layout
 
-        self.context_label = context_label
+        self._overview_widget = overview_widget
+        self._publish_details_widget = publish_details_widget
+        self._publish_frame = publish_frame
 
-        self.comment_input = comment_input
+        self._context_label = context_label
 
-        self.stop_btn = stop_btn
-        self.reset_btn = reset_btn
-        self.validate_btn = validate_btn
-        self.publish_btn = publish_btn
+        self._comment_input = comment_input
+
+        self._stop_btn = stop_btn
+        self._reset_btn = reset_btn
+        self._validate_btn = validate_btn
+        self._publish_btn = publish_btn
 
         self._controller = controller
 
@@ -200,11 +224,23 @@ class PublisherWindow(QtWidgets.QDialog):
         self._controller.reset()
 
     def set_context_label(self, label):
-        self.context_label.setText(label)
+        self._context_label.setText(label)
 
-    def _on_tab_change(self, prev_tab, new_tab):
+    def _on_tab_change(self, old_tab, new_tab):
         if new_tab in ("create", "publish"):
-            self._create_overview_widget.set_state(prev_tab, new_tab)
+            animate = True
+            if old_tab not in ("create", "publish"):
+                animate = False
+                self._content_stacked_layout.setCurrentWidget(
+                    self._overview_widget
+                )
+            self._overview_widget.set_state(new_tab, animate)
+
+        elif new_tab == "details":
+            self._content_stacked_layout.setCurrentWidget(
+                self._publish_details_widget
+            )
+
 
         # TODO handle rest of conditions
 
@@ -219,10 +255,10 @@ class PublisherWindow(QtWidgets.QDialog):
 
     def _set_publish_visibility(self, visible):
         if visible:
-            widget = self.publish_frame
+            widget = self._publish_frame
         else:
-            widget = self._create_overview_widget
-        self.content_stacked_layout.setCurrentWidget(widget)
+            widget = self._overview_widget
+        self._content_stacked_layout.setCurrentWidget(widget)
 
     def _on_reset_clicked(self):
         self._controller.reset()
@@ -234,7 +270,7 @@ class PublisherWindow(QtWidgets.QDialog):
         if self._controller.publish_comment_is_set:
             return
 
-        comment = self.comment_input.text()
+        comment = self._comment_input.text()
         self._controller.set_comment(comment)
 
     def _on_validate_clicked(self):
@@ -248,40 +284,40 @@ class PublisherWindow(QtWidgets.QDialog):
         self._controller.publish()
 
     def _set_footer_enabled(self, enabled):
-        self.reset_btn.setEnabled(True)
+        self._reset_btn.setEnabled(True)
         if enabled:
-            self.stop_btn.setEnabled(False)
-            self.validate_btn.setEnabled(True)
-            self.publish_btn.setEnabled(True)
+            self._stop_btn.setEnabled(False)
+            self._validate_btn.setEnabled(True)
+            self._publish_btn.setEnabled(True)
         else:
-            self.stop_btn.setEnabled(enabled)
-            self.validate_btn.setEnabled(enabled)
-            self.publish_btn.setEnabled(enabled)
+            self._stop_btn.setEnabled(enabled)
+            self._validate_btn.setEnabled(enabled)
+            self._publish_btn.setEnabled(enabled)
 
     def _on_publish_reset(self):
         self._create_tab.setEnabled(True)
-        self.comment_input.setVisible(True)
+        self._comment_input.setVisible(True)
         self._set_publish_visibility(False)
 
         self._set_footer_enabled(False)
 
     def _on_publish_start(self):
-        self.reset_btn.setEnabled(False)
-        self.stop_btn.setEnabled(True)
-        self.validate_btn.setEnabled(False)
-        self.publish_btn.setEnabled(False)
+        self._reset_btn.setEnabled(False)
+        self._stop_btn.setEnabled(True)
+        self._validate_btn.setEnabled(False)
+        self._publish_btn.setEnabled(False)
 
-        self.comment_input.setVisible(False)
+        self._comment_input.setVisible(False)
         self._create_tab.setEnabled(False)
         if self._tabs_widget.is_current_tab(self._create_tab):
             self._tabs_widget.set_current_tab("publish")
 
     def _on_publish_validated(self):
-        self.validate_btn.setEnabled(False)
+        self._validate_btn.setEnabled(False)
 
     def _on_publish_stop(self):
-        self.reset_btn.setEnabled(True)
-        self.stop_btn.setEnabled(False)
+        self._reset_btn.setEnabled(True)
+        self._stop_btn.setEnabled(False)
         validate_enabled = not self._controller.publish_has_crashed
         publish_enabled = not self._controller.publish_has_crashed
         if validate_enabled:
@@ -296,8 +332,8 @@ class PublisherWindow(QtWidgets.QDialog):
             else:
                 publish_enabled = not self._controller.publish_has_finished
 
-        self.validate_btn.setEnabled(validate_enabled)
-        self.publish_btn.setEnabled(publish_enabled)
+        self._validate_btn.setEnabled(validate_enabled)
+        self._publish_btn.setEnabled(publish_enabled)
 
     def _validate_create_instances(self):
         if not self._controller.host_is_valid:

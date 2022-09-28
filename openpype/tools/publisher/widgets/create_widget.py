@@ -443,6 +443,7 @@ class CreateWidget(QtWidgets.QWidget):
         splitter_widget.setStretchFactor(3, 1)
 
         layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(splitter_widget, 1)
 
         prereq_timer = QtCore.QTimer()
