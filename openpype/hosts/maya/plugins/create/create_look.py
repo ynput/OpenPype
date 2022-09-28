@@ -21,9 +21,6 @@ class CreateLook(plugin.Creator):
         # Whether to automatically convert the textures to .tx upon publish.
         self.data["maketx"] = self.make_tx
 
-        # Enable users to import reference
-        self.data["importReference"] = False
-
         # Enable users to force a copy.
         # - on Windows is "forceCopy" always changed to `True` because of
         #   windows implementation of hardlinks

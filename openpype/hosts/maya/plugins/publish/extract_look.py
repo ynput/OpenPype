@@ -255,14 +255,6 @@ class ExtractLook(publish.Extractor):
         hashes = results["fileHashes"]
         remap = results["attrRemap"]
 
-        # Import Reference if the option is enabled
-        ref_import = instance.data.get("importReference", True)
-        if ref_import:
-            reference_node = cmds.ls(type="reference")
-            for r in reference_node:
-                rFile = cmds.referenceQuery(r, f=True)
-                cmds.file(rFile, importReference=True)
-
         # Extract in correct render layer
         layer = instance.data.get("renderlayer", "defaultRenderLayer")
         with lib.renderlayer(layer):

@@ -62,7 +62,7 @@
                 }
             ]
         },
-        {   
+        {
             "type": "dict",
             "collapsible": true,
             "key": "ValidateFrameRange",
@@ -806,6 +806,20 @@
         {
             "type": "schema",
             "name": "schema_maya_capture"
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ImportReference",
+            "label": "Extract Scenes with Imported Reference",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
         },
         {
             "type": "dict",
