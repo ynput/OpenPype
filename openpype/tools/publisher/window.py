@@ -15,6 +15,8 @@ from .widgets import (
     SubsetAttributesWidget,
     InstanceCardView,
     InstanceListView,
+    PublisherTabsWidget,
+
     CreateDialog,
 
     StopBtn,
@@ -78,9 +80,11 @@ class PublisherWindow(QtWidgets.QDialog):
         header_layout.addWidget(icon_label, 0)
         header_layout.addWidget(context_label, 1)
 
-        line_widget = QtWidgets.QWidget(self)
-        line_widget.setObjectName("Separator")
-        line_widget.setMinimumHeight(2)
+        tabs_widget = PublisherTabsWidget(self)
+        tabs_widget.add_tab("Create", "create")
+        tabs_widget.add_tab("Publish", "publish")
+        tabs_widget.add_tab("Report", "report")
+        tabs_widget.add_tab("Details", "details")
 
         # Content
         content_stacked_widget = QtWidgets.QWidget(self)
@@ -196,11 +200,13 @@ class PublisherWindow(QtWidgets.QDialog):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         main_layout.addWidget(header_widget, 0)
-        main_layout.addWidget(line_widget, 0)
+        main_layout.addWidget(tabs_widget, 0)
         main_layout.addWidget(content_stacked_widget, 1)
         main_layout.addWidget(footer_widget, 0)
 
         creator_window = CreateDialog(controller, parent=self)
+
+        tabs_widget.tab_changed.connect(self._on_tab_change)
 
         create_btn.clicked.connect(self._on_create_clicked)
         delete_btn.clicked.connect(self._on_delete_clicked)
@@ -317,6 +323,9 @@ class PublisherWindow(QtWidgets.QDialog):
             new_view.refresh_instance_states()
 
         self._on_subset_change()
+
+    def _on_tab_change(self, prev_tab, new_tab):
+        print(prev_tab, new_tab)
 
     def _on_create_clicked(self):
         self.creator_window.show()
