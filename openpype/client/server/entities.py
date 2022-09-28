@@ -1430,8 +1430,28 @@ def get_output_link_versions(*args, **kwargs):
     raise NotImplementedError("'get_output_link_versions' not implemented")
 
 
-def version_is_latest(*args, **kwargs):
-    raise NotImplementedError("'version_is_latest' not implemented")
+def version_is_latest(project_name, version_id):
+    query = GraphQlQuery("VersionIsLatest")
+    project_name_var = query.add_variable(
+        "projectName", "String!", project_name
+    )
+    version_id_var = query.add_variable(
+        "versionId", "String!", version_id
+    )
+    project_query = query.add_field("project")
+    project_query.set_filter("name", project_name_var)
+    version_query = project_query.add_field("version")
+    version_query.set_filter("id", version_id_var)
+    subset_query = version_query.add_field("subset")
+    latest_version_query = subset_query.add_field("latestVersion")
+    latest_version_query.add_field("id")
+
+    con = get_server_api_connection()
+    parsed_data = query.query(con)
+    latest_version = (
+        parsed_data["project"]["version"]["subset"]["latestVersion"]
+    )
+    return latest_version["id"] == version_id
 
 
 def get_representation_by_id(*args, **kwargs):
