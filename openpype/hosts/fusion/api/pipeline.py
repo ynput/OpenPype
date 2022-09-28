@@ -39,12 +39,13 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
-class CompLogHandler(logging.Handler):
+class FusionLogHandler(logging.Handler):
+    # Keep a reference to fusion's Print function (Remote Object)
+    _print = getattr(sys.modules["__main__"], "fusion").Print
+
     def emit(self, record):
         entry = self.format(record)
-        comp = get_current_comp()
-        if comp:
-            comp.Print(entry)
+        self._print(entry)
 
 
 def install():
@@ -67,7 +68,7 @@ def install():
     # Attach default logging handler that prints to active comp
     logger = logging.getLogger()
     formatter = logging.Formatter(fmt="%(message)s\n")
-    handler = CompLogHandler()
+    handler = FusionLogHandler()
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
