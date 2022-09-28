@@ -23,7 +23,7 @@ def capture(
     maintain_aspect_ratio=True,
     overwrite=False,
     image_settings=None,
-    display_options=None
+    display_options=None,
 ):
     """Playblast in an independent windows
     Arguments:
@@ -99,7 +99,7 @@ def capture(
                 render_keyed_only=False,
                 sequencer=False,
                 write_still=False,
-                view_context=True
+                view_context=True,
             )
 
     return filename
@@ -144,10 +144,10 @@ def _apply_options(entity, options):
 
 def applied_view(window, camera, isolate=None, options=None):
     """Apply view options to window."""
+    # Change area of window to 3D view
     area = window.screen.areas[0]
-    space = area.spaces[0]
-
     area.ui_type = "VIEW_3D"
+    space = area.spaces[0]
 
     meshes = [obj for obj in window.scene.objects if obj.type == "MESH"]
 
