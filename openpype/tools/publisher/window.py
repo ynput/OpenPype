@@ -142,6 +142,9 @@ class PublisherWindow(QtWidgets.QDialog):
         subset_content_layout.addWidget(subset_attributes_wrap, 7)
 
         # Footer
+        footer_widget = QtWidgets.QWidget(self)
+        footer_bottom_widget = QtWidgets.QWidget(footer_widget)
+
         comment_input = PlaceholderLineEdit(subset_frame)
         comment_input.setObjectName("PublishCommentInput")
         comment_input.setPlaceholderText(
@@ -153,13 +156,17 @@ class PublisherWindow(QtWidgets.QDialog):
         validate_btn = ValidateBtn(subset_frame)
         publish_btn = PublishBtn(subset_frame)
 
-        footer_layout = QtWidgets.QHBoxLayout()
-        footer_layout.setContentsMargins(0, 0, 0, 0)
-        footer_layout.addWidget(comment_input, 1)
-        footer_layout.addWidget(reset_btn, 0)
-        footer_layout.addWidget(stop_btn, 0)
-        footer_layout.addWidget(validate_btn, 0)
-        footer_layout.addWidget(publish_btn, 0)
+        footer_bottom_layout = QtWidgets.QHBoxLayout(footer_bottom_widget)
+        footer_bottom_layout.setContentsMargins(0, 0, 0, 0)
+        footer_bottom_layout.addStretch(1)
+        footer_bottom_layout.addWidget(reset_btn, 0)
+        footer_bottom_layout.addWidget(stop_btn, 0)
+        footer_bottom_layout.addWidget(validate_btn, 0)
+        footer_bottom_layout.addWidget(publish_btn, 0)
+
+        footer_layout = QtWidgets.QVBoxLayout(footer_widget)
+        footer_layout.addWidget(comment_input, 0)
+        footer_layout.addWidget(footer_bottom_widget, 0)
 
         # Subset frame layout
         subset_layout = QtWidgets.QVBoxLayout(subset_frame)
@@ -167,10 +174,9 @@ class PublisherWindow(QtWidgets.QDialog):
         marings.setLeft(marings.left() * 2)
         marings.setRight(marings.right() * 2)
         marings.setTop(marings.top() * 2)
-        marings.setBottom(marings.bottom() * 2)
+        marings.setBottom(0)
         subset_layout.setContentsMargins(marings)
         subset_layout.addWidget(subset_content_widget, 1)
-        subset_layout.addLayout(footer_layout, 0)
 
         # Create publish frame
         publish_frame = PublishFrame(controller, content_stacked_widget)
@@ -192,6 +198,7 @@ class PublisherWindow(QtWidgets.QDialog):
         main_layout.addWidget(header_widget, 0)
         main_layout.addWidget(line_widget, 0)
         main_layout.addWidget(content_stacked_widget, 1)
+        main_layout.addWidget(footer_widget, 0)
 
         creator_window = CreateDialog(controller, parent=self)
 
