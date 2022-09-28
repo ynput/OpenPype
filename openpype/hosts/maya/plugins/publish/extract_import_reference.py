@@ -6,6 +6,7 @@ import pyblish.api
 
 from openpype.pipeline import publish, legacy_io
 from openpype.settings import get_project_settings
+from openpype.hosts.maya.api import lib
 
 
 def _get_project_setting():
@@ -80,7 +81,7 @@ class ImportReference(publish.Extractor):
         for r in reference_node:
             rFile = cmds.referenceQuery(r, f=True)
             if r == "sharedReferenceNode":
-                cmds.file(rFile, removeReference = True, referenceNode=r)
+                cmds.file(rFile, removeReference=True, referenceNode=r)
             cmds.file(rFile, importReference=True)
 
         if current.endswith(self.scene_type):
@@ -93,14 +94,14 @@ class ImportReference(publish.Extractor):
             cmds.select(all=True, noExpand=True)
             cmds.file(m_ref_path,
                       force=True,
-                      typ = _scene_type,
+                      typ=_scene_type,
                       exportSelected=True,
                       channels=True,
                       constraints=True,
                       shader=True,
                       expressions=True,
                       constructionHistory=True
-                     )
+            )
 
         if "files" not in instance.data:
             instance.data["files"] = []
