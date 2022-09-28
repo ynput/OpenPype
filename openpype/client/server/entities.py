@@ -3,6 +3,7 @@ import datetime
 
 from .constants import (
     FOLDER_ATTRIBS,
+    DEFAULT_V3_FOLDER_FIELDS,
     DEFAULT_FOLDER_FIELDS,
     FOLDER_ATTRIBS_FIELDS,
 
@@ -174,7 +175,7 @@ def _folder_fields_v3_to_v4(fields):
     """
 
     if not fields:
-        return None
+        return set(DEFAULT_V3_FOLDER_FIELDS)
 
     output = set()
     for field in fields:

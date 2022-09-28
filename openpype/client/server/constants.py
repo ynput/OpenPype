@@ -14,12 +14,22 @@ FOLDER_ATTRIBS_FIELDS = {
     "attrib.{}".format(attr)
     for attr in FOLDER_ATTRIBS
 }
-DEFAULT_FOLDER_FIELDS = {
+# V3 has tasks vs. V4 which does not have
+DEFAULT_V3_FOLDER_FIELDS = {
     "id",
     "name",
     "path",
     "parentId",
     "tasks",
+    "active",
+    "parents",
+    "thumbnailId"
+} | FOLDER_ATTRIBS_FIELDS
+DEFAULT_FOLDER_FIELDS = {
+    "id",
+    "name",
+    "path",
+    "parentId",
     "active",
     "parents",
     "thumbnailId"
