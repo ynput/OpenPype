@@ -25,6 +25,7 @@ from .graphql_queries import (
     subsets_graphql_query,
     versions_graphql_query,
     representations_graphql_query,
+    reprersentations_parents_qraphql_query,
 )
 from .server import get_server_api_connection
 
@@ -41,7 +42,6 @@ PROJECT_FIELDS_MAPPING_V3_V4 = {
 
 # TODO this should not be hardcoded but received from server!!!
 # --- Folder entity ---
-
 FOLDER_FIELDS_MAPPING_V3_V4 = {
     "_id": {"id"},
     "name": {"name"},
@@ -1439,7 +1439,57 @@ def get_representation_parents(project_name, representation):
 
 
 def get_representations_parents(project_name, representations):
-    raise NotImplementedError("'get_representations_parents' not implemented")
+    repre_ids = {
+        repre["_id"]
+        for repre in representations
+    }
+    parents = get_v4_representations_parents(project_name, repre_ids)
+    new_parents = {}
+    folder_ids = set()
+    for parents in parents.values():
+        folder_ids.add(parents[2]["id"])
+
+    tasks_by_folder_id = {}
+
+    for repre_id, parents in parents.items():
+        version, subset, folder, project = parents
+        folder_tasks = tasks_by_folder_id.get(folder["id"]) or {}
+        folder["tasks"] = folder_tasks
+        new_parents[repre_id] = (
+            _convert_v4_version_to_v3(version),
+            _convert_v4_subset_to_v3(subset),
+            _convert_v4_folder_to_v3(folder, project_name),
+            project
+        )
+    return get_v4_representations_parents(project_name, repre_ids)
+
+
+def get_v4_representations_parents(project_name, representation_ids):
+    if not representation_ids:
+        return {}
+
+    project = get_project(project_name)
+    repre_ids = set(representation_ids)
+    output = {
+        repre_id: (None, None, None, None)
+        for repre_id in representation_ids
+    }
+
+    query = reprersentations_parents_qraphql_query()
+    query.set_variable_value("projectName", project_name)
+    query.set_variable_value("representationIds", list(repre_ids))
+
+    con = get_server_api_connection()
+
+    parsed_data = query.query(con)
+    for repre in parsed_data["project"]["representations"]:
+        repre_id = repre["id"]
+        version = repre.pop("version")
+        subset = version.pop("subset")
+        folder = subset.pop("folder")
+        output[repre_id] = (version, subset, folder, project)
+
+    return output
 
 
 def get_archived_representations(*args, **kwargs):
