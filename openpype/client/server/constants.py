@@ -1,0 +1,112 @@
+FOLDER_ATTRIBS = {
+    "clipIn",
+    "clipOut",
+    "fps",
+    "frameEnd",
+    "handleEnd",
+    "frameStart",
+    "handleStart",
+    "pixelAspect",
+    "resolutionHeight",
+    "resolutionWidth",
+}
+FOLDER_ATTRIBS_FIELDS = {
+    "attrib.{}".format(attr)
+    for attr in FOLDER_ATTRIBS
+}
+DEFAULT_FOLDER_FIELDS = {
+    "id",
+    "name",
+    "path",
+    "parentId",
+    "tasks",
+    "active",
+    "parents",
+    "thumbnailId"
+} | FOLDER_ATTRIBS_FIELDS
+
+
+SUBSET_ATTRIBS = {
+    "subsetGroup",
+}
+SUBSET_ATTRIBS_FIELDS = {
+    "attrib.{}".format(attr)
+    for attr in SUBSET_ATTRIBS
+}
+DEFAULT_SUBSET_FIELDS = {
+    "id",
+    "name",
+    "active",
+    "family",
+    "folderId",
+} | SUBSET_ATTRIBS_FIELDS
+
+VERSION_ATTRIBS = {
+    "fps",
+    "resolutionWidth",
+    "resolutionHeight",
+    "pixelAspect",
+    "clipIn",
+    "clipOut",
+    "families",
+    "frameStart",
+    "frameEnd",
+    "handleStart",
+    "handleEnd",
+    "intent",
+    "source",
+    "comment",
+    "machine",
+    "colorSpace",
+}
+VERSION_ATTRIBS_FIELDS = {
+    "attrib.{}".format(attr)
+    for attr in VERSION_ATTRIBS
+}
+DEFAULT_VERSION_FIELDS = {
+    "id",
+    "name",
+    "version",
+    "active",
+    "subsetId",
+    "taskId",
+    "author",
+    "thumbnailId",
+    "createdAt",
+    "updatedAt",
+} | VERSION_ATTRIBS_FIELDS
+
+REPRESENTATION_ATTRIBS = {
+    "clipIn",
+    "clipOut",
+    "extension",
+    "fps",
+    "frameEnd",
+    "frameStart",
+    "handleEnd",
+    "handleStart",
+    "pixelAspect",
+    "resolutionHeight",
+    "resolutionWidth",
+    "path",
+    "template",
+}
+REPRESENTATION_ATTRIBS_FIELDS = {
+    "attrib.{}".format(attr)
+    for attr in REPRESENTATION_ATTRIBS
+}
+REPRESENTATION_FILES_FIELDS = {
+    "files.baseName",
+    "files.hash",
+    "files.id",
+    "files.path",
+    "files.size",
+}
+DEFAULT_REPRESENTATION_FIELDS = {
+    "id",
+    "name",
+    "context",
+    "createdAt",
+    "active",
+    "versionId",
+} | REPRESENTATION_ATTRIBS_FIELDS | REPRESENTATION_FILES_FIELDS

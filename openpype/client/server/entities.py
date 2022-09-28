@@ -1,6 +1,21 @@
 import collections
 import datetime
 
+from .constants import (
+    FOLDER_ATTRIBS,
+    DEFAULT_FOLDER_FIELDS,
+    FOLDER_ATTRIBS_FIELDS,
+
+    SUBSET_ATTRIBS,
+    DEFAULT_SUBSET_FIELDS,
+
+    VERSION_ATTRIBS_FIELDS,
+    DEFAULT_VERSION_FIELDS,
+
+    REPRESENTATION_ATTRIBS_FIELDS,
+    REPRESENTATION_FILES_FIELDS,
+    DEFAULT_REPRESENTATION_FIELDS,
+)
 from .graphql import (
     GraphQlQuery,
     project_graphql_query,
@@ -25,22 +40,7 @@ PROJECT_FIELDS_MAPPING_V3_V4 = {
 
 # TODO this should not be hardcoded but received from server!!!
 # --- Folder entity ---
-FOLDER_ATTRIBS = {
-    "clipIn",
-    "clipOut",
-    "fps",
-    "frameEnd",
-    "handleEnd",
-    "frameStart",
-    "handleStart",
-    "pixelAspect",
-    "resolutionHeight",
-    "resolutionWidth",
-}
-FOLDER_ATTRIBS_FIELDS = {
-    "attrib.{}".format(attr)
-    for attr in FOLDER_ATTRIBS
-}
+
 FOLDER_FIELDS_MAPPING_V3_V4 = {
     "_id": {"id"},
     "name": {"name"},
@@ -54,34 +54,7 @@ FOLDER_FIELDS_MAPPING_V3_V4 = {
     "data.thumbnail_id": {"thumbnailId"}
 }
 
-# NOTE: There are for v3 compatibility
-DEFAULT_FOLDER_FIELDS = {
-    "id",
-    "name",
-    "path",
-    "parentId",
-    "tasks",
-    "active",
-    "parents",
-    "thumbnailId"
-} | FOLDER_ATTRIBS_FIELDS
-
 # --- Subset entity ---
-SUBSET_ATTRIBS = {
-    "subsetGroup",
-}
-SUBSET_ATTRIBS_FIELDS = {
-    "attrib.{}".format(attr)
-    for attr in SUBSET_ATTRIBS
-}
-DEFAULT_SUBSET_FIELDS = {
-    "id",
-    "name",
-    "active",
-    "family",
-    "folderId",
-} | SUBSET_ATTRIBS_FIELDS
-
 SUBSET_FIELDS_MAPPING_V3_V4 = {
     "_id": {"id"},
     "name": {"name"},
@@ -90,40 +63,6 @@ SUBSET_FIELDS_MAPPING_V3_V4 = {
 }
 
 # --- Version entity ---
-VERSION_ATTRIBS = {
-    "fps",
-    "resolutionWidth",
-    "resolutionHeight",
-    "pixelAspect",
-    "clipIn",
-    "clipOut",
-    "families",
-    "frameStart",
-    "frameEnd",
-    "handleStart",
-    "handleEnd",
-    "intent",
-    "source",
-    "comment",
-    "machine",
-    "colorSpace",
-}
-VERSION_ATTRIBS_FIELDS = {
-    "attrib.{}".format(attr)
-    for attr in VERSION_ATTRIBS
-}
-DEFAULT_VERSION_FIELDS = {
-    "id",
-    "name",
-    "version",
-    "active",
-    "subsetId",
-    "taskId",
-    "author",
-    "thumbnailId",
-    "createdAt",
-    "updatedAt",
-} | VERSION_ATTRIBS_FIELDS
 VERSION_FIELDS_MAPPING_V3_V4 = {
     "_id": {"id"},
     "name": {"version"},
@@ -131,40 +70,6 @@ VERSION_FIELDS_MAPPING_V3_V4 = {
 }
 
 # --- Representation entity ---
-REPRESENTATION_ATTRIBS = {
-    "clipIn",
-    "clipOut",
-    "extension",
-    "fps",
-    "frameEnd",
-    "frameStart",
-    "handleEnd",
-    "handleStart",
-    "pixelAspect",
-    "resolutionHeight",
-    "resolutionWidth",
-    "path",
-    "template",
-}
-REPRESENTATION_ATTRIBS_FIELDS = {
-    "attrib.{}".format(attr)
-    for attr in REPRESENTATION_ATTRIBS
-}
-REPRESENTATION_FILES_FIELDS = {
-    "files.baseName",
-    "files.hash",
-    "files.id",
-    "files.path",
-    "files.size",
-}
-DEFAULT_REPRESENTATION_FIELDS = {
-    "id",
-    "name",
-    "context",
-    "createdAt",
-    "active",
-    "versionId",
-} | REPRESENTATION_ATTRIBS_FIELDS | REPRESENTATION_FILES_FIELDS
 REPRESENTATION_FIELDS_MAPPING_V3_V4 = {
     "_id": {"id"},
     "name": {"name"},
