@@ -5,10 +5,10 @@ import os
 import unreal
 from unreal import MaterialEditingLibrary as mat_lib
 
-import openpype.api
+from openpype.pipeline import publish
 
 
-class ExtractLook(openpype.api.Extractor):
+class ExtractLook(publish.Extractor):
     """Extract look."""
 
     label = "Extract Look"
