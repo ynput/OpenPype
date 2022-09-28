@@ -669,6 +669,12 @@ def get_v4_folders(
             parent_ids.remove(None)
             parent_ids.add("root")
 
+        if project_name in parent_ids:
+            # Replace project name with '"root"' which is used during GraphQl
+            #   query for parent ids filter for folders without folder parent
+            parent_ids.remove(project_name)
+            parent_ids.add("root")
+
         filters["parentFolderIds"] = list(parent_ids)
 
     if not fields:
