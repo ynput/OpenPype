@@ -3,8 +3,6 @@ import sys
 import re
 import contextlib
 
-from Qt import QtGui
-
 from openpype.lib import Logger
 from openpype.client import (
     get_asset_by_name,
