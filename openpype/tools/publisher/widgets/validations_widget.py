@@ -414,15 +414,76 @@ class ValidationsWidget(QtWidgets.QFrame):
     │      │  Error detail  │       │
     │      │                │       │
     │      │                │       │
-    ├──────┴────────────────┴───────┤
-    │         Publish buttons       │
-    └───────────────────────────────┘
+    └──────┴────────────────┴───────┘
     """
 
     def __init__(self, controller, parent):
         super(ValidationsWidget, self).__init__(parent)
 
-        errors_scroll = VerticallScrollArea(self)
+        # Before publishing
+        before_publish_widget = QtWidgets.QWidget(self)
+        before_publish_label = QtWidgets.QLabel(
+            "Nothing to report until you run publish",
+            before_publish_widget
+        )
+        before_publish_label.setAlignment(QtCore.Qt.AlignCenter)
+        before_publish_layout = QtWidgets.QHBoxLayout(before_publish_widget)
+        before_publish_layout.setContentsMargins(0, 0, 0, 0)
+        before_publish_layout.addWidget(
+            before_publish_label, 1, QtCore.Qt.AlignCenter
+        )
+
+        # After success publishing
+        publish_started_widget = QtWidgets.QWidget(self)
+        publish_started_label = QtWidgets.QLabel(
+            "Publishing run smoothly",
+            publish_started_widget
+        )
+        publish_started_label.setAlignment(QtCore.Qt.AlignCenter)
+        publish_started_layout = QtWidgets.QHBoxLayout(
+            publish_started_widget
+        )
+        publish_started_layout.setContentsMargins(0, 0, 0, 0)
+        publish_started_layout.addWidget(
+            publish_started_label, 1, QtCore.Qt.AlignCenter
+        )
+
+        # After success publishing
+        publish_stop_ok_widget = QtWidgets.QWidget(self)
+        publish_stop_ok_label = QtWidgets.QLabel(
+            "Publishing finished successfully",
+            publish_stop_ok_widget
+        )
+        publish_stop_ok_label.setAlignment(QtCore.Qt.AlignCenter)
+        publish_stop_ok_layout = QtWidgets.QHBoxLayout(
+            publish_stop_ok_widget
+        )
+        publish_stop_ok_layout.setContentsMargins(0, 0, 0, 0)
+        publish_stop_ok_layout.addWidget(
+            publish_stop_ok_label, 1, QtCore.Qt.AlignCenter
+        )
+
+        # After failed publishing (not with validation error)
+        publish_stop_fail_widget = QtWidgets.QWidget(self)
+        publish_stop_fail_label = QtWidgets.QLabel(
+            "This is not your fault",
+            publish_stop_fail_widget
+        )
+        publish_stop_fail_label.setAlignment(QtCore.Qt.AlignCenter)
+        publish_stop_fail_layout = QtWidgets.QHBoxLayout(
+            publish_stop_fail_widget
+        )
+        publish_stop_fail_layout.setContentsMargins(0, 0, 0, 0)
+        publish_stop_fail_layout.addWidget(
+            publish_stop_fail_label, 1, QtCore.Qt.AlignCenter
+        )
+
+        # Validation errors
+        validations_widget = QtWidgets.QWidget(self)
+
+        content_widget = QtWidgets.QWidget(validations_widget)
+
+        errors_scroll = VerticallScrollArea(content_widget)
         errors_scroll.setWidgetResizable(True)
 
         errors_widget = QtWidgets.QWidget(errors_scroll)
@@ -432,35 +493,58 @@ class ValidationsWidget(QtWidgets.QFrame):
 
         errors_scroll.setWidget(errors_widget)
 
-        error_details_frame = QtWidgets.QFrame(self)
+        error_details_frame = QtWidgets.QFrame(content_widget)
         error_details_input = QtWidgets.QTextEdit(error_details_frame)
         error_details_input.setObjectName("InfoText")
         error_details_input.setTextInteractionFlags(
             QtCore.Qt.TextBrowserInteraction
         )
 
-        actions_widget = ValidateActionsWidget(controller, self)
+        actions_widget = ValidateActionsWidget(controller, content_widget)
         actions_widget.setMinimumWidth(140)
 
         error_details_layout = QtWidgets.QHBoxLayout(error_details_frame)
         error_details_layout.addWidget(error_details_input, 1)
         error_details_layout.addWidget(actions_widget, 0)
 
-        content_layout = QtWidgets.QHBoxLayout()
+        content_layout = QtWidgets.QHBoxLayout(content_widget)
         content_layout.setSpacing(0)
         content_layout.setContentsMargins(0, 0, 0, 0)
 
         content_layout.addWidget(errors_scroll, 0)
         content_layout.addWidget(error_details_frame, 1)
 
-        top_label = QtWidgets.QLabel("Publish validation report", self)
+        top_label = QtWidgets.QLabel(
+            "Publish validation report", content_widget
+        )
         top_label.setObjectName("PublishInfoMainLabel")
         top_label.setAlignment(QtCore.Qt.AlignCenter)
 
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(top_label)
-        layout.addLayout(content_layout)
+        validation_layout = QtWidgets.QVBoxLayout(validations_widget)
+        validation_layout.setContentsMargins(0, 0, 0, 0)
+        validation_layout.addWidget(top_label, 0)
+        validation_layout.addWidget(content_widget, 1)
+
+        main_layout = QtWidgets.QStackedLayout(self)
+        main_layout.addWidget(before_publish_widget)
+        main_layout.addWidget(publish_started_widget)
+        main_layout.addWidget(publish_stop_ok_widget)
+        main_layout.addWidget(publish_stop_fail_widget)
+        main_layout.addWidget(validations_widget)
+
+        main_layout.setCurrentWidget(before_publish_widget)
+
+        controller.add_publish_started_callback(self._on_publish_start)
+        controller.add_publish_reset_callback(self._on_publish_reset)
+        controller.add_publish_stopped_callback(self._on_publish_stop)
+
+        self._main_layout = main_layout
+
+        self._before_publish_widget = before_publish_widget
+        self._publish_started_widget = publish_started_widget
+        self._publish_stop_ok_widget = publish_stop_ok_widget
+        self._publish_stop_fail_widget = publish_stop_fail_widget
+        self._validations_widget = validations_widget
 
         self._top_label = top_label
         self._errors_widget = errors_widget
@@ -472,6 +556,8 @@ class ValidationsWidget(QtWidgets.QFrame):
         self._title_widgets = {}
         self._error_info = {}
         self._previous_select = None
+
+        self._controller = controller
 
     def clear(self):
         """Delete all dynamic widgets and hide all wrappers."""
@@ -535,6 +621,32 @@ class ValidationsWidget(QtWidgets.QFrame):
             self._title_widgets[0].set_selected(True)
 
         self.updateGeometry()
+
+    def _set_current_widget(self, widget):
+        self._main_layout.setCurrentWidget(widget)
+
+    def _on_publish_start(self):
+        self._set_current_widget(self._publish_started_widget)
+
+    def _on_publish_reset(self):
+        self._set_current_widget(self._before_publish_widget)
+
+    def _on_publish_stop(self):
+        if self._controller.publish_has_crashed:
+            self._set_current_widget(self._publish_stop_fail_widget)
+            return
+
+        if self._controller.publish_has_validation_errors:
+            validation_errors = self._controller.get_validation_errors()
+            self._set_current_widget(self._validations_widget)
+            self.set_errors(validation_errors)
+            return
+
+        if self._contoller.publish_has_finished:
+            self._set_current_widget(self._publish_stop_ok_widget)
+            return
+
+        self._set_current_widget(self._publish_started_widget)
 
     def _on_select(self, index):
         if self._previous_select:
