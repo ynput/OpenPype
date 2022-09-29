@@ -812,14 +812,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
         col_format = col.format("{head}{padding}{tail}")
         holes_to_nearest = {}
         for missing_idx in missing_indexes:
-            if abs(missing_idx - prev_index) <= abs(missing_idx - next_index):
-                nearest_index = prev_index
-            else:
-                nearest_index = next_index
+            while abs(missing_idx - prev_index) > abs(missing_idx - next_index):   # noqa: E501
                 prev_index = next_index
                 next_index = next(existing_indices_iter, prev_index)
 
-            nearest_fname = col_format % nearest_index
+            nearest_fname = col_format % prev_index
             hole_fname = col_format % missing_idx
 
             nearest_fpath = os.path.join(staging_dir, nearest_fname)
