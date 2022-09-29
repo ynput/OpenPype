@@ -800,18 +800,25 @@ class ExtractReview(pyblish.api.InstancePlugin):
         if not missing_indexes:
             return []
 
+        # Both collection frame indexes and the missing indexes are sorted
+        # so we can keep track of the nearest existing frame with an iterator
+        existing_indices_iter = iter(col.indexes)
+        prev_index = next(existing_indices_iter, None)
+        next_index = next(existing_indices_iter, prev_index)
+        if prev_index is None:
+            raise RuntimeError("No indices in input collection. This is a bug")
+
         # For each missing filepath collect the nearest existing index filepath
         col_format = col.format("{head}{padding}{tail}")
         holes_to_nearest = {}
         for missing_idx in missing_indexes:
-            # TODO: This isn't 'optimal' since we know both missing_indexes
-            #       and existing indexes are sorted so we could keep track
-            #       of nearest index comparisons
-            # Get the nearest frame index from existing indices
-            nearest_index = min(col.indexes,
-                                # -0.001 so we favor previous existing frame
-                                # over next existing frame
-                                key=lambda idx: abs((missing_idx-0.001)-idx))
+            if abs(missing_idx - prev_index) <= abs(missing_idx - next_index):
+                nearest_index = prev_index
+            else:
+                nearest_index = next_index
+                prev_index = next_index
+                next_index = next(existing_indices_iter, prev_index)
+
             nearest_fname = col_format % nearest_index
             hole_fname = col_format % missing_idx
 
