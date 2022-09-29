@@ -18,6 +18,9 @@ class OverviewWidget(QtWidgets.QFrame):
     instance_context_changed = QtCore.Signal()
     create_requested = QtCore.Signal()
 
+    anim_end_value = 400
+    anim_duration = 400
+
     def __init__(self, controller, parent):
         super(OverviewWidget, self).__init__(parent)
 
@@ -89,10 +92,19 @@ class OverviewWidget(QtWidgets.QFrame):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(subset_content_widget, 1)
 
+        change_anim = QtCore.QVariantAnimation()
+        change_anim.setStartValue(0)
+        change_anim.setEndValue(self.anim_end_value)
+        change_anim.setDuration(self.anim_duration)
+        change_anim.setEasingCurve(QtCore.QEasingCurve.InOutQuad)
+
         # --- Calbacks for instances/subsets view ---
         create_btn.clicked.connect(self._on_create_clicked)
         delete_btn.clicked.connect(self._on_delete_clicked)
         change_view_btn.clicked.connect(self._on_change_view_clicked)
+
+        change_anim.valueChanged.connect(self._on_change_anim)
+        change_anim.finished.connect(self._on_change_anim_finished)
 
         # Selection changed
         subset_list_view.selection_changed.connect(
@@ -119,6 +131,7 @@ class OverviewWidget(QtWidgets.QFrame):
         controller.add_instances_refresh_callback(self._on_instances_refresh)
 
         self._subset_content_widget = subset_content_widget
+        self._subset_content_layout = subset_content_layout
 
         self._subset_view_cards = subset_view_cards
         self._subset_list_view = subset_list_view
@@ -128,9 +141,18 @@ class OverviewWidget(QtWidgets.QFrame):
 
         self._subset_attributes_widget = subset_attributes_widget
         self._create_widget = create_widget
+        self._subset_views_widget = subset_views_widget
         self._subset_attributes_wrap = subset_attributes_wrap
 
+        self._change_anim = change_anim
+
         # Start in create mode
+        self._create_widget_policy = create_widget.sizePolicy()
+        self._subset_views_widget_policy = subset_views_widget.sizePolicy()
+        self._subset_attributes_wrap_policy = (
+            subset_attributes_wrap.sizePolicy()
+        )
+        self._max_widget_width = None
         self._current_state = "create"
         subset_attributes_wrap.setVisible(False)
 
@@ -140,12 +162,29 @@ class OverviewWidget(QtWidgets.QFrame):
 
         self._current_state = new_state
 
-        self._create_widget.setVisible(
-            self._current_state == "create"
+        anim_is_running = (
+            self._change_anim.state() == self._change_anim.Running
         )
-        self._subset_attributes_wrap.setVisible(
-            self._current_state == "publish"
-        )
+        if not animate:
+            self._change_visibility_for_state()
+            if anim_is_running:
+                self._change_anim.stop()
+            return
+
+        if self._max_widget_width is None:
+            self._max_widget_width = self._subset_views_widget.maximumWidth()
+
+        if new_state == "create":
+            direction = self._change_anim.Backward
+        else:
+            direction = self._change_anim.Forward
+        self._change_anim.setDirection(direction)
+
+        if not anim_is_running:
+            view_width = self._subset_views_widget.width()
+            self._subset_views_widget.setMinimumWidth(view_width)
+            self._subset_views_widget.setMaximumWidth(view_width)
+            self._change_anim.start()
 
     def _on_create_clicked(self):
         """Pass signal to parent widget which should care about changing state.
@@ -202,6 +241,52 @@ class OverviewWidget(QtWidgets.QFrame):
         if self._refreshing_instances:
             return
         self.active_changed.emit()
+
+    def _on_change_anim(self, value):
+        self._create_widget.setVisible(True)
+        self._subset_attributes_wrap.setVisible(True)
+        width = (
+            self._subset_content_widget.width()
+            - (
+                self._subset_views_widget.width()
+                + (self._subset_content_layout.spacing() * 2)
+            )
+        )
+        subset_attrs_width = int(float(width) / self.anim_end_value) * value
+        if subset_attrs_width > width:
+            subset_attrs_width = width
+        create_width = width - subset_attrs_width
+
+        self._create_widget.setMinimumWidth(create_width)
+        self._create_widget.setMaximumWidth(create_width)
+        self._subset_attributes_wrap.setMinimumWidth(subset_attrs_width)
+        self._subset_attributes_wrap.setMaximumWidth(subset_attrs_width)
+
+    def _on_change_anim_finished(self):
+        self._change_visibility_for_state()
+        self._create_widget.setMinimumWidth(0)
+        self._create_widget.setMaximumWidth(self._max_widget_width)
+        self._subset_attributes_wrap.setMinimumWidth(0)
+        self._subset_attributes_wrap.setMaximumWidth(self._max_widget_width)
+        self._subset_views_widget.setMinimumWidth(0)
+        self._subset_views_widget.setMaximumWidth(self._max_widget_width)
+        self._create_widget.setSizePolicy(
+            self._create_widget_policy
+        )
+        self._subset_attributes_wrap.setSizePolicy(
+            self._subset_attributes_wrap_policy
+        )
+        self._subset_views_widget.setSizePolicy(
+            self._subset_views_widget_policy
+        )
+
+    def _change_visibility_for_state(self):
+        self._create_widget.setVisible(
+            self._current_state == "create"
+        )
+        self._subset_attributes_wrap.setVisible(
+            self._current_state == "publish"
+        )
 
     def _on_instance_context_change(self):
         current_idx = self._subset_views_layout.currentIndex()
