@@ -4,7 +4,7 @@ import pyblish.api
 from maya import cmds
 
 import openpype.hosts.maya.api.action
-from openpype.hosts.maya.api.render_settings import RenderSettings
+from openpype.hosts.maya.api.lib_rendersettings import RenderSettings
 from openpype.pipeline.publish import ValidateContentsOrder
 
 
