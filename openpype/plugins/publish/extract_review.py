@@ -1223,7 +1223,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         #   'use_input_res' is set to 'True'.
         use_input_res = False
 
-        # Overscal color
+        # Overscan color
         overscan_color_value = "black"
         overscan_color = output_def.get("overscan_color")
         if overscan_color:
@@ -1701,14 +1701,14 @@ class OverscanCrop:
     relative_source_regex = re.compile(r"%([\+\-])")
 
     def __init__(
-        self, input_width, input_height, string_value, overscal_color=None
+        self, input_width, input_height, string_value, overscan_color=None
     ):
         # Make sure that is not None
         string_value = string_value or ""
 
         self.input_width = input_width
         self.input_height = input_height
-        self.overscal_color = overscal_color
+        self.overscan_color = overscan_color
 
         width, height = self._convert_string_to_values(string_value)
         self._width_value = width
@@ -1764,20 +1764,20 @@ class OverscanCrop:
         elif width >= self.input_width and height >= self.input_height:
             output.append(
                 "pad={}:{}:(iw-ow)/2:(ih-oh)/2:{}".format(
-                    width, height, self.overscal_color
+                    width, height, self.overscan_color
                 )
             )
 
         elif width > self.input_width and height < self.input_height:
             output.append("crop=iw:{}".format(height))
             output.append("pad={}:ih:(iw-ow)/2:(ih-oh)/2:{}".format(
-                width, self.overscal_color
+                width, self.overscan_color
             ))
 
         elif width < self.input_width and height > self.input_height:
             output.append("crop={}:ih".format(width))
             output.append("pad=iw:{}:(iw-ow)/2:(ih-oh)/2:{}".format(
-                height, self.overscal_color
+                height, self.overscan_color
             ))
 
         return output
