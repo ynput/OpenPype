@@ -91,6 +91,7 @@ class ExtractThumbnail(openpype.api.Extractor):
             "files": thumbnail,
             "stagingDir": stagingdir,
             "thumbnail": True,
+            "tags": ["review", "thumbnail"],
         }
         instance.data["representations"].append(representation)
 
