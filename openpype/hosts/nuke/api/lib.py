@@ -138,9 +138,6 @@ def get_node_data(node, knobname):
         dict: data stored in knob
     """
     if knobname not in node.knobs():
-        log.warnig("Knobname `{}` does not exist on node `{}`".format(
-            knobname, node.name()
-        ))
         return
 
     rawdata = node[knobname].getValue()
@@ -2212,10 +2209,6 @@ class WorkfileSettings(object):
             node['frame_range_lock'].setValue(True)
             node['frame_range'].setValue(range)
             node['frame_range_lock'].setValue(True)
-
-        # adding handle_start/end to root avalon knob
-        log.debug("self._root_node: {}".format(self._root_node))
-        log.debug("self._root_node: {}".format(self._root_node))
 
         set_node_data(
             self._root_node,
