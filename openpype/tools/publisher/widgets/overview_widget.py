@@ -38,6 +38,7 @@ class OverviewWidget(QtWidgets.QFrame):
         subset_views_layout = QtWidgets.QStackedLayout()
         subset_views_layout.addWidget(subset_view_cards)
         subset_views_layout.addWidget(subset_list_view)
+        subset_views_layout.setCurrentWidget(subset_view_cards)
 
         # Buttons at the bottom of subset view
         create_btn = CreateInstanceBtn(self)
@@ -113,6 +114,7 @@ class OverviewWidget(QtWidgets.QFrame):
         )
 
         # --- Controller callbacks ---
+        controller.add_publish_started_callback(self._on_publish_start)
         controller.add_publish_reset_callback(self._on_publish_reset)
         controller.add_instances_refresh_callback(self._on_instances_refresh)
 
@@ -252,9 +254,15 @@ class OverviewWidget(QtWidgets.QFrame):
         # Force to change instance and refresh details
         self._on_subset_change()
 
+    def _on_publish_start(self):
+        """Publish started."""
+
+        self._subset_attributes_wrap.setEnabled(False)
+
     def _on_publish_reset(self):
         """Context in controller has been refreshed."""
 
+        self._subset_attributes_wrap.setEnabled(True)
         self._subset_content_widget.setEnabled(self._controller.host_is_valid)
 
     def _on_instances_refresh(self):
