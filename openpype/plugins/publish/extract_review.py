@@ -21,6 +21,7 @@ from openpype.lib import (
     convert_input_paths_for_ffmpeg,
     get_transcode_temp_directory
 )
+from openpype.pipeline import legacy_io
 from openpype.lib.profiles_filtering import filter_profiles
 import speedcopy
 
@@ -87,7 +88,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
     def _get_outputs_for_instance(self, instance):
         host_name = instance.context.data["hostName"]
-        task_name = os.environ["AVALON_TASK"]
+        task_name = legacy_io.Session["AVALON_TASK"]
         family = self.main_family_from_instance(instance)
 
         self.log.info("Host: \"{}\"".format(host_name))
