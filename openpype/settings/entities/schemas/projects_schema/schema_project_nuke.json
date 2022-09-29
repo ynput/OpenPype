@@ -19,11 +19,6 @@
                     "children": [
                         {
                             "type": "text",
-                            "key": "create",
-                            "label": "Create..."
-                        },
-                        {
-                            "type": "text",
                             "key": "publish",
                             "label": "Publish..."
                         },

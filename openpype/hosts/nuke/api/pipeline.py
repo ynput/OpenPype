@@ -231,8 +231,8 @@ def _install_menu():
 
     menu.addSeparator()
     menu.addCommand(
-        "Create...",
-        lambda: host_tools.show_creator(parent=main_window)
+        "Publish...",
+        lambda: host_tools.show_publisher(parent=main_window)
     )
     menu.addCommand(
         "Load...",
@@ -242,13 +242,10 @@ def _install_menu():
         )
     )
     menu.addCommand(
-        "Publish...",
-        lambda: host_tools.show_publisher(parent=main_window)
-    )
-    menu.addCommand(
         "Manage...",
         lambda: host_tools.show_scene_inventory(parent=main_window)
     )
+    menu.addSeparator()
     menu.addCommand(
         "Library...",
         lambda: host_tools.show_library_loader(
@@ -344,7 +341,6 @@ def add_shortcuts_from_presets():
     if nuke_presets.get("menu"):
         menu_label_mapping = {
             "manage": "Manage...",
-            "create": "Create...",
             "load": "Load...",
             "build_workfile": "Build Workfile",
             "publish": "Publish..."

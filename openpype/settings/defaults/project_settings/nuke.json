@@ -1,7 +1,6 @@
 {
     "general": {
         "menu": {
-            "create": "ctrl+shift+alt+c",
             "publish": "ctrl+alt+p",
             "load": "ctrl+alt+l",
             "manage": "ctrl+alt+m",
