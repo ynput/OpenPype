@@ -1,5 +1,4 @@
 import os
-import re
 import json
 import copy
 import tempfile
