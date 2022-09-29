@@ -21,6 +21,7 @@ from openpype.lib import (
     convert_input_paths_for_ffmpeg,
     get_transcode_temp_directory
 )
+from openpype.lib.profiles_filtering import filter_profiles
 import speedcopy
 
 
@@ -93,9 +94,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.info("Task: \"{}\"".format(task_name))
         self.log.info("Family: \"{}\"".format(family))
 
-        profile = self.find_matching_profile(
-            host_name, task_name, family
-        )
+        profile = filter_profiles(profiles_data=self.profiles,
+                                  key_values={
+                                      "hosts": host_name,
+                                      "tasks": task_name,
+                                      "families": family,
+                                  },
+                                  logger=self.log)
         if not profile:
             self.log.info((
                 "Skipped instance. None of profiles in presets are for"
@@ -1420,204 +1425,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if family not in families:
                 families.append(family)
         return families
-
-    def compile_list_of_regexes(self, in_list):
-        """Convert strings in entered list to compiled regex objects."""
-        regexes = []
-        if not in_list:
-            return regexes
-
-        for item in in_list:
-            if not item:
-                continue
-
-            try:
-                regexes.append(re.compile(item))
-            except TypeError:
-                self.log.warning((
-                    "Invalid type \"{}\" value \"{}\"."
-                    " Expected string based object. Skipping."
-                ).format(str(type(item)), str(item)))
-
-        return regexes
-
-    def validate_value_by_regexes(self, value, in_list):
-        """Validates in any regex from list match entered value.
-
-        Args:
-            in_list (list): List with regexes.
-            value (str): String where regexes is checked.
-
-        Returns:
-            int: Returns `0` when list is not set or is empty. Returns `1` when
-                any regex match value and returns `-1` when none of regexes
-                match value entered.
-        """
-        if not in_list:
-            return 0
-
-        output = -1
-        regexes = self.compile_list_of_regexes(in_list)
-        for regex in regexes:
-            if not value:
-                continue
-            if re.match(regex, value):
-                output = 1
-                break
-        return output
-
-    def profile_exclusion(self, matching_profiles):
-        """Find out most matching profile byt host, task and family match.
-
-        Profiles are selectively filtered. Each profile should have
-        "__value__" key with list of booleans. Each boolean represents
-        existence of filter for specific key (host, tasks, family).
-        Profiles are looped in sequence. In each sequence are split into
-        true_list and false_list. For next sequence loop are used profiles in
-        true_list if there are any profiles else false_list is used.
-
-        Filtering ends when only one profile left in true_list. Or when all
-        existence booleans loops passed, in that case first profile from left
-        profiles is returned.
-
-        Args:
-            matching_profiles (list): Profiles with same values.
-
-        Returns:
-            dict: Most matching profile.
-        """
-        self.log.info(
-            "Search for first most matching profile in match order:"
-            " Host name -> Task name -> Family."
-        )
-        # Filter all profiles with highest points value. First filter profiles
-        # with matching host if there are any then filter profiles by task
-        # name if there are any and lastly filter by family. Else use first in
-        # list.
-        idx = 0
-        final_profile = None
-        while True:
-            profiles_true = []
-            profiles_false = []
-            for profile in matching_profiles:
-                value = profile["__value__"]
-                # Just use first profile when idx is greater than values.
-                if not idx < len(value):
-                    final_profile = profile
-                    break
-
-                if value[idx]:
-                    profiles_true.append(profile)
-                else:
-                    profiles_false.append(profile)
-
-            if final_profile is not None:
-                break
-
-            if profiles_true:
-                matching_profiles = profiles_true
-            else:
-                matching_profiles = profiles_false
-
-            if len(matching_profiles) == 1:
-                final_profile = matching_profiles[0]
-                break
-            idx += 1
-
-        final_profile.pop("__value__")
-        return final_profile
-
-    def find_matching_profile(self, host_name, task_name, family):
-        """ Filter profiles by Host name, Task name and main Family.
-
-        Filtering keys are "hosts" (list), "tasks" (list), "families" (list).
-        If key is not find or is empty than it's expected to match.
-
-        Args:
-            profiles (list): Profiles definition from presets.
-            host_name (str): Current running host name.
-            task_name (str): Current context task name.
-            family (str): Main family of current Instance.
-
-        Returns:
-            dict/None: Return most matching profile or None if none of profiles
-                match at least one criteria.
-        """
-
-        matching_profiles = None
-        if not self.profiles:
-            return matching_profiles
-
-        highest_profile_points = -1
-        # Each profile get 1 point for each matching filter. Profile with most
-        # points is returned. For cases when more than one profile will match
-        # are also stored ordered lists of matching values.
-        for profile in self.profiles:
-            profile_points = 0
-            profile_value = []
-
-            # Host filtering
-            host_names = profile.get("hosts")
-            match = self.validate_value_by_regexes(host_name, host_names)
-            if match == -1:
-                self.log.debug(
-                    "\"{}\" not found in {}".format(host_name, host_names)
-                )
-                continue
-            profile_points += match
-            profile_value.append(bool(match))
-
-            # Task filtering
-            task_names = profile.get("tasks")
-            match = self.validate_value_by_regexes(task_name, task_names)
-            if match == -1:
-                self.log.debug(
-                    "\"{}\" not found in {}".format(task_name, task_names)
-                )
-                continue
-            profile_points += match
-            profile_value.append(bool(match))
-
-            # Family filtering
-            families = profile.get("families")
-            match = self.validate_value_by_regexes(family, families)
-            if match == -1:
-                self.log.debug(
-                    "\"{}\" not found in {}".format(family, families)
-                )
-                continue
-            profile_points += match
-            profile_value.append(bool(match))
-
-            if profile_points < highest_profile_points:
-                continue
-
-            if profile_points > highest_profile_points:
-                matching_profiles = []
-                highest_profile_points = profile_points
-
-            if profile_points == highest_profile_points:
-                profile["__value__"] = profile_value
-                matching_profiles.append(profile)
-
-        if not matching_profiles:
-            self.log.warning((
-                "None of profiles match your setup."
-                " Host \"{}\" | Task: \"{}\" | Family: \"{}\""
-            ).format(host_name, task_name, family))
-            return
-
-        if len(matching_profiles) == 1:
-            # Pop temporary key `__value__`
-            matching_profiles[0].pop("__value__")
-            return matching_profiles[0]
-
-        self.log.warning((
-            "More than one profile match your setup."
-            " Host \"{}\" | Task: \"{}\" | Family: \"{}\""
-        ).format(host_name, task_name, family))
-
-        return self.profile_exclusion(matching_profiles)
 
     def families_filter_validation(self, families, output_families_filter):
         """Determines if entered families intersect with families filters.
