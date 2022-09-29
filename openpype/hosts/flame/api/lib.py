@@ -766,11 +766,11 @@ class MediaInfoFile(object):
     _drop_mode = None
     _file_pattern = None
 
-    def __init__(self, path, **kwargs):
+    def __init__(self, path, logger=None):
 
         # replace log if any
-        if kwargs.get("logger"):
-            self.log = kwargs["logger"]
+        if logger:
+            self.log = logger
 
         # test if `dl_get_media_info` paht exists
         self._validate_media_script_path()

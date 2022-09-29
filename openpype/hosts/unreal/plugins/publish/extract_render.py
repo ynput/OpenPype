@@ -2,10 +2,10 @@ from pathlib import Path
 
 import unreal
 
-import openpype.api
+from openpype.pipeline import publish
 
 
-class ExtractRender(openpype.api.Extractor):
+class ExtractRender(publish.Extractor):
     """Extract render."""
 
     label = "Extract Render"

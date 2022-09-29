@@ -1,114 +1,61 @@
 import os
-import shutil
-
-import openpype.hosts.fusion
 from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
+from openpype.hosts.fusion import FUSION_HOST_DIR
 
 
 class FusionPrelaunch(PreLaunchHook):
-    """
-    This hook will check if current workfile path has Fusion
-    project inside.
+    """Prepares OpenPype Fusion environment
+
+    Requires FUSION_PYTHON3_HOME to be defined in the environment for Fusion
+    to point at a valid Python 3 build for Fusion. That is Python 3.3-3.10
+    for Fusion 18 and Fusion 3.6 for Fusion 16 and 17.
+
+    This also sets FUSION16_MasterPrefs to apply the fusion master prefs
+    as set in openpype/hosts/fusion/deploy/fusion_shared.prefs to enable
+    the OpenPype menu and force Python 3 over Python 2.
+
     """
     app_groups = ["fusion"]
 
     def execute(self):
-        # making sure python 3.6 is installed at provided path
-        py36_dir = self.launch_context.env.get("PYTHON36")
-        if not py36_dir:
+        # making sure python 3 is installed at provided path
+        # Py 3.3-3.10 for Fusion 18+ or Py 3.6 for Fu 16-17
+        py3_var = "FUSION_PYTHON3_HOME"
+        fusion_python3_home = self.launch_context.env.get(py3_var, "")
+
+        self.log.info(f"Looking for Python 3 in: {fusion_python3_home}")
+        for path in fusion_python3_home.split(os.pathsep):
+            # Allow defining multiple paths to allow "fallback" to other
+            # path. But make to set only a single path as final variable.
+            py3_dir = os.path.normpath(path)
+            if os.path.isdir(py3_dir):
+                break
+        else:
             raise ApplicationLaunchFailed(
-                "Required environment variable \"PYTHON36\" is not set."
-                "\n\nFusion implementation requires to have"
-                " installed Python 3.6"
+                "Python 3 is not installed at the provided path.\n"
+                "Make sure the environment in fusion settings has "
+                "'FUSION_PYTHON3_HOME' set correctly and make sure "
+                "Python 3 is installed in the given path."
+                f"\n\nPYTHON36: {fusion_python3_home}"
             )
 
-        py36_dir = os.path.normpath(py36_dir)
-        if not os.path.isdir(py36_dir):
-            raise ApplicationLaunchFailed(
-                "Python 3.6 is not installed at the provided path.\n"
-                "Either make sure the environments in fusion settings has"
-                " 'PYTHON36' set corectly or make sure Python 3.6 is installed"
-                f" in the given path.\n\nPYTHON36: {py36_dir}"
-            )
-        self.log.info(f"Path to Fusion Python folder: '{py36_dir}'...")
-        self.launch_context.env["PYTHON36"] = py36_dir
+        self.log.info(f"Setting {py3_var}: '{py3_dir}'...")
+        self.launch_context.env[py3_var] = py3_dir
 
-        utility_dir = self.launch_context.env.get("FUSION_UTILITY_SCRIPTS_DIR")
-        if not utility_dir:
-            raise ApplicationLaunchFailed(
-                "Required Fusion utility script dir environment variable"
-                " \"FUSION_UTILITY_SCRIPTS_DIR\" is not set."
-            )
+        # Fusion 18+ requires FUSION_PYTHON3_HOME to also be on PATH
+        self.launch_context.env["PATH"] += ";" + py3_dir
 
-        # setting utility scripts dir for scripts syncing
-        utility_dir = os.path.normpath(utility_dir)
-        if not os.path.isdir(utility_dir):
-            raise ApplicationLaunchFailed(
-                "Fusion utility script dir does not exist. Either make sure "
-                "the environments in fusion settings has"
-                " 'FUSION_UTILITY_SCRIPTS_DIR' set correctly or reinstall "
-                f"Fusion.\n\nFUSION_UTILITY_SCRIPTS_DIR: '{utility_dir}'"
-            )
+        # Fusion 16 and 17 use FUSION16_PYTHON36_HOME instead of
+        # FUSION_PYTHON3_HOME and will only work with a Python 3.6 version
+        # TODO: Detect Fusion version to only set for specific Fusion build
+        self.launch_context.env["FUSION16_PYTHON36_HOME"] = py3_dir
 
-        self._sync_utility_scripts(self.launch_context.env)
-        self.log.info("Fusion Pype wrapper has been installed")
+        # Add our Fusion Master Prefs which is the only way to customize
+        # Fusion to define where it can read custom scripts and tools from
+        self.log.info(f"Setting OPENPYPE_FUSION: {FUSION_HOST_DIR}")
+        self.launch_context.env["OPENPYPE_FUSION"] = FUSION_HOST_DIR
 
-    def _sync_utility_scripts(self, env):
-        """ Synchronizing basic utlility scripts for resolve.
-
-        To be able to run scripts from inside `Fusion/Workspace/Scripts` menu
-        all scripts has to be accessible from defined folder.
-        """
-        if not env:
-            env = {k: v for k, v in os.environ.items()}
-
-        # initiate inputs
-        scripts = {}
-        us_env = env.get("FUSION_UTILITY_SCRIPTS_SOURCE_DIR")
-        us_dir = env.get("FUSION_UTILITY_SCRIPTS_DIR", "")
-        us_paths = [os.path.join(
-            os.path.dirname(os.path.abspath(openpype.hosts.fusion.__file__)),
-            "utility_scripts"
-        )]
-
-        # collect script dirs
-        if us_env:
-            self.log.info(f"Utility Scripts Env: `{us_env}`")
-            us_paths = us_env.split(
-                os.pathsep) + us_paths
-
-        # collect scripts from dirs
-        for path in us_paths:
-            scripts.update({path: os.listdir(path)})
-
-        self.log.info(f"Utility Scripts Dir: `{us_paths}`")
-        self.log.info(f"Utility Scripts: `{scripts}`")
-
-        # make sure no script file is in folder
-        if next((s for s in os.listdir(us_dir)), None):
-            for s in os.listdir(us_dir):
-                path = os.path.normpath(
-                    os.path.join(us_dir, s))
-                self.log.info(f"Removing `{path}`...")
-
-                # remove file or directory if not in our folders
-                if not os.path.isdir(path):
-                    os.remove(path)
-                else:
-                    shutil.rmtree(path)
-
-        # copy scripts into Resolve's utility scripts dir
-        for d, sl in scripts.items():
-            # directory and scripts list
-            for s in sl:
-                # script in script list
-                src = os.path.normpath(os.path.join(d, s))
-                dst = os.path.normpath(os.path.join(us_dir, s))
-
-                self.log.info(f"Copying `{src}` to `{dst}`...")
-
-                # copy file or directory from our folders to fusion's folder
-                if not os.path.isdir(src):
-                    shutil.copy2(src, dst)
-                else:
-                    shutil.copytree(src, dst)
+        pref_var = "FUSION16_MasterPrefs"   # used by Fusion 16, 17 and 18
+        prefs = os.path.join(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
+        self.log.info(f"Setting {pref_var}: {prefs}")
+        self.launch_context.env[pref_var] = prefs
