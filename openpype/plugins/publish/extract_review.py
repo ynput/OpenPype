@@ -1475,7 +1475,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         Returns:
             list: Containg all output definitions matching entered families.
         """
-        outputs = profile.get("outputs") or []
+        outputs = profile.get("outputs") or {}
         if not outputs:
             return outputs
 
