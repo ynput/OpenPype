@@ -25,10 +25,6 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.workfile import BuildWorkfile
-from openpype.pipeline.workfile.build_template import (
-    build_workfile_template,
-    update_workfile_template
-)
 from openpype.tools.utils import host_tools
 
 from .command import viewer_update_and_undo_stop
@@ -51,8 +47,12 @@ from .lib import (
     read_node_data,
     write_node_data
 )
-from .lib_template_builder import (
-    create_placeholder, update_placeholder
+from .workfile_template_builder import (
+    NukePlaceholderLoadPlugin,
+    build_workfile_template,
+    update_workfile_template,
+    create_placeholder,
+    update_placeholder,
 )
 from .workio import (
     open_file,
@@ -201,6 +201,12 @@ def _show_workfiles():
     #   avoid issues with reopening
     # - it is possible to explicitly change on top flag of the tool
     host_tools.show_workfiles(parent=None, on_top=False)
+
+
+def get_workfile_build_placeholder_plugins():
+    return [
+        NukePlaceholderLoadPlugin
+    ]
 
 
 def _install_menu():

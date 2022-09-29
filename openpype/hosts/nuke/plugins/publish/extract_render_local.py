@@ -1,11 +1,13 @@
-import pyblish.api
-import nuke
 import os
-import openpype
+
+import pyblish.api
 import clique
+import nuke
+
+from openpype.pipeline import publish
 
 
-class NukeRenderLocal(openpype.api.Extractor):
+class NukeRenderLocal(publish.Extractor):
     # TODO: rewrite docstring to nuke
     """Render the current Nuke composition locally.
 

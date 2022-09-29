@@ -40,7 +40,7 @@ class PlaceholderLineEdit(QtWidgets.QLineEdit):
         # Change placeholder palette color
         if hasattr(QtGui.QPalette, "PlaceholderText"):
             filter_palette = self.palette()
-            color_obj = get_objected_colors()["font"]
+            color_obj = get_objected_colors("font")
             color = color_obj.get_qcolor()
             color.setAlpha(67)
             filter_palette.setColor(
