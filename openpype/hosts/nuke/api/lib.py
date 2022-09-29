@@ -98,7 +98,16 @@ def get_main_window():
 
 
 def set_node_data(node, knobname, data):
-    # TODO: doc string
+    """Write data to node invisible knob
+
+    Will create new in case it doesnt exists
+    or update the one already created.
+
+    Args:
+        node (nuke.Node): node object
+        knobname (str): knob name
+        data (dict): data to be stored in knob
+    """
     # if exists then update data
     if knobname in node.knobs():
         log.debug("Updating knobname `{}` on node `{}`".format(
@@ -119,7 +128,15 @@ def set_node_data(node, knobname, data):
 
 
 def get_node_data(node, knobname):
-    # TODO: doc string
+    """Read data from node.
+
+    Args:
+        node (nuke.Node): node object
+        knobname (str): knob name
+
+    Returns:
+        dict: data stored in knob
+    """
     if knobname not in node.knobs():
         log.warnig("Knobname `{}` does not exist on node `{}`".format(
             knobname, node.name()
@@ -138,7 +155,13 @@ def get_node_data(node, knobname):
 
 
 def update_node_data(node, knobname, data):
-    # TODO: doc string
+    """Update already present data.
+
+    Args:
+        node (nuke.Node): node object
+        knobname (str): knob name
+        data (dict): data to update knob value
+    """
     knob = node[knobname]
     node_data = get_node_data(node, knobname) or {}
     node_data.update(data)
