@@ -392,10 +392,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
     def input_is_sequence(self, repre):
         """Deduce from representation data if input is sequence."""
         # TODO GLOBAL ISSUE - Find better way how to find out if input
-        # is sequence. Issues( in theory):
-        # - there may be multiple files ant not be sequence
-        # - remainders are not checked at all
-        # - there can be more than one collection
+        #  is sequence. Issues (in theory):
+        #   - there may be multiple files ant not be sequence
+        #   - remainders are not checked at all
+        #   - there can be more than one collection
         return isinstance(repre["files"], (list, tuple))
 
     def prepare_temp_data(self, instance, repre, output_def):
