@@ -63,10 +63,14 @@ class ExtractThumbnail(openpype.api.Extractor):
         )
 
         # Keep current display shading
+        # Catch source window because Win changes focus
+        screen = bpy.context.window_manager.windows[0].screen
         current_area = next(
-            (a for a in bpy.context.screen.areas if a.type == "VIEW_3D"), None
+            (a for a in screen.areas if a.type == "VIEW_3D"), None
         )
-        shading_type = current_area.spaces[0].shading.type if current_area else "SOLID"
+        shading_type = (
+            current_area.spaces[0].shading.type if current_area else "SOLID"
+        )
         preset.setdefault(
             "display_options",
             {"shading": {"type": shading_type}},
