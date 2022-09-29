@@ -44,8 +44,9 @@ from .lib import (
     dirmap_file_name_filter,
     add_scripts_menu,
     add_scripts_gizmo,
-    read_node_data,
-    write_node_data
+    get_node_data,
+    set_node_data,
+    update_node_data
 )
 from .workfile_template_builder import (
     NukePlaceholderLoadPlugin,
@@ -137,11 +138,11 @@ class NukeHost(
 
     def get_context_data(self):
         root_node = nuke.root()
-        return read_node_data(root_node, ROOT_DATA_KNOB)
+        return get_node_data(root_node, ROOT_DATA_KNOB)
 
     def update_context_data(self, data, changes):
         root_node = nuke.root()
-        write_node_data(root_node, ROOT_DATA_KNOB, data)
+        set_node_data(root_node, ROOT_DATA_KNOB, data)
 
 
 def add_nuke_callbacks():

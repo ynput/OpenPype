@@ -97,7 +97,8 @@ def get_main_window():
     return Context.main_window
 
 
-def write_node_data(node, knobname, data):
+def set_node_data(node, knobname, data):
+    # TODO: doc string
     # if exists then update data
     if knobname in node.knobs():
         log.debug("Updating knobname `{}` on node `{}`".format(
@@ -107,8 +108,8 @@ def write_node_data(node, knobname, data):
         return
 
     log.debug("Creating knobname `{}` on node `{}`".format(
-            knobname, node.name()
-        ))
+        knobname, node.name()
+    ))
     # else create new
     knob_value = JSON_PREFIX + json.dumps(data)
     knob = nuke.String_Knob(knobname)
@@ -117,8 +118,8 @@ def write_node_data(node, knobname, data):
     node.addKnob(knob)
 
 
-def read_node_data(node, knobname):
-
+def get_node_data(node, knobname):
+    # TODO: doc string
     if knobname not in node.knobs():
         log.warnig("Knobname `{}` does not exist on node `{}`".format(
             knobname, node.name()
@@ -137,8 +138,9 @@ def read_node_data(node, knobname):
 
 
 def update_node_data(node, knobname, data):
+    # TODO: doc string
     knob = node[knobname]
-    node_data = read_node_data(node, knobname)
+    node_data = get_node_data(node, knobname) or {}
     node_data.update(data)
     knob_value = JSON_PREFIX + json.dumps(node_data)
     knob.setValue(knob_value)
@@ -2179,7 +2181,8 @@ class WorkfileSettings(object):
 
         range = '{0}-{1}'.format(
             int(data["frameStart"]),
-            int(data["frameEnd"]))
+            int(data["frameEnd"])
+        )
 
         for node in nuke.allNodes(filter="Viewer"):
             node['frame_range'].setValue(range)
@@ -2188,7 +2191,10 @@ class WorkfileSettings(object):
             node['frame_range_lock'].setValue(True)
 
         # adding handle_start/end to root avalon knob
-        write_node_data(
+        log.debug("self._root_node: {}".format(self._root_node))
+        log.debug("self._root_node: {}".format(self._root_node))
+
+        set_node_data(
             self._root_node,
             INSTANCE_DATA_KNOB,
             {
