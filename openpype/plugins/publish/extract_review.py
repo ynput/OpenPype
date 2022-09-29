@@ -116,17 +116,19 @@ class ExtractReview(pyblish.api.InstancePlugin):
         filtered_outputs = self.filter_output_defs(
             profile, subset_name, instance_families
         )
+        if not filtered_outputs:
+            self.log.info((
+                "Skipped instance. All output definitions from selected"
+                " profile do not match instance families \"{}\" or"
+                " subset name \"{}\"."
+            ).format(str(instance_families), subset_name))
+
         # Store `filename_suffix` to save arguments
         profile_outputs = []
         for filename_suffix, definition in filtered_outputs.items():
             definition["filename_suffix"] = filename_suffix
             profile_outputs.append(definition)
 
-        if not filtered_outputs:
-            self.log.info((
-                "Skipped instance. All output definitions from selected"
-                " profile does not match to instance families. \"{}\""
-            ).format(str(instance_families)))
         return profile_outputs
 
     def _get_outputs_per_representations(self, instance, profile_outputs):
