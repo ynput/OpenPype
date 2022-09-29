@@ -1431,37 +1431,15 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         All family values are lowered to avoid unexpected results.
         """
-        if not output_families_filter:
+
+        families_filter_lower = set(family.lower() for family in
+                                    output_families_filter
+                                    # Exclude empty filter values
+                                    if family)
+        if not families_filter_lower:
             return True
-
-        single_families = []
-        combination_families = []
-        for family_filter in output_families_filter:
-            if not family_filter:
-                continue
-            if isinstance(family_filter, (list, tuple)):
-                _family_filter = []
-                for family in family_filter:
-                    if family:
-                        _family_filter.append(family.lower())
-                combination_families.append(_family_filter)
-            else:
-                single_families.append(family_filter.lower())
-
-        for family in single_families:
-            if family in families:
-                return True
-
-        for family_combination in combination_families:
-            valid = True
-            for family in family_combination:
-                if family not in families:
-                    valid = False
-                    break
-
-            if valid:
-                return True
-        return False
+        return any(family.lower() in families_filter_lower
+                   for family in families)
 
     def filter_output_defs(self, profile, subset_name, families):
         """Return outputs matching input instance families.
@@ -1478,10 +1456,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         outputs = profile.get("outputs") or {}
         if not outputs:
             return outputs
-
-        # lower values
-        # QUESTION is this valid operation?
-        families = [family.lower() for family in families]
 
         filtered_outputs = {}
         for filename_suffix, output_def in outputs.items():
