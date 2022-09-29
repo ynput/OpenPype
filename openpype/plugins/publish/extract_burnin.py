@@ -11,7 +11,10 @@ import six
 import pyblish.api
 
 from openpype import resources, PACKAGE_DIR
-from openpype.pipeline import publish
+from openpype.pipeline import (
+    publish,
+    legacy_io
+)
 from openpype.lib import (
     run_openpype_process,
 
@@ -140,7 +143,7 @@ class ExtractBurnin(publish.Extractor):
     def main_process(self, instance):
         # TODO get these data from context
         host_name = instance.context.data["hostName"]
-        task_name = os.environ["AVALON_TASK"]
+        task_name = legacy_io.Session["AVALON_TASK"]
         family = self.main_family_from_instance(instance)
 
         # Find profile most matching current host, task and instance family
