@@ -9,7 +9,7 @@ from .widgets import (
     ValidateBtn,
     PublishBtn,
 )
-from .publish_widget import PublishFrame
+from .publish_frame import PublishFrame
 from .tabs_widget import PublisherTabsWidget
 from .overview_widget import OverviewWidget
 from .validations_widget import ValidationsWidget
