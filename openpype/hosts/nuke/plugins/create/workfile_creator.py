@@ -5,6 +5,7 @@ from openpype.pipeline import (
     CreatedInstance,
     legacy_io,
 )
+import nuke
 
 
 class WorkfileCreator(AutoCreator):
@@ -17,14 +18,37 @@ class WorkfileCreator(AutoCreator):
         return []
 
     def collect_instances(self):
-        for instance_data in api.list_instances():
-            creator_id = instance_data.get("creator_identifier")
-            if creator_id == self.identifier:
-                subset_name = instance_data["subset"]
-                instance = CreatedInstance(
-                    self.family, subset_name, instance_data, self
-                )
-                self._add_instance_to_context(instance)
+        root_node = nuke.root()
+        instance_data = api.get_node_data(
+            root_node, api.INSTANCE_DATA_KNOB
+        )
+        self.log.debug("__ instance_data: {}".format(instance_data))
+
+        project_name = legacy_io.Session["AVALON_PROJECT"]
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        task_name = legacy_io.Session["AVALON_TASK"]
+        host_name = legacy_io.Session["AVALON_APP"]
+
+        asset_doc = get_asset_by_name(project_name, asset_name)
+        subset_name = self.get_subset_name(
+            self.default_variant, task_name, asset_doc,
+            project_name, host_name
+        )
+        self.log.debug("__ subset_name: {}".format(subset_name))
+        instance_data.update({
+            "asset": asset_name,
+            "task": task_name,
+            "variant": self.default_variant
+        })
+        instance_data.update(self.get_dynamic_data(
+            self.default_variant, task_name, asset_doc,
+            project_name, host_name
+        ))
+
+        instance = CreatedInstance(
+            self.family, subset_name, instance_data, self
+        )
+        self._add_instance_to_context(instance)
 
     def update_instances(self, update_list):
         # nothing to change on workfiles
@@ -41,6 +65,8 @@ class WorkfileCreator(AutoCreator):
         asset_name = legacy_io.Session["AVALON_ASSET"]
         task_name = legacy_io.Session["AVALON_TASK"]
         host_name = legacy_io.Session["AVALON_APP"]
+
+        self.log.debug("__ existing_instance: {}".format(existing_instance))
 
         if existing_instance is None:
             asset_doc = get_asset_by_name(project_name, asset_name)
