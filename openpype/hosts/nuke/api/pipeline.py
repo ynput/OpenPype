@@ -534,8 +534,6 @@ def list_instances(creator_id=None):
 
         listed_instances.append((node, instance_data))
 
-        instances.append(avalon_knob_data)
-
     return listed_instances
 
 
