@@ -123,22 +123,12 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         prefix = prefix.replace(
             "{aov_separator}", instance.data.get("aovSeparator", "_"))
 
-        required_prefix = "<scene>"
         default_prefix = cls.ImagePrefixTokens[renderer]
 
         if not anim_override:
             invalid = True
             cls.log.error("Animation needs to be enabled. Use the same "
                           "frame for start and end to render single frame")
-
-        if renderer != "renderman" and not prefix.lower().startswith(
-                required_prefix):
-            invalid = True
-            cls.log.error(
-                ("Wrong image prefix [ {} ] "
-                 " - doesn't start with: '{}'").format(
-                    prefix, required_prefix)
-            )
 
         if not re.search(cls.R_LAYER_TOKEN, prefix):
             invalid = True
