@@ -138,7 +138,7 @@ class NukeCreator(NewCreator):
                 INSTANCE_DATA_KNOB,
                 {
                     key: value[1] for key, value in _changes.items()
-                    if current_data.get(key) != value[1]
+                    if current_data.get(key) != value[0]
                 }
             )
 
