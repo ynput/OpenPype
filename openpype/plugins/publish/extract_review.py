@@ -190,7 +190,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         outputs_per_repres = self._get_outputs_per_representations(
             instance, profile_outputs
         )
-        for repre, outpu_defs in outputs_per_repres:
+        for repre, repre_output_defs in outputs_per_repres:
             # Check if input should be preconverted before processing
             # Store original staging dir (it's value may change)
             src_repre_staging_dir = repre["stagingDir"]
@@ -244,7 +244,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             try:
                 self._render_output_definitions(
-                    instance, repre, src_repre_staging_dir, outpu_defs
+                    instance, repre, src_repre_staging_dir, repre_output_defs
                 )
 
             finally:
@@ -258,10 +258,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         shutil.rmtree(new_staging_dir)
 
     def _render_output_definitions(
-        self, instance, repre, src_repre_staging_dir, outpu_defs
+        self, instance, repre, src_repre_staging_dir, output_definitions
     ):
         fill_data = copy.deepcopy(instance.data["anatomyData"])
-        for _output_def in outpu_defs:
+        for _output_def in output_definitions:
             output_def = copy.deepcopy(_output_def)
             # Make sure output definition has "tags" key
             if "tags" not in output_def:
