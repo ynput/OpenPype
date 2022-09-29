@@ -110,7 +110,23 @@ class PublisherWindow(QtWidgets.QDialog):
         footer_bottom_layout.addWidget(publish_btn, 0)
 
         footer_layout = QtWidgets.QVBoxLayout(footer_widget)
+        footer_margins = footer_layout.contentsMargins()
+        border = 2
+        footer_layout.setContentsMargins(
+            footer_margins.left() + border,
+            footer_margins.top(),
+            footer_margins.right() + border,
+            footer_margins.bottom() + border
+        )
+        # Spacer helps keep distance of Publish Frame when comment input
+        #   is hidden - so when is shrunken it is not overlaying pages
+        footer_spacer = QtWidgets.QWidget(footer_widget)
+        footer_spacer.setMinimumHeight(border)
+        footer_spacer.setMaximumHeight(border)
+        footer_spacer.setVisible(False)
+
         footer_layout.addWidget(comment_input, 0)
+        footer_layout.addWidget(footer_spacer, 0)
         footer_layout.addWidget(footer_bottom_widget, 0)
 
         # Content
@@ -230,6 +246,7 @@ class PublisherWindow(QtWidgets.QDialog):
         self._context_label = context_label
 
         self._comment_input = comment_input
+        self._footer_spacer = footer_spacer
 
         self._stop_btn = stop_btn
         self._reset_btn = reset_btn
@@ -332,6 +349,9 @@ class PublisherWindow(QtWidgets.QDialog):
     def _go_to_details_tab(self):
         self._tabs_widget.set_current_tab("details")
 
+    def _go_to_report_tab(self):
+        self._tabs_widget.set_current_tab("report")
+
     def _set_publish_overlay_visibility(self, visible):
         if visible:
             widget = self._publish_overlay
@@ -380,21 +400,21 @@ class PublisherWindow(QtWidgets.QDialog):
 
     def _on_publish_reset(self):
         self._create_tab.setEnabled(True)
-        self._comment_input.setVisible(True)
+        self._set_comment_input_visiblity(True)
         self._set_publish_overlay_visibility(False)
         self._set_publish_visibility(False)
         self._set_footer_enabled(False)
         self._update_publish_details_widget()
 
     def _on_publish_start(self):
+        self._create_tab.setEnabled(False)
+
         self._reset_btn.setEnabled(False)
         self._stop_btn.setEnabled(True)
         self._validate_btn.setEnabled(False)
         self._publish_btn.setEnabled(False)
 
-        self._comment_input.setVisible(False)
-        self._create_tab.setEnabled(False)
-
+        self._set_comment_input_visiblity(False)
         self._set_publish_visibility(True)
         self._set_publish_overlay_visibility(True)
 
@@ -420,6 +440,8 @@ class PublisherWindow(QtWidgets.QDialog):
                 and self._controller.publish_has_validation_errors
             ):
                 publish_enabled = False
+                if self._tabs_widget.is_current_tab("publish"):
+                    self._go_to_report_tab()
 
             else:
                 publish_enabled = not self._controller.publish_has_finished
@@ -455,6 +477,10 @@ class PublisherWindow(QtWidgets.QDialog):
         self.set_context_label(context_title)
         self._update_publish_details_widget()
 
+    def _set_comment_input_visiblity(self, visible):
+        self._comment_input.setVisible(visible)
+        self._footer_spacer.setVisible(not visible)
+
     def _update_publish_frame_rect(self):
         if not self._publish_frame_visible:
             return
@@ -464,6 +490,7 @@ class PublisherWindow(QtWidgets.QDialog):
 
         width = window_size.width()
         height = size_hint.height()
+
         self._publish_frame.resize(width, height)
 
         self._publish_frame.move(

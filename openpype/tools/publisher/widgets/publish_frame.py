@@ -34,12 +34,11 @@ class PublishFrame(QtWidgets.QWidget):
     | <Report><Label bottom>                <Reset><Stop><Validate><Publish> |
     +------------------------------------------------------------------------+
     """
+
     details_page_requested = QtCore.Signal()
 
     def __init__(self, controller, parent):
         super(PublishFrame, self).__init__(parent)
-
-        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         # Bottom part of widget where process and callback buttons are showed
         # - QFrame used to be able set background using stylesheets easily
@@ -47,28 +46,30 @@ class PublishFrame(QtWidgets.QWidget):
         content_frame = QtWidgets.QFrame(self)
         content_frame.setObjectName("PublishInfoFrame")
 
+        top_content_widget = QtWidgets.QWidget(content_frame)
+
         # Center widget displaying current state (without any specific info)
-        main_label = QtWidgets.QLabel(content_frame)
+        main_label = QtWidgets.QLabel(top_content_widget)
         main_label.setObjectName("PublishInfoMainLabel")
         main_label.setAlignment(QtCore.Qt.AlignCenter)
 
         # Supporting labels for main label
         # Top label is displayed just under main label
-        message_label_top = QtWidgets.QLabel(content_frame)
+        message_label_top = QtWidgets.QLabel(top_content_widget)
         message_label_top.setAlignment(QtCore.Qt.AlignCenter)
 
         # Bottom label is displayed between report and publish buttons
         #   at bottom part of info frame
-        message_label_bottom = QtWidgets.QLabel(content_frame)
+        message_label_bottom = QtWidgets.QLabel(top_content_widget)
         message_label_bottom.setAlignment(QtCore.Qt.AlignCenter)
 
         # Label showing currently processed instance
-        instance_label = QtWidgets.QLabel("<Instance name>", content_frame)
+        instance_label = QtWidgets.QLabel("<Instance name>", top_content_widget)
         instance_label.setAlignment(
             QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         )
         # Label showing currently processed plugin
-        plugin_label = QtWidgets.QLabel("<Plugin name>", content_frame)
+        plugin_label = QtWidgets.QLabel("<Plugin name>", top_content_widget)
         plugin_label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
@@ -77,20 +78,37 @@ class PublishFrame(QtWidgets.QWidget):
         instance_plugin_layout.addWidget(plugin_label, 1)
 
         # Progress bar showing progress of publishing
-        progress_widget = QtWidgets.QProgressBar(content_frame)
+        progress_widget = QtWidgets.QProgressBar(top_content_widget)
         progress_widget.setObjectName("PublishProgressBar")
+
+        top_content_layout = QtWidgets.QVBoxLayout(top_content_widget)
+        top_content_layout.setContentsMargins(0, 0, 0, 0)
+        top_content_layout.setSpacing(5)
+        top_content_layout.setAlignment(QtCore.Qt.AlignCenter)
+        top_content_layout.addWidget(main_label)
+        # TODO stretches should be probably replaced by spacing...
+        # - stretch in floating frame doesn't make sense
+        top_content_layout.addWidget(message_label_top)
+        top_content_layout.addLayout(instance_plugin_layout)
+        top_content_layout.addWidget(progress_widget)
 
         # Publishing buttons to stop, reset or trigger publishing
         footer_widget = QtWidgets.QWidget(content_frame)
-        footer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         report_btn = PublishReportBtn(footer_widget)
+
+        shrunk_main_label = QtWidgets.QLabel(footer_widget)
+        shrunk_main_label.setObjectName("PublishInfoMainLabel")
+        shrunk_main_label.setAlignment(
+            QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft
+        )
+
         reset_btn = ResetBtn(footer_widget)
         stop_btn = StopBtn(footer_widget)
         validate_btn = ValidateBtn(footer_widget)
         publish_btn = PublishBtn(footer_widget)
 
-        report_btn.add_action("Go to details page", "go_to_report")
+        report_btn.add_action("Go to details", "go_to_report")
         report_btn.add_action("Copy report", "copy_report")
         report_btn.add_action("Export report", "export_report")
 
@@ -98,6 +116,7 @@ class PublishFrame(QtWidgets.QWidget):
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
         footer_layout.setContentsMargins(0, 0, 0, 0)
         footer_layout.addWidget(report_btn, 0)
+        footer_layout.addWidget(shrunk_main_label, 1)
         footer_layout.addWidget(message_label_bottom, 1)
         footer_layout.addWidget(reset_btn, 0)
         footer_layout.addWidget(stop_btn, 0)
@@ -107,28 +126,34 @@ class PublishFrame(QtWidgets.QWidget):
         # Info frame content
         content_layout = QtWidgets.QVBoxLayout(content_frame)
         content_layout.setSpacing(5)
-        content_layout.setAlignment(QtCore.Qt.AlignCenter)
 
-        content_layout.addWidget(main_label)
-        # TODO stretches should be probably replaced by spacing...
-        # - stretch in floating frame doesn't make sense
-        content_layout.addStretch(1)
-        content_layout.addWidget(message_label_top)
-        content_layout.addStretch(1)
-        content_layout.addLayout(instance_plugin_layout)
-        content_layout.addWidget(progress_widget)
-        content_layout.addStretch(1)
+        content_layout.addWidget(top_content_widget)
         content_layout.addWidget(footer_widget)
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(content_frame)
 
+        shrunk_anim = QtCore.QVariantAnimation()
+        shrunk_anim.setDuration(140)
+        shrunk_anim.setEasingCurve(QtCore.QEasingCurve.InOutQuad)
+
+        # Force translucent background for widgets
+        for widget in (
+            self,
+            top_content_widget,
+            footer_widget,
+        ):
+            widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
         report_btn.triggered.connect(self._on_report_triggered)
         reset_btn.clicked.connect(self._on_reset_clicked)
         stop_btn.clicked.connect(self._on_stop_clicked)
         validate_btn.clicked.connect(self._on_validate_clicked)
         publish_btn.clicked.connect(self._on_publish_clicked)
+
+        shrunk_anim.valueChanged.connect(self._on_shrunk_anim)
+        shrunk_anim.finished.connect(self._on_shrunk_anim_finish)
 
         controller.add_publish_reset_callback(self._on_publish_reset)
         controller.add_publish_started_callback(self._on_publish_start)
@@ -138,9 +163,13 @@ class PublishFrame(QtWidgets.QWidget):
         controller.add_instance_change_callback(self._on_instance_change)
         controller.add_plugin_change_callback(self._on_plugin_change)
 
+        self._shrunk_anim = shrunk_anim
+
         self.controller = controller
 
         self._content_frame = content_frame
+        self._content_layout = content_layout
+        self._top_content_widget = top_content_widget
 
         self._main_label = main_label
         self._message_label_top = message_label_top
@@ -150,11 +179,100 @@ class PublishFrame(QtWidgets.QWidget):
 
         self._progress_widget = progress_widget
 
+        self._shrunk_main_label = shrunk_main_label
         self._message_label_bottom = message_label_bottom
         self._reset_btn = reset_btn
         self._stop_btn = stop_btn
         self._validate_btn = validate_btn
         self._publish_btn = publish_btn
+
+        self._shrunken = False
+        self._top_widget_max_height = None
+        self._top_widget_size_policy = top_content_widget.sizePolicy()
+
+        shrunk_main_label.setVisible(False)
+
+    def mouseReleaseEvent(self, event):
+        super(PublishFrame, self).mouseReleaseEvent(event)
+        self._change_shrunk_state()
+
+    def _change_shrunk_state(self):
+        self.set_shrunk_state(not self._shrunken)
+
+    def set_shrunk_state(self, shrunk):
+        if shrunk is self._shrunken:
+            return
+
+        if self._top_widget_max_height is None:
+            self._top_widget_max_height = (
+                self._top_content_widget.maximumHeight()
+            )
+
+        self._shrunken = shrunk
+
+        start = 0
+        end = 0
+        anim_is_running = (
+            self._shrunk_anim.state() == self._shrunk_anim.Running
+        )
+
+        if shrunk:
+            start = self._top_content_widget.height()
+        else:
+            if anim_is_running:
+                start = self._shrunk_anim.currentValue()
+            hint = self._top_content_widget.minimumSizeHint()
+            end = hint.height()
+
+        if not self.isVisible():
+            self._on_shrunk_anim_finish()
+            return
+
+        self._shrunk_anim.setStartValue(start)
+        self._shrunk_anim.setEndValue(end)
+        if not anim_is_running:
+            self._shrunk_anim.start()
+
+    def _on_shrunk_anim(self, value):
+        diff = self._top_content_widget.height() - value
+        if not self._top_content_widget.isVisible():
+            diff -= self._content_layout.spacing()
+
+        window_pos = self.pos()
+        window_pos_y = self.pos().y() + diff
+        window_height = self.height() - diff
+
+        self._top_content_widget.setMinimumHeight(value)
+        self._top_content_widget.setMaximumHeight(value)
+        self._top_content_widget.setVisible(True)
+
+        self.resize(self.width(), window_height)
+        self.move(window_pos.x(), window_pos_y)
+
+    def _on_shrunk_anim_finish(self):
+        self._top_content_widget.setVisible(not self._shrunken)
+        self._top_content_widget.setMinimumHeight(0)
+        self._top_content_widget.setMaximumHeight(
+            self._top_widget_max_height
+        )
+        self._top_content_widget.setSizePolicy(self._top_widget_size_policy)
+
+        self._message_label_bottom.setVisible(not self._shrunken)
+        self._shrunk_main_label.setVisible(self._shrunken)
+
+        if self._shrunken:
+            content_frame_hint = self._content_frame.sizeHint()
+            window_height = content_frame_hint.height()
+
+            diff = self.height() - window_height
+            window_pos = self.pos()
+            window_pos_y = self.pos().y() + diff
+            self.resize(self.width(), window_height)
+            self.move(window_pos.x(), window_pos_y)
+
+    def _set_main_label(self, message):
+        self._main_label.setText(message)
+        self._shrunk_main_label.setText(message)
 
     def _on_publish_reset(self):
         self._set_success_property()
@@ -175,7 +293,7 @@ class PublishFrame(QtWidgets.QWidget):
     def _on_publish_start(self):
         self._set_success_property(-1)
         self._set_progress_visibility(True)
-        self._main_label.setText("Publishing...")
+        self._set_main_label("Publishing...")
 
         self._reset_btn.setEnabled(False)
         self._stop_btn.setEnabled(True)
@@ -254,7 +372,7 @@ class PublishFrame(QtWidgets.QWidget):
         if self.controller.publish_has_validated:
             main_label += " - Validation passed"
 
-        self._main_label.setText(main_label)
+        self._set_main_label(main_label)
         self._message_label_top.setText(
             "Hit publish (play button) to continue."
         )
@@ -262,7 +380,7 @@ class PublishFrame(QtWidgets.QWidget):
         self._set_success_property(-1)
 
     def _set_error(self, error):
-        self._main_label.setText("Error happened")
+        self._set_main_label("Error happened")
         if isinstance(error, KnownPublishError):
             msg = str(error)
         else:
@@ -275,13 +393,13 @@ class PublishFrame(QtWidgets.QWidget):
         self._set_success_property(0)
 
     def _set_validation_errors(self):
-        self._main_label.setText("Your publish didn't pass studio validations")
+        self._set_main_label("Your publish didn't pass studio validations")
         self._message_label_top.setText("")
         self._message_label_bottom.setText("Check results above please")
         self._set_success_property(2)
 
     def _set_finished(self):
-        self._main_label.setText("Finished")
+        self._set_main_label("Finished")
         self._message_label_top.setText("")
         self._message_label_bottom.setText("")
         self._set_success_property(1)
