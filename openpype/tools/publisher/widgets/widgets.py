@@ -2,6 +2,7 @@
 import os
 import re
 import copy
+import functools
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
@@ -222,28 +223,34 @@ class CreateInstanceBtn(PublishIconBtn):
         self.setToolTip("Create new instance")
 
 
-class CopyPublishReportBtn(PublishIconBtn):
-    """Copy report button."""
-    def __init__(self, parent=None):
-        icon_path = get_icon_path("copy")
-        super(CopyPublishReportBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Copy report")
+class PublishReportBtn(PublishIconBtn):
+    """Publish report button."""
 
+    triggered = QtCore.Signal(str)
 
-class SavePublishReportBtn(PublishIconBtn):
-    """Save report button."""
-    def __init__(self, parent=None):
-        icon_path = get_icon_path("download_arrow")
-        super(SavePublishReportBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Export and save report")
-
-
-class ShowPublishReportBtn(PublishIconBtn):
-    """Show report button."""
     def __init__(self, parent=None):
         icon_path = get_icon_path("view_report")
-        super(ShowPublishReportBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Show details")
+        super(PublishReportBtn, self).__init__(icon_path, parent)
+        self.setToolTip("Copy report")
+        self._actions = []
+
+    def add_action(self, label, identifier):
+        action = QtWidgets.QAction(label)
+        action.setData(identifier)
+        action.triggered.connect(
+            functools.partial(self._on_action_trigger, action)
+        )
+        self._actions.append(action)
+
+    def _on_action_trigger(self, action):
+        identifier = action.data()
+        self.triggered.emit(identifier)
+
+    def mouseReleaseEvent(self, event):
+        super(PublishReportBtn, self).mouseReleaseEvent(event)
+        menu = QtWidgets.QMenu(self)
+        menu.addActions(self._actions)
+        menu.exec_(event.globalPos())
 
 
 class RemoveInstanceBtn(PublishIconBtn):

@@ -54,9 +54,6 @@ class PublisherWindow(QtWidgets.QDialog):
             | on_top_flag
         )
 
-        self._reset_on_show = reset_on_show
-        self._first_show = True
-
         controller = PublisherController()
 
         # Header
@@ -81,8 +78,16 @@ class PublisherWindow(QtWidgets.QDialog):
         tabs_widget.add_tab("Report", "report")
         tabs_widget.add_tab("Details", "details")
 
+        # Widget where is stacked publish overlay and widgets that should be
+        #   covered by it
+        under_publish_stack = QtWidgets.QWidget(self)
+        # Added wrap widget where all widgets under overlay are added
+        # - this is because footer is also under overlay and the top part
+        #       is faked with floating frame
+        under_publish_widget = QtWidgets.QWidget(under_publish_stack)
+
         # Footer
-        footer_widget = QtWidgets.QWidget(self)
+        footer_widget = QtWidgets.QWidget(under_publish_widget)
         footer_bottom_widget = QtWidgets.QWidget(footer_widget)
 
         comment_input = PlaceholderLineEdit(footer_widget)
@@ -111,7 +116,7 @@ class PublisherWindow(QtWidgets.QDialog):
         # Content
         # - wrap stacked widget under one more widget to be able propagate
         #   margins (QStackedLayout can't have margins)
-        content_widget = QtWidgets.QWidget(self)
+        content_widget = QtWidgets.QWidget(under_publish_widget)
 
         content_stacked_widget = QtWidgets.QWidget(content_widget)
 
@@ -136,13 +141,9 @@ class PublisherWindow(QtWidgets.QDialog):
             content_stacked_widget
         )
 
-        # Create publish frame
-        publish_frame = PublishFrame(controller, content_stacked_widget)
-
         content_stacked_layout = QtWidgets.QStackedLayout(
             content_stacked_widget
         )
-
         content_stacked_layout.setContentsMargins(0, 0, 0, 0)
         content_stacked_layout.setStackingMode(
             QtWidgets.QStackedLayout.StackAll
@@ -150,7 +151,28 @@ class PublisherWindow(QtWidgets.QDialog):
         content_stacked_layout.addWidget(overview_widget)
         content_stacked_layout.addWidget(report_widget)
         content_stacked_layout.addWidget(publish_details_widget)
-        content_stacked_layout.addWidget(publish_frame)
+        content_stacked_layout.setCurrentWidget(overview_widget)
+
+        under_publish_layout = QtWidgets.QVBoxLayout(under_publish_widget)
+        under_publish_layout.setContentsMargins(0, 0, 0, 0)
+        under_publish_layout.setSpacing(0)
+        under_publish_layout.addWidget(content_widget, 1)
+        under_publish_layout.addWidget(footer_widget, 0)
+
+        # Overlay which covers inputs during publishing
+        publish_overlay = QtWidgets.QFrame(under_publish_stack)
+        publish_overlay.setObjectName("OverlayFrame")
+
+        under_publish_stack_layout = QtWidgets.QStackedLayout(
+            under_publish_stack
+        )
+        under_publish_stack_layout.setContentsMargins(0, 0, 0, 0)
+        under_publish_stack_layout.setStackingMode(
+            QtWidgets.QStackedLayout.StackAll
+        )
+        under_publish_stack_layout.addWidget(under_publish_widget)
+        under_publish_stack_layout.addWidget(publish_overlay)
+        under_publish_stack_layout.setCurrentWidget(under_publish_widget)
 
         # Add main frame to this window
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -158,8 +180,10 @@ class PublisherWindow(QtWidgets.QDialog):
         main_layout.setSpacing(0)
         main_layout.addWidget(header_widget, 0)
         main_layout.addWidget(tabs_widget, 0)
-        main_layout.addWidget(content_widget, 1)
-        main_layout.addWidget(footer_widget, 0)
+        main_layout.addWidget(under_publish_stack, 1)
+
+        # Floating publish frame
+        publish_frame = PublishFrame(controller, self)
 
         tabs_widget.tab_changed.connect(self._on_tab_change)
         overview_widget.active_changed.connect(
@@ -177,6 +201,8 @@ class PublisherWindow(QtWidgets.QDialog):
         validate_btn.clicked.connect(self._on_validate_clicked)
         publish_btn.clicked.connect(self._on_publish_clicked)
 
+        publish_frame.details_page_requested.connect(self._go_to_details_tab)
+
         controller.add_instances_refresh_callback(self._on_instances_refresh)
         controller.add_publish_reset_callback(self._on_publish_reset)
         controller.add_publish_started_callback(self._on_publish_start)
@@ -189,13 +215,17 @@ class PublisherWindow(QtWidgets.QDialog):
         self._tabs_widget = tabs_widget
         self._create_tab = create_tab
 
-        self._content_stacked_widget = content_stacked_widget
+        self._under_publish_stack_layout = under_publish_stack_layout
+
+        self._under_publish_widget = under_publish_widget
+        self._publish_overlay = publish_overlay
+        self._publish_frame = publish_frame
+
         self._content_stacked_layout = content_stacked_layout
 
         self._overview_widget = overview_widget
         self._report_widget = report_widget
         self._publish_details_widget = publish_details_widget
-        self._publish_frame = publish_frame
 
         self._context_label = context_label
 
@@ -208,6 +238,13 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self._controller = controller
 
+        self._first_show = True
+        self._reset_on_show = reset_on_show
+        self._restart_timer = None
+        self._publish_frame_visible = None
+
+        self._set_publish_visibility(False)
+
     @property
     def controller(self):
         return self._controller
@@ -216,10 +253,31 @@ class PublisherWindow(QtWidgets.QDialog):
         super(PublisherWindow, self).showEvent(event)
         if self._first_show:
             self._first_show = False
-            self.resize(self.default_width, self.default_height)
-            self.setStyleSheet(style.load_stylesheet())
-            if self._reset_on_show:
-                self.reset()
+            self._on_first_show()
+
+    def resizeEvent(self, event):
+        super(PublisherWindow, self).resizeEvent(event)
+        self._update_publish_frame_rect()
+
+    def _on_first_show(self):
+        self.resize(self.default_width, self.default_height)
+        self.setStyleSheet(style.load_stylesheet())
+        if not self._reset_on_show:
+            return
+
+        # Detach showing - give OS chance to draw the window
+        timer = QtCore.QTimer()
+        timer.setSingleShot(True)
+        timer.setInterval(1)
+        timer.timeout.connect(self._on_show_restart_timer)
+        self._restart_timer = timer
+        timer.start()
+
+    def _on_show_restart_timer(self):
+        """Callback for '_restart_timer' timer."""
+
+        self._restart_timer = None
+        self.reset()
 
     def closeEvent(self, event):
         self._controller.save_changes()
@@ -271,12 +329,22 @@ class PublisherWindow(QtWidgets.QDialog):
     def _go_to_create_tab(self):
         self._tabs_widget.set_current_tab("create")
 
-    def _set_publish_visibility(self, visible):
+    def _go_to_details_tab(self):
+        self._tabs_widget.set_current_tab("details")
+
+    def _set_publish_overlay_visibility(self, visible):
         if visible:
-            widget = self._publish_frame
+            widget = self._publish_overlay
         else:
-            widget = self._overview_widget
-        self._content_stacked_layout.setCurrentWidget(widget)
+            widget = self._under_publish_widget
+        self._under_publish_stack_layout.setCurrentWidget(widget)
+
+    def _set_publish_visibility(self, visible):
+        if visible is self._publish_frame_visible:
+            return
+        self._publish_frame_visible = visible
+        self._publish_frame.setVisible(visible)
+        self._update_publish_frame_rect()
 
     def _on_reset_clicked(self):
         self._controller.reset()
@@ -293,12 +361,10 @@ class PublisherWindow(QtWidgets.QDialog):
 
     def _on_validate_clicked(self):
         self._set_publish_comment()
-        self._set_publish_visibility(True)
         self._controller.validate()
 
     def _on_publish_clicked(self):
         self._set_publish_comment()
-        self._set_publish_visibility(True)
         self._controller.publish()
 
     def _set_footer_enabled(self, enabled):
@@ -315,6 +381,7 @@ class PublisherWindow(QtWidgets.QDialog):
     def _on_publish_reset(self):
         self._create_tab.setEnabled(True)
         self._comment_input.setVisible(True)
+        self._set_publish_overlay_visibility(False)
         self._set_publish_visibility(False)
         self._set_footer_enabled(False)
         self._update_publish_details_widget()
@@ -328,7 +395,11 @@ class PublisherWindow(QtWidgets.QDialog):
         self._comment_input.setVisible(False)
         self._create_tab.setEnabled(False)
 
-        self._report_widget.clear()
+        self._set_publish_visibility(True)
+        self._set_publish_overlay_visibility(True)
+
+        self._publish_details_widget.close_details_popup()
+
         if self._tabs_widget.is_current_tab(self._create_tab):
             self._tabs_widget.set_current_tab("publish")
 
@@ -336,6 +407,7 @@ class PublisherWindow(QtWidgets.QDialog):
         self._validate_btn.setEnabled(False)
 
     def _on_publish_stop(self):
+        self._set_publish_overlay_visibility(False)
         self._reset_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
         validate_enabled = not self._controller.publish_has_crashed
@@ -354,10 +426,8 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self._validate_btn.setEnabled(validate_enabled)
         self._publish_btn.setEnabled(publish_enabled)
-        self._update_publish_details_widget()
 
-        validation_errors = self._controller.get_validation_errors()
-        self._report_widget.set_errors(validation_errors)
+        self._update_publish_details_widget()
 
     def _validate_create_instances(self):
         if not self._controller.host_is_valid:
@@ -384,3 +454,18 @@ class PublisherWindow(QtWidgets.QDialog):
         context_title = self.controller.get_context_title()
         self.set_context_label(context_title)
         self._update_publish_details_widget()
+
+    def _update_publish_frame_rect(self):
+        if not self._publish_frame_visible:
+            return
+
+        window_size = self.size()
+        size_hint = self._publish_frame.minimumSizeHint()
+
+        width = window_size.width()
+        height = size_hint.height()
+        self._publish_frame.resize(width, height)
+
+        self._publish_frame.move(
+            0, window_size.height() - height
+        )

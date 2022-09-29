@@ -971,16 +971,6 @@ VariantInputsWidget QToolButton {
     color: {color:publisher:error};
 }
 
-#PublishFrame {
-    background: rgba(0, 0, 0, 127);
-}
-#PublishFrame[state="1"] {
-    background: rgb(22, 25, 29);
-}
-#PublishFrame[state="2"] {
-    background: {color:bg};
-}
-
 #PublishInfoFrame {
     background: {color:bg};
     border: 2px solid black;

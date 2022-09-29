@@ -2,7 +2,7 @@ import os
 import json
 import time
 
-from Qt import QtWidgets, QtCore, QtGui
+from Qt import QtWidgets, QtCore
 
 from openpype.pipeline import KnownPublishError
 
@@ -11,9 +11,7 @@ from .widgets import (
     ResetBtn,
     ValidateBtn,
     PublishBtn,
-    CopyPublishReportBtn,
-    SavePublishReportBtn,
-    ShowPublishReportBtn
+    PublishReportBtn,
 )
 
 
@@ -66,7 +64,7 @@ class ActionsButton(QtWidgets.QToolButton):
         self._set_action(action)
 
 
-class PublishFrame(QtWidgets.QFrame):
+class PublishFrame(QtWidgets.QWidget):
     """Frame showed during publishing.
 
     Shows all information related to publishing. Contains validation error
@@ -78,64 +76,48 @@ class PublishFrame(QtWidgets.QFrame):
     change into that layer.
 
     +------------------------------------------------------------------------+
-    |                                                                        |
-    |                                                                        |
-    |                                                                        |
-    |                       < Validation error widget >                      |
-    |                                                                        |
-    |                                                                        |
-    |                                                                        |
-    |                                                                        |
-    +------------------------------------------------------------------------+
     |                             < Main label >                             |
     |                             < Label top >                              |
     |        (####                      10%  <Progress bar>                ) |
     | <Instance label>                                        <Plugin label> |
-    | Report: <Copy><Save> <Label bottom>   <Reset><Stop><Validate><Publish> |
+    | <Report><Label bottom>                <Reset><Stop><Validate><Publish> |
     +------------------------------------------------------------------------+
     """
+    details_page_requested = QtCore.Signal()
+
     def __init__(self, controller, parent):
         super(PublishFrame, self).__init__(parent)
 
-        self.setObjectName("PublishFrame")
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         # Bottom part of widget where process and callback buttons are showed
         # - QFrame used to be able set background using stylesheets easily
         #   and not override all children widgets style
-        info_frame = QtWidgets.QFrame(self)
-        info_frame.setObjectName("PublishInfoFrame")
-
-        # Content of info frame
-        # - separated into QFrame and QWidget (widget has transparent bg)
-        content_widget = QtWidgets.QWidget(info_frame)
-        content_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-
-        info_layout = QtWidgets.QVBoxLayout(info_frame)
-        info_layout.setContentsMargins(0, 0, 0, 0)
-        info_layout.addWidget(content_widget)
+        content_frame = QtWidgets.QFrame(self)
+        content_frame.setObjectName("PublishInfoFrame")
 
         # Center widget displaying current state (without any specific info)
-        main_label = QtWidgets.QLabel(content_widget)
+        main_label = QtWidgets.QLabel(content_frame)
         main_label.setObjectName("PublishInfoMainLabel")
         main_label.setAlignment(QtCore.Qt.AlignCenter)
 
         # Supporting labels for main label
         # Top label is displayed just under main label
-        message_label_top = QtWidgets.QLabel(content_widget)
+        message_label_top = QtWidgets.QLabel(content_frame)
         message_label_top.setAlignment(QtCore.Qt.AlignCenter)
 
         # Bottom label is displayed between report and publish buttons
         #   at bottom part of info frame
-        message_label_bottom = QtWidgets.QLabel(content_widget)
+        message_label_bottom = QtWidgets.QLabel(content_frame)
         message_label_bottom.setAlignment(QtCore.Qt.AlignCenter)
 
         # Label showing currently processed instance
-        instance_label = QtWidgets.QLabel("<Instance name>", content_widget)
+        instance_label = QtWidgets.QLabel("<Instance name>", content_frame)
         instance_label.setAlignment(
             QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         )
         # Label showing currently processed plugin
-        plugin_label = QtWidgets.QLabel("<Plugin name>", content_widget)
+        plugin_label = QtWidgets.QLabel("<Plugin name>", content_frame)
         plugin_label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
@@ -144,82 +126,54 @@ class PublishFrame(QtWidgets.QFrame):
         instance_plugin_layout.addWidget(plugin_label, 1)
 
         # Progress bar showing progress of publishing
-        progress_widget = QtWidgets.QProgressBar(content_widget)
+        progress_widget = QtWidgets.QProgressBar(content_frame)
         progress_widget.setObjectName("PublishProgressBar")
 
-        # Report buttons to be able copy, save or see report
-        report_btns_widget = QtWidgets.QWidget(content_widget)
-        report_btns_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        # Hidden by default
-        report_btns_widget.setVisible(False)
-
-        report_label = QtWidgets.QLabel("Report:", report_btns_widget)
-        copy_report_btn = CopyPublishReportBtn(report_btns_widget)
-        export_report_btn = SavePublishReportBtn(report_btns_widget)
-        show_details_btn = ShowPublishReportBtn(report_btns_widget)
-
-        report_btns_layout = QtWidgets.QHBoxLayout(report_btns_widget)
-        report_btns_layout.setContentsMargins(0, 0, 0, 0)
-        report_btns_layout.addWidget(report_label, 0)
-        report_btns_layout.addWidget(copy_report_btn, 0)
-        report_btns_layout.addWidget(export_report_btn, 0)
-        report_btns_layout.addWidget(show_details_btn, 0)
-
         # Publishing buttons to stop, reset or trigger publishing
-        reset_btn = ResetBtn(content_widget)
-        stop_btn = StopBtn(content_widget)
-        validate_btn = ValidateBtn(content_widget)
-        publish_btn = PublishBtn(content_widget)
+        footer_widget = QtWidgets.QWidget(content_frame)
+        footer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        report_btn = PublishReportBtn(footer_widget)
+        reset_btn = ResetBtn(footer_widget)
+        stop_btn = StopBtn(footer_widget)
+        validate_btn = ValidateBtn(footer_widget)
+        publish_btn = PublishBtn(footer_widget)
+
+        report_btn.add_action("Go to details page", "go_to_report")
+        report_btn.add_action("Copy report", "copy_report")
+        report_btn.add_action("Export report", "export_report")
 
         # Footer on info frame layout
-        info_footer_layout = QtWidgets.QHBoxLayout()
-        info_footer_layout.addWidget(report_btns_widget, 0)
-        info_footer_layout.addWidget(message_label_bottom, 1)
-        info_footer_layout.addWidget(reset_btn, 0)
-        info_footer_layout.addWidget(stop_btn, 0)
-        info_footer_layout.addWidget(validate_btn, 0)
-        info_footer_layout.addWidget(publish_btn, 0)
+        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
+        footer_layout.setContentsMargins(0, 0, 0, 0)
+        footer_layout.addWidget(report_btn, 0)
+        footer_layout.addWidget(message_label_bottom, 1)
+        footer_layout.addWidget(reset_btn, 0)
+        footer_layout.addWidget(stop_btn, 0)
+        footer_layout.addWidget(validate_btn, 0)
+        footer_layout.addWidget(publish_btn, 0)
 
         # Info frame content
-        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout = QtWidgets.QVBoxLayout(content_frame)
         content_layout.setSpacing(5)
         content_layout.setAlignment(QtCore.Qt.AlignCenter)
 
         content_layout.addWidget(main_label)
+        # TODO stretches should be probably replaced by spacing...
+        # - stretch in floating frame doesn't make sense
         content_layout.addStretch(1)
         content_layout.addWidget(message_label_top)
         content_layout.addStretch(1)
         content_layout.addLayout(instance_plugin_layout)
         content_layout.addWidget(progress_widget)
         content_layout.addStretch(1)
-        content_layout.addLayout(info_footer_layout)
+        content_layout.addWidget(footer_widget)
 
-        # Whole widget layout
-        publish_widget = QtWidgets.QWidget(self)
-        publish_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        publish_layout = QtWidgets.QVBoxLayout(publish_widget)
-        publish_layout.addStretch(1)
-        publish_layout.addWidget(info_frame, 0)
-
-        details_widget = QtWidgets.QWidget(self)
-        close_report_btn = QtWidgets.QPushButton(details_widget)
-        close_report_icon = self._get_report_close_icon()
-        close_report_btn.setIcon(close_report_icon)
-
-        details_layout = QtWidgets.QVBoxLayout(details_widget)
-        details_layout.addWidget(close_report_btn)
-
-        main_layout = QtWidgets.QStackedLayout(self)
+        main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setStackingMode(main_layout.StackOne)
-        main_layout.addWidget(publish_widget)
-        main_layout.addWidget(details_widget)
+        main_layout.addWidget(content_frame)
 
-        main_layout.setCurrentWidget(publish_widget)
-
-        copy_report_btn.clicked.connect(self._on_copy_report)
-        export_report_btn.clicked.connect(self._on_export_report)
-
+        report_btn.triggered.connect(self._on_report_triggered)
         reset_btn.clicked.connect(self._on_reset_clicked)
         stop_btn.clicked.connect(self._on_stop_clicked)
         validate_btn.clicked.connect(self._on_validate_clicked)
@@ -235,10 +189,7 @@ class PublishFrame(QtWidgets.QFrame):
 
         self.controller = controller
 
-        self._info_frame = info_frame
-        self._publish_widget = publish_widget
-
-        self._main_layout = main_layout
+        self._content_frame = content_frame
 
         self._main_label = main_label
         self._message_label_top = message_label_top
@@ -248,48 +199,19 @@ class PublishFrame(QtWidgets.QFrame):
 
         self._progress_widget = progress_widget
 
-        self._report_btns_widget = report_btns_widget
         self._message_label_bottom = message_label_bottom
         self._reset_btn = reset_btn
         self._stop_btn = stop_btn
         self._validate_btn = validate_btn
         self._publish_btn = publish_btn
 
-        self._details_widget = details_widget
-
-    def _get_report_close_icon(self):
-        size = 100
-        pix = QtGui.QPixmap(size, size)
-        pix.fill(QtCore.Qt.transparent)
-
-        half_stroke_size = size / 12
-        stroke_size = 2 * half_stroke_size
-        size_part = size / 5
-
-        p1 = QtCore.QPoint(half_stroke_size, size_part)
-        p2 = QtCore.QPoint(size / 2, size_part * 4)
-        p3 = QtCore.QPoint(size - half_stroke_size, size_part)
-        painter = QtGui.QPainter(pix)
-        pen = QtGui.QPen(QtCore.Qt.white)
-        pen.setWidth(stroke_size)
-        pen.setCapStyle(QtCore.Qt.RoundCap)
-        painter.setPen(pen)
-        painter.setBrush(QtCore.Qt.transparent)
-        painter.drawLine(p1, p2)
-        painter.drawLine(p2, p3)
-        painter.end()
-
-        return QtGui.QIcon(pix)
-
     def _on_publish_reset(self):
         self._set_success_property()
-        self._change_bg_property()
         self._set_progress_visibility(True)
 
         self._main_label.setText("Hit publish (play button)! If you want")
         self._message_label_top.setText("")
         self._message_label_bottom.setText("")
-        self._report_btns_widget.setVisible(False)
 
         self._reset_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
@@ -301,10 +223,8 @@ class PublishFrame(QtWidgets.QFrame):
 
     def _on_publish_start(self):
         self._set_success_property(-1)
-        self._change_bg_property()
         self._set_progress_visibility(True)
         self._main_label.setText("Publishing...")
-        self._report_btns_widget.setVisible(False)
 
         self._reset_btn.setEnabled(False)
         self._stop_btn.setEnabled(True)
@@ -343,7 +263,6 @@ class PublishFrame(QtWidgets.QFrame):
 
     def _on_publish_stop(self):
         self._progress_widget.setValue(self.controller.publish_progress)
-        self._report_btns_widget.setVisible(True)
 
         self._reset_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
@@ -371,7 +290,6 @@ class PublishFrame(QtWidgets.QFrame):
 
         elif validation_errors:
             self._set_progress_visibility(False)
-            self._change_bg_property(1)
             self._set_validation_errors()
 
         elif self.controller.publish_has_finished:
@@ -417,10 +335,6 @@ class PublishFrame(QtWidgets.QFrame):
         self._message_label_bottom.setText("")
         self._set_success_property(1)
 
-    def _change_bg_property(self, state=None):
-        self.setProperty("state", str(state or ""))
-        self.style().polish(self)
-
     def _set_progress_visibility(self, visible):
         self._instance_label.setVisible(visible)
         self._plugin_label.setVisible(visible)
@@ -433,12 +347,12 @@ class PublishFrame(QtWidgets.QFrame):
         else:
             state = str(state)
 
-        for widget in (self._progress_widget, self._info_frame):
+        for widget in (self._progress_widget, self._content_frame):
             if widget.property("state") != state:
                 widget.setProperty("state", state)
                 widget.style().polish(widget)
 
-    def _on_copy_report(self):
+    def _copy_report(self):
         logs = self.controller.get_publish_report()
         logs_string = json.dumps(logs, indent=4)
 
@@ -448,7 +362,7 @@ class PublishFrame(QtWidgets.QFrame):
             mime_data
         )
 
-    def _on_export_report(self):
+    def _export_report(self):
         default_filename = "publish-report-{}".format(
             time.strftime("%y%m%d-%H-%M")
         )
@@ -470,6 +384,16 @@ class PublishFrame(QtWidgets.QFrame):
 
         with open(full_path, "w") as file_stream:
             json.dump(logs, file_stream)
+
+    def _on_report_triggered(self, identifier):
+        if identifier == "export_report":
+            self._export_report()
+
+        elif identifier == "copy_report":
+            self._copy_report()
+
+        elif identifier == "go_to_report":
+            self.details_page_requested.emit()
 
     def _on_reset_clicked(self):
         self.controller.reset()
