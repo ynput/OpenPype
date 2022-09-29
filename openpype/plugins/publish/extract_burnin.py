@@ -719,7 +719,6 @@ class ExtractBurnin(publish.Extractor):
             return filtered_burnin_defs
 
         families = self.families_from_instance(instance)
-        low_families = [family.lower() for family in families]
 
         for filename_suffix, orig_burnin_def in burnin_defs.items():
             burnin_def = copy.deepcopy(orig_burnin_def)
@@ -730,7 +729,7 @@ class ExtractBurnin(publish.Extractor):
 
             families_filters = def_filter["families"]
             if not self.families_filter_validation(
-                low_families, families_filters
+                families, families_filters
             ):
                 self.log.debug((
                     "Skipped burnin definition \"{}\". Family"
@@ -767,31 +766,19 @@ class ExtractBurnin(publish.Extractor):
         return filtered_burnin_defs
 
     def families_filter_validation(self, families, output_families_filter):
-        """Determine if entered families intersect with families filters.
+        """Determines if entered families intersect with families filters.
 
         All family values are lowered to avoid unexpected results.
         """
-        if not output_families_filter:
+
+        families_filter_lower = set(family.lower() for family in
+                                    output_families_filter
+                                    # Exclude empty filter values
+                                    if family)
+        if not families_filter_lower:
             return True
-
-        for family_filter in output_families_filter:
-            if not family_filter:
-                continue
-
-            if not isinstance(family_filter, (list, tuple)):
-                if family_filter.lower() not in families:
-                    continue
-                return True
-
-            valid = True
-            for family in family_filter:
-                if family.lower() not in families:
-                    valid = False
-                    break
-
-            if valid:
-                return True
-        return False
+        return any(family.lower() in families_filter_lower
+                   for family in families)
 
     def main_family_from_instance(self, instance):
         """Return main family of entered instance."""
