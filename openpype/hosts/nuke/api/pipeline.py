@@ -31,6 +31,7 @@ from .command import viewer_update_and_undo_stop
 from .lib import (
     Context,
     ROOT_DATA_KNOB,
+    INSTANCE_DATA_KNOB,
     get_main_window,
     add_publish_knob,
     WorkfileSettings,
@@ -504,8 +505,8 @@ def list_instances(creator_id=None):
     Returns:
         (list) of dictionaries matching instances format
     """
-    instances = []
-    for node in nuke.allNodes():
+    listed_instances = []
+    for node in nuke.allNodes(recurseGroups=True):
 
         if node.Class() in ["Viewer", "Dot"]:
             continue
@@ -513,30 +514,29 @@ def list_instances(creator_id=None):
         try:
             if node["disable"].value():
                 continue
-        except Exception as E:
-            log.warning(E)
+        except Exception as _exc:
+            log.debug("Node {} have no disable knob - {}".format(
+                node.fullName(), _exc))
 
         # get data from avalon knob
-        avalon_knob_data = get_avalon_knob_data(
-            node)
+        instance_data = get_node_data(
+            node, INSTANCE_DATA_KNOB)
 
-        if not avalon_knob_data:
+        if not instance_data:
             continue
 
-        if avalon_knob_data["id"] != "pyblish.avalon.instance":
+        if instance_data["id"] != "pyblish.avalon.instance":
             continue
 
-        if creator_id and avalon_knob_data["identifier"] != creator_id:
+        log.debug("_ creator_id: {}".format(creator_id))
+        if creator_id and instance_data["creator_identifier"] != creator_id:
             continue
 
-        # add node name
-        avalon_knob_data.update({
-            "instance_node": node
-        })
+        listed_instances.append((node, instance_data))
 
         instances.append(avalon_knob_data)
 
-    return instances
+    return listed_instances
 
 
 def remove_instance(instance):
@@ -547,8 +547,8 @@ def remove_instance(instance):
     Args:
         instance (dict): instance representation from subsetmanager model
     """
-    node = nuke.toNode(instance["name"])
-    nuke.delete(node)
+    instance_node = instance.transient_data["node"]
+    nuke.delete(instance_node)
 
 
 def select_instance(instance):
@@ -558,5 +558,5 @@ def select_instance(instance):
         Args:
             instance (dict): instance representation from subsetmanager model
     """
-    node = nuke.toNode(instance["name"])
-    node["selected"].setValue(True)
+    instance_node = instance.transient_data["node"]
+    instance_node["selected"].setValue(True)
