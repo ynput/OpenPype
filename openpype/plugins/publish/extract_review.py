@@ -315,10 +315,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if temp_data["input_is_sequence"]:
                 self.log.info("Filling gaps in sequence.")
                 files_to_clean = self.fill_sequence_gaps(
-                    temp_data["origin_repre"]["files"],
-                    new_repre["stagingDir"],
-                    temp_data["frame_start"],
-                    temp_data["frame_end"])
+                    files=temp_data["origin_repre"]["files"],
+                    staging_dir=new_repre["stagingDir"],
+                    start_frame=temp_data["frame_start"],
+                    end_frame=temp_data["frame_end"]
+                )
 
             # create or update outputName
             output_name = new_repre.get("outputName", "")
@@ -785,73 +786,49 @@ class ExtractReview(pyblish.api.InstancePlugin):
             AssertionError: if more then one collection is obtained.
 
         """
-        start_frame = int(start_frame)
-        end_frame = int(end_frame)
         collections = clique.assemble(files)[0]
         msg = "Multiple collections {} found.".format(collections)
         assert len(collections) == 1, msg
         col = collections[0]
 
-        # do nothing if no gap is found in input range
-        not_gap = True
-        for fr in range(start_frame, end_frame + 1):
-            if fr not in col.indexes:
-                not_gap = False
-
-        if not_gap:
+        start_frame = int(start_frame)
+        end_frame = int(end_frame)
+        missing_indexes = [
+            frame for frame in range(start_frame, end_frame + 1)
+            if frame not in col.indexes
+        ]
+        if not missing_indexes:
             return []
 
-        holes = col.holes()
+        # For each missing filepath collect the nearest existing index filepath
+        col_format = col.format("{head}{padding}{tail}")
+        holes_to_nearest = {}
+        for missing_idx in missing_indexes:
+            # TODO: This isn't 'optimal' since we know both missing_indexes
+            #       and existing indexes are sorted so we could keep track
+            #       of nearest index comparisons
+            # Get the nearest frame index from existing indices
+            nearest_index = min(col.indexes,
+                                # -0.001 so we favor previous existing frame
+                                # over next existing frame
+                                key=lambda idx: abs((missing_idx-0.001)-idx))
+            nearest_fname = col_format % nearest_index
+            hole_fname = col_format % missing_idx
 
-        # generate ideal sequence
-        complete_col = clique.assemble(
-            [("{}{:0" + str(col.padding) + "d}{}").format(
-                col.head, f, col.tail
-            ) for f in range(start_frame, end_frame)]
-        )[0][0]  # type: clique.Collection
+            nearest_fpath = os.path.join(staging_dir, nearest_fname)
+            hole_fpath = os.path.join(staging_dir, hole_fname)
+            if not os.path.isfile(nearest_fpath):
+                raise RuntimeError("Missing previously detected file: "
+                                   "{}".format(nearest_fpath))
 
-        new_files = {}
-        last_existing_file = None
+            holes_to_nearest[hole_fpath] = nearest_fpath
 
-        for idx in holes.indexes:
-            # get previous existing file
-            test_file = os.path.normpath(os.path.join(
-                staging_dir,
-                ("{}{:0" + str(complete_col.padding) + "d}{}").format(
-                    complete_col.head, idx - 1, complete_col.tail)))
-            if os.path.isfile(test_file):
-                new_files[idx] = test_file
-                last_existing_file = test_file
-            else:
-                if not last_existing_file:
-                    # previous file is not found (sequence has a hole
-                    # at the beginning. Use first available frame
-                    # there is.
-                    try:
-                        last_existing_file = list(col)[0]
-                    except IndexError:
-                        # empty collection?
-                        raise AssertionError(
-                            "Invalid sequence collected")
-                new_files[idx] = os.path.normpath(
-                    os.path.join(staging_dir, last_existing_file))
+        added_files = []
+        for hole_fpath, nearest_fpath in holes_to_nearest.items():
+            speedcopy.copyfile(nearest_fpath, hole_fpath)
+            added_files.append(hole_fpath)
 
-        files_to_clean = []
-        if new_files:
-            # so now new files are dict with missing frame as a key and
-            # existing file as a value.
-            for frame, file in new_files.items():
-                self.log.info(
-                    "Filling gap {} with {}".format(frame, file))
-
-                hole = os.path.join(
-                    staging_dir,
-                    ("{}{:0" + str(col.padding) + "d}{}").format(
-                        col.head, frame, col.tail))
-                speedcopy.copyfile(file, hole)
-                files_to_clean.append(hole)
-
-        return files_to_clean
+        return added_files
 
     def input_output_paths(self, new_repre, output_def, temp_data):
         """Deduce input nad output file paths based on entered data.
