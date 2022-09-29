@@ -15,55 +15,6 @@ from .widgets import (
 )
 
 
-class ActionsButton(QtWidgets.QToolButton):
-    def __init__(self, parent=None):
-        super(ActionsButton, self).__init__(parent)
-
-        self.setText("< No action >")
-        self.setPopupMode(self.MenuButtonPopup)
-        menu = QtWidgets.QMenu(self)
-
-        self.setMenu(menu)
-
-        self._menu = menu
-        self._actions = []
-        self._current_action = None
-
-        self.clicked.connect(self._on_click)
-
-    def current_action(self):
-        return self._current_action
-
-    def add_action(self, action):
-        self._actions.append(action)
-        action.triggered.connect(self._on_action_trigger)
-        self._menu.addAction(action)
-        if self._current_action is None:
-            self._set_action(action)
-
-    def set_action(self, action):
-        if action not in self._actions:
-            self.add_action(action)
-        self._set_action(action)
-
-    def _set_action(self, action):
-        if action is self._current_action:
-            return
-        self._current_action = action
-        self.setText(action.text())
-        self.setIcon(action.icon())
-
-    def _on_click(self):
-        self._current_action.trigger()
-
-    def _on_action_trigger(self):
-        action = self.sender()
-        if action not in self._actions:
-            return
-
-        self._set_action(action)
-
-
 class PublishFrame(QtWidgets.QWidget):
     """Frame showed during publishing.
 
