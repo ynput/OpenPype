@@ -46,6 +46,38 @@
                 "output": []
             }
         },
+        "ExtractSlateGlobal": {
+            "enabled": false,
+            "optional": true,
+            "slate_template_path": "",
+            "slate_template_res_path": "",
+            "profiles": [
+                {
+                    "families": [
+                        "review"
+                    ],
+                    "hosts": [],
+                    "oiio_args": {
+                        "input": [],
+                        "output": []
+                    }
+                },
+                {
+                    "families": [
+                        "render"
+                    ],
+                    "hosts": [],
+                    "oiio_args": {
+                        "input": [
+                            "--colorconvert",
+                            "Rec709",
+                            "linear"
+                        ],
+                        "output": []
+                    }
+                }
+            ]
+        },
         "ExtractReview": {
             "enabled": true,
             "profiles": [

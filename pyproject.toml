@@ -70,6 +70,7 @@ requests = "^2.25.1"
 pysftp = "^0.2.9"
 dropbox = "^11.20.0"
 aiohttp-middlewares = "^2.0.0"
+html2image = "^2.0.1"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.7"

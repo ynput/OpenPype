@@ -36,6 +36,11 @@ class ExtractSlateFrame(publish.Extractor):
 
     def process(self, instance):
 
+        #check if slateGlobal is active
+        if "slateGlobal" in instance.data:
+            self.log.info("Slate Global workflow is active, skipping nuke native slate extraction...")
+            return
+
         if "representations" not in instance.data:
             instance.data["representations"] = []
 

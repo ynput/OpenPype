@@ -179,6 +179,84 @@
         {
             "type": "dict",
             "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "ExtractSlateGlobal",
+            "label": "Extract Slate Global",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "text",
+                    "key": "slate_template_path",
+                    "label": "Slate Template Path"
+                },
+                {
+                    "type": "text",
+                    "key": "slate_template_res_path",
+                    "label": "Slate Template Resources Path"
+                },
+                {
+                    "type": "splitter"
+                },
+                {
+                    "type": "list",
+                    "key": "profiles",
+                    "label": "Profiles",
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "hosts-enum",
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "multiselection": true
+                            },
+                            {
+                                "type": "splitter"
+                            },
+                            {
+                                "type": "dict",
+                                "key": "oiio_args",
+                                "label": "oiio arguments",
+                                "collapsible": true,
+                                "children": [
+                                    {
+                                        "type": "list",
+                                        "object_type": "text",
+                                        "key": "input",
+                                        "label": "input arguments"
+                                    },
+                                    {
+                                        "type": "list",
+                                        "object_type": "text",
+                                        "key": "output",
+                                        "label": "output arguments"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "ExtractReview",
             "label": "ExtractReview",
             "checkbox_key": "enabled",
