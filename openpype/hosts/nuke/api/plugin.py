@@ -12,6 +12,7 @@ from abc import (
 )
 
 from openpype.api import get_current_project_settings
+from openpype.lib import BoolDef
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
@@ -20,6 +21,7 @@ from openpype.pipeline import (
     CreatedInstance
 )
 from .lib import (
+    INSTANCE_DATA_KNOB,
     Knobby,
     check_subsetname_exists,
     maintained_selection,
@@ -27,14 +29,16 @@ from .lib import (
     add_publish_knob,
     get_nuke_imageio_settings,
     set_node_knobs_from_settings,
-    get_view_process_node
+    get_view_process_node,
+    set_node_data
 )
 from .pipeline import (
-    list_instances
+    list_instances,
+    remove_instance
 )
 
 
-class OpenPypeCreatorError(CreatorError):
+class NukeCreatorError(CreatorError):
     pass
 
 
@@ -47,7 +51,7 @@ class NukeCreator(NewCreator):
         node_name,
         knobs=None,
         parent=None,
-        node_type="NoOp"
+        node_type=None
     ):
         """Create node representing instance.
 
@@ -61,6 +65,8 @@ class NukeCreator(NewCreator):
             nuke.Node: Newly created instance node.
 
         """
+        node_type = node_type or "NoOp"
+
         node_knobs = knobs or {}
 
         # set parent node
@@ -68,76 +74,83 @@ class NukeCreator(NewCreator):
         if parent:
             parent_node = nuke.toNode(parent)
 
-        with parent_node:
-            created_node = nuke.createNode(node_type)
-            created_node["name"].setValue(node_name)
+        try:
+            with parent_node:
+                created_node = nuke.createNode(node_type)
+                created_node["name"].setValue(node_name)
 
-            for key, values in node_knobs.items():
-                if key in created_node.knobs():
-                    created_node["key"].setValue(values)
+                for key, values in node_knobs.items():
+                    if key in created_node.knobs():
+                        created_node["key"].setValue(values)
+        except Exception as _err:
+            raise NukeCreatorError("Creating have failed: {}".format(_err))
 
         return created_node
 
-    # def create(self, subset_name, instance_data, pre_create_data):
-    #     try:
-    #         if pre_create_data.get("use_selection"):
-    #             self.selected_nodes = nuke.selectedNodes()
+    def create(self, subset_name, instance_data, pre_create_data):
+        try:
+            if pre_create_data.get("use_selection"):
+                self.selected_nodes = nuke.selectedNodes()
+            else:
+                self.selected_nodes = None
 
-    #         # Get the node type and remove it from the data, not needed
-    #         _node_type = instance_data.pop("node_type", None)
-    #         if _node_type is None:
-    #             _node_type = "NoOp"
+            instance_node = self._create_instance_node(
+                subset_name,
+                node_type=instance_data.pop("node_type", None)
+            )
 
-    #         instance_node = self._create_instance_node(
-    #             subset_name, node_type=_node_type, pre_create_data)
+            instance = CreatedInstance(
+                self.family,
+                subset_name,
+                instance_data,
+                self)
 
-    #         instance_data["instance_node"] = instance_node.path()
+            instance.transient_data["node"] = instance_node
 
-    #         instance = CreatedInstance(
-    #             self.family,
-    #             subset_name,
-    #             instance_data,
-    #             self)
-    #         self._add_instance_to_context(instance)
-    #         imprint(instance_node, instance.data_to_store())
-    #         return instance
+            self._add_instance_to_context(instance)
 
-    #     except hou.Error as er:
-    #         six.reraise(
-    #             OpenPypeCreatorError,
-    #             OpenPypeCreatorError("Creator error: {}".format(er)),
-    #             sys.exc_info()[2])
+            set_node_data(
+                instance_node, INSTANCE_DATA_KNOB, instance.data_to_store())
 
-    # def collect_instances(self):
-    #     for instance_data in list_instances(creator_id=self.identifier):
-    #         created_instance = CreatedInstance.from_existing(
-    #             instance_data, self
-    #         )
-    #         self._add_instance_to_context(created_instance)
+            return instance
 
-    # def update_instances(self, update_list):
-    #     for created_inst, _changes in update_list:
-    #         instance_node = created_inst.pop("instance_node", None)
-    #         current_data = created_inst.data
+        except Exception as er:
+            six.reraise(
+                NukeCreatorError,
+                NukeCreatorError("Creator error: {}".format(er)),
+                sys.exc_info()[2])
 
-    #         imprint(
-    #             instance_node,
-    #             {
-    #                 key: value[1] for key, value in _changes.items()
-    #                 if current_data.get(key) != value[1]
-    #             },
-    #             update=True
-    #         )
+    def collect_instances(self):
+        for (node, data) in list_instances(creator_id=self.identifier):
+            created_instance = CreatedInstance.from_existing(
+                data, self
+            )
+            created_instance.transient_data["node"] = node
+            self._add_instance_to_context(created_instance)
 
-    # def remove_instances(self, instances):
-    #     for instance in instances:
-    #         remove_instance(instance)
-    #         self._remove_instance_from_context(instance)
+    def update_instances(self, update_list):
+        for created_inst, _changes in update_list:
+            instance_node = created_inst.transient_data["node"]
+            current_data = created_inst.data
 
-    # def get_pre_create_attr_defs(self):
-    #     return [
-    #         BoolDef("use_selection", label="Use selection")
-    #     ]
+            set_node_data(
+                instance_node,
+                INSTANCE_DATA_KNOB,
+                {
+                    key: value[1] for key, value in _changes.items()
+                    if current_data.get(key) != value[1]
+                }
+            )
+
+    def remove_instances(self, instances):
+        for instance in instances:
+            remove_instance(instance)
+            self._remove_instance_from_context(instance)
+
+    def get_pre_create_attr_defs(self):
+        return [
+            BoolDef("use_selection", label="Use selection")
+        ]
 
 
 class OpenPypeCreator(LegacyCreator):
