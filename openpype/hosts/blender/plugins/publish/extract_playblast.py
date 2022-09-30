@@ -40,7 +40,11 @@ class ExtractPlayblast(openpype.api.Extractor):
         end = instance.data.get("frameEnd", bpy.context.scene.frame_end)
 
         self.log.info(f"start: {start}, end: {end}")
-        assert end >= start, "Invalid time range !"
+
+        # Stop if only one frame
+        if end == start:
+            self.log.info(f"Single frame render, skipping playblast")
+            return
 
         # get cameras
         camera = instance.data("review_camera", None)
@@ -58,14 +62,16 @@ class ExtractPlayblast(openpype.api.Extractor):
         project_settings = instance.context.data["project_settings"]["blender"]
         presets = project_settings["publish"]["ExtractPlayblast"]["presets"]
         preset = presets.get("default")
-        preset.update({
-            "camera": camera,
-            "start_frame": start,
-            "end_frame": end,
-            "filename": path,
-            "overwrite": True,
-            "isolate": isolate,
-        })
+        preset.update(
+            {
+                "camera": camera,
+                "start_frame": start,
+                "end_frame": end,
+                "filename": path,
+                "overwrite": True,
+                "isolate": isolate,
+            }
+        )
         preset.setdefault(
             "image_settings",
             {
@@ -116,6 +122,6 @@ class ExtractPlayblast(openpype.api.Extractor):
             "fps": fps,
             "preview": True,
             "tags": tags,
-            "camera_name": camera
+            "camera_name": camera,
         }
         instance.data["representations"].append(representation)
