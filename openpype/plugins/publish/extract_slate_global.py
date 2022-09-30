@@ -77,7 +77,6 @@ class SlateCreator:
             self.template_res_path
         )
 
-
     def set_logger(self, logger=None):
         """
         Sets the logger for SlateCreator
@@ -89,7 +88,6 @@ class SlateCreator:
         self.log = logger
 
         self.log.debug("Logger: '{}'".format(self.log))
-
 
     def set_template_paths(self, template_path, resources_path=""):
         """
@@ -155,7 +153,6 @@ class SlateCreator:
                 )
             )
 
-
     def set_data(self, data):
         """
         Copies provided data in an internal dict
@@ -180,7 +177,6 @@ class SlateCreator:
             "New Resolution set up: '{}x{}'".format(width, height)
         )
 
-
     def set_env(self, env={}):
         """
         Sets custom environment for oiio if needed.
@@ -194,7 +190,6 @@ class SlateCreator:
                 self.env[k] = v
 
         self.log.debug("Env: '{}'".format(self.env))
-
 
     def set_staging_dir(self, path, subfolder=""):
         """
@@ -222,7 +217,6 @@ class SlateCreator:
         self.staging_dir = staging_dir
         
         self.log.debug("Staging dir: '{}'".format(staging_dir))
-
 
     def read_template(self, template_path="", resources_path=""):
         """
@@ -302,7 +296,6 @@ class SlateCreator:
         
         self.log.debug("Template string: '{}'".format(template))
 
-
     def compute_template(
         self,
         process_optionals=True
@@ -350,7 +343,6 @@ class SlateCreator:
             self.log.error(msg)
             self._template_string_computed = self._template_string
             raise
-
 
     def render_slate(
         self,
@@ -400,7 +392,6 @@ class SlateCreator:
 
         return slate_rendered_path
 
-
     def render_image_oiio(
         self,
         input,
@@ -437,7 +428,6 @@ class SlateCreator:
         )
 
         return res
-
 
     def get_timecode_oiio(self, input, env={}):
         """
@@ -485,7 +475,6 @@ class SlateCreator:
         
         return tc
 
-
     def get_resolution_ffprobe(self, input, env={}):
         """
         Find input resolution using ffprobe.
@@ -518,16 +507,13 @@ class SlateCreator:
         
         return resolution
 
-
     def timecode_to_frames(self, timecode, framerate):
         rt = otio.opentime.from_timecode(timecode, framerate)
         return int(otio.opentime.to_frames(rt))
 
-
     def frames_to_timecode(self, frames, framerate):
         rt = otio.opentime.from_frames(frames, framerate)
         return otio.opentime.to_timecode(rt)
-
 
     def frames_to_seconds(self, frames, framerate):
         rt = otio.opentime.from_frames(frames, framerate)
@@ -569,7 +555,6 @@ class ExtractSlateGlobal(publish.Extractor):
 
     _slate_data_name = "slateGlobal"
 
-
     def process(self, instance):
 
         if self._slate_data_name not in instance.data:
@@ -580,7 +565,7 @@ class ExtractSlateGlobal(publish.Extractor):
         if "representations" not in instance.data:
             self.log.error("No representations to work on!")
             raise ValueError("no items in list.")
-        
+
         repre_ignore_list = [
             "thumbnail",
             "passing"
@@ -616,7 +601,7 @@ class ExtractSlateGlobal(publish.Extractor):
             if isinstance(check_file, list):
                 check_file = check_file[0]
                 isSequence = True
-            
+
             file_path = os.path.normpath(
                 os.path.join(
                     repre["stagingDir"],
@@ -641,8 +626,8 @@ class ExtractSlateGlobal(publish.Extractor):
                 )
                 repre_match = instance.data["family"]
             else:
-                frame_start = int(repre["frameStart"]) 
-                frame_end = int(repre["frameEnd"]) 
+                frame_start = int(repre["frameStart"])
+                frame_end = int(repre["frameEnd"])
                 output_name = "{}_{}_slate.png".format(
                     filename,
                     repre["name"]
@@ -655,7 +640,7 @@ class ExtractSlateGlobal(publish.Extractor):
             for profile in slate_data["slate_profiles"]:
                 if repre_match in profile["families"]:
                     oiio_profile = profile
-                else: 
+                else:
                     oiio_profile = {
                         "families": [],
                         "hosts": [],
@@ -672,7 +657,7 @@ class ExtractSlateGlobal(publish.Extractor):
                 ])
 
             # Data Layout and preparation in instance
-            slate_repre_data = slate_data["slate_repre_data"][repre["name"]] = {
+            slate_repre_data = slate_data["slate_repre_data"][repre["name"]]={
                 "family_match": repre_match or "",
                 "frameStart": int(repre["frameStart"]),
                 "frameEnd": frame_end,
@@ -734,7 +719,7 @@ class ExtractSlateGlobal(publish.Extractor):
                     instance.data["slateFrames"].update({
                         output_name: slate_final_path
                     })
-                
+
                 self.log.debug("SlateFrames: {}".format(
                     instance.data["slateFrames"]
                 ))

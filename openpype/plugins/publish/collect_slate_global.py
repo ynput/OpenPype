@@ -5,6 +5,7 @@ from openpype.lib import (
     get_ffmpeg_tool_path
 )
 
+
 class CollectSlateGlobal(pyblish.api.InstancePlugin):
     """
     Check if slate global is active and enable slate workflow for
@@ -23,12 +24,13 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
 
         context = instance.context
         publ_settings = context.data["project_settings"]["global"]["publish"]
-        version_padding = context.data["anatomy"]["templates"]["defaults"]["version_padding"]
+        version_padding = context.data["anatomy"]["templates"]["defaults"]\
+            ["version_padding"]
 
         if self._slate_settings_name in publ_settings:
 
             settings = publ_settings[self._slate_settings_name]
-            
+
             if not settings["enabled"]:
                 self.log.warning("ExtractSlateGlobal is not active. Skipping...")
                 return
@@ -44,7 +46,7 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
                 )
             }
 
-            if not "slateGlobal" in instance.data:
+            if "slateGlobal" not in instance.data:
                 slate_global = instance.data["slateGlobal"] = {}
 
             slate_global.update({
@@ -56,7 +58,7 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
                 "slate_thumbnail": "",
                 "slate_repre_data": {}
             })
-            
+
             slate_data = slate_global["slate_common_data"]
             slate_data.update(instance.data["anatomyData"])
             slate_data["@version"] = str(
