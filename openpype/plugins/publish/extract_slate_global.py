@@ -3,20 +3,13 @@ import re
 import logging
 import subprocess
 import json
-import copy
 import platform
-
-import pyblish.api
 
 import opentimelineio as otio
 from html2image import Html2Image
 
+import pyblish.api
 from openpype.pipeline import publish
-from openpype.lib import (
-    get_oiio_tools_path,
-    get_ffmpeg_tool_path
-)
-
 
 class SlateCreator:
     """
@@ -345,8 +338,8 @@ class SlateCreator:
                     self.data["{}_optional".format(m)] = hidden_string
         
         try:
-            self._template_string_computed = self._template_string.format_map(
-                self.data
+            self._template_string_computed = self._template_string.format(
+                **self.data
             )
             self.log.debug("Computed Template string: '{}'".format(
                 self._template_string_computed
@@ -574,10 +567,12 @@ class ExtractSlateGlobal(publish.Extractor):
         # "unreal"
     ]
 
+    _slate_data_name = "slateGlobal"
+
 
     def process(self, instance):
 
-        if "slateGlobal" not in instance.data:
+        if self._slate_data_name not in instance.data:
             self.log.warning("Slate Global workflow is not active, \
                 skipping Global slate extraction...")
             return
@@ -591,35 +586,31 @@ class ExtractSlateGlobal(publish.Extractor):
             "passing"
         ]
 
-        _env = {
-            "PATH": "{0};{1}".format(
-                os.path.dirname(get_oiio_tools_path()),
-                os.path.dirname(get_ffmpeg_tool_path())
-            )
-        }
+        slate_data = instance.data[self._slate_data_name]
 
-        data = self.compute_slate_data(instance)
+        # get pyblish comment and intent
+        common_data = slate_data["slate_common_data"]
+        common_data["comment"] = instance.context.data.get("comment")
+        common_data["intent"].update(instance.context.data.get("intent"))
 
-        self.log.debug("ExtractSlateGlobal custom env: {}".format(_env))
-
+        # Init SlateCreator Object
         slate = SlateCreator(
-            template_path=data["slate_template_path"],
-            resources_path=data["slate_template_res_path"],
+            template_path=slate_data["slate_template_path"],
+            resources_path=slate_data["slate_template_res_path"],
             log=self.log,
-            data=data,
-            env=_env
+            data=common_data,
+            env=slate_data["slate_env"]
         )
 
-        sequences = []
-        repres = []
-
-        for repre in data["representations"]:
+        # loop through repres
+        for repre in instance.data["representations"]:
             if repre["name"] in repre_ignore_list:
                 self.log.debug("Representation '{}' was ignored.".format(
                     repre["name"]
                 ))
                 continue
 
+            # check if repre is a sequence
             isSequence = False
             check_file = repre["files"]
             if isinstance(check_file, list):
@@ -633,224 +624,117 @@ class ExtractSlateGlobal(publish.Extractor):
                 )
             )
 
+            filename, specname, ext = check_file.split(".")
             timecode = slate.get_timecode_oiio(file_path)
             resolution = slate.get_resolution_ffprobe(file_path)
-            
-            repre["resolution_width"] = resolution["width"]
-            repre["resolution_height"] = resolution["height"]
-            repre["timecode"] = timecode
 
+            # if sequence render out a slate before first frame
+            # else sequence find matching tags and transfer
+            # also constructs final slate name and metadata
             if isSequence:
-                repre["family"] = instance.data["family"]
-                sequences.append(repre)
-
-            for tag in repre["tags"]:
-                for profile in data["slate_profiles"]:
-                    if tag in profile["families"]:
-                        repre["family"] = tag
-                        repres.append(repre)
-
-        self.log.debug("Tagged Sequences: {}".format(sequences))
-        self.log.debug("Tagged Representations: {}".format(repres))
-
-        for repre in sequences:
-
-            in_args = []
-            out_args = []
-
-            temp_file = "slate_temp_{}.png".format(
-                repre["name"]
-            )
-
-            slate.set_staging_dir(repre["stagingDir"])
-            new_data = slate.data.copy()
-            new_data.update(repre)
-            slate.set_data(new_data)
-
-            slate.render_slate(
-                slate_path = temp_file,
-                resolution=(
-                    repre["resolution_width"],
-                    repre["resolution_height"]
+                frame_start = int(repre["frameStart"]) - 1
+                frame_end = len(repre["files"]) + frame_start
+                output_name = "{}.{}.{}".format(
+                    filename,
+                    frame_start,
+                    ext
                 )
-            )
-
-            for profile in data["slate_profiles"]:
-                if repre["family"] in profile["families"]:
-                    in_args = profile["oiio_args"]["input"]
-                    out_args = profile["oiio_args"]["output"]
-                    out_args.extend(
-                        [
-                            "--attrib:type=timecode",
-                            "smpte:TimeCode",
-                            repre["timecode"]
-                        ]
-                    )
-            
-            filename = repre["files"][0]
-
-            first_frame = int(repre["frameStart"])-1
-
-            slate_temp_path = os.path.normpath(
-                os.path.join(
-                    repre["stagingDir"],
-                    temp_file
-                )
-            )
-
-            output_name = "{}.{}{}".format(
-                data["name"],
-                first_frame,
-                os.path.splitext(filename)[1]
-            )
-            
-            slate_final_path = os.path.normpath(
-                os.path.join(
-                    repre["stagingDir"],
-                    output_name
-                )
-            )
-
-            slate.render_image_oiio(
-                slate_temp_path,
-                slate_final_path,
-                in_args=in_args,
-                out_args=out_args
-            )
-
-            os.remove(slate_temp_path)
-
-            for r in instance.data["representations"]:
-                if repre["name"] == r["name"]:
-                    r["files"].insert(
-                        0, output_name
-                    )
-                    r["frameStart"] = first_frame
-                    self.log.debug(
-                        "Added {} to {} representation file list.".format(
-                            output_name,
-                            repre["name"]
-                        )
-                    )
-                break
-        
-        for repre in repres:
-
-            in_args = []
-            out_args = []
-
-            temp_file = "slate_temp_{}.png".format(
-                repre["name"]
-            )
-
-            slate.set_staging_dir(repre["stagingDir"])
-            new_data = slate.data.copy()
-            new_data.update(repre)
-            slate.set_data(new_data)
-
-            slate.render_slate(
-                slate_path = temp_file,
-                resolution=(
-                    repre["resolution_width"],
-                    repre["resolution_height"]
-                )
-            )
-
-            for profile in data["slateGlobal"]["slate_profiles"]:
-                if repre["family"] in profile["families"]:
-                    in_args = profile["oiio_args"]["input"]
-                    out_args = profile["oiio_args"]["output"]
-            
-            filename = repre["files"][0]
-            
-            slate_temp_path = os.path.normpath(
-                os.path.join(
-                    repre["stagingDir"],
-                    temp_file
-                )
-            )
-
-            output_name = "{}_{}_slate.png".format(
-                data["name"],
-                repre["name"]
-            )
-            
-            slate_final_path = os.path.normpath(
-                os.path.join(
-                    repre["stagingDir"],
-                    output_name
-                )
-            )
-
-            slate.render_image_oiio(
-                slate_temp_path,
-                slate_final_path,
-                in_args=in_args,
-                out_args=out_args
-            )
-
-            os.remove(slate_temp_path)
-
-            if "slateFrames" not in instance.data:
-                instance.data["slateFrames"] = {
-                    "*": slate_final_path
-                }
+                repre_match = instance.data["family"]
             else:
-                instance.data["slateFrames"].update({
-                    output_name: slate_final_path
-                })
-            
+                frame_start = int(repre["frameStart"]) 
+                frame_end = int(repre["frameEnd"]) 
+                output_name = "{}_{}_slate.png".format(
+                    filename,
+                    repre["name"]
+                )
+                for tag in repre["tags"]:
+                    for profile in slate_data["slate_profiles"]:
+                        if tag in profile["families"]:
+                            repre_match = tag
 
-            self.log.debug(
-                "Added {}: in instance SlateFrames key.".format(
-                    instance.data["slateFrames"]
+            for profile in slate_data["slate_profiles"]:
+                if repre_match in profile["families"]:
+                    oiio_profile = profile
+                else: 
+                    oiio_profile = {
+                        "families": [],
+                        "hosts": [],
+                        "oiio_args": {
+                            "input": [],
+                            "output": []
+                        }
+                    }
+                # add timecode to oiio output args
+                oiio_profile["oiio_args"]["output"].extend([
+                    "--attrib:type=timecode",
+                    "smpte:TimeCode",
+                    "\"{}\"".format(timecode)
+                ])
+
+            # Data Layout and preparation in instance
+            slate_repre_data = slate_data["slate_repre_data"][repre["name"]] = {
+                "family_match": repre_match or "",
+                "frameStart": int(repre["frameStart"]),
+                "frameEnd": frame_end,
+                "real_frameStart": frame_start,
+                "resolution_width": int(resolution["width"]),
+                "resolution_height": int(resolution["height"]),
+                "stagingDir": repre["stagingDir"],
+                "slate_file": output_name,
+                "thumbnail": instance.data["thumbnail"],
+                "timecode": timecode
+            }
+            slate.data.update(slate_repre_data)
+            slate.data.update(oiio_profile)
+
+            # set properties for rendering
+            slate.set_resolution(
+                slate.data["resolution_width"],
+                slate.data["resolution_height"]
+            )
+            slate.set_staging_dir(slate.data["stagingDir"])
+
+            # render slate
+            temp_slate = slate.render_slate(
+                slate_specifier="_{}".format(repre["name"])
+            )
+
+            slate_final_path = os.path.normpath(
+                os.path.join(
+                    slate.data["stagingDir"],
+                    slate.data["slate_file"]
                 )
             )
 
+            # convert slate to final name and format
+            slate.render_image_oiio(
+                temp_slate[0],
+                slate_final_path,
+                in_args=slate.data["oiio_args"]["input"],
+                out_args=slate.data["oiio_args"]["output"]
+            )
+            os.remove(temp_slate[0])
 
-    def compute_slate_data(self, instance):
-
-        comment = instance.context.data.get("comment") or ""
-        intent = instance.context.data.get("intent") or {"-": "-"}
-        version = str(
-            instance.data["version"]
-        ).zfill(
-            instance.data["version_padding"]
-        )
-        fill_data = instance.data.copy()
-        if not isinstance(intent, dict):
-            intent = {
-                "label": intent,
-                "value": intent
-            }
-        fill_data.update(
-            {
-                "comment": comment,
-                "intent": intent,
-                "@version": version
-            }
-        )
-        fill_data.update(
-            copy.deepcopy(
-                instance.data.get("customData") or {}
-            )
-        )
-        fill_data.update(
-            copy.deepcopy(
-                instance.data.get("slateGlobal") or {}
-            )
-        )
-        fill_data.update(
-            copy.deepcopy(
-                instance.data.get("anatomyData") or {}
-            )
-        )
-        for repr in instance.data["representations"]:
-            if repr["name"] == "thumbnail":
-                fill_data["thumbnail"] = os.path.normpath(
-                    os.path.join(
-                        repr["stagingDir"],
-                        repr["files"]
+            # update repres and instance
+            if isSequence:
+                repre["files"].insert(0, slate.data["slate_file"])
+                repre["frameStart"] = slate.data["real_frameStart"]
+                self.log.debug(
+                    "Added {} to {} representation file list.".format(
+                        slate.data["slate_file"],
+                        repre["name"]
                     )
                 )
-        return fill_data
+            else:
+                if "slateFrames" not in instance.data:
+                    instance.data["slateFrames"] = {
+                        "*": slate_final_path
+                    }
+                else:
+                    instance.data["slateFrames"].update({
+                        output_name: slate_final_path
+                    })
+                
+                self.log.debug("SlateFrames: {}".format(
+                    instance.data["slateFrames"]
+                ))

@@ -1,10 +1,9 @@
 import os
 import pyblish.api
-from openpype.settings import get_current_project_settings
-from openpype.settings.lib import get_anatomy_settings
-from openpype.pipeline.context_tools import get_template_data_from_session
-
-
+from openpype.lib import (
+    get_oiio_tools_path,
+    get_ffmpeg_tool_path
+)
 
 class CollectSlateGlobal(pyblish.api.InstancePlugin):
     """
@@ -22,39 +21,59 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        publ_settings = get_current_project_settings()\
-            ["global"]["publish"]
-        version_padding = get_anatomy_settings(
-            os.environ.get("AVALON_PROJECT")
-        )["templates"]["defaults"]["version_padding"]
+        context = instance.context
+        publ_settings = context.data["project_settings"]["global"]["publish"]
+        version_padding = context.data["anatomy"]["templates"]["defaults"]["version_padding"]
 
         if self._slate_settings_name in publ_settings:
+
             settings = publ_settings[self._slate_settings_name]
-            self.log.debug(
-                "__ Settings for ExtractSlateGlobal: {}".format(
-                    settings
-                )
-            )
+            
             if not settings["enabled"]:
                 self.log.warning("ExtractSlateGlobal is not active. Skipping...")
                 return
             
             self.log.info("ExtractSlateGlobal is active.")
 
-            tpl_path = settings["slate_template_path"].format_map(os.environ)
-            res_path = settings["slate_template_res_path"].format_map(os.environ)
-
-            instance.data["slate"] = True
-            instance.data["slateGlobal"] = {
-                "slate_template_path": tpl_path,
-                "slate_template_res_path": res_path,
-                "slate_profiles": settings.get("profiles")
+            tpl_path = settings["slate_template_path"].format(**os.environ)
+            res_path = settings["slate_template_res_path"].format(**os.environ)
+            _env = {
+                "PATH": "{0};{1}".format(
+                    os.path.dirname(get_oiio_tools_path()),
+                    os.path.dirname(get_ffmpeg_tool_path())
+                )
             }
 
-            instance.data["version_padding"] = version_padding
-            instance.data["families"].append("slate")
+            if not "slateGlobal" in instance.data:
+                slate_global = instance.data["slateGlobal"] = {}
+
+            slate_global.update({
+                "slate_template_path": tpl_path,
+                "slate_template_res_path": res_path,
+                "slate_profiles": settings["profiles"],
+                "slate_common_data": {},
+                "slate_env": _env,
+                "slate_thumbnail": "",
+                "slate_repre_data": {}
+            })
             
-            # This is not clear. What is this supposed to be doing?
+            slate_data = slate_global["slate_common_data"]
+            slate_data.update(instance.data["anatomyData"])
+            slate_data["@version"] = str(
+                instance.data["version"]
+            ).zfill(
+                version_padding
+            )
+            slate_data["intent"] = {
+                "label": "",
+                "value": ""
+            }
+            slate_data["comment"] = ""
+            slate_data["scope"] = ""
+
+            if "customData" in instance.data:
+                slate_data.update(instance.data["customData"])
+
             if not "versionData" in instance.data:
                 versionData = {
                     "versionData": {
@@ -62,15 +81,10 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
                     }
                 }
                 instance.data.update(versionData)
+            instance.data["slate"] = True
+            instance.data["families"].append("slate")
             instance.data["versionData"]["families"].append("slate")
-            
-            if not "customData" in instance.data:
-                instance.data["customData"] = {
-                    "scope": ""
-                }
-            elif not "scope" in instance.data["customData"]:
-                instance.data["customData"]["scope"] = ""
-            
+
             self.log.debug(
-                "__ instance.data: `{}`".format(instance.data)
+                "SlateGlobal Data: {}".format(slate_global)
             )
