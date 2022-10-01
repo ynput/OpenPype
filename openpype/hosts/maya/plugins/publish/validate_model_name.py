@@ -5,7 +5,6 @@ import re
 from maya import cmds
 import pyblish.api
 
-import openpype.api
 from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import ValidateContentsOrder
 import openpype.hosts.maya.api.action
