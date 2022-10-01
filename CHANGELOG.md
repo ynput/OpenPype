@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.14.3-nightly.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.14.3-nightly.6](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.2...HEAD)
 
@@ -17,12 +17,12 @@
 - Photoshop: synchronize image version with workfile [\#3854](https://github.com/pypeclub/OpenPype/pull/3854)
 - General: Transcoding handle float2 attr type [\#3849](https://github.com/pypeclub/OpenPype/pull/3849)
 - General: Simple script for getting license information about used packages [\#3843](https://github.com/pypeclub/OpenPype/pull/3843)
-- Houdini: Increment current file on workfile publish [\#3840](https://github.com/pypeclub/OpenPype/pull/3840)
 - General: Workfile template build enhancements [\#3838](https://github.com/pypeclub/OpenPype/pull/3838)
 - General: lock task workfiles when they are working on [\#3810](https://github.com/pypeclub/OpenPype/pull/3810)
 
 **🐛 Bug fixes**
 
+- Maya: Fix Render single camera validator [\#3929](https://github.com/pypeclub/OpenPype/pull/3929)
 - Flame: loading multilayer exr to batch/reel is working [\#3901](https://github.com/pypeclub/OpenPype/pull/3901)
 - Hiero: Fix inventory check on launch [\#3895](https://github.com/pypeclub/OpenPype/pull/3895)
 - WebPublisher: Fix import after refactor [\#3891](https://github.com/pypeclub/OpenPype/pull/3891)
@@ -33,10 +33,10 @@
 - Tray Publisher: skip plugin if otioTimeline is missing [\#3856](https://github.com/pypeclub/OpenPype/pull/3856)
 - Flame: retimed attributes are integrated with settings [\#3855](https://github.com/pypeclub/OpenPype/pull/3855)
 - Maya: Extract Playblast fix textures + labelize viewport show settings [\#3852](https://github.com/pypeclub/OpenPype/pull/3852)
-- Maya Deadline: Fix Tile Rendering by forcing integer pixel values [\#3758](https://github.com/pypeclub/OpenPype/pull/3758)
 
 **🔀 Refactored code**
 
+- Maya: Remove unused 'openpype.api' imports in plugins [\#3925](https://github.com/pypeclub/OpenPype/pull/3925)
 - Resolve: Use new Extractor location [\#3918](https://github.com/pypeclub/OpenPype/pull/3918)
 - Unreal: Use new Extractor location [\#3917](https://github.com/pypeclub/OpenPype/pull/3917)
 - Flame: Use new Extractor location [\#3916](https://github.com/pypeclub/OpenPype/pull/3916)
@@ -45,7 +45,6 @@
 - Hiero: Use new Extractor location [\#3851](https://github.com/pypeclub/OpenPype/pull/3851)
 - Maya: Remove old legacy \(ftrack\) plug-ins that are of no use anymore [\#3819](https://github.com/pypeclub/OpenPype/pull/3819)
 - Nuke: Use new Extractor location [\#3799](https://github.com/pypeclub/OpenPype/pull/3799)
-- Maya: Use new Extractor location [\#3775](https://github.com/pypeclub/OpenPype/pull/3775)
 
 **Merged pull requests:**
 
@@ -103,18 +102,6 @@
 ## [3.14.1](https://github.com/pypeclub/OpenPype/tree/3.14.1) (2022-08-30)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.14.1-nightly.4...3.14.1)
-
-**🚀 Enhancements**
-
-- General: Thumbnail can use project roots [\#3750](https://github.com/pypeclub/OpenPype/pull/3750)
-
-**🐛 Bug fixes**
-
-- Maya: Fix typo in getPanel argument `with\_focus` -\> `withFocus` [\#3753](https://github.com/pypeclub/OpenPype/pull/3753)
-
-**🔀 Refactored code**
-
-- General: Move delivery logic to pipeline [\#3751](https://github.com/pypeclub/OpenPype/pull/3751)
 
 ## [3.14.0](https://github.com/pypeclub/OpenPype/tree/3.14.0) (2022-08-18)
 
