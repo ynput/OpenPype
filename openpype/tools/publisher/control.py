@@ -592,6 +592,8 @@ class PublisherController:
         self._reset_publish()
         self._reset_instances()
 
+        self.emit_message("Refreshed..")
+
     def _reset_plugins(self):
         """Reset to initial state."""
         if self._resetting_plugins:
