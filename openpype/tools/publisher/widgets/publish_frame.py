@@ -210,12 +210,17 @@ class PublishFrame(QtWidgets.QWidget):
 
         self._shrunken = shrunk
 
-        start = 0
-        end = 0
         anim_is_running = (
             self._shrunk_anim.state() == self._shrunk_anim.Running
         )
+        if not self.isVisible():
+            if anim_is_running:
+                self._shrunk_anim.stop()
+            self._on_shrunk_anim_finish()
+            return
 
+        start = 0
+        end = 0
         if shrunk:
             start = self._top_content_widget.height()
         else:
@@ -223,10 +228,6 @@ class PublishFrame(QtWidgets.QWidget):
                 start = self._shrunk_anim.currentValue()
             hint = self._top_content_widget.minimumSizeHint()
             end = hint.height()
-
-        if not self.isVisible():
-            self._on_shrunk_anim_finish()
-            return
 
         self._shrunk_anim.setStartValue(start)
         self._shrunk_anim.setEndValue(end)
