@@ -66,8 +66,7 @@ class NiceCheckbox(QtWidgets.QFrame):
         if cls._checked_bg_color is not None:
             return
 
-        colors_data = get_objected_colors()
-        colors_info = colors_data["nice-checkbox"]
+        colors_info = get_objected_colors("nice-checkbox")
 
         cls._checked_bg_color = colors_info["bg-checked"].get_qcolor()
         cls._unchecked_bg_color = colors_info["bg-unchecked"].get_qcolor()
