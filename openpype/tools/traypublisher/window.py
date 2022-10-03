@@ -257,7 +257,11 @@ class TrayPublishWindow(PublisherWindow):
 def main():
     host = TrayPublisherHost()
     install_host(host)
-    app = QtWidgets.QApplication([])
+
+    app_instance = QtWidgets.QApplication.instance()
+    if app_instance is None:
+        app_instance = QtWidgets.QApplication([])
+
     window = TrayPublishWindow()
     window.show()
-    app.exec_()
+    app_instance.exec_()
