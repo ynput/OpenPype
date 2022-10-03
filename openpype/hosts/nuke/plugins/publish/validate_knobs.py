@@ -62,7 +62,16 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
 
         for instance in context:
             # Filter publisable instances.
-            if not instance.data["publish"]:
+            if (
+                instance.data.get("publish")
+                and instance.data["publish"] is False
+            ):
+                continue
+
+            if (
+                instance.data.get("active")
+                and instance.data["active"] is False
+            ):
                 continue
 
             # Filter families.
