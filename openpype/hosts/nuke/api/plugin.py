@@ -201,6 +201,10 @@ class NukeCreator(NewCreator):
             BoolDef("use_selection", label="Use selection")
         ]
 
+    def apply_settings(self, project_settings, system_settings):
+        """Method called on initialization of plugin to apply settings."""
+        self.creators_settings = project_settings["nuke"]["create"]
+
 
 class OpenPypeCreator(LegacyCreator):
     """Pype Nuke Creator class wrapper"""
