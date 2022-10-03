@@ -281,12 +281,7 @@ class CreateWidget(QtWidgets.QWidget):
         create_btn_wrap_layout.addWidget(create_btn, 0)
 
         creators_attrs_layout = QtWidgets.QVBoxLayout(creators_attrs_widget)
-        # NOTE: Match position of '+' button in instances view
-        # - use hardcoded border size which is defined in stylesheets
-        #   (potentially dangerous)
-        # - 10 pixels smaller content of attributes
-        borders = 2
-        creators_attrs_layout.setContentsMargins(0, 0, 0, 10 + borders)
+        creators_attrs_layout.setContentsMargins(0, 0, 0, 0)
         creators_attrs_layout.addWidget(variant_subset_label, 0)
         creators_attrs_layout.addWidget(variant_subset_widget, 0)
         creators_attrs_layout.addWidget(pre_create_widget, 1)
@@ -295,7 +290,7 @@ class CreateWidget(QtWidgets.QWidget):
         creators_splitter.addWidget(creators_view_widget)
         creators_splitter.addWidget(creators_attrs_widget)
         creators_splitter.setStretchFactor(0, 1)
-        creators_splitter.setStretchFactor(1, 1)
+        creators_splitter.setStretchFactor(1, 2)
 
         creators_layout = QtWidgets.QVBoxLayout(creators_widget)
         creators_layout.setContentsMargins(0, 0, 0, 0)
@@ -577,6 +572,7 @@ class CreateWidget(QtWidgets.QWidget):
         self._set_creator_by_identifier(identifier)
 
     def _set_creator_detailed_text(self, creator):
+        # TODO implement
         description = ""
         if creator is not None:
             description = creator.get_detail_description() or description
@@ -756,12 +752,11 @@ class CreateWidget(QtWidgets.QWidget):
 
     def _on_first_show(self):
         width = self.width()
-        part = int(width / 7)
-
-        self._main_splitter_widget.setSizes(
-            [part * 2, part * 4, width - (part * 6)]
-        )
-        self._creators_splitter.setSizes([part * 2, part * 2])
+        part = int(width / 4)
+        rem_width = width - part
+        self._main_splitter_widget.setSizes([part, rem_width])
+        rem_width = rem_width - part
+        self._creators_splitter.setSizes([part, rem_width])
 
     def showEvent(self, event):
         super(CreateWidget, self).showEvent(event)
