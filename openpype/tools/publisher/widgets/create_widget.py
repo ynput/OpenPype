@@ -22,7 +22,10 @@ from openpype.tools.utils import (
     ClickableFrame,
 )
 
-from .widgets import IconValuePixmapLabel
+from .widgets import (
+    IconValuePixmapLabel,
+    CreateBtn,
+)
 from .assets_widget import CreateWidgetAssetsWidget
 from .tasks_widget import CreateWidgetTasksWidget
 from .precreate_widget import PreCreateWidget
@@ -390,7 +393,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         # Create button
         create_btn_wrapper = QtWidgets.QWidget(creators_attrs_widget)
-        create_btn = QtWidgets.QPushButton("Create", create_btn_wrapper)
+        create_btn = CreateBtn(create_btn_wrapper)
         create_btn.setEnabled(False)
 
         create_btn_wrap_layout = QtWidgets.QHBoxLayout(create_btn_wrapper)

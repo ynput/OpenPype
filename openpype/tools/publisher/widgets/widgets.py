@@ -183,6 +183,16 @@ class PublishIconBtn(IconButton):
         return pixmap
 
 
+class CreateBtn(PublishIconBtn):
+    """Create instance button."""
+
+    def __init__(self, parent=None):
+        icon_path = get_icon_path("create")
+        super(CreateBtn, self).__init__(icon_path, "Create", parent)
+        self.setToolTip("Create new subset/s")
+        self.setLayoutDirection(QtCore.Qt.RightToLeft)
+
+
 class ResetBtn(PublishIconBtn):
     """Publish reset button."""
     def __init__(self, parent=None):

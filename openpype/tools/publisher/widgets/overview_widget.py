@@ -8,7 +8,7 @@ from .widgets import (
     SubsetAttributesWidget,
     CreateInstanceBtn,
     RemoveInstanceBtn,
-    ChangeViewBtn
+    ChangeViewBtn,
 )
 from .create_widget import CreateWidget
 
