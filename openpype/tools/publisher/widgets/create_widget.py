@@ -307,7 +307,9 @@ class CreateWidget(QtWidgets.QWidget):
         self._name_pattern = name_pattern
         self._compiled_name_pattern = re.compile(name_pattern)
 
-        context_widget = QtWidgets.QWidget(self)
+        main_splitter_widget = QtWidgets.QSplitter(self)
+
+        context_widget = QtWidgets.QWidget(main_splitter_widget)
 
         assets_widget = CreateWidgetAssetsWidget(controller, context_widget)
         tasks_widget = CreateWidgetTasksWidget(controller, context_widget)
@@ -319,21 +321,44 @@ class CreateWidget(QtWidgets.QWidget):
         context_layout.addWidget(tasks_widget, 1)
 
         # --- Creators view ---
-        creators_header_widget = QtWidgets.QWidget(self)
-        header_label_widget = QtWidgets.QLabel(
-            "Choose family:", creators_header_widget
-        )
-        creators_header_layout = QtWidgets.QHBoxLayout(creators_header_widget)
-        creators_header_layout.setContentsMargins(0, 0, 0, 0)
-        creators_header_layout.addWidget(header_label_widget, 1)
+        creators_widget = QtWidgets.QWidget(main_splitter_widget)
 
-        creators_view = QtWidgets.QListView(self)
+        creator_short_desc_widget = CreatorShortDescWidget(creators_widget)
+
+        attr_separator_widget = QtWidgets.QWidget(creators_widget)
+        attr_separator_widget.setObjectName("Separator")
+        attr_separator_widget.setMinimumHeight(1)
+        attr_separator_widget.setMaximumHeight(1)
+
+        creators_splitter = QtWidgets.QSplitter(creators_widget)
+
+        creators_view_widget = QtWidgets.QWidget(creators_splitter)
+
+        creator_view_label = QtWidgets.QLabel(
+            "Choose publish type", creators_view_widget
+        )
+
+        creators_view = QtWidgets.QListView(creators_view_widget)
         creators_model = QtGui.QStandardItemModel()
         creators_sort_model = QtCore.QSortFilterProxyModel()
         creators_sort_model.setSourceModel(creators_model)
         creators_view.setModel(creators_sort_model)
 
-        variant_widget = VariantInputsWidget(self)
+        creators_view_layout = QtWidgets.QVBoxLayout(creators_view_widget)
+        creators_view_layout.setContentsMargins(0, 0, 0, 0)
+        creators_view_layout.addWidget(creator_view_label, 0)
+        creators_view_layout.addWidget(creators_view, 1)
+
+        # --- Creator attr defs ---
+        creators_attrs_widget = QtWidgets.QWidget(creators_splitter)
+
+        variant_subset_label = QtWidgets.QLabel(
+            "Create options", creators_attrs_widget
+        )
+
+        variant_subset_widget = QtWidgets.QWidget(creators_attrs_widget)
+        # Variant and subset input
+        variant_widget = VariantInputsWidget(creators_attrs_widget)
 
         variant_input = QtWidgets.QLineEdit(variant_widget)
         variant_input.setObjectName("VariantInput")
@@ -352,38 +377,19 @@ class CreateWidget(QtWidgets.QWidget):
         variant_layout.addWidget(variant_input, 1)
         variant_layout.addWidget(variant_hints_btn, 0, QtCore.Qt.AlignVCenter)
 
-        subset_name_input = QtWidgets.QLineEdit(self)
+        subset_name_input = QtWidgets.QLineEdit(variant_subset_widget)
         subset_name_input.setEnabled(False)
 
-        form_layout = QtWidgets.QFormLayout()
-        form_layout.addRow("Variant:", variant_widget)
-        form_layout.addRow("Subset:", subset_name_input)
-
-        mid_widget = QtWidgets.QWidget(self)
-        mid_layout = QtWidgets.QVBoxLayout(mid_widget)
-        mid_layout.setContentsMargins(0, 0, 0, 0)
-        mid_layout.addWidget(creators_header_widget, 0)
-        mid_layout.addWidget(creators_view, 1)
-        mid_layout.addLayout(form_layout, 0)
-        # ------------
-
-        # --- Creator short info and attr defs ---
-        creator_attrs_widget = QtWidgets.QWidget(self)
-
-        creator_short_desc_widget = CreatorShortDescWidget(
-            creator_attrs_widget
-        )
-
-        attr_separator_widget = QtWidgets.QWidget(self)
-        attr_separator_widget.setObjectName("Separator")
-        attr_separator_widget.setMinimumHeight(1)
-        attr_separator_widget.setMaximumHeight(1)
+        variant_subset_layout = QtWidgets.QFormLayout(variant_subset_widget)
+        variant_subset_layout.setContentsMargins(0, 0, 0, 0)
+        variant_subset_layout.addRow("Variant", variant_widget)
+        variant_subset_layout.addRow("Subset", subset_name_input)
 
         # Precreate attributes widget
-        pre_create_widget = PreCreateWidget(creator_attrs_widget)
+        pre_create_widget = PreCreateWidget(creators_attrs_widget)
 
         # Create button
-        create_btn_wrapper = QtWidgets.QWidget(creator_attrs_widget)
+        create_btn_wrapper = QtWidgets.QWidget(creators_attrs_widget)
         create_btn = QtWidgets.QPushButton("Create", create_btn_wrapper)
         create_btn.setEnabled(False)
 
@@ -392,17 +398,34 @@ class CreateWidget(QtWidgets.QWidget):
         create_btn_wrap_layout.addStretch(1)
         create_btn_wrap_layout.addWidget(create_btn, 0)
 
-        creator_attrs_layout = QtWidgets.QVBoxLayout(creator_attrs_widget)
-        creator_attrs_layout.setContentsMargins(0, 0, 0, 0)
-        creator_attrs_layout.addWidget(creator_short_desc_widget, 0)
-        creator_attrs_layout.addWidget(attr_separator_widget, 0)
-        creator_attrs_layout.addWidget(pre_create_widget, 1)
-        creator_attrs_layout.addWidget(create_btn_wrapper, 0)
-        # -------------------------------------
+        creators_attrs_layout = QtWidgets.QVBoxLayout(creators_attrs_widget)
+        # NOTE: Match position of '+' button in instances view
+        # - use hardcoded border size which is defined in stylesheets
+        #   (potentially dangerous)
+        # - 10 pixels smaller content of attributes
+        borders = 2
+        creators_attrs_layout.setContentsMargins(0, 0, 0, 10 + borders)
+        creators_attrs_layout.addWidget(variant_subset_label, 0)
+        creators_attrs_layout.addWidget(variant_subset_widget, 0)
+        creators_attrs_layout.addWidget(pre_create_widget, 1)
+        creators_attrs_layout.addWidget(create_btn_wrapper, 0)
+
+        creators_splitter.addWidget(creators_view_widget)
+        creators_splitter.addWidget(creators_attrs_widget)
+        creators_splitter.setStretchFactor(0, 1)
+        creators_splitter.setStretchFactor(1, 1)
+
+        creators_layout = QtWidgets.QVBoxLayout(creators_widget)
+        creators_layout.setContentsMargins(0, 0, 0, 0)
+        creators_layout.addWidget(creator_short_desc_widget, 0)
+        creators_layout.addWidget(attr_separator_widget, 0)
+        creators_layout.addWidget(creators_splitter, 1)
+        # ------------
 
         # --- Detailed information about creator ---
         # Detailed description of creator
-        detail_description_widget = QtWidgets.QWidget(self)
+        # TODO this has no way how can be showed now
+        detail_description_widget = QtWidgets.QWidget(main_splitter_widget)
 
         detail_placoholder_widget = QtWidgets.QWidget(
             detail_description_widget
@@ -430,29 +453,22 @@ class CreateWidget(QtWidgets.QWidget):
         detail_description_widget.setVisible(False)
 
         # -------------------------------------------
-        splitter_widget = QtWidgets.QSplitter(self)
-        splitter_widget.addWidget(context_widget)
-        splitter_widget.addWidget(mid_widget)
-        splitter_widget.addWidget(creator_attrs_widget)
-        splitter_widget.addWidget(detail_description_widget)
-        splitter_widget.setStretchFactor(0, 1)
-        splitter_widget.setStretchFactor(1, 1)
-        splitter_widget.setStretchFactor(2, 1)
-        splitter_widget.setStretchFactor(3, 1)
+        main_splitter_widget.addWidget(context_widget)
+        main_splitter_widget.addWidget(creators_widget)
+        main_splitter_widget.addWidget(detail_description_widget)
+        main_splitter_widget.setStretchFactor(0, 1)
+        main_splitter_widget.setStretchFactor(1, 2)
+        main_splitter_widget.setStretchFactor(2, 1)
 
-        layout = QtWidgets.QHBoxLayout(self)
+        layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(splitter_widget, 1)
+        layout.addWidget(main_splitter_widget, 1)
 
         prereq_timer = QtCore.QTimer()
         prereq_timer.setInterval(50)
         prereq_timer.setSingleShot(True)
 
         prereq_timer.timeout.connect(self._invalidate_prereq)
-
-        assets_widget.header_height_changed.connect(
-            self._on_asset_filter_height_change
-        )
 
         create_btn.clicked.connect(self._on_create)
         variant_widget.resized.connect(self._on_variant_widget_resize)
@@ -474,7 +490,9 @@ class CreateWidget(QtWidgets.QWidget):
 
         controller.add_plugins_refresh_callback(self._on_plugins_refresh)
 
-        self._splitter_widget = splitter_widget
+        self._main_splitter_widget = main_splitter_widget
+
+        self._creators_splitter = creators_splitter
 
         self._context_widget = context_widget
         self._assets_widget = assets_widget
@@ -487,7 +505,6 @@ class CreateWidget(QtWidgets.QWidget):
         self.variant_hints_menu = variant_hints_menu
         self.variant_hints_group = variant_hints_group
 
-        self._creators_header_widget = creators_header_widget
         self._creators_model = creators_model
         self._creators_sort_model = creators_sort_model
         self._creators_view = creators_view
@@ -572,10 +589,6 @@ class CreateWidget(QtWidgets.QWidget):
 
     def _invalidate_prereq_deffered(self):
         self._prereq_timer.start()
-
-    def _on_asset_filter_height_change(self, height):
-        self._creators_header_widget.setMinimumHeight(height)
-        self._creators_header_widget.setMaximumHeight(height)
 
     def _invalidate_prereq(self):
         prereq_available = True
@@ -902,9 +915,11 @@ class CreateWidget(QtWidgets.QWidget):
     def _on_first_show(self):
         width = self.width()
         part = int(width / 7)
-        self._splitter_widget.setSizes(
-            [part * 2, part * 2, width - (part * 4)]
+
+        self._main_splitter_widget.setSizes(
+            [part * 2, part * 4, width - (part * 6)]
         )
+        self._creators_splitter.setSizes([part * 2, part * 2])
 
     def showEvent(self, event):
         super(CreateWidget, self).showEvent(event)
