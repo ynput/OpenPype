@@ -1,6 +1,6 @@
 # Changelog
 
-## [3.14.3-nightly.6](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.14.3-nightly.7](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.2...HEAD)
 
@@ -33,6 +33,7 @@
 - Tray Publisher: skip plugin if otioTimeline is missing [\#3856](https://github.com/pypeclub/OpenPype/pull/3856)
 - Flame: retimed attributes are integrated with settings [\#3855](https://github.com/pypeclub/OpenPype/pull/3855)
 - Maya: Extract Playblast fix textures + labelize viewport show settings [\#3852](https://github.com/pypeclub/OpenPype/pull/3852)
+- Resolve: Addon import is Python 2 compatible [\#3798](https://github.com/pypeclub/OpenPype/pull/3798)
 
 **🔀 Refactored code**
 
@@ -74,7 +75,6 @@
 - Launcher: Skip opening last work file works for groups [\#3822](https://github.com/pypeclub/OpenPype/pull/3822)
 - Maya: Publishing data key change [\#3811](https://github.com/pypeclub/OpenPype/pull/3811)
 - Igniter: Fix status handling when version is already installed [\#3804](https://github.com/pypeclub/OpenPype/pull/3804)
-- Resolve: Addon import is Python 2 compatible [\#3798](https://github.com/pypeclub/OpenPype/pull/3798)
 - Hiero: retimed clip publishing is working [\#3792](https://github.com/pypeclub/OpenPype/pull/3792)
 - nuke: validate write node is not failing due wrong type [\#3780](https://github.com/pypeclub/OpenPype/pull/3780)
 - Fix - changed format of version string in pyproject.toml [\#3777](https://github.com/pypeclub/OpenPype/pull/3777)
