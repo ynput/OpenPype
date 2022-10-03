@@ -1,98 +1,82 @@
-import qtawesome
-from Qt import QtWidgets, QtCore, QtGui
+try:
+    import commonmark
+except Exception:
+    commonmark = None
 
-from openpype.tools.utils import ClickableFrame
+from Qt import QtWidgets, QtCore
 
 
-class HelpButton(ClickableFrame):
-    resized = QtCore.Signal(int)
-    question_mark_icon_name = "fa.question"
-    help_icon_name = "fa.question-circle"
-    hide_icon_name = "fa.angle-left"
+class HelpButton(QtWidgets.QPushButton):
+    """Button used to trigger help dialog."""
 
-    def __init__(self, *args, **kwargs):
-        super(HelpButton, self).__init__(*args, **kwargs)
+    def __init__(self, parent):
+        super(HelpButton, self).__init__(parent)
         self.setObjectName("CreateDialogHelpButton")
+        self.setText("?")
 
-        question_mark_label = QtWidgets.QLabel(self)
-        help_widget = QtWidgets.QWidget(self)
 
-        help_question = QtWidgets.QLabel(help_widget)
-        help_label = QtWidgets.QLabel("Help", help_widget)
-        hide_icon = QtWidgets.QLabel(help_widget)
+class HelpWidget(QtWidgets.QWidget):
+    """Widget showing help for single functionality."""
 
-        help_layout = QtWidgets.QHBoxLayout(help_widget)
-        help_layout.setContentsMargins(0, 0, 5, 0)
-        help_layout.addWidget(help_question, 0)
-        help_layout.addWidget(help_label, 0)
-        help_layout.addStretch(1)
-        help_layout.addWidget(hide_icon, 0)
+    def __init__(self, parent):
+        super(HelpWidget, self).__init__(parent)
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        layout.addWidget(question_mark_label, 0)
-        layout.addWidget(help_widget, 1)
+        # TODO add hints what to help with?
+        detail_description_input = QtWidgets.QTextEdit(self)
+        detail_description_input.setObjectName("CreatorDetailedDescription")
+        detail_description_input.setTextInteractionFlags(
+            QtCore.Qt.TextBrowserInteraction
+        )
 
-        help_widget.setVisible(False)
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        main_layout.addWidget(detail_description_input, 1)
 
-        self._question_mark_label = question_mark_label
-        self._help_widget = help_widget
-        self._help_question = help_question
-        self._hide_icon = hide_icon
+        self._detail_description_input = detail_description_input
 
-        self._expanded = None
-        self.set_expanded()
+        self.set_detailed_text()
 
-    def set_expanded(self, expanded=None):
-        if self._expanded is expanded:
-            if expanded is not None:
-                return
-            expanded = False
-        self._expanded = expanded
-        self._help_widget.setVisible(expanded)
-        self._update_content()
+    def set_detailed_text(self, text=None):
+        if not text:
+            text = "We didn't prepare help for this part..."
 
-    def _update_content(self):
-        width = self.get_icon_width()
-        if self._expanded:
-            question_mark_pix = QtGui.QPixmap(width, width)
-            question_mark_pix.fill(QtCore.Qt.transparent)
-
+        if commonmark:
+            html = commonmark.commonmark(text)
+            self._detail_description_input.setHtml(html)
         else:
-            question_mark_icon = qtawesome.icon(
-                self.question_mark_icon_name, color=QtCore.Qt.white
-            )
-            question_mark_pix = question_mark_icon.pixmap(width, width)
+            self._detail_description_input.setMarkdown(text)
 
-        hide_icon = qtawesome.icon(
-            self.hide_icon_name, color=QtCore.Qt.white
+
+class HelpDialog(QtWidgets.QDialog):
+    default_width = 530
+    default_height = 340
+
+    def __init__(self, controller, parent):
+        super(HelpDialog, self).__init__(parent)
+
+        self.setWindowTitle("Help dialog")
+
+        help_content = HelpWidget(self)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.addWidget(help_content, 1)
+
+        controller.event_system.add_callback(
+            "show.detailed.help", self._on_help_request
         )
-        help_question_icon = qtawesome.icon(
-            self.help_icon_name, color=QtCore.Qt.white
-        )
-        self._question_mark_label.setPixmap(question_mark_pix)
-        self._question_mark_label.setMaximumWidth(width)
-        self._hide_icon.setPixmap(hide_icon.pixmap(width, width))
-        self._help_question.setPixmap(help_question_icon.pixmap(width, width))
 
-    def get_icon_width(self):
-        metrics = self.fontMetrics()
-        return metrics.height()
+        self._controller = controller
 
-    def set_pos_and_size(self, pos_x, pos_y, width, height):
-        update_icon = self.height() != height
-        self.move(pos_x, pos_y)
-        self.resize(width, height)
+        self._help_content = help_content
 
-        if update_icon:
-            self._update_content()
-            self.updateGeometry()
+    def _on_help_request(self, event):
+        message = event.get("message")
+        self.set_detailed_text(message)
+
+    def set_detailed_text(self, text=None):
+        self._help_content.set_detailed_text(text)
 
     def showEvent(self, event):
-        super(HelpButton, self).showEvent(event)
-        self.resized.emit(self.height())
-
-    def resizeEvent(self, event):
-        super(HelpButton, self).resizeEvent(event)
-        self.resized.emit(self.height())
+        super(HelpDialog, self).showEvent(event)
+        self.resize(self.default_width, self.default_height)
