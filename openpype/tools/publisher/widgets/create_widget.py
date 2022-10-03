@@ -290,7 +290,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         self.setWindowTitle("Create new instance")
 
-        self.controller = controller
+        self._controller = controller
 
         self._asset_name = self.dbcon.Session.get("AVALON_ASSET")
         self._task_name = self.dbcon.Session.get("AVALON_TASK")
@@ -306,8 +306,6 @@ class CreateWidget(QtWidgets.QWidget):
         name_pattern = "^[{}]*$".format(SUBSET_NAME_ALLOWED_SYMBOLS)
         self._name_pattern = name_pattern
         self._compiled_name_pattern = re.compile(name_pattern)
-
-        overlay_object = MessageOverlayObject(self)
 
         context_widget = QtWidgets.QWidget(self)
 
@@ -476,8 +474,6 @@ class CreateWidget(QtWidgets.QWidget):
 
         controller.add_plugins_refresh_callback(self._on_plugins_refresh)
 
-        self._overlay_object = overlay_object
-
         self._splitter_widget = splitter_widget
 
         self._context_widget = context_widget
@@ -509,7 +505,7 @@ class CreateWidget(QtWidgets.QWidget):
         self._first_show = True
 
     def _emit_message(self, message):
-        self._overlay_object.add_message(message)
+        self._controller.emit_message(message)
 
     def _context_change_is_enabled(self):
         return self._context_widget.isEnabled()
@@ -537,7 +533,7 @@ class CreateWidget(QtWidgets.QWidget):
 
     @property
     def dbcon(self):
-        return self.controller.dbcon
+        return self._controller.dbcon
 
     def _set_context_enabled(self, enabled):
         self._assets_widget.set_enabled(enabled)
@@ -655,7 +651,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         # Add new families
         new_creators = set()
-        for identifier, creator in self.controller.manual_creators.items():
+        for identifier, creator in self._controller.manual_creators.items():
             # TODO add details about creator
             new_creators.add(identifier)
             if identifier in existing_items:
@@ -738,7 +734,7 @@ class CreateWidget(QtWidgets.QWidget):
             self._detail_description_input.setMarkdown(detailed_description)
 
     def _set_creator_by_identifier(self, identifier):
-        creator = self.controller.manual_creators.get(identifier)
+        creator = self._controller.manual_creators.get(identifier)
         self._set_creator(creator)
 
     def _set_creator(self, creator):
@@ -822,7 +818,7 @@ class CreateWidget(QtWidgets.QWidget):
             self.subset_name_input.setText("< Valid variant >")
             return
 
-        project_name = self.controller.project_name
+        project_name = self._controller.project_name
         task_name = self._get_task_name()
 
         asset_doc = copy.deepcopy(self._asset_doc)
@@ -951,7 +947,7 @@ class CreateWidget(QtWidgets.QWidget):
         error_msg = None
         formatted_traceback = None
         try:
-            self.controller.create(
+            self._controller.create(
                 creator_identifier,
                 subset_name,
                 instance_data,

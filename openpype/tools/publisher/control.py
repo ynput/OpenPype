@@ -413,6 +413,7 @@ class PublisherController:
         self._publish_started_callback_refs = set()
         self._publish_validated_callback_refs = set()
         self._publish_stopped_callback_refs = set()
+        self._message_emit_callback_refs = set()
 
         self._publish_instance_changed_callback_refs = set()
         self._publish_plugin_changed_callback_refs = set()
@@ -516,6 +517,12 @@ class PublisherController:
         ref = self._create_reference(callback)
         self._publish_stopped_callback_refs.add(ref)
 
+    def add_message_emitted_callback(self, callback):
+        """Callbacks triggered when message is emitted."""
+
+        ref = self._create_reference(callback)
+        self._message_emit_callback_refs.add(ref)
+
     def get_asset_docs(self):
         """Get asset documents from cache for whole project."""
         return self._asset_docs_cache.get_asset_docs()
@@ -613,6 +620,9 @@ class PublisherController:
         self._resetting_instances = False
 
         self._trigger_callbacks(self._instances_refresh_callback_refs)
+
+    def emit_message(self, message):
+        self._trigger_callbacks(self._message_emit_callback_refs, message)
 
     def get_creator_attribute_definitions(self, instances):
         """Collect creator attribute definitions for multuple instances.

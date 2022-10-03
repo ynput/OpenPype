@@ -6,8 +6,10 @@ from openpype import (
 )
 from openpype.tools.utils import (
     PlaceholderLineEdit,
-    PixmapLabel
+    MessageOverlayObject,
+    PixmapLabel,
 )
+
 from .publish_report_viewer import PublishReportViewerWidget
 from .control import PublisherController
 from .widgets import (
@@ -55,6 +57,8 @@ class PublisherWindow(QtWidgets.QDialog):
         )
 
         controller = PublisherController()
+
+        overlay_object = MessageOverlayObject(self)
 
         # Header
         header_widget = QtWidgets.QWidget(self)
@@ -224,6 +228,7 @@ class PublisherWindow(QtWidgets.QDialog):
         controller.add_publish_started_callback(self._on_publish_start)
         controller.add_publish_validated_callback(self._on_publish_validated)
         controller.add_publish_stopped_callback(self._on_publish_stop)
+        controller.add_message_emitted_callback(self._on_overlay_message)
 
         # Store header for TrayPublisher
         self._header_layout = header_layout
@@ -253,6 +258,8 @@ class PublisherWindow(QtWidgets.QDialog):
         self._validate_btn = validate_btn
         self._publish_btn = publish_btn
 
+        self._overlay_object = overlay_object
+
         self._controller = controller
 
         self._first_show = True
@@ -275,6 +282,9 @@ class PublisherWindow(QtWidgets.QDialog):
     def resizeEvent(self, event):
         super(PublisherWindow, self).resizeEvent(event)
         self._update_publish_frame_rect()
+
+    def _on_overlay_message(self, message):
+        self._overlay_object.add_message(message)
 
     def _on_first_show(self):
         self.resize(self.default_width, self.default_height)
