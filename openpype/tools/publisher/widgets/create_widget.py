@@ -3,10 +3,6 @@ import re
 import traceback
 import copy
 
-try:
-    import commonmark
-except Exception:
-    commonmark = None
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.client import get_asset_by_name, get_subsets
@@ -116,8 +112,6 @@ class CreateErrorMessageBox(ErrorMessageBox):
 
 # TODO add creator identifier/label to details
 class CreatorShortDescWidget(QtWidgets.QWidget):
-    height_changed = QtCore.Signal(int)
-
     def __init__(self, parent=None):
         super(CreatorShortDescWidget, self).__init__(parent=parent)
 
@@ -155,22 +149,6 @@ class CreatorShortDescWidget(QtWidgets.QWidget):
         self._icon_widget = icon_widget
         self._family_label = family_label
         self._description_label = description_label
-
-        self._last_height = None
-
-    def _check_height_change(self):
-        height = self.height()
-        if height != self._last_height:
-            self._last_height = height
-            self.height_changed.emit(height)
-
-    def showEvent(self, event):
-        super(CreatorShortDescWidget, self).showEvent(event)
-        self._check_height_change()
-
-    def resizeEvent(self, event):
-        super(CreatorShortDescWidget, self).resizeEvent(event)
-        self._check_height_change()
 
     def set_plugin(self, plugin=None):
         if not plugin:
@@ -329,40 +307,12 @@ class CreateWidget(QtWidgets.QWidget):
         # --- Detailed information about creator ---
         # Detailed description of creator
         # TODO this has no way how can be showed now
-        detail_description_widget = QtWidgets.QWidget(main_splitter_widget)
-
-        detail_placoholder_widget = QtWidgets.QWidget(
-            detail_description_widget
-        )
-        detail_placoholder_widget.setAttribute(
-            QtCore.Qt.WA_TranslucentBackground
-        )
-
-        detail_description_input = QtWidgets.QTextEdit(
-            detail_description_widget
-        )
-        detail_description_input.setObjectName("CreatorDetailedDescription")
-        detail_description_input.setTextInteractionFlags(
-            QtCore.Qt.TextBrowserInteraction
-        )
-
-        detail_description_layout = QtWidgets.QVBoxLayout(
-            detail_description_widget
-        )
-        detail_description_layout.setContentsMargins(0, 0, 0, 0)
-        detail_description_layout.setSpacing(0)
-        detail_description_layout.addWidget(detail_placoholder_widget, 0)
-        detail_description_layout.addWidget(detail_description_input, 1)
-
-        detail_description_widget.setVisible(False)
 
         # -------------------------------------------
         main_splitter_widget.addWidget(context_widget)
         main_splitter_widget.addWidget(creators_widget)
-        main_splitter_widget.addWidget(detail_description_widget)
         main_splitter_widget.setStretchFactor(0, 1)
-        main_splitter_widget.setStretchFactor(1, 2)
-        main_splitter_widget.setStretchFactor(2, 1)
+        main_splitter_widget.setStretchFactor(1, 3)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -388,9 +338,6 @@ class CreateWidget(QtWidgets.QWidget):
             self._on_current_session_context_request
         )
         tasks_widget.task_changed.connect(self._on_task_change)
-        creator_short_desc_widget.height_changed.connect(
-            self._on_description_height_change
-        )
 
         controller.add_plugins_refresh_callback(self._on_plugins_refresh)
 
@@ -417,10 +364,6 @@ class CreateWidget(QtWidgets.QWidget):
         self._creator_short_desc_widget = creator_short_desc_widget
         self._pre_create_widget = pre_create_widget
         self._attr_separator_widget = attr_separator_widget
-
-        self._detail_placoholder_widget = detail_placoholder_widget
-        self._detail_description_widget = detail_description_widget
-        self._detail_description_input = detail_description_input
 
         self._prereq_timer = prereq_timer
         self._first_show = True
@@ -627,12 +570,6 @@ class CreateWidget(QtWidgets.QWidget):
         if self._task_name:
             self._tasks_widget.select_task_name(self._task_name)
 
-    def _on_description_height_change(self):
-        # Use separator's 'y' position as height
-        height = self._attr_separator_widget.y()
-        self._detail_placoholder_widget.setMinimumHeight(height)
-        self._detail_placoholder_widget.setMaximumHeight(height)
-
     def _on_creator_item_change(self, new_index, _old_index):
         identifier = None
         if new_index.isValid():
@@ -640,15 +577,16 @@ class CreateWidget(QtWidgets.QWidget):
         self._set_creator_by_identifier(identifier)
 
     def _set_creator_detailed_text(self, creator):
-        if not creator:
-            self._detail_description_input.setPlainText("")
-            return
-        detailed_description = creator.get_detail_description() or ""
-        if commonmark:
-            html = commonmark.commonmark(detailed_description)
-            self._detail_description_input.setHtml(html)
-        else:
-            self._detail_description_input.setMarkdown(detailed_description)
+        description = ""
+        if creator is not None:
+            description = creator.get_detail_description() or description
+        self._controller.event_system.emit(
+            "show.detailed.help",
+            {
+                "message": description
+            },
+            "create.widget"
+        )
 
     def _set_creator_by_identifier(self, identifier):
         creator = self._controller.manual_creators.get(identifier)
