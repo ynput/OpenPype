@@ -104,6 +104,3 @@ class ExtractBackdropNode(publish.Extractor):
 
         self.log.info("Extracted instance '{}' to: {}".format(
             instance.name, path))
-
-        self.log.info("Data {}".format(
-            instance.data))
