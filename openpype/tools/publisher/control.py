@@ -14,6 +14,7 @@ except Exception:
 import pyblish.api
 
 from openpype.client import get_assets
+from openpype.lib.events import EventSystem
 from openpype.pipeline import (
     PublishValidationError,
     registered_host,
@@ -364,6 +365,8 @@ class PublisherController:
         self.log = logging.getLogger("PublisherController")
         self.host = registered_host()
         self.headless = headless
+
+        self.event_system = EventSystem()
 
         self.create_context = CreateContext(
             self.host, dbcon, headless=headless, reset=False
