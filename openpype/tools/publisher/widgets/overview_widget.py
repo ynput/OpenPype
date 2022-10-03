@@ -18,8 +18,8 @@ class OverviewWidget(QtWidgets.QFrame):
     instance_context_changed = QtCore.Signal()
     create_requested = QtCore.Signal()
 
-    anim_end_value = 400
-    anim_duration = 400
+    anim_end_value = 200
+    anim_duration = 200
 
     def __init__(self, controller, parent):
         super(OverviewWidget, self).__init__(parent)
