@@ -60,7 +60,8 @@ class ValidateBackdrop(pyblish.api.InstancePlugin):
     actions = [SelectCenterInNodeGraph]
 
     def process(self, instance):
-        connections_out = instance.data["nodeConnectionsOut"]
+        child_nodes = instance.data["transientData"]["childNodes"]
+        connections_out = instance.data["transientData"]["nodeConnectionsOut"]
 
         msg_multiple_outputs = (
             "Only one outcoming connection from "
@@ -78,10 +79,10 @@ class ValidateBackdrop(pyblish.api.InstancePlugin):
 
         self.log.debug(
             "Amount of nodes on instance: {}".format(
-                len(instance))
+                len(child_nodes))
         )
 
-        if len(instance) == 1:
+        if child_nodes == []:
             raise PublishXmlValidationError(
                 self,
                 msg_no_nodes,

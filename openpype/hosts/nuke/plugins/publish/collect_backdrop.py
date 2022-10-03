@@ -1,3 +1,4 @@
+from pprint import pformat
 import pyblish.api
 from openpype.hosts.nuke.api import lib as pnlib
 import nuke
@@ -14,8 +15,14 @@ class CollectBackdrops(pyblish.api.InstancePlugin):
     families = ["nukenodes"]
 
     def process(self, instance):
+        self.log.debug(pformat(instance.data))
 
-        bckn = instance[0]
+        # new publisher way
+        if instance.data.get("transientData"):
+            bckn = instance.data["transientData"]["node"]
+        else:
+            # or backward compatible
+            bckn = instance[0]
 
         # define size of the backdrop
         left = bckn.xpos()
@@ -23,6 +30,7 @@ class CollectBackdrops(pyblish.api.InstancePlugin):
         right = left + bckn['bdwidth'].value()
         bottom = top + bckn['bdheight'].value()
 
+        instance.data["transientData"]["childNodes"] = []
         # iterate all nodes
         for node in nuke.allNodes():
 
@@ -37,13 +45,13 @@ class CollectBackdrops(pyblish.api.InstancePlugin):
                     and (node.ypos() + node.screenHeight() < bottom):
 
                 # add contained nodes to instance's node list
-                instance.append(node)
+                instance.data["transientData"]["childNodes"].append(node)
 
         # get all connections from outside of backdrop
-        nodes = instance[1:]
+        nodes = instance.data["transientData"]["childNodes"]
         connections_in, connections_out = pnlib.get_dependent_nodes(nodes)
-        instance.data["nodeConnectionsIn"] = connections_in
-        instance.data["nodeConnectionsOut"] = connections_out
+        instance.data["transientData"]["nodeConnectionsIn"] = connections_in
+        instance.data["transientData"]["nodeConnectionsOut"] = connections_out
 
         # make label nicer
         instance.data["label"] = "{0} ({1} nodes)".format(
