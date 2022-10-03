@@ -7,8 +7,10 @@ import random
 import string
 from collections import OrderedDict
 from abc import abstractmethod
-from abc import (
-    ABCMeta
+
+from openpype.client import (
+    get_asset_by_name,
+    get_subsets,
 )
 
 from openpype.api import get_current_project_settings
@@ -18,7 +20,8 @@ from openpype.pipeline import (
     LoaderPlugin,
     CreatorError,
     Creator as NewCreator,
-    CreatedInstance
+    CreatedInstance,
+    legacy_io
 )
 from .lib import (
     INSTANCE_DATA_KNOB,
@@ -42,11 +45,39 @@ class NukeCreatorError(CreatorError):
     pass
 
 
-@six.add_metaclass(ABCMeta)
 class NukeCreator(NewCreator):
     selected_nodes = []
 
-    def _create_instance_node(
+    def add_info_knob(self, node):
+        if "OP_info" in node.knobs().keys():
+            return
+
+        # add info text
+        info_knob = nuke.Text_Knob("OP_info", "")
+        info_knob.setValue("""
+<h1><span style=\"color:#fc0303\">Do not erase manually !</span></h1>
+<p>This node is maintained by <b>OpenPype Publisher</b>.</p>
+<p>We recomand to remove it from the Publisher gui.</p>
+        """)
+        node.addKnob(info_knob)
+
+    def check_existing_subset(self, subset_name, instance_data):
+        """Check if existing subset name versions already exists."""
+        # Get all subsets of the current asset
+        project_name = legacy_io.active_project()
+        asset_doc = get_asset_by_name(
+            project_name, instance_data["asset"], fields=["_id"]
+        )
+        subset_docs = get_subsets(
+            project_name, asset_ids=[asset_doc["_id"]], fields=["name"]
+        )
+        existing_subset_names_low = {
+            subset_doc["name"].lower()
+            for subset_doc in subset_docs
+        }
+        return subset_name.lower() in existing_subset_names_low
+
+    def create_instance_node(
         self,
         node_name,
         knobs=None,
@@ -57,9 +88,9 @@ class NukeCreator(NewCreator):
 
         Arguments:
             node_name (str): Name of the new node.
-            knobs (OrderedDict): knobs name and values
+            knobs (OrderedDict): node knobs name and values
             parent (str): Name of the parent node.
-            node_type (str, optional): Type of the node.
+            node_type (str, optional): Nuke node Class.
 
         Returns:
             nuke.Node: Newly created instance node.
@@ -79,6 +110,8 @@ class NukeCreator(NewCreator):
                 created_node = nuke.createNode(node_type)
                 created_node["name"].setValue(node_name)
 
+                self.add_info_knob(created_node)
+
                 for key, values in node_knobs.items():
                     if key in created_node.knobs():
                         created_node["key"].setValue(values)
@@ -87,23 +120,39 @@ class NukeCreator(NewCreator):
 
         return created_node
 
-    def create(self, subset_name, instance_data, pre_create_data):
-        try:
-            if pre_create_data.get("use_selection"):
-                self.selected_nodes = nuke.selectedNodes()
-            else:
-                self.selected_nodes = None
+    def set_selected_nodes(self, pre_create_data):
+        if pre_create_data.get("use_selection"):
+            self.selected_nodes = nuke.selectedNodes()
+            if self.selected_nodes == []:
+                raise NukeCreatorError("Creator error: No active selection")
+        else:
+            self.selected_nodes = []
 
-            instance_node = self._create_instance_node(
+        self.log.debug("Selection is: {}".format(self.selected_nodes))
+
+    def create(self, subset_name, instance_data, pre_create_data):
+
+        # make sure selected nodes are added
+        self.set_selected_nodes(pre_create_data)
+
+        # make sure subset name is unique
+        if self.check_existing_subset(subset_name, instance_data):
+            raise NukeCreatorError(
+                ("subset {} is already published with different HDA"
+                 "definition.").format(subset_name))
+
+        try:
+
+            instance_node = self.create_instance_node(
                 subset_name,
                 node_type=instance_data.pop("node_type", None)
             )
-
             instance = CreatedInstance(
                 self.family,
                 subset_name,
                 instance_data,
-                self)
+                self
+            )
 
             instance.transient_data["node"] = instance_node
 
