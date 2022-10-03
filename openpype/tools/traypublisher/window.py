@@ -196,7 +196,7 @@ class TrayPublishWindow(PublisherWindow):
 
         overlay_widget = StandaloneOverlayWidget(self)
 
-        btns_widget = QtWidgets.QWidget(self)
+        btns_widget = self._header_extra_widget
 
         back_to_overlay_btn = QtWidgets.QPushButton(
             "Change project", btns_widget
@@ -210,8 +210,6 @@ class TrayPublishWindow(PublisherWindow):
 
         btns_layout.addWidget(save_btn, 0)
         btns_layout.addWidget(back_to_overlay_btn, 0)
-
-        self._header_layout.addWidget(btns_widget, 0)
 
         overlay_widget.project_selected.connect(self._on_project_select)
         back_to_overlay_btn.clicked.connect(self._on_back_to_overlay)

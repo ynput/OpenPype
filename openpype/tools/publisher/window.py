@@ -62,11 +62,15 @@ class PublisherWindow(QtWidgets.QDialog):
 
         # Header
         header_widget = QtWidgets.QWidget(self)
+
         icon_pixmap = QtGui.QPixmap(resources.get_openpype_icon_filepath())
         icon_label = PixmapLabel(icon_pixmap, header_widget)
         icon_label.setObjectName("PublishContextLabel")
+
         context_label = QtWidgets.QLabel(header_widget)
         context_label.setObjectName("PublishContextLabel")
+
+        header_extra_widget = QtWidgets.QWidget(header_widget)
 
         header_layout = QtWidgets.QHBoxLayout(header_widget)
         header_layout.setContentsMargins(15, 15, 15, 15)
@@ -74,6 +78,7 @@ class PublisherWindow(QtWidgets.QDialog):
         header_layout.addWidget(icon_label, 0)
         header_layout.addWidget(context_label, 0)
         header_layout.addStretch(1)
+        header_layout.addWidget(header_extra_widget, 0)
 
         # Tabs widget under header
         tabs_widget = PublisherTabsWidget(self)
@@ -230,8 +235,10 @@ class PublisherWindow(QtWidgets.QDialog):
         controller.add_publish_stopped_callback(self._on_publish_stop)
         controller.add_message_emitted_callback(self._on_overlay_message)
 
-        # Store header for TrayPublisher
-        self._header_layout = header_layout
+        # Store extra header widget for TrayPublisher
+        # - can be used to add additional widgets to header between context
+        #   label and help button
+        self._header_extra_widget = header_extra_widget
 
         self._tabs_widget = tabs_widget
         self._create_tab = create_tab
