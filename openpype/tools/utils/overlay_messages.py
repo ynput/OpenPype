@@ -123,6 +123,16 @@ class OverlayMessageWidget(QtWidgets.QFrame):
         self._timeout_timer = timeout_timer
         self._hover_timer = hover_timer
 
+    def update_message(self, message, message_type=None, timeout=None):
+        self._label_widget.setText(message)
+        if timeout:
+            self._timeout_timer.setInterval(timeout)
+
+        if message_type:
+            set_style_property(self, "type", message_type)
+
+        self._timeout_timer.start()
+
     def size_hint_without_word_wrap(self):
         """Size hint in cases that word wrap of label is disabled."""
         self._label_widget.setWordWrap(False)
@@ -196,7 +206,9 @@ class MessageOverlayObject(QtCore.QObject):
         self._move_size_remove = 8
         self._default_timeout = default_timeout
 
-    def add_message(self, message, message_type=None, timeout=None):
+    def add_message(
+        self, message, message_type=None, timeout=None, message_id=None
+    ):
         """Add single message into overlay.
 
         Args:
@@ -204,6 +216,12 @@ class MessageOverlayObject(QtCore.QObject):
             timeout (int): Message timeout.
             message_type (str): Message type can be used as property in
                 stylesheets.
+            message_id (str): UUID of already existing message to update
+                it's message and timeout. Is created with different id if is
+                not available anymore.
+
+        Returns:
+            str: UUID of message which can be used to update message.
         """
         # Skip empty messages
         if not message:
@@ -213,31 +231,48 @@ class MessageOverlayObject(QtCore.QObject):
             timeout = self._default_timeout
 
         # Create unique id of message
-        label_id = str(uuid.uuid4())
-        # Create message widget
-        widget = OverlayMessageWidget(
-            label_id, message, self._widget, message_type, timeout
-        )
-        widget.close_requested.connect(self._on_message_close_request)
-        widget.show()
+        widget = None
+        if message_id is not None:
+            widget = self._messages.get(message_id)
+
+        if message_id is None:
+            message_id = str(uuid.uuid4())
+
+        elif message_id in self._messages_order:
+            self._messages_order.remove(message_id)
+
+        if widget is not None:
+            # NOTE: Update of message won't change paint order which should be
+            #   ok in most of cases as it matters only when messages are
+            #   animated
+            widget.update_message(message, message_type, timeout)
+        else:
+            # Create message widget
+            widget = OverlayMessageWidget(
+                message_id, message, self._widget, message_type, timeout
+            )
+            widget.close_requested.connect(self._on_message_close_request)
+            widget.show()
 
         # Move widget outside of window
         pos = widget.pos()
         pos.setY(pos.y() - widget.height())
         widget.move(pos)
         # Store message
-        self._messages[label_id] = widget
-        self._messages_order.append(label_id)
+        self._messages[message_id] = widget
+        self._messages_order.append(message_id)
         # Trigger recalculation timer
         self._recalculate_timer.start()
 
-    def _on_message_close_request(self, label_id):
+        return message_id
+
+    def _on_message_close_request(self, message_id):
         """Message widget requested removement."""
 
-        widget = self._messages.get(label_id)
+        widget = self._messages.get(message_id)
         if widget is not None:
             # Add message to closing messages and start recalculation
-            self._closing_messages.add(label_id)
+            self._closing_messages.add(message_id)
             self._recalculate_timer.start()
 
     def _recalculate_positions(self):
