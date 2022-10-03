@@ -23,6 +23,9 @@ from .widgets import (
     ResetBtn,
     ValidateBtn,
     PublishBtn,
+
+    HelpButton,
+    HelpDialog,
 )
 
 
@@ -58,6 +61,8 @@ class PublisherWindow(QtWidgets.QDialog):
 
         controller = PublisherController()
 
+        help_dialog = HelpDialog(controller, self)
+
         overlay_object = MessageOverlayObject(self)
 
         # Header
@@ -72,13 +77,16 @@ class PublisherWindow(QtWidgets.QDialog):
 
         header_extra_widget = QtWidgets.QWidget(header_widget)
 
+        help_btn = HelpButton(header_widget)
+
         header_layout = QtWidgets.QHBoxLayout(header_widget)
-        header_layout.setContentsMargins(15, 15, 15, 15)
+        header_layout.setContentsMargins(15, 15, 0, 15)
         header_layout.setSpacing(15)
         header_layout.addWidget(icon_label, 0)
         header_layout.addWidget(context_label, 0)
         header_layout.addStretch(1)
         header_layout.addWidget(header_extra_widget, 0)
+        header_layout.addWidget(help_btn, 0)
 
         # Tabs widget under header
         tabs_widget = PublisherTabsWidget(self)
@@ -210,6 +218,7 @@ class PublisherWindow(QtWidgets.QDialog):
         # Floating publish frame
         publish_frame = PublishFrame(controller, self)
 
+        help_btn.clicked.connect(self._on_help_click)
         tabs_widget.tab_changed.connect(self._on_tab_change)
         overview_widget.active_changed.connect(
             self._on_context_or_active_change
@@ -238,6 +247,9 @@ class PublisherWindow(QtWidgets.QDialog):
         # Store extra header widget for TrayPublisher
         # - can be used to add additional widgets to header between context
         #   label and help button
+        self._help_dialog = help_dialog
+        self._help_btn = help_btn
+
         self._header_extra_widget = header_extra_widget
 
         self._tabs_widget = tabs_widget
@@ -275,6 +287,8 @@ class PublisherWindow(QtWidgets.QDialog):
         self._publish_frame_visible = None
 
         self._set_publish_visibility(False)
+
+        self._header_widget = header_widget
 
     @property
     def controller(self):
@@ -329,6 +343,9 @@ class PublisherWindow(QtWidgets.QDialog):
 
         report_data = self.controller.get_publish_report()
         self._publish_details_widget.set_report_data(report_data)
+
+    def _on_help_click(self):
+        self._help_dialog.show()
 
     def _on_tab_change(self, old_tab, new_tab):
         if old_tab == "details":

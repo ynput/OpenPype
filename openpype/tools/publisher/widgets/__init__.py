@@ -9,6 +9,10 @@ from .widgets import (
     ValidateBtn,
     PublishBtn,
 )
+from .help_widget import (
+    HelpButton,
+    HelpDialog,
+)
 from .publish_frame import PublishFrame
 from .tabs_widget import PublisherTabsWidget
 from .overview_widget import OverviewWidget
@@ -24,6 +28,9 @@ __all__ = (
     "ResetBtn",
     "ValidateBtn",
     "PublishBtn",
+
+    "HelpButton",
+    "HelpDialog",
 
     "PublishFrame",
 
