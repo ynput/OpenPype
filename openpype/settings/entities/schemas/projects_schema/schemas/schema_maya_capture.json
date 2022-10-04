@@ -185,6 +185,10 @@
                             "type": "splitter"
                         },
                         {
+                            "type": "label",
+                            "label": "<b>Display</b>"
+                        },
+                        {
                             "type":"boolean",
                             "key": "renderDepthOfField",
                             "label": "Depth of Field"
