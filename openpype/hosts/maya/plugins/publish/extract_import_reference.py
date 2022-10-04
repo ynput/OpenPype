@@ -114,5 +114,5 @@ class ExtractImportReference(publish.Extractor):
         self.log.info("Extracted instance '%s' to : '%s'" % (m_ref_fname,
                                                              m_ref_path))
 
-        #re-open the previous scene
+        # re-open the previous scene
         cmds.file(current, open=True)
