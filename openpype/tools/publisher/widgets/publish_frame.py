@@ -64,7 +64,9 @@ class PublishFrame(QtWidgets.QWidget):
         message_label_bottom.setAlignment(QtCore.Qt.AlignCenter)
 
         # Label showing currently processed instance
-        instance_label = QtWidgets.QLabel("<Instance name>", top_content_widget)
+        instance_label = QtWidgets.QLabel(
+            "<Instance name>", top_content_widget
+        )
         instance_label.setAlignment(
             QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         )
