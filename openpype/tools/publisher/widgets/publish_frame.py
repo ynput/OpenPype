@@ -321,9 +321,7 @@ class PublishFrame(QtWidgets.QWidget):
     def _on_instance_change(self, event):
         """Change instance label when instance is going to be processed."""
 
-        label = event["label"]
-
-        self._instance_label.setText(label)
+        self._instance_label.setText(event["instance_label"])
         QtWidgets.QApplication.processEvents()
 
     def _on_plugin_change(self, event):

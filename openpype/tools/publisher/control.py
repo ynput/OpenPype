@@ -895,13 +895,13 @@ class PublisherController:
                     if instance.data.get("publish") is False:
                         continue
 
-                    label = (
+                    instance_label = (
                         instance.data.get("label")
                         or instance.data["name"]
                     )
                     self._emit_event(
                         "publish.process.instance.changed",
-                        {"label": label}
+                        {"instance_label": instance_label}
                     )
 
                     yield MainThreadItem(
@@ -915,14 +915,14 @@ class PublisherController:
                     [plugin], families
                 )
                 if plugins:
-                    label = (
+                    instance_label = (
                         self._publish_context.data.get("label")
                         or self._publish_context.data.get("name")
                         or "Context"
                     )
                     self._emit_event(
                         "publish.process.instance.changed",
-                        {"label": label}
+                        {"instance_label": instance_label}
                     )
                     yield MainThreadItem(
                         self._process_and_continue, plugin, None
