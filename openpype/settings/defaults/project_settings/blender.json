@@ -80,16 +80,6 @@
         "ExtractBlendAnimation": {
             "enabled": true,
             "optional": true,
-            "active": false
-        },
-        "ExtractABC": {
-            "enabled": true,
-            "optional": true,
-            "active": false
-        },
-        "ExtractBlendAnimation": {
-            "enabled": true,
-            "optional": true,
             "active": false,
             "scale_length": 0
         },
