@@ -3,7 +3,6 @@ import os
 import bpy
 
 from openpype.pipeline import publish
-from openpype.pipeline import legacy_io
 from openpype.hosts.blender.api import plugin
 
 

@@ -80,7 +80,7 @@
         "ExtractBlendAnimation": {
             "enabled": true,
             "optional": true,
-            "active": false,
+            "active": true,
             "scale_length": 0
         },
         "ExtractAnimationFBX": {
@@ -91,7 +91,7 @@
         "ExtractCamera": {
             "enabled": true,
             "optional": true,
-            "active": false
+            "active": true
         },
         "ExtractLayout": {
             "enabled": true,
