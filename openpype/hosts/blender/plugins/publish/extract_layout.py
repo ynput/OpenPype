@@ -1,13 +1,11 @@
 import os
 import json
 
-from bson.objectid import ObjectId
-
 import bpy
 import bpy_extras
 import bpy_extras.anim_utils
 
-from openpype.pipeline import publish, legacy_io, AVALON_CONTAINER_ID
+from openpype.pipeline import publish, AVALON_CONTAINER_ID
 from openpype.client import get_representation_by_name
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
@@ -21,7 +19,7 @@ class ExtractLayout(publish.Extractor):
     families = ["layout"]
     optional = True
 
-    def _export_animation(self, asset, instance, stagingdir, fbx_count):
+    def _export_animation(self, asset, stagingdir, fbx_count):
         n = fbx_count
 
         for obj in asset.all_objects:
@@ -126,9 +124,7 @@ class ExtractLayout(publish.Extractor):
             if (
                 not member.override_library
                 and member.get(AVALON_PROPERTY)
-                and member.get(AVALON_PROPERTY).get("id") == (
-                    AVALON_CONTAINER_ID
-                )
+                and member[AVALON_PROPERTY].get("id") == AVALON_CONTAINER_ID
             )
         ]
 
@@ -139,9 +135,7 @@ class ExtractLayout(publish.Extractor):
             # skip invalid assets
             for key in ("parent", "family", "asset_name", "libpath"):
                 if key not in metadata:
-                    self.log.debug(
-                        f"Missing metadata for {asset.name}: {key}"
-                    )
+                    self.log.debug(f"Missing metadata for {asset.name}: {key}")
                     continue
 
             self.log.info(f"Extracting: {asset.name}")
@@ -195,7 +189,7 @@ class ExtractLayout(publish.Extractor):
                     "rotation": {
                         "x": asset.rotation_euler.x,
                         "y": asset.rotation_euler.y,
-                        "z": asset.rotation_euler.z,
+                        "z": asset.rotation_euler.z
                     },
                     "scale": {
                         "x": asset.scale.x,
@@ -206,9 +200,7 @@ class ExtractLayout(publish.Extractor):
 
             # Extract the animation as well
             if family == "rig":
-                f, n = self._export_animation(
-                    asset, instance, stagingdir, fbx_count
-                )
+                f, n = self._export_animation(asset, stagingdir, fbx_count)
                 if f:
                     fbx_files.append(f)
                     json_element["animation"] = f

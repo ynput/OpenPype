@@ -3,7 +3,6 @@ import os
 import bpy
 from bson.objectid import ObjectId
 
-import openpype.api
 from openpype.pipeline import (
     publish,
     discover_loader_plugins,

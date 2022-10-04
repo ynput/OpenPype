@@ -4,8 +4,8 @@ from pathlib import Path
 
 import bpy
 
-from openpype import lib
 from openpype.pipeline import legacy_io, legacy_create
+from openpype.pipeline.create import get_legacy_creator_by_name
 from openpype.hosts.blender.api import plugin, get_selection
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
