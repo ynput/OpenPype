@@ -22,7 +22,7 @@ import pyblish.version
 from . import util
 from .constants import InstanceStates
 
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 
 
 class IterationBreak(Exception):

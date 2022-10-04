@@ -17,7 +17,7 @@ from openpype.style import (
 )
 from openpype.resources import get_image_path
 from openpype.lib import filter_profiles, Logger
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 from openpype.pipeline import registered_host
 
 log = Logger.get_logger(__name__)
