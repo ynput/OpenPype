@@ -4,7 +4,6 @@ from typing import Dict
 
 import bpy
 
-from openpype import lib
 from openpype.pipeline import legacy_io, legacy_create, AVALON_INSTANCE_ID
 from openpype.pipeline.create import get_legacy_creator_by_name
 from openpype.hosts.blender.api import plugin
