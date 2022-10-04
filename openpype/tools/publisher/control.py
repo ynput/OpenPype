@@ -361,11 +361,13 @@ class PublisherController:
         dbcon (AvalonMongoDB): Connection to mongo with context.
         headless (bool): Headless publishing. ATM not implemented or used.
     """
+
     def __init__(self, dbcon=None, headless=False):
         self.log = logging.getLogger("PublisherController")
         self.host = registered_host()
         self.headless = headless
 
+        # Inner event system of controller
         self.event_system = EventSystem()
 
         self.create_context = CreateContext(
@@ -595,7 +597,7 @@ class PublisherController:
         self._reset_publish()
         self._reset_instances()
 
-        self.emit_message("Refreshed..")
+        self.emit_card_message("Refreshed..")
 
     def _reset_plugins(self):
         """Reset to initial state."""
@@ -626,7 +628,7 @@ class PublisherController:
 
         self._trigger_callbacks(self._instances_refresh_callback_refs)
 
-    def emit_message(self, message):
+    def emit_card_message(self, message):
         self._trigger_callbacks(self._message_emit_callback_refs, message)
 
     def get_creator_attribute_definitions(self, instances):

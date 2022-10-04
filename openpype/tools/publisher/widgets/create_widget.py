@@ -363,9 +363,6 @@ class CreateWidget(QtWidgets.QWidget):
         self._prereq_timer = prereq_timer
         self._first_show = True
 
-    def _emit_message(self, message):
-        self._controller.emit_message(message)
-
     def _context_change_is_enabled(self):
         return self._context_widget.isEnabled()
 
@@ -820,7 +817,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         if error_msg is None:
             self._set_creator(self._selected_creator)
-            self._emit_message("Creation finished...")
+            self._controller.emit_card_message("Creation finished...")
         else:
             box = CreateErrorMessageBox(
                 creator_label,
