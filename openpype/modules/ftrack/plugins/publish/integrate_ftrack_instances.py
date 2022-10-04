@@ -150,38 +150,38 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         # TODO what if there is multiple thumbnails?
         first_thumbnail_component = None
         first_thumbnail_component_repre = None
-        for repre in thumbnail_representations:
-            if review_representations and not has_movie_review:
-                break
-            repre_path = self._get_repre_path(instance, repre, False)
-            if not repre_path:
-                self.log.warning(
-                    "Published path is not set and source was removed."
+
+        if has_movie_review:
+            for repre in thumbnail_representations:
+                repre_path = self._get_repre_path(instance, repre, False)
+                if not repre_path:
+                    self.log.warning(
+                        "Published path is not set and source was removed."
+                    )
+                    continue
+
+                # Create copy of base comp item and append it
+                thumbnail_item = copy.deepcopy(base_component_item)
+                thumbnail_item["component_path"] = repre_path
+                thumbnail_item["component_data"] = {
+                    "name": "thumbnail"
+                }
+                thumbnail_item["thumbnail"] = True
+
+                # Create copy of item before setting location
+                if "delete" not in repre["tags"]:
+                    src_components_to_add.append(copy.deepcopy(thumbnail_item))
+                # Create copy of first thumbnail
+                if first_thumbnail_component is None:
+                    first_thumbnail_component_repre = repre
+                    first_thumbnail_component = thumbnail_item
+                # Set location
+                thumbnail_item["component_location_name"] = (
+                    ftrack_server_location_name
                 )
-                continue
 
-            # Create copy of base comp item and append it
-            thumbnail_item = copy.deepcopy(base_component_item)
-            thumbnail_item["component_path"] = repre_path
-            thumbnail_item["component_data"] = {
-                "name": "thumbnail"
-            }
-            thumbnail_item["thumbnail"] = True
-
-            # Create copy of item before setting location
-            if "delete" not in repre["tags"]:
-                src_components_to_add.append(copy.deepcopy(thumbnail_item))
-            # Create copy of first thumbnail
-            if first_thumbnail_component is None:
-                first_thumbnail_component_repre = repre
-                first_thumbnail_component = thumbnail_item
-            # Set location
-            thumbnail_item["component_location_name"] = (
-                ftrack_server_location_name
-            )
-
-            # Add item to component list
-            component_list.append(thumbnail_item)
+                # Add item to component list
+                component_list.append(thumbnail_item)
 
         if first_thumbnail_component is not None:
             metadata = self._prepare_image_component_metadata(
@@ -455,7 +455,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             streams = get_ffprobe_streams(component_path)
         except Exception:
             self.log.debug(
-                "Failed to retrieve information about " 
+                "Failed to retrieve information about "
                 "input {}".format(component_path))
 
         # Find video streams
