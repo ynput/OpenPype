@@ -94,6 +94,7 @@ def find_paths_by_hash(texture_hash):
     key = "data.sourceHashes.{0}".format(texture_hash)
     return legacy_io.distinct(key, {"type": "version"})
 
+
 @six.add_metaclass(ABCMeta)
 class TextureProcessor:
 
