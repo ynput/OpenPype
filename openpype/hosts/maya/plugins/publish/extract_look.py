@@ -11,13 +11,14 @@ import platform
 import contextlib
 import subprocess
 from openpype.lib.vendor_bin_utils import find_executable
+from openpype.lib import source_hash
 from collections import OrderedDict
 
 from maya import cmds  # noqa
 
 import pyblish.api
 
-from openpype.lib import source_hash, run_subprocess
+
 from openpype.pipeline import legacy_io, publish
 from openpype.hosts.maya.api import lib
 
@@ -92,7 +93,6 @@ def find_paths_by_hash(texture_hash):
     """
     key = "data.sourceHashes.{0}".format(texture_hash)
     return legacy_io.distinct(key, {"type": "version"})
-
 
 @six.add_metaclass(ABCMeta)
 class TextureProcessor:
@@ -612,7 +612,7 @@ class ExtractLook(publish.Extractor):
         fname, ext = os.path.splitext(os.path.basename(filepath))
 
         args = []
-        texture_hash = openpype.api.source_hash(filepath, *args)
+        texture_hash = source_hash(filepath, *args)
 
         # If source has been published before with the same settings,
         # then don't reprocess but hardlink from the original
