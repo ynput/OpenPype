@@ -55,7 +55,8 @@
         "ExtractFBX": {
             "enabled": true,
             "optional": true,
-            "active": false
+            "active": false,
+            "scale_length": 0
         },
         "ExtractABC": {
             "enabled": true,
@@ -65,8 +66,7 @@
         "ExtractBlendAnimation": {
             "enabled": true,
             "optional": true,
-            "active": true,
-            "scale_length": 0
+            "active": true
         },
         "ExtractAnimationFBX": {
             "enabled": true,
