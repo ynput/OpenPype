@@ -7,6 +7,7 @@ publishing plugins.
 """
 
 from Qt import QtWidgets, QtCore
+import qtawesome
 
 from openpype.pipeline import (
     install_host,
@@ -19,6 +20,27 @@ from openpype.tools.utils.models import (
     ProjectModel,
     ProjectSortFilterProxy
 )
+
+from openpype.tools.utils import PlaceholderLineEdit
+import appdirs
+from openpype.lib import JSONSettingRegistry
+
+
+class TrayPublisherRegistry(JSONSettingRegistry):
+    """Class handling OpenPype general settings registry.
+
+    Attributes:
+        vendor (str): Name used for path construction.
+        product (str): Additional name used for path construction.
+
+    """
+
+    def __init__(self):
+        self.vendor = "pypeclub"
+        self.product = "openpype"
+        name = "tray_publisher"
+        path = appdirs.user_data_dir(self.product, self.vendor)
+        super(TrayPublisherRegistry, self).__init__(name, path)
 
 
 class StandaloneOverlayWidget(QtWidgets.QFrame):
@@ -43,6 +65,7 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
         projects_model = ProjectModel(dbcon)
         projects_proxy = ProjectSortFilterProxy()
         projects_proxy.setSourceModel(projects_model)
+        projects_proxy.setFilterKeyColumn(0)
 
         projects_view = QtWidgets.QListView(content_widget)
         projects_view.setObjectName("ChooseProjectView")
@@ -59,10 +82,17 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
         btns_layout.addWidget(cancel_btn, 0)
         btns_layout.addWidget(confirm_btn, 0)
 
+        txt_filter = PlaceholderLineEdit(content_widget)
+        txt_filter.setPlaceholderText("Quick filter projects..")
+        txt_filter.setClearButtonEnabled(True)
+        txt_filter.addAction(qtawesome.icon("fa.filter", color="gray"),
+                             QtWidgets.QLineEdit.LeadingPosition)
+
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(0, 0, 0, 0)
         content_layout.setSpacing(20)
         content_layout.addWidget(header_label, 0)
+        content_layout.addWidget(txt_filter, 0)
         content_layout.addWidget(projects_view, 1)
         content_layout.addLayout(btns_layout, 0)
 
@@ -79,17 +109,40 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
         projects_view.doubleClicked.connect(self._on_double_click)
         confirm_btn.clicked.connect(self._on_confirm_click)
         cancel_btn.clicked.connect(self._on_cancel_click)
+        txt_filter.textChanged.connect(self._on_text_changed)
 
         self._projects_view = projects_view
         self._projects_model = projects_model
+        self._projects_proxy = projects_proxy
         self._cancel_btn = cancel_btn
         self._confirm_btn = confirm_btn
+        self._txt_filter = txt_filter
 
         self._publisher_window = publisher_window
         self._project_name = None
 
     def showEvent(self, event):
         self._projects_model.refresh()
+        # Sort projects after refresh
+        self._projects_proxy.sort(0)
+
+        setting_registry = TrayPublisherRegistry()
+        try:
+            project_name = setting_registry.get_item("project_name")
+        except ValueError:
+            project_name = None
+
+        if project_name:
+            index = None
+            src_index = self._projects_model.find_project(project_name)
+            if src_index is not None:
+                index = self._projects_proxy.mapFromSource(src_index)
+            if index:
+                mode = (
+                    QtCore.QItemSelectionModel.Select
+                    | QtCore.QItemSelectionModel.Rows)
+                self._projects_view.selectionModel().select(index, mode)
+
         self._cancel_btn.setVisible(self._project_name is not None)
         super(StandaloneOverlayWidget, self).showEvent(event)
 
@@ -101,6 +154,10 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
 
     def _on_cancel_click(self):
         self._set_project(self._project_name)
+
+    def _on_text_changed(self):
+        self._projects_proxy.setFilterRegularExpression(
+            self._txt_filter.text())
 
     def set_selected_project(self):
         index = self._projects_view.currentIndex()
@@ -118,6 +175,9 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
         self.host.set_project_name(project_name)
         self.setVisible(False)
         self.project_selected.emit(project_name)
+
+        setting_registry = TrayPublisherRegistry()
+        setting_registry.set_item("project_name", project_name)
 
 
 class TrayPublishWindow(PublisherWindow):

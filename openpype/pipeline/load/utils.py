@@ -23,6 +23,10 @@ from openpype.client import (
     get_representation_by_name,
     get_representation_parents
 )
+from openpype.lib import (
+    StringTemplate,
+    TemplateUnsolved,
+)
 from openpype.pipeline import (
     schema,
     legacy_io,
@@ -33,7 +37,7 @@ log = logging.getLogger(__name__)
 
 ContainersFilterResult = collections.namedtuple(
     "ContainersFilterResult",
-    ["latest", "outdated", "not_foud", "invalid"]
+    ["latest", "outdated", "not_found", "invalid"]
 )
 
 
@@ -61,6 +65,11 @@ class IncompatibleLoaderError(ValueError):
     pass
 
 
+class InvalidRepresentationContext(ValueError):
+    """Representation path can't be received using representation document."""
+    pass
+
+
 def get_repres_contexts(representation_ids, dbcon=None):
     """Return parenthood context for representation.
 
@@ -78,12 +87,19 @@ def get_repres_contexts(representation_ids, dbcon=None):
     if not dbcon:
         dbcon = legacy_io
 
-    contexts = {}
     if not representation_ids:
-        return contexts
+        return {}
 
     project_name = dbcon.active_project()
     repre_docs = get_representations(project_name, representation_ids)
+
+    return get_contexts_for_repre_docs(project_name, repre_docs)
+
+
+def get_contexts_for_repre_docs(project_name, repre_docs):
+    contexts = {}
+    if not repre_docs:
+        return contexts
 
     repre_docs_by_id = {}
     version_ids = set()
@@ -515,6 +531,52 @@ def get_representation_path_from_context(context):
     return get_representation_path(representation, root)
 
 
+def get_representation_path_with_anatomy(repre_doc, anatomy):
+    """Receive representation path using representation document and anatomy.
+
+    Anatomy is used to replace 'root' key in representation file. Ideally
+    should be used instead of 'get_representation_path' which is based on
+    "current context".
+
+    Future notes:
+        We want also be able store resources into representation and I can
+        imagine the result should also contain paths to possible resources.
+
+    Args:
+        repre_doc (Dict[str, Any]): Representation document.
+        anatomy (Anatomy): Project anatomy object.
+
+    Returns:
+        Union[None, TemplateResult]: None if path can't be received
+
+    Raises:
+        InvalidRepresentationContext: When representation data are probably
+            invalid or not available.
+    """
+
+    try:
+        template = repre_doc["data"]["template"]
+
+    except KeyError:
+        raise InvalidRepresentationContext((
+            "Representation document does not"
+            " contain template in data ('data.template')"
+        ))
+
+    try:
+        context = repre_doc["context"]
+        context["root"] = anatomy.roots
+        path = StringTemplate.format_strict_template(template, context)
+
+    except TemplateUnsolved as exc:
+        raise InvalidRepresentationContext((
+            "Couldn't resolve representation template with available data."
+            " Reason: {}".format(str(exc))
+        ))
+
+    return path.normalized()
+
+
 def get_representation_path(representation, root=None, dbcon=None):
     """Get filename from representation document
 
@@ -532,8 +594,6 @@ def get_representation_path(representation, root=None, dbcon=None):
         str: fullpath of the representation
 
     """
-
-    from openpype.lib import StringTemplate, TemplateUnsolved
 
     if dbcon is None:
         dbcon = legacy_io
@@ -737,6 +797,7 @@ def get_outdated_containers(host=None, project_name=None):
 
     if host is None:
         from openpype.pipeline import registered_host
+
         host = registered_host()
 
     if project_name is None:
@@ -754,7 +815,7 @@ def filter_containers(containers, project_name):
 
     Categories are 'latest', 'outdated', 'invalid' and 'not_found'.
     The 'lastest' containers are from last version, 'outdated' are not,
-    'invalid' are invalid containers (invalid content) and 'not_foud' has
+    'invalid' are invalid containers (invalid content) and 'not_found' has
     some missing entity in database.
 
     Args:

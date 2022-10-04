@@ -2,14 +2,14 @@ import os
 
 from maya import cmds
 
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.maya.api.lib import (
     suspended_refresh,
     maintained_selection
 )
 
 
-class ExtractXgenCache(openpype.api.Extractor):
+class ExtractXgenCache(publish.Extractor):
     """Produce an alembic of just xgen interactive groom
 
     """

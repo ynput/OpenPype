@@ -1,10 +1,11 @@
 import os
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline import publish
 from openpype.hosts.resolve.api.lib import get_project_manager
 
 
-class ExtractWorkfile(openpype.api.Extractor):
+class ExtractWorkfile(publish.Extractor):
     """
     Extractor export DRP workfile file representation
     """

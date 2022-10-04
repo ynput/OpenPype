@@ -419,9 +419,14 @@ def get_custom_workfile_template(
     # when path is available try to format it in case
     # there are some anatomy template strings
     if matching_item:
+        # extend anatomy context with os.environ to
+        # also allow formatting against env
+        full_context_data = os.environ.copy()
+        full_context_data.update(anatomy_context_data)
+
         template = matching_item["path"][platform.system().lower()]
         return StringTemplate.format_strict_template(
-            template, anatomy_context_data
+            template, full_context_data
         ).normalized()
 
     return None
@@ -462,3 +467,60 @@ def get_custom_workfile_template_by_string_context(
     return get_custom_workfile_template(
         project_doc, asset_doc, task_name, host_name, anatomy, project_settings
     )
+
+
+def create_workdir_extra_folders(
+    workdir,
+    host_name,
+    task_type,
+    task_name,
+    project_name,
+    project_settings=None
+):
+    """Create extra folders in work directory based on context.
+
+    Args:
+        workdir (str): Path to workdir where workfiles is stored.
+        host_name (str): Name of host implementation.
+        task_type (str): Type of task for which extra folders should be
+            created.
+        task_name (str): Name of task for which extra folders should be
+            created.
+        project_name (str): Name of project on which task is.
+        project_settings (dict): Prepared project settings. Are loaded if not
+            passed.
+    """
+
+    # Load project settings if not set
+    if not project_settings:
+        project_settings = get_project_settings(project_name)
+
+    # Load extra folders profiles
+    extra_folders_profiles = (
+        project_settings["global"]["tools"]["Workfiles"]["extra_folders"]
+    )
+    # Skip if are empty
+    if not extra_folders_profiles:
+        return
+
+    # Prepare profiles filters
+    filter_data = {
+        "task_types": task_type,
+        "task_names": task_name,
+        "hosts": host_name
+    }
+    profile = filter_profiles(extra_folders_profiles, filter_data)
+    if profile is None:
+        return
+
+    for subfolder in profile["folders"]:
+        # Make sure backslashes are converted to forwards slashes
+        #   and does not start with slash
+        subfolder = subfolder.replace("\\", "/").lstrip("/")
+        # Skip empty strings
+        if not subfolder:
+            continue
+
+        fullpath = os.path.join(workdir, subfolder)
+        if not os.path.exists(fullpath):
+            os.makedirs(fullpath)

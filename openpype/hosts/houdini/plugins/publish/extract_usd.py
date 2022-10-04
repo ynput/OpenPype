@@ -1,11 +1,12 @@
 import os
 
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline import publish
 from openpype.hosts.houdini.api.lib import render_rop
 
 
-class ExtractUSD(openpype.api.Extractor):
+class ExtractUSD(publish.Extractor):
 
     order = pyblish.api.ExtractorOrder
     label = "Extract USD"

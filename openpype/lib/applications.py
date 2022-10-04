@@ -24,7 +24,7 @@ from openpype.settings.constants import (
     METADATA_KEYS,
     M_DYNAMIC_KEY_LABEL
 )
-from . import PypeLogger
+from .log import Logger
 from .profiles_filtering import filter_profiles
 from .local_settings import get_openpype_username
 
@@ -138,7 +138,7 @@ def get_logger():
     """Global lib.applications logger getter."""
     global _logger
     if _logger is None:
-        _logger = PypeLogger.get_logger(__name__)
+        _logger = Logger.get_logger(__name__)
     return _logger
 
 
@@ -373,7 +373,7 @@ class ApplicationManager:
     """
 
     def __init__(self, system_settings=None):
-        self.log = PypeLogger.get_logger(self.__class__.__name__)
+        self.log = Logger.get_logger(self.__class__.__name__)
 
         self.app_groups = {}
         self.applications = {}
@@ -468,6 +468,19 @@ class ApplicationManager:
             self.tool_groups[tool_group_name] = group
             for tool in group:
                 self.tools[tool.full_name] = tool
+
+    def find_latest_available_variant_for_group(self, group_name):
+        group = self.app_groups.get(group_name)
+        if group is None or not group.enabled:
+            return None
+
+        output = None
+        for _, variant in reversed(sorted(group.variants.items())):
+            executable = variant.find_executable()
+            if executable:
+                output = variant
+                break
+        return output
 
     def launch(self, app_name, **data):
         """Launch procedure.
@@ -735,7 +748,7 @@ class LaunchHook:
 
         Always should be called
         """
-        self.log = PypeLogger().get_logger(self.__class__.__name__)
+        self.log = Logger.get_logger(self.__class__.__name__)
 
         self.launch_context = launch_context
 
@@ -877,7 +890,7 @@ class ApplicationLaunchContext:
 
         # Logger
         logger_name = "{}-{}".format(self.__class__.__name__, self.app_name)
-        self.log = PypeLogger.get_logger(logger_name)
+        self.log = Logger.get_logger(logger_name)
 
         self.executable = executable
 
@@ -950,6 +963,63 @@ class ApplicationLaunchContext:
             )
         self.kwargs["env"] = value
 
+    def _collect_addons_launch_hook_paths(self):
+        """Helper to collect application launch hooks from addons.
+
+        Module have to have implemented 'get_launch_hook_paths' method which
+        can expect appliction as argument or nothing.
+
+        Returns:
+            List[str]: Paths to launch hook directories.
+        """
+
+        expected_types = (list, tuple, set)
+
+        output = []
+        for module in self.modules_manager.get_enabled_modules():
+            # Skip module if does not have implemented 'get_launch_hook_paths'
+            func = getattr(module, "get_launch_hook_paths", None)
+            if func is None:
+                continue
+
+            func = module.get_launch_hook_paths
+            if hasattr(inspect, "signature"):
+                sig = inspect.signature(func)
+                expect_args = len(sig.parameters) > 0
+            else:
+                expect_args = len(inspect.getargspec(func)[0]) > 0
+
+            # Pass application argument if method expect it.
+            try:
+                if expect_args:
+                    hook_paths = func(self.application)
+                else:
+                    hook_paths = func()
+            except Exception:
+                self.log.warning(
+                    "Failed to call 'get_launch_hook_paths'",
+                    exc_info=True
+                )
+                continue
+
+            if not hook_paths:
+                continue
+
+            # Convert string to list
+            if isinstance(hook_paths, six.string_types):
+                hook_paths = [hook_paths]
+
+            # Skip invalid types
+            if not isinstance(hook_paths, expected_types):
+                self.log.warning((
+                    "Result of `get_launch_hook_paths`"
+                    " has invalid type {}. Expected {}"
+                ).format(type(hook_paths), expected_types))
+                continue
+
+            output.extend(hook_paths)
+        return output
+
     def paths_to_launch_hooks(self):
         """Directory paths where to look for launch hooks."""
         # This method has potential to be part of application manager (maybe).
@@ -983,9 +1053,7 @@ class ApplicationLaunchContext:
                 paths.append(path)
 
         # Load modules paths
-        paths.extend(
-            self.modules_manager.collect_launch_hook_paths(self.application)
-        )
+        paths.extend(self._collect_addons_launch_hook_paths())
 
         return paths
 

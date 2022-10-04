@@ -2,13 +2,14 @@
 Basic avalon integration
 """
 import os
-import sys
 import logging
-import contextlib
 
 import pyblish.api
 
-from openpype.api import Logger
+from openpype.lib import (
+    Logger,
+    register_event_callback
+)
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
@@ -18,12 +19,19 @@ from openpype.pipeline import (
     deregister_inventory_action_path,
     AVALON_CONTAINER_ID,
 )
-import openpype.hosts.fusion
+from openpype.pipeline.load import any_outdated_containers
+from openpype.hosts.fusion import FUSION_HOST_DIR
+from openpype.tools.utils import host_tools
 
-log = Logger().get_logger(__name__)
+from .lib import (
+    get_current_comp,
+    comp_lock_and_undo_chunk,
+    validate_comp_prefs
+)
 
-HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.fusion.__file__))
-PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+log = Logger.get_logger(__name__)
+
+PLUGINS_DIR = os.path.join(FUSION_HOST_DIR, "plugins")
 
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
@@ -40,7 +48,7 @@ class CompLogHandler(logging.Handler):
 
 
 def install():
-    """Install fusion-specific functionality of avalon-core.
+    """Install fusion-specific functionality of OpenPype.
 
     This is where you install menus and register families, data
     and loaders into fusion.
@@ -52,7 +60,7 @@ def install():
 
     """
     # Remove all handlers associated with the root logger object, because
-    # that one sometimes logs as "warnings" incorrectly.
+    # that one always logs as "warnings" incorrectly.
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
 
@@ -63,8 +71,6 @@ def install():
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
-
-    log.info("openpype.hosts.fusion installed")
 
     pyblish.api.register_host("fusion")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
@@ -77,6 +83,11 @@ def install():
     pyblish.api.register_callback(
         "instanceToggled", on_pyblish_instance_toggled
     )
+
+    # Fusion integration currently does not attach to direct callbacks of
+    # the application. So we use workfile callbacks to allow similar behavior
+    # on save and open
+    register_event_callback("workfile.open.after", on_after_open)
 
 
 def uninstall():
@@ -103,7 +114,7 @@ def uninstall():
     )
 
 
-def on_pyblish_instance_toggled(instance, new_value, old_value):
+def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle saver tool passthrough states on instance toggles."""
     comp = instance.context.data.get("currentComp")
     if not comp:
@@ -124,6 +135,38 @@ def on_pyblish_instance_toggled(instance, new_value, old_value):
             current = attrs["TOOLB_PassThrough"]
             if current != passthrough:
                 tool.SetAttrs({"TOOLB_PassThrough": passthrough})
+
+
+def on_after_open(_event):
+    comp = get_current_comp()
+    validate_comp_prefs(comp)
+
+    if any_outdated_containers():
+        log.warning("Scene has outdated content.")
+
+        # Find OpenPype menu to attach to
+        from . import menu
+
+        def _on_show_scene_inventory():
+            # ensure that comp is active
+            frame = comp.CurrentFrame
+            if not frame:
+                print("Comp is closed, skipping show scene inventory")
+                return
+            frame.ActivateFrame()   # raise comp window
+            host_tools.show_scene_inventory()
+
+        from openpype.widgets import popup
+        from openpype.style import load_stylesheet
+        dialog = popup.Popup(parent=menu.menu)
+        dialog.setWindowTitle("Fusion comp has outdated content")
+        dialog.setMessage("There are outdated containers in "
+                          "your Fusion comp.")
+        dialog.on_clicked.connect(_on_show_scene_inventory)
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
+        dialog.setStyleSheet(load_stylesheet())
 
 
 def ls():
@@ -211,19 +254,3 @@ def parse_container(tool):
     return container
 
 
-def get_current_comp():
-    """Hack to get current comp in this session"""
-    fusion = getattr(sys.modules["__main__"], "fusion", None)
-    return fusion.CurrentComp if fusion else None
-
-
-@contextlib.contextmanager
-def comp_lock_and_undo_chunk(comp, undo_queue_name="Script CMD"):
-    """Lock comp and open an undo chunk during the context"""
-    try:
-        comp.Lock()
-        comp.StartUndo(undo_queue_name)
-        yield
-    finally:
-        comp.Unlock()
-        comp.EndUndo()

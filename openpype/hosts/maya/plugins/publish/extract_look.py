@@ -17,8 +17,8 @@ from maya import cmds  # noqa
 
 import pyblish.api
 
-import openpype.api
-from openpype.pipeline import legacy_io
+from openpype.lib import source_hash, run_subprocess
+from openpype.pipeline import legacy_io, publish
 from openpype.hosts.maya.api import lib
 
 # Modes for transfer
@@ -251,7 +251,7 @@ def no_workspace_dir():
         os.rmdir(fake_workspace_dir)
 
 
-class ExtractLook(openpype.api.Extractor):
+class ExtractLook(publish.Extractor):
     """Extract Look (Maya Scene + JSON)
 
     Only extracts the sets (shadingEngines and alike) alongside a .json file

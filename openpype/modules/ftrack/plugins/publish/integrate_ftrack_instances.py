@@ -35,7 +35,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
     family_mapping = {
         "camera": "cam",
         "look": "look",
-        "mayaascii": "scene",
+        "mayaAscii": "scene",
         "model": "geo",
         "rig": "rig",
         "setdress": "setdress",
@@ -54,7 +54,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         "reference": "reference"
     }
     keep_first_subset_name_for_review = True
-    asset_versions_status_profiles = {}
+    asset_versions_status_profiles = []
     additional_metadata_keys = []
 
     def process(self, instance):
@@ -74,11 +74,15 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         version_number = int(instance_version)
 
         family = instance.data["family"]
-        family_low = family.lower()
 
+        # Perform case-insensitive family mapping
+        family_low = family.lower()
         asset_type = instance.data.get("ftrackFamily")
-        if not asset_type and family_low in self.family_mapping:
-            asset_type = self.family_mapping[family_low]
+        if not asset_type:
+            for map_family, map_value in self.family_mapping.items():
+                if map_family.lower() == family_low:
+                    asset_type = map_value
+                    break
 
         if not asset_type:
             asset_type = "upload"
@@ -86,15 +90,6 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         self.log.debug(
             "Family: {}\nMapping: {}".format(family_low, self.family_mapping)
         )
-
-        # Ignore this instance if neither "ftrackFamily" or a family mapping is
-        # found.
-        if not asset_type:
-            self.log.info((
-                "Family \"{}\" does not match any asset type mapping"
-            ).format(family))
-            return
-
         status_name = self._get_asset_version_status_name(instance)
 
         # Base of component item data

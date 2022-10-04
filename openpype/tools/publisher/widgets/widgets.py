@@ -6,7 +6,6 @@ import collections
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
-from openpype.lib import TaskNotSetError
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
 from openpype.tools.flickcharm import FlickCharm
@@ -17,7 +16,11 @@ from openpype.tools.utils import (
     BaseClickableFrame,
     set_style_property,
 )
-from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
+from openpype.style import get_objected_colors
+from openpype.pipeline.create import (
+    SUBSET_NAME_ALLOWED_SYMBOLS,
+    TaskNotSetError,
+)
 from .assets_widget import AssetsDialog
 from .tasks_widget import TasksModel
 from .icons import (
@@ -123,28 +126,21 @@ class PublishIconBtn(IconButton):
     def __init__(self, pixmap_path, *args, **kwargs):
         super(PublishIconBtn, self).__init__(*args, **kwargs)
 
-        loaded_image = QtGui.QImage(pixmap_path)
+        colors = get_objected_colors()
+        icon = self.generate_icon(
+            pixmap_path,
+            enabled_color=colors["font"].get_qcolor(),
+            disabled_color=colors["font-disabled"].get_qcolor())
+        self.setIcon(icon)
 
-        pixmap = self.paint_image_with_color(loaded_image, QtCore.Qt.white)
-
-        self._base_image = loaded_image
-        self._enabled_icon = QtGui.QIcon(pixmap)
-        self._disabled_icon = None
-
-        self.setIcon(self._enabled_icon)
-
-    def get_enabled_icon(self):
-        """Enabled icon."""
-        return self._enabled_icon
-
-    def get_disabled_icon(self):
-        """Disabled icon."""
-        if self._disabled_icon is None:
-            pixmap = self.paint_image_with_color(
-                self._base_image, QtCore.Qt.gray
-            )
-            self._disabled_icon = QtGui.QIcon(pixmap)
-        return self._disabled_icon
+    def generate_icon(self, pixmap_path, enabled_color, disabled_color):
+        icon = QtGui.QIcon()
+        image = QtGui.QImage(pixmap_path)
+        enabled_pixmap = self.paint_image_with_color(image, enabled_color)
+        icon.addPixmap(enabled_pixmap, icon.Normal)
+        disabled_pixmap = self.paint_image_with_color(image, disabled_color)
+        icon.addPixmap(disabled_pixmap, icon.Disabled)
+        return icon
 
     @staticmethod
     def paint_image_with_color(image, color):
@@ -184,13 +180,6 @@ class PublishIconBtn(IconButton):
         painter.end()
 
         return pixmap
-
-    def setEnabled(self, enabled):
-        super(PublishIconBtn, self).setEnabled(enabled)
-        if self.isEnabled():
-            self.setIcon(self.get_enabled_icon())
-        else:
-            self.setIcon(self.get_disabled_icon())
 
 
 class ResetBtn(PublishIconBtn):

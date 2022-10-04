@@ -335,14 +335,12 @@ class PublishFrame(QtWidgets.QFrame):
         if instance is None:
             new_name = (
                 context.data.get("label")
-                or getattr(context, "label", None)
                 or context.data.get("name")
                 or "Context"
             )
         else:
             new_name = (
                 instance.data.get("label")
-                or getattr(instance, "label", None)
                 or instance.data["name"]
             )
 

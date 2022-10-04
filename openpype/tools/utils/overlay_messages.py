@@ -14,8 +14,7 @@ class CloseButton(QtWidgets.QFrame):
 
     def __init__(self, parent):
         super(CloseButton, self).__init__(parent)
-        colors = get_objected_colors()
-        close_btn_color = colors["overlay-messages"]["close-btn"]
+        close_btn_color = get_objected_colors("overlay-messages", "close-btn")
         self._color = close_btn_color.get_qcolor()
         self._mouse_pressed = False
         policy = QtWidgets.QSizePolicy(

@@ -1,9 +1,11 @@
 from typing import List
 
-import mathutils
+import bpy
 
 import pyblish.api
+import openpype.api
 import openpype.hosts.blender.api.action
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateCameraZeroKeyframe(pyblish.api.InstancePlugin):
@@ -14,21 +16,18 @@ class ValidateCameraZeroKeyframe(pyblish.api.InstancePlugin):
     in Unreal and Blender.
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["blender"]
     families = ["camera"]
-    category = "geometry"
     version = (0, 1, 0)
     label = "Zero Keyframe"
     actions = [openpype.hosts.blender.api.action.SelectInvalidAction]
 
-    _identity = mathutils.Matrix()
-
-    @classmethod
-    def get_invalid(cls, instance) -> List:
+    @staticmethod
+    def get_invalid(instance) -> List:
         invalid = []
-        for obj in [obj for obj in instance]:
-            if obj.type == "CAMERA":
+        for obj in instance:
+            if isinstance(obj, bpy.types.Object) and obj.type == "CAMERA":
                 if obj.animation_data and obj.animation_data.action:
                     action = obj.animation_data.action
                     frames_set = set()
@@ -45,4 +44,5 @@ class ValidateCameraZeroKeyframe(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
         if invalid:
             raise RuntimeError(
-                f"Object found in instance is not in Object Mode: {invalid}")
+                f"Camera must have a keyframe at frame 0: {invalid}"
+            )

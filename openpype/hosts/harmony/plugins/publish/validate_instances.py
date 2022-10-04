@@ -1,9 +1,12 @@
 import os
 
 import pyblish.api
-import openpype.api
-from openpype.pipeline import PublishXmlValidationError
+
 import openpype.hosts.harmony.api as harmony
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishXmlValidationError,
+)
 
 
 class ValidateInstanceRepair(pyblish.api.Action):
@@ -37,7 +40,7 @@ class ValidateInstance(pyblish.api.InstancePlugin):
     label = "Validate Instance"
     hosts = ["harmony"]
     actions = [ValidateInstanceRepair]
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
 
     def process(self, instance):
         instance_asset = instance.data["asset"]
