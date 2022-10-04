@@ -400,6 +400,20 @@ class VerticallScrollArea(QtWidgets.QScrollArea):
         return super(VerticallScrollArea, self).eventFilter(obj, event)
 
 
+class ValidationArtistMessage(QtWidgets.QWidget):
+    def __init__(self, message, parent):
+        super(ValidationArtistMessage, self).__init__(parent)
+
+        artist_msg_label = QtWidgets.QLabel(message, self)
+        artist_msg_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(
+            artist_msg_label, 1, QtCore.Qt.AlignCenter
+        )
+
+
 class ValidationsWidget(QtWidgets.QFrame):
     """Widgets showing validation error.
 
@@ -421,61 +435,20 @@ class ValidationsWidget(QtWidgets.QFrame):
         super(ValidationsWidget, self).__init__(parent)
 
         # Before publishing
-        before_publish_widget = QtWidgets.QWidget(self)
-        before_publish_label = QtWidgets.QLabel(
-            "Nothing to report until you run publish",
-            before_publish_widget
+        before_publish_widget = ValidationArtistMessage(
+            "Nothing to report until you run publish", self
         )
-        before_publish_label.setAlignment(QtCore.Qt.AlignCenter)
-        before_publish_layout = QtWidgets.QHBoxLayout(before_publish_widget)
-        before_publish_layout.setContentsMargins(0, 0, 0, 0)
-        before_publish_layout.addWidget(
-            before_publish_label, 1, QtCore.Qt.AlignCenter
-        )
-
         # After success publishing
-        publish_started_widget = QtWidgets.QWidget(self)
-        publish_started_label = QtWidgets.QLabel(
-            "Publishing run smoothly",
-            publish_started_widget
+        publish_started_widget = ValidationArtistMessage(
+            "Publishing run smoothly", self
         )
-        publish_started_label.setAlignment(QtCore.Qt.AlignCenter)
-        publish_started_layout = QtWidgets.QHBoxLayout(
-            publish_started_widget
-        )
-        publish_started_layout.setContentsMargins(0, 0, 0, 0)
-        publish_started_layout.addWidget(
-            publish_started_label, 1, QtCore.Qt.AlignCenter
-        )
-
         # After success publishing
-        publish_stop_ok_widget = QtWidgets.QWidget(self)
-        publish_stop_ok_label = QtWidgets.QLabel(
-            "Publishing finished successfully",
-            publish_stop_ok_widget
+        publish_stop_ok_widget = ValidationArtistMessage(
+            "Publishing finished successfully", self
         )
-        publish_stop_ok_label.setAlignment(QtCore.Qt.AlignCenter)
-        publish_stop_ok_layout = QtWidgets.QHBoxLayout(
-            publish_stop_ok_widget
-        )
-        publish_stop_ok_layout.setContentsMargins(0, 0, 0, 0)
-        publish_stop_ok_layout.addWidget(
-            publish_stop_ok_label, 1, QtCore.Qt.AlignCenter
-        )
-
         # After failed publishing (not with validation error)
-        publish_stop_fail_widget = QtWidgets.QWidget(self)
-        publish_stop_fail_label = QtWidgets.QLabel(
-            "This is not your fault",
-            publish_stop_fail_widget
-        )
-        publish_stop_fail_label.setAlignment(QtCore.Qt.AlignCenter)
-        publish_stop_fail_layout = QtWidgets.QHBoxLayout(
-            publish_stop_fail_widget
-        )
-        publish_stop_fail_layout.setContentsMargins(0, 0, 0, 0)
-        publish_stop_fail_layout.addWidget(
-            publish_stop_fail_label, 1, QtCore.Qt.AlignCenter
+        publish_stop_fail_widget = ValidationArtistMessage(
+            "This is not your fault...", self
         )
 
         # Validation errors

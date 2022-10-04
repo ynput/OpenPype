@@ -1004,6 +1004,11 @@ VariantInputsWidget QToolButton {
     font-size: 13pt;
 }
 
+ValidationArtistMessage QLabel {
+    font-size: 28pt;
+    font-weight: bold;
+}
+
 #ValidationActionButton {
     border-radius: 0.2em;
     padding: 4px 6px 4px 6px;
