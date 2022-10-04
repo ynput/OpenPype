@@ -762,9 +762,6 @@
                 }
             }
         },
-        "ImportReference": {
-            "enabled": false
-        },
         "ExtractMayaSceneRaw": {
             "enabled": true,
             "add_for_families": [

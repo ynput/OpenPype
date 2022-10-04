@@ -810,20 +810,6 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "ImportReference",
-            "label": "Extract Scenes with Imported Reference",
-            "checkbox_key": "enabled",
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                }
-            ]
-        },
-        {
-            "type": "dict",
-            "collapsible": true,
             "key": "ExtractMayaSceneRaw",
             "label": "Maya Scene (Raw)",
             "checkbox_key": "enabled",
