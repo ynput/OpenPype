@@ -119,7 +119,7 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
     def validate_renderer(cls, instance):
 
         renderer = cmds.getAttr(
-                'defaultRenderGlobals.currentRenderer').lower()
+            'defaultRenderGlobals.currentRenderer').lower()
         do_maketx = instance.data.get("maketx", False)
         do_rstex = instance.data.get("rstex", False)
         processors = []
