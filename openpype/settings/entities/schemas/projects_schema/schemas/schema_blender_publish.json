@@ -15,13 +15,7 @@
                 {
                     "key": "ValidateAssetsVersion",
                     "label": "Validate Assets Version"
-                }
-            ]
-        },
-        {
-            "type": "schema_template",
-            "name": "template_publish_plugin",
-            "template_data": [
+                },
                 {
                     "key": "ValidateCameraZeroKeyframe",
                     "label": "Validate Camera Zero Keyframe"
@@ -57,19 +51,6 @@
             ]
         },
         {
-            "type": "dict",
-            "collapsible": true,
-            "key": "ValidateLinkedVersion",
-            "label": "Validate Linked Version",
-            "checkbox_key": "enabled",
-            "children": [
-                {
-                    "key": "ValidateAssetsVersion",
-                    "label": "Validate Assets Version"
-                }
-            ]
-        },
-        {
             "type": "splitter"
         },
         {
@@ -83,6 +64,16 @@
             "label": "Extract Blend",
             "checkbox_key": "enabled",
             "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
                 {
                     "type": "boolean",
                     "key": "active",
