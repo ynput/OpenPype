@@ -138,11 +138,13 @@ class DropEmpty(QtWidgets.QWidget):
             allowed_items = [item + "s" for item in allowed_items]
 
         if not allowed_items:
+            self._drop_label_widget.setVisible(False)
             self._items_label_widget.setText(
                 "It is not allowed to add anything here!"
             )
             return
 
+        self._drop_label_widget.setVisible(True)
         items_label = "Multiple "
         if self._single_item:
             items_label = "Single "
@@ -235,9 +237,40 @@ class FilesModel(QtGui.QStandardItemModel):
         self._filenames_by_dirpath = collections.defaultdict(set)
         self._items_by_dirpath = collections.defaultdict(list)
 
+        self.rowsAboutToBeRemoved.connect(self._on_about_to_be_removed)
+        self.rowsInserted.connect(self._on_insert)
+
     @property
     def id(self):
         return self._id
+
+    def _on_about_to_be_removed(self, parent_index, start, end):
+        """Make sure that removed items are removed from items mapping.
+
+        Connected with '_on_insert'. When user drag item and drop it to same
+        view the item is actually removed and creted again but it happens in
+        inner calls of Qt.
+        """
+
+        for row in range(start, end + 1):
+            index = self.index(row, 0, parent_index)
+            item_id = index.data(ITEM_ID_ROLE)
+            if item_id is not None:
+                self._items_by_id.pop(item_id, None)
+
+    def _on_insert(self, parent_index, start, end):
+        """Make sure new added items are stored in items mapping.
+
+        Connected to '_on_about_to_be_removed'. Some items are not created
+        using '_create_item' but are recreated using Qt. So the item is not in
+        mapping and if it would it would not lead to same item pointer.
+        """
+
+        for row in range(start, end + 1):
+            index = self.index(start, end, parent_index)
+            item_id = index.data(ITEM_ID_ROLE)
+            if item_id not in self._items_by_id:
+                self._items_by_id[item_id] = self.item(row)
 
     def set_multivalue(self, multivalue):
         """Disable filtering."""
@@ -352,6 +385,10 @@ class FilesModel(QtGui.QStandardItemModel):
             src_item_id = index.data(ITEM_ID_ROLE)
             src_item = self._items_by_id.get(src_item_id)
 
+        src_row = None
+        if src_item:
+            src_row = src_item.row()
+
         # Take out items that should be moved
         items = []
         for item_id in item_ids:
@@ -365,10 +402,12 @@ class FilesModel(QtGui.QStandardItemModel):
             return False
 
         # Calculate row where items should be inserted
-        if src_item:
-            src_row = src_item.row()
-        else:
-            src_row = root.rowCount()
+        row_count = root.rowCount()
+        if src_row is None:
+            src_row = row_count
+
+        if src_row > row_count:
+            src_row = row_count
 
         root.insertRow(src_row, items)
         return True
@@ -592,6 +631,13 @@ class FilesView(QtWidgets.QListView):
 
         self._remove_btn.setVisible(not multivalue)
 
+    def update_remove_btn_visibility(self):
+        model = self.model()
+        visible = False
+        if model:
+            visible = model.rowCount() > 0
+        self._remove_btn.setVisible(visible)
+
     def has_selected_item_ids(self):
         """Is any index selected."""
         for index in self.selectionModel().selectedIndexes():
@@ -655,6 +701,7 @@ class FilesView(QtWidgets.QListView):
     def showEvent(self, event):
         super(FilesView, self).showEvent(event)
         self._update_remove_btn()
+        self.update_remove_btn_visibility()
 
 
 class FilesWidget(QtWidgets.QFrame):
@@ -673,12 +720,13 @@ class FilesWidget(QtWidgets.QFrame):
         files_proxy_model.setSourceModel(files_model)
         files_view = FilesView(self)
         files_view.setModel(files_proxy_model)
-        files_view.setVisible(False)
 
-        layout = QtWidgets.QHBoxLayout(self)
+        layout = QtWidgets.QStackedLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(empty_widget, 1)
-        layout.addWidget(files_view, 1)
+        layout.setStackingMode(layout.StackAll)
+        layout.addWidget(empty_widget)
+        layout.addWidget(files_view)
+        layout.setCurrentWidget(empty_widget)
 
         files_proxy_model.rowsInserted.connect(self._on_rows_inserted)
         files_proxy_model.rowsRemoved.connect(self._on_rows_removed)
@@ -697,6 +745,8 @@ class FilesWidget(QtWidgets.QFrame):
         self._files_view = files_view
 
         self._widgets_by_id = {}
+
+        self._layout = layout
 
     def _set_multivalue(self, multivalue):
         if self._multivalue == multivalue:
@@ -774,6 +824,8 @@ class FilesWidget(QtWidgets.QFrame):
         if not self._in_set_value:
             self.value_changed.emit()
 
+        self._update_visibility()
+
     def _on_rows_removed(self, parent_index, start_row, end_row):
         available_item_ids = set()
         for row in range(self._files_proxy_model.rowCount()):
@@ -793,6 +845,7 @@ class FilesWidget(QtWidgets.QFrame):
 
         if not self._in_set_value:
             self.value_changed.emit()
+        self._update_visibility()
 
     def _on_split_request(self):
         if self._multivalue:
@@ -836,29 +889,6 @@ class FilesWidget(QtWidgets.QFrame):
 
         menu.popup(pos)
 
-    def sizeHint(self):
-        # Get size hints of widget and visible widgets
-        result = super(FilesWidget, self).sizeHint()
-        if not self._files_view.isVisible():
-            not_visible_hint = self._files_view.sizeHint()
-        else:
-            not_visible_hint = self._empty_widget.sizeHint()
-
-        # Get margins of this widget
-        margins = self.layout().contentsMargins()
-
-        # Change size hint based on result of maximum size hint of widgets
-        result.setWidth(max(
-            result.width(),
-            not_visible_hint.width() + margins.left() + margins.right()
-        ))
-        result.setHeight(max(
-            result.height(),
-            not_visible_hint.height() + margins.top() + margins.bottom()
-        ))
-
-        return result
-
     def dragEnterEvent(self, event):
         if self._multivalue:
             return
@@ -890,7 +920,6 @@ class FilesWidget(QtWidgets.QFrame):
         mime_data = event.mimeData()
         if mime_data.hasUrls():
             event.accept()
-            # event.setDropAction(QtCore.Qt.CopyAction)
             filepaths = []
             for url in mime_data.urls():
                 filepath = url.toLocalFile()
@@ -956,13 +985,15 @@ class FilesWidget(QtWidgets.QFrame):
 
     def _add_filepaths(self, filepaths):
         self._files_model.add_filepaths(filepaths)
-        self._update_visibility()
 
     def _remove_item_by_ids(self, item_ids):
         self._files_model.remove_item_by_ids(item_ids)
-        self._update_visibility()
 
     def _update_visibility(self):
         files_exists = self._files_proxy_model.rowCount() > 0
-        self._files_view.setVisible(files_exists)
-        self._empty_widget.setVisible(not files_exists)
+        if files_exists:
+            current_widget = self._files_view
+        else:
+            current_widget = self._empty_widget
+        self._layout.setCurrentWidget(current_widget)
+        self._files_view.update_remove_btn_visibility()

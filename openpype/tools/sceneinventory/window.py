@@ -40,8 +40,6 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         project_name = os.getenv("AVALON_PROJECT") or "<Project not set>"
         self.setWindowTitle("Scene Inventory 1.0 - {}".format(project_name))
         self.setObjectName("SceneInventory")
-        # Maya only property
-        self.setProperty("saveWindowPref", True)
 
         self.resize(1100, 480)
 

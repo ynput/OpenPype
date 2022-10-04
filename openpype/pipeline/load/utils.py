@@ -87,12 +87,19 @@ def get_repres_contexts(representation_ids, dbcon=None):
     if not dbcon:
         dbcon = legacy_io
 
-    contexts = {}
     if not representation_ids:
-        return contexts
+        return {}
 
     project_name = dbcon.active_project()
     repre_docs = get_representations(project_name, representation_ids)
+
+    return get_contexts_for_repre_docs(project_name, repre_docs)
+
+
+def get_contexts_for_repre_docs(project_name, repre_docs):
+    contexts = {}
+    if not repre_docs:
+        return contexts
 
     repre_docs_by_id = {}
     version_ids = set()
