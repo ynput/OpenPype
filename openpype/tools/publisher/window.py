@@ -343,7 +343,28 @@ class PublisherWindow(QtWidgets.QDialog):
         self._publish_details_widget.set_report_data(report_data)
 
     def _on_help_click(self):
+        if self._help_dialog.isVisible():
+            return
+
         self._help_dialog.show()
+
+        window = self.window()
+        desktop = QtWidgets.QApplication.desktop()
+        screen_idx = desktop.screenNumber(window)
+        screen = desktop.screen(screen_idx)
+        screen_rect = screen.geometry()
+
+        window_geo = window.geometry()
+        dialog_x = window_geo.x() + window_geo.width()
+        dialog_right = (dialog_x + self._help_dialog.width()) - 1
+        diff = dialog_right - screen_rect.right()
+        if diff > 0:
+            dialog_x -= diff
+
+        self._help_dialog.setGeometry(
+            dialog_x, window_geo.y(),
+            self._help_dialog.width(), self._help_dialog.height()
+        )
 
     def _on_tab_change(self, old_tab, new_tab):
         if old_tab == "details":
