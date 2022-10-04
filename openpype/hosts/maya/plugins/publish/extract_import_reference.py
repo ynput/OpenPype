@@ -32,7 +32,7 @@ class ExtractImportReference(publish.Extractor):
     hosts = ["maya"]
     families = ["renderlayer", "workfile"]
     active = _import_reference()
-    optional= True
+    optional = True
     tmp_format = "_tmp"
 
     def process(self, instance):
