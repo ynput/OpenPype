@@ -334,7 +334,9 @@ class CreateWidget(QtWidgets.QWidget):
         )
         tasks_widget.task_changed.connect(self._on_task_change)
 
-        controller.add_plugins_refresh_callback(self._on_plugins_refresh)
+        controller.event_system.add_callback(
+            "plugins.refresh.finished", self._on_plugins_refresh
+        )
 
         self._main_splitter_widget = main_splitter_widget
 

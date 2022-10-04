@@ -126,9 +126,15 @@ class OverviewWidget(QtWidgets.QFrame):
         )
 
         # --- Controller callbacks ---
-        controller.add_publish_started_callback(self._on_publish_start)
-        controller.add_publish_reset_callback(self._on_publish_reset)
-        controller.add_instances_refresh_callback(self._on_instances_refresh)
+        controller.event_system.add_callback(
+            "publish.process.started", self._on_publish_start
+        )
+        controller.event_system.add_callback(
+            "publish.reset.finished", self._on_publish_reset
+        )
+        controller.event_system.add_callback(
+            "instances.refresh.finished", self._on_instances_refresh
+        )
 
         self._subset_content_widget = subset_content_widget
         self._subset_content_layout = subset_content_layout

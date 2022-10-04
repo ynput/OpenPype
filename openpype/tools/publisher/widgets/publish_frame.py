@@ -155,13 +155,25 @@ class PublishFrame(QtWidgets.QWidget):
         shrunk_anim.valueChanged.connect(self._on_shrunk_anim)
         shrunk_anim.finished.connect(self._on_shrunk_anim_finish)
 
-        controller.add_publish_reset_callback(self._on_publish_reset)
-        controller.add_publish_started_callback(self._on_publish_start)
-        controller.add_publish_validated_callback(self._on_publish_validated)
-        controller.add_publish_stopped_callback(self._on_publish_stop)
+        controller.event_system.add_callback(
+            "publish.reset.finished", self._on_publish_reset
+        )
+        controller.event_system.add_callback(
+            "publish.process.started", self._on_publish_start
+        )
+        controller.event_system.add_callback(
+            "publish.process.validated", self._on_publish_validated
+        )
+        controller.event_system.add_callback(
+            "publish.process.stopped", self._on_publish_stop
+        )
 
-        controller.add_instance_change_callback(self._on_instance_change)
-        controller.add_plugin_change_callback(self._on_plugin_change)
+        controller.event_system.add_callback(
+            "publish.process.instance.changed", self._on_instance_change
+        )
+        controller.event_system.add_callback(
+            "publish.process.plugin.changed", self._on_plugin_change
+        )
 
         self._shrunk_anim = shrunk_anim
 
@@ -304,8 +316,11 @@ class PublishFrame(QtWidgets.QWidget):
     def _on_publish_validated(self):
         self._validate_btn.setEnabled(False)
 
-    def _on_instance_change(self, context, instance):
+    def _on_instance_change(self, event):
         """Change instance label when instance is going to be processed."""
+
+        context = event["context"]
+        instance = event["instance"]
         if instance is None:
             new_name = (
                 context.data.get("label")
@@ -321,8 +336,10 @@ class PublishFrame(QtWidgets.QWidget):
         self._instance_label.setText(new_name)
         QtWidgets.QApplication.processEvents()
 
-    def _on_plugin_change(self, plugin):
+    def _on_plugin_change(self, event):
         """Change plugin label when instance is going to be processed."""
+
+        plugin = event["plugin"]
         plugin_name = plugin.__name__
         if hasattr(plugin, "label") and plugin.label:
             plugin_name = plugin.label

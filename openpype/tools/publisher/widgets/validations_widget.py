@@ -534,9 +534,15 @@ class ValidationsWidget(QtWidgets.QFrame):
 
         main_layout.setCurrentWidget(before_publish_widget)
 
-        controller.add_publish_started_callback(self._on_publish_start)
-        controller.add_publish_reset_callback(self._on_publish_reset)
-        controller.add_publish_stopped_callback(self._on_publish_stop)
+        controller.event_system.add_callback(
+            "publish.process.started", self._on_publish_start
+        )
+        controller.event_system.add_callback(
+            "publish.reset.finished", self._on_publish_reset
+        )
+        controller.event_system.add_callback(
+            "publish.process.stopped", self._on_publish_stop
+        )
 
         self._main_layout = main_layout
 

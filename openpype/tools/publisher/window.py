@@ -237,12 +237,24 @@ class PublisherWindow(QtWidgets.QDialog):
 
         publish_frame.details_page_requested.connect(self._go_to_details_tab)
 
-        controller.add_instances_refresh_callback(self._on_instances_refresh)
-        controller.add_publish_reset_callback(self._on_publish_reset)
-        controller.add_publish_started_callback(self._on_publish_start)
-        controller.add_publish_validated_callback(self._on_publish_validated)
-        controller.add_publish_stopped_callback(self._on_publish_stop)
-        controller.add_message_emitted_callback(self._on_overlay_message)
+        controller.event_system.add_callback(
+            "instances.refresh.finished", self._on_instances_refresh
+        )
+        controller.event_system.add_callback(
+            "publish.reset.finished", self._on_publish_reset
+        )
+        controller.event_system.add_callback(
+            "publish.process.started", self._on_publish_start
+        )
+        controller.event_system.add_callback(
+            "publish.process.validated", self._on_publish_validated
+        )
+        controller.event_system.add_callback(
+            "publish.process.stopped", self._on_publish_stop
+        )
+        controller.event_system.add_callback(
+            "show.card.message", self._on_overlay_message
+        )
 
         # Store extra header widget for TrayPublisher
         # - can be used to add additional widgets to header between context
@@ -302,8 +314,8 @@ class PublisherWindow(QtWidgets.QDialog):
         super(PublisherWindow, self).resizeEvent(event)
         self._update_publish_frame_rect()
 
-    def _on_overlay_message(self, message):
-        self._overlay_object.add_message(message)
+    def _on_overlay_message(self, event):
+        self._overlay_object.add_message(event["message"])
 
     def _on_first_show(self):
         self.resize(self.default_width, self.default_height)
