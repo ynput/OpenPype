@@ -288,8 +288,6 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self._set_publish_visibility(False)
 
-        self._header_widget = header_widget
-
     @property
     def controller(self):
         return self._controller
