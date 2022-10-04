@@ -874,9 +874,12 @@ class PublisherController:
             self._publish_report.add_plugin_iter(plugin, self._publish_context)
 
             # Trigger callback that new plugin is going to be processed
+            plugin_label = plugin.__name__
+            if hasattr(plugin, "label") and plugin.label:
+                plugin_label = plugin.label
             self._emit_event(
                 "publish.process.plugin.changed",
-                {"plugin": plugin}
+                {"plugin_label": plugin_label}
             )
 
             # Plugin is instance plugin

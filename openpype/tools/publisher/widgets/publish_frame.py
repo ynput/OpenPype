@@ -329,13 +329,8 @@ class PublishFrame(QtWidgets.QWidget):
     def _on_plugin_change(self, event):
         """Change plugin label when instance is going to be processed."""
 
-        plugin = event["plugin"]
-        plugin_name = plugin.__name__
-        if hasattr(plugin, "label") and plugin.label:
-            plugin_name = plugin.label
-
         self._progress_widget.setValue(self.controller.publish_progress)
-        self._plugin_label.setText(plugin_name)
+        self._plugin_label.setText(event["plugin_label"])
         QtWidgets.QApplication.processEvents()
 
     def _on_publish_stop(self):
