@@ -190,7 +190,9 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             Version=cmds.about(version=True),
             RenderLayer=instance.data['setMembers'],
             Renderer=instance.data["renderer"],
-            RenderSetupIncludeLights=instance.data.get("renderSetupIncludeLights"),  # noqa
+            # Set it to default Maya behaviour if it cannot be determined
+            # from instance (but it should be, by the Collector).
+            RenderSetupIncludeLights=instance.data.get("renderSetupIncludeLights", 1),  # noqa
             ProjectPath=context.data["workspaceDir"],
             UsingRenderLayers=True,
         )
