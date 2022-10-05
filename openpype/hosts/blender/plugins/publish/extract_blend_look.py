@@ -94,8 +94,8 @@ class ExtractBlendLook(openpype.api.Extractor):
         for image, sourcepath in remapped:
             image.filepath = sourcepath.as_posix()
 
-        del collection["materials_assignment"]
-        del collection["materials_indexes"]
+        collection.pop("materials_assignment")
+        collection.pop("materials_indexes")
 
         for material in materials:
             material.use_fake_user = False
