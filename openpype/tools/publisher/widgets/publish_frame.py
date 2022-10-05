@@ -59,24 +59,35 @@ class PublishFrame(QtWidgets.QWidget):
         message_label_top.setAlignment(QtCore.Qt.AlignCenter)
 
         # Label showing currently processed instance
+        progress_widget = QtWidgets.QWidget(top_content_widget)
+        instance_plugin_widget = QtWidgets.QWidget(progress_widget)
         instance_label = QtWidgets.QLabel(
-            "<Instance name>", top_content_widget
+            "<Instance name>", instance_plugin_widget
         )
         instance_label.setAlignment(
             QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         )
         # Label showing currently processed plugin
-        plugin_label = QtWidgets.QLabel("<Plugin name>", top_content_widget)
+        plugin_label = QtWidgets.QLabel(
+            "<Plugin name>", instance_plugin_widget
+        )
         plugin_label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
-        instance_plugin_layout = QtWidgets.QHBoxLayout()
+        instance_plugin_layout = QtWidgets.QHBoxLayout(instance_plugin_widget)
+        instance_plugin_layout.setContentsMargins(0, 0, 0, 0)
         instance_plugin_layout.addWidget(instance_label, 1)
         instance_plugin_layout.addWidget(plugin_label, 1)
 
         # Progress bar showing progress of publishing
-        progress_widget = QtWidgets.QProgressBar(top_content_widget)
-        progress_widget.setObjectName("PublishProgressBar")
+        progress_bar = QtWidgets.QProgressBar(progress_widget)
+        progress_bar.setObjectName("PublishProgressBar")
+
+        progress_layout = QtWidgets.QVBoxLayout(progress_widget)
+        progress_layout.setSpacing(5)
+        progress_layout.setContentsMargins(0, 0, 0, 0)
+        progress_layout.addWidget(instance_plugin_widget, 0)
+        progress_layout.addWidget(progress_bar, 0)
 
         top_content_layout = QtWidgets.QVBoxLayout(top_content_widget)
         top_content_layout.setContentsMargins(0, 0, 0, 0)
@@ -86,7 +97,6 @@ class PublishFrame(QtWidgets.QWidget):
         # TODO stretches should be probably replaced by spacing...
         # - stretch in floating frame doesn't make sense
         top_content_layout.addWidget(message_label_top)
-        top_content_layout.addLayout(instance_plugin_layout)
         top_content_layout.addWidget(progress_widget)
 
         # Publishing buttons to stop, reset or trigger publishing
@@ -139,6 +149,8 @@ class PublishFrame(QtWidgets.QWidget):
             self,
             top_content_widget,
             footer_widget,
+            progress_widget,
+            instance_plugin_widget,
         ):
             widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
@@ -185,6 +197,7 @@ class PublishFrame(QtWidgets.QWidget):
         self._instance_label = instance_label
         self._plugin_label = plugin_label
 
+        self._progress_bar = progress_bar
         self._progress_widget = progress_widget
 
         self._shrunk_main_label = shrunk_main_label
@@ -295,8 +308,8 @@ class PublishFrame(QtWidgets.QWidget):
         self._validate_btn.setEnabled(True)
         self._publish_btn.setEnabled(True)
 
-        self._progress_widget.setValue(self.controller.publish_progress)
-        self._progress_widget.setMaximum(self.controller.publish_max_progress)
+        self._progress_bar.setValue(self.controller.publish_progress)
+        self._progress_bar.setMaximum(self.controller.publish_max_progress)
 
     def _on_publish_start(self):
         self._set_success_property(-1)
@@ -320,12 +333,12 @@ class PublishFrame(QtWidgets.QWidget):
     def _on_plugin_change(self, event):
         """Change plugin label when instance is going to be processed."""
 
-        self._progress_widget.setValue(self.controller.publish_progress)
+        self._progress_bar.setValue(self.controller.publish_progress)
         self._plugin_label.setText(event["plugin_label"])
         QtWidgets.QApplication.processEvents()
 
     def _on_publish_stop(self):
-        self._progress_widget.setValue(self.controller.publish_progress)
+        self._progress_bar.setValue(self.controller.publish_progress)
 
         self._reset_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
@@ -397,10 +410,8 @@ class PublishFrame(QtWidgets.QWidget):
         self._set_success_property(1)
 
     def _set_progress_visibility(self, visible):
-        self._instance_label.setVisible(visible)
-        self._plugin_label.setVisible(visible)
+        window_height = self.height()
         self._progress_widget.setVisible(visible)
-        self._message_label_top.setVisible(visible)
 
     def _set_success_property(self, state=None):
         if state is None:
@@ -408,7 +419,7 @@ class PublishFrame(QtWidgets.QWidget):
         else:
             state = str(state)
 
-        for widget in (self._progress_widget, self._content_frame):
+        for widget in (self._progress_bar, self._content_frame):
             if widget.property("state") != state:
                 widget.setProperty("state", state)
                 widget.style().polish(widget)
