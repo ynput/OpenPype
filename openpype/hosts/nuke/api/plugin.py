@@ -1,3 +1,4 @@
+from pprint import pformat
 import nuke
 
 import os
@@ -14,7 +15,10 @@ from openpype.client import (
 )
 
 from openpype.api import get_current_project_settings
-from openpype.lib import BoolDef
+from openpype.lib import (
+    BoolDef,
+    EnumDef
+)
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
@@ -202,9 +206,127 @@ class NukeCreator(NewCreator):
             BoolDef("use_selection", label="Use selection")
         ]
 
-    def apply_settings(self, project_settings, system_settings):
+    def get_creator_settings(self, project_settings, settings_key=None):
+        if not settings_key:
+            settings_key = self.__class__.__name__
+        return project_settings["nuke"]["create"][settings_key]
+
+
+class NukeWriteCreator(NukeCreator):
+    """Add Publishable Write node"""
+
+    identifier = "create_write"
+    label = "Create Write"
+    family = "write"
+    icon = "sign-out"
+
+    def set_selected_nodes(self, pre_create_data):
+        if pre_create_data.get("use_selection"):
+            selected_nodes = nuke.selectedNodes()
+            if selected_nodes == []:
+                raise NukeCreatorError("Creator error: No active selection")
+            elif len(selected_nodes) > 1:
+                NukeCreatorError("Creator error: Select only one camera node")
+            self.selected_node = selected_nodes[0]
+        else:
+            self.selected_node = None
+
+    def get_pre_create_attr_defs(self):
+        attr_defs = [
+            BoolDef("use_selection", label="Use selection"),
+            self._get_render_target_enum()
+        ]
+        return attr_defs
+
+    def get_instance_attr_defs(self):
+        attr_defs = [
+            self._get_render_target_enum(),
+            self._get_reviewable_bool()
+        ]
+        return attr_defs
+
+    def _get_render_target_enum(self):
+        rendering_targets = {
+            "local": "Local machine rendering",
+            "frames": "Use existing frames"
+        }
+        if ("farm_rendering" in self.instance_attributes):
+            rendering_targets["farm"] = "Farm rendering"
+
+        return EnumDef(
+            "render_target",
+            items=rendering_targets,
+            label="Render target"
+        )
+
+    def _get_reviewable_bool(self):
+        return BoolDef(
+            "review",
+            default=("reviewable" in self.instance_attributes),
+            label="Review"
+        )
+
+    def create(self, subset_name, instance_data, pre_create_data):
+        # make sure selected nodes are added
+        self.set_selected_nodes(pre_create_data)
+
+        # make sure subset name is unique
+        if self.check_existing_subset(subset_name, instance_data):
+            raise NukeCreatorError(
+                ("subset {} is already published"
+                 "definition.").format(subset_name))
+
+        instance_node = self.create_instance_node(
+            subset_name,
+            instance_data
+        )
+
+        try:
+            instance = CreatedInstance(
+                self.family,
+                subset_name,
+                instance_data,
+                self
+            )
+
+            instance.transient_data["node"] = instance_node
+
+            self._add_instance_to_context(instance)
+
+            set_node_data(
+                instance_node, INSTANCE_DATA_KNOB, instance.data_to_store())
+
+            return instance
+
+        except Exception as er:
+            six.reraise(
+                NukeCreatorError,
+                NukeCreatorError("Creator error: {}".format(er)),
+                sys.exc_info()[2])
+
+        return instance
+
+    def apply_settings(
+        self,
+        project_settings,
+        system_settings,
+        # anatomy_settings
+    ):
         """Method called on initialization of plugin to apply settings."""
-        self.creators_settings = project_settings["nuke"]["create"]
+
+        # plugin settings
+        plugin_settings = self.get_creator_settings(project_settings)
+
+        self.log.debug("___________________")
+        self.log.debug(pformat(plugin_settings))
+
+        # individual attributes
+        self.instance_attributes = plugin_settings[
+            "instance_attributes"]
+        self.prenodes = plugin_settings["prenodes"]
+        self.default_variants = plugin_settings["default_variants"]
+        self.temp_rendering_path_template = plugin_settings[
+            "temp_rendering_path_template"]
 
 
 class OpenPypeCreator(LegacyCreator):
