@@ -10,22 +10,18 @@ import platform
 
 from Qt import QtWidgets, QtCore
 import qtawesome
+import appdirs
 
-from openpype.pipeline import (
-    install_host,
-    AvalonMongoDB,
-)
+from openpype.lib import JSONSettingRegistry
+from openpype.pipeline import install_host
 from openpype.hosts.traypublisher.api import TrayPublisherHost
-from openpype.tools.publisher import PublisherWindow
+from openpype.tools.publisher.window import PublisherWindow
+from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.constants import PROJECT_NAME_ROLE
 from openpype.tools.utils.models import (
     ProjectModel,
     ProjectSortFilterProxy
 )
-
-from openpype.tools.utils import PlaceholderLineEdit
-import appdirs
-from openpype.lib import JSONSettingRegistry
 
 
 class TrayPublisherRegistry(JSONSettingRegistry):
@@ -57,14 +53,10 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
 
         content_widget = QtWidgets.QWidget(middle_frame)
 
-        # Create db connection for projects model
-        dbcon = AvalonMongoDB()
-        dbcon.install()
-
         header_label = QtWidgets.QLabel("Choose project", content_widget)
         header_label.setObjectName("ChooseProjectLabel")
         # Create project models and view
-        projects_model = ProjectModel(dbcon)
+        projects_model = ProjectModel()
         projects_proxy = ProjectSortFilterProxy()
         projects_proxy.setSourceModel(projects_model)
         projects_proxy.setFilterKeyColumn(0)
