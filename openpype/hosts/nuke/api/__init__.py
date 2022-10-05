@@ -11,6 +11,7 @@ from .command import (
 )
 from .plugin import (
     NukeCreator,
+    NukeWriteCreator,
     NukeCreatorError,
     OpenPypeCreator
 )
@@ -40,7 +41,8 @@ from .lib import (
     convert_knob_value_to_correct_type,
     get_node_data,
     set_node_data,
-    update_node_data
+    update_node_data,
+    create_write_node
 )
 from .utils import (
     colorspace_exists_on_node,
@@ -58,6 +60,7 @@ __all__ = (
     "viewer_update_and_undo_stop",
 
     "NukeCreator",
+    "NukeWriteCreator",
     "NukeCreatorError",
     "OpenPypeCreator",
     "NukeHost",
@@ -85,6 +88,7 @@ __all__ = (
     "get_node_data",
     "set_node_data",
     "update_node_data",
+    "create_write_node",
 
     "colorspace_exists_on_node",
     "get_colorspace_list"
