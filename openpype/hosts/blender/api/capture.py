@@ -6,7 +6,7 @@ Playblasting with independent viewport, camera and display options
 import contextlib
 import bpy
 
-from .lib import maintained_time
+from .lib import maintained_time, maintained_selection, maintained_visibility
 from .plugin import deselect_all
 
 
@@ -83,24 +83,29 @@ def capture(
         "use_overwrite": overwrite,
     }
 
-    with _independent_window() as window:
 
-        applied_view(window, camera, isolate, options=display_options)
+    with contextlib.ExitStack() as stack:
+        stack.enter_context(maintained_time())
+        stack.enter_context(maintained_selection())
+        stack.enter_context(maintained_visibility())
 
-        with contextlib.ExitStack() as stack:
-            stack.enter_context(maintain_camera(window, camera))
-            stack.enter_context(applied_frame_range(window, *frame_range))
-            stack.enter_context(applied_render_options(window, render_options))
-            stack.enter_context(applied_image_settings(window, image_settings))
-            stack.enter_context(maintained_time())
+        with _independent_window() as window:
 
-            bpy.ops.render.opengl(
-                animation=True,
-                render_keyed_only=False,
-                sequencer=False,
-                write_still=False,
-                view_context=True,
-            )
+            applied_view(window, camera, isolate, options=display_options)
+
+            with contextlib.ExitStack() as substack:
+                substack.enter_context(maintain_camera(window, camera))
+                substack.enter_context(applied_frame_range(window, *frame_range))
+                substack.enter_context(applied_render_options(window, render_options))
+                substack.enter_context(applied_image_settings(window, image_settings))
+
+                bpy.ops.render.opengl(
+                    animation=True,
+                    render_keyed_only=False,
+                    sequencer=False,
+                    write_still=False,
+                    view_context=True,
+                )
 
     return filename
 
@@ -123,13 +128,13 @@ def isolate_objects(window, objects):
     """Isolate selection"""
     deselect_all()
 
-    for obj in objects:
-        obj.select_set(True)
+    for obj in bpy.context.scene.objects:
+        obj.select_set(obj in objects)
+        obj.hide_set(obj not in objects)
 
     context = create_blender_context(selected=objects, window=window)
 
     bpy.ops.view3d.view_axis(context, type="FRONT")
-    bpy.ops.view3d.localview(context)
 
     deselect_all()
 
@@ -149,7 +154,10 @@ def applied_view(window, camera, isolate=None, options=None):
     area.ui_type = "VIEW_3D"
     space = area.spaces[0]
 
-    meshes = [obj for obj in window.scene.objects if obj.type == "MESH"]
+    meshes = [
+        obj for obj in window.scene.objects
+        if obj.type == "MESH" and obj.visible_get()
+    ]
 
     if camera == "AUTO":
         space.region_3d.view_perspective = "ORTHO"
