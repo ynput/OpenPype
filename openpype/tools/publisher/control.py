@@ -437,11 +437,6 @@ class PublisherController:
         return self.host.get_current_context()["task_name"]
 
     @property
-    def dbcon(self):
-        """Pointer to AvalonMongoDB in creator context."""
-        return self.create_context.dbcon
-
-    @property
     def instances(self):
         """Current instances in create context."""
         return self.create_context.instances
