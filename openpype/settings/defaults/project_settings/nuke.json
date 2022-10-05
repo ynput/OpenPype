@@ -56,12 +56,15 @@
     ],
     "create": {
         "CreateWriteRender": {
-            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
-            "defaults": [
+            "temp_rendering_path_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
+            "default_variants": [
                 "Main",
                 "Mask"
             ],
-            "knobs": [],
+            "instance_attributes": [
+                "reviewable",
+                "farm_rendering"
+            ],
             "prenodes": {
                 "Reformat01": {
                     "nodeclass": "Reformat",
@@ -82,27 +85,28 @@
             }
         },
         "CreateWritePrerender": {
-            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
-            "use_range_limit": true,
-            "defaults": [
+            "temp_rendering_path_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
+            "default_variants": [
                 "Key01",
                 "Bg01",
                 "Fg01",
                 "Branch01",
                 "Part01"
             ],
-            "reviewable": false,
-            "knobs": [],
+            "instance_attributes": [
+                "farm_rendering",
+                "use_range_limit"
+            ],
             "prenodes": {}
         },
         "CreateWriteStill": {
-            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{ext}",
-            "defaults": [
+            "temp_rendering_path_template": "{work}/renders/nuke/{subset}/{subset}.{ext}",
+            "default_variants": [
                 "ImageFrame",
                 "MPFrame",
                 "LayoutFrame"
             ],
-            "knobs": [],
+            "instance_attributes": [],
             "prenodes": {
                 "FrameHold01": {
                     "nodeclass": "FrameHold",
