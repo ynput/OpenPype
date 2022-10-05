@@ -108,10 +108,6 @@ class AssetDocsCache:
         self._asset_docs = None
         self._task_names_by_asset_name = {}
 
-    @property
-    def dbcon(self):
-        return self._controller.dbcon
-
     def reset(self):
         self._asset_docs = None
         self._task_names_by_asset_name = {}

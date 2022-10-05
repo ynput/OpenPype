@@ -174,9 +174,6 @@ class CreateWidget(QtWidgets.QWidget):
 
         self._controller = controller
 
-        self._asset_name = self.dbcon.Session.get("AVALON_ASSET")
-        self._task_name = self.dbcon.Session.get("AVALON_TASK")
-
         self._asset_doc = None
         self._subset_names = None
         self._selected_creator = None
@@ -365,6 +362,14 @@ class CreateWidget(QtWidgets.QWidget):
         self._prereq_timer = prereq_timer
         self._first_show = True
 
+    @property
+    def current_asset_name(self):
+        return self._controller.current_asset_name
+
+    @property
+    def current_task_name(self):
+        return self._controller.current_task_name
+
     def _context_change_is_enabled(self):
         return self._context_widget.isEnabled()
 
@@ -374,7 +379,7 @@ class CreateWidget(QtWidgets.QWidget):
             asset_name = self._assets_widget.get_selected_asset_name()
 
         if asset_name is None:
-            asset_name = self._asset_name
+            asset_name = self.current_asset_name
         return asset_name
 
     def _get_task_name(self):
@@ -386,12 +391,8 @@ class CreateWidget(QtWidgets.QWidget):
                 task_name = self._tasks_widget.get_selected_task_name()
 
         if not task_name:
-            task_name = self._task_name
+            task_name = self.current_task_name
         return task_name
-
-    @property
-    def dbcon(self):
-        return self._controller.dbcon
 
     def _set_context_enabled(self, enabled):
         self._assets_widget.set_enabled(enabled)
@@ -421,7 +422,7 @@ class CreateWidget(QtWidgets.QWidget):
         #   data
         self._refresh_creators()
 
-        self._assets_widget.set_current_asset_name(self._asset_name)
+        self._assets_widget.set_current_asset_name(self.current_asset_name)
         self._assets_widget.select_asset_by_name(asset_name)
         self._tasks_widget.set_asset_name(asset_name)
         self._tasks_widget.select_task_name(task_name)
@@ -476,7 +477,7 @@ class CreateWidget(QtWidgets.QWidget):
         if asset_name is None:
             return
 
-        project_name = self.dbcon.active_project()
+        project_name = self._controller.project_name
         asset_doc = get_asset_by_name(project_name, asset_name)
         self._asset_doc = asset_doc
 
@@ -561,8 +562,9 @@ class CreateWidget(QtWidgets.QWidget):
 
     def _on_current_session_context_request(self):
         self._assets_widget.set_current_session_asset()
-        if self._task_name:
-            self._tasks_widget.select_task_name(self._task_name)
+        task_name = self.current_task_name
+        if task_name:
+            self._tasks_widget.select_task_name(task_name)
 
     def _on_creator_item_change(self, new_index, _old_index):
         identifier = None
