@@ -60,9 +60,10 @@ class NukeCreator(NewCreator):
         # add info text
         info_knob = nuke.Text_Knob("OP_info", "")
         info_knob.setValue("""
-<h1><span style=\"color:#fc0303\">Do not erase manually !</span></h1>
+<span style=\"color:#fc0303\">
 <p>This node is maintained by <b>OpenPype Publisher</b>.</p>
-<p>We recomand to remove it from the Publisher gui.</p>
+<p>To remove it use Publisher gui.</p>
+</span>
         """)
         node.addKnob(info_knob)
 
@@ -302,9 +303,8 @@ class NukeWriteCreator(NukeCreator):
             six.reraise(
                 NukeCreatorError,
                 NukeCreatorError("Creator error: {}".format(er)),
-                sys.exc_info()[2])
-
-        return instance
+                sys.exc_info()[2]
+            )
 
     def apply_settings(
         self,
