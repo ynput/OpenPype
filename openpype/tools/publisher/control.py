@@ -118,7 +118,7 @@ class AssetDocsCache:
 
     def _query(self):
         if self._asset_docs is None:
-            project_name = self.dbcon.active_project()
+            project_name = self._controller.project_name
             asset_docs = get_assets(
                 project_name, fields=self.projection.keys()
             )
@@ -419,8 +419,33 @@ class PublisherController:
 
     @property
     def project_name(self):
-        """Current project context."""
-        return self.dbcon.Session["AVALON_PROJECT"]
+        """Current project context defined by host.
+
+        Returns:
+            str: Project name.
+        """
+
+        return self.host.get_current_context()["project_name"]
+
+    @property
+    def current_asset_name(self):
+        """Current context asset name defined by host.
+
+        Returns:
+            Union[str, None]: Asset name or None if asset is not set.
+        """
+
+        return self.host.get_current_context()["asset_name"]
+
+    @property
+    def current_task_name(self):
+        """Current context task name defined by host.
+
+        Returns:
+            Union[str, None]: Task name or None if task is not set.
+        """
+
+        return self.host.get_current_context()["task_name"]
 
     @property
     def dbcon(self):
