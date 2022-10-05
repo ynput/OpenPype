@@ -1082,27 +1082,14 @@ def format_anatomy(data):
     Return:
         path (str)
     '''
-    # TODO: perhaps should be nonPublic
-
     anatomy = Anatomy()
     log.debug("__ anatomy.templates: {}".format(anatomy.templates))
 
-    try:
-        # TODO: bck compatibility with old anatomy template
-        padding = int(
-            anatomy.templates["render"].get(
-                "frame_padding",
-                anatomy.templates["render"].get("padding")
-            )
+    padding = int(
+        anatomy.templates["render"].get(
+            "frame_padding"
         )
-    except KeyError as e:
-        msg = ("`padding` key is not in `render` "
-               "or `frame_padding` on is not available in "
-               "Anatomy template. Please, add it there and restart "
-               "the pipeline (padding: \"4\"): `{}`").format(e)
-
-        log.error(msg)
-        nuke.message(msg)
+    )
 
     version = data.get("version", None)
     if not version:
@@ -1110,16 +1097,16 @@ def format_anatomy(data):
         data["version"] = get_version_from_path(file)
 
     project_name = anatomy.project_name
-    asset_name = data["avalon"]["asset"]
-    task_name = os.environ["AVALON_TASK"]
+    asset_name = data["asset"]
+    task_name = data["task"]
     host_name = os.environ["AVALON_APP"]
     context_data = get_template_data_with_names(
         project_name, asset_name, task_name, host_name
     )
     data.update(context_data)
     data.update({
-        "subset": data["avalon"]["subset"],
-        "family": data["avalon"]["family"],
+        "subset": data["subset"],
+        "family": data["family"],
         "frame": "#" * padding,
     })
     return anatomy.format(data)
