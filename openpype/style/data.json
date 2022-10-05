@@ -100,6 +100,9 @@
                 "bg-expander": "#2C313A",
                 "bg-expander-hover": "#2d6c9f",
                 "bg-expander-selected-hover": "#3784c5"
+            },
+            "validate-title": {
+                "selected": "#6b5d49"
             }
         },
         "settings": {

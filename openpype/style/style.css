@@ -1025,17 +1025,16 @@ ValidationArtistMessage QLabel {
 }
 
 #ValidationErrorTitleFrame {
-    background: {color:bg-inputs};
-    border-left: 4px solid transparent;
+    border-radius: 0.2em;
+    background: {color:bg-buttons};
 }
 
 #ValidationErrorTitleFrame:hover {
-    border-left-color: {color:border};
+    background: {color:bg-buttons-hover};
 }
 
 #ValidationErrorTitleFrame[selected="1"] {
-    background: {color:bg};
-    border-left-color: {palette:blue-light};
+    background: {color:publisher:validate-title:selected};
 }
 
 #ValidationErrorInstanceList {

@@ -6,7 +6,7 @@ except Exception:
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from openpype.tools.utils import BaseClickableFrame
+from openpype.tools.utils import BaseClickableFrame, ClickableFrame
 from .widgets import (
     IconValuePixmapLabel
 )
@@ -60,9 +60,8 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         self._error_info = error_info
         self._selected = False
 
-        title_frame = BaseClickableFrame(self)
+        title_frame = ClickableFrame(self)
         title_frame.setObjectName("ValidationErrorTitleFrame")
-        title_frame._mouse_release_callback = self._mouse_release_callback
 
         toggle_instance_btn = QtWidgets.QToolButton(title_frame)
         toggle_instance_btn.setObjectName("ArrowBtn")
@@ -72,8 +71,8 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         label_widget = QtWidgets.QLabel(error_info["title"], title_frame)
 
         title_frame_layout = QtWidgets.QHBoxLayout(title_frame)
-        title_frame_layout.addWidget(toggle_instance_btn)
-        title_frame_layout.addWidget(label_widget)
+        title_frame_layout.addWidget(label_widget, 1)
+        title_frame_layout.addWidget(toggle_instance_btn, 0)
 
         instances_model = QtGui.QStandardItemModel()
         error_info = error_info["error_info"]
@@ -106,25 +105,27 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
 
         instances_view = ValidationErrorInstanceList(self)
         instances_view.setModel(instances_model)
-        instances_view.setVisible(False)
 
         self.setLayoutDirection(QtCore.Qt.LeftToRight)
 
-        view_layout = QtWidgets.QHBoxLayout()
+        view_widget = QtWidgets.QWidget(self)
+        view_layout = QtWidgets.QHBoxLayout(view_widget)
         view_layout.setContentsMargins(0, 0, 0, 0)
         view_layout.setSpacing(0)
         view_layout.addSpacing(14)
-        view_layout.addWidget(instances_view)
+        view_layout.addWidget(instances_view, 0)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(title_frame)
-        layout.addLayout(view_layout)
+        layout.addWidget(title_frame, 0)
+        layout.addWidget(view_widget, 0)
+        view_widget.setVisible(False)
 
         if not context_validation:
             toggle_instance_btn.clicked.connect(self._on_toggle_btn_click)
 
+        title_frame.clicked.connect(self._mouse_release_callback)
         instances_view.selectionModel().selectionChanged.connect(
             self._on_seleciton_change
         )
@@ -133,7 +134,7 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
 
         self._toggle_instance_btn = toggle_instance_btn
 
-        self._view_layout = view_layout
+        self._view_widget = view_widget
 
         self._instances_model = instances_model
         self._instances_view = instances_view
@@ -141,17 +142,21 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         self._context_validation = context_validation
         self._help_text_by_instance_id = help_text_by_instance_id
 
+        self._expanded = False
+
     def sizeHint(self):
         result = super(ValidationErrorTitleWidget, self).sizeHint()
-        expected_width = 0
-        for idx in range(self._view_layout.count()):
-            expected_width += self._view_layout.itemAt(idx).sizeHint().width()
+        expected_width = max(
+            self._view_widget.minimumSizeHint().width(),
+            self._view_widget.sizeHint().width()
+        )
 
         if expected_width < 200:
             expected_width = 200
 
         if result.width() < expected_width:
             result.setWidth(expected_width)
+
         return result
 
     def minimumSizeHint(self):
@@ -170,7 +175,9 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
 
     def _mouse_release_callback(self):
         """Mark this widget as selected on click."""
+
         self.set_selected(True)
+        self._set_expanded(True)
 
     def current_desctiption_text(self):
         if self._context_validation:
@@ -218,9 +225,19 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
 
     def _on_toggle_btn_click(self):
         """Show/hide instances list."""
-        new_visible = not self._instances_view.isVisible()
-        self._instances_view.setVisible(new_visible)
-        if new_visible:
+
+        self._set_expanded()
+
+    def _set_expanded(self, expanded=None):
+        if expanded is None:
+            expanded = not self._expanded
+
+        elif expanded is self._expanded:
+            return
+
+        self._expanded = expanded
+        self._view_widget.setVisible(expanded)
+        if expanded:
             self._toggle_instance_btn.setArrowType(QtCore.Qt.DownArrow)
         else:
             self._toggle_instance_btn.setArrowType(QtCore.Qt.RightArrow)
