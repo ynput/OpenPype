@@ -6,6 +6,8 @@ Tray publisher can be considered as host implementeation with creators and
 publishing plugins.
 """
 
+import platform
+
 from Qt import QtWidgets, QtCore
 import qtawesome
 
@@ -259,6 +261,12 @@ def main():
     app_instance = QtWidgets.QApplication.instance()
     if app_instance is None:
         app_instance = QtWidgets.QApplication([])
+
+    if platform.system().lower() == "windows":
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            u"traypublisher"
+        )
 
     window = TrayPublishWindow()
     window.show()
