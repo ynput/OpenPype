@@ -1256,7 +1256,11 @@ class RepresentationWidget(QtWidgets.QWidget):
             repre_doc["parent"]
             for repre_doc in repre_docs
         ]
-        version_docs = get_versions(project_name, version_ids=version_ids)
+        version_docs = get_versions(
+            project_name,
+            version_ids=version_ids,
+            hero=True
+        )
 
         version_docs_by_id = {}
         version_docs_by_subset_id = collections.defaultdict(list)
