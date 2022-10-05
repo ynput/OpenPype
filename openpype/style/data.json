@@ -89,6 +89,7 @@
         },
         "publisher": {
             "error": "#AA5050",
+            "crash": "#FF6432",
             "success": "#458056",
             "warning": "#ffc671",
             "tab-bg": "#16191d",

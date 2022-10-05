@@ -980,7 +980,7 @@ VariantInputsWidget QToolButton {
 }
 
 #PublishInfoFrame[state="0"] {
-	background: {color:publisher:error};
+	background: {color:publisher:crash};
 }
 
 #PublishInfoFrame[state="1"] {
