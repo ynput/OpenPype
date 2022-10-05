@@ -296,16 +296,17 @@ class PublisherController(object):
         headless (bool): Headless publishing. ATM not implemented or used.
     """
 
+    _log = None
+
     def __init__(self, dbcon=None, headless=False):
-        self.log = logging.getLogger("PublisherController")
-        self.host = registered_host()
-        self.headless = headless
+        self._host = registered_host()
+        self._headless = headless
 
         # Inner event system of controller
         self._event_system = EventSystem()
 
-        self.create_context = CreateContext(
-            self.host, dbcon, headless=headless, reset=False
+        self._create_context = CreateContext(
+            self._host, dbcon, headless=headless, reset=False
         )
 
         # pyblish.api.Context
@@ -350,6 +351,12 @@ class PublisherController(object):
         self._asset_docs_cache = AssetDocsCache(self)
 
     @property
+    def log(self):
+        if self._log is None:
+            self._log = logging.getLogger("PublisherController")
+        return self._log
+
+    @property
     def project_name(self):
         """Current project context defined by host.
 
@@ -357,7 +364,7 @@ class PublisherController(object):
             str: Project name.
         """
 
-        return self.host.get_current_context()["project_name"]
+        return self._host.get_current_context()["project_name"]
 
     @property
     def current_asset_name(self):
@@ -367,7 +374,7 @@ class PublisherController(object):
             Union[str, None]: Asset name or None if asset is not set.
         """
 
-        return self.host.get_current_context()["asset_name"]
+        return self._host.get_current_context()["asset_name"]
 
     @property
     def current_task_name(self):
@@ -377,37 +384,37 @@ class PublisherController(object):
             Union[str, None]: Task name or None if task is not set.
         """
 
-        return self.host.get_current_context()["task_name"]
+        return self._host.get_current_context()["task_name"]
 
     @property
     def instances(self):
         """Current instances in create context."""
-        return self.create_context.instances
+        return self._create_context.instances
 
     @property
     def creators(self):
         """All creators loaded in create context."""
-        return self.create_context.creators
+        return self._create_context.creators
 
     @property
     def manual_creators(self):
         """Creators that can be shown in create dialog."""
-        return self.create_context.manual_creators
+        return self._create_context.manual_creators
 
     @property
     def host_is_valid(self):
         """Host is valid for creation."""
-        return self.create_context.host_is_valid
+        return self._create_context.host_is_valid
 
     @property
     def publish_plugins(self):
         """Publish plugins."""
-        return self.create_context.publish_plugins
+        return self._create_context.publish_plugins
 
     @property
     def plugins_with_defs(self):
         """Publish plugins with possible attribute definitions."""
-        return self.create_context.plugins_with_defs
+        return self._create_context.plugins_with_defs
 
     @property
     def event_system(self):
@@ -445,8 +452,8 @@ class PublisherController(object):
     def get_context_title(self):
         """Get context title for artist shown at the top of main window."""
         context_title = None
-        if hasattr(self.host, "get_context_title"):
-            context_title = self.host.get_context_title()
+        if hasattr(self._host, "get_context_title"):
+            context_title = self._host.get_context_title()
 
         if context_title is None:
             context_title = os.environ.get("AVALON_APP_NAME")
@@ -486,7 +493,7 @@ class PublisherController(object):
         self.save_changes()
 
         # Reset avalon context
-        self.create_context.reset_avalon_context()
+        self._create_context.reset_avalon_context()
 
         self._reset_plugins()
         # Publish part must be reset after plugins
@@ -502,7 +509,7 @@ class PublisherController(object):
 
         self._resetting_plugins = True
 
-        self.create_context.reset_plugins()
+        self._create_context.reset_plugins()
 
         self._resetting_plugins = False
 
@@ -515,10 +522,10 @@ class PublisherController(object):
 
         self._resetting_instances = True
 
-        self.create_context.reset_context_data()
-        with self.create_context.bulk_instances_collection():
-            self.create_context.reset_instances()
-            self.create_context.execute_autocreators()
+        self._create_context.reset_context_data()
+        with self._create_context.bulk_instances_collection():
+            self._create_context.reset_instances()
+            self._create_context.execute_autocreators()
 
         self._resetting_instances = False
 
@@ -567,7 +574,7 @@ class PublisherController(object):
         """
         _tmp_items = []
         if include_context:
-            _tmp_items.append(self.create_context)
+            _tmp_items.append(self._create_context)
 
         for instance in instances:
             _tmp_items.append(instance)
@@ -626,8 +633,8 @@ class PublisherController(object):
 
     def save_changes(self):
         """Save changes happened during creation."""
-        if self.create_context.host_is_valid:
-            self.create_context.save_changes()
+        if self._create_context.host_is_valid:
+            self._create_context.save_changes()
 
     def remove_instances(self, instances):
         """"""
@@ -635,7 +642,7 @@ class PublisherController(object):
         #   reset is not required and save changes too.
         self.save_changes()
 
-        self.create_context.remove_instances(instances)
+        self._create_context.remove_instances(instances)
 
         self._emit_event("instances.refresh.finished")
 
@@ -696,9 +703,9 @@ class PublisherController(object):
         # - must not be used for changing CreatedInstances during publishing!
         # QUESTION
         # - pop the key after first collector using it would be safest option?
-        self._publish_context.data["create_context"] = self.create_context
+        self._publish_context.data["create_context"] = self._create_context
 
-        self._publish_report.reset(self._publish_context, self.create_context)
+        self._publish_report.reset(self._publish_context, self._create_context)
         self._publish_validation_errors = []
         self._publish_current_plugin_validation_errors = None
         self._publish_error = None
