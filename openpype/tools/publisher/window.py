@@ -11,7 +11,7 @@ from openpype.tools.utils import (
 )
 
 from .publish_report_viewer import PublishReportViewerWidget
-from .control import PublisherController
+from .control_qt import QtPublisherController
 from .widgets import (
     OverviewWidget,
     ValidationsWidget,
@@ -34,7 +34,7 @@ class PublisherWindow(QtWidgets.QDialog):
     default_width = 1300
     default_height = 800
 
-    def __init__(self, parent=None, reset_on_show=None):
+    def __init__(self, parent=None, controller=None, reset_on_show=None):
         super(PublisherWindow, self).__init__(parent)
 
         self.setWindowTitle("OpenPype publisher")
@@ -59,7 +59,8 @@ class PublisherWindow(QtWidgets.QDialog):
             | on_top_flag
         )
 
-        controller = PublisherController()
+        if controller is None:
+            controller = QtPublisherController()
 
         help_dialog = HelpDialog(controller, self)
 

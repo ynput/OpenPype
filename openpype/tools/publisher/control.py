@@ -14,14 +14,13 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.create import CreateContext
 
-from Qt import QtCore
-
 # Define constant for plugin orders offset
 PLUGIN_ORDER_OFFSET = 0.5
 
 
 class MainThreadItem:
     """Callback with args and kwargs."""
+
     def __init__(self, callback, *args, **kwargs):
         self.callback = callback
         self.args = args
@@ -31,64 +30,9 @@ class MainThreadItem:
         self.callback(*self.args, **self.kwargs)
 
 
-class MainThreadProcess(QtCore.QObject):
-    """Qt based main thread process executor.
-
-    Has timer which controls each 50ms if there is new item to process.
-
-    This approach gives ability to update UI meanwhile plugin is in progress.
-    """
-
-    count_timeout = 2
-
-    def __init__(self):
-        super(MainThreadProcess, self).__init__()
-        self._items_to_process = collections.deque()
-
-        timer = QtCore.QTimer()
-        timer.setInterval(0)
-
-        timer.timeout.connect(self._execute)
-
-        self._timer = timer
-        self._switch_counter = self.count_timeout
-
-    def process(self, func, *args, **kwargs):
-        item = MainThreadItem(func, *args, **kwargs)
-        self.add_item(item)
-
-    def add_item(self, item):
-        self._items_to_process.append(item)
-
-    def _execute(self):
-        if not self._items_to_process:
-            return
-
-        if self._switch_counter > 0:
-            self._switch_counter -= 1
-            return
-
-        self._switch_counter = self.count_timeout
-
-        item = self._items_to_process.popleft()
-        item.process()
-
-    def start(self):
-        if not self._timer.isActive():
-            self._timer.start()
-
-    def stop(self):
-        if self._timer.isActive():
-            self._timer.stop()
-
-    def clear(self):
-        if self._timer.isActive():
-            self._timer.stop()
-        self._items_to_process = collections.deque()
-
-
 class AssetDocsCache:
     """Cache asset documents for creation part."""
+
     projection = {
         "_id": True,
         "name": True,
@@ -133,6 +77,7 @@ class PublishReport:
 
     Report keeps current state of publishing and currently processed plugin.
     """
+
     def __init__(self, controller):
         self.controller = controller
         self._publish_discover_result = None
@@ -341,7 +286,7 @@ class PublishReport:
         return output
 
 
-class PublisherController:
+class PublisherController(object):
     """Middleware between UI, CreateContext and publish Context.
 
     Handle both creation and publishing parts.
@@ -394,8 +339,6 @@ class PublisherController:
             pyblish.api.ValidatorOrder + PLUGIN_ORDER_OFFSET
         )
 
-        # Qt based main thread processor
-        self._main_thread_processor = MainThreadProcess()
         # Plugin iterator
         self._main_thread_iter = None
 
@@ -744,7 +687,7 @@ class PublisherController:
         self._publish_up_validation = False
         self._publish_finished = False
         self._publish_comment_is_set = False
-        self._main_thread_processor.clear()
+
         self._main_thread_iter = self._publish_iterator()
         self._publish_context = pyblish.api.Context()
         # Make sure "comment" is set on publish context
@@ -792,13 +735,12 @@ class PublisherController:
         self._publish_is_running = True
 
         self._emit_event("publish.process.started")
-        self._main_thread_processor.start()
+
         self._publish_next_process()
 
     def _stop_publish(self):
         """Stop or pause publishing."""
         self._publish_is_running = False
-        self._main_thread_processor.stop()
 
         self._emit_event("publish.process.stopped")
 
@@ -837,7 +779,10 @@ class PublisherController:
         else:
             item = next(self._main_thread_iter)
 
-        self._main_thread_processor.add_item(item)
+        self._process_main_thread_item(item)
+
+    def _process_main_thread_item(self, item):
+        item()
 
     def _publish_iterator(self):
         """Main logic center of publishing.
