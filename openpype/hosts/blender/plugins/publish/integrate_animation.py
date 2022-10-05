@@ -11,6 +11,7 @@ class IntegrateAnimation(pyblish.api.InstancePlugin):
     optional = True
     hosts = ["blender"]
     families = ["setdress"]
+    active = False
 
     def process(self, instance):
         self.log.info("Integrate Animation")
