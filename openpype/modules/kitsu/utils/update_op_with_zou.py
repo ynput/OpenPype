@@ -115,8 +115,8 @@ def update_op_assets(
         item_data["frameStart"] = frame_in
         # Frames duration, fallback on 0
         try:
-            # NOTE nb_frames is stored directly in item because 
-            # of zou's legacy design
+            # NOTE nb_frames is stored directly in item
+            # because of zou's legacy design
             frames_duration = int(item.get("nb_frames", 0))
         except (TypeError, ValueError):
             frames_duration = 0
