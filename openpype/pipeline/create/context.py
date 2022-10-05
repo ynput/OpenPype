@@ -169,7 +169,7 @@ class AttributeValues:
     def reset_values(self):
         self._data = {}
 
-    def mark_stored(self):
+    def mark_as_stored(self):
         self._origin_data = copy.deepcopy(self._data)
 
     @property
@@ -307,7 +307,7 @@ class PublishAttributes:
         for name in self._plugin_names_order:
             yield name
 
-    def mark_stored(self):
+    def mark_as_stored(self):
         self._origin_data = copy.deepcopy(self._data)
 
     def data_to_store(self):
@@ -629,7 +629,7 @@ class CreatedInstance:
                 changes[key] = (old_value, None)
         return changes
 
-    def mark_stored(self):
+    def mark_as_stored(self):
         """Should be called when instance data are stored.
 
         Origin data are replaced by current data so changes are cleared.
@@ -645,8 +645,8 @@ class CreatedInstance:
         for key in orig_keys:
             self._orig_data.pop(key)
 
-        self.creator_attributes.mark_stored()
-        self.publish_attributes.mark_stored()
+        self.creator_attributes.mark_as_stored()
+        self.publish_attributes.mark_as_stored()
 
     @property
     def creator_attributes(self):
