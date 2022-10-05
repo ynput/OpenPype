@@ -91,6 +91,8 @@ class CreateWriteRender(napi.NukeWriteCreator):
         )
         self.add_info_knob(created_node)
 
+        self.integrate_links(created_node, outputs=False)
+
         return created_node
 
     def create(self, subset_name, instance_data, pre_create_data):

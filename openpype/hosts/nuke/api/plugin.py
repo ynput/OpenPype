@@ -221,6 +221,26 @@ class NukeWriteCreator(NukeCreator):
     family = "write"
     icon = "sign-out"
 
+    def integrate_links(self, node, outputs=True):
+        # skip if no selection
+        if not self.selected_node:
+            return
+
+        # collect dependencies
+        input_nodes = [self.selected_node]
+        dependent_nodes = self.selected_node.dependent() if outputs else []
+
+        # relinking to collected connections
+        for i, input in enumerate(input_nodes):
+            node.setInput(i, input)
+
+        # make it nicer in graph
+        node.autoplace()
+
+        # relink also dependent nodes
+        for dep_nodes in dependent_nodes:
+            dep_nodes.setInput(0, node)
+
     def set_selected_nodes(self, pre_create_data):
         if pre_create_data.get("use_selection"):
             selected_nodes = nuke.selectedNodes()
