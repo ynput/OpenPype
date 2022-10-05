@@ -33,7 +33,8 @@ from .lib import (
     get_nuke_imageio_settings,
     set_node_knobs_from_settings,
     get_view_process_node,
-    set_node_data
+    set_node_data,
+    deprecated
 )
 from .pipeline import (
     list_instances,
@@ -138,7 +139,7 @@ class NukeCreator(NewCreator):
         # make sure subset name is unique
         if self.check_existing_subset(subset_name, instance_data):
             raise NukeCreatorError(
-                ("subset {} is already published with different HDA"
+                ("subset {} is already published"
                  "definition.").format(subset_name))
 
         try:
@@ -736,6 +737,7 @@ class ExporterReviewMov(ExporterReview):
         return self.data
 
 
+@deprecated("openpype.hosts.nuke.api.plugin.NukeWriteCreator")
 class AbstractWriteRender(OpenPypeCreator):
     """Abstract creator to gather similar implementation for Write creators"""
     name = ""

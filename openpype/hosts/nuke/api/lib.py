@@ -3,6 +3,8 @@ from pprint import pformat
 import re
 import json
 import six
+import functools
+import warnings
 import platform
 import tempfile
 import contextlib
@@ -66,6 +68,51 @@ EXCLUDED_KNOB_TYPE_ON_READ = (
 JSON_PREFIX = "JSON:::"
 ROOT_DATA_KNOB = "publish_context"
 INSTANCE_DATA_KNOB = "publish_instance"
+
+
+class DeprecatedWarning(DeprecationWarning):
+    pass
+
+
+def deprecated(new_destination):
+    """Mark functions as deprecated.
+
+    It will result in a warning being emitted when the function is used.
+    """
+
+    func = None
+    if callable(new_destination):
+        func = new_destination
+        new_destination = None
+
+    def _decorator(decorated_func):
+        if new_destination is None:
+            warning_message = (
+                " Please check content of deprecated function to figure out"
+                " possible replacement."
+            )
+        else:
+            warning_message = " Please replace your usage with '{}'.".format(
+                new_destination
+            )
+
+        @functools.wraps(decorated_func)
+        def wrapper(*args, **kwargs):
+            warnings.simplefilter("always", DeprecatedWarning)
+            warnings.warn(
+                (
+                    "Call to deprecated function '{}'"
+                    "\nFunction was moved or removed.{}"
+                ).format(decorated_func.__name__, warning_message),
+                category=DeprecatedWarning,
+                stacklevel=4
+            )
+            return decorated_func(*args, **kwargs)
+        return wrapper
+
+    if func is None:
+        return _decorator
+    return _decorator(func)
 
 
 class Context:
@@ -1164,8 +1211,6 @@ def create_write_node(
     data,
     input=None,
     prenodes=None,
-    review=True,
-    farm=True,
     linked_knobs=None,
     **kwargs
 ):
@@ -1207,35 +1252,26 @@ def create_write_node(
     '''
     prenodes = prenodes or {}
 
-    # group node knob overrides
-    knob_overrides = data.pop("knobs", [])
-
     # filtering variables
     plugin_name = data["creator"]
     subset = data["subset"]
 
     # get knob settings for write node
     imageio_writes = get_imageio_node_setting(
-        node_class=data["nodeclass"],
+        node_class="Write",
         plugin_name=plugin_name,
         subset=subset
     )
 
     for knob in imageio_writes["knobs"]:
         if knob["name"] == "file_type":
-            representation = knob["value"]
+            ext = knob["value"]
 
-    try:
-        data.update({
-            "imageio_writes": imageio_writes,
-            "representation": representation,
-        })
-        anatomy_filled = format_anatomy(data)
-
-    except Exception as e:
-        msg = "problem with resolving anatomy template: {}".format(e)
-        log.error(msg)
-        nuke.message(msg)
+    data.update({
+        "imageio_writes": imageio_writes,
+        "ext": ext
+    })
+    anatomy_filled = format_anatomy(data)
 
     # build file path to workfiles
     fdir = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
@@ -1244,7 +1280,7 @@ def create_write_node(
         version=data["version"],
         subset=data["subset"],
         frame=data["frame"],
-        ext=representation
+        ext=ext
     )
 
     # create directory
@@ -1298,14 +1334,6 @@ def create_write_node(
         # connect to previous node
         now_node.setInput(0, prev_node)
 
-    # imprinting group node
-    set_avalon_knob_data(GN, data["avalon"])
-    add_publish_knob(GN)
-    add_rendering_knobs(GN, farm)
-
-    if review:
-        add_review_knob(GN)
-
     # add divider
     GN.addKnob(nuke.Text_Knob('', 'Rendering'))
 
@@ -1351,12 +1379,6 @@ def create_write_node(
     # adding write to read button
     add_button_clear_rendered(GN, os.path.dirname(fpath))
 
-    # Deadline tab.
-    add_deadline_tab(GN)
-
-    # open the our Tab as default
-    GN[_NODE_TAB_NAME].setFlag(0)
-
     # set tile color
     tile_color = next(
         iter(
@@ -1367,12 +1389,10 @@ def create_write_node(
     GN["tile_color"].setValue(
         color_gui_to_int(tile_color))
 
-    # finally add knob overrides
-    set_node_knobs_from_settings(GN, knob_overrides, **kwargs)
-
     return GN
 
 
+@deprecated("openpype.hosts.nuke.api.lib.create_write_node")
 def create_write_node_legacy(
     name, data, input=None, prenodes=None,
     review=True, linked_knobs=None, farm=True
@@ -1725,6 +1745,7 @@ def color_gui_to_int(color_gui):
     return int(hex_value, 16)
 
 
+@deprecated
 def add_rendering_knobs(node, farm=True):
     ''' Adds additional rendering knobs to given node
 
@@ -1745,6 +1766,7 @@ def add_rendering_knobs(node, farm=True):
     return node
 
 
+@deprecated
 def add_review_knob(node):
     ''' Adds additional review knob to given node
 
@@ -1761,7 +1783,9 @@ def add_review_knob(node):
     return node
 
 
+@deprecated
 def add_deadline_tab(node):
+    # TODO: remove this as it is only linked to legacy create
     node.addKnob(nuke.Tab_Knob("Deadline"))
 
     knob = nuke.Int_Knob("deadlinePriority", "Priority")
@@ -1787,7 +1811,10 @@ def add_deadline_tab(node):
     node.addKnob(knob)
 
 
+@deprecated
 def get_deadline_knob_names():
+    # TODO: remove this as it is only linked to legacy
+    # validate_write_deadline_tab
     return [
         "Deadline",
         "deadlineChunkSize",
