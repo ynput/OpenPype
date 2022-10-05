@@ -1,15 +1,8 @@
 import os
 import copy
-import inspect
 import logging
 import traceback
 import collections
-
-import weakref
-try:
-    from weakref import WeakMethod
-except Exception:
-    from openpype.lib.python_2_comp import WeakMethod
 
 import pyblish.api
 
