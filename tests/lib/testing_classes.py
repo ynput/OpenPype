@@ -10,7 +10,7 @@ import glob
 import platform
 
 from tests.lib.db_handler import DBHandler
-from distribution.file_handler import RemoteFileHandler
+from common.openpype_common.distribution.file_handler import RemoteFileHandler
 
 
 class BaseTest:

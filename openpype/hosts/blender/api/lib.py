@@ -6,7 +6,7 @@ from typing import Dict, List, Union
 
 import bpy
 import addon_utils
-from openpype.api import Logger
+from openpype.lib import Logger
 
 from . import pipeline
 

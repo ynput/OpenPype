@@ -8,10 +8,9 @@ import pyblish.api
 
 import openpype
 from openpype.api import (
-    Logger,
     get_current_project_settings
 )
-from openpype.lib import register_event_callback
+from openpype.lib import register_event_callback, Logger
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,

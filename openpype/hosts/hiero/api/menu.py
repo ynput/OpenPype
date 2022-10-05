@@ -4,7 +4,7 @@ import sys
 import hiero.core
 from hiero.ui import findMenuAction
 
-from openpype.api import Logger
+from openpype.lib import Logger
 from openpype.pipeline import legacy_io
 from openpype.tools.utils import host_tools
 
