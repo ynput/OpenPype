@@ -233,7 +233,7 @@ def _install_menu():
     menu.addSeparator()
     menu.addCommand(
         "Publish...",
-        lambda: host_tools.show_publisher(parent=main_window)
+        host_tools.show_publisher
     )
     menu.addCommand(
         "Load...",
