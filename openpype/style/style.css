@@ -1034,7 +1034,7 @@ ValidationArtistMessage QLabel {
 }
 
 #ValidationErrorTitleFrame[selected="1"] {
-    background: {color:publisher:validate-title:selected};
+    background: {color:bg-view-selection};
 }
 
 #ValidationErrorInstanceList {
