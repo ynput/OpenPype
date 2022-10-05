@@ -432,9 +432,9 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                         repre_name_low
                     )
 
-                    changes["old_id"] = repre["_id"]
-                    changes["_id"] = archived_repre["_id"]
-                    changes["type"] = archived_repre["type"]
+                    changes = {"old_id": repre["_id"],
+                               "_id": archived_repre["_id"],
+                               "type": archived_repre["type"]}
                     op_session.update_entity(project_name,
                                              archived_repre["type"],
                                              archived_repre["_id"],
