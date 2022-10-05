@@ -215,7 +215,10 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         if selected is None:
             selected = not self._selected
 
-        elif selected == self._selected:
+        if not selected:
+            self._instances_view.clearSelection()
+
+        if selected == self._selected:
             return
 
         self._selected = selected
@@ -243,7 +246,9 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
             self._toggle_instance_btn.setArrowType(QtCore.Qt.RightArrow)
 
     def _on_seleciton_change(self):
-        self.instance_changed.emit(self._index)
+        sel_model = self._instances_view.selectionModel()
+        if sel_model.selectedIndexes():
+            self.instance_changed.emit(self._index)
 
 
 class ActionButton(BaseClickableFrame):
@@ -660,8 +665,9 @@ class ValidationsWidget(QtWidgets.QFrame):
 
     def _on_instance_change(self, index):
         if self._previous_select and self._previous_select.index != index:
-            return
-        self._update_description()
+            self._title_widgets[index].set_selected(True)
+        else:
+            self._update_description()
 
     def _update_description(self):
         description = self._previous_select.current_desctiption_text()
