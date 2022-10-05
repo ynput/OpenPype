@@ -1,18 +1,20 @@
-from pprint import pformat
 import nuke
+import sys
+import six
 
+from openpype.pipeline import (
+    CreatedInstance
+)
 from openpype.lib import (
     BoolDef,
     NumberDef,
     UISeparatorDef,
     UILabelDef
 )
-from openpype.hosts.nuke.api import plugin
-from openpype.hosts.nuke.api.lib import (
-    create_write_node)
+from openpype.hosts.nuke import api as napi
 
 
-class CreateWriteRender(plugin.NukeWriteCreator):
+class CreateWriteRender(napi.NukeWriteCreator):
     identifier = "create_write_render"
     label = "Create Write Render"
     family = "render"
@@ -77,7 +79,7 @@ class CreateWriteRender(plugin.NukeWriteCreator):
             actual_format = nuke.root().knob('format').value()
             width, height = (actual_format.width(), actual_format.height())
 
-        return create_write_node(
+        created_node = napi.create_write_node(
             subset_name,
             write_data,
             input=self.selected_node,
@@ -87,3 +89,48 @@ class CreateWriteRender(plugin.NukeWriteCreator):
                 "height": height
             }
         )
+        self.add_info_knob(created_node)
+
+        return created_node
+
+    def create(self, subset_name, instance_data, pre_create_data):
+        # make sure selected nodes are added
+        self.set_selected_nodes(pre_create_data)
+
+        # make sure subset name is unique
+        if self.check_existing_subset(subset_name, instance_data):
+            raise napi.NukeCreatorError(
+                ("subset {} is already published"
+                 "definition.").format(subset_name))
+
+        instance_node = self.create_instance_node(
+            subset_name,
+            instance_data
+        )
+
+        try:
+            instance = CreatedInstance(
+                self.family,
+                subset_name,
+                instance_data,
+                self
+            )
+
+            instance.transient_data["node"] = instance_node
+
+            self._add_instance_to_context(instance)
+
+            napi.set_node_data(
+                instance_node,
+                napi.INSTANCE_DATA_KNOB,
+                instance.data_to_store()
+            )
+
+            return instance
+
+        except Exception as er:
+            six.reraise(
+                napi.NukeCreatorError,
+                napi.NukeCreatorError("Creator error: {}".format(er)),
+                sys.exc_info()[2]
+            )
