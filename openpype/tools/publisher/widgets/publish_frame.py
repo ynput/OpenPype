@@ -31,7 +31,7 @@ class PublishFrame(QtWidgets.QWidget):
     |                             < Label top >                              |
     |        (####                      10%  <Progress bar>                ) |
     | <Instance label>                                        <Plugin label> |
-    | <Report><Label bottom>                <Reset><Stop><Validate><Publish> |
+    | <Report>                              <Reset><Stop><Validate><Publish> |
     +------------------------------------------------------------------------+
     """
 
@@ -57,11 +57,6 @@ class PublishFrame(QtWidgets.QWidget):
         # Top label is displayed just under main label
         message_label_top = QtWidgets.QLabel(top_content_widget)
         message_label_top.setAlignment(QtCore.Qt.AlignCenter)
-
-        # Bottom label is displayed between report and publish buttons
-        #   at bottom part of info frame
-        message_label_bottom = QtWidgets.QLabel(top_content_widget)
-        message_label_bottom.setAlignment(QtCore.Qt.AlignCenter)
 
         # Label showing currently processed instance
         instance_label = QtWidgets.QLabel(
@@ -119,7 +114,6 @@ class PublishFrame(QtWidgets.QWidget):
         footer_layout.setContentsMargins(0, 0, 0, 0)
         footer_layout.addWidget(report_btn, 0)
         footer_layout.addWidget(shrunk_main_label, 1)
-        footer_layout.addWidget(message_label_bottom, 1)
         footer_layout.addWidget(reset_btn, 0)
         footer_layout.addWidget(stop_btn, 0)
         footer_layout.addWidget(validate_btn, 0)
@@ -194,7 +188,6 @@ class PublishFrame(QtWidgets.QWidget):
         self._progress_widget = progress_widget
 
         self._shrunk_main_label = shrunk_main_label
-        self._message_label_bottom = message_label_bottom
         self._reset_btn = reset_btn
         self._stop_btn = stop_btn
         self._validate_btn = validate_btn
@@ -203,8 +196,6 @@ class PublishFrame(QtWidgets.QWidget):
         self._shrunken = False
         self._top_widget_max_height = None
         self._top_widget_size_policy = top_content_widget.sizePolicy()
-
-        shrunk_main_label.setVisible(False)
 
     def mouseReleaseEvent(self, event):
         super(PublishFrame, self).mouseReleaseEvent(event)
@@ -272,8 +263,10 @@ class PublishFrame(QtWidgets.QWidget):
         )
         self._top_content_widget.setSizePolicy(self._top_widget_size_policy)
 
-        self._message_label_bottom.setVisible(not self._shrunken)
-        self._shrunk_main_label.setVisible(self._shrunken)
+        if self._shrunken:
+            self._shrunk_main_label.setText(self._main_label.text())
+        else:
+            self._shrunk_main_label.setText("")
 
         if self._shrunken:
             content_frame_hint = self._content_frame.sizeHint()
@@ -287,7 +280,8 @@ class PublishFrame(QtWidgets.QWidget):
 
     def _set_main_label(self, message):
         self._main_label.setText(message)
-        self._shrunk_main_label.setText(message)
+        if self._shrunken:
+            self._shrunk_main_label.setText(message)
 
     def _on_publish_reset(self):
         self._set_success_property()
@@ -295,7 +289,6 @@ class PublishFrame(QtWidgets.QWidget):
 
         self._main_label.setText("Hit publish (play button)! If you want")
         self._message_label_top.setText("")
-        self._message_label_bottom.setText("")
 
         self._reset_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
@@ -390,19 +383,17 @@ class PublishFrame(QtWidgets.QWidget):
                 " to your supervisor or OpenPype."
             )
         self._message_label_top.setText(msg)
-        self._message_label_bottom.setText("")
+
         self._set_success_property(0)
 
     def _set_validation_errors(self):
         self._set_main_label("Your publish didn't pass studio validations")
-        self._message_label_top.setText("")
-        self._message_label_bottom.setText("Check results above please")
+        self._message_label_top.setText("Check results above please")
         self._set_success_property(2)
 
     def _set_finished(self):
         self._set_main_label("Finished")
         self._message_label_top.setText("")
-        self._message_label_bottom.setText("")
         self._set_success_property(1)
 
     def _set_progress_visibility(self, visible):
