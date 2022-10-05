@@ -189,6 +189,7 @@ class PublishFrame(QtWidgets.QWidget):
 
         self._content_frame = content_frame
         self._content_layout = content_layout
+        self._top_content_layout = top_content_layout
         self._top_content_widget = top_content_widget
 
         self._main_label = main_label
@@ -412,6 +413,20 @@ class PublishFrame(QtWidgets.QWidget):
     def _set_progress_visibility(self, visible):
         window_height = self.height()
         self._progress_widget.setVisible(visible)
+        # Ignore rescaling and move of widget if is shrunken of progress bar
+        #   should be visible
+        if self._shrunken or visible:
+            return
+
+        height = self._progress_widget.height()
+        diff = height + self._top_content_layout.spacing()
+
+        window_pos = self.pos()
+        window_pos_y = self.pos().y() + diff
+        window_height -= diff
+
+        self.resize(self.width(), window_height)
+        self.move(window_pos.x(), window_pos_y)
 
     def _set_success_property(self, state=None):
         if state is None:
