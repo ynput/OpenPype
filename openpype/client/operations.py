@@ -163,13 +163,13 @@ def new_version_doc(version, subset_id, data=None, entity_id=None):
     }
 
 
-def new_hero_version_doc(version_id, parent_id, data=None, entity_id=None):
+def new_hero_version_doc(version_id, subset_id, data=None, entity_id=None):
     """Create skeleton data of hero version document.
 
     Args:
         version_id (ObjectId): Is considered as unique identifier of version
             under subset.
-        parent_id (Union[str, ObjectId]): Id of parent subset.
+        subset_id (Union[str, ObjectId]): Id of parent subset.
         data (Dict[str, Any]): Version document data.
         entity_id (Union[str, ObjectId]): Predefined id of document. New id is
             created if not passed.
@@ -186,7 +186,7 @@ def new_hero_version_doc(version_id, parent_id, data=None, entity_id=None):
         "schema": CURRENT_HERO_VERSION_SCHEMA,
         "type": "hero_version",
         "version_id": version_id,
-        "parent": parent_id,
+        "parent": subset_id,
         "data": data
     }
 
