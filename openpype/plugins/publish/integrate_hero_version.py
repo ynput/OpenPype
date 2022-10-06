@@ -443,8 +443,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                                              archived_repre["_id"],
                                              changes)
                 else:
-                    repre["old_id"] = repre["_id"]
-                    repre["_id"] = _create_or_convert_to_mongo_id(None)
+                    repre["old_id"] = repre.pop("_id")
                     repre["type"] = "archived_representation"
                     op_session.create_entity(project_name, "representation",
                                              repre)
