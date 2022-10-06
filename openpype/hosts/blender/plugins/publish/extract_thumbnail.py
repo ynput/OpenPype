@@ -45,6 +45,13 @@ class ExtractThumbnail(Extractor):
                 if layer.name == instance_collection.name:
                     layer.hide_viewport = False
 
+        focus = [
+            obj for obj in instance
+            if isinstance(obj, bpy.types.Object)
+            and obj.type == "MESH"
+            and obj.visible_get()
+        ]
+
         if not isolate:
             isolate = [
                 obj
@@ -55,7 +62,7 @@ class ExtractThumbnail(Extractor):
             for sibling_instance in instance.context:
                 if sibling_instance is not instance:
                     for obj in sibling_instance:
-                        if obj in isolate:
+                        if obj in isolate and obj not in focus:
                             isolate.remove(obj)
 
         focus = [
@@ -78,6 +85,7 @@ class ExtractThumbnail(Extractor):
                 "overwrite": True,
                 "isolate": isolate,
                 "focus": focus,
+                "maintain_aspect_ratio": True,
             }
         )
         preset.setdefault(
