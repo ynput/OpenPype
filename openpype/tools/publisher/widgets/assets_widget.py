@@ -24,7 +24,6 @@ class CreateWidgetAssetsWidget(SingleSelectAssetsWidget):
         self.set_refresh_btn_visibility(False)
         self.set_current_asset_btn_visibility(False)
 
-        self._current_asset_name = None
         self._last_selection = None
         self._enabled = None
 
@@ -69,13 +68,13 @@ class CreateWidgetAssetsWidget(SingleSelectAssetsWidget):
         self._last_selection = self.get_selected_asset_id()
         self._clear_selection()
 
-    def set_current_asset_name(self, asset_name):
-        self._current_asset_name = asset_name
+    def update_current_asset(self):
         # Hide set current asset if there is no one
-        self.set_current_asset_btn_visibility(asset_name is not None)
+        asset_name = self._get_current_session_asset()
+        self.set_current_asset_btn_visibility(bool(asset_name))
 
     def _get_current_session_asset(self):
-        return self._current_asset_name
+        return self._controller.current_asset_name
 
     def _create_source_model(self):
         return AssetsHierarchyModel(self._controller)
