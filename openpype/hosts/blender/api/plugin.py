@@ -1367,20 +1367,6 @@ class AssetLoader(LoaderPlugin):
             self.log.info("Asset already up to date, not updating...")
             return
 
-        # fix asset_group and namespace if needed.
-        # e.g. when switching between two different assets
-        asset = representation["context"]["asset"]
-        subset = representation["context"]["subset"]
-        if (
-            not asset_group.name.startswith(asset)
-            or not asset_group.name.endswith(subset)
-        ):
-            unique_number = get_unique_number(asset, subset)
-            group_name = asset_name(asset, subset, unique_number)
-            namespace = f"{asset}_{unique_number}"
-            asset_group.name = group_name
-            metadata_update(asset_group, {"namespace": namespace})
-
         # Update the asset group with maintained contexts.
         with self.update_maintainer(asset_group, self.maintained_parameters):
 
@@ -1451,6 +1437,20 @@ class AssetLoader(LoaderPlugin):
             f"No library file found for representation: {representation}"
         )
 
+        # fix asset_group and namespace if needed.
+        # e.g. when switching between two different assets
+        asset = representation["context"]["asset"]
+        subset = representation["context"]["subset"]
+        if (
+            not asset_group.name.startswith(asset)
+            or not asset_group.name.endswith(subset)
+        ):
+            unique_number = get_unique_number(asset, subset)
+            group_name = asset_name(asset, subset, unique_number)
+            namespace = f"{asset}_{unique_number}"
+            asset_group.name = group_name
+            metadata_update(asset_group, {"namespace": namespace})
+
         asset_group = self._update_process(libpath, asset_group)
 
         # update metadata
@@ -1474,7 +1474,9 @@ class AssetLoader(LoaderPlugin):
         execute_in_main_thread(mti)
         return mti
 
-    def exec_switch(self, container: Dict, representation: Dict)->Tuple[str, Union[bpy.types.Collection, bpy.types.Object]]:
+    def exec_switch(
+        self, container: Dict, representation: Dict
+    ) -> Tuple[str, Union[bpy.types.Collection, bpy.types.Object]]:
         """Switch the asset using update"""
         if (
             container["loader"] == str(self.__class__.__name__)
