@@ -79,6 +79,7 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
 
         help_text_by_instance_id = {}
         context_validation = False
+        items = []
         if (
             not error_info
             or (len(error_info) == 1 and error_info[0][0] is None)
@@ -87,8 +88,10 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
             toggle_instance_btn.setArrowType(QtCore.Qt.NoArrow)
             description = self._prepare_description(error_info[0][1])
             help_text_by_instance_id[None] = description
+            # Add fake item to have minimum size hint of view widget
+            items.append(QtGui.QStandardItem("Context"))
+
         else:
-            items = []
             for instance, exception in error_info:
                 label = instance.data.get("label") or instance.data.get("name")
                 item = QtGui.QStandardItem(label)
@@ -101,7 +104,9 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
                 description = self._prepare_description(exception)
                 help_text_by_instance_id[instance.id] = description
 
-            instances_model.invisibleRootItem().appendRows(items)
+        if items:
+            root_item = instances_model.invisibleRootItem()
+            root_item.appendRows(items)
 
         instances_view = ValidationErrorInstanceList(self)
         instances_view.setModel(instances_model)
@@ -177,7 +182,6 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         """Mark this widget as selected on click."""
 
         self.set_selected(True)
-        self._set_expanded(True)
 
     def current_desctiption_text(self):
         if self._context_validation:
@@ -225,6 +229,7 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         self._change_style_property(selected)
         if selected:
             self.selected.emit(self._index)
+            self._set_expanded(True)
 
     def _on_toggle_btn_click(self):
         """Show/hide instances list."""
@@ -236,6 +241,9 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
             expanded = not self._expanded
 
         elif expanded is self._expanded:
+            return
+
+        if expanded and self._context_validation:
             return
 
         self._expanded = expanded
