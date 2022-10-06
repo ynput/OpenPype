@@ -44,23 +44,19 @@ class ExtractFBX(publish.Extractor):
                 new_materials.append(mat)
                 new_materials_objs.append(obj)
 
-        context = plugin.create_blender_context(
-            active=selected[-1], selected=selected
-        )
-
         kept_scale_length = bpy.context.scene.unit_settings.scale_length
         if self.scale_length > 0:
             bpy.context.scene.unit_settings.scale_length = self.scale_length
 
         # We export the fbx
-        bpy.ops.export_scene.fbx(
-            context,
-            filepath=filepath,
-            use_active_collection=False,
-            use_selection=True,
-            mesh_smooth_type='FACE',
-            add_leaf_bones=False
-        )
+        with plugin.context_override(active=selected[-1], selected=selected):
+            bpy.ops.export_scene.fbx(
+                filepath=filepath,
+                use_active_collection=False,
+                use_selection=True,
+                mesh_smooth_type='FACE',
+                add_leaf_bones=False
+            )
 
         bpy.context.scene.unit_settings.scale_length = kept_scale_length
 

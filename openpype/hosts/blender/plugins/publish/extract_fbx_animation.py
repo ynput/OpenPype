@@ -56,20 +56,17 @@ class ExtractAnimationFBX(publish.Extractor):
         fbx_filename = f"{fbx_count:03d}.fbx"
         filepath = os.path.join(stagingdir, fbx_filename)
 
-        bpy.ops.export_scene.fbx(
-            plugin.create_blender_context(
-                active=armature,
-                selected=[armature],
-            ),
-            filepath=filepath,
-            use_active_collection=False,
-            use_selection=True,
-            bake_anim_use_nla_strips=False,
-            bake_anim_use_all_actions=False,
-            add_leaf_bones=False,
-            armature_nodetype="ROOT",
-            object_types={"EMPTY", "ARMATURE"}
-        )
+        with plugin.context_override(active=armature, selected=armature):
+            bpy.ops.export_scene.fbx(
+                filepath=filepath,
+                use_active_collection=False,
+                use_selection=True,
+                bake_anim_use_nla_strips=False,
+                bake_anim_use_all_actions=False,
+                add_leaf_bones=False,
+                armature_nodetype="ROOT",
+                object_types={"EMPTY", "ARMATURE"}
+            )
         armature.select_set(False)
 
         # We delete the baked action and set the original one back

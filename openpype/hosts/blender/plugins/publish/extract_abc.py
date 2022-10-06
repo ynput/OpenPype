@@ -32,17 +32,13 @@ class ExtractABC(publish.Extractor):
                 obj.select_set(True)
                 selected.append(obj)
 
-        context = plugin.create_blender_context(
-            active=selected[-1], selected=selected
-        )
-
         # We export the abc
-        bpy.ops.wm.alembic_export(
-            context,
-            filepath=filepath,
-            selected=True,
-            flatten=False
-        )
+        with plugin.context_override(active=selected[-1], selected=selected):
+            bpy.ops.wm.alembic_export(
+                filepath=filepath,
+                selected=True,
+                flatten=False
+            )
 
         plugin.deselect_all()
 

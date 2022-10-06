@@ -74,17 +74,17 @@ class ExtractLayout(publish.Extractor):
             fbx_filename = f"{n:03d}.fbx"
             filepath = os.path.join(stagingdir, fbx_filename)
 
-            bpy.ops.export_scene.fbx(
-                plugin.create_blender_context(active=obj, selected=[obj]),
-                filepath=filepath,
-                use_active_collection=False,
-                use_selection=True,
-                bake_anim_use_nla_strips=False,
-                bake_anim_use_all_actions=False,
-                add_leaf_bones=False,
-                armature_nodetype='ROOT',
-                object_types={'EMPTY', 'ARMATURE'}
-            )
+            with plugin.context_override(active=obj, selected=obj):
+                bpy.ops.export_scene.fbx(
+                    filepath=filepath,
+                    use_active_collection=False,
+                    use_selection=True,
+                    bake_anim_use_nla_strips=False,
+                    bake_anim_use_all_actions=False,
+                    add_leaf_bones=False,
+                    armature_nodetype='ROOT',
+                    object_types={'EMPTY', 'ARMATURE'}
+                )
             obj.name = armature_name
             obj.select_set(False)
 
