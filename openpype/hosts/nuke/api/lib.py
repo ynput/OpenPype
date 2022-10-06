@@ -1672,6 +1672,13 @@ def set_node_knobs_from_settings(node, knob_settings, **kwargs):
         if knob_name not in node.knobs():
             continue
 
+        if knob_type == "expression":
+            knob_expression = knob["expression"]
+            node[knob_name].setExpression(
+                knob_expression
+            )
+            continue
+
         # first deal with formatable knob settings
         if knob_type == "formatable":
             template = knob["template"]

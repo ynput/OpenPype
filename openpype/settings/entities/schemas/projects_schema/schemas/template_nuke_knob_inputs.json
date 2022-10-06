@@ -29,6 +29,22 @@
                         ]
                     },
                     {
+                        "key": "expression",
+                        "label": "Expression",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "name",
+                                "label": "Name"
+                            },
+                            {
+                                "type": "text",
+                                "key": "expression",
+                                "label": "Expression"
+                            }
+                        ]
+                    },
+                    {
                         "key": "formatable",
                         "label": "Formate from template",
                         "children": [
