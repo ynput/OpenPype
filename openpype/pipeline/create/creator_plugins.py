@@ -246,7 +246,7 @@ class BaseCreator:
         return self.icon
 
     def get_dynamic_data(
-        self, variant, task_name, asset_doc, project_name, host_name
+        self, variant, task_name, asset_doc, project_name, host_name, instance
     ):
         """Dynamic data for subset name filling.
 
@@ -291,7 +291,7 @@ class BaseCreator:
         """
 
         dynamic_data = self.get_dynamic_data(
-            variant, task_name, asset_doc, project_name, host_name
+            variant, task_name, asset_doc, project_name, host_name, instance
         )
 
         return get_subset_name(
