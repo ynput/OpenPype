@@ -445,7 +445,8 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                 else:
                     repre["old_id"] = repre.pop("_id")
                     repre["type"] = "archived_representation"
-                    op_session.create_entity(project_name, "representation",
+                    op_session.create_entity(project_name,
+                                             "archived_representation",
                                              repre)
 
             op_session.commit()
