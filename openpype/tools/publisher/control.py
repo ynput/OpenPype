@@ -536,9 +536,6 @@ class PublisherController(AbstractPublisherController):
         self._host = registered_host()
         self._headless = headless
 
-        # Inner event system of controller
-        self._event_system = EventSystem()
-
         self._create_context = CreateContext(
             self._host, dbcon, headless=headless, reset=False
         )
@@ -645,29 +642,6 @@ class PublisherController(AbstractPublisherController):
     def _publish_plugins(self):
         """Publish plugins."""
         return self._create_context.publish_plugins
-
-    @property
-    def event_system(self):
-        """Inner event system for publisher controller.
-
-        Known topics:
-            "show.detailed.help" - Detailed help requested (UI related).
-            "show.card.message" - Show card message request (UI related).
-            "instances.refresh.finished" - Instances are refreshed.
-            "plugins.refresh.finished" - Plugins refreshed.
-            "publish.reset.finished" - Controller reset finished.
-            "publish.process.started" - Publishing started. Can be started from
-                paused state.
-            "publish.process.validated" - Publishing passed validation.
-            "publish.process.stopped" - Publishing stopped/paused process.
-            "publish.process.plugin.changed" - Plugin state has changed.
-            "publish.process.instance.changed" - Instance state has changed.
-
-        Returns:
-            EventSystem: Event system which can trigger callbacks for topics.
-        """
-
-        return self._event_system
 
     def _emit_event(self, topic, data=None):
         if data is None:
