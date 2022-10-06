@@ -20,6 +20,7 @@ def capture(
     step_frame=None,
     sound=None,
     isolate=None,
+    focus=None,
     maintain_aspect_ratio=True,
     overwrite=False,
     image_settings=None,
@@ -89,7 +90,7 @@ def capture(
         stack.enter_context(maintained_visibility())
         window = stack.enter_context(_independent_window())
 
-        applied_view(window, camera, isolate, options=display_options)
+        applied_view(window, camera, isolate, focus, options=display_options)
 
         stack.enter_context(maintain_camera(window, camera))
         stack.enter_context(applied_frame_range(window, *frame_range))
@@ -122,15 +123,19 @@ ImageSettings = {
 }
 
 
-def isolate_objects(window, objects):
+def isolate_objects(window, objects, focus=None):
     """Isolate selection"""
-    deselect_all()
 
     for obj in bpy.context.scene.objects:
-        obj.select_set(obj in objects)
         obj.hide_set(obj not in objects)
 
-    with context_override(selected=objects, window=window):
+    deselect_all()
+
+    focus = focus or objects
+    for obj in focus:
+        obj.select_set(True)
+
+    with context_override(selected=focus, window=window):
         bpy.ops.view3d.view_axis(type="FRONT")
         bpy.ops.view3d.view_selected(use_all_regions=False)
 
@@ -145,7 +150,7 @@ def _apply_options(entity, options):
             setattr(entity, option, value)
 
 
-def applied_view(window, camera, isolate=None, options=None):
+def applied_view(window, camera, isolate=None, focus=None, options=None):
     """Apply view options to window."""
     # Change area of window to 3D view
     area = window.screen.areas[0]
@@ -159,9 +164,9 @@ def applied_view(window, camera, isolate=None, options=None):
 
     if camera == "AUTO":
         space.region_3d.view_perspective = "ORTHO"
-        isolate_objects(window, isolate or meshes)
+        isolate_objects(window, isolate or meshes, focus)
     else:
-        isolate_objects(window, isolate or meshes)
+        isolate_objects(window, isolate or meshes, focus)
         space.camera = window.scene.objects.get(camera)
         space.region_3d.view_perspective = "CAMERA"
 
