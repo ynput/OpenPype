@@ -337,9 +337,6 @@ class NukeWriteCreator(NukeCreator):
         # plugin settings
         plugin_settings = self.get_creator_settings(project_settings)
 
-        self.log.debug("___________________")
-        self.log.debug(pformat(plugin_settings))
-
         # individual attributes
         self.instance_attributes = plugin_settings[
             "instance_attributes"]
