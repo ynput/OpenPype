@@ -9,7 +9,7 @@ from abc import (
 import six
 
 from openpype.settings import get_system_settings, get_project_settings
-from .subset_name import get_subset_name
+from openpype.lib import Logger
 from openpype.pipeline.plugin_discover import (
     discover,
     register_plugin,
@@ -18,6 +18,7 @@ from openpype.pipeline.plugin_discover import (
     deregister_plugin_path
 )
 
+from .subset_name import get_subset_name
 from .legacy_create import LegacyCreator
 
 
@@ -143,8 +144,6 @@ class BaseCreator:
         """
 
         if self._log is None:
-            from openpype.api import Logger
-
             self._log = Logger.get_logger(self.__class__.__name__)
         return self._log
 
