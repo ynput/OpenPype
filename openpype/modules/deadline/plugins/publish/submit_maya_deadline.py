@@ -57,8 +57,9 @@ class MayaPluginInfo:
     RenderLayer = attr.ib(default=None)  # Render only this layer
     Renderer = attr.ib(default=None)
     ProjectPath = attr.ib(default=None)  # Resolve relative references
+    # Include all lights flag
     RenderSetupIncludeLights = attr.ib(
-        default="1", validator=_validate_deadline_bool_value)  # Include all lights flag
+        default="1", validator=_validate_deadline_bool_value)
 
 
 @attr.s
