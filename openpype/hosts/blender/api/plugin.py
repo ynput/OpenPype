@@ -1434,7 +1434,7 @@ class AssetLoader(LoaderPlugin):
 
     def exec_update(
         self, container: Dict, representation: Dict
-    ) -> Tuple[Path, Union[bpy.types.Collection, bpy.types.Object]]:
+    ) -> Tuple[Union[bpy.types.Collection, bpy.types.Object]]:
         """Update the loaded asset"""
         object_name = container["objectName"]
         asset_group = self._get_asset_group_container(container)
@@ -1466,7 +1466,7 @@ class AssetLoader(LoaderPlugin):
                 "family": representation["context"]["family"],
             }
         )
-        return Path(libpath), asset_group
+        return asset_group
 
     def update(self, container: Dict, representation: Dict) -> MainThreadItem:
         """Run the update on Blender main thread"""
@@ -1483,11 +1483,11 @@ class AssetLoader(LoaderPlugin):
             or (container["asset_name"] == representation["context"]["asset"]
                 and container["family"] in ("model", "rig"))
         ):
-            libpath, asset_group = self.exec_update(container, representation)
+            asset_group = self.exec_update(container, representation)
 
             # Update namespace if needed
 
-            return libpath, asset_group
+            return asset_group
         else:
             raise NotImplementedError("Not implemented yet")
 
