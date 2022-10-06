@@ -268,7 +268,7 @@ class ServerAPIBase(object):
         return server_schema["components"]["schemas"]
 
     def get_graphql_schema(self):
-        return self.query(INTROSPECTION_QUERY).data
+        return self.query_graphl(INTROSPECTION_QUERY).data
 
     def _do_rest_request(self, function, url, **kwargs):
         if "headers" not in kwargs:
