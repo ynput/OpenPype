@@ -116,13 +116,13 @@ class InstanceModelLoader(plugin.AssetLoader):
 
     def exec_switch(
         self, container: Dict, representation: Dict
-    ) -> Tuple[str, Union[bpy.types.Collection, bpy.types.Object]]:
+    ) -> Tuple[Union[bpy.types.Collection, bpy.types.Object]]:
         """Switch the asset using update"""
         if container["loader"] != "InstanceModelLoader":
             raise NotImplementedError("Not implemented yet")
 
-        libpath, asset_group = self.exec_update(container, representation)
+        asset_group = self.exec_update(container, representation)
 
         # Update namespace if needed
 
-        return libpath, asset_group
+        return asset_group

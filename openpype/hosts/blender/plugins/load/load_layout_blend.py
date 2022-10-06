@@ -185,9 +185,9 @@ class LayoutLoader(plugin.AssetLoader):
 
     def exec_update(
         self, container: Dict, representation: Dict
-    ) -> Tuple(str, Union[bpy.types.Collection, bpy.types.Object]):
+    ) -> Tuple[Union[bpy.types.Collection, bpy.types.Object]]:
         """Update the loaded asset"""
-        libpath, asset_group = super().exec_update(container, representation)
+        asset_group = super().exec_update(container, representation)
 
         # Add new loaded rig asset groups to animationMain collection.
         if legacy_io.Session.get("AVALON_TASK") == "Animation":
@@ -223,7 +223,7 @@ class LayoutLoader(plugin.AssetLoader):
                             dependency,
                         )
 
-        return libpath, asset_group
+        return asset_group
 
 
 class LinkLayoutLoader(LayoutLoader):

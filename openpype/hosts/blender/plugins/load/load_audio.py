@@ -7,6 +7,7 @@ import bpy
 
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
+from openpype.pipeline.load.utils import get_representation_path
 
 
 class AudioLoader(plugin.AssetLoader):
@@ -80,18 +81,17 @@ class AudioLoader(plugin.AssetLoader):
 
     def exec_update(
         self, container: Dict, representation: Dict
-    ) -> Tuple[str, Union[bpy.types.Collection, bpy.types.Object]]:
+    ) -> Tuple[Union[bpy.types.Collection, bpy.types.Object]]:
         """Update the loaded asset"""
+        # Remove audio datablock
+        libpath = get_representation_path(representation)
+        self._remove_audio(libpath.name)
 
-        self._remove_audio(container["audio"])
+        asset_group = super().exec_update(container, representation)
 
-        libpath, asset_group = super().exec_update(container, representation)
-
-        asset_group[AVALON_PROPERTY]["audio"] = libpath.name
-
-        return libpath, asset_group
+        return asset_group
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene."""
-        self._remove_audio(container["audio"])
+        self._remove_audio(container["libpath"])
         return super().exec_remove(container)
