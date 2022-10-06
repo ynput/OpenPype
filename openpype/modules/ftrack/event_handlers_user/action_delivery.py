@@ -556,6 +556,19 @@ class Delivery(BaseAction):
         format_dict = get_format_dict(anatomy, location_path)
 
         datetime_data = get_datetime_data()
+
+        # dealing with backwards compatibility where there was no `ext` in
+        # context.
+        for repre in repres_to_deliver:
+            if not repre["context"].get("ext"):
+                if repre["context"].get("representation") == "thumbnail":
+                    ext = os.path.splitext(
+                        repre["data"]["path"])[1].replace('.', '')
+                else:
+                    ext = repre["context"]["representation"]
+
+                repre["context"]["ext"] = ext
+
         for repre in repres_to_deliver:
             source_path = repre.get("data", {}).get("path")
             debug_msg = "Processing representation {}".format(repre["_id"])
