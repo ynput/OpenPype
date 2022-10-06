@@ -3,7 +3,7 @@ import os
 import hiero
 
 from openpype.client import get_project, get_assets
-from openpype.api import Logger
+from openpype.lib import Logger
 from openpype.pipeline import legacy_io
 
 log = Logger.get_logger(__name__)

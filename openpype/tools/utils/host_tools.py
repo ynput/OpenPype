@@ -7,6 +7,7 @@ import os
 
 import pyblish.api
 from openpype.host import IWorkfileHost, ILoadHost
+from openpype.lib import Logger
 from openpype.pipeline import (
     registered_host,
     legacy_io,
@@ -23,6 +24,7 @@ class HostToolsHelper:
 
     Class may also contain tools that are available only for one or few hosts.
     """
+
     def __init__(self, parent=None):
         self._log = None
         # Global parent for all tools (may and may not be set)
@@ -42,8 +44,6 @@ class HostToolsHelper:
     @property
     def log(self):
         if self._log is None:
-            from openpype.api import Logger
-
             self._log = Logger.get_logger(self.__class__.__name__)
         return self._log
 
