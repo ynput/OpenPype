@@ -1,6 +1,6 @@
 """Load an action in Blender."""
 
-from typing import Dict
+from typing import Dict, Tuple, Union
 
 import bpy
 
@@ -39,7 +39,9 @@ class ActionLoader(plugin.AssetLoader):
 
         return super()._remove_container(container)
 
-    def exec_update(self, container: Dict, representation: Dict):
+    def exec_update(
+        self, container: Dict, representation: Dict
+    ) -> Tuple[str, Union[bpy.types.Collection, bpy.types.Object]]:
         """Update the loaded asset"""
 
         asset_group = self._get_asset_group_container(container)
@@ -48,7 +50,7 @@ class ActionLoader(plugin.AssetLoader):
         if old_action:
             old_action.name = f"{old_action.name}.old"
 
-        asset_group = self._update_process(container, representation)
+        libpath, asset_group = super().exec_update(container, representation)
         new_action = self._get_action(asset_group) if asset_group else None
 
         if old_action:
@@ -63,7 +65,7 @@ class ActionLoader(plugin.AssetLoader):
 
             bpy.data.actions.remove(old_action)
 
-        return asset_group
+        return libpath, asset_group
 
 
 class LinkActionLoader(ActionLoader):
