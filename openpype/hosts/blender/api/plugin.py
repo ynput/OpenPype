@@ -75,7 +75,7 @@ def prepare_data(data, container_name=None):
     return local_data
 
 
-def create_blender_context(
+def context_override(
     active: Optional[bpy.types.Object] = None,
     selected: Optional[bpy.types.Object] = None,
     window: Optional[bpy.types.Window] = None,
@@ -88,8 +88,6 @@ def create_blender_context(
     if not isinstance(selected, list):
         selected = [selected]
 
-    override_context = bpy.context.copy()
-
     windows = [window] if window else bpy.context.window_manager.windows
 
     for win in windows:
@@ -97,14 +95,13 @@ def create_blender_context(
             if area.type == area_type:
                 for region in area.regions:
                     if region.type == "WINDOW":
-                        override_context["window"] = win
-                        override_context["screen"] = win.screen
-                        override_context["area"] = area
-                        override_context["region"] = region
-                        override_context["scene"] = bpy.context.scene
-                        override_context["active_object"] = active
-                        override_context["selected_objects"] = selected
-                        return override_context
+                        return bpy.context.temp_override(
+                            window=win,
+                            area=area,
+                            region=region,
+                            active_object=active,
+                            selected_objects=selected,
+                        )
     raise Exception("Could not create a custom Blender context.")
 
 
@@ -514,10 +511,10 @@ def make_local(obj, data_local=True):
         obj_name = obj.name
         deselect_all()
         obj.select_set(True)
-        bpy.ops.object.make_local(
-            create_blender_context(active=obj, selected=obj),
-            type="SELECT_OBDATA" if data_local else "SELECT_OBJECT",
-        )
+        with context_override(active=obj, selected=obj):
+            bpy.ops.object.make_local(
+                type="SELECT_OBDATA" if data_local else "SELECT_OBJECT",
+            )
         obj = bpy.context.scene.objects.get(obj_name)
     elif obj.library:
         obj = obj.make_local()
@@ -850,7 +847,6 @@ class ContainerMaintainer(ExitStack):
                     deselect_all()
                     bpy.context.view_layer.objects.active = tmp
                     obj.select_set(True)
-                    context = create_blender_context(active=tmp, selected=obj)
 
                     if data.unit_test_compare(mesh=obj.data) == "Same":
                         mapping = {
@@ -869,13 +865,13 @@ class ContainerMaintainer(ExitStack):
 
                     if data_types:
                         for data_type in data_types:
-                            bpy.ops.object.data_transfer(
-                                context,
-                                data_type=data_type,
-                                layers_select_src="ALL",
-                                layers_select_dst="NAME",
-                                **mapping
-                            )
+                            with context_override(active=tmp, selected=obj):
+                                bpy.ops.object.data_transfer(
+                                    data_type=data_type,
+                                    layers_select_src="ALL",
+                                    layers_select_dst="NAME",
+                                    **mapping
+                                )
 
                     bpy.data.objects.remove(tmp)
                     deselect_all()
@@ -1645,10 +1641,10 @@ class ModifierDescriptor(StructDescriptor):
             current_index = obj.modifiers.find(self.name)
             if current_index > self.order_index > -1:
                 while current_index > self.order_index:
-                    ops_result = bpy.ops.object.modifier_move_up(
-                        create_blender_context(active=obj, selected=obj),
-                        modifier=self.name,
-                    )
+                    with context_override(active=obj, selected=obj):
+                        ops_result = bpy.ops.object.modifier_move_up(
+                            modifier=self.name,
+                        )
                     current_index = obj.modifiers.find(self.name)
                     if "CANCELLED" in ops_result:
                         break
