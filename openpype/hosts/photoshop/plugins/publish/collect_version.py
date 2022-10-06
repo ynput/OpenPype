@@ -16,7 +16,7 @@ class CollectVersion(pyblish.api.InstancePlugin):
     label = 'Collect Version'
 
     hosts = ["photoshop"]
-    families = ["image", "review"]
+    families = ["image", "review", "workfile"]
 
     def process(self, instance):
         workfile_version = instance.context.data["version"]
