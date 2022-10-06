@@ -56,13 +56,16 @@ class CreateWriteStill(napi.NukeWriteCreator):
         return attr_defs
 
     def create_instance_node(self, subset_name, instance_data):
+        linked_knobs_ = []
+        if "use_range_limit" in self.instance_attributes:
+            linked_knobs_ = ["channels", "___", "first", "last", "use_limit"]
+
         # add fpath_template
         write_data = {
             "creator": self.__class__.__name__,
             "subset": subset_name,
             "fpath_template": self.temp_rendering_path_template
         }
-
         write_data.update(instance_data)
 
         created_node = napi.create_write_node(
@@ -70,7 +73,7 @@ class CreateWriteStill(napi.NukeWriteCreator):
             write_data,
             input=self.selected_node,
             prenodes=self.prenodes,
-            linked_knobs=["channels", "___", "first", "last", "use_limit"],
+            linked_knobs=linked_knobs_,
             **{
                 "frame": nuke.frame()
             }
@@ -137,6 +140,6 @@ class CreateWriteStill(napi.NukeWriteCreator):
 
         w_node["use_limit"].setValue(True)
         w_node["first"].setValue(nuke.frame())
-        w_node["last"].setValue(nuke.frame())
+        w_node["last"].setExpression("first")
 
         return write_node
