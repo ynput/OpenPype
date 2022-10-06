@@ -4,7 +4,7 @@ from pprint import pformat
 from inspect import getmembers
 from pathlib import Path
 from contextlib import contextmanager, ExitStack
-from typing import Dict, List, Optional, Union, Iterator
+from typing import Dict, List, Optional, Tuple, Union, Iterator
 from collections.abc import Iterable
 from bson.objectid import ObjectId
 
@@ -1345,29 +1345,14 @@ class AssetLoader(LoaderPlugin):
 
     def _update_process(
         self,
-        container: Dict,
-        representation: Dict
+        libpath: str,
+        asset_group: Union[bpy.types.Collection, bpy.types.Object],
     ) -> Union[bpy.types.Collection, bpy.types.Object]:
         """Update the loaded asset.
 
         This will remove all objects of the current collection, load the new
         ones and add them to the collection.
         """
-        object_name = container["objectName"]
-        asset_group = self._get_asset_group_container(container)
-        libpath = get_representation_path(representation)
-
-        self.log.info(
-            "Container: %s\nRepresentation: %s",
-            pformat(container, indent=2),
-            pformat(representation, indent=2),
-        )
-
-        assert asset_group, f"The asset is not loaded: {object_name}"
-        assert libpath, (
-            f"No library file found for representation: {representation}"
-        )
-
         # This part fix the update process with linked collections without the
         # OpenPYPE loader tool or api, as the Asset Browser from Blender 3.2
         if (
@@ -1418,20 +1403,6 @@ class AssetLoader(LoaderPlugin):
             if getattr(obj.override_library, "operations_update", None):
                 obj.override_library.operations_update()
 
-        # update metadata
-        metadata_update(
-            asset_group,
-            {
-                "name": representation["context"]["subset"],
-                "loader": str(self.__class__.__name__),
-                "libpath": libpath,
-                "representation": str(representation["_id"]),
-                "asset_name": representation["context"]["asset"],
-                "parent": str(representation["parent"]),
-                "family": representation["context"]["family"],
-            }
-        )
-
         return asset_group
 
     def _update_metadata(
@@ -1461,9 +1432,41 @@ class AssetLoader(LoaderPlugin):
             }
         )
 
-    def exec_update(self, container: Dict, representation: Dict):
+    def exec_update(
+        self, container: Dict, representation: Dict
+    ) -> Tuple[str, Union[bpy.types.Collection, bpy.types.Object]]:
         """Update the loaded asset"""
-        return self._update_process(container, representation)
+        object_name = container["objectName"]
+        asset_group = self._get_asset_group_container(container)
+        libpath = get_representation_path(representation)
+
+        self.log.info(
+            "Container: %s\nRepresentation: %s",
+            pformat(container, indent=2),
+            pformat(representation, indent=2),
+        )
+
+        assert asset_group, f"The asset is not loaded: {object_name}"
+        assert libpath, (
+            f"No library file found for representation: {representation}"
+        )
+
+        asset_group = self._update_process(libpath, asset_group)
+
+        # update metadata
+        metadata_update(
+            asset_group,
+            {
+                "name": representation["context"]["subset"],
+                "loader": str(self.__class__.__name__),
+                "libpath": libpath,
+                "representation": str(representation["_id"]),
+                "asset_name": representation["context"]["asset"],
+                "parent": str(representation["parent"]),
+                "family": representation["context"]["family"],
+            }
+        )
+        return Path(libpath), asset_group
 
     def update(self, container: Dict, representation: Dict) -> MainThreadItem:
         """Run the update on Blender main thread"""
@@ -1471,7 +1474,7 @@ class AssetLoader(LoaderPlugin):
         execute_in_main_thread(mti)
         return mti
 
-    def exec_switch(self, container: Dict, representation: Dict):
+    def exec_switch(self, container: Dict, representation: Dict)->Tuple[str, Union[bpy.types.Collection, bpy.types.Object]]:
         """Switch the asset using update"""
         if (
             container["loader"] == str(self.__class__.__name__)
@@ -1480,11 +1483,11 @@ class AssetLoader(LoaderPlugin):
             or (container["asset_name"] == representation["context"]["asset"]
                 and container["family"] in ("model", "rig"))
         ):
-            asset_group = self._update_process(container, representation)
+            libpath, asset_group = self.exec_update(container, representation)
 
             # Update namespace if needed
 
-            return asset_group
+            return libpath, asset_group
         else:
             raise NotImplementedError("Not implemented yet")
 
