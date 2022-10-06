@@ -3,7 +3,9 @@ import copy
 import logging
 import traceback
 import collections
+from abc import ABCMeta, abstractmethod, abstractproperty
 
+import six
 import pyblish.api
 
 from openpype.client import get_assets
@@ -286,7 +288,239 @@ class PublishReport:
         return output
 
 
-class PublisherController(object):
+
+
+@six.add_metaclass(ABCMeta)
+class AbstractPublisherController(object):
+    """Publisher tool controller.
+
+    Define what must be implemented to be able use Publisher functionality.
+
+    Goal is to have "data driven" controller that can be used to control UI
+    running in different process. That lead to some ""
+    """
+
+    _log = None
+    _event_system = None
+
+    @property
+    def log(self):
+        """Controller's logger object.
+
+        Returns:
+            logging.Logger: Logger object that can be used for logging.
+        """
+
+        if self._log is None:
+            self._log = logging.getLogget(self.__class__.__name__)
+        return self._log
+
+    @property
+    def event_system(self):
+        """Inner event system for publisher controller.
+
+        Event system is autocreated.
+
+        Known topics:
+            "show.detailed.help" - Detailed help requested (UI related).
+            "show.card.message" - Show card message request (UI related).
+            "instances.refresh.finished" - Instances are refreshed.
+            "plugins.refresh.finished" - Plugins refreshed.
+            "publish.reset.finished" - Controller reset finished.
+            "publish.process.started" - Publishing started. Can be started from
+                paused state.
+            "publish.process.validated" - Publishing passed validation.
+            "publish.process.stopped" - Publishing stopped/paused process.
+            "publish.process.plugin.changed" - Plugin state has changed.
+            "publish.process.instance.changed" - Instance state has changed.
+
+        Returns:
+            EventSystem: Event system which can trigger callbacks for topics.
+        """
+
+        if self._event_system is None:
+            self._event_system = EventSystem()
+        return self._event_system
+
+    @abstractproperty
+    def project_name(self):
+        """Current context project name.
+
+        Returns:
+            str: Name of project.
+        """
+
+        pass
+
+    @abstractproperty
+    def current_asset_name(self):
+        """Current context asset name.
+
+        Returns:
+            Union[str, None]: Name of asset.
+        """
+
+        pass
+
+    @abstractproperty
+    def current_task_name(self):
+        """Current context task name.
+
+        Returns:
+            Union[str, None]: Name of task.
+        """
+
+        pass
+
+    @abstractproperty
+    def instances(self):
+        """Collected/created instances.
+
+        Returns:
+            List[CreatedInstance]: List of created instances.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_manual_creators_base_info(self):
+        """Creators that can be selected and triggered by artist.
+
+        Returns:
+            List[CreatorBaseInfo]: Base information about creator plugin.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_context_title(self):
+        """Get context title for artist shown at the top of main window.
+
+        Returns:
+            Union[str, None]: Context title for window or None. In case of None
+                a warning is displayed (not nice for artists).
+        """
+
+        pass
+
+    @abstractmethod
+    def get_asset_docs(self):
+        pass
+
+    @abstractmethod
+    def get_asset_hierarchy(self):
+        pass
+
+    @abstractmethod
+    def get_task_names_by_asset_names(self, asset_names):
+        pass
+
+    @abstractmethod
+    def reset(self):
+        pass
+
+    @abstractmethod
+    def emit_card_message(self, message):
+        pass
+
+    @abstractmethod
+    def get_creator_attribute_definitions(self, instances):
+        pass
+
+    @abstractmethod
+    def get_publish_attribute_definitions(self, instances, include_context):
+        pass
+
+    @abstractmethod
+    def get_icon_for_family(self, family):
+        pass
+
+    @abstractmethod
+    def create(
+        self, creator_identifier, subset_name, instance_data, options
+    ):
+        pass
+
+    def save_changes(self):
+        """Save changes happened during creation."""
+
+        pass
+
+    def remove_instances(self, instances):
+        """Remove list of instances."""
+
+        pass
+
+    @abstractproperty
+    def publish_has_finished(self):
+        pass
+
+    @abstractproperty
+    def publish_is_running(self):
+        pass
+
+    @abstractproperty
+    def publish_has_validated(self):
+        pass
+
+    @abstractproperty
+    def publish_has_crashed(self):
+        pass
+
+    @abstractproperty
+    def publish_has_validation_errors(self):
+        pass
+
+    @abstractproperty
+    def publish_max_progress(self):
+        pass
+
+    @abstractproperty
+    def publish_progress(self):
+        pass
+
+    @abstractproperty
+    def publish_comment_is_set(self):
+        pass
+
+    @abstractmethod
+    def get_publish_crash_error(self):
+        pass
+
+    @abstractmethod
+    def get_publish_report(self):
+        pass
+
+    @abstractmethod
+    def get_validation_errors(self):
+        pass
+
+    @abstractmethod
+    def set_comment(self, comment):
+        pass
+
+    @abstractmethod
+    def publish(self):
+        pass
+
+    @abstractmethod
+    def validate(self):
+        pass
+
+    @abstractmethod
+    def stop_publish(self):
+        pass
+
+    @abstractmethod
+    def run_action(self, plugin, action):
+        pass
+
+    @abstractmethod
+    def reset_project_data_cache(self):
+        pass
+
+
+class PublisherController(AbstractPublisherController):
     """Middleware between UI, CreateContext and publish Context.
 
     Handle both creation and publishing parts.
