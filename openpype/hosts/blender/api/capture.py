@@ -7,7 +7,7 @@ import contextlib
 import bpy
 
 from .lib import maintained_time, maintained_selection, maintained_visibility
-from .plugin import deselect_all
+from .plugin import deselect_all, context_override
 
 
 def capture(
@@ -83,29 +83,27 @@ def capture(
         "use_overwrite": overwrite,
     }
 
-
     with contextlib.ExitStack() as stack:
         stack.enter_context(maintained_time())
         stack.enter_context(maintained_selection())
         stack.enter_context(maintained_visibility())
+        window = stack.enter_context(_independent_window())
 
-        with _independent_window() as window:
+        applied_view(window, camera, isolate, options=display_options)
 
-            applied_view(window, camera, isolate, options=display_options)
+        stack.enter_context(maintain_camera(window, camera))
+        stack.enter_context(applied_frame_range(window, *frame_range))
+        stack.enter_context(applied_render_options(window, render_options))
+        stack.enter_context(applied_image_settings(window, image_settings))
 
-            with contextlib.ExitStack() as substack:
-                substack.enter_context(maintain_camera(window, camera))
-                substack.enter_context(applied_frame_range(window, *frame_range))
-                substack.enter_context(applied_render_options(window, render_options))
-                substack.enter_context(applied_image_settings(window, image_settings))
-
-                bpy.ops.render.opengl(
-                    animation=True,
-                    render_keyed_only=False,
-                    sequencer=False,
-                    write_still=False,
-                    view_context=True,
-                )
+        with context_override(window=window):
+            bpy.ops.render.opengl(
+                animation=True,
+                render_keyed_only=False,
+                sequencer=False,
+                write_still=False,
+                view_context=True,
+            )
 
     return filename
 
@@ -132,9 +130,9 @@ def isolate_objects(window, objects):
         obj.select_set(obj in objects)
         obj.hide_set(obj not in objects)
 
-    context = create_blender_context(selected=objects, window=window)
-
-    bpy.ops.view3d.view_axis(context, type="FRONT")
+    with context_override(selected=objects, window=window):
+        bpy.ops.view3d.view_axis(type="FRONT")
+        bpy.ops.view3d.view_selected(use_all_regions=False)
 
     deselect_all()
 
@@ -276,12 +274,12 @@ def maintain_camera(window, camera):
 @contextlib.contextmanager
 def _independent_window():
     """Create capture-window context."""
-    context = create_blender_context()
     current_windows = set(bpy.context.window_manager.windows)
-    bpy.ops.wm.window_new(context)
+    with context_override():
+        bpy.ops.wm.window_new()
     window = list(set(bpy.context.window_manager.windows) - current_windows)[0]
-    context["window"] = window
     try:
         yield window
     finally:
-        bpy.ops.wm.window_close(context)
+        with context_override(window=window):
+            bpy.ops.wm.window_close()
