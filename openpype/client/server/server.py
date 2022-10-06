@@ -227,10 +227,18 @@ class ServerAPIBase(object):
 
     def logout(self):
         if self._access_token:
-            from openpype_common.connection import logout
-
-            logout(self._base_url, self._access_token)
+            self._logout()
             self.reset_token()
+
+    def _logout(self):
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {}".format(self._access_token)
+        }
+        requests.post(
+            self._base_url + "/api/auth/logout",
+            headers=headers
+        )
 
     def query_graphl(self, query, variables=None):
         data = {"query": query, "variables": variables or {}}
@@ -461,6 +469,19 @@ class ServerAPI(ServerAPIBase):
         super(ServerAPI, self).login(username, password)
         if self.has_valid_token and previous_token != self._access_token:
             os.environ["OPENPYPE_TOKEN"] = self._access_token
+
+    def logout(self):
+        if not self._access_token:
+            return
+
+        try:
+            from openpype_common.connection import logout
+
+            logout(self._base_url, self._access_token)
+            self.reset_token()
+
+        except:
+            self._logout()
 
     @staticmethod
     def get_url():
