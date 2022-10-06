@@ -257,7 +257,13 @@ class BaseCreator:
         return {}
 
     def get_subset_name(
-        self, variant, task_name, asset_doc, project_name, host_name=None
+        self,
+        variant,
+        task_name,
+        asset_doc,
+        project_name,
+        host_name=None,
+        instance=None
     ):
         """Return subset name for passed context.
 
@@ -271,12 +277,17 @@ class BaseCreator:
         Asset document is not used yet but is required if would like to use
         task type in subset templates.
 
+        Method is also called on subset name update. In that case origin
+        instance is passed in.
+
         Args:
             variant(str): Subset name variant. In most of cases user input.
             task_name(str): For which task subset is created.
             asset_doc(dict): Asset document for which subset is created.
             project_name(str): Project name.
             host_name(str): Which host creates subset.
+            instance(str|None): Object of 'CreatedInstance' for which is
+                subset name updated. Passed only on subset name update.
         """
 
         dynamic_data = self.get_dynamic_data(
