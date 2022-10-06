@@ -646,11 +646,6 @@ class PublisherController(AbstractPublisherController):
         return self._create_context.publish_plugins
 
     @property
-    def plugins_with_defs(self):
-        """Publish plugins with possible attribute definitions."""
-        return self._create_context.plugins_with_defs
-
-    @property
     def event_system(self):
         """Inner event system for publisher controller.
 
@@ -838,7 +833,7 @@ class PublisherController(AbstractPublisherController):
                     attr_values.append((item, value))
 
         output = []
-        for plugin in self.plugins_with_defs:
+        for plugin in self._create_context.plugins_with_defs:
             plugin_name = plugin.__name__
             if plugin_name not in all_defs_by_plugin_name:
                 continue
