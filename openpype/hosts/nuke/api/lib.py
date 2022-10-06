@@ -1680,7 +1680,6 @@ def set_node_knobs_from_settings(node, knob_settings, **kwargs):
                 _knob_value = template.format(
                     **kwargs
                 )
-                log.debug("__ knob_value0: {}".format(_knob_value))
             except KeyError as msg:
                 log.warning("__ msg: {}".format(msg))
                 raise KeyError(msg)
