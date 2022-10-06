@@ -106,17 +106,18 @@
                 "MPFrame",
                 "LayoutFrame"
             ],
-            "instance_attributes": [],
+            "instance_attributes": [
+                "use_range_limit"
+            ],
             "prenodes": {
                 "FrameHold01": {
                     "nodeclass": "FrameHold",
                     "dependent": "",
                     "knobs": [
                         {
-                            "type": "formatable",
+                            "type": "expression",
                             "name": "first_frame",
-                            "template": "{frame}",
-                            "to_type": "number"
+                            "expression": "parent.first"
                         }
                     ]
                 }
