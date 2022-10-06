@@ -1434,7 +1434,7 @@ class AssetLoader(LoaderPlugin):
 
     def exec_update(
         self, container: Dict, representation: Dict
-    ) -> Tuple[str, Union[bpy.types.Collection, bpy.types.Object]]:
+    ) -> Tuple[Path, Union[bpy.types.Collection, bpy.types.Object]]:
         """Update the loaded asset"""
         object_name = container["objectName"]
         asset_group = self._get_asset_group_container(container)
