@@ -36,6 +36,30 @@ class ExtractThumbnail(openpype.api.Extractor):
         family = instance.data.get("family")
         isolate = instance.data("isolate", None)
 
+        instance_collection = instance[-1]
+        instance_collection.hide_viewport = False
+        bpy.context.view_layer.layer_collection.children.get(
+            instance_collection.name
+        ).hide_viewport = False
+
+        if not isolate:
+            isolate = [
+                obj for obj in bpy.context.scene.objects
+                if obj.type == "MESH" and obj.visible_get()
+            ]
+            for sibling_instance in instance.context:
+                if sibling_instance is not instance:
+                    for obj in sibling_instance:
+                        if obj in isolate:
+                            isolate.remove(obj)
+
+        focus = [
+            obj for obj in instance
+            if isinstance(obj, bpy.types.Object)
+            and obj.type == "MESH"
+            and obj.visible_get()
+        ]
+
         project_settings = instance.context.data["project_settings"]["blender"]
         extractor_settings = project_settings["publish"]["ExtractThumbnail"]
         presets = extractor_settings.get("presets")
@@ -50,6 +74,7 @@ class ExtractThumbnail(openpype.api.Extractor):
                 "filename": path,
                 "overwrite": True,
                 "isolate": isolate,
+                "focus": focus,
             }
         )
         preset.setdefault("height", preset.setdefault("width", 512))
