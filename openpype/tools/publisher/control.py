@@ -626,8 +626,9 @@ class PublisherController(AbstractPublisherController):
         return self._create_context.instances
 
     @property
-    def creators(self):
+    def _creators(self):
         """All creators loaded in create context."""
+
         return self._create_context.creators
 
     @property
@@ -846,7 +847,7 @@ class PublisherController(AbstractPublisherController):
 
     def get_icon_for_family(self, family):
         """TODO rename to get creator icon."""
-        creator = self.creators.get(family)
+        creator = self._creators.get(family)
         if creator is not None:
             return creator.get_icon()
         return None
@@ -855,7 +856,7 @@ class PublisherController(AbstractPublisherController):
         self, creator_identifier, subset_name, instance_data, options
     ):
         """Trigger creation and refresh of instances in UI."""
-        creator = self.creators[creator_identifier]
+        creator = self._creators[creator_identifier]
         creator.create(subset_name, instance_data, options)
 
         self._emit_event("instances.refresh.finished")
