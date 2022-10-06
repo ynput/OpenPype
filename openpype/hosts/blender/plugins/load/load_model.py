@@ -67,13 +67,8 @@ class InstanceModelLoader(plugin.AssetLoader):
             asset_group.scale = [scale[n] for n in "xyz"]
 
         if isinstance(parent, bpy.types.Object):
-            bpy.ops.object.parent_set(
-                plugin.create_blender_context(
-                    active=bpy.context.scene.objects.get(parent),
-                    selected=[asset_group]
-                ),
-                keep_transform=True
-            )
+            with plugin.context_override(active=parent, selected=asset_group):
+                bpy.ops.object.parent_set(keep_transform=True)
         elif isinstance(parent, bpy.types.Collection):
             for current_parent in asset_group.users_collection:
                 current_parent.children.unlink(asset_group)
