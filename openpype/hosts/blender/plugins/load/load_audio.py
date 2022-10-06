@@ -93,5 +93,5 @@ class AudioLoader(plugin.AssetLoader):
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene."""
-        self._remove_audio(container["libpath"])
+        self._remove_audio(Path(container["libpath"]).name)
         return super().exec_remove(container)
