@@ -642,7 +642,7 @@ class PublisherController(AbstractPublisherController):
         return self._create_context.host_is_valid
 
     @property
-    def publish_plugins(self):
+    def _publish_plugins(self):
         """Publish plugins."""
         return self._create_context.publish_plugins
 
@@ -681,6 +681,7 @@ class PublisherController(AbstractPublisherController):
 
     def get_context_title(self):
         """Get context title for artist shown at the top of main window."""
+
         context_title = None
         if hasattr(self._host, "get_context_title"):
             context_title = self._host.get_context_title()
@@ -913,7 +914,7 @@ class PublisherController(AbstractPublisherController):
         return self._publish_error
 
     def get_publish_report(self):
-        return self._publish_report.get_report(self.publish_plugins)
+        return self._publish_report.get_report(self._publish_plugins)
 
     def get_validation_errors(self):
         return self._publish_validation_errors
@@ -940,7 +941,7 @@ class PublisherController(AbstractPublisherController):
         self._publish_current_plugin_validation_errors = None
         self._publish_error = None
 
-        self._publish_max_progress = len(self.publish_plugins)
+        self._publish_max_progress = len(self._publish_plugins)
         self._publish_progress = 0
 
         self._emit_event("publish.reset.finished")
@@ -1034,7 +1035,7 @@ class PublisherController(AbstractPublisherController):
         QUESTION:
         Does validate button still make sense?
         """
-        for idx, plugin in enumerate(self.publish_plugins):
+        for idx, plugin in enumerate(self._publish_plugins):
             self._publish_progress = idx
 
             # Reset current plugin validations error
