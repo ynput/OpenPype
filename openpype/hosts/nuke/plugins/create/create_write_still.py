@@ -131,6 +131,9 @@ class CreateWriteStill(napi.NukeWriteCreator):
             )
 
     def _add_frame_range_limit(self, write_node):
+        if "use_range_limit" not in self.instance_attributes:
+            return
+
         write_node.begin()
         for n in nuke.allNodes():
             # get write node
