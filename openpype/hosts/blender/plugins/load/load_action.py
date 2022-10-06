@@ -41,7 +41,7 @@ class ActionLoader(plugin.AssetLoader):
 
     def exec_update(
         self, container: Dict, representation: Dict
-    ) -> Tuple[str, Union[bpy.types.Collection, bpy.types.Object]]:
+    ) -> Tuple[Union[bpy.types.Collection, bpy.types.Object]]:
         """Update the loaded asset"""
 
         asset_group = self._get_asset_group_container(container)
@@ -50,7 +50,7 @@ class ActionLoader(plugin.AssetLoader):
         if old_action:
             old_action.name = f"{old_action.name}.old"
 
-        libpath, asset_group = super().exec_update(container, representation)
+        asset_group = super().exec_update(container, representation)
         new_action = self._get_action(asset_group) if asset_group else None
 
         if old_action:
@@ -65,7 +65,7 @@ class ActionLoader(plugin.AssetLoader):
 
             bpy.data.actions.remove(old_action)
 
-        return libpath, asset_group
+        return asset_group
 
 
 class LinkActionLoader(ActionLoader):
