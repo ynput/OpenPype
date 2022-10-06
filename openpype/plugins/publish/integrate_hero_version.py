@@ -389,7 +389,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                         old_repre, repre)
                     op_session.update_entity(
                         project_name,
-                        "representation",
+                        old_repre["type"],
                         old_repre["_id"],
                         update_data
                     )
@@ -404,7 +404,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                         archived_repre, repre)
                     op_session.update_entity(
                         project_name,
-                        "representation",
+                        old_repre["type"],
                         archived_repre["_id"],
                         update_data
                     )
