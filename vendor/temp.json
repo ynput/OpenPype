@@ -1,0 +1,46 @@
+{
+    project(name: "demo_Big_Episodic") {
+      representations(
+          first: 0,
+          after: 0,
+          localSite: "local",
+          remoteSite: "local"
+      ) {
+          edges {
+              node {
+                  id
+                  name
+                  # Sorry: totalSize is not implemented, but it will be
+                  # totalSize
+                  fileCount
+                  # overal sync state
+                  localState{
+                      status
+                      size
+                      timestamp
+                  }
+                  remoteState{
+                      status
+                      size
+                      timestamp
+                  }
+                  # crawl to the top to get parent info
+                  version {
+                      version
+                      subset {
+                          family
+                          name
+                          folder {
+                              name
+                          }
+                      }
+                  }
+              }
+          }
+          pageInfo {
+              hasNextPage
+              endCursor
+          }
+      }
+  }
+}

@@ -1,0 +1,92 @@
+[
+    {
+        "_id": {
+            "$oid": "623c9d53db3f5046eb1ad5f4"
+        },
+        "schema": "openpype:version-3.0",
+        "type": "version",
+        "parent": {
+            "$oid": "5f3e439a30a9464d6c181cbc"
+        },
+        "name": 94,
+        "data": {
+            "families": [
+                "workfile"
+            ],
+            "time": "20220324T173254Z",
+            "author": "petrk",
+            "source": "C:/projects_local/petr_test/assets/locations/Jungle/work/art/petr_test_Jungle_art_v009.psd",
+            "comment": "",
+            "machine": "LAPTOP-UB778LHG",
+            "fps": 25.0,
+            "intent": "-",
+            "inputLinks": [
+                {
+                    "type": "reference",
+                    "id": {
+                        "$oid": "618eb14f0a55a9c1591e913c"
+                    },
+                    "linkedBy": "publish"
+                }
+            ]
+        },
+        "outputs_recursive": [
+            {
+                "_id": {
+                    "$oid": "618eb14f0a55a9c1591e913c"
+                },
+                "schema": "openpype:version-3.0",
+                "type": "version",
+                "parent": {
+                    "$oid": "618e42a72ff49bd543bc1768"
+                },
+                "name": 8,
+                "data": {
+                    "families": [
+                        "image"
+                    ],
+                    "time": "20211112T192359Z",
+                    "author": "petrk",
+                    "source": "C:/projects_local/petr_test/assets/locations/Town/work/art/petr_test_Town_art_v005.psd",
+                    "comment": "",
+                    "machine": "LAPTOP-UB778LHG",
+                    "fps": 25.0,
+                    "intent": "-",
+                    "inputLinks": [
+                        {
+                            "type": "reference",
+                            "id": {
+                                "$oid": "5f3cd2d530a94638544837c3"
+                            },
+                            "linkedBy": "publish"
+                        }
+                    ]
+                },
+                "depth": 0
+            },
+            {
+                "_id": {
+                    "$oid": "5f3cd2d530a94638544837c3"
+                },
+                "schema": "pype:version-3.0",
+                "type": "version",
+                "parent": {
+                    "$oid": "5f3a714030a9464bfc7d2382"
+                },
+                "name": 7,
+                "data": {
+                    "families": [
+                        "image"
+                    ],
+                    "time": "20200819T092032Z",
+                    "author": "petrk",
+                    "source": "/c/projects/petr_test/assets/characters/Hero/work/art/Hero_v019.psd",
+                    "comment": "",
+                    "machine": "LAPTOP-UB778LHG",
+                    "fps": null
+                },
+                "depth": 1
+            }
+        ]
+    }
+]

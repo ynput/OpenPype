@@ -1,0 +1,1133 @@
+{
+  'family': 'render',
+  'name': 'renderLightingDefault',
+  'label': 'renderLightingDefault - local',
+  'version': 1,
+  'time': '',
+  'source': 'C:/projects/petr_test/sequences/seq01/shot01/work/lighting/petr_test_shot01_lighting_v001.aep',
+  'subset': 'renderLightingDefault',
+  'asset': 'shot01',
+  'attachTo': False,
+  'setMembers': '',
+  'publish': True,
+  'resolutionWidth': 1920.0,
+  'resolutionHeight': 1080.0,
+  'pixelAspect': 1,
+  'frameStart': 0,
+  'frameEnd': 0,
+  'frameStep': 1,
+  'handleStart': 0,
+  'handleEnd': 0,
+  'ignoreFrameHandleCheck': False,
+  'renderer': 'aerender',
+  'review': True,
+  'priority': 50,
+  'families': [
+    'render',
+    'review',
+    'ftrack',
+    'slack'
+  ],
+  'multipartExr': False,
+  'convertToScanline': False,
+  'tileRendering': False,
+  'tilesX': 0,
+  'tilesY': 0,
+  'toBeRenderedOn': 'deadline',
+  'deadlineSubmissionJob': None,
+  'anatomyData': {
+    'project': {
+      'name': 'petr_test',
+      'code': 'petr_test'
+    },
+    'asset': 'shot01',
+    'parent': 'seq01',
+    'hierarchy': 'sequences/seq01',
+    'task': {
+      'name': 'lighting',
+      'type': 'Lighting',
+      'short': 'lgt'
+    },
+    'username': 'petrk',
+    'app': 'aftereffects',
+    'd': '6',
+    'dd': '06',
+    'ddd': 'Thu',
+    'dddd': 'Thursday',
+    'm': '1',
+    'mm': '01',
+    'mmm': 'Jan',
+    'mmmm': 'January',
+    'yy': '22',
+    'yyyy': '2022',
+    'H': '18',
+    'HH': '18',
+    'h': '6',
+    'hh': '06',
+    'ht': 'PM',
+    'M': '14',
+    'MM': '14',
+    'S': '23',
+    'SS': '23',
+    'version': 1,
+    'subset': 'renderLightingDefault',
+    'family': 'render',
+    'intent': '-'
+  },
+  'outputDir': 'C:/projects/petr_test/sequences/seq01/shot01/work/lighting\\renders\\aftereffects\\petr_test_shot01_lighting_v001',
+  'comp_name': '℗ renderLightingDefault',
+  'comp_id': 1,
+  'fps': 25,
+  'projectEntity': {
+    '_id': ObjectId(
+    '5f2a6d2311e06a9818a1958b'
+    ),
+    'name': 'petr_test',
+    'created_d': datetime.datetime(2020,
+    9,
+    17,
+    15,
+    27,
+    27,
+    927000),
+    'data': {
+      'ftrackId': 'e5eda2bc-d682-11ea-afc1-92591a5b5e3e',
+      'entityType': 'Project',
+      'applications': [
+        'maya_2019',
+        'photoshop_2021',
+        'photoshop_2022',
+        'harmony_17',
+        'aftereffects_2022',
+        'harmony_20',
+        'nukestudio_12.2',
+        'nukex_12.2',
+        'hiero_12.2',
+        'blender_2.93'
+      ],
+      'library_project': True,
+      'clipIn': 1,
+      'resolutionWidth': 1920.0,
+      'handleEnd': 0,
+      'frameEnd': 1001,
+      'resolutionHeight': 1080.0,
+      'frameStart': 1001.0,
+      'pixelAspect': 1.0,
+      'fps': 25.0,
+      'handleStart': 0,
+      'clipOut': 1,
+      'tools_env': [],
+      'code': 'petr_test',
+      'active': True
+    },
+    'type': 'project',
+    'config': {
+      'apps': [
+        {
+          'name': 'aftereffects/2022'
+        },
+        {
+          'name': 'maya/2019'
+        },
+        {
+          'name': 'hiero/12-2'
+        },
+        {
+          'name': 'photoshop/2021'
+        },
+        {
+          'name': 'nuke/12-2'
+        },
+        {
+          'name': 'photoshop/2022'
+        }
+      ],
+      'tasks': {
+        'Layout': {
+          'short_name': 'lay'
+        },
+        'Setdress': {
+          'short_name': 'dress'
+        },
+        'Previz': {
+          'short_name': ''
+        },
+        'Generic': {
+          'short_name': 'gener'
+        },
+        'Animation': {
+          'short_name': 'anim'
+        },
+        'Modeling': {
+          'short_name': 'mdl'
+        },
+        'Lookdev': {
+          'short_name': 'look'
+        },
+        'FX': {
+          'short_name': 'fx'
+        },
+        'Lighting': {
+          'short_name': 'lgt'
+        },
+        'Compositing': {
+          'short_name': 'comp'
+        },
+        'Tracking': {
+          'short_name': ''
+        },
+        'Rigging': {
+          'short_name': 'rig'
+        },
+        'Paint': {
+          'short_name': 'paint'
+        },
+        'schedulle': {
+          'short_name': ''
+        },
+        'Art': {
+          'short_name': 'art'
+        },
+        'Texture': {
+          'short_name': 'tex'
+        },
+        'Edit': {
+          'short_name': 'edit'
+        }
+      },
+      'imageio': {
+        'hiero': {
+          'workfile': {
+            'ocioConfigName': 'nuke-default',
+            'ocioconfigpath': {
+              'windows': [],
+              'darwin': [],
+              'linux': []
+            },
+            'workingSpace': 'linear',
+            'sixteenBitLut': 'sRGB',
+            'eightBitLut': 'sRGB',
+            'floatLut': 'linear',
+            'logLut': 'Cineon',
+            'viewerLut': 'sRGB',
+            'thumbnailLut': 'sRGB'
+          },
+          'regexInputs': {
+            'inputs': [
+              {
+                'regex': '[^-a-zA-Z0-9](plateRef).*(?=mp4)',
+                'colorspace': 'sRGB'
+              }
+            ]
+          }
+        },
+        'nuke': {
+          'viewer': {
+            'viewerProcess': 'sRGB'
+          },
+          'baking': {
+            'viewerProcess': 'rec709'
+          },
+          'workfile': {
+            'colorManagement': 'Nuke',
+            'OCIO_config': 'nuke-default',
+            'customOCIOConfigPath': {
+              'windows': [],
+              'darwin': [],
+              'linux': []
+            },
+            'workingSpaceLUT': 'linear',
+            'monitorLut': 'sRGB',
+            'int8Lut': 'sRGB',
+            'int16Lut': 'sRGB',
+            'logLut': 'Cineon',
+            'floatLut': 'linear'
+          },
+          'nodes': {
+            'requiredNodes': [
+              {
+                'plugins': [
+                  'CreateWriteRender'
+                ],
+                'nukeNodeClass': 'Write',
+                'knobs': [
+                  {
+                    'name': 'file_type',
+                    'value': 'exr'
+                  },
+                  {
+                    'name': 'datatype',
+                    'value': '16 bit half'
+                  },
+                  {
+                    'name': 'compression',
+                    'value': 'Zip (1 scanline)'
+                  },
+                  {
+                    'name': 'autocrop',
+                    'value': 'True'
+                  },
+                  {
+                    'name': 'tile_color',
+                    'value': '0xff0000ff'
+                  },
+                  {
+                    'name': 'channels',
+                    'value': 'rgb'
+                  },
+                  {
+                    'name': 'colorspace',
+                    'value': 'linear'
+                  },
+                  {
+                    'name': 'create_directories',
+                    'value': 'True'
+                  }
+                ]
+              },
+              {
+                'plugins': [
+                  'CreateWritePrerender'
+                ],
+                'nukeNodeClass': 'Write',
+                'knobs': [
+                  {
+                    'name': 'file_type',
+                    'value': 'exr'
+                  },
+                  {
+                    'name': 'datatype',
+                    'value': '16 bit half'
+                  },
+                  {
+                    'name': 'compression',
+                    'value': 'Zip (1 scanline)'
+                  },
+                  {
+                    'name': 'autocrop',
+                    'value': 'False'
+                  },
+                  {
+                    'name': 'tile_color',
+                    'value': '0xadab1dff'
+                  },
+                  {
+                    'name': 'channels',
+                    'value': 'rgb'
+                  },
+                  {
+                    'name': 'colorspace',
+                    'value': 'linear'
+                  },
+                  {
+                    'name': 'create_directories',
+                    'value': 'True'
+                  }
+                ]
+              }
+            ],
+            'customNodes': []
+          },
+          'regexInputs': {
+            'inputs': [
+              {
+                'regex': '[^-a-zA-Z0-9]beauty[^-a-zA-Z0-9]',
+                'colorspace': 'linear'
+              }
+            ]
+          }
+        },
+        'maya': {
+          'colorManagementPreference': {
+            'configFilePath': {
+              'windows': [],
+              'darwin': [],
+              'linux': []
+            },
+            'renderSpace': 'scene-linear Rec 709/sRGB',
+            'viewTransform': 'sRGB gamma'
+          }
+        }
+      },
+      'roots': {
+        'work': {
+          'windows': 'C:/projects',
+          'darwin': '/Volumes/path',
+          'linux': '/mnt/share/projects'
+        }
+      },
+      'templates': {
+        'defaults': {
+          'version_padding': 3,
+          'version': 'v{version:0>{@version_padding}}',
+          'frame_padding': 4,
+          'frame': '{frame:0>{@frame_padding}}'
+        },
+        'work': {
+          'folder': '{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task}',
+          'file': '{project[code]}_{asset}_{task}_{@version}<_{comment}>.{ext}',
+          'path': '{@folder}/{@file}'
+        },
+        'render': {
+          'folder': '{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}',
+          'file': '{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{ext}',
+          'path': '{@folder}/{@file}'
+        },
+        'publish': {
+          'folder': '{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}',
+          'file': '{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}><_{udim}>.{ext}',
+          'path': '{@folder}/{@file}',
+          'thumbnail': '{thumbnail_root}/{project[name]}/{_id}_{thumbnail_type}.{ext}'
+        },
+        'hero': {
+          'folder': '{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/hero',
+          'file': '{project[code]}_{asset}_{subset}_hero<_{output}><.{frame}>.{ext}',
+          'path': '{@folder}/{@file}'
+        },
+        'delivery': {},
+        'others': {}
+      }
+    },
+    'parent': None,
+    'schema': 'avalon-core:project-2.0'
+  },
+  'stagingDir': 'C:\\Users\\petrk\\AppData\\Local\\Temp\\tmpwyhr_ecr',
+  'frameStartHandle': 0,
+  'frameEndHandle': 0,
+  'byFrameStep': 1,
+  'author': 'petrk',
+  'expectedFiles': [
+    'C:/projects/petr_test/sequences/seq01/shot01/work/lighting\\renders\\aftereffects\\petr_test_shot01_lighting_v001\\shot01_renderLightingDefault_v001.mov'
+  ],
+  'slack_channel_message_profiles': [
+    {
+      'channels': [
+        'test_integration'
+      ],
+      'upload_thumbnail': True,
+      'message': 'Test message'
+    }
+  ],
+  'slack_token': 'xoxb-1494100953104-2176825439264-jGqvQzfq9uZJPmyX5Q4o4TnP',
+  'representations': [
+    {
+      'frameStart': 0,
+      'frameEnd': 0,
+      'name': 'mov',
+      'ext': 'mov',
+      'files': ' renderLightingDefault.mov',
+      'stagingDir': 'C:\\Users\\petrk\\AppData\\Local\\Temp\\tmpwyhr_ecr',
+      'tags': [
+        'review'
+      ],
+      'published_path': 'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001.mov',
+      'publishedFiles': [
+        'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001.mov'
+      ]
+    },
+    {
+      'name': 'thumbnail',
+      'ext': 'jpg',
+      'files': 'thumbnail.jpg',
+      'stagingDir': 'C:\\Users\\petrk\\AppData\\Local\\Temp\\tmpwyhr_ecr',
+      'tags': [
+        'thumbnail'
+      ],
+      'published_path': 'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001.jpg',
+      'publishedFiles': [
+        'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001.jpg'
+      ]
+    },
+    {
+      'frameStart': 0,
+      'frameEnd': 0,
+      'name': 'h264_mp4',
+      'ext': 'mp4',
+      'files': ' renderLightingDefault_h264burnin.mp4',
+      'stagingDir': 'C:\\Users\\petrk\\AppData\\Local\\Temp\\tmpwyhr_ecr',
+      'tags': [
+        'review',
+        'burnin',
+        'ftrackreview'
+      ],
+      'resolutionWidth': 1920,
+      'resolutionHeight': 1080,
+      'outputName': 'h264',
+      'outputDef': {
+        'ext': 'mp4',
+        'tags': [
+          'burnin',
+          'ftrackreview'
+        ],
+        'burnins': [],
+        'ffmpeg_args': {
+          'video_filters': [],
+          'audio_filters': [],
+          'input': [
+            '-apply_trc gamma22'
+          ],
+          'output': [
+            '-pix_fmt yuv420p',
+            '-crf 18',
+            '-intra'
+          ]
+        },
+        'filter': {
+          'families': [
+            'render',
+            'review',
+            'ftrack'
+          ]
+        },
+        'overscan_crop': '',
+        'overscan_color': [
+          0,
+          0,
+          0,
+          255
+        ],
+        'width': 0,
+        'height': 0,
+        'bg_color': [
+          0,
+          0,
+          0,
+          0
+        ],
+        'letter_box': {
+          'enabled': False,
+          'ratio': 0.0,
+          'state': 'letterbox',
+          'fill_color': [
+            0,
+            0,
+            0,
+            255
+          ],
+          'line_thickness': 0,
+          'line_color': [
+            255,
+            0,
+            0,
+            255
+          ]
+        },
+        'filename_suffix': 'h264'
+      },
+      'frameStartFtrack': 0,
+      'frameEndFtrack': 0,
+      'ffmpeg_cmd': 'C:\\Users\\petrk\\PycharmProjects\\Pype3.0\\pype\\vendor\\bin\\ffmpeg\\windows\\bin\\ffmpeg -apply_trc gamma22 -i "C:\\Users\\petrk\\AppData\\Local\\Temp\\tmpwyhr_ecr\\ renderLightingDefault.mov" -pix_fmt yuv420p -crf 18 -intra -y "C:\\Users\\petrk\\AppData\\Local\\Temp\\tmpwyhr_ecr\\ renderLightingDefault_h264.mp4"',
+      'published_path': 'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001_h264.mp4',
+      'publishedFiles': [
+        'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001_h264.mp4'
+      ]
+    }
+  ],
+  'assetEntity': {
+    '_id': ObjectId(
+    '5fabee9730a94666449245b7'
+    ),
+    'name': 'shot01',
+    'data': {
+      'ftrackId': '0c5f548c-2425-11eb-b203-628b111fac3c',
+      'entityType': 'Shot',
+      'clipIn': 1,
+      'resolutionWidth': 1920.0,
+      'handleEnd': 0.0,
+      'frameEnd': 1001,
+      'resolutionHeight': 1080.0,
+      'frameStart': 1001.0,
+      'pixelAspect': 1.0,
+      'fps': 25.0,
+      'handleStart': 0.0,
+      'clipOut': 1,
+      'tools_env': [],
+      'avalon_mongo_id': '5fabee9730a94666449245b7',
+      'parents': [
+        'sequences',
+        'seq01'
+      ],
+      'hierarchy': 'sequences\\seq01',
+      'tasks': {
+        'lighting': {
+          'type': 'Lighting'
+        },
+        'animation': {
+          'type': 'Animation'
+        },
+        'compositing': {
+          'type': 'Compositing'
+        }
+      },
+      'visualParent': ObjectId(
+      '5fabee9730a94666449245b6'
+      )
+    },
+    'type': 'asset',
+    'parent': ObjectId(
+    '5f2a6d2311e06a9818a1958b'
+    ),
+    'schema': 'pype:asset-3.0'
+  },
+  'subsetEntity': {
+    '_id': ObjectId(
+    '61d723a271e6fce378bd428c'
+    ),
+    'schema': 'openpype:subset-3.0',
+    'type': 'subset',
+    'name': 'renderLightingDefault',
+    'data': {
+      'families': [
+        'render',
+        'review',
+        'ftrack',
+        'slack'
+      ]
+    },
+    'parent': ObjectId(
+    '5fabee9730a94666449245b7'
+    )
+  },
+  'versionEntity': {
+    '_id': ObjectId(
+    '61d723a371e6fce378bd428d'
+    ),
+    'schema': 'openpype:version-3.0',
+    'type': 'version',
+    'parent': ObjectId(
+    '61d723a271e6fce378bd428c'
+    ),
+    'name': 1,
+    'data': {
+      'families': [
+        'render',
+        'render',
+        'review',
+        'ftrack',
+        'slack'
+      ],
+      'time': '20220106T181423Z',
+      'author': 'petrk',
+      'source': 'C:/projects/petr_test/sequences/seq01/shot01/work/lighting/petr_test_shot01_lighting_v001.aep',
+      'comment': '',
+      'machine': 'LAPTOP-UB778LHG',
+      'fps': 25.0,
+      'intent': '-',
+      'frameStart': 0,
+      'frameEnd': 0,
+      'handleEnd': 0,
+      'handleStart': 0,
+      'inputLinks': [
+        OrderedDict(
+        [
+          (
+          'type',
+          'generative'
+          ),
+          (
+          'id',
+          ObjectId(
+          '600ab849c411725a626b8c35'
+          )),
+          (
+          'linkedBy',
+          'publish'
+          )
+        ]
+        )
+      ]
+    }
+  },
+  'transfers': [
+    [
+      'C:\\Users\\petrk\\AppData\\Local\\Temp\\tmpwyhr_ecr\\ renderLightingDefault_h264burnin.mp4',
+      'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001_h264.mp4'
+    ]
+  ],
+  'destination_list': [
+    'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001.mov',
+    'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001.jpg',
+    'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001_h264.mp4'
+  ],
+  'published_representations': {
+    ObjectId(
+    '61d723a371e6fce378bd428e'
+    ): {
+      'representation': {
+        '_id': ObjectId(
+        '61d723a371e6fce378bd428e'
+        ),
+        'schema': 'openpype:representation-2.0',
+        'type': 'representation',
+        'parent': ObjectId(
+        '61d723a371e6fce378bd428d'
+        ),
+        'name': 'mov',
+        'data': {
+          'path': 'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001.mov',
+          'template': '{root[work]}\\{project[name]}\\{hierarchy}\\{asset}\\publish\\{family}\\{subset}\\v{version:0>3}\\{project[code]}_{asset}_{subset}_v{version:0>3}<_{output}><.{frame:0>4}>.{ext}'
+        },
+        'dependencies': [],
+        'context': {
+          'root': {
+            'work': 'C:/projects'
+          },
+          'project': {
+            'name': 'petr_test',
+            'code': 'petr_test'
+          },
+          'hierarchy': 'sequences/seq01',
+          'asset': 'shot01',
+          'family': 'render',
+          'subset': 'renderLightingDefault',
+          'version': 1,
+          'ext': 'mov',
+          'task': {
+            'name': 'lighting',
+            'type': 'Lighting',
+            'short': 'lgt'
+          },
+          'representation': 'mov',
+          'username': 'petrk'
+        },
+        'files': [
+          {
+            '_id': ObjectId(
+            '61d723a371e6fce378bd4291'
+            ),
+            'path': '{root[work]}/petr_test/sequences/seq01/shot01/publish/render/renderLightingDefault/v001/petr_test_shot01_renderLightingDefault_v001.mov',
+            'size': 1654788,
+            'hash': 'petr_test_shot01_renderLightingDefault_v001,mov|1641489300,6230524|1654788',
+            'sites': [
+              {
+                'name': 'studio',
+                'created_dt': datetime.datetime(2022,
+                1,
+                6,
+                18,
+                15,
+                15,
+                264448)
+              }
+            ]
+          }
+        ]
+      },
+      'anatomy_data': {
+        'project': {
+          'name': 'petr_test',
+          'code': 'petr_test'
+        },
+        'asset': 'shot01',
+        'parent': 'seq01',
+        'hierarchy': 'sequences/seq01',
+        'task': {
+          'name': 'lighting',
+          'type': 'Lighting',
+          'short': 'lgt'
+        },
+        'username': 'petrk',
+        'app': 'aftereffects',
+        'd': '6',
+        'dd': '06',
+        'ddd': 'Thu',
+        'dddd': 'Thursday',
+        'm': '1',
+        'mm': '01',
+        'mmm': 'Jan',
+        'mmmm': 'January',
+        'yy': '22',
+        'yyyy': '2022',
+        'H': '18',
+        'HH': '18',
+        'h': '6',
+        'hh': '06',
+        'ht': 'PM',
+        'M': '14',
+        'MM': '14',
+        'S': '23',
+        'SS': '23',
+        'version': 1,
+        'subset': 'renderLightingDefault',
+        'family': 'render',
+        'intent': '-',
+        'representation': 'mov',
+        'ext': 'mov'
+      },
+      'published_files': [
+        'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001.mov'
+      ]
+    },
+    ObjectId(
+    '61d723a371e6fce378bd4292'
+    ): {
+      'representation': {
+        '_id': ObjectId(
+        '61d723a371e6fce378bd4292'
+        ),
+        'schema': 'openpype:representation-2.0',
+        'type': 'representation',
+        'parent': ObjectId(
+        '61d723a371e6fce378bd428d'
+        ),
+        'name': 'thumbnail',
+        'data': {
+          'path': 'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001.jpg',
+          'template': '{root[work]}\\{project[name]}\\{hierarchy}\\{asset}\\publish\\{family}\\{subset}\\v{version:0>3}\\{project[code]}_{asset}_{subset}_v{version:0>3}<_{output}><.{frame:0>4}>.{ext}'
+        },
+        'dependencies': [],
+        'context': {
+          'root': {
+            'work': 'C:/projects'
+          },
+          'project': {
+            'name': 'petr_test',
+            'code': 'petr_test'
+          },
+          'hierarchy': 'sequences/seq01',
+          'asset': 'shot01',
+          'family': 'render',
+          'subset': 'renderLightingDefault',
+          'version': 1,
+          'ext': 'jpg',
+          'task': {
+            'name': 'lighting',
+            'type': 'Lighting',
+            'short': 'lgt'
+          },
+          'representation': 'jpg',
+          'username': 'petrk'
+        },
+        'files': [
+          {
+            '_id': ObjectId(
+            '61d723a371e6fce378bd4295'
+            ),
+            'path': '{root[work]}/petr_test/sequences/seq01/shot01/publish/render/renderLightingDefault/v001/petr_test_shot01_renderLightingDefault_v001.jpg',
+            'size': 871,
+            'hash': 'petr_test_shot01_renderLightingDefault_v001,jpg|1641489301,1720147|871',
+            'sites': [
+              {
+                'name': 'studio',
+                'created_dt': datetime.datetime(2022,
+                1,
+                6,
+                18,
+                15,
+                15,
+                825446)
+              }
+            ]
+          }
+        ]
+      },
+      'anatomy_data': {
+        'project': {
+          'name': 'petr_test',
+          'code': 'petr_test'
+        },
+        'asset': 'shot01',
+        'parent': 'seq01',
+        'hierarchy': 'sequences/seq01',
+        'task': {
+          'name': 'lighting',
+          'type': 'Lighting',
+          'short': 'lgt'
+        },
+        'username': 'petrk',
+        'app': 'aftereffects',
+        'd': '6',
+        'dd': '06',
+        'ddd': 'Thu',
+        'dddd': 'Thursday',
+        'm': '1',
+        'mm': '01',
+        'mmm': 'Jan',
+        'mmmm': 'January',
+        'yy': '22',
+        'yyyy': '2022',
+        'H': '18',
+        'HH': '18',
+        'h': '6',
+        'hh': '06',
+        'ht': 'PM',
+        'M': '14',
+        'MM': '14',
+        'S': '23',
+        'SS': '23',
+        'version': 1,
+        'subset': 'renderLightingDefault',
+        'family': 'render',
+        'intent': '-',
+        'representation': 'jpg',
+        'ext': 'jpg'
+      },
+      'published_files': [
+        'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001.jpg'
+      ]
+    },
+    ObjectId(
+    '61d723a471e6fce378bd4296'
+    ): {
+      'representation': {
+        '_id': ObjectId(
+        '61d723a471e6fce378bd4296'
+        ),
+        'schema': 'openpype:representation-2.0',
+        'type': 'representation',
+        'parent': ObjectId(
+        '61d723a371e6fce378bd428d'
+        ),
+        'name': 'h264_mp4',
+        'data': {
+          'path': 'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001_h264.mp4',
+          'template': '{root[work]}\\{project[name]}\\{hierarchy}\\{asset}\\publish\\{family}\\{subset}\\v{version:0>3}\\{project[code]}_{asset}_{subset}_v{version:0>3}<_{output}><.{frame:0>4}>.{ext}'
+        },
+        'dependencies': [],
+        'context': {
+          'root': {
+            'work': 'C:/projects'
+          },
+          'project': {
+            'name': 'petr_test',
+            'code': 'petr_test'
+          },
+          'hierarchy': 'sequences/seq01',
+          'asset': 'shot01',
+          'family': 'render',
+          'subset': 'renderLightingDefault',
+          'version': 1,
+          'output': 'h264',
+          'ext': 'mp4',
+          'task': {
+            'name': 'lighting',
+            'type': 'Lighting',
+            'short': 'lgt'
+          },
+          'representation': 'mp4',
+          'username': 'petrk'
+        },
+        'files': [
+          {
+            '_id': ObjectId(
+            '61d723a471e6fce378bd4299'
+            ),
+            'path': '{root[work]}/petr_test/sequences/seq01/shot01/publish/render/renderLightingDefault/v001/petr_test_shot01_renderLightingDefault_v001_h264.mp4',
+            'size': 10227,
+            'hash': 'petr_test_shot01_renderLightingDefault_v001_h264,mp4|1641489313,659368|10227',
+            'sites': [
+              {
+                'name': 'studio',
+                'created_dt': datetime.datetime(2022,
+                1,
+                6,
+                18,
+                15,
+                16,
+                53445)
+              }
+            ]
+          }
+        ]
+      },
+      'anatomy_data': {
+        'project': {
+          'name': 'petr_test',
+          'code': 'petr_test'
+        },
+        'asset': 'shot01',
+        'parent': 'seq01',
+        'hierarchy': 'sequences/seq01',
+        'task': {
+          'name': 'lighting',
+          'type': 'Lighting',
+          'short': 'lgt'
+        },
+        'username': 'petrk',
+        'app': 'aftereffects',
+        'd': '6',
+        'dd': '06',
+        'ddd': 'Thu',
+        'dddd': 'Thursday',
+        'm': '1',
+        'mm': '01',
+        'mmm': 'Jan',
+        'mmmm': 'January',
+        'yy': '22',
+        'yyyy': '2022',
+        'H': '18',
+        'HH': '18',
+        'h': '6',
+        'hh': '06',
+        'ht': 'PM',
+        'M': '14',
+        'MM': '14',
+        'S': '23',
+        'SS': '23',
+        'version': 1,
+        'subset': 'renderLightingDefault',
+        'family': 'render',
+        'intent': '-',
+        'resolution_width': 1920,
+        'resolution_height': 1080,
+        'fps': 25,
+        'output': 'h264',
+        'representation': 'mp4',
+        'ext': 'mp4'
+      },
+      'published_files': [
+        'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001_h264.mp4'
+      ]
+    }
+  },
+  'ftrackComponentsList': [
+    {
+      'assettype_data': {
+        'short': 'render'
+      },
+      'asset_data': {
+        'name': 'renderLightingDefault'
+      },
+      'assetversion_data': {
+        'version': 1
+      },
+      'component_overwrite': False,
+      'thumbnail': True,
+      'component_data': {
+        'name': 'thumbnail'
+      },
+      'component_path': 'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001.jpg',
+      'component_location': <dynamic
+      ftrack
+      ServerLocation
+      object
+      2625391364936>,
+      'component': <dynamic
+      ftrack
+      FileComponent
+      object
+      2625391805768>
+    },
+    {
+      'assettype_data': {
+        'short': 'render'
+      },
+      'asset_data': {
+        'name': 'renderLightingDefault'
+      },
+      'assetversion_data': {
+        'version': 1
+      },
+      'component_overwrite': False,
+      'thumbnail': False,
+      'component_data': {
+        'name': 'ftrackreview-mp4',
+        'metadata': {
+          'ftr_meta': '{"frameIn": 0, "frameOut": 1, "frameRate": 25.0}'
+        }
+      },
+      'component_path': 'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001_h264.mp4',
+      'component_location': <dynamic
+      ftrack
+      ServerLocation
+      object
+      2625391364936>,
+      'component': <dynamic
+      ftrack
+      FileComponent
+      object
+      2625391810696>
+    },
+    {
+      'assettype_data': {
+        'short': 'render'
+      },
+      'asset_data': {
+        'name': 'renderLightingDefault'
+      },
+      'assetversion_data': {
+        'version': 1
+      },
+      'component_overwrite': False,
+      'thumbnail': False,
+      'component_data': {
+        'name': 'thumbnail_src'
+      },
+      'component_path': 'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001.jpg',
+      'component_location': <dynamic
+      ftrack
+      UnmanagedLocation
+      object
+      2625391365640>,
+      'component': <dynamic
+      ftrack
+      FileComponent
+      object
+      2625391990728>
+    },
+    {
+      'assettype_data': {
+        'short': 'render'
+      },
+      'asset_data': {
+        'name': 'renderLightingDefault'
+      },
+      'assetversion_data': {
+        'version': 1
+      },
+      'component_overwrite': False,
+      'thumbnail': False,
+      'component_data': {
+        'name': 'ftrackreview-mp4_src',
+        'metadata': {
+          'ftr_meta': '{"frameIn": 0, "frameOut": 1, "frameRate": 25.0}'
+        }
+      },
+      'component_path': 'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001_h264.mp4',
+      'component_location': <dynamic
+      ftrack
+      UnmanagedLocation
+      object
+      2625391365640>,
+      'component': <dynamic
+      ftrack
+      FileComponent
+      object
+      2625370354440>
+    },
+    {
+      'assettype_data': {
+        'short': 'render'
+      },
+      'asset_data': {
+        'name': 'renderLightingDefault'
+      },
+      'assetversion_data': {
+        'version': 1
+      },
+      'component_overwrite': False,
+      'thumbnail': False,
+      'component_data': {
+        'name': 'mov'
+      },
+      'component_path': 'C:\\projects\\petr_test\\sequences\\seq01\\shot01\\publish\\render\\renderLightingDefault\\v001\\petr_test_shot01_renderLightingDefault_v001.mov',
+      'component_location': <dynamic
+      ftrack
+      UnmanagedLocation
+      object
+      2625391365640>,
+      'component': <dynamic
+      ftrack
+      FileComponent
+      object
+      2625411434568>
+    }
+  ],
+  'ftrackIntegratedAssetVersions': [
+    <dynamic
+    ftrack
+    AssetVersion
+    object
+    2625370356232>
+  ]
+}

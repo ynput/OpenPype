@@ -14,7 +14,6 @@ from openpype.client import (
 )
 from openpype.client.operations import (
     OperationsSession,
-    _create_or_convert_to_mongo_id,
     new_hero_version_doc,
     prepare_hero_version_update_data,
     prepare_representation_update_data,
@@ -193,9 +192,13 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
 
         op_session = OperationsSession()
 
+        entity_id = None
+        if old_version:
+            entity_id = old_version["_id"]
         new_hero_version = new_hero_version_doc(
             src_version_entity["_id"],
-            src_version_entity["parent"]
+            src_version_entity["parent"],
+            entity_id=entity_id
         )
 
         if old_version:
@@ -408,7 +411,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
 
                 # Create representation
                 else:
-                    repre["_id"] = _create_or_convert_to_mongo_id(None)
+                    repre.pop("_id", None)
                     op_session.create_entity(project_name, "representation",
                                              repre)
 
