@@ -1,6 +1,6 @@
 """Load a layout in Blender."""
 from contextlib import contextmanager
-from typing import Dict
+from typing import Dict, Tuple, Union
 
 import bpy
 
@@ -112,9 +112,7 @@ class LayoutLoader(plugin.AssetLoader):
     def _create_animation_collection(self, name, rig_assets, dependency):
         creator_plugin = get_legacy_creator_by_name("CreateAnimation")
         if not creator_plugin:
-            raise ValueError(
-                'Creator plugin "CreateAnimation" was not found.'
-            )
+            raise ValueError('Creator plugin "CreateAnimation" was not found.')
 
         if self.animation_instance_link == "armature":
             members = set(self._get_armatures(rig_assets))
@@ -126,7 +124,7 @@ class LayoutLoader(plugin.AssetLoader):
             name=name,
             asset=legacy_io.Session.get("AVALON_ASSET"),
             options={"useSelection": False, "members": members},
-            data={"dependencies": dependency}
+            data={"dependencies": dependency},
         )
 
     def _make_local_actions(self, asset_group):
@@ -185,9 +183,11 @@ class LayoutLoader(plugin.AssetLoader):
 
         return asset_group
 
-    def exec_update(self, container: Dict, representation: Dict):
+    def exec_update(
+        self, container: Dict, representation: Dict
+    ) -> Tuple(str, Union[bpy.types.Collection, bpy.types.Object]):
         """Update the loaded asset"""
-        asset_group = self._update_process(container, representation)
+        libpath, asset_group = super().exec_update(container, representation)
 
         # Add new loaded rig asset groups to animationMain collection.
         if legacy_io.Session.get("AVALON_TASK") == "Animation":
@@ -223,7 +223,7 @@ class LayoutLoader(plugin.AssetLoader):
                             dependency,
                         )
 
-        return asset_group
+        return libpath, asset_group
 
 
 class LinkLayoutLoader(LayoutLoader):
