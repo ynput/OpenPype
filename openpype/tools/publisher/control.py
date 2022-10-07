@@ -687,7 +687,8 @@ class AbstractPublisherController(object):
     Define what must be implemented to be able use Publisher functionality.
 
     Goal is to have "data driven" controller that can be used to control UI
-    running in different process. That lead to some ""
+    running in different process. That lead to some disadvantages like UI can't
+    access objects directly but by using wrappers that can be serialized.
     """
 
     _log = None
@@ -758,6 +759,19 @@ class AbstractPublisherController(object):
 
         Returns:
             Union[str, None]: Name of task.
+        """
+
+        pass
+
+    @abstractproperty
+    def host_is_valid(self):
+        """Host is valid for creation part.
+
+        Host must have implemented certain functionality to be able create
+        in Publisher tool.
+
+        Returns:
+            bool: Host can handle creation of instances.
         """
 
         pass
