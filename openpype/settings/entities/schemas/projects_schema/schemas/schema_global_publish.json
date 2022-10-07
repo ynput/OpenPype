@@ -558,6 +558,73 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "PreIntegrateThumbnails",
+            "label": "Integrate Thumbnail Representations",
+            "is_group": true,
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "label",
+                    "label": "Explicitly set if Thumbnail representation should be integrated into DB.<br> If no matching profile set, existing state from Host implementation is kept."
+                },
+                {
+                    "type": "list",
+                    "key": "integrate_profiles",
+                    "label": "Integrate profiles",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "hosts-enum",
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "multiselection": true
+                            },
+                            {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
+                                "key": "tasks",
+                                "label": "Task names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "subsets",
+                                "label": "Subset names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "integrate_thumbnail",
+                                "label": "Integrate thumbnail"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "IntegrateSubsetGroup",
             "label": "Integrate Subset Group",
             "is_group": true,
