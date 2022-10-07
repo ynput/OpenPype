@@ -18,7 +18,12 @@ from openpype.pipeline import (
     PublishValidationError,
     registered_host,
 )
-from openpype.pipeline.create import CreateContext
+from openpype.pipeline.create import (
+    CreateContext,
+    AutoCreator,
+    HiddenCreator,
+    Creator,
+)
 
 # Define constant for plugin orders offset
 PLUGIN_ORDER_OFFSET = 0.5
@@ -707,6 +712,102 @@ class PublishValidationErrors:
             plugin_id
         )
         self._plugin_action_items[plugin_id] = plugin_actions
+
+
+class CreatorType:
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return self.name
+
+    def __eq__(self, other):
+        return self.name == str(other)
+
+
+class CreatorTypes:
+    base = CreatorType("base")
+    auto = CreatorType("auto")
+    hidden = CreatorType("hidden")
+    artist = CreatorType("artist")
+
+
+class CreatorItem:
+    """Wrapper around Creator plugin.
+
+    Object can be serialized and recreated.
+    """
+
+    def __init__(
+        self,
+        identifier,
+        creator_type,
+        family,
+        label,
+        group_label,
+        icon,
+        instance_attributes_defs,
+        description,
+        detailed_description,
+        default_variant,
+        default_variants,
+        create_allow_context_change,
+        pre_create_attributes_defs
+    ):
+        self.identifier = identifier
+        self.creator_type = creator_type
+        self.family = family
+        self.label = label
+        self.icon = icon
+        self.description = description
+        self.detailed_description = detailed_description
+        self.default_variant = default_variant
+        self.default_variants = default_variants
+        self.create_allow_context_change = create_allow_context_change
+        self.instance_attributes_defs = instance_attributes_defs
+        self.pre_create_attributes_defs = pre_create_attributes_defs
+
+    @classmethod
+    def from_creator(cls, creator):
+        if isinstance(creator, AutoCreator):
+            creator_type = CreatorTypes.auto
+        elif isinstance(creator, HiddenCreator):
+            creator_type = CreatorTypes.hidden
+        elif isinstance(creator, Creator):
+            creator_type = CreatorTypes.artist
+        else:
+            creator_type = CreatorTypes.base
+
+        description = None
+        detail_description = None
+        default_variant = None
+        default_variants = None
+        pre_create_attr_defs = None
+        create_allow_context_change = None
+        if creator_type is CreatorTypes.artist:
+            description = creator.get_description()
+            detail_description = creator.get_detail_description()
+            default_variant = creator.get_default_variant()
+            default_variants = creator.get_default_variants()
+            pre_create_attr_defs = creator.get_pre_create_attr_defs()
+            create_allow_context_change = creator.create_allow_context_change
+
+        identifier = creator.identifier
+        return cls(
+            identifier,
+            creator_type,
+            creator.family,
+            creator.label or identifier,
+            creator.get_group_label(),
+            creator.get_icon(),
+            creator.get_instance_attr_defs(),
+            description,
+            detail_description,
+            default_variant,
+            default_variants,
+            create_allow_context_change,
+            pre_create_attr_defs
+        )
 
 
 @six.add_metaclass(ABCMeta)
