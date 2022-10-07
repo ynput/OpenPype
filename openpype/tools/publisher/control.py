@@ -1089,6 +1089,7 @@ class AbstractPublisherController(object):
 
     def remove_instances(self, instances):
         """Remove list of instances from create context."""
+        # TODO expect instance ids
 
         pass
 
@@ -1485,7 +1486,7 @@ class PublisherController(AbstractPublisherController):
 
         self._resetting_instances = False
 
-        self._emit_event("instances.refresh.finished")
+        self._on_create_instance_change()
 
     def emit_card_message(self, message):
         self._emit_event("show.card.message", {"message": message})
@@ -1494,9 +1495,10 @@ class PublisherController(AbstractPublisherController):
         """Collect creator attribute definitions for multuple instances.
 
         Args:
-            instances(list<CreatedInstance>): List of created instances for
+            instances(List[CreatedInstance]): List of created instances for
                 which should be attribute definitions returned.
         """
+
         output = []
         _attr_defs = {}
         for instance in instances:
@@ -1530,6 +1532,7 @@ class PublisherController(AbstractPublisherController):
                 which should be attribute definitions returned.
             include_context(bool): Add context specific attribute definitions.
         """
+
         _tmp_items = []
         if include_context:
             _tmp_items.append(self._create_context)
@@ -1614,7 +1617,7 @@ class PublisherController(AbstractPublisherController):
         creator = self._creators[creator_identifier]
         creator.create(subset_name, instance_data, options)
 
-        self._emit_event("instances.refresh.finished")
+        self._on_create_instance_change()
 
     def save_changes(self):
         """Save changes happened during creation."""
@@ -1623,12 +1626,19 @@ class PublisherController(AbstractPublisherController):
 
     def remove_instances(self, instances):
         """"""
+        # TODO expect instance ids instead of instances
         # QUESTION Expect that instances are really removed? In that case save
         #   reset is not required and save changes too.
         self.save_changes()
 
+        self._remove_instances_from_context(instances)
+
+        self._on_create_instance_change()
+
+    def _remove_instances_from_context(self, instances):
         self._create_context.remove_instances(instances)
 
+    def _on_create_instance_change(self):
         self._emit_event("instances.refresh.finished")
 
     # --- Publish specific implementations ---
