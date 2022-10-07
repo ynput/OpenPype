@@ -13,7 +13,8 @@ from .plugin import (
     NukeCreator,
     NukeWriteCreator,
     NukeCreatorError,
-    OpenPypeCreator
+    OpenPypeCreator,
+    get_instance_node
 )
 from .pipeline import (
     NukeHost,
@@ -64,6 +65,7 @@ __all__ = (
     "NukeCreatorError",
     "OpenPypeCreator",
     "NukeHost",
+    "get_instance_node",
 
     "ls",
 

@@ -1,4 +1,3 @@
-from pprint import pformat
 import nuke
 
 import os
@@ -405,6 +404,15 @@ class OpenPypeCreator(LegacyCreator):
         add_publish_knob(instance)
 
         return instance
+
+
+def get_instance_node(instance):
+    # new publisher way
+    if instance.data.get("transientData"):
+        return instance.data["transientData"]["node"]
+    else:
+        # or backward compatible
+        return instance[0]
 
 
 def get_review_presets_config():
