@@ -1,11 +1,12 @@
 import os
 
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline import publish
 from openpype.hosts.houdini.api.lib import render_rop
 
 
-class ExtractAss(openpype.api.Extractor):
+class ExtractAss(publish.Extractor):
 
     order = pyblish.api.ExtractorOrder + 0.1
     label = "Extract Ass"

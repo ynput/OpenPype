@@ -1,14 +1,5 @@
 {
-    "shelves": [
-        {
-            "shelf_set_name": "OpenPype Shelves",
-            "shelf_set_source_path": {
-                "windows": "",
-                "darwin": "",
-                "linux": ""
-            }
-        }
-    ],
+    "shelves": [],
     "create": {
         "CreateArnoldAss": {
             "enabled": true,

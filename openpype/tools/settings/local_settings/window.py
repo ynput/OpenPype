@@ -1,4 +1,3 @@
-import logging
 from Qt import QtWidgets, QtGui
 
 from openpype import style
@@ -7,10 +6,10 @@ from openpype.settings.lib import (
     get_local_settings,
     save_local_settings
 )
+from openpype.lib import Logger
 from openpype.tools.settings import CHILD_OFFSET
 from openpype.tools.utils import MessageOverlayObject
 from openpype.api import (
-    Logger,
     SystemSettings,
     ProjectSettings
 )

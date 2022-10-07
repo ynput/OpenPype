@@ -1,9 +1,10 @@
 import os
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline import publish
 
 
-class ExtractThumnail(openpype.api.Extractor):
+class ExtractThumnail(publish.Extractor):
     """
     Extractor for track item's tumnails
     """

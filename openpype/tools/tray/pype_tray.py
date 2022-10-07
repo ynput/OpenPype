@@ -144,8 +144,7 @@ class VersionUpdateDialog(QtWidgets.QDialog):
             "gifts.png"
         )
         src_image = QtGui.QImage(image_path)
-        colors = style.get_objected_colors()
-        color_value = colors["font"]
+        color_value = style.get_objected_colors("font")
 
         return paint_image_with_color(
             src_image,

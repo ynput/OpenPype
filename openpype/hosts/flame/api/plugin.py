@@ -9,13 +9,14 @@ from Qt import QtCore, QtWidgets
 import openpype.api as openpype
 import qargparse
 from openpype import style
+from openpype.lib import Logger
 from openpype.pipeline import LegacyCreator, LoaderPlugin
 
 from . import constants
 from . import lib as flib
 from . import pipeline as fpipeline
 
-log = openpype.Logger.get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 class CreatorWidget(QtWidgets.QDialog):
@@ -678,6 +679,7 @@ class ClipLoader(LoaderPlugin):
     `update` logic.
 
     """
+    log = log
 
     options = [
         qargparse.Boolean(
@@ -694,8 +696,12 @@ class OpenClipSolver(flib.MediaInfoFile):
 
     log = log
 
-    def __init__(self, openclip_file_path, feed_data):
+    def __init__(self, openclip_file_path, feed_data, logger=None):
         self.out_file = openclip_file_path
+
+        # replace log if any
+        if logger:
+            self.log = logger
 
         # new feed variables:
         feed_path = feed_data.pop("path")
@@ -703,7 +709,7 @@ class OpenClipSolver(flib.MediaInfoFile):
         # initialize parent class
         super(OpenClipSolver, self).__init__(
             feed_path,
-            **feed_data
+            logger=logger
         )
 
         # get other metadata
@@ -751,17 +757,18 @@ class OpenClipSolver(flib.MediaInfoFile):
         self.log.info("Building new openClip")
         self.log.debug(">> self.clip_data: {}".format(self.clip_data))
 
-        # clip data comming from MediaInfoFile
-        tmp_xml_feeds = self.clip_data.find('tracks/track/feeds')
-        tmp_xml_feeds.set('currentVersion', self.feed_version_name)
-        for tmp_feed in tmp_xml_feeds:
-            tmp_feed.set('vuid', self.feed_version_name)
+        for tmp_xml_track in self.clip_data.iter("track"):
+            tmp_xml_feeds = tmp_xml_track.find('feeds')
+            tmp_xml_feeds.set('currentVersion', self.feed_version_name)
 
-            # add colorspace if any is set
-            if self.feed_colorspace:
-                self._add_colorspace(tmp_feed, self.feed_colorspace)
+            for tmp_feed in tmp_xml_track.iter("feed"):
+                tmp_feed.set('vuid', self.feed_version_name)
 
-            self._clear_handler(tmp_feed)
+                # add colorspace if any is set
+                if self.feed_colorspace:
+                    self._add_colorspace(tmp_feed, self.feed_colorspace)
+
+                self._clear_handler(tmp_feed)
 
         tmp_xml_versions_obj = self.clip_data.find('versions')
         tmp_xml_versions_obj.set('currentVersion', self.feed_version_name)
@@ -774,6 +781,17 @@ class OpenClipSolver(flib.MediaInfoFile):
 
         self.write_clip_data_to_file(self.out_file, self.clip_data)
 
+    def _get_xml_track_obj_by_uid(self, xml_data, uid):
+        # loop all tracks of input xml data
+        for xml_track in xml_data.iter("track"):
+            track_uid = xml_track.get("uid")
+            self.log.debug(
+                ">> track_uid:uid: {}:{}".format(track_uid, uid))
+
+            # get matching uids
+            if uid == track_uid:
+                return xml_track
+
     def _update_open_clip(self):
         self.log.info("Updating openClip ..")
 
@@ -783,52 +801,81 @@ class OpenClipSolver(flib.MediaInfoFile):
         self.log.debug(">> out_xml: {}".format(out_xml))
         self.log.debug(">> self.clip_data: {}".format(self.clip_data))
 
-        # Get new feed from tmp file
-        tmp_xml_feed = self.clip_data.find('tracks/track/feeds/feed')
+        # loop tmp tracks
+        updated_any = False
+        for tmp_xml_track in self.clip_data.iter("track"):
+            # get tmp track uid
+            tmp_track_uid = tmp_xml_track.get("uid")
+            self.log.debug(">> tmp_track_uid: {}".format(tmp_track_uid))
 
-        self._clear_handler(tmp_xml_feed)
+            # get out data track by uid
+            out_track_element = self._get_xml_track_obj_by_uid(
+                out_xml, tmp_track_uid)
+            self.log.debug(
+                ">> out_track_element: {}".format(out_track_element))
 
-        # update fps from MediaInfoFile class
-        if self.fps:
-            tmp_feed_fps_obj = tmp_xml_feed.find(
-                "startTimecode/rate")
-            tmp_feed_fps_obj.text = str(self.fps)
+            # loop tmp feeds
+            for tmp_xml_feed in tmp_xml_track.iter("feed"):
+                new_path_obj = tmp_xml_feed.find(
+                    "spans/span/path")
+                new_path = new_path_obj.text
 
-        # update start_frame from MediaInfoFile class
-        if self.start_frame:
-            tmp_feed_nb_ticks_obj = tmp_xml_feed.find(
-                "startTimecode/nbTicks")
-            tmp_feed_nb_ticks_obj.text = str(self.start_frame)
+                # check if feed path already exists in track's feeds
+                if (
+                    out_track_element is not None
+                    and self._feed_exists(out_track_element, new_path)
+                ):
+                    continue
 
-        # update drop_mode from MediaInfoFile class
-        if self.drop_mode:
-            tmp_feed_drop_mode_obj = tmp_xml_feed.find(
-                "startTimecode/dropMode")
-            tmp_feed_drop_mode_obj.text = str(self.drop_mode)
+                # rename versions on feeds
+                tmp_xml_feed.set('vuid', self.feed_version_name)
+                self._clear_handler(tmp_xml_feed)
 
-        new_path_obj = tmp_xml_feed.find(
-            "spans/span/path")
-        new_path = new_path_obj.text
+                # update fps from MediaInfoFile class
+                if self.fps is not None:
+                    tmp_feed_fps_obj = tmp_xml_feed.find(
+                        "startTimecode/rate")
+                    tmp_feed_fps_obj.text = str(self.fps)
 
-        feed_added = False
-        if not self._feed_exists(out_xml, new_path):
-            tmp_xml_feed.set('vuid', self.feed_version_name)
-            # Append new temp file feed to .clip source out xml
-            out_track = out_xml.find("tracks/track")
-            # add colorspace if any is set
-            if self.feed_colorspace:
-                self._add_colorspace(tmp_xml_feed, self.feed_colorspace)
+                # update start_frame from MediaInfoFile class
+                if self.start_frame is not None:
+                    tmp_feed_nb_ticks_obj = tmp_xml_feed.find(
+                        "startTimecode/nbTicks")
+                    tmp_feed_nb_ticks_obj.text = str(self.start_frame)
 
-            out_feeds = out_track.find('feeds')
-            out_feeds.set('currentVersion', self.feed_version_name)
-            out_feeds.append(tmp_xml_feed)
+                # update drop_mode from MediaInfoFile class
+                if self.drop_mode is not None:
+                    tmp_feed_drop_mode_obj = tmp_xml_feed.find(
+                        "startTimecode/dropMode")
+                    tmp_feed_drop_mode_obj.text = str(self.drop_mode)
 
-            self.log.info(
-                "Appending new feed: {}".format(
-                    self.feed_version_name))
-            feed_added = True
+                # add colorspace if any is set
+                if self.feed_colorspace is not None:
+                    self._add_colorspace(tmp_xml_feed, self.feed_colorspace)
 
-        if feed_added:
+                # then append/update feed to correct track in output
+                if out_track_element:
+                    self.log.debug("updating track element ..")
+                    # update already present track
+                    out_feeds = out_track_element.find('feeds')
+                    out_feeds.set('currentVersion', self.feed_version_name)
+                    out_feeds.append(tmp_xml_feed)
+
+                    self.log.info(
+                        "Appending new feed: {}".format(
+                            self.feed_version_name))
+                else:
+                    self.log.debug("adding new track element ..")
+                    # create new track as it doesnt exists yet
+                    # set current version to feeds on tmp
+                    tmp_xml_feeds = tmp_xml_track.find('feeds')
+                    tmp_xml_feeds.set('currentVersion', self.feed_version_name)
+                    out_tracks = out_xml.find("tracks")
+                    out_tracks.append(tmp_xml_track)
+
+                updated_any = True
+
+        if updated_any:
             # Append vUID to versions
             out_xml_versions_obj = out_xml.find('versions')
             out_xml_versions_obj.set(
