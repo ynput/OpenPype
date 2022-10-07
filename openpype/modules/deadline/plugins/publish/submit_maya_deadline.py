@@ -199,10 +199,18 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         context = instance.context
 
         # Set it to default Maya behaviour if it cannot be determined
-        # from instance (but it should be, by the Collector). Also
-        rs_include_lights = instance.data.get("renderSetupIncludeLights", "1")
+        # from instance (but it should be, by the Collector).
+
+        default_rs_include_lights = instance.context.data\
+            .get('project_settings')\
+            .get('maya')\
+            .get('RenderSettings')\
+            .get('enable_all_lights')
+
+        rs_include_lights = instance.data.get(
+            "renderSetupIncludeLights", default_rs_include_lights)
         if rs_include_lights not in {"1", "0", True, False}:
-            rs_include_lights = "1"
+            rs_include_lights = default_rs_include_lights
         plugin_info = MayaPluginInfo(
             SceneFile=self.scene_path,
             Version=cmds.about(version=True),
