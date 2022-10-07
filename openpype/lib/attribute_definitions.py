@@ -8,6 +8,28 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 import six
 import clique
 
+# Global variable which store attribude definitions by type
+#   - default types are registered on import
+_attr_defs_by_type = {}
+
+
+def register_attr_def_class(cls):
+    """Register attribute definition.
+
+    Currently are registered definitions used to deserialize data to objects.
+
+    Attrs:
+        cls (AbtractAttrDef): Non-abstract class to be registered with unique
+            'type' attribute.
+
+    Raises:
+        KeyError: When type was already registered.
+    """
+
+    if cls.type in _attr_defs_by_type:
+        raise KeyError("Type \"{}\" was already registered".format(cls.type))
+    _attr_defs_by_type[cls.type] = cls
+
 
 def get_attributes_keys(attribute_definitions):
     """Collect keys from list of attribute definitions.
@@ -756,3 +778,71 @@ class FileDef(AbtractAttrDef):
         if self.single_item:
             return FileDefItem.create_empty_item().to_dict()
         return []
+
+
+def serialize_attr_def(attr_def):
+    """Serialize attribute definition to data.
+
+    Args:
+        attr_def (AbtractAttrDef): Attribute definition to serialize.
+
+    Returns:
+        Dict[str, Any]: Serialized data.
+    """
+
+    return attr_def.serialize()
+
+
+def serialize_attr_defs(attr_defs):
+    """Serialize attribute definitions to data.
+
+    Args:
+        attr_defs (List[AbtractAttrDef]): Attribute definitions to serialize.
+
+    Returns:
+        List[Dict[str, Any]]: Serialized data.
+    """
+
+    return [
+        serialize_attr_def(attr_def)
+        for attr_def in attr_defs
+    ]
+
+
+def deserialize_attr_def(attr_def_data):
+    """Deserialize attribute definition from data.
+
+    Args:
+        attr_def (Dict[str, Any]): Attribute definition data to deserialize.
+    """
+
+    attr_type = attr_def_data.pop("type")
+    cls = _attr_defs_by_type[attr_type]
+    return cls.deserialize(attr_def_data)
+
+
+def deserialize_attr_defs(attr_defs_data):
+    """Deserialize attribute definitions.
+
+    Args:
+        List[Dict[str, Any]]: List of attribute definitions.
+    """
+
+    return [
+        deserialize_attr_def(attr_def_data)
+        for attr_def_data in attr_defs_data
+    ]
+
+
+# Register attribute definitions
+for _attr_class in (
+    UISeparatorDef,
+    UILabelDef,
+    UnknownDef,
+    NumberDef,
+    TextDef,
+    EnumDef,
+    BoolDef,
+    FileDef
+):
+    register_attr_def_class(_attr_class)
