@@ -469,7 +469,7 @@ class InstanceCardView(AbstractInstanceView):
                 group_widget = self._widgets_by_group[group_name]
             else:
                 group_icons = {
-                    idenfier: self.controller.get_icon_for_family(idenfier)
+                    idenfier: self.controller.get_creator_icon(idenfier)
                     for idenfier in identifiers_by_group[group_name]
                 }
 

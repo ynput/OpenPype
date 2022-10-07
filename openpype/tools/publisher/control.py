@@ -812,7 +812,16 @@ class AbstractPublisherController(object):
         pass
 
     @abstractmethod
-    def get_icon_for_family(self, family):
+    def get_creator_icon(self, identifier):
+        """Receive creator's icon by identifier.
+
+        Args:
+            identifier (str): Creator's identifier.
+
+        Returns:
+            Union[str, None]: Creator's icon string.
+        """
+
         pass
 
     @abstractmethod
@@ -1200,9 +1209,9 @@ class PublisherController(AbstractPublisherController):
             ))
         return output
 
-    def get_icon_for_family(self, family):
+    def get_creator_icon(self, identifier):
         """TODO rename to get creator icon."""
-        creator = self._creators.get(family)
+        creator = self._creators.get(identifier)
         if creator is not None:
             return creator.get_icon()
         return None
