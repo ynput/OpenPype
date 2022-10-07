@@ -874,6 +874,29 @@ class AbstractPublisherController(object):
         pass
 
     @abstractmethod
+    def get_subset_name(
+        self,
+        creator_identifier,
+        variant,
+        task_name,
+        asset_name,
+        instance_id=None
+    ):
+        """Get subset name based on passed data.
+
+        Args:
+            creator_identifier (str): Identifier of creator which should be
+                responsible for subset name creation.
+            variant (str): Variant value from user's input.
+            task_name (str): Name of task for which is instance created.
+            asset_name (str): Name of asset for which is instance created.
+            instance_id (Union[str, None]): Existing instance id when subset
+                name is updated.
+        """
+
+        pass
+
+    @abstractmethod
     def create(
         self, creator_identifier, subset_name, instance_data, options
     ):
@@ -1379,6 +1402,35 @@ class PublisherController(AbstractPublisherController):
         if creator is not None:
             return creator.get_icon()
         return None
+
+    def get_subset_name(
+        self,
+        creator_identifier,
+        variant,
+        task_name,
+        asset_name,
+        instance_id=None
+    ):
+        """Get subset name based on passed data.
+
+        Args:
+            creator_identifier (str): Identifier of creator which should be
+                responsible for subset name creation.
+            variant (str): Variant value from user's input.
+            task_name (str): Name of task for which is instance created.
+            asset_name (str): Name of asset for which is instance created.
+            instance_id (Union[str, None]): Existing instance id when subset
+                name is updated.
+        """
+
+        creator = self._creators[creator_identifier]
+        project_name = self.project_name
+        print(asset_name)
+        asset_doc = self._asset_docs_cache.get_full_asset_by_name(asset_name)
+
+        return creator.get_subset_name(
+            variant, task_name, asset_doc, project_name
+        )
 
     def create(
         self, creator_identifier, subset_name, instance_data, options
