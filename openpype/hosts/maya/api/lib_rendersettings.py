@@ -4,6 +4,7 @@ from maya import cmds  # noqa
 import maya.mel as mel
 import six
 import sys
+import re
 
 from openpype.api import (
     get_project_settings,
@@ -280,12 +281,15 @@ class RenderSettings(object):
         sensible way.
         """
 
-        preMelToInsert = """/*--*3dl_v2*--*/
+        # We need the DOTALL since the regex will now match across newlines.
+        regex_match = re.compile(r"\/\*--\*3dl_v\d+\*--\*\/.*\/\*--\*\*--\*\/",
+            re.DOTALL)
+        PREMEL_TEMPLATE = """/*--*3dl_v4*--*/
 currentTime -e `getAttr ("defaultRenderGlobals.startFrame")`;
-string $ls[] = `listConnections renderLayerManager.renderLayerId`;
-for ($i = 0 ; $i<size($ls) ; $i++) 
+string $lsCon[] = `listConnections renderLayerManager.renderLayerId`;
+for ($i = 0 ; $i<size($lsCon) ; $i++) 
 {
-    string $cl = $ls[$i];
+    string $cl = $lsCon[$i];
     if (!startsWith($cl, "rs_"))
         continue;
     if (!endsWith($cl, "_RL"))
@@ -296,16 +300,22 @@ for ($i = 0 ; $i<size($ls) ; $i++)
         string $rg = "dlRenderGlobals1.renderSettings";
         DL_disconnectNode( $rg );
         DL_connectNodeToMessagePlug( $_3l, $rg );
+        setAttr($_3l+".startFrame", 
+            `getAttr ("defaultRenderGlobals.startFrame")`);
+        setAttr($_3l+".endFrame",   
+            `getAttr ("defaultRenderGlobals.endFrame")`);
+        setAttr($_3l+".isRenderingSequence", 1);
     }
 }
 /*--**--*/"""
+
         preMel = cmds.getAttr("defaultRenderGlobals.preMel")
         print("This is our current 'preMel':[{}]".format(preMel))
-        if preMel:
-            if "/*--*3dl_v2*--*/" in preMel:
-                print("  - we already have the correct preMel, leave it")
-        else:
+        if preMel is None:
             print("  - we need to insert our own preMel")
-            preMel = preMel if preMel else ""
-            mel = "{};{}".format(preMel, preMelToInsert)
-            cmds.setAttr("defaultRenderGlobals.preMel", mel, type="string")
+            preMel = PREMEL_TEMPLATE
+        else:
+            print("  - we have preMel update it")
+            preMel = re.sub(regex_match, PREMEL_TEMPLATE, preMel)
+
+        cmds.setAttr("defaultRenderGlobals.preMel", preMel, type="string")
