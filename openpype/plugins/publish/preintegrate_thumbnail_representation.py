@@ -20,7 +20,7 @@ class PreIntegrateThumbnails(pyblish.api.InstancePlugin):
     """Marks thumbnail representation for integrate to DB or not."""
 
     label = "Should Integrate Thumbnails"
-    order = pyblish.api.IntegratorOrder
+    order = pyblish.api.IntegratorOrder - 0.1
     families = ["review"]
 
     integrate_profiles = {}
