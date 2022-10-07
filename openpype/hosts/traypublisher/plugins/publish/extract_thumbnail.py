@@ -71,9 +71,9 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
         oiio_supported = is_oiio_supported()
 
         self.log.info("Thumbnail source: {}".format(thumbnail_source))
-        filename = os.path.splitext(thumbnail_source)[0]
-        jpeg_file = filename + ".jpg"
-        full_output_path = os.path.join(dst_staging, jpeg_file)
+        src_basename = os.path.basename(thumbnail_source)
+        dst_filename = os.path.splitext(src_basename)[0] + ".jpg"
+        full_output_path = os.path.join(dst_staging, dst_filename)
 
         if oiio_supported:
             self.log.info("Trying to convert with OIIO")
@@ -104,7 +104,7 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
         new_repre = {
             "name": "thumbnail",
             "ext": "jpg",
-            "files": jpeg_file,
+            "files": dst_filename,
             "stagingDir": dst_staging,
             "thumbnail": True,
             "tags": ["thumbnail"]
