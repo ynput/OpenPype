@@ -1025,6 +1025,7 @@ class PublisherController(AbstractPublisherController):
     @property
     def host_is_valid(self):
         """Host is valid for creation."""
+
         return self._create_context.host_is_valid
 
     @property
@@ -1035,7 +1036,7 @@ class PublisherController(AbstractPublisherController):
     def _emit_event(self, topic, data=None):
         if data is None:
             data = {}
-        self._event_system.emit(topic, data, "controller")
+        self.event_system.emit(topic, data, "controller")
 
     # --- Publish specific callbacks ---
     def get_asset_docs(self):
