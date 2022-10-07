@@ -1214,10 +1214,6 @@ class AbstractPublisherController(object):
         pass
 
     @abstractmethod
-    def reset_project_data_cache(self):
-        pass
-
-    @abstractmethod
     def set_comment(self, comment):
         """Set comment on pyblish context.
 
@@ -1904,9 +1900,6 @@ class PublisherController(AbstractPublisherController):
                 self._publish_error = exception
 
         self._publish_next_process()
-
-    def reset_project_data_cache(self):
-        self._asset_docs_cache.reset()
 
 
 def collect_families_from_instances(instances, only_active=False):

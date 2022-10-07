@@ -30,6 +30,9 @@ class TrayPublisherController(QtPublisherController):
     def host(self):
         return self._host
 
+    def reset_project_data_cache(self):
+        self._asset_docs_cache.reset()
+
 
 class TrayPublisherRegistry(JSONSettingRegistry):
     """Class handling OpenPype general settings registry.
