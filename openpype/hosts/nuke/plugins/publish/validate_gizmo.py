@@ -1,6 +1,6 @@
 import pyblish
 from openpype.pipeline import PublishXmlValidationError
-from openpype.hosts.nuke.api import maintained_selection
+from openpype.hosts.nuke import api as napi
 import nuke
 
 
@@ -26,10 +26,10 @@ class OpenFailedGroupNode(pyblish.api.Action):
         instances = pyblish.api.instances_by_plugin(failed, plugin)
 
         # maintain selection
-        with maintained_selection():
+        with napi.maintained_selection():
             # collect all failed nodes xpos and ypos
             for instance in instances:
-                grpn = instance[0]
+                grpn = napi.get_instance_node(instance)
                 nuke.showDag(grpn)
 
 
@@ -45,7 +45,7 @@ class ValidateGizmo(pyblish.api.InstancePlugin):
     actions = [OpenFailedGroupNode]
 
     def process(self, instance):
-        grpn = instance[0]
+        grpn = napi.get_instance_node(instance)
 
         with grpn:
             connections_out = nuke.allNodes('Output')

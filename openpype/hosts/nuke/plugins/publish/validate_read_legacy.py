@@ -5,7 +5,7 @@ import nuke
 import toml
 import pyblish.api
 from bson.objectid import ObjectId
-
+from openpype.hosts.nuke import api as napi
 from openpype.pipeline import (
     discover_loader_plugins,
     load_container,
@@ -31,22 +31,22 @@ class RepairReadLegacyAction(pyblish.api.Action):
         instances = pyblish.api.instances_by_plugin(failed, plugin)
 
         for instance in instances:
-
-            data = toml.loads(instance[0]["avalon"].value())
-            data["name"] = instance[0].name()
-            data["xpos"] = instance[0].xpos()
-            data["ypos"] = instance[0].ypos()
+            node = napi.get_instance_node(instance)
+            data = toml.loads(node["avalon"].value())
+            data["name"] = node.name()
+            data["xpos"] = node.xpos()
+            data["ypos"] = node.ypos()
             data["extension"] = os.path.splitext(
-                instance[0]["file"].value()
+                node["file"].value()
             )[1][1:]
 
             data["connections"] = []
-            for d in instance[0].dependent():
+            for d in node.dependent():
                 for i in range(d.inputs()):
-                    if d.input(i) == instance[0]:
+                    if d.input(i) == node:
                         data["connections"].append([i, d])
 
-            nuke.delete(instance[0])
+            nuke.delete(node)
 
             loader_name = "LoadSequence"
             if data["extension"] == "mov":
@@ -72,7 +72,7 @@ class RepairReadLegacyAction(pyblish.api.Action):
 
 
 class ValidateReadLegacy(pyblish.api.InstancePlugin):
-    """Validate legacy read instance[0]s."""
+    """Validate legacy read nodes."""
 
     order = pyblish.api.ValidatorOrder
     optional = True

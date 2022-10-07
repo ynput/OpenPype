@@ -5,6 +5,7 @@ from openpype.hosts.nuke.api.lib import (
     set_node_knobs_from_settings,
     color_gui_to_int
 )
+from openpype.hosts.nuke import api as napi
 from openpype.pipeline import PublishXmlValidationError
 
 
@@ -18,10 +19,15 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
         instances = get_errored_instances_from_context(context)
 
         for instance in instances:
-            write_group_node = instance[0]
+            child_nodes = (
+                instance.data.get("transientData", {}).get("childNodes")
+                or instance
+            )
+
+            write_group_node = napi.get_instance_node(instance)
             # get write node from inside of group
             write_node = None
-            for x in instance:
+            for x in child_nodes:
                 if x.Class() == "Write":
                     write_node = x
 
@@ -47,11 +53,16 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
     hosts = ["nuke"]
 
     def process(self, instance):
-        write_group_node = instance[0]
+        child_nodes = (
+            instance.data.get("transientData", {}).get("childNodes")
+            or instance
+        )
+
+        write_group_node = napi.get_instance_node(instance)
 
         # get write node from inside of group
         write_node = None
-        for x in instance:
+        for x in child_nodes:
             if x.Class() == "Write":
                 write_node = x
 

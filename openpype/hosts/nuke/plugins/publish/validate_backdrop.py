@@ -1,6 +1,6 @@
 import nuke
 import pyblish
-from openpype.hosts.nuke.api.lib import maintained_selection
+from openpype.hosts.nuke import api as napi
 from openpype.pipeline import PublishXmlValidationError
 
 
@@ -25,14 +25,14 @@ class SelectCenterInNodeGraph(pyblish.api.Action):
         # Apply pyblish.logic to get the instances for the plug-in
         instances = pyblish.api.instances_by_plugin(failed, plugin)
 
-        all_xC = list()
-        all_yC = list()
+        all_xC = []
+        all_yC = []
 
         # maintain selection
-        with maintained_selection():
+        with napi.maintained_selection():
             # collect all failed nodes xpos and ypos
             for instance in instances:
-                bdn = instance[0]
+                bdn = napi.get_instance_node(instance)
                 xC = bdn.xpos() + bdn.screenWidth() / 2
                 yC = bdn.ypos() + bdn.screenHeight() / 2
 

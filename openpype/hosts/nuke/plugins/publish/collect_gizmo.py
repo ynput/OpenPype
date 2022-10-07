@@ -1,4 +1,5 @@
 import pyblish.api
+from openpype.hosts.nuke import api as napi
 import nuke
 
 
@@ -13,8 +14,7 @@ class CollectGizmo(pyblish.api.InstancePlugin):
     families = ["gizmo"]
 
     def process(self, instance):
-
-        grpn = instance[0]
+        grpn = napi.get_instance_node(instance)
 
         # add family to familiess
         instance.data["families"].insert(0, instance.data["family"])
@@ -46,5 +46,4 @@ class CollectGizmo(pyblish.api.InstancePlugin):
             "frameStart": first_frame,
             "frameEnd": last_frame
         })
-        self.log.info("Gizmo content collected: `{}`".format(instance[:]))
         self.log.info("Gizmo instance collected: `{}`".format(instance))

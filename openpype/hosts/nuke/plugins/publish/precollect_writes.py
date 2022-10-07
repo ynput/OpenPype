@@ -27,8 +27,13 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         _families_test = [instance.data["family"]] + instance.data["families"]
         self.log.debug("_families_test: {}".format(_families_test))
 
+        child_nodes = (
+            instance.data.get("transientData", {}).get("childNodes")
+            or instance
+        )
+
         node = None
-        for x in instance:
+        for x in child_nodes:
             if x.Class() == "Write":
                 node = x
 

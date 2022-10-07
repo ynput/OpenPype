@@ -1,6 +1,7 @@
 import os
 import pyblish.api
 import clique
+from openpype.hosts.nuke import api as napi
 from openpype.pipeline import PublishXmlValidationError
 
 
@@ -23,6 +24,7 @@ class RepairActionBase(pyblish.api.Action):
 
     def repair_knob(self, instances, state):
         for instance in instances:
+            node = napi.get_instance_node(instance)
             files_remove = [os.path.join(instance.data["outputDir"], f)
                             for r in instance.data.get("representations", [])
                             for f in r.get("files", [])
@@ -31,7 +33,7 @@ class RepairActionBase(pyblish.api.Action):
             for f in files_remove:
                 os.remove(f)
                 self.log.debug("removing file: {}".format(f))
-            instance[0]["render"].setValue(state)
+            node["render"].setValue(state)
             self.log.info("Rendering toggled to `{}`".format(state))
 
 
@@ -62,9 +64,10 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
     actions = [RepairCollectionActionToLocal, RepairCollectionActionToFarm]
 
     def process(self, instance):
+        node = napi.get_instance_node(instance)
 
         f_data = {
-            "node_name": instance[0]["name"].value()
+            "node_name": node.name()
         }
 
         for repre in instance.data["representations"]:

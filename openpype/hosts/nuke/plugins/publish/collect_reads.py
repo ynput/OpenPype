@@ -5,6 +5,7 @@ import pyblish.api
 
 from openpype.client import get_asset_by_name
 from openpype.pipeline import legacy_io
+from openpype.hosts.nuke import api as napi
 
 
 @pyblish.api.log
@@ -17,6 +18,8 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
     families = ["source"]
 
     def process(self, instance):
+        node = napi.get_instance_node(instance)
+
         project_name = legacy_io.active_project()
         asset_name = legacy_io.Session["AVALON_ASSET"]
         asset_doc = get_asset_by_name(project_name, asset_name)
@@ -25,7 +28,6 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
 
         self.log.debug("checking instance: {}".format(instance))
 
-        node = instance[0]
         if node.Class() != "Read":
             return
 
@@ -99,10 +101,7 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
         }
         instance.data["representations"].append(representation)
 
-        transfer = False
-        if "publish" in node.knobs():
-            transfer = node["publish"]
-
+        transfer = node["publish"] if "publish" in node.knobs() else False
         instance.data['transfer'] = transfer
 
         # Add version data to instance

@@ -1,6 +1,6 @@
 import pyblish.api
 
-from openpype.hosts.nuke.api import maintained_selection
+from openpype.hosts.nuke import api as napi
 from openpype.pipeline import PublishXmlValidationError
 from openpype.pipeline.publish import RepairAction
 import nuke
@@ -30,8 +30,13 @@ class ValidateOutputResolution(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_reformat(cls, instance):
+        child_nodes = (
+            instance.data.get("transientData", {}).get("childNodes")
+            or instance
+        )
+
         reformat = None
-        for inode in instance:
+        for inode in child_nodes:
             if inode.Class() != "Reformat":
                 continue
             reformat = inode
@@ -64,21 +69,26 @@ class ValidateOutputResolution(pyblish.api.InstancePlugin):
 
     @classmethod
     def repair(cls, instance):
+        child_nodes = (
+            instance.data.get("transientData", {}).get("childNodes")
+            or instance
+        )
+
         invalid = cls.get_invalid(instance)
-        grp_node = instance[0]
+        grp_node = napi.get_instance_node(instance)
 
         if cls.missing_msg == invalid:
             # make sure we are inside of the group node
             with grp_node:
                 # find input node and select it
                 _input = None
-                for inode in instance:
+                for inode in child_nodes:
                     if inode.Class() != "Input":
                         continue
                     _input = inode
 
                 # add reformat node under it
-                with maintained_selection():
+                with napi.maintained_selection():
                     _input['selected'].setValue(True)
                     _rfn = nuke.createNode("Reformat", "name Reformat01")
                     _rfn["resize"].setValue(0)

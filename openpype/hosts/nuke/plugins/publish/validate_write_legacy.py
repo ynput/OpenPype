@@ -7,7 +7,7 @@ import pyblish.api
 from openpype.pipeline import discover_creator_plugins
 from openpype.pipeline.publish import RepairAction
 from openpype.hosts.nuke.api.lib import get_avalon_knob_data
-
+from openpype.hosts.nuke import api as napi
 
 class ValidateWriteLegacy(pyblish.api.InstancePlugin):
     """Validate legacy write nodes."""
@@ -20,7 +20,7 @@ class ValidateWriteLegacy(pyblish.api.InstancePlugin):
     actions = [RepairAction]
 
     def process(self, instance):
-        node = instance[0]
+        node = napi.get_instance_node(instance)
         msg = "Clean up legacy write node \"{}\"".format(instance)
 
         if node.Class() not in ["Group", "Write"]:
@@ -48,7 +48,7 @@ class ValidateWriteLegacy(pyblish.api.InstancePlugin):
 
     @classmethod
     def repair(cls, instance):
-        node = instance[0]
+        node = napi.get_instance_node(instance)
 
         if "Write" in node.Class():
             data = toml.loads(node["avalon"].value())

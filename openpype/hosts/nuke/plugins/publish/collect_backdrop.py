@@ -1,6 +1,7 @@
 from pprint import pformat
 import pyblish.api
 from openpype.hosts.nuke.api import lib as pnlib
+from openpype.hosts.nuke import api as napi
 import nuke
 
 
@@ -17,12 +18,7 @@ class CollectBackdrops(pyblish.api.InstancePlugin):
     def process(self, instance):
         self.log.debug(pformat(instance.data))
 
-        # new publisher way
-        if instance.data.get("transientData"):
-            bckn = instance.data["transientData"]["node"]
-        else:
-            # or backward compatible
-            bckn = instance[0]
+        bckn = napi.get_instance_node(instance)
 
         # define size of the backdrop
         left = bckn.xpos()
@@ -91,5 +87,4 @@ class CollectBackdrops(pyblish.api.InstancePlugin):
             "frameStart": first_frame,
             "frameEnd": last_frame
         })
-        self.log.info("Backdrop content collected: `{}`".format(instance[:]))
         self.log.info("Backdrop instance collected: `{}`".format(instance))

@@ -6,7 +6,7 @@ import nuke
 import pyblish.api
 
 import openpype.hosts.nuke.api.lib as nlib
-import openpype.hosts.nuke.api as nuke_api
+from openpype.hosts.nuke import api as napi
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     PublishXmlValidationError,
@@ -85,8 +85,8 @@ class RepairSelectInvalidInstances(pyblish.api.Action):
 
         context_asset = context.data["assetEntity"]["name"]
         for instance in instances:
-            origin_node = instance[0]
-            nuke_api.lib.recreate_instance(
+            origin_node = napi.get_instance_node(instance)
+            napi.lib.recreate_instance(
                 origin_node, avalon_data={"asset": context_asset}
             )
 
@@ -112,6 +112,7 @@ class ValidateCorrectAssetName(pyblish.api.InstancePlugin):
     def process(self, instance):
         asset = instance.data.get("asset")
         context_asset = instance.context.data["assetEntity"]["name"]
+        node = napi.get_instance_node(instance)
 
         msg = (
             "Instance `{}` has wrong shot/asset name:\n"
@@ -123,7 +124,7 @@ class ValidateCorrectAssetName(pyblish.api.InstancePlugin):
         if asset != context_asset:
             raise PublishXmlValidationError(
                 self, msg, formatting_data={
-                    "node_name": instance[0]["name"].value(),
+                    "node_name": node.name(),
                     "wrong_name": asset,
                     "correct_name": context_asset
                 }

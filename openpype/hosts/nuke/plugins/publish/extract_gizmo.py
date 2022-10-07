@@ -4,6 +4,7 @@ import nuke
 import pyblish.api
 
 from openpype.pipeline import publish
+from openpype.hosts.nuke import api as napi
 from openpype.hosts.nuke.api import utils as pnutils
 from openpype.hosts.nuke.api.lib import (
     maintained_selection,
@@ -24,8 +25,9 @@ class ExtractGizmo(publish.Extractor):
     families = ["gizmo"]
 
     def process(self, instance):
-        tmp_nodes = list()
-        orig_grpn = instance[0]
+        tmp_nodes = []
+        orig_grpn = napi.get_instance_node(instance)
+
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
         filename = "{0}.nk".format(instance.name)

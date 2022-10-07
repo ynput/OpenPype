@@ -23,9 +23,13 @@ class NukeRenderLocal(publish.Extractor):
 
     def process(self, instance):
         families = instance.data["families"]
+        child_nodes = (
+            instance.data.get("transientData", {}).get("childNodes")
+            or instance
+        )
 
         node = None
-        for x in instance:
+        for x in child_nodes:
             if x.Class() == "Write":
                 node = x
 

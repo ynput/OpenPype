@@ -1,4 +1,5 @@
 import pyblish.api
+from openpype.hosts.nuke import api as napi
 import nuke
 
 
@@ -11,7 +12,7 @@ class CollectSlate(pyblish.api.InstancePlugin):
     families = ["render", "render.local", "render.farm"]
 
     def process(self, instance):
-        node = instance[0]
+        node = napi.get_instance_node(instance)
 
         slate = next((n for n in nuke.allNodes()
                       if "slate" in n.name().lower()
