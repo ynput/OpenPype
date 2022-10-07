@@ -784,6 +784,12 @@ class CreatorItem:
         self.instance_attributes_defs = instance_attributes_defs
         self.pre_create_attributes_defs = pre_create_attributes_defs
 
+    def get_instance_attr_defs(self):
+        return self.instance_attributes_defs
+
+    def get_group_label(self):
+        return self.group_label
+
     @classmethod
     def from_creator(cls, creator):
         if isinstance(creator, AutoCreator):
