@@ -781,6 +781,10 @@ class CreateContext:
         return self._instances_by_id.values()
 
     @property
+    def instances_by_id(self):
+        return self._instances_by_id
+
+    @property
     def publish_attributes(self):
         """Access to global publish attributes."""
         return self._publish_attributes
