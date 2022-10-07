@@ -920,6 +920,8 @@ class PublisherController(AbstractPublisherController):
             self._host, dbcon, headless=headless, reset=False
         )
 
+        self._publish_plugins_proxy = None
+
         # pyblish.api.Context
         self._publish_context = None
         # Pyblish report
@@ -1289,6 +1291,10 @@ class PublisherController(AbstractPublisherController):
         # QUESTION
         # - pop the key after first collector using it would be safest option?
         self._publish_context.data["create_context"] = self._create_context
+
+        self._publish_plugins_proxy = PublishPluginsProxy(
+            self._publish_plugins
+        )
 
         self._publish_report.reset(self._publish_context, self._create_context)
         self._publish_validation_errors = []
