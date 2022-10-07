@@ -45,25 +45,34 @@ class AssetDocsCache:
     def __init__(self, controller):
         self._controller = controller
         self._asset_docs = None
+        # TODO use asset ids instead
         self._task_names_by_asset_name = {}
+        self._asset_docs_by_name = {}
 
     def reset(self):
         self._asset_docs = None
         self._task_names_by_asset_name = {}
+        self._asset_docs_by_name = {}
 
     def _query(self):
-        if self._asset_docs is None:
-            project_name = self._controller.project_name
-            asset_docs = get_assets(
-                project_name, fields=self.projection.keys()
-            )
-            task_names_by_asset_name = {}
-            for asset_doc in asset_docs:
-                asset_name = asset_doc["name"]
-                asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
-                task_names_by_asset_name[asset_name] = list(asset_tasks.keys())
-            self._asset_docs = asset_docs
-            self._task_names_by_asset_name = task_names_by_asset_name
+        if self._asset_docs is not None:
+            return
+
+        project_name = self._controller.project_name
+        asset_docs = get_assets(
+            project_name, fields=self.projection.keys()
+        )
+        asset_docs_by_name = {}
+        task_names_by_asset_name = {}
+        for asset_doc in asset_docs:
+            asset_name = asset_doc["name"]
+            asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
+            task_names_by_asset_name[asset_name] = list(asset_tasks.keys())
+            asset_docs_by_name[asset_name] = asset_doc
+
+        self._asset_docs = asset_docs
+        self._asset_docs_by_name = asset_docs_by_name
+        self._task_names_by_asset_name = task_names_by_asset_name
 
     def get_asset_docs(self):
         self._query()
@@ -72,6 +81,12 @@ class AssetDocsCache:
     def get_task_names_by_asset_name(self):
         self._query()
         return copy.deepcopy(self._task_names_by_asset_name)
+
+    def get_asset_by_name(self, asset_name):
+        asset_doc = self._asset_docs_by_name.get(asset_name)
+        if asset_doc is None:
+            return None
+        return copy.deepcopy(asset_doc)
 
 
 class PublishReport:
