@@ -351,10 +351,11 @@ class InstanceCardView(AbstractInstanceView):
 
     Wrapper of all widgets in card view.
     """
+
     def __init__(self, controller, parent):
         super(InstanceCardView, self).__init__(parent)
 
-        self.controller = controller
+        self._controller = controller
 
         scroll_area = QtWidgets.QScrollArea(self)
         scroll_area.setWidgetResizable(True)
@@ -440,7 +441,7 @@ class InstanceCardView(AbstractInstanceView):
         # Prepare instances by group and identifiers by group
         instances_by_group = collections.defaultdict(list)
         identifiers_by_group = collections.defaultdict(set)
-        for instance in self.controller.instances:
+        for instance in self._controller.instances:
             group_name = instance.group_label
             instances_by_group[group_name].append(instance)
             identifiers_by_group[group_name].add(
@@ -469,7 +470,7 @@ class InstanceCardView(AbstractInstanceView):
                 group_widget = self._widgets_by_group[group_name]
             else:
                 group_icons = {
-                    idenfier: self.controller.get_creator_icon(idenfier)
+                    idenfier: self._controller.get_creator_icon(idenfier)
                     for idenfier in identifiers_by_group[group_name]
                 }
 

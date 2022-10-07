@@ -994,7 +994,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent):
         super(GlobalAttrsWidget, self).__init__(parent)
 
-        self.controller = controller
+        self._controller = controller
         self._current_instances = []
 
         variant_input = VariantInputWidget(self)
@@ -1068,7 +1068,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         else:
             asset_names.add(asset_name)
 
-        for asset_doc in self.controller.get_asset_docs():
+        for asset_doc in self._controller.get_asset_docs():
             _asset_name = asset_doc["name"]
             if _asset_name in asset_names:
                 asset_names.remove(_asset_name)
@@ -1077,7 +1077,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             if not asset_names:
                 break
 
-        project_name = self.controller.project_name
+        project_name = self._controller.project_name
         subset_names = set()
         invalid_tasks = False
         for instance in self._current_instances:
@@ -1245,7 +1245,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
 
         self._main_layout = main_layout
 
-        self.controller = controller
+        self._controller = controller
         self._scroll_area = scroll_area
 
         self._attr_def_id_to_instances = {}
@@ -1274,7 +1274,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
         self._attr_def_id_to_instances = {}
         self._attr_def_id_to_attr_def = {}
 
-        result = self.controller.get_creator_attribute_definitions(
+        result = self._controller.get_creator_attribute_definitions(
             instances
         )
 
@@ -1366,7 +1366,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
 
         self._main_layout = main_layout
 
-        self.controller = controller
+        self._controller = controller
         self._scroll_area = scroll_area
 
         self._attr_def_id_to_instances = {}
@@ -1398,7 +1398,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
         self._attr_def_id_to_attr_def = {}
         self._attr_def_id_to_plugin_name = {}
 
-        result = self.controller.get_publish_attribute_definitions(
+        result = self._controller.get_publish_attribute_definitions(
             instances, context_selected
         )
 
@@ -1513,7 +1513,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
             self._on_instance_context_changed
         )
 
-        self.controller = controller
+        self._controller = controller
 
         self.global_attrs_widget = global_attrs_widget
 
