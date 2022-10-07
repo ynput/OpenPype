@@ -500,6 +500,11 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
             plugin_info["Renderer"] = renderer
 
+            # this is needed because renderman plugin in Deadline
+            # handles directory and file prefixes separately
+            plugin_info["OutputFilePath"] = os.path.dirname(
+                job_info.OutputDirectory[0]).replace("\\", "/")
+
         return job_info, plugin_info
 
     def _get_vray_export_payload(self, data):
