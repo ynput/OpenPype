@@ -87,6 +87,8 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
                 toggle_instance_btn.setArrowType(QtCore.Qt.NoArrow)
                 description = self._prepare_description(error_item)
                 help_text_by_instance_id[None] = description
+                # Add fake item to have minimum size hint of view widget
+                items.append(QtGui.QStandardItem("Context"))
                 continue
 
             label = error_item.instance_label
@@ -188,7 +190,6 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         """Mark this widget as selected on click."""
 
         self.set_selected(True)
-        self._set_expanded(True)
 
     def current_desctiption_text(self):
         if self._context_validation:
@@ -255,6 +256,7 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         self._change_style_property(selected)
         if selected:
             self.selected.emit(self._index)
+            self._set_expanded(True)
 
     def _on_toggle_btn_click(self):
         """Show/hide instances list."""
@@ -266,6 +268,9 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
             expanded = not self._expanded
 
         elif expanded is self._expanded:
+            return
+
+        if expanded and self._context_validation:
             return
 
         self._expanded = expanded

@@ -422,7 +422,7 @@ class CreateWidget(QtWidgets.QWidget):
         #   data
         self._refresh_creators()
 
-        self._assets_widget.set_current_asset_name(self.current_asset_name)
+        self._assets_widget.update_current_asset()
         self._assets_widget.select_asset_by_name(asset_name)
         self._tasks_widget.set_asset_name(asset_name)
         self._tasks_widget.select_task_name(task_name)
