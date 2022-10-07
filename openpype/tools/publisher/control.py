@@ -1407,9 +1407,6 @@ class PublisherController(AbstractPublisherController):
         for idx, plugin in enumerate(self._publish_plugins):
             self._publish_progress = idx
 
-            # Reset current plugin validations error
-            self._publish_current_plugin_validation_errors = None
-
             # Check if plugin is over validation order
             if not self._publish_validated:
                 self._publish_validated = (
