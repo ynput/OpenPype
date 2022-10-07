@@ -615,6 +615,71 @@ class PublishValidationErrorsReport:
         return cls(error_items, plugin_action_items)
 
 
+class PublishValidationErrors:
+    """Object to keep track about validation errors by plugin."""
+
+    def __init__(self):
+        self._plugins_proxy = None
+        self._error_items = []
+        self._plugin_action_items = {}
+
+    def __bool__(self):
+        return self.has_errors
+
+    @property
+    def has_errors(self):
+        """At least one error was added."""
+
+        return bool(self._error_items)
+
+    def reset(self, plugins_proxy):
+        """Reset object to default state.
+
+        Args:
+            plugins_proxy (PublishPluginsProxy): Proxy which store plugins,
+                actions by ids and create mapping of action ids by plugin ids.
+        """
+
+        self._plugins_proxy = plugins_proxy
+        self._error_items = []
+        self._plugin_action_items = {}
+
+    def create_report(self):
+        """Create report based on currently existing errors.
+
+        Returns:
+            PublishValidationErrorsReport: Validation error report with all
+                error information and publish plugin action items.
+        """
+
+        return PublishValidationErrorsReport(
+            self._error_items, self._plugin_action_items
+        )
+
+    def add_error(self, plugin, error, instance):
+        """Add error from pyblish result.
+
+        Args:
+            plugin (pyblish.api.Plugin): Plugin which triggered error.
+            error (ValidationException): Validation error.
+            instance (Union[pyblish.api.Instance, None]): Instance on which was
+                error raised or None if was raised on context.
+        """
+
+        # Make sure the cached report is cleared
+        plugin_id = self._plugins_proxy.get_plugin_id(plugin)
+        self._error_items.append(
+            ValidationErrorItem.from_result(plugin_id, error, instance)
+        )
+        if plugin_id in self._plugin_action_items:
+            return
+
+        plugin_actions = self._plugins_proxy.get_plugin_action_items(
+            plugin_id
+        )
+        self._plugin_action_items[plugin_id] = plugin_actions
+
+
 @six.add_metaclass(ABCMeta)
 class AbstractPublisherController(object):
     """Publisher tool controller.
