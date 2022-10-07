@@ -174,7 +174,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         self._controller = controller
 
-        self._asset_doc = None
+        self._asset_name = None
         self._subset_names = None
         self._selected_creator = None
 
@@ -380,7 +380,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         if asset_name is None:
             asset_name = self.current_asset_name
-        return asset_name
+        return asset_name or None
 
     def _get_task_name(self):
         task_name = None
@@ -444,7 +444,7 @@ class CreateWidget(QtWidgets.QWidget):
             prereq_available = False
             creator_btn_tooltips.append("Creator is not selected")
 
-        if self._context_change_is_enabled() and self._asset_doc is None:
+        if self._context_change_is_enabled() and self._asset_name is None:
             # QUESTION how to handle invalid asset?
             prereq_available = False
             creator_btn_tooltips.append("Context is not selected")
@@ -468,30 +468,19 @@ class CreateWidget(QtWidgets.QWidget):
         asset_name = self._get_asset_name()
 
         # Skip if asset did not change
-        if self._asset_doc and self._asset_doc["name"] == asset_name:
+        if self._asset_name and self._asset_name == asset_name:
             return
 
-        # Make sure `_asset_doc` and `_subset_names` variables are reset
-        self._asset_doc = None
+        # Make sure `_asset_name` and `_subset_names` variables are reset
+        self._asset_name = asset_name
         self._subset_names = None
         if asset_name is None:
             return
 
-        project_name = self._controller.project_name
-        asset_doc = get_asset_by_name(project_name, asset_name)
-        self._asset_doc = asset_doc
+        subset_names = self._controller.get_existing_subset_names(asset_name)
 
-        if asset_doc:
-            asset_id = asset_doc["_id"]
-            subset_docs = get_subsets(
-                project_name, asset_ids=[asset_id], fields=["name"]
-            )
-            self._subset_names = {
-                subset_doc["name"]
-                for subset_doc in subset_docs
-            }
-
-        if not asset_doc:
+        self._subset_names = subset_names
+        if subset_names is None:
             self.subset_name_input.setText("< Asset is not set >")
 
     def _refresh_creators(self):
@@ -670,14 +659,13 @@ class CreateWidget(QtWidgets.QWidget):
             self.subset_name_input.setText("< Valid variant >")
             return
 
-        project_name = self._controller.project_name
+        asset_name = self._get_asset_name()
         task_name = self._get_task_name()
-
-        asset_doc = copy.deepcopy(self._asset_doc)
+        creator_idenfier = self._selected_creator.identifier
         # Calculate subset name with Creator plugin
         try:
-            subset_name = self._selected_creator.get_subset_name(
-                variant_value, task_name, asset_doc, project_name
+            subset_name = self._controller.get_subset_name(
+                creator_idenfier, variant_value, task_name, asset_name
             )
         except TaskNotSetError:
             self._create_btn.setEnabled(False)
