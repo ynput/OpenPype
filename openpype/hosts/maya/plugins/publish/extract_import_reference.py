@@ -1,9 +1,11 @@
 import os
+import sys
 
 from maya import cmds
 
 import pyblish.api
 
+from openpype.lib import run_subprocess
 from openpype.pipeline import publish, legacy_io
 from openpype.settings import get_project_settings
 from openpype.hosts.maya.api import lib
@@ -31,7 +33,7 @@ class ExtractImportReference(publish.Extractor):
     order = pyblish.api.ExtractorOrder - 0.48
     hosts = ["maya"]
     families = ["renderlayer", "workfile"]
-    active = _import_reference()
+    active = True
     optional = True
     tmp_format = "_tmp"
 
@@ -62,31 +64,48 @@ class ExtractImportReference(publish.Extractor):
         if instance.name == "Main":
             return
         tmp_name = instance.name + self.tmp_format
-        m_ref_fname = "{0}.{1}".format(tmp_name, self.scene_type)
+        current_name = cmds.file(query=True, sceneName=True)
+        ref_scene_name  = "{0}.{1}".format(tmp_name, self.scene_type)
 
-        m_ref_path = os.path.join(dir_path, m_ref_fname)
+        reference_path = os.path.join(dir_path, ref_scene_name)
 
         self.log.info("Performing extraction..")
-        current = cmds.file(query=True, sceneName=True)
-        cmds.file(save=True, force=True)
-        # create temp scene with imported
-        # reference for rendering
-        reference_node = cmds.ls(type="reference")
-        for r in reference_node:
-            ref_file = cmds.referenceQuery(r, f=True)
-            if r == "sharedReferenceNode":
-                cmds.file(ref_file, removeReference=True, referenceNode=r)
-                return
-            cmds.file(ref_file, importReference=True)
+        script = ("import maya.standalone\nmaya.standalone.initialize()\n"
+                  "cmds.file('{current_name}', open=True, force=True)\n"
+                  "reference_node = cmds.ls(type='reference')\n"
+                  "for ref in reference_node:\n"
+                  "\tref_file = cmds.referenceQuery(ref, f=True)\n"
+                  "\tif ref == 'sharedReferenceNode':\n"
+                  "\t\tcmds.file(ref_file, removeReference=True, referenceNode=ref)\n"
+                  "\telse:\n"
+                  "\t\tcmds.file(ref_file, importReference=True)\n"
+                  "try:\n"
+                  "\tcmds.file(rename='{ref_scene_name}')\n"
+                  "except SyntaxError:\n"
+                  "\tcmds.file(rename='{ref_scene_name}')\n"
+                  "cmds.file(save=True, force=True)\n")
 
-        cmds.file(rename=m_ref_fname)
-        cmds.file(save=True, force=True)
-        tmp_filepath = cmds.file(query=True, sceneName=True)
+        mayapy_exe = os.path.join(os.getenv("MAYA_LOCATION"), "bin", "mayapy")
+        if sys.platform == "windows":
+            mayapy_exe = mayapy_exe + ".exe"
+
+        subprocess_args = [
+            mayapy_exe,
+            "-c",
+        script.replace("\n", ";")
+        ]
+        try:
+            out = run_subprocess(subprocess_args)
+        except Exception:
+            self.log.error("Import reference failed", exc_info=True)
+            raise
+
+        proj_file_dir = os.path.dirname(current_name)
+        tmp_filepath = os.path.join(proj_file_dir, ref_scene_name)
         instance.context.data["currentFile"] = tmp_filepath
-
         with lib.maintained_selection():
             cmds.select(all=True, noExpand=True)
-            cmds.file(m_ref_path,
+            cmds.file(reference_path,
                       force=True,
                       typ=_scene_type,
                       exportSelected=True,
@@ -98,7 +117,7 @@ class ExtractImportReference(publish.Extractor):
 
         if "files" not in instance.data:
             instance.data["files"] = []
-        instance.data["files"].append(m_ref_fname)
+        instance.data["files"].append(ref_scene_name)
 
         if instance.data.get("representations") is None:
             instance.data["representations"] = []
@@ -106,14 +125,11 @@ class ExtractImportReference(publish.Extractor):
         ref_representation = {
             "name": self.scene_type,
             "ext": self.scene_type,
-            "files": m_ref_fname,
-            "stagingDir": os.path.dirname(tmp_filepath)
+            "files": ref_scene_name,
+            "stagingDir": proj_file_dir
         }
 
         instance.data["representations"].append(ref_representation)
 
-        self.log.info("Extracted instance '%s' to : '%s'" % (m_ref_fname,
-                                                             m_ref_path))
-
-        # re-open the previous scene
-        cmds.file(current, open=True)
+        self.log.info("Extracted instance '%s' to : '%s'" % (ref_scene_name,
+                                                             reference_path))
