@@ -797,10 +797,12 @@ class AbstractPublisherController(object):
 
     @abstractmethod
     def reset(self):
-        pass
+        """Reset whole controller.
 
-    @abstractmethod
-    def emit_card_message(self, message):
+        This should reset create context, publish context and all variables
+        that are related to it.
+        """
+
         pass
 
     @abstractmethod
@@ -828,52 +830,113 @@ class AbstractPublisherController(object):
     def create(
         self, creator_identifier, subset_name, instance_data, options
     ):
-        pass
+        """Trigger creation by creator identifier.
+
+        Should also trigger refresh of instanes.
+
+        Args:
+            creator_identifier (str): Identifier of Creator plugin.
+            subset_name (str): Calculated subset name.
+            instance_data (Dict[str, Any]): Base instance data with variant,
+                asset name and task name.
+            options (Dict[str, Any]): Data from pre-create attributes.
+        """
 
     def save_changes(self):
-        """Save changes happened during creation."""
+        """Save changes in create context."""
 
         pass
 
     def remove_instances(self, instances):
-        """Remove list of instances."""
+        """Remove list of instances from create context."""
 
         pass
 
     @abstractproperty
     def publish_has_finished(self):
+        """Has publishing finished.
+
+        Returns:
+            bool: If publishing finished and all plugins were iterated.
+        """
+
         pass
 
     @abstractproperty
     def publish_is_running(self):
+        """Publishing is running right now.
+
+        Returns:
+            bool: If publishing is in progress.
+        """
+
         pass
 
     @abstractproperty
     def publish_has_validated(self):
+        """Publish validation passed.
+
+        Returns:
+            bool: If publishing passed last possible validation order.
+        """
+
         pass
 
     @abstractproperty
     def publish_has_crashed(self):
+        """Publishing crashed for any reason.
+
+        Returns:
+            bool: Publishing crashed.
+        """
+
         pass
 
     @abstractproperty
     def publish_has_validation_errors(self):
+        """During validation happened at least one validation error.
+
+        Returns:
+            bool: Validation error was raised during validation.
+        """
+
         pass
 
     @abstractproperty
     def publish_max_progress(self):
+        """Get maximum possible progress number.
+
+        Returns:
+            int: Number that can be used as 100% of publish progress bar.
+        """
+
         pass
 
     @abstractproperty
     def publish_progress(self):
+        """Current progress number.
+
+        Returns:
+            int: Current progress value which is between 0 and
+                'publish_max_progress'.
+        """
+
         pass
 
     @abstractproperty
     def publish_comment_is_set(self):
+        """Publish comment was at least once set.
+
+        Publish comment can be set only once when publish is started for a
+        first time. This helpt to idetify if 'set_comment' should be called or
+        not.
+        """
+
         pass
 
     @abstractmethod
     def get_publish_crash_error(self):
+
         pass
 
     @abstractmethod
@@ -885,27 +948,65 @@ class AbstractPublisherController(object):
         pass
 
     @abstractmethod
-    def set_comment(self, comment):
-        pass
-
-    @abstractmethod
     def publish(self):
+        """Trigger publishing without any order limitations."""
+
         pass
 
     @abstractmethod
     def validate(self):
+        """Trigger publishing which will stop after validation order."""
+
         pass
 
     @abstractmethod
     def stop_publish(self):
+        """Stop publishing can be also used to pause publishing.
+
+        Pause of publishing is possible only if all plugins successfully
+        finished.
+        """
+
         pass
 
     @abstractmethod
-    def run_action(self, plugin, action):
+    def run_action(self, plugin_id, action_id):
+        """Trigger pyblish action on a plugin.
+
+        Args:
+            plugin_id (str): Id of publish plugin.
+            action_id (str): Id of publish action.
+        """
+
         pass
 
     @abstractmethod
     def reset_project_data_cache(self):
+        pass
+
+    @abstractmethod
+    def set_comment(self, comment):
+        """Set comment on pyblish context.
+
+        Set "comment" key on current pyblish.api.Context data.
+
+        Args:
+            comment (str): Artist's comment.
+        """
+
+        pass
+
+    @abstractmethod
+    def emit_card_message(self, message):
+        """Emit a card message which can have a lifetime.
+
+        This is for UI purposes. Method can be extended to more arguments
+        in future e.g. different message timeout or type (color).
+
+        Args:
+            message (str): Message that will be showed.
+        """
+
         pass
 
 
