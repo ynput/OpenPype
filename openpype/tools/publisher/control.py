@@ -773,16 +773,6 @@ class AbstractPublisherController(object):
         pass
 
     @abstractmethod
-    def get_manual_creators_base_info(self):
-        """Creators that can be selected and triggered by artist.
-
-        Returns:
-            List[CreatorBaseInfo]: Base information about creator plugin.
-        """
-
-        pass
-
-    @abstractmethod
     def get_context_title(self):
         """Get context title for artist shown at the top of main window.
 
