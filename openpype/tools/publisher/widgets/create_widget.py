@@ -1,11 +1,9 @@
 import sys
 import re
 import traceback
-import copy
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from openpype.client import get_asset_by_name, get_subsets
 from openpype.pipeline.create import (
     CreatorError,
     SUBSET_NAME_ALLOWED_SYMBOLS,
@@ -150,18 +148,18 @@ class CreatorShortDescWidget(QtWidgets.QWidget):
         self._family_label = family_label
         self._description_label = description_label
 
-    def set_plugin(self, plugin=None):
-        if not plugin:
+    def set_creator_item(self, creator_item=None):
+        if not creator_item:
             self._icon_widget.set_icon_def(None)
             self._family_label.setText("")
             self._description_label.setText("")
             return
 
-        plugin_icon = plugin.get_icon()
-        description = plugin.get_description() or ""
+        plugin_icon = creator_item.icon
+        description = creator_item.description or ""
 
         self._icon_widget.set_icon_def(plugin_icon)
-        self._family_label.setText("<b>{}</b>".format(plugin.family))
+        self._family_label.setText("<b>{}</b>".format(creator_item.family))
         self._family_label.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
         self._description_label.setText(description)
 
@@ -495,7 +493,10 @@ class CreateWidget(QtWidgets.QWidget):
 
         # Add new families
         new_creators = set()
-        for identifier, creator in self._controller.manual_creators.items():
+        for identifier, creator_item in self._controller.creator_items.items():
+            if creator_item.creator_type != "artist":
+                continue
+
             # TODO add details about creator
             new_creators.add(identifier)
             if identifier in existing_items:
@@ -507,10 +508,9 @@ class CreateWidget(QtWidgets.QWidget):
                 )
                 self._creators_model.appendRow(item)
 
-            label = creator.label or identifier
-            item.setData(label, QtCore.Qt.DisplayRole)
+            item.setData(creator_item.label, QtCore.Qt.DisplayRole)
             item.setData(identifier, CREATOR_IDENTIFIER_ROLE)
-            item.setData(creator.family, FAMILY_ROLE)
+            item.setData(creator_item.family, FAMILY_ROLE)
 
         # Remove families that are no more available
         for identifier in (old_creators - new_creators):
@@ -561,11 +561,11 @@ class CreateWidget(QtWidgets.QWidget):
             identifier = new_index.data(CREATOR_IDENTIFIER_ROLE)
         self._set_creator_by_identifier(identifier)
 
-    def _set_creator_detailed_text(self, creator):
+    def _set_creator_detailed_text(self, creator_item):
         # TODO implement
         description = ""
-        if creator is not None:
-            description = creator.get_detail_description() or description
+        if creator_item is not None:
+            description = creator_item.detailed_description or description
         self._controller.event_system.emit(
             "show.detailed.help",
             {
@@ -575,32 +575,39 @@ class CreateWidget(QtWidgets.QWidget):
         )
 
     def _set_creator_by_identifier(self, identifier):
-        creator = self._controller.manual_creators.get(identifier)
-        self._set_creator(creator)
+        creator_item = self._controller.creator_items.get(identifier)
+        self._set_creator(creator_item)
 
-    def _set_creator(self, creator):
-        self._creator_short_desc_widget.set_plugin(creator)
-        self._set_creator_detailed_text(creator)
-        self._pre_create_widget.set_plugin(creator)
+    def _set_creator(self, creator_item):
+        """Set current creator item.
 
-        self._selected_creator = creator
+        Args:
+            creator_item (CreatorItem): Item representing creator that can be
+                triggered by artist.
+        """
 
-        if not creator:
+        self._creator_short_desc_widget.set_creator_item(creator_item)
+        self._set_creator_detailed_text(creator_item)
+        self._pre_create_widget.set_creator_item(creator_item)
+
+        self._selected_creator = creator_item
+
+        if not creator_item:
             self._set_context_enabled(False)
             return
 
         if (
-            creator.create_allow_context_change
+            creator_item.create_allow_context_change
             != self._context_change_is_enabled()
         ):
-            self._set_context_enabled(creator.create_allow_context_change)
+            self._set_context_enabled(creator_item.create_allow_context_change)
             self._refresh_asset()
 
-        default_variants = creator.get_default_variants()
+        default_variants = creator_item.default_variants
         if not default_variants:
             default_variants = ["Main"]
 
-        default_variant = creator.get_default_variant()
+        default_variant = creator_item.default_variant
         if not default_variant:
             default_variant = default_variants[0]
 

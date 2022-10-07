@@ -1107,7 +1107,6 @@ class AbstractPublisherController(object):
 
     @abstractmethod
     def get_publish_crash_error(self):
-
         pass
 
     @abstractmethod
@@ -1201,6 +1200,8 @@ class PublisherController(AbstractPublisherController):
             self._host, dbcon, headless=headless, reset=False
         )
 
+        self._creator_items = {}
+
         self._publish_plugins_proxy = None
 
         # pyblish.api.Context
@@ -1290,9 +1291,10 @@ class PublisherController(AbstractPublisherController):
         return self._create_context.creators
 
     @property
-    def manual_creators(self):
+    def creator_items(self):
         """Creators that can be shown in create dialog."""
-        return self._create_context.manual_creators
+
+        return self._creator_items
 
     @property
     def host_is_valid(self):
@@ -1392,6 +1394,12 @@ class PublisherController(AbstractPublisherController):
         self._resetting_plugins = True
 
         self._create_context.reset_plugins()
+
+        creator_items = {
+            identifier: CreatorItem.from_creator(creator)
+            for identifier, creator in self._create_context.creators.items()
+        }
+        self._creator_items = creator_items
 
         self._resetting_plugins = False
 
@@ -1498,10 +1506,9 @@ class PublisherController(AbstractPublisherController):
         return output
 
     def get_creator_icon(self, identifier):
-        """TODO rename to get creator icon."""
-        creator = self._creators.get(identifier)
-        if creator is not None:
-            return creator.get_icon()
+        creator_item = self._creator_items.get(identifier)
+        if creator_item is not None:
+            return creator_item.icon
         return None
 
     def get_subset_name(
@@ -1526,7 +1533,6 @@ class PublisherController(AbstractPublisherController):
 
         creator = self._creators[creator_identifier]
         project_name = self.project_name
-        print(asset_name)
         asset_doc = self._asset_docs_cache.get_full_asset_by_name(asset_name)
 
         return creator.get_subset_name(
