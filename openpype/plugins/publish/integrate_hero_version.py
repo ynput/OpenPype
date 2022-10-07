@@ -203,7 +203,6 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
 
         if old_version:
             self.log.debug("Replacing old hero version.")
-            new_hero_version["_id"] = old_version["_id"]
             update_data = prepare_hero_version_update_data(
                 old_version, new_hero_version
             )
