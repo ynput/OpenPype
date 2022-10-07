@@ -22,7 +22,11 @@ class CreateWriteRender(napi.NukeWriteCreator):
 
     def get_pre_create_attr_defs(self):
         attr_defs = [
-            BoolDef("use_selection", label="Use selection"),
+            BoolDef(
+                "use_selection",
+                default=True,
+                label="Use selection"
+            ),
             self._get_render_target_enum()
         ]
         return attr_defs
@@ -96,6 +100,14 @@ class CreateWriteRender(napi.NukeWriteCreator):
         return created_node
 
     def create(self, subset_name, instance_data, pre_create_data):
+        # pass values from precreate to instance
+        self.pass_pre_attributes_to_instance(
+            instance_data,
+            pre_create_data,
+            [
+                "render_target"
+            ]
+        )
         # make sure selected nodes are added
         self.set_selected_nodes(pre_create_data)
 

@@ -22,7 +22,11 @@ class CreateWriteStill(napi.NukeWriteCreator):
 
     def get_pre_create_attr_defs(self):
         attr_defs = [
-            BoolDef("use_selection", label="Use selection"),
+            BoolDef(
+                "use_selection",
+                default=True,
+                label="Use selection"
+            ),
             self._get_render_target_enum(),
             UISeparatorDef(),
             self._get_frame_source_number()
@@ -80,14 +84,24 @@ class CreateWriteStill(napi.NukeWriteCreator):
         )
         self.add_info_knob(created_node)
 
-        self._add_frame_range_limit(created_node)
+        self._add_frame_range_limit(created_node, instance_data)
 
-        self.integrate_links(created_node, outputs=False)
+        self.integrate_links(created_node, outputs=True)
 
         return created_node
 
     def create(self, subset_name, instance_data, pre_create_data):
         subset_name = subset_name.format(**pre_create_data)
+
+        # pass values from precreate to instance
+        self.pass_pre_attributes_to_instance(
+            instance_data,
+            pre_create_data,
+            [
+                "active_frame",
+                "render_target"
+            ]
+        )
 
         # make sure selected nodes are added
         self.set_selected_nodes(pre_create_data)
@@ -100,7 +114,7 @@ class CreateWriteStill(napi.NukeWriteCreator):
 
         instance_node = self.create_instance_node(
             subset_name,
-            instance_data
+            instance_data,
         )
 
         try:
@@ -130,9 +144,12 @@ class CreateWriteStill(napi.NukeWriteCreator):
                 sys.exc_info()[2]
             )
 
-    def _add_frame_range_limit(self, write_node):
+    def _add_frame_range_limit(self, write_node, instance_data):
         if "use_range_limit" not in self.instance_attributes:
             return
+
+        active_frame = (
+            instance_data["creator_attributes"].get("active_frame"))
 
         write_node.begin()
         for n in nuke.allNodes():
@@ -142,7 +159,7 @@ class CreateWriteStill(napi.NukeWriteCreator):
         write_node.end()
 
         w_node["use_limit"].setValue(True)
-        w_node["first"].setValue(nuke.frame())
+        w_node["first"].setValue(active_frame or nuke.frame())
         w_node["last"].setExpression("first")
 
         return write_node
