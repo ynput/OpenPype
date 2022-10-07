@@ -11,6 +11,7 @@ import pyblish.api
 from openpype.client import (
     get_assets,
     get_asset_by_id,
+    get_subsets,
 )
 from openpype.lib.events import EventSystem
 from openpype.pipeline import (
@@ -838,6 +839,10 @@ class AbstractPublisherController(object):
         pass
 
     @abstractmethod
+    def get_existing_subset_names(self, asset_name):
+        pass
+
+    @abstractmethod
     def reset(self):
         """Reset whole controller.
 
@@ -1222,6 +1227,21 @@ class PublisherController(AbstractPublisherController):
                 task_names_by_asset_name.get(asset_name) or []
             )
         return result
+
+    def get_existing_subset_names(self, asset_name):
+        project_name = self.project_name
+        asset_doc = self._asset_docs_cache.get_asset_by_name(asset_name)
+        if not asset_doc:
+            return None
+
+        asset_id = asset_doc["_id"]
+        subset_docs = get_subsets(
+            project_name, asset_ids=[asset_id], fields=["name"]
+        )
+        return {
+            subset_doc["name"]
+            for subset_doc in subset_docs
+        }
 
     def reset(self):
         """Reset everything related to creation and publishing."""
