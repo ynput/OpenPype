@@ -148,8 +148,11 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
             ))
             return
 
+        item_dir = review_file_item["directory"]
+        first_filepath = os.path.join(item_dir, filenames[0])
+
         filepaths = {
-            os.path.join(review_file_item["directory"], filename)
+            os.path.join(item_dir, filename)
             for filename in filenames
         }
         source_filepaths.extend(filepaths)
@@ -175,6 +178,8 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
 
         if "review" not in instance.data["families"]:
             instance.data["families"].append("review")
+
+        instance.data["thumbnailSource"] = first_filepath
 
         review_representation["tags"].append("review")
         self.log.debug("Representation {} was marked for review. {}".format(
