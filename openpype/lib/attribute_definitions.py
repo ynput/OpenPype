@@ -3,7 +3,7 @@ import re
 import collections
 import uuid
 import json
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
 import clique
@@ -115,6 +115,16 @@ class AbtractAttrDef:
             return False
         return self.key == other.key
 
+    @abstractproperty
+    def type(self):
+        """Attribute definition type also used as identifier of class.
+
+        Returns:
+            str: Type of attribute definition.
+        """
+
+        pass
+
     @abstractmethod
     def convert_value(self, value):
         """Convert value to a valid one.
@@ -141,10 +151,12 @@ class UIDef(AbtractAttrDef):
 
 
 class UISeparatorDef(UIDef):
-    pass
+    type = "separator"
 
 
 class UILabelDef(UIDef):
+    type = "label"
+
     def __init__(self, label):
         super(UILabelDef, self).__init__(label=label)
 
@@ -159,6 +171,8 @@ class UnknownDef(AbtractAttrDef):
     This attribute can be used to keep existing data unchanged but does not
     have known definition of type.
     """
+
+    type = "unknown"
 
     def __init__(self, key, default=None, **kwargs):
         kwargs["default"] = default
@@ -181,6 +195,7 @@ class NumberDef(AbtractAttrDef):
         default(int, float): Default value for conversion.
     """
 
+    type = "number"
     def __init__(
         self, key, minimum=None, maximum=None, decimals=None, default=None,
         **kwargs
@@ -301,6 +316,8 @@ class EnumDef(AbtractAttrDef):
         default: Default value. Must be one key(value) from passed items.
     """
 
+    type = "enum"
+
     def __init__(self, key, items, default=None, **kwargs):
         if not items:
             raise ValueError((
@@ -342,6 +359,8 @@ class BoolDef(AbtractAttrDef):
     Args:
         default(bool): Default value. Set to `False` if not defined.
     """
+
+    type = "bool"
 
     def __init__(self, key, default=None, **kwargs):
         if default is None:
@@ -585,6 +604,7 @@ class FileDef(AbtractAttrDef):
         default(str, List[str]): Default value.
     """
 
+    type = "path"
     def __init__(
         self, key, single_item=True, folders=None, extensions=None,
         allow_sequences=True, extensions_label=None, default=None, **kwargs
