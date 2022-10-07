@@ -90,6 +90,8 @@ class AbtractAttrDef:
             next to value input or ahead.
     """
 
+    type_attributes = []
+
     is_value_def = True
 
     def __init__(
@@ -134,6 +136,35 @@ class AbtractAttrDef:
         """
 
         pass
+
+    def serialize(self):
+        """Serialize object to data so it's possible to recreate it.
+
+        Returns:
+            Dict[str, Any]: Serialized object that can be passed to
+                'deserialize' method.
+        """
+
+        data = {
+            "type": self.type,
+            "key": self.key,
+            "label": self.label,
+            "tooltip": self.tooltip,
+            "default": self.default,
+            "is_label_horizontal": self.is_label_horizontal
+        }
+        for attr in self.type_attributes:
+            data[attr] = getattr(self, attr)
+        return data
+
+    @classmethod
+    def deserialize(cls, data):
+        """Recreate object from data.
+
+        Data can be received using 'serialize' method.
+        """
+
+        return cls(**data)
 
 
 # -----------------------------------------
@@ -196,6 +227,12 @@ class NumberDef(AbtractAttrDef):
     """
 
     type = "number"
+    type_attributes = [
+        "minimum",
+        "maximum",
+        "decimals"
+    ]
+
     def __init__(
         self, key, minimum=None, maximum=None, decimals=None, default=None,
         **kwargs
@@ -267,6 +304,12 @@ class TextDef(AbtractAttrDef):
         default(str, None): Default value. Empty string used when not defined.
     """
 
+    type = "text"
+    type_attributes = [
+        "multiline",
+        "placeholder",
+    ]
+
     def __init__(
         self, key, multiline=None, regex=None, placeholder=None, default=None,
         **kwargs
@@ -304,6 +347,11 @@ class TextDef(AbtractAttrDef):
         if isinstance(value, six.string_types):
             return value
         return self.default
+
+    def serialize(self):
+        data = super(TextDef, self).serialize()
+        data["regex"] = self.regex.pattern
+        return data
 
 
 class EnumDef(AbtractAttrDef):
@@ -351,6 +399,11 @@ class EnumDef(AbtractAttrDef):
         if value in self.items:
             return value
         return self.default
+
+    def serialize(self):
+        data = super(TextDef, self).serialize()
+        data["items"] = list(self.items)
+        return data
 
 
 class BoolDef(AbtractAttrDef):
@@ -605,6 +658,14 @@ class FileDef(AbtractAttrDef):
     """
 
     type = "path"
+    type_attributes = [
+        "single_item",
+        "folders",
+        "extensions",
+        "allow_sequences",
+        "extensions_label",
+    ]
+
     def __init__(
         self, key, single_item=True, folders=None, extensions=None,
         allow_sequences=True, extensions_label=None, default=None, **kwargs
