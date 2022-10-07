@@ -8,7 +8,10 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 import six
 import pyblish.api
 
-from openpype.client import get_assets
+from openpype.client import (
+    get_assets,
+    get_asset_by_id,
+)
 from openpype.lib.events import EventSystem
 from openpype.pipeline import (
     PublishValidationError,
@@ -48,6 +51,7 @@ class AssetDocsCache:
         # TODO use asset ids instead
         self._task_names_by_asset_name = {}
         self._asset_docs_by_name = {}
+        self._full_asset_docs_by_name = {}
 
     def reset(self):
         self._asset_docs = None
@@ -87,6 +91,15 @@ class AssetDocsCache:
         if asset_doc is None:
             return None
         return copy.deepcopy(asset_doc)
+
+    def get_full_asset_by_name(self, asset_name):
+        self._query()
+        if asset_name not in self._full_asset_docs_by_name:
+            asset_doc = self._asset_docs_by_name.get(asset_name)
+            project_name = self._controller.project_name
+            full_asset_doc = get_asset_by_id(project_name, asset_doc["_id"])
+            self._full_asset_docs_by_name[asset_name] = full_asset_doc
+        return copy.deepcopy(self._full_asset_docs_by_name[asset_name])
 
 
 class PublishReport:
