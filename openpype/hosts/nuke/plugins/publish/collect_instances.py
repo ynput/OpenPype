@@ -8,11 +8,11 @@ from openpype.hosts.nuke.api.lib import (
 
 
 @pyblish.api.log
-class PreCollectNukeInstances(pyblish.api.ContextPlugin):
+class CollectNukeInstances(pyblish.api.ContextPlugin):
     """Collect all nodes with Avalon knob."""
 
     order = pyblish.api.CollectorOrder - 0.49
-    label = "Pre-collect Instances"
+    label = "Collect Instances"
     hosts = ["nuke", "nukeassist"]
 
     # presets

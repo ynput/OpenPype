@@ -19,7 +19,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
     """Collect all write nodes."""
 
     order = pyblish.api.CollectorOrder - 0.48
-    label = "Pre-collect Writes"
+    label = "Collect Writes"
     hosts = ["nuke", "nukeassist"]
     families = ["write"]
 
