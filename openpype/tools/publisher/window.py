@@ -496,8 +496,9 @@ class PublisherWindow(QtWidgets.QDialog):
         self._set_publish_overlay_visibility(False)
         self._reset_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
-        validate_enabled = not self._controller.publish_has_crashed
-        publish_enabled = not self._controller.publish_has_crashed
+        publish_has_crashed = self._controller.publish_has_crashed
+        validate_enabled = not publish_has_crashed
+        publish_enabled = not publish_has_crashed
         if validate_enabled:
             validate_enabled = not self._controller.publish_has_validated
         if publish_enabled:
