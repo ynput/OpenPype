@@ -197,6 +197,16 @@ class AttributeValues:
     def changes(self):
         return self.calculate_changes(self._data, self._origin_data)
 
+    def apply_changes(self, changes):
+        for key, item in changes.items():
+            old_value, new_value = item
+            if new_value is None:
+                if key in self:
+                    self.pop(key)
+
+            elif self.get(key) != new_value:
+                self[key] = new_value
+
 
 class CreatorAttributeValues(AttributeValues):
     """Creator specific attribute values of an instance.
@@ -326,6 +336,21 @@ class PublishAttributes:
             if key not in self._data:
                 changes[key] = (value, None)
         return changes
+
+    def apply_changes(self, changes):
+        for key, item in changes.items():
+            if isinstance(item, dict):
+                self._data[key].apply_changes(item)
+                continue
+
+            old_value, new_value = item
+            if new_value is not None:
+                raise ValueError(
+                    "Unexpected type \"{}\" expected None".format(
+                        str(type(new_value))
+                    )
+                )
+            self.pop(key)
 
     def set_publish_plugins(self, attr_plugins):
         """Set publish plugins attribute definitions."""
@@ -692,6 +717,97 @@ class CreatedInstance:
         for member in members:
             if member not in self._members:
                 self._members.append(member)
+
+    def serialize_for_remote(self):
+        return {
+            "data": self.data_to_store(),
+            "orig_data": copy.deepcopy(self._orig_data)
+        }
+
+    @classmethod
+    def deserialize_on_remote(cls, serialized_data, creator_items):
+        """Convert instance data to CreatedInstance.
+
+        This is fake instance in remote process e.g. in UI process. The creator
+        is not a full creator and should not be used for calling methods when
+        instance is created from this method (matters on implementation).
+
+        Args:
+            serialized_data (Dict[str, Any]): Serialized data for remote
+                recreating. Should contain 'data' and 'orig_data'.
+            creator_items (Dict[str, Any]): Mapping of creator identifier and
+                objects that behave like a creator for most of attribute
+                access.
+        """
+
+        instance_data = copy.deepcopy(serialized_data["data"])
+        creator_identifier = instance_data["creator_identifier"]
+        creator_item = creator_items[creator_identifier]
+
+        family = instance_data.get("family", None)
+        if family is None:
+            family = creator_item.family
+        subset_name = instance_data.get("subset", None)
+
+        obj = cls(
+            family, subset_name, instance_data, creator_item, new=False
+        )
+        obj._orig_data = serialized_data["orig_data"]
+
+        return obj
+
+    def remote_changes(self):
+        """Prepare serializable changes on remote side.
+
+        Returns:
+            Dict[str, Any]: Prepared changes that can be send to client side.
+        """
+
+        return {
+            "changes": self.changes(),
+            "asset_is_valid": self._asset_is_valid,
+            "task_is_valid": self._task_is_valid,
+        }
+
+    def update_from_remote(self, remote_changes):
+        """Apply changes from remote side on client side.
+
+        Args:
+            remote_changes (Dict[str, Any]): Changes created on remote side.
+        """
+
+        self._asset_is_valid = remote_changes["asset_is_valid"]
+        self._task_is_valid = remote_changes["task_is_valid"]
+
+        changes = remote_changes["changes"]
+        creator_attributes = changes.pop("creator_attributes", None) or {}
+        publish_attributes = changes.pop("publish_attributes", None) or {}
+        if changes:
+            self.apply_changes(changes)
+
+        if creator_attributes:
+            self.creator_attributes.apply_changes(creator_attributes)
+
+        if publish_attributes:
+            self.publish_attributes.apply_changes(publish_attributes)
+
+    def apply_changes(self, changes):
+        """Apply changes created via 'changes'.
+
+        Args:
+            Dict[str, Tuple[Any, Any]]: Instance changes to apply. Same values
+                are kept untouched.
+        """
+
+        for key, item in changes.items():
+            old_value, new_value = item
+            if new_value is None:
+                if key in self:
+                    self.pop(key)
+            else:
+                current_value = self.get(key)
+                if current_value != new_value:
+                    self[key] = new_value
 
 
 class CreateContext:
