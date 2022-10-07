@@ -927,9 +927,7 @@ class PublisherController(AbstractPublisherController):
         # Pyblish report
         self._publish_report = PublishReport(self)
         # Store exceptions of validation error
-        self._publish_validation_errors = []
-        # Currently processing plugin errors
-        self._publish_current_plugin_validation_errors = None
+        self._publish_validation_errors = PublishValidationErrors()
         # Any other exception that happened during publishing
         self._publish_error = None
         # Publishing is in progress
@@ -1273,7 +1271,7 @@ class PublisherController(AbstractPublisherController):
         return self._publish_report.get_report(self._publish_plugins)
 
     def get_validation_errors(self):
-        return self._publish_validation_errors
+        return self._publish_validation_errors.create_report()
 
     def _reset_publish(self):
         self._publish_is_running = False
@@ -1297,8 +1295,7 @@ class PublisherController(AbstractPublisherController):
         )
 
         self._publish_report.reset(self._publish_context, self._create_context)
-        self._publish_validation_errors = []
-        self._publish_current_plugin_validation_errors = None
+        self._publish_validation_errors.reset(self._publish_plugins_proxy)
         self._publish_error = None
 
         self._publish_max_progress = len(self._publish_plugins)
@@ -1488,19 +1485,11 @@ class PublisherController(AbstractPublisherController):
         yield MainThreadItem(self.stop_publish)
 
     def _add_validation_error(self, result):
-        if self._publish_current_plugin_validation_errors is None:
-            self._publish_current_plugin_validation_errors = {
-                "plugin": result["plugin"],
-                "errors": []
-            }
-            self._publish_validation_errors.append(
-                self._publish_current_plugin_validation_errors
-            )
-
-        self._publish_current_plugin_validation_errors["errors"].append({
-            "exception": result["error"],
-            "instance": result["instance"]
-        })
+        self._publish_validation_errors.add_error(
+            result["plugin"],
+            result["error"],
+            result["instance"]
+        )
 
     def _process_and_continue(self, plugin, instance):
         result = pyblish.plugin.process(
