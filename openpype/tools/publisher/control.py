@@ -288,6 +288,95 @@ class PublishReport:
         return output
 
 
+class PublishPluginsProxy:
+    """Wrapper around publish plugin.
+
+    Prepare mapping for publish plugins and actions. Also can create
+    serializable data for plugin actions so UI don't have to have access to
+    them.
+
+    This object is created in process where publishing is actually running.
+
+    Notes:
+        Actions have id but single action can be used on multiple plugins so
+            to run an action is needed combination of plugin and action.
+
+    Args:
+        plugins [List[pyblish.api.Plugin]]: Discovered plugins that will be
+            processed.
+    """
+
+    def __init__(self, plugins):
+        plugins_by_id = {}
+        actions_by_id = {}
+        action_ids_by_plugin_id = {}
+        for plugin in plugins:
+            plugin_id = plugin.id
+            plugins_by_id[plugin_id] = plugin
+
+            action_ids = set()
+            action_ids_by_plugin_id[plugin_id] = action_ids
+
+            actions = getattr(plugin, "actions", None) or []
+            for action in actions:
+                action_id = action.id
+                action_ids.add(action_id)
+                actions_by_id[action_id] = action
+
+        self._plugins_by_id = plugins_by_id
+        self._actions_by_id = actions_by_id
+        self._action_ids_by_plugin_id = action_ids_by_plugin_id
+
+    def get_action(self, action_id):
+        return self._actions_by_id[action_id]
+
+    def get_plugin(self, plugin_id):
+        return self._plugins_by_id[plugin_id]
+
+    def get_plugin_id(self, plugin):
+        """Get id of plugin based on plugin object.
+
+        It's used for validation errors report.
+
+        Args:
+            plugin (pyblish.api.Plugin): Publish plugin for which id should be
+                returned.
+
+        Returns:
+            str: Plugin id.
+        """
+
+        return plugin.id
+
+    def get_plugin_action_items(self, plugin_id):
+        """Get plugin action items for plugin by it's id.
+
+        Args:
+            plugin_id (str): Publish plugin id.
+
+        Returns:
+            List[PublishPluginActionItem]: Items with information about publish
+                plugin actions.
+        """
+
+        return [
+            self._create_action_item(self._actions_by_id[action_id], plugin_id)
+            for action_id in self._action_ids_by_plugin_id[plugin_id]
+        ]
+
+    def _create_action_item(self, action, plugin_id):
+        label = action.label or action.__name__
+        icon = getattr(action, "icon", None)
+        return PublishPluginActionItem(
+            action.id,
+            plugin_id,
+            action.active,
+            action.on,
+            label,
+            icon
+        )
+
+
 
 
 @six.add_metaclass(ABCMeta)
