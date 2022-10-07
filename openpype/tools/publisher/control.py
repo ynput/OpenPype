@@ -14,6 +14,10 @@ from openpype.client import (
     get_subsets,
 )
 from openpype.lib.events import EventSystem
+from openpype.lib.attribute_definitions import (
+    serialize_attr_defs,
+    deserialize_attr_defs,
+)
 from openpype.pipeline import (
     PublishValidationError,
     registered_host,
@@ -731,6 +735,18 @@ class CreatorTypes:
     hidden = CreatorType("hidden")
     artist = CreatorType("artist")
 
+    @classmethod
+    def from_str(cls, value):
+        for creator_type in (
+            cls.base,
+            cls.auto,
+            cls.hidden,
+            cls.artist
+        ):
+            if value == creator_type:
+                return creator_type
+        raise ValueError("Unknown type \"{}\"".format(str(value)))
+
 
 class CreatorItem:
     """Wrapper around Creator plugin.
@@ -758,6 +774,7 @@ class CreatorItem:
         self.creator_type = creator_type
         self.family = family
         self.label = label
+        self.group_label = group_label
         self.icon = icon
         self.description = description
         self.detailed_description = detailed_description
@@ -808,6 +825,52 @@ class CreatorItem:
             create_allow_context_change,
             pre_create_attr_defs
         )
+
+    def to_data(self):
+        instance_attributes_defs = None
+        if self.instance_attributes_defs is not None:
+            instance_attributes_defs = serialize_attr_defs(
+                self.instance_attributes_defs
+            )
+
+        pre_create_attributes_defs = None
+        if self.pre_create_attributes_defs is not None:
+            instance_attributes_defs = serialize_attr_defs(
+                self.pre_create_attributes_defs
+            )
+
+        return {
+            "identifier": self.identifier,
+            "creator_type": str(self.creator_type),
+            "family": self.family,
+            "label": self.label,
+            "group_label": self.group_label,
+            "icon": self.icon,
+            "description": self.description,
+            "detailed_description": self.detailed_description,
+            "default_variant": self.default_variant,
+            "default_variants": self.default_variants,
+            "create_allow_context_change": self.create_allow_context_change,
+            "instance_attributes_defs": instance_attributes_defs,
+            "pre_create_attributes_defs": pre_create_attributes_defs,
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        instance_attributes_defs = data["instance_attributes_defs"]
+        if instance_attributes_defs is not None:
+            data["instance_attributes_defs"] = deserialize_attr_defs(
+                instance_attributes_defs
+            )
+
+        pre_create_attributes_defs = data["pre_create_attributes_defs"]
+        if pre_create_attributes_defs is not None:
+            data["pre_create_attributes_defs"] = deserialize_attr_defs(
+                pre_create_attributes_defs
+            )
+
+        data["creator_type"] = CreatorTypes.from_str(data["creator_type"])
+        return cls(**data)
 
 
 @six.add_metaclass(ABCMeta)
@@ -1395,11 +1458,10 @@ class PublisherController(AbstractPublisherController):
 
         self._create_context.reset_plugins()
 
-        creator_items = {
+        self._creator_items = {
             identifier: CreatorItem.from_creator(creator)
             for identifier, creator in self._create_context.creators.items()
         }
-        self._creator_items = creator_items
 
         self._resetting_plugins = False
 
