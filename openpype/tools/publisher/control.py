@@ -1354,8 +1354,11 @@ class PublisherController(AbstractPublisherController):
         if self._publish_is_running:
             self._stop_publish()
 
-    def run_action(self, plugin, action):
+    def run_action(self, plugin_id, action_id):
         # TODO handle result in UI
+        plugin = self._publish_plugins_proxy.get_plugin(plugin_id)
+        action = self._publish_plugins_proxy.get_action(action_id)
+
         result = pyblish.plugin.process(
             plugin, self._publish_context, None, action.id
         )
