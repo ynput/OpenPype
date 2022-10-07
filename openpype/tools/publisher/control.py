@@ -1345,7 +1345,7 @@ class PublisherController(AbstractPublisherController):
     @property
     def instances(self):
         """Current instances in create context."""
-        return self._create_context.instances
+        return self._create_context.instances_by_id
 
     @property
     def _creators(self):

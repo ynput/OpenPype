@@ -523,7 +523,7 @@ class PublisherWindow(QtWidgets.QDialog):
             return
 
         all_valid = None
-        for instance in self._controller.instances:
+        for instance in self._controller.instances.values():
             if not instance["active"]:
                 continue
 

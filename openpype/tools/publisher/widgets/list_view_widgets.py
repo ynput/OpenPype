@@ -520,7 +520,7 @@ class InstanceListView(AbstractInstanceView):
         # Prepare instances by their groups
         instances_by_group_name = collections.defaultdict(list)
         group_names = set()
-        for instance in self._controller.instances:
+        for instance in self._controller.instances.values():
             group_label = instance.group_label
             group_names.add(group_label)
             instances_by_group_name[group_label].append(instance)
@@ -769,10 +769,7 @@ class InstanceListView(AbstractInstanceView):
         """
         instances = []
         context_selected = False
-        instances_by_id = {
-            instance.id: instance
-            for instance in self._controller.instances
-        }
+        instances_by_id = self._controller.instances
 
         for index in self._instance_view.selectionModel().selectedIndexes():
             instance_id = index.data(INSTANCE_ID_ROLE)
