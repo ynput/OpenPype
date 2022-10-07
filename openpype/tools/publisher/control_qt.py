@@ -67,10 +67,10 @@ class QtPublisherController(PublisherController):
 
         super(QtPublisherController, self).__init__(*args, **kwargs)
 
-        self._event_system.add_callback(
+        self.event_system.add_callback(
             "publish.process.started", self._qt_on_publish_start
         )
-        self._event_system.add_callback(
+        self.event_system.add_callback(
             "publish.process.stopped", self._qt_on_publish_stop
         )
 
