@@ -53,6 +53,19 @@ class NukeCreatorError(CreatorError):
 class NukeCreator(NewCreator):
     selected_nodes = []
 
+    def pass_pre_attributes_to_instance(
+        self,
+        instance_data,
+        pre_create_data,
+        keys=None
+    ):
+        if not keys:
+            keys = pre_create_data.keys()
+
+        creator_attrs = instance_data["creator_attributes"] = {}
+        for pass_key in keys:
+            creator_attrs[pass_key] = pre_create_data[pass_key]
+
     def add_info_knob(self, node):
         if "OP_info" in node.knobs().keys():
             return
