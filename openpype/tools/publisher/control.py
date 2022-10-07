@@ -1500,7 +1500,9 @@ class PublisherController(AbstractPublisherController):
         output = []
         _attr_defs = {}
         for instance in instances:
-            for attr_def in instance.creator_attribute_defs:
+            creator_identifier = instance.creator_identifier
+            creator_item = self._creator_items[creator_identifier]
+            for attr_def in creator_item.instance_attributes_defs:
                 found_idx = None
                 for idx, _attr_def in _attr_defs.items():
                     if attr_def == _attr_def:
