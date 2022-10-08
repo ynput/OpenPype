@@ -14,7 +14,9 @@ from .plugin import (
     NukeWriteCreator,
     NukeCreatorError,
     OpenPypeCreator,
-    get_instance_node
+    get_instance_node,
+    get_instance_group_node_childs,
+    get_colorspace_from_node
 )
 from .pipeline import (
     NukeHost,
@@ -66,6 +68,8 @@ __all__ = (
     "OpenPypeCreator",
     "NukeHost",
     "get_instance_node",
+    "get_instance_group_node_childs",
+    "get_colorspace_from_node",
 
     "ls",
 

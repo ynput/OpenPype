@@ -1,5 +1,5 @@
 import nuke
-
+import re
 import os
 import sys
 import six
@@ -413,6 +413,41 @@ def get_instance_node(instance):
     else:
         # or backward compatible
         return instance[0]
+
+
+def get_instance_group_node_childs(instance):
+    """Return list of instance group node children
+
+    Args:
+        instance (pyblish.Instance): pyblish instance
+
+    Returns:
+        list: [nuke.Node]
+    """
+    node = get_instance_node(instance)
+
+    if node.Class() != "Group":
+        return
+
+    # collect child nodes
+    child_nodes = []
+    # iterate all nodes
+    for node in nuke.allNodes(group=node):
+        # add contained nodes to instance's node list
+        child_nodes.append(node)
+
+    return child_nodes
+
+
+def get_colorspace_from_node(node):
+    # Add version data to instance
+    colorspace = node["colorspace"].value()
+
+    # remove default part of the string
+    if "default (" in colorspace:
+        colorspace = re.sub(r"default.\(|\)", "", colorspace)
+
+    return colorspace
 
 
 def get_review_presets_config():
