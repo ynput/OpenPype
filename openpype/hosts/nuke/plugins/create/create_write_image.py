@@ -14,10 +14,10 @@ from openpype.lib import (
 from openpype.hosts.nuke import api as napi
 
 
-class CreateWriteStill(napi.NukeWriteCreator):
-    identifier = "create_write_still"
-    label = "Create Write Still Frame"
-    family = "still"
+class CreateWriteImage(napi.NukeWriteCreator):
+    identifier = "create_write_image"
+    label = "Create Write Image"
+    family = "image"
     icon = "sign-out"
 
     def get_pre_create_attr_defs(self):
