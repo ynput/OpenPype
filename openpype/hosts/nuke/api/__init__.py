@@ -29,7 +29,8 @@ from .lib import (
     reset_selection,
     get_view_process_node,
     duplicate_node,
-    convert_knob_value_to_correct_type
+    convert_knob_value_to_correct_type,
+    get_imageio_settings
 )
 
 from .utils import (
@@ -64,6 +65,7 @@ __all__ = (
     "get_view_process_node",
     "duplicate_node",
     "convert_knob_value_to_correct_type",
+    "get_imageio_settings",
 
     "colorspace_exists_on_node",
     "get_colorspace_list"

@@ -17,7 +17,7 @@ from .lib import (
     maintained_selection,
     set_avalon_knob_data,
     add_publish_knob,
-    get_nuke_imageio_settings,
+    get_imageio_settings,
     set_node_knobs_from_settings,
     get_view_process_node
 )
@@ -216,7 +216,7 @@ class ExporterReview(object):
 
     def get_imageio_baking_profile(self):
         from . import lib as opnlib
-        nuke_imageio = opnlib.get_nuke_imageio_settings()
+        nuke_imageio = opnlib.get_imageio_settings()
 
         # TODO: this is only securing backward compatibility lets remove
         # this once all projects's anotomy are updated to newer config
@@ -669,7 +669,7 @@ class AbstractWriteRender(OpenPypeCreator):
         Returns:
             bool: True if legacy
         """
-        imageio_nodes = get_nuke_imageio_settings()["nodes"]
+        imageio_nodes = get_imageio_settings()["nodes"]
         node = imageio_nodes["requiredNodes"][0]
         if "type" not in node["knobs"][0]:
             # if type is not yet in project anatomy

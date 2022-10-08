@@ -567,6 +567,7 @@ def get_imageio_settings():
 
 
 def get_nuke_imageio_settings():
+    """ [depricated] """
     return get_anatomy_settings(Context.project_name)["imageio"]["nuke"]
 
 
@@ -577,7 +578,7 @@ def get_created_node_imageio_setting_legacy(nodeclass, creator, subset):
     assert any([creator, nodeclass]), nuke.message(
         "`{}`: Missing mandatory kwargs `host`, `cls`".format(__file__))
 
-    imageio_nodes = get_nuke_imageio_settings()["nodes"]
+    imageio_nodes = get_imageio_settings()["nodes"]
     required_nodes = imageio_nodes["requiredNodes"]
 
     # HACK: for backward compatibility this needs to be optional
@@ -649,7 +650,7 @@ def get_created_node_imageio_setting_legacy(nodeclass, creator, subset):
 def get_imageio_node_setting(node_class, plugin_name, subset):
     ''' Get preset data for dataflow (fileType, compression, bitDepth)
     '''
-    imageio_nodes = get_nuke_imageio_settings()["nodes"]
+    imageio_nodes = get_imageio_settings()["nodes"]
     required_nodes = imageio_nodes["requiredNodes"]
 
     imageio_node = None
@@ -684,7 +685,7 @@ def get_imageio_node_override_setting(
 ):
     ''' Get imageio node overrides from settings
     '''
-    imageio_nodes = get_nuke_imageio_settings()["nodes"]
+    imageio_nodes = get_imageio_settings()["nodes"]
     override_nodes = imageio_nodes["overrideNodes"]
 
     # find matching override node
@@ -741,7 +742,7 @@ def get_imageio_input_colorspace(filename):
     ''' Get input file colorspace based on regex in settings.
     '''
     imageio_regex_inputs = (
-        get_nuke_imageio_settings()["regexInputs"]["inputs"])
+        get_imageio_settings()["regexInputs"]["inputs"])
 
     preset_clrsp = None
     for regexInput in imageio_regex_inputs:
@@ -2048,7 +2049,7 @@ class WorkfileSettings(object):
         ''' Setting colorpace following presets
         '''
         # get imageio
-        nuke_colorspace = get_nuke_imageio_settings()
+        nuke_colorspace = get_imageio_settings()
 
         log.info("Setting colorspace to workfile...")
         try:
