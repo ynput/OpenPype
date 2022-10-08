@@ -562,6 +562,10 @@ def get_node_path(path, padding=4):
     return filename, padding, ext
 
 
+def get_imageio_settings():
+    return get_project_settings(Context.project_name)["nuke"]["imageio"]
+
+
 def get_nuke_imageio_settings():
     return get_anatomy_settings(Context.project_name)["imageio"]["nuke"]
 
