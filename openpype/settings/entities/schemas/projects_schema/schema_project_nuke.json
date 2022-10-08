@@ -47,7 +47,12 @@
             ]
         },
         {
-           "type": "dict",
+            "type": "schema",
+            "name": "schema_nuke_imageio",
+            "template_data": []
+        },
+        {
+            "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
             "key": "nuke-dirmap",
