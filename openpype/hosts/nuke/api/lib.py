@@ -691,6 +691,7 @@ def get_nuke_imageio_settings():
     return get_anatomy_settings(Context.project_name)["imageio"]["nuke"]
 
 
+@deprecated("openpype.hosts.nuke.api.lib.get_nuke_imageio_settings")
 def get_created_node_imageio_setting_legacy(nodeclass, creator, subset):
     '''[DEPRICATED]  Get preset data for dataflow (fileType, compression, bitDepth)
     '''
