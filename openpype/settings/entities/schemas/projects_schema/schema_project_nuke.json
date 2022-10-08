@@ -205,8 +205,8 @@
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "CreateWriteStill",
-                    "label": "CreateWriteStill",
+                    "key": "CreateWriteImage",
+                    "label": "CreateWriteImage",
                     "is_group": true,
                     "children": [
                         {

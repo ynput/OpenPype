@@ -99,10 +99,10 @@
             ],
             "prenodes": {}
         },
-        "CreateWriteStill": {
+        "CreateWriteImage": {
             "temp_rendering_path_template": "{work}/renders/nuke/{subset}/{subset}.{ext}",
             "default_variants": [
-                "ImageFrame",
+                "StillFrame",
                 "MPFrame",
                 "LayoutFrame"
             ],
@@ -125,7 +125,7 @@
         }
     },
     "publish": {
-        "PreCollectNukeInstances": {
+        "CollectInstanceData": {
             "sync_workfile_version_on_families": [
                 "nukenodes",
                 "camera",
