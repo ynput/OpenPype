@@ -1,17 +1,8 @@
 import os
-import re
 from pprint import pformat
 import nuke
 import pyblish.api
-
-from openpype.client import (
-    get_last_version_by_subset_name,
-    get_representations,
-)
-from openpype.pipeline import (
-    legacy_io,
-    get_representation_path,
-)
+from openpype.hosts.nuke import api as napi
 
 
 @pyblish.api.log
@@ -21,35 +12,49 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder - 0.48
     label = "Collect Writes"
     hosts = ["nuke", "nukeassist"]
-    families = ["write"]
+    families = ["render", "prerender", "image"]
 
     def process(self, instance):
-        _families_test = [instance.data["family"]] + instance.data["families"]
-        self.log.debug("_families_test: {}".format(_families_test))
+        self.log.debug(pformat(instance.data))
+        instance.data.update(instance.data["creator_attributes"])
 
-        child_nodes = (
-            instance.data.get("transientData", {}).get("childNodes")
-            or instance
+        group_node = napi.get_instance_node(instance)
+        render_target = instance.data["render_target"]
+        family = instance.data["family"]
+        families = instance.data["families"]
+
+        # add targeted family to families
+        instance.data["families"].append(
+            "{}.{}".format(family, render_target)
         )
+        # add additional keys to farm targeted
+        if render_target == "farm":
+            # Farm rendering
+            self.log.info("flagged for farm render")
+            instance.data["transfer"] = False
+            instance.data["farm"] = True
 
-        node = None
+        child_nodes = napi.get_instance_group_node_childs(instance)
+        instance.data["transientData"]["childNodes"] = child_nodes
+
+        write_node = None
         for x in child_nodes:
             if x.Class() == "Write":
-                node = x
+                write_node = x
 
-        if node is None:
+        if write_node is None:
+            self.log.warning(
+                "Created node '{}' is missing write node!".format(
+                    group_node.name()
+                )
+            )
             return
 
-        instance.data["writeNode"] = node
+        instance.data["writeNode"] = write_node
         self.log.debug("checking instance: {}".format(instance))
 
         # Determine defined file type
-        ext = node["file_type"].value()
-
-        # Determine output type
-        output_type = "img"
-        if ext == "mov":
-            output_type = "mov"
+        ext = write_node["file_type"].value()
 
         # Get frame range
         handle_start = instance.context.data["handleStart"]
@@ -58,105 +63,85 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         last_frame = int(nuke.root()["last_frame"].getValue())
         frame_length = int(last_frame - first_frame + 1)
 
-        if node["use_limit"].getValue():
-            first_frame = int(node["first"].getValue())
-            last_frame = int(node["last"].getValue())
+        if write_node["use_limit"].getValue():
+            first_frame = int(write_node["first"].getValue())
+            last_frame = int(write_node["last"].getValue())
 
-        # Prepare expected output paths by evaluating each frame of write node
-        #   - paths are first collected to set to avoid duplicated paths, then
-        #       sorted and converted to list
-        node_file = node["file"]
-        expected_paths = list(sorted({
-            node_file.evaluate(frame)
-            for frame in range(first_frame, last_frame + 1)
-        }))
-        expected_filenames = [
-            os.path.basename(filepath)
-            for filepath in expected_paths
-        ]
-        path = nuke.filename(node)
-        output_dir = os.path.dirname(path)
+        write_file_path = nuke.filename(write_node)
+        output_dir = os.path.dirname(write_file_path)
 
         self.log.debug('output dir: {}'.format(output_dir))
 
-        # create label
-        name = node.name()
-        # Include start and end render frame in label
-        label = "{0} ({1}-{2})".format(
-            name,
-            int(first_frame),
-            int(last_frame)
-        )
-
-        if [fm for fm in _families_test
-                if fm in ["render", "prerender", "still"]]:
-            if "representations" not in instance.data:
-                instance.data["representations"] = list()
+        if render_target == "frame":
 
             representation = {
                 'name': ext,
                 'ext': ext,
                 "stagingDir": output_dir,
-                "tags": list()
+                "tags": []
             }
 
-            try:
-                collected_frames = [
-                    filename
-                    for filename in os.listdir(output_dir)
-                    if filename in expected_filenames
-                ]
-                if collected_frames:
-                    collected_frames_len = len(collected_frames)
-                    frame_start_str = "%0{}d".format(
-                        len(str(last_frame))) % first_frame
-                    representation['frameStart'] = frame_start_str
+            # get file path knob
+            node_file_knob = write_node["file"]
+            # list file paths based on input frames
+            expected_paths = list(sorted({
+                node_file_knob.evaluate(frame)
+                for frame in range(first_frame, last_frame + 1)
+            }))
 
-                    # in case slate is expected and not yet rendered
-                    self.log.debug("_ frame_length: {}".format(frame_length))
-                    self.log.debug(
-                        "_ collected_frames_len: {}".format(
-                            collected_frames_len))
-                    # this will only run if slate frame is not already
-                    # rendered from previews publishes
-                    if "slate" in _families_test \
-                            and (frame_length == collected_frames_len) \
-                            and ("prerender" not in _families_test):
-                        frame_slate_str = "%0{}d".format(
-                            len(str(last_frame))) % (first_frame - 1)
-                        slate_frame = collected_frames[0].replace(
-                            frame_start_str, frame_slate_str)
-                        collected_frames.insert(0, slate_frame)
+            # convert only to base names
+            expected_filenames = [
+                os.path.basename(filepath)
+                for filepath in expected_paths
+            ]
+
+            # make sure files are existing at folder
+            collected_frames = [
+                filename
+                for filename in os.listdir(output_dir)
+                if filename in expected_filenames
+            ]
+
+            if collected_frames:
+                collected_frames_len = len(collected_frames)
+                frame_start_str = "%0{}d".format(
+                    len(str(last_frame))) % first_frame
+                representation['frameStart'] = frame_start_str
+
+                # in case slate is expected and not yet rendered
+                self.log.debug("_ frame_length: {}".format(frame_length))
+                self.log.debug("_ collected_frames_len: {}".format(
+                    collected_frames_len))
+
+                # this will only run if slate frame is not already
+                # rendered from previews publishes
+                if (
+                    "slate" in families
+                    and frame_length == collected_frames_len
+                    and family == "render"
+                ):
+                    frame_slate_str = (
+                        "{{:0{}d}}".format(len(str(last_frame)))
+                    ).format(first_frame - 1)
+
+                    slate_frame = collected_frames[0].replace(
+                        frame_start_str, frame_slate_str)
+                    collected_frames.insert(0, slate_frame)
 
                 if collected_frames_len == 1:
                     representation['files'] = collected_frames.pop()
-                    if "still" in _families_test:
-                        instance.data['family'] = 'image'
-                        instance.data["families"].remove('still')
                 else:
                     representation['files'] = collected_frames
-                instance.data["representations"].append(representation)
-            except Exception:
-                instance.data["representations"].append(representation)
-                self.log.debug("couldn't collect frames: {}".format(label))
 
-        # Add version data to instance
-        colorspace = node["colorspace"].value()
+            instance.data["representations"].append(representation)
 
-        # remove default part of the string
-        if "default (" in colorspace:
-            colorspace = re.sub(r"default.\(|\)", "", colorspace)
-            self.log.debug("colorspace: `{}`".format(colorspace))
-
+        # get colorspace and add to version data
+        colorspace = napi.get_colorspace_from_node(write_node)
         version_data = {
-            "families": [
-                _f.replace(".local", "").replace(".farm", "")
-                for _f in _families_test if "write" != _f
-            ],
             "colorspace": colorspace
         }
 
-        group_node = [x for x in instance if x.Class() == "Group"][0]
+        # get deadline related attributes
         dl_chunk_size = 1
         if "deadlineChunkSize" in group_node.knobs():
             dl_chunk_size = group_node["deadlineChunkSize"].value()
@@ -171,27 +156,16 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
         instance.data.update({
             "versionData": version_data,
-            "path": path,
+            "path": write_file_path,
             "outputDir": output_dir,
             "ext": ext,
-            "label": label,
-            "outputType": output_type,
             "colorspace": colorspace,
             "deadlineChunkSize": dl_chunk_size,
             "deadlinePriority": dl_priority,
             "deadlineConcurrentTasks": dl_concurrent_tasks
         })
 
-        if self.is_prerender(_families_test):
-            instance.data.update({
-                "handleStart": 0,
-                "handleEnd": 0,
-                "frameStart": first_frame,
-                "frameEnd": last_frame,
-                "frameStartHandle": first_frame,
-                "frameEndHandle": last_frame,
-            })
-        else:
+        if family == "render":
             instance.data.update({
                 "handleStart": handle_start,
                 "handleEnd": handle_end,
@@ -200,13 +174,19 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                 "frameStartHandle": first_frame,
                 "frameEndHandle": last_frame,
             })
+        else:
+            instance.data.update({
+                "handleStart": 0,
+                "handleEnd": 0,
+                "frameStart": first_frame,
+                "frameEnd": last_frame,
+                "frameStartHandle": first_frame,
+                "frameEndHandle": last_frame,
+            })
 
-            # make sure rendered sequence on farm will
-            # be used for exctract review
-            if not instance.data["review"]:
-                instance.data["useSequenceForReview"] = False
+        # make sure rendered sequence on farm will
+        # be used for exctract review
+        if not instance.data["review"]:
+            instance.data["useSequenceForReview"] = False
 
         self.log.debug("instance.data: {}".format(pformat(instance.data)))
-
-    def is_prerender(self, families):
-        return next((f for f in families if "prerender" in f), None)
