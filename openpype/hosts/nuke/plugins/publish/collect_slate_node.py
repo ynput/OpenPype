@@ -9,7 +9,7 @@ class CollectSlate(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.09
     label = "Collect Slate Node"
     hosts = ["nuke"]
-    families = ["render", "render.local", "render.farm"]
+    families = ["render"]
 
     def process(self, instance):
         node = napi.get_instance_node(instance)
