@@ -196,7 +196,7 @@ def ls():
     """
 
     comp = get_current_comp()
-    tools = comp.GetToolList(False, "Loader").values()
+    tools = comp.GetToolList(False).values()
 
     for tool in tools:
         container = parse_container(tool)
