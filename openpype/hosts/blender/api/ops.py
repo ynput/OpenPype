@@ -1051,7 +1051,7 @@ class BuildWorkFile(bpy.types.Operator):
                 data = get_template_data_with_names(
                     project_name, asset_name, task_name, host_name
                 )
-                data.update({"version": 0, "comment": "", "ext": "blend"})
+                data.update({"version": 0, "ext": "blend"})
 
                 # Getting file name anatomy
                 anatomy_filled = Anatomy(project_name).format(data)
