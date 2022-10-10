@@ -17,6 +17,7 @@ class WidgetUserIdle(QtWidgets.QWidget):
         self.setWindowFlags(
             QtCore.Qt.WindowCloseButtonHint
             | QtCore.Qt.WindowMinimizeButtonHint
+            | QtCore.Qt.WindowStaysOnTopHint
         )
 
         self._is_showed = False
@@ -170,7 +171,8 @@ class WidgetUserIdle(QtWidgets.QWidget):
     def showEvent(self, event):
         if not self._is_showed:
             self._is_showed = True
-            self._refresh_context()
+        self._timer_stopped = False
+        self._refresh_context()
 
         if not self._count_timer.isActive():
             self._count_timer.start()
@@ -186,10 +188,12 @@ class WidgetUserIdle(QtWidgets.QWidget):
 
 class SignalHandler(QtCore.QObject):
     signal_show_message = QtCore.Signal()
+    signal_hide_message = QtCore.Signal()
     signal_stop_timers = QtCore.Signal()
 
     def __init__(self, module):
         super(SignalHandler, self).__init__()
         self.module = module
         self.signal_show_message.connect(module.show_message)
+        self.signal_hide_message.connect(module.hide_message)
         self.signal_stop_timers.connect(module.stop_timers)

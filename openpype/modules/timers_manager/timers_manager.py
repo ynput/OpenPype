@@ -299,6 +299,8 @@ class TimersManager(
 
         self.last_task = data
         self.is_running = True
+        # Make sure the widget is hidden
+        self.close_message()
 
     def timer_stopped(self, source_id):
         """Connector triggered that hist timer has stopped.
@@ -376,6 +378,16 @@ class TimersManager(
         if not self._widget_user_idle.is_showed():
             self._widget_user_idle.reset_countdown()
             self._widget_user_idle.show()
+
+    def hide_message(self):
+        self._widget_user_idle.set_timer_stopped()
+        if self._widget_user_idle.is_showed():
+            self._widget_user_idle._is_showed = False
+            self._widget_user_idle.hide()
+
+    #TODO(derek): change name to 'request_hide_message' (?)
+    def close_message(self):
+        self._signal_handler.signal_hide_message.emit()
 
     # Webserver module implementation
     def webserver_initialization(self, server_manager):

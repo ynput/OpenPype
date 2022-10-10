@@ -1,0 +1,6 @@
+{
+    "project_settings/global": {
+        "type": "schema",
+        "name": "process_monitor/main"
+    }
+}
