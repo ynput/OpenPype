@@ -136,7 +136,10 @@ def isolate_objects(window, objects, focus=None):
 
     focus = focus or objects
     for obj in focus:
-        obj.select_set(True)
+        try:
+            obj.select_set(True)
+        except RuntimeError:
+            continue
 
     with context_override(selected=focus, window=window):
         bpy.ops.view3d.view_axis(type="FRONT")
