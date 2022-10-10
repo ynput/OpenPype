@@ -1995,11 +1995,11 @@ class PublisherController(BasePublishController):
 
         # Cleanup of publishing process
         self.publish_finished = True
-        self.publish_progress = self._publish_max_progress
+        self.publish_progress = self.publish_max_progress
         yield MainThreadItem(self.stop_publish)
 
     def _add_validation_error(self, result):
-        self.publish_has_validation_errors = False
+        self.publish_has_validation_errors = True
         self._publish_validation_errors.add_error(
             result["plugin"],
             result["error"],
@@ -2030,7 +2030,7 @@ class PublisherController(BasePublishController):
                         " to your supervisor or OpenPype."
                     )
                 self.publish_error_msg = msg
-                self.publish_has_crashed = False
+                self.publish_has_crashed = True
 
         self._publish_next_process()
 
