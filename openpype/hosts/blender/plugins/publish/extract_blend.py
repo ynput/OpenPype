@@ -97,9 +97,6 @@ class ExtractBlend(publish.Extractor):
         instance_metadata = instance_collection[AVALON_PROPERTY].to_dict()
         instance_collection[AVALON_PROPERTY] = dict()
 
-        # Create ID to allow blender import without using OP tools
-        repre_id = str(ObjectId())
-
         # Get Loader module from instance
         loader_module = self._get_loader_from_instance(instance)
 
@@ -111,10 +108,11 @@ class ExtractBlend(publish.Extractor):
                 "id": AVALON_CONTAINER_ID,
                 "name": instance_metadata["subset"],
                 "loader": loader_module.__name__,
-                "representation": repre_id,
+                "representation": True,  # Substitute by the created ObjectId after integration
                 "asset_name": instance_metadata["asset"],
                 "parent": str(instance.data["assetEntity"]["parent"]),
                 "family": instance.data["family"],
+                "namespace": "",
             },
         )
 
@@ -155,7 +153,6 @@ class ExtractBlend(publish.Extractor):
             "ext": "blend",
             "files": filename,
             "stagingDir": stagingdir,
-            "id": repre_id,
         }
         instance.data.setdefault("representations", [])
         instance.data["representations"].append(representation)
