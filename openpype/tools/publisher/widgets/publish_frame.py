@@ -4,8 +4,6 @@ import time
 
 from Qt import QtWidgets, QtCore
 
-from openpype.pipeline import KnownPublishError
-
 from .widgets import (
     StopBtn,
     ResetBtn,
@@ -170,7 +168,7 @@ class PublishFrame(QtWidgets.QWidget):
             "publish.process.started", self._on_publish_start
         )
         controller.event_system.add_callback(
-            "publish.process.validated", self._on_publish_validated
+            "publish.has_validated.changed", self._on_publish_validated_change
         )
         controller.event_system.add_callback(
             "publish.process.stopped", self._on_publish_stop
@@ -322,8 +320,9 @@ class PublishFrame(QtWidgets.QWidget):
         self._validate_btn.setEnabled(False)
         self._publish_btn.setEnabled(False)
 
-    def _on_publish_validated(self):
-        self._validate_btn.setEnabled(False)
+    def _on_publish_validated_change(self, event):
+        if event["value"]:
+            self._validate_btn.setEnabled(False)
 
     def _on_instance_change(self, event):
         """Change instance label when instance is going to be processed."""
@@ -360,10 +359,10 @@ class PublishFrame(QtWidgets.QWidget):
         self._validate_btn.setEnabled(validate_enabled)
         self._publish_btn.setEnabled(publish_enabled)
 
-        error = self._controller.get_publish_crash_error()
+        error_msg = self._controller.publish_error_msg
         validation_errors = self._controller.get_validation_errors()
-        if error:
-            self._set_error(error)
+        if error_msg:
+            self._set_error_msg(error_msg)
 
         elif validation_errors:
             self._set_progress_visibility(False)
@@ -387,16 +386,16 @@ class PublishFrame(QtWidgets.QWidget):
 
         self._set_success_property(-1)
 
-    def _set_error(self, error):
+    def _set_error_msg(self, error_msg):
+        """Show error message to artist.
+
+        Args:
+            error_msg (str): Message which is showed to artist.
+        """
+
         self._set_main_label("Error happened")
-        if isinstance(error, KnownPublishError):
-            msg = str(error)
-        else:
-            msg = (
-                "Something went wrong. Send report"
-                " to your supervisor or OpenPype."
-            )
-        self._message_label_top.setText(msg)
+
+        self._message_label_top.setText(error_msg)
 
         self._set_success_property(0)
 

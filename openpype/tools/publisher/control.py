@@ -20,6 +20,7 @@ from openpype.lib.attribute_definitions import (
 )
 from openpype.pipeline import (
     PublishValidationError,
+    KnownPublishError,
     registered_host,
 )
 from openpype.pipeline.create import (
@@ -909,7 +910,7 @@ class AbstractPublisherController(object):
     def event_system(self):
         """Inner event system for publisher controller.
 
-        Event system is autocreated.
+        Is used for communication with UI. Event system is autocreated.
 
         Known topics:
             "show.detailed.help" - Detailed help requested (UI related).
@@ -919,10 +920,20 @@ class AbstractPublisherController(object):
             "publish.reset.finished" - Controller reset finished.
             "publish.process.started" - Publishing started. Can be started from
                 paused state.
-            "publish.process.validated" - Publishing passed validation.
             "publish.process.stopped" - Publishing stopped/paused process.
             "publish.process.plugin.changed" - Plugin state has changed.
             "publish.process.instance.changed" - Instance state has changed.
+            "publish.has_validated.changed" - Attr 'publish_has_validated'
+                changed.
+            "publish.is_running.changed" - Attr 'publish_is_running' changed.
+            "publish.has_validated.changed" - Attr 'has_validated' changed.
+            "publish.has_crashed.changed" - Attr 'publish_has_crashed' changed.
+            "publish.publish_error.changed" - Attr 'publish_error'
+            "publish.has_validation_errors.changed" - Attr
+                'has_validation_errors' changed.
+            "publish.max_progress.changed" - Attr 'publish_max_progress'
+                changed.
+            "publish.progress.changed" - Attr 'publish_progress' changed.
 
         Returns:
             EventSystem: Event system which can trigger callbacks for topics.
@@ -1158,25 +1169,20 @@ class AbstractPublisherController(object):
         """Current progress number.
 
         Returns:
-            int: Current progress value which is between 0 and
-                'publish_max_progress'.
+            int: Current progress value from 0 to 'publish_max_progress'.
         """
 
         pass
 
     @abstractproperty
-    def publish_comment_is_set(self):
-        """Publish comment was at least once set.
+    def publish_error_msg(self):
+        """Current error message which cause fail of publishing.
 
-        Publish comment can be set only once when publish is started for a
-        first time. This helpt to idetify if 'set_comment' should be called or
-        not.
+        Returns:
+            Union[str, None]: Message which will be showed to artist or
+                None.
         """
 
-        pass
-
-    @abstractmethod
-    def get_publish_crash_error(self):
         pass
 
     @abstractmethod
@@ -1277,7 +1283,6 @@ class PublisherController(AbstractPublisherController):
         # Store exceptions of validation error
         self._publish_validation_errors = PublishValidationErrors()
         # Any other exception that happened during publishing
-        self._publish_error = None
         self._publish_error_msg = None
         # Publishing is in progress
         self._publish_is_running = False
@@ -1645,9 +1650,6 @@ class PublisherController(AbstractPublisherController):
         self._emit_event("instances.refresh.finished")
 
     # --- Publish specific implementations ---
-    def get_publish_crash_error(self):
-        return self._publish_error
-
     def _get_publish_has_finished(self):
         return self._publish_finished
 
@@ -1746,10 +1748,13 @@ class PublisherController(AbstractPublisherController):
         return self._publish_validation_errors.create_report()
 
     def _reset_publish(self):
-        self._publish_is_running = False
-        self._publish_validated = False
+        self.publish_is_running = False
+        self.publish_has_validated = False
+        self.publish_has_crashed = False
+        self.publish_has_validation_errors = False
+        self.publish_finished = False
+
         self._publish_up_validation = False
-        self._publish_finished = False
         self._publish_comment_is_set = False
 
         self._main_thread_iter = self._publish_iterator()
@@ -1768,16 +1773,25 @@ class PublisherController(AbstractPublisherController):
 
         self._publish_report.reset(self._publish_context, self._create_context)
         self._publish_validation_errors.reset(self._publish_plugins_proxy)
-        self._publish_error = None
 
-        self._publish_max_progress = len(self._publish_plugins)
-        self._publish_progress = 0
+        self.publish_error_msg = None
+
+        self.publish_max_progress = len(self._publish_plugins)
+        self.publish_progress = 0
 
         self._emit_event("publish.reset.finished")
 
     def set_comment(self, comment):
-        self._publish_context.data["comment"] = comment
-        self._publish_comment_is_set = True
+        """Set comment from ui to pyblish context.
+
+        This should be called always before publishing is started but should
+        happen only once on first publish start thus variable
+        '_publish_comment_is_set' is used to keep track about the information.
+        """
+
+        if not self._publish_comment_is_set:
+            self._publish_context.data["comment"] = comment
+            self._publish_comment_is_set = True
 
     def publish(self):
         """Run publishing."""
@@ -1786,20 +1800,20 @@ class PublisherController(AbstractPublisherController):
 
     def validate(self):
         """Run publishing and stop after Validation."""
-        if self._publish_validated:
+        if self.publish_has_validated:
             return
         self._publish_up_validation = True
         self._start_publish()
 
     def _start_publish(self):
         """Start or continue in publishing."""
-        if self._publish_is_running:
+        if self.publish_is_running:
             return
 
         # Make sure changes are saved
         self.save_changes()
 
-        self._publish_is_running = True
+        self.publish_is_running = True
 
         self._emit_event("publish.process.started")
 
@@ -1807,14 +1821,14 @@ class PublisherController(AbstractPublisherController):
 
     def _stop_publish(self):
         """Stop or pause publishing."""
-        self._publish_is_running = False
+        self.publish_is_running = False
 
         self._emit_event("publish.process.stopped")
 
     def stop_publish(self):
         """Stop publishing process (any reason)."""
 
-        if self._publish_is_running:
+        if self.publish_is_running:
             self._stop_publish()
 
     def run_action(self, plugin_id, action_id):
@@ -1835,14 +1849,14 @@ class PublisherController(AbstractPublisherController):
         # There are validation errors and validation is passed
         # - can't do any progree
         if (
-            self._publish_validated
-            and self._publish_validation_errors
+            self.publish_has_validated
+            and self.publish_has_validation_errors
         ):
             item = MainThreadItem(self.stop_publish)
 
         # Any unexpected error happened
         # - everything should stop
-        elif self._publish_error:
+        elif self.publish_has_crashed:
             item = MainThreadItem(self.stop_publish)
 
         # Everything is ok so try to get new processing item
@@ -1871,23 +1885,20 @@ class PublisherController(AbstractPublisherController):
             self._publish_progress = idx
 
             # Check if plugin is over validation order
-            if not self._publish_validated:
-                self._publish_validated = (
+            if not self.publish_has_validated:
+                self.publish_has_validated = (
                     plugin.order >= self._validation_order
                 )
-                # Trigger callbacks when validation stage is passed
-                if self._publish_validated:
-                    self._emit_event("publish.process.validated")
 
             # Stop if plugin is over validation order and process
             #   should process up to validation.
-            if self._publish_up_validation and self._publish_validated:
+            if self._publish_up_validation and self.publish_has_validated:
                 yield MainThreadItem(self.stop_publish)
 
             # Stop if validation is over and validation errors happened
             if (
-                self._publish_validated
-                and self._publish_validation_errors
+                self.publish_has_validated
+                and self.publish_has_validation_errors
             ):
                 yield MainThreadItem(self.stop_publish)
 
@@ -1952,11 +1963,12 @@ class PublisherController(AbstractPublisherController):
                     self._publish_report.set_plugin_skipped()
 
         # Cleanup of publishing process
-        self._publish_finished = True
-        self._publish_progress = self._publish_max_progress
+        self.publish_finished = True
+        self.publish_progress = self._publish_max_progress
         yield MainThreadItem(self.stop_publish)
 
     def _add_validation_error(self, result):
+        self.publish_has_validation_errors = False
         self._publish_validation_errors.add_error(
             result["plugin"],
             result["error"],
@@ -1974,12 +1986,20 @@ class PublisherController(AbstractPublisherController):
         if exception:
             if (
                 isinstance(exception, PublishValidationError)
-                and not self._publish_validated
+                and not self.publish_has_validated
             ):
                 self._add_validation_error(result)
 
             else:
-                self._publish_error = exception
+                if isinstance(exception, KnownPublishError):
+                    msg = str(exception)
+                else:
+                    msg = (
+                        "Something went wrong. Send report"
+                        " to your supervisor or OpenPype."
+                    )
+                self.publish_error_msg = msg
+                self.publish_has_crashed = False
 
         self._publish_next_process()
 

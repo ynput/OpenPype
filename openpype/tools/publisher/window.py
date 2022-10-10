@@ -248,7 +248,7 @@ class PublisherWindow(QtWidgets.QDialog):
             "publish.process.started", self._on_publish_start
         )
         controller.event_system.add_callback(
-            "publish.process.validated", self._on_publish_validated
+            "publish.has_validated.changed", self._on_publish_validated_change
         )
         controller.event_system.add_callback(
             "publish.process.stopped", self._on_publish_stop
@@ -439,11 +439,7 @@ class PublisherWindow(QtWidgets.QDialog):
         self._controller.stop_publish()
 
     def _set_publish_comment(self):
-        if self._controller.publish_comment_is_set:
-            return
-
-        comment = self._comment_input.text()
-        self._controller.set_comment(comment)
+        self._controller.set_comment(self._comment_input.text())
 
     def _on_validate_clicked(self):
         self._set_publish_comment()
@@ -489,8 +485,9 @@ class PublisherWindow(QtWidgets.QDialog):
         if self._tabs_widget.is_current_tab(self._create_tab):
             self._tabs_widget.set_current_tab("publish")
 
-    def _on_publish_validated(self):
-        self._validate_btn.setEnabled(False)
+    def _on_publish_validated_change(self, event):
+        if event["value"]:
+            self._validate_btn.setEnabled(False)
 
     def _on_publish_stop(self):
         self._set_publish_overlay_visibility(False)
