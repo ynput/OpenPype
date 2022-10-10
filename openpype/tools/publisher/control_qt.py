@@ -111,7 +111,7 @@ class QtRemotePublishController(QtPublisherController):
         self._created_instances = created_instances
         self._emit_event("instances.refresh.finished")
 
-    @property
+    @abstractproperty
     def project_name(self):
         """Current context project name.
 
@@ -121,7 +121,7 @@ class QtRemotePublishController(QtPublisherController):
 
         pass
 
-    @property
+    @abstractproperty
     def current_asset_name(self):
         """Current context asset name.
 
@@ -131,7 +131,7 @@ class QtRemotePublishController(QtPublisherController):
 
         pass
 
-    @property
+    @abstractproperty
     def current_task_name(self):
         """Current context task name.
 
@@ -141,7 +141,7 @@ class QtRemotePublishController(QtPublisherController):
 
         pass
 
-    @property
+    @abstractproperty
     def host_is_valid(self):
         """Host is valid for creation part.
 
@@ -186,6 +186,7 @@ class QtRemotePublishController(QtPublisherController):
     def get_existing_subset_names(self, asset_name):
         pass
 
+    @abstractmethod
     def reset(self):
         """Reset whole controller.
 
@@ -195,9 +196,7 @@ class QtRemotePublishController(QtPublisherController):
 
         pass
 
-    def get_publish_attribute_definitions(self, instances, include_context):
-        pass
-
+    @abstractmethod
     def get_subset_name(
         self,
         creator_identifier,
@@ -220,6 +219,7 @@ class QtRemotePublishController(QtPublisherController):
 
         pass
 
+    @abstractmethod
     def create(
         self, creator_identifier, subset_name, instance_data, options
     ):
@@ -237,6 +237,7 @@ class QtRemotePublishController(QtPublisherController):
 
         pass
 
+    @abstractmethod
     def save_changes(self):
         """Save changes happened during creation."""
 
@@ -246,116 +247,36 @@ class QtRemotePublishController(QtPublisherController):
                 instance.remote_changes()
             )
 
-        # TODO trigger save changes
-        self._trigger("save_changes", created_instance_changes)
+        # Send 'created_instance_changes' value to client
 
+    @abstractmethod
     def remove_instances(self, instances):
         """Remove list of instances from create context."""
         # TODO add Args:
 
         pass
 
-    @property
-    def publish_has_finished(self):
-        """Has publishing finished.
-
-        Returns:
-            bool: If publishing finished and all plugins were iterated.
-        """
-
-        pass
-
-    @property
-    def publish_is_running(self):
-        """Publishing is running right now.
-
-        Returns:
-            bool: If publishing is in progress.
-        """
-
-        pass
-
-    @property
-    def publish_has_validated(self):
-        """Publish validation passed.
-
-        Returns:
-            bool: If publishing passed last possible validation order.
-        """
-
-        pass
-
-    @property
-    def publish_has_crashed(self):
-        """Publishing crashed for any reason.
-
-        Returns:
-            bool: Publishing crashed.
-        """
-
-        pass
-
-    @property
-    def publish_has_validation_errors(self):
-        """During validation happened at least one validation error.
-
-        Returns:
-            bool: Validation error was raised during validation.
-        """
-
-        pass
-
-    @property
-    def publish_max_progress(self):
-        """Get maximum possible progress number.
-
-        Returns:
-            int: Number that can be used as 100% of publish progress bar.
-        """
-
-        pass
-
-    @property
-    def publish_progress(self):
-        """Current progress number.
-
-        Returns:
-            int: Current progress value which is between 0 and
-                'publish_max_progress'.
-        """
-
-        pass
-
-    @property
-    def publish_comment_is_set(self):
-        """Publish comment was at least once set.
-
-        Publish comment can be set only once when publish is started for a
-        first time. This helpt to idetify if 'set_comment' should be called or
-        not.
-        """
-
-        pass
-
-    def get_publish_crash_error(self):
-        pass
-
+    @abstractmethod
     def get_publish_report(self):
         pass
 
+    @abstractmethod
     def get_validation_errors(self):
         pass
 
+    @abstractmethod
     def publish(self):
         """Trigger publishing without any order limitations."""
 
         pass
 
+    @abstractmethod
     def validate(self):
         """Trigger publishing which will stop after validation order."""
 
         pass
 
+    @abstractmethod
     def stop_publish(self):
         """Stop publishing can be also used to pause publishing.
 
@@ -365,6 +286,7 @@ class QtRemotePublishController(QtPublisherController):
 
         pass
 
+    @abstractmethod
     def run_action(self, plugin_id, action_id):
         """Trigger pyblish action on a plugin.
 
@@ -375,6 +297,7 @@ class QtRemotePublishController(QtPublisherController):
 
         pass
 
+    @abstractmethod
     def set_comment(self, comment):
         """Set comment on pyblish context.
 
@@ -386,6 +309,7 @@ class QtRemotePublishController(QtPublisherController):
 
         pass
 
+    @abstractmethod
     def emit_card_message(self, message):
         """Emit a card message which can have a lifetime.
 
