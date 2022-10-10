@@ -2,7 +2,7 @@ from subprocess import Popen
 
 import bpy
 
-from openpype.hosts.blender.utility_scripts import make_paths_relative
+from openpype.hosts.blender.utility_scripts import make_paths_relative, update_representations
 from openpype.plugins.publish.integrate import IntegrateAsset
 from openpype.settings.lib import get_project_settings
 
