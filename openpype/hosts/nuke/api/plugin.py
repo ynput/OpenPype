@@ -198,15 +198,11 @@ class NukeCreator(NewCreator):
     def update_instances(self, update_list):
         for created_inst, _changes in update_list:
             instance_node = created_inst.transient_data["node"]
-            current_data = created_inst.data
 
             set_node_data(
                 instance_node,
                 INSTANCE_DATA_KNOB,
-                {
-                    key: value[1] for key, value in _changes.items()
-                    if current_data.get(key) != value[0]
-                }
+                created_inst.data_to_store()
             )
 
     def remove_instances(self, instances):
