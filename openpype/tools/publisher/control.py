@@ -60,15 +60,17 @@ class AssetDocsCache:
     def __init__(self, controller):
         self._controller = controller
         self._asset_docs = None
-        # TODO use asset ids instead
+        self._asset_docs_hierarchy = None
         self._task_names_by_asset_name = {}
         self._asset_docs_by_name = {}
         self._full_asset_docs_by_name = {}
 
     def reset(self):
         self._asset_docs = None
+        self._asset_docs_hierarchy = None
         self._task_names_by_asset_name = {}
         self._asset_docs_by_name = {}
+        self._full_asset_docs_by_name = {}
 
     def _query(self):
         if self._asset_docs is not None:
@@ -81,8 +83,13 @@ class AssetDocsCache:
         asset_docs_by_name = {}
         task_names_by_asset_name = {}
         for asset_doc in asset_docs:
+            if "data" not in asset_doc:
+                asset_doc["data"] = {"tasks": {}, "visualParent": None}
+            elif "tasks" not in asset_doc["data"]:
+                asset_doc["data"]["tasks"] = {}
+
             asset_name = asset_doc["name"]
-            asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
+            asset_tasks = asset_doc["data"]["tasks"]
             task_names_by_asset_name[asset_name] = list(asset_tasks.keys())
             asset_docs_by_name[asset_name] = asset_doc
 
@@ -94,11 +101,38 @@ class AssetDocsCache:
         self._query()
         return copy.deepcopy(self._asset_docs)
 
+    def get_asset_hierarchy(self):
+        """Prepare asset documents into hierarchy.
+
+        Convert ObjectId to string. Asset id is not used during whole
+        process of publisher but asset name is used rather.
+
+        Returns:
+            Dict[Union[str, None]: Any]: Mapping of parent id to it's children.
+                Top level assets have parent id 'None'.
+        """
+
+        if self._asset_docs_hierarchy is None:
+            _queue = collections.deque(self.get_asset_docs())
+
+            output = collections.defaultdict(list)
+            while _queue:
+                asset_doc = _queue.popleft()
+                asset_doc["_id"] = str(asset_doc["_id"])
+                parent_id = asset_doc["data"]["visualParent"]
+                if parent_id is not None:
+                    parent_id = str(parent_id)
+                    asset_doc["data"]["visualParent"] = parent_id
+                output[parent_id].append(asset_doc)
+            self._asset_docs_hierarchy = output
+        return copy.deepcopy(self._asset_docs_hierarchy)
+
     def get_task_names_by_asset_name(self):
         self._query()
         return copy.deepcopy(self._task_names_by_asset_name)
 
     def get_asset_by_name(self, asset_name):
+        self._query()
         asset_doc = self._asset_docs_by_name.get(asset_name)
         if asset_doc is None:
             return None
@@ -1588,14 +1622,8 @@ class PublisherController(BasePublishController):
 
     def get_asset_hierarchy(self):
         """Prepare asset documents into hierarchy."""
-        _queue = collections.deque(self.get_asset_docs())
 
-        output = collections.defaultdict(list)
-        while _queue:
-            asset_doc = _queue.popleft()
-            parent_id = asset_doc["data"]["visualParent"]
-            output[parent_id].append(asset_doc)
-        return output
+        return self._asset_docs_cache.get_asset_hierarchy()
 
     def get_task_names_by_asset_names(self, asset_names):
         """Prepare task names by asset name."""
