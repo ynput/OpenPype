@@ -42,8 +42,8 @@ class CreateCamera(NukeCreator):
     def create(self, subset_name, instance_data, pre_create_data):
         if self.check_existing_subset(subset_name, instance_data):
             raise NukeCreatorError(
-                ("subset {} is already published with different HDA"
-                 "definition.").format(subset_name))
+                ("Subset name '{}' is already used. "
+                 "Please specify different Variant.").format(subset_name))
 
         instance = super(CreateCamera, self).create(
             subset_name,
