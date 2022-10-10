@@ -1278,12 +1278,15 @@ class PublisherController(AbstractPublisherController):
         self._publish_validation_errors = PublishValidationErrors()
         # Any other exception that happened during publishing
         self._publish_error = None
+        self._publish_error_msg = None
         # Publishing is in progress
         self._publish_is_running = False
         # Publishing is over validation order
-        self._publish_validated = False
+        self._publish_has_validated = False
         # Publishing should stop at validation stage
         self._publish_up_validation = False
+        self._publish_has_validation_errors = False
+        self._publish_has_crashed = False
         # All publish plugins are processed
         self._publish_finished = False
         self._publish_max_progress = 0
@@ -1642,40 +1645,99 @@ class PublisherController(AbstractPublisherController):
         self._emit_event("instances.refresh.finished")
 
     # --- Publish specific implementations ---
-    @property
-    def publish_has_finished(self):
-        return self._publish_finished
-
-    @property
-    def publish_is_running(self):
-        return self._publish_is_running
-
-    @property
-    def publish_has_validated(self):
-        return self._publish_validated
-
-    @property
-    def publish_has_crashed(self):
-        return bool(self._publish_error)
-
-    @property
-    def publish_has_validation_errors(self):
-        return bool(self._publish_validation_errors)
-
-    @property
-    def publish_max_progress(self):
-        return self._publish_max_progress
-
-    @property
-    def publish_progress(self):
-        return self._publish_progress
-
-    @property
-    def publish_comment_is_set(self):
-        return self._publish_comment_is_set
-
     def get_publish_crash_error(self):
         return self._publish_error
+
+    def _get_publish_has_finished(self):
+        return self._publish_finished
+
+    def _set_publish_has_finished(self, value):
+        if self._publish_finished != value:
+            self._publish_finished = value
+
+    def _get_publish_is_running(self):
+        return self._publish_is_running
+
+    def _set_publish_is_running(self, value):
+        if self._publish_is_running != value:
+            self._publish_is_running = value
+            self._emit_event("publish.is_running.changed", {"value": value})
+
+    def _get_publish_has_validated(self):
+        return self._publish_has_validated
+
+    def _set_publish_has_validated(self, value):
+        if self._publish_has_validated != value:
+            self._publish_has_validated = value
+            self._emit_event("publish.has_validated.changed", {"value": value})
+
+    def _get_publish_has_crashed(self):
+        return self._publish_has_crashed
+
+    def _set_publish_has_crashed(self, value):
+        if self._publish_has_crashed != value:
+            self._publish_has_crashed = value
+            self._emit_event("publish.has_crashed.changed", {"value": value})
+
+    def _get_publish_has_validation_errors(self):
+        return self._publish_has_validation_errors
+
+    def _set_publish_has_validation_errors(self, value):
+        if self._publish_has_validation_errors != value:
+            self._publish_has_validation_errors = value
+            self._emit_event(
+                "publish.has_validation_errors.changed",
+                {"value": value}
+            )
+
+    def _get_publish_max_progress(self):
+        return self._publish_max_progress
+
+    def _set_publish_max_progress(self, value):
+        if self._publish_max_progress != value:
+            self._publish_max_progress = value
+            self._emit_event("publish.max_progress.changed", {"value": value})
+
+    def _get_publish_progress(self):
+        return self._publish_progress
+
+    def _set_publish_progress(self, value):
+        if self._publish_progress != value:
+            self._publish_progress = value
+            self._emit_event("publish.progress.changed", {"value": value})
+
+    def _get_publish_error_msg(self):
+        return self._publish_error_msg
+
+    def _set_publish_error_msg(self, value):
+        if self._publish_error_msg != value:
+            self._publish_error_msg = value
+            self._emit_event("publish.publish_error.changed", {"value": value})
+
+    publish_has_finished = property(
+        _get_publish_has_finished, _set_publish_has_finished
+    )
+    publish_is_running = property(
+        _get_publish_is_running, _set_publish_is_running
+    )
+    publish_has_validated = property(
+        _get_publish_has_validated, _set_publish_has_validated
+    )
+    publish_has_crashed = property(
+        _get_publish_has_crashed, _set_publish_has_crashed
+    )
+    publish_has_validation_errors = property(
+        _get_publish_has_validation_errors, _set_publish_has_validation_errors
+    )
+    publish_max_progress = property(
+        _get_publish_max_progress, _set_publish_max_progress
+    )
+    publish_progress = property(
+        _get_publish_progress, _set_publish_progress
+    )
+    publish_error_msg = property(
+        _get_publish_error_msg, _set_publish_error_msg
+    )
 
     def get_publish_report(self):
         return self._publish_report.get_report(self._publish_plugins)
