@@ -1,5 +1,4 @@
 import pyblish.api
-import openpype.api
 
 from maya import cmds
 
@@ -48,7 +47,7 @@ class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
         from openpype.hosts.maya.api import lib
 
         # Get all transforms in the loaded containers
-        container_roots = cmds.listRelatives(instance.data["hierarchy"],
+        container_roots = cmds.listRelatives(instance.data["nodesHierarchy"],
                                              children=True,
                                              type="transform",
                                              fullPath=True)

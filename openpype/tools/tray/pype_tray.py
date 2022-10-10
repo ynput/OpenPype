@@ -9,11 +9,11 @@ import platform
 from Qt import QtCore, QtGui, QtWidgets
 
 import openpype.version
-from openpype.api import (
-    resources,
-    get_system_settings
+from openpype import resources, style
+from openpype.lib import (
+    get_openpype_execute_args,
+    Logger,
 )
-from openpype.lib import get_openpype_execute_args, Logger
 from openpype.lib.openpype_version import (
     op_version_control_available,
     get_expected_version,
@@ -25,8 +25,8 @@ from openpype.lib.openpype_version import (
     get_openpype_version,
 )
 from openpype.modules import TrayModulesManager
-from openpype import style
 from openpype.settings import (
+    get_system_settings,
     SystemSettings,
     ProjectSettings,
     DefaultsNotDefined
@@ -144,8 +144,7 @@ class VersionUpdateDialog(QtWidgets.QDialog):
             "gifts.png"
         )
         src_image = QtGui.QImage(image_path)
-        colors = style.get_objected_colors()
-        color_value = colors["font"]
+        color_value = style.get_objected_colors("font")
 
         return paint_image_with_color(
             src_image,
@@ -774,9 +773,37 @@ class PypeTrayStarter(QtCore.QObject):
 
 
 def main():
+    log = Logger.get_logger(__name__)
     app = QtWidgets.QApplication.instance()
+
+    high_dpi_scale_attr = None
     if not app:
+        # 'AA_EnableHighDpiScaling' must be set before app instance creation
+        high_dpi_scale_attr = getattr(
+            QtCore.Qt, "AA_EnableHighDpiScaling", None
+        )
+        if high_dpi_scale_attr is not None:
+            QtWidgets.QApplication.setAttribute(high_dpi_scale_attr)
+
         app = QtWidgets.QApplication([])
+
+    if high_dpi_scale_attr is None:
+        log.debug((
+            "Attribute 'AA_EnableHighDpiScaling' was not set."
+            " UI quality may be affected."
+        ))
+
+    for attr_name in (
+        "AA_UseHighDpiPixmaps",
+    ):
+        attr = getattr(QtCore.Qt, attr_name, None)
+        if attr is None:
+            log.debug((
+                "Missing QtCore.Qt attribute \"{}\"."
+                " UI quality may be affected."
+            ).format(attr_name))
+        else:
+            app.setAttribute(attr)
 
     starter = PypeTrayStarter(app)
 

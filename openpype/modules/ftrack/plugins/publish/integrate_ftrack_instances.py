@@ -9,6 +9,7 @@ from openpype.lib.transcoding import (
     convert_ffprobe_fps_to_float,
 )
 from openpype.lib.profiles_filtering import filter_profiles
+from openpype.lib.transcoding import VIDEO_EXTENSIONS
 
 
 class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
@@ -35,7 +36,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
     family_mapping = {
         "camera": "cam",
         "look": "look",
-        "mayaascii": "scene",
+        "mayaAscii": "scene",
         "model": "geo",
         "rig": "rig",
         "setdress": "setdress",
@@ -74,11 +75,15 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         version_number = int(instance_version)
 
         family = instance.data["family"]
-        family_low = family.lower()
 
+        # Perform case-insensitive family mapping
+        family_low = family.lower()
         asset_type = instance.data.get("ftrackFamily")
-        if not asset_type and family_low in self.family_mapping:
-            asset_type = self.family_mapping[family_low]
+        if not asset_type:
+            for map_family, map_value in self.family_mapping.items():
+                if map_family.lower() == family_low:
+                    asset_type = map_value
+                    break
 
         if not asset_type:
             asset_type = "upload"
@@ -86,15 +91,6 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         self.log.debug(
             "Family: {}\nMapping: {}".format(family_low, self.family_mapping)
         )
-
-        # Ignore this instance if neither "ftrackFamily" or a family mapping is
-        # found.
-        if not asset_type:
-            self.log.info((
-                "Family \"{}\" does not match any asset type mapping"
-            ).format(family))
-            return
-
         status_name = self._get_asset_version_status_name(instance)
 
         # Base of component item data
@@ -126,6 +122,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         review_representations = []
         thumbnail_representations = []
         other_representations = []
+        has_movie_review = False
         for repre in instance_repres:
             self.log.debug("Representation {}".format(repre))
             repre_tags = repre.get("tags") or []
@@ -134,6 +131,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
             elif "ftrackreview" in repre_tags:
                 review_representations.append(repre)
+                if self._is_repre_video(repre):
+                    has_movie_review = True
 
             else:
                 other_representations.append(repre)
@@ -151,65 +150,53 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         # TODO what if there is multiple thumbnails?
         first_thumbnail_component = None
         first_thumbnail_component_repre = None
-        for repre in thumbnail_representations:
-            repre_path = self._get_repre_path(instance, repre, False)
-            if not repre_path:
-                self.log.warning(
-                    "Published path is not set and source was removed."
+
+        if has_movie_review:
+            for repre in thumbnail_representations:
+                repre_path = self._get_repre_path(instance, repre, False)
+                if not repre_path:
+                    self.log.warning(
+                        "Published path is not set and source was removed."
+                    )
+                    continue
+
+                # Create copy of base comp item and append it
+                thumbnail_item = copy.deepcopy(base_component_item)
+                thumbnail_item["component_path"] = repre_path
+                thumbnail_item["component_data"] = {
+                    "name": "thumbnail"
+                }
+                thumbnail_item["thumbnail"] = True
+
+                # Create copy of item before setting location
+                if "delete" not in repre["tags"]:
+                    src_components_to_add.append(copy.deepcopy(thumbnail_item))
+                # Create copy of first thumbnail
+                if first_thumbnail_component is None:
+                    first_thumbnail_component_repre = repre
+                    first_thumbnail_component = thumbnail_item
+                # Set location
+                thumbnail_item["component_location_name"] = (
+                    ftrack_server_location_name
                 )
-                continue
 
-            # Create copy of base comp item and append it
-            thumbnail_item = copy.deepcopy(base_component_item)
-            thumbnail_item["component_path"] = repre_path
-            thumbnail_item["component_data"] = {
-                "name": "thumbnail"
-            }
-            thumbnail_item["thumbnail"] = True
-
-            # Create copy of item before setting location
-            src_components_to_add.append(copy.deepcopy(thumbnail_item))
-            # Create copy of first thumbnail
-            if first_thumbnail_component is None:
-                first_thumbnail_component_repre = repre
-                first_thumbnail_component = thumbnail_item
-            # Set location
-            thumbnail_item["component_location_name"] = (
-                ftrack_server_location_name
-            )
-
-            # Add item to component list
-            component_list.append(thumbnail_item)
+                # Add item to component list
+                component_list.append(thumbnail_item)
 
         if first_thumbnail_component is not None:
-            width = first_thumbnail_component_repre.get("width")
-            height = first_thumbnail_component_repre.get("height")
-            if not width or not height:
-                component_path = first_thumbnail_component["component_path"]
-                streams = []
-                try:
-                    streams = get_ffprobe_streams(component_path)
-                except Exception:
-                    self.log.debug((
-                        "Failed to retrieve information about intput {}"
-                    ).format(component_path))
+            metadata = self._prepare_image_component_metadata(
+                first_thumbnail_component_repre,
+                first_thumbnail_component["component_path"]
+            )
 
-                for stream in streams:
-                    if "width" in stream and "height" in stream:
-                        width = stream["width"]
-                        height = stream["height"]
-                        break
-
-            if width and height:
+            if metadata:
                 component_data = first_thumbnail_component["component_data"]
-                component_data["name"] = "ftrackreview-image"
-                component_data["metadata"] = {
-                    "ftr_meta": json.dumps({
-                        "width": width,
-                        "height": height,
-                        "format": "image"
-                    })
-                }
+                component_data["metadata"] = metadata
+
+                if review_representations:
+                    component_data["name"] = "thumbnail"
+                else:
+                    component_data["name"] = "ftrackreview-image"
 
         # Create review components
         # Change asset name of each new component for review
@@ -218,6 +205,11 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         extended_asset_name = ""
         multiple_reviewable = len(review_representations) > 1
         for repre in review_representations:
+            if not self._is_repre_video(repre) and has_movie_review:
+                self.log.debug("Movie repre has priority "
+                               "from {}".format(repre))
+                continue
+
             repre_path = self._get_repre_path(instance, repre, False)
             if not repre_path:
                 self.log.warning(
@@ -266,12 +258,23 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             # Change location
             review_item["component_path"] = repre_path
             # Change component data
-            review_item["component_data"] = {
-                # Default component name is "main".
-                "name": "ftrackreview-mp4",
-                "metadata": self._prepare_component_metadata(
+
+            if self._is_repre_video(repre):
+                component_name = "ftrackreview-mp4"
+                metadata = self._prepare_video_component_metadata(
                     instance, repre, repre_path, True
                 )
+            else:
+                component_name = "ftrackreview-image"
+                metadata = self._prepare_image_component_metadata(
+                    repre, repre_path
+                )
+                review_item["thumbnail"] = True
+
+            review_item["component_data"] = {
+                # Default component name is "main".
+                "name": component_name,
+                "metadata": metadata
             }
 
             if is_first_review_repre:
@@ -281,7 +284,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 not_first_components.append(review_item)
 
             # Create copy of item before setting location
-            src_components_to_add.append(copy.deepcopy(review_item))
+            if "delete" not in repre["tags"]:
+                src_components_to_add.append(copy.deepcopy(review_item))
 
             # Set location
             review_item["component_location_name"] = (
@@ -427,7 +431,18 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         return matching_profile["status"] or None
 
     def _prepare_component_metadata(
-        self, instance, repre, component_path, is_review
+        self, instance, repre, component_path, is_review=None
+    ):
+        if self._is_repre_video(repre):
+            return self._prepare_video_component_metadata(instance, repre,
+                                                          component_path,
+                                                          is_review)
+        else:
+            return self._prepare_image_component_metadata(repre,
+                                                          component_path)
+
+    def _prepare_video_component_metadata(
+        self, instance, repre, component_path, is_review=None
     ):
         metadata = {}
         if "openpype_version" in self.additional_metadata_keys:
@@ -439,9 +454,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         try:
             streams = get_ffprobe_streams(component_path)
         except Exception:
-            self.log.debug((
-                "Failed to retrieve information about intput {}"
-            ).format(component_path))
+            self.log.debug(
+                "Failed to retrieve information about "
+                "input {}".format(component_path))
 
         # Find video streams
         video_streams = [
@@ -485,9 +500,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     input_framerate
                 )
             except ValueError:
-                self.log.warning((
-                    "Could not convert ffprobe fps to float \"{}\""
-                ).format(input_framerate))
+                self.log.warning(
+                    "Could not convert ffprobe "
+                    "fps to float \"{}\"".format(input_framerate))
                 continue
 
             stream_width = tmp_width
@@ -559,3 +574,37 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             "frameRate": float(fps)
         })
         return metadata
+
+    def _prepare_image_component_metadata(self, repre, component_path):
+        width = repre.get("width")
+        height = repre.get("height")
+        if not width or not height:
+            streams = []
+            try:
+                streams = get_ffprobe_streams(component_path)
+            except Exception:
+                self.log.debug(
+                    "Failed to retrieve information "
+                    "about input {}".format(component_path))
+
+            for stream in streams:
+                if "width" in stream and "height" in stream:
+                    width = stream["width"]
+                    height = stream["height"]
+                    break
+
+        metadata = {}
+        if width and height:
+            metadata = {
+                "ftr_meta": json.dumps({
+                    "width": width,
+                    "height": height,
+                    "format": "image"
+                })
+            }
+
+        return metadata
+
+    def _is_repre_video(self, repre):
+        repre_ext = ".{}".format(repre["ext"])
+        return repre_ext in VIDEO_EXTENSIONS

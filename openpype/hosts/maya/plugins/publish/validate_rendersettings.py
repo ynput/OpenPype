@@ -13,6 +13,12 @@ from openpype.pipeline.publish import (
 from openpype.hosts.maya.api import lib
 
 
+def get_redshift_image_format_labels():
+    """Return nice labels for Redshift image formats."""
+    var = "$g_redshiftImageFormatLabels"
+    return mel.eval("{0}={0}".format(var))
+
+
 class ValidateRenderSettings(pyblish.api.InstancePlugin):
     """Validates the global render settings
 
@@ -105,8 +111,9 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         # Get the node attributes for current renderer
         attrs = lib.RENDER_ATTRS.get(renderer, lib.RENDER_ATTRS['default'])
+        # Prefix attribute can return None when a value was never set
         prefix = lib.get_attr_in_layer(cls.ImagePrefixes[renderer],
-                                       layer=layer)
+                                       layer=layer) or ""
         padding = lib.get_attr_in_layer("{node}.{padding}".format(**attrs),
                                         layer=layer)
 
@@ -183,18 +190,22 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                         redshift_AOV_prefix
                     ))
                     invalid = True
-                # get aov format
-                aov_ext = cmds.getAttr(
-                    "{}.fileFormat".format(aov), asString=True)
 
-                default_ext = cmds.getAttr(
-                    "redshiftOptions.imageFormat", asString=True)
+                # check aov file format
+                aov_ext = cmds.getAttr("{}.fileFormat".format(aov))
+                default_ext = cmds.getAttr("redshiftOptions.imageFormat")
+                aov_type = cmds.getAttr("{}.aovType".format(aov))
+                if aov_type == "Cryptomatte":
+                    # redshift Cryptomatte AOV always uses "Cryptomatte (EXR)"
+                    # so we ignore validating file format for it.
+                    pass
 
-                if default_ext != aov_ext:
-                    cls.log.error(("AOV file format is not the same "
-                                   "as the one set globally "
-                                   "{} != {}").format(default_ext,
-                                                      aov_ext))
+                elif default_ext != aov_ext:
+                    labels = get_redshift_image_format_labels()
+                    cls.log.error(
+                        "AOV file format {} does not match global file format "
+                        "{}".format(labels[aov_ext], labels[default_ext])
+                    )
                     invalid = True
 
         if renderer == "renderman":
@@ -257,14 +268,20 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         # go through definitions and test if such node.attribute exists.
         # if so, compare its value from the one required.
         for attr, value in OrderedDict(validation_settings).items():
-            # first get node of that type
             cls.log.debug("{}: {}".format(attr, value))
-            node_type = attr.split(".")[0]
-            attribute_name = ".".join(attr.split(".")[1:])
+            if "." not in attr:
+                cls.log.warning("Skipping invalid attribute defined in "
+                                "validation settings: '{}'".format(attr))
+                continue
+
+            node_type, attribute_name = attr.split(".", 1)
+
+            # first get node of that type
             nodes = cmds.ls(type=node_type)
 
-            if not isinstance(nodes, list):
-                cls.log.warning("No nodes of '{}' found.".format(node_type))
+            if not nodes:
+                cls.log.warning(
+                    "No nodes of type '{}' found.".format(node_type))
                 continue
 
             for node in nodes:
@@ -302,6 +319,9 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             default = lib.RENDER_ATTRS['default']
             render_attrs = lib.RENDER_ATTRS.get(renderer, default)
 
+            # Repair animation must be enabled
+            cmds.setAttr("defaultRenderGlobals.animation", True)
+
             # Repair prefix
             if renderer != "renderman":
                 node = render_attrs["node"]
@@ -334,8 +354,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 cmds.optionMenuGrp("vrayRenderElementSeparator",
                                    v=instance.data.get("aovSeparator", "_"))
                 cmds.setAttr(
-                    "{}.fileNameRenderElementSeparator".format(
-                        node),
+                    "{}.fileNameRenderElementSeparator".format(node),
                     instance.data.get("aovSeparator", "_"),
                     type="string"
                 )

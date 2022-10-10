@@ -2,12 +2,15 @@ import os
 import shutil
 from PIL import Image
 
-import openpype.api
-import openpype.lib
+from openpype.lib import (
+    run_subprocess,
+    get_ffmpeg_tool_path,
+)
+from openpype.pipeline import publish
 from openpype.hosts.photoshop import api as photoshop
 
 
-class ExtractReview(openpype.api.Extractor):
+class ExtractReview(publish.Extractor):
     """
         Produce a flattened or sequence image files from all 'image' instances.
 
@@ -46,7 +49,7 @@ class ExtractReview(openpype.api.Extractor):
 
         if self.make_image_sequence and len(layers) > 1:
             self.log.info("Extract layers to image sequence.")
-            img_list = self._saves_sequences_layers(staging_dir, layers)
+            img_list = self._save_sequence_images(staging_dir, layers)
 
             instance.data["representations"].append({
                 "name": "jpg",
@@ -61,7 +64,7 @@ class ExtractReview(openpype.api.Extractor):
             processed_img_names = img_list
         else:
             self.log.info("Extract layers to flatten image.")
-            img_list = self._saves_flattened_layers(staging_dir, layers)
+            img_list = self._save_flatten_image(staging_dir, layers)
 
             instance.data["representations"].append({
                 "name": "jpg",
@@ -72,7 +75,7 @@ class ExtractReview(openpype.api.Extractor):
             })
             processed_img_names = [img_list]
 
-        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
         instance.data["stagingDir"] = staging_dir
 
@@ -81,6 +84,67 @@ class ExtractReview(openpype.api.Extractor):
         source_files_pattern = self._check_and_resize(processed_img_names,
                                                       source_files_pattern,
                                                       staging_dir)
+        self._generate_thumbnail(ffmpeg_path, instance, source_files_pattern,
+                                 staging_dir)
+
+        no_of_frames = len(processed_img_names)
+        if no_of_frames > 1:
+            self._generate_mov(ffmpeg_path, instance, fps, no_of_frames,
+                               source_files_pattern, staging_dir)
+
+        self.log.info(f"Extracted {instance} to {staging_dir}")
+
+    def _generate_mov(self, ffmpeg_path, instance, fps, no_of_frames,
+                      source_files_pattern, staging_dir):
+        """Generates .mov to upload to Ftrack.
+
+        Args:
+            ffmpeg_path (str): path to ffmpeg
+            instance (Pyblish Instance)
+            fps (str)
+            no_of_frames (int):
+            source_files_pattern (str): name of source file
+            staging_dir (str): temporary location to store thumbnail
+        Updates:
+            instance - adds representation portion
+        """
+        # Generate mov.
+        mov_path = os.path.join(staging_dir, "review.mov")
+        self.log.info(f"Generate mov review: {mov_path}")
+        args = [
+            ffmpeg_path,
+            "-y",
+            "-i", source_files_pattern,
+            "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
+            "-vframes", str(no_of_frames),
+            mov_path
+        ]
+        self.log.debug("mov args:: {}".format(args))
+        _output = run_subprocess(args)
+        instance.data["representations"].append({
+            "name": "mov",
+            "ext": "mov",
+            "files": os.path.basename(mov_path),
+            "stagingDir": staging_dir,
+            "frameStart": 1,
+            "frameEnd": no_of_frames,
+            "fps": fps,
+            "preview": True,
+            "tags": self.mov_options['tags']
+        })
+
+    def _generate_thumbnail(self, ffmpeg_path, instance, source_files_pattern,
+                            staging_dir):
+        """Generates scaled down thumbnail and adds it as representation.
+
+        Args:
+            ffmpeg_path (str): path to ffmpeg
+            instance (Pyblish Instance)
+            source_files_pattern (str): name of source file
+            staging_dir (str): temporary location to store thumbnail
+        Updates:
+            instance - adds representation portion
+        """
         # Generate thumbnail
         thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
         self.log.info(f"Generate thumbnail {thumbnail_path}")
@@ -93,49 +157,15 @@ class ExtractReview(openpype.api.Extractor):
             thumbnail_path
         ]
         self.log.debug("thumbnail args:: {}".format(args))
-        output = openpype.lib.run_subprocess(args)
-
+        _output = run_subprocess(args)
         instance.data["representations"].append({
             "name": "thumbnail",
             "ext": "jpg",
+            "outputName": "thumb",
             "files": os.path.basename(thumbnail_path),
             "stagingDir": staging_dir,
-            "tags": ["thumbnail"]
+            "tags": ["thumbnail", "delete"]
         })
-
-        # Generate mov.
-        mov_path = os.path.join(staging_dir, "review.mov")
-        self.log.info(f"Generate mov review: {mov_path}")
-        img_number = len(img_list)
-        args = [
-            ffmpeg_path,
-            "-y",
-            "-i", source_files_pattern,
-            "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
-            "-vframes", str(img_number),
-            mov_path
-        ]
-        self.log.debug("mov args:: {}".format(args))
-        output = openpype.lib.run_subprocess(args)
-        self.log.debug(output)
-        instance.data["representations"].append({
-            "name": "mov",
-            "ext": "mov",
-            "files": os.path.basename(mov_path),
-            "stagingDir": staging_dir,
-            "frameStart": 1,
-            "frameEnd": img_number,
-            "fps": fps,
-            "preview": True,
-            "tags": self.mov_options['tags']
-        })
-
-        # Required for extract_review plugin (L222 onwards).
-        instance.data["frameStart"] = 1
-        instance.data["frameEnd"] = img_number
-        instance.data["fps"] = 25
-
-        self.log.info(f"Extracted {instance} to {staging_dir}")
 
     def _check_and_resize(self, processed_img_names, source_files_pattern,
                           staging_dir):
@@ -165,37 +195,12 @@ class ExtractReview(openpype.api.Extractor):
 
         return source_files_pattern
 
-    def _get_image_path_from_instances(self, instance):
-        img_list = []
-
-        for instance in sorted(instance.context):
-            if instance.data["family"] != "image":
-                continue
-
-            for rep in instance.data["representations"]:
-                img_path = os.path.join(
-                    rep["stagingDir"],
-                    rep["files"]
-                )
-                img_list.append(img_path)
-
-        return img_list
-
-    def _copy_image_to_staging_dir(self, staging_dir, img_list):
-        copy_files = []
-        for i, img_src in enumerate(img_list):
-            img_filename = self.output_seq_filename % i
-            img_dst = os.path.join(staging_dir, img_filename)
-
-            self.log.debug(
-                "Copying file .. {} -> {}".format(img_src, img_dst)
-            )
-            shutil.copy(img_src, img_dst)
-            copy_files.append(img_filename)
-
-        return copy_files
-
     def _get_layers_from_image_instances(self, instance):
+        """Collect all layers from 'instance'.
+
+        Returns:
+            (list) of PSItem
+        """
         layers = []
         for image_instance in instance.context:
             if image_instance.data["family"] != "image":
@@ -207,7 +212,12 @@ class ExtractReview(openpype.api.Extractor):
 
         return sorted(layers)
 
-    def _saves_flattened_layers(self, staging_dir, layers):
+    def _save_flatten_image(self, staging_dir, layers):
+        """Creates flat image from 'layers' into 'staging_dir'.
+
+        Returns:
+            (str): path to new image
+        """
         img_filename = self.output_seq_filename % 0
         output_image_path = os.path.join(staging_dir, img_filename)
         stub = photoshop.stub()
@@ -221,7 +231,13 @@ class ExtractReview(openpype.api.Extractor):
 
         return img_filename
 
-    def _saves_sequences_layers(self, staging_dir, layers):
+    def _save_sequence_images(self, staging_dir, layers):
+        """Creates separate flat images from 'layers' into 'staging_dir'.
+
+        Used as source for multi frames .mov to review at once.
+        Returns:
+            (list): paths to new images
+        """
         stub = photoshop.stub()
 
         list_img_filename = []

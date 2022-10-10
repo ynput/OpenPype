@@ -16,11 +16,8 @@ from openpype.style import (
     get_objected_colors,
 )
 from openpype.resources import get_image_path
-from openpype.lib import filter_profiles
-from openpype.api import (
-    get_project_settings,
-    Logger
-)
+from openpype.lib import filter_profiles, Logger
+from openpype.api import get_project_settings
 from openpype.pipeline import registered_host
 
 log = Logger.get_logger(__name__)
@@ -822,8 +819,6 @@ def get_warning_pixmap(color=None):
     src_image_path = get_image_path("warning.png")
     src_image = QtGui.QImage(src_image_path)
     if color is None:
-        colors = get_objected_colors()
-        color_value = colors["delete-btn-bg"]
-        color = color_value.get_qcolor()
+        color = get_objected_colors("delete-btn-bg").get_qcolor()
 
     return paint_image_with_color(src_image, color)
