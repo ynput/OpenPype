@@ -26,8 +26,12 @@ class PreIntegrateThumbnails(pyblish.api.InstancePlugin):
     integrate_profiles = {}
 
     def process(self, instance):
+        repres = instance.data.get("representations")
+        if not repres:
+            return
+
         thumbnail_repre = None
-        for repre in instance.data["representations"]:
+        for repre in repres:
             if repre["name"] == "thumbnail":
                 thumbnail_repre = repre
                 break
