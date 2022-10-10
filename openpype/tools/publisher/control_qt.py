@@ -1,7 +1,9 @@
 import collections
+from ABC import abstractmethod, abstractproperty
 
 from Qt import QtCore
 
+from openpype.lib.events import Event
 from openpype.pipeline.create import CreatedInstance
 
 from .control import MainThreadItem, PublisherController
@@ -90,15 +92,29 @@ class QtPublisherController(PublisherController):
         self._main_thread_processor.stop()
 
 
-class QtRemotePublishController(QtPublisherController):
+class QtRemotePublishController(PublisherController):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._created_instances = {}
+        self._main_thread_processor = MainThreadProcess()
+        self._main_thread_processor.start()
+
+    @abstractmethod
+    def _get_serialized_instances(self):
+        """Receive serialized instances from client process.
+
+        Returns:
+            List[Dict[str, Any]]: Serialized instances.
+        """
+
+        pass
+
+    def _process_main_thread_item(self, item):
+        self._main_thread_processor.add_item(item)
 
     def _on_create_instance_change(self):
-        # TODO somehow get serialized instances from client
-        serialized_instances = []
+        serialized_instances = self._get_serialized_instances()
 
         created_instances = {}
         for serialized_data in serialized_instances:
@@ -110,6 +126,55 @@ class QtRemotePublishController(QtPublisherController):
 
         self._created_instances = created_instances
         self._emit_event("instances.refresh.finished")
+
+    def remote_events_handler(self, event_data):
+        event = Event.from_data(event_data)
+
+        # Topics that cause "replication" of controller changes
+        if event.topic == "publish.max_progress.changed":
+            self.publish_max_progress = event["value"]
+            return
+
+        if event.topic == "publish.progress.changed":
+            self.publish_progress = event["value"]
+            return
+
+        if event.topic == "publish.has_validated.changed":
+            self.publish_has_validated = event["value"]
+            return
+
+        if event.topic == "publish.is_running.changed":
+            self.publish_is_running = event["value"]
+            return
+
+        if event.topic == "publish.publish_error.changed":
+            self.publish_error_msg = event["value"]
+            return
+
+        if event.topic == "publish.has_crashed.changed":
+            self.publish_has_crashed = event["value"]
+            return
+
+        if event.topic == "publish.has_validation_errors.changed":
+            self.publish_has_validation_errors = event["value"]
+            return
+
+        if event.topic == "publish.finished.changed":
+            self.publish_finished = event["value"]
+            return
+
+        # Topics that can be just passed by because are not affecting
+        #   controller itself
+        # - "show.card.message"
+        # - "show.detailed.help"
+        # - "publish.reset.finished"
+        # - "instances.refresh.finished"
+        # - "plugins.refresh.finished"
+        # - "publish.process.started"
+        # - "publish.process.stopped"
+        # - "publish.process.plugin.changed"
+        # - "publish.process.instance.changed"
+        self.event_system.emit_event(event)
 
     @abstractproperty
     def project_name(self):
