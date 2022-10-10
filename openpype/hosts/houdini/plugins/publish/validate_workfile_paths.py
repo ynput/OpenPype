@@ -35,6 +35,9 @@ class ValidateWorkfilePaths(pyblish.api.InstancePlugin):
     def get_invalid(cls):
         invalid = []
         for param, _ in hou.fileReferences():
+            if param is None:
+                continue
+
             # skip nodes we are not interested in
             if param.node().type().name() not in cls.node_types:
                 continue

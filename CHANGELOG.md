@@ -1,8 +1,35 @@
 # Changelog
 
+## [3.14.4-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.3...HEAD)
+
+**🚀 Enhancements**
+
+- General: Set root environments before DCC launch [\#3947](https://github.com/pypeclub/OpenPype/pull/3947)
+- Maya: Moved plugin from global to maya [\#3939](https://github.com/pypeclub/OpenPype/pull/3939)
+- Publisher: Instances can be marked as stored [\#3846](https://github.com/pypeclub/OpenPype/pull/3846)
+
+**🐛 Bug fixes**
+
+- Photoshop: missed sync published version of workfile with workfile [\#3946](https://github.com/pypeclub/OpenPype/pull/3946)
+- Maya: fix regression of Renderman Deadline hack [\#3943](https://github.com/pypeclub/OpenPype/pull/3943)
+- AttributeDefs: Fix crashing multivalue of files widget [\#3937](https://github.com/pypeclub/OpenPype/pull/3937)
+- Publisher: Files Drag n Drop cleanup [\#3888](https://github.com/pypeclub/OpenPype/pull/3888)
+- Maya: Render settings validation attribute check tweak logging [\#3821](https://github.com/pypeclub/OpenPype/pull/3821)
+
+**🔀 Refactored code**
+
+- General: import 'Logger' from 'openpype.lib' [\#3926](https://github.com/pypeclub/OpenPype/pull/3926)
+
+**Merged pull requests:**
+
+- Photoshop: create single frame image in Ftrack as review [\#3908](https://github.com/pypeclub/OpenPype/pull/3908)
+- Maya: Warn correctly about nodes in render instance with unexpected names [\#3816](https://github.com/pypeclub/OpenPype/pull/3816)
+
 ## [3.14.3](https://github.com/pypeclub/OpenPype/tree/3.14.3) (2022-10-03)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.2...3.14.3)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.14.3-nightly.7...3.14.3)
 
 **🚀 Enhancements**
 
@@ -41,7 +68,6 @@
 - Unreal: Use new Extractor location [\#3917](https://github.com/pypeclub/OpenPype/pull/3917)
 - Flame: Use new Extractor location [\#3916](https://github.com/pypeclub/OpenPype/pull/3916)
 - Houdini: Use new Extractor location [\#3894](https://github.com/pypeclub/OpenPype/pull/3894)
-- Harmony: Use new Extractor location [\#3893](https://github.com/pypeclub/OpenPype/pull/3893)
 - Hiero: Use new Extractor location [\#3851](https://github.com/pypeclub/OpenPype/pull/3851)
 - Maya: Remove old legacy \(ftrack\) plug-ins that are of no use anymore [\#3819](https://github.com/pypeclub/OpenPype/pull/3819)
 - Nuke: Use new Extractor location [\#3799](https://github.com/pypeclub/OpenPype/pull/3799)
@@ -56,17 +82,12 @@
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.14.2-nightly.5...3.14.2)
 
-**🆕 New features**
-
-- Nuke: Build workfile by template [\#3763](https://github.com/pypeclub/OpenPype/pull/3763)
-
 **🚀 Enhancements**
 
 - Flame: Adding Creator's retimed shot and handles switch [\#3826](https://github.com/pypeclub/OpenPype/pull/3826)
 - Flame: OpenPype submenu to batch and media manager [\#3825](https://github.com/pypeclub/OpenPype/pull/3825)
 - General: Better pixmap scaling [\#3809](https://github.com/pypeclub/OpenPype/pull/3809)
 - Photoshop: attempt to speed up ExtractImage [\#3793](https://github.com/pypeclub/OpenPype/pull/3793)
-- SyncServer: Added cli commands for sync server [\#3765](https://github.com/pypeclub/OpenPype/pull/3765)
 
 **🐛 Bug fixes**
 
@@ -78,26 +99,16 @@
 - Hiero: retimed clip publishing is working [\#3792](https://github.com/pypeclub/OpenPype/pull/3792)
 - nuke: validate write node is not failing due wrong type [\#3780](https://github.com/pypeclub/OpenPype/pull/3780)
 - Fix - changed format of version string in pyproject.toml [\#3777](https://github.com/pypeclub/OpenPype/pull/3777)
-- Ftrack status fix typo prgoress -\> progress [\#3761](https://github.com/pypeclub/OpenPype/pull/3761)
-- Fix version resolution [\#3757](https://github.com/pypeclub/OpenPype/pull/3757)
 
 **🔀 Refactored code**
 
 - Photoshop: Use new Extractor location [\#3789](https://github.com/pypeclub/OpenPype/pull/3789)
 - Blender: Use new Extractor location [\#3787](https://github.com/pypeclub/OpenPype/pull/3787)
 - AfterEffects: Use new Extractor location [\#3784](https://github.com/pypeclub/OpenPype/pull/3784)
-- General: Remove unused teshost [\#3773](https://github.com/pypeclub/OpenPype/pull/3773)
-- General: Copied 'Extractor' plugin to publish pipeline [\#3771](https://github.com/pypeclub/OpenPype/pull/3771)
-- General: Move queries of asset and representation links [\#3770](https://github.com/pypeclub/OpenPype/pull/3770)
-- General: Move create project folders to pipeline [\#3768](https://github.com/pypeclub/OpenPype/pull/3768)
-- General: Create project function moved to client code [\#3766](https://github.com/pypeclub/OpenPype/pull/3766)
-- Maya: Refactor submit deadline to use AbstractSubmitDeadline [\#3759](https://github.com/pypeclub/OpenPype/pull/3759)
-- General: Change publish template settings location [\#3755](https://github.com/pypeclub/OpenPype/pull/3755)
 
 **Merged pull requests:**
 
 - Standalone Publisher: Ignore empty labels, then still use name like other asset models [\#3779](https://github.com/pypeclub/OpenPype/pull/3779)
-- Kitsu - sync\_all\_project - add list ignore\_projects [\#3776](https://github.com/pypeclub/OpenPype/pull/3776)
 
 ## [3.14.1](https://github.com/pypeclub/OpenPype/tree/3.14.1) (2022-08-30)
 

@@ -22,6 +22,7 @@ from openpype.pipeline import (
     PublishValidationError,
     KnownPublishError,
     registered_host,
+    legacy_io,
 )
 from openpype.pipeline.create import (
     CreateContext,
@@ -1519,7 +1520,10 @@ class PublisherController(BasePublishController):
             str: Project name.
         """
 
-        return self._host.get_current_context()["project_name"]
+        if not hasattr(self.host, "get_current_context"):
+            return legacy_io.active_project()
+
+        return self.host.get_current_context()["project_name"]
 
     @property
     def current_asset_name(self):
@@ -1529,7 +1533,10 @@ class PublisherController(BasePublishController):
             Union[str, None]: Asset name or None if asset is not set.
         """
 
-        return self._host.get_current_context()["asset_name"]
+        if not hasattr(self.host, "get_current_context"):
+            return legacy_io.Session["AVALON_ASSET"]
+
+        return self.host.get_current_context()["asset_name"]
 
     @property
     def current_task_name(self):
@@ -1539,7 +1546,10 @@ class PublisherController(BasePublishController):
             Union[str, None]: Task name or None if task is not set.
         """
 
-        return self._host.get_current_context()["task_name"]
+        if not hasattr(self.host, "get_current_context"):
+            return legacy_io.Session["AVALON_TASK"]
+
+        return self.host.get_current_context()["task_name"]
 
     @property
     def instances(self):
