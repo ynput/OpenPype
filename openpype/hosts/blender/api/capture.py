@@ -127,7 +127,10 @@ def isolate_objects(window, objects, focus=None):
     """Isolate selection"""
 
     for obj in bpy.context.scene.objects:
-        obj.hide_set(obj not in objects)
+        try:
+            obj.hide_set(obj not in objects)
+        except RuntimeError:
+            continue
 
     deselect_all()
 
