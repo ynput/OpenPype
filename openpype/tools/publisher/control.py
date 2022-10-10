@@ -891,10 +891,7 @@ class AbstractPublisherController(object):
     access objects directly but by using wrappers that can be serialized.
     """
 
-    _log = None
-    _event_system = None
-
-    @property
+    @abstractproperty
     def log(self):
         """Controller's logger object.
 
@@ -902,54 +899,13 @@ class AbstractPublisherController(object):
             logging.Logger: Logger object that can be used for logging.
         """
 
-        if self._log is None:
-            self._log = logging.getLogget(self.__class__.__name__)
-        return self._log
+        pass
 
-    @property
+    @abstractproperty
     def event_system(self):
-        """Inner event system for publisher controller.
+        """Inner event system for publisher controller."""
 
-        Is used for communication with UI. Event system is autocreated.
-
-        Known topics:
-            "show.detailed.help" - Detailed help requested (UI related).
-            "show.card.message" - Show card message request (UI related).
-            "instances.refresh.finished" - Instances are refreshed.
-            "plugins.refresh.finished" - Plugins refreshed.
-            "publish.reset.finished" - Publish context reset finished.
-            "controller.reset.finished" - Controller reset finished.
-            "publish.process.started" - Publishing started. Can be started from
-                paused state.
-            "publish.process.stopped" - Publishing stopped/paused process.
-            "publish.process.plugin.changed" - Plugin state has changed.
-            "publish.process.instance.changed" - Instance state has changed.
-            "publish.has_validated.changed" - Attr 'publish_has_validated'
-                changed.
-            "publish.is_running.changed" - Attr 'publish_is_running' changed.
-            "publish.has_validated.changed" - Attr 'has_validated' changed.
-            "publish.has_crashed.changed" - Attr 'publish_has_crashed' changed.
-            "publish.publish_error.changed" - Attr 'publish_error'
-            "publish.has_validation_errors.changed" - Attr
-                'has_validation_errors' changed.
-            "publish.max_progress.changed" - Attr 'publish_max_progress'
-                changed.
-            "publish.progress.changed" - Attr 'publish_progress' changed.
-            "publish.host_is_valid.changed" - Attr 'host_is_valid' changed.
-            "publish.finished.changed" - Attr 'publish_finished' changed.
-
-        Returns:
-            EventSystem: Event system which can trigger callbacks for topics.
-        """
-
-        if self._event_system is None:
-            self._event_system = EventSystem()
-        return self._event_system
-
-    def _emit_event(self, topic, data=None):
-        if data is None:
-            data = {}
-        self.event_system.emit(topic, data, "controller")
+        pass
 
     @abstractproperty
     def project_name(self):
@@ -1261,10 +1217,22 @@ class AbstractPublisherController(object):
 
 
 class BasePublishController(AbstractPublisherController):
-    def __init__(self):
-        # Controller must implement it's update
-        self._creator_items = {}
+    """Implement common logic for controllers.
 
+    Implement event system, logger and common attributes. Attributes are
+    triggering value changes so anyone can listen to their topics.
+
+    Prepare implementation for creator items. Controller must implement just
+    their filling by '_collect_creator_items'.
+
+    All prepared implementation is based on calling super '__init__'.
+    """
+
+    def __init__(self):
+        self._log = None
+        self._event_system = None
+
+        # Host is valid for creation
         self._host_is_valid = False
 
         # Any other exception that happened during publishing
@@ -1281,17 +1249,65 @@ class BasePublishController(AbstractPublisherController):
         self._publish_max_progress = 0
         self._publish_progress = 0
 
+        # Controller must '_collect_creator_items' to fill the value
+        self._creator_items = None
+
     @property
-    def creator_items(self):
-        """Creators that can be shown in create dialog."""
+    def log(self):
+        """Controller's logger object.
 
-        return self._creator_items
+        Returns:
+            logging.Logger: Logger object that can be used for logging.
+        """
 
-    def get_creator_icon(self, identifier):
-        creator_item = self._creator_items.get(identifier)
-        if creator_item is not None:
-            return creator_item.icon
-        return None
+        if self._log is None:
+            self._log = logging.getLogget(self.__class__.__name__)
+        return self._log
+
+    @property
+    def event_system(self):
+        """Inner event system for publisher controller.
+
+        Is used for communication with UI. Event system is autocreated.
+
+        Known topics:
+            "show.detailed.help" - Detailed help requested (UI related).
+            "show.card.message" - Show card message request (UI related).
+            "instances.refresh.finished" - Instances are refreshed.
+            "plugins.refresh.finished" - Plugins refreshed.
+            "publish.reset.finished" - Publish context reset finished.
+            "controller.reset.finished" - Controller reset finished.
+            "publish.process.started" - Publishing started. Can be started from
+                paused state.
+            "publish.process.stopped" - Publishing stopped/paused process.
+            "publish.process.plugin.changed" - Plugin state has changed.
+            "publish.process.instance.changed" - Instance state has changed.
+            "publish.has_validated.changed" - Attr 'publish_has_validated'
+                changed.
+            "publish.is_running.changed" - Attr 'publish_is_running' changed.
+            "publish.has_validated.changed" - Attr 'has_validated' changed.
+            "publish.has_crashed.changed" - Attr 'publish_has_crashed' changed.
+            "publish.publish_error.changed" - Attr 'publish_error'
+            "publish.has_validation_errors.changed" - Attr
+                'has_validation_errors' changed.
+            "publish.max_progress.changed" - Attr 'publish_max_progress'
+                changed.
+            "publish.progress.changed" - Attr 'publish_progress' changed.
+            "publish.host_is_valid.changed" - Attr 'host_is_valid' changed.
+            "publish.finished.changed" - Attr 'publish_finished' changed.
+
+        Returns:
+            EventSystem: Event system which can trigger callbacks for topics.
+        """
+
+        if self._event_system is None:
+            self._event_system = EventSystem()
+        return self._event_system
+
+    def _emit_event(self, topic, data=None):
+        if data is None:
+            data = {}
+        self.event_system.emit(topic, data, "controller")
 
     def _get_host_is_valid(self):
         return self._host_is_valid
@@ -1399,6 +1415,9 @@ class BasePublishController(AbstractPublisherController):
     def _reset_attributes(self):
         """Reset most of attributes that can be reset."""
 
+        # Reset creator items
+        self._creator_items = None
+
         self.publish_is_running = False
         self.publish_has_validated = False
         self.publish_has_crashed = False
@@ -1407,6 +1426,35 @@ class BasePublishController(AbstractPublisherController):
 
         self.publish_error_msg = None
         self.publish_progress = 0
+
+    @property
+    def creator_items(self):
+        """Creators that can be shown in create dialog."""
+        if self._creator_items is None:
+            self._creator_items = self._collect_creator_items()
+        return self._creator_items
+
+    @abstractmethod
+    def _collect_creator_items(self):
+        """Receive CreatorItems to work with.
+
+        Returns:
+            Dict[str, CreatorItem]: Creator items by their identifier.
+        """
+
+        pass
+
+    def get_creator_icon(self, identifier):
+        """Function to receive icon for creator identifier.
+
+        Args:
+            str: Creator's identifier for which should be icon returned.
+        """
+
+        creator_item = self.creator_items.get(identifier)
+        if creator_item is not None:
+            return creator_item.icon
+        return None
 
 
 class PublisherController(BasePublishController):
@@ -1598,14 +1646,15 @@ class PublisherController(BasePublishController):
 
         self._create_context.reset_plugins()
 
-        self._creator_items = {
-            identifier: CreatorItem.from_creator(creator)
-            for identifier, creator in self._create_context.creators.items()
-        }
-
         self._resetting_plugins = False
 
         self._emit_event("plugins.refresh.finished")
+
+    def _collect_creator_items(self):
+        return {
+            identifier: CreatorItem.from_creator(creator)
+            for identifier, creator in self._create_context.creators.items()
+        }
 
     def _reset_instances(self):
         """Reset create instances."""
@@ -1638,7 +1687,7 @@ class PublisherController(BasePublishController):
         _attr_defs = {}
         for instance in instances:
             creator_identifier = instance.creator_identifier
-            creator_item = self._creator_items[creator_identifier]
+            creator_item = self.creator_items[creator_identifier]
             for attr_def in creator_item.instance_attributes_defs:
                 found_idx = None
                 for idx, _attr_def in _attr_defs.items():
