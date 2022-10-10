@@ -678,7 +678,7 @@ class ValidationsWidget(QtWidgets.QFrame):
             self._set_errors(validation_errors)
             return
 
-        if self._contoller.publish_has_finished:
+        if self._controller.publish_has_finished:
             self._set_current_widget(self._publish_stop_ok_widget)
             return
 
