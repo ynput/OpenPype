@@ -917,7 +917,8 @@ class AbstractPublisherController(object):
             "show.card.message" - Show card message request (UI related).
             "instances.refresh.finished" - Instances are refreshed.
             "plugins.refresh.finished" - Plugins refreshed.
-            "publish.reset.finished" - Controller reset finished.
+            "publish.reset.finished" - Publish context reset finished.
+            "controller.reset.finished" - Controller reset finished.
             "publish.process.started" - Publishing started. Can be started from
                 paused state.
             "publish.process.stopped" - Publishing stopped/paused process.
@@ -934,6 +935,8 @@ class AbstractPublisherController(object):
             "publish.max_progress.changed" - Attr 'publish_max_progress'
                 changed.
             "publish.progress.changed" - Attr 'publish_progress' changed.
+            "publish.host_is_valid.changed" - Attr 'host_is_valid' changed.
+            "publish.finished.changed" - Attr 'publish_finished' changed.
 
         Returns:
             EventSystem: Event system which can trigger callbacks for topics.
@@ -942,6 +945,11 @@ class AbstractPublisherController(object):
         if self._event_system is None:
             self._event_system = EventSystem()
         return self._event_system
+
+    def _emit_event(self, topic, data=None):
+        if data is None:
+            data = {}
+        self.event_system.emit(topic, data, "controller")
 
     @abstractproperty
     def project_name(self):
@@ -1252,7 +1260,156 @@ class AbstractPublisherController(object):
         pass
 
 
-class PublisherController(AbstractPublisherController):
+class BasePublishController(AbstractPublisherController):
+    def __init__(self):
+        # Controller must implement it's update
+        self._creator_items = {}
+
+        self._host_is_valid = False
+
+        # Any other exception that happened during publishing
+        self._publish_error_msg = None
+        # Publishing is in progress
+        self._publish_is_running = False
+        # Publishing is over validation order
+        self._publish_has_validated = False
+
+        self._publish_has_validation_errors = False
+        self._publish_has_crashed = False
+        # All publish plugins are processed
+        self._publish_finished = False
+        self._publish_max_progress = 0
+        self._publish_progress = 0
+
+    @property
+    def creator_items(self):
+        """Creators that can be shown in create dialog."""
+
+        return self._creator_items
+
+    def get_creator_icon(self, identifier):
+        creator_item = self._creator_items.get(identifier)
+        if creator_item is not None:
+            return creator_item.icon
+        return None
+
+    def _get_host_is_valid(self):
+        return self._host_is_valid
+
+    def _set_host_is_valid(self, value):
+        if self._host_is_valid != value:
+            self._host_is_valid = value
+            self._emit_event("publish.host_is_valid.changed", {"value": value})
+
+    def _get_publish_has_finished(self):
+        return self._publish_finished
+
+    def _set_publish_has_finished(self, value):
+        if self._publish_finished != value:
+            self._publish_finished = value
+            self._emit_event("publish.finished.changed", {"value": value})
+
+    def _get_publish_is_running(self):
+        return self._publish_is_running
+
+    def _set_publish_is_running(self, value):
+        if self._publish_is_running != value:
+            self._publish_is_running = value
+            self._emit_event("publish.is_running.changed", {"value": value})
+
+    def _get_publish_has_validated(self):
+        return self._publish_has_validated
+
+    def _set_publish_has_validated(self, value):
+        if self._publish_has_validated != value:
+            self._publish_has_validated = value
+            self._emit_event("publish.has_validated.changed", {"value": value})
+
+    def _get_publish_has_crashed(self):
+        return self._publish_has_crashed
+
+    def _set_publish_has_crashed(self, value):
+        if self._publish_has_crashed != value:
+            self._publish_has_crashed = value
+            self._emit_event("publish.has_crashed.changed", {"value": value})
+
+    def _get_publish_has_validation_errors(self):
+        return self._publish_has_validation_errors
+
+    def _set_publish_has_validation_errors(self, value):
+        if self._publish_has_validation_errors != value:
+            self._publish_has_validation_errors = value
+            self._emit_event(
+                "publish.has_validation_errors.changed",
+                {"value": value}
+            )
+
+    def _get_publish_max_progress(self):
+        return self._publish_max_progress
+
+    def _set_publish_max_progress(self, value):
+        if self._publish_max_progress != value:
+            self._publish_max_progress = value
+            self._emit_event("publish.max_progress.changed", {"value": value})
+
+    def _get_publish_progress(self):
+        return self._publish_progress
+
+    def _set_publish_progress(self, value):
+        if self._publish_progress != value:
+            self._publish_progress = value
+            self._emit_event("publish.progress.changed", {"value": value})
+
+    def _get_publish_error_msg(self):
+        return self._publish_error_msg
+
+    def _set_publish_error_msg(self, value):
+        if self._publish_error_msg != value:
+            self._publish_error_msg = value
+            self._emit_event("publish.publish_error.changed", {"value": value})
+
+    host_is_valid = property(
+        _get_host_is_valid, _set_host_is_valid
+    )
+    publish_has_finished = property(
+        _get_publish_has_finished, _set_publish_has_finished
+    )
+    publish_is_running = property(
+        _get_publish_is_running, _set_publish_is_running
+    )
+    publish_has_validated = property(
+        _get_publish_has_validated, _set_publish_has_validated
+    )
+    publish_has_crashed = property(
+        _get_publish_has_crashed, _set_publish_has_crashed
+    )
+    publish_has_validation_errors = property(
+        _get_publish_has_validation_errors, _set_publish_has_validation_errors
+    )
+    publish_max_progress = property(
+        _get_publish_max_progress, _set_publish_max_progress
+    )
+    publish_progress = property(
+        _get_publish_progress, _set_publish_progress
+    )
+    publish_error_msg = property(
+        _get_publish_error_msg, _set_publish_error_msg
+    )
+
+    def _reset_attributes(self):
+        """Reset most of attributes that can be reset."""
+
+        self.publish_is_running = False
+        self.publish_has_validated = False
+        self.publish_has_crashed = False
+        self.publish_has_validation_errors = False
+        self.publish_finished = False
+
+        self.publish_error_msg = None
+        self.publish_progress = 0
+
+
+class PublisherController(BasePublishController):
     """Middleware between UI, CreateContext and publish Context.
 
     Handle both creation and publishing parts.
@@ -1265,14 +1422,14 @@ class PublisherController(AbstractPublisherController):
     _log = None
 
     def __init__(self, dbcon=None, headless=False):
+        super(PublisherController, self).__init__()
+
         self._host = registered_host()
         self._headless = headless
 
         self._create_context = CreateContext(
             self._host, dbcon, headless=headless, reset=False
         )
-
-        self._creator_items = {}
 
         self._publish_plugins_proxy = None
 
@@ -1282,20 +1439,9 @@ class PublisherController(AbstractPublisherController):
         self._publish_report = PublishReport(self)
         # Store exceptions of validation error
         self._publish_validation_errors = PublishValidationErrors()
-        # Any other exception that happened during publishing
-        self._publish_error_msg = None
-        # Publishing is in progress
-        self._publish_is_running = False
-        # Publishing is over validation order
-        self._publish_has_validated = False
+
         # Publishing should stop at validation stage
         self._publish_up_validation = False
-        self._publish_has_validation_errors = False
-        self._publish_has_crashed = False
-        # All publish plugins are processed
-        self._publish_finished = False
-        self._publish_max_progress = 0
-        self._publish_progress = 0
         # This information is not much important for controller but for widget
         #   which can change (and set) the comment.
         self._publish_comment_is_set = False
@@ -1316,12 +1462,6 @@ class PublisherController(AbstractPublisherController):
 
         # Cacher of avalon documents
         self._asset_docs_cache = AssetDocsCache(self)
-
-    @property
-    def log(self):
-        if self._log is None:
-            self._log = logging.getLogger("PublisherController")
-        return self._log
 
     @property
     def project_name(self):
@@ -1365,26 +1505,9 @@ class PublisherController(AbstractPublisherController):
         return self._create_context.creators
 
     @property
-    def creator_items(self):
-        """Creators that can be shown in create dialog."""
-
-        return self._creator_items
-
-    @property
-    def host_is_valid(self):
-        """Host is valid for creation."""
-
-        return self._create_context.host_is_valid
-
-    @property
     def _publish_plugins(self):
         """Publish plugins."""
         return self._create_context.publish_plugins
-
-    def _emit_event(self, topic, data=None):
-        if data is None:
-            data = {}
-        self.event_system.emit(topic, data, "controller")
 
     # --- Publish specific callbacks ---
     def get_asset_docs(self):
@@ -1450,6 +1573,8 @@ class PublisherController(AbstractPublisherController):
 
         self.save_changes()
 
+        self.host_is_valid = self._create_context.host_is_valid
+
         # Reset avalon context
         self._create_context.reset_avalon_context()
 
@@ -1459,6 +1584,8 @@ class PublisherController(AbstractPublisherController):
         # Publish part must be reset after plugins
         self._reset_publish()
         self._reset_instances()
+
+        self._emit_event("controller.reset.finished")
 
         self.emit_card_message("Refreshed..")
 
@@ -1584,12 +1711,6 @@ class PublisherController(AbstractPublisherController):
             ))
         return output
 
-    def get_creator_icon(self, identifier):
-        creator_item = self._creator_items.get(identifier)
-        if creator_item is not None:
-            return creator_item.icon
-        return None
-
     def get_subset_name(
         self,
         creator_identifier,
@@ -1633,7 +1754,11 @@ class PublisherController(AbstractPublisherController):
             self._create_context.save_changes()
 
     def remove_instances(self, instance_ids):
-        """"""
+        """Remove instances based on instance ids.
+
+        Args:
+            instance_ids (List[str]): List of instance ids to remove.
+        """
         # TODO expect instance ids instead of instances
         # QUESTION Expect that instances are really removed? In that case save
         #   reset is not required and save changes too.
@@ -1654,99 +1779,6 @@ class PublisherController(AbstractPublisherController):
     def _on_create_instance_change(self):
         self._emit_event("instances.refresh.finished")
 
-    # --- Publish specific implementations ---
-    def _get_publish_has_finished(self):
-        return self._publish_finished
-
-    def _set_publish_has_finished(self, value):
-        if self._publish_finished != value:
-            self._publish_finished = value
-            self._emit_event("publish.finished.changed", {"value": value})
-
-    def _get_publish_is_running(self):
-        return self._publish_is_running
-
-    def _set_publish_is_running(self, value):
-        if self._publish_is_running != value:
-            self._publish_is_running = value
-            self._emit_event("publish.is_running.changed", {"value": value})
-
-    def _get_publish_has_validated(self):
-        return self._publish_has_validated
-
-    def _set_publish_has_validated(self, value):
-        if self._publish_has_validated != value:
-            self._publish_has_validated = value
-            self._emit_event("publish.has_validated.changed", {"value": value})
-
-    def _get_publish_has_crashed(self):
-        return self._publish_has_crashed
-
-    def _set_publish_has_crashed(self, value):
-        if self._publish_has_crashed != value:
-            self._publish_has_crashed = value
-            self._emit_event("publish.has_crashed.changed", {"value": value})
-
-    def _get_publish_has_validation_errors(self):
-        return self._publish_has_validation_errors
-
-    def _set_publish_has_validation_errors(self, value):
-        if self._publish_has_validation_errors != value:
-            self._publish_has_validation_errors = value
-            self._emit_event(
-                "publish.has_validation_errors.changed",
-                {"value": value}
-            )
-
-    def _get_publish_max_progress(self):
-        return self._publish_max_progress
-
-    def _set_publish_max_progress(self, value):
-        if self._publish_max_progress != value:
-            self._publish_max_progress = value
-            self._emit_event("publish.max_progress.changed", {"value": value})
-
-    def _get_publish_progress(self):
-        return self._publish_progress
-
-    def _set_publish_progress(self, value):
-        if self._publish_progress != value:
-            self._publish_progress = value
-            self._emit_event("publish.progress.changed", {"value": value})
-
-    def _get_publish_error_msg(self):
-        return self._publish_error_msg
-
-    def _set_publish_error_msg(self, value):
-        if self._publish_error_msg != value:
-            self._publish_error_msg = value
-            self._emit_event("publish.publish_error.changed", {"value": value})
-
-    publish_has_finished = property(
-        _get_publish_has_finished, _set_publish_has_finished
-    )
-    publish_is_running = property(
-        _get_publish_is_running, _set_publish_is_running
-    )
-    publish_has_validated = property(
-        _get_publish_has_validated, _set_publish_has_validated
-    )
-    publish_has_crashed = property(
-        _get_publish_has_crashed, _set_publish_has_crashed
-    )
-    publish_has_validation_errors = property(
-        _get_publish_has_validation_errors, _set_publish_has_validation_errors
-    )
-    publish_max_progress = property(
-        _get_publish_max_progress, _set_publish_max_progress
-    )
-    publish_progress = property(
-        _get_publish_progress, _set_publish_progress
-    )
-    publish_error_msg = property(
-        _get_publish_error_msg, _set_publish_error_msg
-    )
-
     def get_publish_report(self):
         return self._publish_report.get_report(self._publish_plugins)
 
@@ -1754,11 +1786,7 @@ class PublisherController(AbstractPublisherController):
         return self._publish_validation_errors.create_report()
 
     def _reset_publish(self):
-        self.publish_is_running = False
-        self.publish_has_validated = False
-        self.publish_has_crashed = False
-        self.publish_has_validation_errors = False
-        self.publish_finished = False
+        self._reset_attributes()
 
         self._publish_up_validation = False
         self._publish_comment_is_set = False
@@ -1780,10 +1808,7 @@ class PublisherController(AbstractPublisherController):
         self._publish_report.reset(self._publish_context, self._create_context)
         self._publish_validation_errors.reset(self._publish_plugins_proxy)
 
-        self.publish_error_msg = None
-
         self.publish_max_progress = len(self._publish_plugins)
-        self.publish_progress = 0
 
         self._emit_event("publish.reset.finished")
 
