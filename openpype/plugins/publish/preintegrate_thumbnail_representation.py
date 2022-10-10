@@ -46,7 +46,7 @@ class PreIntegrateThumbnails(pyblish.api.InstancePlugin):
             self.integrate_profiles,
             {
                 "hosts": host_name,
-                "tasks": task.get("name"),
+                "task_names": task.get("name"),
                 "task_types": task.get("type"),
                 "families": family,
                 "subsets": subset_name,

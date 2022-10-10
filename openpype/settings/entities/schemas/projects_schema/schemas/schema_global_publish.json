@@ -598,7 +598,7 @@
                                 "type": "task-types-enum"
                             },
                             {
-                                "key": "tasks",
+                                "key": "task_names",
                                 "label": "Task names",
                                 "type": "list",
                                 "object_type": "text"
