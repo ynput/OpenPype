@@ -1656,6 +1656,7 @@ class PublisherController(AbstractPublisherController):
     def _set_publish_has_finished(self, value):
         if self._publish_finished != value:
             self._publish_finished = value
+            self._emit_event("publish.finished.changed", {"value": value})
 
     def _get_publish_is_running(self):
         return self._publish_is_running
