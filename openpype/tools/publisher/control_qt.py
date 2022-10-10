@@ -1,5 +1,5 @@
 import collections
-from ABC import abstractmethod, abstractproperty
+from abc import abstractmethod, abstractproperty
 
 from Qt import QtCore
 
