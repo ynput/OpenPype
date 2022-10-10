@@ -6,7 +6,10 @@ from openpype.hosts.nuke.api.lib import (
     color_gui_to_int
 )
 from openpype.hosts.nuke import api as napi
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline.publish import (
+    PublishXmlValidationError,
+    OptionalPyblishPluginMixin,
+)
 
 
 @pyblish.api.log
@@ -38,7 +41,10 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
             self.log.info("Node attributes were fixed")
 
 
-class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
+class ValidateNukeWriteNode(
+    OptionalPyblishPluginMixin,
+    pyblish.api.InstancePlugin
+):
     """ Validate Write node's knobs.
 
     Compare knobs on write node inside the render group
@@ -48,11 +54,14 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     optional = True
     families = ["render"]
-    label = "Write Node"
+    label = "Validate write node"
     actions = [RepairNukeWriteNodeAction]
     hosts = ["nuke"]
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         child_nodes = (
             instance.data.get("transientData", {}).get("childNodes")
             or instance
