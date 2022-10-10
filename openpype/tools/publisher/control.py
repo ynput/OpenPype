@@ -1098,7 +1098,7 @@ class AbstractPublisherController(object):
 
         pass
 
-    def remove_instances(self, instances):
+    def remove_instances(self, instance_ids):
         """Remove list of instances from create context."""
         # TODO expect instance ids
 
@@ -1632,18 +1632,23 @@ class PublisherController(AbstractPublisherController):
         if self._create_context.host_is_valid:
             self._create_context.save_changes()
 
-    def remove_instances(self, instances):
+    def remove_instances(self, instance_ids):
         """"""
         # TODO expect instance ids instead of instances
         # QUESTION Expect that instances are really removed? In that case save
         #   reset is not required and save changes too.
         self.save_changes()
 
-        self._remove_instances_from_context(instances)
+        self._remove_instances_from_context(instance_ids)
 
         self._on_create_instance_change()
 
-    def _remove_instances_from_context(self, instances):
+    def _remove_instances_from_context(self, instance_ids):
+        instances_by_id = self._create_context.instances_by_id
+        instances = [
+            instances_by_id[instance_id]
+            for instance_id in instance_ids
+        ]
         self._create_context.remove_instances(instances)
 
     def _on_create_instance_change(self):

@@ -250,7 +250,7 @@ class QtRemotePublishController(QtPublisherController):
         # Send 'created_instance_changes' value to client
 
     @abstractmethod
-    def remove_instances(self, instances):
+    def remove_instances(self, instance_ids):
         """Remove list of instances from create context."""
         # TODO add Args:
 
