@@ -11,6 +11,7 @@ from openpype.lib.events import EventSystem
 from openpype.pipeline import (
     PublishValidationError,
     registered_host,
+    legacy_io,
 )
 from openpype.pipeline.create import CreateContext
 
@@ -414,6 +415,9 @@ class PublisherController:
             str: Project name.
         """
 
+        if not hasattr(self.host, "get_current_context"):
+            return legacy_io.active_project()
+
         return self.host.get_current_context()["project_name"]
 
     @property
@@ -424,6 +428,9 @@ class PublisherController:
             Union[str, None]: Asset name or None if asset is not set.
         """
 
+        if not hasattr(self.host, "get_current_context"):
+            return legacy_io.Session["AVALON_ASSET"]
+
         return self.host.get_current_context()["asset_name"]
 
     @property
@@ -433,6 +440,9 @@ class PublisherController:
         Returns:
             Union[str, None]: Task name or None if task is not set.
         """
+
+        if not hasattr(self.host, "get_current_context"):
+            return legacy_io.Session["AVALON_TASK"]
 
         return self.host.get_current_context()["task_name"]
 
