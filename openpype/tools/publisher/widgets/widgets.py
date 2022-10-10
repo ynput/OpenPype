@@ -1060,24 +1060,6 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         if self.task_value_widget.has_value_changed():
             task_name = self.task_value_widget.get_selected_items()[0]
 
-        asset_docs_by_name = {}
-        asset_names = set()
-        if asset_name is None:
-            for instance in self._current_instances:
-                asset_names.add(instance.get("asset"))
-        else:
-            asset_names.add(asset_name)
-
-        for asset_doc in self._controller.get_asset_docs():
-            _asset_name = asset_doc["name"]
-            if _asset_name in asset_names:
-                asset_names.remove(_asset_name)
-                asset_docs_by_name[_asset_name] = asset_doc
-
-            if not asset_names:
-                break
-
-        project_name = self._controller.project_name
         subset_names = set()
         invalid_tasks = False
         for instance in self._current_instances:
@@ -1093,11 +1075,13 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             if task_name is not None:
                 new_task_name = task_name
 
-            asset_doc = asset_docs_by_name[new_asset_name]
-
             try:
-                new_subset_name = instance.creator.get_subset_name(
-                    new_variant_value, new_task_name, asset_doc, project_name
+                new_subset_name = self._controller.get_subset_name(
+                    instance.creator_identifier,
+                    new_variant_value,
+                    new_task_name,
+                    new_asset_name,
+                    instance.id
                 )
             except TaskNotSetError:
                 invalid_tasks = True
