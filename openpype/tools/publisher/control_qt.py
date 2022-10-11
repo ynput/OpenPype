@@ -6,7 +6,11 @@ from Qt import QtCore
 from openpype.lib.events import Event
 from openpype.pipeline.create import CreatedInstance
 
-from .control import MainThreadItem, PublisherController
+from .control import (
+    MainThreadItem,
+    PublisherController,
+    BasePublisherController,
+)
 
 
 class MainThreadProcess(QtCore.QObject):
@@ -92,7 +96,7 @@ class QtPublisherController(PublisherController):
         self._main_thread_processor.stop()
 
 
-class QtRemotePublishController(PublisherController):
+class QtRemotePublishController(BasePublisherController):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
