@@ -1320,7 +1320,6 @@ class BasePublishController(AbstractPublisherController):
             "publish.has_validated.changed" - Attr 'publish_has_validated'
                 changed.
             "publish.is_running.changed" - Attr 'publish_is_running' changed.
-            "publish.has_validated.changed" - Attr 'has_validated' changed.
             "publish.has_crashed.changed" - Attr 'publish_has_crashed' changed.
             "publish.publish_error.changed" - Attr 'publish_error'
             "publish.has_validation_errors.changed" - Attr
