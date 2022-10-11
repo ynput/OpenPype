@@ -88,6 +88,9 @@
                                             "object_type": "text"
                                         },
                                         {
+                                            "type": "separator"
+                                        },
+                                        {
                                             "type": "list",
                                             "key": "families",
                                             "label": "Families",
@@ -96,9 +99,6 @@
                                         {
                                             "type": "schema",
                                             "name": "schema_representation_tags"
-                                        },
-                                        {
-                                            "type": "separator"
                                         },
                                         {
                                             "type": "text",
