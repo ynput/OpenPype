@@ -333,6 +333,8 @@ class PublishFrame(QtWidgets.QWidget):
         self._validate_btn.setEnabled(False)
         self._publish_btn.setEnabled(False)
 
+        self.set_shrunk_state(False)
+
     def _on_publish_validated(self):
         self._validate_btn.setEnabled(False)
 
