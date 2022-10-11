@@ -147,13 +147,14 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             instances.append(instance)
             self.log.info("instance.data:: {}".format(instance.data))
 
-        if not self.sync_version:
+        if not self.sync_next_version:
             return
 
         # overwrite specific version with same version for all
         max_next_version = max(next_versions)
         for inst in instances:
             inst.data["version"] = max_next_version
+            self.log.debug("overwritten version:: {}".format(max_next_version))
 
     def _get_subset_name(self, family, subset_template, task_name, variant):
         fill_pairs = {
