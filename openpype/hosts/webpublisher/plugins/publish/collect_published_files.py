@@ -46,6 +46,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
 
     # from Settings
     task_type_to_family = []
+    sync_next_version = False  # find max version to be published, use for all
 
     def process(self, context):
         batch_dir = context.data["batchDir"]
@@ -64,6 +65,9 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         task_type = context.data["taskType"]
         project_name = context.data["project_name"]
         variant = context.data["variant"]
+
+        next_versions = []
+        instances = []
         for task_dir in task_subfolders:
             task_data = parse_json(os.path.join(task_dir,
                                                 "manifest.json"))
@@ -87,16 +91,15 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 host_name="webpublisher",
                 project_settings=context.data["project_settings"]
             )
-            version = self._get_next_version(
+            next_versions.append(self._get_next_version(
                 project_name, asset_doc, subset_name
-            )
+            ))
 
             instance = context.create_instance(subset_name)
             instance.data["asset"] = asset_name
             instance.data["subset"] = subset_name
             instance.data["family"] = family
             instance.data["families"] = families
-            instance.data["version"] = version
             instance.data["stagingDir"] = tempfile.mkdtemp()
             instance.data["source"] = "webpublisher"
 
@@ -137,7 +140,15 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             instance.data["handleStart"] = asset_doc["data"]["handleStart"]
             instance.data["handleEnd"] = asset_doc["data"]["handleEnd"]
 
+            instances.append(instance)
             self.log.info("instance.data:: {}".format(instance.data))
+
+        if not self.sync_version:
+            return
+
+        max_next_version = max(next_versions)
+        for inst in instances:
+            inst.data["version"] = max_next_version
 
     def _get_subset_name(self, family, subset_template, task_name, variant):
         fill_pairs = {
