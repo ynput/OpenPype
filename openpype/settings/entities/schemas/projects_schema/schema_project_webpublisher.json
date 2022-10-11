@@ -50,6 +50,19 @@
                     "label": "Collect Published Files",
                     "children": [
                         {
+                            "type": "label",
+                            "label": "Select if all versions of published items should be kept same. (As max(published) + 1.)"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "sync_next_version",
+                            "label": "Sync next publish version"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Configure resulting family and tags on representation based on uploaded file and task. <br>Eg. '.png' is uploaded >> create instance of 'render' family<br>'Create review' in Tags >> mark representation to create review from."
+                        },
+                        {
                             "type": "dict-modifiable",
                             "collapsible": true,
                             "key": "task_type_to_family",
