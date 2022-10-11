@@ -81,12 +81,36 @@
             ]
         },
         {
-            "type": "schema_template",
-            "name": "template_publish_plugin",
-            "template_data": [
+            "type": "dict",
+            "key": "ValidateVersion",
+            "label": "Validate Version",
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "children": [
                 {
-                    "key": "ValidateVersion",
-                    "label": "Validate Version"
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "label",
+                    "label": "Check if currently published version wasn't published before."
+                },
+                {
+                    "key": "hosts",
+                    "label": "Host names",
+                    "type": "hosts-enum",
+                    "multiselection": true
                 }
             ]
         },
