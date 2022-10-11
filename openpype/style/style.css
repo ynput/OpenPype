@@ -1005,7 +1005,7 @@ VariantInputsWidget QToolButton {
 }
 
 ValidationArtistMessage QLabel {
-    font-size: 28pt;
+    font-size: 20pt;
     font-weight: bold;
 }
 
