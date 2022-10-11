@@ -167,6 +167,10 @@ class QtRemotePublishController(BasePublisherController):
             self.publish_finished = event["value"]
             return
 
+        if event.topic == "publish.host_is_valid.changed":
+            self.host_is_valid = event["value"]
+            return
+
         # Topics that can be just passed by because are not affecting
         #   controller itself
         # - "show.card.message"
@@ -174,6 +178,7 @@ class QtRemotePublishController(BasePublisherController):
         # - "publish.reset.finished"
         # - "instances.refresh.finished"
         # - "plugins.refresh.finished"
+        # - "controller.reset.finished"
         # - "publish.process.started"
         # - "publish.process.stopped"
         # - "publish.process.plugin.changed"
