@@ -16,6 +16,7 @@ from openpype.hosts.fusion.api.lib import (
 from openpype.pipeline import legacy_io
 from openpype.resources import get_openpype_icon_filepath
 
+from .pipeline import FusionEventHandler
 from .pulse import FusionPulse
 
 self = sys.modules[__name__]
@@ -118,6 +119,10 @@ class OpenPypeMenu(QtWidgets.QWidget):
         # Force close current process if Fusion is closed
         self._pulse = FusionPulse(parent=self)
         self._pulse.start()
+
+        # Detect Fusion events as OpenPype events
+        self._event_handler = FusionEventHandler(parent=self)
+        self._event_handler.start()
 
     def on_task_changed(self):
         # Update current context label

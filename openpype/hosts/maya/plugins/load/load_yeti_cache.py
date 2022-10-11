@@ -250,7 +250,7 @@ class YetiCacheLoader(load.LoaderPlugin):
         """
 
         name = node_name.replace(":", "_")
-        pattern = r"^({name})(\.[0-4]+)?(\.fur)$".format(name=re.escape(name))
+        pattern = r"^({name})(\.[0-9]+)?(\.fur)$".format(name=re.escape(name))
 
         files = [fname for fname in os.listdir(root) if re.match(pattern,
                                                                  fname)]
