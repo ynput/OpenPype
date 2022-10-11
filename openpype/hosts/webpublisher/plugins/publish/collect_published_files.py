@@ -37,6 +37,15 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
 
     This is not applicable for 'studio' processing where host application is
     called to process uploaded workfile and render frames itself.
+
+    For each task configure what properties should resulting instance have
+    based on uploaded files:
+    - uploading sequence of 'png' >> create instance of 'render' family,
+    by adding 'review' to 'Families' and 'Create review' to Tags it will
+    produce review.
+
+    There might be difference between single(>>image) and sequence(>>render)
+    uploaded files.
     """
     # must be really early, context values are only in json file
     order = pyblish.api.CollectorOrder - 0.490
