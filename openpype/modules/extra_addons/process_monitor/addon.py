@@ -16,13 +16,14 @@ import threading
 import ctypes
 import platform
 
+from openpype.lib import Logger
+
 #TODO: Move psutil to OpenPype (add to dependencies)?
 # Or better to keep dependencies here as module is optional?
 import sys
 if sys.version_info.major == 3:
     from .vendor import psutil
 else:
-    from openpype.api import Logger
     log = Logger().get_logger("ProcessMonitor")
     log.warning("Module not supported in Python 2, operations will fail.")
 
@@ -97,7 +98,6 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
 
     def stop_timers(self):
         """Stop all timers."""
-        print("ProcessMonitor - stop_timers")
         if self._timers_manager_module is not None:
             self._timers_manager_module.last_task = None
             self._timers_manager_module.stop_timers()
@@ -121,9 +121,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
         self._process_widget.open()
 
     def request_start_timer(self, pid):
-        print("request_start_timer: {}".format(pid))
-
-        #self. start_timer(self, project_name, asset_name, task_name)
+        #self.log.warning("request_start_timer: {}".format(pid))
 
         if pid is None:
             self._timers_manager_module.close_message()
@@ -137,6 +135,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
             ).format(pid))
             return
 
+        #self.log.warning("CURRENT PID: {}".format(self._current_pid))
         if self._current_pid != pid:
             if self._timers_manager_module.is_running:
                 self.timer_stopped()
@@ -184,7 +183,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
         click_group.add_command(cli_main)
 
     def start_timer(self, data):
-        #self.log.info("start_timer - data: {}".format(data))
+        #self.log.info("addon - start_timer - data: {}".format(data))
 
         project_name = data["project_name"]
         #TODO: Avoid repeating process is same project as last time
@@ -206,8 +205,8 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
 
         # check if other running processes
 
-        print("stop_timer - running processes '{}'".format(self._running_processes))
-        #TODO: kill waiting threads? (find way to stop 'wait_proc' thread)
+        #self.log.warning("stop_timer - running processes '{}'".format(self._running_processes))
+        #TODO: kill waiting threads? (NOT HERE!)
         #self.stop_waiting_thread(pid)
 
     def _get_applications(self, project_name):
@@ -267,7 +266,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
         self._timers_manager_module = timer_manager_module
 
     def timer_started(self, data):
-        #self.log.info("timer_started")
+        #self.log.debug("timer_started - data: {}".format(data))
         if self._timers_manager_module is not None:
             self._timers_manager_module.timer_started(self.id, data)
 
@@ -280,7 +279,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
         self._current_pid = None
 
     def _add_running_process(self, data):
-        print("_add_running_process")
+        #self.log.warning("_add_running_process")
 
         # TODO: should also check "username" (e.g. if background task started by server)
         process_parameters = [
@@ -415,9 +414,14 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
             - if all have same context: start timer for any (first found),
             - else: ask user to select task.
         """
-        self.log.debug((
+        self.log.info((
             "Process '{}' terminated with exit code '{}'"
         ).format(proc.pid, proc.returncode))
+
+        # Get current status of timer manager ('is_running')
+        timer_running = False
+        if self._timers_manager_module is not None:
+            timer_running = self._timers_manager_module.is_running
 
         #TODO: useless variable, same as 'proc' (?)
         terminated_process = None
@@ -482,14 +486,12 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                 if self._current_pid != pid:
                     self.timer_stopped()
 
-                    #TODO: need to check?
-                    if self._timers_manager_module is not None:
-                        #if not self._timers_manager_module._idle_stopped:
-                        if self._timers_manager_module.is_running:
-                            #TODO(derek): need timeout? (avoid if possible)
-                            import time
-                            time.sleep(1)
-                            self.start_process_timer(pid)
+                    #if not self._timers_manager_module._idle_stopped:
+                    if timer_running:
+                        #TODO: need timeout? (avoid if possible)
+                        import time
+                        time.sleep(1)
+                        self.start_process_timer(pid)
 
                 self._process_widget.signal_update_table.emit(
                     self._running_processes,
@@ -516,7 +518,8 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
 
                     if (
                         terminated_process
-                        and self._compare_data(data, terminated_process["data"])
+                        and self._compare_data(data,
+                                               terminated_process["data"])
                     ):
                         # Same context ('data'): no need to stop+start timers
                         # (only update 'pid')
@@ -527,18 +530,16 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                         self.timer_stopped()
                         #self._current_pid = pid
 
-                        #TODO: need to check?
-                        if self._timers_manager_module is not None:
-                            #if not self._timers_manager_module._idle_stopped:
-                            if self._timers_manager_module.is_running:
-                                #TODO(derek): need timeout? (avoid if possible)
-                                import time
-                                time.sleep(1)
-                                '''
-                                self._current_pid = pid
-                                self.timer_started(data)
-                                '''
-                                self.start_process_timer(pid)
+                        #if not self._timers_manager_module._idle_stopped:
+                        if timer_running:
+                            #TODO: need timeout? (avoid if possible)
+                            import time
+                            time.sleep(1)
+                            '''
+                            self._current_pid = pid
+                            self.timer_started(data)
+                            '''
+                            self.start_process_timer(pid)
 
                 else:
                     # If all the running processes have same context ('data'),
@@ -567,17 +568,15 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                             self._current_pid = None
                             self.timer_stopped()
 
-                            #TODO: need to check?
-                            if self._timers_manager_module is not None:
-                                if self._timers_manager_module.is_running:
-                                    #TODO(derek): need timeout? (avoid if possible)
-                                    import time
-                                    time.sleep(1)
-                                    '''
-                                    self._current_pid = pid
-                                    self.timer_started(new_data)
-                                    '''
-                                    self.start_process_timer(pid)
+                            if timer_running:
+                                #TODO: need timeout? (avoid if possible)
+                                import time
+                                time.sleep(1)
+                                '''
+                                self._current_pid = pid
+                                self.timer_started(new_data)
+                                '''
+                                self.start_process_timer(pid)
 
                     else:
                         #?
@@ -597,7 +596,10 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
             return
 
         self._current_pid = pid
-        self.timer_started(self._running_processes[pid]["data"])
+
+        data = self._running_processes[pid]["data"]
+        self.start_timer(data)
+        self.timer_started(data)
 
     def stop_waiting_thread(self, pid):
         if pid not in self._running_processes:
@@ -647,20 +649,21 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
 class StoppableThread(threading.Thread):
     def __init__(self, process, on_terminate):
         super(StoppableThread, self).__init__()
+        self.log = Logger.get_logger(self.__class__.__name__)
         self.process = process
         self.on_terminate = on_terminate
 
     def run(self):
         try:
-            print("wait_proc: {}".format(self.process))
+            self.log.debug("wait_proc: {}".format(self.process))
             gone, alive = psutil.wait_procs([self.process],
                                             timeout=None,
                                             callback=self.on_terminate)
-            print("gone: {}, alive: {}".format(gone, alive))
+            self.log.debug("gone: {}, alive: {}".format(gone, alive))
         except Exception as e:
-            print("ERROR: {}".format(str(e)))
+            self.log.error("ERROR: {}".format(str(e)))
         finally:
-            print("thread ended")
+            self.log.warning("thread ended")
 
     def get_id(self):
         # returns id of the respective thread
@@ -676,7 +679,7 @@ class StoppableThread(threading.Thread):
                                                          ctypes.py_object(SystemExit))
         if res > 1:
             ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
-            print('Exception raise failure')
+            self.log.warning('Exception raise failure')
 
 
 

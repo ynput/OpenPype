@@ -4,6 +4,7 @@
 from Qt import QtWidgets, QtGui, QtCore
 
 from openpype import resources
+from openpype.lib import Logger
 from openpype.style import load_stylesheet
 
 from .model import ProcessModel
@@ -17,6 +18,7 @@ class ProcessMonitorDialog(QtWidgets.QDialog):
     def __init__(self, module):
         super(ProcessMonitorDialog, self).__init__()
 
+        self._log = None
         self._module = module
 
         self.setWindowTitle("Process Monitor")
@@ -98,6 +100,12 @@ class ProcessMonitorDialog(QtWidgets.QDialog):
         self._process_model.update({})
 
 
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = Logger.get_logger(self.__class__.__name__)
+        return self._log
+
     def _get_selected_pid(self):
         """Return process ID currently selected in view"""
         selection = self._process_view.selectionModel()
@@ -119,7 +127,7 @@ class ProcessMonitorDialog(QtWidgets.QDialog):
     def start_timer(self):
         pid = self._get_selected_pid()
         if not pid:
-            print("No Process ID selected")
+            self.log.warning("No Process ID selected")
             return
 
         self._module.request_start_timer(pid)
@@ -127,7 +135,7 @@ class ProcessMonitorDialog(QtWidgets.QDialog):
     def stop_timer(self):
         pid = self._get_selected_pid()
         if not pid:
-            print("No Process ID selected")
+            self.log.warning("No Process ID selected")
             return
 
         status = self._get_selected_status()

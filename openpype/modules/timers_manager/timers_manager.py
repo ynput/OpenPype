@@ -324,6 +324,8 @@ class TimersManager(
                     )
                 )
 
+        self.is_running = False
+
     def restart_timers(self):
         if self.last_task is not None:
             self.timer_started(None, self.last_task)
@@ -335,8 +337,8 @@ class TimersManager(
 
         if self._widget_user_idle is not None:
             self._widget_user_idle.set_timer_stopped()
-        self.is_running = False
 
+        #self.is_running = False
         self.timer_stopped(None)
 
     def connect_with_modules(self, enabled_modules):
