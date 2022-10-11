@@ -1,3 +1,4 @@
+from pprint import pformat
 import nuke
 import re
 import os
@@ -37,6 +38,7 @@ from .lib import (
     set_node_knobs_from_settings,
     get_view_process_node,
     set_node_data,
+    get_node_data,
     deprecated
 )
 from .pipeline import (
@@ -189,6 +191,10 @@ class NukeCreator(NewCreator):
 
     def collect_instances(self):
         for (node, data) in list_instances(creator_id=self.identifier):
+            self.log.debug("_" * 50)
+            self.log.debug("_ self.identifier: `{}`".format(self.identifier))
+            self.log.debug("_ data: `{}`".format(pformat(data)))
+
             created_instance = CreatedInstance.from_existing(
                 data, self
             )
@@ -337,8 +343,7 @@ class NukeWriteCreator(NukeCreator):
     def apply_settings(
         self,
         project_settings,
-        system_settings,
-        # anatomy_settings
+        system_settings
     ):
         """Method called on initialization of plugin to apply settings."""
 
@@ -1080,3 +1085,133 @@ class AbstractWriteRender(OpenPypeCreator):
             node (nuke.Node): group node with data as Knobs
         """
         pass
+
+
+def convert_to_valid_instaces():
+    """ Check and convert to latest publisher instances
+
+    Also save as new minor version of workfile.
+    """
+    def family_to_identifier(family):
+        mapping = {
+            "render": "create_write_render",
+            "prerender": "create_write_prerender",
+            "still": "create_write_image",
+            "model": "create_model",
+            "camera": "create_camera",
+            "nukenodes": "create_backdrop",
+            "gizmo": "create_gizmo",
+            "source": "create_source"
+
+        }
+        return mapping[family]
+
+    from openpype.hosts.nuke.api.lib import (
+        get_avalon_knob_data
+    )
+    from openpype.hosts.nuke.api import workio
+
+    task_name = legacy_io.Session["AVALON_TASK"]
+
+    # save into new workfile
+    current_file = workio.current_file()
+    new_workfile = current_file[:-3] + "_publisherConvert" + current_file[-3:]
+
+    path = new_workfile.replace("\\", "/")
+    nuke.scriptSaveAs(new_workfile, overwrite=1)
+    nuke.Root()["name"].setValue(path)
+    nuke.Root()["project_directory"].setValue(os.path.dirname(path))
+    nuke.Root().setModified(False)
+
+    # loop all nodes and convert
+    for node in nuke.allNodes(recurseGroups=True):
+        transfer_data = {
+            "creator_attributes": {}
+        }
+        creator_attr = transfer_data["creator_attributes"]
+
+        if node.Class() in ["Viewer", "Dot"]:
+            continue
+
+        if get_node_data(node, INSTANCE_DATA_KNOB):
+            continue
+
+        # get data from avalon knob
+        avalon_knob_data = get_avalon_knob_data(
+            node, ["avalon:", "ak:"])
+
+        if not avalon_knob_data:
+            continue
+
+        if avalon_knob_data["id"] != "pyblish.avalon.instance":
+            continue
+
+        transfer_data.update({
+            k: v for k, v in avalon_knob_data.items()
+            if k not in ["families", "creator"]
+        })
+
+        transfer_data["task"] = task_name
+
+        family = avalon_knob_data["family"]
+        # establish families
+        families_ak = avalon_knob_data.get("families", [])
+
+        if "suspend_publish" in node.knobs():
+            creator_attr["suspended_publish"] = (
+                node["suspend_publish"].value())
+
+        # get review knob value
+        if "review" in node.knobs():
+            creator_attr["review"] = (
+                node["review"].value())
+
+        if "publish" in node.knobs():
+            transfer_data["active"] = (
+                node["publish"].value())
+
+        # add idetifier
+        transfer_data["creator_identifier"] = family_to_identifier(family)
+
+        # Add all nodes in group instances.
+        if node.Class() == "Group":
+            # only alter families for render family
+            if families_ak and "write" in families_ak.lower():
+                target = node["render"].value()
+                if target == "Use existing frames":
+                    creator_attr["render_target"] = "frames"
+                elif target == "Local":
+                    # Local rendering
+                    creator_attr["render_target"] = "local"
+                elif target == "On farm":
+                    # Farm rendering
+                    creator_attr["render_target"] = "farm"
+
+                if "deadlinePriority" in node.knobs():
+                    transfer_data["farm_priority"] = (
+                        node["deadlinePriority"].value())
+                if "deadlineChunkSize" in node.knobs():
+                    creator_attr["farm_chunk"] = (
+                        node["deadlineChunkSize"].value())
+                if "deadlineConcurrentTasks" in node.knobs():
+                    creator_attr["farm_concurency"] = (
+                        node["deadlineConcurrentTasks"].value())
+
+        remove_knobs = [
+            "review", "publish", "render", "suspend_publish", "warn", "divd",
+            "OpenpypeDataGroup", "OpenpypeDataGroup_End", "deadlinePriority",
+            "deadlineChunkSize", "deadlineConcurrentTasks", "Deadline"
+        ]
+
+        # remove all old knobs
+        for knob in node.allKnobs():
+            if knob.name() in remove_knobs:
+                node.removeKnob(knob)
+            elif "avalon" in knob.name():
+                node.removeKnob(knob)
+
+        # add new instance knob with transfer data
+        set_node_data(
+            node, INSTANCE_DATA_KNOB, transfer_data)
+
+    nuke.scriptSave()
