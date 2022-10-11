@@ -1251,7 +1251,7 @@ class AbstractPublisherController(object):
         pass
 
 
-class BasePublishController(AbstractPublisherController):
+class BasePublisherController(AbstractPublisherController):
     """Implement common logic for controllers.
 
     Implement event system, logger and common attributes. Attributes are
@@ -1491,7 +1491,7 @@ class BasePublishController(AbstractPublisherController):
         return None
 
 
-class PublisherController(BasePublishController):
+class PublisherController(BasePublisherController):
     """Middleware between UI, CreateContext and publish Context.
 
     Handle both creation and publishing parts.
