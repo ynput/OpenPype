@@ -9,6 +9,7 @@
         }
     },
     "imageio": {
+        "enabled": false,
         "viewer": {
             "viewerProcess": "sRGB"
         },

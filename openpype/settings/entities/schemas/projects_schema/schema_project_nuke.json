@@ -50,9 +50,15 @@
             "key": "imageio",
             "type": "dict",
             "label": "Color Management (ImageIO)",
+            "checkbox_key": "enabled",
             "collapsible": true,
             "is_group": true,
             "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
                 {
                     "key": "viewer",
                     "type": "dict",
