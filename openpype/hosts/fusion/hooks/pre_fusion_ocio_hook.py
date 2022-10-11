@@ -15,12 +15,7 @@ class FusionPreLaunchOCIO(PreLaunchHook):
         project_settings = self.data["project_settings"]
 
         # make sure anatomy settings are having flame key
-        imageio_fusion = project_settings.get("fusion", {}).get("imageio")
-        if not imageio_fusion:
-            raise ApplicationLaunchFailed(
-                "Project settings are missing `fusion/imageio` key. "
-                "Please make sure you update your project settings. "
-            )
+        imageio_fusion = project_settings["fusion"]["imageio"]
 
         ocio = imageio_fusion.get("ocio")
         enabled = ocio.get("enabled", False)
