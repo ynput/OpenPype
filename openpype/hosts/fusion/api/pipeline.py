@@ -44,11 +44,26 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 class FusionLogHandler(logging.Handler):
     # Keep a reference to fusion's Print function (Remote Object)
-    _print = getattr(sys.modules["__main__"], "fusion").Print
+    _print = None
+
+    @property
+    def print(self):
+        if self._print is not None:
+            # Use cached
+            return self._print
+
+        _print = getattr(sys.modules["__main__"], "fusion").Print
+        if _print is None:
+            # Backwards compatibility: Print method on Fusion instance was
+            # added around Fusion 17.4 and wasn't available on PyRemote Object
+            # before
+            _print = get_current_comp().Print
+        self._print = _print
+        return _print
 
     def emit(self, record):
         entry = self.format(record)
-        self._print(entry)
+        self.print(entry)
 
 
 def install():
