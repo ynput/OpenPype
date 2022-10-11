@@ -30,7 +30,11 @@ class MayaAddon(OpenPypeModule, IHostAddon):
 
         # Set default values if are not already set via settings
         defaults = {
-            "OPENPYPE_LOG_NO_COLORS": "Yes"
+            "OPENPYPE_LOG_NO_COLORS": "Yes",
+            # For python module 'qtpy'
+            "QT_API": "PySide2",
+            # For python module 'Qt'
+            "QT_PREFERRED_BINDING": "PySide2"
         }
         for key, value in defaults.items():
             if not env.get(key):
