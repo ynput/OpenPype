@@ -44,13 +44,6 @@ class FlamePrelaunch(PreLaunchHook):
         # get image io
         project_settings = self.data["project_settings"]
 
-        # make sure anatomy settings are having flame key
-        if not project_settings["flame"].get("imageio"):
-            raise ApplicationLaunchFailed(
-                "Project settings are missing `flame/imageio` key. "
-                "Please make sure to update project settings."
-            )
-
         imageio_flame = project_settings["flame"]["imageio"]
 
         # get user name and host name
