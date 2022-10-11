@@ -29,7 +29,7 @@ class PublishFrame(QtWidgets.QWidget):
     +------------------------------------------------------------------------+
     |                             < Main label >                             |
     |                             < Label top >                              |
-    |        (####                      10%  <Progress bar>                ) |
+    |        (####                10%  <Progress bar>                )       |
     | <Instance label>                                        <Plugin label> |
     | <Report>                              <Reset><Stop><Validate><Publish> |
     +------------------------------------------------------------------------+
@@ -37,7 +37,7 @@ class PublishFrame(QtWidgets.QWidget):
 
     details_page_requested = QtCore.Signal()
 
-    def __init__(self, controller, parent):
+    def __init__(self, controller, borders, parent):
         super(PublishFrame, self).__init__(parent)
 
         # Bottom part of widget where process and callback buttons are showed
@@ -137,7 +137,7 @@ class PublishFrame(QtWidgets.QWidget):
         content_layout.addWidget(footer_widget)
 
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setContentsMargins(borders, 0, borders, borders)
         main_layout.addWidget(content_frame)
 
         shrunk_anim = QtCore.QVariantAnimation()
@@ -261,7 +261,7 @@ class PublishFrame(QtWidgets.QWidget):
             diff -= self._content_layout.spacing()
 
         window_pos = self.pos()
-        window_pos_y = self.pos().y() + diff
+        window_pos_y = window_pos.y() + diff
         window_height = self.height() - diff
 
         self._top_content_widget.setMinimumHeight(value)
@@ -286,11 +286,17 @@ class PublishFrame(QtWidgets.QWidget):
 
         if self._shrunken:
             content_frame_hint = self._content_frame.sizeHint()
-            window_height = content_frame_hint.height()
 
+            layout = self.layout()
+            margins = layout.contentsMargins()
+            window_height = (
+                content_frame_hint.height()
+                + margins.bottom()
+                + margins.top()
+            )
             diff = self.height() - window_height
             window_pos = self.pos()
-            window_pos_y = self.pos().y() + diff
+            window_pos_y = window_pos.y() + diff
             self.resize(self.width(), window_height)
             self.move(window_pos.x(), window_pos_y)
 
