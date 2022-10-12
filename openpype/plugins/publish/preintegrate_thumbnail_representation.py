@@ -62,7 +62,7 @@ class PreIntegrateThumbnails(pyblish.api.InstancePlugin):
                 thumbnail_repre["tags"].append("delete")
         else:
             if "delete" in thumbnail_repre["tags"]:
-                thumbnail_repre["tags"].pop("delete")
+                thumbnail_repre["tags"].remove("delete")
 
         self.log.debug(
             "Thumbnail repre tags {}".format(thumbnail_repre["tags"]))
