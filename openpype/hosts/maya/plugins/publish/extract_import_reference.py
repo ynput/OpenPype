@@ -70,20 +70,24 @@ class ExtractImportReference(publish.Extractor):
         reference_path = os.path.join(dir_path, ref_scene_name)
 
         self.log.info("Performing extraction..")
-        script = ("import maya.standalone\nmaya.standalone.initialize()\n"
-                  "cmds.file('{current_name}', open=True, force=True)\n"
-                  "reference_node = cmds.ls(type='reference')\n"
-                  "for ref in reference_node:\n"
-                  "\tref_file = cmds.referenceQuery(ref, f=True)\n"
-                  "\tif ref == 'sharedReferenceNode':\n"
-                  "\t\tcmds.file(ref_file, removeReference=True, referenceNode=ref)\n"
-                  "\telse:\n"
-                  "\t\tcmds.file(ref_file, importReference=True)\n"
-                  "try:\n"
-                  "\tcmds.file(rename='{ref_scene_name}')\n"
-                  "except SyntaxError:\n"
-                  "\tcmds.file(rename='{ref_scene_name}')\n"
-                  "cmds.file(save=True, force=True)\n")
+        script = f"""
+        import maya.standalone
+        maya.standalone.initialize()
+        cmds.file('{current_name}', open=True, force=True)
+        reference_node = cmds.ls(type='reference')
+        for ref in reference_node:
+            ref_file = cmds.referenceQuery(ref, f=True)
+            if ref == 'sharedReferenceNode':
+                cmds.file(ref_file, removeReference=True, referenceNode=ref)
+            else:
+                cmds.file(ref_file, importReference=True)
+        try:
+            cmds.file(rename='{ref_scene_name}')
+        except SyntaxError:
+            cmds.file(rename='{ref_scene_name}')
+
+        cmds.file(save=True, force=True)
+        """
 
         mayapy_exe = os.path.join(os.getenv("MAYA_LOCATION"), "bin", "mayapy")
         if sys.platform == "windows":
@@ -100,9 +104,7 @@ class ExtractImportReference(publish.Extractor):
             self.log.error("Import reference failed", exc_info=True)
             raise
 
-        proj_file_dir = os.path.dirname(current_name)
-        tmp_filepath = os.path.join(proj_file_dir, ref_scene_name)
-        instance.context.data["currentFile"] = tmp_filepath
+        instance.context.data["currentFile"] = ref_scene_name
         with lib.maintained_selection():
             cmds.select(all=True, noExpand=True)
             cmds.file(reference_path,
@@ -126,7 +128,7 @@ class ExtractImportReference(publish.Extractor):
             "name": self.scene_type,
             "ext": self.scene_type,
             "files": ref_scene_name,
-            "stagingDir": proj_file_dir
+            "stagingDir": os.path.dirname(current_name)
         }
 
         instance.data["representations"].append(ref_representation)

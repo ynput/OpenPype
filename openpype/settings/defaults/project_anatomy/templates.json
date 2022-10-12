@@ -17,7 +17,7 @@
     },
     "publish": {
         "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
-        "file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}><_{udim}>.{ext}",
+        "file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}><_{udim}><_{workfiletype}>.{ext}",
         "path": "{@folder}/{@file}",
         "thumbnail": "{thumbnail_root}/{project[name]}/{_id}_{thumbnail_type}.{ext}"
     },
