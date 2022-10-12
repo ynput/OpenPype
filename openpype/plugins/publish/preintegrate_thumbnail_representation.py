@@ -19,7 +19,7 @@ from openpype.lib.profiles_filtering import filter_profiles
 class PreIntegrateThumbnails(pyblish.api.InstancePlugin):
     """Marks thumbnail representation for integrate to DB or not."""
 
-    label = "Override Integrate Thumbnails"
+    label = "Override Integrate Thumbnail Representations"
     order = pyblish.api.IntegratorOrder - 0.1
     families = ["review"]
 
