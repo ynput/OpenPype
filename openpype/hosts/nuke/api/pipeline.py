@@ -142,6 +142,11 @@ def _show_workfiles():
 
 
 def _install_menu():
+    def _loader_launch():
+        return host_tools.show_loader(
+            parent=main_window,
+            use_context=True
+        )
     # uninstall original avalon menu
     main_window = get_main_window()
     menubar = nuke.menu("Nuke")
@@ -167,10 +172,7 @@ def _install_menu():
     )
     menu.addCommand(
         "Load...",
-        lambda: host_tools.show_loader(
-            parent=main_window,
-            use_context=True
-        )
+        _loader_launch
     )
     menu.addCommand(
         "Publish...",
