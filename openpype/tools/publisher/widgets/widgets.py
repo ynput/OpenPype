@@ -1082,8 +1082,8 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
                     new_task_name,
                     new_asset_name,
                     instance.id,
-                    instance=instance
                 )
+
             except TaskNotSetError:
                 invalid_tasks = True
                 instance.set_task_invalid(True)

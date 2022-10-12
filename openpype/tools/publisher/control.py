@@ -1820,9 +1820,12 @@ class PublisherController(BasePublisherController):
         creator = self._creators[creator_identifier]
         project_name = self.project_name
         asset_doc = self._asset_docs_cache.get_full_asset_by_name(asset_name)
+        instance = None
+        if instance_id:
+            instance = self.instances[instance_id]
 
         return creator.get_subset_name(
-            variant, task_name, asset_doc, project_name
+            variant, task_name, asset_doc, project_name, instance=instance
         )
 
     def create(
