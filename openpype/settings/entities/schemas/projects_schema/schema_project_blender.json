@@ -45,7 +45,19 @@
                     "type": "schema",
                     "name": "schema_imageio_file_rules"
                 }
-
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "general",
+            "label": "General",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "compress",
+                    "label": "Use file compress on save"
+                }
             ]
         },
         {

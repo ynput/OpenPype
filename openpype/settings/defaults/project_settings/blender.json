@@ -14,6 +14,9 @@
             "rules": {}
         }
     },
+    "general": {
+        "compress": false
+    },
     "workfile_builder": {
         "create_first_version": false,
         "custom_templates": []

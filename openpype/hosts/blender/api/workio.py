@@ -5,6 +5,9 @@ from typing import List, Optional
 
 import bpy
 
+from openpype.settings import get_project_settings
+from openpype.pipeline import legacy_io
+
 
 class OpenFileCacher:
     """Store information about opening file.
@@ -42,9 +45,13 @@ def open_file(filepath: str) -> Optional[str]:
 
 def save_file(filepath: str, copy: bool = False) -> Optional[str]:
     """Save the open scene file."""
+    project_name = legacy_io.active_project()
+    project_setting = get_project_settings(project_name)
 
     preferences = bpy.context.preferences
-    compress = preferences.filepaths.use_file_compression
+    compress = project_setting["blender"]["general"].get(
+        "compress", preferences.filepaths.use_file_compression
+    )
     relative_remap = preferences.filepaths.use_relative_paths
     result = bpy.ops.wm.save_as_mainfile(
         filepath=filepath,
