@@ -37,7 +37,7 @@ from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 
 
 @attr.s
-class MayaPluginInfo:
+class MayaPluginInfo():
     SceneFile = attr.ib(default=None)   # Input
     OutputFilePath = attr.ib(default=None)  # Output directory and filename
     OutputFilePrefix = attr.ib(default=None)
@@ -50,7 +50,7 @@ class MayaPluginInfo:
 
 
 @attr.s
-class PythonPluginInfo:
+class PythonPluginInfo():
     ScriptFile = attr.ib()
     Version = attr.ib(default="3.6")
     Arguments = attr.ib(default=None)
@@ -58,7 +58,7 @@ class PythonPluginInfo:
 
 
 @attr.s
-class VRayPluginInfo:
+class VRayPluginInfo():
     InputFilename = attr.ib(default=None)   # Input
     SeparateFilesPerFrame = attr.ib(default=None)
     VRayEngine = attr.ib(default="V-Ray")
@@ -69,7 +69,7 @@ class VRayPluginInfo:
 
 
 @attr.s
-class ArnoldPluginInfo:
+class ArnoldPluginInfo():
     ArnoldFile = attr.ib(default=None)
 
 
