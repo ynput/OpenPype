@@ -6,6 +6,19 @@
     "is_file": true,
     "children": [
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "general",
+            "label": "General",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "compress",
+                    "label": "Use file compress on save"
+                }
+            ]
+        },
+        {
             "type": "schema_template",
             "name": "template_workfile_options",
             "skip_paths": [
