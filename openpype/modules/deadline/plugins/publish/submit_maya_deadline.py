@@ -36,8 +36,19 @@ from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 
 
+def _validate_deadline_bool_value(instance, attribute, value):
+    if not isinstance(value, (str, bool)):
+        raise TypeError(
+            "Attribute {} must be str or bool.".format(attribute))
+    if value not in {"1", "0", True, False}:
+        raise ValueError(
+            ("Value of {} must be one of "
+             "'0', '1', True, False").format(attribute)
+        )
+
+
 @attr.s
-class MayaPluginInfo:
+class MayaPluginInfo():
     SceneFile = attr.ib(default=None)   # Input
     OutputFilePath = attr.ib(default=None)  # Output directory and filename
     OutputFilePrefix = attr.ib(default=None)
@@ -46,11 +57,13 @@ class MayaPluginInfo:
     RenderLayer = attr.ib(default=None)  # Render only this layer
     Renderer = attr.ib(default=None)
     ProjectPath = attr.ib(default=None)  # Resolve relative references
-    RenderSetupIncludeLights = attr.ib(default=None)  # Include all lights flag
+    # Include all lights flag
+    RenderSetupIncludeLights = attr.ib(
+        default="1", validator=_validate_deadline_bool_value)
 
 
 @attr.s
-class PythonPluginInfo:
+class PythonPluginInfo():
     ScriptFile = attr.ib()
     Version = attr.ib(default="3.6")
     Arguments = attr.ib(default=None)
@@ -58,7 +71,7 @@ class PythonPluginInfo:
 
 
 @attr.s
-class VRayPluginInfo:
+class VRayPluginInfo():
     InputFilename = attr.ib(default=None)   # Input
     SeparateFilesPerFrame = attr.ib(default=None)
     VRayEngine = attr.ib(default="V-Ray")
@@ -69,7 +82,7 @@ class VRayPluginInfo:
 
 
 @attr.s
-class ArnoldPluginInfo:
+class ArnoldPluginInfo():
     ArnoldFile = attr.ib(default=None)
 
 
@@ -185,12 +198,26 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         instance = self._instance
         context = instance.context
 
+        # Set it to default Maya behaviour if it cannot be determined
+        # from instance (but it should be, by the Collector).
+
+        default_rs_include_lights = (
+            instance.context.data['project_settings']
+                                 ['maya']
+                                 ['RenderSettings']
+                                 ['enable_all_lights']
+        )
+
+        rs_include_lights = instance.data.get(
+            "renderSetupIncludeLights", default_rs_include_lights)
+        if rs_include_lights not in {"1", "0", True, False}:
+            rs_include_lights = default_rs_include_lights
         plugin_info = MayaPluginInfo(
             SceneFile=self.scene_path,
             Version=cmds.about(version=True),
             RenderLayer=instance.data['setMembers'],
             Renderer=instance.data["renderer"],
-            RenderSetupIncludeLights=instance.data.get("renderSetupIncludeLights"),  # noqa
+            RenderSetupIncludeLights=rs_include_lights,  # noqa
             ProjectPath=context.data["workspaceDir"],
             UsingRenderLayers=True,
         )

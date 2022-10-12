@@ -688,7 +688,15 @@ def get_node_path(path, padding=4):
 
 
 def get_nuke_imageio_settings():
-    return get_anatomy_settings(Context.project_name)["imageio"]["nuke"]
+    project_imageio = get_project_settings(
+        Context.project_name)["nuke"]["imageio"]
+
+    # backward compatibility for project started before 3.10
+    # those are still having `__legacy__` knob types
+    if not project_imageio["enabled"]:
+        return get_anatomy_settings(Context.project_name)["imageio"]["nuke"]
+
+    return get_project_settings(Context.project_name)["nuke"]["imageio"]
 
 
 @deprecated("openpype.hosts.nuke.api.lib.get_nuke_imageio_settings")

@@ -42,17 +42,9 @@ class FlamePrelaunch(PreLaunchHook):
         volume_name = _env.get("FLAME_WIRETAP_VOLUME")
 
         # get image io
-        project_anatomy = self.data["anatomy"]
+        project_settings = self.data["project_settings"]
 
-        # make sure anatomy settings are having flame key
-        if not project_anatomy["imageio"].get("flame"):
-            raise ApplicationLaunchFailed((
-                "Anatomy project settings are missing `flame` key. "
-                "Please make sure you remove project overides on "
-                "Anatomy Image io")
-            )
-
-        imageio_flame = project_anatomy["imageio"]["flame"]
+        imageio_flame = project_settings["flame"]["imageio"]
 
         # get user name and host name
         user_name = get_openpype_username()

@@ -1,29 +1,38 @@
 # Changelog
 
-## [3.14.4-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.14.4-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.3...HEAD)
 
 **🚀 Enhancements**
 
 - General: Set root environments before DCC launch [\#3947](https://github.com/pypeclub/OpenPype/pull/3947)
+- Refactor: changed legacy way to update database for Hero version integrate [\#3941](https://github.com/pypeclub/OpenPype/pull/3941)
 - Maya: Moved plugin from global to maya [\#3939](https://github.com/pypeclub/OpenPype/pull/3939)
+- Fusion: Implement Alembic and FBX mesh loader [\#3927](https://github.com/pypeclub/OpenPype/pull/3927)
 - Publisher: Instances can be marked as stored [\#3846](https://github.com/pypeclub/OpenPype/pull/3846)
 
 **🐛 Bug fixes**
 
+- Maya: Deadline OutputFilePath hack regression for Renderman [\#3950](https://github.com/pypeclub/OpenPype/pull/3950)
+- Houdini: Fix validate workfile paths for non-parm file references [\#3948](https://github.com/pypeclub/OpenPype/pull/3948)
 - Photoshop: missed sync published version of workfile with workfile [\#3946](https://github.com/pypeclub/OpenPype/pull/3946)
 - Maya: fix regression of Renderman Deadline hack [\#3943](https://github.com/pypeclub/OpenPype/pull/3943)
+- Tray: Change order of attribute changes [\#3938](https://github.com/pypeclub/OpenPype/pull/3938)
 - AttributeDefs: Fix crashing multivalue of files widget [\#3937](https://github.com/pypeclub/OpenPype/pull/3937)
+- General: Fix links query on hero version [\#3900](https://github.com/pypeclub/OpenPype/pull/3900)
 - Publisher: Files Drag n Drop cleanup [\#3888](https://github.com/pypeclub/OpenPype/pull/3888)
 - Maya: Render settings validation attribute check tweak logging [\#3821](https://github.com/pypeclub/OpenPype/pull/3821)
 
 **🔀 Refactored code**
 
+- General: Direct settings imports [\#3934](https://github.com/pypeclub/OpenPype/pull/3934)
 - General: import 'Logger' from 'openpype.lib' [\#3926](https://github.com/pypeclub/OpenPype/pull/3926)
 
 **Merged pull requests:**
 
+- Maya + Yeti: Load Yeti Cache fix frame number recognition [\#3942](https://github.com/pypeclub/OpenPype/pull/3942)
+- Fusion: Implement callbacks to Fusion's event system thread [\#3928](https://github.com/pypeclub/OpenPype/pull/3928)
 - Photoshop: create single frame image in Ftrack as review [\#3908](https://github.com/pypeclub/OpenPype/pull/3908)
 - Maya: Warn correctly about nodes in render instance with unexpected names [\#3816](https://github.com/pypeclub/OpenPype/pull/3816)
 
@@ -68,6 +77,7 @@
 - Unreal: Use new Extractor location [\#3917](https://github.com/pypeclub/OpenPype/pull/3917)
 - Flame: Use new Extractor location [\#3916](https://github.com/pypeclub/OpenPype/pull/3916)
 - Houdini: Use new Extractor location [\#3894](https://github.com/pypeclub/OpenPype/pull/3894)
+- Harmony: Use new Extractor location [\#3893](https://github.com/pypeclub/OpenPype/pull/3893)
 - Hiero: Use new Extractor location [\#3851](https://github.com/pypeclub/OpenPype/pull/3851)
 - Maya: Remove old legacy \(ftrack\) plug-ins that are of no use anymore [\#3819](https://github.com/pypeclub/OpenPype/pull/3819)
 - Nuke: Use new Extractor location [\#3799](https://github.com/pypeclub/OpenPype/pull/3799)
@@ -97,18 +107,6 @@
 - Igniter: Fix status handling when version is already installed [\#3804](https://github.com/pypeclub/OpenPype/pull/3804)
 - Resolve: Addon import is Python 2 compatible [\#3798](https://github.com/pypeclub/OpenPype/pull/3798)
 - Hiero: retimed clip publishing is working [\#3792](https://github.com/pypeclub/OpenPype/pull/3792)
-- nuke: validate write node is not failing due wrong type [\#3780](https://github.com/pypeclub/OpenPype/pull/3780)
-- Fix - changed format of version string in pyproject.toml [\#3777](https://github.com/pypeclub/OpenPype/pull/3777)
-
-**🔀 Refactored code**
-
-- Photoshop: Use new Extractor location [\#3789](https://github.com/pypeclub/OpenPype/pull/3789)
-- Blender: Use new Extractor location [\#3787](https://github.com/pypeclub/OpenPype/pull/3787)
-- AfterEffects: Use new Extractor location [\#3784](https://github.com/pypeclub/OpenPype/pull/3784)
-
-**Merged pull requests:**
-
-- Standalone Publisher: Ignore empty labels, then still use name like other asset models [\#3779](https://github.com/pypeclub/OpenPype/pull/3779)
 
 ## [3.14.1](https://github.com/pypeclub/OpenPype/tree/3.14.1) (2022-08-30)
 

@@ -14,7 +14,7 @@ from openpype.client import (
     get_subsets,
 )
 
-from openpype.api import get_current_project_settings
+from openpype.settings import get_current_project_settings
 from openpype.lib import (
     BoolDef,
     EnumDef
