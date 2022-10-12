@@ -28,17 +28,16 @@ class MayaAddon(OpenPypeModule, IHostAddon):
 
         env["PYTHONPATH"] = os.pathsep.join(new_python_paths)
 
-        # Set default values if are not already set via settings
-        defaults = {
+        # Set default environments
+        envs = {
             "OPENPYPE_LOG_NO_COLORS": "Yes",
             # For python module 'qtpy'
             "QT_API": "PySide2",
             # For python module 'Qt'
             "QT_PREFERRED_BINDING": "PySide2"
         }
-        for key, value in defaults.items():
-            if not env.get(key):
-                env[key] = value
+        for key, value in envs.items():
+            env[key] = value
 
     def get_launch_hook_paths(self, app):
         if app.host_name != self.host_name:
