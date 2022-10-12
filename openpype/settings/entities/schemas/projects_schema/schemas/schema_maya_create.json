@@ -173,36 +173,6 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "CreateRig",
-            "label": "Create Rig",
-            "checkbox_key": "enabled",
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                },
-                {
-                    "type": "boolean",
-                    "key": "write_color_sets",
-                    "label": "Write Color Sets"
-                },
-                {
-                    "type": "boolean",
-                    "key": "write_face_sets",
-                    "label": "Write Face Sets"
-                },
-                {
-                    "type": "list",
-                    "key": "defaults",
-                    "label": "Default Subsets",
-                    "object_type": "text"
-                }
-            ]
-        },
-        {
-            "type": "dict",
-            "collapsible": true,
             "key": "CreatePointCache",
             "label": "Create Point Cache",
             "checkbox_key": "enabled",
@@ -274,6 +244,10 @@
                 {
                     "key": "CreateReview",
                     "label": "Create Review"
+                },
+                {
+                    "key": "CreateRig",
+                    "label": "Create Rig"
                 },
                 {
                     "key": "CreateSetDress",

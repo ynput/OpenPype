@@ -187,8 +187,6 @@
         },
         "CreateRig": {
             "enabled": true,
-            "write_color_sets": false,
-            "write_face_sets": false,
             "defaults": [
                 "Main",
                 "Sim",
