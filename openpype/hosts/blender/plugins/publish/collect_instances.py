@@ -19,7 +19,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     @staticmethod
     def get_collections() -> Generator:
         """Return all collections marked as OpenPype instance."""
-        for collection in bpy.context.scene.collection.children:
+        for collection in bpy.context.scene.collection.children_recursive:
             avalon_prop = collection.get(AVALON_PROPERTY) or dict()
             if avalon_prop.get("id") == AVALON_INSTANCE_ID:
                 yield collection
