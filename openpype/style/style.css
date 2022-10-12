@@ -971,7 +971,6 @@ VariantInputsWidget QToolButton {
 
 #PublishInfoFrame {
     background: {color:bg};
-    border: 2px solid black;
     border-radius: 0.3em;
 }
 
@@ -1005,7 +1004,7 @@ VariantInputsWidget QToolButton {
 }
 
 ValidationArtistMessage QLabel {
-    font-size: 28pt;
+    font-size: 20pt;
     font-weight: bold;
 }
 

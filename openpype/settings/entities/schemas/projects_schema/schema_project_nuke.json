@@ -47,6 +47,10 @@
             ]
         },
         {
+            "type": "schema",
+            "name": "schema_nuke_imageio"
+        },
+        {
            "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",

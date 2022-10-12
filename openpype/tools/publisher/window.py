@@ -33,6 +33,8 @@ class PublisherWindow(QtWidgets.QDialog):
     """Main window of publisher."""
     default_width = 1300
     default_height = 800
+    footer_border = 8
+    publish_footer_spacer = 2
 
     def __init__(self, parent=None, controller=None, reset_on_show=None):
         super(PublisherWindow, self).__init__(parent)
@@ -127,21 +129,22 @@ class PublisherWindow(QtWidgets.QDialog):
         footer_bottom_layout.addWidget(validate_btn, 0)
         footer_bottom_layout.addWidget(publish_btn, 0)
 
-        footer_layout = QtWidgets.QVBoxLayout(footer_widget)
-        footer_margins = footer_layout.contentsMargins()
-        border = 2
-        footer_layout.setContentsMargins(
-            footer_margins.left() + border,
-            footer_margins.top(),
-            footer_margins.right() + border,
-            footer_margins.bottom() + border
-        )
         # Spacer helps keep distance of Publish Frame when comment input
         #   is hidden - so when is shrunken it is not overlaying pages
         footer_spacer = QtWidgets.QWidget(footer_widget)
-        footer_spacer.setMinimumHeight(border)
-        footer_spacer.setMaximumHeight(border)
+        footer_spacer.setMinimumHeight(self.publish_footer_spacer)
+        footer_spacer.setMaximumHeight(self.publish_footer_spacer)
         footer_spacer.setVisible(False)
+
+        footer_layout = QtWidgets.QVBoxLayout(footer_widget)
+        footer_margins = footer_layout.contentsMargins()
+
+        footer_layout.setContentsMargins(
+            footer_margins.left() + self.footer_border,
+            footer_margins.top(),
+            footer_margins.right() + self.footer_border,
+            footer_margins.bottom() + self.footer_border
+        )
 
         footer_layout.addWidget(comment_input, 0)
         footer_layout.addWidget(footer_spacer, 0)
@@ -217,7 +220,7 @@ class PublisherWindow(QtWidgets.QDialog):
         main_layout.addWidget(under_publish_stack, 1)
 
         # Floating publish frame
-        publish_frame = PublishFrame(controller, self)
+        publish_frame = PublishFrame(controller, self.footer_border, self)
 
         help_btn.clicked.connect(self._on_help_click)
         tabs_widget.tab_changed.connect(self._on_tab_change)

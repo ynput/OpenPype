@@ -27,7 +27,7 @@ class PublishFrame(QtWidgets.QWidget):
     +------------------------------------------------------------------------+
     |                             < Main label >                             |
     |                             < Label top >                              |
-    |        (####                      10%  <Progress bar>                ) |
+    |        (####                10%  <Progress bar>                )       |
     | <Instance label>                                        <Plugin label> |
     | <Report>                              <Reset><Stop><Validate><Publish> |
     +------------------------------------------------------------------------+
@@ -35,7 +35,7 @@ class PublishFrame(QtWidgets.QWidget):
 
     details_page_requested = QtCore.Signal()
 
-    def __init__(self, controller, parent):
+    def __init__(self, controller, borders, parent):
         super(PublishFrame, self).__init__(parent)
 
         # Bottom part of widget where process and callback buttons are showed
@@ -135,7 +135,7 @@ class PublishFrame(QtWidgets.QWidget):
         content_layout.addWidget(footer_widget)
 
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setContentsMargins(borders, 0, borders, borders)
         main_layout.addWidget(content_frame)
 
         shrunk_anim = QtCore.QVariantAnimation()
@@ -208,6 +208,8 @@ class PublishFrame(QtWidgets.QWidget):
         self._shrunken = False
         self._top_widget_max_height = None
         self._top_widget_size_policy = top_content_widget.sizePolicy()
+        self._last_instance_label = None
+        self._last_plugin_label = None
 
     def mouseReleaseEvent(self, event):
         super(PublishFrame, self).mouseReleaseEvent(event)
@@ -257,7 +259,7 @@ class PublishFrame(QtWidgets.QWidget):
             diff -= self._content_layout.spacing()
 
         window_pos = self.pos()
-        window_pos_y = self.pos().y() + diff
+        window_pos_y = window_pos.y() + diff
         window_height = self.height() - diff
 
         self._top_content_widget.setMinimumHeight(value)
@@ -282,11 +284,17 @@ class PublishFrame(QtWidgets.QWidget):
 
         if self._shrunken:
             content_frame_hint = self._content_frame.sizeHint()
-            window_height = content_frame_hint.height()
 
+            layout = self.layout()
+            margins = layout.contentsMargins()
+            window_height = (
+                content_frame_hint.height()
+                + margins.bottom()
+                + margins.top()
+            )
             diff = self.height() - window_height
             window_pos = self.pos()
-            window_pos_y = self.pos().y() + diff
+            window_pos_y = window_pos.y() + diff
             self.resize(self.width(), window_height)
             self.move(window_pos.x(), window_pos_y)
 
@@ -296,6 +304,9 @@ class PublishFrame(QtWidgets.QWidget):
             self._shrunk_main_label.setText(message)
 
     def _on_publish_reset(self):
+        self._last_instance_label = None
+        self._last_plugin_label = None
+
         self._set_success_property()
         self._set_progress_visibility(True)
 
@@ -311,6 +322,12 @@ class PublishFrame(QtWidgets.QWidget):
         self._progress_bar.setMaximum(self._controller.publish_max_progress)
 
     def _on_publish_start(self):
+        if self._last_plugin_label:
+            self._plugin_label.setText(self._last_plugin_label)
+
+        if self._last_instance_label:
+            self._instance_label.setText(self._last_instance_label)
+
         self._set_success_property(-1)
         self._set_progress_visibility(True)
         self._set_main_label("Publishing...")
@@ -320,6 +337,8 @@ class PublishFrame(QtWidgets.QWidget):
         self._validate_btn.setEnabled(False)
         self._publish_btn.setEnabled(False)
 
+        self.set_shrunk_state(False)
+
     def _on_publish_validated_change(self, event):
         if event["value"]:
             self._validate_btn.setEnabled(False)
@@ -327,12 +346,14 @@ class PublishFrame(QtWidgets.QWidget):
     def _on_instance_change(self, event):
         """Change instance label when instance is going to be processed."""
 
+        self._last_instance_label = event["instance_label"]
         self._instance_label.setText(event["instance_label"])
         QtWidgets.QApplication.processEvents()
 
     def _on_plugin_change(self, event):
         """Change plugin label when instance is going to be processed."""
 
+        self._last_plugin_label = event["plugin_label"]
         self._progress_bar.setValue(self._controller.publish_progress)
         self._plugin_label.setText(event["plugin_label"])
         QtWidgets.QApplication.processEvents()
@@ -342,6 +363,10 @@ class PublishFrame(QtWidgets.QWidget):
 
         self._reset_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
+
+        self._instance_label.setText("")
+        self._plugin_label.setText("")
+
         validate_enabled = not self._controller.publish_has_crashed
         publish_enabled = not self._controller.publish_has_crashed
         if validate_enabled:
