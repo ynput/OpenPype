@@ -1,8 +1,8 @@
-
 import pyblish.api
-import openpype.api
+
 from openpype.hosts.nuke.api import maintained_selection
 from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline.publish import RepairAction
 import nuke
 
 
@@ -18,7 +18,7 @@ class ValidateOutputResolution(pyblish.api.InstancePlugin):
     families = ["render", "render.local", "render.farm"]
     label = "Write Resolution"
     hosts = ["nuke"]
-    actions = [openpype.api.RepairAction]
+    actions = [RepairAction]
 
     missing_msg = "Missing Reformat node in render group node"
     resolution_msg = "Reformat is set to wrong format"

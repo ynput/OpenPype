@@ -1,8 +1,8 @@
 from maya import cmds
 
 import pyblish.api
-import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
@@ -23,7 +23,7 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder + 0.01
+    order = ValidateContentsOrder + 0.01
     families = ['look']
     hosts = ['maya']
     label = 'Look No Default Shaders'

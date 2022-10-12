@@ -1,10 +1,11 @@
 import os
-import pyblish.api
-import openpype
 from pprint import pformat
+import pyblish.api
+
+from openpype.pipeline import publish
 
 
-class ExtractReviewData(openpype.api.Extractor):
+class ExtractReviewData(publish.Extractor):
     """Extracts review tag into available representation
     """
 

@@ -1,8 +1,8 @@
 from maya import cmds
 
 import pyblish.api
-import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import ValidateMeshOrder
 
 
 class ValidateMeshLaminaFaces(pyblish.api.InstancePlugin):
@@ -12,7 +12,7 @@ class ValidateMeshLaminaFaces(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateMeshOrder
+    order = ValidateMeshOrder
     hosts = ['maya']
     families = ['model']
     category = 'geometry'

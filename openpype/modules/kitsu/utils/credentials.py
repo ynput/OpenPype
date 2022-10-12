@@ -5,6 +5,7 @@ from typing import Tuple
 import gazu
 
 from openpype.lib.local_settings import OpenPypeSecureRegistry
+from openpype.lib import emit_event
 
 
 def validate_credentials(
@@ -31,6 +32,8 @@ def validate_credentials(
         gazu.log_in(login, password)
     except gazu.exception.AuthFailedException:
         return False
+
+    emit_event("kitsu.user.logged", data={"username": login}, source="kitsu")
 
     return True
 

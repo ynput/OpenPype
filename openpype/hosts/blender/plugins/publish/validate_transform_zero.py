@@ -6,6 +6,7 @@ import bpy
 import pyblish.api
 import openpype.api
 import openpype.hosts.blender.api.action
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateTransformZero(pyblish.api.InstancePlugin):
@@ -17,7 +18,7 @@ class ValidateTransformZero(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["blender"]
     families = ["model"]
     version = (0, 1, 0)

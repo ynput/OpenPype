@@ -40,8 +40,6 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         project_name = os.getenv("AVALON_PROJECT") or "<Project not set>"
         self.setWindowTitle("Scene Inventory 1.0 - {}".format(project_name))
         self.setObjectName("SceneInventory")
-        # Maya only property
-        self.setProperty("saveWindowPref", True)
 
         self.resize(1100, 480)
 
@@ -89,7 +87,8 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         view.setColumnWidth(1, 55)   # version
         view.setColumnWidth(2, 55)   # count
         view.setColumnWidth(3, 150)  # family
-        view.setColumnWidth(4, 100)  # namespace
+        view.setColumnWidth(4, 120)  # group
+        view.setColumnWidth(5, 150)  # loader
 
         # apply delegates
         version_delegate = VersionDelegate(legacy_io, self)

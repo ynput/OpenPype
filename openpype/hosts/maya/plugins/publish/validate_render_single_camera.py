@@ -3,9 +3,9 @@ import re
 import pyblish.api
 from maya import cmds
 
-import openpype.api
 import openpype.hosts.maya.api.action
-from openpype.hosts.maya.api.render_settings import RenderSettings
+from openpype.hosts.maya.api.lib_rendersettings import RenderSettings
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
@@ -15,7 +15,7 @@ class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
     prefix must contain <Camera> token.
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     label = "Render Single Camera"
     hosts = ['maya']
     families = ["renderlayer",
@@ -38,6 +38,10 @@ class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
         # handle various renderman names
         if renderer.startswith('renderman'):
             renderer = 'renderman'
+        if renderer == "_3delight":
+            # 3delight manages its own render/camera settings and therefore
+            # doesn't play nicely with the "standard" way of doing things.
+            return
 
         file_prefix = cmds.getAttr(
             RenderSettings.get_image_prefix_attr(renderer)

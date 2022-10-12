@@ -30,8 +30,8 @@ from .widgets import (
 
 class PublisherWindow(QtWidgets.QDialog):
     """Main window of publisher."""
-    default_width = 1000
-    default_height = 600
+    default_width = 1200
+    default_height = 700
 
     def __init__(self, parent=None, reset_on_show=None):
         super(PublisherWindow, self).__init__(parent)

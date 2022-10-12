@@ -3,10 +3,11 @@
 import re
 
 import pyblish.api
-import openpype.api
+
 import openpype.hosts.maya.api.action
 from openpype.pipeline import legacy_io
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
@@ -50,7 +51,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
 
     """
     optional = True
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["maya"]
     families = ["staticMesh"]
     label = "Unreal Static Mesh Name"
