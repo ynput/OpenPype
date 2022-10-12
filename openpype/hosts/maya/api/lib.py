@@ -23,7 +23,7 @@ from openpype.client import (
     get_last_versions,
     get_representation_by_name
 )
-from openpype.api import get_anatomy_settings
+from openpype.settings import get_project_settings
 from openpype.pipeline import (
     legacy_io,
     discover_loader_plugins,
@@ -3159,7 +3159,7 @@ def set_colorspace():
     """Set Colorspace from project configuration
     """
     project_name = os.getenv("AVALON_PROJECT")
-    imageio = get_anatomy_settings(project_name)["imageio"]["maya"]
+    imageio = get_project_settings(project_name)["maya"]["imageio"]
 
     # Maya 2022+ introduces new OCIO v2 color management settings that
     # can override the old color managenement preferences. OpenPype has

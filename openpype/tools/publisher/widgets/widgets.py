@@ -1080,7 +1080,11 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
             try:
                 new_subset_name = instance.creator.get_subset_name(
-                    new_variant_value, new_task_name, asset_doc, project_name
+                    new_variant_value,
+                    new_task_name,
+                    asset_doc,
+                    project_name,
+                    instance=instance
                 )
             except TaskNotSetError:
                 invalid_tasks = True
