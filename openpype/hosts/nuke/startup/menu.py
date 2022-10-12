@@ -134,10 +134,10 @@ def switchExtension():
         old = filek.value()
         pre,ext = os.path.splitext(old)
         filek.setValue(pre + '.' + knb.value())
-knobMatrix = { 'exr': ['colorspace', 'write_ACES_compliant_EXR', 'autocrop', 'datatype', 'heroview', 'metadata', 'interleave'],
-		'png': ['colorspace', 'datatype'],
-		'tiff': ['colorspace','datatype', 'compression'],
-		'mov': ['colorspace','mov64_codec', 'mov64_fps', 'mov64_encoder' ]
+knobMatrix = { 'exr': ['colorspace','raw', 'write_ACES_compliant_EXR', 'autocrop', 'datatype', 'heroview', 'metadata', 'interleave'],
+		'png': ['colorspace', 'raw','datatype'],
+		'tiff': ['colorspace','raw','datatype', 'compression'],
+		'mov': ['colorspace','raw','mov64_codec', 'mov64_fps', 'mov64_encoder' ]
 }
 def embedOptions():
     nde = nuke.thisNode() 

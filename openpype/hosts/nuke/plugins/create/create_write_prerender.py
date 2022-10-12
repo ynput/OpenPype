@@ -9,7 +9,7 @@ class CreateWritePrerender(plugin.AbstractWriteRender):
     # change this to template preset
     name = "WritePrerender"
     label = "Create Write Prerender"
-    hosts = ["nuke"]
+    hosts = []
     n_class = "Write"
     family = "prerender"
     icon = "sign-out"
