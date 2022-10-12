@@ -475,6 +475,13 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         layer_metadata = render_products.layer_data
         layer_prefix = layer_metadata.filePrefix
 
+        plugin_info = copy.deepcopy(self.plugin_info)
+        plugin_info.update({
+            # Output directory and filename
+            "OutputFilePath": data["dirname"].replace("\\", "/"),
+            "OutputFilePrefix": layer_prefix,
+        })
+
         # This hack is here because of how Deadline handles Renderman version.
         # it considers everything with `renderman` set as version older than
         # Renderman 22, and so if we are using renderman > 21 we need to set
@@ -491,12 +498,11 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             if int(rman_version.split(".")[0]) > 22:
                 renderer = "renderman22"
 
-        plugin_info = copy.deepcopy(self.plugin_info)
-        plugin_info.update({
-            # Output directory and filename
-            "OutputFilePath": data["dirname"].replace("\\", "/"),
-            "OutputFilePrefix": layer_prefix,
-        })
+            plugin_info["Renderer"] = renderer
+
+            # this is needed because renderman plugin in Deadline
+            # handles directory and file prefixes separately
+            plugin_info["OutputFilePath"] = job_info.OutputDirectory[0]
 
         return job_info, plugin_info
 
