@@ -652,18 +652,22 @@ class PublishValidationErrorsReport:
             Dict[str, Any]: Serialized data.
         """
 
+        error_items = [
+            item.to_data()
+            for item in self._error_items
+        ]
+
+        plugin_action_items = {
+            plugin_id: [
+                action_item.to_data()
+                for action_item in action_items
+            ]
+            for plugin_id, action_items in self._plugin_action_items.items()
+        }
+
         return {
-            "error_items": [
-                item.to_data()
-                for item in self._error_items
-            ],
-            "plugin_action_items": {
-                plugin_id: [
-                    action_item.to_data()
-                    for action_item in action_items
-                ]
-                for plugin_id, action_items in self._plugin_action_items.items()
-            }
+            "error_items": error_items,
+            "plugin_action_items": plugin_action_items
         }
 
     @classmethod
