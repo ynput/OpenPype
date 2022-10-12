@@ -6,8 +6,18 @@ import collections
 import numbers
 
 import six
+import time
 
-from openpype.settings.lib import get_anatomy_settings
+from openpype.settings.lib import (
+    # get_anatomy_settings,
+    get_project_settings,
+    get_default_project_settings,
+    get_local_settings,
+    create_settings_handler,
+    apply_local_settings_on_anatomy_settings
+)
+
+from openpype.client import get_project
 from openpype.lib.path_templates import (
     TemplateUnsolved,
     TemplateResult,
@@ -39,34 +49,21 @@ class RootCombinationError(Exception):
         super(RootCombinationError, self).__init__(msg)
 
 
-class Anatomy:
+class BaseAnatomy(object):
     """Anatomy module helps to keep project settings.
 
     Wraps key project specifications, AnatomyTemplates and Roots.
-
-    Args:
-        project_name (str): Project name to look on overrides.
     """
-
     root_key_regex = re.compile(r"{(root?[^}]+)}")
     root_name_regex = re.compile(r"root\[([^]]+)\]")
 
-    def __init__(self, project_name=None, site_name=None):
-        if not project_name:
-            project_name = os.environ.get("AVALON_PROJECT")
-
-        if not project_name:
-            raise ProjectNotSet((
-                "Implementation bug: Project name is not set. Anatomy requires"
-                " to load data for specific project."
-            ))
-
+    def __init__(self, project_doc, local_settings):
+        project_name = project_doc["name"]
         self.project_name = project_name
 
         self._data = self._prepare_anatomy_data(
-            get_anatomy_settings(project_name, site_name)
+            project_doc, local_settings
         )
-        self._site_name = site_name
         self._templates_obj = AnatomyTemplates(self)
         self._roots_obj = Roots(self)
 
@@ -87,12 +84,15 @@ class Anatomy:
     def items(self):
         return copy.deepcopy(self._data).items()
 
-    @staticmethod
-    def _prepare_anatomy_data(anatomy_data):
+    def _prepare_anatomy_data(self, project_doc, local_settings):
         """Prepare anatomy data for further processing.
 
         Method added to replace `{task}` with `{task[name]}` in templates.
         """
+        project_name = project_doc["name"]
+        handler = create_settings_handler()
+        anatomy_data = handler.project_doc_to_anatomy_data(project_doc)
+
         templates_data = anatomy_data.get("templates")
         if templates_data:
             # Replace `{task}` with `{task[name]}` in templates
@@ -103,20 +103,16 @@ class Anatomy:
                 if not isinstance(item, dict):
                     continue
 
-                for key in tuple(item.keys()):
-                    value = item[key]
-                    if isinstance(value, dict):
-                        value_queue.append(value)
+        apply_local_settings_on_anatomy_settings(anatomy_data,
+                                                 local_settings, project_name)
 
-                    elif isinstance(value, six.string_types):
-                        item[key] = value.replace("{task}", "{task[name]}")
-        return anatomy_data
+        self._data = anatomy_data
 
     def reset(self):
         """Reset values of cached data in templates and roots objects."""
-        self._data = self._prepare_anatomy_data(
-            get_anatomy_settings(self.project_name, self._site_name)
-        )
+        # self._data = self._prepare_anatomy_data(
+        #     get_anatomy_settings(self.project_name, self._site_name)
+        # )
         self.templates_obj.reset()
         self.roots_obj.reset()
 
@@ -337,6 +333,59 @@ class Anatomy:
 
         data = self.root_environmets_fill_data(template)
         return rootless_path.format(**data)
+
+
+class Anatomy(BaseAnatomy):
+    _project_cache = {}
+
+    def __init__(self, project_name=None, site_name=None):
+        if not project_name:
+            project_name = os.environ.get("AVALON_PROJECT")
+
+        if not project_name:
+            raise ProjectNotSet((
+                "Implementation bug: Project name is not set. Anatomy requires"
+                " to load data for specific project."
+            ))
+
+        self._site_name = site_name
+        project_info = self.get_project_data_and_cache(project_name, site_name)
+
+        super(Anatomy, self).__init__(
+            project_info["project_doc"],
+            project_info["local_settings"]
+        )
+
+    @classmethod
+    def get_project_data_and_cache(cls, project_name, site_name):
+        project_info = cls._project_cache.get(project_name)
+        if project_info is not None:
+            if time.time() - project_info["start"] > 10:
+                cls._project_cache.pop(project_name)
+                project_info = None
+
+        if project_info is None:
+            if site_name is None:
+                if project_name:
+                    project_settings = get_project_settings(project_name)
+                else:
+                    project_settings = get_default_project_settings()
+                site_name = (
+                    project_settings["global"]
+                                    ["sync_server"]
+                                    ["config"]
+                                    ["active_site"]
+                )
+
+            project_info = {
+                "project_doc": get_project(project_name),
+                "local_settings": get_local_settings(),
+                "site_name": site_name,
+                "start": time.time()
+            }
+            cls._project_cache[project_name] = project_info
+
+        return project_info
 
 
 class AnatomyTemplateUnsolved(TemplateUnsolved):
