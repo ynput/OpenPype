@@ -187,7 +187,7 @@ class QtRemotePublishController(BasePublisherController):
 
     @abstractproperty
     def project_name(self):
-        """Current context project name.
+        """Current context project name from client.
 
         Returns:
             str: Name of project.
@@ -197,7 +197,7 @@ class QtRemotePublishController(BasePublisherController):
 
     @abstractproperty
     def current_asset_name(self):
-        """Current context asset name.
+        """Current context asset name from client.
 
         Returns:
             Union[str, None]: Name of asset.
@@ -207,23 +207,10 @@ class QtRemotePublishController(BasePublisherController):
 
     @abstractproperty
     def current_task_name(self):
-        """Current context task name.
+        """Current context task name from client.
 
         Returns:
             Union[str, None]: Name of task.
-        """
-
-        pass
-
-    @abstractproperty
-    def host_is_valid(self):
-        """Host is valid for creation part.
-
-        Host must have implemented certain functionality to be able create
-        in Publisher tool.
-
-        Returns:
-            bool: Host can handle creation of instances.
         """
 
         pass
@@ -258,16 +245,6 @@ class QtRemotePublishController(BasePublisherController):
         pass
 
     def get_existing_subset_names(self, asset_name):
-        pass
-
-    @abstractmethod
-    def reset(self):
-        """Reset whole controller.
-
-        This should reset create context, publish context and all variables
-        that are related to it.
-        """
-
         pass
 
     @abstractmethod
@@ -311,17 +288,26 @@ class QtRemotePublishController(BasePublisherController):
 
         pass
 
-    @abstractmethod
-    def save_changes(self):
-        """Save changes happened during creation."""
+    def _get_instance_changes_for_client(self):
+        """Preimplemented method to receive instance changes for client."""
 
         created_instance_changes = {}
         for instance_id, instance in self._created_instances.items():
             created_instance_changes[instance_id] = (
                 instance.remote_changes()
             )
+        return created_instance_changes
 
-        # Send 'created_instance_changes' value to client
+    @abstractmethod
+    def _send_instance_changes_to_client(self):
+        instance_changes = self._get_instance_changes_for_client()
+        # Implement to send 'instance_changes' value to client
+
+    @abstractmethod
+    def save_changes(self):
+        """Save changes happened during creation."""
+
+        self._send_instance_changes_to_client()
 
     @abstractmethod
     def remove_instances(self, instance_ids):
@@ -339,15 +325,28 @@ class QtRemotePublishController(BasePublisherController):
         pass
 
     @abstractmethod
+    def reset(self):
+        """Reset whole controller.
+
+        This should reset create context, publish context and all variables
+        that are related to it.
+        """
+
+        self._send_instance_changes_to_client()
+        pass
+
+    @abstractmethod
     def publish(self):
         """Trigger publishing without any order limitations."""
 
+        self._send_instance_changes_to_client()
         pass
 
     @abstractmethod
     def validate(self):
         """Trigger publishing which will stop after validation order."""
 
+        self._send_instance_changes_to_client()
         pass
 
     @abstractmethod
