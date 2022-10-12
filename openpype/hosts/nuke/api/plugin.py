@@ -6,7 +6,7 @@ from abc import abstractmethod
 
 import nuke
 
-from openpype.api import get_current_project_settings
+from openpype.settings import get_current_project_settings
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
