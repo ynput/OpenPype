@@ -559,7 +559,7 @@
             "type": "dict",
             "collapsible": true,
             "key": "PreIntegrateThumbnails",
-            "label": "Integrate Thumbnail Representations",
+            "label": "Override Integrate Thumbnail Representations",
             "is_group": true,
             "checkbox_key": "enabled",
             "children": [
