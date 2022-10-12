@@ -97,12 +97,24 @@ class QtPublisherController(PublisherController):
 
 
 class QtRemotePublishController(BasePublisherController):
+    """Abstract Remote controller for Qt UI.
+
+    This controller should be used in process where UI is running and should
+    listen and ask for data on a client side.
+
+    All objects that are used during UI processing should be able to convert
+    on client side to json serializable data and then recreated here. Keep in
+    mind that all changes made here should be send back to client controller
+    before critical actions.
+
+    ATM Was not tested and will require some changes. All code written here is
+    based on theoretical idea how it could work.
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._created_instances = {}
-        self._main_thread_processor = MainThreadProcess()
-        self._main_thread_processor.start()
 
     @abstractmethod
     def _get_serialized_instances(self):
@@ -113,9 +125,6 @@ class QtRemotePublishController(BasePublisherController):
         """
 
         pass
-
-    def _process_main_thread_item(self, item):
-        self._main_thread_processor.add_item(item)
 
     def _on_create_instance_change(self):
         serialized_instances = self._get_serialized_instances()
