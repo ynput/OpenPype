@@ -1,5 +1,6 @@
 {
     "level_sequences_for_layouts": false,
+    "delete_unmatched_assets": false,
     "project_setup": {
         "dev_mode": true
     }

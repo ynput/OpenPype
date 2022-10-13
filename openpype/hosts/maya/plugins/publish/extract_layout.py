@@ -34,14 +34,15 @@ class ExtractLayout(publish.Extractor):
         for asset in cmds.sets(str(instance), query=True):
             # Find the container
             grp_name = asset.split(':')[0]
-            containers = cmds.ls(f"{grp_name}*_CON")
+            containers = cmds.ls("{}*_CON".format(grp_name))
 
             assert len(containers) == 1, \
-                f"More than one container found for {asset}"
+                "More than one container found for {}".format(asset)
 
             container = containers[0]
 
-            representation_id = cmds.getAttr(f"{container}.representation")
+            representation_id = cmds.getAttr(
+                "{}.representation".format(container))
 
             representation = get_representation_by_id(
                 project_name,
@@ -56,7 +57,8 @@ class ExtractLayout(publish.Extractor):
 
             json_element = {
                 "family": family,
-                "instance_name": cmds.getAttr(f"{container}.name"),
+                "instance_name": cmds.getAttr(
+                    "{}.namespace".format(container)),
                 "representation": str(representation_id),
                 "version": str(version_id)
             }
