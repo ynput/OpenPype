@@ -1,4 +1,26 @@
 {
+    "imageio": {
+        "colorManagementPreference_v2": {
+            "enabled": true,
+            "configFilePath": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "renderSpace": "ACEScg",
+            "displayName": "sRGB",
+            "viewName": "ACES 1.0 SDR-video"
+        },
+        "colorManagementPreference": {
+            "configFilePath": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "renderSpace": "scene-linear Rec 709/sRGB",
+            "viewTransform": "sRGB gamma"
+        }
+    },
     "mel_workspace": "workspace -fr \"shaders\" \"renderData/shaders\";\nworkspace -fr \"images\" \"renders/maya\";\nworkspace -fr \"particles\" \"particles\";\nworkspace -fr \"mayaAscii\" \"\";\nworkspace -fr \"mayaBinary\" \"\";\nworkspace -fr \"scene\" \"\";\nworkspace -fr \"alembicCache\" \"cache/alembic\";\nworkspace -fr \"renderData\" \"renderData\";\nworkspace -fr \"sourceImages\" \"sourceimages\";\nworkspace -fr \"fileCache\" \"cache/nCache\";\n",
     "ext_mapping": {
         "model": "ma",
@@ -35,7 +57,7 @@
     "RenderSettings": {
         "apply_render_settings": true,
         "default_render_image_folder": "renders/maya",
-        "enable_all_lights": false,
+        "enable_all_lights": true,
         "aov_separator": "underscore",
         "reset_current_frame": false,
         "arnold_renderer": {

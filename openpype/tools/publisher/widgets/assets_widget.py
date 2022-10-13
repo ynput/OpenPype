@@ -13,18 +13,17 @@ from openpype.tools.utils.assets_widget import (
 )
 
 
-class CreateDialogAssetsWidget(SingleSelectAssetsWidget):
+class CreateWidgetAssetsWidget(SingleSelectAssetsWidget):
     current_context_required = QtCore.Signal()
     header_height_changed = QtCore.Signal(int)
 
     def __init__(self, controller, parent):
         self._controller = controller
-        super(CreateDialogAssetsWidget, self).__init__(None, parent)
+        super(CreateWidgetAssetsWidget, self).__init__(None, parent)
 
         self.set_refresh_btn_visibility(False)
         self.set_current_asset_btn_visibility(False)
 
-        self._current_asset_name = None
         self._last_selection = None
         self._enabled = None
 
@@ -42,11 +41,11 @@ class CreateDialogAssetsWidget(SingleSelectAssetsWidget):
             self.header_height_changed.emit(height)
 
     def resizeEvent(self, event):
-        super(CreateDialogAssetsWidget, self).resizeEvent(event)
+        super(CreateWidgetAssetsWidget, self).resizeEvent(event)
         self._check_header_height()
 
     def showEvent(self, event):
-        super(CreateDialogAssetsWidget, self).showEvent(event)
+        super(CreateWidgetAssetsWidget, self).showEvent(event)
         self._check_header_height()
 
     def _on_current_asset_click(self):
@@ -63,19 +62,19 @@ class CreateDialogAssetsWidget(SingleSelectAssetsWidget):
             self.select_asset(self._last_selection)
 
     def _select_indexes(self, *args, **kwargs):
-        super(CreateDialogAssetsWidget, self)._select_indexes(*args, **kwargs)
+        super(CreateWidgetAssetsWidget, self)._select_indexes(*args, **kwargs)
         if self._enabled:
             return
         self._last_selection = self.get_selected_asset_id()
         self._clear_selection()
 
-    def set_current_asset_name(self, asset_name):
-        self._current_asset_name = asset_name
+    def update_current_asset(self):
         # Hide set current asset if there is no one
-        self.set_current_asset_btn_visibility(asset_name is not None)
+        asset_name = self._get_current_session_asset()
+        self.set_current_asset_btn_visibility(bool(asset_name))
 
     def _get_current_session_asset(self):
-        return self._current_asset_name
+        return self._controller.current_asset_name
 
     def _create_source_model(self):
         return AssetsHierarchyModel(self._controller)
