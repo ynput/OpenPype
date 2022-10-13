@@ -3,11 +3,6 @@ import re
 import traceback
 import copy
 
-import qtawesome
-try:
-    import commonmark
-except Exception:
-    commonmark = None
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.client import get_asset_by_name, get_subsets
@@ -16,15 +11,14 @@ from openpype.pipeline.create import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
     TaskNotSetError,
 )
-from openpype.tools.utils import (
-    ErrorMessageBox,
-    MessageOverlayObject,
-    ClickableFrame,
-)
+from openpype.tools.utils import ErrorMessageBox
 
-from .widgets import IconValuePixmapLabel
-from .assets_widget import CreateDialogAssetsWidget
-from .tasks_widget import CreateDialogTasksWidget
+from .widgets import (
+    IconValuePixmapLabel,
+    CreateBtn,
+)
+from .assets_widget import CreateWidgetAssetsWidget
+from .tasks_widget import CreateWidgetTasksWidget
 from .precreate_widget import PreCreateWidget
 from ..constants import (
     VARIANT_TOOLTIP,
@@ -118,8 +112,6 @@ class CreateErrorMessageBox(ErrorMessageBox):
 
 # TODO add creator identifier/label to details
 class CreatorShortDescWidget(QtWidgets.QWidget):
-    height_changed = QtCore.Signal(int)
-
     def __init__(self, parent=None):
         super(CreatorShortDescWidget, self).__init__(parent=parent)
 
@@ -158,22 +150,6 @@ class CreatorShortDescWidget(QtWidgets.QWidget):
         self._family_label = family_label
         self._description_label = description_label
 
-        self._last_height = None
-
-    def _check_height_change(self):
-        height = self.height()
-        if height != self._last_height:
-            self._last_height = height
-            self.height_changed.emit(height)
-
-    def showEvent(self, event):
-        super(CreatorShortDescWidget, self).showEvent(event)
-        self._check_height_change()
-
-    def resizeEvent(self, event):
-        super(CreatorShortDescWidget, self).resizeEvent(event)
-        self._check_height_change()
-
     def set_plugin(self, plugin=None):
         if not plugin:
             self._icon_widget.set_icon_def(None)
@@ -190,122 +166,14 @@ class CreatorShortDescWidget(QtWidgets.QWidget):
         self._description_label.setText(description)
 
 
-class HelpButton(ClickableFrame):
-    resized = QtCore.Signal(int)
-    question_mark_icon_name = "fa.question"
-    help_icon_name = "fa.question-circle"
-    hide_icon_name = "fa.angle-left"
-
-    def __init__(self, *args, **kwargs):
-        super(HelpButton, self).__init__(*args, **kwargs)
-        self.setObjectName("CreateDialogHelpButton")
-
-        question_mark_label = QtWidgets.QLabel(self)
-        help_widget = QtWidgets.QWidget(self)
-
-        help_question = QtWidgets.QLabel(help_widget)
-        help_label = QtWidgets.QLabel("Help", help_widget)
-        hide_icon = QtWidgets.QLabel(help_widget)
-
-        help_layout = QtWidgets.QHBoxLayout(help_widget)
-        help_layout.setContentsMargins(0, 0, 5, 0)
-        help_layout.addWidget(help_question, 0)
-        help_layout.addWidget(help_label, 0)
-        help_layout.addStretch(1)
-        help_layout.addWidget(hide_icon, 0)
-
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        layout.addWidget(question_mark_label, 0)
-        layout.addWidget(help_widget, 1)
-
-        help_widget.setVisible(False)
-
-        self._question_mark_label = question_mark_label
-        self._help_widget = help_widget
-        self._help_question = help_question
-        self._hide_icon = hide_icon
-
-        self._expanded = None
-        self.set_expanded()
-
-    def set_expanded(self, expanded=None):
-        if self._expanded is expanded:
-            if expanded is not None:
-                return
-            expanded = False
-        self._expanded = expanded
-        self._help_widget.setVisible(expanded)
-        self._update_content()
-
-    def _update_content(self):
-        width = self.get_icon_width()
-        if self._expanded:
-            question_mark_pix = QtGui.QPixmap(width, width)
-            question_mark_pix.fill(QtCore.Qt.transparent)
-
-        else:
-            question_mark_icon = qtawesome.icon(
-                self.question_mark_icon_name, color=QtCore.Qt.white
-            )
-            question_mark_pix = question_mark_icon.pixmap(width, width)
-
-        hide_icon = qtawesome.icon(
-            self.hide_icon_name, color=QtCore.Qt.white
-        )
-        help_question_icon = qtawesome.icon(
-            self.help_icon_name, color=QtCore.Qt.white
-        )
-        self._question_mark_label.setPixmap(question_mark_pix)
-        self._question_mark_label.setMaximumWidth(width)
-        self._hide_icon.setPixmap(hide_icon.pixmap(width, width))
-        self._help_question.setPixmap(help_question_icon.pixmap(width, width))
-
-    def get_icon_width(self):
-        metrics = self.fontMetrics()
-        return metrics.height()
-
-    def set_pos_and_size(self, pos_x, pos_y, width, height):
-        update_icon = self.height() != height
-        self.move(pos_x, pos_y)
-        self.resize(width, height)
-
-        if update_icon:
-            self._update_content()
-            self.updateGeometry()
-
-    def showEvent(self, event):
-        super(HelpButton, self).showEvent(event)
-        self.resized.emit(self.height())
-
-    def resizeEvent(self, event):
-        super(HelpButton, self).resizeEvent(event)
-        self.resized.emit(self.height())
-
-
-class CreateDialog(QtWidgets.QDialog):
-    default_size = (1000, 560)
-
-    def __init__(
-        self, controller, asset_name=None, task_name=None, parent=None
-    ):
-        super(CreateDialog, self).__init__(parent)
+class CreateWidget(QtWidgets.QWidget):
+    def __init__(self, controller, parent=None):
+        super(CreateWidget, self).__init__(parent)
 
         self.setWindowTitle("Create new instance")
 
-        self.controller = controller
+        self._controller = controller
 
-        if asset_name is None:
-            asset_name = self.dbcon.Session.get("AVALON_ASSET")
-
-        if task_name is None:
-            task_name = self.dbcon.Session.get("AVALON_TASK")
-
-        self._asset_name = asset_name
-        self._task_name = task_name
-
-        self._last_pos = None
         self._asset_doc = None
         self._subset_names = None
         self._selected_creator = None
@@ -318,12 +186,12 @@ class CreateDialog(QtWidgets.QDialog):
         self._name_pattern = name_pattern
         self._compiled_name_pattern = re.compile(name_pattern)
 
-        overlay_object = MessageOverlayObject(self)
+        main_splitter_widget = QtWidgets.QSplitter(self)
 
-        context_widget = QtWidgets.QWidget(self)
+        context_widget = QtWidgets.QWidget(main_splitter_widget)
 
-        assets_widget = CreateDialogAssetsWidget(controller, context_widget)
-        tasks_widget = CreateDialogTasksWidget(controller, context_widget)
+        assets_widget = CreateWidgetAssetsWidget(controller, context_widget)
+        tasks_widget = CreateWidgetTasksWidget(controller, context_widget)
 
         context_layout = QtWidgets.QVBoxLayout(context_widget)
         context_layout.setContentsMargins(0, 0, 0, 0)
@@ -332,21 +200,44 @@ class CreateDialog(QtWidgets.QDialog):
         context_layout.addWidget(tasks_widget, 1)
 
         # --- Creators view ---
-        creators_header_widget = QtWidgets.QWidget(self)
-        header_label_widget = QtWidgets.QLabel(
-            "Choose family:", creators_header_widget
-        )
-        creators_header_layout = QtWidgets.QHBoxLayout(creators_header_widget)
-        creators_header_layout.setContentsMargins(0, 0, 0, 0)
-        creators_header_layout.addWidget(header_label_widget, 1)
+        creators_widget = QtWidgets.QWidget(main_splitter_widget)
 
-        creators_view = QtWidgets.QListView(self)
+        creator_short_desc_widget = CreatorShortDescWidget(creators_widget)
+
+        attr_separator_widget = QtWidgets.QWidget(creators_widget)
+        attr_separator_widget.setObjectName("Separator")
+        attr_separator_widget.setMinimumHeight(1)
+        attr_separator_widget.setMaximumHeight(1)
+
+        creators_splitter = QtWidgets.QSplitter(creators_widget)
+
+        creators_view_widget = QtWidgets.QWidget(creators_splitter)
+
+        creator_view_label = QtWidgets.QLabel(
+            "Choose publish type", creators_view_widget
+        )
+
+        creators_view = QtWidgets.QListView(creators_view_widget)
         creators_model = QtGui.QStandardItemModel()
         creators_sort_model = QtCore.QSortFilterProxyModel()
         creators_sort_model.setSourceModel(creators_model)
         creators_view.setModel(creators_sort_model)
 
-        variant_widget = VariantInputsWidget(self)
+        creators_view_layout = QtWidgets.QVBoxLayout(creators_view_widget)
+        creators_view_layout.setContentsMargins(0, 0, 0, 0)
+        creators_view_layout.addWidget(creator_view_label, 0)
+        creators_view_layout.addWidget(creators_view, 1)
+
+        # --- Creator attr defs ---
+        creators_attrs_widget = QtWidgets.QWidget(creators_splitter)
+
+        variant_subset_label = QtWidgets.QLabel(
+            "Create options", creators_attrs_widget
+        )
+
+        variant_subset_widget = QtWidgets.QWidget(creators_attrs_widget)
+        # Variant and subset input
+        variant_widget = VariantInputsWidget(creators_attrs_widget)
 
         variant_input = QtWidgets.QLineEdit(variant_widget)
         variant_input.setObjectName("VariantInput")
@@ -365,39 +256,20 @@ class CreateDialog(QtWidgets.QDialog):
         variant_layout.addWidget(variant_input, 1)
         variant_layout.addWidget(variant_hints_btn, 0, QtCore.Qt.AlignVCenter)
 
-        subset_name_input = QtWidgets.QLineEdit(self)
+        subset_name_input = QtWidgets.QLineEdit(variant_subset_widget)
         subset_name_input.setEnabled(False)
 
-        form_layout = QtWidgets.QFormLayout()
-        form_layout.addRow("Variant:", variant_widget)
-        form_layout.addRow("Subset:", subset_name_input)
-
-        mid_widget = QtWidgets.QWidget(self)
-        mid_layout = QtWidgets.QVBoxLayout(mid_widget)
-        mid_layout.setContentsMargins(0, 0, 0, 0)
-        mid_layout.addWidget(creators_header_widget, 0)
-        mid_layout.addWidget(creators_view, 1)
-        mid_layout.addLayout(form_layout, 0)
-        # ------------
-
-        # --- Creator short info and attr defs ---
-        creator_attrs_widget = QtWidgets.QWidget(self)
-
-        creator_short_desc_widget = CreatorShortDescWidget(
-            creator_attrs_widget
-        )
-
-        attr_separator_widget = QtWidgets.QWidget(self)
-        attr_separator_widget.setObjectName("Separator")
-        attr_separator_widget.setMinimumHeight(1)
-        attr_separator_widget.setMaximumHeight(1)
+        variant_subset_layout = QtWidgets.QFormLayout(variant_subset_widget)
+        variant_subset_layout.setContentsMargins(0, 0, 0, 0)
+        variant_subset_layout.addRow("Variant", variant_widget)
+        variant_subset_layout.addRow("Subset", subset_name_input)
 
         # Precreate attributes widget
-        pre_create_widget = PreCreateWidget(creator_attrs_widget)
+        pre_create_widget = PreCreateWidget(creators_attrs_widget)
 
         # Create button
-        create_btn_wrapper = QtWidgets.QWidget(creator_attrs_widget)
-        create_btn = QtWidgets.QPushButton("Create", create_btn_wrapper)
+        create_btn_wrapper = QtWidgets.QWidget(creators_attrs_widget)
+        create_btn = CreateBtn(create_btn_wrapper)
         create_btn.setEnabled(False)
 
         create_btn_wrap_layout = QtWidgets.QHBoxLayout(create_btn_wrapper)
@@ -405,78 +277,44 @@ class CreateDialog(QtWidgets.QDialog):
         create_btn_wrap_layout.addStretch(1)
         create_btn_wrap_layout.addWidget(create_btn, 0)
 
-        creator_attrs_layout = QtWidgets.QVBoxLayout(creator_attrs_widget)
-        creator_attrs_layout.setContentsMargins(0, 0, 0, 0)
-        creator_attrs_layout.addWidget(creator_short_desc_widget, 0)
-        creator_attrs_layout.addWidget(attr_separator_widget, 0)
-        creator_attrs_layout.addWidget(pre_create_widget, 1)
-        creator_attrs_layout.addWidget(create_btn_wrapper, 0)
-        # -------------------------------------
+        creators_attrs_layout = QtWidgets.QVBoxLayout(creators_attrs_widget)
+        creators_attrs_layout.setContentsMargins(0, 0, 0, 0)
+        creators_attrs_layout.addWidget(variant_subset_label, 0)
+        creators_attrs_layout.addWidget(variant_subset_widget, 0)
+        creators_attrs_layout.addWidget(pre_create_widget, 1)
+        creators_attrs_layout.addWidget(create_btn_wrapper, 0)
+
+        creators_splitter.addWidget(creators_view_widget)
+        creators_splitter.addWidget(creators_attrs_widget)
+        creators_splitter.setStretchFactor(0, 1)
+        creators_splitter.setStretchFactor(1, 2)
+
+        creators_layout = QtWidgets.QVBoxLayout(creators_widget)
+        creators_layout.setContentsMargins(0, 0, 0, 0)
+        creators_layout.addWidget(creator_short_desc_widget, 0)
+        creators_layout.addWidget(attr_separator_widget, 0)
+        creators_layout.addWidget(creators_splitter, 1)
+        # ------------
 
         # --- Detailed information about creator ---
         # Detailed description of creator
-        detail_description_widget = QtWidgets.QWidget(self)
-
-        detail_placoholder_widget = QtWidgets.QWidget(
-            detail_description_widget
-        )
-        detail_placoholder_widget.setAttribute(
-            QtCore.Qt.WA_TranslucentBackground
-        )
-
-        detail_description_input = QtWidgets.QTextEdit(
-            detail_description_widget
-        )
-        detail_description_input.setObjectName("CreatorDetailedDescription")
-        detail_description_input.setTextInteractionFlags(
-            QtCore.Qt.TextBrowserInteraction
-        )
-
-        detail_description_layout = QtWidgets.QVBoxLayout(
-            detail_description_widget
-        )
-        detail_description_layout.setContentsMargins(0, 0, 0, 0)
-        detail_description_layout.setSpacing(0)
-        detail_description_layout.addWidget(detail_placoholder_widget, 0)
-        detail_description_layout.addWidget(detail_description_input, 1)
-
-        detail_description_widget.setVisible(False)
+        # TODO this has no way how can be showed now
 
         # -------------------------------------------
-        splitter_widget = QtWidgets.QSplitter(self)
-        splitter_widget.addWidget(context_widget)
-        splitter_widget.addWidget(mid_widget)
-        splitter_widget.addWidget(creator_attrs_widget)
-        splitter_widget.addWidget(detail_description_widget)
-        splitter_widget.setStretchFactor(0, 1)
-        splitter_widget.setStretchFactor(1, 1)
-        splitter_widget.setStretchFactor(2, 1)
-        splitter_widget.setStretchFactor(3, 1)
+        main_splitter_widget.addWidget(context_widget)
+        main_splitter_widget.addWidget(creators_widget)
+        main_splitter_widget.setStretchFactor(0, 1)
+        main_splitter_widget.setStretchFactor(1, 3)
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.addWidget(splitter_widget, 1)
-
-        # Floating help button
-        # - Create this button as last to be fully visible
-        help_btn = HelpButton(self)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(main_splitter_widget, 1)
 
         prereq_timer = QtCore.QTimer()
         prereq_timer.setInterval(50)
         prereq_timer.setSingleShot(True)
 
-        desc_width_anim_timer = QtCore.QTimer()
-        desc_width_anim_timer.setInterval(10)
-
         prereq_timer.timeout.connect(self._invalidate_prereq)
-
-        desc_width_anim_timer.timeout.connect(self._on_desc_animation)
-
-        help_btn.clicked.connect(self._on_help_btn)
-        help_btn.resized.connect(self._on_help_btn_resize)
-
-        assets_widget.header_height_changed.connect(
-            self._on_asset_filter_height_change
-        )
 
         create_btn.clicked.connect(self._on_create)
         variant_widget.resized.connect(self._on_variant_widget_resize)
@@ -492,16 +330,14 @@ class CreateDialog(QtWidgets.QDialog):
             self._on_current_session_context_request
         )
         tasks_widget.task_changed.connect(self._on_task_change)
-        creator_short_desc_widget.height_changed.connect(
-            self._on_description_height_change
+
+        controller.event_system.add_callback(
+            "plugins.refresh.finished", self._on_plugins_refresh
         )
-        splitter_widget.splitterMoved.connect(self._on_splitter_move)
 
-        controller.add_plugins_refresh_callback(self._on_plugins_refresh)
+        self._main_splitter_widget = main_splitter_widget
 
-        self._overlay_object = overlay_object
-
-        self._splitter_widget = splitter_widget
+        self._creators_splitter = creators_splitter
 
         self._context_widget = context_widget
         self._assets_widget = assets_widget
@@ -514,7 +350,6 @@ class CreateDialog(QtWidgets.QDialog):
         self.variant_hints_menu = variant_hints_menu
         self.variant_hints_group = variant_hints_group
 
-        self._creators_header_widget = creators_header_widget
         self._creators_model = creators_model
         self._creators_sort_model = creators_sort_model
         self._creators_view = creators_view
@@ -524,26 +359,16 @@ class CreateDialog(QtWidgets.QDialog):
         self._pre_create_widget = pre_create_widget
         self._attr_separator_widget = attr_separator_widget
 
-        self._detail_placoholder_widget = detail_placoholder_widget
-        self._detail_description_widget = detail_description_widget
-        self._detail_description_input = detail_description_input
-        self._help_btn = help_btn
-
         self._prereq_timer = prereq_timer
         self._first_show = True
 
-        # Description animation
-        self._description_size_policy = detail_description_widget.sizePolicy()
-        self._desc_width_anim_timer = desc_width_anim_timer
-        self._desc_widget_step = 0
-        self._last_description_width = None
-        self._last_full_width = 0
-        self._expected_description_width = 0
-        self._last_desc_max_width = None
-        self._other_widgets_widths = []
+    @property
+    def current_asset_name(self):
+        return self._controller.current_asset_name
 
-    def _emit_message(self, message):
-        self._overlay_object.add_message(message)
+    @property
+    def current_task_name(self):
+        return self._controller.current_task_name
 
     def _context_change_is_enabled(self):
         return self._context_widget.isEnabled()
@@ -554,7 +379,7 @@ class CreateDialog(QtWidgets.QDialog):
             asset_name = self._assets_widget.get_selected_asset_name()
 
         if asset_name is None:
-            asset_name = self._asset_name
+            asset_name = self.current_asset_name
         return asset_name
 
     def _get_task_name(self):
@@ -566,12 +391,8 @@ class CreateDialog(QtWidgets.QDialog):
                 task_name = self._tasks_widget.get_selected_task_name()
 
         if not task_name:
-            task_name = self._task_name
+            task_name = self.current_task_name
         return task_name
-
-    @property
-    def dbcon(self):
-        return self.controller.dbcon
 
     def _set_context_enabled(self, enabled):
         self._assets_widget.set_enabled(enabled)
@@ -601,7 +422,7 @@ class CreateDialog(QtWidgets.QDialog):
         #   data
         self._refresh_creators()
 
-        self._assets_widget.set_current_asset_name(self._asset_name)
+        self._assets_widget.update_current_asset()
         self._assets_widget.select_asset_by_name(asset_name)
         self._tasks_widget.set_asset_name(asset_name)
         self._tasks_widget.select_task_name(task_name)
@@ -610,10 +431,6 @@ class CreateDialog(QtWidgets.QDialog):
 
     def _invalidate_prereq_deffered(self):
         self._prereq_timer.start()
-
-    def _on_asset_filter_height_change(self, height):
-        self._creators_header_widget.setMinimumHeight(height)
-        self._creators_header_widget.setMaximumHeight(height)
 
     def _invalidate_prereq(self):
         prereq_available = True
@@ -660,7 +477,7 @@ class CreateDialog(QtWidgets.QDialog):
         if asset_name is None:
             return
 
-        project_name = self.dbcon.active_project()
+        project_name = self._controller.project_name
         asset_doc = get_asset_by_name(project_name, asset_name)
         self._asset_doc = asset_doc
 
@@ -689,7 +506,7 @@ class CreateDialog(QtWidgets.QDialog):
 
         # Add new families
         new_creators = set()
-        for identifier, creator in self.controller.manual_creators.items():
+        for identifier, creator in self._controller.manual_creators.items():
             # TODO add details about creator
             new_creators.add(identifier)
             if identifier in existing_items:
@@ -729,8 +546,7 @@ class CreateDialog(QtWidgets.QDialog):
 
     def _on_plugins_refresh(self):
         # Trigger refresh only if is visible
-        if self.isVisible():
-            self.refresh()
+        self.refresh()
 
     def _on_asset_change(self):
         self._refresh_asset()
@@ -746,14 +562,9 @@ class CreateDialog(QtWidgets.QDialog):
 
     def _on_current_session_context_request(self):
         self._assets_widget.set_current_session_asset()
-        if self._task_name:
-            self._tasks_widget.select_task_name(self._task_name)
-
-    def _on_description_height_change(self):
-        # Use separator's 'y' position as height
-        height = self._attr_separator_widget.y()
-        self._detail_placoholder_widget.setMinimumHeight(height)
-        self._detail_placoholder_widget.setMaximumHeight(height)
+        task_name = self.current_task_name
+        if task_name:
+            self._tasks_widget.select_task_name(task_name)
 
     def _on_creator_item_change(self, new_index, _old_index):
         identifier = None
@@ -761,196 +572,21 @@ class CreateDialog(QtWidgets.QDialog):
             identifier = new_index.data(CREATOR_IDENTIFIER_ROLE)
         self._set_creator_by_identifier(identifier)
 
-    def _update_help_btn(self):
-        short_desc_rect = self._creator_short_desc_widget.rect()
-
-        # point = short_desc_rect.topRight()
-        point = short_desc_rect.center()
-        mapped_point = self._creator_short_desc_widget.mapTo(self, point)
-        # pos_y = mapped_point.y()
-        center_pos_y = mapped_point.y()
-        icon_width = self._help_btn.get_icon_width()
-
-        _height = int(icon_width * 2.5)
-        height = min(_height, short_desc_rect.height())
-        pos_y = center_pos_y - int(height / 2)
-
-        pos_x = self.width() - icon_width
-        if self._detail_placoholder_widget.isVisible():
-            pos_x -= (
-                self._detail_placoholder_widget.width()
-                + self._splitter_widget.handle(3).width()
-            )
-
-        width = self.width() - pos_x
-
-        self._help_btn.set_pos_and_size(
-            max(0, pos_x), max(0, pos_y),
-            width, height
-        )
-
-    def _on_help_btn_resize(self, height):
-        if self._creator_short_desc_widget.height() != height:
-            self._update_help_btn()
-
-    def _on_splitter_move(self, *args):
-        self._update_help_btn()
-
-    def _on_help_btn(self):
-        if self._desc_width_anim_timer.isActive():
-            return
-
-        final_size = self.size()
-        cur_sizes = self._splitter_widget.sizes()
-
-        if self._desc_widget_step == 0:
-            now_visible = self._detail_description_widget.isVisible()
-        else:
-            now_visible = self._desc_widget_step > 0
-
-        sizes = []
-        for idx, value in enumerate(cur_sizes):
-            if idx < 3:
-                sizes.append(value)
-
-        self._last_full_width = final_size.width()
-        self._other_widgets_widths = list(sizes)
-
-        if now_visible:
-            cur_desc_width = self._detail_description_widget.width()
-            if cur_desc_width < 1:
-                cur_desc_width = 2
-            step_size = int(cur_desc_width / 5)
-            if step_size < 1:
-                step_size = 1
-
-            step_size *= -1
-            expected_width = 0
-            desc_width = cur_desc_width - 1
-            width = final_size.width() - 1
-            min_max = desc_width
-            self._last_description_width = cur_desc_width
-
-        else:
-            self._detail_description_widget.setVisible(True)
-            handle = self._splitter_widget.handle(3)
-            desc_width = handle.sizeHint().width()
-            if self._last_description_width:
-                expected_width = self._last_description_width
-            else:
-                hint = self._detail_description_widget.sizeHint()
-                expected_width = hint.width()
-
-            width = final_size.width() + desc_width
-            step_size = int(expected_width / 5)
-            if step_size < 1:
-                step_size = 1
-            min_max = 0
-
-        if self._last_desc_max_width is None:
-            self._last_desc_max_width = (
-                self._detail_description_widget.maximumWidth()
-            )
-        self._detail_description_widget.setMinimumWidth(min_max)
-        self._detail_description_widget.setMaximumWidth(min_max)
-        self._expected_description_width = expected_width
-        self._desc_widget_step = step_size
-
-        self._desc_width_anim_timer.start()
-
-        sizes.append(desc_width)
-
-        final_size.setWidth(width)
-
-        self._splitter_widget.setSizes(sizes)
-        self.resize(final_size)
-
-        self._help_btn.set_expanded(not now_visible)
-
-    def _on_desc_animation(self):
-        current_width = self._detail_description_widget.width()
-
-        desc_width = None
-        last_step = False
-        growing = self._desc_widget_step > 0
-
-        # Growing
-        if growing:
-            if current_width < self._expected_description_width:
-                desc_width = current_width + self._desc_widget_step
-                if desc_width >= self._expected_description_width:
-                    desc_width = self._expected_description_width
-                    last_step = True
-
-        # Decreasing
-        elif self._desc_widget_step < 0:
-            if current_width > self._expected_description_width:
-                desc_width = current_width + self._desc_widget_step
-                if desc_width <= self._expected_description_width:
-                    desc_width = self._expected_description_width
-                    last_step = True
-
-        if desc_width is None:
-            self._desc_widget_step = 0
-            self._desc_width_anim_timer.stop()
-            return
-
-        if last_step and not growing:
-            self._detail_description_widget.setVisible(False)
-            QtWidgets.QApplication.processEvents()
-
-        width = self._last_full_width
-        handle_width = self._splitter_widget.handle(3).width()
-        if growing:
-            width += (handle_width + desc_width)
-        else:
-            width -= self._last_description_width
-            if last_step:
-                width -= handle_width
-            else:
-                width += desc_width
-
-        if not last_step or growing:
-            self._detail_description_widget.setMaximumWidth(desc_width)
-            self._detail_description_widget.setMinimumWidth(desc_width)
-
-        window_size = self.size()
-        window_size.setWidth(width)
-        self.resize(window_size)
-        if not last_step:
-            return
-
-        self._desc_widget_step = 0
-        self._desc_width_anim_timer.stop()
-
-        if not growing:
-            return
-
-        self._detail_description_widget.setMinimumWidth(0)
-        self._detail_description_widget.setMaximumWidth(
-            self._last_desc_max_width
-        )
-        self._detail_description_widget.setSizePolicy(
-            self._description_size_policy
-        )
-
-        sizes = list(self._other_widgets_widths)
-        sizes.append(desc_width)
-        self._splitter_widget.setSizes(sizes)
-
     def _set_creator_detailed_text(self, creator):
-        if not creator:
-            self._detail_description_input.setPlainText("")
-            return
-        detailed_description = creator.get_detail_description() or ""
-        if commonmark:
-            html = commonmark.commonmark(detailed_description)
-            self._detail_description_input.setHtml(html)
-        else:
-            self._detail_description_input.setMarkdown(detailed_description)
+        # TODO implement
+        description = ""
+        if creator is not None:
+            description = creator.get_detail_description() or description
+        self._controller.event_system.emit(
+            "show.detailed.help",
+            {
+                "message": description
+            },
+            "create.widget"
+        )
 
     def _set_creator_by_identifier(self, identifier):
-        creator = self.controller.manual_creators.get(identifier)
+        creator = self._controller.manual_creators.get(identifier)
         self._set_creator(creator)
 
     def _set_creator(self, creator):
@@ -1034,7 +670,7 @@ class CreateDialog(QtWidgets.QDialog):
             self.subset_name_input.setText("< Valid variant >")
             return
 
-        project_name = self.controller.project_name
+        project_name = self._controller.project_name
         task_name = self._get_task_name()
 
         asset_doc = copy.deepcopy(self._asset_doc)
@@ -1116,40 +752,18 @@ class CreateDialog(QtWidgets.QDialog):
             self.variant_input.style().polish(self.variant_input)
 
     def _on_first_show(self):
-        center = self.rect().center()
-
-        width, height = self.default_size
-        self.resize(width, height)
-        part = int(width / 7)
-        self._splitter_widget.setSizes(
-            [part * 2, part * 2, width - (part * 4)]
-        )
-
-        new_pos = self.mapToGlobal(center)
-        new_pos.setX(new_pos.x() - int(self.width() / 2))
-        new_pos.setY(new_pos.y() - int(self.height() / 2))
-        self.move(new_pos)
-
-    def moveEvent(self, event):
-        super(CreateDialog, self).moveEvent(event)
-        self._last_pos = self.pos()
+        width = self.width()
+        part = int(width / 4)
+        rem_width = width - part
+        self._main_splitter_widget.setSizes([part, rem_width])
+        rem_width = rem_width - part
+        self._creators_splitter.setSizes([part, rem_width])
 
     def showEvent(self, event):
-        super(CreateDialog, self).showEvent(event)
+        super(CreateWidget, self).showEvent(event)
         if self._first_show:
             self._first_show = False
             self._on_first_show()
-
-        if self._last_pos is not None:
-            self.move(self._last_pos)
-
-        self._update_help_btn()
-
-        self.refresh()
-
-    def resizeEvent(self, event):
-        super(CreateDialog, self).resizeEvent(event)
-        self._update_help_btn()
 
     def _on_create(self):
         indexes = self._creators_view.selectedIndexes()
@@ -1186,7 +800,7 @@ class CreateDialog(QtWidgets.QDialog):
         error_msg = None
         formatted_traceback = None
         try:
-            self.controller.create(
+            self._controller.create(
                 creator_identifier,
                 subset_name,
                 instance_data,
@@ -1207,7 +821,7 @@ class CreateDialog(QtWidgets.QDialog):
 
         if error_msg is None:
             self._set_creator(self._selected_creator)
-            self._emit_message("Creation finished...")
+            self._controller.emit_card_message("Creation finished...")
         else:
             box = CreateErrorMessageBox(
                 creator_label,
