@@ -11,6 +11,7 @@ repository or locally available.
 
 import os
 import sys
+import warnings
 
 import openpype.version
 
@@ -60,9 +61,16 @@ def is_running_from_build():
 def is_running_staging():
     """Currently used OpenPype is staging version.
 
+    Deprecated:
+        Since 3.15
+
     Returns:
         bool: True if openpype version containt 'staging'.
     """
+    warnings.warn(
+        "Staging version logic set by version string is deprecated.",
+        DeprecationWarning
+    )
     if "staging" in get_openpype_version():
         return True
     return False

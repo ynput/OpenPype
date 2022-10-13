@@ -16,14 +16,13 @@ from .pype_commands import PypeCommands
 @click.option("--use-staging", is_flag=True,
               expose_value=False, help="use staging variants")
 @click.option("--list-versions", is_flag=True, expose_value=False,
-              help=("list all detected versions. Use With `--use-staging "
-                    "to list staging versions."))
+              help="list all detected versions.")
 @click.option("--validate-version", expose_value=False,
               help="validate given version integrity")
 @click.option("--debug", is_flag=True, expose_value=False,
-              help=("Enable debug"))
+              help="Enable debug")
 @click.option("--verbose", expose_value=False,
-              help=("Change OpenPype log level (debug - critical or 0-50)"))
+              help="Change OpenPype log level (debug - critical or 0-50)")
 def main(ctx):
     """Pype is main command serving as entry point to pipeline system.
 
@@ -416,20 +415,18 @@ def unpack_project(zipfile, root):
 
 @main.command()
 def interactive():
-    """Interative (Python like) console.
+    """Interactive (Python like) console.
 
-    Helpfull command not only for development to directly work with python
+    Helpful command not only for development to directly work with python
     interpreter.
 
     Warning:
-        Executable 'openpype_gui' on windows won't work.
+        Executable 'openpype_gui' on Windows won't work.
     """
 
     from openpype.version import __version__
 
-    banner = "OpenPype {}\nPython {} on {}".format(
-        __version__, sys.version, sys.platform
-    )
+    banner = f"OpenPype {__version__}\nPython {sys.version} on {sys.platform}"
     code.interact(banner)
 
 

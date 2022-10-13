@@ -57,7 +57,6 @@ class OpenPypeVersion(semver.VersionInfo):
     """Class for storing information about OpenPype version.
 
     Attributes:
-        staging (bool): True if it is staging version
         path (str): path to OpenPype
 
     """
@@ -160,15 +159,6 @@ class OpenPypeVersion(semver.VersionInfo):
             return None
         version = OpenPypeVersion.parse(string[m.start():m.end()])
         return version
-
-    @classmethod
-    def parse(cls, version):
-        """Extends parse to handle ta handle staging variant."""
-        v = super().parse(version)
-        openpype_version = cls(major=v.major, minor=v.minor,
-                               patch=v.patch, prerelease=v.prerelease,
-                               build=v.build)
-        return openpype_version
 
     def __hash__(self):
         return hash(self.path) if self.path else hash(str(self))
@@ -448,7 +438,6 @@ class OpenPypeVersion(semver.VersionInfo):
         The version does not contain information about path and source.
 
         This is utility version to get the latest version from all found.
-        Build version is not listed if staging is enabled.
 
         Arguments 'local' and 'remote' define if local and remote repository
         versions are used. All versions are used if both are not set (or set
@@ -483,7 +472,7 @@ class OpenPypeVersion(semver.VersionInfo):
         return all_versions[-1]
 
     @classmethod
-    def get_expected_studio_version(cls, global_settings=None):
+    def get_expected_studio_version(cls, staging=False, global_settings=None):
         """Expected OpenPype version that should be used at the moment.
 
         If version is not defined in settings the latest found version is
@@ -492,12 +481,13 @@ class OpenPypeVersion(semver.VersionInfo):
         Using precached global settings is needed for usage inside OpenPype.
 
         Args:
+            staging (bool): Staging version or production version.
             global_settings (dict): Optional precached global settings.
 
         Returns:
             OpenPypeVersion: Version that should be used.
         """
-        result = get_expected_studio_version_str(global_settings)
+        result = get_expected_studio_version_str(staging, global_settings)
         if not result:
             return None
         return OpenPypeVersion(version=result)
@@ -567,7 +557,7 @@ class BootstrapRepos:
         """Get path for specific version in list of OpenPype versions.
 
         Args:
-            version (str): Version string to look for (1.2.4+staging)
+            version (str): Version string to look for (1.2.4-nightly.1+test)
             version_list (list of OpenPypeVersion): list of version to search.
 
         Returns:
