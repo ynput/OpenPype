@@ -762,10 +762,10 @@ def _format_tiles(
 
     Example::
         Image prefix is:
-        `maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>`
+        `<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>`
 
         Result for tile 0 for 4x4 will be:
-        `maya/<Scene>/<RenderLayer>/_tile_1x1_4x4_<RenderLayer>_<RenderPass>`
+        `<Scene>/<RenderLayer>/_tile_1x1_4x4_<RenderLayer>_<RenderPass>`
 
         Calculating coordinates is tricky as in Job they are defined as top,
     left, bottom, right with zero being in top-left corner. But Assembler
