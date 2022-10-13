@@ -42,7 +42,7 @@ class WorkfileCreator(AutoCreator):
         })
         instance_data.update(self.get_dynamic_data(
             self.default_variant, task_name, asset_doc,
-            project_name, host_name
+            project_name, host_name, instance_data
         ))
 
         instance = CreatedInstance(
