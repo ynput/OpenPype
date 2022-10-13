@@ -64,12 +64,3 @@ class CreateCamera(NukeCreator):
             self.selected_nodes = []
 
         self.log.debug("Selection is: {}".format(self.selected_nodes))
-
-    def apply_settings(self, project_settings, system_settings):
-        """Method called on initialization of plugin to apply settings."""
-
-        # only selected keys ideally
-        # settings = self.get_creator_settings(project_settings)
-
-        # self.key = settings["key"]
-        pass
