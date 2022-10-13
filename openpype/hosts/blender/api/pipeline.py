@@ -160,7 +160,6 @@ def set_use_file_compression():
     project_setting = get_project_settings(project_name)
     compress = project_setting["blender"]["general"].get("compress")
     bpy.context.preferences.filepaths.use_file_compression = compress
-    print(f"filepaths.use_file_compression = {compress}")
 
 
 def on_new():
@@ -219,8 +218,6 @@ def _on_load_post(*args):
         emit_event("new")
 
     ops.OpenFileCacher.post_load()
-    
-    print("_on_load_post")
 
 
 def _register_callbacks():
