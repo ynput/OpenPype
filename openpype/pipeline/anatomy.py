@@ -107,7 +107,7 @@ class BaseAnatomy(object):
                                                    project_name,
                                                    site_name)
 
-        self._data = anatomy_data
+        return anatomy_data
 
     @property
     def templates(self):
