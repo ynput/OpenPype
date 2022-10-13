@@ -1,12 +1,12 @@
 import os
 
 import pyblish.api
-import openpype.api
 
+from openpype.pipeline import publish
 from openpype.hosts.houdini.api.lib import render_rop
 
 
-class ExtractComposite(openpype.api.Extractor):
+class ExtractComposite(publish.Extractor):
 
     order = pyblish.api.ExtractorOrder
     label = "Extract Composite (Image Sequence)"

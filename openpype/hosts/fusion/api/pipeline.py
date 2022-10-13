@@ -4,11 +4,15 @@ Basic avalon integration
 import os
 import sys
 import logging
-import contextlib
 
 import pyblish.api
+from Qt import QtCore
 
-from openpype.lib import Logger
+from openpype.lib import (
+    Logger,
+    register_event_callback,
+    emit_event
+)
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
@@ -18,7 +22,15 @@ from openpype.pipeline import (
     deregister_inventory_action_path,
     AVALON_CONTAINER_ID,
 )
+from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.fusion import FUSION_HOST_DIR
+from openpype.tools.utils import host_tools
+
+from .lib import (
+    get_current_comp,
+    comp_lock_and_undo_chunk,
+    validate_comp_prefs
+)
 
 log = Logger.get_logger(__name__)
 
@@ -30,16 +42,17 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
-class CompLogHandler(logging.Handler):
+class FusionLogHandler(logging.Handler):
+    # Keep a reference to fusion's Print function (Remote Object)
+    _print = getattr(sys.modules["__main__"], "fusion").Print
+
     def emit(self, record):
         entry = self.format(record)
-        comp = get_current_comp()
-        if comp:
-            comp.Print(entry)
+        self._print(entry)
 
 
 def install():
-    """Install fusion-specific functionality of avalon-core.
+    """Install fusion-specific functionality of OpenPype.
 
     This is where you install menus and register families, data
     and loaders into fusion.
@@ -51,19 +64,17 @@ def install():
 
     """
     # Remove all handlers associated with the root logger object, because
-    # that one sometimes logs as "warnings" incorrectly.
+    # that one always logs as "warnings" incorrectly.
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
 
     # Attach default logging handler that prints to active comp
     logger = logging.getLogger()
     formatter = logging.Formatter(fmt="%(message)s\n")
-    handler = CompLogHandler()
+    handler = FusionLogHandler()
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
-
-    log.info("openpype.hosts.fusion installed")
 
     pyblish.api.register_host("fusion")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
@@ -76,6 +87,11 @@ def install():
     pyblish.api.register_callback(
         "instanceToggled", on_pyblish_instance_toggled
     )
+
+    # Register events
+    register_event_callback("open", on_after_open)
+    register_event_callback("save", on_save)
+    register_event_callback("new", on_new)
 
 
 def uninstall():
@@ -102,7 +118,7 @@ def uninstall():
     )
 
 
-def on_pyblish_instance_toggled(instance, new_value, old_value):
+def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle saver tool passthrough states on instance toggles."""
     comp = instance.context.data.get("currentComp")
     if not comp:
@@ -125,6 +141,48 @@ def on_pyblish_instance_toggled(instance, new_value, old_value):
                 tool.SetAttrs({"TOOLB_PassThrough": passthrough})
 
 
+def on_new(event):
+    comp = event["Rets"]["comp"]
+    validate_comp_prefs(comp, force_repair=True)
+
+
+def on_save(event):
+    comp = event["sender"]
+    validate_comp_prefs(comp)
+
+
+def on_after_open(event):
+    comp = event["sender"]
+    validate_comp_prefs(comp)
+
+    if any_outdated_containers():
+        log.warning("Scene has outdated content.")
+
+        # Find OpenPype menu to attach to
+        from . import menu
+
+        def _on_show_scene_inventory():
+            # ensure that comp is active
+            frame = comp.CurrentFrame
+            if not frame:
+                print("Comp is closed, skipping show scene inventory")
+                return
+            frame.ActivateFrame()   # raise comp window
+            host_tools.show_scene_inventory()
+
+        from openpype.widgets import popup
+        from openpype.style import load_stylesheet
+        dialog = popup.Popup(parent=menu.menu)
+        dialog.setWindowTitle("Fusion comp has outdated content")
+        dialog.setMessage("There are outdated containers in "
+                          "your Fusion comp.")
+        dialog.on_clicked.connect(_on_show_scene_inventory)
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
+        dialog.setStyleSheet(load_stylesheet())
+
+
 def ls():
     """List containers from active Fusion scene
 
@@ -138,7 +196,7 @@ def ls():
     """
 
     comp = get_current_comp()
-    tools = comp.GetToolList(False, "Loader").values()
+    tools = comp.GetToolList(False).values()
 
     for tool in tools:
         container = parse_container(tool)
@@ -210,19 +268,114 @@ def parse_container(tool):
     return container
 
 
-def get_current_comp():
-    """Hack to get current comp in this session"""
-    fusion = getattr(sys.modules["__main__"], "fusion", None)
-    return fusion.CurrentComp if fusion else None
+class FusionEventThread(QtCore.QThread):
+    """QThread which will periodically ping Fusion app for any events.
+
+    The fusion.UIManager must be set up to be notified of events before they'll
+    be reported by this thread, for example:
+        fusion.UIManager.AddNotify("Comp_Save", None)
+
+    """
+
+    on_event = QtCore.Signal(dict)
+
+    def run(self):
+
+        app = getattr(sys.modules["__main__"], "app", None)
+        if app is None:
+            # No Fusion app found
+            return
+
+        # As optimization store the GetEvent method directly because every
+        # getattr of UIManager.GetEvent tries to resolve the Remote Function
+        # through the PyRemoteObject
+        get_event = app.UIManager.GetEvent
+        delay = int(os.environ.get("OPENPYPE_FUSION_CALLBACK_INTERVAL", 1000))
+        while True:
+            if self.isInterruptionRequested():
+                return
+
+            # Process all events that have been queued up until now
+            while True:
+                event = get_event(False)
+                if not event:
+                    break
+                self.on_event.emit(event)
+
+            # Wait some time before processing events again
+            # to not keep blocking the UI
+            self.msleep(delay)
 
 
-@contextlib.contextmanager
-def comp_lock_and_undo_chunk(comp, undo_queue_name="Script CMD"):
-    """Lock comp and open an undo chunk during the context"""
-    try:
-        comp.Lock()
-        comp.StartUndo(undo_queue_name)
-        yield
-    finally:
-        comp.Unlock()
-        comp.EndUndo()
+class FusionEventHandler(QtCore.QObject):
+    """Emits OpenPype events based on Fusion events captured in a QThread.
+
+    This will emit the following OpenPype events based on Fusion actions:
+        save: Comp_Save, Comp_SaveAs
+        open: Comp_Opened
+        new: Comp_New
+
+    To use this you can attach it to you Qt UI so it runs in the background.
+    E.g.
+        >>> handler = FusionEventHandler(parent=window)
+        >>> handler.start()
+
+
+    """
+    ACTION_IDS = [
+        "Comp_Save",
+        "Comp_SaveAs",
+        "Comp_New",
+        "Comp_Opened"
+    ]
+
+    def __init__(self, parent=None):
+        super(FusionEventHandler, self).__init__(parent=parent)
+
+        # Set up Fusion event callbacks
+        fusion = getattr(sys.modules["__main__"], "fusion", None)
+        ui = fusion.UIManager
+
+        # Add notifications for the ones we want to listen to
+        notifiers = []
+        for action_id in self.ACTION_IDS:
+            notifier = ui.AddNotify(action_id, None)
+            notifiers.append(notifier)
+
+        # TODO: Not entirely sure whether these must be kept to avoid
+        #       garbage collection
+        self._notifiers = notifiers
+
+        self._event_thread = FusionEventThread(parent=self)
+        self._event_thread.on_event.connect(self._on_event)
+
+    def start(self):
+        self._event_thread.start()
+
+    def stop(self):
+        self._event_thread.stop()
+
+    def _on_event(self, event):
+        """Handle Fusion events to emit OpenPype events"""
+        if not event:
+            return
+
+        what = event["what"]
+
+        # Comp Save
+        if what in {"Comp_Save", "Comp_SaveAs"}:
+            if not event["Rets"].get("success"):
+                # If the Save action is cancelled it will still emit an
+                # event but with "success": False so we ignore those cases
+                return
+            # Comp was saved
+            emit_event("save", data=event)
+            return
+
+        # Comp New
+        elif what in {"Comp_New"}:
+            emit_event("new", data=event)
+
+        # Comp Opened
+        elif what in {"Comp_Opened"}:
+            emit_event("open", data=event)

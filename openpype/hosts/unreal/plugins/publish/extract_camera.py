@@ -6,10 +6,10 @@ import unreal
 from unreal import EditorAssetLibrary as eal
 from unreal import EditorLevelLibrary as ell
 
-import openpype.api
+from openpype.pipeline import publish
 
 
-class ExtractCamera(openpype.api.Extractor):
+class ExtractCamera(publish.Extractor):
     """Extract a camera."""
 
     label = "Extract Camera"

@@ -2,7 +2,6 @@ from collections import defaultdict
 from maya import cmds
 
 import pyblish.api
-import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     RepairAction,
