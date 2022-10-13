@@ -37,7 +37,7 @@ class ShowInKitsu(LauncherAction):
         project_zou_id = project["data"].get("zou_id")
         if not project_zou_id:
             raise RuntimeError(f"Project {project_name} has no "
-                               f"connected ftrack id.")
+                               f"connected kitsu id.")
 
         asset_zou_name = None
         asset_zou_id = None
