@@ -16,7 +16,7 @@ from openpype.hosts.nuke import api as napi
 
 class CreateWriteRender(napi.NukeWriteCreator):
     identifier = "create_write_render"
-    label = "Create Write Render"
+    label = "Render (write)"
     family = "render"
     icon = "sign-out"
 

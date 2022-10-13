@@ -16,7 +16,7 @@ from openpype.hosts.nuke import api as napi
 
 class CreateWritePrerender(napi.NukeWriteCreator):
     identifier = "create_write_prerender"
-    label = "Create Write Prerender"
+    label = "Prerender (write)"
     family = "prerender"
     icon = "sign-out"
 

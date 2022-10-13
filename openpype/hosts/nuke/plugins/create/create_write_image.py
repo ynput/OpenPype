@@ -16,7 +16,7 @@ from openpype.hosts.nuke import api as napi
 
 class CreateWriteImage(napi.NukeWriteCreator):
     identifier = "create_write_image"
-    label = "Create Write Image"
+    label = "Image (write)"
     family = "image"
     icon = "sign-out"
 

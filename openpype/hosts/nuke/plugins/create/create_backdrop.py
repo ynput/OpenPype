@@ -13,7 +13,7 @@ class CreateBackdrop(NukeCreator):
     """Add Publishable Backdrop"""
 
     identifier = "create_backdrop"
-    label = "Create Backdrop"
+    label = "Nukenodes (backdrop)"
     family = "nukenodes"
     icon = "file-archive-o"
     maintain_selection = True

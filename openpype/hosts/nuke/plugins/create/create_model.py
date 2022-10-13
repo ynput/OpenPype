@@ -10,7 +10,7 @@ class CreateModel(NukeCreator):
     """Add Publishable Camera"""
 
     identifier = "create_model"
-    label = "Create 3d Model"
+    label = "Model (3d)"
     family = "model"
     icon = "cube"
     default_variants = ["Main"]

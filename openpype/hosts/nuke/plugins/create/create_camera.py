@@ -10,7 +10,7 @@ class CreateCamera(NukeCreator):
     """Add Publishable Camera"""
 
     identifier = "create_camera"
-    label = "Create 3d Camera"
+    label = "Camera (3d)"
     family = "camera"
     icon = "camera"
 

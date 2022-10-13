@@ -11,7 +11,7 @@ from openpype.hosts.nuke.api.lib import (
 class CrateRead(plugin.OpenPypeCreator):
     # change this to template preset
     name = "ReadCopy"
-    label = "Create Read Copy"
+    label = "Source (read)"
     hosts = ["nuke"]
     family = "source"
     families = family
