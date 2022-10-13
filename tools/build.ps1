@@ -21,7 +21,7 @@ PS> .\build.ps1 --no-submodule-update
 https://openpype.io/docs
 
 #>
-param($buildname)
+
 $arguments=$ARGS
 $disable_submodule_update=""
 if($arguments -eq "--no-submodule-update") {
@@ -171,7 +171,7 @@ Write-Color -Text "OK" -Color green
 Write-Color -Text ">>> ", "Building OpenPype ..." -Color Green, White
 $startTime = [int][double]::Parse((Get-Date -UFormat %s))
 
-$out = &  "$($env:POETRY_HOME)\bin\poetry" run python setup.py build --build-exe ".\build\$buildname" 2>&1
+$out = &  "$($env:POETRY_HOME)\bin\poetry" run python setup.py build 2>&1
 Set-Content -Path "$($openpype_root)\build\build.log" -Value $out
 if ($LASTEXITCODE -ne 0)
 {
