@@ -192,8 +192,15 @@ if [ "$disable_submodule_update" == 1 ]; then
   "$POETRY_HOME/bin/poetry" run python "$openpype_root/tools/build_dependencies.py"
 
   if [[ "$OSTYPE" == "darwin"* ]]; then
+    # fix cx_Freeze libs issue
+    echo -e "${BIGreen}>>>${RST} Fixing libs ..."
+    mv "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/dependencies/cx_Freeze" "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/lib/"
+
     # fix code signing issue
-    codesign --remove-signature "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/lib/Python"
+    echo -e "${BIGreen}>>>${RST} Fixing code signatures ..."
+    codesign --remove-signature "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/openpype_console"
+    codesign --remove-signature "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/openpype_gui"
+    # codesign --remove-signature "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/lib/Python"
     if command -v create-dmg > /dev/null 2>&1; then
       create-dmg \
         --volname "OpenPype $openpype_version Installer" \
