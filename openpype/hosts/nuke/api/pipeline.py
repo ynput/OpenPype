@@ -37,7 +37,6 @@ from .lib import (
     check_inventory_versions,
     set_avalon_knob_data,
     read_avalon_data,
-    get_avalon_knob_data,
     on_script_load,
     dirmap_file_name_filter,
     add_scripts_menu,
@@ -61,6 +60,7 @@ from .workio import (
     work_root,
     current_file
 )
+from openpype.hosts.nuke.api import plugin
 
 log = Logger.get_logger(__name__)
 
@@ -297,7 +297,11 @@ def _install_menu():
         "Experimental tools...",
         lambda: host_tools.show_experimental_tools_dialog(parent=main_window)
     )
-
+    menu.addSeparator()
+    menu.addCommand(
+        "Convert old publishing instances",
+        plugin.convert_to_valid_instaces
+    )
     # add reload pipeline only in debug mode
     if bool(os.getenv("NUKE_DEBUG")):
         menu.addSeparator()

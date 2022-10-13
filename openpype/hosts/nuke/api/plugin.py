@@ -1202,14 +1202,17 @@ def convert_to_valid_instaces():
             "OpenpypeDataGroup", "OpenpypeDataGroup_End", "deadlinePriority",
             "deadlineChunkSize", "deadlineConcurrentTasks", "Deadline"
         ]
+        print(node.name())
 
         # remove all old knobs
         for knob in node.allKnobs():
-            if knob.name() in remove_knobs:
-                node.removeKnob(knob)
-            elif "avalon" in knob.name():
-                node.removeKnob(knob)
-
+            try:
+                if knob.name() in remove_knobs:
+                    node.removeKnob(knob)
+                elif "avalon" in knob.name():
+                    node.removeKnob(knob)
+            except ValueError:
+                pass
         # add new instance knob with transfer data
         set_node_data(
             node, INSTANCE_DATA_KNOB, transfer_data)
