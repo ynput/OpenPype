@@ -1,4 +1,5 @@
 {
+    "shelves": [],
     "create": {
         "CreateArnoldAss": {
             "enabled": true,

@@ -58,6 +58,7 @@ from .model import (
     ITEM_ID_ROLE
 )
 from . import lib
+from .delegates import LoadedInSceneDelegate
 
 from openpype.tools.utils.constants import (
     LOCAL_PROVIDER_ROLE,
@@ -169,6 +170,7 @@ class SubsetWidget(QtWidgets.QWidget):
         ("duration", 60),
         ("handles", 55),
         ("step", 10),
+        ("loaded_in_scene", 25),
         ("repre_info", 65)
     )
 
@@ -233,6 +235,10 @@ class SubsetWidget(QtWidgets.QWidget):
         avail_delegate = AvailabilityDelegate(self.dbcon, view)
         column = model.Columns.index("repre_info")
         view.setItemDelegateForColumn(column, avail_delegate)
+
+        loaded_in_scene_delegate = LoadedInSceneDelegate(view)
+        column = model.Columns.index("loaded_in_scene")
+        view.setItemDelegateForColumn(column, loaded_in_scene_delegate)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -1250,7 +1256,11 @@ class RepresentationWidget(QtWidgets.QWidget):
             repre_doc["parent"]
             for repre_doc in repre_docs
         ]
-        version_docs = get_versions(project_name, version_ids=version_ids)
+        version_docs = get_versions(
+            project_name,
+            version_ids=version_ids,
+            hero=True
+        )
 
         version_docs_by_id = {}
         version_docs_by_subset_id = collections.defaultdict(list)
