@@ -48,7 +48,6 @@ class ValidateWorkfilePaths(
             if not param:
                 continue
             # skip nodes we are not interested in
-            cls.log.debug(param)
             if param.node().type().name() not in cls.node_types:
                 continue
 

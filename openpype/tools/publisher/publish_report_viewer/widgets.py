@@ -331,7 +331,7 @@ class DetailsPopup(QtWidgets.QDialog):
         self.closed.emit()
 
 
-class PublishReportViewerWidget(QtWidgets.QWidget):
+class PublishReportViewerWidget(QtWidgets.QFrame):
     def __init__(self, parent=None):
         super(PublishReportViewerWidget, self).__init__(parent)
 

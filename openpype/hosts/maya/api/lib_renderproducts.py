@@ -80,7 +80,7 @@ IMAGE_PREFIXES = {
     "mayahardware2": "defaultRenderGlobals.imageFilePrefix"
 }
 
-RENDERMAN_IMAGE_DIR = "maya/<scene>/<layer>"
+RENDERMAN_IMAGE_DIR = "<scene>/<layer>"
 
 
 def has_tokens(string, tokens):
