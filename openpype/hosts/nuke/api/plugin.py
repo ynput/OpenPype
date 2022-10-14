@@ -407,15 +407,6 @@ class OpenPypeCreator(LegacyCreator):
         return instance
 
 
-def get_instance_node(instance):
-    # new publisher way
-    if instance.data.get("transientData"):
-        return instance.data["transientData"]["node"]
-    else:
-        # or backward compatible
-        return instance[0]
-
-
 def get_instance_group_node_childs(instance):
     """Return list of instance group node children
 
@@ -425,7 +416,7 @@ def get_instance_group_node_childs(instance):
     Returns:
         list: [nuke.Node]
     """
-    node = get_instance_node(instance)
+    node = instance.data["transientData"]["node"]
 
     if node.Class() != "Group":
         return
