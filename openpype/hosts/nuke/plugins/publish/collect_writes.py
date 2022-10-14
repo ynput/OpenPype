@@ -15,7 +15,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         self.log.debug(pformat(instance.data))
-        instance.data.update(instance.data["creator_attributes"])
+        creator_attributes = instance.data["creator_attributes"]
+        instance.data.update(creator_attributes)
 
         group_node = instance.data["transientData"]["node"]
         render_target = instance.data["render_target"]
@@ -26,12 +27,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         instance.data["families"].append(
             "{}.{}".format(family, render_target)
         )
-        # add additional keys to farm targeted
-        if render_target == "farm":
-            # Farm rendering
-            self.log.info("flagged for farm render")
-            instance.data["transfer"] = False
-            instance.data["farm"] = True
+        if instance.data.get("review"):
+            instance.data["families"].append("review")
 
         child_nodes = napi.get_instance_group_node_childs(instance)
         instance.data["transientData"]["childNodes"] = child_nodes
@@ -71,8 +68,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
         self.log.debug('output dir: {}'.format(output_dir))
 
-        if render_target == "frame":
-
+        if render_target == "frames":
             representation = {
                 'name': ext,
                 'ext': ext,
@@ -133,6 +129,21 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                     representation['files'] = collected_frames
 
             instance.data["representations"].append(representation)
+            self.log.info("Publishing rendered frames ...")
+
+        elif render_target == "farm":
+            farm_priority = creator_attributes.get("farm_priority")
+            farm_chunk = creator_attributes.get("farm_chunk")
+            farm_concurency = creator_attributes.get("farm_concurency")
+            instance.data.update({
+                "deadlineChunkSize": farm_chunk or 1,
+                "deadlinePriority": farm_priority or 50,
+                "deadlineConcurrentTasks": farm_concurency or 0
+            })
+            # Farm rendering
+            instance.data["transfer"] = False
+            instance.data["farm"] = True
+            self.log.info("Farm rendering ON ...")
 
         # get colorspace and add to version data
         colorspace = napi.get_colorspace_from_node(write_node)
@@ -140,28 +151,12 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "colorspace": colorspace
         }
 
-        # get deadline related attributes
-        dl_chunk_size = 1
-        if "deadlineChunkSize" in group_node.knobs():
-            dl_chunk_size = group_node["deadlineChunkSize"].value()
-
-        dl_priority = 50
-        if "deadlinePriority" in group_node.knobs():
-            dl_priority = group_node["deadlinePriority"].value()
-
-        dl_concurrent_tasks = 0
-        if "deadlineConcurrentTasks" in group_node.knobs():
-            dl_concurrent_tasks = group_node["deadlineConcurrentTasks"].value()
-
         instance.data.update({
             "versionData": version_data,
             "path": write_file_path,
             "outputDir": output_dir,
             "ext": ext,
-            "colorspace": colorspace,
-            "deadlineChunkSize": dl_chunk_size,
-            "deadlinePriority": dl_priority,
-            "deadlineConcurrentTasks": dl_concurrent_tasks
+            "colorspace": colorspace
         })
 
         if family == "render":
