@@ -1,7 +1,7 @@
-from tests.integration.hosts.maya.lib import MayaLocalPublishTestClass
+from tests.integration.hosts.maya.lib import MayaDeadlinePublishTestClass
 
 
-class TestPublishInMaya(MayaLocalPublishTestClass):
+class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
     """Basic test case for publishing in Maya
 
         Shouldnt be running standalone only via 'runtests' pype command! (??)
@@ -22,7 +22,7 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
         {OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py runtests ../tests/integration/hosts/maya  # noqa: E501
 
     """
-    PERSIST = False
+    PERSIST = True
 
     TEST_FILES = [
         ("1BTSIIULJTuDc8VvXseuiJV_fL6-Bu7FP", "test_maya_publish.zip", "")
@@ -67,4 +67,4 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
 
 
 if __name__ == "__main__":
-    test_case = TestPublishInMaya()
+    test_case = TestDeadlinePublishInMaya()
