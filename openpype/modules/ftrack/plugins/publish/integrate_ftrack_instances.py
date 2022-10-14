@@ -169,7 +169,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 thumbnail_item["thumbnail"] = True
 
                 # Create copy of item before setting location
-                if "delete" not in repre["tags"]:
+                if "delete" not in repre.get("tags", []):
                     src_components_to_add.append(copy.deepcopy(thumbnail_item))
                 # Create copy of first thumbnail
                 if first_thumbnail_component is None:
@@ -284,7 +284,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 not_first_components.append(review_item)
 
             # Create copy of item before setting location
-            if "delete" not in repre["tags"]:
+            if "delete" not in repre.get("tags", []):
                 src_components_to_add.append(copy.deepcopy(review_item))
 
             # Set location
