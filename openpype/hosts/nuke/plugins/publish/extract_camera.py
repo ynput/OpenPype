@@ -28,6 +28,7 @@ class ExtractCamera(publish.Extractor):
     ]
 
     def process(self, instance):
+        camera_node = instance.data["transientData"]["node"]
         handle_start = instance.context.data["handleStart"]
         handle_end = instance.context.data["handleEnd"]
         first_frame = int(nuke.root()["first_frame"].getValue())
@@ -38,7 +39,7 @@ class ExtractCamera(publish.Extractor):
         self.log.info("instance.data: `{}`".format(
             pformat(instance.data)))
 
-        rm_nodes = list()
+        rm_nodes = []
         self.log.info("Crating additional nodes")
         subset = instance.data["subset"]
         staging_dir = self.staging_dir(instance)
@@ -58,7 +59,7 @@ class ExtractCamera(publish.Extractor):
         with maintained_selection():
             # bake camera with axeses onto word coordinate XYZ
             rm_n = bakeCameraWithAxeses(
-                nuke.toNode(instance.data["name"]), output_range)
+                camera_node, output_range)
             rm_nodes.append(rm_n)
 
             # create scene node

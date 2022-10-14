@@ -51,7 +51,7 @@ class CollectBackdrops(pyblish.api.InstancePlugin):
 
         # make label nicer
         instance.data["label"] = "{0} ({1} nodes)".format(
-            bckn.name(), len(instance) - 1)
+            bckn.name(), len(instance.data["transientData"]["childNodes"]))
 
         instance.data["families"].append(instance.data["family"])
 
