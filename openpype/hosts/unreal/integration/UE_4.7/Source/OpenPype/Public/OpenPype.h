@@ -18,4 +18,10 @@ private:
 	void MenuPopup();
 	void MenuDialog();
 
+	void CreateSocket();
+	void ConnectToSocket();
+
+private:
+	TSharedPtr<IWebSocket> Socket;
+
 };
