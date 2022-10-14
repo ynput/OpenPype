@@ -40,7 +40,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         instance.data["toBeRenderedOn"] = "deadline"
         families = instance.data["families"]
 
-        node = instance[0]
+        node = instance.data["transientData"]["node"]
         context = instance.context
 
         # get default deadline webservice url from deadline module
