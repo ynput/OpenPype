@@ -350,12 +350,22 @@ class DeadlinePublishTest(PublishTest):
                 launched_app.terminate()
                 raise ValueError("Timeout reached")
 
-        deadline_job_id = os.environ.get("DEADLINE_PUBLISH_JOB_ID")
-        if not deadline_job_id:
-            raise ValueError("DEADLINE_PUBLISH_JOB_ID empty, cannot find job")
+        metadata_json = glob.glob(os.path.join(download_test_data,
+                                               "**/*_metadata.json"),
+                                  recursive=True)
+        if not metadata_json:
+            raise RuntimeError("No metadata file found. No job id.")
 
-        modules_manager = ModulesManager()
-        deadline_module = modules_manager.modules_by_name("deadline")
+        if len(metadata_json) > 1:
+            raise RuntimeError("Too many metadata files found.")
+
+        with open(metadata_json[0]) as fp:
+            job_info = json.load(fp)
+
+        deadline_job_id = job_info["job"]["_id"]
+
+        manager = ModulesManager()
+        deadline_module = manager.modules_by_name["deadline"]
         deadline_url = deadline_module.deadline_urls["default"]
 
         if not deadline_url:
@@ -378,7 +388,7 @@ class DeadlinePublishTest(PublishTest):
             if not response.json():
                 raise ValueError("Couldn't find {}".format(deadline_job_id))
 
-            date_finished = response.json()[0]["DateComp"]
+            date_finished = response.json()[0]["MainEnd"]
 
         # some clean exit test possible?
         print("Publish finished")
