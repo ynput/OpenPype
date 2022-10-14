@@ -480,11 +480,12 @@ class InstanceCardView(AbstractInstanceView):
         self._content_layout = content_layout
         self._content_widget = content_widget
 
-        self._widgets_by_group = {}
         self._context_widget = None
+        self._widgets_by_group = {}
+        self._ordered_groups = []
 
-        self._selected_group = None
-        self._selected_instance_id = None
+        self._explicitly_selected_instance_ids = []
+        self._explicitly_selected_groups = []
 
         self.setSizePolicy(
             QtWidgets.QSizePolicy.Minimum,
@@ -504,21 +505,30 @@ class InstanceCardView(AbstractInstanceView):
         result.setWidth(width)
         return result
 
-    def _get_selected_widget(self):
-        if self._selected_instance_id == CONTEXT_ID:
-            return self._context_widget
+    def _get_selected_widgets(self):
+        output = []
+        if (
+            self._context_widget is not None
+            and self._context_widget.is_selected
+        ):
+            output.append(self._context_widget)
 
-        group_widget = self._widgets_by_group.get(
-            self._selected_group
-        )
-        if group_widget is not None:
-            widget = group_widget.get_widget_by_instance_id(
-                self._selected_instance_id
-            )
-            if widget is not None:
-                return widget
+        for group_widget in self._widgets_by_group.values():
+            for widget in group_widget.get_selected_widgets():
+                output.append(widget)
+        return output
 
-        return None
+    def _get_selected_instance_ids(self):
+        output = []
+        if (
+            self._context_widget is not None
+            and self._context_widget.is_selected
+        ):
+            output.append(CONTEXT_ID)
+
+        for group_widget in self._widgets_by_group.values():
+            output.extend(group_widget.get_selected_instance_ids())
+        return output
 
     def refresh(self):
         """Refresh instances in view based on CreatedContext."""
@@ -533,8 +543,6 @@ class InstanceCardView(AbstractInstanceView):
 
             self.selection_changed.emit()
             self._content_layout.insertWidget(0, widget)
-
-            self.select_item(CONTEXT_ID, None)
 
         # Prepare instances by group and identifiers by group
         instances_by_group = collections.defaultdict(list)
@@ -551,15 +559,17 @@ class InstanceCardView(AbstractInstanceView):
             if group_name in instances_by_group:
                 continue
 
-            if group_name == self._selected_group:
-                self._on_remove_selected()
             widget = self._widgets_by_group.pop(group_name)
             widget.setVisible(False)
             self._content_layout.removeWidget(widget)
             widget.deleteLater()
 
+            if group_name in self._explicitly_selected_groups:
+                self._explicitly_selected_groups.remove(group_name)
+
         # Sort groups
         sorted_group_names = list(sorted(instances_by_group.keys()))
+
         # Keep track of widget indexes
         # - we start with 1 because Context item as at the top
         widget_idx = 1
@@ -577,9 +587,6 @@ class InstanceCardView(AbstractInstanceView):
                 )
                 group_widget.active_changed.connect(self._on_active_changed)
                 group_widget.selected.connect(self._on_widget_selection)
-                group_widget.removed_selected.connect(
-                    self._on_remove_selected
-                )
                 self._content_layout.insertWidget(widget_idx, group_widget)
                 self._widgets_by_group[group_name] = group_widget
 
@@ -587,6 +594,16 @@ class InstanceCardView(AbstractInstanceView):
             group_widget.update_instances(
                 instances_by_group[group_name]
             )
+
+        ordered_group_names = [""]
+        for idx in range(self._content_layout.count()):
+            if idx > 0:
+                item = self._content_layout.itemAt(idx)
+                group_widget = item.widget()
+                if group_widget is not None:
+                    ordered_group_names.append(group_widget.group_name)
+
+        self._ordered_groups = ordered_group_names
 
     def refresh_instance_states(self):
         """Trigger update of instances on group widgets."""
@@ -597,9 +614,6 @@ class InstanceCardView(AbstractInstanceView):
         self.active_changed.emit()
 
     def _on_widget_selection(self, instance_id, group_name, selection_type):
-        self.select_item(instance_id, group_name)
-
-    def select_item(self, instance_id, group_name):
         """Select specific item by instance id.
 
         Pass `CONTEXT_ID` as instance id and empty string as group to select
@@ -611,34 +625,281 @@ class InstanceCardView(AbstractInstanceView):
             group_widget = self._widgets_by_group[group_name]
             new_widget = group_widget.get_widget_by_instance_id(instance_id)
 
-        selected_widget = self._get_selected_widget()
-        if new_widget is selected_widget:
-            return
-
-        if selected_widget is not None:
-            selected_widget.set_selected(False)
-
-        self._selected_instance_id = instance_id
-        self._selected_group = group_name
-        if new_widget is not None:
-            new_widget.set_selected(True)
+        if selection_type is SelectionTypes.clear:
+            self._select_item_clear(instance_id, group_name, new_widget)
+        elif selection_type is SelectionTypes.extend:
+            self._select_item_extend(instance_id, group_name, new_widget)
+        elif selection_type is SelectionTypes.extend_to:
+            self._select_item_extend_to(instance_id, group_name, new_widget)
 
         self.selection_changed.emit()
 
-    def _on_remove_selected(self):
-        selected_widget = self._get_selected_widget()
-        if selected_widget is None:
-            self._on_widget_selection(CONTEXT_ID, None)
+    def _select_item_clear(self, instance_id, group_name, new_widget):
+        """Select specific item by instance id and clear previous selection.
+
+        Pass `CONTEXT_ID` as instance id and empty string as group to select
+        global context item.
+        """
+
+        selected_widgets = self._get_selected_widgets()
+        for widget in selected_widgets:
+            if widget.id != instance_id:
+                widget.set_selected(False)
+
+        self._explicitly_selected_groups = [group_name]
+        self._explicitly_selected_instance_ids = [instance_id]
+
+        if new_widget is not None:
+            new_widget.set_selected(True)
+
+    def _select_item_extend(self, instance_id, group_name, new_widget):
+        """Add/Remove single item to/from current selection.
+
+        If item is already selected the selection is removed.
+        """
+
+        self._explicitly_selected_instance_ids = (
+            self._get_selected_instance_ids()
+        )
+        if new_widget.is_selected:
+            self._explicitly_selected_instance_ids.remove(instance_id)
+            new_widget.set_selected(False)
+            remove_group = False
+            if instance_id == CONTEXT_ID:
+                remove_group = True
+            else:
+                group_widget = self._widgets_by_group[group_name]
+                if not group_widget.get_selected_widgets():
+                    remove_group = True
+
+            if remove_group:
+                self._explicitly_selected_groups.remove(group_name)
+            return
+
+        self._explicitly_selected_instance_ids.append(instance_id)
+        if group_name in self._explicitly_selected_groups:
+            self._explicitly_selected_groups.remove(group_name)
+        self._explicitly_selected_groups.append(group_name)
+        new_widget.set_selected(True)
+
+    def _select_item_extend_to(self, instance_id, group_name, new_widget):
+        """Extend selected items to specific instance id.
+
+        This method is handling Shift+click selection of widgets. Selection
+        is not stored to explicit selection items. That's because user can
+        shift select again and it should use last explicit selected item as
+        source item for selection.
+
+        Items selected via this function can get to explicit selection only if
+        selection is extended by one specific item ('_select_item_extend').
+        From that moment the selection is locked to new last explicit selected
+        item.
+
+        It's required to traverse through group widgets in their UI order and
+        through their instances in UI order. All explicitly selected items
+        must not change their selection state during this function. Passed
+        instance id can be above or under last selected item so a start item
+        and end item must be found to be able know which direction is selection
+        happening.
+        """
+
+        # Start group name (in '_ordered_groups')
+        start_group = None
+        # End group name (in '_ordered_groups')
+        end_group = None
+        # Instance id of first selected item
+        start_instance_id = None
+        # Instance id of last selected item
+        end_instance_id = None
+
+        # Get previously selected group by explicit selected groups
+        previous_group = None
+        if self._explicitly_selected_groups:
+            previous_group = self._explicitly_selected_groups[-1]
+
+        # Find last explicitly selected instance id
+        previous_last_selected_id = None
+        if self._explicitly_selected_instance_ids:
+            previous_last_selected_id = (
+                self._explicitly_selected_instance_ids[-1]
+            )
+
+        # If last instance id was not found or available then last selected
+        #   group is also invalid.
+        # NOTE: This probably never happen?
+        if previous_last_selected_id is None:
+            previous_group = None
+
+        # Check if previously selected group is available and find out if
+        #   new instance group is above or under previous selection
+        # - based on these information are start/end group/instance filled
+        if previous_group in self._ordered_groups:
+            new_idx = self._ordered_groups.index(group_name)
+            prev_idx = self._ordered_groups.index(previous_group)
+            if new_idx < prev_idx:
+                start_group = group_name
+                end_group = previous_group
+                start_instance_id = instance_id
+                end_instance_id = previous_last_selected_id
+            else:
+                start_group = previous_group
+                end_group = group_name
+                start_instance_id = previous_last_selected_id
+                end_instance_id = instance_id
+
+        # If start group is not set then use context item group name
+        if start_group is None:
+            start_group = ""
+
+        # If start instance id is not filled then use context id (similar to
+        #   group)
+        if start_instance_id is None:
+            start_instance_id = CONTEXT_ID
+
+        # If end group is not defined then use passed group name
+        #   - this can be happen when previous group was not selected
+        #   - when this happens the selection will probably happen from context
+        #       item to item selected by user
+        if end_group is None:
+            end_group = group_name
+
+        # If end instance is not filled then use instance selected by user
+        if end_instance_id is None:
+            end_instance_id = instance_id
+
+        # Start and end group are the same
+        # - a different logic is needed in that case
+        same_group = start_group == end_group
+
+        # Process known information and change selection of items
+        passed_start_group = False
+        passed_end_group = False
+        # Go through ordered groups (from top to bottom) and change selection
+        for name in self._ordered_groups:
+            # Prepare sorted instance widgets
+            if name == "":
+                sorted_widgets = [self._context_widget]
+            else:
+                group_widget = self._widgets_by_group[name]
+                sorted_widgets = group_widget.get_ordered_widgets()
+
+            # Change selection based on explicit selection if start group
+            #   was not passed yet
+            if not passed_start_group:
+                if name != start_group:
+                    for widget in sorted_widgets:
+                        widget.set_selected(
+                            widget.id in self._explicitly_selected_instance_ids
+                        )
+                    continue
+
+            # Change selection based on explicit selection if end group
+            #   already passed
+            if passed_end_group:
+                for widget in sorted_widgets:
+                    widget.set_selected(
+                        widget.id in self._explicitly_selected_instance_ids
+                    )
+                continue
+
+            # Start group is already passed and end group was not yet hit
+            if same_group:
+                passed_start_group = True
+                passed_end_group = True
+                passed_start_instance = False
+                passed_end_instance = False
+                for widget in sorted_widgets:
+                    if not passed_start_instance:
+                        if widget.id in (start_instance_id, end_instance_id):
+                            if widget.id != start_instance_id:
+                                # Swap start/end instance if start instance is
+                                #   after end
+                                # - fix 'passed_end_instance' check
+                                start_instance_id, end_instance_id = (
+                                    end_instance_id, start_instance_id
+                                )
+                            passed_start_instance = True
+
+                    # Find out if widget should be selected
+                    select = False
+                    if passed_end_instance:
+                        select = False
+
+                    elif passed_start_instance:
+                        select = True
+
+                    # Check if instance is in explicitly selected items if
+                    #   should ont be selected
+                    if (
+                        not select
+                        and widget.id in self._explicitly_selected_instance_ids
+                    ):
+                        select = True
+
+                    widget.set_selected(select)
+
+                    if (
+                        not passed_end_instance
+                        and widget.id == end_instance_id
+                    ):
+                        passed_end_instance = True
+
+            elif name == start_group:
+                # First group from which selection should start
+                # - look for start instance first from which the selection
+                #   should happen
+                passed_start_group = True
+                passed_start_instance = False
+                for widget in sorted_widgets:
+                    if widget.id == start_instance_id:
+                        passed_start_instance = True
+
+                    select = False
+                    # Check if passed start instance or instance is
+                    #   in explicitly selected items to be selected
+                    if (
+                        passed_start_instance
+                        or widget.id in self._explicitly_selected_instance_ids
+                    ):
+                        select = True
+                    widget.set_selected(select)
+
+            elif name == end_group:
+                # Last group where selection should happen
+                # - look for end instance first after which the selection
+                #   should stop
+                passed_end_group = True
+                passed_end_instance = False
+                for widget in sorted_widgets:
+                    select = False
+                    # Check if not yet passed end instance or if instance is
+                    #   in explicitly selected items to be selected
+                    if (
+                        not passed_end_instance
+                        or widget.id in self._explicitly_selected_instance_ids
+                    ):
+                        select = True
+
+                    widget.set_selected(select)
+
+                    if widget.id == end_instance_id:
+                        passed_end_instance = True
+
+            else:
+                # Just select everything between start and end group
+                for widget in sorted_widgets:
+                    widget.set_selected(True)
 
     def get_selected_items(self):
         """Get selected instance ids and context."""
         instances = []
-        context_selected = False
-        selected_widget = self._get_selected_widget()
-        if selected_widget is self._context_widget:
-            context_selected = True
+        selected_widgets = self._get_selected_widgets()
 
-        elif selected_widget is not None:
-            instances.append(selected_widget.instance.id)
+        context_selected = False
+        for widget in selected_widgets:
+            if widget is self._context_widget:
+                context_selected = True
+            else:
+                instances.append(widget.id)
 
         return instances, context_selected
