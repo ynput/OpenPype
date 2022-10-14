@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
+#include "IWebSocket.h"       // Socket definition
+
 
 class FOpenPypeModule : public IModuleInterface
 {
@@ -18,6 +20,11 @@ private:
 	void MenuPopup();
 	void MenuDialog();
 
+	void CreateSocket();
+	void ConnectToSocket();
+
 private:
 	TSharedPtr<class FUICommandList> PluginCommands;
+
+	TSharedPtr<IWebSocket> Socket;
 };

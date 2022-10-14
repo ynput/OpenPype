@@ -8,7 +8,8 @@ from openpype.lib import (
     PreLaunchHook,
     ApplicationLaunchFailed,
     ApplicationNotFound,
-    get_workfile_template_key
+    get_workfile_template_key,
+    get_openpype_execute_args
 )
 import openpype.hosts.unreal.lib as unreal_lib
 
@@ -122,7 +123,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
         ue_path = unreal_lib.get_editor_executable_path(
             Path(detected[engine_version]), engine_version)
 
-        self.launch_context.launch_args = [ue_path.as_posix()]
+        # self.launch_context.launch_args = [ue_path.as_posix()]
         project_path.mkdir(parents=True, exist_ok=True)
 
         project_file = project_path / unreal_project_filename
@@ -150,6 +151,21 @@ class UnrealPrelaunchHook(PreLaunchHook):
                 engine_path=Path(engine_path)
             )
 
+        # Pop unreal executable
+        executable_path = ue_path.as_posix()
+
+        new_launch_args = get_openpype_execute_args(
+            "run", self.launch_script_path(), executable_path,
+        )
+
+        # Append as whole list as these areguments should not be separated
+        self.launch_context.launch_args.append(new_launch_args)
+
         # Append project file to launch arguments
         self.launch_context.launch_args.append(
             f"\"{project_file.as_posix()}\"")
+
+    def launch_script_path(self):
+        from openpype.hosts.unreal import get_launch_script_path
+
+        return get_launch_script_path()

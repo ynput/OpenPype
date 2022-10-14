@@ -26,6 +26,7 @@ public class OpenPype : ModuleRules
 			new string[]
 			{
 				"Core",
+				"WebSockets",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
