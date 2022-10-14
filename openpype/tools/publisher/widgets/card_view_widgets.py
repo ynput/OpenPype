@@ -89,21 +89,73 @@ class GroupWidget(QtWidgets.QWidget):
         self._group_icons = group_icons
 
         self._widgets_by_id = {}
+        self._ordered_instance_ids = []
 
         self._label_widget = label_widget
         self._content_layout = layout
 
+    @property
+    def group_name(self):
+        """Group which widget represent.
+
+        Returns:
+            str: Name of group.
+        """
+
+        return self._group
+
+    def get_selected_instance_ids(self):
+        """Selected instance ids.
+
+        Returns:
+            Set[str]: Instance ids that are selected.
+        """
+
+        return {
+            instance_id
+            for instance_id, widget in self._widgets_by_id.items()
+            if widget.is_selected
+        }
+
+    def get_selected_widgets(self):
+        """Access to widgets marked as selected.
+
+        Returns:
+            List[InstanceCardWidget]: Instance widgets that are selected.
+        """
+
+        return [
+            widget
+            for instance_id, widget in self._widgets_by_id.items()
+            if widget.is_selected
+        ]
+
+    def get_ordered_widgets(self):
+        """Get instance ids in order as are shown in ui.
+
+        Returns:
+            List[str]: Instance ids.
+        """
+
+        return [
+            self._widgets_by_id[instance_id]
+            for instance_id in self._ordered_instance_ids
+        ]
+
     def get_widget_by_instance_id(self, instance_id):
         """Get instance widget by it's id."""
+
         return self._widgets_by_id.get(instance_id)
 
     def update_instance_values(self):
         """Trigger update on instance widgets."""
+
         for widget in self._widgets_by_id.values():
             widget.update_instance_values()
 
     def confirm_remove_instance_id(self, instance_id):
         """Delete widget by instance id."""
+
         widget = self._widgets_by_id.pop(instance_id)
         widget.setVisible(False)
         self._content_layout.removeWidget(widget)
@@ -140,6 +192,7 @@ class GroupWidget(QtWidgets.QWidget):
 
         # Sort instances by subset name
         sorted_subset_names = list(sorted(instances_by_subset_name.keys()))
+
         # Add new instances to widget
         widget_idx = 1
         for subset_names in sorted_subset_names:
@@ -158,6 +211,15 @@ class GroupWidget(QtWidgets.QWidget):
                     self._content_layout.insertWidget(widget_idx, widget)
                 widget_idx += 1
 
+        ordered_instance_ids = []
+        for idx in range(self._content_layout.count()):
+            if idx > 0:
+                item = self._content_layout.itemAt(idx)
+                widget = item.widget()
+                if widget is not None:
+                    ordered_instance_ids.append(widget.id)
+
+        self._ordered_instance_ids = ordered_instance_ids
 
     def _on_widget_selection(self, instance_id, group_id, selection_type):
         self.selected.emit(instance_id, group_id, selection_type)
@@ -177,6 +239,12 @@ class CardWidget(BaseClickableFrame):
 
         self._selected = False
         self._id = None
+
+    @property
+    def id(self):
+        """Id of card."""
+
+        return self._id
 
     @property
     def is_selected(self):
