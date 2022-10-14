@@ -118,9 +118,8 @@ class DBHandler:
                                    "Run with overwrite=True")
             else:
                 if collection:
-                    coll = self.client[db_name_out].get(collection)
-                    if coll:
-                        coll.drop()
+                    if collection in self.client[db_name_out].list_collection_names():
+                        self.client[db_name_out][collection].drop()
                 else:
                     self.teardown(db_name_out)
 
