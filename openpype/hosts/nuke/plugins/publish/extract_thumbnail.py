@@ -65,7 +65,7 @@ class ExtractThumbnail(publish.Extractor):
         bake_viewer_input_process_node = kwargs[
             "bake_viewer_input_process"]
 
-        node = napi.get_instance_node(instance)  # group node
+        node = instance.data["transientData"]["node"]  # group node
         self.log.info("Creating staging dir...")
 
         if "representations" not in instance.data:

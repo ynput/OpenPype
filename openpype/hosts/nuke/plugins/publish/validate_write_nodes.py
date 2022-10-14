@@ -27,7 +27,7 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
                 or instance
             )
 
-            write_group_node = napi.get_instance_node(instance)
+            write_group_node = instance.data["transientData"]["node"]
             # get write node from inside of group
             write_node = None
             for x in child_nodes:
@@ -67,7 +67,7 @@ class ValidateNukeWriteNode(
             or instance
         )
 
-        write_group_node = napi.get_instance_node(instance)
+        write_group_node = instance.data["transientData"]["node"]
 
         # get write node from inside of group
         write_node = None

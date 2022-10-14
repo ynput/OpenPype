@@ -32,7 +32,7 @@ class SelectCenterInNodeGraph(pyblish.api.Action):
         with napi.maintained_selection():
             # collect all failed nodes xpos and ypos
             for instance in instances:
-                bdn = napi.get_instance_node(instance)
+                bdn = instance.data["transientData"]["node"]
                 xC = bdn.xpos() + bdn.screenWidth() / 2
                 yC = bdn.ypos() + bdn.screenHeight() / 2
 

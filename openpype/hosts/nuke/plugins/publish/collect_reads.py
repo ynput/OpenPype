@@ -18,7 +18,7 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
     families = ["source"]
 
     def process(self, instance):
-        node = napi.get_instance_node(instance)
+        node = instance.data["transientData"]["node"]
 
         project_name = legacy_io.active_project()
         asset_name = legacy_io.Session["AVALON_ASSET"]

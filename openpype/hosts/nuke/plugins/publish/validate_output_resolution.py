@@ -75,7 +75,7 @@ class ValidateOutputResolution(pyblish.api.InstancePlugin):
         )
 
         invalid = cls.get_invalid(instance)
-        grp_node = napi.get_instance_node(instance)
+        grp_node = instance.data["transientData"]["node"]
 
         if cls.missing_msg == invalid:
             # make sure we are inside of the group node

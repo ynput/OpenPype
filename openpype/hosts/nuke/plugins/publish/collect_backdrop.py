@@ -18,7 +18,7 @@ class CollectBackdrops(pyblish.api.InstancePlugin):
     def process(self, instance):
         self.log.debug(pformat(instance.data))
 
-        bckn = napi.get_instance_node(instance)
+        bckn = instance.data["transientData"]["node"]
 
         # define size of the backdrop
         left = bckn.xpos()

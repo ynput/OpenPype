@@ -38,7 +38,7 @@ class ExtractModel(publish.Extractor):
             pformat(instance.data)))
 
         rm_nodes = []
-        model_node = napi.get_instance_node(instance)
+        model_node = instance.data["transientData"]["node"]
 
         self.log.info("Crating additional nodes")
         subset = instance.data["subset"]

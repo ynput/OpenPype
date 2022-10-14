@@ -18,7 +18,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         self.log.debug(pformat(instance.data))
         instance.data.update(instance.data["creator_attributes"])
 
-        group_node = napi.get_instance_node(instance)
+        group_node = instance.data["transientData"]["node"]
         render_target = instance.data["render_target"]
         family = instance.data["family"]
         families = instance.data["families"]

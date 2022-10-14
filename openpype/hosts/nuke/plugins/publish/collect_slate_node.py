@@ -12,7 +12,7 @@ class CollectSlate(pyblish.api.InstancePlugin):
     families = ["render"]
 
     def process(self, instance):
-        node = napi.get_instance_node(instance)
+        node = instance.data["transientData"]["node"]
 
         slate = next((n for n in nuke.allNodes()
                       if "slate" in n.name().lower()

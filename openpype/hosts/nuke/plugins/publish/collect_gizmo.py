@@ -14,7 +14,7 @@ class CollectGizmo(pyblish.api.InstancePlugin):
     families = ["gizmo"]
 
     def process(self, instance):
-        grpn = napi.get_instance_node(instance)
+        grpn = instance.data["transientData"]["node"]
 
         # add family to familiess
         instance.data["families"].insert(0, instance.data["family"])

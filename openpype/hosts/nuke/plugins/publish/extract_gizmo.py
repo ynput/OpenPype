@@ -26,7 +26,7 @@ class ExtractGizmo(publish.Extractor):
 
     def process(self, instance):
         tmp_nodes = []
-        orig_grpn = napi.get_instance_node(instance)
+        orig_grpn = instance.data["transientData"]["node"]
 
         # Define extract output file path
         stagingdir = self.staging_dir(instance)

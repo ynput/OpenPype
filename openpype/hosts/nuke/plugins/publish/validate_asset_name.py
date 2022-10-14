@@ -85,7 +85,7 @@ class RepairSelectInvalidInstances(pyblish.api.Action):
 
         context_asset = context.data["assetEntity"]["name"]
         for instance in instances:
-            origin_node = napi.get_instance_node(instance)
+            origin_node = instance.data["transientData"]["node"]
             napi.lib.recreate_instance(
                 origin_node, avalon_data={"asset": context_asset}
             )
@@ -112,7 +112,7 @@ class ValidateCorrectAssetName(pyblish.api.InstancePlugin):
     def process(self, instance):
         asset = instance.data.get("asset")
         context_asset = instance.context.data["assetEntity"]["name"]
-        node = napi.get_instance_node(instance)
+        node = instance.data["transientData"]["node"]
 
         msg = (
             "Instance `{}` has wrong shot/asset name:\n"

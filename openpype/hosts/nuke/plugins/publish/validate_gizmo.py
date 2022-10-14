@@ -29,7 +29,7 @@ class OpenFailedGroupNode(pyblish.api.Action):
         with napi.maintained_selection():
             # collect all failed nodes xpos and ypos
             for instance in instances:
-                grpn = napi.get_instance_node(instance)
+                grpn = instance.data["transientData"]["node"]
                 nuke.showDag(grpn)
 
 
@@ -45,7 +45,7 @@ class ValidateGizmo(pyblish.api.InstancePlugin):
     actions = [OpenFailedGroupNode]
 
     def process(self, instance):
-        grpn = napi.get_instance_node(instance)
+        grpn = instance.data["transientData"]["node"]
 
         with grpn:
             connections_out = nuke.allNodes('Output')

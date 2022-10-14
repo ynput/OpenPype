@@ -14,7 +14,7 @@ class CollectModel(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        geo_node = napi.get_instance_node(instance)
+        geo_node = instance.data["transientData"]["node"]
 
         # add family to familiess
         instance.data["families"].insert(0, instance.data["family"])

@@ -24,7 +24,7 @@ class RepairActionBase(pyblish.api.Action):
 
     def repair_knob(self, instances, state):
         for instance in instances:
-            node = napi.get_instance_node(instance)
+            node = instance.data["transientData"]["node"]
             files_remove = [os.path.join(instance.data["outputDir"], f)
                             for r in instance.data.get("representations", [])
                             for f in r.get("files", [])
@@ -64,7 +64,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
     actions = [RepairCollectionActionToLocal, RepairCollectionActionToFarm]
 
     def process(self, instance):
-        node = napi.get_instance_node(instance)
+        node = instance.data["transientData"]["node"]
 
         f_data = {
             "node_name": node.name()
