@@ -207,26 +207,26 @@ class BaseTVPaintRpc(JsonRpc):
         self.route_name = route_name
         self.communication_obj = communication_obj
 
-    # async def _handle_rpc_msg(self, http_request, raw_msg):
-        # # This is duplicated code from super but there is no way how to do it
-        # # to be able handle server->client requests
-        # host = http_request.host
-        # if host in self.waiting_requests:
-        #     try:
-        #         _raw_message = raw_msg.data
-        #         msg = decode_msg(_raw_message)
+    async def _handle_rpc_msg(self, http_request, raw_msg):
+        # This is duplicated code from super but there is no way how to do it
+        # to be able handle server->client requests
+        host = http_request.host
+        if host in self.waiting_requests:
+            try:
+                _raw_message = raw_msg.data
+                msg = decode_msg(_raw_message)
 
-        #     except RpcError as error:
-        #         await self._ws_send_str(http_request, encode_error(error))
-        #         return
+            except RpcError as error:
+                await self._ws_send_str(http_request, encode_error(error))
+                return
 
-        #     if msg.type in (JsonRpcMsgTyp.RESULT, JsonRpcMsgTyp.ERROR):
-        #         msg_data = json.loads(_raw_message)
-        #         if msg_data.get("id") in self.waiting_requests[host]:
-        #             self.responses[host].append(msg_data)
-        #             return
+            if msg.type in (JsonRpcMsgTyp.RESULT, JsonRpcMsgTyp.ERROR):
+                msg_data = json.loads(_raw_message)
+                if msg_data.get("id") in self.waiting_requests[host]:
+                    self.responses[host].append(msg_data)
+                    return
 
-        # return await super()._handle_rpc_msg(http_request, raw_msg)
+        return await super()._handle_rpc_msg(http_request, raw_msg)
 
     def client_connected(self):
         # TODO This is poor check. Add check it is client from TVPaint
