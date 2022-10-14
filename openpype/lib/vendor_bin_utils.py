@@ -265,6 +265,12 @@ def get_oiio_tools_path(tool="oiiotool"):
         if _oiio_executable_validation(default_path):
             tool_executable_path = default_path
 
+    # Look to PATH for the tool
+    if not tool_executable_path:
+        from_path = find_executable(tool)
+        if from_path and _oiio_executable_validation(from_path):
+            tool_executable_path = from_path
+
     CachedToolPaths.cache_executable_path(tool, tool_executable_path)
     return tool_executable_path
 
@@ -338,6 +344,12 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
         tool_path = find_executable(os.path.join(ffmpeg_dir, tool))
         if tool_path and _ffmpeg_executable_validation(tool_path):
             tool_executable_path = tool_path
+
+    # Look to PATH for the tool
+    if not tool_executable_path:
+        from_path = find_executable(tool)
+        if from_path and _oiio_executable_validation(from_path):
+            tool_executable_path = from_path
 
     CachedToolPaths.cache_executable_path(tool, tool_executable_path)
     return tool_executable_path
