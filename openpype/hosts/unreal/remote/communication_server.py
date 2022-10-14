@@ -704,7 +704,7 @@ class BaseCommunicator:
             self, loop=self.websocket_server.loop
         )
         self.websocket_server.add_route(
-            "*", "/", self.websocket_handler
+            "*", "/ws", self.websocket_handler
         )
 
     async def websocket_handler(self, request):
@@ -762,7 +762,7 @@ class BaseCommunicator:
 
         self._create_routes()
 
-        os.environ["WEBSOCKET_URL"] = "ws://localhost:{}".format(
+        os.environ["WEBSOCKET_URL"] = "ws://localhost:{}/ws".format(
             self.websocket_server.port
         )
 
@@ -930,7 +930,7 @@ class QtCommunicator(BaseCommunicator):
             self, loop=self.websocket_server.loop
         )
         self.websocket_server.add_route(
-            "*", "/", self.websocket_rpc.handle_request
+            "*", "/ws", self.websocket_rpc.handle_request
         )
 
     def execute_in_main_thread(self, main_thread_item, wait=True):
