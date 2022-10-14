@@ -1,7 +1,8 @@
 import os
-
+import platform
 from openpype.lib import PreLaunchHook
 from openpype.hosts.resolve.utils import setup
+from openpype.hosts.resolve import api as rapi
 
 
 class ResolvePrelaunch(PreLaunchHook):
@@ -14,35 +15,98 @@ class ResolvePrelaunch(PreLaunchHook):
     app_groups = ["resolve"]
 
     def execute(self):
-        # TODO: add OTIO installation from  `openpype/requirements.py`
-        # making sure python 3.6 is installed at provided path
-        py36_dir = os.path.normpath(
-            self.launch_context.env.get("PYTHON36_RESOLVE", ""))
-        assert os.path.isdir(py36_dir), (
-            "Python 3.6 is not installed at the provided folder path. Either "
-            "make sure the `environments\resolve.json` is having correctly "
-            "set `PYTHON36_RESOLVE` or make sure Python 3.6 is installed "
-            f"in given path. \nPYTHON36_RESOLVE: `{py36_dir}`"
-        )
-        self.log.info(f"Path to Resolve Python folder: `{py36_dir}`...")
+        current_platform = platform.system().lower()
 
+        PROGRAMDATA = self.launch_context.env["PROGRAMDATA"]
+        RESOLVE_SCRIPT_API_ = {
+            "windows": (
+                f"{PROGRAMDATA}/Blackmagic Design/"
+                "DaVinci Resolve/Support/Developer/Scripting"
+            ),
+            "darwin": (
+                "/Library/Application Support/Blackmagic Design"
+                "/DaVinci Resolve/Developer/Scripting"
+            ),
+            "linux": "/opt/resolve/Developer/Scripting"
+        }
+        RESOLVE_SCRIPT_API = os.path.normpath(
+            RESOLVE_SCRIPT_API_[current_platform])
+        self.launch_context.env["RESOLVE_SCRIPT_API"] = RESOLVE_SCRIPT_API
+
+        RESOLVE_SCRIPT_LIB_ = {
+            "windows": (
+                "C:/Program Files/Blackmagic Design"
+                "/DaVinci Resolve/fusionscript.dll"
+            ),
+            "darwin": (
+                "/Applications/DaVinci Resolve/DaVinci Resolve.app"
+                "/Contents/Libraries/Fusion/fusionscript.so"
+            ),
+            "linux": "/opt/resolve/libs/Fusion/fusionscript.so"
+        }
+        RESOLVE_SCRIPT_LIB = os.path.normpath(
+            RESOLVE_SCRIPT_LIB_[current_platform])
+        self.launch_context.env["RESOLVE_SCRIPT_LIB"] = RESOLVE_SCRIPT_LIB
+
+        # TODO: add OTIO installation from  `openpype/requirements.py`
+        # making sure python <3.9.* is installed at provided path
+        python3_home = os.path.normpath(
+            self.launch_context.env.get("RESOLVE_PYTHON3_HOME", ""))
+
+        assert os.path.isdir(python3_home), (
+            "Python 3 is not installed at the provided folder path. Either "
+            "make sure the `environments\resolve.json` is having correctly "
+            "set `RESOLVE_PYTHON3_HOME` or make sure Python 3 is installed "
+            f"in given path. \nRESOLVE_PYTHON3_HOME: `{python3_home}`"
+        )
+        self.launch_context.env["PYTHONHOME"] = python3_home
+        self.log.info(f"Path to Resolve Python folder: `{python3_home}`...")
+
+        # add to the python path to path
+        env_path = self.launch_context.env["PATH"]
+        self.launch_context.env["PATH"] = os.pathsep.join([
+            python3_home,
+            os.path.join(python3_home, "Scripts")
+        ] + env_path.split(os.pathsep))
+
+        self.log.debug(f"PATH: {self.launch_context.env['PATH']}")
+
+        # add to the PYTHONPATH
+        env_pythonpath = self.launch_context.env["PYTHONPATH"]
+        self.launch_context.env["PYTHONPATH"] = os.pathsep.join([
+            os.path.join(python3_home, "Lib", "site-packages"),
+            os.path.join(RESOLVE_SCRIPT_API, "Modules"),
+        ] + env_pythonpath.split(os.pathsep))
+
+        self.log.debug(f"PYTHONPATH: {self.launch_context.env['PYTHONPATH']}")
+
+        RESOLVE_UTILITY_SCRIPTS_DIR_ = {
+            "windows": (
+                f"{PROGRAMDATA}/Blackmagic Design"
+                "/DaVinci Resolve/Fusion/Scripts/Comp"
+            ),
+            "darwin": (
+                "/Library/Application Support/Blackmagic Design"
+                "/DaVinci Resolve/Fusion/Scripts/Comp"
+            ),
+            "linux": "/opt/resolve/Fusion/Scripts/Comp"
+        }
+        RESOLVE_UTILITY_SCRIPTS_DIR = os.path.normpath(
+            RESOLVE_UTILITY_SCRIPTS_DIR_[current_platform]
+        )
         # setting utility scripts dir for scripts syncing
-        us_dir = os.path.normpath(
-            self.launch_context.env.get("RESOLVE_UTILITY_SCRIPTS_DIR", "")
-        )
-        assert os.path.isdir(us_dir), (
-            "Resolve utility script dir does not exists. Either make sure "
-            "the `environments\resolve.json` is having correctly set "
-            "`RESOLVE_UTILITY_SCRIPTS_DIR` or reinstall DaVinci Resolve. \n"
-            f"RESOLVE_UTILITY_SCRIPTS_DIR: `{us_dir}`"
-        )
-        self.log.debug(f"-- us_dir: `{us_dir}`")
+        self.launch_context.env["RESOLVE_UTILITY_SCRIPTS_DIR"] = (
+            RESOLVE_UTILITY_SCRIPTS_DIR)
 
         # correctly format path for pre python script
-        pre_py_sc = os.path.normpath(
-            self.launch_context.env.get("PRE_PYTHON_SCRIPT", ""))
+        rapi_path = os.path.dirname(rapi.__file__)
+        pre_py_sc = os.path.join(
+            rapi_path, "preload_console.py")
         self.launch_context.env["PRE_PYTHON_SCRIPT"] = pre_py_sc
         self.log.debug(f"-- pre_py_sc: `{pre_py_sc}`...")
+
+        # remove terminal coloring tags
+        self.launch_context.env["OPENPYPE_LOG_NO_COLORS"] = "True"
 
         # Resolve Setup integration
         setup(self.launch_context.env)
