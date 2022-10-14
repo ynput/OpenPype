@@ -1,4 +1,4 @@
-#### Basic setup
+## Basic setup
 
 -   Actually supported version is up to v18
 -   install Python 3.6.2 (latest tested v17) or up to 3.9.13 (latest tested on v18)
@@ -6,13 +6,13 @@
     -   Python 3.9.*: open terminal and go to python.exe directory, then `python -m pip install PySide2`
 -   pip install OpenTimelineIO:
     -   Python 3.9.*: open terminal and go to python.exe directory, then  `python -m pip install OpenTimelineIO`
-    -   Python 3.6: open terminal and go to python.exe directory, then `python -m pip install git+https://github.com/PixarAnimationStudios/OpenTimelineIO.git@5aa24fbe89d615448876948fe4b4900455c9a3e8` and move built files from `%LOCALAPPDATA%/Programs/Python/Python36/Lib/site-packages/opentimelineio/cxx-libs/bin and lib` to `/Lib/site-packages/opentimelineio/`. I was building it on Win10 machine with Visual Studio Community 2019 and
+    -   Python 3.6: open terminal and go to python.exe directory, then `python -m pip install git+https://github.com/PixarAnimationStudios/OpenTimelineIO.git@5aa24fbe89d615448876948fe4b4900455c9a3e8` and move built files from `./Lib/site-packages/opentimelineio/cxx-libs/bin and lib` to `./Lib/site-packages/opentimelineio/`. I was building it on Win10 machine with Visual Studio Community 2019 and
     ![image](https://user-images.githubusercontent.com/40640033/102792588-ffcb1c80-43a8-11eb-9c6b-bf2114ed578e.png) with installed CMake in PATH.
 -   make sure Resolve Fusion (Fusion Tab/menu/Fusion/Fusion Settings) is set to Python 3.6
     ![image](https://user-images.githubusercontent.com/40640033/102631545-280b0f00-414e-11eb-89fc-98ac268d209d.png)
 -   Open OpenPype **Tray/Admin/Studio settings** > `applications/resolve/environment` and add Python3 path to `RESOLVE_PYTHON3_HOME` platform related.
 
-#### Editorial setup
+## Editorial setup
 
 This is how it looks on my testing project timeline
 ![image](https://user-images.githubusercontent.com/40640033/102637638-96ec6600-4156-11eb-9656-6e8e3ce4baf8.png)
