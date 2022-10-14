@@ -541,6 +541,6 @@ class InstanceCardView(AbstractInstanceView):
             context_selected = True
 
         elif selected_widget is not None:
-            instances.append(selected_widget.instance)
+            instances.append(selected_widget.instance.id)
 
         return instances, context_selected

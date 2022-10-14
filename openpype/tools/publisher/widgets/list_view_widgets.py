@@ -723,13 +723,13 @@ class InstanceListView(AbstractInstanceView):
             widget.update_instance_values()
 
     def _on_active_changed(self, changed_instance_id, new_value):
-        selected_instances, _ = self.get_selected_items()
+        selected_instance_ids, _ = self.get_selected_items()
 
         selected_ids = set()
         found = False
-        for instance in selected_instances:
-            selected_ids.add(instance.id)
-            if not found and instance.id == changed_instance_id:
+        for instance_id in selected_instance_ids:
+            selected_ids.add(instance_id)
+            if not found and instance_id == changed_instance_id:
                 found = True
 
         if not found:
@@ -767,9 +767,8 @@ class InstanceListView(AbstractInstanceView):
             tuple<list, bool>: Selected instance ids and boolean if context
                 is selected.
         """
-        instances = []
+        instance_ids = []
         context_selected = False
-        instances_by_id = self._controller.instances
 
         for index in self._instance_view.selectionModel().selectedIndexes():
             instance_id = index.data(INSTANCE_ID_ROLE)
@@ -777,11 +776,9 @@ class InstanceListView(AbstractInstanceView):
                 context_selected = True
 
             elif instance_id is not None:
-                instance = instances_by_id.get(instance_id)
-                if instance:
-                    instances.append(instance)
+                instance_ids.append(instance_id)
 
-        return instances, context_selected
+        return instance_ids, context_selected
 
     def _on_selection_change(self, *_args):
         self.selection_changed.emit()
