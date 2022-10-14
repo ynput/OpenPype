@@ -41,9 +41,26 @@ from ..constants import (
 )
 
 
+class SelectionType:
+    def __init__(self, name):
+        self.name = name
+
+    def __eq__(self, other):
+        if isinstance(other, SelectionType):
+            other = other.name
+        return self.name == other
+
+
+class SelectionTypes:
+    clear = SelectionType("clear")
+    extend = SelectionType("extend")
+    extend_to = SelectionType("extend_to")
+
+
 class GroupWidget(QtWidgets.QWidget):
     """Widget wrapping instances under group."""
-    selected = QtCore.Signal(str, str)
+
+    selected = QtCore.Signal(str, str, SelectionType)
     active_changed = QtCore.Signal()
     removed_selected = QtCore.Signal()
 
@@ -135,17 +152,21 @@ class GroupWidget(QtWidgets.QWidget):
                     widget = InstanceCardWidget(
                         instance, group_icon, self
                     )
-                    widget.selected.connect(self.selected)
+                    widget.selected.connect(self._on_widget_selection)
                     widget.active_changed.connect(self.active_changed)
                     self._widgets_by_id[instance.id] = widget
                     self._content_layout.insertWidget(widget_idx, widget)
                 widget_idx += 1
 
 
+    def _on_widget_selection(self, instance_id, group_id, selection_type):
+        self.selected.emit(instance_id, group_id, selection_type)
+
+
 class CardWidget(BaseClickableFrame):
     """Clickable card used as bigger button."""
 
-    selected = QtCore.Signal(str, str)
+    selected = QtCore.Signal(str, str, SelectionType)
     # Group identifier of card
     # - this must be set because if send when mouse is released with card id
     _group_identifier = None
@@ -173,7 +194,16 @@ class CardWidget(BaseClickableFrame):
 
     def _mouse_release_callback(self):
         """Trigger selected signal."""
-        self.selected.emit(self._id, self._group_identifier)
+
+        modifiers = QtWidgets.QApplication.keyboardModifiers()
+        selection_type = SelectionTypes.clear
+        if bool(modifiers & QtCore.Qt.ShiftModifier):
+            selection_type = SelectionTypes.extend_to
+
+        elif bool(modifiers & QtCore.Qt.ControlModifier):
+            selection_type = SelectionTypes.extend
+
+        self.selected.emit(self._id, self._group_identifier, selection_type)
 
 
 class ContextCardWidget(CardWidget):
@@ -498,7 +528,7 @@ class InstanceCardView(AbstractInstanceView):
     def _on_active_changed(self):
         self.active_changed.emit()
 
-    def _on_widget_selection(self, instance_id, group_name):
+    def _on_widget_selection(self, instance_id, group_name, selection_type):
         self.select_item(instance_id, group_name)
 
     def select_item(self, instance_id, group_name):
