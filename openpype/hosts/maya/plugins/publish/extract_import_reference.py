@@ -124,7 +124,6 @@ print("*** Done")
                 self.log.error("Import reference failed", exc_info=True)
                 raise
 
-
         with lib.maintained_selection():
             cmds.select(all=True, noExpand=True)
             cmds.file(reference_path,
