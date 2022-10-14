@@ -2,8 +2,6 @@ import os
 import platform
 from openpype.lib import PreLaunchHook
 from openpype.hosts.resolve.utils import setup
-from openpype.hosts.resolve import api as rapi
-
 
 class ResolvePrelaunch(PreLaunchHook):
     """
@@ -97,13 +95,6 @@ class ResolvePrelaunch(PreLaunchHook):
         # setting utility scripts dir for scripts syncing
         self.launch_context.env["RESOLVE_UTILITY_SCRIPTS_DIR"] = (
             RESOLVE_UTILITY_SCRIPTS_DIR)
-
-        # correctly format path for pre python script
-        rapi_path = os.path.dirname(rapi.__file__)
-        pre_py_sc = os.path.join(
-            rapi_path, "preload_console.py")
-        self.launch_context.env["PRE_PYTHON_SCRIPT"] = pre_py_sc
-        self.log.debug(f"-- pre_py_sc: `{pre_py_sc}`...")
 
         # remove terminal coloring tags
         self.launch_context.env["OPENPYPE_LOG_NO_COLORS"] = "True"
