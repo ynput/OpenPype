@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import time
-from openpype.hosts.resolve.utils import get_resolve_module
+from openpype.hosts.resolve.api.utils import get_resolve_module
 from openpype.lib import Logger
 
 log = Logger.get_logger(__name__)
