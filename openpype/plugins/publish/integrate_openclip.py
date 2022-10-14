@@ -45,7 +45,7 @@ class IntegrateOpenclip(pyblish.api.InstancePlugin):
         patternStripped = os.path.splitext(patternPosix)[0]
         wildcard = re.sub('[0-9]+$','{frame}',patternStripped)
         regex = re.compile('[^a-zA-Z]v[0-9]+[^a-zA-Z]')
-        versions = regex.sub(lambda m: m.group().replace(m.group()[1:-1], '{version}'),wildcard)
+        versions = regex.sub(lambda m: m.group().replace(m.group()[1:-1], 'v{version}'),wildcard)
         #versions = re.sub('/v[0-9]+', '/v{version}',wildcard)
         self.log.info(versions)
         res = requests.post('http://pype-db.local:4040', json={'output': clipPathPosix,'pattern':versions + '.' + ext})
