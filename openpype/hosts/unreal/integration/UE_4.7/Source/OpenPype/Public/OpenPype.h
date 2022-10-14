@@ -4,6 +4,8 @@
 
 #include "Engine.h"
 
+#include "IWebSocket.h"       // Socket definition
+
 
 class FOpenPypeModule : public IModuleInterface
 {

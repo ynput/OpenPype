@@ -2,6 +2,8 @@
 #include "LevelEditor.h"
 #include "OpenPypePythonBridge.h"
 #include "OpenPypeStyle.h"
+#include "GenericPlatform/GenericPlatformMisc.h"
+#include "WebSocketsModule.h" // Module definition
 
 
 static const FName OpenPypeTabName("OpenPype");
@@ -20,7 +22,7 @@ void FOpenPypeModule::StartupModule()
 
 	// Create the Extender that will add content to the menu
 	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
-	
+
 	TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
 	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender());
 
