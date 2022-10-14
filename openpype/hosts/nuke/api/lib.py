@@ -2362,26 +2362,34 @@ def get_write_node_template_attr(node):
     ''' Gets all defined data from presets
 
     '''
+    # TODO: remove this backward compatibility for old settings
+    # TASK: add identifiers to settings and rename settings key
+    plugin_names_mapping = {
+        "create_write_image": "CreateWriteImage",
+        "create_write_prerender": "CreateWritePrerender",
+        "create_write_render": "CreateWriteRender"
+    }
     # get avalon data from node
-    avalon_knob_data = read_avalon_data(node)
+    node_data = get_node_data(node, INSTANCE_DATA_KNOB)
+    identifier = node_data["creator_identifier"]
     # get template data
     nuke_imageio_writes = get_imageio_node_setting(
-        node_class=avalon_knob_data["families"],
-        plugin_name=avalon_knob_data["creator"],
-        subset=avalon_knob_data["subset"]
+        node_class="Write",
+        plugin_name=plugin_names_mapping[identifier],
+        subset=node_data["subset"]
     )
 
-    # collecting correct data
-    correct_data = OrderedDict()
+    # collecting solved data
+    return_data = OrderedDict()
 
-    # adding imageio knob presets
-    for k, v in nuke_imageio_writes.items():
-        if k in ["_id", "_previous"]:
-            continue
-        correct_data[k] = v
+    for knob in nuke_imageio_writes["knobs"]:
+        knob_type = knob["type"]
+        knob_value = knob["value"]
+        new_knob_value = convert_knob_value_to_correct_type(
+            knob_type, knob_value)
+        return_data[knob["name"]] = new_knob_value
 
-    # fix badly encoded data
-    return fix_data_for_node_create(correct_data)
+    return return_data
 
 
 def get_dependent_nodes(nodes):
