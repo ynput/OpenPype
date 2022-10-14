@@ -4,6 +4,7 @@ import sys
 from maya import cmds
 
 import pyblish.api
+import tempfile
 
 from openpype.lib import run_subprocess
 from openpype.pipeline import publish, legacy_io
@@ -33,7 +34,7 @@ class ExtractImportReference(publish.Extractor):
     order = pyblish.api.ExtractorOrder - 0.48
     hosts = ["maya"]
     families = ["renderlayer", "workfile"]
-    active = True
+    active = _import_reference()
     optional = True
     tmp_format = "_tmp"
 
@@ -68,43 +69,62 @@ class ExtractImportReference(publish.Extractor):
         ref_scene_name  = "{0}.{1}".format(tmp_name, self.scene_type)
 
         reference_path = os.path.join(dir_path, ref_scene_name)
+        tmp_path = os.path.dirname(current_name) + "/" + ref_scene_name
 
         self.log.info("Performing extraction..")
-        script = f"""
-        import maya.standalone
-        maya.standalone.initialize()
-        cmds.file('{current_name}', open=True, force=True)
-        reference_node = cmds.ls(type='reference')
-        for ref in reference_node:
-            ref_file = cmds.referenceQuery(ref, f=True)
-            if ref == 'sharedReferenceNode':
-                cmds.file(ref_file, removeReference=True, referenceNode=ref)
-            else:
-                cmds.file(ref_file, importReference=True)
-        try:
-            cmds.file(rename='{ref_scene_name}')
-        except SyntaxError:
-            cmds.file(rename='{ref_scene_name}')
 
-        cmds.file(save=True, force=True)
-        """
+        # This generates script for mayapy to take care of reference
+        # importing outside current session. It is passing current scene
+        # name and destination scene name.
+        script = ("""
+# -*- coding: utf-8 -*-
+'''Script to import references to given scene.'''
+import maya.standalone
+maya.standalone.initialize()
+# scene names filled by caller
+current_name = "{current_name}"
+ref_scene_name = "{ref_scene_name}"
+print(">>> Opening {{}} ...".format(current_name))
+cmds.file(current_name, open=True, force=True)
+reference_node = cmds.ls(type='reference')
+print(">>> Processing references")
+for ref in reference_node:
+    ref_file = cmds.referenceQuery(ref, f=True)
+    print("--- {{}}".format(ref))
+    print("--> {{}}".format(ref_file))
+    if ref == 'sharedReferenceNode':
+        cmds.file(ref_file, removeReference=True, referenceNode=ref)
+    else:
+        cmds.file(ref_file, importReference=True)
+print(">>> Saving scene as {{}}".format(ref_scene_name))
 
+cmds.file(rename=ref_scene_name)
+cmds.file(save=True, force=True)
+print("*** Done")
+        """).format(current_name=current_name, ref_scene_name=tmp_path)
         mayapy_exe = os.path.join(os.getenv("MAYA_LOCATION"), "bin", "mayapy")
         if sys.platform == "windows":
-            mayapy_exe = mayapy_exe + ".exe"
+            mayapy_exe += ".exe"
+            mayapy_exe = os.path.normpath(mayapy_exe)
+        # can't use TemporaryNamedFile as that can't be opened in another
+        # process until handles are closed by context manager.
+        with tempfile.TemporaryDirectory() as tmp_dir_name:
+            tmp_file_name = os.path.join(tmp_dir_name, "import_ref.py")
+            tmp = open(tmp_file_name, "w+t")
+            subprocess_args = [
+                mayapy_exe,
+                tmp_file_name
+            ]
+            self.log.info("Using temp file: {}".format(tmp.name))
+            try:
+                tmp.write(script)
+                tmp.close()
+                run_subprocess(subprocess_args)
+            except Exception:
+                self.log.error("Import reference failed", exc_info=True)
+                raise
 
-        subprocess_args = [
-            mayapy_exe,
-            "-c",
-        script.replace("\n", ";")
-        ]
-        try:
-            out = run_subprocess(subprocess_args)
-        except Exception:
-            self.log.error("Import reference failed", exc_info=True)
-            raise
 
-        instance.context.data["currentFile"] = ref_scene_name
         with lib.maintained_selection():
             cmds.select(all=True, noExpand=True)
             cmds.file(reference_path,
@@ -117,6 +137,8 @@ class ExtractImportReference(publish.Extractor):
                       expressions=True,
                       constructionHistory=True)
 
+        instance.context.data["currentFile"] = tmp_path
+
         if "files" not in instance.data:
             instance.data["files"] = []
         instance.data["files"].append(ref_scene_name)
@@ -128,8 +150,10 @@ class ExtractImportReference(publish.Extractor):
             "name": self.scene_type,
             "ext": self.scene_type,
             "files": ref_scene_name,
-            "stagingDir": os.path.dirname(current_name)
+            "stagingDir": os.path.dirname(current_name),
+            "outputName": "imported"
         }
+        self.log.info("%s" % ref_representation)
 
         instance.data["representations"].append(ref_representation)
 

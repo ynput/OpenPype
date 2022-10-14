@@ -526,7 +526,6 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
         template_data = workfile_instance.data.get("anatomyData")
         if self.import_reference:
             rep = workfile_instance.data.get("representations")[1]
-            # template_data["workfiletype"] = rep.get("workfiletype")
         else:
             rep = workfile_instance.data.get("representations")[0]
         template_data["representation"] = rep.get("name")
@@ -536,7 +535,6 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
         anatomy = instance.context.data['anatomy']
         anatomy_filled = anatomy.format(template_data)
         template_filled = anatomy_filled["publish"]["path"]
-        # template_filled = anatomy_filled["others"]["mayaWorkfile"]["path"]
         file_path = os.path.normpath(template_filled)
 
         self.log.info("Using published scene for render {}".format(file_path))
