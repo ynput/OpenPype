@@ -3,22 +3,19 @@ import os
 import nuke
 
 import pyblish.api
-import openpype.api as pype
-from openpype.hosts.nuke.api.lib import (
-    add_publish_knob,
-    get_avalon_knob_data
-)
+import openpype.api as api
 from openpype.pipeline import KnownPublishError
 
 
-class CollectWorkfile(pyblish.api.ContextPlugin):
+class CollectWorkfile(pyblish.api.InstancePlugin):
     """Collect current script for publish."""
 
-    order = pyblish.api.CollectorOrder - 0.50
+    order = pyblish.api.CollectorOrder - 0.499
     label = "Collect Workfile"
     hosts = ['nuke']
+    families = ["workfile"]
 
-    def process(self, context):  # sourcery skip: avoid-builtin-shadow
+    def process(self, instance):  # sourcery skip: avoid-builtin-shadow
         root = nuke.root()
 
         current_file = os.path.normpath(nuke.root().name())
@@ -29,23 +26,16 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
                 "Use workfile tool to manage the name correctly."
             )
 
-        knob_data = get_avalon_knob_data(root)
-
-        add_publish_knob(root)
-
-        family = "workfile"
-        task = os.getenv("AVALON_TASK", None)
         # creating instances per write node
         staging_dir = os.path.dirname(current_file)
         base_name = os.path.basename(current_file)
-        subset = family + task.capitalize()
 
         # Get frame range
         first_frame = int(root["first_frame"].getValue())
         last_frame = int(root["last_frame"].getValue())
 
-        handle_start = int(knob_data.get("handleStart", 0))
-        handle_end = int(knob_data.get("handleEnd", 0))
+        handle_start = instance.data["handleStart"]
+        handle_end = instance.data["handleEnd"]
 
         # Get format
         format = root['format'].value()
@@ -53,33 +43,27 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         resolution_height = format.height()
         pixel_aspect = format.pixelAspect()
 
-        # Create instance
-        instance = context.create_instance(subset)
-        instance.add(root)
-
         script_data = {
-            "asset": os.getenv("AVALON_ASSET", None),
             "frameStart": first_frame + handle_start,
             "frameEnd": last_frame - handle_end,
             "resolutionWidth": resolution_width,
             "resolutionHeight": resolution_height,
             "pixelAspect": pixel_aspect,
 
-            # backward compatibility
+            # backward compatibility handles
             "handles": handle_start,
-
             "handleStart": handle_start,
             "handleEnd": handle_end,
             "step": 1,
             "fps": root['fps'].value(),
 
             "currentFile": current_file,
-            "version": int(pype.get_version_from_path(current_file)),
+            "version": int(api.get_version_from_path(current_file)),
 
             "host": pyblish.api.current_host(),
             "hostVersion": nuke.NUKE_VERSION_STRING
         }
-        context.data.update(script_data)
+        instance.context.data.update(script_data)
 
         # creating representation
         representation = {
@@ -91,12 +75,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         # creating instance data
         instance.data.update({
-            "subset": subset,
-            "label": base_name,
             "name": base_name,
-            "publish": root.knob('publish').value(),
-            "family": family,
-            "families": [family],
             "representations": [representation]
         })
 
