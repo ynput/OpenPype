@@ -384,12 +384,10 @@ class PublishFrame(QtWidgets.QWidget):
         self._validate_btn.setEnabled(validate_enabled)
         self._publish_btn.setEnabled(publish_enabled)
 
-        error_msg = self._controller.publish_error_msg
-        validation_errors = self._controller.get_validation_errors()
-        if error_msg:
-            self._set_error_msg(error_msg)
+        if self._controller.publish_has_crashed:
+            self._set_error_msg()
 
-        elif validation_errors:
+        elif self._controller.publish_has_validation_errors:
             self._set_progress_visibility(False)
             self._set_validation_errors()
 
@@ -411,16 +409,12 @@ class PublishFrame(QtWidgets.QWidget):
 
         self._set_success_property(-1)
 
-    def _set_error_msg(self, error_msg):
-        """Show error message to artist.
-
-        Args:
-            error_msg (str): Message which is showed to artist.
-        """
+    def _set_error_msg(self):
+        """Show error message to artist on publish crash."""
 
         self._set_main_label("Error happened")
 
-        self._message_label_top.setText(error_msg)
+        self._message_label_top.setText(self._controller.publish_error_msg)
 
         self._set_success_property(0)
 
