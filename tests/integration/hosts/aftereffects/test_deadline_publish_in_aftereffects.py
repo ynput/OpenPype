@@ -1,23 +1,25 @@
 import logging
 
 from tests.lib.assert_classes import DBAssert
-from tests.integration.hosts.aftereffects.lib import AELocalPublishTestClass
+from tests.integration.hosts.aftereffects.lib import AEDeadlinePublishTestClass
 
 log = logging.getLogger("test_publish_in_aftereffects")
 
 
-class TestPublishInAfterEffects(AELocalPublishTestClass):
-    """Basic test case for publishing in AfterEffects
+class TestDeadlinePublishInAfterEffects(AEDeadlinePublishTestClass):
+    """Basic test case for DL publishing in AfterEffects
 
         Uses generic TestCase to prepare fixtures for test data, testing DBs,
         env vars.
 
-        Opens AfterEffects, run publish on prepared workile.
+        Opens AfterEffects, run DL publish on prepared workile.
 
         Test zip file sets 3 required env vars:
         - HEADLESS_PUBLISH - this triggers publish immediately app is open
         - IS_TEST - this differentiate between regular webpublish
         - PYBLISH_TARGETS
+
+        Waits for publish job on DL is finished.
 
         Then checks content of DB (if subset, version, representations were
         created.
@@ -74,4 +76,4 @@ class TestPublishInAfterEffects(AELocalPublishTestClass):
 
 
 if __name__ == "__main__":
-    test_case = TestPublishInAfterEffects()
+    test_case = TestDeadlinePublishInAfterEffects()

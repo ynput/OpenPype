@@ -2,10 +2,14 @@ import os
 import pytest
 import shutil
 
-from tests.lib.testing_classes import HostFixtures
+from tests.lib.testing_classes import (
+    HostFixtures,
+    PublishTest,
+    DeadlinePublishTest
+)
 
 
-class AfterEffectsTestClass(HostFixtures):
+class AEHostFixtures(HostFixtures):
     @pytest.fixture(scope="module")
     def last_workfile_path(self, download_test_data, output_folder_url):
         """Get last_workfile_path from source data.
@@ -32,3 +36,11 @@ class AfterEffectsTestClass(HostFixtures):
     def startup_scripts(self, monkeypatch_session, download_test_data):
         """Points Maya to userSetup file from input data"""
         pass
+
+
+class AELocalPublishTestClass(AEHostFixtures, PublishTest):
+    """Testing class for local publishes."""
+
+
+class AEDeadlinePublishTestClass(AEHostFixtures, DeadlinePublishTest):
+    """Testing class for Deadline publishes."""
