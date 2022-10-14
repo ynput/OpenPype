@@ -5,7 +5,7 @@ from openpype.hosts.nuke.api.lib import (
     set_node_knobs_from_settings,
     color_gui_to_int
 )
-from openpype.hosts.nuke import api as napi
+
 from openpype.pipeline.publish import (
     PublishXmlValidationError,
     OptionalPyblishPluginMixin,
@@ -80,19 +80,12 @@ class ValidateNukeWriteNode(
 
         correct_data = get_write_node_template_attr(write_group_node)
 
-        if correct_data:
-            check_knobs = correct_data["knobs"]
-        else:
-            return
-
         check = []
         self.log.debug("__ write_node: {}".format(
             write_node
         ))
 
-        for knob_data in check_knobs:
-            key = knob_data["name"]
-            value = knob_data["value"]
+        for key, value in correct_data.items():
             node_value = write_node[key].value()
 
             # fix type differences
