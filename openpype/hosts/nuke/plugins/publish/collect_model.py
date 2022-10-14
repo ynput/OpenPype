@@ -2,7 +2,6 @@ import pyblish.api
 import nuke
 
 
-@pyblish.api.log
 class CollectModel(pyblish.api.InstancePlugin):
     """Collect Model node instance and its content
     """

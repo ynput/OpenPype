@@ -46,7 +46,6 @@ class SelectCenterInNodeGraph(pyblish.api.Action):
         nuke.zoom(2, [min(all_xC), min(all_yC)])
 
 
-@pyblish.api.log
 class ValidateBackdrop(pyblish.api.InstancePlugin):
     """ Validate amount of nodes on backdrop node in case user
     forgoten to add nodes above the publishing backdrop node.

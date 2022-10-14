@@ -2,7 +2,6 @@ import pyblish.api
 import nuke
 
 
-@pyblish.api.log
 class CollectGizmo(pyblish.api.InstancePlugin):
     """Collect Gizmo (group) node instance and its content
     """

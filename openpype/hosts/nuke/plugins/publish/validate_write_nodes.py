@@ -12,7 +12,6 @@ from openpype.pipeline.publish import (
 )
 
 
-@pyblish.api.log
 class RepairNukeWriteNodeAction(pyblish.api.Action):
     label = "Repair"
     on = "failed"

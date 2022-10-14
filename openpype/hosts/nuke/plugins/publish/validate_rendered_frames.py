@@ -4,7 +4,6 @@ import clique
 from openpype.pipeline import PublishXmlValidationError
 
 
-@pyblish.api.log
 class RepairActionBase(pyblish.api.Action):
     on = "failed"
     icon = "wrench"

@@ -4,7 +4,6 @@ from openpype.hosts.nuke.api import lib as pnlib
 import nuke
 
 
-@pyblish.api.log
 class CollectBackdrops(pyblish.api.InstancePlugin):
     """Collect Backdrop node instance and its content
     """

@@ -5,7 +5,6 @@ import pyblish.api
 from openpype.hosts.nuke import api as napi
 
 
-@pyblish.api.log
 class CollectNukeWrites(pyblish.api.InstancePlugin):
     """Collect all write nodes."""
 

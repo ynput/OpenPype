@@ -2,12 +2,10 @@ import os
 import re
 import nuke
 import pyblish.api
-
 from openpype.client import get_asset_by_name
 from openpype.pipeline import legacy_io
 
 
-@pyblish.api.log
 class CollectNukeReads(pyblish.api.InstancePlugin):
     """Collect all read nodes."""
 

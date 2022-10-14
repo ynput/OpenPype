@@ -33,7 +33,6 @@ class OpenFailedGroupNode(pyblish.api.Action):
                 nuke.showDag(grpn)
 
 
-@pyblish.api.log
 class ValidateGizmo(pyblish.api.InstancePlugin):
     """Validate amount of output nodes in gizmo (group) node"""
 

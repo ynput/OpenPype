@@ -10,7 +10,6 @@ from openpype.hosts.nuke.api.lib import (
 import nuke
 
 
-@pyblish.api.log
 class ValidateScriptAttributes(pyblish.api.InstancePlugin):
     """ Validates file output. """
 

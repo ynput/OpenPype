@@ -2,7 +2,6 @@ import nuke
 import pyblish.api
 
 
-@pyblish.api.log
 class CollectInstanceData(pyblish.api.InstancePlugin):
     """Collect all nodes with Avalon knob."""
 
