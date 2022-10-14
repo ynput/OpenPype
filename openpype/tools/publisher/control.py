@@ -1,22 +1,17 @@
 import os
 import copy
-import inspect
 import logging
 import traceback
 import collections
 
-import weakref
-try:
-    from weakref import WeakMethod
-except Exception:
-    from openpype.lib.python_2_comp import WeakMethod
-
 import pyblish.api
 
 from openpype.client import get_assets
+from openpype.lib.events import EventSystem
 from openpype.pipeline import (
     PublishValidationError,
     registered_host,
+    legacy_io,
 )
 from openpype.pipeline.create import CreateContext
 
@@ -107,17 +102,13 @@ class AssetDocsCache:
         self._asset_docs = None
         self._task_names_by_asset_name = {}
 
-    @property
-    def dbcon(self):
-        return self._controller.dbcon
-
     def reset(self):
         self._asset_docs = None
         self._task_names_by_asset_name = {}
 
     def _query(self):
         if self._asset_docs is None:
-            project_name = self.dbcon.active_project()
+            project_name = self._controller.project_name
             asset_docs = get_assets(
                 project_name, fields=self.projection.keys()
             )
@@ -360,10 +351,14 @@ class PublisherController:
         dbcon (AvalonMongoDB): Connection to mongo with context.
         headless (bool): Headless publishing. ATM not implemented or used.
     """
+
     def __init__(self, dbcon=None, headless=False):
         self.log = logging.getLogger("PublisherController")
         self.host = registered_host()
         self.headless = headless
+
+        # Inner event system of controller
+        self._event_system = EventSystem()
 
         self.create_context = CreateContext(
             self.host, dbcon, headless=headless, reset=False
@@ -405,18 +400,6 @@ class PublisherController:
         # Plugin iterator
         self._main_thread_iter = None
 
-        # Variables where callbacks are stored
-        self._instances_refresh_callback_refs = set()
-        self._plugins_refresh_callback_refs = set()
-
-        self._publish_reset_callback_refs = set()
-        self._publish_started_callback_refs = set()
-        self._publish_validated_callback_refs = set()
-        self._publish_stopped_callback_refs = set()
-
-        self._publish_instance_changed_callback_refs = set()
-        self._publish_plugin_changed_callback_refs = set()
-
         # State flags to prevent executing method which is already in progress
         self._resetting_plugins = False
         self._resetting_instances = False
@@ -426,13 +409,42 @@ class PublisherController:
 
     @property
     def project_name(self):
-        """Current project context."""
-        return self.dbcon.Session["AVALON_PROJECT"]
+        """Current project context defined by host.
+
+        Returns:
+            str: Project name.
+        """
+
+        if not hasattr(self.host, "get_current_context"):
+            return legacy_io.active_project()
+
+        return self.host.get_current_context()["project_name"]
 
     @property
-    def dbcon(self):
-        """Pointer to AvalonMongoDB in creator context."""
-        return self.create_context.dbcon
+    def current_asset_name(self):
+        """Current context asset name defined by host.
+
+        Returns:
+            Union[str, None]: Asset name or None if asset is not set.
+        """
+
+        if not hasattr(self.host, "get_current_context"):
+            return legacy_io.Session["AVALON_ASSET"]
+
+        return self.host.get_current_context()["asset_name"]
+
+    @property
+    def current_task_name(self):
+        """Current context task name defined by host.
+
+        Returns:
+            Union[str, None]: Task name or None if task is not set.
+        """
+
+        if not hasattr(self.host, "get_current_context"):
+            return legacy_io.Session["AVALON_TASK"]
+
+        return self.host.get_current_context()["task_name"]
 
     @property
     def instances(self):
@@ -464,58 +476,35 @@ class PublisherController:
         """Publish plugins with possible attribute definitions."""
         return self.create_context.plugins_with_defs
 
-    def _create_reference(self, callback):
-        if inspect.ismethod(callback):
-            ref = WeakMethod(callback)
-        elif callable(callback):
-            ref = weakref.ref(callback)
-        else:
-            raise TypeError("Expected function or method got {}".format(
-                str(type(callback))
-            ))
-        return ref
+    @property
+    def event_system(self):
+        """Inner event system for publisher controller.
 
-    def add_instances_refresh_callback(self, callback):
-        """Callbacks triggered on instances refresh."""
-        ref = self._create_reference(callback)
-        self._instances_refresh_callback_refs.add(ref)
+        Known topics:
+            "show.detailed.help" - Detailed help requested (UI related).
+            "show.card.message" - Show card message request (UI related).
+            "instances.refresh.finished" - Instances are refreshed.
+            "plugins.refresh.finished" - Plugins refreshed.
+            "publish.reset.finished" - Controller reset finished.
+            "publish.process.started" - Publishing started. Can be started from
+                paused state.
+            "publish.process.validated" - Publishing passed validation.
+            "publish.process.stopped" - Publishing stopped/paused process.
+            "publish.process.plugin.changed" - Plugin state has changed.
+            "publish.process.instance.changed" - Instance state has changed.
 
-    def add_plugins_refresh_callback(self, callback):
-        """Callbacks triggered on plugins refresh."""
-        ref = self._create_reference(callback)
-        self._plugins_refresh_callback_refs.add(ref)
+        Returns:
+            EventSystem: Event system which can trigger callbacks for topics.
+        """
+
+        return self._event_system
+
+    def _emit_event(self, topic, data=None):
+        if data is None:
+            data = {}
+        self._event_system.emit(topic, data, "controller")
 
     # --- Publish specific callbacks ---
-    def add_publish_reset_callback(self, callback):
-        """Callbacks triggered on publishing reset."""
-        ref = self._create_reference(callback)
-        self._publish_reset_callback_refs.add(ref)
-
-    def add_publish_started_callback(self, callback):
-        """Callbacks triggered on publishing start."""
-        ref = self._create_reference(callback)
-        self._publish_started_callback_refs.add(ref)
-
-    def add_publish_validated_callback(self, callback):
-        """Callbacks triggered on passing last possible validation order."""
-        ref = self._create_reference(callback)
-        self._publish_validated_callback_refs.add(ref)
-
-    def add_instance_change_callback(self, callback):
-        """Callbacks triggered before next publish instance process."""
-        ref = self._create_reference(callback)
-        self._publish_instance_changed_callback_refs.add(ref)
-
-    def add_plugin_change_callback(self, callback):
-        """Callbacks triggered before next plugin processing."""
-        ref = self._create_reference(callback)
-        self._publish_plugin_changed_callback_refs.add(ref)
-
-    def add_publish_stopped_callback(self, callback):
-        """Callbacks triggered on publishing stop (any reason)."""
-        ref = self._create_reference(callback)
-        self._publish_stopped_callback_refs.add(ref)
-
     def get_asset_docs(self):
         """Get asset documents from cache for whole project."""
         return self._asset_docs_cache.get_asset_docs()
@@ -556,20 +545,6 @@ class PublisherController:
             )
         return result
 
-    def _trigger_callbacks(self, callbacks, *args, **kwargs):
-        """Helper method to trigger callbacks stored by their rerence."""
-        # Trigger reset callbacks
-        to_remove = set()
-        for ref in callbacks:
-            callback = ref()
-            if callback:
-                callback(*args, **kwargs)
-            else:
-                to_remove.add(ref)
-
-        for ref in to_remove:
-            callbacks.remove(ref)
-
     def reset(self):
         """Reset everything related to creation and publishing."""
         # Stop publishing
@@ -585,6 +560,8 @@ class PublisherController:
         self._reset_publish()
         self._reset_instances()
 
+        self.emit_card_message("Refreshed..")
+
     def _reset_plugins(self):
         """Reset to initial state."""
         if self._resetting_plugins:
@@ -596,7 +573,7 @@ class PublisherController:
 
         self._resetting_plugins = False
 
-        self._trigger_callbacks(self._plugins_refresh_callback_refs)
+        self._emit_event("plugins.refresh.finished")
 
     def _reset_instances(self):
         """Reset create instances."""
@@ -612,7 +589,10 @@ class PublisherController:
 
         self._resetting_instances = False
 
-        self._trigger_callbacks(self._instances_refresh_callback_refs)
+        self._emit_event("instances.refresh.finished")
+
+    def emit_card_message(self, message):
+        self._emit_event("show.card.message", {"message": message})
 
     def get_creator_attribute_definitions(self, instances):
         """Collect creator attribute definitions for multuple instances.
@@ -709,7 +689,7 @@ class PublisherController:
         creator = self.creators[creator_identifier]
         creator.create(subset_name, instance_data, options)
 
-        self._trigger_callbacks(self._instances_refresh_callback_refs)
+        self._emit_event("instances.refresh.finished")
 
     def save_changes(self):
         """Save changes happened during creation."""
@@ -724,7 +704,7 @@ class PublisherController:
 
         self.create_context.remove_instances(instances)
 
-        self._trigger_callbacks(self._instances_refresh_callback_refs)
+        self._emit_event("instances.refresh.finished")
 
     # --- Publish specific implementations ---
     @property
@@ -793,7 +773,7 @@ class PublisherController:
         self._publish_max_progress = len(self.publish_plugins)
         self._publish_progress = 0
 
-        self._trigger_callbacks(self._publish_reset_callback_refs)
+        self._emit_event("publish.reset.finished")
 
     def set_comment(self, comment):
         self._publish_context.data["comment"] = comment
@@ -820,7 +800,8 @@ class PublisherController:
         self.save_changes()
 
         self._publish_is_running = True
-        self._trigger_callbacks(self._publish_started_callback_refs)
+
+        self._emit_event("publish.process.started")
         self._main_thread_processor.start()
         self._publish_next_process()
 
@@ -828,10 +809,12 @@ class PublisherController:
         """Stop or pause publishing."""
         self._publish_is_running = False
         self._main_thread_processor.stop()
-        self._trigger_callbacks(self._publish_stopped_callback_refs)
+
+        self._emit_event("publish.process.stopped")
 
     def stop_publish(self):
         """Stop publishing process (any reason)."""
+
         if self._publish_is_running:
             self._stop_publish()
 
@@ -892,9 +875,7 @@ class PublisherController:
                 )
                 # Trigger callbacks when validation stage is passed
                 if self._publish_validated:
-                    self._trigger_callbacks(
-                        self._publish_validated_callback_refs
-                    )
+                    self._emit_event("publish.process.validated")
 
             # Stop if plugin is over validation order and process
             #   should process up to validation.
@@ -912,9 +893,14 @@ class PublisherController:
             self._publish_report.add_plugin_iter(plugin, self._publish_context)
 
             # Trigger callback that new plugin is going to be processed
-            self._trigger_callbacks(
-                self._publish_plugin_changed_callback_refs, plugin
+            plugin_label = plugin.__name__
+            if hasattr(plugin, "label") and plugin.label:
+                plugin_label = plugin.label
+            self._emit_event(
+                "publish.process.plugin.changed",
+                {"plugin_label": plugin_label}
             )
+
             # Plugin is instance plugin
             if plugin.__instanceEnabled__:
                 instances = pyblish.logic.instances_by_plugin(
@@ -928,11 +914,15 @@ class PublisherController:
                     if instance.data.get("publish") is False:
                         continue
 
-                    self._trigger_callbacks(
-                        self._publish_instance_changed_callback_refs,
-                        self._publish_context,
-                        instance
+                    instance_label = (
+                        instance.data.get("label")
+                        or instance.data["name"]
                     )
+                    self._emit_event(
+                        "publish.process.instance.changed",
+                        {"instance_label": instance_label}
+                    )
+
                     yield MainThreadItem(
                         self._process_and_continue, plugin, instance
                     )
@@ -944,10 +934,14 @@ class PublisherController:
                     [plugin], families
                 )
                 if plugins:
-                    self._trigger_callbacks(
-                        self._publish_instance_changed_callback_refs,
-                        self._publish_context,
-                        None
+                    instance_label = (
+                        self._publish_context.data.get("label")
+                        or self._publish_context.data.get("name")
+                        or "Context"
+                    )
+                    self._emit_event(
+                        "publish.process.instance.changed",
+                        {"instance_label": instance_label}
                     )
                     yield MainThreadItem(
                         self._process_and_continue, plugin, None

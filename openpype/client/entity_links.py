@@ -2,6 +2,7 @@ from .mongo import get_project_connection
 from .entities import (
     get_assets,
     get_asset_by_id,
+    get_version_by_id,
     get_representation_by_id,
     convert_id,
 )
@@ -127,12 +128,20 @@ def get_linked_representation_id(
     if not version_id:
         return []
 
+    version_doc = get_version_by_id(
+        project_name, version_id, fields=["type", "version_id"]
+    )
+    if version_doc["type"] == "hero_version":
+        version_id = version_doc["version_id"]
+
     if max_depth is None:
         max_depth = 0
 
     match = {
         "_id": version_id,
-        "type": {"$in": ["version", "hero_version"]}
+        # Links are not stored to hero versions at this moment so filter
+        #   is limited to just versions
+        "type": "version"
     }
 
     graph_lookup = {
@@ -187,7 +196,7 @@ def _process_referenced_pipeline_result(result, link_type):
     referenced_version_ids = set()
     correctly_linked_ids = set()
     for item in result:
-        input_links = item["data"].get("inputLinks")
+        input_links = item.get("data", {}).get("inputLinks")
         if not input_links:
             continue
 
@@ -203,7 +212,7 @@ def _process_referenced_pipeline_result(result, link_type):
             continue
 
         for output in sorted(outputs_recursive, key=lambda o: o["depth"]):
-            output_links = output["data"].get("inputLinks")
+            output_links = output.get("data", {}).get("inputLinks")
             if not output_links:
                 continue
 

@@ -86,6 +86,8 @@ class TrayPublishCreator(Creator):
 
         # Host implementation of storing metadata about instance
         HostContext.add_instance(new_instance.data_to_store())
+        new_instance.mark_as_stored()
+
         # Add instance to current context
         self._add_instance_to_context(new_instance)
 

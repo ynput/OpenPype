@@ -6,9 +6,9 @@ from xml.etree import ElementTree as ET
 
 from Qt import QtCore, QtWidgets
 
-import openpype.api as openpype
 import qargparse
 from openpype import style
+from openpype.settings import get_current_project_settings
 from openpype.lib import Logger
 from openpype.pipeline import LegacyCreator, LoaderPlugin
 
@@ -306,7 +306,7 @@ class Creator(LegacyCreator):
 
     def __init__(self, *args, **kwargs):
         super(Creator, self).__init__(*args, **kwargs)
-        self.presets = openpype.get_current_project_settings()[
+        self.presets = get_current_project_settings()[
             "flame"]["create"].get(self.__class__.__name__, {})
 
         # adding basic current context flame objects

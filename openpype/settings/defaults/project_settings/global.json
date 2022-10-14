@@ -164,6 +164,10 @@
                 }
             ]
         },
+        "PreIntegrateThumbnails": {
+            "enabled": true,
+            "integrate_profiles": []
+        },
         "IntegrateSubsetGroup": {
             "subset_grouping_profiles": [
                 {
