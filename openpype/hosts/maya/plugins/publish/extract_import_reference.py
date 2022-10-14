@@ -66,7 +66,7 @@ class ExtractImportReference(publish.Extractor):
             return
         tmp_name = instance.name + self.tmp_format
         current_name = cmds.file(query=True, sceneName=True)
-        ref_scene_name  = "{0}.{1}".format(tmp_name, self.scene_type)
+        ref_scene_name = "{0}.{1}".format(tmp_name, self.scene_type)
 
         reference_path = os.path.join(dir_path, ref_scene_name)
         tmp_path = os.path.dirname(current_name) + "/" + ref_scene_name
