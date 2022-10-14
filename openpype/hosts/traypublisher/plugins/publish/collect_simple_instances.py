@@ -1,5 +1,6 @@
 import os
 import tempfile
+from pathlib import Path
 
 import clique
 import pyblish.api
@@ -72,6 +73,8 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
 
         instance.data["source"] = source
         instance.data["sourceFilepaths"] = list(set(source_filepaths))
+        instance.data["originalBasename"] = Path(
+            instance.data["sourceFilepaths"][0]).stem
 
         self.log.debug(
             (
