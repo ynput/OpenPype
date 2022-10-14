@@ -3,7 +3,6 @@ from pprint import pformat
 import nuke
 import pyblish.api
 
-from openpype.hosts.nuke import api as napi
 from openpype.pipeline import publish
 from openpype.hosts.nuke.api.lib import (
     maintained_selection,

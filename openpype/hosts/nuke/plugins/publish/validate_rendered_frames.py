@@ -1,7 +1,6 @@
 import os
 import pyblish.api
 import clique
-from openpype.hosts.nuke import api as napi
 from openpype.pipeline import PublishXmlValidationError
 
 

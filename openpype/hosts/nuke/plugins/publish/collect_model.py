@@ -1,6 +1,6 @@
 import pyblish.api
 import nuke
-from openpype.hosts.nuke import api as napi
+
 
 @pyblish.api.log
 class CollectModel(pyblish.api.InstancePlugin):

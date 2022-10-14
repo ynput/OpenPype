@@ -1,7 +1,6 @@
 from pprint import pformat
 import pyblish.api
 from openpype.hosts.nuke.api import lib as pnlib
-from openpype.hosts.nuke import api as napi
 import nuke
 
 

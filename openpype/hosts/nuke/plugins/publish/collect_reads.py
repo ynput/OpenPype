@@ -5,7 +5,6 @@ import pyblish.api
 
 from openpype.client import get_asset_by_name
 from openpype.pipeline import legacy_io
-from openpype.hosts.nuke import api as napi
 
 
 @pyblish.api.log

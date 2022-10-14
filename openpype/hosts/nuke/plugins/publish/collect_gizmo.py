@@ -1,5 +1,4 @@
 import pyblish.api
-from openpype.hosts.nuke import api as napi
 import nuke
 
 

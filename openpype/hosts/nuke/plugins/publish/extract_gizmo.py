@@ -4,7 +4,6 @@ import nuke
 import pyblish.api
 
 from openpype.pipeline import publish
-from openpype.hosts.nuke import api as napi
 from openpype.hosts.nuke.api import utils as pnutils
 from openpype.hosts.nuke.api.lib import (
     maintained_selection,
