@@ -2112,7 +2112,7 @@ class PublisherController(BasePublisherController):
         )
         process_time = time.time() - start
 
-        self._publish_report.add_result(result)
+        self._publish_report.add_result(result, process_time)
 
         exception = result.get("error")
         if exception:
