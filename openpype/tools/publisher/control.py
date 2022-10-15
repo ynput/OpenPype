@@ -4,6 +4,7 @@ import logging
 import traceback
 import collections
 import time
+import uuid
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
@@ -293,7 +294,9 @@ class PublishReport:
             "plugins_data": plugins_data,
             "instances": instances_details,
             "context": self._extract_context_data(self._current_context),
-            "crashed_file_paths": crashed_file_paths
+            "crashed_file_paths": crashed_file_paths,
+            "id": str(uuid.uuid4()),
+            "report_version": "1.0.0"
         }
 
     def _extract_context_data(self, context):
