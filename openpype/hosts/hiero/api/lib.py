@@ -14,7 +14,7 @@ import hiero
 from Qt import QtWidgets
 
 from openpype.client import get_project
-from openpype.settings import get_anatomy_settings
+from openpype.settings import get_project_settings
 from openpype.pipeline import legacy_io, Anatomy
 from openpype.pipeline.load import filter_containers
 from openpype.lib import Logger
@@ -878,8 +878,7 @@ def apply_colorspace_project():
     project.close()
 
     # get presets for hiero
-    imageio = get_anatomy_settings(
-        project_name)["imageio"].get("hiero", None)
+    imageio = get_project_settings(project_name)["hiero"]["imageio"]
     presets = imageio.get("workfile")
 
     # save the workfile as subversion "comment:_colorspaceChange"
@@ -932,8 +931,7 @@ def apply_colorspace_clips():
     clips = project.clips()
 
     # get presets for hiero
-    imageio = get_anatomy_settings(
-        project_name)["imageio"].get("hiero", None)
+    imageio = get_project_settings(project_name)["hiero"]["imageio"]
     from pprint import pprint
 
     presets = imageio.get("regexInputs", {}).get("inputs", {})
