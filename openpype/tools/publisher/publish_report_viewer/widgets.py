@@ -148,12 +148,12 @@ class ZoomPlainText(QtWidgets.QPlainTextEdit):
         anim_timer.timeout.connect(self._scaling_callback)
 
         self._anim_timer = anim_timer
-        self._zoom_enabled = False
         self._scheduled_scalings = 0
         self._point_size = None
 
     def wheelEvent(self, event):
-        if not self._zoom_enabled:
+        modifiers = QtWidgets.QApplication.keyboardModifiers()
+        if modifiers != QtCore.Qt.ControlModifier:
             super(ZoomPlainText, self).wheelEvent(event)
             return
 
@@ -188,16 +188,6 @@ class ZoomPlainText(QtWidgets.QPlainTextEdit):
             self._scheduled_scalings -= 1
         else:
             self._scheduled_scalings += 1
-
-    def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Control:
-            self._zoom_enabled = True
-        super(ZoomPlainText, self).keyPressEvent(event)
-
-    def keyReleaseEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Control:
-            self._zoom_enabled = False
-        super(ZoomPlainText, self).keyReleaseEvent(event)
 
 
 class DetailsWidget(QtWidgets.QWidget):
