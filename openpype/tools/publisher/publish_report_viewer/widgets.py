@@ -139,6 +139,9 @@ class PluginLoadReportWidget(QtWidgets.QWidget):
 
 
 class ZoomPlainText(QtWidgets.QPlainTextEdit):
+    min_point_size = 1.0
+    max_point_size = 200.0
+
     def __init__(self, *args, **kwargs):
         super(ZoomPlainText, self).__init__(*args, **kwargs)
 
@@ -172,19 +175,36 @@ class ZoomPlainText(QtWidgets.QPlainTextEdit):
 
         factor = 1.0 + (self._scheduled_scalings / 300)
         font = self.font()
+
         if self._point_size is None:
-            self._point_size = font.pointSizeF()
+            point_size = font.pointSizeF()
+        else:
+            point_size = self._point_size
 
-        self._point_size *= factor
-        if self._point_size < 1:
-            self._point_size = 1.0
+        point_size *= factor
+        min_hit = False
+        max_hit = False
+        if point_size < self.min_point_size:
+            point_size = self.min_point_size
+            min_hit = True
+        elif point_size > self.max_point_size:
+            point_size = self.max_point_size
+            max_hit = True
 
-        font.setPointSizeF(self._point_size)
+        self._point_size = point_size
+
+        font.setPointSizeF(point_size)
         # Using 'self.setFont(font)' would not be propagated when stylesheets
         #   are applied on this widget
         self.setStyleSheet("font-size: {}pt".format(font.pointSize()))
 
-        if self._scheduled_scalings > 0:
+        if (
+            (max_hit and self._scheduled_scalings > 0)
+            or (min_hit and self._scheduled_scalings < 0)
+        ):
+            self._scheduled_scalings = 0
+
+        elif self._scheduled_scalings > 0:
             self._scheduled_scalings -= 1
         else:
             self._scheduled_scalings += 1
