@@ -48,7 +48,7 @@ def _validate_deadline_bool_value(instance, attribute, value):
 
 
 @attr.s
-class MayaPluginInfo():
+class MayaPluginInfo(object):
     SceneFile = attr.ib(default=None)   # Input
     OutputFilePath = attr.ib(default=None)  # Output directory and filename
     OutputFilePrefix = attr.ib(default=None)
@@ -63,7 +63,7 @@ class MayaPluginInfo():
 
 
 @attr.s
-class PythonPluginInfo():
+class PythonPluginInfo(object):
     ScriptFile = attr.ib()
     Version = attr.ib(default="3.6")
     Arguments = attr.ib(default=None)
@@ -71,7 +71,7 @@ class PythonPluginInfo():
 
 
 @attr.s
-class VRayPluginInfo():
+class VRayPluginInfo(object):
     InputFilename = attr.ib(default=None)   # Input
     SeparateFilesPerFrame = attr.ib(default=None)
     VRayEngine = attr.ib(default="V-Ray")
@@ -82,7 +82,7 @@ class VRayPluginInfo():
 
 
 @attr.s
-class ArnoldPluginInfo():
+class ArnoldPluginInfo(object):
     ArnoldFile = attr.ib(default=None)
 
 
@@ -762,10 +762,10 @@ def _format_tiles(
 
     Example::
         Image prefix is:
-        `maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>`
+        `<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>`
 
         Result for tile 0 for 4x4 will be:
-        `maya/<Scene>/<RenderLayer>/_tile_1x1_4x4_<RenderLayer>_<RenderPass>`
+        `<Scene>/<RenderLayer>/_tile_1x1_4x4_<RenderLayer>_<RenderPass>`
 
         Calculating coordinates is tricky as in Job they are defined as top,
     left, bottom, right with zero being in top-left corner. But Assembler

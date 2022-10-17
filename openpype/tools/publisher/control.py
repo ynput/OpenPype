@@ -3,6 +3,8 @@ import copy
 import logging
 import traceback
 import collections
+import time
+import uuid
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
@@ -232,15 +234,17 @@ class PublishReport:
         """Set that current plugin has been skipped."""
         self._current_plugin_data["skipped"] = True
 
-    def add_result(self, result):
+    def add_result(self, result, process_time):
         """Handle result of one plugin and it's instance."""
+
         instance = result["instance"]
         instance_id = None
         if instance is not None:
             instance_id = instance.id
         self._current_plugin_data["instances_data"].append({
             "id": instance_id,
-            "logs": self._extract_instance_log_items(result)
+            "logs": self._extract_instance_log_items(result),
+            "process_time": process_time
         })
 
     def add_action_result(self, action, result):
@@ -290,7 +294,9 @@ class PublishReport:
             "plugins_data": plugins_data,
             "instances": instances_details,
             "context": self._extract_context_data(self._current_context),
-            "crashed_file_paths": crashed_file_paths
+            "crashed_file_paths": crashed_file_paths,
+            "id": str(uuid.uuid4()),
+            "report_version": "1.0.0"
         }
 
     def _extract_context_data(self, context):
@@ -2100,11 +2106,13 @@ class PublisherController(BasePublisherController):
         )
 
     def _process_and_continue(self, plugin, instance):
+        start = time.time()
         result = pyblish.plugin.process(
             plugin, self._publish_context, instance
         )
+        process_time = time.time() - start
 
-        self._publish_report.add_result(result)
+        self._publish_report.add_result(result, process_time)
 
         exception = result.get("error")
         if exception:
