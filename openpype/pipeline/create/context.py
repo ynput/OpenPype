@@ -27,6 +27,11 @@ from .creator_plugins import (
 UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
 
 
+class UnavailableSharedData(Exception):
+    """Shared data are not available at the moment when are accessed."""
+    pass
+
+
 class ImmutableKeyError(TypeError):
     """Accessed key is immutable so does not allow changes or removements."""
 
@@ -809,6 +814,9 @@ class CreateContext:
         self._bulk_counter = 0
         self._bulk_instances_to_process = []
 
+        # Shared data across creators during collection phase
+        self._collection_shared_data = None
+
         # Trigger reset if was enabled
         if reset:
             self.reset(discover_publish_plugins)
@@ -877,11 +885,15 @@ class CreateContext:
         """Prepare attributes that must be prepared/cleaned before reset."""
 
         pass
+        # Give ability to store shared data for collection phase
+        self._collection_shared_data = {}
 
     def reset_finalization(self):
         """Cleanup of attributes after reset."""
 
         pass
+        # Stop access to collection shared data
+        self._collection_shared_data = None
 
     def reset_avalon_context(self):
         """Give ability to reset avalon context.
@@ -991,7 +1003,8 @@ class CreateContext:
                 and creator_class.host_name != self.host_name
             ):
                 self.log.info((
-                    "Creator's host name is not supported for current host {}"
+                    "Creator's host name \"{}\""
+                    " is not supported for current host \"{}\""
                 ).format(creator_class.host_name, self.host_name))
                 continue
 
@@ -1266,3 +1279,56 @@ class CreateContext:
             if not plugin.__instanceEnabled__:
                 plugins.append(plugin)
         return plugins
+
+    def _validate_collection_shared_data(self):
+        if self._collection_shared_data is None:
+            raise UnavailableSharedData(
+                "Accessed Collection shared data out of collection phase"
+            )
+
+    def has_collection_shared_data(self, key):
+        """Check if collection shared data are set.
+
+        Args:
+            key (str): Key under which are shared data stored.
+
+        Retruns:
+            bool: Key is already set.
+
+        Raises:
+            UnavailableSharedData: When called out of collection phase.
+        """
+
+        self._validate_collection_shared_data()
+        return key in self._collection_shared_data
+
+    def get_collection_shared_data(self, key, default=None):
+        """Receive shared data during collection phase.
+
+        Args:
+            key (str): Key under which are shared data stored.
+            default (Any): Default value if key is not set.
+
+        Returns:
+            Any: Value stored under the key.
+
+        Raises:
+            UnavailableSharedData: When called out of collection phase.
+        """
+
+        self._validate_collection_shared_data()
+        return self._collection_shared_data.get(key, default)
+
+    def set_collection_shared_data(self, key, value):
+        """Store a value under collection shared data.
+
+        Args:
+            key (str): Key under which will shared data be stored.
+            value (Any): Value to store.
+
+        Raises:
+            UnavailableSharedData: When called out of collection phase.
+        """
+
+        self._validate_collection_shared_data()
+        self._collection_shared_data[key] = value
