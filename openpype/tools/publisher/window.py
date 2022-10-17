@@ -470,6 +470,11 @@ class PublisherWindow(QtWidgets.QDialog):
         self._set_publish_visibility(False)
         self._set_footer_enabled(False)
         self._update_publish_details_widget()
+        if (
+            not self._tabs_widget.is_current_tab("create")
+            or not self._tabs_widget.is_current_tab("publish")
+        ):
+            self._tabs_widget.set_current_tab("publish")
 
     def _on_publish_start(self):
         self._create_tab.setEnabled(False)
