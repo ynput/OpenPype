@@ -1096,7 +1096,8 @@ class CreateContext:
                 and creator_class.host_name != self.host_name
             ):
                 self.log.info((
-                    "Creator's host name is not supported for current host {}"
+                    "Creator's host name \"{}\""
+                    " is not supported for current host \"{}\""
                 ).format(creator_class.host_name, self.host_name))
                 continue
 
