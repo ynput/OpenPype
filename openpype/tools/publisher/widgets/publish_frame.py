@@ -328,7 +328,7 @@ class PublishFrame(QtWidgets.QWidget):
         if self._last_instance_label:
             self._instance_label.setText(self._last_instance_label)
 
-        self._set_success_property(-1)
+        self._set_success_property(3)
         self._set_progress_visibility(True)
         self._set_main_label("Publishing...")
 
@@ -407,7 +407,7 @@ class PublishFrame(QtWidgets.QWidget):
             "Hit publish (play button) to continue."
         )
 
-        self._set_success_property(-1)
+        self._set_success_property(4)
 
     def _set_error_msg(self):
         """Show error message to artist on publish crash."""
@@ -416,7 +416,7 @@ class PublishFrame(QtWidgets.QWidget):
 
         self._message_label_top.setText(self._controller.publish_error_msg)
 
-        self._set_success_property(0)
+        self._set_success_property(1)
 
     def _set_validation_errors(self):
         self._set_main_label("Your publish didn't pass studio validations")
@@ -426,7 +426,7 @@ class PublishFrame(QtWidgets.QWidget):
     def _set_finished(self):
         self._set_main_label("Finished")
         self._message_label_top.setText("")
-        self._set_success_property(1)
+        self._set_success_property(0)
 
     def _set_progress_visibility(self, visible):
         window_height = self.height()
@@ -447,6 +447,17 @@ class PublishFrame(QtWidgets.QWidget):
         self.move(window_pos.x(), window_pos_y)
 
     def _set_success_property(self, state=None):
+        """Apply styles by state.
+
+        State enum:
+        - None - Default state after restart
+        - 0 - Success finish
+        - 1 - Error happened
+        - 2 - Validation error
+        - 3 - In progress
+        - 4 - Stopped/Paused
+        """
+
         if state is None:
             state = ""
         else:

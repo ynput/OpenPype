@@ -973,21 +973,20 @@ VariantInputsWidget QToolButton {
     background: {color:bg};
     border-radius: 0.3em;
 }
-
-#PublishInfoFrame[state="-1"] {
-    background: rgb(194, 226, 236);
-}
-
 #PublishInfoFrame[state="0"] {
-	background: {color:publisher:crash};
+  background: {color:publisher:success};
 }
 
 #PublishInfoFrame[state="1"] {
-	background: {color:publisher:success};
+	background: {color:publisher:crash};
 }
 
 #PublishInfoFrame[state="2"] {
 	background: {color:publisher:warning};
+}
+
+#PublishInfoFrame[state="3"], #PublishInfoFrame[state="4"] {
+    background: rgb(194, 226, 236);
 }
 
 #PublishInfoFrame QLabel {
@@ -1086,7 +1085,7 @@ ValidationArtistMessage QLabel {
     border-color: {color:publisher:error};
 }
 
-#PublishProgressBar[state="0"]::chunk, #PublishProgressBar[state="2"]::chunk {
+#PublishProgressBar[state="1"]::chunk, #PublishProgressBar[state="4"]::chunk {
     background: {color:bg-buttons};
 }
 
