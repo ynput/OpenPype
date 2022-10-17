@@ -3,6 +3,7 @@ import platform
 from openpype.lib import PreLaunchHook
 from openpype.hosts.resolve.utils import setup
 
+
 class ResolvePrelaunch(PreLaunchHook):
     """
     This hook will check if current workfile path has Resolve
@@ -15,7 +16,7 @@ class ResolvePrelaunch(PreLaunchHook):
     def execute(self):
         current_platform = platform.system().lower()
 
-        PROGRAMDATA = self.launch_context.env["PROGRAMDATA"]
+        PROGRAMDATA = self.launch_context.env.get("PROGRAMDATA", "")
         RESOLVE_SCRIPT_API_ = {
             "windows": (
                 f"{PROGRAMDATA}/Blackmagic Design/"
