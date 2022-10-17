@@ -306,8 +306,23 @@ class AbstractInstanceView(QtWidgets.QWidget):
 
         Example: When delete button is clicked to know what should be deleted.
         """
+
         raise NotImplementedError((
             "{} Method 'get_selected_items' is not implemented."
+        ).format(self.__class__.__name__))
+
+    def set_selected_items(self, instance_ids, context_selected):
+        """Change selection for instances and context.
+
+        Used to applying selection from one view to other.
+
+        Args:
+            instance_ids (List[str]): Selected instance ids.
+            context_selected (bool): Context is selected.
+        """
+
+        raise NotImplementedError((
+            "{} Method 'set_selected_items' is not implemented."
         ).format(self.__class__.__name__))
 
 

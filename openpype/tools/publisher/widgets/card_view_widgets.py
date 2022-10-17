@@ -903,3 +903,40 @@ class InstanceCardView(AbstractInstanceView):
                 instances.append(widget.id)
 
         return instances, context_selected
+
+    def set_selected_items(self, instance_ids, context_selected):
+        s_instance_ids = set(instance_ids)
+        cur_ids, cur_context = self.get_selected_items()
+        if (
+            set(cur_ids) == s_instance_ids
+            and cur_context == context_selected
+        ):
+            return
+
+        selected_groups = []
+        selected_instances = []
+        if context_selected:
+            selected_groups.append("")
+            selected_instances.append(CONTEXT_ID)
+
+        self._context_widget.set_selected(context_selected)
+
+        for group_name in self._ordered_groups:
+            if group_name == "":
+                continue
+
+            group_widget = self._widgets_by_group[group_name]
+            group_selected = False
+            for widget in group_widget.get_ordered_widgets():
+                select = False
+                if widget.id in s_instance_ids:
+                    selected_instances.append(widget.id)
+                    group_selected = True
+                    select = True
+                widget.set_selected(select)
+
+            if group_selected:
+                selected_groups.append(group_name)
+
+        self._explicitly_selected_groups = selected_groups
+        self._explicitly_selected_instance_ids = selected_instances
