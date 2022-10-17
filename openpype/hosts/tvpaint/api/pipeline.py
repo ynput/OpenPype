@@ -10,7 +10,7 @@ import pyblish.api
 from openpype.client import get_project, get_asset_by_name
 from openpype.host import HostBase, IWorkfileHost, ILoadHost
 from openpype.hosts.tvpaint import TVPAINT_ROOT_DIR
-from openpype.api import get_current_project_settings
+from openpype.settings import get_current_project_settings
 from openpype.lib import register_event_callback
 from openpype.pipeline import (
     legacy_io,

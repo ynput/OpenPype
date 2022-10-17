@@ -127,11 +127,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
 ```python
 import os
 
-import openpype.api
-from avalon import photoshop
+from openpype.pipeline import publish
+from openpype.hosts.photoshop import api as photoshop
 
 
-class ExtractImage(openpype.api.Extractor):
+class ExtractImage(publish.Extractor):
     """Produce a flattened image file from instance
 
     This plug-in takes into account only the layers in the group.

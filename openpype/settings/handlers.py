@@ -831,7 +831,10 @@ class MongoSettingsHandler(SettingsHandler):
         data_cache.update_last_saved_info(last_saved_info)
 
         self._save_project_data(
-            project_name, self._project_settings_key, data_cache
+            project_name,
+            self._project_settings_key,
+            data_cache,
+            last_saved_info
         )
 
     def save_project_anatomy(self, project_name, anatomy_data):
@@ -849,8 +852,16 @@ class MongoSettingsHandler(SettingsHandler):
             self._save_project_anatomy_data(project_name, data_cache)
 
         else:
+            last_saved_info = SettingsStateInfo.create_new(
+                self._current_version,
+                PROJECT_ANATOMY_KEY,
+                project_name
+            )
             self._save_project_data(
-                project_name, self._project_anatomy_key, data_cache
+                project_name,
+                self._project_anatomy_key,
+                data_cache,
+                last_saved_info
             )
 
     @classmethod
@@ -931,14 +942,16 @@ class MongoSettingsHandler(SettingsHandler):
             {"$set": update_dict}
         )
 
-    def _save_project_data(self, project_name, doc_type, data_cache):
+    def _save_project_data(
+        self, project_name, doc_type, data_cache, last_saved_info
+    ):
         is_default = bool(project_name is None)
         query_filter = {
             "type": doc_type,
             "is_default": is_default,
             "version": self._current_version
         }
-        last_saved_info = data_cache.last_saved_info
+
         new_project_settings_doc = {
             "type": doc_type,
             "data": data_cache.data,
@@ -946,6 +959,7 @@ class MongoSettingsHandler(SettingsHandler):
             "version": self._current_version,
             "last_saved_info": last_saved_info.to_data()
         }
+
         if not is_default:
             query_filter["project_name"] = project_name
             new_project_settings_doc["project_name"] = project_name
@@ -957,7 +971,7 @@ class MongoSettingsHandler(SettingsHandler):
         if project_settings_doc:
             self.collection.update_one(
                 {"_id": project_settings_doc["_id"]},
-                new_project_settings_doc
+                {"$set": new_project_settings_doc}
             )
         else:
             self.collection.insert_one(new_project_settings_doc)

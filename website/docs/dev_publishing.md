@@ -198,6 +198,37 @@ class RenderLayerCreator(Creator):
 
 - **`get_dynamic_data`** (method) - Can be used to extend data for subset templates which may be required in some cases.
 
+Methods are used before instance creation and on instance subset name update. Update may require to have access to existing instance because dynamic data should be filled from there. Because of that is instance passed to `get_subset_name` and `get_dynamic_data` so the creator can handle that cases.
+
+This is one example where subset name template may contain `"{layer}"` which is filled during creation because the value is taken from selection. In that case `get_dynamic_data` returns value for `"layer"` -> `"{layer}"` so it can be filled in creation. But when subset name of already existing instance is updated it should return already existing value. Note: Creator must make sure the value is available on instance.
+
+```python
+from openpype.lib import prepare_template_data
+from my_host import get_selected_layer
+
+
+class SomeCreator(Creator):
+    def get_dynamic_data(
+        self, variant, task_name, asset_doc, project_name, host_name, instance
+    ):
+        # Before instance is created return unfilled key
+        # - the key will be filled during creation
+        if instance is None:
+            return {"layer": "{layer}"}
+        # Take value from existing instance
+        # - creator must know where to look for the value
+        return {"layer": instance.data["layer"]}
+
+    def create(self, subset_name, instance_data, pre_create_data):
+        # Fill the layer name in
+        layer = get_selected_layer()
+        layer_name = layer["name"]
+        layer_fill_data = prepare_template_data({"layer": layer_name})
+        subset_name = subset_name.format(**layer_fill_data)
+        instance_data["layer"] = layer_name
+        ...
+```
+
 
 #### *HiddenCreator*
 Creator which is not showed in UI so artist can't trigger it directly but is available for other creators. This creator is primarily meant for cases when creation should create different types of instances. For example during editorial publishing where input is single edl file but should create 2 or more kind of instances each with different family, attributes and abilities. Arguments for creation were limited to `instance_data` and `source_data`. Data of `instance_data` should follow what is sent to other creators and `source_data` can be used to send custom data defined by main creator. It is expected that `HiddenCreator` has specific main or "parent" creator.

@@ -39,7 +39,7 @@ class BaseInfoDialog(QtWidgets.QDialog):
         ):
             other_information_layout.addRow(
                 label,
-                QtWidgets.QLabel(value, other_information)
+                QtWidgets.QLabel(value or "N/A", other_information)
             )
 
         timestamp_label = QtWidgets.QLabel(

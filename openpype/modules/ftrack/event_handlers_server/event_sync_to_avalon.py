@@ -18,6 +18,7 @@ from openpype.client import (
     get_archived_assets,
     get_asset_ids_with_subsets
 )
+from openpype.client.operations import CURRENT_ASSET_DOC_SCHEMA
 from openpype.pipeline import AvalonMongoDB, schema
 
 from openpype_modules.ftrack.lib import (
@@ -35,7 +36,6 @@ from openpype_modules.ftrack.lib.avalon_sync import (
     convert_to_fps,
     InvalidFpsValue
 )
-from openpype.lib import CURRENT_DOC_SCHEMAS
 
 
 class SyncToAvalonEvent(BaseEvent):
@@ -1236,7 +1236,7 @@ class SyncToAvalonEvent(BaseEvent):
             "_id": mongo_id,
             "name": name,
             "type": "asset",
-            "schema": CURRENT_DOC_SCHEMAS["asset"],
+            "schema": CURRENT_ASSET_DOC_SCHEMA,
             "parent": proj["_id"],
             "data": {
                 "ftrackId": ftrack_ent["id"],

@@ -8,12 +8,13 @@ import hiero
 from Qt import QtWidgets, QtCore
 import qargparse
 
-import openpype.api as openpype
+from openpype.settings import get_current_project_settings
+from openpype.lib import Logger
 from openpype.pipeline import LoaderPlugin, LegacyCreator
 from openpype.pipeline.context_tools import get_current_project_asset
 from . import lib
 
-log = openpype.Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 def load_stylesheet():
@@ -605,7 +606,7 @@ class Creator(LegacyCreator):
     def __init__(self, *args, **kwargs):
         super(Creator, self).__init__(*args, **kwargs)
         import openpype.hosts.hiero.api as phiero
-        self.presets = openpype.get_current_project_settings()[
+        self.presets = get_current_project_settings()[
             "hiero"]["create"].get(self.__class__.__name__, {})
 
         # adding basic current context resolve objects

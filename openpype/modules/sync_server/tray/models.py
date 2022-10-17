@@ -9,8 +9,7 @@ import qtawesome
 
 from openpype.tools.utils.delegates import pretty_timestamp
 
-from openpype.lib import PypeLogger
-from openpype.api import get_local_site_id
+from openpype.lib import Logger, get_local_site_id
 from openpype.client import get_representation_by_id
 
 from . import lib
@@ -33,7 +32,7 @@ from openpype.tools.utils.constants import (
 )
 
 
-log = PypeLogger().get_logger("SyncServer")
+log = Logger.get_logger("SyncServer")
 
 
 class _SyncRepresentationModel(QtCore.QAbstractTableModel):

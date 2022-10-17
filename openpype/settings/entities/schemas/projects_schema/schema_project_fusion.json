@@ -1,0 +1,38 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "fusion",
+    "label": "Fusion",
+    "is_file": true,
+    "children": [
+        {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (ImageIO)",
+            "collapsible": true,
+            "children": [
+                {
+                    "key": "ocio",
+                    "type": "dict",
+                    "label": "OpenColorIO (OCIO)",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Set OCIO variable for Fusion"
+                        },
+                        {
+                            "type": "path",
+                            "key": "configFilePath",
+                            "label": "OCIO Config File Path",
+                            "multiplatform": true,
+                            "multipath": true
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -2,10 +2,10 @@ import os
 
 import bpy
 
-import openpype.api
+from openpype.pipeline import publish
 
 
-class ExtractBlend(openpype.api.Extractor):
+class ExtractBlend(publish.Extractor):
     """Extract a blend file."""
 
     label = "Extract Blend"

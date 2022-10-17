@@ -9,7 +9,7 @@ import requests
 from maya import cmds
 from maya.app.renderSetup.model import renderSetup
 
-from openpype.api import (
+from openpype.settings import (
     get_system_settings,
     get_project_settings,
 )

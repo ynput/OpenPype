@@ -1,11 +1,12 @@
 """Should be used only inside of hosts."""
 import os
-import re
 import copy
 import platform
 import logging
 import functools
 import warnings
+
+import six
 
 from openpype.client import (
     get_project,
@@ -14,8 +15,14 @@ from openpype.client import (
     get_last_version_by_subset_name,
     get_workfile_info,
 )
+from openpype.client.operations import (
+    CURRENT_ASSET_DOC_SCHEMA,
+    CURRENT_PROJECT_SCHEMA,
+    CURRENT_PROJECT_CONFIG_SCHEMA,
+    PROJECT_NAME_ALLOWED_SYMBOLS,
+    PROJECT_NAME_REGEX,
+)
 from .profiles_filtering import filter_profiles
-from .events import emit_event
 from .path_templates import StringTemplate
 
 legacy_io = None
@@ -23,15 +30,13 @@ legacy_io = None
 log = logging.getLogger("AvalonContext")
 
 
+# Backwards compatibility - should not be used anymore
+#   - Will be removed in OP 3.16.*
 CURRENT_DOC_SCHEMAS = {
-    "project": "openpype:project-3.0",
-    "asset": "openpype:asset-3.0",
-    "config": "openpype:config-2.0"
+    "project": CURRENT_PROJECT_SCHEMA,
+    "asset": CURRENT_ASSET_DOC_SCHEMA,
+    "config": CURRENT_PROJECT_CONFIG_SCHEMA
 }
-PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
-PROJECT_NAME_REGEX = re.compile(
-    "^[{}]+$".format(PROJECT_NAME_ALLOWED_SYMBOLS)
-)
 
 
 class AvalonContextDeprecatedWarning(DeprecationWarning):
@@ -79,6 +84,7 @@ def deprecated(new_destination):
     return _decorator(func)
 
 
+@deprecated("openpype.client.operations.create_project")
 def create_project(
     project_name, project_code, library_project=False, dbcon=None
 ):
@@ -102,59 +108,14 @@ def create_project(
 
     Returns:
         dict: Created project document.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
-    from openpype.settings import ProjectSettings, SaveWarningExc
-    from openpype.pipeline import AvalonMongoDB
-    from openpype.pipeline.schema import validate
+    from openpype.client.operations import create_project
 
-    if get_project(project_name, fields=["name"]):
-        raise ValueError("Project with name \"{}\" already exists".format(
-            project_name
-        ))
-
-    if dbcon is None:
-        dbcon = AvalonMongoDB()
-
-    if not PROJECT_NAME_REGEX.match(project_name):
-        raise ValueError((
-            "Project name \"{}\" contain invalid characters"
-        ).format(project_name))
-
-    database = dbcon.database
-    project_doc = {
-        "type": "project",
-        "name": project_name,
-        "data": {
-            "code": project_code,
-            "library_project": library_project
-        },
-        "schema": CURRENT_DOC_SCHEMAS["project"]
-    }
-    # Insert document with basic data
-    database[project_name].insert_one(project_doc)
-    # Load ProjectSettings for the project and save it to store all attributes
-    #   and Anatomy
-    try:
-        project_settings_entity = ProjectSettings(project_name)
-        project_settings_entity.save()
-    except SaveWarningExc as exc:
-        print(str(exc))
-    except Exception:
-        database[project_name].delete_one({"type": "project"})
-        raise
-
-    project_doc = get_project(project_name)
-
-    try:
-        # Validate created project document
-        validate(project_doc)
-    except Exception:
-        # Remove project if is not valid
-        database[project_name].delete_one({"type": "project"})
-        raise
-
-    return project_doc
+    return create_project(project_name, project_code, library_project)
 
 
 def with_pipeline_io(func):
@@ -178,7 +139,7 @@ def is_latest(representation):
         bool: Whether the representation is of latest version.
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.context_tools import is_representation_from_latest
@@ -191,7 +152,7 @@ def any_outdated():
     """Return whether the current scene has any outdated content.
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.load import any_outdated_containers
@@ -212,7 +173,7 @@ def get_asset(asset_name=None):
         (MongoDB document)
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.context_tools import get_current_project_asset
@@ -224,13 +185,14 @@ def get_asset(asset_name=None):
 def get_system_general_anatomy_data(system_settings=None):
     """
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
     from openpype.pipeline.template_data import get_general_template_data
 
     return get_general_template_data(system_settings)
 
 
+@deprecated("openpype.client.get_linked_asset_ids")
 def get_linked_asset_ids(asset_doc):
     """Return linked asset ids for `asset_doc` from DB
 
@@ -239,26 +201,20 @@ def get_linked_asset_ids(asset_doc):
 
     Returns:
         (list): MongoDB ids of input links.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
-    output = []
-    if not asset_doc:
-        return output
 
-    input_links = asset_doc["data"].get("inputLinks") or []
-    if input_links:
-        for item in input_links:
-            # Backwards compatibility for "_id" key which was replaced with
-            #   "id"
-            if "_id" in item:
-                link_id = item["_id"]
-            else:
-                link_id = item["id"]
-            output.append(link_id)
+    from openpype.client import get_linked_asset_ids
+    from openpype.pipeline import legacy_io
 
-    return output
+    project_name = legacy_io.active_project()
+
+    return get_linked_asset_ids(project_name, asset_doc=asset_doc)
 
 
-@with_pipeline_io
+@deprecated("openpype.client.get_linked_assets")
 def get_linked_assets(asset_doc):
     """Return linked assets for `asset_doc` from DB
 
@@ -267,14 +223,17 @@ def get_linked_assets(asset_doc):
 
     Returns:
         (list) Asset documents of input links for passed asset doc.
+
+    Deprecated:
+        Function will be removed after release version 3.15.*
     """
 
-    link_ids = get_linked_asset_ids(asset_doc)
-    if not link_ids:
-        return []
+    from openpype.pipeline import legacy_io
+    from openpype.client import get_linked_assets
 
     project_name = legacy_io.active_project()
-    return list(get_assets(project_name, link_ids))
+
+    return get_linked_assets(project_name, asset_doc=asset_doc)
 
 
 @deprecated("openpype.client.get_last_version_by_subset_name")
@@ -296,7 +255,7 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
         dict: Last version document for entered.
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     if not project_name:
@@ -344,6 +303,9 @@ def get_workfile_template_key_from_context(
     Raises:
         ValueError: When both 'dbcon' and 'project_name' were not
             passed.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
     from openpype.pipeline.workfile import (
@@ -387,6 +349,9 @@ def get_workfile_template_key(
     Raises:
         ValueError: When both 'project_name' and 'project_settings' were not
             passed.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
     from openpype.pipeline.workfile import get_workfile_template_key
@@ -411,7 +376,7 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
         dict: Data prepared for filling workdir template.
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.template_data import get_template_data
@@ -447,6 +412,9 @@ def get_workdir_with_workdir_data(
 
     Raises:
         ValueError: When both `anatomy` and `project_name` are set to None.
+
+    Deprecated:
+        Function will be removed after release version 3.15.*
     """
 
     if not anatomy and not project_name:
@@ -492,6 +460,9 @@ def get_workdir(
 
     Returns:
         TemplateResult: Workdir path.
+
+    Deprecated:
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.workfile import get_workdir
@@ -518,7 +489,7 @@ def template_data_from_session(session=None):
         dict: All available data from session.
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.context_tools import get_template_data_from_session
@@ -526,7 +497,7 @@ def template_data_from_session(session=None):
     return get_template_data_from_session(session)
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.context_tools.compute_session_changes")
 def compute_session_changes(
     session, task=None, asset=None, app=None, template_key=None
 ):
@@ -547,64 +518,49 @@ def compute_session_changes(
 
     Returns:
         dict: The required changes in the Session dictionary.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
-    from openpype.pipeline.context_tools import get_workdir_from_session
+    from openpype.pipeline import legacy_io
+    from openpype.pipeline.context_tools import compute_session_changes
 
-    changes = dict()
+    if isinstance(asset, six.string_types):
+        project_name = legacy_io.active_project()
+        asset = get_asset_by_name(project_name, asset)
 
-    # If no changes, return directly
-    if not any([task, asset, app]):
-        return changes
-
-    # Get asset document and asset
-    asset_document = None
-    asset_tasks = None
-    if isinstance(asset, dict):
-        # Assume asset database document
-        asset_document = asset
-        asset_tasks = asset_document.get("data", {}).get("tasks")
-        asset = asset["name"]
-
-    if not asset_document or not asset_tasks:
-        # Assume asset name
-        project_name = session["AVALON_PROJECT"]
-        asset_document = get_asset_by_name(
-            project_name, asset, fields=["data.tasks"]
-        )
-        assert asset_document, "Asset must exist"
-
-    # Detect any changes compared session
-    mapping = {
-        "AVALON_ASSET": asset,
-        "AVALON_TASK": task,
-        "AVALON_APP": app,
-    }
-    changes = {
-        key: value
-        for key, value in mapping.items()
-        if value and value != session.get(key)
-    }
-    if not changes:
-        return changes
-
-    # Compute work directory (with the temporary changed session so far)
-    _session = session.copy()
-    _session.update(changes)
-
-    changes["AVALON_WORKDIR"] = get_workdir_from_session(_session)
-
-    return changes
+    return compute_session_changes(
+        session,
+        asset,
+        task,
+        template_key
+    )
 
 
 @deprecated("openpype.pipeline.context_tools.get_workdir_from_session")
 def get_workdir_from_session(session=None, template_key=None):
+    """Calculate workdir path based on session data.
+
+    Args:
+        session (Union[None, Dict[str, str]]): Session to use. If not passed
+            current context session is used (from legacy_io).
+        template_key (Union[str, None]): Precalculate template key to define
+            workfile template name in Anatomy.
+
+    Returns:
+        str: Workdir path.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
+    """
+
     from openpype.pipeline.context_tools import get_workdir_from_session
 
     return get_workdir_from_session(session, template_key)
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.context_tools.change_current_context")
 def update_current_task(task=None, asset=None, app=None, template_key=None):
     """Update active Session to a new task work area.
 
@@ -617,35 +573,19 @@ def update_current_task(task=None, asset=None, app=None, template_key=None):
 
     Returns:
         dict: The changed key, values in the current Session.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
-    changes = compute_session_changes(
-        legacy_io.Session,
-        task=task,
-        asset=asset,
-        app=app,
-        template_key=template_key
-    )
+    from openpype.pipeline import legacy_io
+    from openpype.pipeline.context_tools import change_current_context
 
-    # Update the Session and environments. Pop from environments all keys with
-    # value set to None.
-    for key, value in changes.items():
-        legacy_io.Session[key] = value
-        if value is None:
-            os.environ.pop(key, None)
-        else:
-            os.environ[key] = value
+    project_name = legacy_io.active_project()
+    if isinstance(asset, six.string_types):
+        asset = get_asset_by_name(project_name, asset)
 
-    data = changes.copy()
-    # Convert env keys to human readable keys
-    data["project_name"] = legacy_io.Session["AVALON_PROJECT"]
-    data["asset_name"] = legacy_io.Session["AVALON_ASSET"]
-    data["task_name"] = legacy_io.Session["AVALON_TASK"]
-
-    # Emit session change
-    emit_event("taskChanged", data)
-
-    return changes
+    return change_current_context(asset, task, template_key)
 
 
 @deprecated("openpype.client.get_workfile_info")
@@ -664,6 +604,9 @@ def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
 
     Returns:
         dict: Workfile document or None.
+
+    Deprecated:
+        Function will be removed after release version 3.15.*
     """
 
     # Use legacy_io if dbcon is not entered
@@ -774,12 +717,17 @@ def save_workfile_data_to_doc(workfile_doc, data, dbcon=None):
 
 @deprecated("openpype.pipeline.workfile.BuildWorkfile")
 def BuildWorkfile():
+    """Build workfile class was moved to workfile pipeline.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
+    """
     from openpype.pipeline.workfile import BuildWorkfile
 
     return BuildWorkfile()
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.create.get_legacy_creator_by_name")
 def get_creator_by_name(creator_name, case_sensitive=False):
     """Find creator plugin by name.
 
@@ -790,23 +738,13 @@ def get_creator_by_name(creator_name, case_sensitive=False):
 
     Returns:
         Creator: Return first matching plugin or `None`.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
-    from openpype.pipeline import discover_legacy_creator_plugins
+    from openpype.pipeline.create import get_legacy_creator_by_name
 
-    # Lower input creator name if is not case sensitive
-    if not case_sensitive:
-        creator_name = creator_name.lower()
-
-    for creator_plugin in discover_legacy_creator_plugins():
-        _creator_name = creator_plugin.__name__
-
-        # Lower creator plugin name if is not case sensitive
-        if not case_sensitive:
-            _creator_name = _creator_name.lower()
-
-        if _creator_name == creator_name:
-            return creator_plugin
-    return None
+    return get_legacy_creator_by_name(creator_name, case_sensitive)
 
 
 @deprecated
@@ -816,10 +754,7 @@ def change_timer_to_current_context():
     Deprecated:
         This method is specific for TimersManager module so please use the
         functionality from there. Function will be removed after release
-        version 3.14.*
-
-    TODO:
-    - use TimersManager's static method instead of reimplementing it here
+        version 3.15.*
     """
 
     from openpype.pipeline import legacy_io
@@ -934,6 +869,9 @@ def get_custom_workfile_template_by_context(
     Returns:
         str: Path to template or None if none of profiles match current
             context. (Existence of formatted path is not validated.)
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
     if anatomy is None:
@@ -992,6 +930,9 @@ def get_custom_workfile_template_by_string_context(
     Returns:
         str: Path to template or None if none of profiles match current
             context. (Existence of formatted path is not validated.)
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
     project_name = None
@@ -1026,6 +967,9 @@ def get_custom_workfile_template(template_profiles):
     Returns:
         str: Path to template or None if none of profiles match current
             context. (Existence of formatted path is not validated.)
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
     from openpype.pipeline import legacy_io
@@ -1054,6 +998,9 @@ def get_last_workfile_with_version(
     Returns:
         tuple: Last workfile<str> with version<int> if there is any otherwise
             returns (None, None).
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
     from openpype.pipeline.workfile import get_last_workfile_with_version
@@ -1080,6 +1027,9 @@ def get_last_workfile(
 
     Returns:
         str: Last or first workfile as filename of full path to filename.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
     from openpype.pipeline.workfile import get_last_workfile
@@ -1089,9 +1039,10 @@ def get_last_workfile(
     )
 
 
-@with_pipeline_io
-def get_linked_ids_for_representations(project_name, repre_ids, dbcon=None,
-                                       link_type=None, max_depth=0):
+@deprecated("openpype.client.get_linked_representation_id")
+def get_linked_ids_for_representations(
+    project_name, repre_ids, dbcon=None, link_type=None, max_depth=0
+):
     """Returns list of linked ids of particular type (if provided).
 
     Goes from representations to version, back to representations
@@ -1102,104 +1053,25 @@ def get_linked_ids_for_representations(project_name, repre_ids, dbcon=None,
             with Session.
         link_type (str): ['reference', '..]
         max_depth (int): limit how many levels of recursion
+
     Returns:
         (list) of ObjectId - linked representations
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
-    # Create new dbcon if not passed and use passed project name
-    if not dbcon:
-        from openpype.pipeline import AvalonMongoDB
-        dbcon = AvalonMongoDB()
-        dbcon.Session["AVALON_PROJECT"] = project_name
-    # Validate that passed dbcon has same project
-    elif dbcon.Session["AVALON_PROJECT"] != project_name:
-        raise ValueError("Passed connection does not have right project")
+
+    from openpype.client import get_linked_representation_id
 
     if not isinstance(repre_ids, list):
         repre_ids = [repre_ids]
 
-    version_ids = dbcon.distinct("parent", {
-        "_id": {"$in": repre_ids},
-        "type": "representation"
-    })
-
-    match = {
-        "_id": {"$in": version_ids},
-        "type": "version"
-    }
-
-    graph_lookup = {
-        "from": project_name,
-        "startWith": "$data.inputLinks.id",
-        "connectFromField": "data.inputLinks.id",
-        "connectToField": "_id",
-        "as": "outputs_recursive",
-        "depthField": "depth"
-    }
-    if max_depth != 0:
-        # We offset by -1 since 0 basically means no recursion
-        # but the recursion only happens after the initial lookup
-        # for outputs.
-        graph_lookup["maxDepth"] = max_depth - 1
-
-    pipeline_ = [
-        # Match
-        {"$match": match},
-        # Recursive graph lookup for inputs
-        {"$graphLookup": graph_lookup}
-    ]
-
-    result = dbcon.aggregate(pipeline_)
-    referenced_version_ids = _process_referenced_pipeline_result(result,
-                                                                 link_type)
-
-    ref_ids = dbcon.distinct(
-        "_id",
-        filter={
-            "parent": {"$in": list(referenced_version_ids)},
-            "type": "representation"
-        }
-    )
-
-    return list(ref_ids)
-
-
-def _process_referenced_pipeline_result(result, link_type):
-    """Filters result from pipeline for particular link_type.
-
-    Pipeline cannot use link_type directly in a query.
-    Returns:
-        (list)
-    """
-    referenced_version_ids = set()
-    correctly_linked_ids = set()
-    for item in result:
-        input_links = item["data"].get("inputLinks", [])
-        correctly_linked_ids = _filter_input_links(input_links,
-                                                   link_type,
-                                                   correctly_linked_ids)
-
-        # outputs_recursive in random order, sort by depth
-        outputs_recursive = sorted(item.get("outputs_recursive", []),
-                                   key=lambda d: d["depth"])
-
-        for output in outputs_recursive:
-            if output["_id"] not in correctly_linked_ids:  # leaf
-                continue
-
-            correctly_linked_ids = _filter_input_links(
-                output["data"].get("inputLinks", []),
-                link_type,
-                correctly_linked_ids)
-
-            referenced_version_ids.add(output["_id"])
-
-    return referenced_version_ids
-
-
-def _filter_input_links(input_links, link_type, correctly_linked_ids):
-    for input_link in input_links:
-        if not link_type or input_link["type"] == link_type:
-            correctly_linked_ids.add(input_link.get("id") or
-                                     input_link.get("_id"))  # legacy
-
-    return correctly_linked_ids
+    output = []
+    for repre_id in repre_ids:
+        output.extend(get_linked_representation_id(
+            project_name,
+            repre_id=repre_id,
+            link_type=link_type,
+            max_depth=max_depth
+        ))
+    return output

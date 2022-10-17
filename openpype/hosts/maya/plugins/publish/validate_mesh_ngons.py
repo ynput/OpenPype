@@ -1,9 +1,9 @@
 from maya import cmds
 
 import pyblish.api
-import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateMeshNgons(pyblish.api.Validator):
@@ -16,7 +16,7 @@ class ValidateMeshNgons(pyblish.api.Validator):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["maya"]
     families = ["model"]
     label = "Mesh ngons"
