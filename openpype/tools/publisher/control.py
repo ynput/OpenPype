@@ -234,7 +234,7 @@ class PublishReport:
         """Set that current plugin has been skipped."""
         self._current_plugin_data["skipped"] = True
 
-    def add_result(self, result, process_time):
+    def add_result(self, result):
         """Handle result of one plugin and it's instance."""
 
         instance = result["instance"]
@@ -244,7 +244,7 @@ class PublishReport:
         self._current_plugin_data["instances_data"].append({
             "id": instance_id,
             "logs": self._extract_instance_log_items(result),
-            "process_time": process_time
+            "process_time": result["duration"]
         })
 
     def add_action_result(self, action, result):
@@ -2106,13 +2106,11 @@ class PublisherController(BasePublisherController):
         )
 
     def _process_and_continue(self, plugin, instance):
-        start = time.time()
         result = pyblish.plugin.process(
             plugin, self._publish_context, instance
         )
-        process_time = time.time() - start
 
-        self._publish_report.add_result(result, process_time)
+        self._publish_report.add_result(result)
 
         exception = result.get("error")
         if exception:
