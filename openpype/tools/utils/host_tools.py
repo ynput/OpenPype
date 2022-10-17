@@ -287,7 +287,7 @@ class HostToolsHelper:
 
     def show_publisher_tool(self, parent=None, controller=None):
         with qt_app_context():
-            dialog = self.get_publisher_tool(controller, parent)
+            dialog = self.get_publisher_tool(parent, controller)
 
             dialog.show()
             dialog.raise_()
