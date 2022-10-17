@@ -1286,7 +1286,7 @@ class CreateContext:
                 "Accessed Collection shared data out of collection phase"
             )
 
-    def has_collection_shared_data(self, key):
+    def collection_shared_data_contains(self, key):
         """Check if collection shared data are set.
 
         Args:

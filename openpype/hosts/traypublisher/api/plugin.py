@@ -28,7 +28,7 @@ def _cache_and_get_instances(creator):
     """
 
     shared_key = "openpype.traypublisher.instances"
-    if not creator.has_collection_shared_data(shared_key):
+    if not creator.collection_shared_data_contains(shared_key):
         creator.set_collection_shared_data(shared_key, list_instances())
     return creator.get_collection_shared_data(shared_key)
 

@@ -324,7 +324,7 @@ class BaseCreator:
 
         return self.instance_attr_defs
 
-    def has_collection_shared_data(self, key):
+    def collection_shared_data_contains(self, key):
         """Check if collection shared data are set.
 
         Args:
@@ -334,7 +334,7 @@ class BaseCreator:
             bool: Key is already set.
         """
 
-        return self.create_context.has_collection_shared_data(key)
+        return self.create_context.collection_shared_data_contains(key)
 
     def get_collection_shared_data(self, key, default=None):
         """Receive shared data during collection phase.
