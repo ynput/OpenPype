@@ -1086,7 +1086,7 @@ ValidationArtistMessage QLabel {
     border-color: {color:publisher:error};
 }
 
-#PublishProgressBar[state="0"]::chunk {
+#PublishProgressBar[state="0"]::chunk, #PublishProgressBar[state="2"]::chunk {
     background: {color:bg-buttons};
 }
 
