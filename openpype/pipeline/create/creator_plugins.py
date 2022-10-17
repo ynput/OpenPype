@@ -6,6 +6,7 @@ from abc import (
     abstractmethod,
     abstractproperty
 )
+
 import six
 
 from openpype.settings import get_system_settings, get_project_settings
@@ -322,6 +323,41 @@ class BaseCreator:
         """
 
         return self.instance_attr_defs
+
+    def has_collection_shared_data(self, key):
+        """Check if collection shared data are set.
+
+        Args:
+            key (str): Key under which are shared data stored.
+
+        Retruns:
+            bool: Key is already set.
+        """
+
+        return self.create_context.has_collection_shared_data(key)
+
+    def get_collection_shared_data(self, key, default=None):
+        """Receive shared data during collection phase.
+
+        Args:
+            key (str): Key under which are shared data stored.
+            default (Any): Default value if key is not set.
+
+        Returns:
+            Any: Value stored under the key.
+        """
+
+        return self.create_context.get_collection_shared_data(key, default)
+
+    def set_collection_shared_data(self, key, value):
+        """Store a value under collection shared data.
+
+        Args:
+            key (str): Key under which will shared data be stored.
+            value (Any): Value to store.
+        """
+
+        return self.create_context.set_collection_shared_data(key, value)
 
 
 class Creator(BaseCreator):
