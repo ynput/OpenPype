@@ -1563,10 +1563,10 @@ class PublisherController(BasePublisherController):
             str: Project name.
         """
 
-        if not hasattr(self.host, "get_current_context"):
+        if not hasattr(self._host, "get_current_context"):
             return legacy_io.active_project()
 
-        return self.host.get_current_context()["project_name"]
+        return self._host.get_current_context()["project_name"]
 
     @property
     def current_asset_name(self):
@@ -1576,10 +1576,10 @@ class PublisherController(BasePublisherController):
             Union[str, None]: Asset name or None if asset is not set.
         """
 
-        if not hasattr(self.host, "get_current_context"):
+        if not hasattr(self._host, "get_current_context"):
             return legacy_io.Session["AVALON_ASSET"]
 
-        return self.host.get_current_context()["asset_name"]
+        return self._host.get_current_context()["asset_name"]
 
     @property
     def current_task_name(self):
@@ -1589,10 +1589,10 @@ class PublisherController(BasePublisherController):
             Union[str, None]: Task name or None if task is not set.
         """
 
-        if not hasattr(self.host, "get_current_context"):
+        if not hasattr(self._host, "get_current_context"):
             return legacy_io.Session["AVALON_TASK"]
 
-        return self.host.get_current_context()["task_name"]
+        return self._host.get_current_context()["task_name"]
 
     @property
     def instances(self):
