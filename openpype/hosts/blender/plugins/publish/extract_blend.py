@@ -1,11 +1,9 @@
 import os
 
 import bpy
-from bson.objectid import ObjectId
 
 from openpype.pipeline import (
     publish,
-    discover_loader_plugins,
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load.utils import loaders_from_repre_context
@@ -25,23 +23,6 @@ class ExtractBlend(publish.Extractor):
     optional = True
 
     pack_images = True
-
-    def _get_loader_from_instance(self, instance):
-        all_loaders = discover_loader_plugins()
-        context = {
-            "subset": {"schema": "openpype:container-2.0"},
-            "version": {"data": {"families": [instance.data["family"]]}},
-            "representation": {"name": "blend"},
-        }
-        loaders = loaders_from_repre_context(all_loaders, context)
-
-        assert loaders, f"No loader modules found for {instance.name}"
-
-        for loader_type in ("Instance", "Link", "Append"):
-            for loader in loaders:
-                if loader_type in loader.__name__:
-                    return loader
-        return loaders[0]
 
     def _get_images_from_objects(self, objects):
         """Get images from mesh objects materials."""
@@ -97,9 +78,6 @@ class ExtractBlend(publish.Extractor):
         instance_metadata = instance_collection[AVALON_PROPERTY].to_dict()
         instance_collection[AVALON_PROPERTY] = dict()
 
-        # Get Loader module from instance
-        loader_module = self._get_loader_from_instance(instance)
-
         # Add container metadata to collection
         metadata_update(
             instance_collection,
@@ -107,8 +85,10 @@ class ExtractBlend(publish.Extractor):
                 "schema": "openpype:container-2.0",
                 "id": AVALON_CONTAINER_ID,
                 "name": instance_metadata["subset"],
-                "loader": loader_module.__name__,
-                "representation": True,  # Substitute by the created ObjectId after integration
+                "loader": True,
+                # ^ To be subsituted by the appropriate loader matched after Blender native Load
+                "representation": True,
+                # ^ To be substituted by the created ObjectId after integration
                 "asset_name": instance_metadata["asset"],
                 "parent": str(instance.data["assetEntity"]["parent"]),
                 "family": instance.data["family"],
