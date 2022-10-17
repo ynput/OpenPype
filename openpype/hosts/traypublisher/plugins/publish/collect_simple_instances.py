@@ -70,11 +70,17 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
             repre_names,
             representation_files_mapping
         )
-
+        source_filepaths = list(set(source_filepaths))
         instance.data["source"] = source
-        instance.data["sourceFilepaths"] = list(set(source_filepaths))
-        instance.data["originalBasename"] = Path(
-            instance.data["sourceFilepaths"][0]).stem
+        instance.data["sourceFilepaths"] = source_filepaths
+
+        # NOTE: Missing filepaths should not cause crashes (at least not here)
+        # - if filepaths are required they should crash on validation
+        if source_filepaths:
+            # NOTE: Original basename is not handling sequences
+            # - we should maybe not fill the key when sequence is used?
+            origin_basename = Path(source_filepaths[0]).stem
+            instance.data["originalBasename"] = origin_basename
 
         self.log.debug(
             (
