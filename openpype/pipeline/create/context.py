@@ -860,6 +860,9 @@ class CreateContext:
 
         All changes will be lost if were not saved explicitely.
         """
+
+        self.reset_preparation()
+
         self.reset_avalon_context()
         self.reset_plugins(discover_publish_plugins)
         self.reset_context_data()
@@ -867,6 +870,18 @@ class CreateContext:
         with self.bulk_instances_collection():
             self.reset_instances()
             self.execute_autocreators()
+
+        self.reset_finalization()
+
+    def reset_preparation(self):
+        """Prepare attributes that must be prepared/cleaned before reset."""
+
+        pass
+
+    def reset_finalization(self):
+        """Cleanup of attributes after reset."""
+
+        pass
 
     def reset_avalon_context(self):
         """Give ability to reset avalon context.

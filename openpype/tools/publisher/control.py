@@ -552,6 +552,8 @@ class PublisherController:
 
         self.save_changes()
 
+        self.create_context.reset_preparation()
+
         # Reset avalon context
         self.create_context.reset_avalon_context()
 
@@ -559,6 +561,8 @@ class PublisherController:
         # Publish part must be reset after plugins
         self._reset_publish()
         self._reset_instances()
+
+        self.create_context.reset_finalization()
 
         self.emit_card_message("Refreshed..")
 
