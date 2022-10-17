@@ -29,7 +29,7 @@ class TestDeadlinePublishInNuke(NukeDeadlinePublishTestClass):
     # https://drive.google.com/file/d/1SUurHj2aiQ21ZIMJfGVBI2KjR8kIjBGI/view?usp=sharing  # noqa: E501
     TEST_FILES = [
         ("1SeWprClKhWMv2xVC9AcnekIJFExxnp_b",
-         "test_nuke_deadlinepublish.zip", "")
+         "test_nuke_deadline_publish.zip", "")
     ]
 
     APP = "nuke"
