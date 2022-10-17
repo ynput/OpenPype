@@ -173,7 +173,7 @@ class QtRemotePublishController(BasePublisherController):
             return
 
         if event.topic == "publish.finished.changed":
-            self.publish_finished = event["value"]
+            self.publish_has_finished = event["value"]
             return
 
         if event.topic == "publish.host_is_valid.changed":
