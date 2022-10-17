@@ -352,6 +352,9 @@ class BaseCreator:
     def set_collection_shared_data(self, key, value):
         """Store a value under collection shared data.
 
+        It is highly recommended to use very specific keys as creators may
+        clash each other if simple keys are used.
+
         Args:
             key (str): Key under which will shared data be stored.
             value (Any): Value to store.
