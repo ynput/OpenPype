@@ -29,7 +29,7 @@ class TestDeadlinePublishInAfterEffects(AEDeadlinePublishTestClass):
     PERSIST = False
 
     TEST_FILES = [
-        ("1c8261CmHwyMgS-g7S4xL5epAp0jCBmhf",
+        ("1xhd2ij2ixyjCyTjZgcJEPAIiBHLU1FEY",
          "test_aftereffects_publish.zip",
          "")
     ]
