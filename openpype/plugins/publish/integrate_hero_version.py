@@ -4,8 +4,6 @@ import clique
 import errno
 import shutil
 
-from bson.objectid import ObjectId
-from pymongo import InsertOne, ReplaceOne
 import pyblish.api
 
 from openpype.client import (
@@ -14,10 +12,15 @@ from openpype.client import (
     get_archived_representations,
     get_representations,
 )
+from openpype.client.operations import (
+    OperationsSession,
+    new_hero_version_doc,
+    prepare_hero_version_update_data,
+    prepare_representation_update_data,
+)
 from openpype.lib import create_hard_link
 from openpype.pipeline import (
-    schema,
-    legacy_io,
+    schema
 )
 from openpype.pipeline.publish import get_publish_template_name
 
@@ -187,35 +190,32 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             repre["name"].lower(): repre for repre in old_repres
         }
 
+        op_session = OperationsSession()
+
+        entity_id = None
         if old_version:
-            new_version_id = old_version["_id"]
-        else:
-            new_version_id = ObjectId()
-
-        new_hero_version = {
-            "_id": new_version_id,
-            "version_id": src_version_entity["_id"],
-            "parent": src_version_entity["parent"],
-            "type": "hero_version",
-            "schema": "openpype:hero_version-1.0"
-        }
-        schema.validate(new_hero_version)
-
-        # Don't make changes in database until everything is O.K.
-        bulk_writes = []
+            entity_id = old_version["_id"]
+        new_hero_version = new_hero_version_doc(
+            src_version_entity["_id"],
+            src_version_entity["parent"],
+            entity_id=entity_id
+        )
 
         if old_version:
             self.log.debug("Replacing old hero version.")
-            bulk_writes.append(
-                ReplaceOne(
-                    {"_id": new_hero_version["_id"]},
-                    new_hero_version
-                )
+            update_data = prepare_hero_version_update_data(
+                old_version, new_hero_version
+            )
+            op_session.update_entity(
+                project_name,
+                new_hero_version["type"],
+                old_version["_id"],
+                update_data
             )
         else:
             self.log.debug("Creating first hero version.")
-            bulk_writes.append(
-                InsertOne(new_hero_version)
+            op_session.create_entity(
+                project_name, new_hero_version["type"], new_hero_version
             )
 
         # Separate old representations into `to replace` and `to delete`
@@ -235,7 +235,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         archived_repres = list(get_archived_representations(
             project_name,
             # Check what is type of archived representation
-            version_ids=[new_version_id]
+            version_ids=[new_hero_version["_id"]]
         ))
         archived_repres_by_name = {}
         for repre in archived_repres:
@@ -382,12 +382,15 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                 # Replace current representation
                 if repre_name_low in old_repres_to_replace:
                     old_repre = old_repres_to_replace.pop(repre_name_low)
+
                     repre["_id"] = old_repre["_id"]
-                    bulk_writes.append(
-                        ReplaceOne(
-                            {"_id": old_repre["_id"]},
-                            repre
-                        )
+                    update_data = prepare_representation_update_data(
+                        old_repre, repre)
+                    op_session.update_entity(
+                        project_name,
+                        old_repre["type"],
+                        old_repre["_id"],
+                        update_data
                     )
 
                 # Unarchive representation
@@ -395,21 +398,21 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     archived_repre = archived_repres_by_name.pop(
                         repre_name_low
                     )
-                    old_id = archived_repre["old_id"]
-                    repre["_id"] = old_id
-                    bulk_writes.append(
-                        ReplaceOne(
-                            {"old_id": old_id},
-                            repre
-                        )
+                    repre["_id"] = archived_repre["old_id"]
+                    update_data = prepare_representation_update_data(
+                        archived_repre, repre)
+                    op_session.update_entity(
+                        project_name,
+                        old_repre["type"],
+                        archived_repre["_id"],
+                        update_data
                     )
 
                 # Create representation
                 else:
-                    repre["_id"] = ObjectId()
-                    bulk_writes.append(
-                        InsertOne(repre)
-                    )
+                    repre.pop("_id", None)
+                    op_session.create_entity(project_name, "representation",
+                                             repre)
 
             self.path_checks = []
 
@@ -430,28 +433,22 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     archived_repre = archived_repres_by_name.pop(
                         repre_name_low
                     )
-                    repre["old_id"] = repre["_id"]
-                    repre["_id"] = archived_repre["_id"]
-                    repre["type"] = archived_repre["type"]
-                    bulk_writes.append(
-                        ReplaceOne(
-                            {"_id": archived_repre["_id"]},
-                            repre
-                        )
-                    )
 
+                    changes = {"old_id": repre["_id"],
+                               "_id": archived_repre["_id"],
+                               "type": archived_repre["type"]}
+                    op_session.update_entity(project_name,
+                                             archived_repre["type"],
+                                             archived_repre["_id"],
+                                             changes)
                 else:
-                    repre["old_id"] = repre["_id"]
-                    repre["_id"] = ObjectId()
+                    repre["old_id"] = repre.pop("_id")
                     repre["type"] = "archived_representation"
-                    bulk_writes.append(
-                        InsertOne(repre)
-                    )
+                    op_session.create_entity(project_name,
+                                             "archived_representation",
+                                             repre)
 
-            if bulk_writes:
-                legacy_io.database[project_name].bulk_write(
-                    bulk_writes
-                )
+            op_session.commit()
 
             # Remove backuped previous hero
             if (

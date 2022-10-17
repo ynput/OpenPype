@@ -15,8 +15,8 @@ from openpype_modules.ftrack.ftrack_server.lib import (
     TOPIC_STATUS_SERVER,
     TOPIC_STATUS_SERVER_RESULT
 )
-from openpype.api import Logger
 from openpype.lib import (
+    Logger,
     is_current_version_studio_latest,
     is_running_from_build,
     get_expected_version,

@@ -7,7 +7,11 @@ from uuid import uuid4
 from contextlib import contextmanager
 
 from openpype.client import get_assets
-from openpype.host import INewPublisher
+from openpype.settings import (
+    get_system_settings,
+    get_project_settings
+)
+from openpype.host import IPublishHost
 from openpype.pipeline import legacy_io
 from openpype.pipeline.mongodb import (
     AvalonMongoDB,
@@ -18,11 +22,6 @@ from .creator_plugins import (
     Creator,
     AutoCreator,
     discover_creator_plugins,
-)
-
-from openpype.api import (
-    get_system_settings,
-    get_project_settings
 )
 
 UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
@@ -167,7 +166,10 @@ class AttributeValues:
         return self._data.pop(key, default)
 
     def reset_values(self):
-        self._data = []
+        self._data = {}
+
+    def mark_as_stored(self):
+        self._origin_data = copy.deepcopy(self._data)
 
     @property
     def attr_defs(self):
@@ -304,6 +306,9 @@ class PublishAttributes:
         for name in self._plugin_names_order:
             yield name
 
+    def mark_as_stored(self):
+        self._origin_data = copy.deepcopy(self._data)
+
     def data_to_store(self):
         """Convert attribute values to "data to store"."""
 
@@ -402,7 +407,11 @@ class CreatedInstance:
         self.creator = creator
 
         # Instance members may have actions on them
+        # TODO implement members logic
         self._members = []
+
+        # Data that can be used for lifetime of object
+        self._transient_data = {}
 
         # Create a copy of passed data to avoid changing them on the fly
         data = copy.deepcopy(data or {})
@@ -596,6 +605,26 @@ class CreatedInstance:
 
         return self
 
+    @property
+    def transient_data(self):
+        """Data stored for lifetime of instance object.
+
+        These data are not stored to scene and will be lost on object
+        deletion.
+
+        Can be used to store objects. In some host implementations is not
+        possible to reference to object in scene with some unique identifier
+        (e.g. node in Fusion.). In that case it is handy to store the object
+        here. Should be used that way only if instance data are stored on the
+        node itself.
+
+        Returns:
+            Dict[str, Any]: Dictionary object where you can store data related
+                to instance for lifetime of instance object.
+        """
+
+        return self._transient_data
+
     def changes(self):
         """Calculate and return changes."""
 
@@ -623,6 +652,25 @@ class CreatedInstance:
                 changes[key] = (old_value, None)
         return changes
 
+    def mark_as_stored(self):
+        """Should be called when instance data are stored.
+
+        Origin data are replaced by current data so changes are cleared.
+        """
+
+        orig_keys = set(self._orig_data.keys())
+        for key, value in self._data.items():
+            orig_keys.discard(key)
+            if key in ("creator_attributes", "publish_attributes"):
+                continue
+            self._orig_data[key] = copy.deepcopy(value)
+
+        for key in orig_keys:
+            self._orig_data.pop(key)
+
+        self.creator_attributes.mark_as_stored()
+        self.publish_attributes.mark_as_stored()
+
     @property
     def creator_attributes(self):
         return self._data["creator_attributes"]
@@ -636,6 +684,18 @@ class CreatedInstance:
         return self._data["publish_attributes"]
 
     def data_to_store(self):
+        """Collect data that contain json parsable types.
+
+        It is possible to recreate the instance using these data.
+
+        Todo:
+            We probably don't need OrderedDict. When data are loaded they
+                are not ordered anymore.
+
+        Returns:
+            OrderedDict: Ordered dictionary with instance data.
+        """
+
         output = collections.OrderedDict()
         for key, value in self._data.items():
             if key in ("creator_attributes", "publish_attributes"):
@@ -771,7 +831,7 @@ class CreateContext:
         """
 
         missing = set(
-            INewPublisher.get_missing_publish_methods(host)
+            IPublishHost.get_missing_publish_methods(host)
         )
         return missing
 
