@@ -499,6 +499,9 @@ class PublisherWindow(QtWidgets.QDialog):
         publish_has_crashed = self._controller.publish_has_crashed
         validate_enabled = not publish_has_crashed
         publish_enabled = not publish_has_crashed
+        if self._tabs_widget.is_current_tab("publish"):
+            self._go_to_report_tab()
+
         if validate_enabled:
             validate_enabled = not self._controller.publish_has_validated
         if publish_enabled:
@@ -507,8 +510,6 @@ class PublisherWindow(QtWidgets.QDialog):
                 and self._controller.publish_has_validation_errors
             ):
                 publish_enabled = False
-                if self._tabs_widget.is_current_tab("publish"):
-                    self._go_to_report_tab()
 
             else:
                 publish_enabled = not self._controller.publish_has_finished
