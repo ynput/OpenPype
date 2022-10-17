@@ -372,10 +372,10 @@ class DeadlinePublishTest(PublishTest):
             raise ValueError("Must have default deadline url.")
 
         url = "{}/api/jobs?JobId={}".format(deadline_url, deadline_job_id)
-        date_finished = None
+        valid_date_finished = None
 
         time_start = time.time()
-        while not date_finished:
+        while not valid_date_finished:
             time.sleep(0.5)
             if time.time() - time_start > timeout:
                 raise ValueError("Timeout for DL finish reached")
@@ -388,7 +388,8 @@ class DeadlinePublishTest(PublishTest):
             if not response.json():
                 raise ValueError("Couldn't find {}".format(deadline_job_id))
 
-            date_finished = response.json()[0]["MainEnd"]
+            # '0001-...' returned until job is finished
+            valid_date_finished = response.json()[0]["DateComp"][:4] != "0001"
 
         # some clean exit test possible?
         print("Publish finished")
