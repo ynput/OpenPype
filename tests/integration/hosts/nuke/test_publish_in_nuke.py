@@ -1,12 +1,12 @@
 import logging
 
 from tests.lib.assert_classes import DBAssert
-from tests.integration.hosts.nuke.lib import NukeTestClass
+from tests.integration.hosts.nuke.lib import NukeLocalPublishTestClass
 
 log = logging.getLogger("test_publish_in_nuke")
 
 
-class TestPublishInNuke(NukeTestClass):
+class TestPublishInNuke(NukeLocalPublishTestClass):
     """Basic test case for publishing in Nuke
 
         Uses generic TestCase to prepare fixtures for test data, testing DBs,
@@ -20,7 +20,8 @@ class TestPublishInNuke(NukeTestClass):
 
         How to run:
         (in cmd with activated {OPENPYPE_ROOT}/.venv)
-        {OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py runtests ../tests/integration/hosts/nuke  # noqa: E501
+        {OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py
+        runtests ../tests/integration/hosts/nuke  # noqa: E501
 
         To check log/errors from launched app's publish process keep PERSIST
         to True and check `test_openpype.logs` collection.
@@ -37,7 +38,7 @@ class TestPublishInNuke(NukeTestClass):
     # could be overwritten by command line arguments
     # keep empty to locate latest installed variant or explicit
     APP_VARIANT = ""
-    PERSIST = True  # True - keep test_db, test_openpype, outputted test files
+    PERSIST = False  # True - keep test_db, test_openpype, outputted test files
     TEST_DATA_FOLDER = None
 
     def test_db_asserts(self, dbcon, publish_finished):
