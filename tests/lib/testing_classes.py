@@ -362,7 +362,7 @@ class DeadlinePublishTest(PublishTest):
         with open(metadata_json[0]) as fp:
             job_info = json.load(fp)
 
-        deadline_job_id = job_info["job"]["_id"]
+        deadline_job_id = job_info["deadline_publish_job_id"]
 
         manager = ModulesManager()
         deadline_module = manager.modules_by_name["deadline"]
