@@ -27,7 +27,7 @@ as a naive barier to prevent artists from accidental setting changes.
 Uses `subst` command, if configured volume character in `Destination` field already exists, no re-mapping is done for that character(volume).
 
 ### FFmpeg and OpenImageIO tools
-We bundle FFmpeg and OpenImageIO tools with OpenPype build for Windows and Linux builds. For MacOs support or to use different build is it possible to set environment variables `OPENPYPE_FFMPEG_PATHS` and `OPENPYPE_OIIO_PATHS` in system settings. Both should lead to directory where tool executables are located. Multiple paths are supported.
+We bundle FFmpeg tools for all platforms and OpenImageIO tools for Windows and Linux. By default are used bundled tools but it is possible to set environment variables `OPENPYPE_FFMPEG_PATHS` and `OPENPYPE_OIIO_PATHS` in system settings environments to look for them in different directory e.g. for different linux distributions or to add oiio support for MacOs. Values of both environment variables should lead to directory where tool executables are located (multiple paths are supported).
 
 ### OpenPype deployment control
 **`Versions Repository`** - Location where automatic update mechanism searches for zip files with
