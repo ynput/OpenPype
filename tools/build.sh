@@ -152,7 +152,7 @@ main () {
   openpype_root=$(dirname $(dirname "$(realpath ${BASH_SOURCE[0]})"))
   pushd "$openpype_root" > /dev/null || return > /dev/null
 
-  version_command="import os;import re;exec(open(os.path.join('$openpype_root', 'openpype', 'version.py')).read());print(re.search(r'(\d+\.\d+.\d+).*', version['__version__'])[1]);"
+  version_command="import os;import re;version={};exec(open(os.path.join('$openpype_root', 'openpype', 'version.py')).read(), version);print(re.search(r'(\d+\.\d+.\d+).*', version['__version__'])[1]);"
   openpype_version="$(python <<< ${version_command})"
 
   _inside_openpype_tool="1"
