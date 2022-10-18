@@ -4,6 +4,14 @@ import bpy
 
 
 if __name__ == "__main__":
-    bpy.ops.file.make_paths_relative()
+    data_blocks = set(bpy.data.collections)
 
-    bpy.ops.wm.save_mainfile()
+    for obj in bpy.data.objects:
+        data_blocks.add(obj)
+        # Get reference from override library.
+        if obj.override_library and obj.override_library.reference:
+            data_blocks.add(obj.override_library.reference)
+
+    bpy.data.libraries.write(
+        bpy.data.filepath, data_blocks, path_remap="RELATIVE_ALL"
+    )
