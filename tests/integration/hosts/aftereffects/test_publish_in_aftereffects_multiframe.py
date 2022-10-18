@@ -1,12 +1,12 @@
 import logging
 
 from tests.lib.assert_classes import DBAssert
-from tests.integration.hosts.aftereffects.lib import AfterEffectsTestClass
+from tests.integration.hosts.aftereffects.lib import AELocalPublishTestClass
 
 log = logging.getLogger("test_publish_in_aftereffects")
 
 
-class TestPublishInAfterEffects(AfterEffectsTestClass):
+class TestPublishInAfterEffects(AELocalPublishTestClass):
     """Basic test case for publishing in AfterEffects
 
     Should publish 5 frames
