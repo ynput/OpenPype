@@ -199,8 +199,8 @@ if [ "$disable_submodule_update" == 1 ]; then
 
     # fix code signing issue
     echo -e "${BIGreen}>>>${RST} Fixing code signatures ...\c"
-    codesign --remove-signature "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/openpype_console" || { echo -e "${BIRed}FAILED{$RST}"; return 1 }
-    codesign --remove-signature "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/openpype_gui" || { echo -e "${BIRed}FAILED{$RST}"; return 1 }
+    codesign --remove-signature "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/openpype_console" || { echo -e "${BIRed}FAILED${RST}"; return 1; }
+    codesign --remove-signature "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/openpype_gui" || { echo -e "${BIRed}FAILED${RST}"; return 1; }
     echo -e "${BIGreen}DONE${RST}"
     if command -v create-dmg > /dev/null 2>&1; then
       echo -e "${BIGreen}>>>${RST} Creating dmg image ...\c"
@@ -210,8 +210,10 @@ if [ "$disable_submodule_update" == 1 ]; then
         --window-size 600 300 \
         --app-drop-link 100 50 \
         "$openpype_root/build/OpenPype-Installer-$openpype_version.dmg" \
-        "$openpype_root/build/OpenPype $openpype_version.app" || { echo -e "${BIRed}FAILED{$RST}"; return 1 }
-        echo -e "${BIGreen}DONE${RST}"
+        "$openpype_root/build/OpenPype $openpype_version.app"
+
+      test $? -eq 0 || { echo -e "${BIRed}FAILED${RST}"; return 1; }
+      echo -e "${BIGreen}DONE${RST}"
     else
       echo -e "${BIYellow}!!!${RST} ${BIWhite}create-dmg${RST} command is not available."
     fi
