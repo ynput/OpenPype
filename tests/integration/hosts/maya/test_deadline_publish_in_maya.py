@@ -4,14 +4,12 @@ from tests.integration.hosts.maya.lib import MayaDeadlinePublishTestClass
 class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
     """Basic test case for publishing in Maya
 
-        Shouldnt be running standalone only via 'runtests' pype command! (??)
-
-        Uses generic TestCase to prepare fixtures for test data, testing DBs,
-        env vars.
 
         Always pulls and uses test data from GDrive!
 
         Opens Maya, runs publish on prepared workile.
+
+        Sends file to be rendered on Deadline.
 
         Then checks content of DB (if subset, version, representations were
         created.
@@ -22,10 +20,11 @@ class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
         {OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py runtests ../tests/integration/hosts/maya  # noqa: E501
 
     """
-    PERSIST = True
+    PERSIST = False
 
     TEST_FILES = [
-        ("1BTSIIULJTuDc8VvXseuiJV_fL6-Bu7FP", "test_maya_publish.zip", "")
+        ("1dDY7CbdFXfRksGVoiuwjhnPoTRCCf5ea",
+         "test_maya_deadline_publish.zip", "")
     ]
 
     APP = "maya"
@@ -37,7 +36,7 @@ class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
         print("test_db_asserts")
-        assert 5 == dbcon.count_documents({"type": "version"}), \
+        assert 3 == dbcon.count_documents({"type": "version"}), \
             "Not expected no of versions"
 
         assert 0 == dbcon.count_documents({"type": "version",
@@ -48,22 +47,46 @@ class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
                                            "name": "modelMain"}), \
             "modelMain subset must be present"
 
-        assert 1 == dbcon.count_documents({"type": "subset",
-                                           "name": "workfileTest_task"}), \
-            "workfileTest_task subset must be present"
+        assert 1 == dbcon.count_documents({
+            "type": "subset", "name": "renderTestTaskMain_beauty"}), \
+            "renderTestTaskMain_beauty subset must be present"
 
-        assert 11 == dbcon.count_documents({"type": "representation"}), \
+        assert 1 == dbcon.count_documents({"type": "subset",
+                                           "name": "workfileTesttask"}), \
+            "workfileTesttask subset must be present"
+
+        assert 6 == dbcon.count_documents({"type": "representation"}), \
             "Not expected no of representations"
 
-        assert 2 == dbcon.count_documents({"type": "representation",
+        assert 1 == dbcon.count_documents({"type": "representation",
                                            "context.subset": "modelMain",
                                            "context.ext": "abc"}), \
             "Not expected no of representations with ext 'abc'"
 
-        assert 2 == dbcon.count_documents({"type": "representation",
+        assert 1 == dbcon.count_documents({"type": "representation",
                                            "context.subset": "modelMain",
                                            "context.ext": "ma"}), \
-            "Not expected no of representations with ext 'abc'"
+            "Not expected no of representations with ext 'ma'"
+
+        assert 1 == dbcon.count_documents({"type": "representation",
+                                           "context.subset": "workfileTesttask",  # noqa
+                                           "context.ext": "mb"}), \
+            "Not expected no of representations with ext 'mb'"
+
+        assert 1 == dbcon.count_documents({"type": "representation",
+                                           "context.subset": "renderTestTaskMain_beauty",  # noqa
+                                           "context.ext": "exr"}), \
+            "Not expected no of representations with ext 'exr'"
+
+        assert 1 == dbcon.count_documents({"type": "representation",
+                                           "context.subset": "renderTestTaskMain_beauty",  # noqa
+                                           "context.ext": "jpg"}), \
+            "Not expected no of representations with ext 'jpg'"
+
+        assert 1 == dbcon.count_documents({"type": "representation",
+                                           "context.subset": "renderTestTaskMain_beauty",  # noqa
+                                           "context.ext": "h264_exr"}), \
+            "Not expected no of representations with ext 'h264_exr'"
 
 
 if __name__ == "__main__":
