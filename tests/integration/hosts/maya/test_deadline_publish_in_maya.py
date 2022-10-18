@@ -1,3 +1,4 @@
+from tests.lib.assert_classes import DBAssert
 from tests.integration.hosts.maya.lib import MayaDeadlinePublishTestClass
 
 
@@ -36,57 +37,61 @@ class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
         print("test_db_asserts")
-        assert 3 == dbcon.count_documents({"type": "version"}), \
-            "Not expected no of versions"
+        failures = []
+        failures.append(DBAssert.count_of_types(dbcon, "version", 3))
 
-        assert 0 == dbcon.count_documents({"type": "version",
-                                           "name": {"$ne": 1}}), \
-            "Only versions with 1 expected"
+        failures.append(
+            DBAssert.count_of_types(dbcon, "version", 0, name={"$ne": 1}))
 
-        assert 1 == dbcon.count_documents({"type": "subset",
-                                           "name": "modelMain"}), \
-            "modelMain subset must be present"
+        failures.append(
+            DBAssert.count_of_types(dbcon, "subset", 1,
+                                    name="modelMain"))
 
-        assert 1 == dbcon.count_documents({
-            "type": "subset", "name": "renderTestTaskMain_beauty"}), \
-            "renderTestTaskMain_beauty subset must be present"
+        failures.append(
+            DBAssert.count_of_types(dbcon, "subset", 1,
+                                    name="renderTestTaskMain_beauty"))
 
-        assert 1 == dbcon.count_documents({"type": "subset",
-                                           "name": "workfileTesttask"}), \
-            "workfileTesttask subset must be present"
+        failures.append(
+            DBAssert.count_of_types(dbcon, "subset", 1,
+                                    name="workfileTesttask"))
 
-        assert 6 == dbcon.count_documents({"type": "representation"}), \
-            "Not expected no of representations"
+        failures.append(DBAssert.count_of_types(dbcon, "representation", 6))
 
-        assert 1 == dbcon.count_documents({"type": "representation",
-                                           "context.subset": "modelMain",
-                                           "context.ext": "abc"}), \
-            "Not expected no of representations with ext 'abc'"
+        additional_args = {"context.subset": "modelMain",
+                           "context.ext": "abc"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
 
-        assert 1 == dbcon.count_documents({"type": "representation",
-                                           "context.subset": "modelMain",
-                                           "context.ext": "ma"}), \
-            "Not expected no of representations with ext 'ma'"
+        additional_args = {"context.subset": "modelMain",
+                           "context.ext": "ma"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
 
-        assert 1 == dbcon.count_documents({"type": "representation",
-                                           "context.subset": "workfileTesttask",  # noqa
-                                           "context.ext": "mb"}), \
-            "Not expected no of representations with ext 'mb'"
+        additional_args = {"context.subset": "modelMain",
+                           "context.ext": "mb"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
 
-        assert 1 == dbcon.count_documents({"type": "representation",
-                                           "context.subset": "renderTestTaskMain_beauty",  # noqa
-                                           "context.ext": "exr"}), \
-            "Not expected no of representations with ext 'exr'"
+        additional_args = {"context.subset": "renderTestTaskMain_beauty",
+                           "context.ext": "exr"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
 
-        assert 1 == dbcon.count_documents({"type": "representation",
-                                           "context.subset": "renderTestTaskMain_beauty",  # noqa
-                                           "context.ext": "jpg"}), \
-            "Not expected no of representations with ext 'jpg'"
+        additional_args = {"context.subset": "renderTestTaskMain_beauty",
+                           "context.ext": "jpg"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
 
-        assert 1 == dbcon.count_documents({"type": "representation",
-                                           "context.subset": "renderTestTaskMain_beauty",  # noqa
-                                           "context.ext": "h264_exr"}), \
-            "Not expected no of representations with ext 'h264_exr'"
+        additional_args = {"context.subset": "renderTestTaskMain_beauty",
+                           "context.ext": "h264_exr"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
 
 
 if __name__ == "__main__":
