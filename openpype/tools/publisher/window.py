@@ -11,7 +11,7 @@ from openpype.tools.utils import (
 )
 
 from .publish_report_viewer import PublishReportViewerWidget
-from .control import PublisherController
+from .control_qt import QtPublisherController
 from .widgets import (
     OverviewWidget,
     ValidationsWidget,
@@ -36,7 +36,7 @@ class PublisherWindow(QtWidgets.QDialog):
     footer_border = 8
     publish_footer_spacer = 2
 
-    def __init__(self, parent=None, reset_on_show=None):
+    def __init__(self, parent=None, controller=None, reset_on_show=None):
         super(PublisherWindow, self).__init__(parent)
 
         self.setWindowTitle("OpenPype publisher")
@@ -61,7 +61,8 @@ class PublisherWindow(QtWidgets.QDialog):
             | on_top_flag
         )
 
-        controller = PublisherController()
+        if controller is None:
+            controller = QtPublisherController()
 
         help_dialog = HelpDialog(controller, self)
 
@@ -250,7 +251,7 @@ class PublisherWindow(QtWidgets.QDialog):
             "publish.process.started", self._on_publish_start
         )
         controller.event_system.add_callback(
-            "publish.process.validated", self._on_publish_validated
+            "publish.has_validated.changed", self._on_publish_validated_change
         )
         controller.event_system.add_callback(
             "publish.process.stopped", self._on_publish_stop
@@ -441,11 +442,7 @@ class PublisherWindow(QtWidgets.QDialog):
         self._controller.stop_publish()
 
     def _set_publish_comment(self):
-        if self._controller.publish_comment_is_set:
-            return
-
-        comment = self._comment_input.text()
-        self._controller.set_comment(comment)
+        self._controller.set_comment(self._comment_input.text())
 
     def _on_validate_clicked(self):
         self._set_publish_comment()
@@ -473,6 +470,11 @@ class PublisherWindow(QtWidgets.QDialog):
         self._set_publish_visibility(False)
         self._set_footer_enabled(False)
         self._update_publish_details_widget()
+        if (
+            not self._tabs_widget.is_current_tab("create")
+            or not self._tabs_widget.is_current_tab("publish")
+        ):
+            self._tabs_widget.set_current_tab("publish")
 
     def _on_publish_start(self):
         self._create_tab.setEnabled(False)
@@ -491,15 +493,20 @@ class PublisherWindow(QtWidgets.QDialog):
         if self._tabs_widget.is_current_tab(self._create_tab):
             self._tabs_widget.set_current_tab("publish")
 
-    def _on_publish_validated(self):
-        self._validate_btn.setEnabled(False)
+    def _on_publish_validated_change(self, event):
+        if event["value"]:
+            self._validate_btn.setEnabled(False)
 
     def _on_publish_stop(self):
         self._set_publish_overlay_visibility(False)
         self._reset_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
-        validate_enabled = not self._controller.publish_has_crashed
-        publish_enabled = not self._controller.publish_has_crashed
+        publish_has_crashed = self._controller.publish_has_crashed
+        validate_enabled = not publish_has_crashed
+        publish_enabled = not publish_has_crashed
+        if self._tabs_widget.is_current_tab("publish"):
+            self._go_to_report_tab()
+
         if validate_enabled:
             validate_enabled = not self._controller.publish_has_validated
         if publish_enabled:
@@ -508,8 +515,6 @@ class PublisherWindow(QtWidgets.QDialog):
                 and self._controller.publish_has_validation_errors
             ):
                 publish_enabled = False
-                if self._tabs_widget.is_current_tab("publish"):
-                    self._go_to_report_tab()
 
             else:
                 publish_enabled = not self._controller.publish_has_finished
@@ -525,7 +530,7 @@ class PublisherWindow(QtWidgets.QDialog):
             return
 
         all_valid = None
-        for instance in self._controller.instances:
+        for instance in self._controller.instances.values():
             if not instance["active"]:
                 continue
 

@@ -3,19 +3,34 @@ import copy
 import logging
 import traceback
 import collections
+import uuid
+from abc import ABCMeta, abstractmethod, abstractproperty
 
+import six
 import pyblish.api
 
-from openpype.client import get_assets
+from openpype.client import (
+    get_assets,
+    get_asset_by_id,
+    get_subsets,
+)
 from openpype.lib.events import EventSystem
+from openpype.lib.attribute_definitions import (
+    serialize_attr_defs,
+    deserialize_attr_defs,
+)
 from openpype.pipeline import (
     PublishValidationError,
+    KnownPublishError,
     registered_host,
     legacy_io,
 )
-from openpype.pipeline.create import CreateContext
-
-from Qt import QtCore
+from openpype.pipeline.create import (
+    CreateContext,
+    AutoCreator,
+    HiddenCreator,
+    Creator,
+)
 
 # Define constant for plugin orders offset
 PLUGIN_ORDER_OFFSET = 0.5
@@ -23,6 +38,7 @@ PLUGIN_ORDER_OFFSET = 0.5
 
 class MainThreadItem:
     """Callback with args and kwargs."""
+
     def __init__(self, callback, *args, **kwargs):
         self.callback = callback
         self.args = args
@@ -32,64 +48,9 @@ class MainThreadItem:
         self.callback(*self.args, **self.kwargs)
 
 
-class MainThreadProcess(QtCore.QObject):
-    """Qt based main thread process executor.
-
-    Has timer which controls each 50ms if there is new item to process.
-
-    This approach gives ability to update UI meanwhile plugin is in progress.
-    """
-
-    count_timeout = 2
-
-    def __init__(self):
-        super(MainThreadProcess, self).__init__()
-        self._items_to_process = collections.deque()
-
-        timer = QtCore.QTimer()
-        timer.setInterval(0)
-
-        timer.timeout.connect(self._execute)
-
-        self._timer = timer
-        self._switch_counter = self.count_timeout
-
-    def process(self, func, *args, **kwargs):
-        item = MainThreadItem(func, *args, **kwargs)
-        self.add_item(item)
-
-    def add_item(self, item):
-        self._items_to_process.append(item)
-
-    def _execute(self):
-        if not self._items_to_process:
-            return
-
-        if self._switch_counter > 0:
-            self._switch_counter -= 1
-            return
-
-        self._switch_counter = self.count_timeout
-
-        item = self._items_to_process.popleft()
-        item.process()
-
-    def start(self):
-        if not self._timer.isActive():
-            self._timer.start()
-
-    def stop(self):
-        if self._timer.isActive():
-            self._timer.stop()
-
-    def clear(self):
-        if self._timer.isActive():
-            self._timer.stop()
-        self._items_to_process = collections.deque()
-
-
 class AssetDocsCache:
     """Cache asset documents for creation part."""
+
     projection = {
         "_id": True,
         "name": True,
@@ -100,33 +61,92 @@ class AssetDocsCache:
     def __init__(self, controller):
         self._controller = controller
         self._asset_docs = None
+        self._asset_docs_hierarchy = None
         self._task_names_by_asset_name = {}
+        self._asset_docs_by_name = {}
+        self._full_asset_docs_by_name = {}
 
     def reset(self):
         self._asset_docs = None
+        self._asset_docs_hierarchy = None
         self._task_names_by_asset_name = {}
+        self._asset_docs_by_name = {}
+        self._full_asset_docs_by_name = {}
 
     def _query(self):
-        if self._asset_docs is None:
-            project_name = self._controller.project_name
-            asset_docs = get_assets(
-                project_name, fields=self.projection.keys()
-            )
-            task_names_by_asset_name = {}
-            for asset_doc in asset_docs:
-                asset_name = asset_doc["name"]
-                asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
-                task_names_by_asset_name[asset_name] = list(asset_tasks.keys())
-            self._asset_docs = asset_docs
-            self._task_names_by_asset_name = task_names_by_asset_name
+        if self._asset_docs is not None:
+            return
+
+        project_name = self._controller.project_name
+        asset_docs = get_assets(
+            project_name, fields=self.projection.keys()
+        )
+        asset_docs_by_name = {}
+        task_names_by_asset_name = {}
+        for asset_doc in asset_docs:
+            if "data" not in asset_doc:
+                asset_doc["data"] = {"tasks": {}, "visualParent": None}
+            elif "tasks" not in asset_doc["data"]:
+                asset_doc["data"]["tasks"] = {}
+
+            asset_name = asset_doc["name"]
+            asset_tasks = asset_doc["data"]["tasks"]
+            task_names_by_asset_name[asset_name] = list(asset_tasks.keys())
+            asset_docs_by_name[asset_name] = asset_doc
+
+        self._asset_docs = asset_docs
+        self._asset_docs_by_name = asset_docs_by_name
+        self._task_names_by_asset_name = task_names_by_asset_name
 
     def get_asset_docs(self):
         self._query()
         return copy.deepcopy(self._asset_docs)
 
+    def get_asset_hierarchy(self):
+        """Prepare asset documents into hierarchy.
+
+        Convert ObjectId to string. Asset id is not used during whole
+        process of publisher but asset name is used rather.
+
+        Returns:
+            Dict[Union[str, None]: Any]: Mapping of parent id to it's children.
+                Top level assets have parent id 'None'.
+        """
+
+        if self._asset_docs_hierarchy is None:
+            _queue = collections.deque(self.get_asset_docs())
+
+            output = collections.defaultdict(list)
+            while _queue:
+                asset_doc = _queue.popleft()
+                asset_doc["_id"] = str(asset_doc["_id"])
+                parent_id = asset_doc["data"]["visualParent"]
+                if parent_id is not None:
+                    parent_id = str(parent_id)
+                    asset_doc["data"]["visualParent"] = parent_id
+                output[parent_id].append(asset_doc)
+            self._asset_docs_hierarchy = output
+        return copy.deepcopy(self._asset_docs_hierarchy)
+
     def get_task_names_by_asset_name(self):
         self._query()
         return copy.deepcopy(self._task_names_by_asset_name)
+
+    def get_asset_by_name(self, asset_name):
+        self._query()
+        asset_doc = self._asset_docs_by_name.get(asset_name)
+        if asset_doc is None:
+            return None
+        return copy.deepcopy(asset_doc)
+
+    def get_full_asset_by_name(self, asset_name):
+        self._query()
+        if asset_name not in self._full_asset_docs_by_name:
+            asset_doc = self._asset_docs_by_name.get(asset_name)
+            project_name = self._controller.project_name
+            full_asset_doc = get_asset_by_id(project_name, asset_doc["_id"])
+            self._full_asset_docs_by_name[asset_name] = full_asset_doc
+        return copy.deepcopy(self._full_asset_docs_by_name[asset_name])
 
 
 class PublishReport:
@@ -134,6 +154,7 @@ class PublishReport:
 
     Report keeps current state of publishing and currently processed plugin.
     """
+
     def __init__(self, controller):
         self.controller = controller
         self._publish_discover_result = None
@@ -214,13 +235,15 @@ class PublishReport:
 
     def add_result(self, result):
         """Handle result of one plugin and it's instance."""
+
         instance = result["instance"]
         instance_id = None
         if instance is not None:
             instance_id = instance.id
         self._current_plugin_data["instances_data"].append({
             "id": instance_id,
-            "logs": self._extract_instance_log_items(result)
+            "logs": self._extract_instance_log_items(result),
+            "process_time": result["duration"]
         })
 
     def add_action_result(self, action, result):
@@ -270,7 +293,9 @@ class PublishReport:
             "plugins_data": plugins_data,
             "instances": instances_details,
             "context": self._extract_context_data(self._current_context),
-            "crashed_file_paths": crashed_file_paths
+            "crashed_file_paths": crashed_file_paths,
+            "id": str(uuid.uuid4()),
+            "report_version": "1.0.0"
         }
 
     def _extract_context_data(self, context):
@@ -342,7 +367,1140 @@ class PublishReport:
         return output
 
 
-class PublisherController:
+class PublishPluginsProxy:
+    """Wrapper around publish plugin.
+
+    Prepare mapping for publish plugins and actions. Also can create
+    serializable data for plugin actions so UI don't have to have access to
+    them.
+
+    This object is created in process where publishing is actually running.
+
+    Notes:
+        Actions have id but single action can be used on multiple plugins so
+            to run an action is needed combination of plugin and action.
+
+    Args:
+        plugins [List[pyblish.api.Plugin]]: Discovered plugins that will be
+            processed.
+    """
+
+    def __init__(self, plugins):
+        plugins_by_id = {}
+        actions_by_id = {}
+        action_ids_by_plugin_id = {}
+        for plugin in plugins:
+            plugin_id = plugin.id
+            plugins_by_id[plugin_id] = plugin
+
+            action_ids = set()
+            action_ids_by_plugin_id[plugin_id] = action_ids
+
+            actions = getattr(plugin, "actions", None) or []
+            for action in actions:
+                action_id = action.id
+                action_ids.add(action_id)
+                actions_by_id[action_id] = action
+
+        self._plugins_by_id = plugins_by_id
+        self._actions_by_id = actions_by_id
+        self._action_ids_by_plugin_id = action_ids_by_plugin_id
+
+    def get_action(self, action_id):
+        return self._actions_by_id[action_id]
+
+    def get_plugin(self, plugin_id):
+        return self._plugins_by_id[plugin_id]
+
+    def get_plugin_id(self, plugin):
+        """Get id of plugin based on plugin object.
+
+        It's used for validation errors report.
+
+        Args:
+            plugin (pyblish.api.Plugin): Publish plugin for which id should be
+                returned.
+
+        Returns:
+            str: Plugin id.
+        """
+
+        return plugin.id
+
+    def get_plugin_action_items(self, plugin_id):
+        """Get plugin action items for plugin by it's id.
+
+        Args:
+            plugin_id (str): Publish plugin id.
+
+        Returns:
+            List[PublishPluginActionItem]: Items with information about publish
+                plugin actions.
+        """
+
+        return [
+            self._create_action_item(self._actions_by_id[action_id], plugin_id)
+            for action_id in self._action_ids_by_plugin_id[plugin_id]
+        ]
+
+    def _create_action_item(self, action, plugin_id):
+        label = action.label or action.__name__
+        icon = getattr(action, "icon", None)
+        return PublishPluginActionItem(
+            action.id,
+            plugin_id,
+            action.active,
+            action.on,
+            label,
+            icon
+        )
+
+
+class PublishPluginActionItem:
+    """Representation of publish plugin action.
+
+    Data driven object which is used as proxy for controller and UI.
+
+    Args:
+        action_id (str): Action id.
+        plugin_id (str): Plugin id.
+        active (bool): Action is active.
+        on_filter (str): Actions have 'on' attribte which define when can be
+            action triggered (e.g. 'all', 'failed', ...).
+        label (str): Action's label.
+        icon (Union[str, None]) Action's icon.
+    """
+
+    def __init__(self, action_id, plugin_id, active, on_filter, label, icon):
+        self.action_id = action_id
+        self.plugin_id = plugin_id
+        self.active = active
+        self.on_filter = on_filter
+        self.label = label
+        self.icon = icon
+
+    def to_data(self):
+        """Serialize object to dictionary.
+
+        Returns:
+            Dict[str, Union[str,bool,None]]: Serialized object.
+        """
+
+        return {
+            "action_id": self.action_id,
+            "plugin_id": self.plugin_id,
+            "active": self.active,
+            "on_filter": self.on_filter,
+            "label": self.label,
+            "icon": self.icon
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        """Create object from data.
+
+        Args:
+            data (Dict[str, Union[str,bool,None]]): Data used to recreate
+                object.
+
+        Returns:
+            PublishPluginActionItem: Object created using data.
+        """
+
+        return cls(**data)
+
+
+class ValidationErrorItem:
+    """Data driven validation error item.
+
+    Prepared data container with information about validation error and it's
+    source plugin.
+
+    Can be converted to raw data and recreated should be used for controller
+    and UI connection.
+
+    Args:
+        instance_id (str): Id of pyblish instance to which is validation error
+            connected.
+        instance_label (str): Prepared instance label.
+        plugin_id (str): Id of pyblish Plugin which triggered the validation
+            error. Id is generated using 'PublishPluginsProxy'.
+    """
+
+    def __init__(
+        self,
+        instance_id,
+        instance_label,
+        plugin_id,
+        context_validation,
+        title,
+        description,
+        detail,
+    ):
+        self.instance_id = instance_id
+        self.instance_label = instance_label
+        self.plugin_id = plugin_id
+        self.context_validation = context_validation
+        self.title = title
+        self.description = description
+        self.detail = detail
+
+    def to_data(self):
+        """Serialize object to dictionary.
+
+        Returns:
+            Dict[str, Union[str, bool, None]]: Serialized object data.
+        """
+
+        return {
+            "instance_id": self.instance_id,
+            "instance_label": self.instance_label,
+            "plugin_id": self.plugin_id,
+            "context_validation": self.context_validation,
+            "title": self.title,
+            "description": self.description,
+            "detail": self.detail,
+        }
+
+    @classmethod
+    def from_result(cls, plugin_id, error, instance):
+        """Create new object based on resukt from controller.
+
+        Returns:
+            ValidationErrorItem: New object with filled data.
+        """
+
+        instance_label = None
+        instance_id = None
+        if instance is not None:
+            instance_label = (
+                instance.data.get("label") or instance.data.get("name")
+            )
+            instance_id = instance.id
+
+        return cls(
+            instance_id,
+            instance_label,
+            plugin_id,
+            instance is None,
+            error.title,
+            error.description,
+            error.detail,
+        )
+
+    @classmethod
+    def from_data(cls, data):
+        return cls(**data)
+
+
+class PublishValidationErrorsReport:
+    """Publish validation errors report that can be parsed to raw data.
+
+    Args:
+        error_items (List[ValidationErrorItem]): List of validation errors.
+        plugin_action_items (Dict[str, PublishPluginActionItem]): Action items
+            by plugin id.
+    """
+
+    def __init__(self, error_items, plugin_action_items):
+        self._error_items = error_items
+        self._plugin_action_items = plugin_action_items
+
+    def __iter__(self):
+        for item in self._error_items:
+            yield item
+
+    def group_items_by_title(self):
+        """Group errors by plugin and their titles.
+
+        Items are grouped by plugin and title -> same title from different
+        plugin is different item. Items are ordered by plugin order.
+
+        Returns:
+            List[Dict[str, Any]]: List where each item title, instance
+                information related to title and possible plugin actions.
+        """
+
+        ordered_plugin_ids = []
+        error_items_by_plugin_id = collections.defaultdict(list)
+        for error_item in self._error_items:
+            plugin_id = error_item.plugin_id
+            if plugin_id not in ordered_plugin_ids:
+                ordered_plugin_ids.append(plugin_id)
+            error_items_by_plugin_id[plugin_id].append(error_item)
+
+        grouped_error_items = []
+        for plugin_id in ordered_plugin_ids:
+            plugin_action_items = self._plugin_action_items[plugin_id]
+            error_items = error_items_by_plugin_id[plugin_id]
+
+            titles = []
+            error_items_by_title = collections.defaultdict(list)
+            for error_item in error_items:
+                title = error_item.title
+                if title not in titles:
+                    titles.append(error_item.title)
+                error_items_by_title[title].append(error_item)
+
+            for title in titles:
+                grouped_error_items.append({
+                    "plugin_action_items": list(plugin_action_items),
+                    "error_items": error_items_by_title[title],
+                    "title": title
+                })
+        return grouped_error_items
+
+    def to_data(self):
+        """Serialize object to dictionary.
+
+        Returns:
+            Dict[str, Any]: Serialized data.
+        """
+
+        error_items = [
+            item.to_data()
+            for item in self._error_items
+        ]
+
+        plugin_action_items = {
+            plugin_id: [
+                action_item.to_data()
+                for action_item in action_items
+            ]
+            for plugin_id, action_items in self._plugin_action_items.items()
+        }
+
+        return {
+            "error_items": error_items,
+            "plugin_action_items": plugin_action_items
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        """Recreate object from data.
+
+        Args:
+            data (dict[str, Any]): Data to recreate object. Can be created
+                using 'to_data' method.
+
+        Returns:
+            PublishValidationErrorsReport: New object based on data.
+        """
+
+        error_items = [
+            ValidationErrorItem.from_data(error_item)
+            for error_item in data["error_items"]
+        ]
+        plugin_action_items = [
+            PublishPluginActionItem.from_data(action_item)
+            for action_item in data["plugin_action_items"]
+        ]
+        return cls(error_items, plugin_action_items)
+
+
+class PublishValidationErrors:
+    """Object to keep track about validation errors by plugin."""
+
+    def __init__(self):
+        self._plugins_proxy = None
+        self._error_items = []
+        self._plugin_action_items = {}
+
+    def __bool__(self):
+        return self.has_errors
+
+    @property
+    def has_errors(self):
+        """At least one error was added."""
+
+        return bool(self._error_items)
+
+    def reset(self, plugins_proxy):
+        """Reset object to default state.
+
+        Args:
+            plugins_proxy (PublishPluginsProxy): Proxy which store plugins,
+                actions by ids and create mapping of action ids by plugin ids.
+        """
+
+        self._plugins_proxy = plugins_proxy
+        self._error_items = []
+        self._plugin_action_items = {}
+
+    def create_report(self):
+        """Create report based on currently existing errors.
+
+        Returns:
+            PublishValidationErrorsReport: Validation error report with all
+                error information and publish plugin action items.
+        """
+
+        return PublishValidationErrorsReport(
+            self._error_items, self._plugin_action_items
+        )
+
+    def add_error(self, plugin, error, instance):
+        """Add error from pyblish result.
+
+        Args:
+            plugin (pyblish.api.Plugin): Plugin which triggered error.
+            error (ValidationException): Validation error.
+            instance (Union[pyblish.api.Instance, None]): Instance on which was
+                error raised or None if was raised on context.
+        """
+
+        # Make sure the cached report is cleared
+        plugin_id = self._plugins_proxy.get_plugin_id(plugin)
+        self._error_items.append(
+            ValidationErrorItem.from_result(plugin_id, error, instance)
+        )
+        if plugin_id in self._plugin_action_items:
+            return
+
+        plugin_actions = self._plugins_proxy.get_plugin_action_items(
+            plugin_id
+        )
+        self._plugin_action_items[plugin_id] = plugin_actions
+
+
+class CreatorType:
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return self.name
+
+    def __eq__(self, other):
+        return self.name == str(other)
+
+
+class CreatorTypes:
+    base = CreatorType("base")
+    auto = CreatorType("auto")
+    hidden = CreatorType("hidden")
+    artist = CreatorType("artist")
+
+    @classmethod
+    def from_str(cls, value):
+        for creator_type in (
+            cls.base,
+            cls.auto,
+            cls.hidden,
+            cls.artist
+        ):
+            if value == creator_type:
+                return creator_type
+        raise ValueError("Unknown type \"{}\"".format(str(value)))
+
+
+class CreatorItem:
+    """Wrapper around Creator plugin.
+
+    Object can be serialized and recreated.
+    """
+
+    def __init__(
+        self,
+        identifier,
+        creator_type,
+        family,
+        label,
+        group_label,
+        icon,
+        instance_attributes_defs,
+        description,
+        detailed_description,
+        default_variant,
+        default_variants,
+        create_allow_context_change,
+        pre_create_attributes_defs
+    ):
+        self.identifier = identifier
+        self.creator_type = creator_type
+        self.family = family
+        self.label = label
+        self.group_label = group_label
+        self.icon = icon
+        self.description = description
+        self.detailed_description = detailed_description
+        self.default_variant = default_variant
+        self.default_variants = default_variants
+        self.create_allow_context_change = create_allow_context_change
+        self.instance_attributes_defs = instance_attributes_defs
+        self.pre_create_attributes_defs = pre_create_attributes_defs
+
+    def get_instance_attr_defs(self):
+        return self.instance_attributes_defs
+
+    def get_group_label(self):
+        return self.group_label
+
+    @classmethod
+    def from_creator(cls, creator):
+        if isinstance(creator, AutoCreator):
+            creator_type = CreatorTypes.auto
+        elif isinstance(creator, HiddenCreator):
+            creator_type = CreatorTypes.hidden
+        elif isinstance(creator, Creator):
+            creator_type = CreatorTypes.artist
+        else:
+            creator_type = CreatorTypes.base
+
+        description = None
+        detail_description = None
+        default_variant = None
+        default_variants = None
+        pre_create_attr_defs = None
+        create_allow_context_change = None
+        if creator_type is CreatorTypes.artist:
+            description = creator.get_description()
+            detail_description = creator.get_detail_description()
+            default_variant = creator.get_default_variant()
+            default_variants = creator.get_default_variants()
+            pre_create_attr_defs = creator.get_pre_create_attr_defs()
+            create_allow_context_change = creator.create_allow_context_change
+
+        identifier = creator.identifier
+        return cls(
+            identifier,
+            creator_type,
+            creator.family,
+            creator.label or identifier,
+            creator.get_group_label(),
+            creator.get_icon(),
+            creator.get_instance_attr_defs(),
+            description,
+            detail_description,
+            default_variant,
+            default_variants,
+            create_allow_context_change,
+            pre_create_attr_defs
+        )
+
+    def to_data(self):
+        instance_attributes_defs = None
+        if self.instance_attributes_defs is not None:
+            instance_attributes_defs = serialize_attr_defs(
+                self.instance_attributes_defs
+            )
+
+        pre_create_attributes_defs = None
+        if self.pre_create_attributes_defs is not None:
+            instance_attributes_defs = serialize_attr_defs(
+                self.pre_create_attributes_defs
+            )
+
+        return {
+            "identifier": self.identifier,
+            "creator_type": str(self.creator_type),
+            "family": self.family,
+            "label": self.label,
+            "group_label": self.group_label,
+            "icon": self.icon,
+            "description": self.description,
+            "detailed_description": self.detailed_description,
+            "default_variant": self.default_variant,
+            "default_variants": self.default_variants,
+            "create_allow_context_change": self.create_allow_context_change,
+            "instance_attributes_defs": instance_attributes_defs,
+            "pre_create_attributes_defs": pre_create_attributes_defs,
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        instance_attributes_defs = data["instance_attributes_defs"]
+        if instance_attributes_defs is not None:
+            data["instance_attributes_defs"] = deserialize_attr_defs(
+                instance_attributes_defs
+            )
+
+        pre_create_attributes_defs = data["pre_create_attributes_defs"]
+        if pre_create_attributes_defs is not None:
+            data["pre_create_attributes_defs"] = deserialize_attr_defs(
+                pre_create_attributes_defs
+            )
+
+        data["creator_type"] = CreatorTypes.from_str(data["creator_type"])
+        return cls(**data)
+
+
+@six.add_metaclass(ABCMeta)
+class AbstractPublisherController(object):
+    """Publisher tool controller.
+
+    Define what must be implemented to be able use Publisher functionality.
+
+    Goal is to have "data driven" controller that can be used to control UI
+    running in different process. That lead to some disadvantages like UI can't
+    access objects directly but by using wrappers that can be serialized.
+    """
+
+    @abstractproperty
+    def log(self):
+        """Controller's logger object.
+
+        Returns:
+            logging.Logger: Logger object that can be used for logging.
+        """
+
+        pass
+
+    @abstractproperty
+    def event_system(self):
+        """Inner event system for publisher controller."""
+
+        pass
+
+    @abstractproperty
+    def project_name(self):
+        """Current context project name.
+
+        Returns:
+            str: Name of project.
+        """
+
+        pass
+
+    @abstractproperty
+    def current_asset_name(self):
+        """Current context asset name.
+
+        Returns:
+            Union[str, None]: Name of asset.
+        """
+
+        pass
+
+    @abstractproperty
+    def current_task_name(self):
+        """Current context task name.
+
+        Returns:
+            Union[str, None]: Name of task.
+        """
+
+        pass
+
+    @abstractproperty
+    def host_is_valid(self):
+        """Host is valid for creation part.
+
+        Host must have implemented certain functionality to be able create
+        in Publisher tool.
+
+        Returns:
+            bool: Host can handle creation of instances.
+        """
+
+        pass
+
+    @abstractproperty
+    def instances(self):
+        """Collected/created instances.
+
+        Returns:
+            List[CreatedInstance]: List of created instances.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_context_title(self):
+        """Get context title for artist shown at the top of main window.
+
+        Returns:
+            Union[str, None]: Context title for window or None. In case of None
+                a warning is displayed (not nice for artists).
+        """
+
+        pass
+
+    @abstractmethod
+    def get_asset_docs(self):
+        pass
+
+    @abstractmethod
+    def get_asset_hierarchy(self):
+        pass
+
+    @abstractmethod
+    def get_task_names_by_asset_names(self, asset_names):
+        pass
+
+    @abstractmethod
+    def get_existing_subset_names(self, asset_name):
+        pass
+
+    @abstractmethod
+    def reset(self):
+        """Reset whole controller.
+
+        This should reset create context, publish context and all variables
+        that are related to it.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_creator_attribute_definitions(self, instances):
+        pass
+
+    @abstractmethod
+    def get_publish_attribute_definitions(self, instances, include_context):
+        pass
+
+    @abstractmethod
+    def get_creator_icon(self, identifier):
+        """Receive creator's icon by identifier.
+
+        Args:
+            identifier (str): Creator's identifier.
+
+        Returns:
+            Union[str, None]: Creator's icon string.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_subset_name(
+        self,
+        creator_identifier,
+        variant,
+        task_name,
+        asset_name,
+        instance_id=None
+    ):
+        """Get subset name based on passed data.
+
+        Args:
+            creator_identifier (str): Identifier of creator which should be
+                responsible for subset name creation.
+            variant (str): Variant value from user's input.
+            task_name (str): Name of task for which is instance created.
+            asset_name (str): Name of asset for which is instance created.
+            instance_id (Union[str, None]): Existing instance id when subset
+                name is updated.
+        """
+
+        pass
+
+    @abstractmethod
+    def create(
+        self, creator_identifier, subset_name, instance_data, options
+    ):
+        """Trigger creation by creator identifier.
+
+        Should also trigger refresh of instanes.
+
+        Args:
+            creator_identifier (str): Identifier of Creator plugin.
+            subset_name (str): Calculated subset name.
+            instance_data (Dict[str, Any]): Base instance data with variant,
+                asset name and task name.
+            options (Dict[str, Any]): Data from pre-create attributes.
+        """
+
+    def save_changes(self):
+        """Save changes in create context."""
+
+        pass
+
+    def remove_instances(self, instance_ids):
+        """Remove list of instances from create context."""
+        # TODO expect instance ids
+
+        pass
+
+    @abstractproperty
+    def publish_has_finished(self):
+        """Has publishing finished.
+
+        Returns:
+            bool: If publishing finished and all plugins were iterated.
+        """
+
+        pass
+
+    @abstractproperty
+    def publish_is_running(self):
+        """Publishing is running right now.
+
+        Returns:
+            bool: If publishing is in progress.
+        """
+
+        pass
+
+    @abstractproperty
+    def publish_has_validated(self):
+        """Publish validation passed.
+
+        Returns:
+            bool: If publishing passed last possible validation order.
+        """
+
+        pass
+
+    @abstractproperty
+    def publish_has_crashed(self):
+        """Publishing crashed for any reason.
+
+        Returns:
+            bool: Publishing crashed.
+        """
+
+        pass
+
+    @abstractproperty
+    def publish_has_validation_errors(self):
+        """During validation happened at least one validation error.
+
+        Returns:
+            bool: Validation error was raised during validation.
+        """
+
+        pass
+
+    @abstractproperty
+    def publish_max_progress(self):
+        """Get maximum possible progress number.
+
+        Returns:
+            int: Number that can be used as 100% of publish progress bar.
+        """
+
+        pass
+
+    @abstractproperty
+    def publish_progress(self):
+        """Current progress number.
+
+        Returns:
+            int: Current progress value from 0 to 'publish_max_progress'.
+        """
+
+        pass
+
+    @abstractproperty
+    def publish_error_msg(self):
+        """Current error message which cause fail of publishing.
+
+        Returns:
+            Union[str, None]: Message which will be showed to artist or
+                None.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_publish_report(self):
+        pass
+
+    @abstractmethod
+    def get_validation_errors(self):
+        pass
+
+    @abstractmethod
+    def publish(self):
+        """Trigger publishing without any order limitations."""
+
+        pass
+
+    @abstractmethod
+    def validate(self):
+        """Trigger publishing which will stop after validation order."""
+
+        pass
+
+    @abstractmethod
+    def stop_publish(self):
+        """Stop publishing can be also used to pause publishing.
+
+        Pause of publishing is possible only if all plugins successfully
+        finished.
+        """
+
+        pass
+
+    @abstractmethod
+    def run_action(self, plugin_id, action_id):
+        """Trigger pyblish action on a plugin.
+
+        Args:
+            plugin_id (str): Id of publish plugin.
+            action_id (str): Id of publish action.
+        """
+
+        pass
+
+    @abstractmethod
+    def set_comment(self, comment):
+        """Set comment on pyblish context.
+
+        Set "comment" key on current pyblish.api.Context data.
+
+        Args:
+            comment (str): Artist's comment.
+        """
+
+        pass
+
+    @abstractmethod
+    def emit_card_message(self, message):
+        """Emit a card message which can have a lifetime.
+
+        This is for UI purposes. Method can be extended to more arguments
+        in future e.g. different message timeout or type (color).
+
+        Args:
+            message (str): Message that will be showed.
+        """
+
+        pass
+
+
+class BasePublisherController(AbstractPublisherController):
+    """Implement common logic for controllers.
+
+    Implement event system, logger and common attributes. Attributes are
+    triggering value changes so anyone can listen to their topics.
+
+    Prepare implementation for creator items. Controller must implement just
+    their filling by '_collect_creator_items'.
+
+    All prepared implementation is based on calling super '__init__'.
+    """
+
+    def __init__(self):
+        self._log = None
+        self._event_system = None
+
+        # Host is valid for creation
+        self._host_is_valid = False
+
+        # Any other exception that happened during publishing
+        self._publish_error_msg = None
+        # Publishing is in progress
+        self._publish_is_running = False
+        # Publishing is over validation order
+        self._publish_has_validated = False
+
+        self._publish_has_validation_errors = False
+        self._publish_has_crashed = False
+        # All publish plugins are processed
+        self._publish_has_finished = False
+        self._publish_max_progress = 0
+        self._publish_progress = 0
+
+        # Controller must '_collect_creator_items' to fill the value
+        self._creator_items = None
+
+    @property
+    def log(self):
+        """Controller's logger object.
+
+        Returns:
+            logging.Logger: Logger object that can be used for logging.
+        """
+
+        if self._log is None:
+            self._log = logging.getLogget(self.__class__.__name__)
+        return self._log
+
+    @property
+    def event_system(self):
+        """Inner event system for publisher controller.
+
+        Is used for communication with UI. Event system is autocreated.
+
+        Known topics:
+            "show.detailed.help" - Detailed help requested (UI related).
+            "show.card.message" - Show card message request (UI related).
+            "instances.refresh.finished" - Instances are refreshed.
+            "plugins.refresh.finished" - Plugins refreshed.
+            "publish.reset.finished" - Publish context reset finished.
+            "controller.reset.finished" - Controller reset finished.
+            "publish.process.started" - Publishing started. Can be started from
+                paused state.
+            "publish.process.stopped" - Publishing stopped/paused process.
+            "publish.process.plugin.changed" - Plugin state has changed.
+            "publish.process.instance.changed" - Instance state has changed.
+            "publish.has_validated.changed" - Attr 'publish_has_validated'
+                changed.
+            "publish.is_running.changed" - Attr 'publish_is_running' changed.
+            "publish.has_crashed.changed" - Attr 'publish_has_crashed' changed.
+            "publish.publish_error.changed" - Attr 'publish_error'
+            "publish.has_validation_errors.changed" - Attr
+                'has_validation_errors' changed.
+            "publish.max_progress.changed" - Attr 'publish_max_progress'
+                changed.
+            "publish.progress.changed" - Attr 'publish_progress' changed.
+            "publish.host_is_valid.changed" - Attr 'host_is_valid' changed.
+            "publish.finished.changed" - Attr 'publish_has_finished' changed.
+
+        Returns:
+            EventSystem: Event system which can trigger callbacks for topics.
+        """
+
+        if self._event_system is None:
+            self._event_system = EventSystem()
+        return self._event_system
+
+    def _emit_event(self, topic, data=None):
+        if data is None:
+            data = {}
+        self.event_system.emit(topic, data, "controller")
+
+    def _get_host_is_valid(self):
+        return self._host_is_valid
+
+    def _set_host_is_valid(self, value):
+        if self._host_is_valid != value:
+            self._host_is_valid = value
+            self._emit_event("publish.host_is_valid.changed", {"value": value})
+
+    def _get_publish_has_finished(self):
+        return self._publish_has_finished
+
+    def _set_publish_has_finished(self, value):
+        if self._publish_has_finished != value:
+            self._publish_has_finished = value
+            self._emit_event("publish.finished.changed", {"value": value})
+
+    def _get_publish_is_running(self):
+        return self._publish_is_running
+
+    def _set_publish_is_running(self, value):
+        if self._publish_is_running != value:
+            self._publish_is_running = value
+            self._emit_event("publish.is_running.changed", {"value": value})
+
+    def _get_publish_has_validated(self):
+        return self._publish_has_validated
+
+    def _set_publish_has_validated(self, value):
+        if self._publish_has_validated != value:
+            self._publish_has_validated = value
+            self._emit_event("publish.has_validated.changed", {"value": value})
+
+    def _get_publish_has_crashed(self):
+        return self._publish_has_crashed
+
+    def _set_publish_has_crashed(self, value):
+        if self._publish_has_crashed != value:
+            self._publish_has_crashed = value
+            self._emit_event("publish.has_crashed.changed", {"value": value})
+
+    def _get_publish_has_validation_errors(self):
+        return self._publish_has_validation_errors
+
+    def _set_publish_has_validation_errors(self, value):
+        if self._publish_has_validation_errors != value:
+            self._publish_has_validation_errors = value
+            self._emit_event(
+                "publish.has_validation_errors.changed",
+                {"value": value}
+            )
+
+    def _get_publish_max_progress(self):
+        return self._publish_max_progress
+
+    def _set_publish_max_progress(self, value):
+        if self._publish_max_progress != value:
+            self._publish_max_progress = value
+            self._emit_event("publish.max_progress.changed", {"value": value})
+
+    def _get_publish_progress(self):
+        return self._publish_progress
+
+    def _set_publish_progress(self, value):
+        if self._publish_progress != value:
+            self._publish_progress = value
+            self._emit_event("publish.progress.changed", {"value": value})
+
+    def _get_publish_error_msg(self):
+        return self._publish_error_msg
+
+    def _set_publish_error_msg(self, value):
+        if self._publish_error_msg != value:
+            self._publish_error_msg = value
+            self._emit_event("publish.publish_error.changed", {"value": value})
+
+    host_is_valid = property(
+        _get_host_is_valid, _set_host_is_valid
+    )
+    publish_has_finished = property(
+        _get_publish_has_finished, _set_publish_has_finished
+    )
+    publish_is_running = property(
+        _get_publish_is_running, _set_publish_is_running
+    )
+    publish_has_validated = property(
+        _get_publish_has_validated, _set_publish_has_validated
+    )
+    publish_has_crashed = property(
+        _get_publish_has_crashed, _set_publish_has_crashed
+    )
+    publish_has_validation_errors = property(
+        _get_publish_has_validation_errors, _set_publish_has_validation_errors
+    )
+    publish_max_progress = property(
+        _get_publish_max_progress, _set_publish_max_progress
+    )
+    publish_progress = property(
+        _get_publish_progress, _set_publish_progress
+    )
+    publish_error_msg = property(
+        _get_publish_error_msg, _set_publish_error_msg
+    )
+
+    def _reset_attributes(self):
+        """Reset most of attributes that can be reset."""
+
+        # Reset creator items
+        self._creator_items = None
+
+        self.publish_is_running = False
+        self.publish_has_validated = False
+        self.publish_has_crashed = False
+        self.publish_has_validation_errors = False
+        self.publish_has_finished = False
+
+        self.publish_error_msg = None
+        self.publish_progress = 0
+
+    @property
+    def creator_items(self):
+        """Creators that can be shown in create dialog."""
+        if self._creator_items is None:
+            self._creator_items = self._collect_creator_items()
+        return self._creator_items
+
+    @abstractmethod
+    def _collect_creator_items(self):
+        """Receive CreatorItems to work with.
+
+        Returns:
+            Dict[str, CreatorItem]: Creator items by their identifier.
+        """
+
+        pass
+
+    def get_creator_icon(self, identifier):
+        """Function to receive icon for creator identifier.
+
+        Args:
+            str: Creator's identifier for which should be icon returned.
+        """
+
+        creator_item = self.creator_items.get(identifier)
+        if creator_item is not None:
+            return creator_item.icon
+        return None
+
+
+class PublisherController(BasePublisherController):
     """Middleware between UI, CreateContext and publish Context.
 
     Handle both creation and publishing parts.
@@ -352,38 +1510,29 @@ class PublisherController:
         headless (bool): Headless publishing. ATM not implemented or used.
     """
 
+    _log = None
+
     def __init__(self, dbcon=None, headless=False):
-        self.log = logging.getLogger("PublisherController")
-        self.host = registered_host()
-        self.headless = headless
+        super(PublisherController, self).__init__()
 
-        # Inner event system of controller
-        self._event_system = EventSystem()
+        self._host = registered_host()
+        self._headless = headless
 
-        self.create_context = CreateContext(
-            self.host, dbcon, headless=headless, reset=False
+        self._create_context = CreateContext(
+            self._host, dbcon, headless=headless, reset=False
         )
+
+        self._publish_plugins_proxy = None
 
         # pyblish.api.Context
         self._publish_context = None
         # Pyblish report
         self._publish_report = PublishReport(self)
         # Store exceptions of validation error
-        self._publish_validation_errors = []
-        # Currently processing plugin errors
-        self._publish_current_plugin_validation_errors = None
-        # Any other exception that happened during publishing
-        self._publish_error = None
-        # Publishing is in progress
-        self._publish_is_running = False
-        # Publishing is over validation order
-        self._publish_validated = False
+        self._publish_validation_errors = PublishValidationErrors()
+
         # Publishing should stop at validation stage
         self._publish_up_validation = False
-        # All publish plugins are processed
-        self._publish_finished = False
-        self._publish_max_progress = 0
-        self._publish_progress = 0
         # This information is not much important for controller but for widget
         #   which can change (and set) the comment.
         self._publish_comment_is_set = False
@@ -395,8 +1544,6 @@ class PublisherController:
             pyblish.api.ValidatorOrder + PLUGIN_ORDER_OFFSET
         )
 
-        # Qt based main thread processor
-        self._main_thread_processor = MainThreadProcess()
         # Plugin iterator
         self._main_thread_iter = None
 
@@ -415,10 +1562,10 @@ class PublisherController:
             str: Project name.
         """
 
-        if not hasattr(self.host, "get_current_context"):
+        if not hasattr(self._host, "get_current_context"):
             return legacy_io.active_project()
 
-        return self.host.get_current_context()["project_name"]
+        return self._host.get_current_context()["project_name"]
 
     @property
     def current_asset_name(self):
@@ -428,10 +1575,10 @@ class PublisherController:
             Union[str, None]: Asset name or None if asset is not set.
         """
 
-        if not hasattr(self.host, "get_current_context"):
+        if not hasattr(self._host, "get_current_context"):
             return legacy_io.Session["AVALON_ASSET"]
 
-        return self.host.get_current_context()["asset_name"]
+        return self._host.get_current_context()["asset_name"]
 
     @property
     def current_task_name(self):
@@ -441,68 +1588,26 @@ class PublisherController:
             Union[str, None]: Task name or None if task is not set.
         """
 
-        if not hasattr(self.host, "get_current_context"):
+        if not hasattr(self._host, "get_current_context"):
             return legacy_io.Session["AVALON_TASK"]
 
-        return self.host.get_current_context()["task_name"]
+        return self._host.get_current_context()["task_name"]
 
     @property
     def instances(self):
         """Current instances in create context."""
-        return self.create_context.instances
+        return self._create_context.instances_by_id
 
     @property
-    def creators(self):
+    def _creators(self):
         """All creators loaded in create context."""
-        return self.create_context.creators
+
+        return self._create_context.creators
 
     @property
-    def manual_creators(self):
-        """Creators that can be shown in create dialog."""
-        return self.create_context.manual_creators
-
-    @property
-    def host_is_valid(self):
-        """Host is valid for creation."""
-        return self.create_context.host_is_valid
-
-    @property
-    def publish_plugins(self):
+    def _publish_plugins(self):
         """Publish plugins."""
-        return self.create_context.publish_plugins
-
-    @property
-    def plugins_with_defs(self):
-        """Publish plugins with possible attribute definitions."""
-        return self.create_context.plugins_with_defs
-
-    @property
-    def event_system(self):
-        """Inner event system for publisher controller.
-
-        Known topics:
-            "show.detailed.help" - Detailed help requested (UI related).
-            "show.card.message" - Show card message request (UI related).
-            "instances.refresh.finished" - Instances are refreshed.
-            "plugins.refresh.finished" - Plugins refreshed.
-            "publish.reset.finished" - Controller reset finished.
-            "publish.process.started" - Publishing started. Can be started from
-                paused state.
-            "publish.process.validated" - Publishing passed validation.
-            "publish.process.stopped" - Publishing stopped/paused process.
-            "publish.process.plugin.changed" - Plugin state has changed.
-            "publish.process.instance.changed" - Instance state has changed.
-
-        Returns:
-            EventSystem: Event system which can trigger callbacks for topics.
-        """
-
-        return self._event_system
-
-    def _emit_event(self, topic, data=None):
-        if data is None:
-            data = {}
-        self._event_system.emit(topic, data, "controller")
+        return self._create_context.publish_plugins
 
     # --- Publish specific callbacks ---
     def get_asset_docs(self):
@@ -511,9 +1616,10 @@ class PublisherController:
 
     def get_context_title(self):
         """Get context title for artist shown at the top of main window."""
+
         context_title = None
-        if hasattr(self.host, "get_context_title"):
-            context_title = self.host.get_context_title()
+        if hasattr(self._host, "get_context_title"):
+            context_title = self._host.get_context_title()
 
         if context_title is None:
             context_title = os.environ.get("AVALON_APP_NAME")
@@ -524,14 +1630,8 @@ class PublisherController:
 
     def get_asset_hierarchy(self):
         """Prepare asset documents into hierarchy."""
-        _queue = collections.deque(self.get_asset_docs())
 
-        output = collections.defaultdict(list)
-        while _queue:
-            asset_doc = _queue.popleft()
-            parent_id = asset_doc["data"]["visualParent"]
-            output[parent_id].append(asset_doc)
-        return output
+        return self._asset_docs_cache.get_asset_hierarchy()
 
     def get_task_names_by_asset_names(self, asset_names):
         """Prepare task names by asset name."""
@@ -545,6 +1645,21 @@ class PublisherController:
             )
         return result
 
+    def get_existing_subset_names(self, asset_name):
+        project_name = self.project_name
+        asset_doc = self._asset_docs_cache.get_asset_by_name(asset_name)
+        if not asset_doc:
+            return None
+
+        asset_id = asset_doc["_id"]
+        subset_docs = get_subsets(
+            project_name, asset_ids=[asset_id], fields=["name"]
+        )
+        return {
+            subset_doc["name"]
+            for subset_doc in subset_docs
+        }
+
     def reset(self):
         """Reset everything related to creation and publishing."""
         # Stop publishing
@@ -552,13 +1667,19 @@ class PublisherController:
 
         self.save_changes()
 
+        self.host_is_valid = self._create_context.host_is_valid
+
         # Reset avalon context
-        self.create_context.reset_avalon_context()
+        self._create_context.reset_avalon_context()
+
+        self._asset_docs_cache.reset()
 
         self._reset_plugins()
         # Publish part must be reset after plugins
         self._reset_publish()
         self._reset_instances()
+
+        self._emit_event("controller.reset.finished")
 
         self.emit_card_message("Refreshed..")
 
@@ -569,11 +1690,17 @@ class PublisherController:
 
         self._resetting_plugins = True
 
-        self.create_context.reset_plugins()
+        self._create_context.reset_plugins()
 
         self._resetting_plugins = False
 
         self._emit_event("plugins.refresh.finished")
+
+    def _collect_creator_items(self):
+        return {
+            identifier: CreatorItem.from_creator(creator)
+            for identifier, creator in self._create_context.creators.items()
+        }
 
     def _reset_instances(self):
         """Reset create instances."""
@@ -582,14 +1709,14 @@ class PublisherController:
 
         self._resetting_instances = True
 
-        self.create_context.reset_context_data()
-        with self.create_context.bulk_instances_collection():
-            self.create_context.reset_instances()
-            self.create_context.execute_autocreators()
+        self._create_context.reset_context_data()
+        with self._create_context.bulk_instances_collection():
+            self._create_context.reset_instances()
+            self._create_context.execute_autocreators()
 
         self._resetting_instances = False
 
-        self._emit_event("instances.refresh.finished")
+        self._on_create_instance_change()
 
     def emit_card_message(self, message):
         self._emit_event("show.card.message", {"message": message})
@@ -598,13 +1725,16 @@ class PublisherController:
         """Collect creator attribute definitions for multuple instances.
 
         Args:
-            instances(list<CreatedInstance>): List of created instances for
+            instances(List[CreatedInstance]): List of created instances for
                 which should be attribute definitions returned.
         """
+
         output = []
         _attr_defs = {}
         for instance in instances:
-            for attr_def in instance.creator_attribute_defs:
+            creator_identifier = instance.creator_identifier
+            creator_item = self.creator_items[creator_identifier]
+            for attr_def in creator_item.instance_attributes_defs:
                 found_idx = None
                 for idx, _attr_def in _attr_defs.items():
                     if attr_def == _attr_def:
@@ -632,9 +1762,10 @@ class PublisherController:
                 which should be attribute definitions returned.
             include_context(bool): Add context specific attribute definitions.
         """
+
         _tmp_items = []
         if include_context:
-            _tmp_items.append(self.create_context)
+            _tmp_items.append(self._create_context)
 
         for instance in instances:
             _tmp_items.append(instance)
@@ -664,7 +1795,7 @@ class PublisherController:
                     attr_values.append((item, value))
 
         output = []
-        for plugin in self.plugins_with_defs:
+        for plugin in self._create_context.plugins_with_defs:
             plugin_name = plugin.__name__
             if plugin_name not in all_defs_by_plugin_name:
                 continue
@@ -675,86 +1806,89 @@ class PublisherController:
             ))
         return output
 
-    def get_icon_for_family(self, family):
-        """TODO rename to get creator icon."""
-        creator = self.creators.get(family)
-        if creator is not None:
-            return creator.get_icon()
-        return None
+    def get_subset_name(
+        self,
+        creator_identifier,
+        variant,
+        task_name,
+        asset_name,
+        instance_id=None
+    ):
+        """Get subset name based on passed data.
+
+        Args:
+            creator_identifier (str): Identifier of creator which should be
+                responsible for subset name creation.
+            variant (str): Variant value from user's input.
+            task_name (str): Name of task for which is instance created.
+            asset_name (str): Name of asset for which is instance created.
+            instance_id (Union[str, None]): Existing instance id when subset
+                name is updated.
+        """
+
+        creator = self._creators[creator_identifier]
+        project_name = self.project_name
+        asset_doc = self._asset_docs_cache.get_full_asset_by_name(asset_name)
+        instance = None
+        if instance_id:
+            instance = self.instances[instance_id]
+
+        return creator.get_subset_name(
+            variant, task_name, asset_doc, project_name, instance=instance
+        )
 
     def create(
         self, creator_identifier, subset_name, instance_data, options
     ):
         """Trigger creation and refresh of instances in UI."""
-        creator = self.creators[creator_identifier]
+        creator = self._creators[creator_identifier]
         creator.create(subset_name, instance_data, options)
 
-        self._emit_event("instances.refresh.finished")
+        self._on_create_instance_change()
 
     def save_changes(self):
         """Save changes happened during creation."""
-        if self.create_context.host_is_valid:
-            self.create_context.save_changes()
+        if self._create_context.host_is_valid:
+            self._create_context.save_changes()
 
-    def remove_instances(self, instances):
-        """"""
+    def remove_instances(self, instance_ids):
+        """Remove instances based on instance ids.
+
+        Args:
+            instance_ids (List[str]): List of instance ids to remove.
+        """
+        # TODO expect instance ids instead of instances
         # QUESTION Expect that instances are really removed? In that case save
         #   reset is not required and save changes too.
         self.save_changes()
 
-        self.create_context.remove_instances(instances)
+        self._remove_instances_from_context(instance_ids)
 
+        self._on_create_instance_change()
+
+    def _remove_instances_from_context(self, instance_ids):
+        instances_by_id = self._create_context.instances_by_id
+        instances = [
+            instances_by_id[instance_id]
+            for instance_id in instance_ids
+        ]
+        self._create_context.remove_instances(instances)
+
+    def _on_create_instance_change(self):
         self._emit_event("instances.refresh.finished")
 
-    # --- Publish specific implementations ---
-    @property
-    def publish_has_finished(self):
-        return self._publish_finished
-
-    @property
-    def publish_is_running(self):
-        return self._publish_is_running
-
-    @property
-    def publish_has_validated(self):
-        return self._publish_validated
-
-    @property
-    def publish_has_crashed(self):
-        return bool(self._publish_error)
-
-    @property
-    def publish_has_validation_errors(self):
-        return bool(self._publish_validation_errors)
-
-    @property
-    def publish_max_progress(self):
-        return self._publish_max_progress
-
-    @property
-    def publish_progress(self):
-        return self._publish_progress
-
-    @property
-    def publish_comment_is_set(self):
-        return self._publish_comment_is_set
-
-    def get_publish_crash_error(self):
-        return self._publish_error
-
     def get_publish_report(self):
-        return self._publish_report.get_report(self.publish_plugins)
+        return self._publish_report.get_report(self._publish_plugins)
 
     def get_validation_errors(self):
-        return self._publish_validation_errors
+        return self._publish_validation_errors.create_report()
 
     def _reset_publish(self):
-        self._publish_is_running = False
-        self._publish_validated = False
+        self._reset_attributes()
+
         self._publish_up_validation = False
-        self._publish_finished = False
         self._publish_comment_is_set = False
-        self._main_thread_processor.clear()
+
         self._main_thread_iter = self._publish_iterator()
         self._publish_context = pyblish.api.Context()
         # Make sure "comment" is set on publish context
@@ -763,21 +1897,30 @@ class PublisherController:
         # - must not be used for changing CreatedInstances during publishing!
         # QUESTION
         # - pop the key after first collector using it would be safest option?
-        self._publish_context.data["create_context"] = self.create_context
+        self._publish_context.data["create_context"] = self._create_context
 
-        self._publish_report.reset(self._publish_context, self.create_context)
-        self._publish_validation_errors = []
-        self._publish_current_plugin_validation_errors = None
-        self._publish_error = None
+        self._publish_plugins_proxy = PublishPluginsProxy(
+            self._publish_plugins
+        )
 
-        self._publish_max_progress = len(self.publish_plugins)
-        self._publish_progress = 0
+        self._publish_report.reset(self._publish_context, self._create_context)
+        self._publish_validation_errors.reset(self._publish_plugins_proxy)
+
+        self.publish_max_progress = len(self._publish_plugins)
 
         self._emit_event("publish.reset.finished")
 
     def set_comment(self, comment):
-        self._publish_context.data["comment"] = comment
-        self._publish_comment_is_set = True
+        """Set comment from ui to pyblish context.
+
+        This should be called always before publishing is started but should
+        happen only once on first publish start thus variable
+        '_publish_comment_is_set' is used to keep track about the information.
+        """
+
+        if not self._publish_comment_is_set:
+            self._publish_context.data["comment"] = comment
+            self._publish_comment_is_set = True
 
     def publish(self):
         """Run publishing."""
@@ -786,40 +1929,42 @@ class PublisherController:
 
     def validate(self):
         """Run publishing and stop after Validation."""
-        if self._publish_validated:
+        if self.publish_has_validated:
             return
         self._publish_up_validation = True
         self._start_publish()
 
     def _start_publish(self):
         """Start or continue in publishing."""
-        if self._publish_is_running:
+        if self.publish_is_running:
             return
 
         # Make sure changes are saved
         self.save_changes()
 
-        self._publish_is_running = True
+        self.publish_is_running = True
 
         self._emit_event("publish.process.started")
-        self._main_thread_processor.start()
+
         self._publish_next_process()
 
     def _stop_publish(self):
         """Stop or pause publishing."""
-        self._publish_is_running = False
-        self._main_thread_processor.stop()
+        self.publish_is_running = False
 
         self._emit_event("publish.process.stopped")
 
     def stop_publish(self):
         """Stop publishing process (any reason)."""
 
-        if self._publish_is_running:
+        if self.publish_is_running:
             self._stop_publish()
 
-    def run_action(self, plugin, action):
+    def run_action(self, plugin_id, action_id):
         # TODO handle result in UI
+        plugin = self._publish_plugins_proxy.get_plugin(plugin_id)
+        action = self._publish_plugins_proxy.get_action(action_id)
+
         result = pyblish.plugin.process(
             plugin, self._publish_context, None, action.id
         )
@@ -833,21 +1978,24 @@ class PublisherController:
         # There are validation errors and validation is passed
         # - can't do any progree
         if (
-            self._publish_validated
-            and self._publish_validation_errors
+            self.publish_has_validated
+            and self.publish_has_validation_errors
         ):
             item = MainThreadItem(self.stop_publish)
 
         # Any unexpected error happened
         # - everything should stop
-        elif self._publish_error:
+        elif self.publish_has_crashed:
             item = MainThreadItem(self.stop_publish)
 
         # Everything is ok so try to get new processing item
         else:
             item = next(self._main_thread_iter)
 
-        self._main_thread_processor.add_item(item)
+        self._process_main_thread_item(item)
+
+    def _process_main_thread_item(self, item):
+        item()
 
     def _publish_iterator(self):
         """Main logic center of publishing.
@@ -862,30 +2010,24 @@ class PublisherController:
         QUESTION:
         Does validate button still make sense?
         """
-        for idx, plugin in enumerate(self.publish_plugins):
+        for idx, plugin in enumerate(self._publish_plugins):
             self._publish_progress = idx
 
-            # Reset current plugin validations error
-            self._publish_current_plugin_validation_errors = None
-
             # Check if plugin is over validation order
-            if not self._publish_validated:
-                self._publish_validated = (
+            if not self.publish_has_validated:
+                self.publish_has_validated = (
                     plugin.order >= self._validation_order
                 )
-                # Trigger callbacks when validation stage is passed
-                if self._publish_validated:
-                    self._emit_event("publish.process.validated")
 
             # Stop if plugin is over validation order and process
             #   should process up to validation.
-            if self._publish_up_validation and self._publish_validated:
+            if self._publish_up_validation and self.publish_has_validated:
                 yield MainThreadItem(self.stop_publish)
 
             # Stop if validation is over and validation errors happened
             if (
-                self._publish_validated
-                and self._publish_validation_errors
+                self.publish_has_validated
+                and self.publish_has_validation_errors
             ):
                 yield MainThreadItem(self.stop_publish)
 
@@ -950,24 +2092,17 @@ class PublisherController:
                     self._publish_report.set_plugin_skipped()
 
         # Cleanup of publishing process
-        self._publish_finished = True
-        self._publish_progress = self._publish_max_progress
+        self.publish_has_finished = True
+        self.publish_progress = self.publish_max_progress
         yield MainThreadItem(self.stop_publish)
 
     def _add_validation_error(self, result):
-        if self._publish_current_plugin_validation_errors is None:
-            self._publish_current_plugin_validation_errors = {
-                "plugin": result["plugin"],
-                "errors": []
-            }
-            self._publish_validation_errors.append(
-                self._publish_current_plugin_validation_errors
-            )
-
-        self._publish_current_plugin_validation_errors["errors"].append({
-            "exception": result["error"],
-            "instance": result["instance"]
-        })
+        self.publish_has_validation_errors = True
+        self._publish_validation_errors.add_error(
+            result["plugin"],
+            result["error"],
+            result["instance"]
+        )
 
     def _process_and_continue(self, plugin, instance):
         result = pyblish.plugin.process(
@@ -980,17 +2115,22 @@ class PublisherController:
         if exception:
             if (
                 isinstance(exception, PublishValidationError)
-                and not self._publish_validated
+                and not self.publish_has_validated
             ):
                 self._add_validation_error(result)
 
             else:
-                self._publish_error = exception
+                if isinstance(exception, KnownPublishError):
+                    msg = str(exception)
+                else:
+                    msg = (
+                        "Something went wrong. Send report"
+                        " to your supervisor or OpenPype."
+                    )
+                self.publish_error_msg = msg
+                self.publish_has_crashed = True
 
         self._publish_next_process()
-
-    def reset_project_data_cache(self):
-        self._asset_docs_cache.reset()
 
 
 def collect_families_from_instances(instances, only_active=False):

@@ -224,7 +224,11 @@ class OverviewWidget(QtWidgets.QFrame):
         dialog.exec_()
         # Skip if OK was not clicked
         if dialog.result() == QtWidgets.QMessageBox.Ok:
-            self._controller.remove_instances(instances)
+            instance_ids = {
+                instance.id
+                for instance in instances
+            }
+            self._controller.remove_instances(instance_ids)
 
     def _on_change_view_clicked(self):
         self._change_view_type()
