@@ -1010,7 +1010,7 @@ class AssetLoader(LoaderPlugin):
         for obj in get_container_objects(asset_group):
 
             if obj is not asset_group:
-                obj.name = f"{namespace}-{obj.name}"
+                obj.name = f"{namespace}:{obj.name}"
 
             if obj.data and not obj.data.library and obj.data.users == 1:
                 objects_data.add(obj.data)
@@ -1026,17 +1026,17 @@ class AssetLoader(LoaderPlugin):
                 if anim_data:
                     action = anim_data.action
                     if action and not action.library and action.users == 1:
-                        action.name = f"{namespace}-{anim_data.action.name}"
+                        action.name = f"{namespace}:{anim_data.action.name}"
 
         for data in objects_data:
-            data.name = f"{namespace}-{data.name}"
+            data.name = f"{namespace}:{data.name}"
 
         for material in materials:
-            material.name = f"{namespace}-{material.name}"
+            material.name = f"{namespace}:{material.name}"
 
         if isinstance(asset_group, bpy.types.Collection):
             for child in set(get_children_recursive(asset_group)):
-                child.name = f"{namespace}-{child.name}"
+                child.name = f"{namespace}:{child.name}"
 
     def _load_library_collection(
         self, libpath: str, link: Optional[bool] = True
