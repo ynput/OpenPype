@@ -37,7 +37,7 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
         print("test_db_asserts")
-        assert 5 == dbcon.count_documents({"type": "version"}), \
+        assert 2 == dbcon.count_documents({"type": "version"}), \
             "Not expected no of versions"
 
         assert 0 == dbcon.count_documents({"type": "version",
@@ -52,7 +52,7 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
                                            "name": "workfileTest_task"}), \
             "workfileTest_task subset must be present"
 
-        assert 11 == dbcon.count_documents({"type": "representation"}), \
+        assert 5 == dbcon.count_documents({"type": "representation"}), \
             "Not expected no of representations"
 
         assert 2 == dbcon.count_documents({"type": "representation",
@@ -63,7 +63,12 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
         assert 2 == dbcon.count_documents({"type": "representation",
                                            "context.subset": "modelMain",
                                            "context.ext": "ma"}), \
-            "Not expected no of representations with ext 'abc'"
+            "Not expected no of representations with ext 'ma'"
+
+        assert 1 == dbcon.count_documents({"type": "representation",
+                                           "context.subset": "workfileTest_task",  # noqa
+                                           "context.ext": "mb"}), \
+            "Not expected no of representations with ext 'mb'"
 
 
 if __name__ == "__main__":
