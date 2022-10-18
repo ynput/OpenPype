@@ -181,7 +181,7 @@ if [ "$disable_submodule_update" == 1 ]; then
     echo -e "${BIYellow}***${RST} Not updating submodules ..."
   else
     echo -e "${BIGreen}>>>${RST} Making sure submodules are up-to-date ..."
-    git submodule update --init --recursive
+    git submodule update --init --recursive || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return 1; }
   fi
   echo -e "${BIGreen}>>>${RST} Building ..."
   if [[ "$OSTYPE" == "linux-gnu"* ]]; then
@@ -189,26 +189,29 @@ if [ "$disable_submodule_update" == 1 ]; then
   elif [[ "$OSTYPE" == "darwin"* ]]; then
     "$POETRY_HOME/bin/poetry" run python "$openpype_root/setup.py" bdist_mac &> "$openpype_root/build/build.log" || { echo -e "${BIRed}------------------------------------------${RST}"; cat "$openpype_root/build/build.log"; echo -e "${BIRed}------------------------------------------${RST}"; echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return 1; }
   fi
-  "$POETRY_HOME/bin/poetry" run python "$openpype_root/tools/build_dependencies.py"
+  "$POETRY_HOME/bin/poetry" run python "$openpype_root/tools/build_dependencies.py" || { echo -e "${BIRed}!!!>${RST} ${BIYellow}Failed to process dependencies${RST}"; return 1; }
 
   if [[ "$OSTYPE" == "darwin"* ]]; then
     # fix cx_Freeze libs issue
     echo -e "${BIGreen}>>>${RST} Fixing libs ..."
-    mv "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/dependencies/cx_Freeze" "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/lib/"
+    mv "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/dependencies/cx_Freeze" "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/lib/"  || { echo -e "${BIRed}!!!>${RST} ${BIYellow}Can't move cx_Freeze libs${RST}"; return 1; }
+
 
     # fix code signing issue
-    echo -e "${BIGreen}>>>${RST} Fixing code signatures ..."
-    codesign --remove-signature "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/openpype_console"
-    codesign --remove-signature "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/openpype_gui"
-    # codesign --remove-signature "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/lib/Python"
+    echo -e "${BIGreen}>>>${RST} Fixing code signatures ...\c"
+    codesign --remove-signature "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/openpype_console" || { echo -e "${BIRed}FAILED{$RST}"; return 1 }
+    codesign --remove-signature "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/openpype_gui" || { echo -e "${BIRed}FAILED{$RST}"; return 1 }
+    echo -e "${BIGreen}DONE${RST}"
     if command -v create-dmg > /dev/null 2>&1; then
+      echo -e "${BIGreen}>>>${RST} Creating dmg image ...\c"
       create-dmg \
         --volname "OpenPype $openpype_version Installer" \
         --window-pos 200 120 \
         --window-size 600 300 \
         --app-drop-link 100 50 \
         "$openpype_root/build/OpenPype-Installer-$openpype_version.dmg" \
-        "$openpype_root/build/OpenPype $openpype_version.app"
+        "$openpype_root/build/OpenPype $openpype_version.app" || { echo -e "${BIRed}FAILED{$RST}"; return 1 }
+        echo -e "${BIGreen}DONE${RST}"
     else
       echo -e "${BIYellow}!!!${RST} ${BIWhite}create-dmg${RST} command is not available."
     fi
