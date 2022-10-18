@@ -26,7 +26,14 @@ as a naive barier to prevent artists from accidental setting changes.
 **`Disk mapping`** - Platform dependent configuration for mapping of virtual disk(s) on an artist's OpenPype machines before OP starts up. 
 Uses `subst` command, if configured volume character in `Destination` field already exists, no re-mapping is done for that character(volume).
 
+
+### FFmpeg and OpenImageIO tools
+
+We bundle FFmpeg and OpenImageIO tools with OpenPype build for Windows and Linux builds. For MacOs support or to use different build is it possible to set environment variables `OPENPYPE_FFMPEG_PATHS` and `OPENPYPE_OIIO_PATHS` in system settings. Both should lead to directory where tool executables are located. Multiple paths are supported.
+
+
 ### OpenPype deployment control
+
 **`Versions Repository`** - Location where automatic update mechanism searches for zip files with
 OpenPype update packages. To read more about preparing OpenPype for automatic updates go to [Admin Distribute docs](admin_distribute.md#2-openpype-codebase)
 
