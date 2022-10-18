@@ -72,7 +72,7 @@ class TestPublishInPhotoshop(PhotoshopTestClass):
                                     name="workfileTest_task"))
 
         failures.append(
-            DBAssert.count_of_types(dbcon, "representation", 8))
+            DBAssert.count_of_types(dbcon, "representation", 6))
 
         additional_args = {"context.subset": "imageMainForeground",
                            "context.ext": "png"}
