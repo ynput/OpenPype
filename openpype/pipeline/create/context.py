@@ -884,14 +884,12 @@ class CreateContext:
     def reset_preparation(self):
         """Prepare attributes that must be prepared/cleaned before reset."""
 
-        pass
         # Give ability to store shared data for collection phase
         self._collection_shared_data = {}
 
     def reset_finalization(self):
         """Cleanup of attributes after reset."""
 
-        pass
         # Stop access to collection shared data
         self._collection_shared_data = None
 
@@ -1280,58 +1278,19 @@ class CreateContext:
                 plugins.append(plugin)
         return plugins
 
-    def _validate_collection_shared_data(self):
+    @property
+    def collection_shared_data(self):
+        """Access to shared data that can be used during creator's collection.
+
+        Retruns:
+            Dict[str, Any]: Shared data.
+
+        Raises:
+            UnavailableSharedData: When called out of collection phase.
+        """
+
         if self._collection_shared_data is None:
             raise UnavailableSharedData(
                 "Accessed Collection shared data out of collection phase"
             )
-
-    def collection_shared_data_contains(self, key):
-        """Check if collection shared data are set.
-
-        Args:
-            key (str): Key under which are shared data stored.
-
-        Retruns:
-            bool: Key is already set.
-
-        Raises:
-            UnavailableSharedData: When called out of collection phase.
-        """
-
-        self._validate_collection_shared_data()
-        return key in self._collection_shared_data
-
-    def get_collection_shared_data(self, key, default=None):
-        """Receive shared data during collection phase.
-
-        Args:
-            key (str): Key under which are shared data stored.
-            default (Any): Default value if key is not set.
-
-        Returns:
-            Any: Value stored under the key.
-
-        Raises:
-            UnavailableSharedData: When called out of collection phase.
-        """
-
-        self._validate_collection_shared_data()
-        return self._collection_shared_data.get(key, default)
-
-    def set_collection_shared_data(self, key, value):
-        """Store a value under collection shared data.
-
-        It is highly recommended to use very specific keys as creators may
-        clash each other if simple keys are used.
-
-        Args:
-            key (str): Key under which will shared data be stored.
-            value (Any): Value to store.
-
-        Raises:
-            UnavailableSharedData: When called out of collection phase.
-        """
-
-        self._validate_collection_shared_data()
-        self._collection_shared_data[key] = value
+        return self._collection_shared_data

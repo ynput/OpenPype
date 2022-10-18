@@ -324,43 +324,18 @@ class BaseCreator:
 
         return self.instance_attr_defs
 
-    def collection_shared_data_contains(self, key):
-        """Check if collection shared data are set.
-
-        Args:
-            key (str): Key under which are shared data stored.
+    @property
+    def collection_shared_data(self):
+        """Access to shared data that can be used during creator's collection.
 
         Retruns:
-            bool: Key is already set.
+            Dict[str, Any]: Shared data.
+
+        Raises:
+            UnavailableSharedData: When called out of collection phase.
         """
 
-        return self.create_context.collection_shared_data_contains(key)
-
-    def get_collection_shared_data(self, key, default=None):
-        """Receive shared data during collection phase.
-
-        Args:
-            key (str): Key under which are shared data stored.
-            default (Any): Default value if key is not set.
-
-        Returns:
-            Any: Value stored under the key.
-        """
-
-        return self.create_context.get_collection_shared_data(key, default)
-
-    def set_collection_shared_data(self, key, value):
-        """Store a value under collection shared data.
-
-        It is highly recommended to use very specific keys as creators may
-        clash each other if simple keys are used.
-
-        Args:
-            key (str): Key under which will shared data be stored.
-            value (Any): Value to store.
-        """
-
-        return self.create_context.set_collection_shared_data(key, value)
+        return self.create_context.collection_shared_data
 
 
 class Creator(BaseCreator):
