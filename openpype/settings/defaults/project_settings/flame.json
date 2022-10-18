@@ -1,4 +1,23 @@
 {
+    "imageio": {
+        "project": {
+            "colourPolicy": "ACES 1.1",
+            "frameDepth": "16-bit fp",
+            "fieldDominance": "PROGRESSIVE"
+        },
+        "profilesMapping": {
+            "inputs": [
+                {
+                    "flameName": "ACEScg",
+                    "ocioName": "ACES - ACEScg"
+                },
+                {
+                    "flameName": "Rec.709 video",
+                    "ocioName": "Output - Rec.709"
+                }
+            ]
+        }
+    },
     "create": {
         "CreateShotClip": {
             "hierarchy": "{folder}/{sequence}",
@@ -17,7 +36,9 @@
             "workfileFrameStart": 1001,
             "handleStart": 5,
             "handleEnd": 5,
-            "includeHandles": false
+            "includeHandles": false,
+            "retimedHandles": true,
+            "retimedFramerange": true
         }
     },
     "publish": {

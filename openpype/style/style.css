@@ -856,6 +856,33 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 /* New Create/Publish UI */
+PublisherTabsWidget {
+    background: {color:publisher:tab-bg};
+}
+
+PublisherTabBtn {
+    border-radius: 0px;
+    background: {color:bg-inputs};
+    font-size: 9pt;
+    font-weight: regular;
+    padding: 0.5em 1em 0.5em 1em;
+}
+
+PublisherTabBtn:disabled {
+    background: {color:bg-inputs};
+}
+
+PublisherTabBtn:hover {
+    background: {color:bg-buttons};
+}
+
+PublisherTabBtn[active="1"] {
+    background: {color:bg};
+}
+PublisherTabBtn[active="1"]:hover {
+    background: {color:bg};
+}
+
 #CreatorDetailedDescription {
     padding-left: 5px;
     padding-right: 5px;
@@ -865,18 +892,16 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 #CreateDialogHelpButton {
-    background: rgba(255, 255, 255, 31);
+    background: {color:bg-buttons};
     border-top-left-radius: 0.2em;
     border-bottom-left-radius: 0.2em;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
-    font-size: 10pt;
     font-weight: bold;
-    padding: 0px;
 }
 
 #CreateDialogHelpButton:hover {
-    background: rgba(255, 255, 255, 63);
+    background: {color:bg-button-hover};
 }
 #CreateDialogHelpButton QWidget {
     background: transparent;
@@ -944,19 +969,8 @@ VariantInputsWidget QToolButton {
     color: {color:publisher:error};
 }
 
-#PublishFrame {
-    background: rgba(0, 0, 0, 127);
-}
-#PublishFrame[state="1"] {
-    background: rgb(22, 25, 29);
-}
-#PublishFrame[state="2"] {
-    background: {color:bg};
-}
-
 #PublishInfoFrame {
     background: {color:bg};
-    border: 2px solid black;
     border-radius: 0.3em;
 }
 
@@ -965,7 +979,7 @@ VariantInputsWidget QToolButton {
 }
 
 #PublishInfoFrame[state="0"] {
-	background: {color:publisher:error};
+	background: {color:publisher:crash};
 }
 
 #PublishInfoFrame[state="1"] {
@@ -989,6 +1003,11 @@ VariantInputsWidget QToolButton {
     font-size: 13pt;
 }
 
+ValidationArtistMessage QLabel {
+    font-size: 20pt;
+    font-weight: bold;
+}
+
 #ValidationActionButton {
     border-radius: 0.2em;
     padding: 4px 6px 4px 6px;
@@ -1005,17 +1024,16 @@ VariantInputsWidget QToolButton {
 }
 
 #ValidationErrorTitleFrame {
-    background: {color:bg-inputs};
-    border-left: 4px solid transparent;
+    border-radius: 0.2em;
+    background: {color:bg-buttons};
 }
 
 #ValidationErrorTitleFrame:hover {
-    border-left-color: {color:border};
+    background: {color:bg-buttons-hover};
 }
 
 #ValidationErrorTitleFrame[selected="1"] {
-    background: {color:bg};
-    border-left-color: {palette:blue-light};
+    background: {color:bg-view-selection};
 }
 
 #ValidationErrorInstanceList {

@@ -1,7 +1,6 @@
 from collections import defaultdict
 
 import pyblish.api
-import openpype.api
 from openpype.pipeline.publish import ValidatePipelineOrder
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib

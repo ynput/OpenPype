@@ -20,8 +20,8 @@ from openpype.pipeline import (
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
-from openpype.api import Logger
 from openpype.lib import (
+    Logger,
     register_event_callback,
     emit_event
 )
