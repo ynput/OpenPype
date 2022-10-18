@@ -1,3 +1,5 @@
+"""Make all paths relative."""
+
 import bpy
 
 
