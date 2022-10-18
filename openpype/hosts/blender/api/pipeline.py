@@ -6,7 +6,7 @@ from typing import Callable, Dict, List, Optional
 import bpy
 
 from . import lib
-from . import ops
+from . import ops, properties
 
 import pyblish.api
 
@@ -72,6 +72,7 @@ def install():
 
     if not IS_HEADLESS:
         ops.register()
+        properties.register()
 
 
 def uninstall():
@@ -87,6 +88,7 @@ def uninstall():
 
     if not IS_HEADLESS:
         ops.unregister()
+        properties.unregister()
 
 
 def show_message(title, message):
