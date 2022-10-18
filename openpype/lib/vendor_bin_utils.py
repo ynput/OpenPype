@@ -250,7 +250,7 @@ def get_oiio_tools_path(tool="oiiotool"):
     if CachedToolPaths.is_tool_cached(tool):
         return CachedToolPaths.get_executable_path(tool)
 
-    custom_paths_str = os.environ.get("OPENPYPE_CUSTOM_OIIO_PATHS") or ""
+    custom_paths_str = os.environ.get("OPENPYPE_OIIO_PATHS") or ""
     tool_executable_path = find_tool_in_custom_paths(
         custom_paths_str.split(os.pathsep),
         tool,
@@ -330,7 +330,7 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
     if CachedToolPaths.is_tool_cached(tool):
         return CachedToolPaths.get_executable_path(tool)
 
-    custom_paths_str = os.environ.get("OPENPYPE_CUSTOM_FFMPEG_PATHS") or ""
+    custom_paths_str = os.environ.get("OPENPYPE_FFMPEG_PATHS") or ""
     tool_executable_path = find_tool_in_custom_paths(
         custom_paths_str.split(os.pathsep),
         tool,
