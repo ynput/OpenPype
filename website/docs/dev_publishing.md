@@ -73,10 +73,7 @@ Main responsibility of create plugin is to create, update, collect and remove in
 Base implementation of creator plugin. It is not recommended to use this class as base for production plugins but rather use one of **HiddenCreator**, **AutoCreator** and **Creator** variants.
 
 **Access to shared data**
-Functions to work with "Collection shared data" can be used during reset phase of `CreateContext`. Creators can cache there data that are common for them. For example list of nodes in scene. Methods are implemented on `CreateContext` but their usage is primarily for Create plugins as nothing else should use it.
-- **`collection_shared_data_contains`** - Check if shared data already has set a key.
-- **`get_collection_shared_data`** - Receive value of shared data by a key.
-- **`set_collection_shared_data`** - Set or update value of shared data key.
+Functions to work with "Collection shared data" can be used during reset phase of `CreateContext`. Creators can cache there data that are common for them. For example list of nodes in scene. Methods are implemented on `CreateContext` but their usage is primarily for Create plugins as nothing else should use it. Each creator can access `collection_shared_data` attribute which is a dictionary where shared data can be stored.
 
 **Abstractions**
 - **`family`** (class attr) - Tells what kind of instance will be created.
