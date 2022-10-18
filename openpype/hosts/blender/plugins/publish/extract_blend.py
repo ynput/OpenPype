@@ -126,8 +126,7 @@ class ExtractBlend(publish.Extractor):
                     packed_images.add((image, image.is_dirty))
                     image.pack()
 
-        bpy.ops.file.make_paths_absolute()
-        bpy.data.libraries.write(filepath, data_blocks)
+        bpy.data.libraries.write(filepath, data_blocks, path_remap="ABSOLUTE")
 
         # restor packed images.
         for image, is_dirty in packed_images:
