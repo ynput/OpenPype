@@ -139,6 +139,26 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost):
         log.info("Setting up project...")
         set_context_settings()
 
+    def remove_instance(self, instance):
+        """Remove instance from current workfile metadata.
+
+        Implementation for Subset manager tool.
+        """
+
+        current_instances = get_workfile_metadata(SECTION_NAME_INSTANCES)
+        instance_id = instance.get("uuid")
+        found_idx = None
+        if instance_id:
+            for idx, _inst in enumerate(current_instances):
+                if _inst["uuid"] == instance_id:
+                    found_idx = idx
+                    break
+
+        if found_idx is None:
+            return
+        current_instances.pop(found_idx)
+        write_instances(current_instances)
+
     def application_exit(self):
         """Logic related to TimerManager.
 
@@ -419,23 +439,6 @@ def get_current_workfile_context():
 def save_current_workfile_context(context):
     """Save context which was used to create a workfile."""
     return write_workfile_metadata(SECTION_NAME_CONTEXT, context)
-
-
-def remove_instance(instance):
-    """Remove instance from current workfile metadata."""
-    current_instances = get_workfile_metadata(SECTION_NAME_INSTANCES)
-    instance_id = instance.get("uuid")
-    found_idx = None
-    if instance_id:
-        for idx, _inst in enumerate(current_instances):
-            if _inst["uuid"] == instance_id:
-                found_idx = idx
-                break
-
-    if found_idx is None:
-        return
-    current_instances.pop(found_idx)
-    write_instances(current_instances)
 
 
 def list_instances():
