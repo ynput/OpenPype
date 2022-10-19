@@ -152,7 +152,10 @@ def extractenvironments(output_json_path, project, asset, task, app, envgroup,
               multiple=True)
 @click.option("-g", "--gui", is_flag=True,
               help="Show Publish UI", default=False)
-def publish(paths, targets, gui):
+@click.option(
+    "--automatic_tests", help="Is this automatic test", default=None
+)
+def publish(paths, targets, gui, automatic_tests):
     """Start CLI publishing.
 
     Publish collects json from paths provided as an argument.

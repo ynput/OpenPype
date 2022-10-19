@@ -266,6 +266,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "--targets", "farm"
         ]
 
+        if os.environ.get("IS_TEST"):
+            args["automatic_tests"] = "1"
+
         # Generate the payload for Deadline submission
         payload = {
             "JobInfo": {

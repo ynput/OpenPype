@@ -409,6 +409,8 @@ class ExporterReviewMov(ExporterReview):
             # create nk path
             path = os.path.splitext(self.path)[0] + ".nk"
             # save file to the path
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
             shutil.copyfile(self.instance.context.data["currentFile"], path)
 
         self.log.info("Nodes exported...")
