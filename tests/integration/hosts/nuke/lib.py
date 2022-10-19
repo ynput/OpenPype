@@ -15,7 +15,7 @@ class NukeHostFixtures(HostFixtures):
         """Get last_workfile_path from source data.
 
         """
-        source_file_name = "test_project_test_asset_CompositingInNuke_v001.nk"
+        source_file_name = "test_project_test_asset_TestTask_v001.nk"
         src_path = os.path.join(download_test_data,
                                 "input",
                                 "workfile",

@@ -12,6 +12,14 @@ class TestDeadlinePublishInNuke(NukeDeadlinePublishTestClass):
         Uses generic TestCase to prepare fixtures for test data, testing DBs,
         env vars.
 
+        !!!
+        It expects modified path in WriteNode,
+        use '[python {nuke.script_directory()}]' instead of regular root
+        dir (eg. instead of `c:/projects`).
+        Access file path by selecting WriteNode group, CTRL+Enter, update file
+        input
+        !!!
+
         Opens Nuke, run publish on prepared workile.
 
         Then checks content of DB (if subset, version, representations were
