@@ -191,7 +191,20 @@ class ExporterReview(object):
         if "#" in self.fhead:
             self.fhead = self.fhead.replace("#", "")[:-1]
 
-    def get_representation_data(self, tags=None, range=False):
+    def get_representation_data(
+        self, tags=None, range=False,
+        custom_tags=None
+    ):
+        """ Add representation data to self.data
+
+        Args:
+            tags (list[str], optional): list of defined tags.
+                                        Defaults to None.
+            range (bool, optional): flag for adding ranges.
+                                    Defaults to False.
+            custom_tags (list[str], optional): user inputed custom tags.
+                                               Defaults to None.
+        """
         add_tags = tags or []
         repre = {
             "name": self.name,
@@ -200,6 +213,9 @@ class ExporterReview(object):
             "stagingDir": self.staging_dir,
             "tags": [self.name.replace("_", "-")] + add_tags
         }
+
+        if custom_tags:
+            repre["custom_tags"] = custom_tags
 
         if range:
             repre.update({
@@ -417,6 +433,7 @@ class ExporterReviewMov(ExporterReview):
         return path
 
     def generate_mov(self, farm=False, **kwargs):
+        add_tags = []
         self.publish_on_farm = farm
         read_raw = kwargs["read_raw"]
         reformat_node_add = kwargs["reformat_node_add"]
@@ -435,10 +452,10 @@ class ExporterReviewMov(ExporterReview):
         self.log.debug(">> baking_view_profile   `{}`".format(
             baking_view_profile))
 
-        add_tags = kwargs.get("add_tags", [])
+        add_custom_tags = kwargs.get("add_custom_tags", [])
 
         self.log.info(
-            "__ add_tags: `{0}`".format(add_tags))
+            "__ add_custom_tags: `{0}`".format(add_custom_tags))
 
         subset = self.instance.data["subset"]
         self._temp_nodes[subset] = []
@@ -552,6 +569,7 @@ class ExporterReviewMov(ExporterReview):
         # ---------- generate representation data
         self.get_representation_data(
             tags=["review", "delete"] + add_tags,
+            custom_tags=add_custom_tags,
             range=True
         )
 
