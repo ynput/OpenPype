@@ -61,6 +61,8 @@ class BaseAnatomy(object):
         project_name = project_doc["name"]
         self.project_name = project_name
 
+        self._site_name = site_name
+
         self._data = self._prepare_anatomy_data(
             project_doc, local_settings, site_name
         )
@@ -335,43 +337,8 @@ class BaseAnatomy(object):
         if not project_doc:
             return {}
 
-        project_settings_root = ProjectSettings(
-            project_doc["name"], reset=False, change_state=False
-        )
-        anatomy_entity = project_settings_root["project_anatomy"]
-        anatomy_keys = set(anatomy_entity.keys())
-        anatomy_keys.remove("attributes")
-        attribute_keys = set(anatomy_entity["attributes"].keys())
-
-        attributes = {}
-        project_doc_data = project_doc.get("data") or {}
-        for key in attribute_keys:
-            value = project_doc_data.get(key)
-            if value is not None:
-                attributes[key] = value
-
-        project_doc_config = project_doc.get("config") or {}
-
-        app_names = set()
-        if not project_doc_config or "apps" not in project_doc_config:
-            set_applications = False
-        else:
-            set_applications = True
-            for app_item in project_doc_config["apps"]:
-                if not app_item:
-                    continue
-                app_name = app_item.get("name")
-                if app_name:
-                    app_names.add(app_name)
-
-        if set_applications:
-            attributes["applications"] = list(app_names)
-
-        output = {"attributes": attributes}
-        for key in anatomy_keys:
-            value = project_doc_config.get(key)
-            if value is not None:
-                output[key] = value
+        output = copy.deepcopy(project_doc["config"])
+        output["attributes"] = copy.deepcopy(project_doc["data"])
 
         return output
 
@@ -450,7 +417,6 @@ class Anatomy(BaseAnatomy):
                 " to load data for specific project."
             ))
 
-        self._site_name = site_name
         project_doc = self.get_project_doc_from_cache(project_name)
         local_settings = get_local_settings()
         if not site_name:
