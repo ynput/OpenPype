@@ -142,7 +142,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "OPENPYPE_RENDER_JOB",
         "OPENPYPE_PUBLISH_JOB",
         "OPENPYPE_MONGO",
-        "OPENPYPE_VERSION"
+        "OPENPYPE_VERSION",
+
+        "IS_TEST"
     ]
 
     # custom deadline attributes
@@ -247,6 +249,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         environment["OPENPYPE_USERNAME"] = instance.context.data["user"]
         environment["OPENPYPE_PUBLISH_JOB"] = "1"
         environment["OPENPYPE_RENDER_JOB"] = "0"
+        environment["IS_TEST"] = os.environ.get("IS_TEST")
         # Add mongo url if it's enabled
         if instance.context.data.get("deadlinePassMongoUrl"):
             mongo_url = os.environ.get("OPENPYPE_MONGO")

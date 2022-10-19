@@ -153,7 +153,8 @@ def get_openpype_global_settings(url: str) -> dict:
         # Create mongo connection
         client = MongoClient(url, **kwargs)
         # Access settings collection
-        col = client["openpype"]["settings"]
+        openpype_db = os.environ.get("OPENPYPE_DATABASE_NAME") or "openpype"
+        col = client[openpype_db]["settings"]
         # Query global settings
         global_settings = col.find_one({"type": "global_settings"}) or {}
         # Close Mongo connection

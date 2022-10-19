@@ -83,7 +83,8 @@ class AfterEffectsSubmitDeadline(
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
             "OPENPYPE_LOG_NO_COLORS",
-            "OPENPYPE_VERSION"
+            "OPENPYPE_VERSION",
+            "IS_TEST"
         ]
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):
