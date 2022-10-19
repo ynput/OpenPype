@@ -4,7 +4,6 @@ from maya import cmds  # noqa
 import maya.mel as mel
 import six
 import sys
-import os
 
 from openpype.lib import Logger
 from openpype.api import (
@@ -178,7 +177,8 @@ class RenderSettings(object):
                 filter_nodes = d_node[0]
             else:
                 filter_nodes = cmds.createNode(display_filters[i])
-            cmds.connectAttr(filter_nodes+".message",
+
+            cmds.connectAttr(filter_nodes + ".message",
                              "rmanGlobals.displayFilters[%i]"% i,
                              force=True)
 
@@ -190,7 +190,8 @@ class RenderSettings(object):
                 filter_nodes = s_node[0]
             else:
                 filter_nodes = cmds.createNode(sample_filters[n])
-            cmds.connectAttr(filter_nodes+".message",
+
+            cmds.connectAttr(filter_nodes + ".message",
                              "rmanGlobals.sampleFilters[%i]"% n,
                              force=True)
 
