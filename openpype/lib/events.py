@@ -1,6 +1,7 @@
 """Events holding data about specific event."""
 import os
 import re
+import copy
 import inspect
 import logging
 import weakref
@@ -207,6 +208,12 @@ class Event(object):
 
     @property
     def source(self):
+        """Event's source used for triggering callbacks.
+
+        Returns:
+            Union[str, None]: Source string or None. Source is optional.
+        """
+
         return self._source
 
     @property
@@ -215,6 +222,12 @@ class Event(object):
 
     @property
     def topic(self):
+        """Event's topic used for triggering callbacks.
+
+        Returns:
+            str: Topic string.
+        """
+
         return self._topic
 
     def emit(self):
@@ -226,6 +239,42 @@ class Event(object):
                 )
             )
         self._event_system.emit_event(self)
+
+    def to_data(self):
+        """Convert Event object to data.
+
+        Returns:
+            Dict[str, Any]: Event data.
+        """
+
+        return {
+            "id": self.id,
+            "topic": self.topic,
+            "source": self.source,
+            "data": copy.deepcopy(self.data)
+        }
+
+    @classmethod
+    def from_data(cls, event_data, event_system=None):
+        """Create event from data.
+
+        Args:
+            event_data (Dict[str, Any]): Event data with defined keys. Can be
+                created using 'to_data' method.
+            event_system (EventSystem): System to which the event belongs.
+
+        Returns:
+            Event: Event with attributes from passed data.
+        """
+
+        obj = cls(
+            event_data["topic"],
+            event_data["data"],
+            event_data["source"],
+            event_system
+        )
+        obj._id = event_data["id"]
+        return obj
 
 
 class EventSystem(object):
