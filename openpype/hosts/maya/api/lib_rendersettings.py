@@ -179,7 +179,7 @@ class RenderSettings(object):
                 filter_nodes = cmds.createNode(display_filters[i])
 
             cmds.connectAttr(filter_nodes + ".message",
-                             "rmanGlobals.displayFilters[%i]"% i,
+                             "rmanGlobals.displayFilters[%i]" % i,
                              force=True)
 
         sample_filters = rman_render_presets["sample_filters"]
@@ -192,7 +192,7 @@ class RenderSettings(object):
                 filter_nodes = cmds.createNode(sample_filters[n])
 
             cmds.connectAttr(filter_nodes + ".message",
-                             "rmanGlobals.sampleFilters[%i]"% n,
+                             "rmanGlobals.sampleFilters[%i]" % n,
                              force=True)
 
         additional_options = rman_render_presets["additional_options"]
