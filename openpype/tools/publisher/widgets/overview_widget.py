@@ -201,16 +201,16 @@ class OverviewWidget(QtWidgets.QFrame):
         self.create_requested.emit()
 
     def _on_delete_clicked(self):
-        instances, _ = self.get_selected_items()
+        instance_ids, _ = self.get_selected_items()
 
         # Ask user if he really wants to remove instances
         dialog = QtWidgets.QMessageBox(self)
         dialog.setIcon(QtWidgets.QMessageBox.Question)
         dialog.setWindowTitle("Are you sure?")
-        if len(instances) > 1:
+        if len(instance_ids) > 1:
             msg = (
                 "Do you really want to remove {} instances?"
-            ).format(len(instances))
+            ).format(len(instance_ids))
         else:
             msg = (
                 "Do you really want to remove the instance?"
@@ -224,10 +224,7 @@ class OverviewWidget(QtWidgets.QFrame):
         dialog.exec_()
         # Skip if OK was not clicked
         if dialog.result() == QtWidgets.QMessageBox.Ok:
-            instance_ids = {
-                instance.id
-                for instance in instances
-            }
+            instance_ids = set(instance_ids)
             self._controller.remove_instances(instance_ids)
 
     def _on_change_view_clicked(self):
@@ -238,11 +235,16 @@ class OverviewWidget(QtWidgets.QFrame):
         if self._refreshing_instances:
             return
 
-        instances, context_selected = self.get_selected_items()
+        instance_ids, context_selected = self.get_selected_items()
 
         # Disable delete button if nothing is selected
-        self._delete_btn.setEnabled(len(instances) > 0)
+        self._delete_btn.setEnabled(len(instance_ids) > 0)
 
+        instances_by_id = self._controller.instances
+        instances = [
+            instances_by_id[instance_id]
+            for instance_id in instance_ids
+        ]
         self._subset_attributes_widget.set_current_instances(
             instances, context_selected
         )
@@ -319,14 +321,20 @@ class OverviewWidget(QtWidgets.QFrame):
     def _change_view_type(self):
         idx = self._subset_views_layout.currentIndex()
         new_idx = (idx + 1) % self._subset_views_layout.count()
-        self._subset_views_layout.setCurrentIndex(new_idx)
 
-        new_view = self._subset_views_layout.currentWidget()
+        old_view = self._subset_views_layout.currentWidget()
+        new_view = self._subset_views_layout.widget(new_idx)
+
         if not new_view.refreshed:
             new_view.refresh()
             new_view.set_refreshed(True)
         else:
             new_view.refresh_instance_states()
+
+        instance_ids, context_selected = old_view.get_selected_items()
+        new_view.set_selected_items(instance_ids, context_selected)
+
+        self._subset_views_layout.setCurrentIndex(new_idx)
 
         self._on_subset_change()
 

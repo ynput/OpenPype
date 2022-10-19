@@ -723,13 +723,13 @@ class InstanceListView(AbstractInstanceView):
             widget.update_instance_values()
 
     def _on_active_changed(self, changed_instance_id, new_value):
-        selected_instances, _ = self.get_selected_items()
+        selected_instance_ids, _ = self.get_selected_items()
 
         selected_ids = set()
         found = False
-        for instance in selected_instances:
-            selected_ids.add(instance.id)
-            if not found and instance.id == changed_instance_id:
+        for instance_id in selected_instance_ids:
+            selected_ids.add(instance_id)
+            if not found and instance_id == changed_instance_id:
                 found = True
 
         if not found:
@@ -759,29 +759,6 @@ class InstanceListView(AbstractInstanceView):
 
         if changed_ids:
             self.active_changed.emit()
-
-    def get_selected_items(self):
-        """Get selected instance ids and context selection.
-
-        Returns:
-            tuple<list, bool>: Selected instance ids and boolean if context
-                is selected.
-        """
-        instances = []
-        context_selected = False
-        instances_by_id = self._controller.instances
-
-        for index in self._instance_view.selectionModel().selectedIndexes():
-            instance_id = index.data(INSTANCE_ID_ROLE)
-            if not context_selected and instance_id == CONTEXT_ID:
-                context_selected = True
-
-            elif instance_id is not None:
-                instance = instances_by_id.get(instance_id)
-                if instance:
-                    instances.append(instance)
-
-        return instances, context_selected
 
     def _on_selection_change(self, *_args):
         self.selection_changed.emit()
@@ -822,3 +799,102 @@ class InstanceListView(AbstractInstanceView):
         proxy_index = self._proxy_model.mapFromSource(group_item.index())
         if not self._instance_view.isExpanded(proxy_index):
             self._instance_view.expand(proxy_index)
+
+    def get_selected_items(self):
+        """Get selected instance ids and context selection.
+
+        Returns:
+            tuple<list, bool>: Selected instance ids and boolean if context
+                is selected.
+        """
+        instance_ids = []
+        context_selected = False
+
+        for index in self._instance_view.selectionModel().selectedIndexes():
+            instance_id = index.data(INSTANCE_ID_ROLE)
+            if not context_selected and instance_id == CONTEXT_ID:
+                context_selected = True
+
+            elif instance_id is not None:
+                instance_ids.append(instance_id)
+
+        return instance_ids, context_selected
+
+    def set_selected_items(self, instance_ids, context_selected):
+        s_instance_ids = set(instance_ids)
+        cur_ids, cur_context = self.get_selected_items()
+        if (
+            set(cur_ids) == s_instance_ids
+            and cur_context == context_selected
+        ):
+            return
+
+        view = self._instance_view
+        src_model = self._instance_model
+        proxy_model = self._proxy_model
+
+        select_indexes = []
+
+        select_queue = collections.deque()
+        select_queue.append(
+            (src_model.invisibleRootItem(), [])
+        )
+        while select_queue:
+            queue_item = select_queue.popleft()
+            item, parent_items = queue_item
+
+            if item.hasChildren():
+                new_parent_items = list(parent_items)
+                new_parent_items.append(item)
+                for row in range(item.rowCount()):
+                    select_queue.append(
+                        (item.child(row), list(new_parent_items))
+                    )
+
+            instance_id = item.data(INSTANCE_ID_ROLE)
+            if not instance_id:
+                continue
+
+            if instance_id in s_instance_ids:
+                select_indexes.append(item.index())
+                for parent_item in parent_items:
+                    index = parent_item.index()
+                    proxy_index = proxy_model.mapFromSource(index)
+                    if not view.isExpanded(proxy_index):
+                        view.expand(proxy_index)
+
+            elif context_selected and instance_id == CONTEXT_ID:
+                select_indexes.append(item.index())
+
+        selection_model = view.selectionModel()
+        if not select_indexes:
+            selection_model.clear()
+            return
+
+        if len(select_indexes) == 1:
+            proxy_index = proxy_model.mapFromSource(select_indexes[0])
+            selection_model.setCurrentIndex(
+                proxy_index,
+                selection_model.ClearAndSelect | selection_model.Rows
+            )
+            return
+
+        first_index = proxy_model.mapFromSource(select_indexes.pop(0))
+        last_index = proxy_model.mapFromSource(select_indexes.pop(-1))
+
+        selection_model.setCurrentIndex(
+            first_index,
+            selection_model.ClearAndSelect | selection_model.Rows
+        )
+
+        for index in select_indexes:
+            proxy_index = proxy_model.mapFromSource(index)
+            selection_model.select(
+                proxy_index,
+                selection_model.Select | selection_model.Rows
+            )
+
+        selection_model.setCurrentIndex(
+            last_index,
+            selection_model.Select | selection_model.Rows
+        )
