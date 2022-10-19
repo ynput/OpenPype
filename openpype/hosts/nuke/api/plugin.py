@@ -19,7 +19,8 @@ from .lib import (
     add_publish_knob,
     get_nuke_imageio_settings,
     set_node_knobs_from_settings,
-    get_view_process_node
+    get_view_process_node,
+    get_viewer_config_from_string
 )
 
 
@@ -312,7 +313,8 @@ class ExporterReviewLut(ExporterReview):
                 dag_node.setInput(0, self.previous_node)
                 self._temp_nodes.append(dag_node)
                 self.previous_node = dag_node
-                self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
+                self.log.debug(
+                    "OCIODisplay...   `{}`".format(self._temp_nodes))
 
         # GenerateLUT
         gen_lut_node = nuke.createNode("GenerateLUT")
@@ -491,7 +493,15 @@ class ExporterReviewMov(ExporterReview):
             if not self.viewer_lut_raw:
                 # OCIODisplay
                 dag_node = nuke.createNode("OCIODisplay")
-                dag_node["view"].setValue(str(baking_view_profile))
+
+                display, viewer = get_viewer_config_from_string(
+                    str(baking_view_profile)
+                )
+                if display:
+                    dag_node["display"].setValue(display)
+
+                # assign viewer
+                dag_node["view"].setValue(viewer)
 
                 # connect
                 dag_node.setInput(0, self.previous_node)
