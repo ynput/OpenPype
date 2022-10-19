@@ -1619,6 +1619,24 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         return self.profile_exclusion(matching_profiles)
 
+    def custom_tags_filter_validation(
+        self, repr_custom_tags, output_custom_tags_filter
+    ):
+        """Determines if entered custom tags intersect with custom tags filters.
+
+        All cutsom tags values are lowered to avoid unexpected results.
+        """
+        repr_custom_tags = repr_custom_tags or []
+        valid = False
+        for tag in output_custom_tags_filter:
+            if tag in repr_custom_tags:
+                valid = True
+                break
+
+        if valid:
+            return True
+        return False
+
     def families_filter_validation(self, families, output_families_filter):
         """Determines if entered families intersect with families filters.
 
@@ -1656,7 +1674,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 return True
         return False
 
-    def filter_output_defs(self, profile, subset_name, families):
+    def filter_output_defs(
+        self, profile, subset_name, families, custom_tags=None
+    ):
         """Return outputs matching input instance families.
 
         Output definitions without families filter are marked as valid.
@@ -1687,6 +1707,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             families_filters = output_filters.get("families")
             if not self.families_filter_validation(families, families_filters):
+                continue
+
+            custom_tags_filters = output_filters.get("custom_tags")
+            if custom_tags and not self.custom_tags_filter_validation(
+                custom_tags, custom_tags_filters
+            ):
                 continue
 
             # Subsets name filters
