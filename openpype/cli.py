@@ -127,7 +127,11 @@ def webpublisherwebserver(executable, upload_dir, host=None, port=None):
 @click.option(
     "--envgroup", help="Environment group (e.g. \"farm\")", default=None
 )
-def extractenvironments(output_json_path, project, asset, task, app, envgroup):
+@click.option(
+    "--automatic_tests", help="Is this automatic test", default=None
+)
+def extractenvironments(output_json_path, project, asset, task, app, envgroup,
+                        automatic_tests):
     """Extract environment variables for entered context to a json file.
 
     Entered output filepath will be created if does not exists.
