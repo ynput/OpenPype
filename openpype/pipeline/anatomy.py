@@ -15,7 +15,6 @@ from openpype.settings.lib import (
 from openpype.settings.constants import (
     DEFAULT_PROJECT_KEY
 )
-from openpype.settings import ProjectSettings
 
 from openpype.client import get_project
 from openpype.lib.path_templates import (
