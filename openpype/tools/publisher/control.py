@@ -3,7 +3,6 @@ import copy
 import logging
 import traceback
 import collections
-import time
 import uuid
 from abc import ABCMeta, abstractmethod, abstractproperty
 
@@ -234,7 +233,7 @@ class PublishReport:
         """Set that current plugin has been skipped."""
         self._current_plugin_data["skipped"] = True
 
-    def add_result(self, result, process_time):
+    def add_result(self, result):
         """Handle result of one plugin and it's instance."""
 
         instance = result["instance"]
@@ -244,7 +243,7 @@ class PublishReport:
         self._current_plugin_data["instances_data"].append({
             "id": instance_id,
             "logs": self._extract_instance_log_items(result),
-            "process_time": process_time
+            "process_time": result["duration"]
         })
 
     def add_action_result(self, action, result):
@@ -1290,7 +1289,7 @@ class BasePublisherController(AbstractPublisherController):
         self._publish_has_validation_errors = False
         self._publish_has_crashed = False
         # All publish plugins are processed
-        self._publish_finished = False
+        self._publish_has_finished = False
         self._publish_max_progress = 0
         self._publish_progress = 0
 
@@ -1338,7 +1337,7 @@ class BasePublisherController(AbstractPublisherController):
                 changed.
             "publish.progress.changed" - Attr 'publish_progress' changed.
             "publish.host_is_valid.changed" - Attr 'host_is_valid' changed.
-            "publish.finished.changed" - Attr 'publish_finished' changed.
+            "publish.finished.changed" - Attr 'publish_has_finished' changed.
 
         Returns:
             EventSystem: Event system which can trigger callbacks for topics.
@@ -1362,11 +1361,11 @@ class BasePublisherController(AbstractPublisherController):
             self._emit_event("publish.host_is_valid.changed", {"value": value})
 
     def _get_publish_has_finished(self):
-        return self._publish_finished
+        return self._publish_has_finished
 
     def _set_publish_has_finished(self, value):
-        if self._publish_finished != value:
-            self._publish_finished = value
+        if self._publish_has_finished != value:
+            self._publish_has_finished = value
             self._emit_event("publish.finished.changed", {"value": value})
 
     def _get_publish_is_running(self):
@@ -1466,7 +1465,7 @@ class BasePublisherController(AbstractPublisherController):
         self.publish_has_validated = False
         self.publish_has_crashed = False
         self.publish_has_validation_errors = False
-        self.publish_finished = False
+        self.publish_has_finished = False
 
         self.publish_error_msg = None
         self.publish_progress = 0
@@ -2093,7 +2092,7 @@ class PublisherController(BasePublisherController):
                     self._publish_report.set_plugin_skipped()
 
         # Cleanup of publishing process
-        self.publish_finished = True
+        self.publish_has_finished = True
         self.publish_progress = self.publish_max_progress
         yield MainThreadItem(self.stop_publish)
 
@@ -2106,13 +2105,11 @@ class PublisherController(BasePublisherController):
         )
 
     def _process_and_continue(self, plugin, instance):
-        start = time.time()
         result = pyblish.plugin.process(
             plugin, self._publish_context, instance
         )
-        process_time = time.time() - start
 
-        self._publish_report.add_result(result, process_time)
+        self._publish_report.add_result(result)
 
         exception = result.get("error")
         if exception:

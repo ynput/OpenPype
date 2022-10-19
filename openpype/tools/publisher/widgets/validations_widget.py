@@ -709,5 +709,7 @@ class ValidationsWidget(QtWidgets.QFrame):
         if commonmark:
             html = commonmark.commonmark(description)
             self._error_details_input.setHtml(html)
-        else:
+        elif hasattr(self._error_details_input, "setMarkdown"):
             self._error_details_input.setMarkdown(description)
+        else:
+            self._error_details_input.setText(description)

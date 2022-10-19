@@ -89,7 +89,10 @@ class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):
         """Implementation of abstract method for `IPluginPaths`."""
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
-        return {"publish": [os.path.join(current_dir, "plugins", "publish")]}
+        return {
+            "publish": [os.path.join(current_dir, "plugins", "publish")],
+            "actions": [os.path.join(current_dir, "actions")]
+        }
 
     def cli(self, click_group):
         click_group.add_command(cli_main)

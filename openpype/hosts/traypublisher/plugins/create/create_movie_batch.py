@@ -188,6 +188,7 @@ class BatchMovieCreator(TrayPublishCreator):
                 folders=False,
                 single_item=False,
                 extensions=self.extensions,
+                allow_sequences=False,
                 label="Filepath"
             ),
             BoolDef(
