@@ -333,8 +333,6 @@ class BaseAnatomy(object):
 
         Probably should fill missing keys and values.
         """
-        if not project_doc:
-            return {}
 
         output = copy.deepcopy(project_doc["config"])
         output["attributes"] = copy.deepcopy(project_doc["data"])
