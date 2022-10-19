@@ -44,6 +44,9 @@ class CleanUp(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Plugin entry point."""
+        if os.environ.get("IS_TEST"):
+            # let automatic test process clean up temporary data
+            return
         # Get the errored instances
         failed = []
         for result in instance.context.data["results"]:
