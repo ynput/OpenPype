@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.14.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.3...HEAD)
 
