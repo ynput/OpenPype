@@ -572,7 +572,6 @@ def _process_arguments() -> tuple:
         sys.argv.insert(idx, "tray")
 
     if "--automatic_tests" in sys.argv:
-        sys.argv.remove("--automatic_tests")
         automatic_tests = True
 
     return use_version, use_staging, commands, automatic_tests
