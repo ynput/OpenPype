@@ -1620,13 +1620,13 @@ def get_representations_parents(project_name, representations):
         for repre in representations
     }
     parents = get_v4_representations_parents(project_name, repre_ids)
-    new_parents = {}
     folder_ids = set()
     for parents in parents.values():
         folder_ids.add(parents[2]["id"])
 
     tasks_by_folder_id = {}
 
+    new_parents = {}
     for repre_id, parents in parents.items():
         version, subset, folder, project = parents
         folder_tasks = tasks_by_folder_id.get(folder["id"]) or {}
@@ -1637,7 +1637,7 @@ def get_representations_parents(project_name, representations):
             _convert_v4_folder_to_v3(folder, project_name),
             project
         )
-    return get_v4_representations_parents(project_name, repre_ids)
+    return new_parents
 
 
 def get_v4_representations_parents(project_name, representation_ids):
