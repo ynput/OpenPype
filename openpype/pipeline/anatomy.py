@@ -6,8 +6,17 @@ import collections
 import numbers
 
 import six
+import time
 
-from openpype.settings.lib import get_anatomy_settings
+from openpype.settings.lib import (
+    get_project_settings,
+    get_local_settings,
+)
+from openpype.settings.constants import (
+    DEFAULT_PROJECT_KEY
+)
+
+from openpype.client import get_project
 from openpype.lib.path_templates import (
     TemplateUnsolved,
     TemplateResult,
@@ -39,34 +48,23 @@ class RootCombinationError(Exception):
         super(RootCombinationError, self).__init__(msg)
 
 
-class Anatomy:
+class BaseAnatomy(object):
     """Anatomy module helps to keep project settings.
 
     Wraps key project specifications, AnatomyTemplates and Roots.
-
-    Args:
-        project_name (str): Project name to look on overrides.
     """
-
     root_key_regex = re.compile(r"{(root?[^}]+)}")
     root_name_regex = re.compile(r"root\[([^]]+)\]")
 
-    def __init__(self, project_name=None, site_name=None):
-        if not project_name:
-            project_name = os.environ.get("AVALON_PROJECT")
-
-        if not project_name:
-            raise ProjectNotSet((
-                "Implementation bug: Project name is not set. Anatomy requires"
-                " to load data for specific project."
-            ))
-
+    def __init__(self, project_doc, local_settings, site_name):
+        project_name = project_doc["name"]
         self.project_name = project_name
 
-        self._data = self._prepare_anatomy_data(
-            get_anatomy_settings(project_name, site_name)
-        )
         self._site_name = site_name
+
+        self._data = self._prepare_anatomy_data(
+            project_doc, local_settings, site_name
+        )
         self._templates_obj = AnatomyTemplates(self)
         self._roots_obj = Roots(self)
 
@@ -87,12 +85,14 @@ class Anatomy:
     def items(self):
         return copy.deepcopy(self._data).items()
 
-    @staticmethod
-    def _prepare_anatomy_data(anatomy_data):
+    def _prepare_anatomy_data(self, project_doc, local_settings, site_name):
         """Prepare anatomy data for further processing.
 
         Method added to replace `{task}` with `{task[name]}` in templates.
         """
+        project_name = project_doc["name"]
+        anatomy_data = self._project_doc_to_anatomy_data(project_doc)
+
         templates_data = anatomy_data.get("templates")
         if templates_data:
             # Replace `{task}` with `{task[name]}` in templates
@@ -103,22 +103,12 @@ class Anatomy:
                 if not isinstance(item, dict):
                     continue
 
-                for key in tuple(item.keys()):
-                    value = item[key]
-                    if isinstance(value, dict):
-                        value_queue.append(value)
+        self._apply_local_settings_on_anatomy_data(anatomy_data,
+                                                   local_settings,
+                                                   project_name,
+                                                   site_name)
 
-                    elif isinstance(value, six.string_types):
-                        item[key] = value.replace("{task}", "{task[name]}")
         return anatomy_data
-
-    def reset(self):
-        """Reset values of cached data in templates and roots objects."""
-        self._data = self._prepare_anatomy_data(
-            get_anatomy_settings(self.project_name, self._site_name)
-        )
-        self.templates_obj.reset()
-        self.roots_obj.reset()
 
     @property
     def templates(self):
@@ -337,6 +327,161 @@ class Anatomy:
 
         data = self.root_environmets_fill_data(template)
         return rootless_path.format(**data)
+
+    def _project_doc_to_anatomy_data(self, project_doc):
+        """Convert project document to anatomy data.
+
+        Probably should fill missing keys and values.
+        """
+
+        output = copy.deepcopy(project_doc["config"])
+        output["attributes"] = copy.deepcopy(project_doc["data"])
+
+        return output
+
+    def _apply_local_settings_on_anatomy_data(
+        self, anatomy_data, local_settings, project_name, site_name
+    ):
+        """Apply local settings on anatomy data.
+
+        ATM local settings can modify project roots. Project name is required
+        as local settings have data stored data by project's name.
+
+        Local settings override root values in this order:
+        1.) Check if local settings contain overrides for default project and
+            apply it's values on roots if there are any.
+        2.) If passed `project_name` is not None then check project specific
+            overrides in local settings for the project and apply it's value on
+            roots if there are any.
+
+        NOTE: Root values of default project from local settings are always
+        applied if are set.
+
+        Args:
+            anatomy_data (dict): Data for anatomy.
+            local_settings (dict): Data of local settings.
+            project_name (str): Name of project for which anatomy data are.
+        """
+        if not local_settings:
+            return
+
+        local_project_settings = local_settings.get("projects") or {}
+
+        # Check for roots existence in local settings first
+        roots_project_locals = (
+            local_project_settings
+            .get(project_name, {})
+        )
+        roots_default_locals = (
+            local_project_settings
+            .get(DEFAULT_PROJECT_KEY, {})
+        )
+
+        # Skip rest of processing if roots are not set
+        if not roots_project_locals and not roots_default_locals:
+            return
+
+        # Combine roots from local settings
+        roots_locals = roots_default_locals.get(site_name) or {}
+        roots_locals.update(roots_project_locals.get(site_name) or {})
+        # Skip processing if roots for current active site are not available in
+        #   local settings
+        if not roots_locals:
+            return
+
+        current_platform = platform.system().lower()
+
+        root_data = anatomy_data["roots"]
+        for root_name, path in roots_locals.items():
+            if root_name not in root_data:
+                continue
+            anatomy_data["roots"][root_name][current_platform] = (
+                path
+            )
+
+
+class Anatomy(BaseAnatomy):
+    _project_cache = {}
+    _site_cache = {}
+
+    def __init__(self, project_name=None, site_name=None):
+        if not project_name:
+            project_name = os.environ.get("AVALON_PROJECT")
+
+        if not project_name:
+            raise ProjectNotSet((
+                "Implementation bug: Project name is not set. Anatomy requires"
+                " to load data for specific project."
+            ))
+
+        project_doc = self.get_project_doc_from_cache(project_name)
+        local_settings = get_local_settings()
+        if not site_name:
+            site_name = self.get_site_name_from_cache(
+                project_name, local_settings
+            )
+
+        super(Anatomy, self).__init__(
+            project_doc,
+            local_settings,
+            site_name
+        )
+
+    @classmethod
+    def get_project_doc_from_cache(cls, project_name):
+        project_cache = cls._project_cache.get(project_name)
+        if project_cache is not None:
+            if time.time() - project_cache["start"] > 10:
+                cls._project_cache.pop(project_name)
+                project_cache = None
+
+        if project_cache is None:
+            project_cache = {
+                "project_doc": get_project(project_name),
+                "start": time.time()
+            }
+            cls._project_cache[project_name] = project_cache
+
+        return copy.deepcopy(
+            cls._project_cache[project_name]["project_doc"]
+        )
+
+    @classmethod
+    def get_site_name_from_cache(cls, project_name, local_settings):
+        site_cache = cls._site_cache.get(project_name)
+        if site_cache is not None:
+            if time.time() - site_cache["start"] > 10:
+                cls._site_cache.pop(project_name)
+                site_cache = None
+
+        if site_cache:
+            return site_cache["site_name"]
+
+        local_project_settings = local_settings.get("projects")
+        if not local_project_settings:
+            return
+
+        project_locals = local_project_settings.get(project_name) or {}
+        default_locals = local_project_settings.get(DEFAULT_PROJECT_KEY) or {}
+        active_site = (
+            project_locals.get("active_site")
+            or default_locals.get("active_site")
+        )
+        if not active_site:
+            project_settings = get_project_settings(project_name)
+            active_site = (
+                project_settings
+                ["global"]
+                ["sync_server"]
+                ["config"]
+                ["active_site"]
+            )
+
+        cls._site_cache[project_name] = {
+            "site_name": active_site,
+            "start": time.time()
+        }
+        return active_site
 
 
 class AnatomyTemplateUnsolved(TemplateUnsolved):
