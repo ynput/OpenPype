@@ -16,15 +16,13 @@ public:
 
 private:
 	void RegisterMenus();
+	void MapCommands();
 
 	void MenuPopup();
 	void MenuDialog();
 
-	void CreateSocket();
-	void ConnectToSocket();
+	void TestMethod();
 
 private:
 	TSharedPtr<class FUICommandList> PluginCommands;
-
-	TSharedPtr<IWebSocket> Socket;
 };

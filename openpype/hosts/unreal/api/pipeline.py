@@ -16,7 +16,7 @@ from openpype.tools.utils import host_tools
 import openpype.hosts.unreal
 from openpype.host import HostBase, ILoadHost
 
-import unreal  # noqa
+# import unreal  # noqa
 
 
 logger = logging.getLogger("openpype.hosts.unreal")
@@ -110,20 +110,20 @@ def ls():
     metadata from them. Adding `objectName` to set.
 
     """
-    ar = unreal.AssetRegistryHelpers.get_asset_registry()
-    openpype_containers = ar.get_assets_by_class("AssetContainer", True)
+    # ar = unreal.AssetRegistryHelpers.get_asset_registry()
+    # openpype_containers = ar.get_assets_by_class("AssetContainer", True)
 
-    # get_asset_by_class returns AssetData. To get all metadata we need to
-    # load asset. get_tag_values() work only on metadata registered in
-    # Asset Registry Project settings (and there is no way to set it with
-    # python short of editing ini configuration file).
-    for asset_data in openpype_containers:
-        asset = asset_data.get_asset()
-        data = unreal.EditorAssetLibrary.get_metadata_tag_values(asset)
-        data["objectName"] = asset_data.asset_name
-        data = cast_map_to_str_dict(data)
+    # # get_asset_by_class returns AssetData. To get all metadata we need to
+    # # load asset. get_tag_values() work only on metadata registered in
+    # # Asset Registry Project settings (and there is no way to set it with
+    # # python short of editing ini configuration file).
+    # for asset_data in openpype_containers:
+    #     asset = asset_data.get_asset()
+    #     data = unreal.EditorAssetLibrary.get_metadata_tag_values(asset)
+    #     data["objectName"] = asset_data.asset_name
+    #     data = cast_map_to_str_dict(data)
 
-        yield data
+    #     yield data
 
 
 def parse_container(container):
@@ -135,12 +135,12 @@ def parse_container(container):
     Returns:
         dict: metadata stored on container
     """
-    asset = unreal.EditorAssetLibrary.load_asset(container)
-    data = unreal.EditorAssetLibrary.get_metadata_tag_values(asset)
-    data["objectName"] = asset.get_name()
-    data = cast_map_to_str_dict(data)
+    # asset = unreal.EditorAssetLibrary.load_asset(container)
+    # data = unreal.EditorAssetLibrary.get_metadata_tag_values(asset)
+    # data["objectName"] = asset.get_name()
+    # data = cast_map_to_str_dict(data)
 
-    return data
+    # return data
 
 
 def publish():
@@ -168,28 +168,28 @@ def containerise(name, namespace, nodes, context, loader=None, suffix="_CON"):
     `Material /Game/OpenPype/Test/TestMaterial.TestMaterial`
 
     """
-    # 1 - create directory for container
-    root = "/Game"
-    container_name = "{}{}".format(name, suffix)
-    new_name = move_assets_to_path(root, container_name, nodes)
+    # # 1 - create directory for container
+    # root = "/Game"
+    # container_name = "{}{}".format(name, suffix)
+    # new_name = move_assets_to_path(root, container_name, nodes)
 
-    # 2 - create Asset Container there
-    path = "{}/{}".format(root, new_name)
-    create_container(container=container_name, path=path)
+    # # 2 - create Asset Container there
+    # path = "{}/{}".format(root, new_name)
+    # create_container(container=container_name, path=path)
 
-    namespace = path
+    # namespace = path
 
-    data = {
-        "schema": "openpype:container-2.0",
-        "id": AVALON_CONTAINER_ID,
-        "name": new_name,
-        "namespace": namespace,
-        "loader": str(loader),
-        "representation": context["representation"]["_id"],
-    }
-    # 3 - imprint data
-    imprint("{}/{}".format(path, container_name), data)
-    return path
+    # data = {
+    #     "schema": "openpype:container-2.0",
+    #     "id": AVALON_CONTAINER_ID,
+    #     "name": new_name,
+    #     "namespace": namespace,
+    #     "loader": str(loader),
+    #     "representation": context["representation"]["_id"],
+    # }
+    # # 3 - imprint data
+    # imprint("{}/{}".format(path, container_name), data)
+    # return path
 
 
 def instantiate(root, name, data, assets=None, suffix="_INS"):
@@ -210,36 +210,37 @@ def instantiate(root, name, data, assets=None, suffix="_INS"):
         suffix (str): suffix string to append to instance name
 
     """
-    container_name = "{}{}".format(name, suffix)
+    # container_name = "{}{}".format(name, suffix)
 
-    # if we specify assets, create new folder and move them there. If not,
-    # just create empty folder
-    if assets:
-        new_name = move_assets_to_path(root, container_name, assets)
-    else:
-        new_name = create_folder(root, name)
+    # # if we specify assets, create new folder and move them there. If not,
+    # # just create empty folder
+    # if assets:
+    #     new_name = move_assets_to_path(root, container_name, assets)
+    # else:
+    #     new_name = create_folder(root, name)
 
-    path = "{}/{}".format(root, new_name)
-    create_publish_instance(instance=container_name, path=path)
+    # path = "{}/{}".format(root, new_name)
+    # create_publish_instance(instance=container_name, path=path)
 
-    imprint("{}/{}".format(path, container_name), data)
+    # imprint("{}/{}".format(path, container_name), data)
 
 
 def imprint(node, data):
-    loaded_asset = unreal.EditorAssetLibrary.load_asset(node)
-    for key, value in data.items():
-        # Support values evaluated at imprint
-        if callable(value):
-            value = value()
-        # Unreal doesn't support NoneType in metadata values
-        if value is None:
-            value = ""
-        unreal.EditorAssetLibrary.set_metadata_tag(
-            loaded_asset, key, str(value)
-        )
+    pass
+    # loaded_asset = unreal.EditorAssetLibrary.load_asset(node)
+    # for key, value in data.items():
+    #     # Support values evaluated at imprint
+    #     if callable(value):
+    #         value = value()
+    #     # Unreal doesn't support NoneType in metadata values
+    #     if value is None:
+    #         value = ""
+    #     unreal.EditorAssetLibrary.set_metadata_tag(
+    #         loaded_asset, key, str(value)
+    #     )
 
-    with unreal.ScopedEditorTransaction("OpenPype containerising"):
-        unreal.EditorAssetLibrary.save_asset(node)
+    # with unreal.ScopedEditorTransaction("OpenPype containerising"):
+    #     unreal.EditorAssetLibrary.save_asset(node)
 
 
 def show_tools_popup():
@@ -302,17 +303,17 @@ def create_folder(root: str, name: str) -> str:
         /Game/Foo1
 
     """
-    eal = unreal.EditorAssetLibrary
-    index = 1
-    while True:
-        if eal.does_directory_exist("{}/{}".format(root, name)):
-            name = "{}{}".format(name, index)
-            index += 1
-        else:
-            eal.make_directory("{}/{}".format(root, name))
-            break
+    # eal = unreal.EditorAssetLibrary
+    # index = 1
+    # while True:
+    #     if eal.does_directory_exist("{}/{}".format(root, name)):
+    #         name = "{}{}".format(name, index)
+    #         index += 1
+    #     else:
+    #         eal.make_directory("{}/{}".format(root, name))
+    #         break
 
-    return name
+    # return name
 
 
 def move_assets_to_path(root: str, name: str, assets: List[str]) -> str:
@@ -336,73 +337,73 @@ def move_assets_to_path(root: str, name: str, assets: List[str]) -> str:
         NewTest
 
     """
-    eal = unreal.EditorAssetLibrary
-    name = create_folder(root, name)
+    # eal = unreal.EditorAssetLibrary
+    # name = create_folder(root, name)
 
-    unreal.log(assets)
-    for asset in assets:
-        loaded = eal.load_asset(asset)
-        eal.rename_asset(
-            asset, "{}/{}/{}".format(root, name, loaded.get_name())
-        )
+    # unreal.log(assets)
+    # for asset in assets:
+    #     loaded = eal.load_asset(asset)
+    #     eal.rename_asset(
+    #         asset, "{}/{}/{}".format(root, name, loaded.get_name())
+    #     )
 
-    return name
-
-
-def create_container(container: str, path: str) -> unreal.Object:
-    """Helper function to create Asset Container class on given path.
-
-    This Asset Class helps to mark given path as Container
-    and enable asset version control on it.
-
-    Args:
-        container (str): Asset Container name
-        path (str): Path where to create Asset Container. This path should
-            point into container folder
-
-    Returns:
-        :class:`unreal.Object`: instance of created asset
-
-    Example:
-
-        create_container(
-            "/Game/modelingFooCharacter_CON",
-            "modelingFooCharacter_CON"
-        )
-
-    """
-    factory = unreal.AssetContainerFactory()
-    tools = unreal.AssetToolsHelpers().get_asset_tools()
-
-    asset = tools.create_asset(container, path, None, factory)
-    return asset
+    # return name
 
 
-def create_publish_instance(instance: str, path: str) -> unreal.Object:
-    """Helper function to create OpenPype Publish Instance on given path.
+# def create_container(container: str, path: str) -> unreal.Object:
+#     """Helper function to create Asset Container class on given path.
 
-    This behaves similarly as :func:`create_openpype_container`.
+#     This Asset Class helps to mark given path as Container
+#     and enable asset version control on it.
 
-    Args:
-        path (str): Path where to create Publish Instance.
-            This path should point into container folder
-        instance (str): Publish Instance name
+#     Args:
+#         container (str): Asset Container name
+#         path (str): Path where to create Asset Container. This path should
+#             point into container folder
 
-    Returns:
-        :class:`unreal.Object`: instance of created asset
+#     Returns:
+#         :class:`unreal.Object`: instance of created asset
 
-    Example:
+#     Example:
 
-        create_publish_instance(
-            "/Game/modelingFooCharacter_INST",
-            "modelingFooCharacter_INST"
-        )
+#         create_container(
+#             "/Game/modelingFooCharacter_CON",
+#             "modelingFooCharacter_CON"
+#         )
 
-    """
-    factory = unreal.OpenPypePublishInstanceFactory()
-    tools = unreal.AssetToolsHelpers().get_asset_tools()
-    asset = tools.create_asset(instance, path, None, factory)
-    return asset
+#     """
+#     factory = unreal.AssetContainerFactory()
+#     tools = unreal.AssetToolsHelpers().get_asset_tools()
+
+#     asset = tools.create_asset(container, path, None, factory)
+#     return asset
+
+
+# def create_publish_instance(instance: str, path: str) -> unreal.Object:
+#     """Helper function to create OpenPype Publish Instance on given path.
+
+#     This behaves similarly as :func:`create_openpype_container`.
+
+#     Args:
+#         path (str): Path where to create Publish Instance.
+#             This path should point into container folder
+#         instance (str): Publish Instance name
+
+#     Returns:
+#         :class:`unreal.Object`: instance of created asset
+
+#     Example:
+
+#         create_publish_instance(
+#             "/Game/modelingFooCharacter_INST",
+#             "modelingFooCharacter_INST"
+#         )
+
+#     """
+#     factory = unreal.OpenPypePublishInstanceFactory()
+#     tools = unreal.AssetToolsHelpers().get_asset_tools()
+#     asset = tools.create_asset(instance, path, None, factory)
+#     return asset
 
 
 def cast_map_to_str_dict(umap) -> dict:
@@ -422,22 +423,22 @@ def cast_map_to_str_dict(umap) -> dict:
     return {str(key): str(value) for (key, value) in umap.items()}
 
 
-def get_subsequences(sequence: unreal.LevelSequence):
-    """Get list of subsequences from sequence.
+# def get_subsequences(sequence: unreal.LevelSequence):
+#     """Get list of subsequences from sequence.
 
-    Args:
-        sequence (unreal.LevelSequence): Sequence
+#     Args:
+#         sequence (unreal.LevelSequence): Sequence
 
-    Returns:
-        list(unreal.LevelSequence): List of subsequences
+#     Returns:
+#         list(unreal.LevelSequence): List of subsequences
 
-    """
-    tracks = sequence.get_master_tracks()
-    subscene_track = None
-    for t in tracks:
-        if t.get_class() == unreal.MovieSceneSubTrack.static_class():
-            subscene_track = t
-            break
-    if subscene_track is not None and subscene_track.get_sections():
-        return subscene_track.get_sections()
-    return []
+#     """
+#     tracks = sequence.get_master_tracks()
+#     subscene_track = None
+#     for t in tracks:
+#         if t.get_class() == unreal.MovieSceneSubTrack.static_class():
+#             subscene_track = t
+#             break
+#     if subscene_track is not None and subscene_track.get_sections():
+#         return subscene_track.get_sections()
+#     return []

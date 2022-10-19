@@ -1,5 +1,5 @@
-#include "OpenPype.h"
 #include "OpenPypeStyle.h"
+#include "OpenPype.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Slate/SlateGameResources.h"
@@ -43,6 +43,7 @@ TSharedRef< FSlateStyleSet > FOpenPypeStyle::Create()
 
 	Style->Set("OpenPype.OpenPypeTools", new IMAGE_BRUSH(TEXT("openpype40"), Icon40x40));
 	Style->Set("OpenPype.OpenPypeToolsDialog", new IMAGE_BRUSH(TEXT("openpype40"), Icon40x40));
+	Style->Set("OpenPype.OpenPypeTestMethod", new IMAGE_BRUSH(TEXT("openpype40"), Icon40x40));
 
 	return Style;
 }

@@ -21,4 +21,5 @@ public:
 public:
 	TSharedPtr< FUICommandInfo > OpenPypeTools;
 	TSharedPtr< FUICommandInfo > OpenPypeToolsDialog;
+	TSharedPtr< FUICommandInfo > OpenPypeTestMethod;
 };

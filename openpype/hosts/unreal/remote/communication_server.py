@@ -197,7 +197,7 @@ class WebsocketServerThread(threading.Thread):
         self.loop.stop()
 
 
-class BaseTVPaintRpc(JsonRpc):
+class BaseUnrealRpc(JsonRpc):
     def __init__(self, communication_obj, route_name="", **kwargs):
         super().__init__(**kwargs)
         self.requests_ids = collections.defaultdict(lambda: 0)
@@ -296,7 +296,7 @@ class BaseTVPaintRpc(JsonRpc):
         return result
 
 
-class QtTVPaintRpc(BaseTVPaintRpc):
+class QtUnrealRpc(BaseUnrealRpc):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -493,7 +493,7 @@ class BaseCommunicator:
         self.process = subprocess.Popen(launch_args, **kwargs)
 
     def _create_routes(self):
-        self.websocket_rpc = BaseTVPaintRpc(
+        self.websocket_rpc = BaseUnrealRpc(
             self, loop=self.websocket_server.loop
         )
         self.websocket_server.add_route(
@@ -664,7 +664,7 @@ class QtCommunicator(BaseCommunicator):
         self.qt_app = qt_app
 
     def _create_routes(self):
-        self.websocket_rpc = QtTVPaintRpc(
+        self.websocket_rpc = QtUnrealRpc(
             self, loop=self.websocket_server.loop
         )
         self.websocket_server.add_route(

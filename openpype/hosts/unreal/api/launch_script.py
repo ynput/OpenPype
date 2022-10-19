@@ -12,6 +12,9 @@ logging.basicConfig(level=logging.DEBUG)
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype import style
+from openpype.pipeline import install_host
+from openpype.hosts.unreal.api import UnrealHost
+# from openpype.hosts.unreal import api as unreal_host
 from openpype.hosts.unreal.remote.communication_server import (
     CommunicationWrapper
 )
@@ -28,6 +31,9 @@ def main(launch_args):
     # Create QtApplication for tools
     # - QApplicaiton is also main thread/event loop of the server
     qt_app = QtWidgets.QApplication([])
+
+    unreal_host = UnrealHost()
+    install_host(unreal_host)
 
     # Create Communicator object and trigger launch
     # - this must be done before anything is processed
