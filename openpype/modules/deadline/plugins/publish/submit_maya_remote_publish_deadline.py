@@ -1,5 +1,6 @@
 import os
 import requests
+from datetime import datetime
 
 from maya import cmds
 
@@ -57,6 +58,8 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
         job_name = "{scene} [PUBLISH]".format(scene=scenename)
         batch_name = "{code} - {scene}".format(code=project_name,
                                                scene=scenename)
+        if os.environ.get("IS_TEST"):
+            batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
 
         # Generate the payload for Deadline submission
         payload = {

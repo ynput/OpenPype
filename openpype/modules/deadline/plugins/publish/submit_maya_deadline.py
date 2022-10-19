@@ -118,6 +118,9 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         src_filepath = context.data["currentFile"]
         src_filename = os.path.basename(src_filepath)
 
+        if os.environ.get("IS_TEST"):
+            src_filename += datetime.now().strftime("%d%m%Y%H%M%S")
+
         job_info.Name = "%s - %s" % (src_filename, instance.name)
         job_info.BatchName = src_filename
         job_info.Plugin = instance.data.get("mayaRenderPlugin", "MayaBatch")

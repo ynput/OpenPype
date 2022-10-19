@@ -1,5 +1,6 @@
 import os
 import json
+from datetime import datetime
 
 import requests
 import hou
@@ -60,6 +61,8 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
 
         job_name = "{scene} [PUBLISH]".format(scene=scenename)
         batch_name = "{code} - {scene}".format(code=code, scene=scenename)
+        if os.environ.get("IS_TEST"):
+            batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
         deadline_user = "roy"  # todo: get deadline user dynamically
 
         # Get only major.minor version of Houdini, ignore patch version

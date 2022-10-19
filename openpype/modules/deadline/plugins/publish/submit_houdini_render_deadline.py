@@ -1,6 +1,7 @@
 import os
 import json
 import getpass
+from datetime import datetime
 
 import requests
 import pyblish.api
@@ -44,6 +45,9 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
         batch_name = filename
         if code:
             batch_name = "{0} - {1}".format(code, batch_name)
+
+        if os.environ.get("IS_TEST"):
+            batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
 
         # Output driver to render
         driver = instance[0]

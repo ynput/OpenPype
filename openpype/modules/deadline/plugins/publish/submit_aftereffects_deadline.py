@@ -2,6 +2,7 @@ import os
 import attr
 import getpass
 import pyblish.api
+from datetime import datetime
 
 from openpype.lib import (
     env_value_to_bool,
@@ -48,9 +49,11 @@ class AfterEffectsSubmitDeadline(
 
         context = self._instance.context
 
+        batch_name = os.path.basename(self._instance.data["source"])
+        if os.environ.get("IS_TEST"):
+            batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
         dln_job_info.Name = self._instance.data["name"]
-        dln_job_info.BatchName = os.path.basename(self._instance.
-                                                  data["source"])
+        dln_job_info.BatchName = batch_name
         dln_job_info.Plugin = "AfterEffects"
         dln_job_info.UserName = context.data.get(
             "deadlineUser", getpass.getuser())

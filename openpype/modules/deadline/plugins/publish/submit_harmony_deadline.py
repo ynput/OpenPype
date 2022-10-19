@@ -5,6 +5,7 @@ from pathlib import Path
 from collections import OrderedDict
 from zipfile import ZipFile, is_zipfile
 import re
+from datetime import datetime
 
 import attr
 import pyblish.api
@@ -261,7 +262,10 @@ class HarmonySubmitDeadline(
         job_info.Pool = self._instance.data.get("primaryPool")
         job_info.SecondaryPool = self._instance.data.get("secondaryPool")
         job_info.ChunkSize = self.chunk_size
-        job_info.BatchName = os.path.basename(self._instance.data["source"])
+        batch_name = os.path.basename(self._instance.data["source"])
+        if os.environ.get("IS_TEST"):
+            batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
+        job_info.BatchName = batch_name
         job_info.Department = self.department
         job_info.Group = self.group
 
