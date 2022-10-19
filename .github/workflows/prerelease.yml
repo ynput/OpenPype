@@ -40,13 +40,13 @@ jobs:
     - name: "✏️ Generate full changelog"
       if: steps.version_type.outputs.type != 'skip'
       id: generate-full-changelog
-      uses: heinrichreimer/github-changelog-generator-action@v2.2
+      uses: heinrichreimer/github-changelog-generator-action@v2.3
       with:
         token: ${{ secrets.ADMIN_TOKEN }}
         addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["type: documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]},"feature":{"prefix":"**🆕 New features**", "labels":["type: feature"]},"breaking":{"prefix":"**💥 Breaking**", "labels":["breaking"]},"enhancements":{"prefix":"**🚀 Enhancements**", "labels":["type: enhancement"]},"bugs":{"prefix":"**🐛 Bug fixes**", "labels":["type: bug"]},"deprecated":{"prefix":"**⚠️ Deprecations**", "labels":["depreciated"]}, "refactor":{"prefix":"**🔀 Refactored code**", "labels":["refactor"]}}'
         issues: false
         issuesWoLabels: false
-        sinceTag: "3.0.0"
+        sinceTag: "3.12.0"
         maxIssues: 100
         pullRequests: true
         prWoLabels: false
