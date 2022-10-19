@@ -2,7 +2,7 @@ name: Stable Release
 
 on:
   release:
-    types: 
+    types:
       - prereleased
 
 jobs:
@@ -13,7 +13,7 @@ jobs:
     steps:
     - name: 🚛 Checkout Code
       uses: actions/checkout@v2
-      with:      
+      with:
         fetch-depth: 0
 
     - name: Set up Python
@@ -33,27 +33,27 @@ jobs:
         echo ::set-output name=last_release::$LASTRELEASE
         echo ::set-output name=release_tag::$RESULT
 
-    - name: "✏️ Generate full changelog"
-      if: steps.version.outputs.release_tag != 'skip'
-      id: generate-full-changelog
-      uses: heinrichreimer/github-changelog-generator-action@v2.3
-      with:
-        token: ${{ secrets.ADMIN_TOKEN }}
-        addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["type: documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]},"feature":{"prefix":"**🆕 New features**", "labels":["type: feature"]},"breaking":{"prefix":"**💥 Breaking**", "labels":["breaking"]},"enhancements":{"prefix":"**🚀 Enhancements**", "labels":["type: enhancement"]},"bugs":{"prefix":"**🐛 Bug fixes**", "labels":["type: bug"]},"deprecated":{"prefix":"**⚠️ Deprecations**", "labels":["depreciated"]}, "refactor":{"prefix":"**🔀 Refactored code**", "labels":["refactor"]}}'
-        issues: false
-        issuesWoLabels: false
-        sinceTag: "3.12.0"
-        maxIssues: 100
-        pullRequests: true
-        prWoLabels: false
-        author: false
-        unreleased: true
-        compareLink: true
-        stripGeneratorNotice: true
-        verbose: true
-        futureRelease: ${{ steps.version.outputs.release_tag }}
-        excludeTagsRegex: "CI/.+"
-        releaseBranch: "main"
+    # - name: "✏️ Generate full changelog"
+    #   if: steps.version.outputs.release_tag != 'skip'
+    #   id: generate-full-changelog
+    #   uses: heinrichreimer/github-changelog-generator-action@v2.3
+    #   with:
+    #     token: ${{ secrets.ADMIN_TOKEN }}
+    #     addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["type: documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]},"feature":{"prefix":"**🆕 New features**", "labels":["type: feature"]},"breaking":{"prefix":"**💥 Breaking**", "labels":["breaking"]},"enhancements":{"prefix":"**🚀 Enhancements**", "labels":["type: enhancement"]},"bugs":{"prefix":"**🐛 Bug fixes**", "labels":["type: bug"]},"deprecated":{"prefix":"**⚠️ Deprecations**", "labels":["depreciated"]}, "refactor":{"prefix":"**🔀 Refactored code**", "labels":["refactor"]}}'
+    #     issues: false
+    #     issuesWoLabels: false
+    #     sinceTag: "3.12.0"
+    #     maxIssues: 100
+    #     pullRequests: true
+    #     prWoLabels: false
+    #     author: false
+    #     unreleased: true
+    #     compareLink: true
+    #     stripGeneratorNotice: true
+    #     verbose: true
+    #     futureRelease: ${{ steps.version.outputs.release_tag }}
+    #     excludeTagsRegex: "CI/.+"
+    #     releaseBranch: "main"
 
     - name: 💾 Commit and Tag
       id: git_commit
@@ -73,8 +73,8 @@ jobs:
         token: ${{ secrets.ADMIN_TOKEN }}
         branch: main
         tags: true
-        unprotect_reviews: true    
-    
+        unprotect_reviews: true
+
     - name: "✏️ Generate last changelog"
       if: steps.version.outputs.release_tag != 'skip'
       id: generate-last-changelog
@@ -114,7 +114,7 @@ jobs:
       with:
         tag: "${{ steps.version.outputs.current_version }}"
 
-    - name: 🔁 Merge main back to develop   
+    - name: 🔁 Merge main back to develop
       if: steps.version.outputs.release_tag != 'skip'
       uses: everlytic/branch-merge@1.1.0
       with:
