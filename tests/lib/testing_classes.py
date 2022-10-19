@@ -317,7 +317,7 @@ class PublishTest(ModuleUnitTest):
 
             Compares only presence, not size nor content!
         """
-        published_dir_base = output_folder_url
+        published_dir_base = os.path.join(output_folder_url, "output")
         expected_dir_base = os.path.join(download_test_data,
                                          "expected")
 
@@ -351,6 +351,7 @@ class DeadlinePublishTest(PublishTest):
                 raise ValueError("Timeout reached")
 
         metadata_json = glob.glob(os.path.join(download_test_data,
+                                               "output",
                                                "**/*_metadata.json"),
                                   recursive=True)
         if not metadata_json:

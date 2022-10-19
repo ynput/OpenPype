@@ -21,6 +21,7 @@ class MayaHostFixtures(HostFixtures):
                                 "workfile",
                                 "test_project_test_asset_TestTask_v001.mb")
         dest_folder = os.path.join(output_folder_url,
+                                   "output",
                                    self.PROJECT,
                                    self.ASSET,
                                    "work",

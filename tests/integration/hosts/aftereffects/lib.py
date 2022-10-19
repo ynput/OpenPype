@@ -21,6 +21,7 @@ class AEHostFixtures(HostFixtures):
                                 "workfile",
                                 "test_project_test_asset_TestTask_v001.aep")
         dest_folder = os.path.join(download_test_data,
+                                   "output",
                                    self.PROJECT,
                                    self.ASSET,
                                    "work",
