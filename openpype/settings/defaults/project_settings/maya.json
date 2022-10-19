@@ -62,6 +62,12 @@
             "force_combine": true,
             "aov_list": [],
             "additional_options": []
+        },
+        "renderman_renderer": {
+            "image_prefix": "maya/<Scene>/<layer>/<layer>{aov_separator}<aov>",
+            "display_filters": [],
+            "sample_filters": [],
+            "additional_options": []
         }
     },
     "create": {

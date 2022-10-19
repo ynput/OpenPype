@@ -4,6 +4,7 @@ from maya import cmds  # noqa
 import maya.mel as mel
 import six
 import sys
+import os
 
 from openpype.lib import Logger
 from openpype.api import (
@@ -29,7 +30,7 @@ class RenderSettings(object):
     _image_prefixes = {
         'vray': get_current_project_settings()["maya"]["RenderSettings"]["vray_renderer"]["image_prefix"], # noqa
         'arnold': get_current_project_settings()["maya"]["RenderSettings"]["arnold_renderer"]["image_prefix"],  # noqa
-        'renderman': 'maya/<Scene>/<layer>/<layer>{aov_separator}<aov>',
+        'renderman': get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["image_prefix"],  # noqa
         'redshift': get_current_project_settings()["maya"]["RenderSettings"]["redshift_renderer"]["image_prefix"]  # noqa
     }
 
@@ -96,6 +97,9 @@ class RenderSettings(object):
         if renderer == "redshift":
             self._set_redshift_settings(width, height)
 
+        if renderer == "renderman":
+            self._set_renderman_settings(width, height)
+
     def _set_arnold_settings(self, width, height):
         """Sets settings for Arnold."""
         from mtoa.core import createOptions  # noqa
@@ -154,6 +158,45 @@ class RenderSettings(object):
 
         self._set_global_output_settings()
         cmds.setAttr("redshiftOptions.imageFormat", img_ext)
+        cmds.setAttr("defaultResolution.width", width)
+        cmds.setAttr("defaultResolution.height", height)
+        self._additional_attribs_setter(additional_options)
+
+    def _set_renderman_settings(self, width, height):
+        """Sets settings for Renderman"""
+        rman_render_presets = (
+            self._project_settings
+            ["maya"]
+            ["RenderSettings"]
+            ["renderman_renderer"]
+        )
+        display_filters = rman_render_presets["display_filters"]
+        d_filters_number = len(display_filters)
+        for i in range(d_filters_number):
+            d_node = cmds.ls(typ=display_filters[i])
+            if len(d_node) > 0:
+                filter_nodes = d_node[0]
+            else:
+                filter_nodes = cmds.createNode(display_filters[i])
+            cmds.connectAttr(filter_nodes+".message",
+                             "rmanGlobals.displayFilters[%i]"% i,
+                             force=True)
+
+        sample_filters = rman_render_presets["sample_filters"]
+        s_filters_number = len(sample_filters)
+        for n in range(s_filters_number):
+            s_node = cmds.ls(typ=sample_filters[n])
+            if len(s_node) > 0:
+                filter_nodes = s_node[0]
+            else:
+                filter_nodes = cmds.createNode(sample_filters[n])
+            cmds.connectAttr(filter_nodes+".message",
+                             "rmanGlobals.sampleFilters[%i]"% n,
+                             force=True)
+
+        additional_options = rman_render_presets["additional_options"]
+
+        self._set_global_output_settings()
         cmds.setAttr("defaultResolution.width", width)
         cmds.setAttr("defaultResolution.height", height)
         self._additional_attribs_setter(additional_options)
