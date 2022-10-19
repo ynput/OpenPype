@@ -50,6 +50,7 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
     Has toggle button to show/hide instances on which validation error happened
     if there is a list (Valdation error may happen on context).
     """
+
     selected = QtCore.Signal(int)
     instance_changed = QtCore.Signal(int)
 
@@ -75,34 +76,31 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         title_frame_layout.addWidget(toggle_instance_btn, 0)
 
         instances_model = QtGui.QStandardItemModel()
-        error_info = error_info["error_info"]
 
         help_text_by_instance_id = {}
-        context_validation = False
-        items = []
-        if (
-            not error_info
-            or (len(error_info) == 1 and error_info[0][0] is None)
-        ):
-            context_validation = True
-            toggle_instance_btn.setArrowType(QtCore.Qt.NoArrow)
-            description = self._prepare_description(error_info[0][1])
-            help_text_by_instance_id[None] = description
-            # Add fake item to have minimum size hint of view widget
-            items.append(QtGui.QStandardItem("Context"))
 
-        else:
-            for instance, exception in error_info:
-                label = instance.data.get("label") or instance.data.get("name")
-                item = QtGui.QStandardItem(label)
-                item.setFlags(
-                    QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
-                )
-                item.setData(label, QtCore.Qt.ToolTipRole)
-                item.setData(instance.id, INSTANCE_ID_ROLE)
-                items.append(item)
-                description = self._prepare_description(exception)
-                help_text_by_instance_id[instance.id] = description
+        items = []
+        context_validation = False
+        for error_item in error_info["error_items"]:
+            context_validation = error_item.context_validation
+            if context_validation:
+                toggle_instance_btn.setArrowType(QtCore.Qt.NoArrow)
+                description = self._prepare_description(error_item)
+                help_text_by_instance_id[None] = description
+                # Add fake item to have minimum size hint of view widget
+                items.append(QtGui.QStandardItem("Context"))
+                continue
+
+            label = error_item.instance_label
+            item = QtGui.QStandardItem(label)
+            item.setFlags(
+                QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+            )
+            item.setData(label, QtCore.Qt.ToolTipRole)
+            item.setData(error_item.instance_id, INSTANCE_ID_ROLE)
+            items.append(item)
+            description = self._prepare_description(error_item)
+            help_text_by_instance_id[error_item.instance_id] = description
 
         if items:
             root_item = instances_model.invisibleRootItem()
@@ -167,9 +165,19 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
     def minimumSizeHint(self):
         return self.sizeHint()
 
-    def _prepare_description(self, exception):
-        dsc = exception.description
-        detail = exception.detail
+    def _prepare_description(self, error_item):
+        """Prepare description text for detail intput.
+
+        Args:
+            error_item (ValidationErrorItem): Item which hold information about
+                validation error.
+
+        Returns:
+            str: Prepared detailed description.
+        """
+
+        dsc = error_item.description
+        detail = error_item.detail
         if detail:
             dsc += "<br/><br/>{}".format(detail)
 
@@ -196,32 +204,51 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
 
     @property
     def is_selected(self):
-        """Is widget marked a selected"""
+        """Is widget marked a selected.
+
+        Returns:
+            bool: Item is selected or not.
+        """
+
         return self._selected
 
     @property
     def index(self):
-        """Widget's index set by parent."""
+        """Widget's index set by parent.
+
+        Returns:
+            int: Index of widget.
+        """
+
         return self._index
 
     def set_index(self, index):
-        """Set index of widget (called by parent)."""
+        """Set index of widget (called by parent).
+
+        Args:
+            int: New index of widget.
+        """
+
         self._index = index
 
     def _change_style_property(self, selected):
         """Change style of widget based on selection."""
+
         value = "1" if selected else ""
         self._title_frame.setProperty("selected", value)
         self._title_frame.style().polish(self._title_frame)
 
     def set_selected(self, selected=None):
         """Change selected state of widget."""
+
         if selected is None:
             selected = not self._selected
 
+        # Clear instance view selection on deselect
         if not selected:
             self._instances_view.clearSelection()
 
+        # Skip if has same value
         if selected == self._selected:
             return
 
@@ -263,18 +290,23 @@ class ActionButton(BaseClickableFrame):
     """Plugin's action callback button.
 
     Action may have label or icon or both.
-    """
-    action_clicked = QtCore.Signal(str)
 
-    def __init__(self, action, parent):
+    Args:
+        plugin_action_item (PublishPluginActionItem): Action item that can be
+            triggered by it's id.
+    """
+
+    action_clicked = QtCore.Signal(str, str)
+
+    def __init__(self, plugin_action_item, parent):
         super(ActionButton, self).__init__(parent)
 
         self.setObjectName("ValidationActionButton")
 
-        self.action = action
+        self.plugin_action_item = plugin_action_item
 
-        action_label = action.label or action.__name__
-        action_icon = getattr(action, "icon", None)
+        action_label = plugin_action_item.label
+        action_icon = plugin_action_item.icon
         label_widget = QtWidgets.QLabel(action_label, self)
         icon_label = None
         if action_icon:
@@ -292,7 +324,10 @@ class ActionButton(BaseClickableFrame):
         )
 
     def _mouse_release_callback(self):
-        self.action_clicked.emit(self.action.id)
+        self.action_clicked.emit(
+            self.plugin_action_item.plugin_id,
+            self.plugin_action_item.action_id
+        )
 
 
 class ValidateActionsWidget(QtWidgets.QFrame):
@@ -300,6 +335,7 @@ class ValidateActionsWidget(QtWidgets.QFrame):
 
     Change actions based on selected validation error.
     """
+
     def __init__(self, controller, parent):
         super(ValidateActionsWidget, self).__init__(parent)
 
@@ -312,10 +348,9 @@ class ValidateActionsWidget(QtWidgets.QFrame):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(content_widget)
 
-        self.controller = controller
+        self._controller = controller
         self._content_widget = content_widget
         self._content_layout = content_layout
-        self._plugin = None
         self._actions_mapping = {}
 
     def clear(self):
@@ -328,28 +363,34 @@ class ValidateActionsWidget(QtWidgets.QFrame):
                 widget.deleteLater()
         self._actions_mapping = {}
 
-    def set_plugin(self, plugin):
+    def set_error_item(self, error_item):
         """Set selected plugin and show it's actions.
 
         Clears current actions from widget and recreate them from the plugin.
+
+        Args:
+            Dict[str, Any]: Object holding error items, title and possible
+                actions to run.
         """
+
         self.clear()
-        self._plugin = plugin
-        if not plugin:
+
+        if not error_item:
             self.setVisible(False)
             return
 
-        actions = getattr(plugin, "actions", [])
-        for action in actions:
-            if not action.active:
+        plugin_action_items = error_item["plugin_action_items"]
+        for plugin_action_item in plugin_action_items:
+            if not plugin_action_item.active:
                 continue
 
-            if action.on not in ("failed", "all"):
+            if plugin_action_item.on_filter not in ("failed", "all"):
                 continue
 
-            self._actions_mapping[action.id] = action
+            action_id = plugin_action_item.action_id
+            self._actions_mapping[action_id] = plugin_action_item
 
-            action_btn = ActionButton(action, self._content_widget)
+            action_btn = ActionButton(plugin_action_item, self._content_widget)
             action_btn.action_clicked.connect(self._on_action_click)
             self._content_layout.addWidget(action_btn)
 
@@ -359,9 +400,8 @@ class ValidateActionsWidget(QtWidgets.QFrame):
         else:
             self.setVisible(False)
 
-    def _on_action_click(self, action_id):
-        action = self._actions_mapping[action_id]
-        self.controller.run_action(self._plugin, action)
+    def _on_action_click(self, plugin_id, action_id):
+        self._controller.run_action(plugin_id, action_id)
 
 
 class VerticallScrollArea(QtWidgets.QScrollArea):
@@ -373,6 +413,7 @@ class VerticallScrollArea(QtWidgets.QScrollArea):
     Resize if deferred by 100ms because at the moment of resize are not yet
     propagated sizes and visibility of scroll bars.
     """
+
     def __init__(self, *args, **kwargs):
         super(VerticallScrollArea, self).__init__(*args, **kwargs)
 
@@ -584,45 +625,31 @@ class ValidationsWidget(QtWidgets.QFrame):
         self._errors_widget.setVisible(False)
         self._actions_widget.setVisible(False)
 
-    def set_errors(self, errors):
-        """Set errors into context and created titles."""
+    def _set_errors(self, validation_error_report):
+        """Set errors into context and created titles.
+
+        Args:
+            validation_error_report (PublishValidationErrorsReport): Report
+                with information about validation errors and publish plugin
+                actions.
+        """
+
         self.clear()
-        if not errors:
+        if not validation_error_report:
             return
 
         self._top_label.setVisible(True)
         self._error_details_frame.setVisible(True)
         self._errors_widget.setVisible(True)
 
-        errors_by_title = []
-        for plugin_info in errors:
-            titles = []
-            error_info_by_title = {}
-
-            for error_info in plugin_info["errors"]:
-                exception = error_info["exception"]
-                title = exception.title
-                if title not in titles:
-                    titles.append(title)
-                    error_info_by_title[title] = []
-                error_info_by_title[title].append(
-                    (error_info["instance"], exception)
-                )
-
-            for title in titles:
-                errors_by_title.append({
-                    "plugin": plugin_info["plugin"],
-                    "error_info": error_info_by_title[title],
-                    "title": title
-                })
-
-        for idx, item in enumerate(errors_by_title):
-            widget = ValidationErrorTitleWidget(idx, item, self)
+        grouped_error_items = validation_error_report.group_items_by_title()
+        for idx, error_info in enumerate(grouped_error_items):
+            widget = ValidationErrorTitleWidget(idx, error_info, self)
             widget.selected.connect(self._on_select)
             widget.instance_changed.connect(self._on_instance_change)
             self._errors_layout.addWidget(widget)
             self._title_widgets[idx] = widget
-            self._error_info[idx] = item
+            self._error_info[idx] = error_info
 
         self._errors_layout.addStretch(1)
 
@@ -648,7 +675,7 @@ class ValidationsWidget(QtWidgets.QFrame):
         if self._controller.publish_has_validation_errors:
             validation_errors = self._controller.get_validation_errors()
             self._set_current_widget(self._validations_widget)
-            self.set_errors(validation_errors)
+            self._set_errors(validation_errors)
             return
 
         if self._controller.publish_has_finished:
@@ -667,7 +694,7 @@ class ValidationsWidget(QtWidgets.QFrame):
 
         error_item = self._error_info[index]
 
-        self._actions_widget.set_plugin(error_item["plugin"])
+        self._actions_widget.set_error_item(error_item)
 
         self._update_description()
 
@@ -682,5 +709,7 @@ class ValidationsWidget(QtWidgets.QFrame):
         if commonmark:
             html = commonmark.commonmark(description)
             self._error_details_input.setHtml(html)
-        else:
+        elif hasattr(self._error_details_input, "setMarkdown"):
             self._error_details_input.setMarkdown(description)
+        else:
+            self._error_details_input.setText(description)
