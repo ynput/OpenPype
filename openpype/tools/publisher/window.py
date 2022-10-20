@@ -37,7 +37,7 @@ class PublisherWindow(QtWidgets.QDialog):
     footer_border = 8
     publish_footer_spacer = 2
 
-    def __init__(self, parent=None, controller=None, reset_on_first_show=None):
+    def __init__(self, parent=None, controller=None, reset_on_show=None):
         super(PublisherWindow, self).__init__(parent)
 
         self.setWindowTitle("OpenPype publisher")
@@ -45,8 +45,8 @@ class PublisherWindow(QtWidgets.QDialog):
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
 
-        if reset_on_first_show is None:
-            reset_on_first_show = True
+        if reset_on_show is None:
+            reset_on_show = True
 
         if parent is None:
             on_top_flag = QtCore.Qt.WindowStaysOnTopHint
@@ -312,7 +312,9 @@ class PublisherWindow(QtWidgets.QDialog):
         self._controller = controller
 
         self._first_show = True
-        self._reset_on_first_show = reset_on_first_show
+        # This is a little bit confusing but 'reset_on_first_show' is too long
+        #   forin init
+        self._reset_on_first_show = reset_on_show
         self._reset_on_show = True
         self._restart_timer = None
         self._publish_frame_visible = None
