@@ -1,3 +1,4 @@
+import collections
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype import (
@@ -222,6 +223,10 @@ class PublisherWindow(QtWidgets.QDialog):
         # Floating publish frame
         publish_frame = PublishFrame(controller, self.footer_border, self)
 
+        dialog_message_timer = QtCore.QTimer()
+        dialog_message_timer.setInterval(100)
+        dialog_message_timer.timeout.connect(self._on_dialog_message_timeout)
+
         help_btn.clicked.connect(self._on_help_click)
         tabs_widget.tab_changed.connect(self._on_tab_change)
         overview_widget.active_changed.connect(
@@ -258,6 +263,15 @@ class PublisherWindow(QtWidgets.QDialog):
         )
         controller.event_system.add_callback(
             "show.card.message", self._on_overlay_message
+        )
+        controller.event_system.add_callback(
+            "instances.collection.failed", self._instance_collection_failed
+        )
+        controller.event_system.add_callback(
+            "instances.save.failed", self._instance_save_failed
+        )
+        controller.event_system.add_callback(
+            "instances.remove.failed", self._instance_remove_failed
         )
 
         # Store extra header widget for TrayPublisher
@@ -302,6 +316,9 @@ class PublisherWindow(QtWidgets.QDialog):
         self._reset_on_show = True
         self._restart_timer = None
         self._publish_frame_visible = None
+
+        self._dialog_messages_to_show = collections.deque()
+        self._dialog_message_timer = dialog_message_timer
 
         self._set_publish_visibility(False)
 
@@ -578,3 +595,51 @@ class PublisherWindow(QtWidgets.QDialog):
         self._publish_frame.move(
             0, window_size.height() - height
         )
+
+    def add_message_dialog(self, message, title):
+        self._dialog_messages_to_show.append((message, title))
+        self._dialog_message_timer.start()
+
+    def _on_dialog_message_timeout(self):
+        if not self._dialog_messages_to_show:
+            self._dialog_message_timer.stop()
+            return
+
+        item = self._dialog_messages_to_show.popleft()
+        message, title = item
+        dialog = MessageDialog(message, title)
+        dialog.exec_()
+
+    def _instance_collection_failed(self, event):
+        self.add_message_dialog(event["message"], event["title"])
+
+    def _instance_save_failed(self, event):
+        self.add_message_dialog(event["message"], event["title"])
+
+    def _instance_remove_failed(self, event):
+        self.add_message_dialog(event["message"], event["title"])
+
+
+class MessageDialog(QtWidgets.QDialog):
+    def __init__(self, message, title, parent=None):
+        super(MessageDialog, self).__init__(parent)
+
+        self.setWindowTitle(title or "Something happend")
+
+        message_widget = QtWidgets.QLabel(message, self)
+
+        btns_widget = QtWidgets.QWidget(self)
+        submit_btn = QtWidgets.QPushButton("OK", btns_widget)
+
+        btns_layout = QtWidgets.QHBoxLayout(btns_widget)
+        btns_layout.setContentsMargins(0, 0, 0, 0)
+        btns_layout.addStretch(1)
+        btns_layout.addWidget(submit_btn)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(message_widget, 1)
+        layout.addWidget(btns_widget, 0)
+
+    def showEvent(self, event):
+        super(MessageDialog, self).showEvent(event)
+        self.resize(400, 300)
