@@ -20,6 +20,16 @@ class CreateWriteRender(napi.NukeWriteCreator):
     family = "render"
     icon = "sign-out"
 
+    instance_attributes = [
+        "reviewable"
+    ]
+    default_variants = [
+        "Main",
+        "Mask"
+    ]
+    temp_rendering_path_template = (
+        "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}")
+
     def get_pre_create_attr_defs(self):
         attr_defs = [
             BoolDef(

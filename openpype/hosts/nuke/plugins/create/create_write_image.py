@@ -20,6 +20,17 @@ class CreateWriteImage(napi.NukeWriteCreator):
     family = "image"
     icon = "sign-out"
 
+    instance_attributes = [
+        "use_range_limit"
+    ]
+    default_variants = [
+        "StillFrame",
+        "MPFrame",
+        "LayoutFrame"
+    ]
+    temp_rendering_path_template = (
+        "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}")
+
     def get_pre_create_attr_defs(self):
         attr_defs = [
             BoolDef(

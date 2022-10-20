@@ -358,12 +358,15 @@ class NukeWriteCreator(NukeCreator):
         plugin_settings = self.get_creator_settings(project_settings)
 
         # individual attributes
-        self.instance_attributes = plugin_settings[
-            "instance_attributes"]
+        self.instance_attributes = plugin_settings.get(
+            "instance_attributes") or self.instance_attributes
         self.prenodes = plugin_settings["prenodes"]
-        self.default_variants = plugin_settings["default_variants"]
-        self.temp_rendering_path_template = plugin_settings[
-            "temp_rendering_path_template"]
+        self.default_variants = plugin_settings.get(
+            "default_variants") or self.default_variants
+        self.temp_rendering_path_template = (
+            plugin_settings.get("temp_rendering_path_template")
+            or self.temp_rendering_path_template
+        )
 
 
 class OpenPypeCreator(LegacyCreator):
