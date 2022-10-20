@@ -62,6 +62,22 @@ class HostMissRequiredMethod(Exception):
         super(HostMissRequiredMethod, self).__init__(msg)
 
 
+class CreatorOperationFailed(Exception):
+    pass
+
+
+class CreatorsCollectionFailed(CreatorOperationFailed):
+    pass
+
+
+class CreatorsSaveFailed(CreatorOperationFailed):
+    pass
+
+
+class CreatorsRemoveFailed(CreatorOperationFailed):
+    pass
+
+
 class InstanceMember:
     """Representation of instance member.
 
@@ -1221,8 +1237,26 @@ class CreateContext:
         self._instances_by_id = {}
 
         # Collect instances
+        failed_creators = []
         for creator in self.creators.values():
-            creator.collect_instances()
+            try:
+                creator.collect_instances()
+            except:
+                failed_creators.append(creator)
+                self.log.warning(
+                    "Collection of instances for creator {} ({}) failed".format(
+                        creator.label, creator.identifier),
+                    exc_info=True
+                )
+
+        if failed_creators:
+            joined_creators = ", ".join(
+                [creator.label for creator in failed_creators]
+            )
+
+            raise CreatorsCollectionFailed(
+                "Failed to collect instances of creators {}".format(joined_creators)
+            )
 
     def execute_autocreators(self):
         """Execute discovered AutoCreator plugins.
@@ -1315,16 +1349,35 @@ class CreateContext:
             identifier = instance.creator_identifier
             instances_by_identifier[identifier].append(instance)
 
-        for identifier, cretor_instances in instances_by_identifier.items():
+        failed_creators = []
+        for identifier, creator_instances in instances_by_identifier.items():
             update_list = []
-            for instance in cretor_instances:
+            for instance in creator_instances:
                 instance_changes = instance.changes()
                 if instance_changes:
                     update_list.append(UpdateData(instance, instance_changes))
 
             creator = self.creators[identifier]
             if update_list:
-                creator.update_instances(update_list)
+                try:
+                    creator.update_instances(update_list)
+
+                except:
+                    failed_creators.append(creator)
+                    self.log.warning(
+                        "Instances update of creator {} ({}) failed".format(
+                            creator.label, creator.identifier),
+                        exc_info=True
+                    )
+
+        if failed_creators:
+            joined_creators = ", ".join(
+                [creator.label for creator in failed_creators]
+            )
+
+            raise CreatorsSaveFailed(
+                "Failed save changes of creators {}".format(joined_creators)
+            )
 
     def remove_instances(self, instances):
         """Remove instances from context.
@@ -1333,14 +1386,36 @@ class CreateContext:
             instances(list<CreatedInstance>): Instances that should be removed
                 from context.
         """
+
         instances_by_identifier = collections.defaultdict(list)
         for instance in instances:
             identifier = instance.creator_identifier
             instances_by_identifier[identifier].append(instance)
 
+        failed_creators = []
         for identifier, creator_instances in instances_by_identifier.items():
             creator = self.creators.get(identifier)
-            creator.remove_instances(creator_instances)
+            try:
+                creator.remove_instances(creator_instances)
+            except:
+                failed_creators.append(creator)
+                self.log.warning(
+                    "Instances removement of creator {} ({}) failed".format(
+                        creator.label, creator.identifier),
+                    exc_info=True
+                )
+
+        if failed_creators:
+            joined_creators = ", ".join(
+                [creator.label for creator in failed_creators]
+            )
+
+            raise CreatorsRemoveFailed(
+                "Failed to remove instances of creators {}".format(
+                    joined_creators
+                )
+            )
+
 
     def _get_publish_plugins_with_attr_for_family(self, family):
         """Publish plugin attributes for passed family.
