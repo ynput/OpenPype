@@ -32,6 +32,9 @@ from maya import cmds
 
 from openpype.pipeline import legacy_io
 
+from openpype.hosts.maya.api.lib_rendersettings import RenderSettings
+from openpype.hosts.maya.api.lib import get_attr_in_layer
+
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 
@@ -48,7 +51,7 @@ def _validate_deadline_bool_value(instance, attribute, value):
 
 
 @attr.s
-class MayaPluginInfo():
+class MayaPluginInfo(object):
     SceneFile = attr.ib(default=None)   # Input
     OutputFilePath = attr.ib(default=None)  # Output directory and filename
     OutputFilePrefix = attr.ib(default=None)
@@ -63,7 +66,7 @@ class MayaPluginInfo():
 
 
 @attr.s
-class PythonPluginInfo():
+class PythonPluginInfo(object):
     ScriptFile = attr.ib()
     Version = attr.ib(default="3.6")
     Arguments = attr.ib(default=None)
@@ -71,7 +74,7 @@ class PythonPluginInfo():
 
 
 @attr.s
-class VRayPluginInfo():
+class VRayPluginInfo(object):
     InputFilename = attr.ib(default=None)   # Input
     SeparateFilesPerFrame = attr.ib(default=None)
     VRayEngine = attr.ib(default="V-Ray")
@@ -82,7 +85,7 @@ class VRayPluginInfo():
 
 
 @attr.s
-class ArnoldPluginInfo():
+class ArnoldPluginInfo(object):
     ArnoldFile = attr.ib(default=None)
 
 
@@ -498,9 +501,10 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             job_info.AssetDependency += self.scene_path
 
         # Get layer prefix
-        render_products = self._instance.data["renderProducts"]
-        layer_metadata = render_products.layer_data
-        layer_prefix = layer_metadata.filePrefix
+        renderlayer = self._instance.data["setMembers"]
+        renderer = self._instance.data["renderer"]
+        layer_prefix_attr = RenderSettings.get_image_prefix_attr(renderer)
+        layer_prefix = get_attr_in_layer(layer_prefix_attr, layer=renderlayer)
 
         plugin_info = copy.deepcopy(self.plugin_info)
         plugin_info.update({
@@ -762,10 +766,10 @@ def _format_tiles(
 
     Example::
         Image prefix is:
-        `maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>`
+        `<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>`
 
         Result for tile 0 for 4x4 will be:
-        `maya/<Scene>/<RenderLayer>/_tile_1x1_4x4_<RenderLayer>_<RenderPass>`
+        `<Scene>/<RenderLayer>/_tile_1x1_4x4_<RenderLayer>_<RenderPass>`
 
         Calculating coordinates is tricky as in Job they are defined as top,
     left, bottom, right with zero being in top-left corner. But Assembler

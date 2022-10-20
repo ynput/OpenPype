@@ -2,6 +2,7 @@
 import os
 import re
 import copy
+import functools
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
@@ -182,6 +183,16 @@ class PublishIconBtn(IconButton):
         return pixmap
 
 
+class CreateBtn(PublishIconBtn):
+    """Create instance button."""
+
+    def __init__(self, parent=None):
+        icon_path = get_icon_path("create")
+        super(CreateBtn, self).__init__(icon_path, "Create", parent)
+        self.setToolTip("Create new subset/s")
+        self.setLayoutDirection(QtCore.Qt.RightToLeft)
+
+
 class ResetBtn(PublishIconBtn):
     """Publish reset button."""
     def __init__(self, parent=None):
@@ -222,28 +233,34 @@ class CreateInstanceBtn(PublishIconBtn):
         self.setToolTip("Create new instance")
 
 
-class CopyPublishReportBtn(PublishIconBtn):
-    """Copy report button."""
-    def __init__(self, parent=None):
-        icon_path = get_icon_path("copy")
-        super(CopyPublishReportBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Copy report")
+class PublishReportBtn(PublishIconBtn):
+    """Publish report button."""
 
+    triggered = QtCore.Signal(str)
 
-class SavePublishReportBtn(PublishIconBtn):
-    """Save report button."""
-    def __init__(self, parent=None):
-        icon_path = get_icon_path("download_arrow")
-        super(SavePublishReportBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Export and save report")
-
-
-class ShowPublishReportBtn(PublishIconBtn):
-    """Show report button."""
     def __init__(self, parent=None):
         icon_path = get_icon_path("view_report")
-        super(ShowPublishReportBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Show details")
+        super(PublishReportBtn, self).__init__(icon_path, parent)
+        self.setToolTip("Copy report")
+        self._actions = []
+
+    def add_action(self, label, identifier):
+        action = QtWidgets.QAction(label)
+        action.setData(identifier)
+        action.triggered.connect(
+            functools.partial(self._on_action_trigger, action)
+        )
+        self._actions.append(action)
+
+    def _on_action_trigger(self, action):
+        identifier = action.data()
+        self.triggered.emit(identifier)
+
+    def mouseReleaseEvent(self, event):
+        super(PublishReportBtn, self).mouseReleaseEvent(event)
+        menu = QtWidgets.QMenu(self)
+        menu.addActions(self._actions)
+        menu.exec_(event.globalPos())
 
 
 class RemoveInstanceBtn(PublishIconBtn):
@@ -289,8 +306,23 @@ class AbstractInstanceView(QtWidgets.QWidget):
 
         Example: When delete button is clicked to know what should be deleted.
         """
+
         raise NotImplementedError((
             "{} Method 'get_selected_items' is not implemented."
+        ).format(self.__class__.__name__))
+
+    def set_selected_items(self, instance_ids, context_selected):
+        """Change selection for instances and context.
+
+        Used to applying selection from one view to other.
+
+        Args:
+            instance_ids (List[str]): Selected instance ids.
+            context_selected (bool): Context is selected.
+        """
+
+        raise NotImplementedError((
+            "{} Method 'set_selected_items' is not implemented."
         ).format(self.__class__.__name__))
 
 
@@ -977,7 +1009,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent):
         super(GlobalAttrsWidget, self).__init__(parent)
 
-        self.controller = controller
+        self._controller = controller
         self._current_instances = []
 
         variant_input = VariantInputWidget(self)
@@ -1043,24 +1075,6 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         if self.task_value_widget.has_value_changed():
             task_name = self.task_value_widget.get_selected_items()[0]
 
-        asset_docs_by_name = {}
-        asset_names = set()
-        if asset_name is None:
-            for instance in self._current_instances:
-                asset_names.add(instance.get("asset"))
-        else:
-            asset_names.add(asset_name)
-
-        for asset_doc in self.controller.get_asset_docs():
-            _asset_name = asset_doc["name"]
-            if _asset_name in asset_names:
-                asset_names.remove(_asset_name)
-                asset_docs_by_name[_asset_name] = asset_doc
-
-            if not asset_names:
-                break
-
-        project_name = self.controller.project_name
         subset_names = set()
         invalid_tasks = False
         for instance in self._current_instances:
@@ -1076,16 +1090,15 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             if task_name is not None:
                 new_task_name = task_name
 
-            asset_doc = asset_docs_by_name[new_asset_name]
-
             try:
-                new_subset_name = instance.creator.get_subset_name(
+                new_subset_name = self._controller.get_subset_name(
+                    instance.creator_identifier,
                     new_variant_value,
                     new_task_name,
-                    asset_doc,
-                    project_name,
-                    instance=instance
+                    new_asset_name,
+                    instance.id,
                 )
+
             except TaskNotSetError:
                 invalid_tasks = True
                 instance.set_task_invalid(True)
@@ -1232,7 +1245,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
 
         self._main_layout = main_layout
 
-        self.controller = controller
+        self._controller = controller
         self._scroll_area = scroll_area
 
         self._attr_def_id_to_instances = {}
@@ -1261,7 +1274,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
         self._attr_def_id_to_instances = {}
         self._attr_def_id_to_attr_def = {}
 
-        result = self.controller.get_creator_attribute_definitions(
+        result = self._controller.get_creator_attribute_definitions(
             instances
         )
 
@@ -1353,7 +1366,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
 
         self._main_layout = main_layout
 
-        self.controller = controller
+        self._controller = controller
         self._scroll_area = scroll_area
 
         self._attr_def_id_to_instances = {}
@@ -1385,7 +1398,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
         self._attr_def_id_to_attr_def = {}
         self._attr_def_id_to_plugin_name = {}
 
-        result = self.controller.get_publish_attribute_definitions(
+        result = self._controller.get_publish_attribute_definitions(
             instances, context_selected
         )
 
@@ -1500,7 +1513,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
             self._on_instance_context_changed
         )
 
-        self.controller = controller
+        self._controller = controller
 
         self.global_attrs_widget = global_attrs_widget
 

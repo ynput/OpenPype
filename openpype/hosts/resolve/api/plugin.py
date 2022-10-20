@@ -4,13 +4,15 @@ import uuid
 import qargparse
 from Qt import QtWidgets, QtCore
 
+from openpype.settings import get_current_project_settings
+from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
 )
-from openpype.pipeline.context_tools import get_current_project_asset
-from openpype.hosts import resolve
+
 from . import lib
+from .menu import load_stylesheet
 
 
 class CreatorWidget(QtWidgets.QDialog):
@@ -86,7 +88,7 @@ class CreatorWidget(QtWidgets.QDialog):
         ok_btn.clicked.connect(self._on_ok_clicked)
         cancel_btn.clicked.connect(self._on_cancel_clicked)
 
-        stylesheet = resolve.api.menu.load_stylesheet()
+        stylesheet = load_stylesheet()
         self.setStyleSheet(stylesheet)
 
     def _on_ok_clicked(self):
@@ -438,7 +440,7 @@ class ClipLoader:
         source_in = int(_clip_property("Start"))
         source_out = int(_clip_property("End"))
 
-        resolve.swap_clips(
+        lib.swap_clips(
             timeline_item,
             media_pool_item,
             source_in,
@@ -504,7 +506,7 @@ class Creator(LegacyCreator):
 
     def __init__(self, *args, **kwargs):
         super(Creator, self).__init__(*args, **kwargs)
-        from openpype.settings import get_current_project_settings
+
         resolve_p_settings = get_current_project_settings().get("resolve")
         self.presets = {}
         if resolve_p_settings:
@@ -512,13 +514,13 @@ class Creator(LegacyCreator):
                 self.__class__.__name__, {})
 
         # adding basic current context resolve objects
-        self.project = resolve.get_current_project()
-        self.timeline = resolve.get_current_timeline()
+        self.project = lib.get_current_project()
+        self.timeline = lib.get_current_timeline()
 
         if (self.options or {}).get("useSelection"):
-            self.selected = resolve.get_current_timeline_items(filter=True)
+            self.selected = lib.get_current_timeline_items(filter=True)
         else:
-            self.selected = resolve.get_current_timeline_items(filter=False)
+            self.selected = lib.get_current_timeline_items(filter=False)
 
         self.widget = CreatorWidget
 

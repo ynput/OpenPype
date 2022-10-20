@@ -115,7 +115,9 @@ def update_op_assets(
         item_data["frameStart"] = frame_in
         # Frames duration, fallback on 0
         try:
-            frames_duration = int(item_data.pop("nb_frames", 0))
+            # NOTE nb_frames is stored directly in item
+            # because of zou's legacy design
+            frames_duration = int(item.get("nb_frames", 0))
         except (TypeError, ValueError):
             frames_duration = 0
         # Frame out, fallback on frame_in + duration or project's value or 1001
@@ -170,7 +172,7 @@ def update_op_assets(
         # Substitute item type for general classification (assets or shots)
         if item_type in ["Asset", "AssetType"]:
             entity_root_asset_name = "Assets"
-        elif item_type in ["Episode", "Sequence"]:
+        elif item_type in ["Episode", "Sequence", "Shot"]:
             entity_root_asset_name = "Shots"
 
         # Root parent folder if exist
@@ -276,11 +278,13 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
 
     match_res = re.match(r"(\d+)x(\d+)", project["resolution"])
     if match_res:
-        project_data['resolutionWidth'] = int(match_res.group(1))
-        project_data['resolutionHeight'] = int(match_res.group(2))
+        project_data["resolutionWidth"] = int(match_res.group(1))
+        project_data["resolutionHeight"] = int(match_res.group(2))
     else:
-        log.warning(f"\'{project['resolution']}\' does not match the expected"
-                    " format for the resolution, for example: 1920x1080")
+        log.warning(
+            f"'{project['resolution']}' does not match the expected"
+            " format for the resolution, for example: 1920x1080"
+        )
 
     return UpdateOne(
         {"_id": project_doc["_id"]},
