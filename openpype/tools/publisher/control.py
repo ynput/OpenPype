@@ -302,8 +302,11 @@ class PublishReport:
         }
 
     def _extract_context_data(self, context):
+        context_label = "Context"
+        if context is not None:
+            context_label = context.data.get("label")
         return {
-            "label": context.data.get("label")
+            "label": context_label
         }
 
     def _extract_instance_data(self, instance, exists):
