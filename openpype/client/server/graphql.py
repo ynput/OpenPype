@@ -358,6 +358,8 @@ class BaseGraphQlQueryField(object):
 
         self._query_item = query_item
 
+        self._path = None
+
     @property
     def need_query(self):
         """Still need query from server.
@@ -411,9 +413,13 @@ class BaseGraphQlQueryField(object):
             str: Field path in query.
         """
 
-        if isinstance(self._parent, GraphQlQuery):
-            return self._name
-        return "/".join((self._parent.path, self._name))
+        if self._path is None:
+            if isinstance(self._parent, GraphQlQuery):
+                path = self._name
+            else:
+                path = "/".join((self._parent.path, self._name))
+            self._path = path
+        return self._path
 
     def reset_cursor(self):
         for child in self._children:
