@@ -325,6 +325,47 @@ class GraphQlQuery:
 
         return output
 
+    def continuos_query(self, con):
+        """Do a query from server.
+
+        Args:
+            con (ServerAPI): Connection to server with 'query' method.
+
+        Returns:
+            Dict[str, Any]: Parsed output from GraphQl query.
+        """
+
+        progress_data = {}
+        if self.has_multiple_edge_fields:
+            output = {}
+            while self.need_query:
+                response = con.query_graphql(
+                    self.calculate_query(),
+                    self.get_variables_values()
+                )
+                if response.errors:
+                    raise ValueError(
+                        "QueryFailed {}".format(str(response.errors))
+                    )
+                self.parse_result(response.data["data"], output, progress_data)
+
+            yield output
+
+        else:
+            while self.need_query:
+                output = {}
+                response = con.query_graphql(
+                    self.calculate_query(),
+                    self.get_variables_values()
+                )
+                if response.errors:
+                    raise ValueError(
+                        "QueryFailed {}".format(str(response.errors))
+                    )
+                self.parse_result(response.data["data"], output, progress_data)
+
+                yield output
+
 
 @six.add_metaclass(ABCMeta)
 class BaseGraphQlQueryField(object):
