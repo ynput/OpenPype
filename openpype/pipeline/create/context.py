@@ -62,19 +62,19 @@ class HostMissRequiredMethod(Exception):
         super(HostMissRequiredMethod, self).__init__(msg)
 
 
-class CreatorOperationFailed(Exception):
+class CreatorsOperationFailed(Exception):
     pass
 
 
-class CreatorsCollectionFailed(CreatorOperationFailed):
+class CreatorsCollectionFailed(CreatorsOperationFailed):
     pass
 
 
-class CreatorsSaveFailed(CreatorOperationFailed):
+class CreatorsSaveFailed(CreatorsOperationFailed):
     pass
 
 
-class CreatorsRemoveFailed(CreatorOperationFailed):
+class CreatorsRemoveFailed(CreatorsOperationFailed):
     pass
 
 
