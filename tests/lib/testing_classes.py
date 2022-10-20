@@ -50,6 +50,8 @@ class ModuleUnitTest(BaseTest):
 
     TEST_DATA_FOLDER = None
 
+    failed = False
+
     @pytest.fixture(scope='session')
     def monkeypatch_session(self):
         """Monkeypatch couldn't be used with module or session fixtures."""
@@ -80,7 +82,7 @@ class ModuleUnitTest(BaseTest):
                 print("Temporary folder created:: {}".format(tmpdir))
                 yield tmpdir
 
-                persist = persist or self.PERSIST
+                persist = persist or self.PERSIST or self.failed
                 if not persist:
                     print("Removing {}".format(tmpdir))
                     shutil.rmtree(tmpdir)
@@ -143,7 +145,8 @@ class ModuleUnitTest(BaseTest):
 
         yield db_handler
 
-        if not self.PERSIST:
+        persist = self.PERSIST or self.failed
+        if not persist:
             db_handler.teardown(self.TEST_DB_NAME)
             db_handler.teardown(self.TEST_OPENPYPE_NAME)
 
@@ -304,6 +307,7 @@ class PublishTest(ModuleUnitTest):
         while launched_app.poll() is None:
             time.sleep(0.5)
             if time.time() - time_start > timeout:
+                self.failed = True
                 launched_app.terminate()
                 raise ValueError("Timeout reached")
 
@@ -317,7 +321,7 @@ class PublishTest(ModuleUnitTest):
 
             Compares only presence, not size nor content!
         """
-        published_dir_base = os.path.join(output_folder_url, "output")
+        published_dir_base = output_folder_url
         expected_dir_base = os.path.join(download_test_data,
                                          "expected")
 
@@ -347,6 +351,7 @@ class DeadlinePublishTest(PublishTest):
         while launched_app.poll() is None:
             time.sleep(0.5)
             if time.time() - time_start > timeout:
+                self.failed = True
                 launched_app.terminate()
                 raise ValueError("Timeout reached")
 
@@ -355,9 +360,11 @@ class DeadlinePublishTest(PublishTest):
                                                "**/*_metadata.json"),
                                   recursive=True)
         if not metadata_json:
+            self.failed = True
             raise RuntimeError("No metadata file found. No job id.")
 
         if len(metadata_json) > 1:
+            self.failed = True
             raise RuntimeError("Too many metadata files found.")
 
         with open(metadata_json[0]) as fp:
@@ -370,6 +377,7 @@ class DeadlinePublishTest(PublishTest):
         deadline_url = deadline_module.deadline_urls["default"]
 
         if not deadline_url:
+            self.failed = True
             raise ValueError("Must have default deadline url.")
 
         url = "{}/api/jobs?JobId={}".format(deadline_url, deadline_job_id)
@@ -379,14 +387,17 @@ class DeadlinePublishTest(PublishTest):
         while not valid_date_finished:
             time.sleep(0.5)
             if time.time() - time_start > timeout:
+                self.failed = True
                 raise ValueError("Timeout for DL finish reached")
 
             response = requests.get(url, timeout=10)
             if not response.ok:
+                self.failed = True
                 msg = "Couldn't connect to {}".format(deadline_url)
                 raise RuntimeError(msg)
 
             if not response.json():
+                self.failed = True
                 raise ValueError("Couldn't find {}".format(deadline_job_id))
 
             # '0001-...' returned until job is finished
