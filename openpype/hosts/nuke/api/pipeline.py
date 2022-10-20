@@ -229,6 +229,11 @@ def _install_menu():
 
     menu.addSeparator()
     menu.addCommand(
+        "Create... [depricated]",
+        lambda: nuke.message(
+            "New position is in \"Publish...\" and \"Create\" tab")
+    )
+    menu.addCommand(
         "Publish...",
         host_tools.show_publisher
     )
