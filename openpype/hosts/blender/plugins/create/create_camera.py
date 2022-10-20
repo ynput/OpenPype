@@ -14,6 +14,7 @@ class CreateCamera(plugin.Creator):
     family = "camera"
     icon = "video-camera"
     color_tag = "COLOR_05"
+    bl_types = (bpy.types.Camera,)
 
     def _use_selection(self, container):
         cameras = [obj for obj in get_selection() if obj.type == "CAMERA"]

@@ -1,4 +1,5 @@
 """Create an animation asset."""
+import bpy
 
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.lib import get_selection
@@ -12,6 +13,7 @@ class CreateAnimation(plugin.Creator):
     family = "animation"
     icon = "male"
     color_tag = "COLOR_07"
+    bl_types = (bpy.types.Action,)
 
     def _use_selection(self, container):
         selected_objects = set(get_selection())

@@ -14,6 +14,7 @@ class CreateAction(plugin.Creator):
     family = "action"
     icon = "male"
     color_tag = "COLOR_07"
+    bl_types = (bpy.types.Action,)
 
     def _use_selection(self, container):
         for obj in get_selection():
