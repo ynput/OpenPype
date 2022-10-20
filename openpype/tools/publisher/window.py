@@ -609,8 +609,9 @@ class PublisherWindow(QtWidgets.QDialog):
 
         item = self._dialog_messages_to_show.popleft()
         message, title = item
-        dialog = MessageDialog(message, title)
+        dialog = MessageDialog(message, title, self)
         dialog.exec_()
+        dialog.deleteLater()
 
     def _instance_collection_failed(self, event):
         self.add_message_dialog(event["message"], event["title"])
@@ -629,6 +630,7 @@ class MessageDialog(QtWidgets.QDialog):
         self.setWindowTitle(title or "Something happend")
 
         message_widget = QtWidgets.QLabel(message, self)
+        message_widget.setWordWrap(True)
 
         btns_widget = QtWidgets.QWidget(self)
         submit_btn = QtWidgets.QPushButton("OK", btns_widget)
@@ -639,9 +641,15 @@ class MessageDialog(QtWidgets.QDialog):
         btns_layout.addWidget(submit_btn)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(message_widget, 1)
+        layout.addWidget(message_widget, 0)
+        layout.addStretch(1)
         layout.addWidget(btns_widget, 0)
+
+        submit_btn.clicked.connect(self._on_submit_click)
+
+    def _on_submit_click(self):
+        self.close()
 
     def showEvent(self, event):
         super(MessageDialog, self).showEvent(event)
-        self.resize(400, 300)
+        self.resize(400, 200)
