@@ -565,12 +565,14 @@ def get_v4_projects(active=None, library=None, fields=None):
 
     con = get_server_api_connection()
     if not fields:
-        return con.get_rest_projects(active, library)
+        for project in con.get_rest_projects(active, library):
+            yield project
 
-    query = projects_graphql_query(fields)
-    parsed_data = query.query(con)
-
-    return parsed_data["projects"]
+    else:
+        query = projects_graphql_query(fields)
+        for parsed_data in query.continuos_query(con):
+            for project in parsed_data["projects"]:
+                yield project
 
 
 def get_v4_project(project_name, fields=None):
@@ -689,15 +691,10 @@ def get_v4_folders(
         query.set_variable_value(attr, filter_value)
 
     con = get_server_api_connection()
-    parsed_data = query.query(con)
-    folders = parsed_data["project"]["folders"]
-    if active is None:
-        return folders
-    return [
-        folder
-        for folder in folders
-        if folder["active"] is active
-    ]
+    for parsed_data in query.continuos_query(con):
+        for folder in parsed_data["project"]["folders"]:
+            if active is None or active is folder["active"]:
+                yield folder
 
 
 def get_v4_tasks(
@@ -1054,11 +1051,8 @@ def get_projects(active=True, inactive=False, library=None, fields=None):
         active = False
 
     fields = _project_fields_v3_to_v4(fields)
-    projects = get_v4_projects(active, library, fields)
-    return [
-        _convert_v4_project_to_v3(project)
-        for project in projects
-    ]
+    for project in get_v4_projects(active, library, fields):
+        yield _convert_v4_project_to_v3(project)
 
 
 def get_project(project_name, active=True, inactive=False, fields=None):
@@ -1244,15 +1238,15 @@ def _get_versions(
 
 def get_asset_by_id(project_name, asset_id, fields=None):
     assets = get_assets(project_name, asset_ids=[asset_id], fields=fields)
-    if assets:
-        return assets[0]
+    for asset in assets:
+        return asset
     return None
 
 
 def get_asset_by_name(project_name, asset_name, fields=None):
     assets = get_assets(project_name, asset_names=[asset_name], fields=fields)
-    if assets:
-        return assets[0]
+    for asset in assets:
+        return asset
     return None
 
 
@@ -1284,10 +1278,8 @@ def get_assets(
     else:
         folders = get_v4_folders(project_name, **kwargs)
 
-    return [
-        _convert_v4_folder_to_v3(folder, project_name)
-        for folder in folders
-    ]
+    for folder in folders:
+        yield _convert_v4_folder_to_v3(folder, project_name)
 
 
 def get_archived_assets(*args, **kwargs):
