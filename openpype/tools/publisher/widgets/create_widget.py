@@ -1,11 +1,9 @@
 import sys
 import re
 import traceback
-import copy
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from openpype.client import get_asset_by_name, get_subsets
 from openpype.pipeline.create import (
     CreatorError,
     SUBSET_NAME_ALLOWED_SYMBOLS,
@@ -150,18 +148,18 @@ class CreatorShortDescWidget(QtWidgets.QWidget):
         self._family_label = family_label
         self._description_label = description_label
 
-    def set_plugin(self, plugin=None):
-        if not plugin:
+    def set_creator_item(self, creator_item=None):
+        if not creator_item:
             self._icon_widget.set_icon_def(None)
             self._family_label.setText("")
             self._description_label.setText("")
             return
 
-        plugin_icon = plugin.get_icon()
-        description = plugin.get_description() or ""
+        plugin_icon = creator_item.icon
+        description = creator_item.description or ""
 
         self._icon_widget.set_icon_def(plugin_icon)
-        self._family_label.setText("<b>{}</b>".format(plugin.family))
+        self._family_label.setText("<b>{}</b>".format(creator_item.family))
         self._family_label.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
         self._description_label.setText(description)
 
@@ -174,7 +172,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         self._controller = controller
 
-        self._asset_doc = None
+        self._asset_name = None
         self._subset_names = None
         self._selected_creator = None
 
@@ -380,7 +378,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         if asset_name is None:
             asset_name = self.current_asset_name
-        return asset_name
+        return asset_name or None
 
     def _get_task_name(self):
         task_name = None
@@ -444,7 +442,7 @@ class CreateWidget(QtWidgets.QWidget):
             prereq_available = False
             creator_btn_tooltips.append("Creator is not selected")
 
-        if self._context_change_is_enabled() and self._asset_doc is None:
+        if self._context_change_is_enabled() and self._asset_name is None:
             # QUESTION how to handle invalid asset?
             prereq_available = False
             creator_btn_tooltips.append("Context is not selected")
@@ -468,30 +466,19 @@ class CreateWidget(QtWidgets.QWidget):
         asset_name = self._get_asset_name()
 
         # Skip if asset did not change
-        if self._asset_doc and self._asset_doc["name"] == asset_name:
+        if self._asset_name and self._asset_name == asset_name:
             return
 
-        # Make sure `_asset_doc` and `_subset_names` variables are reset
-        self._asset_doc = None
+        # Make sure `_asset_name` and `_subset_names` variables are reset
+        self._asset_name = asset_name
         self._subset_names = None
         if asset_name is None:
             return
 
-        project_name = self._controller.project_name
-        asset_doc = get_asset_by_name(project_name, asset_name)
-        self._asset_doc = asset_doc
+        subset_names = self._controller.get_existing_subset_names(asset_name)
 
-        if asset_doc:
-            asset_id = asset_doc["_id"]
-            subset_docs = get_subsets(
-                project_name, asset_ids=[asset_id], fields=["name"]
-            )
-            self._subset_names = {
-                subset_doc["name"]
-                for subset_doc in subset_docs
-            }
-
-        if not asset_doc:
+        self._subset_names = subset_names
+        if subset_names is None:
             self.subset_name_input.setText("< Asset is not set >")
 
     def _refresh_creators(self):
@@ -506,7 +493,10 @@ class CreateWidget(QtWidgets.QWidget):
 
         # Add new families
         new_creators = set()
-        for identifier, creator in self._controller.manual_creators.items():
+        for identifier, creator_item in self._controller.creator_items.items():
+            if creator_item.creator_type != "artist":
+                continue
+
             # TODO add details about creator
             new_creators.add(identifier)
             if identifier in existing_items:
@@ -518,10 +508,9 @@ class CreateWidget(QtWidgets.QWidget):
                 )
                 self._creators_model.appendRow(item)
 
-            label = creator.label or identifier
-            item.setData(label, QtCore.Qt.DisplayRole)
+            item.setData(creator_item.label, QtCore.Qt.DisplayRole)
             item.setData(identifier, CREATOR_IDENTIFIER_ROLE)
-            item.setData(creator.family, FAMILY_ROLE)
+            item.setData(creator_item.family, FAMILY_ROLE)
 
         # Remove families that are no more available
         for identifier in (old_creators - new_creators):
@@ -572,11 +561,11 @@ class CreateWidget(QtWidgets.QWidget):
             identifier = new_index.data(CREATOR_IDENTIFIER_ROLE)
         self._set_creator_by_identifier(identifier)
 
-    def _set_creator_detailed_text(self, creator):
+    def _set_creator_detailed_text(self, creator_item):
         # TODO implement
         description = ""
-        if creator is not None:
-            description = creator.get_detail_description() or description
+        if creator_item is not None:
+            description = creator_item.detailed_description or description
         self._controller.event_system.emit(
             "show.detailed.help",
             {
@@ -586,32 +575,39 @@ class CreateWidget(QtWidgets.QWidget):
         )
 
     def _set_creator_by_identifier(self, identifier):
-        creator = self._controller.manual_creators.get(identifier)
-        self._set_creator(creator)
+        creator_item = self._controller.creator_items.get(identifier)
+        self._set_creator(creator_item)
 
-    def _set_creator(self, creator):
-        self._creator_short_desc_widget.set_plugin(creator)
-        self._set_creator_detailed_text(creator)
-        self._pre_create_widget.set_plugin(creator)
+    def _set_creator(self, creator_item):
+        """Set current creator item.
 
-        self._selected_creator = creator
+        Args:
+            creator_item (CreatorItem): Item representing creator that can be
+                triggered by artist.
+        """
 
-        if not creator:
+        self._creator_short_desc_widget.set_creator_item(creator_item)
+        self._set_creator_detailed_text(creator_item)
+        self._pre_create_widget.set_creator_item(creator_item)
+
+        self._selected_creator = creator_item
+
+        if not creator_item:
             self._set_context_enabled(False)
             return
 
         if (
-            creator.create_allow_context_change
+            creator_item.create_allow_context_change
             != self._context_change_is_enabled()
         ):
-            self._set_context_enabled(creator.create_allow_context_change)
+            self._set_context_enabled(creator_item.create_allow_context_change)
             self._refresh_asset()
 
-        default_variants = creator.get_default_variants()
+        default_variants = creator_item.default_variants
         if not default_variants:
             default_variants = ["Main"]
 
-        default_variant = creator.get_default_variant()
+        default_variant = creator_item.default_variant
         if not default_variant:
             default_variant = default_variants[0]
 
@@ -670,14 +666,13 @@ class CreateWidget(QtWidgets.QWidget):
             self.subset_name_input.setText("< Valid variant >")
             return
 
-        project_name = self._controller.project_name
+        asset_name = self._get_asset_name()
         task_name = self._get_task_name()
-
-        asset_doc = copy.deepcopy(self._asset_doc)
+        creator_idenfier = self._selected_creator.identifier
         # Calculate subset name with Creator plugin
         try:
-            subset_name = self._selected_creator.get_subset_name(
-                variant_value, task_name, asset_doc, project_name
+            subset_name = self._controller.get_subset_name(
+                creator_idenfier, variant_value, task_name, asset_name
             )
         except TaskNotSetError:
             self._create_btn.setEnabled(False)
