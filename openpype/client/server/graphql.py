@@ -325,7 +325,7 @@ class GraphQlQuery:
 
         return output
 
-    def continuos_query(self, con):
+    def continuous_query(self, con):
         """Do a query from server.
 
         Args:
