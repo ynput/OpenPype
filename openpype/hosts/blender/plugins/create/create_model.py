@@ -1,4 +1,5 @@
 """Create a model asset."""
+import bpy
 
 from openpype.hosts.blender.api import plugin
 
@@ -12,3 +13,4 @@ class CreateModel(plugin.Creator):
     icon = "cube"
     defaults = ["Main", "Proxy"]
     color_tag = "COLOR_04"
+    bl_types = (bpy.types.Collection, bpy.types.Object)

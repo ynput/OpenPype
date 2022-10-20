@@ -885,6 +885,7 @@ class Creator(LegacyCreator):
     """Base class for Creator plug-ins."""
     defaults = ['Main']
     color_tag = "NONE"
+    bl_types = ()
 
     def _use_selection(self, container):
         selected_objects = set(get_selection())

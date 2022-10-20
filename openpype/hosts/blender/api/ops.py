@@ -13,13 +13,17 @@ from typing import Dict, List, Optional, Union
 from qtpy import QtWidgets, QtCore
 
 import bpy
+from bpy.props import EnumProperty
 import bpy.utils.previews
 
 from openpype import style
-from openpype.client.entities import get_subset_by_id, get_version_by_id
+from openpype.client.entities import get_asset_by_name, get_subset_by_id, get_version_by_id
 from openpype.hosts.blender.api.lib import ls
 from openpype.pipeline import legacy_io
 from openpype.pipeline.constants import AVALON_INSTANCE_ID
+from openpype.pipeline.create.creator_plugins import discover_legacy_creator_plugins, get_legacy_creator_by_name
+from openpype.pipeline.create.legacy_create import legacy_create
+from openpype.pipeline.create.subset_name import get_subset_name
 from openpype.tools.utils import host_tools
 
 from .workio import OpenFileCacher
@@ -30,6 +34,15 @@ PREVIEW_COLLECTIONS: Dict = dict()
 # down Blender. At least on macOS I the interface of Blender gets very laggy if
 # you make it smaller.
 TIMER_INTERVAL: float = 0.01 if platform.system() == "Windows" else 0.1
+
+# Match Blender type to a datapath to look into. Needed for native UI creator.
+BL_TYPE_DATAPATH = {
+    bpy.types.Collection: "bpy.context.scene.collection.children",
+    bpy.types.Object: "bpy.context.scene.collection.all_objects",
+    bpy.types.Camera: "bpy.data.cameras",
+    bpy.types.Action: "bpy.data.actions",
+    bpy.types.Armature: "bpy.data.armatures",
+}
 
 
 class BlenderApplication(QtWidgets.QApplication):
@@ -328,6 +341,198 @@ class LaunchLibrary(LaunchQtApp):
         self._window.refresh()
 
 
+def _check_name_validity(asset_name: str) -> bool:
+    """Make sure asset name is valid by getting asset from DB.
+
+    Args:
+        asset_name (str): Asset name to check entry exists
+
+    Returns:
+        bool: If asset exists
+    """
+    project_name = legacy_io.active_project()
+    asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
+    return bool(asset_doc)
+
+
+class SimpleOperator(bpy.types.Operator):
+    """Create OpenPype instance"""
+
+    bl_idname = "scene.simple_operator"
+    bl_label = "Simple Object Operator"
+
+    # Creator used
+    def _update_entries_preset(self, _context):
+        """Update some entries with a preset.
+
+        - Set `datapath`'s value to the first item of the list to avoid `None` values when
+        the length of the items list reduces.
+        - Update variant name to the first item. TODO available variant names
+        """
+        creator_plugin = get_legacy_creator_by_name(self.family)
+
+        # Set default datapath
+        self.datapath = BL_TYPE_DATAPATH.get(creator_plugin.bl_types[0])
+
+        # Change names
+        # Check if Creator plugin has set defaults
+        if creator_plugin.defaults and isinstance(
+            creator_plugin.defaults, (list, tuple, set)
+        ):
+            self.variant_name = creator_plugin.defaults[0]
+
+    creator: EnumProperty(
+        name="Family",
+        # Items from all creator plugins, referenced by their class name, label is displayed in UI
+        # creator class name is used later to get the creator plugin
+        items=lambda _, __: (
+            (p.__name__, p.label, "")
+            for p in discover_legacy_creator_plugins()
+        ),
+        update=_update_entries_preset,
+    )
+
+    # Asset Name
+    def _get_asset_name(self: bpy.types.Operator) -> str:
+        """Asset Name getter.
+
+        Args:
+            self (bpy.types.Operator): Current running operator
+
+        Returns:
+            str: Asset name
+        """
+        return self.get("asset_name", "")
+
+    def _set_asset_name(self: bpy.types.Operator, value: str):
+        """Asset Name setter.
+
+        Args:
+            self (bpy.types.Operator): Current running operator
+            value (str): New value for property
+        """
+        # Set value
+        self["asset_name"] = value
+
+        # Check asset name is valid
+        self.name_is_valid = _check_name_validity(value)
+        if not self.name_is_valid:
+            return
+
+    asset_name: bpy.props.StringProperty(
+        name="Asset Name", set=_set_asset_name, get=_get_asset_name
+    )
+
+    # Variant name
+    def _update_subset_name(
+        self: bpy.types.Operator, _context: bpy.types.Context
+    ):
+        """Update subset name by getting the family name from the creator plugin.
+
+        Args:
+            self (bpy.types.Operator): Current running operator
+            _context (bpy.types.Context): Current context
+        """
+        project_name = legacy_io.active_project()
+        asset_doc = get_asset_by_name(
+            project_name, self.asset_name, fields=["_id"]
+        )
+        task_name = legacy_io.Session["AVALON_TASK"]
+
+        # Get creator plugin
+        creator_plugin = get_legacy_creator_by_name(self.family)
+
+        # Build subset name and set it
+        self.subset_name = get_subset_name(
+            creator_plugin.family,
+            self.variant_name,
+            task_name,
+            asset_doc,
+            project_name,
+        )
+
+    variant_name: bpy.props.StringProperty(
+        name="Variant Name", update=_update_subset_name
+    )
+
+    subset_name: bpy.props.StringProperty(name="Subset Name")
+    name_is_valid: bpy.props.BoolProperty(name="Name is valid")
+    use_selection: bpy.props.BoolProperty(name="Use selection")
+    datapath: EnumProperty(
+        name="Data type",
+        # Build datapath items by getting the creator by its name
+        # Matching the appropriate datapath using the bl_types field which lists all relevant data types
+        items=lambda self, _: [
+            (BL_TYPE_DATAPATH.get(bl_type), bl_type.__name__, "")
+            for bl_type in get_legacy_creator_by_name(self.family).bl_types
+        ],
+    )
+    datablock: bpy.props.StringProperty(name="Datablock")
+
+    def __init__(self) -> None:
+        self.asset_name = legacy_io.Session["AVALON_ASSET"]
+
+        # Setup all data
+        self._update_entries_preset(self, None)
+
+    def invoke(self, context, _event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+
+    def draw(self, _context):
+        layout = self.layout
+
+        layout.prop(self, "family")
+        layout.alert = not self.name_is_valid
+        layout.prop(self, "asset_name")
+        layout.prop(self, "variant_name")  # TODO list of variants
+        # Subset name preview
+        sublayout = layout.row()
+        sublayout.enabled = False
+        sublayout.prop(self, "subset_name")
+
+        # Use selection only if relevant to outliner data
+        if self.datapath.startswith("bpy.context.scene"):
+            sublayout = layout.row()
+            # Enabled only if objects selected
+            sublayout.enabled = bool(bpy.context.selected_objects)
+            sublayout.prop(self, "use_selection")
+
+        # If not use selection, pick the datablock in a field
+        if not self.use_selection:
+            row = layout.row(align=True)
+
+            creator_plugin = get_legacy_creator_by_name(self.creator)
+            if (
+                len(creator_plugin.bl_types) > 1
+            ):  # Only if several types can match
+                row.prop(self, "datapath", text="", icon_only=True)
+
+            # Search data into list
+            data_path, search_field = self.datapath.rsplit(
+                ".", 1
+            )  # Split data path from search field
+            row.prop_search(
+                self, "datablock", eval(data_path), search_field, text=""
+            ) if self.datapath else layout.label(
+                text=f"Not supported family: {self.creator}"
+            )
+
+    def execute(self, _context):
+        # Run creator
+        creator_plugin = get_legacy_creator_by_name(self.creator)
+        legacy_create(
+            creator_plugin,
+            self.subset_name,
+            self.asset_name,
+            options={"useSelection": self.use_selection},
+            data={"variant": self.variant_name},
+            switch_to_main_thread=False,
+        )
+
+        return {"FINISHED"}
+
+
 class LaunchWorkFiles(LaunchQtApp):
     """Launch Avalon Work Files."""
 
@@ -469,6 +674,7 @@ classes = [
     LaunchWorkFiles,
     TOPBAR_MT_avalon,
     SCENE_OT_MakeContainerPublishable,
+    SimpleOperator,
 ]
 
 
