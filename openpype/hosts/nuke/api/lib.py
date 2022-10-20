@@ -2726,29 +2726,29 @@ def recreate_instance(origin_node, avalon_data=None):
 
 
 def add_scripts_menu():
-        try:
-            from scriptsmenu import launchfornuke
-        except ImportError:
-            log.warning(
-                "Skipping studio.menu install, because "
-                "'scriptsmenu' module seems unavailable."
-            )
-            return
+    try:
+        from scriptsmenu import launchfornuke
+    except ImportError:
+        log.warning(
+            "Skipping studio.menu install, because "
+            "'scriptsmenu' module seems unavailable."
+        )
+        return
 
-        # load configuration of custom menu
-        project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
-        config = project_settings["nuke"]["scriptsmenu"]["definition"]
-        _menu = project_settings["nuke"]["scriptsmenu"]["name"]
+    # load configuration of custom menu
+    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+    config = project_settings["nuke"]["scriptsmenu"]["definition"]
+    _menu = project_settings["nuke"]["scriptsmenu"]["name"]
 
-        if not config:
-            log.warning("Skipping studio menu, no definition found.")
-            return
+    if not config:
+        log.warning("Skipping studio menu, no definition found.")
+        return
 
-        # run the launcher for Maya menu
-        studio_menu = launchfornuke.main(title=_menu.title())
+    # run the launcher for Maya menu
+    studio_menu = launchfornuke.main(title=_menu.title())
 
-        # apply configuration
-        studio_menu.build_from_configuration(studio_menu, config)
+    # apply configuration
+    studio_menu.build_from_configuration(studio_menu, config)
 
 
 def add_scripts_gizmo():
