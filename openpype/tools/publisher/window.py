@@ -498,7 +498,7 @@ class PublisherWindow(QtWidgets.QDialog):
         self._update_publish_details_widget()
         if (
             not self._tabs_widget.is_current_tab("create")
-            or not self._tabs_widget.is_current_tab("publish")
+            and not self._tabs_widget.is_current_tab("publish")
         ):
             self._tabs_widget.set_current_tab("publish")
 
