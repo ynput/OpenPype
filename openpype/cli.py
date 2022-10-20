@@ -277,6 +277,13 @@ def projectmanager():
     PypeCommands().launch_project_manager()
 
 
+@main.command(context_settings={"ignore_unknown_options": True})
+def publish_report_viewer():
+    from openpype.tools.publisher.publish_report_viewer import main
+
+    sys.exit(main())
+
+
 @main.command()
 @click.argument("output_path")
 @click.option("--project", help="Define project context")
