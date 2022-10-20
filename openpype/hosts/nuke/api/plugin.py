@@ -205,6 +205,13 @@ class NukeCreator(NewCreator):
         for created_inst, _changes in update_list:
             instance_node = created_inst.transient_data["node"]
 
+            # in case node is not existing anymore (user erased it manually)
+            try:
+                instance_node.fullName()
+            except ValueError:
+                self.remove_instances([created_inst])
+                continue
+
             set_node_data(
                 instance_node,
                 INSTANCE_DATA_KNOB,
@@ -1114,6 +1121,8 @@ def convert_to_valid_instaces():
     nuke.Root()["project_directory"].setValue(os.path.dirname(path))
     nuke.Root().setModified(False)
 
+    _remove_old_knobs(nuke.Root())
+
     # loop all nodes and convert
     for node in nuke.allNodes(recurseGroups=True):
         transfer_data = {
@@ -1188,24 +1197,29 @@ def convert_to_valid_instaces():
                     creator_attr["farm_concurency"] = (
                         node["deadlineConcurrentTasks"].value())
 
-        remove_knobs = [
-            "review", "publish", "render", "suspend_publish", "warn", "divd",
-            "OpenpypeDataGroup", "OpenpypeDataGroup_End", "deadlinePriority",
-            "deadlineChunkSize", "deadlineConcurrentTasks", "Deadline"
-        ]
-        print(node.name())
+        _remove_old_knobs(node)
 
-        # remove all old knobs
-        for knob in node.allKnobs():
-            try:
-                if knob.name() in remove_knobs:
-                    node.removeKnob(knob)
-                elif "avalon" in knob.name():
-                    node.removeKnob(knob)
-            except ValueError:
-                pass
         # add new instance knob with transfer data
         set_node_data(
             node, INSTANCE_DATA_KNOB, transfer_data)
 
     nuke.scriptSave()
+
+
+def _remove_old_knobs(node):
+    remove_knobs = [
+        "review", "publish", "render", "suspend_publish", "warn", "divd",
+        "OpenpypeDataGroup", "OpenpypeDataGroup_End", "deadlinePriority",
+        "deadlineChunkSize", "deadlineConcurrentTasks", "Deadline"
+    ]
+    print(node.name())
+
+    # remove all old knobs
+    for knob in node.allKnobs():
+        try:
+            if knob.name() in remove_knobs:
+                node.removeKnob(knob)
+            elif "avalon" in knob.name():
+                node.removeKnob(knob)
+        except ValueError:
+            pass
