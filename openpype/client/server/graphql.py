@@ -745,7 +745,7 @@ class GraphQlQueryEdgeField(BaseGraphQlQueryField):
             self._cursor = new_cursor
 
     def _get_cursor_key(self):
-        return "{}__cursor__".format(self.path)
+        return "{}/__cursor__".format(self.path)
 
     def get_filters(self):
         filters = super(GraphQlQueryEdgeField, self).get_filters()
