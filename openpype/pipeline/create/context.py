@@ -27,6 +27,11 @@ from .creator_plugins import (
 UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
 
 
+class UnavailableSharedData(Exception):
+    """Shared data are not available at the moment when are accessed."""
+    pass
+
+
 class ImmutableKeyError(TypeError):
     """Accessed key is immutable so does not allow changes or removements."""
 
@@ -926,6 +931,9 @@ class CreateContext:
         self._bulk_counter = 0
         self._bulk_instances_to_process = []
 
+        # Shared data across creators during collection phase
+        self._collection_shared_data = None
+
         # Trigger reset if was enabled
         if reset:
             self.reset(discover_publish_plugins)
@@ -981,6 +989,9 @@ class CreateContext:
 
         All changes will be lost if were not saved explicitely.
         """
+
+        self.reset_preparation()
+
         self.reset_avalon_context()
         self.reset_plugins(discover_publish_plugins)
         self.reset_context_data()
@@ -988,6 +999,20 @@ class CreateContext:
         with self.bulk_instances_collection():
             self.reset_instances()
             self.execute_autocreators()
+
+        self.reset_finalization()
+
+    def reset_preparation(self):
+        """Prepare attributes that must be prepared/cleaned before reset."""
+
+        # Give ability to store shared data for collection phase
+        self._collection_shared_data = {}
+
+    def reset_finalization(self):
+        """Cleanup of attributes after reset."""
+
+        # Stop access to collection shared data
+        self._collection_shared_data = None
 
     def reset_avalon_context(self):
         """Give ability to reset avalon context.
@@ -1373,3 +1398,20 @@ class CreateContext:
             if not plugin.__instanceEnabled__:
                 plugins.append(plugin)
         return plugins
+
+    @property
+    def collection_shared_data(self):
+        """Access to shared data that can be used during creator's collection.
+
+        Retruns:
+            Dict[str, Any]: Shared data.
+
+        Raises:
+            UnavailableSharedData: When called out of collection phase.
+        """
+
+        if self._collection_shared_data is None:
+            raise UnavailableSharedData(
+                "Accessed Collection shared data out of collection phase"
+            )
+        return self._collection_shared_data

@@ -1669,6 +1669,8 @@ class PublisherController(BasePublisherController):
 
         self.host_is_valid = self._create_context.host_is_valid
 
+        self.create_context.reset_preparation()
+
         # Reset avalon context
         self._create_context.reset_avalon_context()
 
@@ -1678,6 +1680,8 @@ class PublisherController(BasePublisherController):
         # Publish part must be reset after plugins
         self._reset_publish()
         self._reset_instances()
+
+        self.create_context.reset_finalization()
 
         self._emit_event("controller.reset.finished")
 
