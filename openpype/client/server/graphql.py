@@ -81,6 +81,7 @@ class GraphQlQuery:
         self._name = name
         self._variables = {}
         self._children = []
+        self._has_multiple_edge_fields = None
 
     @property
     def indent(self):
@@ -116,6 +117,18 @@ class GraphQlQuery:
             if child.need_query:
                 return True
         return False
+
+    @property
+    def has_multiple_edge_fields(self):
+        if self._has_multiple_edge_fields is None:
+            edge_counter = 0
+            for child in self._children:
+                edge_counter += child.sum_edge_fields(2)
+                if edge_counter > 1:
+                    break
+            self._has_multiple_edge_fields = edge_counter > 1
+
+        return self._has_multiple_edge_fields
 
     def add_variable(self, key, value_type, value=None):
         """Add variable to query.
@@ -360,6 +373,30 @@ class BaseGraphQlQueryField(object):
             if child.need_query:
                 return True
         return False
+
+    def sum_edge_fields(self, max_limit=None):
+        """Check how many edge fields query has.
+
+        In case there are multiple edge fields or are nested the query can't
+        yield mid cursor results.
+
+        Args:
+            max_limit (int): Skip rest of counting if counter is bigger then
+                entered number.
+
+        Returns:
+            int: Counter edge fields
+        """
+
+        counter = 0
+        if isinstance(self, GraphQlQueryEdgeField):
+            counter = 1
+
+        for child in self._children:
+            counter += child.sum_edge_fields(max_limit)
+            if max_limit is not None and counter >= max_limit:
+                break
+        return counter
 
     @property
     def offset(self):
