@@ -270,7 +270,7 @@ class GraphQlQuery:
 
         return "\n".join(output)
 
-    def parse_result(self, data, output):
+    def parse_result(self, data, output, progress_data):
         """Parse data from response for output.
 
         Output is stored to passed 'output' variable. That's because of paging
@@ -285,26 +285,7 @@ class GraphQlQuery:
             return
 
         for child in self._children:
-            child.parse_result(data, output)
-
-    def cleanup_result(self, output):
-        """Remove temporary data from output.
-
-        Some fields may require to store temporary data into output because of
-        paging.
-
-        Passed object is modified during processing.
-
-        Args:
-            output (Dict[str, Any]): Output which is result of all queries from
-                all pages.
-        """
-
-        if not output:
-            return
-
-        for child in self._children:
-            child.cleanup_result(output)
+            child.parse_result(data, output, progress_data)
 
     def query(self, con):
         """Do a query from server.
@@ -316,16 +297,18 @@ class GraphQlQuery:
             Dict[str, Any]: Parsed output from GraphQl query.
         """
 
+        progress_data = {}
         output = {}
         while self.need_query:
-            response = con.query_graphl(
+            response = con.query_graphql(
                 self.calculate_query(),
                 self.get_variables_values()
             )
             if response.errors:
-                raise ValueError("QueryFailed {}".format(str(response.errors)))
-            self.parse_result(response.data["data"], output)
-        self.cleanup_result(output)
+                raise ValueError(
+                    "QueryFailed {}".format(str(response.errors))
+                )
+            self.parse_result(response.data["data"], output, progress_data)
 
         return output
 
@@ -516,33 +499,15 @@ class BaseGraphQlQueryField(object):
         """Mark children as they don't need query."""
 
         for child in self._children:
-            child.parse_result({}, {})
+            child.parse_result({}, {}, {})
 
     @abstractmethod
     def calculate_query(self):
         pass
 
     @abstractmethod
-    def parse_result(self, data, output):
+    def parse_result(self, data, output, progress_data):
         pass
-
-    def cleanup_result(self, data):
-        if not isinstance(data, dict):
-            raise TypeError("{} Expected 'dict' type got '{}'".format(
-                self._name, str(type(data))
-            ))
-
-        value = data.get(self._name)
-        if not value:
-            return
-
-        if isinstance(value, dict):
-            for child in self._children:
-                child.cleanup_result(value)
-        elif isinstance(value, (list, tuple, set)):
-            for item in value:
-                for child in self._children:
-                    child.cleanup_result(item)
 
 
 class GraphQlQueryField(BaseGraphQlQueryField):
@@ -552,7 +517,7 @@ class GraphQlQueryField(BaseGraphQlQueryField):
     def child_indent(self):
         return self.indent
 
-    def parse_result(self, data, output):
+    def parse_result(self, data, output, progress_data):
         if not isinstance(data, dict):
             raise TypeError("{} Expected 'dict' type got '{}'".format(
                 self._name, str(type(data))
@@ -577,7 +542,7 @@ class GraphQlQueryField(BaseGraphQlQueryField):
                 output[self._name] = output_value
 
             for child in self._children:
-                child.parse_result(value, output_value)
+                child.parse_result(value, output_value, progress_data)
             return
 
         if output_value is None:
@@ -596,7 +561,7 @@ class GraphQlQueryField(BaseGraphQlQueryField):
         for idx, item in enumerate(value):
             item_value = output_value[idx]
             for child in self._children:
-                child.parse_result(item, item_value)
+                child.parse_result(item, item_value, progress_data)
 
     def calculate_query(self):
         offset = self.indent * " "
@@ -639,7 +604,7 @@ class GraphQlQueryEdgeField(BaseGraphQlQueryField):
 
         super(GraphQlQueryEdgeField, self).reset_cursor()
 
-    def parse_result(self, data, output):
+    def parse_result(self, data, output, progress_data):
         if not isinstance(data, dict):
             raise TypeError("{} Expected 'dict' type got '{}'".format(
                 self._name, str(type(data))
@@ -654,11 +619,11 @@ class GraphQlQueryEdgeField(BaseGraphQlQueryField):
         handle_cursors = self.child_has_edges
         if handle_cursors:
             cursor_key = self._get_cursor_key()
-            if cursor_key in output:
-                nodes_by_cursor = output[cursor_key]
+            if cursor_key in progress_data:
+                nodes_by_cursor = progress_data[cursor_key]
             else:
                 nodes_by_cursor = {}
-                output[cursor_key] = nodes_by_cursor
+                progress_data[cursor_key] = nodes_by_cursor
 
         value = data.get(self._name)
         if value is None:
@@ -686,7 +651,7 @@ class GraphQlQueryEdgeField(BaseGraphQlQueryField):
                     node_values.append(edge_value)
 
             for child in self._children:
-                child.parse_result(edge["node"], edge_value)
+                child.parse_result(edge["node"], edge_value, progress_data)
 
         if not self._need_query:
             return
@@ -701,14 +666,8 @@ class GraphQlQueryEdgeField(BaseGraphQlQueryField):
                 child.reset_cursor()
             self._cursor = new_cursor
 
-    def cleanup_result(self, data):
-        super(GraphQlQueryEdgeField, self).cleanup_result(data)
-        if self.child_has_edges:
-            cursor_key = self._get_cursor_key()
-            data.pop(cursor_key)
-
     def _get_cursor_key(self):
-        return "__cursor__{}".format(self._name)
+        return "{}__cursor__".format(self.path)
 
     def get_filters(self):
         filters = super(GraphQlQueryEdgeField, self).get_filters()
