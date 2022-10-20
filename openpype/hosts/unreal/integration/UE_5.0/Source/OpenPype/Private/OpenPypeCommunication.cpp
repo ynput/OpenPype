@@ -2,6 +2,7 @@
 #include "OpenPype.h"
 #include "GenericPlatform/GenericPlatformMisc.h"
 #include "WebSocketsModule.h"
+#include "Json.h"
 #include "JsonObjectConverter.h"
 
 
@@ -97,22 +98,46 @@ void FOpenPypeCommunication::OnMessage(const FString & Message)
 	// This code will run when we receive a string message from the server.
 	UE_LOG(LogTemp, Display, TEXT("Message received: %s"), *Message);
 
-	FRpcResponse RpcResponse;
+	TSharedRef< TJsonReader<> > Reader = TJsonReaderFactory<>::Create(Message);
+	TSharedPtr<FJsonObject> Root;
 
-	if(!FJsonObjectConverter::JsonObjectStringToUStruct(Message, &RpcResponse, 0, 0)) {
-		UE_LOG(LogTemp, Error, TEXT("Error during parsing message"));
-		return;
-	}
-
-	RpcResponses.Add(RpcResponse);
-
-	if (RpcResponse.error.code != 0)
+	if (FJsonSerializer::Deserialize(Reader, Root))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Error during calling method \"%s\""), *RpcResponse.error.message);
+		if (Root->HasField(TEXT("result")))
+		{
+			FString OutputMessage;
+			if (Root->TryGetStringField(TEXT("result"), OutputMessage))
+			{
+				UE_LOG(LogTemp, Display, TEXT("Result: %s"), *OutputMessage);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Display, TEXT("Function call successful without return value"));
+			}
+		}
+		else if (Root->HasField(TEXT("error")))
+		{
+			auto Error = Root->GetObjectField(TEXT("error"));
+
+			if (Error->HasField(TEXT("message")))
+			{
+				FString ErrorMessage;
+				Error->TryGetStringField(TEXT("message"), ErrorMessage);
+				UE_LOG(LogTemp, Error, TEXT("Error: %s"), *ErrorMessage);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("Error during parsing error"));
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Error during parsing message"));
+		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Display, TEXT("Message parsed: %s"), *RpcResponse.result);
+		UE_LOG(LogTemp, Error, TEXT("Error during deserialization"));
 	}
 }
 
