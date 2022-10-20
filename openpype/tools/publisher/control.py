@@ -1662,10 +1662,7 @@ class PublisherController(BasePublisherController):
 
     def reset(self):
         """Reset everything related to creation and publishing."""
-        # Stop publishing
         self.stop_publish()
-
-        self.save_changes()
 
         self.host_is_valid = self._create_context.host_is_valid
 

@@ -36,7 +36,7 @@ class PublisherWindow(QtWidgets.QDialog):
     footer_border = 8
     publish_footer_spacer = 2
 
-    def __init__(self, parent=None, controller=None, reset_on_show=None):
+    def __init__(self, parent=None, controller=None, reset_on_first_show=None):
         super(PublisherWindow, self).__init__(parent)
 
         self.setWindowTitle("OpenPype publisher")
@@ -44,8 +44,8 @@ class PublisherWindow(QtWidgets.QDialog):
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
 
-        if reset_on_show is None:
-            reset_on_show = True
+        if reset_on_first_show is None:
+            reset_on_first_show = True
 
         if parent is None:
             on_top_flag = QtCore.Qt.WindowStaysOnTopHint
@@ -298,7 +298,8 @@ class PublisherWindow(QtWidgets.QDialog):
         self._controller = controller
 
         self._first_show = True
-        self._reset_on_show = reset_on_show
+        self._reset_on_first_show = reset_on_first_show
+        self._reset_on_show = True
         self._restart_timer = None
         self._publish_frame_visible = None
 
@@ -314,6 +315,18 @@ class PublisherWindow(QtWidgets.QDialog):
             self._first_show = False
             self._on_first_show()
 
+        if not self._reset_on_show:
+            return
+
+        self._reset_on_show = False
+        # Detach showing - give OS chance to draw the window
+        timer = QtCore.QTimer()
+        timer.setSingleShot(True)
+        timer.setInterval(1)
+        timer.timeout.connect(self._on_show_restart_timer)
+        self._restart_timer = timer
+        timer.start()
+
     def resizeEvent(self, event):
         super(PublisherWindow, self).resizeEvent(event)
         self._update_publish_frame_rect()
@@ -324,16 +337,7 @@ class PublisherWindow(QtWidgets.QDialog):
     def _on_first_show(self):
         self.resize(self.default_width, self.default_height)
         self.setStyleSheet(style.load_stylesheet())
-        if not self._reset_on_show:
-            return
-
-        # Detach showing - give OS chance to draw the window
-        timer = QtCore.QTimer()
-        timer.setSingleShot(True)
-        timer.setInterval(1)
-        timer.timeout.connect(self._on_show_restart_timer)
-        self._restart_timer = timer
-        timer.start()
+        self._reset_on_show = self._reset_on_first_show
 
     def _on_show_restart_timer(self):
         """Callback for '_restart_timer' timer."""
@@ -342,8 +346,12 @@ class PublisherWindow(QtWidgets.QDialog):
         self.reset()
 
     def closeEvent(self, event):
-        self._controller.save_changes()
+        self.save_changes()
+        self._reset_on_show = True
         super(PublisherWindow, self).closeEvent(event)
+
+    def save_changes(self):
+        self._controller.save_changes()
 
     def reset(self):
         self._controller.reset()
@@ -436,7 +444,8 @@ class PublisherWindow(QtWidgets.QDialog):
         self._update_publish_frame_rect()
 
     def _on_reset_clicked(self):
-        self._controller.reset()
+        self.save_changes()
+        self.reset()
 
     def _on_stop_clicked(self):
         self._controller.stop_publish()
