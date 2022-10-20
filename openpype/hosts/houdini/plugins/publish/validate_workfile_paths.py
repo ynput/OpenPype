@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-import openpype.api
 import pyblish.api
 import hou
 from openpype.pipeline import (
     PublishValidationError,
     OptionalPyblishPluginMixin
 )
+from openpype.pipeline.publish import RepairAction
+
 from openpype.pipeline.publish import RepairAction
 
 
