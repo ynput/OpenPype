@@ -19,7 +19,8 @@ public:
 	virtual void RegisterCommands() override;
 
 public:
-	TSharedPtr< FUICommandInfo > OpenPypeTools;
-	TSharedPtr< FUICommandInfo > OpenPypeToolsDialog;
-	TSharedPtr< FUICommandInfo > OpenPypeTestMethod;
+	TSharedPtr< FUICommandInfo > OpenPypeLoaderTool;
+	TSharedPtr< FUICommandInfo > OpenPypeCreatorTool;
+	TSharedPtr< FUICommandInfo > OpenPypeSceneInventoryTool;
+	TSharedPtr< FUICommandInfo > OpenPypePublishTool;
 };

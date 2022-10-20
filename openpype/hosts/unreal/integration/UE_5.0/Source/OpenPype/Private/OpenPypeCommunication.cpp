@@ -18,8 +18,8 @@ void FOpenPypeCommunication::CreateSocket()
 
 	UE_LOG(LogTemp, Display, TEXT("Websocket URL: %s"), *url);
 
-	const FString ServerURL = url; // Your server URL. You can use ws, wss or wss+insecure.
-	const FString ServerProtocol = TEXT("ws");  // The WebServer protocol you want to use.
+	const FString ServerURL = url;
+	const FString ServerProtocol = TEXT("ws");
 
 	TMap<FString, FString> UpgradeHeaders;
 	UpgradeHeaders.Add(TEXT("upgrade"), TEXT("websocket"));
@@ -52,7 +52,7 @@ bool FOpenPypeCommunication::IsConnected()
 	return Socket->IsConnected();
 }
 
-void FOpenPypeCommunication::CallMethod(FString Method, TArray<FString> Params)
+void FOpenPypeCommunication::CallMethod(const FString Method, const TArray<FString> Args)
 {
 	if (Socket->IsConnected())
 	{
@@ -61,7 +61,7 @@ void FOpenPypeCommunication::CallMethod(FString Method, TArray<FString> Params)
 		int32 newId = Id++;
 
 		FString Message;
-		FRpcCall RpcCall = { "2.0", Method, Params, newId };
+		FRpcCall RpcCall = { "2.0", *Method, Args, newId };
 		FJsonObjectConverter::UStructToJsonObjectString(RpcCall, Message);
 
 		Socket->Send(Message);

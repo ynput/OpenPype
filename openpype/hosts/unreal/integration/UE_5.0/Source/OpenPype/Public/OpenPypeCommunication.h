@@ -71,7 +71,7 @@ public:
 
 	static bool IsConnected();
 
-    static void CallMethod(FString, TArray<FString>);
+    static void CallMethod(const FString Method, const TArray<FString> Args);
 
 public:
     UFUNCTION()

@@ -41,9 +41,7 @@ TSharedRef< FSlateStyleSet > FOpenPypeStyle::Create()
 	TSharedRef< FSlateStyleSet > Style = MakeShareable(new FSlateStyleSet("OpenPypeStyle"));
 	Style->SetContentRoot(IPluginManager::Get().FindPlugin("OpenPype")->GetBaseDir() / TEXT("Resources"));
 
-	Style->Set("OpenPype.OpenPypeTools", new IMAGE_BRUSH(TEXT("openpype40"), Icon40x40));
-	Style->Set("OpenPype.OpenPypeToolsDialog", new IMAGE_BRUSH(TEXT("openpype40"), Icon40x40));
-	Style->Set("OpenPype.OpenPypeTestMethod", new IMAGE_BRUSH(TEXT("openpype40"), Icon40x40));
+	Style->Set("OpenPype.OpenPypeMenu", new IMAGE_BRUSH(TEXT("openpype40"), Icon40x40));
 
 	return Style;
 }

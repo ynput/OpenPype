@@ -4,8 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
-
-#include "IWebSocket.h"       // Socket definition
+#include "Widgets/SWidget.h"
+#include "Framework/Commands/UICommandList.h"
+#include "IWebSocket.h"
 
 
 class FOpenPypeModule : public IModuleInterface
@@ -14,15 +15,16 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
+protected:
+	static TSharedRef<SWidget> GenerateOpenPypeMenuContent(TSharedRef<class FUICommandList> InCommandList);
+
+	static void CallMethod(const FString MethodName, const TArray<FString> Args);
+
 private:
 	void RegisterMenus();
+	void RegisterOpenPypeMenu();
 	void MapCommands();
 
-	void MenuPopup();
-	void MenuDialog();
-
-	void TestMethod();
-
 private:
-	TSharedPtr<class FUICommandList> PluginCommands;
+	TSharedPtr<class FUICommandList> OpenPypeCommands;
 };
