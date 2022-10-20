@@ -570,7 +570,7 @@ def get_v4_projects(active=None, library=None, fields=None):
 
     else:
         query = projects_graphql_query(fields)
-        for parsed_data in query.continuos_query(con):
+        for parsed_data in query.continuous_query(con):
             for project in parsed_data["projects"]:
                 yield project
 
@@ -691,7 +691,7 @@ def get_v4_folders(
         query.set_variable_value(attr, filter_value)
 
     con = get_server_api_connection()
-    for parsed_data in query.continuos_query(con):
+    for parsed_data in query.continuous_query(con):
         for folder in parsed_data["project"]["folders"]:
             if active is None or active is folder["active"]:
                 yield folder
