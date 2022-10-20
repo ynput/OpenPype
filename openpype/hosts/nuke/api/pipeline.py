@@ -365,7 +365,7 @@ def add_shortcuts_from_presets():
                 item_label = menu_label_mapping[command_name]
                 menuitem = menu.findItem(item_label)
                 menuitem.setShortcut(shortcut_str)
-            except AttributeError as e:
+            except (AttributeError, KeyError) as e:
                 log.error(e)
 
 
