@@ -862,18 +862,26 @@ class LegacyInstancesItem(object):
     """
 
     def __init__(self, identifier, label):
+        self._id = str(uuid4())
         self.identifier = identifier
         self.label = label
 
+    @property
+    def id(self):
+        return self._id
+
     def to_data(self):
         return {
+            "id": self.id,
             "identifier": self.identifier,
             "label": self.label
         }
 
     @classmethod
     def from_data(cls, data):
-        return cls(data["identifier"], data["label"])
+        obj = cls(data["identifier"], data["label"])
+        obj._id = data["id"]
+        return obj
 
 
 class CreateContext:
