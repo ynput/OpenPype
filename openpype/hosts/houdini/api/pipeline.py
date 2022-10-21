@@ -440,7 +440,7 @@ def list_instances(creator_id=None):
 
     return [
         i for i in lib.lsattrs(instance_signature)
-        if i.paramEval("creator_identifier") == creator_id
+        if i.parm("creator_identifier").eval() == creator_id
     ]
 
 
