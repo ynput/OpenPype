@@ -1461,6 +1461,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
     └───────────────────────────────┘
     """
     instance_context_changed = QtCore.Signal()
+    convert_requested = QtCore.Signal()
 
     def __init__(self, controller, parent):
         super(SubsetAttributesWidget, self).__init__(parent)
@@ -1479,9 +1480,48 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         # BOTTOM PART
         bottom_widget = QtWidgets.QWidget(self)
-        creator_attrs_widget = CreatorAttrsWidget(
-            controller, bottom_widget
+
+        # Wrap Creator attributes to widget to be able add convert button
+        creator_widget = QtWidgets.QWidget(bottom_widget)
+
+        # Convert button widget (with layout to handle stretch)
+        convert_widget = QtWidgets.QWidget(creator_widget)
+        convert_label = QtWidgets.QLabel(
+            (
+                "Found instances created with legacy creators."
+                "\nDo you with to convert them?"
+            ),
+            creator_widget
         )
+        convert_label.setWordWrap(True)
+        convert_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        convert_btn = QtWidgets.QPushButton(
+            "Convert legacy instances", convert_widget
+        )
+        convert_separator = QtWidgets.QFrame(convert_widget)
+        convert_separator.setObjectName("Separator")
+        convert_separator.setMinimumHeight(2)
+        convert_separator.setMaximumHeight(2)
+
+        convert_layout = QtWidgets.QGridLayout(convert_widget)
+        convert_layout.setContentsMargins(0, 0, 0, 0)
+        convert_layout.addWidget(convert_label, 0, 0, 1, 3)
+        convert_layout.addWidget(convert_btn, 1, 1)
+        convert_layout.addWidget(convert_separator, 2, 0, 1, 3)
+        convert_layout.setColumnStretch(0, 1)
+        convert_layout.setColumnStretch(1, 0)
+        convert_layout.setColumnStretch(2, 1)
+
+        # Creator attributes widget
+        creator_attrs_widget = CreatorAttrsWidget(
+            controller, creator_widget
+        )
+        creator_layout = QtWidgets.QVBoxLayout(creator_widget)
+        creator_layout.setContentsMargins(0, 0, 0, 0)
+        creator_layout.addWidget(convert_widget, 0)
+        creator_layout.addWidget(creator_attrs_widget, 1)
+
         publish_attrs_widget = PublishPluginAttrsWidget(
             controller, bottom_widget
         )
@@ -1492,7 +1532,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         bottom_layout = QtWidgets.QHBoxLayout(bottom_widget)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
-        bottom_layout.addWidget(creator_attrs_widget, 1)
+        bottom_layout.addWidget(creator_widget, 1)
         bottom_layout.addWidget(bottom_separator, 0)
         bottom_layout.addWidget(publish_attrs_widget, 1)
 
@@ -1505,6 +1545,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         layout.addWidget(top_bottom, 0)
         layout.addWidget(bottom_widget, 1)
 
+        self._convertor_identifiers = None
         self._current_instances = None
         self._context_selected = False
         self._all_instances_valid = True
@@ -1512,8 +1553,11 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         global_attrs_widget.instance_context_changed.connect(
             self._on_instance_context_changed
         )
+        convert_btn.clicked.connect(self._on_convert_click)
 
         self._controller = controller
+
+        self._convert_widget = convert_widget
 
         self.global_attrs_widget = global_attrs_widget
 
@@ -1537,7 +1581,12 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         self.instance_context_changed.emit()
 
-    def set_current_instances(self, instances, context_selected):
+    def _on_convert_click(self):
+        self.convert_requested.emit()
+
+    def set_current_instances(
+        self, instances, context_selected, convertor_identifiers
+    ):
         """Change currently selected items.
 
         Args:
@@ -1551,10 +1600,13 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
                 all_valid = False
                 break
 
+        s_convertor_identifiers = set(convertor_identifiers)
+        self._convertor_identifiers = s_convertor_identifiers
         self._current_instances = instances
         self._context_selected = context_selected
         self._all_instances_valid = all_valid
 
+        self._convert_widget.setVisible(len(s_convertor_identifiers) > 0)
         self.global_attrs_widget.set_current_instances(instances)
         self.creator_attrs_widget.set_current_instances(instances)
         self.publish_attrs_widget.set_current_instances(

@@ -124,6 +124,9 @@ class OverviewWidget(QtWidgets.QFrame):
         subset_attributes_widget.instance_context_changed.connect(
             self._on_instance_context_change
         )
+        subset_attributes_widget.convert_requested.connect(
+            self._on_convert_requested
+        )
 
         # --- Controller callbacks ---
         controller.event_system.add_callback(
@@ -201,7 +204,7 @@ class OverviewWidget(QtWidgets.QFrame):
         self.create_requested.emit()
 
     def _on_delete_clicked(self):
-        instance_ids, _ = self.get_selected_items()
+        instance_ids, _, _ = self.get_selected_items()
 
         # Ask user if he really wants to remove instances
         dialog = QtWidgets.QMessageBox(self)
@@ -235,7 +238,9 @@ class OverviewWidget(QtWidgets.QFrame):
         if self._refreshing_instances:
             return
 
-        instance_ids, context_selected = self.get_selected_items()
+        instance_ids, context_selected, convertor_identifiers = (
+            self.get_selected_items()
+        )
 
         # Disable delete button if nothing is selected
         self._delete_btn.setEnabled(len(instance_ids) > 0)
@@ -246,7 +251,7 @@ class OverviewWidget(QtWidgets.QFrame):
             for instance_id in instance_ids
         ]
         self._subset_attributes_widget.set_current_instances(
-            instances, context_selected
+            instances, context_selected, convertor_identifiers
         )
 
     def _on_active_changed(self):
@@ -314,6 +319,10 @@ class OverviewWidget(QtWidgets.QFrame):
 
         self.instance_context_changed.emit()
 
+    def _on_convert_requested(self):
+        _, _, convertor_identifiers = self.get_selected_items()
+        self._controller.convert_legacy_items(convertor_identifiers)
+
     def get_selected_items(self):
         view = self._subset_views_layout.currentWidget()
         return view.get_selected_items()
@@ -331,8 +340,12 @@ class OverviewWidget(QtWidgets.QFrame):
         else:
             new_view.refresh_instance_states()
 
-        instance_ids, context_selected = old_view.get_selected_items()
-        new_view.set_selected_items(instance_ids, context_selected)
+        instance_ids, context_selected, convertor_identifiers = (
+            old_view.get_selected_items()
+        )
+        new_view.set_selected_items(
+            instance_ids, context_selected, convertor_identifiers
+        )
 
         self._subset_views_layout.setCurrentIndex(new_idx)
 

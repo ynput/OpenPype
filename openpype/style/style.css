@@ -965,6 +965,18 @@ VariantInputsWidget QToolButton {
     background: {color:bg-view-selection};
 }
 
+#CardViewLegacyItemWidget {
+    background: {color:publisher:bg-legacy};
+    border-radius: 0.2em;
+
+}
+#CardViewLegacyItemWidget:hover {
+    background: {color:publisher:bg-legacy-hover};
+}
+#CardViewLegacyItemWidget[state="selected"] {
+    background: {color:publisher:bg-legacy-selected};
+}
+
 #ListViewSubsetName[state="invalid"] {
     color: {color:publisher:error};
 }
