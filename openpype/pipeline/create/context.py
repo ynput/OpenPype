@@ -22,6 +22,7 @@ from .creator_plugins import (
     Creator,
     AutoCreator,
     discover_creator_plugins,
+    discover_legacy_convertor_plugins,
 )
 
 UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
@@ -940,6 +941,9 @@ class CreateContext:
         # Manual creators
         self.manual_creators = {}
 
+        self.legacy_convertors = {}
+        self.legacy_items_by_id = {}
+
         self.publish_discover_result = None
         self.publish_plugins_mismatch_targets = []
         self.publish_plugins = []
@@ -1020,6 +1024,7 @@ class CreateContext:
 
         with self.bulk_instances_collection():
             self.reset_instances()
+            self.find_legacy_items()
             self.execute_autocreators()
 
         self.reset_finalization()
@@ -1077,6 +1082,7 @@ class CreateContext:
 
         self._reset_publish_plugins(discover_publish_plugins)
         self._reset_creator_plugins()
+        self._reset_legacy_convertor_plugins()
 
     def _reset_publish_plugins(self, discover_publish_plugins):
         import pyblish.logic
@@ -1172,6 +1178,29 @@ class CreateContext:
 
         self.creators = creators
 
+    def _reset_legacy_convertor_plugins(self):
+        legacy_convertors = {}
+        for convertor_class in discover_legacy_convertor_plugins():
+            if inspect.isabstract(convertor_class):
+                self.log.info(
+                    "Skipping abstract Creator {}".format(str(convertor_class))
+                )
+                continue
+
+            convertor_identifier = convertor_class.identifier
+            if convertor_identifier in legacy_convertors:
+                self.log.warning((
+                    "Duplicated Converter identifier. "
+                    "Using first and skipping following"
+                ))
+                continue
+
+            legacy_convertors[convertor_identifier] = (
+                convertor_identifier(self)
+            )
+
+        self.legacy_convertors = legacy_convertors
+
     def reset_context_data(self):
         """Reload context data using host implementation.
 
@@ -1243,6 +1272,14 @@ class CreateContext:
     def creator_removed_instance(self, instance):
         self._instances_by_id.pop(instance.id, None)
 
+    def add_legacy_item(self, convertor_identifier, label):
+        self.legacy_items_by_id[convertor_identifier] = (
+            LegacyInstancesItem(convertor_identifier, label)
+        )
+
+    def remove_legacy_item(self, convertor_identifier):
+        self.legacy_items_by_id.pop(convertor_identifier, None)
+
     @contextmanager
     def bulk_instances_collection(self):
         """Validate context of instances in bulk.
@@ -1277,6 +1314,20 @@ class CreateContext:
         # Collect instances
         for creator in self.creators.values():
             creator.collect_instances()
+
+    def find_legacy_items(self):
+        self.legacy_items_by_id = {}
+
+        for convertor in self.legacy_convertors.values():
+            try:
+                convertor.find_instances()
+            except:
+                self.log.warning(
+                    "Failed to find instances of convertor \"{}\"".format(
+                        convertor.identifier
+                    ),
+                    exc_info=True
+                )
 
     def execute_autocreators(self):
         """Execute discovered AutoCreator plugins.

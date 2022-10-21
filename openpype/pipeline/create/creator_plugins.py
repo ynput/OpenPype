@@ -559,6 +559,10 @@ def discover_creator_plugins():
     return discover(BaseCreator)
 
 
+def discover_legacy_convertor_plugins():
+    return discover(LegacyInstanceConvertor)
+
+
 def discover_legacy_creator_plugins():
     from openpype.lib import Logger
 
@@ -616,6 +620,9 @@ def register_creator_plugin(plugin):
     elif issubclass(plugin, LegacyCreator):
         register_plugin(LegacyCreator, plugin)
 
+    elif issubclass(plugin, LegacyInstanceConvertor):
+        register_plugin(LegacyInstanceConvertor, plugin)
+
 
 def deregister_creator_plugin(plugin):
     if issubclass(plugin, BaseCreator):
@@ -624,12 +631,17 @@ def deregister_creator_plugin(plugin):
     elif issubclass(plugin, LegacyCreator):
         deregister_plugin(LegacyCreator, plugin)
 
+    elif issubclass(plugin, LegacyInstanceConvertor):
+        deregister_plugin(LegacyInstanceConvertor, plugin)
+
 
 def register_creator_plugin_path(path):
     register_plugin_path(BaseCreator, path)
     register_plugin_path(LegacyCreator, path)
+    register_plugin_path(LegacyInstanceConvertor, path)
 
 
 def deregister_creator_plugin_path(path):
     deregister_plugin_path(BaseCreator, path)
     deregister_plugin_path(LegacyCreator, path)
+    deregister_plugin_path(LegacyInstanceConvertor, path)
