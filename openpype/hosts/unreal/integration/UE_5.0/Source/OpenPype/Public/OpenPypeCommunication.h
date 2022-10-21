@@ -100,10 +100,16 @@ public:
     static void OnMessage(const FString & Message);
 
     UFUNCTION()
-    static void OnRawMessage(const void* Data, SIZE_T Size, SIZE_T BytesRemaining);
-
-    UFUNCTION()
     static void OnMessageSent(const FString& MessageString);
+
+private:
+    static void HandleResult(TSharedPtr<FJsonObject> Root);
+    static void HandleError(TSharedPtr<FJsonObject> Root);
+    static void RunMethod(TSharedPtr<FJsonObject> Root);
+
+    static void ls(TSharedPtr<FJsonObject> Root);
+    static void containerise(TSharedPtr<FJsonObject> Root);
+    static void instantiate(TSharedPtr<FJsonObject> Root);
 
 private:
 	static TSharedPtr<IWebSocket> Socket;
