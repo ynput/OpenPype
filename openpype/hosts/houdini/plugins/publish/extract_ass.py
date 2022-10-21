@@ -35,8 +35,12 @@ class ExtractAss(publish.Extractor):
         # error and thus still continues to the integrator. To capture that
         # we make sure all files exist
         files = instance.data["frames"]
-        missing = [fname for fname in files
-                   if not os.path.exists(os.path.join(staging_dir, fname))]
+        missing = []
+        for file_name in files:
+            full_path = os.path.normpath(os.path.join(staging_dir, file_name))
+            if not os.path.exists(full_path):
+                missing.append(full_path)
+
         if missing:
             raise RuntimeError("Failed to complete Arnold ass extraction. "
                                "Missing output files: {}".format(missing))
