@@ -10,12 +10,13 @@ import six
 import clique
 
 import pyblish.api
-import openpype.api
+
 from openpype.lib import (
     get_ffmpeg_tool_path,
     get_ffprobe_streams,
 
     path_to_subprocess_arg,
+    run_subprocess,
 
     should_convert_for_ffmpeg,
     convert_input_paths_for_ffmpeg,
@@ -350,9 +351,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             # run subprocess
             self.log.debug("Executing: {}".format(subprcs_cmd))
 
-            openpype.api.run_subprocess(
-                subprcs_cmd, shell=True, logger=self.log
-            )
+            run_subprocess(subprcs_cmd, shell=True, logger=self.log)
 
             # delete files added to fill gaps
             if files_to_clean:
