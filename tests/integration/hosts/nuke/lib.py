@@ -1,6 +1,6 @@
 import os
 import pytest
-import shutil
+import re
 
 from tests.lib.testing_classes import (
     HostFixtures,
@@ -15,7 +15,7 @@ class NukeHostFixtures(HostFixtures):
         """Get last_workfile_path from source data.
 
         """
-        source_file_name = "test_project_test_asset_TestTask_v001.nk"
+        source_file_name = "test_project_test_asset_test_task_v001.nk"
         src_path = os.path.join(download_test_data,
                                 "input",
                                 "workfile",
@@ -31,7 +31,16 @@ class NukeHostFixtures(HostFixtures):
         dest_path = os.path.join(dest_folder,
                                  source_file_name)
 
-        shutil.copy(src_path, dest_path)
+        # rewrite old root with temporary file
+        # TODO - using only C:/projects seems wrong - but where to get root ?
+        replace_pattern = re.compile(re.escape("C:/projects"), re.IGNORECASE)
+        with open(src_path, "r") as fp:
+            updated = fp.read()
+            updated = replace_pattern.sub(output_folder_url.replace("\\", '/'),
+                                          updated)
+
+        with open(dest_path, "w") as fp:
+            fp.write(updated)
 
         yield dest_path
 
