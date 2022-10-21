@@ -172,7 +172,7 @@ class HoudiniCreator(NewCreator):
                     "houdini_cached_instances"):
                 self.collection_shared_data["houdini_cached_instances"] = {}
             self.log.info("Caching instances for {}".format(self.identifier))
-            self.collection_shared_data["houdini_cached_instances"][self.identifier] = instances  # noqa: E401
+            self.collection_shared_data["houdini_cached_instances"][self.identifier] = instances  # noqa: E501
         for instance in instances:
             created_instance = CreatedInstance.from_existing(
                 read(instance), self
@@ -182,7 +182,6 @@ class HoudiniCreator(NewCreator):
     def update_instances(self, update_list):
         for created_inst, _changes in update_list:
             instance_node = hou.node(created_inst.get("instance_node"))
-            current_data = read(instance_node)
 
             new_values = {
                 key: new_value

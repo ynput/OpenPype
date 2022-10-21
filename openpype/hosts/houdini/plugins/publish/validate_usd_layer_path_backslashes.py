@@ -4,6 +4,8 @@ import pyblish.api
 import openpype.hosts.houdini.api.usd as hou_usdlib
 from openpype.pipeline import PublishValidationError
 
+import hou
+
 
 class ValidateUSDLayerPathBackslashes(pyblish.api.InstancePlugin):
     """Validate USD loaded paths have no backslashes.

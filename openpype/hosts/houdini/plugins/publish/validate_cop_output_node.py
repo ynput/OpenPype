@@ -38,7 +38,7 @@ class ValidateCopOutputNode(pyblish.api.InstancePlugin):
 
         try:
             output_node = instance.data["output_node"]
-        except KeyError as e:
+        except KeyError:
             six.reraise(
                 PublishValidationError,
                 PublishValidationError(
