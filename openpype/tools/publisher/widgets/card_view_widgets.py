@@ -178,7 +178,7 @@ class BaseGroupWidget(QtWidgets.QWidget):
 class LegacyItemsGroupWidget(BaseGroupWidget):
     def update_items(self, items_by_id):
         items_by_label = collections.defaultdict(list)
-        for item_id, item in items_by_id.items():
+        for item in items_by_id.values():
             items_by_label[item.label].append(item)
 
         # Remove instance widgets that are not in passed instances
