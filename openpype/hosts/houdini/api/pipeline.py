@@ -428,6 +428,3 @@ def on_pyblish_instance_toggled(instance, new_value, old_value):
             instance_node.bypass(not new_value)
     except hou.PermissionError as exc:
         log.warning("%s - %s", instance_node.path(), exc)
-
-
-
