@@ -32,7 +32,12 @@ class AssLoader(load.LoaderPlugin):
 
         # Create a new geo node
         procedural = obj.createNode("arnold::procedural", node_name=node_name)
-        procedural.setParms({"ar_filename": self.get_path(self.fname)})
+
+        procedural.setParms(
+            {
+                "ar_filename": self.format_path(
+                    self.fname, context["representation"])
+            })
 
         nodes = [procedural]
         self[:] = nodes
@@ -46,57 +51,14 @@ class AssLoader(load.LoaderPlugin):
             suffix="",
         )
 
-    def get_path(self, path):
-
-        # Find all frames in the folder
-        ext = ".ass.gz" if path.endswith(".ass.gz") else ".ass"
-        folder = os.path.dirname(path)
-        frames = [f for f in os.listdir(folder) if f.endswith(ext)]
-
-        # Get the collection of frames to detect frame padding
-        patterns = [clique.PATTERNS["frames"]]
-        collections, remainder = clique.assemble(frames,
-                                                 minimum_items=1,
-                                                 patterns=patterns)
-        self.log.debug("Detected collections: {}".format(collections))
-        self.log.debug("Detected remainder: {}".format(remainder))
-
-        if not collections and remainder:
-            if len(remainder) != 1:
-                raise ValueError("Frames not correctly detected "
-                                 "in: {}".format(remainder))
-
-            # A single frame without frame range detected
-            filepath = remainder[0]
-            return os.path.normpath(filepath).replace("\\", "/")
-
-        # Frames detected with a valid "frame" number pattern
-        # Then we don't want to have any remainder files found
-        assert len(collections) == 1 and not remainder
-        collection = collections[0]
-
-        num_frames = len(collection.indexes)
-        if num_frames == 1:
-            # Return the input path without dynamic $F variable
-            result = path
-        else:
-            # More than a single frame detected - use $F{padding}
-            fname = "{}$F{}{}".format(collection.head,
-                                      collection.padding,
-                                      collection.tail)
-            result = os.path.join(folder, fname)
-
-        # Format file name, Houdini only wants forward slashes
-        return os.path.normpath(result).replace("\\", "/")
-
     def update(self, container, representation):
 
         # Update the file path
         file_path = get_representation_path(representation)
-        file_path = file_path.replace("\\", "/")
+        file_path = self.format_path(file_path, representation)
 
         procedural = container["node"]
-        procedural.setParms({"ar_filename": self.get_path(file_path)})
+        procedural.setParms({"ar_filename": file_path})
 
         # Update attribute
         procedural.setParms({"representation": str(representation["_id"])})
@@ -105,3 +67,23 @@ class AssLoader(load.LoaderPlugin):
 
         node = container["node"]
         node.destroy()
+
+    @staticmethod
+    def format_path(path, representation):
+        """Format file path correctly for single bgeo or bgeo sequence."""
+        if not os.path.exists(path):
+            raise RuntimeError("Path does not exist: %s" % path)
+
+        is_sequence = bool(representation["context"].get("frame"))
+        # The path is either a single file or sequence in a folder.
+        if not is_sequence:
+            filename = path
+        else:
+            filename = re.sub(r"(.*)\.(\d+)\.(ass.*)", "\\1.$F4.\\3", path)
+
+            filename = os.path.join(path, filename)
+
+        filename = os.path.normpath(filename)
+        filename = filename.replace("\\", "/")
+
+        return filename
