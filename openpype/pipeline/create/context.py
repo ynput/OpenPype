@@ -1074,6 +1074,11 @@ class CreateContext:
         Reloads creators from preregistered paths and can load publish plugins
         if it's enabled on context.
         """
+
+        self._reset_publish_plugins(discover_publish_plugins)
+        self._reset_creator_plugins()
+
+    def _reset_publish_plugins(self, discover_publish_plugins):
         import pyblish.logic
 
         from openpype.pipeline import OpenPypePyblishPluginMixin
@@ -1115,6 +1120,7 @@ class CreateContext:
         self.publish_plugins = plugins_by_targets
         self.plugins_with_defs = plugins_with_defs
 
+    def _reset_creator_plugins(self):
         # Prepare settings
         system_settings = get_system_settings()
         project_settings = get_project_settings(self.project_name)
