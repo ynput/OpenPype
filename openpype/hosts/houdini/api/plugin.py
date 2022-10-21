@@ -133,7 +133,7 @@ class HoudiniCreator(NewCreator):
 
             # wondering if we'll ever need more than one member here
             # in Houdini
-            instance_data["members"] = [instance_node.path()]
+            # instance_data["members"] = [instance_node.path()]
             instance_data["instance_node"] = instance_node.path()
 
             instance = CreatedInstance(
@@ -167,7 +167,12 @@ class HoudiniCreator(NewCreator):
                 self.log.debug("missing lock pattern {}".format(name))
 
     def collect_instances(self):
-        for instance in list_instances(creator_id=self.identifier):
+        instances = [i for i in self.collection_shared_data.get(
+            "houdini_cached_instances", []) if i.paramEval("creator_identifier") == self.identifier]
+        if not instances:
+            print("not using cached instances")
+            instances = list_instances(creator_id=self.identifier)
+        for instance in instances:
             created_instance = CreatedInstance.from_existing(
                 read(instance), self
             )

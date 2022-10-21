@@ -435,10 +435,13 @@ def list_instances(creator_id=None):
 
     """
     instance_signature = {
-        "id": "pyblish.avalon.instance",
-        "identifier": creator_id
+        "id": "pyblish.avalon.instance"
     }
-    return lib.lsattrs(instance_signature)
+
+    return [
+        i for i in lib.lsattrs(instance_signature)
+        if i.paramEval("creator_identifier") == creator_id
+    ]
 
 
 def remove_instance(instance):
@@ -448,12 +451,8 @@ def remove_instance(instance):
     because it might contain valuable data for artist.
 
     """
-    nodes = instance.get("members")
-    if not nodes:
-        return
-
     # Assume instance node is first node
-    instance_node = hou.node(nodes[0])
+    instance_node = hou.node(instance.data.get("instance_node"))
     to_delete = None
     for parameter in instance_node.spareParms():
         if parameter.name() == "id" and \
