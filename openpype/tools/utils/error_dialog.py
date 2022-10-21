@@ -91,11 +91,12 @@ class ErrorMessageBox(QtWidgets.QDialog):
         footer_layout.addWidget(ok_btn, 0)
 
         bottom_line = self._create_line()
-        body_layout = QtWidgets.QVBoxLayout(self)
-        body_layout.addWidget(top_widget, 0)
-        body_layout.addWidget(content_scroll, 1)
-        body_layout.addWidget(bottom_line, 0)
-        body_layout.addLayout(footer_layout, 0)
+        main_layout = QtWidgets.QVBoxLayout(self)
+        if top_widget is not None:
+            main_layout.addWidget(top_widget, 0)
+        main_layout.addWidget(content_scroll, 1)
+        main_layout.addWidget(bottom_line, 0)
+        main_layout.addWidget(footer_widget, 0)
 
         copy_report_btn.clicked.connect(self._on_copy_report)
         ok_btn.clicked.connect(self._on_ok_clicked)
