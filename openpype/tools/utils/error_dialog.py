@@ -132,7 +132,8 @@ class ErrorMessageBox(QtWidgets.QDialog):
         self.close()
 
     def _on_copy_report(self):
-        report_text = (10 * "*").join(self._report_data)
+        sep = "\n{}\n".format(10 * "*")
+        report_text = sep.join(self._report_data)
 
         mime_data = QtCore.QMimeData()
         mime_data.setText(report_text)
