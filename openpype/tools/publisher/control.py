@@ -1234,6 +1234,14 @@ class AbstractPublisherController(object):
 
         pass
 
+    @abstractproperty
+    def legacy_items(self):
+        pass
+
+    @abstractmethod
+    def convert_legacy_items(self, convertor_identifiers):
+        pass
+
     @abstractmethod
     def set_comment(self, comment):
         """Set comment on pyblish context.
@@ -1599,6 +1607,10 @@ class PublisherController(BasePublisherController):
         return self._create_context.instances_by_id
 
     @property
+    def legacy_items(self):
+        return self._create_context.legacy_items_by_id
+
+    @property
     def _creators(self):
         """All creators loaded in create context."""
 
@@ -1716,6 +1728,7 @@ class PublisherController(BasePublisherController):
         self._create_context.reset_context_data()
         with self._create_context.bulk_instances_collection():
             self._create_context.reset_instances()
+            self._create_context.find_legacy_items()
             self._create_context.execute_autocreators()
 
         self._resetting_instances = False
@@ -1840,6 +1853,12 @@ class PublisherController(BasePublisherController):
         return creator.get_subset_name(
             variant, task_name, asset_doc, project_name, instance=instance
         )
+
+    def convert_legacy_items(self, convertor_identifiers):
+        for convertor_identifier in convertor_identifiers:
+            self._create_context.run_convertor(convertor_identifier)
+        self._on_create_instance_change()
+        self.emit_card_message("Conversion finished")
 
     def create(
         self, creator_identifier, subset_name, instance_data, options
