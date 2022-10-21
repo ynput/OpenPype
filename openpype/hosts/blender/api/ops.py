@@ -17,7 +17,7 @@ from bpy.props import EnumProperty
 import bpy.utils.previews
 
 from openpype import style
-from openpype.client.entities import get_asset_by_name, get_subset_by_id, get_version_by_id
+from openpype.client.entities import get_assets, get_asset_by_name, get_subset_by_id, get_version_by_id
 from openpype.hosts.blender.api.lib import ls
 from openpype.pipeline import legacy_io
 from openpype.pipeline.constants import AVALON_INSTANCE_ID
@@ -341,19 +341,6 @@ class LaunchLibrary(LaunchQtApp):
         self._window.refresh()
 
 
-def _check_name_validity(asset_name: str) -> bool:
-    """Make sure asset name is valid by getting asset from DB.
-
-    Args:
-        asset_name (str): Asset name to check entry exists
-
-    Returns:
-        bool: If asset exists
-    """
-    project_name = legacy_io.active_project()
-    asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
-    return bool(asset_doc)
-
 def _update_entries_preset(self, _context):
     """Update some entries with a preset.
 
@@ -429,35 +416,13 @@ class SimpleOperator(bpy.types.Operator):
         update=_update_entries_preset,
     )
 
-    # Asset Name
-    def _get_asset_name(self: bpy.types.Operator) -> str:
-        """Asset Name getter.
-
-        Args:
-            self (bpy.types.Operator): Current running operator
-
-        Returns:
-            str: Asset name
-        """
-        return self.get("asset_name", "")
-
-    def _set_asset_name(self: bpy.types.Operator, value: str):
-        """Asset Name setter.
-
-        Args:
-            self (bpy.types.Operator): Current running operator
-            value (str): New value for property
-        """
-        # Set value
-        self["asset_name"] = value
-
-        # Check asset name is valid
-        self.name_is_valid = _check_name_validity(value)
-        if not self.name_is_valid:
-            return
-
-    asset_name: bpy.props.StringProperty(
-        name="Asset Name", set=_set_asset_name, get=_get_asset_name
+    asset_name: EnumProperty(
+        name="Asset Name",
+        # Items are defaults from current creator plugin
+        items=lambda _, __: [
+            (asset_doc["name"], asset_doc["name"], "")
+            for asset_doc in get_assets(legacy_io.active_project())
+        ]
     )
 
     # Variant
@@ -475,7 +440,6 @@ class SimpleOperator(bpy.types.Operator):
     )
 
     subset_name: bpy.props.StringProperty(name="Subset Name")
-    name_is_valid: bpy.props.BoolProperty(name="Name is valid")
     use_selection: bpy.props.BoolProperty(name="Use selection")
     datapath: EnumProperty(
         name="Data type",
@@ -502,7 +466,6 @@ class SimpleOperator(bpy.types.Operator):
         layout = self.layout
 
         layout.prop(self, "creator")
-        layout.alert = not self.name_is_valid
         layout.prop(self, "asset_name")
 
         # Variant with defaults list
