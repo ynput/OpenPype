@@ -354,6 +354,63 @@ def _check_name_validity(asset_name: str) -> bool:
     asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
     return bool(asset_doc)
 
+def _update_entries_preset(self, _context):
+    """Update some entries with a preset.
+
+    - Set `datapath`'s value to the first item of the list to avoid `None` values when
+    the length of the items list reduces.
+    - Update variant name to the first item. TODO available variant names
+    """
+    creator_plugin = get_legacy_creator_by_name(self.creator)
+
+    # Set default datapath
+    self.datapath = BL_TYPE_DATAPATH.get(creator_plugin.bl_types[0])
+
+    # Change names
+    # Check if Creator plugin has set defaults
+    if creator_plugin.defaults and isinstance(
+        creator_plugin.defaults, (list, tuple, set)
+    ):
+        self.variant_default = creator_plugin.defaults[0]
+
+
+def _update_subset_name(self: bpy.types.Operator, _context: bpy.types.Context):
+    """Update subset name by getting the family name from the creator plugin.
+
+    Args:
+        self (bpy.types.Operator): Current running operator
+        _context (bpy.types.Context): Current context
+    """
+    project_name = legacy_io.active_project()
+    asset_doc = get_asset_by_name(
+        project_name, self.asset_name, fields=["_id"]
+    )
+    task_name = legacy_io.Session["AVALON_TASK"]
+
+    # Get creator plugin
+    creator_plugin = get_legacy_creator_by_name(self.creator)
+
+    # Build subset name and set it
+    self.subset_name = get_subset_name(
+        creator_plugin.family,
+        self.variant_name,
+        task_name,
+        asset_doc,
+        project_name,
+    )
+
+
+def _update_variant_name(
+    self: bpy.types.Operator, _context: bpy.types.Context
+):
+    """Update subset name by getting the family name from the creator plugin.
+
+    Args:
+        self (bpy.types.Operator): Current running operator
+        _context (bpy.types.Context): Current context
+    """
+    self.variant_name = self.variant_default
+
 
 class SimpleOperator(bpy.types.Operator):
     """Create OpenPype instance"""
@@ -361,28 +418,8 @@ class SimpleOperator(bpy.types.Operator):
     bl_idname = "scene.simple_operator"
     bl_label = "Simple Object Operator"
 
-    # Creator used
-    def _update_entries_preset(self, _context):
-        """Update some entries with a preset.
-
-        - Set `datapath`'s value to the first item of the list to avoid `None` values when
-        the length of the items list reduces.
-        - Update variant name to the first item. TODO available variant names
-        """
-        creator_plugin = get_legacy_creator_by_name(self.family)
-
-        # Set default datapath
-        self.datapath = BL_TYPE_DATAPATH.get(creator_plugin.bl_types[0])
-
-        # Change names
-        # Check if Creator plugin has set defaults
-        if creator_plugin.defaults and isinstance(
-            creator_plugin.defaults, (list, tuple, set)
-        ):
-            self.variant_name = creator_plugin.defaults[0]
-
     creator: EnumProperty(
-        name="Family",
+        name="Creator",
         # Items from all creator plugins, referenced by their class name, label is displayed in UI
         # creator class name is used later to get the creator plugin
         items=lambda _, __: (
@@ -423,36 +460,18 @@ class SimpleOperator(bpy.types.Operator):
         name="Asset Name", set=_set_asset_name, get=_get_asset_name
     )
 
-    # Variant name
-    def _update_subset_name(
-        self: bpy.types.Operator, _context: bpy.types.Context
-    ):
-        """Update subset name by getting the family name from the creator plugin.
-
-        Args:
-            self (bpy.types.Operator): Current running operator
-            _context (bpy.types.Context): Current context
-        """
-        project_name = legacy_io.active_project()
-        asset_doc = get_asset_by_name(
-            project_name, self.asset_name, fields=["_id"]
-        )
-        task_name = legacy_io.Session["AVALON_TASK"]
-
-        # Get creator plugin
-        creator_plugin = get_legacy_creator_by_name(self.family)
-
-        # Build subset name and set it
-        self.subset_name = get_subset_name(
-            creator_plugin.family,
-            self.variant_name,
-            task_name,
-            asset_doc,
-            project_name,
-        )
-
+    # Variant
     variant_name: bpy.props.StringProperty(
         name="Variant Name", update=_update_subset_name
+    )
+    variant_default: EnumProperty(
+        name="Variant Defaults",
+        # Items are defaults from current creator plugin
+        items=lambda self, _: [
+            (default, default, "")
+            for default in get_legacy_creator_by_name(self.creator).defaults
+        ],
+        update=_update_variant_name,
     )
 
     subset_name: bpy.props.StringProperty(name="Subset Name")
@@ -464,7 +483,7 @@ class SimpleOperator(bpy.types.Operator):
         # Matching the appropriate datapath using the bl_types field which lists all relevant data types
         items=lambda self, _: [
             (BL_TYPE_DATAPATH.get(bl_type), bl_type.__name__, "")
-            for bl_type in get_legacy_creator_by_name(self.family).bl_types
+            for bl_type in get_legacy_creator_by_name(self.creator).bl_types
         ],
     )
     datablock: bpy.props.StringProperty(name="Datablock")
@@ -473,7 +492,7 @@ class SimpleOperator(bpy.types.Operator):
         self.asset_name = legacy_io.Session["AVALON_ASSET"]
 
         # Setup all data
-        self._update_entries_preset(self, None)
+        _update_entries_preset(self, None)
 
     def invoke(self, context, _event):
         wm = context.window_manager
@@ -482,10 +501,15 @@ class SimpleOperator(bpy.types.Operator):
     def draw(self, _context):
         layout = self.layout
 
-        layout.prop(self, "family")
+        layout.prop(self, "creator")
         layout.alert = not self.name_is_valid
         layout.prop(self, "asset_name")
-        layout.prop(self, "variant_name")  # TODO list of variants
+
+        # Variant with defaults list
+        sublayout = layout.row(align=True)
+        sublayout.prop(self, "variant_name")
+        sublayout.prop(self, "variant_default", icon_only=True)
+
         # Subset name preview
         sublayout = layout.row()
         sublayout.enabled = False
@@ -503,10 +527,6 @@ class SimpleOperator(bpy.types.Operator):
             row = layout.row(align=True)
 
             creator_plugin = get_legacy_creator_by_name(self.creator)
-            if (
-                len(creator_plugin.bl_types) > 1
-            ):  # Only if several types can match
-                row.prop(self, "datapath", text="", icon_only=True)
 
             # Search data into list
             data_path, search_field = self.datapath.rsplit(
@@ -517,6 +537,10 @@ class SimpleOperator(bpy.types.Operator):
             ) if self.datapath else layout.label(
                 text=f"Not supported family: {self.creator}"
             )
+
+            # Pick list if several possibilities match
+            if len(creator_plugin.bl_types) > 1:
+                row.prop(self, "datapath", text="", icon_only=True)
 
     def execute(self, _context):
         # Run creator

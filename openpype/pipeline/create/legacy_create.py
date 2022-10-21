@@ -164,7 +164,7 @@ class LegacyCreator(object):
         )
 
 
-def legacy_create(Creator, name, asset, options=None, data=None):
+def legacy_create(Creator, name, asset, options=None, data=None, switch_to_main_thread=True):
     """Create a new instance
 
     Associate nodes with a subset and family. These nodes are later
@@ -181,6 +181,7 @@ def legacy_create(Creator, name, asset, options=None, data=None):
         asset (str): Name of asset
         options (dict, optional): Additional options from GUI
         data (dict, optional): Additional data from GUI
+        switch_to_main_thread (bool): Run process in main thread in case creator is executed from another
 
     Raises:
         NameError on `subset` already exists
@@ -196,12 +197,15 @@ def legacy_create(Creator, name, asset, options=None, data=None):
     host = registered_host()
     plugin = Creator(name, asset, options, data)
 
+    # Pick the correct process function
+    process_func = plugin.process if switch_to_main_thread else plugin._process
+
     if plugin.maintain_selection is True:
         with host.maintained_selection():
             print("Running %s with maintained selection" % plugin)
-            instance = plugin.process()
+            instance = process_func()
         return instance
 
     print("Running %s" % plugin)
-    instance = plugin.process()
+    instance = process_func()
     return instance
