@@ -430,32 +430,4 @@ def on_pyblish_instance_toggled(instance, new_value, old_value):
         log.warning("%s - %s", instance_node.path(), exc)
 
 
-def list_instances(creator_id=None):
-    """List all publish instances in the scene.
 
-    """
-    instance_signature = {
-        "id": "pyblish.avalon.instance"
-    }
-
-    return [
-        i for i in lib.lsattrs(instance_signature)
-        if i.parm("creator_identifier").eval() == creator_id
-    ]
-
-
-def remove_instance(instance):
-    """Remove specified instance from the scene.
-
-    This is only removing `id` parameter so instance is no longer instance,
-    because it might contain valuable data for artist.
-
-    """
-    # Assume instance node is first node
-    instance_node = hou.node(instance.data.get("instance_node"))
-    to_delete = None
-    for parameter in instance_node.spareParms():
-        if parameter.name() == "id" and \
-                parameter.eval() == "pyblish.avalon.instance":
-            to_delete = parameter
-    instance_node.removeSpareParmTuple(to_delete)

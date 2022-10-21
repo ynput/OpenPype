@@ -13,8 +13,7 @@ from openpype.pipeline import (
     CreatedInstance
 )
 from openpype.lib import BoolDef
-from openpype.hosts.houdini.api import list_instances, remove_instance
-from .lib import imprint, read
+from .lib import imprint, read, lsattr
 
 
 class OpenPypeCreatorError(CreatorError):
@@ -167,7 +166,11 @@ class HoudiniCreator(NewCreator):
             "houdini_cached_instances", {})
         instances = cached_instances.get(self.identifier)
         if not instances:
-            instances = list_instances(creator_id=self.identifier)
+            instances = [
+                i for i in lsattr("id", "pyblish.avalon.instance")
+                if i.parm("creator_identifier").eval() == self.identifier
+            ]
+
             if not self.collection_shared_data.get(
                     "houdini_cached_instances"):
                 self.collection_shared_data["houdini_cached_instances"] = {}
@@ -194,8 +197,21 @@ class HoudiniCreator(NewCreator):
             )
 
     def remove_instances(self, instances):
+        """Remove specified instance from the scene.
+
+            This is only removing `id` parameter so instance is no longer
+            instance,
+            because it might contain valuable data for artist.
+
+            """
         for instance in instances:
-            remove_instance(instance)
+            instance_node = hou.node(instance.data.get("instance_node"))
+            to_delete = None
+            for parameter in instance_node.spareParms():
+                if parameter.name() == "id" and \
+                        parameter.eval() == "pyblish.avalon.instance":
+                    to_delete = parameter
+            instance_node.removeSpareParmTuple(to_delete)
             self._remove_instance_from_context(instance)
 
     def get_pre_create_attr_defs(self):
