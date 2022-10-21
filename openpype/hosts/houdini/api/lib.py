@@ -310,6 +310,9 @@ def imprint(node, data, update=False):
     """
     if not data:
         return
+    if not node:
+        self.log.error("Node is not set, calling imprint on invalid data.")
+        return
 
     current_parms = {p.name(): p for p in node.spareParms()}
     update_parms = []
