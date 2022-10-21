@@ -1500,3 +1500,8 @@ class CreateContext:
                 "Accessed Collection shared data out of collection phase"
             )
         return self._collection_shared_data
+
+    def run_convertor(self, convertor_identifier):
+        convertor = self.legacy_convertors.get(convertor_identifier)
+        if convertor is not None:
+            convertor.convert()
