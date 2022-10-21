@@ -30,11 +30,18 @@ class CreatePointCache(plugin.HoudiniCreator):
             "prim_to_detail_pattern": "cbId",
             "format": 2,
             "facesets": 0,
-            "filename": "$HIP/pyblish/{}.abc".format(subset_name)
+            "filename": hou.text.expandString(
+                "$HIP/pyblish/{}.abc".format(subset_name))
         }
 
         if self.selected_nodes:
             parms["sop_path"] = self.selected_nodes[0].path()
+
+            # try to find output node
+            for child in self.selected_nodes[0].children():
+                if child.type().name() == "output":
+                    parms["sop_path"] = child.path()
+                    break
 
         instance_node.setParms(parms)
         instance_node.parm("trange").set(1)

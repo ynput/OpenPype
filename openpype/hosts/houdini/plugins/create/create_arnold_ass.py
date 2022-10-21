@@ -28,23 +28,22 @@ class CreateArnoldAss(plugin.HoudiniCreator):
 
         instance_node = hou.node(instance.get("instance_node"))
 
-        basename = instance_node.name()
-        instance_node.setName(basename + "_ASS", unique_name=True)
-
         # Hide Properties Tab on Arnold ROP since that's used
         # for rendering instead of .ass Archive Export
         parm_template_group = instance_node.parmTemplateGroup()
         parm_template_group.hideFolder("Properties", True)
         instance_node.setParmTemplateGroup(parm_template_group)
 
-        filepath = "$HIP/pyblish/{}.$F4{}".format(subset_name, self.ext)
+        filepath = "{}{}".format(
+            hou.text.expandString("$HIP/pyblish/"),
+            "{}.$F4{}".format(subset_name, self.ext)
+        )
         parms = {
             # Render frame range
             "trange": 1,
             # Arnold ROP settings
             "ar_ass_file": filepath,
-            "ar_ass_export_enable": 1,
-            "filename": filepath
+            "ar_ass_export_enable": 1
         }
 
         instance_node.setParms(parms)

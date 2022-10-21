@@ -12,6 +12,8 @@ class CreateCompositeSequence(plugin.HoudiniCreator):
     family = "imagesequence"
     icon = "gears"
 
+    ext = ".exr"
+
     def create(self, subset_name, instance_data, pre_create_data):
         import hou  # noqa
 
@@ -24,8 +26,12 @@ class CreateCompositeSequence(plugin.HoudiniCreator):
             pre_create_data)  # type: CreatedInstance
 
         instance_node = hou.node(instance.get("instance_node"))
-        filepath = "$HIP/pyblish/{}.$F4.exr".format(subset_name)
+        filepath = "{}{}".format(
+            hou.text.expandString("$HIP/pyblish/"),
+            "{}.$F4{}".format(subset_name, self.ext)
+        )
         parms = {
+            "trange": 1,
             "copoutput": filepath
         }
 
