@@ -6,6 +6,7 @@ from openpype import (
     style
 )
 from openpype.tools.utils import (
+    ErrorMessageBox,
     PlaceholderLineEdit,
     MessageOverlayObject,
     PixmapLabel,
@@ -223,9 +224,11 @@ class PublisherWindow(QtWidgets.QDialog):
         # Floating publish frame
         publish_frame = PublishFrame(controller, self.footer_border, self)
 
-        dialog_message_timer = QtCore.QTimer()
-        dialog_message_timer.setInterval(100)
-        dialog_message_timer.timeout.connect(self._on_dialog_message_timeout)
+        creators_dialog_message_timer = QtCore.QTimer()
+        creators_dialog_message_timer.setInterval(100)
+        creators_dialog_message_timer.timeout.connect(
+            self._on_creators_message_timeout
+        )
 
         help_btn.clicked.connect(self._on_help_click)
         tabs_widget.tab_changed.connect(self._on_tab_change)
@@ -273,6 +276,9 @@ class PublisherWindow(QtWidgets.QDialog):
         controller.event_system.add_callback(
             "instances.remove.failed", self._instance_remove_failed
         )
+        controller.event_system.add_callback(
+            "instances.create.failed", self._instance_create_failed
+        )
 
         # Store extra header widget for TrayPublisher
         # - can be used to add additional widgets to header between context
@@ -319,8 +325,8 @@ class PublisherWindow(QtWidgets.QDialog):
         self._restart_timer = None
         self._publish_frame_visible = None
 
-        self._dialog_messages_to_show = collections.deque()
-        self._dialog_message_timer = dialog_message_timer
+        self._creators_messages_to_show = collections.deque()
+        self._creators_dialog_message_timer = creators_dialog_message_timer
 
         self._set_publish_visibility(False)
 
@@ -598,58 +604,127 @@ class PublisherWindow(QtWidgets.QDialog):
             0, window_size.height() - height
         )
 
-    def add_message_dialog(self, message, title):
-        self._dialog_messages_to_show.append((message, title))
-        self._dialog_message_timer.start()
+    def add_message_dialog(self, title, failed_info):
+        self._creators_messages_to_show.append((title, failed_info))
+        self._creators_dialog_message_timer.start()
 
-    def _on_dialog_message_timeout(self):
-        if not self._dialog_messages_to_show:
-            self._dialog_message_timer.stop()
+    def _on_creators_message_timeout(self):
+        if not self._creators_messages_to_show:
+            self._creators_dialog_message_timer.stop()
             return
 
-        item = self._dialog_messages_to_show.popleft()
-        message, title = item
-        dialog = MessageDialog(message, title, self)
+        item = self._creators_messages_to_show.popleft()
+        title, failed_info = item
+        dialog = CreatorsErrorMessageBox(title, failed_info, self)
         dialog.exec_()
         dialog.deleteLater()
 
     def _instance_collection_failed(self, event):
-        self.add_message_dialog(event["message"], event["title"])
+        self.add_message_dialog(event["title"], event["failed_info"])
 
     def _instance_save_failed(self, event):
-        self.add_message_dialog(event["message"], event["title"])
+        self.add_message_dialog(event["title"], event["failed_info"])
 
     def _instance_remove_failed(self, event):
-        self.add_message_dialog(event["message"], event["title"])
+        self.add_message_dialog(event["title"], event["failed_info"])
+
+    def _instance_create_failed(self, event):
+        self.add_message_dialog(event["title"], event["failed_info"])
 
 
-class MessageDialog(QtWidgets.QDialog):
-    def __init__(self, message, title, parent=None):
-        super(MessageDialog, self).__init__(parent)
+class CreatorsErrorMessageBox(ErrorMessageBox):
+    def __init__(self, error_title, failed_info, parent):
+        self._failed_info = failed_info
+        self._info_with_id = [
+            {"id": idx, "info": info}
+            for idx, info in enumerate(failed_info)
+        ]
+        self._widgets_by_id = {}
+        self._tabs_widget = None
+        self._stack_layout = None
 
-        self.setWindowTitle(title or "Something happend")
+        super(CreatorsErrorMessageBox, self).__init__(error_title, parent)
 
-        message_widget = QtWidgets.QLabel(message, self)
-        message_widget.setWordWrap(True)
+        layout = self.layout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
-        btns_widget = QtWidgets.QWidget(self)
-        submit_btn = QtWidgets.QPushButton("OK", btns_widget)
+        footer_layout = self._footer_widget.layout()
+        footer_layout.setContentsMargins(5, 5, 5, 5)
 
-        btns_layout = QtWidgets.QHBoxLayout(btns_widget)
-        btns_layout.setContentsMargins(0, 0, 0, 0)
-        btns_layout.addStretch(1)
-        btns_layout.addWidget(submit_btn)
+    def _create_top_widget(self, parent_widget):
+        return None
 
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(message_widget, 0)
-        layout.addStretch(1)
-        layout.addWidget(btns_widget, 0)
+    def _get_report_data(self):
+        output = []
+        for info in self._failed_info:
+            creator_label = info["creator_label"]
+            creator_identifier = info["creator_identifier"]
+            report_message = "Creator:"
+            if creator_label:
+                report_message += " {} ({})".format(
+                    creator_label, creator_identifier)
+            else:
+                report_message += " {}".format(creator_identifier)
 
-        submit_btn.clicked.connect(self._on_submit_click)
+            report_message += "\n\nError: {}".format(info["message"])
+            formatted_traceback = info["traceback"]
+            if formatted_traceback:
+                report_message += "\n\n{}".format(formatted_traceback)
+            output.append(report_message)
+        return output
 
-    def _on_submit_click(self):
-        self.close()
+    def _create_content(self, content_layout):
+        tabs_widget = PublisherTabsWidget(self)
 
-    def showEvent(self, event):
-        super(MessageDialog, self).showEvent(event)
-        self.resize(400, 200)
+        stack_widget = QtWidgets.QFrame(self._content_widget)
+        stack_layout = QtWidgets.QStackedLayout(stack_widget)
+
+        first = True
+        for item in self._info_with_id:
+            item_id = item["id"]
+            info = item["info"]
+            message = info["message"]
+            formatted_traceback = info["traceback"]
+            creator_label = info["creator_label"]
+            creator_identifier = info["creator_identifier"]
+            if not creator_label:
+                creator_label = creator_identifier
+
+            msg_widget = QtWidgets.QWidget(stack_widget)
+            msg_layout = QtWidgets.QVBoxLayout(msg_widget)
+
+            exc_msg_template = "<span style='font-weight:bold'>{}</span>"
+            message_label_widget = QtWidgets.QLabel(msg_widget)
+            message_label_widget.setText(
+                exc_msg_template.format(self.convert_text_for_html(message))
+            )
+            msg_layout.addWidget(message_label_widget, 0)
+
+            if formatted_traceback:
+                line_widget = self._create_line(msg_widget)
+                tb_widget = self._create_traceback_widget(formatted_traceback)
+                msg_layout.addWidget(line_widget, 0)
+                msg_layout.addWidget(tb_widget, 0)
+
+            msg_layout.addStretch(1)
+
+            tabs_widget.add_tab(creator_label, item_id)
+            stack_layout.addWidget(msg_widget)
+            if first:
+                first = False
+                stack_layout.setCurrentWidget(msg_widget)
+
+            self._widgets_by_id[item_id] = msg_widget
+
+        content_layout.addWidget(tabs_widget, 0)
+        content_layout.addWidget(stack_widget, 1)
+
+        tabs_widget.tab_changed.connect(self._on_tab_change)
+
+        self._tabs_widget = tabs_widget
+        self._stack_layout = stack_layout
+
+    def _on_tab_change(self, identifier):
+        widget = self._widgets_by_id[identifier]
+        self._stack_layout.setCurrentWidget(widget)
