@@ -1107,6 +1107,8 @@ class AbstractPublisherController(object):
             options (Dict[str, Any]): Data from pre-create attributes.
         """
 
+        pass
+
     def save_changes(self):
         """Save changes in create context."""
 
@@ -1716,14 +1718,24 @@ class PublisherController(BasePublisherController):
         with self._create_context.bulk_instances_collection():
             try:
                 self._create_context.reset_instances()
-                self._create_context.execute_autocreators()
-
             except CreatorsOperationFailed as exc:
                 self._emit_event(
                     "instances.collection.failed",
                     {
                         "title": "Instance collection failed",
-                        "message": str(exc)
+                        "failed_info": exc.failed_info
+                    }
+                )
+
+            try:
+                self._create_context.execute_autocreators()
+
+            except CreatorsOperationFailed as exc:
+                self._emit_event(
+                    "instances.create.failed",
+                    {
+                        "title": "AutoCreation failed",
+                        "failed_info": exc.failed_info
                     }
                 )
 
@@ -1854,10 +1866,24 @@ class PublisherController(BasePublisherController):
         self, creator_identifier, subset_name, instance_data, options
     ):
         """Trigger creation and refresh of instances in UI."""
-        creator = self._creators[creator_identifier]
-        creator.create(subset_name, instance_data, options)
+
+        success = True
+        try:
+            self._create_context.create(
+                creator_identifier, subset_name, instance_data, options
+            )
+        except CreatorsOperationFailed as exc:
+            success = False
+            self._emit_event(
+                "instances.create.failed",
+                {
+                    "title": "Creation failed",
+                    "failed_info": exc.failed_info
+                }
+            )
 
         self._on_create_instance_change()
+        return success
 
     def save_changes(self):
         """Save changes happened during creation."""
@@ -1866,12 +1892,13 @@ class PublisherController(BasePublisherController):
 
         try:
             self._create_context.save_changes()
+
         except CreatorsOperationFailed as exc:
             self._emit_event(
                 "instances.save.failed",
                 {
-                    "title": "Save failed",
-                    "message": str(exc)
+                    "title": "Instances save failed",
+                    "failed_info": exc.failed_info
                 }
             )
 
@@ -1902,8 +1929,8 @@ class PublisherController(BasePublisherController):
             self._emit_event(
                 "instances.remove.failed",
                 {
-                    "title": "Remove failed",
-                    "message": str(exc)
+                    "title": "Instance removement failed",
+                    "failed_info": exc.failed_info
                 }
             )
 
