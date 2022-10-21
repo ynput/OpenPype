@@ -168,11 +168,14 @@ class HoudiniCreator(NewCreator):
 
     def collect_instances(self):
         cached_instances = self.collection_shared_data.get(
-            "houdini_cached_instances")
+            "houdini_cached_instances", {})
         instances = cached_instances.get(self.identifier)
         if not instances:
-            print("not using cached instances")
             instances = list_instances(creator_id=self.identifier)
+            if not self.collection_shared_data.get(
+                    "houdini_cached_instances"):
+                self.collection_shared_data["houdini_cached_instances"] = {}
+            self.log.info("Caching instances for {}".format(self.identifier))
             self.collection_shared_data["houdini_cached_instances"][self.identifier] = instances  # noqa: E401
         for instance in instances:
             created_instance = CreatedInstance.from_existing(
