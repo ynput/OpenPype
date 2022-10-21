@@ -85,7 +85,9 @@ class ErrorMessageBox(QtWidgets.QDialog):
         copy_report_btn = QtWidgets.QPushButton("Copy report", self)
         ok_btn = QtWidgets.QPushButton("OK", self)
 
-        footer_layout = QtWidgets.QHBoxLayout()
+        footer_widget = QtWidgets.QWidget(self)
+        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
+        footer_layout.setContentsMargins(0, 0, 0, 0)
         footer_layout.addWidget(copy_report_btn, 0)
         footer_layout.addStretch(1)
         footer_layout.addWidget(ok_btn, 0)
@@ -107,6 +109,8 @@ class ErrorMessageBox(QtWidgets.QDialog):
         if not report_data:
             copy_report_btn.setVisible(False)
 
+        self._content_scroll = content_scroll
+        self._footer_widget = footer_widget
         self._report_data = report_data
 
     @staticmethod
