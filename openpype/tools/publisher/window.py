@@ -636,7 +636,8 @@ class CreatorsErrorMessageBox(ErrorMessageBox):
     def __init__(self, error_title, failed_info, parent):
         self._failed_info = failed_info
         self._info_with_id = [
-            {"id": idx, "info": info}
+            # Id must be string when used in tab widget
+            {"id": str(idx), "info": info}
             for idx, info in enumerate(failed_info)
         ]
         self._widgets_by_id = {}
@@ -725,6 +726,6 @@ class CreatorsErrorMessageBox(ErrorMessageBox):
         self._tabs_widget = tabs_widget
         self._stack_layout = stack_layout
 
-    def _on_tab_change(self, identifier):
+    def _on_tab_change(self, old_identifier, identifier):
         widget = self._widgets_by_id[identifier]
         self._stack_layout.setCurrentWidget(widget)
