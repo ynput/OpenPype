@@ -1195,9 +1195,7 @@ class CreateContext:
                 ))
                 continue
 
-            legacy_convertors[convertor_identifier] = (
-                convertor_identifier(self)
-            )
+            legacy_convertors[convertor_identifier] = convertor_class(self)
 
         self.legacy_convertors = legacy_convertors
 
