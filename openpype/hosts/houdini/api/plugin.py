@@ -167,11 +167,13 @@ class HoudiniCreator(NewCreator):
                 self.log.debug("missing lock pattern {}".format(name))
 
     def collect_instances(self):
-        instances = [i for i in self.collection_shared_data.get(
-            "houdini_cached_instances", []) if i.paramEval("creator_identifier") == self.identifier]
+        cached_instances = self.collection_shared_data.get(
+            "houdini_cached_instances")
+        instances = cached_instances.get(self.identifier)
         if not instances:
             print("not using cached instances")
             instances = list_instances(creator_id=self.identifier)
+            self.collection_shared_data["houdini_cached_instances"][self.identifier] = instances  # noqa: E401
         for instance in instances:
             created_instance = CreatedInstance.from_existing(
                 read(instance), self
