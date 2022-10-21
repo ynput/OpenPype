@@ -852,6 +852,29 @@ class CreatedInstance:
                     self[key] = new_value
 
 
+class LegacyInstancesItem(object):
+    """Item representing convertor for legacy instances.
+
+    Args:
+        identifier (str): Identifier of convertor.
+        label (str): Label which will be shown in UI.
+    """
+
+    def __init__(self, identifier, label):
+        self.identifier = identifier
+        self.label = label
+
+    def to_data(self):
+        return {
+            "identifier": self.identifier,
+            "label": self.label
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        return cls(data["identifier"], data["label"])
+
+
 class CreateContext:
     """Context of instance creation.
 
