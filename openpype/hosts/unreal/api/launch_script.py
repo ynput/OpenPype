@@ -14,8 +14,7 @@ from Qt import QtWidgets, QtCore, QtGui
 from openpype import style
 from openpype.pipeline import install_host
 from openpype.hosts.unreal.api import UnrealHost
-# from openpype.hosts.unreal import api as unreal_host
-from openpype.hosts.unreal.remote.communication_server import (
+from openpype.hosts.unreal.api.communication_server import (
     CommunicationWrapper
 )
 

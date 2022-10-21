@@ -44,7 +44,7 @@ public:
 };
 
 USTRUCT()
-struct FRpcResponse
+struct FRpcResponseResult
 {
     GENERATED_BODY()
 
@@ -54,6 +54,19 @@ public:
 
     UPROPERTY()
     FString result;
+
+    UPROPERTY()
+    int32 id;
+};
+
+USTRUCT()
+struct FRpcResponseError
+{
+    GENERATED_BODY()
+
+public:
+    UPROPERTY()
+    FString jsonrpc;
 
 	UPROPERTY()
 	struct FRpcError error;
@@ -94,6 +107,5 @@ public:
 
 private:
 	static TSharedPtr<IWebSocket> Socket;
-    static TArray<FRpcResponse> RpcResponses;
     static int32 Id;
 };
