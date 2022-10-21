@@ -37,7 +37,7 @@ class HiddenTrayPublishCreator(HiddenCreator):
     host_name = "traypublisher"
 
     def collect_instances(self):
-        for instance_data in _cache_and_get_instances():
+        for instance_data in _cache_and_get_instances(self):
             creator_id = instance_data.get("creator_identifier")
             if creator_id == self.identifier:
                 instance = CreatedInstance.from_existing(
@@ -74,7 +74,7 @@ class TrayPublishCreator(Creator):
     host_name = "traypublisher"
 
     def collect_instances(self):
-        for instance_data in _cache_and_get_instances():
+        for instance_data in _cache_and_get_instances(self):
             creator_id = instance_data.get("creator_identifier")
             if creator_id == self.identifier:
                 instance = CreatedInstance.from_existing(
