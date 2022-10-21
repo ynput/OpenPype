@@ -139,7 +139,7 @@ class ModuleUnitTest(BaseTest):
                                    overwrite=True,
                                    db_name_out=self.TEST_DB_NAME)
 
-        db_handler.setup_from_dump("openpype", backup_dir,
+        db_handler.setup_from_dump(self.TEST_OPENPYPE_NAME, backup_dir,
                                    overwrite=True,
                                    db_name_out=self.TEST_OPENPYPE_NAME)
 
