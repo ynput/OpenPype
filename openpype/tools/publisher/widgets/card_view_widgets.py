@@ -37,7 +37,8 @@ from .widgets import (
 )
 from ..constants import (
     CONTEXT_ID,
-    CONTEXT_LABEL
+    CONTEXT_LABEL,
+    CONTEXT_GROUP,
 )
 
 
@@ -284,7 +285,7 @@ class ContextCardWidget(CardWidget):
         super(ContextCardWidget, self).__init__(parent)
 
         self._id = CONTEXT_ID
-        self._group_identifier = ""
+        self._group_identifier = CONTEXT_GROUP
 
         icon_widget = PublishPixmapLabel(None, self)
         icon_widget.setObjectName("FamilyIconLabel")
@@ -595,7 +596,7 @@ class InstanceCardView(AbstractInstanceView):
                 instances_by_group[group_name]
             )
 
-        ordered_group_names = [""]
+        ordered_group_names = [CONTEXT_GROUP]
         for idx in range(self._content_layout.count()):
             if idx > 0:
                 item = self._content_layout.itemAt(idx)
@@ -749,7 +750,7 @@ class InstanceCardView(AbstractInstanceView):
 
         # If start group is not set then use context item group name
         if start_group is None:
-            start_group = ""
+            start_group = CONTEXT_GROUP
 
         # If start instance id is not filled then use context id (similar to
         #   group)
@@ -777,7 +778,7 @@ class InstanceCardView(AbstractInstanceView):
         # Go through ordered groups (from top to bottom) and change selection
         for name in self._ordered_groups:
             # Prepare sorted instance widgets
-            if name == "":
+            if name == CONTEXT_GROUP:
                 sorted_widgets = [self._context_widget]
             else:
                 group_widget = self._widgets_by_group[name]
@@ -916,13 +917,13 @@ class InstanceCardView(AbstractInstanceView):
         selected_groups = []
         selected_instances = []
         if context_selected:
-            selected_groups.append("")
+            selected_groups.append(CONTEXT_GROUP)
             selected_instances.append(CONTEXT_ID)
 
         self._context_widget.set_selected(context_selected)
 
         for group_name in self._ordered_groups:
-            if group_name == "":
+            if group_name == CONTEXT_GROUP:
                 continue
 
             group_widget = self._widgets_by_group[group_name]
