@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Creator plugin for creating alembic camera subsets."""
 from openpype.hosts.houdini.api import plugin
-from openpype.pipeline import CreatedInstance
+from openpype.pipeline import CreatedInstance, CreatorError
 
 
 class CreateAlembicCamera(plugin.HoudiniCreator):
@@ -30,7 +30,9 @@ class CreateAlembicCamera(plugin.HoudiniCreator):
         }
 
         if self.selected_nodes:
-            path = self.selected_nodes.path()
+            if len(self.selected_nodes) > 1:
+                raise CreatorError("More than one item selected.")
+            path = self.selected_nodes[0].path()
             # Split the node path into the first root and the remainder
             # So we can set the root and objects parameters correctly
             _, root, remainder = path.split("/", 2)
