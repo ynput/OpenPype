@@ -84,7 +84,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             instance.data["families"] = [instance.data["family"]]
 
             instance[:] = [node]
-            instance.data["members"] = [node]
+            instance.data["instance_node"] = node.path()
             instance.data.update(data)
 
         def sort_by_family(instance):

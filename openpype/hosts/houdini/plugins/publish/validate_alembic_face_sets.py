@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import pyblish.api
-
+import hou
 
 class ValidateAlembicROPFaceSets(pyblish.api.InstancePlugin):
     """Validate Face Sets are disabled for extraction to pointcache.
@@ -24,7 +24,7 @@ class ValidateAlembicROPFaceSets(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        rop = instance.data["members"][0]
+        rop = hou.node(instance.data["instance_node"])
         facesets = rop.parm("facesets").eval()
 
         # 0 = No Face Sets

@@ -32,19 +32,18 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_invalid(cls, instance):
-
+        import hou  # noqa
         output_node = instance.data.get("output_node")
+        rop_node = hou.node(instance.data["instance_node"])
         if output_node is None:
-            node = instance.data["members"][0]
             cls.log.error(
                 "SOP Output node in '%s' does not exist. "
-                "Ensure a valid SOP output path is set." % node.path()
+                "Ensure a valid SOP output path is set." % rop_node.path()
             )
 
-            return [node.path()]
+            return [rop_node.path()]
 
-        rop = instance.data["members"][0]
-        pattern = rop.parm("prim_to_detail_pattern").eval().strip()
+        pattern = rop_node.parm("prim_to_detail_pattern").eval().strip()
         if not pattern:
             cls.log.debug(
                 "Alembic ROP has no 'Primitive to Detail' pattern. "
@@ -52,7 +51,7 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
             )
             return
 
-        build_from_path = rop.parm("build_from_path").eval()
+        build_from_path = rop_node.parm("build_from_path").eval()
         if not build_from_path:
             cls.log.debug(
                 "Alembic ROP has 'Build from Path' disabled. "
@@ -60,14 +59,14 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
             )
             return
 
-        path_attr = rop.parm("path_attrib").eval()
+        path_attr = rop_node.parm("path_attrib").eval()
         if not path_attr:
             cls.log.error(
                 "The Alembic ROP node has no Path Attribute"
                 "value set, but 'Build Hierarchy from Attribute'"
                 "is enabled."
             )
-            return [rop.path()]
+            return [rop_node.path()]
 
         # Let's assume each attribute is explicitly named for now and has no
         # wildcards for Primitive to Detail. This simplifies the check.

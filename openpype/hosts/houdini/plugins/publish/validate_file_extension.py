@@ -5,6 +5,8 @@ import pyblish.api
 from openpype.hosts.houdini.api import lib
 from openpype.pipeline import PublishValidationError
 
+import hou
+
 
 class ValidateFileExtension(pyblish.api.InstancePlugin):
     """Validate the output file extension fits the output family.
@@ -40,7 +42,7 @@ class ValidateFileExtension(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
 
         # Get ROP node from instance
-        node = instance.data["members"][0]
+        node = hou.node(instance.data["instance_node"])
 
         # Create lookup for current family in instance
         families = []

@@ -6,6 +6,8 @@ from openpype.pipeline import PublishValidationError
 
 from pxr import UsdShade, UsdRender, UsdLux
 
+import hou
+
 
 def fullname(o):
     """Get fully qualified class name"""
@@ -38,7 +40,7 @@ class ValidateUsdModel(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        rop = instance.data["members"][0]
+        rop = hou.node(instance.get("instance_node"))
         lop_path = hou_usdlib.get_usd_rop_loppath(rop)
         stage = lop_path.stage(apply_viewport_overrides=False)
 

@@ -4,6 +4,8 @@ import pyblish.api
 from openpype.pipeline import publish
 from openpype.hosts.houdini.api.lib import render_rop, splitext
 
+import hou
+
 
 class ExtractComposite(publish.Extractor):
 
@@ -14,7 +16,7 @@ class ExtractComposite(publish.Extractor):
 
     def process(self, instance):
 
-        ropnode = instance.data["members"][0]
+        ropnode = hou.node(instance.data["instance_node"])
 
         # Get the filename from the copoutput parameter
         # `.evalParm(parameter)` will make sure all tokens are resolved

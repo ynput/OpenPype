@@ -1,6 +1,7 @@
 import pyblish.api
 
 from openpype.hosts.houdini.api import lib
+import hou
 
 
 class ValidateAnimationSettings(pyblish.api.InstancePlugin):
@@ -36,7 +37,7 @@ class ValidateAnimationSettings(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        node = instance.data["members"][0]
+        node = hou.node(instance.get("instance_node"))
 
         # Check trange parm, 0 means Render Current Frame
         frame_range = node.evalParm("trange")

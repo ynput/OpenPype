@@ -2,6 +2,7 @@
 import pyblish.api
 from openpype.pipeline import PublishValidationError
 
+import hou
 
 class ValidateBypassed(pyblish.api.InstancePlugin):
     """Validate all primitives build hierarchy from attribute when enabled.
@@ -36,6 +37,6 @@ class ValidateBypassed(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        rop = instance.data["members"][0]
+        rop = hou.node(instance.get("instance_node"))
         if hasattr(rop, "isBypassed") and rop.isBypassed():
             return [rop]

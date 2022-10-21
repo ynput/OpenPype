@@ -2,6 +2,7 @@
 import pyblish.api
 from openpype.pipeline.publish import ValidateContentsOrder
 from openpype.pipeline import PublishValidationError
+import hou
 
 
 class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
@@ -30,18 +31,17 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
 
         output_node = instance.data.get("output_node")
+        rop_node = hou.node(instance.data["instance_node"])
 
         if output_node is None:
-            node = instance.data["members"][0]
             cls.log.error(
                 "SOP Output node in '%s' does not exist. "
-                "Ensure a valid SOP output path is set." % node.path()
+                "Ensure a valid SOP output path is set." % rop_node.path()
             )
 
-            return [node.path()]
+            return [rop_node.path()]
 
-        rop = instance.data["members"][0]
-        build_from_path = rop.parm("build_from_path").eval()
+        build_from_path = rop_node.parm("build_from_path").eval()
         if not build_from_path:
             cls.log.debug(
                 "Alembic ROP has 'Build from Path' disabled. "
@@ -49,14 +49,14 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
             )
             return
 
-        path_attr = rop.parm("path_attrib").eval()
+        path_attr = rop_node.parm("path_attrib").eval()
         if not path_attr:
             cls.log.error(
                 "The Alembic ROP node has no Path Attribute"
                 "value set, but 'Build Hierarchy from Attribute'"
                 "is enabled."
             )
-            return [rop.path()]
+            return [rop_node.path()]
 
         cls.log.debug("Checking for attribute: %s" % path_attr)
 
