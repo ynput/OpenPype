@@ -17,16 +17,12 @@
 
 import os
 import sys
-pype_root = os.path.abspath('../..')
-sys.path.insert(0, pype_root)
-repos = os.listdir(os.path.abspath("../../repos"))
-repos = [os.path.join(pype_root, "repos", repo) for repo in repos]
-for repo in repos:
-    sys.path.append(repo)
+openpype_root = os.path.abspath('../../..')
+sys.path.insert(0, openpype_root)
 
 # -- Project information -----------------------------------------------------
 
-project = 'pype'
+project = 'OpenPype'
 copyright = '2019, Orbi Tools'
 author = 'Orbi Tools'
 
@@ -126,7 +122,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'pypedoc'
+htmlhelp_basename = 'OpenPype_Doc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -153,7 +149,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'pype.tex', 'pype Documentation',
+    (master_doc, 'openpype.tex', 'openpype Documentation',
      'OrbiTools', 'manual'),
 ]
 
@@ -163,7 +159,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'pype', 'pype Documentation',
+    (master_doc, 'openpype', 'openpype Documentation',
      [author], 1)
 ]
 
@@ -174,8 +170,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'pype', 'pype Documentation',
-     author, 'pype', 'One line description of project.',
+    (master_doc, 'openpype', 'openpype Documentation',
+     author, 'openpype', 'One line description of project.',
      'Miscellaneous'),
 ]
 
