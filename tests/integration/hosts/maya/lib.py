@@ -19,7 +19,7 @@ class MayaHostFixtures(HostFixtures):
         src_path = os.path.join(download_test_data,
                                 "input",
                                 "workfile",
-                                "test_project_test_asset_TestTask_v001.mb")
+                                "test_project_test_asset_test_task_v001.mb")
         dest_folder = os.path.join(output_folder_url,
                                    self.PROJECT,
                                    self.ASSET,
@@ -27,7 +27,7 @@ class MayaHostFixtures(HostFixtures):
                                    self.TASK)
         os.makedirs(dest_folder)
         dest_path = os.path.join(dest_folder,
-                                 "test_project_test_asset_TestTask_v001.mb")
+                                 "test_project_test_asset_test_task_v001.mb")
         shutil.copy(src_path, dest_path)
 
         yield dest_path
