@@ -1,6 +1,6 @@
 import os
 
-import clique
+import re
 from openpype.pipeline import (
     load,
     get_representation_path,
