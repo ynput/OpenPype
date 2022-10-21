@@ -1,6 +1,6 @@
 from Qt import QtWidgets, QtCore
 
-from .widgets import ClickableFrame, ExpandBtn
+from .widgets import ClickableFrame, ExpandBtn, SeparatorWidget
 
 
 def convert_text_for_html(text):
@@ -139,12 +139,10 @@ class ErrorMessageBox(QtWidgets.QDialog):
             mime_data
         )
 
-    def _create_line(self):
-        line = QtWidgets.QFrame(self)
-        line.setObjectName("Separator")
-        line.setMinimumHeight(2)
-        line.setMaximumHeight(2)
-        return line
+    def _create_line(self, parent=None):
+        if parent is None:
+            parent = self
+        return SeparatorWidget(2, parent=parent)
 
     def _create_traceback_widget(self, traceback_text, parent=None):
         if parent is None:
