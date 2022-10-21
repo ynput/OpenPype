@@ -324,14 +324,16 @@ def imprint(node, data, update=False):
 
         parm = get_template_from_value(key, value)
 
-        if key in current_parms.keys():
+        if key in current_parms:
+            if node.evalParm(key) == data[key]:
+                continue
             if not update:
-                log.debug("{} already exists on {}".format(key, node))
+                log.debug(f"{key} already exists on {node}")
             else:
-                log.debug("replacing {}".format(key))
+                log.debug(f"replacing {key}")
                 update_parms.append(parm)
             continue
-        # parm.hide(True)
+
         templates.append(parm)
 
     parm_group = node.parmTemplateGroup()

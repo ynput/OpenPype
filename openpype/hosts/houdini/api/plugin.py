@@ -184,12 +184,13 @@ class HoudiniCreator(NewCreator):
             instance_node = hou.node(created_inst.get("instance_node"))
             current_data = read(instance_node)
 
+            new_values = {
+                key: new_value
+                for key, (_old_value, new_value) in _changes.items()
+            }
             imprint(
                 instance_node,
-                {
-                    key: value[1] for key, value in _changes.items()
-                    if current_data.get(key) != value[1]
-                },
+                new_values,
                 update=True
             )
 
