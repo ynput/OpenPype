@@ -3,7 +3,7 @@ from Qt import QtWidgets, QtCore
 from .widgets import ClickableFrame, ExpandBtn, SeparatorWidget
 
 
-def convert_text_for_html(text):
+def escape_text_for_html(text):
     return (
         text
         .replace("<", "&#60;")
@@ -19,7 +19,7 @@ class TracebackWidget(QtWidgets.QWidget):
 
         # Modify text to match html
         # - add more replacements when needed
-        tb_text = convert_text_for_html(tb_text)
+        tb_text = escape_text_for_html(tb_text)
         expand_btn = ExpandBtn(self)
 
         clickable_frame = ClickableFrame(self)
@@ -110,7 +110,7 @@ class ErrorMessageBox(QtWidgets.QDialog):
 
     @staticmethod
     def convert_text_for_html(text):
-        return convert_text_for_html(text)
+        return escape_text_for_html(text)
 
     def _create_top_widget(self, parent_widget):
         label_widget = QtWidgets.QLabel(parent_widget)
