@@ -1,5 +1,6 @@
 import qargparse
-from openpype.hosts.tvpaint.api import lib, plugin
+from openpype.hosts.tvpaint.api import plugin
+from openpype.hosts.tvpaint.api.lib import execute_george_through_file
 
 
 class ImportImage(plugin.Loader):
@@ -79,4 +80,4 @@ class ImportImage(plugin.Loader):
             layer_name,
             load_options_str
         )
-        return lib.execute_george_through_file(george_script)
+        return execute_george_through_file(george_script)

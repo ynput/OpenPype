@@ -6,6 +6,7 @@ from abc import (
     abstractmethod,
     abstractproperty
 )
+
 import six
 
 from openpype.settings import get_system_settings, get_project_settings
@@ -322,6 +323,19 @@ class BaseCreator:
         """
 
         return self.instance_attr_defs
+
+    @property
+    def collection_shared_data(self):
+        """Access to shared data that can be used during creator's collection.
+
+        Retruns:
+            Dict[str, Any]: Shared data.
+
+        Raises:
+            UnavailableSharedData: When called out of collection phase.
+        """
+
+        return self.create_context.collection_shared_data
 
 
 class Creator(BaseCreator):

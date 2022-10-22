@@ -195,6 +195,28 @@ def find_tool_in_custom_paths(paths, tool, validation_func=None):
     return None
 
 
+def _check_args_returncode(args):
+    try:
+        # Python 2 compatibility where DEVNULL is not available
+        if hasattr(subprocess, "DEVNULL"):
+            proc = subprocess.Popen(
+                args,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            proc.wait()
+        else:
+            with open(os.devnull, "w") as devnull:
+                proc = subprocess.Popen(
+                    args, stdout=devnull, stderr=devnull,
+                )
+                proc.wait()
+
+    except Exception:
+        return False
+    return proc.returncode == 0
+
+
 def _oiio_executable_validation(filepath):
     """Validate oiio tool executable if can be executed.
 
@@ -223,18 +245,7 @@ def _oiio_executable_validation(filepath):
     if not filepath:
         return False
 
-    try:
-        proc = subprocess.Popen(
-            [filepath, "--help"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        proc.wait()
-        return proc.returncode == 0
-
-    except Exception:
-        pass
-    return False
+    return _check_args_returncode([filepath, "--help"])
 
 
 def get_oiio_tools_path(tool="oiiotool"):
@@ -302,18 +313,7 @@ def _ffmpeg_executable_validation(filepath):
     if not filepath:
         return False
 
-    try:
-        proc = subprocess.Popen(
-            [filepath, "-version"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        proc.wait()
-        return proc.returncode == 0
-
-    except Exception:
-        pass
-    return False
+    return _check_args_returncode([filepath, "-version"])
 
 
 def get_ffmpeg_tool_path(tool="ffmpeg"):
