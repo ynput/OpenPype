@@ -162,21 +162,22 @@ class HoudiniCreator(NewCreator):
                 self.log.debug("missing lock pattern {}".format(name))
 
     def collect_instances(self):
-        cached_instances = self.collection_shared_data.get(
-            "houdini_cached_instances", {})
-        instances = cached_instances.get(self.identifier)
-        if not instances:
-            instances = [
-                i for i in lsattr("id", "pyblish.avalon.instance")
-                if i.parm("creator_identifier").eval() == self.identifier
-            ]
+        # cache instances  if missing
+        if self.collection_shared_data.get("houdini_cached_instances") is None:
+            self.log.info("Caching instances ...")
+            self.collection_shared_data["houdini_cached_instances"] = {}
+            cached_instances = lsattr("id", "pyblish.avalon.instance")
+            for i in cached_instances:
+                creator_id = i.parm("creator_identifier").eval()
+                if creator_id not in self.collection_shared_data[
+                        "houdini_cached_instances"]:
+                    self.collection_shared_data["houdini_cached_instances"][
+                        creator_id] = [i]
+                else:
+                    self.collection_shared_data["houdini_cached_instances"][
+                        creator_id].append(i)
 
-            if not self.collection_shared_data.get(
-                    "houdini_cached_instances"):
-                self.collection_shared_data["houdini_cached_instances"] = {}
-            self.log.info("Caching instances for {}".format(self.identifier))
-            self.collection_shared_data["houdini_cached_instances"][self.identifier] = instances  # noqa: E501
-        for instance in instances:
+        for instance in self.collection_shared_data["houdini_cached_instances"].get(self.identifier, []):  # noqa
             created_instance = CreatedInstance.from_existing(
                 read(instance), self
             )

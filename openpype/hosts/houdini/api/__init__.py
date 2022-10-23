@@ -1,9 +1,7 @@
 from .pipeline import (
     HoudiniHost,
     ls,
-    containerise,
-    list_instances,
-    remove_instance
+    containerise
 )
 
 from .plugin import (
@@ -24,8 +22,6 @@ __all__ = [
 
     "ls",
     "containerise",
-    "list_instances",
-    "remove_instance",
 
     "Creator",
 
