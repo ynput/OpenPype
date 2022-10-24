@@ -1264,7 +1264,7 @@ class AbstractPublisherController(object):
         pass
 
     @abstractmethod
-    def emit_card_message(self, message):
+    def emit_card_message(self, message, message_type=None):
         """Emit a card message which can have a lifetime.
 
         This is for UI purposes. Method can be extended to more arguments
@@ -1771,8 +1771,14 @@ class PublisherController(BasePublisherController):
 
         self._on_create_instance_change()
 
-    def emit_card_message(self, message):
-        self._emit_event("show.card.message", {"message": message})
+    def emit_card_message(self, message, message_type=None):
+        self._emit_event(
+            "show.card.message",
+            {
+                "message": message,
+                "message_type": message_type
+            }
+        )
 
     def get_creator_attribute_definitions(self, instances):
         """Collect creator attribute definitions for multuple instances.
