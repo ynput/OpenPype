@@ -17,9 +17,11 @@ Distribution consists of two parts
  It is self contained (frozen) software that also includes all of the OpenPype codebase with the version
  from the time of the build.
 
- Igniter package is around 500MB and preparing an updated version requires you to re-build pype. That would be 
+ Igniter package is around 1Gb and preparing an updated version requires you to re-build pype. That would be 
  inconvenient for regular and quick distribution of production updates and fixes. So you can distribute those
  independently, without requiring you artists to re-install every time.
+
+ You can have multiple versions installed at the same time.
 
  ### 2. OpenPype Codebase
 
@@ -74,3 +76,5 @@ For example OpenPype will consider the versions in this order: `3.8.0-nightly` <
 See https://semver.org/ for more details.
 
 For studios customizing the source code of OpenPype, a practical approach could be to build by adding a name and a number after the PATCH and not to deploy 3.8.0 from original OpenPype repository. For example, your builds will be: `3.8.0-yourstudio.1` < `3.8.0-yourstudio.2` < `3.8.1-yourstudio.1`.
+
+Versions of Igniter and those coming in zips are compatible if they match major and minor version - `3.13.4` is compatible with `3.13.1` but not with `3.12.2` or `3.14.0`.

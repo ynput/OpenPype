@@ -30,7 +30,7 @@ from .workfile import (
 from . import (
     legacy_io,
     register_loader_plugin_path,
-    register_inventory_action,
+    register_inventory_action_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
 )
@@ -197,7 +197,7 @@ def install_openpype_plugins(project_name=None, host_name=None):
             pyblish.api.register_plugin_path(path)
             register_loader_plugin_path(path)
             register_creator_plugin_path(path)
-            register_inventory_action(path)
+            register_inventory_action_path(path)
 
 
 def uninstall_host():

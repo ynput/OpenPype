@@ -659,6 +659,8 @@ class BootstrapRepos:
         """
         version = OpenPypeVersion.version_in_str(zip_file.name)
         destination_dir = self.data_dir / f"{version.major}.{version.minor}"
+        if not destination_dir.exists():
+            destination_dir.mkdir(parents=True)
         destination = destination_dir / zip_file.name
 
         if destination.exists():
