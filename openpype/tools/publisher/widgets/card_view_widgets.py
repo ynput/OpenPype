@@ -39,7 +39,7 @@ from ..constants import (
     CONTEXT_ID,
     CONTEXT_LABEL,
     CONTEXT_GROUP,
-    LEGACY_ITEM_GROUP,
+    CONVERTOR_ITEM_GROUP,
 )
 
 
@@ -175,7 +175,7 @@ class BaseGroupWidget(QtWidgets.QWidget):
         self.selected.emit(instance_id, group_id, selection_type)
 
 
-class LegacyItemsGroupWidget(BaseGroupWidget):
+class ConvertorItemsGroupWidget(BaseGroupWidget):
     def update_items(self, items_by_id):
         items_by_label = collections.defaultdict(list)
         for item in items_by_id.values():
@@ -195,7 +195,7 @@ class LegacyItemsGroupWidget(BaseGroupWidget):
                     widget = self._widgets_by_id[item.id]
                     widget.update_item(item)
                 else:
-                    widget = LegacyItemCardWidget(item, self)
+                    widget = ConvertorItemCardWidget(item, self)
                     widget.selected.connect(self._on_widget_selection)
                     self._widgets_by_id[item.id] = widget
                     self._content_layout.insertWidget(widget_idx, widget)
@@ -345,18 +345,18 @@ class ContextCardWidget(CardWidget):
         self._label_widget = label_widget
 
 
-class LegacyItemCardWidget(CardWidget):
+class ConvertorItemCardWidget(CardWidget):
     """Card for global context.
 
     Is not visually under group widget and is always at the top of card view.
     """
 
     def __init__(self, item, parent):
-        super(LegacyItemCardWidget, self).__init__(parent)
+        super(ConvertorItemCardWidget, self).__init__(parent)
 
         self._id = item.id
         self.identifier = item.identifier
-        self._group_identifier = LEGACY_ITEM_GROUP
+        self._group_identifier = CONVERTOR_ITEM_GROUP
 
         icon_widget = IconValuePixmapLabel("fa.magic", self)
         icon_widget.setObjectName("FamilyIconLabel")
@@ -556,7 +556,7 @@ class InstanceCardView(AbstractInstanceView):
         self._content_widget = content_widget
 
         self._context_widget = None
-        self._legacy_items_group = None
+        self._convertor_items_group = None
         self._widgets_by_group = {}
         self._ordered_groups = []
 
@@ -589,8 +589,8 @@ class InstanceCardView(AbstractInstanceView):
         ):
             output.append(self._context_widget)
 
-        if self._legacy_items_group is not None:
-            output.extend(self._legacy_items_group.get_selected_widgets())
+        if self._convertor_items_group is not None:
+            output.extend(self._convertor_items_group.get_selected_widgets())
 
         for group_widget in self._widgets_by_group.values():
             for widget in group_widget.get_selected_widgets():
@@ -605,8 +605,8 @@ class InstanceCardView(AbstractInstanceView):
         ):
             output.append(CONTEXT_ID)
 
-        if self._legacy_items_group is not None:
-            output.extend(self._legacy_items_group.get_selected_item_ids())
+        if self._convertor_items_group is not None:
+            output.extend(self._convertor_items_group.get_selected_item_ids())
 
         for group_widget in self._widgets_by_group.values():
             output.extend(group_widget.get_selected_item_ids())
@@ -617,7 +617,7 @@ class InstanceCardView(AbstractInstanceView):
 
         self._make_sure_context_widget_exists()
 
-        self._update_legacy_items_group()
+        self._update_convertor_items_group()
 
         # Prepare instances by group and identifiers by group
         instances_by_group = collections.defaultdict(list)
@@ -648,7 +648,7 @@ class InstanceCardView(AbstractInstanceView):
         # Keep track of widget indexes
         # - we start with 1 because Context item as at the top
         widget_idx = 1
-        if self._legacy_items_group is not None:
+        if self._convertor_items_group is not None:
             widget_idx += 1
 
         for group_name in sorted_group_names:
@@ -702,27 +702,27 @@ class InstanceCardView(AbstractInstanceView):
         self.selection_changed.emit()
         self._content_layout.insertWidget(0, widget)
 
-    def _update_legacy_items_group(self):
-        legacy_items = self._controller.legacy_items
-        if not legacy_items and self._legacy_items_group is None:
+    def _update_convertor_items_group(self):
+        convertor_items = self._controller.convertor_items
+        if not convertor_items and self._convertor_items_group is None:
             return
 
-        if not legacy_items:
-            self._legacy_items_group.setVisible(False)
-            self._content_layout.removeWidget(self._legacy_items_group)
-            self._legacy_items_group.deleteLater()
-            self._legacy_items_group = None
+        if not convertor_items:
+            self._convertor_items_group.setVisible(False)
+            self._content_layout.removeWidget(self._convertor_items_group)
+            self._convertor_items_group.deleteLater()
+            self._convertor_items_group = None
             return
 
-        if self._legacy_items_group is None:
-            group_widget = LegacyItemsGroupWidget(
-                LEGACY_ITEM_GROUP, self._content_widget
+        if self._convertor_items_group is None:
+            group_widget = ConvertorItemsGroupWidget(
+                CONVERTOR_ITEM_GROUP, self._content_widget
             )
             group_widget.selected.connect(self._on_widget_selection)
             self._content_layout.insertWidget(1, group_widget)
-            self._legacy_items_group = group_widget
+            self._convertor_items_group = group_widget
 
-        self._legacy_items_group.update_items(legacy_items)
+        self._convertor_items_group.update_items(convertor_items)
 
     def refresh_instance_states(self):
         """Trigger update of instances on group widgets."""
@@ -742,8 +742,8 @@ class InstanceCardView(AbstractInstanceView):
             new_widget = self._context_widget
 
         else:
-            if group_name == LEGACY_ITEM_GROUP:
-                group_widget = self._legacy_items_group
+            if group_name == CONVERTOR_ITEM_GROUP:
+                group_widget = self._convertor_items_group
             else:
                 group_widget = self._widgets_by_group[group_name]
             new_widget = group_widget.get_widget_by_item_id(instance_id)
@@ -791,8 +791,8 @@ class InstanceCardView(AbstractInstanceView):
             if instance_id == CONTEXT_ID:
                 remove_group = True
             else:
-                if group_name == LEGACY_ITEM_GROUP:
-                    group_widget = self._legacy_items_group
+                if group_name == CONVERTOR_ITEM_GROUP:
+                    group_widget = self._convertor_items_group
                 else:
                     group_widget = self._widgets_by_group[group_name]
                 if not group_widget.get_selected_widgets():
@@ -906,8 +906,8 @@ class InstanceCardView(AbstractInstanceView):
             if name == CONTEXT_GROUP:
                 sorted_widgets = [self._context_widget]
             else:
-                if name == LEGACY_ITEM_GROUP:
-                    group_widget = self._legacy_items_group
+                if name == CONVERTOR_ITEM_GROUP:
+                    group_widget = self._convertor_items_group
                 else:
                     group_widget = self._widgets_by_group[name]
                 sorted_widgets = group_widget.get_ordered_widgets()
@@ -1034,7 +1034,7 @@ class InstanceCardView(AbstractInstanceView):
             elif isinstance(widget, InstanceCardWidget):
                 instances.append(widget.id)
 
-            elif isinstance(widget, LegacyItemCardWidget):
+            elif isinstance(widget, ConvertorItemCardWidget):
                 convertor_identifiers.append(widget.identifier)
 
         return instances, context_selected, convertor_identifiers
@@ -1066,16 +1066,16 @@ class InstanceCardView(AbstractInstanceView):
             if group_name == CONTEXT_GROUP:
                 continue
 
-            legacy_group = group_name == LEGACY_ITEM_GROUP
-            if legacy_group:
-                group_widget = self._legacy_items_group
+            is_convertor_group = group_name == CONVERTOR_ITEM_GROUP
+            if is_convertor_group:
+                group_widget = self._convertor_items_group
             else:
                 group_widget = self._widgets_by_group[group_name]
 
             group_selected = False
             for widget in group_widget.get_ordered_widgets():
                 select = False
-                if legacy_group:
+                if is_convertor_group:
                     is_in = widget.identifier in s_convertor_identifiers
                 else:
                     is_in = widget.id in s_instance_ids

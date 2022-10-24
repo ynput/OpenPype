@@ -37,8 +37,8 @@ from ..constants import (
     CONTEXT_ID,
     CONTEXT_LABEL,
     GROUP_ROLE,
-    LEGACY_CONVERTER_IDENTIFIER,
-    LEGACY_ITEM_GROUP,
+    CONVERTER_IDENTIFIER_ROLE,
+    CONVERTOR_ITEM_GROUP,
 )
 
 
@@ -333,7 +333,7 @@ class InstanceTreeView(QtWidgets.QTreeView):
         """Ids of selected instances."""
         instance_ids = set()
         for index in self.selectionModel().selectedIndexes():
-            if index.data(LEGACY_CONVERTER_IDENTIFIER) is not None:
+            if index.data(CONVERTER_IDENTIFIER_ROLE) is not None:
                 continue
 
             instance_id = index.data(INSTANCE_ID_ROLE)
@@ -450,9 +450,9 @@ class InstanceListView(AbstractInstanceView):
         self._context_item = None
         self._context_widget = None
 
-        self._legacy_group_item = None
-        self._legacy_group_widget = None
-        self._legacy_items_by_id = {}
+        self._convertor_group_item = None
+        self._convertor_group_widget = None
+        self._convertor_items_by_id = {}
 
         self._instance_view = instance_view
         self._instance_delegate = instance_delegate
@@ -467,8 +467,8 @@ class InstanceListView(AbstractInstanceView):
 
     def _update_widget_expand_state(self, index, expanded):
         group_name = index.data(GROUP_ROLE)
-        if group_name == LEGACY_ITEM_GROUP:
-            group_widget = self._legacy_group_widget
+        if group_name == CONVERTOR_ITEM_GROUP:
+            group_widget = self._convertor_group_widget
         else:
             group_widget = self._group_widgets.get(group_name)
 
@@ -540,7 +540,7 @@ class InstanceListView(AbstractInstanceView):
         if self._make_sure_context_item_exists():
             sort_at_the_end = True
 
-        self._update_legacy_items_group()
+        self._update_convertor_items_group()
 
         # Prepare instances by their groups
         instances_by_group_name = collections.defaultdict(list)
@@ -702,25 +702,25 @@ class InstanceListView(AbstractInstanceView):
         self._context_item = context_item
         return True
 
-    def _update_legacy_items_group(self):
+    def _update_convertor_items_group(self):
         created_new_items = False
-        legacy_items_by_id = self._controller.legacy_items
-        group_item = self._legacy_group_item
-        if not legacy_items_by_id and group_item is None:
+        convertor_items_by_id = self._controller.convertor_items
+        group_item = self._convertor_group_item
+        if not convertor_items_by_id and group_item is None:
             return created_new_items
 
         root_item = self._instance_model.invisibleRootItem()
-        if not legacy_items_by_id:
+        if not convertor_items_by_id:
             root_item.removeRow(group_item.row())
-            self._legacy_group_widget.deleteLater()
-            self._legacy_group_widget = None
-            self._legacy_items_by_id = {}
+            self._convertor_group_widget.deleteLater()
+            self._convertor_group_widget = None
+            self._convertor_items_by_id = {}
             return created_new_items
 
         if group_item is None:
             created_new_items = True
             group_item = QtGui.QStandardItem()
-            group_item.setData(LEGACY_ITEM_GROUP, GROUP_ROLE)
+            group_item.setData(CONVERTOR_ITEM_GROUP, GROUP_ROLE)
             group_item.setData(1, SORT_VALUE_ROLE)
             group_item.setData(True, IS_GROUP_ROLE)
             group_item.setFlags(QtCore.Qt.ItemIsEnabled)
@@ -732,36 +732,38 @@ class InstanceListView(AbstractInstanceView):
             )
             proxy_index = self._proxy_model.mapFromSource(index)
             widget = InstanceListGroupWidget(
-                LEGACY_ITEM_GROUP, self._instance_view
+                CONVERTOR_ITEM_GROUP, self._instance_view
             )
             widget.toggle_checkbox.setVisible(False)
-            widget.expand_changed.connect(self._on_legacy_group_expand_request)
+            widget.expand_changed.connect(
+                self._on_convertor_group_expand_request
+            )
             self._instance_view.setIndexWidget(proxy_index, widget)
 
-            self._legacy_group_item = group_item
-            self._legacy_group_widget = widget
+            self._convertor_group_item = group_item
+            self._convertor_group_widget = widget
 
         for row in reversed(range(group_item.rowCount())):
             child_item = group_item.child(row)
-            child_identifier = child_item.data(LEGACY_CONVERTER_IDENTIFIER)
-            if child_identifier not in legacy_items_by_id:
-                self._legacy_items_by_id.pop(child_identifier, None)
+            child_identifier = child_item.data(CONVERTER_IDENTIFIER_ROLE)
+            if child_identifier not in convertor_items_by_id:
+                self._convertor_items_by_id.pop(child_identifier, None)
                 group_item.removeRows(row, 1)
 
         new_items = []
-        for identifier, convertor_item in legacy_items_by_id.items():
-            item = self._legacy_items_by_id.get(identifier)
+        for identifier, convertor_item in convertor_items_by_id.items():
+            item = self._convertor_items_by_id.get(identifier)
             if item is None:
                 created_new_items = True
                 item = QtGui.QStandardItem(convertor_item.label)
                 new_items.append(item)
             item.setData(convertor_item.id, INSTANCE_ID_ROLE)
             item.setData(convertor_item.label, SORT_VALUE_ROLE)
-            item.setData(LEGACY_ITEM_GROUP, GROUP_ROLE)
+            item.setData(CONVERTOR_ITEM_GROUP, GROUP_ROLE)
             item.setData(
-                convertor_item.identifier, LEGACY_CONVERTER_IDENTIFIER
+                convertor_item.identifier, CONVERTER_IDENTIFIER_ROLE
             )
-            self._legacy_items_by_id[identifier] = item
+            self._convertor_items_by_id[identifier] = item
 
         if new_items:
             group_item.appendRows(new_items)
@@ -874,8 +876,8 @@ class InstanceListView(AbstractInstanceView):
         proxy_index = self._proxy_model.mapFromSource(group_index)
         self._instance_view.setExpanded(proxy_index, expanded)
 
-    def _on_legacy_group_expand_request(self, _, expanded):
-        group_item = self._legacy_group_item
+    def _on_convertor_group_expand_request(self, _, expanded):
+        group_item = self._convertor_group_item
         if not group_item:
             return
         group_index = self._instance_model.index(
@@ -923,7 +925,7 @@ class InstanceListView(AbstractInstanceView):
         context_selected = False
 
         for index in self._instance_view.selectionModel().selectedIndexes():
-            convertor_identifier = index.data(LEGACY_CONVERTER_IDENTIFIER)
+            convertor_identifier = index.data(CONVERTER_IDENTIFIER_ROLE)
             if convertor_identifier is not None:
                 convertor_identifiers.append(convertor_identifier)
                 continue
@@ -974,7 +976,7 @@ class InstanceListView(AbstractInstanceView):
                         (item.child(row), list(new_parent_items))
                     )
 
-            convertor_identifier = item.data(LEGACY_CONVERTER_IDENTIFIER)
+            convertor_identifier = item.data(CONVERTER_IDENTIFIER_ROLE)
 
             select = False
             expand_parent = True

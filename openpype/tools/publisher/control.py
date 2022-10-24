@@ -1235,7 +1235,7 @@ class AbstractPublisherController(object):
         pass
 
     @abstractproperty
-    def legacy_items(self):
+    def convertor_items(self):
         pass
 
     @abstractmethod
@@ -1607,7 +1607,7 @@ class PublisherController(BasePublisherController):
         return self._create_context.instances_by_id
 
     @property
-    def legacy_items(self):
+    def convertor_items(self):
         return self._create_context.legacy_items_by_id
 
     @property
