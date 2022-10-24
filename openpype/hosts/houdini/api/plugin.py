@@ -35,6 +35,9 @@ class Creator(LegacyCreator):
     when hovering over a node. The information is visible under the name of
     the node.
 
+    Deprecated:
+        This creator is deprecated and will be removed in future version.
+
     """
     defaults = ['Main']
 
@@ -91,12 +94,35 @@ class Creator(LegacyCreator):
                 sys.exc_info()[2])
 
 
-@six.add_metaclass(ABCMeta)
-class HoudiniCreator(NewCreator):
-    selected_nodes = []
+class HoudiniCreatorBase(object):
+    @staticmethod
+    def cache_instances(shared_data):
+        """Cache instances for Creators to shared data.
+
+        Create `houdini_cached_instances` key when needed in shared data and
+        fill it with all collected instances from the scene under its
+        respective creator identifiers.
+
+        Args:
+            Dict[str, Any]: Shared data.
+
+        Return:
+            Dict[str, Any]: Shared data dictionary.
+
+        """
+        if shared_data.get("houdini_cached_instances") is None:
+            shared_data["houdini_cached_instances"] = {}
+            cached_instances = lsattr("id", "pyblish.avalon.instance")
+            for i in cached_instances:
+                creator_id = i.parm("creator_identifier").eval()
+                if creator_id not in shared_data["houdini_cached_instances"]:
+                    shared_data["houdini_cached_instances"][creator_id] = [i]
+                else:
+                    shared_data["houdini_cached_instances"][creator_id].append(i)  # noqa
+        return shared_data
 
     @staticmethod
-    def _create_instance_node(
+    def create_instance_node(
             node_name, parent,
             node_type="geometry"):
         # type: (str, str, str) -> hou.Node
@@ -117,6 +143,11 @@ class HoudiniCreator(NewCreator):
         instance_node.moveToGoodPosition()
         return instance_node
 
+
+@six.add_metaclass(ABCMeta)
+class HoudiniCreator(NewCreator, HoudiniCreatorBase):
+    selected_nodes = []
+
     def create(self, subset_name, instance_data, pre_create_data):
         try:
             if pre_create_data.get("use_selection"):
@@ -127,7 +158,7 @@ class HoudiniCreator(NewCreator):
             if node_type is None:
                 node_type = "geometry"
 
-            instance_node = self._create_instance_node(
+            instance_node = self.create_instance_node(
                 subset_name, "/out", node_type)
 
             instance_data["instance_node"] = instance_node.path()
@@ -163,20 +194,7 @@ class HoudiniCreator(NewCreator):
 
     def collect_instances(self):
         # cache instances  if missing
-        if self.collection_shared_data.get("houdini_cached_instances") is None:
-            self.log.info("Caching instances ...")
-            self.collection_shared_data["houdini_cached_instances"] = {}
-            cached_instances = lsattr("id", "pyblish.avalon.instance")
-            for i in cached_instances:
-                creator_id = i.parm("creator_identifier").eval()
-                if creator_id not in self.collection_shared_data[
-                        "houdini_cached_instances"]:
-                    self.collection_shared_data["houdini_cached_instances"][
-                        creator_id] = [i]
-                else:
-                    self.collection_shared_data["houdini_cached_instances"][
-                        creator_id].append(i)
-
+        self.cache_instances(self.collection_shared_data)
         for instance in self.collection_shared_data["houdini_cached_instances"].get(self.identifier, []):  # noqa
             created_instance = CreatedInstance.from_existing(
                 read(instance), self
