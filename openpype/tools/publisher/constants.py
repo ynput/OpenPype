@@ -6,7 +6,7 @@ CONTEXT_LABEL = "Options"
 # Not showed anywhere - used as identifier
 CONTEXT_GROUP = "__ContextGroup__"
 
-LEGACY_ITEM_GROUP = "Legacy instances"
+LEGACY_ITEM_GROUP = "Incompatible subsets"
 
 # Allowed symbols for subset name (and variant)
 # - characters, numbers, unsercore and dash
