@@ -33,6 +33,7 @@ from openpype.pipeline.create import (
 )
 from openpype.pipeline.create.context import (
     CreatorsOperationFailed,
+    ConvertorsOperationFailed,
 )
 
 # Define constant for plugin orders offset
@@ -1743,7 +1744,16 @@ class PublisherController(BasePublisherController):
                     }
                 )
 
-            self._create_context.find_convertor_items()
+            try:
+                self._create_context.find_convertor_items()
+            except ConvertorsOperationFailed as exc:
+                self._emit_event(
+                    "convertors.find.failed",
+                    {
+                        "title": "Collection of unsupported subset failed",
+                        "failed_info": exc.failed_info
+                    }
+                )
 
             try:
                 self._create_context.execute_autocreators()
@@ -1881,8 +1891,19 @@ class PublisherController(BasePublisherController):
         )
 
     def trigger_convertor_items(self, convertor_identifiers):
-        for convertor_identifier in convertor_identifiers:
-            self._create_context.run_convertor(convertor_identifier)
+        success = True
+        try:
+            self._create_context.run_convertors(convertor_identifiers)
+
+        except ConvertorsOperationFailed as exc:
+            success = False
+            self._emit_event(
+                "convertors.convert.failed",
+                {
+                    "title": "Conversion failed",
+                    "failed_info": exc.failed_info
+                }
+            )
         self._on_create_instance_change()
         self.emit_card_message("Conversion finished")
 
