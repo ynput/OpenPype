@@ -578,7 +578,7 @@
             ]
         },
         "ExtractObj": {
-            "enabled": true,
+            "enabled": false,
             "optional": true
         },
         "ValidateRigContents": {
