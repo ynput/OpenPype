@@ -162,6 +162,10 @@ def _process_app_events() -> Optional[float]:
                 msg)
             dialog.setMinimumWidth(500)
             dialog.setDetailedText(detail)
+            dialog.setWindowFlags(
+                dialog.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
+            )
+            
             dialog.exec_()
 
         # Refresh Manager
