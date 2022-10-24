@@ -49,45 +49,47 @@ class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
 
         failures.append(
             DBAssert.count_of_types(dbcon, "subset", 1,
-                                    name="renderTestTaskMain_beauty"))
+                                    name="renderTest_taskMain_beauty"))
 
         failures.append(
             DBAssert.count_of_types(dbcon, "subset", 1,
-                                    name="workfileTesttask"))
+                                    name="workfileTest_task"))
 
-        failures.append(DBAssert.count_of_types(dbcon, "representation", 6))
+        failures.append(DBAssert.count_of_types(dbcon, "representation", 8))
 
+        # hero included
         additional_args = {"context.subset": "modelMain",
                            "context.ext": "abc"}
         failures.append(
-            DBAssert.count_of_types(dbcon, "representation", 1,
+            DBAssert.count_of_types(dbcon, "representation", 2,
                                     additional_args=additional_args))
 
+        # hero included
         additional_args = {"context.subset": "modelMain",
                            "context.ext": "ma"}
         failures.append(
-            DBAssert.count_of_types(dbcon, "representation", 1,
+            DBAssert.count_of_types(dbcon, "representation", 2,
                                     additional_args=additional_args))
 
         additional_args = {"context.subset": "modelMain",
                            "context.ext": "mb"}
         failures.append(
-            DBAssert.count_of_types(dbcon, "representation", 1,
+            DBAssert.count_of_types(dbcon, "representation", 0,
                                     additional_args=additional_args))
 
-        additional_args = {"context.subset": "renderTestTaskMain_beauty",
+        additional_args = {"context.subset": "renderTest_taskMain_beauty",
                            "context.ext": "exr"}
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 1,
                                     additional_args=additional_args))
 
-        additional_args = {"context.subset": "renderTestTaskMain_beauty",
+        additional_args = {"context.subset": "renderTest_taskMain_beauty",
                            "context.ext": "jpg"}
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 1,
                                     additional_args=additional_args))
 
-        additional_args = {"context.subset": "renderTestTaskMain_beauty",
+        additional_args = {"context.subset": "renderTest_taskMain_beauty",
                            "context.ext": "h264_exr"}
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 1,
