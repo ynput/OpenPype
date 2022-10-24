@@ -7,6 +7,7 @@ import pyblish.api
 from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
 
+
 class ExtractObj(publish.Extractor):
     """Extract OBJ from Maya.
 
@@ -34,11 +35,11 @@ class ExtractObj(publish.Extractor):
 
         members = instance.data("setMembers")
         members = cmds.ls(members,
-                    dag=True,
-                    shapes=True,
-                    type=("mesh", "nurbsCurve"),
-                    noIntermediate=True,
-                    long=True)
+                          dag=True,
+                          shapes=True,
+                          type=("mesh", "nurbsCurve"),
+                          noIntermediate=True,
+                          long=True)
         self.log.info("Members: {0}".format(members))
         self.log.info("Instance: {0}".format(instance[:]))
 
@@ -58,17 +59,17 @@ class ExtractObj(publish.Extractor):
                     with lib.maintained_selection():
                         cmds.select(members, noExpand=True)
                         cmds.file(path,
-                                exportSelected=True,
-                                type='OBJexport',
-                                preserveReferences=True,
-                                force=True)
+                                  exportSelected=True,
+                                  type='OBJexport',
+                                  preserveReferences=True,
+                                  force=True)
 
         if "representation" not in instance.data:
             instance.data["representation"] = []
 
         representation = {
-            'name':'obj',
-            'ext':'obj',
+            'name': 'obj',
+            'ext': 'obj',
             'files': filename,
             "stagingDir": staging_dir,
         }
