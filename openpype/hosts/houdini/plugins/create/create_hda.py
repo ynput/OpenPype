@@ -43,7 +43,7 @@ class CreateHDA(plugin.HoudiniCreator):
             # if we have `use selection` enabled, and we have some
             # selected nodes ...
             subnet = parent_node.collapseIntoSubnet(
-                self._nodes,
+                self.selected_nodes,
                 subnet_name="{}_subnet".format(node_name))
             subnet.moveToGoodPosition()
             to_hda = subnet
