@@ -47,6 +47,7 @@ public class OpenPype : ModuleRules
 				"SlateCore",
 				"Json",
 				"JsonUtilities",
+				"PythonScriptPlugin",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

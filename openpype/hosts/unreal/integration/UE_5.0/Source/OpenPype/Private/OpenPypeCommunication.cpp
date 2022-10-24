@@ -4,6 +4,8 @@
 #include "WebSocketsModule.h"
 #include "Json.h"
 #include "JsonObjectConverter.h"
+#include "IPythonScriptPlugin.h"
+#include "PythonScriptTypes.h"
 
 
 // Initialize static attributes
@@ -170,73 +172,51 @@ void FOpenPypeCommunication::HandleError(TSharedPtr<FJsonObject> Root)
 void FOpenPypeCommunication::RunMethod(TSharedPtr<FJsonObject> Root)
 {
 	// This code is called when we receive the request to run a method from the server.
+	IPythonScriptPlugin* PythonPlugin = IPythonScriptPlugin::Get();
+
+	if ( !PythonPlugin || !PythonPlugin->IsPythonAvailable() )
+	{
+        UE_LOG(LogTemp, Error, TEXT("Python Plugin not loaded!"));
+		return;
+	}
+
 	FString Method = Root->GetStringField(TEXT("method"));
 	UE_LOG(LogTemp, Verbose, TEXT("Calling a function: %s"), *Method);
 
-	if (Method == "ls")
-	{
-		ls(Root);
-	}
-	else if (Method == "containerise")
-	{
-		containerise(Root);
-	}
-	else if (Method == "instantiate")
-	{
-		instantiate(Root);
-	}
-}
-
-void FOpenPypeCommunication::ls(TSharedPtr<FJsonObject> Root)
-{
-	FString Result = UOpenPypePythonBridge::Get()->ls();
-
-	UE_LOG(LogTemp, Verbose, TEXT("Result: %s"), *Result);
-
-	FString StringResponse;
-	FRpcResponseResult RpcResponse = { "2.0", Result, Root->GetIntegerField(TEXT("id")) };
-	FJsonObjectConverter::UStructToJsonObjectString(RpcResponse, StringResponse);
-
-	Socket->Send(StringResponse);
-}
-
-void FOpenPypeCommunication::containerise(TSharedPtr<FJsonObject> Root)
-{
+	FPythonCommandEx Command;
+	Command.ExecutionMode = EPythonCommandExecutionMode::EvaluateStatement;
+	Command.Command = Method + "(";
 	auto params = Root->GetArrayField(TEXT("params"));
+	for (auto param : params)
+	{
+		Command.Command += " " + param->AsString();
+	}
+	Command.Command += ")";
 
-	FString Name = params[0]->AsString();
-	FString Namespace = params[1]->AsString();
-	FString Nodes = params[2]->AsString();
-	FString Context = params[3]->AsString();
-	FString Loader = params.Num() >= 5 ? params[4]->AsString() : TEXT("");
-	FString Suffix = params.Num() == 6 ? params[5]->AsString() : TEXT("_CON");
-
-	FString Result = UOpenPypePythonBridge::Get()->containerise(Name, Namespace, Nodes, Context, Loader, Suffix);
-
-	UE_LOG(LogTemp, Verbose, TEXT("Result: %s"), *Result);
+	UE_LOG(LogTemp, Verbose, TEXT("Full command: %s"), *Command.Command);
 
 	FString StringResponse;
-	FRpcResponseResult RpcResponse = { "2.0", Result, Root->GetIntegerField(TEXT("id")) };
-	FJsonObjectConverter::UStructToJsonObjectString(RpcResponse, StringResponse);
 
-	Socket->Send(StringResponse);
-}
+	if ( !PythonPlugin->ExecPythonCommandEx(Command) )
+	{
+		UE_LOG(LogTemp, Error, TEXT("Python Execution Failed!"));
+		for ( FPythonLogOutputEntry& LogEntry : Command.LogOutput )
+		{
+			UE_LOG(LogTemp, Error, TEXT("%s"), *LogEntry.Message);
+		}
 
-void FOpenPypeCommunication::instantiate(TSharedPtr<FJsonObject> Root)
-{
-	auto params = Root->GetArrayField(TEXT("params"));
+		FRpcError RpcError = { -32000, "Python Execution in Unreal Failed!", "" };
+		FRpcResponseError RpcResponse = { "2.0", RpcError, Root->GetIntegerField(TEXT("id")) };
+		FJsonObjectConverter::UStructToJsonObjectString(RpcResponse, StringResponse);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Verbose, TEXT("Python Execution Success!"));
+		UE_LOG(LogTemp, Verbose, TEXT("Result: %s"), *Command.CommandResult);
 
-	FString RootParam = params[0]->AsString();
-	FString Name = params[1]->AsString();
-	FString Data = params[2]->AsString();
-	FString Assets = params.Num() >= 4 ? params[3]->AsString() : TEXT("");
-	FString Suffix = params.Num() == 5 ? params[4]->AsString() : TEXT("_INS");
-
-	UOpenPypePythonBridge::Get()->instantiate(RootParam, Name, Data, Assets, Suffix);
-
-	FString StringResponse;
-	FRpcResponseResult RpcResponse = { "2.0", "", Root->GetIntegerField(TEXT("id")) };
-	FJsonObjectConverter::UStructToJsonObjectString(RpcResponse, StringResponse);
+		FRpcResponseResult RpcResponse = { "2.0", Command.CommandResult, Root->GetIntegerField(TEXT("id")) };
+		FJsonObjectConverter::UStructToJsonObjectString(RpcResponse, StringResponse);
+	}
 
 	Socket->Send(StringResponse);
 }

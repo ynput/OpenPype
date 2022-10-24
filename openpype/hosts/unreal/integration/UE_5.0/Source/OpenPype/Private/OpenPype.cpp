@@ -2,7 +2,6 @@
 #include "OpenPypeStyle.h"
 #include "OpenPypeCommands.h"
 #include "OpenPypeCommunication.h"
-#include "OpenPypePythonBridge.h"
 #include "LevelEditor.h"
 #include "Misc/MessageDialog.h"
 #include "LevelEditorMenuContext.h"

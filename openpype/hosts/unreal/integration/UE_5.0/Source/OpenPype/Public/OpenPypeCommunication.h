@@ -107,10 +107,6 @@ private:
     static void HandleError(TSharedPtr<FJsonObject> Root);
     static void RunMethod(TSharedPtr<FJsonObject> Root);
 
-    static void ls(TSharedPtr<FJsonObject> Root);
-    static void containerise(TSharedPtr<FJsonObject> Root);
-    static void instantiate(TSharedPtr<FJsonObject> Root);
-
 private:
 	static TSharedPtr<IWebSocket> Socket;
     static int32 Id;
