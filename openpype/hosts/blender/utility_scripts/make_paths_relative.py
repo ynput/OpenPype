@@ -13,5 +13,8 @@ if __name__ == "__main__":
             data_blocks.add(obj.override_library.reference)
 
     bpy.data.libraries.write(
-        bpy.data.filepath, data_blocks, path_remap="RELATIVE_ALL"
+        bpy.data.filepath,
+        data_blocks,
+        path_remap="RELATIVE_ALL",
+        compress=bpy.context.preferences.filepaths.use_file_compression,
     )

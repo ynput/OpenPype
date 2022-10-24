@@ -9,7 +9,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load.utils import loaders_from_repre_context
-from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api import plugin, get_compress_setting
 from openpype.hosts.blender.api.pipeline import (
     metadata_update,
     AVALON_PROPERTY,
@@ -126,7 +126,13 @@ class ExtractBlend(publish.Extractor):
                     packed_images.add((image, image.is_dirty))
                     image.pack()
 
-        bpy.data.libraries.write(filepath, data_blocks, path_remap="ABSOLUTE")
+
+        bpy.data.libraries.write(
+            filepath,
+            data_blocks,
+            path_remap="ABSOLUTE",
+            compress=get_compress_setting(),
+        )
 
         # restor packed images.
         for image, is_dirty in packed_images:

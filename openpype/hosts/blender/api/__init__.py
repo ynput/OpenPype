@@ -22,6 +22,7 @@ from .workio import (
     save_file,
     current_file,
     has_unsaved_changes,
+    get_compress_setting,
     file_extensions,
     work_root,
 )
@@ -54,6 +55,7 @@ __all__ = [
     "save_file",
     "current_file",
     "has_unsaved_changes",
+    "get_compress_setting",
     "file_extensions",
     "work_root",
 

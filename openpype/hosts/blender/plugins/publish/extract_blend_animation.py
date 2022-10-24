@@ -3,7 +3,7 @@ import os
 import bpy
 
 from openpype.pipeline import publish
-from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api import plugin, get_compress_setting
 
 
 class ExtractBlendAnimation(publish.Extractor):
@@ -66,7 +66,12 @@ class ExtractBlendAnimation(publish.Extractor):
                 data_blocks.add(action)
                 extracted_actions.add(obj.animation_data.action)
 
-        bpy.data.libraries.write(filepath, data_blocks)
+        bpy.data.libraries.write(
+            filepath,
+            data_blocks,
+            path_remap="ABSOLUTE",
+            compress=get_compress_setting(),
+        )
 
         for action in data_blocks:
             bpy.data.actions.remove(action)

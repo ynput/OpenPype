@@ -45,18 +45,11 @@ def open_file(filepath: str) -> Optional[str]:
 
 def save_file(filepath: str, copy: bool = False) -> Optional[str]:
     """Save the open scene file."""
-    project_name = legacy_io.active_project()
-    project_setting = get_project_settings(project_name)
 
-    preferences = bpy.context.preferences
-    compress = project_setting["blender"]["general"].get(
-        "compress", preferences.filepaths.use_file_compression
-    )
-    relative_remap = preferences.filepaths.use_relative_paths
     result = bpy.ops.wm.save_as_mainfile(
         filepath=filepath,
-        compress=compress,
-        relative_remap=relative_remap,
+        compress=get_compress_setting(),
+        relative_remap=bpy.context.preferences.filepaths.use_relative_paths,
         copy=copy,
     )
 
@@ -78,6 +71,14 @@ def has_unsaved_changes() -> bool:
     """Does the open scene file have unsaved changes?"""
 
     return bpy.data.is_dirty
+
+
+def get_compress_setting():
+    project_name = legacy_io.active_project()
+    project_setting = get_project_settings(project_name)
+    return project_setting["blender"]["general"].get(
+        "compress", bpy.context.preferences.filepaths.use_file_compression
+    )
 
 
 def file_extensions() -> List[str]:
