@@ -43,10 +43,7 @@ class ExtractThumbnail(openpype.api.Extractor):
         ).hide_viewport = False
 
         if not isolate:
-            isolate = [
-                obj for obj in bpy.context.scene.objects
-                if obj.type == "MESH" and obj.visible_get()
-            ]
+            isolate = [obj for obj in bpy.context.scene.objects if obj.visible_get()]
             for sibling_instance in instance.context:
                 if sibling_instance is not instance:
                     for obj in sibling_instance:
@@ -55,9 +52,7 @@ class ExtractThumbnail(openpype.api.Extractor):
 
         focus = [
             obj for obj in instance
-            if isinstance(obj, bpy.types.Object)
-            and obj.type == "MESH"
-            and obj.visible_get()
+            if isinstance(obj, bpy.types.Object) and obj.visible_get()
         ]
 
         project_settings = instance.context.data["project_settings"]["blender"]
