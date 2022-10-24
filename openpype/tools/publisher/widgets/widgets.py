@@ -1486,18 +1486,22 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         # Convert button widget (with layout to handle stretch)
         convert_widget = QtWidgets.QWidget(creator_widget)
-        convert_label = QtWidgets.QLabel(
+        convert_label = QtWidgets.QLabel(creator_widget)
+        # Set the label text with 'setText' to apply html
+        convert_label.setText(
             (
-                "Found instances created with legacy creators."
-                "\nDo you with to convert them?"
-            ),
-            creator_widget
+                "Found old publishable subsets"
+                " incompatible with new publisher."
+                "<br/><br/>Press the <b>update subsets</b> button"
+                " to automatically update them"
+                " to be able to publish again."
+            )
         )
         convert_label.setWordWrap(True)
         convert_label.setAlignment(QtCore.Qt.AlignCenter)
 
         convert_btn = QtWidgets.QPushButton(
-            "Convert legacy instances", convert_widget
+            "Update subsets", convert_widget
         )
         convert_separator = QtWidgets.QFrame(convert_widget)
         convert_separator.setObjectName("Separator")
