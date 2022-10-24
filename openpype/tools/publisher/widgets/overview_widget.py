@@ -321,7 +321,7 @@ class OverviewWidget(QtWidgets.QFrame):
 
     def _on_convert_requested(self):
         _, _, convertor_identifiers = self.get_selected_items()
-        self._controller.convert_legacy_items(convertor_identifiers)
+        self._controller.trigger_convertor_items(convertor_identifiers)
 
     def get_selected_items(self):
         view = self._subset_views_layout.currentWidget()

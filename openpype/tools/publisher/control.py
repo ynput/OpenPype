@@ -1239,7 +1239,7 @@ class AbstractPublisherController(object):
         pass
 
     @abstractmethod
-    def convert_legacy_items(self, convertor_identifiers):
+    def trigger_convertor_items(self, convertor_identifiers):
         pass
 
     @abstractmethod
@@ -1854,7 +1854,7 @@ class PublisherController(BasePublisherController):
             variant, task_name, asset_doc, project_name, instance=instance
         )
 
-    def convert_legacy_items(self, convertor_identifiers):
+    def trigger_convertor_items(self, convertor_identifiers):
         for convertor_identifier in convertor_identifiers:
             self._create_context.run_convertor(convertor_identifier)
         self._on_create_instance_change()
