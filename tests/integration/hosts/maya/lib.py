@@ -44,6 +44,10 @@ class MayaHostFixtures(HostFixtures):
                                                    os.pathsep,
                                                    original_pythonpath))
 
+    @pytest.fixture(scope="module")
+    def skip_compare_folders(self):
+        yield []
+
 
 class MayaLocalPublishTestClass(MayaHostFixtures, PublishTest):
     """Testing class for local publishes."""

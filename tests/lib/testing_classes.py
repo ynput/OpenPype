@@ -9,6 +9,7 @@ import shutil
 import glob
 import platform
 import requests
+import re
 
 from tests.lib.db_handler import DBHandler
 from common.openpype_common.distribution.file_handler import RemoteFileHandler
@@ -316,7 +317,8 @@ class PublishTest(ModuleUnitTest):
         yield True
 
     def test_folder_structure_same(self, dbcon, publish_finished,
-                                   download_test_data, output_folder_url):
+                                   download_test_data, output_folder_url,
+                                   skip_compare_folders):
         """Check if expected and published subfolders contain same files.
 
             Compares only presence, not size nor content!
@@ -334,9 +336,17 @@ class PublishTest(ModuleUnitTest):
                        glob.glob(expected_dir_base + "\\**", recursive=True)
                        if f != expected_dir_base and os.path.exists(f))
 
-        not_matched = expected.symmetric_difference(published)
-        assert not not_matched, "Missing {} files".format(
-            "\n".join(sorted(not_matched)))
+        filtered_published = set()
+        for pub_path in published:
+            for val in skip_compare_folders:
+                if not re.search(val, pub_path):
+                    filtered_published.add(pub_path)
+
+        not_matched = expected.symmetric_difference(filtered_published)
+        if not_matched:
+            self.failed = True
+            raise AssertionError("Missing {} files".format(
+                "\n".join(sorted(not_matched))))
 
 
 class DeadlinePublishTest(PublishTest):
@@ -418,4 +428,9 @@ class HostFixtures():
     @pytest.fixture(scope="module")
     def startup_scripts(self, monkeypatch_session, download_test_data):
         """"Adds init scripts (like userSetup) to expected location"""
+        raise NotImplementedError
+
+    @pytest.fixture(scope="module")
+    def skip_compare_folders(self):
+        """Use list of regexs to filter out published folders from comparing"""
         raise NotImplementedError

@@ -37,6 +37,11 @@ class AEHostFixtures(HostFixtures):
         """Points Maya to userSetup file from input data"""
         pass
 
+    @pytest.fixture(scope="module")
+    def skip_compare_folders(self):
+        # skip folder that contain "Logs", these come only from Deadline
+        return ["Logs"]
+
 
 class AELocalPublishTestClass(AEHostFixtures, PublishTest):
     """Testing class for local publishes."""

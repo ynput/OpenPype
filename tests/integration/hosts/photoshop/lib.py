@@ -32,3 +32,7 @@ class PhotoshopTestClass(HostFixtures):
     def startup_scripts(self, monkeypatch_session, download_test_data):
         """Points Maya to userSetup file from input data"""
         pass
+
+    @pytest.fixture(scope="module")
+    def skip_compare_folders(self):
+        yield []

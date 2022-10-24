@@ -56,6 +56,9 @@ class NukeHostFixtures(HostFixtures):
                                                    os.pathsep,
                                                    original_nuke_path))
 
+    @pytest.fixture(scope="module")
+    def skip_compare_folders(self):
+        yield []
 
 class NukeLocalPublishTestClass(NukeHostFixtures, PublishTest):
     """Testing class for local publishes."""
