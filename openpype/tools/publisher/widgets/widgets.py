@@ -1509,7 +1509,8 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         convert_separator.setMaximumHeight(1)
 
         convert_layout = QtWidgets.QGridLayout(convert_widget)
-        convert_layout.setContentsMargins(0, 0, 0, 0)
+        convert_layout.setContentsMargins(5, 0, 5, 0)
+        convert_layout.setVerticalSpacing(10)
         convert_layout.addWidget(convert_label, 0, 0, 1, 3)
         convert_layout.addWidget(convert_btn, 1, 1)
         convert_layout.addWidget(convert_separator, 2, 0, 1, 3)
