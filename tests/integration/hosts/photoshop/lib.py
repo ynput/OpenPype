@@ -2,10 +2,13 @@ import os
 import pytest
 import shutil
 
-from tests.lib.testing_classes import HostFixtures
+from tests.lib.testing_classes import (
+    HostFixtures,
+    PublishTest
+)
 
 
-class PhotoshopTestClass(HostFixtures):
+class PhotoshopTestClass(HostFixtures, PublishTest):
     @pytest.fixture(scope="module")
     def last_workfile_path(self, download_test_data, output_folder_url):
         """Get last_workfile_path from source data.
