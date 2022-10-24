@@ -1,6 +1,8 @@
 import os
+import sys
 import copy
 import logging
+import traceback
 import collections
 import inspect
 from uuid import uuid4
@@ -22,6 +24,7 @@ from .creator_plugins import (
     Creator,
     AutoCreator,
     discover_creator_plugins,
+    CreatorError,
 )
 
 UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
@@ -65,6 +68,77 @@ class HostMissRequiredMethod(Exception):
             host_name, joined_methods
         )
         super(HostMissRequiredMethod, self).__init__(msg)
+
+
+class CreatorsOperationFailed(Exception):
+    """Raised when a creator process crashes in 'CreateContext'.
+
+    The exception contains information about the creator and error. The data
+    are prepared using 'prepare_failed_creator_operation_info' and can be
+    serialized using json.
+
+    Usage is for UI purposes which may not have access to exceptions directly
+    and would not have ability to catch exceptions 'per creator'.
+
+    Args:
+        msg (str): General error message.
+        failed_info (list[dict[str, Any]]): List of failed creators with
+            exception message and optionally formatted traceback.
+    """
+
+    def __init__(self, msg, failed_info):
+        super(CreatorsOperationFailed, self).__init__(msg)
+        self.failed_info = failed_info
+
+
+class CreatorsCollectionFailed(CreatorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Failed to collect instances"
+        super(CreatorsCollectionFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+class CreatorsSaveFailed(CreatorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Failed update instance changes"
+        super(CreatorsSaveFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+class CreatorsRemoveFailed(CreatorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Failed to remove instances"
+        super(CreatorsRemoveFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+class CreatorsCreateFailed(CreatorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Faled to create instances"
+        super(CreatorsCreateFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+def prepare_failed_creator_operation_info(
+    identifier, label, exc_info, add_traceback=True
+):
+    formatted_traceback = None
+    exc_type, exc_value, exc_traceback = exc_info
+    if add_traceback:
+        formatted_traceback = "".join(traceback.format_exception(
+            exc_type, exc_value, exc_traceback
+        ))
+
+    return {
+        "creator_identifier": identifier,
+        "creator_label": label,
+        "message": str(exc_value),
+        "traceback": formatted_traceback
+    }
 
 
 class InstanceMember:
@@ -1212,7 +1286,65 @@ class CreateContext:
         with self.bulk_instances_collection():
             self._bulk_instances_to_process.append(instance)
 
+    def create(self, identifier, *args, **kwargs):
+        """Wrapper for creators to trigger created.
+
+        Different types of creators may expect different arguments thus the
+        hints for args are blind.
+
+        Args:
+            identifier (str): Creator's identifier.
+            *args (Tuple[Any]): Arguments for create method.
+            **kwargs (Dict[Any, Any]): Keyword argument for create method.
+        """
+
+        error_message = "Failed to run Creator with identifier \"{}\". {}"
+        creator = self.creators.get(identifier)
+        label = getattr(creator, "label", None)
+        failed = False
+        add_traceback = False
+        exc_info = None
+        try:
+            # Fake CreatorError (Could be maybe specific exception?)
+            if creator is None:
+                raise CreatorError(
+                    "Creator {} was not found".format(identifier)
+                )
+
+            creator.create(*args, **kwargs)
+
+        except CreatorError:
+            failed = True
+            exc_info = sys.exc_info()
+            self.log.warning(error_message.format(identifier, exc_info[1]))
+
+        except:
+            failed = True
+            add_traceback = True
+            exc_info = sys.exc_info()
+            self.log.warning(
+                error_message.format(identifier, ""),
+                exc_info=True
+            )
+
+        if failed:
+            raise CreatorsCreateFailed([
+                prepare_failed_creator_operation_info(
+                    identifier, label, exc_info, add_traceback
+                )
+            ])
+
     def creator_removed_instance(self, instance):
+        """When creator removes instance context should be acknowledged.
+
+        If creator removes instance conext should know about it to avoid
+        possible issues in the session.
+
+        Args:
+            instance (CreatedInstance): Object of instance which was removed
+                from scene metadata.
+        """
+
         self._instances_by_id.pop(instance.id, None)
 
     @contextmanager
@@ -1247,24 +1379,81 @@ class CreateContext:
         self._instances_by_id = {}
 
         # Collect instances
+        error_message = "Collection of instances for creator {} failed. {}"
+        failed_info = []
         for creator in self.creators.values():
-            creator.collect_instances()
+            label = creator.label
+            identifier = creator.identifier
+            failed = False
+            add_traceback = False
+            exc_info = None
+            try:
+                creator.collect_instances()
+
+            except CreatorError:
+                failed = True
+                exc_info = sys.exc_info()
+                self.log.warning(error_message.format(identifier, exc_info[1]))
+
+            except:
+                failed = True
+                add_traceback = True
+                exc_info = sys.exc_info()
+                self.log.warning(
+                    error_message.format(identifier, ""),
+                    exc_info=True
+                )
+
+            if failed:
+                failed_info.append(
+                    prepare_failed_creator_operation_info(
+                        identifier, label, exc_info, add_traceback
+                    )
+                )
+
+        if failed_info:
+            raise CreatorsCollectionFailed(failed_info)
 
     def execute_autocreators(self):
         """Execute discovered AutoCreator plugins.
 
         Reset instances if any autocreator executed properly.
         """
+
+        error_message = "Failed to run AutoCreator with identifier \"{}\". {}"
+        failed_info = []
         for identifier, creator in self.autocreators.items():
+            label = creator.label
+            failed = False
+            add_traceback = False
             try:
                 creator.create()
 
-            except Exception:
-                # TODO raise report exception if any crashed
-                msg = (
-                    "Failed to run AutoCreator with identifier \"{}\" ({})."
-                ).format(identifier, inspect.getfile(creator.__class__))
-                self.log.warning(msg, exc_info=True)
+            except CreatorError:
+                failed = True
+                exc_info = sys.exc_info()
+                self.log.warning(error_message.format(identifier, exc_info[1]))
+
+            # Use bare except because some hosts raise their exceptions that
+            #   do not inherit from python's `BaseException`
+            except:
+                failed = True
+                add_traceback = True
+                exc_info = sys.exc_info()
+                self.log.warning(
+                    error_message.format(identifier, ""),
+                    exc_info=True
+                )
+
+            if failed:
+                failed_info.append(
+                    prepare_failed_creator_operation_info(
+                        identifier, label, exc_info, add_traceback
+                    )
+                )
+
+        if failed_info:
+            raise CreatorsCreateFailed(failed_info)
 
     def validate_instances_context(self, instances=None):
         """Validate 'asset' and 'task' instance context."""
@@ -1341,16 +1530,47 @@ class CreateContext:
             identifier = instance.creator_identifier
             instances_by_identifier[identifier].append(instance)
 
-        for identifier, cretor_instances in instances_by_identifier.items():
+        error_message = "Instances update of creator \"{}\" failed. {}"
+        failed_info = []
+        for identifier, creator_instances in instances_by_identifier.items():
             update_list = []
-            for instance in cretor_instances:
+            for instance in creator_instances:
                 instance_changes = instance.changes()
                 if instance_changes:
                     update_list.append(UpdateData(instance, instance_changes))
 
             creator = self.creators[identifier]
-            if update_list:
+            if not update_list:
+                continue
+
+            label = creator.label
+            failed = False
+            add_traceback = False
+            exc_info = None
+            try:
                 creator.update_instances(update_list)
+
+            except CreatorError:
+                failed = True
+                exc_info = sys.exc_info()
+                self.log.warning(error_message.format(identifier, exc_info[1]))
+
+            except:
+                failed = True
+                add_traceback = True
+                exc_info = sys.exc_info()
+                self.log.warning(
+                    error_message.format(identifier, ""), exc_info=True)
+
+            if failed:
+                failed_info.append(
+                    prepare_failed_creator_operation_info(
+                        identifier, label, exc_info, add_traceback
+                    )
+                )
+
+        if failed_info:
+            raise CreatorsSaveFailed(failed_info)
 
     def remove_instances(self, instances):
         """Remove instances from context.
@@ -1359,14 +1579,48 @@ class CreateContext:
             instances(list<CreatedInstance>): Instances that should be removed
                 from context.
         """
+
         instances_by_identifier = collections.defaultdict(list)
         for instance in instances:
             identifier = instance.creator_identifier
             instances_by_identifier[identifier].append(instance)
 
+        error_message = "Instances removement of creator \"{}\" failed. {}"
+        failed_info = []
         for identifier, creator_instances in instances_by_identifier.items():
             creator = self.creators.get(identifier)
-            creator.remove_instances(creator_instances)
+            label = creator.label
+            failed = False
+            add_traceback = False
+            exc_info = None
+            try:
+                creator.remove_instances(creator_instances)
+
+            except CreatorError:
+                failed = True
+                exc_info = sys.exc_info()
+                self.log.warning(
+                    error_message.format(identifier, exc_info[1])
+                )
+
+            except:
+                failed = True
+                add_traceback = True
+                exc_info = sys.exc_info()
+                self.log.warning(
+                    error_message.format(identifier, ""),
+                    exc_info=True
+                )
+
+            if failed:
+                failed_info.append(
+                    prepare_failed_creator_operation_info(
+                        identifier, label, exc_info, add_traceback
+                    )
+                )
+
+        if failed_info:
+            raise CreatorsRemoveFailed(failed_info)
 
     def _get_publish_plugins_with_attr_for_family(self, family):
         """Publish plugin attributes for passed family.

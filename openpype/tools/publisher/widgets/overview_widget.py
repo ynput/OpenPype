@@ -93,8 +93,8 @@ class OverviewWidget(QtWidgets.QFrame):
         main_layout.addWidget(subset_content_widget, 1)
 
         change_anim = QtCore.QVariantAnimation()
-        change_anim.setStartValue(0)
-        change_anim.setEndValue(self.anim_end_value)
+        change_anim.setStartValue(float(0))
+        change_anim.setEndValue(float(self.anim_end_value))
         change_anim.setDuration(self.anim_duration)
         change_anim.setEasingCurve(QtCore.QEasingCurve.InOutQuad)
 
@@ -264,9 +264,10 @@ class OverviewWidget(QtWidgets.QFrame):
                 + (self._subset_content_layout.spacing() * 2)
             )
         )
-        subset_attrs_width = int(float(width) / self.anim_end_value) * value
+        subset_attrs_width = int((float(width) / self.anim_end_value) * value)
         if subset_attrs_width > width:
             subset_attrs_width = width
+
         create_width = width - subset_attrs_width
 
         self._create_widget.setMinimumWidth(create_width)
