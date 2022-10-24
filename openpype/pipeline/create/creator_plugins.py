@@ -34,7 +34,7 @@ class CreatorError(Exception):
 
 
 @six.add_metaclass(ABCMeta)
-class LegacySubsetConvertor(object):
+class SubsetConvertorPlugin(object):
     """Helper for conversion of instances created using legacy creators.
 
     Conversion from legacy creators would mean to loose legacy instances,
@@ -561,7 +561,7 @@ def discover_creator_plugins():
 
 
 def discover_convertor_plugins():
-    return discover(LegacySubsetConvertor)
+    return discover(SubsetConvertorPlugin)
 
 
 def discover_legacy_creator_plugins():
@@ -621,8 +621,8 @@ def register_creator_plugin(plugin):
     elif issubclass(plugin, LegacyCreator):
         register_plugin(LegacyCreator, plugin)
 
-    elif issubclass(plugin, LegacySubsetConvertor):
-        register_plugin(LegacySubsetConvertor, plugin)
+    elif issubclass(plugin, SubsetConvertorPlugin):
+        register_plugin(SubsetConvertorPlugin, plugin)
 
 
 def deregister_creator_plugin(plugin):
@@ -632,17 +632,17 @@ def deregister_creator_plugin(plugin):
     elif issubclass(plugin, LegacyCreator):
         deregister_plugin(LegacyCreator, plugin)
 
-    elif issubclass(plugin, LegacySubsetConvertor):
-        deregister_plugin(LegacySubsetConvertor, plugin)
+    elif issubclass(plugin, SubsetConvertorPlugin):
+        deregister_plugin(SubsetConvertorPlugin, plugin)
 
 
 def register_creator_plugin_path(path):
     register_plugin_path(BaseCreator, path)
     register_plugin_path(LegacyCreator, path)
-    register_plugin_path(LegacySubsetConvertor, path)
+    register_plugin_path(SubsetConvertorPlugin, path)
 
 
 def deregister_creator_plugin_path(path):
     deregister_plugin_path(BaseCreator, path)
     deregister_plugin_path(LegacyCreator, path)
-    deregister_plugin_path(LegacySubsetConvertor, path)
+    deregister_plugin_path(SubsetConvertorPlugin, path)
