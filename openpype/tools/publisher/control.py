@@ -1608,7 +1608,7 @@ class PublisherController(BasePublisherController):
 
     @property
     def convertor_items(self):
-        return self._create_context.legacy_items_by_id
+        return self._create_context.convertor_items_by_id
 
     @property
     def _creators(self):
@@ -1728,7 +1728,7 @@ class PublisherController(BasePublisherController):
         self._create_context.reset_context_data()
         with self._create_context.bulk_instances_collection():
             self._create_context.reset_instances()
-            self._create_context.find_legacy_items()
+            self._create_context.find_convertor_items()
             self._create_context.execute_autocreators()
 
         self._resetting_instances = False

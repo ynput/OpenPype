@@ -34,7 +34,7 @@ class CreatorError(Exception):
 
 
 @six.add_metaclass(ABCMeta)
-class LegacyInstanceConvertor(object):
+class LegacySubsetConvertor(object):
     """Helper for conversion of instances created using legacy creators.
 
     Conversion from legacy creators would mean to loose legacy instances,
@@ -45,10 +45,10 @@ class LegacyInstanceConvertor(object):
 
     Convertor logic should be very simple. Method 'find_instances' is to
     look for legacy instances in scene a possibly call
-    pre-implemented 'add_legacy_item'.
+    pre-implemented 'add_convertor_item'.
 
     User will have ability to trigger conversion which is executed by calling
-    'convert' which should call 'remove_legacy_item' when is done.
+    'convert' which should call 'remove_convertor_item' when is done.
 
     It does make sense to add only one or none legacy item to create context
     for convertor as it's not possible to choose which instace are converted
@@ -78,7 +78,8 @@ class LegacyInstanceConvertor(object):
     def find_instances(self):
         """Look for legacy instances in the scene.
 
-        Should call 'add_legacy_item' if there is at least one item.
+        Should call 'add_convertor_item' if there is at least one instance to
+        convert.
         """
 
         pass
@@ -108,19 +109,19 @@ class LegacyInstanceConvertor(object):
 
         return self._create_context.collection_shared_data
 
-    def add_legacy_item(self, label):
+    def add_convertor_item(self, label):
         """Add item to CreateContext.
 
         Args:
             label (str): Label of item which will show in UI.
         """
 
-        self._create_context.add_legacy_item(self.identifier, label)
+        self._create_context.add_convertor_item(self.identifier, label)
 
-    def remove_legacy_item(self):
+    def remove_convertor_item(self):
         """Remove legacy item from create context when conversion finished."""
 
-        self._create_context.remove_legacy_item(self.identifier)
+        self._create_context.remove_convertor_item(self.identifier)
 
 
 @six.add_metaclass(ABCMeta)
@@ -559,8 +560,8 @@ def discover_creator_plugins():
     return discover(BaseCreator)
 
 
-def discover_legacy_convertor_plugins():
-    return discover(LegacyInstanceConvertor)
+def discover_convertor_plugins():
+    return discover(LegacySubsetConvertor)
 
 
 def discover_legacy_creator_plugins():
@@ -620,8 +621,8 @@ def register_creator_plugin(plugin):
     elif issubclass(plugin, LegacyCreator):
         register_plugin(LegacyCreator, plugin)
 
-    elif issubclass(plugin, LegacyInstanceConvertor):
-        register_plugin(LegacyInstanceConvertor, plugin)
+    elif issubclass(plugin, LegacySubsetConvertor):
+        register_plugin(LegacySubsetConvertor, plugin)
 
 
 def deregister_creator_plugin(plugin):
@@ -631,17 +632,17 @@ def deregister_creator_plugin(plugin):
     elif issubclass(plugin, LegacyCreator):
         deregister_plugin(LegacyCreator, plugin)
 
-    elif issubclass(plugin, LegacyInstanceConvertor):
-        deregister_plugin(LegacyInstanceConvertor, plugin)
+    elif issubclass(plugin, LegacySubsetConvertor):
+        deregister_plugin(LegacySubsetConvertor, plugin)
 
 
 def register_creator_plugin_path(path):
     register_plugin_path(BaseCreator, path)
     register_plugin_path(LegacyCreator, path)
-    register_plugin_path(LegacyInstanceConvertor, path)
+    register_plugin_path(LegacySubsetConvertor, path)
 
 
 def deregister_creator_plugin_path(path):
     deregister_plugin_path(BaseCreator, path)
     deregister_plugin_path(LegacyCreator, path)
-    deregister_plugin_path(LegacyInstanceConvertor, path)
+    deregister_plugin_path(LegacySubsetConvertor, path)
