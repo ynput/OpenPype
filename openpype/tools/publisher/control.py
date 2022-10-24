@@ -40,6 +40,11 @@ from openpype.pipeline.create.context import (
 PLUGIN_ORDER_OFFSET = 0.5
 
 
+class CardMessageTypes:
+    standard = None
+    error = "error"
+
+
 class MainThreadItem:
     """Callback with args and kwargs."""
 
@@ -1264,7 +1269,9 @@ class AbstractPublisherController(object):
         pass
 
     @abstractmethod
-    def emit_card_message(self, message, message_type=None):
+    def emit_card_message(
+        self, message, message_type=CardMessageTypes.standard
+    ):
         """Emit a card message which can have a lifetime.
 
         This is for UI purposes. Method can be extended to more arguments
@@ -1771,7 +1778,9 @@ class PublisherController(BasePublisherController):
 
         self._on_create_instance_change()
 
-    def emit_card_message(self, message, message_type=None):
+    def emit_card_message(
+        self, message, message_type=CardMessageTypes.standard
+    ):
         self._emit_event(
             "show.card.message",
             {
@@ -1910,8 +1919,12 @@ class PublisherController(BasePublisherController):
                     "failed_info": exc.failed_info
                 }
             )
+
+        if success:
+            self.emit_card_message("Conversion finished")
+        else:
+            self.emit_card_message("Conversion failed", CardMessageTypes.error)
         self._on_create_instance_change()
-        self.emit_card_message("Conversion finished")
 
     def create(
         self, creator_identifier, subset_name, instance_data, options
