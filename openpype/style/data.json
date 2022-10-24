@@ -100,10 +100,7 @@
                 "bg-expander": "#2C313A",
                 "bg-expander-hover": "#2d6c9f",
                 "bg-expander-selected-hover": "#3784c5"
-            },
-            "bg-legacy": "rgb(17, 17, 17)",
-            "bg-legacy-hover": "rgb(41, 41, 41)",
-            "bg-legacy-selected": "rgba(42, 123, 174, .4)"
+            }
         },
         "settings": {
             "invalid-light": "#C93636",

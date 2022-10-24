@@ -353,19 +353,18 @@ class LegacyItemCardWidget(CardWidget):
 
     def __init__(self, item, parent):
         super(LegacyItemCardWidget, self).__init__(parent)
-        self.setObjectName("CardViewLegacyItemWidget")
 
         self._id = item.id
         self.identifier = item.identifier
         self._group_identifier = LEGACY_ITEM_GROUP
 
-        icon_widget = PublishPixmapLabel(None, self)
+        icon_widget = IconValuePixmapLabel("fa.magic", self)
         icon_widget.setObjectName("FamilyIconLabel")
 
         label_widget = QtWidgets.QLabel(item.label, self)
 
         icon_layout = QtWidgets.QHBoxLayout()
-        icon_layout.setContentsMargins(5, 5, 5, 5)
+        icon_layout.setContentsMargins(10, 5, 5, 5)
         icon_layout.addWidget(icon_widget)
 
         layout = QtWidgets.QHBoxLayout(self)
