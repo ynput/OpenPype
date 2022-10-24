@@ -706,30 +706,28 @@
         "icon": "{}/app_icons/fusion.png",
         "host_name": "fusion",
         "environment": {
-            "FUSION_UTILITY_SCRIPTS_SOURCE_DIR": [],
-            "FUSION_UTILITY_SCRIPTS_DIR": {
-                "windows": "{PROGRAMDATA}/Blackmagic Design/Fusion/Scripts/Comp",
-                "darwin": "/Library/Application Support/Blackmagic Design/Fusion/Scripts/Comp",
-                "linux": "/opt/Fusion/Scripts/Comp"
-            },
-            "PYTHON36": {
+            "FUSION_PYTHON3_HOME": {
                 "windows": "{LOCALAPPDATA}/Programs/Python/Python36",
                 "darwin": "~/Library/Python/3.6/bin",
                 "linux": "/opt/Python/3.6/bin"
-            },
-            "PYTHONPATH": [
-                "{PYTHON36}/Lib/site-packages",
-                "{VIRTUAL_ENV}/Lib/site-packages",
-                "{PYTHONPATH}"
-            ],
-            "PATH": [
-                "{PYTHON36}",
-                "{PYTHON36}/Scripts",
-                "{PATH}"
-            ],
-            "OPENPYPE_LOG_NO_COLORS": "Yes"
+            }
         },
         "variants": {
+            "18": {
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Blackmagic Design\\Fusion 18\\Fusion.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
             "17": {
                 "executables": {
                     "windows": [
@@ -784,41 +782,11 @@
         "host_name": "resolve",
         "environment": {
             "RESOLVE_UTILITY_SCRIPTS_SOURCE_DIR": [],
-            "RESOLVE_SCRIPT_API": {
-                "windows": "{PROGRAMDATA}/Blackmagic Design/DaVinci Resolve/Support/Developer/Scripting",
-                "darwin": "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting",
-                "linux": "/opt/resolve/Developer/Scripting"
-            },
-            "RESOLVE_SCRIPT_LIB": {
-                "windows": "C:/Program Files/Blackmagic Design/DaVinci Resolve/fusionscript.dll",
-                "darwin": "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fusionscript.so",
-                "linux": "/opt/resolve/libs/Fusion/fusionscript.so"
-            },
-            "RESOLVE_UTILITY_SCRIPTS_DIR": {
-                "windows": "{PROGRAMDATA}/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp",
-                "darwin": "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp",
-                "linux": "/opt/resolve/Fusion/Scripts/Comp"
-            },
-            "PYTHON36_RESOLVE": {
+            "RESOLVE_PYTHON3_HOME": {
                 "windows": "{LOCALAPPDATA}/Programs/Python/Python36",
                 "darwin": "~/Library/Python/3.6/bin",
                 "linux": "/opt/Python/3.6/bin"
-            },
-            "PYTHONPATH": [
-                "{PYTHON36_RESOLVE}/Lib/site-packages",
-                "{VIRTUAL_ENV}/Lib/site-packages",
-                "{PYTHONPATH}",
-                "{RESOLVE_SCRIPT_API}/Modules",
-                "{PYTHONPATH}"
-            ],
-            "PATH": [
-                "{PYTHON36_RESOLVE}",
-                "{PYTHON36_RESOLVE}/Scripts",
-                "{PATH}"
-            ],
-            "PRE_PYTHON_SCRIPT": "{OPENPYPE_REPOS_ROOT}/openpype/resolve/preload_console.py",
-            "OPENPYPE_LOG_NO_COLORS": "True",
-            "RESOLVE_DEV": "True"
+            }
         },
         "variants": {
             "stable": {

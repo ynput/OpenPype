@@ -1,3 +1,4 @@
+import re
 import uuid
 import copy
 import collections
@@ -8,16 +9,24 @@ from bson.objectid import ObjectId
 from pymongo import DeleteOne, InsertOne, UpdateOne
 
 from .mongo import get_project_connection
+from .entities import get_project
 
 REMOVED_VALUE = object()
+
+PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
+PROJECT_NAME_REGEX = re.compile(
+    "^[{}]+$".format(PROJECT_NAME_ALLOWED_SYMBOLS)
+)
 
 CURRENT_PROJECT_SCHEMA = "openpype:project-3.0"
 CURRENT_PROJECT_CONFIG_SCHEMA = "openpype:config-2.0"
 CURRENT_ASSET_DOC_SCHEMA = "openpype:asset-3.0"
 CURRENT_SUBSET_SCHEMA = "openpype:subset-3.0"
 CURRENT_VERSION_SCHEMA = "openpype:version-3.0"
+CURRENT_HERO_VERSION_SCHEMA = "openpype:hero_version-1.0"
 CURRENT_REPRESENTATION_SCHEMA = "openpype:representation-2.0"
 CURRENT_WORKFILE_INFO_SCHEMA = "openpype:workfile-1.0"
+CURRENT_THUMBNAIL_SCHEMA = "openpype:thumbnail-1.0"
 
 
 def _create_or_convert_to_mongo_id(mongo_id):
@@ -154,6 +163,34 @@ def new_version_doc(version, subset_id, data=None, entity_id=None):
     }
 
 
+def new_hero_version_doc(version_id, subset_id, data=None, entity_id=None):
+    """Create skeleton data of hero version document.
+
+    Args:
+        version_id (ObjectId): Is considered as unique identifier of version
+            under subset.
+        subset_id (Union[str, ObjectId]): Id of parent subset.
+        data (Dict[str, Any]): Version document data.
+        entity_id (Union[str, ObjectId]): Predefined id of document. New id is
+            created if not passed.
+
+    Returns:
+        Dict[str, Any]: Skeleton of version document.
+    """
+
+    if data is None:
+        data = {}
+
+    return {
+        "_id": _create_or_convert_to_mongo_id(entity_id),
+        "schema": CURRENT_HERO_VERSION_SCHEMA,
+        "type": "hero_version",
+        "version_id": version_id,
+        "parent": subset_id,
+        "data": data
+    }
+
+
 def new_representation_doc(
     name, version_id, context, data=None, entity_id=None
 ):
@@ -186,6 +223,29 @@ def new_representation_doc(
 
         # Imprint shortcut to context for performance reasons.
         "context": context
+    }
+
+
+def new_thumbnail_doc(data=None, entity_id=None):
+    """Create skeleton data of thumbnail document.
+
+    Args:
+        data (Dict[str, Any]): Thumbnail document data.
+        entity_id (Union[str, ObjectId]): Predefined id of document. New id is
+            created if not passed.
+
+    Returns:
+        Dict[str, Any]: Skeleton of thumbnail document.
+    """
+
+    if data is None:
+        data = {}
+
+    return {
+        "_id": _create_or_convert_to_mongo_id(entity_id),
+        "type": "thumbnail",
+        "schema": CURRENT_THUMBNAIL_SCHEMA,
+        "data": data
     }
 
 
@@ -250,6 +310,20 @@ def prepare_subset_update_data(old_doc, new_doc, replace=True):
 
 def prepare_version_update_data(old_doc, new_doc, replace=True):
     """Compare two version documents and prepare update data.
+
+    Based on compared values will create update data for 'UpdateOperation'.
+
+    Empty output means that documents are identical.
+
+    Returns:
+        Dict[str, Any]: Changes between old and new document.
+    """
+
+    return _prepare_update_data(old_doc, new_doc, replace)
+
+
+def prepare_hero_version_update_data(old_doc, new_doc, replace=True):
+    """Compare two hero version documents and prepare update data.
 
     Based on compared values will create update data for 'UpdateOperation'.
 
@@ -444,7 +518,7 @@ class UpdateOperation(AbstractOperation):
         set_data = {}
         for key, value in self._update_data.items():
             if value is REMOVED_VALUE:
-                unset_data[key] = value
+                unset_data[key] = None
             else:
                 set_data[key] = value
 
@@ -632,3 +706,89 @@ class OperationsSession(object):
         operation = DeleteOperation(project_name, entity_type, entity_id)
         self.add(operation)
         return operation
+
+
+def create_project(project_name, project_code, library_project=False):
+    """Create project using OpenPype settings.
+
+    This project creation function is not validating project document on
+    creation. It is because project document is created blindly with only
+    minimum required information about project which is it's name, code, type
+    and schema.
+
+    Entered project name must be unique and project must not exist yet.
+
+    Note:
+        This function is here to be OP v4 ready but in v3 has more logic
+            to do. That's why inner imports are in the body.
+
+    Args:
+        project_name(str): New project name. Should be unique.
+        project_code(str): Project's code should be unique too.
+        library_project(bool): Project is library project.
+
+    Raises:
+        ValueError: When project name already exists in MongoDB.
+
+    Returns:
+        dict: Created project document.
+    """
+
+    from openpype.settings import ProjectSettings, SaveWarningExc
+    from openpype.pipeline.schema import validate
+
+    if get_project(project_name, fields=["name"]):
+        raise ValueError("Project with name \"{}\" already exists".format(
+            project_name
+        ))
+
+    if not PROJECT_NAME_REGEX.match(project_name):
+        raise ValueError((
+            "Project name \"{}\" contain invalid characters"
+        ).format(project_name))
+
+    project_doc = {
+        "type": "project",
+        "name": project_name,
+        "data": {
+            "code": project_code,
+            "library_project": library_project
+        },
+        "schema": CURRENT_PROJECT_SCHEMA
+    }
+
+    op_session = OperationsSession()
+    # Insert document with basic data
+    create_op = op_session.create_entity(
+        project_name, project_doc["type"], project_doc
+    )
+    op_session.commit()
+
+    # Load ProjectSettings for the project and save it to store all attributes
+    #   and Anatomy
+    try:
+        project_settings_entity = ProjectSettings(project_name)
+        project_settings_entity.save()
+    except SaveWarningExc as exc:
+        print(str(exc))
+    except Exception:
+        op_session.delete_entity(
+            project_name, project_doc["type"], create_op.entity_id
+        )
+        op_session.commit()
+        raise
+
+    project_doc = get_project(project_name)
+
+    try:
+        # Validate created project document
+        validate(project_doc)
+    except Exception:
+        # Remove project if is not valid
+        op_session.delete_entity(
+            project_name, project_doc["type"], create_op.entity_id
+        )
+        op_session.commit()
+        raise
+
+    return project_doc

@@ -156,8 +156,14 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             # CUSTOM ATTRIBUTES
             custom_attributes = entity_data.get('custom_attributes', [])
             instances = [
-                i for i in self.context if i.data['asset'] in entity['name']
+                instance
+                for instance in self.context
+                if instance.data.get("asset") == entity["name"]
             ]
+
+            for instance in instances:
+                instance.data["ftrackEntity"] = entity
+
             for key in custom_attributes:
                 hier_attr = hier_attr_by_key.get(key)
                 # Use simple method if key is not hierarchical
@@ -187,9 +193,6 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                         )
                     )
 
-                for instance in instances:
-                    instance.data['ftrackEntity'] = entity
-
                 try:
                     self.session.commit()
                 except Exception:
@@ -199,13 +202,22 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                     six.reraise(tp, value, tb)
 
             # TASKS
+            instances_by_task_name = collections.defaultdict(list)
+            for instance in instances:
+                task_name = instance.data.get("task")
+                if task_name:
+                    instances_by_task_name[task_name].append(instance)
+
             tasks = entity_data.get('tasks', [])
             existing_tasks = []
             tasks_to_create = []
             for child in entity['children']:
-                if child.entity_type.lower() == 'task':
-                    existing_tasks.append(child['name'].lower())
-                    # existing_tasks.append(child['type']['name'])
+                if child.entity_type.lower() == "task":
+                    task_name_low = child["name"].lower()
+                    existing_tasks.append(task_name_low)
+
+                    for instance in instances_by_task_name[task_name_low]:
+                        instance["ftrackTask"] = child
 
             for task_name in tasks:
                 task_type = tasks[task_name]["type"]
@@ -215,11 +227,14 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 tasks_to_create.append((task_name, task_type))
 
             for task_name, task_type in tasks_to_create:
-                self.create_task(
+                task_entity = self.create_task(
                     name=task_name,
                     task_type=task_type,
                     parent=entity
                 )
+
+                for instance in instances_by_task_name[task_name.lower()]:
+                    instance.data["ftrackTask"] = task_entity
 
             # Incoming links.
             self.create_links(project_name, entity_data, entity)

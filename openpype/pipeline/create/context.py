@@ -7,7 +7,11 @@ from uuid import uuid4
 from contextlib import contextmanager
 
 from openpype.client import get_assets
-from openpype.host import INewPublisher
+from openpype.settings import (
+    get_system_settings,
+    get_project_settings
+)
+from openpype.host import IPublishHost
 from openpype.pipeline import legacy_io
 from openpype.pipeline.mongodb import (
     AvalonMongoDB,
@@ -20,12 +24,12 @@ from .creator_plugins import (
     discover_creator_plugins,
 )
 
-from openpype.api import (
-    get_system_settings,
-    get_project_settings
-)
-
 UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
+
+
+class UnavailableSharedData(Exception):
+    """Shared data are not available at the moment when are accessed."""
+    pass
 
 
 class ImmutableKeyError(TypeError):
@@ -167,7 +171,10 @@ class AttributeValues:
         return self._data.pop(key, default)
 
     def reset_values(self):
-        self._data = []
+        self._data = {}
+
+    def mark_as_stored(self):
+        self._origin_data = copy.deepcopy(self._data)
 
     @property
     def attr_defs(self):
@@ -197,6 +204,16 @@ class AttributeValues:
 
     def changes(self):
         return self.calculate_changes(self._data, self._origin_data)
+
+    def apply_changes(self, changes):
+        for key, item in changes.items():
+            old_value, new_value = item
+            if new_value is None:
+                if key in self:
+                    self.pop(key)
+
+            elif self.get(key) != new_value:
+                self[key] = new_value
 
 
 class CreatorAttributeValues(AttributeValues):
@@ -304,6 +321,9 @@ class PublishAttributes:
         for name in self._plugin_names_order:
             yield name
 
+    def mark_as_stored(self):
+        self._origin_data = copy.deepcopy(self._data)
+
     def data_to_store(self):
         """Convert attribute values to "data to store"."""
 
@@ -327,6 +347,21 @@ class PublishAttributes:
             if key not in self._data:
                 changes[key] = (value, None)
         return changes
+
+    def apply_changes(self, changes):
+        for key, item in changes.items():
+            if isinstance(item, dict):
+                self._data[key].apply_changes(item)
+                continue
+
+            old_value, new_value = item
+            if new_value is not None:
+                raise ValueError(
+                    "Unexpected type \"{}\" expected None".format(
+                        str(type(new_value))
+                    )
+                )
+            self.pop(key)
 
     def set_publish_plugins(self, attr_plugins):
         """Set publish plugins attribute definitions."""
@@ -402,7 +437,11 @@ class CreatedInstance:
         self.creator = creator
 
         # Instance members may have actions on them
+        # TODO implement members logic
         self._members = []
+
+        # Data that can be used for lifetime of object
+        self._transient_data = {}
 
         # Create a copy of passed data to avoid changing them on the fly
         data = copy.deepcopy(data or {})
@@ -596,6 +635,26 @@ class CreatedInstance:
 
         return self
 
+    @property
+    def transient_data(self):
+        """Data stored for lifetime of instance object.
+
+        These data are not stored to scene and will be lost on object
+        deletion.
+
+        Can be used to store objects. In some host implementations is not
+        possible to reference to object in scene with some unique identifier
+        (e.g. node in Fusion.). In that case it is handy to store the object
+        here. Should be used that way only if instance data are stored on the
+        node itself.
+
+        Returns:
+            Dict[str, Any]: Dictionary object where you can store data related
+                to instance for lifetime of instance object.
+        """
+
+        return self._transient_data
+
     def changes(self):
         """Calculate and return changes."""
 
@@ -623,6 +682,25 @@ class CreatedInstance:
                 changes[key] = (old_value, None)
         return changes
 
+    def mark_as_stored(self):
+        """Should be called when instance data are stored.
+
+        Origin data are replaced by current data so changes are cleared.
+        """
+
+        orig_keys = set(self._orig_data.keys())
+        for key, value in self._data.items():
+            orig_keys.discard(key)
+            if key in ("creator_attributes", "publish_attributes"):
+                continue
+            self._orig_data[key] = copy.deepcopy(value)
+
+        for key in orig_keys:
+            self._orig_data.pop(key)
+
+        self.creator_attributes.mark_as_stored()
+        self.publish_attributes.mark_as_stored()
+
     @property
     def creator_attributes(self):
         return self._data["creator_attributes"]
@@ -636,6 +714,18 @@ class CreatedInstance:
         return self._data["publish_attributes"]
 
     def data_to_store(self):
+        """Collect data that contain json parsable types.
+
+        It is possible to recreate the instance using these data.
+
+        Todo:
+            We probably don't need OrderedDict. When data are loaded they
+                are not ordered anymore.
+
+        Returns:
+            OrderedDict: Ordered dictionary with instance data.
+        """
+
         output = collections.OrderedDict()
         for key, value in self._data.items():
             if key in ("creator_attributes", "publish_attributes"):
@@ -669,6 +759,97 @@ class CreatedInstance:
         for member in members:
             if member not in self._members:
                 self._members.append(member)
+
+    def serialize_for_remote(self):
+        return {
+            "data": self.data_to_store(),
+            "orig_data": copy.deepcopy(self._orig_data)
+        }
+
+    @classmethod
+    def deserialize_on_remote(cls, serialized_data, creator_items):
+        """Convert instance data to CreatedInstance.
+
+        This is fake instance in remote process e.g. in UI process. The creator
+        is not a full creator and should not be used for calling methods when
+        instance is created from this method (matters on implementation).
+
+        Args:
+            serialized_data (Dict[str, Any]): Serialized data for remote
+                recreating. Should contain 'data' and 'orig_data'.
+            creator_items (Dict[str, Any]): Mapping of creator identifier and
+                objects that behave like a creator for most of attribute
+                access.
+        """
+
+        instance_data = copy.deepcopy(serialized_data["data"])
+        creator_identifier = instance_data["creator_identifier"]
+        creator_item = creator_items[creator_identifier]
+
+        family = instance_data.get("family", None)
+        if family is None:
+            family = creator_item.family
+        subset_name = instance_data.get("subset", None)
+
+        obj = cls(
+            family, subset_name, instance_data, creator_item, new=False
+        )
+        obj._orig_data = serialized_data["orig_data"]
+
+        return obj
+
+    def remote_changes(self):
+        """Prepare serializable changes on remote side.
+
+        Returns:
+            Dict[str, Any]: Prepared changes that can be send to client side.
+        """
+
+        return {
+            "changes": self.changes(),
+            "asset_is_valid": self._asset_is_valid,
+            "task_is_valid": self._task_is_valid,
+        }
+
+    def update_from_remote(self, remote_changes):
+        """Apply changes from remote side on client side.
+
+        Args:
+            remote_changes (Dict[str, Any]): Changes created on remote side.
+        """
+
+        self._asset_is_valid = remote_changes["asset_is_valid"]
+        self._task_is_valid = remote_changes["task_is_valid"]
+
+        changes = remote_changes["changes"]
+        creator_attributes = changes.pop("creator_attributes", None) or {}
+        publish_attributes = changes.pop("publish_attributes", None) or {}
+        if changes:
+            self.apply_changes(changes)
+
+        if creator_attributes:
+            self.creator_attributes.apply_changes(creator_attributes)
+
+        if publish_attributes:
+            self.publish_attributes.apply_changes(publish_attributes)
+
+    def apply_changes(self, changes):
+        """Apply changes created via 'changes'.
+
+        Args:
+            Dict[str, Tuple[Any, Any]]: Instance changes to apply. Same values
+                are kept untouched.
+        """
+
+        for key, item in changes.items():
+            old_value, new_value = item
+            if new_value is None:
+                if key in self:
+                    self.pop(key)
+            else:
+                current_value = self.get(key)
+                if current_value != new_value:
+                    self[key] = new_value
 
 
 class CreateContext:
@@ -749,6 +930,9 @@ class CreateContext:
         self._bulk_counter = 0
         self._bulk_instances_to_process = []
 
+        # Shared data across creators during collection phase
+        self._collection_shared_data = None
+
         # Trigger reset if was enabled
         if reset:
             self.reset(discover_publish_plugins)
@@ -756,6 +940,10 @@ class CreateContext:
     @property
     def instances(self):
         return self._instances_by_id.values()
+
+    @property
+    def instances_by_id(self):
+        return self._instances_by_id
 
     @property
     def publish_attributes(self):
@@ -771,7 +959,7 @@ class CreateContext:
         """
 
         missing = set(
-            INewPublisher.get_missing_publish_methods(host)
+            IPublishHost.get_missing_publish_methods(host)
         )
         return missing
 
@@ -800,6 +988,9 @@ class CreateContext:
 
         All changes will be lost if were not saved explicitely.
         """
+
+        self.reset_preparation()
+
         self.reset_avalon_context()
         self.reset_plugins(discover_publish_plugins)
         self.reset_context_data()
@@ -807,6 +998,20 @@ class CreateContext:
         with self.bulk_instances_collection():
             self.reset_instances()
             self.execute_autocreators()
+
+        self.reset_finalization()
+
+    def reset_preparation(self):
+        """Prepare attributes that must be prepared/cleaned before reset."""
+
+        # Give ability to store shared data for collection phase
+        self._collection_shared_data = {}
+
+    def reset_finalization(self):
+        """Cleanup of attributes after reset."""
+
+        # Stop access to collection shared data
+        self._collection_shared_data = None
 
     def reset_avalon_context(self):
         """Give ability to reset avalon context.
@@ -916,7 +1121,8 @@ class CreateContext:
                 and creator_class.host_name != self.host_name
             ):
                 self.log.info((
-                    "Creator's host name is not supported for current host {}"
+                    "Creator's host name \"{}\""
+                    " is not supported for current host \"{}\""
                 ).format(creator_class.host_name, self.host_name))
                 continue
 
@@ -1191,3 +1397,20 @@ class CreateContext:
             if not plugin.__instanceEnabled__:
                 plugins.append(plugin)
         return plugins
+
+    @property
+    def collection_shared_data(self):
+        """Access to shared data that can be used during creator's collection.
+
+        Retruns:
+            Dict[str, Any]: Shared data.
+
+        Raises:
+            UnavailableSharedData: When called out of collection phase.
+        """
+
+        if self._collection_shared_data is None:
+            raise UnavailableSharedData(
+                "Accessed Collection shared data out of collection phase"
+            )
+        return self._collection_shared_data

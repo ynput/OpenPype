@@ -323,7 +323,7 @@ class SettingsToolBtn(ImageButton):
     @classmethod
     def _get_icon_type(cls, btn_type):
         if btn_type not in cls._cached_icons:
-            settings_colors = get_objected_colors()["settings"]
+            settings_colors = get_objected_colors("settings")
             normal_color = settings_colors["image-btn"].get_qcolor()
             hover_color = settings_colors["image-btn-hover"].get_qcolor()
             disabled_color = settings_colors["image-btn-disabled"].get_qcolor()
@@ -789,8 +789,7 @@ class ProjectModel(QtGui.QStandardItemModel):
         self._items_by_name = {}
         self._versions_by_project = {}
 
-        colors = get_objected_colors()
-        font_color = colors["font"].get_qcolor()
+        font_color = get_objected_colors("font").get_qcolor()
         font_color.setAlpha(67)
         self._version_font_color = font_color
         self._current_version = get_openpype_version()

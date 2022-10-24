@@ -1,7 +1,7 @@
 from maya import cmds
 
 import pyblish.api
-import openpype.api
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateLookDefaultShadersConnections(pyblish.api.InstancePlugin):
@@ -16,7 +16,7 @@ class ValidateLookDefaultShadersConnections(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     families = ['look']
     hosts = ['maya']
     label = 'Look Default Shader Connections'

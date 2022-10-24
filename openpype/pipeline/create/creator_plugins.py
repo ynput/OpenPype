@@ -6,10 +6,11 @@ from abc import (
     abstractmethod,
     abstractproperty
 )
+
 import six
 
 from openpype.settings import get_system_settings, get_project_settings
-from openpype.lib import get_subset_name_with_asset_doc
+from openpype.lib import Logger
 from openpype.pipeline.plugin_discover import (
     discover,
     register_plugin,
@@ -18,6 +19,7 @@ from openpype.pipeline.plugin_discover import (
     deregister_plugin_path
 )
 
+from .subset_name import get_subset_name
 from .legacy_create import LegacyCreator
 
 
@@ -75,10 +77,18 @@ class BaseCreator:
     ):
         # Reference to CreateContext
         self.create_context = create_context
+        self.project_settings = project_settings
 
         # Creator is running in headless mode (without UI elemets)
         # - we may use UI inside processing this attribute should be checked
         self.headless = headless
+
+        self.apply_settings(project_settings, system_settings)
+
+    def apply_settings(self, project_settings, system_settings):
+        """Method called on initialization of plugin to apply settings."""
+
+        pass
 
     @property
     def identifier(self):
@@ -135,8 +145,6 @@ class BaseCreator:
         """
 
         if self._log is None:
-            from openpype.api import Logger
-
             self._log = Logger.get_logger(self.__class__.__name__)
         return self._log
 
@@ -239,7 +247,7 @@ class BaseCreator:
         return self.icon
 
     def get_dynamic_data(
-        self, variant, task_name, asset_doc, project_name, host_name
+        self, variant, task_name, asset_doc, project_name, host_name, instance
     ):
         """Dynamic data for subset name filling.
 
@@ -250,7 +258,13 @@ class BaseCreator:
         return {}
 
     def get_subset_name(
-        self, variant, task_name, asset_doc, project_name, host_name=None
+        self,
+        variant,
+        task_name,
+        asset_doc,
+        project_name,
+        host_name=None,
+        instance=None
     ):
         """Return subset name for passed context.
 
@@ -264,26 +278,32 @@ class BaseCreator:
         Asset document is not used yet but is required if would like to use
         task type in subset templates.
 
+        Method is also called on subset name update. In that case origin
+        instance is passed in.
+
         Args:
             variant(str): Subset name variant. In most of cases user input.
             task_name(str): For which task subset is created.
             asset_doc(dict): Asset document for which subset is created.
             project_name(str): Project name.
             host_name(str): Which host creates subset.
+            instance(str|None): Object of 'CreatedInstance' for which is
+                subset name updated. Passed only on subset name update.
         """
 
         dynamic_data = self.get_dynamic_data(
-            variant, task_name, asset_doc, project_name, host_name
+            variant, task_name, asset_doc, project_name, host_name, instance
         )
 
-        return get_subset_name_with_asset_doc(
+        return get_subset_name(
             self.family,
             variant,
             task_name,
             asset_doc,
             project_name,
             host_name,
-            dynamic_data=dynamic_data
+            dynamic_data=dynamic_data,
+            project_settings=self.project_settings
         )
 
     def get_instance_attr_defs(self):
@@ -303,6 +323,19 @@ class BaseCreator:
         """
 
         return self.instance_attr_defs
+
+    @property
+    def collection_shared_data(self):
+        """Access to shared data that can be used during creator's collection.
+
+        Retruns:
+            Dict[str, Any]: Shared data.
+
+        Raises:
+            UnavailableSharedData: When called out of collection phase.
+        """
+
+        return self.create_context.collection_shared_data
 
 
 class Creator(BaseCreator):
@@ -456,6 +489,34 @@ def discover_legacy_creator_plugins():
                 exc_info=True
             )
     return plugins
+
+
+def get_legacy_creator_by_name(creator_name, case_sensitive=False):
+    """Find creator plugin by name.
+
+    Args:
+        creator_name (str): Name of creator class that should be returned.
+        case_sensitive (bool): Match of creator plugin name is case sensitive.
+            Set to `False` by default.
+
+    Returns:
+        Creator: Return first matching plugin or `None`.
+    """
+
+    # Lower input creator name if is not case sensitive
+    if not case_sensitive:
+        creator_name = creator_name.lower()
+
+    for creator_plugin in discover_legacy_creator_plugins():
+        _creator_name = creator_plugin.__name__
+
+        # Lower creator plugin name if is not case sensitive
+        if not case_sensitive:
+            _creator_name = _creator_name.lower()
+
+        if _creator_name == creator_name:
+            return creator_plugin
+    return None
 
 
 def register_creator_plugin(plugin):

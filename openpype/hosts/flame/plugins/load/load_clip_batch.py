@@ -64,8 +64,6 @@ class LoadClipBatch(opfapi.ClipLoader):
             "path": self.fname.replace("\\", "/"),
             "colorspace": colorspace,
             "version": "v{:0>3}".format(version_name),
-            "logger": self.log
-
         }
         self.log.debug(pformat(
             loading_context
@@ -73,7 +71,8 @@ class LoadClipBatch(opfapi.ClipLoader):
         self.log.debug(openclip_path)
 
         # make openpype clip file
-        opfapi.OpenClipSolver(openclip_path, loading_context).make()
+        opfapi.OpenClipSolver(
+            openclip_path, loading_context, logger=self.log).make()
 
         # prepare Reel group in actual desktop
         opc = self._get_clip(

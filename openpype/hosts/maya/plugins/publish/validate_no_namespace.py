@@ -2,7 +2,11 @@ import pymel.core as pm
 import maya.cmds as cmds
 
 import pyblish.api
-import openpype.api
+from openpype.pipeline.publish import (
+    RepairAction,
+    ValidateContentsOrder,
+)
+
 import openpype.hosts.maya.api.action
 
 
@@ -16,14 +20,14 @@ def get_namespace(node_name):
 class ValidateNoNamespace(pyblish.api.InstancePlugin):
     """Ensure the nodes don't have a namespace"""
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ['maya']
     families = ['model']
     category = 'cleanup'
     version = (0, 1, 0)
     label = 'No Namespaces'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
-               openpype.api.RepairAction]
+               RepairAction]
 
     @staticmethod
     def get_invalid(instance):

@@ -1,18 +1,16 @@
 import os
-import glob
-import contextlib
 
 import clique
 import capture
 
+from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
-import openpype.api
 
 from maya import cmds
 import pymel.core as pm
 
 
-class ExtractPlayblast(openpype.api.Extractor):
+class ExtractPlayblast(publish.Extractor):
     """Extract viewport playblast.
 
     Takes review camera and creates review Quicktime video based on viewport
@@ -79,8 +77,10 @@ class ExtractPlayblast(openpype.api.Extractor):
             preset['height'] = asset_height
         preset['start_frame'] = start
         preset['end_frame'] = end
-        camera_option = preset.get("camera_option", {})
-        camera_option["depthOfField"] = cmds.getAttr(
+
+        # Enforce persisting camera depth of field
+        camera_options = preset.setdefault("camera_options", {})
+        camera_options["depthOfField"] = cmds.getAttr(
             "{0}.depthOfField".format(camera))
 
         stagingdir = self.staging_dir(instance)
@@ -128,7 +128,7 @@ class ExtractPlayblast(openpype.api.Extractor):
             # Update preset with current panel setting
             # if override_viewport_options is turned off
             if not override_viewport_options:
-                panel = cmds.getPanel(with_focus=True)
+                panel = cmds.getPanel(withFocus=True)
                 panel_preset = capture.parse_active_view()
                 preset.update(panel_preset)
                 cmds.setFocus(panel)
@@ -138,8 +138,10 @@ class ExtractPlayblast(openpype.api.Extractor):
         self.log.debug("playblast path  {}".format(path))
 
         collected_files = os.listdir(stagingdir)
+        patterns = [clique.PATTERNS["frames"]]
         collections, remainder = clique.assemble(collected_files,
-                                                 minimum_items=1)
+                                                 minimum_items=1,
+                                                 patterns=patterns)
 
         self.log.debug("filename {}".format(filename))
         frame_collection = None

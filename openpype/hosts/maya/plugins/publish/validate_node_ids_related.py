@@ -1,6 +1,6 @@
 import pyblish.api
-import openpype.api
 
+from openpype.pipeline.publish import ValidatePipelineOrder
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
 
@@ -10,7 +10,7 @@ class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidatePipelineOrder
+    order = ValidatePipelineOrder
     label = 'Node Ids Related (ID)'
     hosts = ['maya']
     families = ["model",

@@ -16,6 +16,7 @@ from openpype.client import (
     get_asset_by_name,
     version_is_latest,
 )
+from openpype.lib.events import emit_event
 from openpype.modules import load_modules, ModulesManager
 from openpype.settings import get_project_settings
 
@@ -29,7 +30,7 @@ from .workfile import (
 from . import (
     legacy_io,
     register_loader_plugin_path,
-    register_inventory_action,
+    register_inventory_action_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
 )
@@ -196,7 +197,7 @@ def install_openpype_plugins(project_name=None, host_name=None):
             pyblish.api.register_plugin_path(path)
             register_loader_plugin_path(path)
             register_creator_plugin_path(path)
-            register_inventory_action(path)
+            register_inventory_action_path(path)
 
 
 def uninstall_host():
@@ -445,3 +446,103 @@ def get_custom_workfile_template_from_session(
         session["AVALON_APP"],
         project_settings=project_settings
     )
+
+
+def compute_session_changes(
+    session, asset_doc, task_name, template_key=None
+):
+    """Compute the changes for a session object on task under asset.
+
+    Function does not change the session object, only returns changes.
+
+    Args:
+        session (Dict[str, str]): The initial session to compute changes to.
+            This is required for computing the full Work Directory, as that
+            also depends on the values that haven't changed.
+        asset_doc (Dict[str, Any]): Asset document to switch to.
+        task_name (str): Name of task to switch to.
+        template_key (Union[str, None]): Prepare workfile template key in
+            anatomy templates.
+
+    Returns:
+        Dict[str, str]: Changes in the Session dictionary.
+    """
+
+    changes = {}
+
+    # Get asset document and asset
+    if not asset_doc:
+        task_name = None
+        asset_name = None
+    else:
+        asset_name = asset_doc["name"]
+
+    # Detect any changes compared session
+    mapping = {
+        "AVALON_ASSET": asset_name,
+        "AVALON_TASK": task_name,
+    }
+    changes = {
+        key: value
+        for key, value in mapping.items()
+        if value != session.get(key)
+    }
+    if not changes:
+        return changes
+
+    # Compute work directory (with the temporary changed session so far)
+    changed_session = session.copy()
+    changed_session.update(changes)
+
+    workdir = None
+    if asset_doc:
+        workdir = get_workdir_from_session(
+            changed_session, template_key
+        )
+
+    changes["AVALON_WORKDIR"] = workdir
+
+    return changes
+
+
+def change_current_context(asset_doc, task_name, template_key=None):
+    """Update active Session to a new task work area.
+
+    This updates the live Session to a different task under asset.
+
+    Args:
+        asset_doc (Dict[str, Any]): The asset document to set.
+        task_name (str): The task to set under asset.
+        template_key (Union[str, None]): Prepared template key to be used for
+            workfile template in Anatomy.
+
+    Returns:
+        Dict[str, str]: The changed key, values in the current Session.
+    """
+
+    changes = compute_session_changes(
+        legacy_io.Session,
+        asset_doc,
+        task_name,
+        template_key=template_key
+    )
+
+    # Update the Session and environments. Pop from environments all keys with
+    # value set to None.
+    for key, value in changes.items():
+        legacy_io.Session[key] = value
+        if value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = value
+
+    data = changes.copy()
+    # Convert env keys to human readable keys
+    data["project_name"] = legacy_io.Session["AVALON_PROJECT"]
+    data["asset_name"] = legacy_io.Session["AVALON_ASSET"]
+    data["task_name"] = legacy_io.Session["AVALON_TASK"]
+
+    # Emit session change
+    emit_event("taskChanged", data)
+
+    return changes

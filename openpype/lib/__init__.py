@@ -189,11 +189,11 @@ from .plugin_tools import (
     filter_pyblish_plugins,
     set_plugin_attributes_from_settings,
     source_hash,
-    get_unique_layer_name,
-    get_background_layers,
 )
 
 from .path_tools import (
+    format_file_size,
+    collect_frames,
     create_hard_link,
     version_up,
     get_version_from_path,
@@ -201,19 +201,6 @@ from .path_tools import (
     create_project_folders,
     create_workdir_extra_folders,
     get_project_basic_paths,
-)
-
-from .editorial import (
-    is_overlapping_otio_ranges,
-    otio_range_to_frame_range,
-    otio_range_with_handles,
-    get_media_range_with_retimes,
-    convert_to_padded_path,
-    trim_media_range,
-    range_from_frames,
-    frames_to_secons,
-    frames_to_timecode,
-    make_sequence_collection
 )
 
 from .openpype_version import (
@@ -354,9 +341,9 @@ __all__ = [
     "filter_pyblish_plugins",
     "set_plugin_attributes_from_settings",
     "source_hash",
-    "get_unique_layer_name",
-    "get_background_layers",
 
+    "format_file_size",
+    "collect_frames",
     "create_hard_link",
     "version_up",
     "get_version_from_path",
@@ -383,16 +370,6 @@ __all__ = [
     "validate_mongo_connection",
     "OpenPypeMongoConnection",
 
-    "is_overlapping_otio_ranges",
-    "otio_range_with_handles",
-    "convert_to_padded_path",
-    "otio_range_to_frame_range",
-    "get_media_range_with_retimes",
-    "trim_media_range",
-    "range_from_frames",
-    "frames_to_secons",
-    "frames_to_timecode",
-    "make_sequence_collection",
     "create_project_folders",
     "create_workdir_extra_folders",
     "get_project_basic_paths",

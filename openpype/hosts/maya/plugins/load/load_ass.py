@@ -1,7 +1,7 @@
 import os
 import clique
 
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 from openpype.pipeline import (
     load,
     get_representation_path
@@ -65,8 +65,9 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
             proxyPath = proxyPath_base + ".ma"
 
+            project_name = context["project"]["name"]
             file_url = self.prepare_root_value(proxyPath,
-                                               context["project"]["code"])
+                                               project_name)
 
             nodes = cmds.file(file_url,
                               namespace=namespace,
@@ -85,7 +86,7 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             proxyShape.dso.set(path)
             proxyShape.aiOverrideShaders.set(0)
 
-            settings = get_project_settings(os.environ['AVALON_PROJECT'])
+            settings = get_project_settings(project_name)
             colors = settings['maya']['load']['colors']
 
             c = colors.get(family)
@@ -128,7 +129,7 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             file_url = self.prepare_root_value(proxyPath,
                                                representation["context"]
                                                              ["project"]
-                                                             ["code"])
+                                                             ["name"])
             content = cmds.file(file_url,
                                 loadReference=reference_node,
                                 type="mayaAscii",
