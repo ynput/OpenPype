@@ -452,7 +452,6 @@ class InstanceListView(AbstractInstanceView):
 
         self._legacy_group_item = None
         self._legacy_group_widget = None
-        self._legacy_widgets_by_id = {}
         self._legacy_items_by_id = {}
 
         self._instance_view = instance_view
@@ -715,6 +714,7 @@ class InstanceListView(AbstractInstanceView):
             root_item.removeRow(group_item.row())
             self._legacy_group_widget.deleteLater()
             self._legacy_group_widget = None
+            self._legacy_items_by_id = {}
             return created_new_items
 
         if group_item is None:
@@ -745,6 +745,7 @@ class InstanceListView(AbstractInstanceView):
             child_item = group_item.child(row)
             child_identifier = child_item.data(LEGACY_CONVERTER_IDENTIFIER)
             if child_identifier not in legacy_items_by_id:
+                self._legacy_items_by_id.pop(child_identifier, None)
                 group_item.removeRows(row, 1)
 
         new_items = []
@@ -760,6 +761,7 @@ class InstanceListView(AbstractInstanceView):
             item.setData(
                 convertor_item.identifier, LEGACY_CONVERTER_IDENTIFIER
             )
+            self._legacy_items_by_id[identifier] = item
 
         if new_items:
             group_item.appendRows(new_items)
