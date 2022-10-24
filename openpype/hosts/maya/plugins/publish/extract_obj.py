@@ -2,15 +2,12 @@
 import os
 
 from maya import cmds
-import maya.mel as mel
+# import maya.mel as mel
 import pyblish.api
-import openpype.api
-from openpype.hosts.maya.api.lib import maintained_selection
+from openpype.pipeline import publish
+from openpype.hosts.maya.api import lib
 
-from openpype.hosts.maya.api import obj
-
-
-class ExtractObj(openpype.api.Extractor):
+class ExtractObj(publish.Extractor):
     """Extract OBJ from Maya.
 
     This extracts reproducible OBJ exports ignoring any of the settings
@@ -18,42 +15,60 @@ class ExtractObj(openpype.api.Extractor):
 
     """
     order = pyblish.api.ExtractorOrder
+    hosts = ["maya"]
     label = "Extract OBJ"
-    families = ["obj"]
+    families = ["model"]
 
     def process(self, instance):
-        obj_exporter = obj.OBJExtractor(log=self.log)
 
         # Define output path
 
         staging_dir = self.staging_dir(instance)
-        filename = "{0}.fbx".format(instance.name)
+        filename = "{0}.obj".format(instance.name)
         path = os.path.join(staging_dir, filename)
 
         # The export requires forward slashes because we need to
         # format it into a string in a mel expression
-        path = path.replace('\\', '/')
 
         self.log.info("Extracting OBJ to: {0}".format(path))
 
-        members = instance.data["setMembners"]
+        members = instance.data("setMembers")
+        members = cmds.ls(members,
+                    dag=True,
+                    shapes=True,
+                    type=("mesh", "nurbsCurve"),
+                    noIntermediate=True,
+                    long=True)
         self.log.info("Members: {0}".format(members))
         self.log.info("Instance: {0}".format(instance[:]))
 
-        obj_exporter.set_options_from_instance(instance)
+        if not cmds.pluginInfo('objExport', query=True, loaded=True):
+            cmds.loadPlugin('objExport')
 
         # Export
-        with maintained_selection():
-            obj_exporter.export(members, path)
-            cmds.select(members, r=1, noExpand=True)
-            mel.eval('file -force -options "{0};{1};{2};{3};{4}" -typ "OBJexport" -pr -es "{5}";'.format(grp_flag, ptgrp_flag, mats_flag, smooth_flag, normals_flag, path)) # noqa
+        with lib.no_display_layers(instance):
+            with lib.displaySmoothness(members,
+                                       divisionsU=0,
+                                       divisionsV=0,
+                                       pointsWire=4,
+                                       pointsShaded=1,
+                                       polygonObject=1):
+                with lib.shader(members,
+                                shadingEngine="initialShadingGroup"):
+                    with lib.maintained_selection():
+                        cmds.select(members, noExpand=True)
+                        cmds.file(path,
+                                exportSelected=True,
+                                type='OBJexport',
+                                preserveReferences=True,
+                                force=True)
 
         if "representation" not in instance.data:
             instance.data["representation"] = []
 
         representation = {
             'name':'obj',
-            'ext':'obx',
+            'ext':'obj',
             'files': filename,
             "stagingDir": staging_dir,
         }
