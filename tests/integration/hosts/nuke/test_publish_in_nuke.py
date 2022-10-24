@@ -61,7 +61,7 @@ class TestPublishInNuke(NukeLocalPublishTestClass):
 
         failures.append(
             DBAssert.count_of_types(dbcon, "subset", 1,
-                                    name="renderCompositingInNukeMain"))
+                                    name="renderTest_taskMain"))
 
         failures.append(
             DBAssert.count_of_types(dbcon, "subset", 1,
@@ -70,7 +70,7 @@ class TestPublishInNuke(NukeLocalPublishTestClass):
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 4))
 
-        additional_args = {"context.subset": "renderCompositingInNukeMain",
+        additional_args = {"context.subset": "renderTest_taskMain",
                            "context.ext": "exr"}
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 1,
