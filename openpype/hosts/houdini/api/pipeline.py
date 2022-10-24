@@ -136,7 +136,7 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
         )
 
     @staticmethod
-    def _create_context_node():
+    def create_context_node():
         """Helper for creating context holding node.
 
         Returns:
@@ -151,20 +151,20 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
         op_ctx.setCreatorState("OpenPype")
         op_ctx.setComment("OpenPype node to hold context metadata")
         op_ctx.setColor(hou.Color((0.081, 0.798, 0.810)))
-        op_ctx.hide(True)
+        # op_ctx.hide(True)
         return op_ctx
 
     def update_context_data(self, data, changes):
         op_ctx = hou.node(CONTEXT_CONTAINER)
         if not op_ctx:
-            op_ctx = self._create_context_node()
+            op_ctx = self.create_context_node()
 
         lib.imprint(op_ctx, data)
 
     def get_context_data(self):
         op_ctx = hou.node(CONTEXT_CONTAINER)
         if not op_ctx:
-            op_ctx = self._create_context_node()
+            op_ctx = self.create_context_node()
         return lib.read(op_ctx)
 
     def save_file(self, dst_path=None):
