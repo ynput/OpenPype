@@ -71,6 +71,41 @@ class HostMissRequiredMethod(Exception):
         super(HostMissRequiredMethod, self).__init__(msg)
 
 
+class ConvertorsOperationFailed(Exception):
+    def __init__(self, msg, failed_info):
+        super(ConvertorsOperationFailed, self).__init__(msg)
+        self.failed_info = failed_info
+
+
+class ConvertorsFindFailed(ConvertorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Failed to find incompatible subsets"
+        super(ConvertorsFindFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+class ConvertorsConversionFailed(ConvertorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Failed to convert incompatible subsets"
+        super(ConvertorsConversionFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+def prepare_failed_convertor_operation_info(identifier, exc_info):
+    exc_type, exc_value, exc_traceback = exc_info
+    formatted_traceback = "".join(traceback.format_exception(
+        exc_type, exc_value, exc_traceback
+    ))
+
+    return {
+        "convertor_identifier": identifier,
+        "message": str(exc_value),
+        "traceback": formatted_traceback
+    }
+
+
 class CreatorsOperationFailed(Exception):
     """Raised when a creator process crashes in 'CreateContext'.
 
@@ -1486,18 +1521,35 @@ class CreateContext:
             raise CreatorsCollectionFailed(failed_info)
 
     def find_convertor_items(self):
+        """Go through convertor plugins to look for items to convert.
+
+        Raises:
+            ConvertorsFindFailed: When one or more convertors fails during
+                finding.
+        """
+
         self.convertor_items_by_id = {}
 
+        failed_info = []
         for convertor in self.convertors_plugins.values():
             try:
                 convertor.find_instances()
+
             except:
+                failed_info.append(
+                    prepare_failed_convertor_operation_info(
+                        convertor.identifier, sys.exc_info()
+                    )
+                )
                 self.log.warning(
                     "Failed to find instances of convertor \"{}\"".format(
                         convertor.identifier
                     ),
                     exc_info=True
                 )
+
+        if failed_info:
+            raise ConvertorsFindFailed(failed_info)
 
     def execute_autocreators(self):
         """Execute discovered AutoCreator plugins.
@@ -1756,6 +1808,48 @@ class CreateContext:
         return self._collection_shared_data
 
     def run_convertor(self, convertor_identifier):
+        """Run convertor plugin by it's idenfitifier.
+
+        Conversion is skipped if convertor is not available.
+
+        Args:
+            convertor_identifier (str): Identifier of convertor.
+        """
+
         convertor = self.convertors_plugins.get(convertor_identifier)
         if convertor is not None:
             convertor.convert()
+
+    def run_convertors(self, convertor_identifiers):
+        """Run convertor plugins by idenfitifiers.
+
+        Conversion is skipped if convertor is not available.
+
+        Args:
+            convertor_identifiers (Iterator[str]): Identifiers of convertors
+                to run.
+
+        Raises:
+            ConvertorsConversionFailed: When one or more convertors fails.
+        """
+
+        failed_info = []
+        for convertor_identifier in convertor_identifiers:
+            try:
+                self.run_convertor(convertor_identifier)
+
+            except:
+                failed_info.append(
+                    prepare_failed_convertor_operation_info(
+                        convertor_identifier, sys.exc_info()
+                    )
+                )
+                self.log.warning(
+                    "Failed to convert instances of convertor \"{}\"".format(
+                        convertor_identifier
+                    ),
+                    exc_info=True
+                )
+
+        if failed_info:
+            raise ConvertorsConversionFailed(failed_info)
