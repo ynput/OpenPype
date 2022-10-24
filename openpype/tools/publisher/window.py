@@ -280,6 +280,12 @@ class PublisherWindow(QtWidgets.QDialog):
         controller.event_system.add_callback(
             "instances.create.failed", self._on_creator_error
         )
+        controller.event_system.add_callback(
+            "convertors.convert.failed", self._on_convertor_error
+        )
+        controller.event_system.add_callback(
+            "convertors.find.failed", self._on_convertor_error
+        )
 
         # Store extra header widget for TrayPublisher
         # - can be used to add additional widgets to header between context
@@ -635,6 +641,16 @@ class PublisherWindow(QtWidgets.QDialog):
             new_item["identifier"] = new_item.pop("creator_identifier")
             new_failed_info.append(new_item)
         self.add_error_message_dialog(event["title"], new_failed_info, "Creator:")
+
+    def _on_convertor_error(self, event):
+        new_failed_info = []
+        for item in event["failed_info"]:
+            new_item = copy.deepcopy(item)
+            new_item["identifier"] = new_item.pop("convertor_identifier")
+            new_failed_info.append(new_item)
+        self.add_error_message_dialog(
+            event["title"], new_failed_info, "Convertor:"
+        )
 
 
 class ErrorsMessageBox(ErrorMessageBox):
