@@ -128,6 +128,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         for repre in instance.data["representations"]:
             repre_name = str(repre.get("name"))
             tags = repre.get("tags") or []
+            custom_tags = repre.get("custom_tags")
             if "review" not in tags:
                 self.log.debug((
                     "Repre: {} - Didn't found \"review\" in tags. Skipping"
@@ -158,15 +159,18 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 )
                 continue
 
-            # Filter output definition by representation tags (optional)
-            outputs = self.filter_outputs_by_tags(profile_outputs, tags)
+            # Filter output definition by representation's
+            # custom tags (optional)
+            outputs = self.filter_outputs_by_custom_tags(
+                profile_outputs, custom_tags)
             if not outputs:
                 self.log.info((
                     "Skipped representation. All output definitions from"
                     " selected profile does not match to representation's"
-                    " tags. \"{}\""
+                    " custom tags. \"{}\""
                 ).format(str(tags)))
                 continue
+
             outputs_per_representations.append((repre, outputs))
         return outputs_per_representations
 
@@ -1656,7 +1660,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 return True
         return False
 
-    def filter_output_defs(self, profile, subset_name, families):
+    def filter_output_defs(
+        self, profile, subset_name, families
+    ):
         """Return outputs matching input instance families.
 
         Output definitions without families filter are marked as valid.
@@ -1664,6 +1670,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         Args:
             profile (dict): Profile from presets matching current context.
             families (list): All families of current instance.
+            subset_name (str): name of subset
 
         Returns:
             list: Containg all output definitions matching entered families.
@@ -1711,39 +1718,50 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         return filtered_outputs
 
-    def filter_outputs_by_tags(self, outputs, tags):
-        """Filter output definitions by entered representation tags.
+    def filter_outputs_by_custom_tags(self, outputs, custom_tags):
+        """Filter output definitions by entered representation custom_tags.
 
-        Output definitions without tags filter are marked as valid.
+        Output definitions without custom_tags filter are marked as invalid,
+        only in case representation is having any custom_tags defined.
 
         Args:
             outputs (list): Contain list of output definitions from presets.
-            tags (list): Tags of processed representation.
+            custom_tags (list): Custom Tags of processed representation.
 
         Returns:
             list: Containg all output definitions matching entered tags.
         """
-        filtered_outputs = []
-        repre_tags_low = [tag.lower() for tag in tags]
-        for output_def in outputs:
-            valid = True
-            output_filters = output_def.get("filter")
-            if output_filters:
-                # Check tag filters
-                tag_filters = output_filters.get("tags")
-                if tag_filters:
-                    tag_filters_low = [tag.lower() for tag in tag_filters]
-                    valid = False
-                    for tag in repre_tags_low:
-                        if tag in tag_filters_low:
-                            valid = True
-                            break
 
-                    if not valid:
-                        continue
+        filtered_outputs = []
+        repre_c_tags_low = [tag.lower() for tag in (custom_tags or [])]
+        for output_def in outputs:
+            tag_filters = output_def.get("filter", {}).get("custom_tags")
+
+            if not custom_tags and not tag_filters:
+                # Definition is valid if both tags are empty
+                valid = True
+
+            elif not custom_tags or not tag_filters:
+                # Invalid if one is empty
+                valid = False
+
+            else:
+                # Check if output definition tags are in representation tags
+                valid = False
+                # lower all filter tags
+                tag_filters_low = [tag.lower() for tag in tag_filters]
+                # check if any repre tag is not in filter tags
+                for tag in repre_c_tags_low:
+                    if tag in tag_filters_low:
+                        valid = True
+                        break
 
             if valid:
                 filtered_outputs.append(output_def)
+
+        self.log.debug("__ filtered_outputs: {}".format(
+            [_o["filename_suffix"] for _o in filtered_outputs]
+        ))
 
         return filtered_outputs
 

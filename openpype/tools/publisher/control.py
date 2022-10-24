@@ -31,6 +31,9 @@ from openpype.pipeline.create import (
     HiddenCreator,
     Creator,
 )
+from openpype.pipeline.create.context import (
+    CreatorsOperationFailed,
+)
 
 # Define constant for plugin orders offset
 PLUGIN_ORDER_OFFSET = 0.5
@@ -299,8 +302,11 @@ class PublishReport:
         }
 
     def _extract_context_data(self, context):
+        context_label = "Context"
+        if context is not None:
+            context_label = context.data.get("label")
         return {
-            "label": context.data.get("label")
+            "label": context_label
         }
 
     def _extract_instance_data(self, instance, exists):
@@ -1101,6 +1107,8 @@ class AbstractPublisherController(object):
             options (Dict[str, Any]): Data from pre-create attributes.
         """
 
+        pass
+
     def save_changes(self):
         """Save changes in create context."""
 
@@ -1674,10 +1682,7 @@ class PublisherController(BasePublisherController):
 
     def reset(self):
         """Reset everything related to creation and publishing."""
-        # Stop publishing
         self.stop_publish()
-
-        self.save_changes()
 
         self.host_is_valid = self._create_context.host_is_valid
 
@@ -1727,9 +1732,30 @@ class PublisherController(BasePublisherController):
 
         self._create_context.reset_context_data()
         with self._create_context.bulk_instances_collection():
-            self._create_context.reset_instances()
+            try:
+                self._create_context.reset_instances()
+            except CreatorsOperationFailed as exc:
+                self._emit_event(
+                    "instances.collection.failed",
+                    {
+                        "title": "Instance collection failed",
+                        "failed_info": exc.failed_info
+                    }
+                )
+
             self._create_context.find_convertor_items()
-            self._create_context.execute_autocreators()
+
+            try:
+                self._create_context.execute_autocreators()
+
+            except CreatorsOperationFailed as exc:
+                self._emit_event(
+                    "instances.create.failed",
+                    {
+                        "title": "AutoCreation failed",
+                        "failed_info": exc.failed_info
+                    }
+                )
 
         self._resetting_instances = False
 
@@ -1864,15 +1890,41 @@ class PublisherController(BasePublisherController):
         self, creator_identifier, subset_name, instance_data, options
     ):
         """Trigger creation and refresh of instances in UI."""
-        creator = self._creators[creator_identifier]
-        creator.create(subset_name, instance_data, options)
+
+        success = True
+        try:
+            self._create_context.create(
+                creator_identifier, subset_name, instance_data, options
+            )
+        except CreatorsOperationFailed as exc:
+            success = False
+            self._emit_event(
+                "instances.create.failed",
+                {
+                    "title": "Creation failed",
+                    "failed_info": exc.failed_info
+                }
+            )
 
         self._on_create_instance_change()
+        return success
 
     def save_changes(self):
         """Save changes happened during creation."""
-        if self._create_context.host_is_valid:
+        if not self._create_context.host_is_valid:
+            return
+
+        try:
             self._create_context.save_changes()
+
+        except CreatorsOperationFailed as exc:
+            self._emit_event(
+                "instances.save.failed",
+                {
+                    "title": "Instances save failed",
+                    "failed_info": exc.failed_info
+                }
+            )
 
     def remove_instances(self, instance_ids):
         """Remove instances based on instance ids.
@@ -1895,7 +1947,16 @@ class PublisherController(BasePublisherController):
             instances_by_id[instance_id]
             for instance_id in instance_ids
         ]
-        self._create_context.remove_instances(instances)
+        try:
+            self._create_context.remove_instances(instances)
+        except CreatorsOperationFailed as exc:
+            self._emit_event(
+                "instances.remove.failed",
+                {
+                    "title": "Instance removement failed",
+                    "failed_info": exc.failed_info
+                }
+            )
 
     def _on_create_instance_change(self):
         self._emit_event("instances.refresh.finished")
