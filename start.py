@@ -242,6 +242,9 @@ if "--debug" in sys.argv:
     sys.argv.remove("--debug")
     os.environ["OPENPYPE_DEBUG"] = "1"
 
+if "--use-staging" in sys.argv:
+    sys.argv.remove("--use-staging")
+    os.environ["OPENPYPE_USE_STAGING"] = "1"
 
 import igniter  # noqa: E402
 from igniter import BootstrapRepos  # noqa: E402
@@ -484,7 +487,6 @@ def _process_arguments() -> tuple:
     """
     # check for `--use-version=3.0.0` argument and `--use-staging`
     use_version = None
-    use_staging = False
     commands = []
 
     # OpenPype version specification through arguments
@@ -542,10 +544,6 @@ def _process_arguments() -> tuple:
                         " proper version string."))
                 sys.exit(1)
 
-    if "--use-staging" in sys.argv:
-        use_staging = True
-        sys.argv.remove("--use-staging")
-
     if "--list-versions" in sys.argv:
         commands.append("print_versions")
         sys.argv.remove("--list-versions")
@@ -568,7 +566,7 @@ def _process_arguments() -> tuple:
         sys.argv.pop(idx)
         sys.argv.insert(idx, "tray")
 
-    return use_version, use_staging, commands
+    return use_version, commands
 
 
 def _determine_mongodb() -> str:
@@ -962,7 +960,8 @@ def boot():
     # Process arguments
     # ------------------------------------------------------------------------
 
-    use_version, use_staging, commands = _process_arguments()
+    use_version, commands = _process_arguments()
+    use_staging = os.environ.get("OPENPYPE_USE_STAGING") == "1"
 
     if os.getenv("OPENPYPE_VERSION"):
         if use_version:
