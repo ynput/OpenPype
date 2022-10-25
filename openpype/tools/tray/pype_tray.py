@@ -571,7 +571,9 @@ class TrayManager:
         if args[-1] == additional_args[0]:
             additional_args.pop(0)
 
+        cleanup_additional_args = False
         if use_expected_version:
+            cleanup_additional_args = True
             expected_version = get_expected_version()
             if expected_version is not None:
                 reset_version = False
@@ -585,7 +587,16 @@ class TrayManager:
             # Add staging flag if was running from staging
             if is_running_staging():
                 args.append("--use-staging")
+            cleanup_additional_args = True
             envs.pop("OPENPYPE_VERSION", None)
+
+        if cleanup_additional_args:
+            _additional_args = []
+            for arg in additional_args:
+                if arg == "--use-staging" or arg.startswith("--use-version"):
+                    continue
+                _additional_args.append(arg)
+            additional_args = _additional_args
 
         args.extend(additional_args)
 
