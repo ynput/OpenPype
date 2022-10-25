@@ -22,10 +22,6 @@ FFMPEG = (
     '"{}"%(input_args)s -i "%(input)s" %(filters)s %(args)s%(output)s'
 ).format(ffmpeg_path)
 
-FFPROBE = (
-    '"{}" -v quiet -print_format json -show_format -show_streams "%(source)s"'
-).format(ffprobe_path)
-
 DRAWTEXT = (
     "drawtext=fontfile='%(font)s':text=\\'%(text)s\\':"
     "x=%(x)s:y=%(y)s:fontcolor=%(color)s@%(opacity).1f:fontsize=%(size)d"
@@ -48,8 +44,15 @@ def _get_ffprobe_data(source):
     :param str source: source media file
     :rtype: [{}, ...]
     """
-    command = FFPROBE % {'source': source}
-    proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    command = [
+        ffprobe_path,
+        "-v", "quiet",
+        "-print_format", "json",
+        "-show_format",
+        "-show_streams",
+        source
+    ]
+    proc = subprocess.Popen(command, stdout=subprocess.PIPE)
     out = proc.communicate()[0]
     if proc.returncode != 0:
         raise RuntimeError("Failed to run: %s" % command)
