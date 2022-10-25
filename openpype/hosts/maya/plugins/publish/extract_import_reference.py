@@ -28,7 +28,7 @@ class ExtractImportReference(publish.Extractor):
     tmp_format = "_tmp"
 
     @classmethod
-    def apply_settings(cls, project_setting, system_settings): #noqa
+    def apply_settings(cls, project_setting, system_settings):
         cls.active = project_setting["deadline"]["publish"]["MayaSubmitDeadline"]["import_reference"] # noqa
 
     def process(self, instance):
