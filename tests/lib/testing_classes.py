@@ -338,9 +338,12 @@ class PublishTest(ModuleUnitTest):
 
         filtered_published = set()
         for pub_path in published:
-            for val in skip_compare_folders:
-                if not re.search(val, pub_path):
+            if skip_compare_folders:
+                if not any([re.search(val, pub_path)
+                            for val in skip_compare_folders]):
                     filtered_published.add(pub_path)
+            else:
+                filtered_published.add(pub_path)
 
         not_matched = expected.symmetric_difference(filtered_published)
         if not_matched:

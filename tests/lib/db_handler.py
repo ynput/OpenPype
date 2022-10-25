@@ -228,12 +228,14 @@ class DBHandler:
         return query
 
 # Examples
-# handler = DBHandler(uri="mongodb://localhost:27017")
+handler = DBHandler(uri="mongodb://localhost:27017")
 # #
-# backup_dir = "c:\\projects\\test_zips\\test_maya_publish\\input\\dumps"
+backup_dir = "c:\\projects\\test_zips\\test_nuke_deadline_publish\\input\\dumps"
 # # #
-# handler.backup_to_dump("avalon", backup_dir, True, collection="test_project")
-# handler.setup_from_dump("avalon_tests", backup_dir, True, db_name_out="avalon", collection="test_project")
+handler.backup_to_dump("avalon_tests", backup_dir, True, collection="test_project")
+#handler.backup_to_dump("openpype_tests", backup_dir, True, collection="settings")
+
+# handler.setup_from_dump("avalon_tests", backup_dir, True, db_name_out="avalon_tests", collection="test_project")
 # handler.setup_from_sql_file("avalon_tests", "c:\\projects\\sql\\item.sql",
 #                             collection="test_project",
 #                             drop=False, mode="upsert")
