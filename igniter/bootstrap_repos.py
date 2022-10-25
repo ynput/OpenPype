@@ -466,7 +466,7 @@ class OpenPypeVersion(semver.VersionInfo):
         installed_version = OpenPypeVersion.get_installed_version()
         local_versions = OpenPypeVersion.get_local_versions() if local else []
         remote_versions = OpenPypeVersion.get_remote_versions() if remote else []  # noqa: E501
-        all_versions = local_versions + remote_versions + installed_version
+        all_versions = local_versions + remote_versions + [installed_version]
 
         all_versions.sort()
         return all_versions[-1]

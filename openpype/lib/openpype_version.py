@@ -143,13 +143,11 @@ def get_remote_versions(*args, **kwargs):
     return None
 
 
-def get_latest_version(staging=None, local=None, remote=None):
+def get_latest_version(local=None, remote=None):
     """Get latest version from repository path."""
-    if staging is None:
-        staging = is_running_staging()
+
     if op_version_control_available():
         return get_OpenPypeVersion().get_latest_version(
-            staging=staging,
             local=local,
             remote=remote
         )
