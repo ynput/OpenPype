@@ -21,7 +21,6 @@ from openpype.lib.openpype_version import (
     is_current_version_studio_latest,
     is_current_version_higher_than_expected,
     is_running_from_build,
-    is_running_staging,
     get_openpype_version,
 )
 from openpype.modules import TrayModulesManager
