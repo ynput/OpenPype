@@ -151,7 +151,7 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
         op_ctx.setCreatorState("OpenPype")
         op_ctx.setComment("OpenPype node to hold context metadata")
         op_ctx.setColor(hou.Color((0.081, 0.798, 0.810)))
-        # op_ctx.hide(True)
+        op_ctx.hide(True)
         return op_ctx
 
     def update_context_data(self, data, changes):
