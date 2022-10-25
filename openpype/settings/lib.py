@@ -1043,6 +1043,17 @@ def get_current_project_settings():
     return get_project_settings(project_name)
 
 
+@require_handler
+def get_global_settings():
+    default_settings = load_openpype_default_settings()
+    default_values = default_settings["system_settings"]["general"]
+    studio_values = _SETTINGS_HANDLER.get_global_settings()
+    return {
+        key: studio_values.get(key, default_values.get(key))
+        for key in _SETTINGS_HANDLER.global_keys
+    }
+
+
 def get_general_environments():
     """Get general environments.
 
