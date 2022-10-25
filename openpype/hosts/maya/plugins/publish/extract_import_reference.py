@@ -7,18 +7,8 @@ import pyblish.api
 import tempfile
 
 from openpype.lib import run_subprocess
-from openpype.pipeline import publish, legacy_io
-from openpype.settings import get_project_settings
+from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
-
-
-def _import_reference():
-    project_name = legacy_io.active_project()
-    project_setting = get_project_settings(project_name)
-    import_reference = (
-        project_setting["deadline"]["publish"]["MayaSubmitDeadline"]["import_reference"] # noqa
-    )
-    return import_reference
 
 
 class ExtractImportReference(publish.Extractor):
@@ -34,9 +24,12 @@ class ExtractImportReference(publish.Extractor):
     order = pyblish.api.ExtractorOrder - 0.48
     hosts = ["maya"]
     families = ["renderlayer", "workfile"]
-    active = _import_reference()
     optional = True
     tmp_format = "_tmp"
+
+    @classmethod
+    def apply_settings(cls, project_setting, system_settings): #noqa
+        cls.active = project_setting["deadline"]["publish"]["MayaSubmitDeadline"]["import_reference"] # noqa
 
     def process(self, instance):
         ext_mapping = (
