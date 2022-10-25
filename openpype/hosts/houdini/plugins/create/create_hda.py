@@ -11,7 +11,7 @@ from openpype.hosts.houdini.api import plugin
 class CreateHDA(plugin.HoudiniCreator):
     """Publish Houdini Digital Asset file."""
 
-    identifier = "hda"
+    identifier = "io.openpype.creators.houdini.hda"
     label = "Houdini Digital Asset (Hda)"
     family = "hda"
     icon = "gears"
