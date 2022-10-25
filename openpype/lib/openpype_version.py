@@ -58,6 +58,10 @@ def is_running_from_build():
     return True
 
 
+def is_staging_enabled():
+    return os.environ.get("OPENPYPE_USE_STAGING") == "1"
+
+
 def is_running_staging():
     """Currently used OpenPype is staging version.
 
