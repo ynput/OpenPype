@@ -96,12 +96,14 @@ class Creator(LegacyCreator):
 
 class HoudiniCreatorBase(object):
     @staticmethod
-    def cache_instances(shared_data):
+    def cache_subsets(shared_data):
         """Cache instances for Creators to shared data.
 
-        Create `houdini_cached_instances` key when needed in shared data and
+        Create `houdini_cached_subsets` key when needed in shared data and
         fill it with all collected instances from the scene under its
         respective creator identifiers.
+
+        U
 
         Args:
             Dict[str, Any]: Shared data.
@@ -110,15 +112,26 @@ class HoudiniCreatorBase(object):
             Dict[str, Any]: Shared data dictionary.
 
         """
-        if shared_data.get("houdini_cached_instances") is None:
-            shared_data["houdini_cached_instances"] = {}
+        if shared_data.get("houdini_cached_subsets") is None:
+            shared_data["houdini_cached_subsets"] = {}
+            if shared_data.get("houdini_cached_legacy_subsets") is None:
+                shared_data["houdini_cached_legacy_subsets"] = {}
             cached_instances = lsattr("id", "pyblish.avalon.instance")
             for i in cached_instances:
+                if not i.parm("creator_identifier"):
+                    # we have legacy instance
+                    family = i.parm("family").eval()
+                    if family not in shared_data["houdini_cached_legacy_subsets"]:
+                        shared_data["houdini_cached_legacy_subsets"][family] = [i]
+                    else:
+                        shared_data["houdini_cached_legacy_subsets"][family].append(i)
+                    continue
+
                 creator_id = i.parm("creator_identifier").eval()
-                if creator_id not in shared_data["houdini_cached_instances"]:
-                    shared_data["houdini_cached_instances"][creator_id] = [i]
+                if creator_id not in shared_data["houdini_cached_subsets"]:
+                    shared_data["houdini_cached_subsets"][creator_id] = [i]
                 else:
-                    shared_data["houdini_cached_instances"][creator_id].append(i)  # noqa
+                    shared_data["houdini_cached_subsets"][creator_id].append(i)  # noqa
         return shared_data
 
     @staticmethod
@@ -194,8 +207,8 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
 
     def collect_instances(self):
         # cache instances  if missing
-        self.cache_instances(self.collection_shared_data)
-        for instance in self.collection_shared_data["houdini_cached_instances"].get(self.identifier, []):  # noqa
+        self.cache_subsets(self.collection_shared_data)
+        for instance in self.collection_shared_data["houdini_cached_subsets"].get(self.identifier, []):  # noqa
             created_instance = CreatedInstance.from_existing(
                 read(instance), self
             )
