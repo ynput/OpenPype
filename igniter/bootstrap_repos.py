@@ -1026,7 +1026,7 @@ class BootstrapRepos:
         installed_version = OpenPypeVersion.get_installed_version()
         local_versions = OpenPypeVersion.get_local_versions()
         remote_versions = OpenPypeVersion.get_remote_versions()
-        all_versions = local_versions + remote_versions + installed_version
+        all_versions = local_versions + remote_versions + [installed_version]
 
         if not all_versions:
             return None
