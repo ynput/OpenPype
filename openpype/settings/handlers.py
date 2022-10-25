@@ -577,8 +577,6 @@ class MongoSettingsHandler(SettingsHandler):
     key_suffix = "_versioned"
     _version_order_key = "versions_order"
     _all_versions_keys = "all_versions"
-    _production_versions_key = "production_versions"
-    _staging_versions_key = "staging_versions"
 
     def __init__(self):
         # Get mongo connection
@@ -997,10 +995,7 @@ class MongoSettingsHandler(SettingsHandler):
             return
         self._version_order_checked = True
 
-        from openpype.lib.openpype_version import (
-            get_OpenPypeVersion,
-            is_running_staging
-        )
+        from openpype.lib.openpype_version import get_OpenPypeVersion
 
         OpenPypeVersion = get_OpenPypeVersion()
         # Skip if 'OpenPypeVersion' is not available
@@ -1012,25 +1007,11 @@ class MongoSettingsHandler(SettingsHandler):
         if not doc:
             doc = {"type": self._version_order_key}
 
-        if self._production_versions_key not in doc:
-            doc[self._production_versions_key] = []
-
-        if self._staging_versions_key not in doc:
-            doc[self._staging_versions_key] = []
-
         if self._all_versions_keys not in doc:
             doc[self._all_versions_keys] = []
 
-        if is_running_staging():
-            versions_key = self._staging_versions_key
-        else:
-            versions_key = self._production_versions_key
-
         # Skip if current version is already available
-        if (
-            self._current_version in doc[self._all_versions_keys]
-            and self._current_version in doc[versions_key]
-        ):
+        if self._current_version in doc[self._all_versions_keys]:
             return
 
         if self._current_version not in doc[self._all_versions_keys]:
@@ -1045,18 +1026,6 @@ class MongoSettingsHandler(SettingsHandler):
 
             doc[self._all_versions_keys] = [
                 str(version) for version in sorted(all_objected_versions)
-            ]
-
-        if self._current_version not in doc[versions_key]:
-            objected_versions = [
-                OpenPypeVersion(version=self._current_version)
-            ]
-            for version_str in doc[versions_key]:
-                objected_versions.append(OpenPypeVersion(version=version_str))
-
-            # Update versions list and push changes to Mongo
-            doc[versions_key] = [
-                str(version) for version in sorted(objected_versions)
             ]
 
         self.collection.replace_one(
