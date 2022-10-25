@@ -113,11 +113,20 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if not ffprobe_data:
             ffprobe_data = _get_ffprobe_data(source)
 
+        # Validate 'streams' before calling super to raise more specific
+        #   error
+        source_streams = ffprobe_data.get("streams")
+        if not source_streams:
+            raise ValueError((
+                "Input file \"{}\" does not contain any streams"
+                " with image/video content."
+            ).format(source))
+
         self.ffprobe_data = ffprobe_data
         self.first_frame = first_frame
         self.input_args = []
 
-        super().__init__(source, ffprobe_data["streams"])
+        super().__init__(source, source_streams)
 
         if options_init:
             self.options_init.update(options_init)
