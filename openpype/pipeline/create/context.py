@@ -1823,7 +1823,8 @@ class CreateContext:
     def run_convertors(self, convertor_identifiers):
         """Run convertor plugins by idenfitifiers.
 
-        Conversion is skipped if convertor is not available.
+        Conversion is skipped if convertor is not available. It is recommended
+        to trigger reset after conversion to reload instances.
 
         Args:
             convertor_identifiers (Iterator[str]): Identifiers of convertors

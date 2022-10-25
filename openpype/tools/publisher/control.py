@@ -1906,6 +1906,8 @@ class PublisherController(BasePublisherController):
         )
 
     def trigger_convertor_items(self, convertor_identifiers):
+        self.save_changes()
+
         success = True
         try:
             self._create_context.run_convertors(convertor_identifiers)
@@ -1924,7 +1926,8 @@ class PublisherController(BasePublisherController):
             self.emit_card_message("Conversion finished")
         else:
             self.emit_card_message("Conversion failed", CardMessageTypes.error)
-        self._on_create_instance_change()
+
+        self.reset()
 
     def create(
         self, creator_identifier, subset_name, instance_data, options
@@ -1972,7 +1975,6 @@ class PublisherController(BasePublisherController):
         Args:
             instance_ids (List[str]): List of instance ids to remove.
         """
-        # TODO expect instance ids instead of instances
         # QUESTION Expect that instances are really removed? In that case save
         #   reset is not required and save changes too.
         self.save_changes()
