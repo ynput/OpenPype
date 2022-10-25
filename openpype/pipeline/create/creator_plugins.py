@@ -61,8 +61,22 @@ class SubsetConvertorPlugin(object):
         create_context
     """
 
+    _log = None
+
     def __init__(self, create_context):
         self._create_context = create_context
+
+    @property
+    def log(self):
+        """Logger of the plugin.
+
+        Returns:
+            logging.Logger: Logger with name of the plugin.
+        """
+
+        if self._log is None:
+            self._log = Logger.get_logger(self.__class__.__name__)
+        return self._log
 
     @abstractproperty
     def identifier(self):
