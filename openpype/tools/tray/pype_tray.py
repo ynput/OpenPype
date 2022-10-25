@@ -2,7 +2,6 @@ import collections
 import os
 import sys
 import atexit
-import subprocess
 
 import platform
 
@@ -11,8 +10,9 @@ from Qt import QtCore, QtGui, QtWidgets
 import openpype.version
 from openpype import resources, style
 from openpype.lib import (
-    get_openpype_execute_args,
     Logger,
+    get_openpype_execute_args,
+    run_detached_process,
 )
 from openpype.lib.openpype_version import (
     op_version_control_available,
@@ -590,14 +590,8 @@ class TrayManager:
             kwargs["env"].pop("OPENPYPE_VERSION", None)
 
         args.extend(additional_args)
-        if platform.system().lower() == "windows":
-            flags = (
-                subprocess.CREATE_NEW_PROCESS_GROUP
-                | subprocess.DETACHED_PROCESS
-            )
-            kwargs["creationflags"] = flags
 
-        subprocess.Popen(args, **kwargs)
+        run_detached_process(args, **kwargs)
         self.exit()
 
     def exit(self):
