@@ -40,7 +40,7 @@ class AEHostFixtures(HostFixtures):
     @pytest.fixture(scope="module")
     def skip_compare_folders(self):
         # skip folder that contain "Logs", these come only from Deadline
-        return ["Logs"]
+        return ["Logs", "Auto-Save"]
 
 
 class AELocalPublishTestClass(AEHostFixtures, PublishTest):
