@@ -348,6 +348,9 @@ def imprint(node, data, update=False):
     else:
         for template in templates:
             parm_group.appendToFolder(parm_folder, template)
+            # this is needed because the pointer to folder
+            # is for some reason lost every call to `appendToFolder()`
+            parm_folder = parm_group.findFolder("Extra")
 
     node.setParmTemplateGroup(parm_group)
 
