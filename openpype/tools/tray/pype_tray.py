@@ -584,9 +584,6 @@ class TrayManager:
 
         # Pop OPENPYPE_VERSION
         if reset_version:
-            # Add staging flag if was running from staging
-            if is_running_staging():
-                args.append("--use-staging")
             cleanup_additional_args = True
             envs.pop("OPENPYPE_VERSION", None)
 
