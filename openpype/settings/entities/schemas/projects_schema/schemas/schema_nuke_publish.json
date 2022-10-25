@@ -296,8 +296,8 @@
                                 "label": "Write node file type"
                             },
                             {
-                                "key": "add_tags",
-                                "label": "Add additional tags to representations",
+                                "key": "add_custom_tags",
+                                "label": "Add custom tags",
                                 "type": "list",
                                 "object_type": "text"
                             }

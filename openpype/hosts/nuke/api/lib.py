@@ -2930,3 +2930,47 @@ def get_nodes_by_names(names):
         nuke.toNode(name)
         for name in names
     ]
+
+
+def get_viewer_config_from_string(input_string):
+    """Convert string to display and viewer string
+
+    Args:
+        input_string (str): string with viewer
+
+    Raises:
+        IndexError: if more then one slash in input string
+        IndexError: if missing closing bracket
+
+    Returns:
+        tuple[str]: display, viewer
+    """
+    display = None
+    viewer = input_string
+    # check if () or / or \ in name
+    if "/" in viewer:
+        split = viewer.split("/")
+
+        # rise if more then one column
+        if len(split) > 2:
+            raise IndexError((
+                "Viewer Input string is not correct. "
+                "more then two `/` slashes! {}"
+            ).format(input_string))
+
+        viewer = split[1]
+        display = split[0]
+    elif "(" in viewer:
+        pattern = r"([\w\d\s]+).*[(](.*)[)]"
+        result = re.findall(pattern, viewer)
+        try:
+            result = result.pop()
+            display = str(result[1]).rstrip()
+            viewer = str(result[0]).rstrip()
+        except IndexError:
+            raise IndexError((
+                "Viewer Input string is not correct. "
+                "Missing bracket! {}"
+            ).format(input_string))
+
+    return (display, viewer)
