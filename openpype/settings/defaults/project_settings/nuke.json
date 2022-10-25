@@ -434,7 +434,7 @@
                         }
                     ],
                     "extension": "mov",
-                    "add_tags": []
+                    "add_custom_tags": []
                 }
             }
         },
