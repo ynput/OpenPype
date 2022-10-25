@@ -11,7 +11,6 @@ repository or locally available.
 
 import os
 import sys
-import warnings
 
 import openpype.version
 
@@ -65,19 +64,59 @@ def is_staging_enabled():
 def is_running_staging():
     """Currently used OpenPype is staging version.
 
-    Deprecated:
-        Since 3.15
+    This function is not 100% proper check of staging version. It is possible
+    to have enabled to use staging version but be in different one.
+
+    The function is based on 4 factors:
+    - env 'OPENPYPE_IS_STAGING' is set
+    - current production version
+    - current staging version
+    - use staging is enabled
+
+    First checks for 'OPENPYPE_IS_STAGING' environment which can be set to '1'.
+    The value should be set only when a process without access to
+    OpenPypeVersion is launched (e.g. in DCCs). If current version is same
+    as production version it is expected that it is not staging, and it
+    doesn't matter what would 'is_staging_enabled' return. If current version
+    is same as staging version it is expected we're in staging. In all other
+    cases 'is_staging_enabled' is used as source of outpu value.
+
+    The function is used to decide which icon is used. To check e.g. updates
+    the output should be combined with other functions from this file.
 
     Returns:
-        bool: True if openpype version containt 'staging'.
+        bool: Using staging version or not.
     """
-    warnings.warn(
-        "Staging version logic set by version string is deprecated.",
-        DeprecationWarning
-    )
-    if "staging" in get_openpype_version():
+
+    if os.environ.get("OPENPYPE_IS_STAGING") == "1":
         return True
-    return False
+
+    if not op_version_control_available():
+        return False
+
+    from openpype.settings import get_global_settings
+
+    global_settings = get_global_settings()
+    production_version = global_settings["production_version"]
+    latest_version = None
+    if not production_version or production_version == "latest":
+        latest_version = get_latest_version(local=False, remote=True)
+        production_version = latest_version
+
+    current_version = get_openpype_version()
+    if current_version == production_version:
+        return False
+
+    staging_version = global_settings["staging_version"]
+    if not staging_version or staging_version == "latest":
+        if latest_version is None:
+            latest_version = get_latest_version(local=False, remote=True)
+        staging_version = latest_version
+
+    if current_version == production_version:
+        return True
+
+    return is_staging_enabled()
 
 
 # ----------------------------------------
