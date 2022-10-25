@@ -9,7 +9,6 @@ from openpype.pipeline.create import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
     TaskNotSetError,
 )
-from openpype.tools.utils import ErrorMessageBox
 
 from .widgets import (
     IconValuePixmapLabel,
@@ -33,79 +32,6 @@ class VariantInputsWidget(QtWidgets.QWidget):
     def resizeEvent(self, event):
         super(VariantInputsWidget, self).resizeEvent(event)
         self.resized.emit()
-
-
-class CreateErrorMessageBox(ErrorMessageBox):
-    def __init__(
-        self,
-        creator_label,
-        subset_name,
-        asset_name,
-        exc_msg,
-        formatted_traceback,
-        parent
-    ):
-        self._creator_label = creator_label
-        self._subset_name = subset_name
-        self._asset_name = asset_name
-        self._exc_msg = exc_msg
-        self._formatted_traceback = formatted_traceback
-        super(CreateErrorMessageBox, self).__init__("Creation failed", parent)
-
-    def _create_top_widget(self, parent_widget):
-        label_widget = QtWidgets.QLabel(parent_widget)
-        label_widget.setText(
-            "<span style='font-size:18pt;'>Failed to create</span>"
-        )
-        return label_widget
-
-    def _get_report_data(self):
-        report_message = (
-            "{creator}: Failed to create Subset: \"{subset}\""
-            " in Asset: \"{asset}\""
-            "\n\nError: {message}"
-        ).format(
-            creator=self._creator_label,
-            subset=self._subset_name,
-            asset=self._asset_name,
-            message=self._exc_msg,
-        )
-        if self._formatted_traceback:
-            report_message += "\n\n{}".format(self._formatted_traceback)
-        return [report_message]
-
-    def _create_content(self, content_layout):
-        item_name_template = (
-            "<span style='font-weight:bold;'>Creator:</span> {}<br>"
-            "<span style='font-weight:bold;'>Subset:</span> {}<br>"
-            "<span style='font-weight:bold;'>Asset:</span> {}<br>"
-        )
-        exc_msg_template = "<span style='font-weight:bold'>{}</span>"
-
-        line = self._create_line()
-        content_layout.addWidget(line)
-
-        item_name_widget = QtWidgets.QLabel(self)
-        item_name_widget.setText(
-            item_name_template.format(
-                self._creator_label, self._subset_name, self._asset_name
-            )
-        )
-        content_layout.addWidget(item_name_widget)
-
-        message_label_widget = QtWidgets.QLabel(self)
-        message_label_widget.setText(
-            exc_msg_template.format(self.convert_text_for_html(self._exc_msg))
-        )
-        content_layout.addWidget(message_label_widget)
-
-        if self._formatted_traceback:
-            line_widget = self._create_line()
-            tb_widget = self._create_traceback_widget(
-                self._formatted_traceback
-            )
-            content_layout.addWidget(line_widget)
-            content_layout.addWidget(tb_widget)
 
 
 # TODO add creator identifier/label to details
@@ -177,8 +103,6 @@ class CreateWidget(QtWidgets.QWidget):
         self._selected_creator = None
 
         self._prereq_available = False
-
-        self._message_dialog = None
 
         name_pattern = "^[{}]*$".format(SUBSET_NAME_ALLOWED_SYMBOLS)
         self._name_pattern = name_pattern
@@ -769,7 +693,6 @@ class CreateWidget(QtWidgets.QWidget):
             return
 
         index = indexes[0]
-        creator_label = index.data(QtCore.Qt.DisplayRole)
         creator_identifier = index.data(CREATOR_IDENTIFIER_ROLE)
         family = index.data(FAMILY_ROLE)
         variant = self.variant_input.text()
@@ -792,40 +715,13 @@ class CreateWidget(QtWidgets.QWidget):
             "family": family
         }
 
-        error_msg = None
-        formatted_traceback = None
-        try:
-            self._controller.create(
-                creator_identifier,
-                subset_name,
-                instance_data,
-                pre_create_data
-            )
+        success = self._controller.create(
+            creator_identifier,
+            subset_name,
+            instance_data,
+            pre_create_data
+        )
 
-        except CreatorError as exc:
-            error_msg = str(exc)
-
-        # Use bare except because some hosts raise their exceptions that
-        #   do not inherit from python's `BaseException`
-        except:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            formatted_traceback = "".join(traceback.format_exception(
-                exc_type, exc_value, exc_traceback
-            ))
-            error_msg = str(exc_value)
-
-        if error_msg is None:
+        if success:
             self._set_creator(self._selected_creator)
             self._controller.emit_card_message("Creation finished...")
-        else:
-            box = CreateErrorMessageBox(
-                creator_label,
-                subset_name,
-                asset_name,
-                error_msg,
-                formatted_traceback,
-                parent=self
-            )
-            box.show()
-            # Store dialog so is not garbage collected before is shown
-            self._message_dialog = box

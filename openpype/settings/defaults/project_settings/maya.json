@@ -131,6 +131,16 @@
                 "Main"
             ]
         },
+        "CreateModel": {
+            "enabled": true,
+            "write_color_sets": false,
+            "write_face_sets": false,
+            "defaults": [
+                "Main",
+                "Proxy",
+                "Sculpt"
+            ]
+        },
         "CreatePointCache": {
             "enabled": true,
             "write_color_sets": false,
@@ -185,16 +195,6 @@
             "enabled": true,
             "defaults": [
                 "Main"
-            ]
-        },
-        "CreateModel": {
-            "enabled": true,
-            "write_color_sets": false,
-            "write_face_sets": false,
-            "defaults": [
-                "Main",
-                "Proxy",
-                "Sculpt"
             ]
         },
         "CreateRenderSetup": {
@@ -576,6 +576,10 @@
                 "model",
                 "vrayproxy"
             ]
+        },
+        "ExtractObj": {
+            "enabled": false,
+            "optional": true
         },
         "ValidateRigContents": {
             "enabled": false,
