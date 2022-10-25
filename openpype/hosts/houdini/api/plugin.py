@@ -103,7 +103,9 @@ class HoudiniCreatorBase(object):
         fill it with all collected instances from the scene under its
         respective creator identifiers.
 
-        U
+        If legacy instances are detected in the scene, create
+        `houdini_cached_legacy_subsets` there and fill it with
+        all legacy subsets under family as a key.
 
         Args:
             Dict[str, Any]: Shared data.
@@ -121,17 +123,21 @@ class HoudiniCreatorBase(object):
                 if not i.parm("creator_identifier"):
                     # we have legacy instance
                     family = i.parm("family").eval()
-                    if family not in shared_data["houdini_cached_legacy_subsets"]:
-                        shared_data["houdini_cached_legacy_subsets"][family] = [i]
+                    if family not in shared_data[
+                            "houdini_cached_legacy_subsets"]:
+                        shared_data["houdini_cached_legacy_subsets"][
+                            family] = [i]
                     else:
-                        shared_data["houdini_cached_legacy_subsets"][family].append(i)
+                        shared_data[
+                            "houdini_cached_legacy_subsets"][family].append(i)
                     continue
 
                 creator_id = i.parm("creator_identifier").eval()
                 if creator_id not in shared_data["houdini_cached_subsets"]:
                     shared_data["houdini_cached_subsets"][creator_id] = [i]
                 else:
-                    shared_data["houdini_cached_subsets"][creator_id].append(i)  # noqa
+                    shared_data[
+                        "houdini_cached_subsets"][creator_id].append(i)  # noqa
         return shared_data
 
     @staticmethod
@@ -159,6 +165,7 @@ class HoudiniCreatorBase(object):
 
 @six.add_metaclass(ABCMeta)
 class HoudiniCreator(NewCreator, HoudiniCreatorBase):
+    """Base class for most of the Houdini creator plugins."""
     selected_nodes = []
 
     def create(self, subset_name, instance_data, pre_create_data):
@@ -208,7 +215,8 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
     def collect_instances(self):
         # cache instances  if missing
         self.cache_subsets(self.collection_shared_data)
-        for instance in self.collection_shared_data["houdini_cached_subsets"].get(self.identifier, []):  # noqa
+        for instance in self.collection_shared_data[
+                "houdini_cached_subsets"].get(self.identifier, []):
             created_instance = CreatedInstance.from_existing(
                 read(instance), self
             )
@@ -231,11 +239,10 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
     def remove_instances(self, instances):
         """Remove specified instance from the scene.
 
-            This is only removing `id` parameter so instance is no longer
-            instance,
-            because it might contain valuable data for artist.
+        This is only removing `id` parameter so instance is no longer
+        instance, because it might contain valuable data for artist.
 
-            """
+        """
         for instance in instances:
             instance_node = hou.node(instance.data.get("instance_node"))
             to_delete = None
