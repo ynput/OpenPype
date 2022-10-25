@@ -562,9 +562,7 @@ class TrayManager:
                 logic will decide which version will be used.
         """
         args = get_openpype_execute_args()
-        kwargs = {
-            "env": dict(os.environ.items())
-        }
+        envs = dict(os.environ.items())
 
         # Create a copy of sys.argv
         additional_args = list(sys.argv)
@@ -577,7 +575,7 @@ class TrayManager:
             expected_version = get_expected_version()
             if expected_version is not None:
                 reset_version = False
-                kwargs["env"]["OPENPYPE_VERSION"] = str(expected_version)
+                envs["OPENPYPE_VERSION"] = str(expected_version)
             else:
                 # Trigger reset of version if expected version was not found
                 reset_version = True
@@ -587,11 +585,11 @@ class TrayManager:
             # Add staging flag if was running from staging
             if is_running_staging():
                 args.append("--use-staging")
-            kwargs["env"].pop("OPENPYPE_VERSION", None)
+            envs.pop("OPENPYPE_VERSION", None)
 
         args.extend(additional_args)
 
-        run_detached_process(args, **kwargs)
+        run_detached_process(args, env=envs)
         self.exit()
 
     def exit(self):
