@@ -82,7 +82,7 @@ class StaticMeshFBXLoader(plugin.Loader):
             ]
 
             up.send_request(
-                "import_task",
+                "import_fbx_task",
                 params=[
                     str(task_properties),
                     str(options_properties),

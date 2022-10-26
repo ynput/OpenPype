@@ -17,9 +17,12 @@ def make_directory(directory_path):
     unreal.EditorAssetLibrary.make_directory(directory_path)
 
 
-def import_task(task_properties, options_properties, options_extra_properties):
-    task = unreal.AssetImportTask()
-    options = unreal.FbxImportUI()
+def _import(
+    task_arg, options_arg, 
+    task_properties, options_properties, options_extra_properties
+):
+    task = task_arg
+    options = options_arg
 
     task_properties = ast.literal_eval(task_properties)
     for prop in task_properties:
@@ -33,6 +36,23 @@ def import_task(task_properties, options_properties, options_extra_properties):
     for prop in options_extra_properties:
         options.get_editor_property(prop[0]).set_editor_property(
             prop[1], eval(prop[2]))
+
+    return task, options
+
+
+def import_abc_task(task_properties, options_properties, options_extra_properties):
+    task, options = _import(
+        unreal.AssetImportTask(), unreal.AbcImportSettings(),
+        task_properties, options_properties, options_extra_properties)
+
+    task.options = options
+
+    unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+
+def import_fbx_task(task_properties, options_properties, options_extra_properties):
+    task, options = _import(
+        unreal.AssetImportTask(), unreal.FbxImportUI(),
+        task_properties, options_properties, options_extra_properties)
 
     task.options = options
 
