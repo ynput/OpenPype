@@ -40,6 +40,7 @@ def parse_container(container):
 
 def imprint(node, data):
     loaded_asset = unreal.EditorAssetLibrary.load_asset(node)
+    data = ast.literal_eval(data)
     for key, value in data.items():
         # Support values evaluated at imprint
         if callable(value):

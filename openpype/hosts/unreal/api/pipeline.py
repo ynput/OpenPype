@@ -95,6 +95,28 @@ def _register_events():
     pass
 
 
+def format_string(input):
+    string = input.replace('\\', '/')
+    string = string.replace('"', '\\"')
+    string = string.replace("'", "\\'")
+    return '"' + string + '"'
+
+
+def send_request(request, params=None):
+    communicator = CommunicationWrapper.communicator
+    formatted_params = []
+    if params:
+        for p in params:
+            if isinstance(p, str):
+                p = format_string(p)
+            formatted_params.append(p)
+    return communicator.send_request(request, formatted_params)
+
+
+def send_request_literal(request, params=None):
+    return ast.literal_eval(send_request(request, params))
+
+
 def ls():
     """List all containers.
 
@@ -102,8 +124,7 @@ def ls():
     metadata from them. Adding `objectName` to set.
 
     """
-    communicator = CommunicationWrapper.communicator
-    return ast.literal_eval(communicator.send_request("ls"))
+    return send_request_literal("ls")
 
 
 def publish():
@@ -131,8 +152,7 @@ def containerise(name, namespace, nodes, context, loader=None, suffix="_CON"):
     `Material /Game/OpenPype/Test/TestMaterial.TestMaterial`
 
     """
-    communicator = CommunicationWrapper.communicator
-    return communicator.send_request(
+    return send_request(
         "containerise", [name, namespace, nodes, context, loader, suffix])
 
 
@@ -154,8 +174,7 @@ def instantiate(root, name, data, assets=None, suffix="_INS"):
         suffix (str): suffix string to append to instance name
 
     """
-    communicator = CommunicationWrapper.communicator
-    return communicator.send_request(
+    return send_request(
         "instantiate", params=[root, name, data, assets, suffix])
 
 
