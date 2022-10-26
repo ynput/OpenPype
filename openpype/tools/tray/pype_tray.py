@@ -22,6 +22,8 @@ from openpype.lib.openpype_version import (
     is_current_version_higher_than_expected,
     is_running_from_build,
     get_openpype_version,
+    is_running_staging,
+    is_staging_enabled,
 )
 from openpype.modules import TrayModulesManager
 from openpype.settings import (
@@ -199,6 +201,68 @@ class VersionUpdateDialog(QtWidgets.QDialog):
         self._restart_accepted = True
         self.restart_requested.emit()
         self.accept()
+
+
+class ProductionStagingDialog(QtWidgets.QDialog):
+    """Tell user that he has enabled staging but is in production version.
+
+    This is showed only when staging is enabled with '--use-staging' and it's
+    version is the same as production's version.
+    """
+
+    def __init__(self, parent=None):
+        super(ProductionStagingDialog, self).__init__(parent)
+
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
+        self.setWindowIcon(icon)
+        self.setWindowTitle("Production and Staging versions are the same")
+        self.setWindowFlags(
+            self.windowFlags()
+            | QtCore.Qt.WindowStaysOnTopHint
+        )
+
+        top_widget = QtWidgets.QWidget(self)
+
+        staging_pixmap = QtGui.QPixmap(
+            resources.get_openpype_staging_icon_filepath()
+        )
+        staging_icon_label = PixmapLabel(staging_pixmap, top_widget)
+        message = (
+            "Because production and staging versions are the same"
+            " your changes and work will affect both."
+        )
+        content_label = QtWidgets.QLabel(message, self)
+        content_label.setWordWrap(True)
+
+        top_layout = QtWidgets.QHBoxLayout(top_widget)
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.setSpacing(10)
+        top_layout.addWidget(
+            staging_icon_label, 0,
+            QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter
+        )
+        top_layout.addWidget(content_label, 1)
+
+        footer_widget = QtWidgets.QWidget(self)
+        ok_btn = QtWidgets.QPushButton("I understand", footer_widget)
+
+        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
+        footer_layout.setContentsMargins(0, 0, 0, 0)
+        footer_layout.addStretch(1)
+        footer_layout.addWidget(ok_btn)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.addWidget(top_widget, 0)
+        main_layout.addStretch(1)
+        main_layout.addWidget(footer_widget, 0)
+
+        self.setStyleSheet(style.load_stylesheet())
+        self.resize(400, 140)
+
+        ok_btn.clicked.connect(self._on_ok_clicked)
+
+    def _on_ok_clicked(self):
+        self.close()
 
 
 class BuildVersionDialog(QtWidgets.QDialog):
@@ -459,6 +523,10 @@ class TrayManager:
 
         if not op_version_control_available():
             dialog = BuildVersionDialog()
+            dialog.exec_()
+
+        elif is_staging_enabled() and not is_running_staging():
+            dialog = ProductionStagingDialog()
             dialog.exec_()
 
     def _validate_settings_defaults(self):
