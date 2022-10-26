@@ -140,7 +140,7 @@
                 },
                 {
                   "type": "label",
-                  "label": "Add additional options - put attribute and value, like <code>AASamples</code>"
+                  "label": "Add additional options - put attribute and value, like <code>defaultArnoldRenderOptions.AASamples</code> = <code>4</code>"
                 },
                 {
                   "type": "dict-modifiable",
@@ -276,7 +276,7 @@
                 },
                 {
                   "type": "label",
-                  "label": "Add additional options - put attribute and value, like <code>aaFilterSize</code>"
+                  "label": "Add additional options - put attribute and value, like <code>vraySettings.aaFilterSize</code> = <code>1.5</code>"
                 },
                 {
                   "type": "dict-modifiable",
@@ -405,7 +405,7 @@
               },
               {
                   "type": "label",
-                  "label": "Add additional options - put attribute and value, like <code>reflectionMaxTraceDepth</code>"
+                  "label": "Add additional options - put attribute and value, like <code>redshiftOptions.reflectionMaxTraceDepth</code> = <code>3</code>"
               },
               {
                   "type": "dict-modifiable",
