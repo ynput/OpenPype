@@ -1650,11 +1650,25 @@ class ThumbnailWidget(QtWidgets.QWidget):
         self._cached_pix = None
         self._height = None
         self._width = None
+        self._adapted_to_size = True
+        self._last_width = None
+        self._last_height = None
+
+    def set_adapted_to_hint(self, enabled):
+        self._adapted_to_size = enabled
+        if self._width is not None:
+            self.setMinimumHeight(0)
+            self._width = None
+
+        if self._height is not None:
+            self.setMinimumWidth(0)
+            self._height = None
 
     def set_width(self, width):
         if self._width == width:
             return
 
+        self._adapted_to_size = False
         self._width = width
         self._cached_pix = None
         self.setMinimumHeight(int(
@@ -1662,18 +1676,21 @@ class ThumbnailWidget(QtWidgets.QWidget):
         ))
         if self._height is not None:
             self.setMinimumWidth(0)
+            self._height = None
 
     def set_height(self, height):
         if self._height == height:
             return
 
         self._height = height
+        self._adapted_to_size = False
         self._cached_pix = None
         self.setMinimumWidth(int(
             (height / self.height_ratio) * self.width_ratio
         ))
         if self._width is not None:
             self.setMinimumHeight(0)
+            self._width = None
 
     def _get_current_pixes(self):
         if self._current_pixes is None:
@@ -1781,3 +1798,24 @@ class ThumbnailWidget(QtWidgets.QWidget):
         painter.begin(self)
         painter.drawPixmap(0, 0, self._cached_pix)
         painter.end()
+
+    def _adapt_to_size(self):
+        if not self._adapted_to_size:
+            return
+
+        width = self.width()
+        height = self.height()
+        if width == self._last_width and height == self._last_height:
+            return
+
+        self._last_width = width
+        self._last_height = height
+        self._cached_pix = None
+
+    def resizeEvent(self, event):
+        super(ThumbnailWidget, self).resizeEvent(event)
+        self._adapt_to_size()
+
+    def showEvent(self, event):
+        super(ThumbnailWidget, self).showEvent(event)
+        self._adapt_to_size()
