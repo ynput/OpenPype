@@ -10,6 +10,7 @@ from openpype.pipeline.create import (
 from .widgets import (
     IconValuePixmapLabel,
     CreateBtn,
+    ThumbnailWidget,
 )
 from .assets_widget import CreateWidgetAssetsWidget
 from .tasks_widget import CreateWidgetTasksWidget
@@ -23,11 +24,11 @@ from ..constants import (
 SEPARATORS = ("---separator---", "---")
 
 
-class VariantInputsWidget(QtWidgets.QWidget):
+class ResizeControlWidget(QtWidgets.QWidget):
     resized = QtCore.Signal()
 
     def resizeEvent(self, event):
-        super(VariantInputsWidget, self).resizeEvent(event)
+        super(ResizeControlWidget, self).resizeEvent(event)
         self.resized.emit()
 
 
@@ -150,13 +151,19 @@ class CreateWidget(QtWidgets.QWidget):
         # --- Creator attr defs ---
         creators_attrs_widget = QtWidgets.QWidget(creators_splitter)
 
+        # Top part - variant / subset name + thumbnail
+        creators_attrs_top = QtWidgets.QWidget(creators_attrs_widget)
+
+        # Basics - variant / subset name
+        creator_basics_widget = ResizeControlWidget(creators_attrs_top)
+
         variant_subset_label = QtWidgets.QLabel(
-            "Create options", creators_attrs_widget
+            "Create options", creator_basics_widget
         )
 
-        variant_subset_widget = QtWidgets.QWidget(creators_attrs_widget)
+        variant_subset_widget = QtWidgets.QWidget(creator_basics_widget)
         # Variant and subset input
-        variant_widget = VariantInputsWidget(creators_attrs_widget)
+        variant_widget = ResizeControlWidget(variant_subset_widget)
 
         variant_input = QtWidgets.QLineEdit(variant_widget)
         variant_input.setObjectName("VariantInput")
@@ -183,6 +190,18 @@ class CreateWidget(QtWidgets.QWidget):
         variant_subset_layout.addRow("Variant", variant_widget)
         variant_subset_layout.addRow("Subset", subset_name_input)
 
+        creator_basics_layout = QtWidgets.QVBoxLayout(creator_basics_widget)
+        creator_basics_layout.setContentsMargins(0, 0, 0, 0)
+        creator_basics_layout.addWidget(variant_subset_label, 0)
+        creator_basics_layout.addWidget(variant_subset_widget, 0)
+
+        thumbnail_widget = ThumbnailWidget(creators_attrs_top)
+
+        creators_attrs_top_layout = QtWidgets.QHBoxLayout(creators_attrs_top)
+        creators_attrs_top_layout.setContentsMargins(0, 0, 0, 0)
+        creators_attrs_top_layout.addWidget(creator_basics_widget, 1)
+        creators_attrs_top_layout.addWidget(thumbnail_widget, 0)
+
         # Precreate attributes widget
         pre_create_widget = PreCreateWidget(creators_attrs_widget)
 
@@ -198,8 +217,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         creators_attrs_layout = QtWidgets.QVBoxLayout(creators_attrs_widget)
         creators_attrs_layout.setContentsMargins(0, 0, 0, 0)
-        creators_attrs_layout.addWidget(variant_subset_label, 0)
-        creators_attrs_layout.addWidget(variant_subset_widget, 0)
+        creators_attrs_layout.addWidget(creators_attrs_top, 0)
         creators_attrs_layout.addWidget(pre_create_widget, 1)
         creators_attrs_layout.addWidget(create_btn_wrapper, 0)
 
@@ -237,6 +255,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         create_btn.clicked.connect(self._on_create)
         variant_widget.resized.connect(self._on_variant_widget_resize)
+        creator_basics_widget.resized.connect(self._on_creator_basics_resize)
         variant_input.returnPressed.connect(self._on_create)
         variant_input.textChanged.connect(self._on_variant_change)
         creators_view.selectionModel().currentChanged.connect(
@@ -275,6 +294,8 @@ class CreateWidget(QtWidgets.QWidget):
         self._create_btn = create_btn
 
         self._creator_short_desc_widget = creator_short_desc_widget
+        self._creator_basics_widget = creator_basics_widget
+        self._thumbnail_widget = thumbnail_widget
         self._pre_create_widget = pre_create_widget
         self._attr_separator_widget = attr_separator_widget
 
@@ -680,6 +701,11 @@ class CreateWidget(QtWidgets.QWidget):
         if self._first_show:
             self._first_show = False
             self._on_first_show()
+
+    def _on_creator_basics_resize(self):
+        self._thumbnail_widget.set_height(
+            self._creator_basics_widget.sizeHint().height()
+        )
 
     def _on_create(self):
         indexes = self._creators_view.selectedIndexes()
