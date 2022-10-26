@@ -42,8 +42,7 @@ from .lib import (
     add_scripts_menu,
     add_scripts_gizmo,
     get_node_data,
-    set_node_data,
-    update_node_data
+    set_node_data
 )
 from .workfile_template_builder import (
     NukePlaceholderLoadPlugin,
@@ -60,7 +59,6 @@ from .workio import (
     work_root,
     current_file
 )
-from openpype.hosts.nuke.api import plugin
 
 log = Logger.get_logger(__name__)
 
