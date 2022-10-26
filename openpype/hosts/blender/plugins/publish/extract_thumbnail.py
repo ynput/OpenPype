@@ -5,6 +5,7 @@ import pyblish.api
 import openpype.api
 from openpype.hosts.blender.api import capture
 from openpype.hosts.blender.api.lib import maintained_time
+from openpype.hosts.blender.api.plugin import get_children_recursive
 
 import bpy
 
@@ -38,9 +39,9 @@ class ExtractThumbnail(openpype.api.Extractor):
 
         instance_collection = instance[-1]
         instance_collection.hide_viewport = False
-        bpy.context.view_layer.layer_collection.children.get(
-            instance_collection.name
-        ).hide_viewport = False
+        for layer in get_children_recursive(bpy.context.view_layer.layer_collection):
+            if layer.name == instance_collection.name:
+                layer.hide_viewport = False
 
         if not isolate:
             isolate = [obj for obj in bpy.context.scene.objects if obj.visible_get()]
