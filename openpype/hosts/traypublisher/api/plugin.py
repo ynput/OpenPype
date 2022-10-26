@@ -17,11 +17,27 @@ from openpype.lib.transcoding import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
 REVIEW_EXTENSIONS = IMAGE_EXTENSIONS + VIDEO_EXTENSIONS
 
 
+def _cache_and_get_instances(creator):
+    """Cache instances in shared data.
+
+    Args:
+        creator (Creator): Plugin which would like to get instances from host.
+
+    Returns:
+        List[Dict[str, Any]]: Cached instances list from host implementation.
+    """
+
+    shared_key = "openpype.traypublisher.instances"
+    if shared_key not in creator.collection_shared_data:
+        creator.collection_shared_data[shared_key] = list_instances()
+    return creator.collection_shared_data[shared_key]
+
+
 class HiddenTrayPublishCreator(HiddenCreator):
     host_name = "traypublisher"
 
     def collect_instances(self):
-        for instance_data in list_instances():
+        for instance_data in _cache_and_get_instances(self):
             creator_id = instance_data.get("creator_identifier")
             if creator_id == self.identifier:
                 instance = CreatedInstance.from_existing(
@@ -58,7 +74,7 @@ class TrayPublishCreator(Creator):
     host_name = "traypublisher"
 
     def collect_instances(self):
-        for instance_data in list_instances():
+        for instance_data in _cache_and_get_instances(self):
             creator_id = instance_data.get("creator_identifier")
             if creator_id == self.identifier:
                 instance = CreatedInstance.from_existing(

@@ -36,9 +36,10 @@ from .lib import (
     add_publish_knob,
     get_nuke_imageio_settings,
     set_node_knobs_from_settings,
-    get_view_process_node,
     set_node_data,
     get_node_data,
+    get_view_process_node,
+    get_viewer_config_from_string,
     deprecated
 )
 from .pipeline import (
@@ -571,7 +572,20 @@ class ExporterReview(object):
         if "#" in self.fhead:
             self.fhead = self.fhead.replace("#", "")[:-1]
 
-    def get_representation_data(self, tags=None, range=False):
+    def get_representation_data(
+        self, tags=None, range=False,
+        custom_tags=None
+    ):
+        """ Add representation data to self.data
+
+        Args:
+            tags (list[str], optional): list of defined tags.
+                                        Defaults to None.
+            range (bool, optional): flag for adding ranges.
+                                    Defaults to False.
+            custom_tags (list[str], optional): user inputed custom tags.
+                                               Defaults to None.
+        """
         add_tags = tags or []
         repre = {
             "name": self.name,
@@ -580,6 +594,9 @@ class ExporterReview(object):
             "stagingDir": self.staging_dir,
             "tags": [self.name.replace("_", "-")] + add_tags
         }
+
+        if custom_tags:
+            repre["custom_tags"] = custom_tags
 
         if range:
             repre.update({
@@ -693,7 +710,8 @@ class ExporterReviewLut(ExporterReview):
                 dag_node.setInput(0, self.previous_node)
                 self._temp_nodes.append(dag_node)
                 self.previous_node = dag_node
-                self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
+                self.log.debug(
+                    "OCIODisplay...   `{}`".format(self._temp_nodes))
 
         # GenerateLUT
         gen_lut_node = nuke.createNode("GenerateLUT")
@@ -796,6 +814,7 @@ class ExporterReviewMov(ExporterReview):
         return path
 
     def generate_mov(self, farm=False, **kwargs):
+        add_tags = []
         self.publish_on_farm = farm
         read_raw = kwargs["read_raw"]
         reformat_node_add = kwargs["reformat_node_add"]
@@ -814,10 +833,10 @@ class ExporterReviewMov(ExporterReview):
         self.log.debug(">> baking_view_profile   `{}`".format(
             baking_view_profile))
 
-        add_tags = kwargs.get("add_tags", [])
+        add_custom_tags = kwargs.get("add_custom_tags", [])
 
         self.log.info(
-            "__ add_tags: `{0}`".format(add_tags))
+            "__ add_custom_tags: `{0}`".format(add_custom_tags))
 
         subset = self.instance.data["subset"]
         self._temp_nodes[subset] = []
@@ -872,7 +891,15 @@ class ExporterReviewMov(ExporterReview):
             if not self.viewer_lut_raw:
                 # OCIODisplay
                 dag_node = nuke.createNode("OCIODisplay")
-                dag_node["view"].setValue(str(baking_view_profile))
+
+                display, viewer = get_viewer_config_from_string(
+                    str(baking_view_profile)
+                )
+                if display:
+                    dag_node["display"].setValue(display)
+
+                # assign viewer
+                dag_node["view"].setValue(viewer)
 
                 # connect
                 dag_node.setInput(0, self.previous_node)
@@ -923,6 +950,7 @@ class ExporterReviewMov(ExporterReview):
         # ---------- generate representation data
         self.get_representation_data(
             tags=["review", "delete"] + add_tags,
+            custom_tags=add_custom_tags,
             range=True
         )
 

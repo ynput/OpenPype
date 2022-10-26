@@ -1,8 +1,40 @@
 # Changelog
 
-## [3.14.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.14.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.3...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.4...HEAD)
+
+**🚀 Enhancements**
+
+- Maya: add OBJ extractor to model family [\#4021](https://github.com/pypeclub/OpenPype/pull/4021)
+- Publish report viewer tool [\#4010](https://github.com/pypeclub/OpenPype/pull/4010)
+- Nuke | Global: adding custom tags representation filtering [\#4009](https://github.com/pypeclub/OpenPype/pull/4009)
+- Publisher: Create context has shared data for collection phase [\#3995](https://github.com/pypeclub/OpenPype/pull/3995)
+- Resolve: updating to v18 compatibility [\#3986](https://github.com/pypeclub/OpenPype/pull/3986)
+
+**🐛 Bug fixes**
+
+- TrayPublisher: Fix missing argument [\#4019](https://github.com/pypeclub/OpenPype/pull/4019)
+- General: Fix python 2 compatibility of ffmpeg and oiio tools discovery [\#4011](https://github.com/pypeclub/OpenPype/pull/4011)
+
+**🔀 Refactored code**
+
+- Maya: Removed unused imports [\#4008](https://github.com/pypeclub/OpenPype/pull/4008)
+- Unreal: Fix import of moved function [\#4007](https://github.com/pypeclub/OpenPype/pull/4007)
+- Houdini: Change import of RepairAction [\#4005](https://github.com/pypeclub/OpenPype/pull/4005)
+- Nuke/Hiero: Refactor openpype.api imports [\#4000](https://github.com/pypeclub/OpenPype/pull/4000)
+- TVPaint: Defined with HostBase [\#3994](https://github.com/pypeclub/OpenPype/pull/3994)
+
+**Merged pull requests:**
+
+- Unreal: Remove redundant Creator stub [\#4012](https://github.com/pypeclub/OpenPype/pull/4012)
+- Unreal: add `uproject` extension to Unreal project template [\#4004](https://github.com/pypeclub/OpenPype/pull/4004)
+- Unreal: fix order of includes [\#4002](https://github.com/pypeclub/OpenPype/pull/4002)
+- Fusion: Implement backwards compatibility \(+/- Fusion 17.2\) [\#3958](https://github.com/pypeclub/OpenPype/pull/3958)
+
+## [3.14.4](https://github.com/pypeclub/OpenPype/tree/3.14.4) (2022-10-19)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.3...3.14.4)
 
 **🆕 New features**
 
@@ -27,7 +59,6 @@
 - Maya: Moved plugin from global to maya [\#3939](https://github.com/pypeclub/OpenPype/pull/3939)
 - Publisher: Create dialog is part of main window [\#3936](https://github.com/pypeclub/OpenPype/pull/3936)
 - Fusion: Implement Alembic and FBX mesh loader [\#3927](https://github.com/pypeclub/OpenPype/pull/3927)
-- Maya: Remove hardcoded requirement for maya/ start for image file prefix [\#3873](https://github.com/pypeclub/OpenPype/pull/3873)
 
 **🐛 Bug fixes**
 
@@ -71,14 +102,6 @@
 **🚀 Enhancements**
 
 - Publisher: Enhancement proposals [\#3897](https://github.com/pypeclub/OpenPype/pull/3897)
-- Maya: better logging in Maketx [\#3886](https://github.com/pypeclub/OpenPype/pull/3886)
-- Photoshop: review can be turned off [\#3885](https://github.com/pypeclub/OpenPype/pull/3885)
-- TrayPublisher: added persisting of last selected project [\#3871](https://github.com/pypeclub/OpenPype/pull/3871)
-- TrayPublisher: added text filter on project name to Tray Publisher [\#3867](https://github.com/pypeclub/OpenPype/pull/3867)
-- Github issues adding `running version` section [\#3864](https://github.com/pypeclub/OpenPype/pull/3864)
-- Publisher: Increase size of main window [\#3862](https://github.com/pypeclub/OpenPype/pull/3862)
-- Flame: make migratable projects after creation [\#3860](https://github.com/pypeclub/OpenPype/pull/3860)
-- Photoshop: synchronize image version with workfile [\#3854](https://github.com/pypeclub/OpenPype/pull/3854)
 
 **🐛 Bug fixes**
 
@@ -86,12 +109,6 @@
 - Flame: loading multilayer exr to batch/reel is working [\#3901](https://github.com/pypeclub/OpenPype/pull/3901)
 - Hiero: Fix inventory check on launch [\#3895](https://github.com/pypeclub/OpenPype/pull/3895)
 - WebPublisher: Fix import after refactor [\#3891](https://github.com/pypeclub/OpenPype/pull/3891)
-- TVPaint: Fix renaming of rendered files [\#3882](https://github.com/pypeclub/OpenPype/pull/3882)
-- Publisher: Nice checkbox visible in Python 2 [\#3877](https://github.com/pypeclub/OpenPype/pull/3877)
-- Settings: Add missing default settings [\#3870](https://github.com/pypeclub/OpenPype/pull/3870)
-- General: Copy of workfile does not use 'copy' function but 'copyfile' [\#3869](https://github.com/pypeclub/OpenPype/pull/3869)
-- Tray Publisher: skip plugin if otioTimeline is missing [\#3856](https://github.com/pypeclub/OpenPype/pull/3856)
-- Flame: retimed attributes are integrated with settings [\#3855](https://github.com/pypeclub/OpenPype/pull/3855)
 
 **🔀 Refactored code**
 
@@ -105,8 +122,6 @@
 **Merged pull requests:**
 
 - Maya: Fix Scene Inventory possibly starting off-screen due to maya preferences [\#3923](https://github.com/pypeclub/OpenPype/pull/3923)
-- Maya: RenderSettings set default image format for V-Ray+Redshift to exr [\#3879](https://github.com/pypeclub/OpenPype/pull/3879)
-- Remove lockfile during publish [\#3874](https://github.com/pypeclub/OpenPype/pull/3874)
 
 ## [3.14.2](https://github.com/pypeclub/OpenPype/tree/3.14.2) (2022-09-12)
 

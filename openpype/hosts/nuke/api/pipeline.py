@@ -176,7 +176,6 @@ def reload_config():
     """
 
     for module in (
-        "openpype.api",
         "openpype.hosts.nuke.api.actions",
         "openpype.hosts.nuke.api.menu",
         "openpype.hosts.nuke.api.plugin",
