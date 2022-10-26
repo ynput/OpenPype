@@ -7,6 +7,9 @@ from bpy.utils import register_classes_factory
 
 class OpenpypeInstance(PropertyGroup):
     name: bpy.props.StringProperty(name="OpenPype Instance name")
+    
+    # = Custom properties =
+    # datablocks (List): all datablocks related to this instance
 
 
 classes = [

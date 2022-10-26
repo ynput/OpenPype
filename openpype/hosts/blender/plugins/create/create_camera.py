@@ -16,7 +16,7 @@ class CreateCamera(plugin.Creator):
     color_tag = "COLOR_05"
     bl_types = (bpy.types.Camera,)
 
-    def _use_selection(self, container):
+    def _link_to_container_collection(self, container):
         cameras = [obj for obj in get_selection() if obj.type == "CAMERA"]
         plugin.link_to_collection(cameras, container)
 

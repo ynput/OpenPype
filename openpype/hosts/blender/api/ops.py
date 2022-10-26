@@ -22,7 +22,6 @@ from openpype.hosts.blender.api.lib import ls
 from openpype.pipeline import legacy_io
 from openpype.pipeline.constants import AVALON_INSTANCE_ID
 from openpype.pipeline.create.creator_plugins import discover_legacy_creator_plugins, get_legacy_creator_by_name
-from openpype.pipeline.create.legacy_create import legacy_create
 from openpype.pipeline.create.subset_name import get_subset_name
 from openpype.tools.utils import host_tools
 
@@ -404,6 +403,7 @@ class SimpleOperator(bpy.types.Operator):
 
     bl_idname = "scene.simple_operator"
     bl_label = "Simple Object Operator"
+    bl_options = {"REGISTER", "UNDO"}
 
     creator: EnumProperty(
         name="Creator",
@@ -423,7 +423,7 @@ class SimpleOperator(bpy.types.Operator):
             (asset_doc["name"], asset_doc["name"], "")
             for asset_doc in get_assets(legacy_io.active_project())
         ]
-    )
+    ) # TODO make it a prop search with two properties to search data
 
     # Variant
     variant_name: bpy.props.StringProperty(
@@ -457,6 +457,9 @@ class SimpleOperator(bpy.types.Operator):
 
         # Setup all data
         _update_entries_preset(self, None)
+
+        # Determine use_selection
+        self.use_selection = bool(bpy.context.selected_objects)
 
     def invoke(self, context, _event):
         wm = context.window_manager
@@ -506,16 +509,17 @@ class SimpleOperator(bpy.types.Operator):
                 row.prop(self, "datapath", text="", icon_only=True)
 
     def execute(self, _context):
-        # Run creator
-        creator_plugin = get_legacy_creator_by_name(self.creator)
-        legacy_create(
-            creator_plugin,
-            self.subset_name,
-            self.asset_name,
-            options={"useSelection": self.use_selection},
-            data={"variant": self.variant_name},
-            switch_to_main_thread=False,
-        )
+        # Get creator class
+        Creator = get_legacy_creator_by_name(self.creator)
+
+        # NOTE Shunting legacy_create because of useless overhead and deprecated design. 
+        # Will see if compatible with new creator when implemented for Blender
+        plugin = Creator(self.subset_name, self.asset_name, {"variant": self.variant_name})
+        datapath = eval(self.datapath)
+        plugin._process(bpy.context.selected_objects if self.use_selection else [datapath.get(self.datablock)])
+        
+        if not self.datablock and not self.use_selection:
+            self.report({'WARNING'}, f"No any datablock to process...")
 
         return {"FINISHED"}
 

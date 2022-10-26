@@ -16,7 +16,7 @@ class CreateAction(plugin.Creator):
     color_tag = "COLOR_07"
     bl_types = (bpy.types.Action,)
 
-    def _use_selection(self, container):
+    def _link_to_container_collection(self, container):
         for obj in get_selection():
             if (
                 obj.animation_data is not None
