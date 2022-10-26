@@ -24,6 +24,7 @@ from .creator_plugins import (
     Creator,
     AutoCreator,
     discover_creator_plugins,
+    discover_convertor_plugins,
     CreatorError,
 )
 
@@ -68,6 +69,41 @@ class HostMissRequiredMethod(Exception):
             host_name, joined_methods
         )
         super(HostMissRequiredMethod, self).__init__(msg)
+
+
+class ConvertorsOperationFailed(Exception):
+    def __init__(self, msg, failed_info):
+        super(ConvertorsOperationFailed, self).__init__(msg)
+        self.failed_info = failed_info
+
+
+class ConvertorsFindFailed(ConvertorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Failed to find incompatible subsets"
+        super(ConvertorsFindFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+class ConvertorsConversionFailed(ConvertorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Failed to convert incompatible subsets"
+        super(ConvertorsConversionFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+def prepare_failed_convertor_operation_info(identifier, exc_info):
+    exc_type, exc_value, exc_traceback = exc_info
+    formatted_traceback = "".join(traceback.format_exception(
+        exc_type, exc_value, exc_traceback
+    ))
+
+    return {
+        "convertor_identifier": identifier,
+        "message": str(exc_value),
+        "traceback": formatted_traceback
+    }
 
 
 class CreatorsOperationFailed(Exception):
@@ -926,6 +962,37 @@ class CreatedInstance:
                     self[key] = new_value
 
 
+class ConvertorItem(object):
+    """Item representing convertor plugin.
+
+    Args:
+        identifier (str): Identifier of convertor.
+        label (str): Label which will be shown in UI.
+    """
+
+    def __init__(self, identifier, label):
+        self._id = str(uuid4())
+        self.identifier = identifier
+        self.label = label
+
+    @property
+    def id(self):
+        return self._id
+
+    def to_data(self):
+        return {
+            "id": self.id,
+            "identifier": self.identifier,
+            "label": self.label
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        obj = cls(data["identifier"], data["label"])
+        obj._id = data["id"]
+        return obj
+
+
 class CreateContext:
     """Context of instance creation.
 
@@ -990,6 +1057,9 @@ class CreateContext:
         self.autocreators = {}
         # Manual creators
         self.manual_creators = {}
+
+        self.convertors_plugins = {}
+        self.convertor_items_by_id = {}
 
         self.publish_discover_result = None
         self.publish_plugins_mismatch_targets = []
@@ -1071,6 +1141,7 @@ class CreateContext:
 
         with self.bulk_instances_collection():
             self.reset_instances()
+            self.find_convertor_items()
             self.execute_autocreators()
 
         self.reset_finalization()
@@ -1125,6 +1196,12 @@ class CreateContext:
         Reloads creators from preregistered paths and can load publish plugins
         if it's enabled on context.
         """
+
+        self._reset_publish_plugins(discover_publish_plugins)
+        self._reset_creator_plugins()
+        self._reset_convertor_plugins()
+
+    def _reset_publish_plugins(self, discover_publish_plugins):
         import pyblish.logic
 
         from openpype.pipeline import OpenPypePyblishPluginMixin
@@ -1166,6 +1243,7 @@ class CreateContext:
         self.publish_plugins = plugins_by_targets
         self.plugins_with_defs = plugins_with_defs
 
+    def _reset_creator_plugins(self):
         # Prepare settings
         system_settings = get_system_settings()
         project_settings = get_project_settings(self.project_name)
@@ -1216,6 +1294,27 @@ class CreateContext:
         self.manual_creators = manual_creators
 
         self.creators = creators
+
+    def _reset_convertor_plugins(self):
+        convertors_plugins = {}
+        for convertor_class in discover_convertor_plugins():
+            if inspect.isabstract(convertor_class):
+                self.log.info(
+                    "Skipping abstract Creator {}".format(str(convertor_class))
+                )
+                continue
+
+            convertor_identifier = convertor_class.identifier
+            if convertor_identifier in convertors_plugins:
+                self.log.warning((
+                    "Duplicated Converter identifier. "
+                    "Using first and skipping following"
+                ))
+                continue
+
+            convertors_plugins[convertor_identifier] = convertor_class(self)
+
+        self.convertors_plugins = convertors_plugins
 
     def reset_context_data(self):
         """Reload context data using host implementation.
@@ -1346,6 +1445,14 @@ class CreateContext:
 
         self._instances_by_id.pop(instance.id, None)
 
+    def add_convertor_item(self, convertor_identifier, label):
+        self.convertor_items_by_id[convertor_identifier] = ConvertorItem(
+            convertor_identifier, label
+        )
+
+    def remove_convertor_item(self, convertor_identifier):
+        self.convertor_items_by_id.pop(convertor_identifier, None)
+
     @contextmanager
     def bulk_instances_collection(self):
         """Validate context of instances in bulk.
@@ -1412,6 +1519,37 @@ class CreateContext:
 
         if failed_info:
             raise CreatorsCollectionFailed(failed_info)
+
+    def find_convertor_items(self):
+        """Go through convertor plugins to look for items to convert.
+
+        Raises:
+            ConvertorsFindFailed: When one or more convertors fails during
+                finding.
+        """
+
+        self.convertor_items_by_id = {}
+
+        failed_info = []
+        for convertor in self.convertors_plugins.values():
+            try:
+                convertor.find_instances()
+
+            except:
+                failed_info.append(
+                    prepare_failed_convertor_operation_info(
+                        convertor.identifier, sys.exc_info()
+                    )
+                )
+                self.log.warning(
+                    "Failed to find instances of convertor \"{}\"".format(
+                        convertor.identifier
+                    ),
+                    exc_info=True
+                )
+
+        if failed_info:
+            raise ConvertorsFindFailed(failed_info)
 
     def execute_autocreators(self):
         """Execute discovered AutoCreator plugins.
@@ -1668,3 +1806,51 @@ class CreateContext:
                 "Accessed Collection shared data out of collection phase"
             )
         return self._collection_shared_data
+
+    def run_convertor(self, convertor_identifier):
+        """Run convertor plugin by it's idenfitifier.
+
+        Conversion is skipped if convertor is not available.
+
+        Args:
+            convertor_identifier (str): Identifier of convertor.
+        """
+
+        convertor = self.convertors_plugins.get(convertor_identifier)
+        if convertor is not None:
+            convertor.convert()
+
+    def run_convertors(self, convertor_identifiers):
+        """Run convertor plugins by idenfitifiers.
+
+        Conversion is skipped if convertor is not available. It is recommended
+        to trigger reset after conversion to reload instances.
+
+        Args:
+            convertor_identifiers (Iterator[str]): Identifiers of convertors
+                to run.
+
+        Raises:
+            ConvertorsConversionFailed: When one or more convertors fails.
+        """
+
+        failed_info = []
+        for convertor_identifier in convertor_identifiers:
+            try:
+                self.run_convertor(convertor_identifier)
+
+            except:
+                failed_info.append(
+                    prepare_failed_convertor_operation_info(
+                        convertor_identifier, sys.exc_info()
+                    )
+                )
+                self.log.warning(
+                    "Failed to convert instances of convertor \"{}\"".format(
+                        convertor_identifier
+                    ),
+                    exc_info=True
+                )
+
+        if failed_info:
+            raise ConvertorsConversionFailed(failed_info)
