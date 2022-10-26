@@ -932,31 +932,53 @@ class Creator(LegacyCreator):
             # Remove objects to not link them to container
             objects -= set(collection.all_objects)
 
-        if bpy.data.collections.get(collection_name) is None:
+        container_collection = bpy.data.collections.get(collection_name)
+        if container_collection is None:
             # If only one collection handling all objects, use it as container
             collections_as_list = list(collections)
             if len(collections) == 1 and objects.issubset(
                 set(collections_as_list[0].objects)
             ):
-                container = collections_as_list[0]
-                container.name = collection_name  # Rename
+                container_collection = collections_as_list[0]
+                container_collection.name = collection_name  # Rename
                 collections.clear()  # Remove it from collections to link
             else:
-                container = bpy.data.collections.new(collection_name)
-                bpy.context.scene.collection.children.link(container)
+                container_collection = bpy.data.collections.new(
+                    collection_name
+                )
+                bpy.context.scene.collection.children.link(
+                    container_collection
+                )
 
         # Set color tag
-        if self.color_tag and hasattr(container, "color_tag"):
-            container.color_tag = self.color_tag
+        if self.color_tag and hasattr(container_collection, "color_tag"):
+            container_collection.color_tag = self.color_tag
 
         # Link datablocks to container
-        self._link_to_container_collection(container, collections, objects)
+        self._link_to_container_collection(
+            container_collection, collections, objects
+        )
 
-        return container
+        return container_collection
 
     def _process(
         self, datablocks: List[bpy.types.ID] = None
     ) -> OpenpypeInstance:
+        """Create openpype publishable instance from datablocks.
+
+        Instances are created in `scene.openpype_instances`.
+        If no datablocks are provided, it creates an empty instance.
+        Processing datablocks for an instance which already exists appends the datablocks to it.
+
+        Args:
+            datablocks (List[bpy.types.ID], optional): Datablocks to process and append to instance. Defaults to None.
+
+        Raises:
+            RuntimeError: The instance already exists but no datablocks are provided.
+
+        Returns:
+            OpenpypeInstance: Created or existing instance
+        """
 
         # Get info from data and create name value.
         asset = self.data["asset"]
@@ -968,14 +990,17 @@ class Creator(LegacyCreator):
             # Get collection from selected objects
             datablocks = get_selection()
         else:
-            datablocks = []
+            datablocks = datablocks or []
 
         # Create the container
-        if bpy.context.scene.openpype_instances.get(name) is None:
+        op_instance = bpy.context.scene.openpype_instances.get(name)
+        if op_instance is None:
             op_instance = bpy.context.scene.openpype_instances.add()
             op_instance.name = name
         else:
-            raise RuntimeError(f"This instance already exists: {name}")
+            # If no datablocks, then empty instance is already existing
+            if not datablocks:
+                raise RuntimeError(f"This instance already exists: {name}")
 
         # Add custom property on the instance container with the data.
         self.data["task"] = legacy_io.Session.get("AVALON_TASK")
@@ -990,7 +1015,7 @@ class Creator(LegacyCreator):
             container_collection = self._process_outliner(datablocks, name)
 
         # Associate datablocks to openpype instance
-        op_instance["datablocks"] = (
+        op_instance["datablocks"] = list(op_instance.get("datablocks", [])) + (
             [container_collection] if container_collection else datablocks
         )
 
