@@ -35,7 +35,7 @@ class RRJob:
 
     # Is the job enabled for submission?
     # enabled by default
-    IsActive = attr.ib()  # type: str
+    IsActive = attr.ib()  # type: bool
 
     # Sequence settings of this job
     SeqStart = attr.ib()  # type: int
@@ -60,7 +60,7 @@ class RRJob:
 
     # If you render a single file, e.g. Quicktime or Avi, then you have to
     # set this value. Videos have to be rendered at once on one client.
-    ImageSingleOutputFile = attr.ib(default="false")  # type: str
+    ImageSingleOutputFile = attr.ib(default=False)  # type: bool
 
     # Semi-Required (required for some render applications)
     # -----------------------------------------------------
@@ -169,11 +169,11 @@ class SubmitFile:
     # Delete submission file after processing
     DeleteXML = attr.ib(default=1)  # type: int
 
-    # List of submitter options per job
+    # List of the submitter options per job.
     # list item must be of `SubmitterParameter` type
     SubmitterParameters = attr.ib(factory=list)  # type: list
 
-    # List of job is submission batch.
+    # List of the jobs in submission batch.
     # list item must be of type `RRJob`
     Jobs = attr.ib(factory=list)  # type: list
 
