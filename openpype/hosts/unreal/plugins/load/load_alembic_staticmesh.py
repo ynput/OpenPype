@@ -78,13 +78,17 @@ class StaticMeshAlembicLoader(plugin.Loader):
             ]
 
             options_extra_properties = [
-                ("static_mesh_settings", "merge_meshes", "True"),
-                ("conversion_settings", "preset", "unreal.AbcConversionPreset.CUSTOM"),
-                ("conversion_settings", "flip_u", "False"),
-                ("conversion_settings", "flip_v", "False"),
-                ("conversion_settings", "rotation", "[0.0, 0.0, 0.0]"),
-                ("conversion_settings", "scale", "[1.0, 1.0, 1.0]")
+                ("static_mesh_settings", "merge_meshes", "True")
             ]
+
+            if not default_conversion:
+                options_extra_properties.extend([
+                    ("conversion_settings", "preset", "unreal.AbcConversionPreset.CUSTOM"),
+                    ("conversion_settings", "flip_u", "False"),
+                    ("conversion_settings", "flip_v", "False"),
+                    ("conversion_settings", "rotation", "[0.0, 0.0, 0.0]"),
+                    ("conversion_settings", "scale", "[1.0, 1.0, 1.0]")
+                ])
 
             up.send_request(
                 "import_abc_task",
