@@ -64,7 +64,9 @@
         "overlay-messages": {
             "close-btn": "#D3D8DE",
             "bg-success": "#458056",
-            "bg-success-hover": "#55a066"
+            "bg-success-hover": "#55a066",
+            "bg-error": "#AD2E2E",
+            "bg-error-hover": "#C93636"
         },
         "tab-widget": {
             "bg": "#21252B",

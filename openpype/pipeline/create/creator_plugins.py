@@ -34,6 +34,111 @@ class CreatorError(Exception):
 
 
 @six.add_metaclass(ABCMeta)
+class SubsetConvertorPlugin(object):
+    """Helper for conversion of instances created using legacy creators.
+
+    Conversion from legacy creators would mean to loose legacy instances,
+    convert them automatically or write a script which must user run. All of
+    these solutions are workign but will happen without asking or user must
+    know about them. This plugin can be used to show legacy instances in
+    Publisher and give user ability to run conversion script.
+
+    Convertor logic should be very simple. Method 'find_instances' is to
+    look for legacy instances in scene a possibly call
+    pre-implemented 'add_convertor_item'.
+
+    User will have ability to trigger conversion which is executed by calling
+    'convert' which should call 'remove_convertor_item' when is done.
+
+    It does make sense to add only one or none legacy item to create context
+    for convertor as it's not possible to choose which instace are converted
+    and which are not.
+
+    Convertor can use 'collection_shared_data' property like creators. Also
+    can store any information to it's object for conversion purposes.
+
+    Args:
+        create_context
+    """
+
+    _log = None
+
+    def __init__(self, create_context):
+        self._create_context = create_context
+
+    @property
+    def log(self):
+        """Logger of the plugin.
+
+        Returns:
+            logging.Logger: Logger with name of the plugin.
+        """
+
+        if self._log is None:
+            self._log = Logger.get_logger(self.__class__.__name__)
+        return self._log
+
+    @abstractproperty
+    def identifier(self):
+        """Converted identifier.
+
+        Returns:
+            str: Converted identifier unique for all converters in host.
+        """
+
+        pass
+
+    @abstractmethod
+    def find_instances(self):
+        """Look for legacy instances in the scene.
+
+        Should call 'add_convertor_item' if there is at least one instance to
+        convert.
+        """
+
+        pass
+
+    @abstractmethod
+    def convert(self):
+        """Conversion code."""
+
+        pass
+
+    @property
+    def create_context(self):
+        """Quick access to create context."""
+
+        return self._create_context
+
+    @property
+    def collection_shared_data(self):
+        """Access to shared data that can be used during 'find_instances'.
+
+        Retruns:
+            Dict[str, Any]: Shared data.
+
+        Raises:
+            UnavailableSharedData: When called out of collection phase.
+        """
+
+        return self._create_context.collection_shared_data
+
+    def add_convertor_item(self, label):
+        """Add item to CreateContext.
+
+        Args:
+            label (str): Label of item which will show in UI.
+        """
+
+        self._create_context.add_convertor_item(self.identifier, label)
+
+    def remove_convertor_item(self):
+        """Remove legacy item from create context when conversion finished."""
+
+        self._create_context.remove_convertor_item(self.identifier)
+
+
+@six.add_metaclass(ABCMeta)
 class BaseCreator:
     """Plugin that create and modify instance data before publishing process.
 
@@ -469,6 +574,10 @@ def discover_creator_plugins():
     return discover(BaseCreator)
 
 
+def discover_convertor_plugins():
+    return discover(SubsetConvertorPlugin)
+
+
 def discover_legacy_creator_plugins():
     from openpype.lib import Logger
 
@@ -526,6 +635,9 @@ def register_creator_plugin(plugin):
     elif issubclass(plugin, LegacyCreator):
         register_plugin(LegacyCreator, plugin)
 
+    elif issubclass(plugin, SubsetConvertorPlugin):
+        register_plugin(SubsetConvertorPlugin, plugin)
+
 
 def deregister_creator_plugin(plugin):
     if issubclass(plugin, BaseCreator):
@@ -534,12 +646,17 @@ def deregister_creator_plugin(plugin):
     elif issubclass(plugin, LegacyCreator):
         deregister_plugin(LegacyCreator, plugin)
 
+    elif issubclass(plugin, SubsetConvertorPlugin):
+        deregister_plugin(SubsetConvertorPlugin, plugin)
+
 
 def register_creator_plugin_path(path):
     register_plugin_path(BaseCreator, path)
     register_plugin_path(LegacyCreator, path)
+    register_plugin_path(SubsetConvertorPlugin, path)
 
 
 def deregister_creator_plugin_path(path):
     deregister_plugin_path(BaseCreator, path)
     deregister_plugin_path(LegacyCreator, path)
+    deregister_plugin_path(SubsetConvertorPlugin, path)
