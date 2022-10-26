@@ -1,11 +1,8 @@
-import sys
 import re
-import traceback
 
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.pipeline.create import (
-    CreatorError,
     SUBSET_NAME_ALLOWED_SYMBOLS,
     TaskNotSetError,
 )
