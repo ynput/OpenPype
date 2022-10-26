@@ -189,7 +189,7 @@ void FOpenPypeCommunication::RunMethod(TSharedPtr<FJsonObject> Root)
 	auto params = Root->GetArrayField(TEXT("params"));
 	for (auto param : params)
 	{
-		Command.Command += " " + param->AsString();
+		Command.Command += " " + param->AsString() + ",";
 	}
 	Command.Command += ")";
 
@@ -202,7 +202,7 @@ void FOpenPypeCommunication::RunMethod(TSharedPtr<FJsonObject> Root)
 		UE_LOG(LogTemp, Error, TEXT("Python Execution Failed!"));
 		for ( FPythonLogOutputEntry& LogEntry : Command.LogOutput )
 		{
-			UE_LOG(LogTemp, Error, TEXT("%s"), *LogEntry.Message);
+			UE_LOG(LogTemp, Error, TEXT("%s"), *LogEntry.Output);
 		}
 
 		FRpcError RpcError = { -32000, "Python Execution in Unreal Failed!", "" };
