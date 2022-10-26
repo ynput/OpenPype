@@ -15,7 +15,7 @@ class CreateAnimation(plugin.Creator):
     color_tag = "COLOR_07"
     bl_types = (bpy.types.Action,)
 
-    def _use_selection(self, container):
+    def _link_to_container_collection(self, container):
         selected_objects = set(get_selection())
         # Get rig collections from selected objects.
         selected_collections = set()

@@ -4,7 +4,7 @@ from pprint import pformat
 from inspect import getmembers
 from pathlib import Path
 from contextlib import contextmanager, ExitStack
-from typing import Dict, List, Optional, Tuple, Union, Iterator
+from typing import Dict, List, Optional, Set, Tuple, Union, Iterator
 from collections.abc import Iterable
 from bson.objectid import ObjectId
 
@@ -12,6 +12,7 @@ import bpy
 from mathutils import Matrix
 
 from openpype.api import Logger
+from openpype.hosts.blender.api.properties import OpenpypeInstance
 from openpype.pipeline import (
     legacy_io,
     LegacyCreator,
@@ -103,27 +104,6 @@ def context_override(
                             selected_objects=selected,
                         )
     raise Exception("Could not create a custom Blender context.")
-
-
-def create_container(
-    name: str,
-    color_tag: Optional[str] = None
-) -> Optional[bpy.types.Collection]:
-    """Create the collection container with the given name.
-
-    Arguments:
-        name:  The name of the collection.
-        color_tag: The display color in the outliner.
-
-    Returns:
-        The collection if successed, None otherwise.
-    """
-    if bpy.data.collections.get(name) is None:
-        container = bpy.data.collections.new(name)
-        if color_tag and hasattr(container, "color_tag"):
-            container.color_tag = color_tag
-        bpy.context.scene.collection.children.link(container)
-        return container
 
 
 def remove_container(
@@ -887,46 +867,134 @@ class Creator(LegacyCreator):
     color_tag = "NONE"
     bl_types = ()
 
-    def _use_selection(self, container):
-        selected_objects = set(get_selection())
-        # Get collection from selected objects.
-        selected_collections = set()
-        for collection in get_collections_by_objects(selected_objects):
-            selected_collections.add(collection)
-            selected_objects -= set(collection.all_objects)
+    @staticmethod
+    def _filter_outliner_datablocks(
+        datablocks: List,
+    ) -> Tuple[Set[bpy.types.Collection], Set[bpy.types.Object]]:
+        collections = set()
+        objects = set()
+        for block in datablocks:
+            # Collections
+            if type(block) is bpy.types.Collection:
+                collections.add(block)
+            # Objects
+            elif type(block) is bpy.types.Object:
+                objects.add(block)
+        return collections, objects
 
+    def _link_to_container_collection(
+        self,
+        container_collection: bpy.types.Collection,
+        collections: List[bpy.types.Collection],
+        objects: List[bpy.types.Object],
+    ):
+        """Link objects and then collections to the container collection.
+
+        Args:
+            container_collection (bpy.types.Collection): Container collection to link to
+            collections (List[bpy.types.Collection]): Collections to link
+            objects (List[bpy.types.Object]): Objects to link
+        """
         # Link Selected
-        link_to_collection(selected_objects, container)
-        link_to_collection(selected_collections, container)
+        link_to_collection(objects, container_collection)
+        link_to_collection(collections, container_collection)
 
         # Unlink from scene collection root if needed
-        for obj in selected_objects:
+        for obj in objects:
             if obj in set(bpy.context.scene.collection.objects):
                 bpy.context.scene.collection.objects.unlink(obj)
-        for collection in selected_collections:
+        for collection in collections:
             if collection in set(bpy.context.scene.collection.children):
                 bpy.context.scene.collection.children.unlink(collection)
 
-    def _process(self):
+    def _process_outliner(
+        self, datablocks: List[bpy.types.ID], collection_name: str
+    ) -> bpy.types.Collection:
+        """Process outliner structure in case it concerns outliner datablocks.
+
+        Link all objects and collections to a single container collection with appropriate name.
+        In case there is only one collection between the container one and the objects, it's removed.
+
+        Args:
+            datablocks (List[bpy.types.ID]): Datablocks to filter and link to container collection
+            collection_name (str): Name of the container collection
+
+        Returns:
+            bpy.types.Collection: Created container collection
+        """
+        # Filter outliner datablocks
+        collections, objects = self._filter_outliner_datablocks(datablocks)
+
+        # Determine collections to include if all children are included
+        for collection in get_collections_by_objects(objects):
+            collections.add(collection)
+
+            # Remove objects to not link them to container
+            objects -= set(collection.all_objects)
+
+        if bpy.data.collections.get(collection_name) is None:
+            # If only one collection handling all objects, use it as container
+            collections_as_list = list(collections)
+            if len(collections) == 1 and objects.issubset(
+                set(collections_as_list[0].objects)
+            ):
+                container = collections_as_list[0]
+                container.name = collection_name  # Rename
+                collections.clear()  # Remove it from collections to link
+            else:
+                container = bpy.data.collections.new(collection_name)
+                bpy.context.scene.collection.children.link(container)
+
+        # Set color tag
+        if self.color_tag and hasattr(container, "color_tag"):
+            container.color_tag = self.color_tag
+
+        # Link datablocks to container
+        self._link_to_container_collection(container, collections, objects)
+
+        return container
+
+    def _process(
+        self, datablocks: List[bpy.types.ID] = None
+    ) -> OpenpypeInstance:
+
         # Get info from data and create name value.
         asset = self.data["asset"]
         subset = self.data["subset"]
         name = asset_name(asset, subset)
 
-        # Create the container.
-        container = create_container(name, self.color_tag)
-        if container is None:
+        # Use selected objects if useSelection is True
+        if (self.options or {}).get("useSelection"):
+            # Get collection from selected objects
+            datablocks = get_selection()
+        else:
+            datablocks = []
+
+        # Create the container
+        if bpy.context.scene.openpype_instances.get(name) is None:
+            op_instance = bpy.context.scene.openpype_instances.add()
+            op_instance.name = name
+        else:
             raise RuntimeError(f"This instance already exists: {name}")
 
         # Add custom property on the instance container with the data.
         self.data["task"] = legacy_io.Session.get("AVALON_TASK")
-        imprint(container, self.data)
+        imprint(op_instance, self.data)
 
-        # Add selected objects to container if useSelection is True.
-        if (self.options or {}).get("useSelection"):
-            self._use_selection(container)
+        # Process outliner if current creator relates to this types
+        container_collection = None
+        if all(
+            t in self.bl_types
+            for t in [bpy.types.Collection, bpy.types.Object]
+        ):
+            container_collection = self._process_outliner(datablocks, name)
 
-        return container
+        # Associate datablocks to openpype instance
+        op_instance["datablocks"] = (
+            [container_collection] if container_collection else datablocks
+        )
+
+        return op_instance
 
     def process(self) -> MainThreadItem:
         """Run the creator on Blender main thread."""
