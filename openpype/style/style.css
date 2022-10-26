@@ -688,22 +688,23 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 /* Messages overlay */
-#OverlayMessageWidget {
+OverlayMessageWidget {
     border-radius: 0.2em;
-    background: {color:bg-buttons};
-}
-
-#OverlayMessageWidget:hover {
-    background: {color:bg-button-hover};
-}
-#OverlayMessageWidget {
     background: {color:overlay-messages:bg-success};
 }
-#OverlayMessageWidget:hover {
+
+OverlayMessageWidget:hover {
     background: {color:overlay-messages:bg-success-hover};
 }
 
-#OverlayMessageWidget QWidget {
+OverlayMessageWidget[type="error"] {
+    background: {color:overlay-messages:bg-error};
+}
+OverlayMessageWidget[type="error"]:hover {
+    background: {color:overlay-messages:bg-error-hover};
+}
+
+OverlayMessageWidget QWidget {
     background: transparent;
 }
 

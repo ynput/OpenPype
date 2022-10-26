@@ -33,10 +33,16 @@ from openpype.pipeline.create import (
 )
 from openpype.pipeline.create.context import (
     CreatorsOperationFailed,
+    ConvertorsOperationFailed,
 )
 
 # Define constant for plugin orders offset
 PLUGIN_ORDER_OFFSET = 0.5
+
+
+class CardMessageTypes:
+    standard = None
+    error = "error"
 
 
 class MainThreadItem:
@@ -1242,6 +1248,14 @@ class AbstractPublisherController(object):
 
         pass
 
+    @abstractproperty
+    def convertor_items(self):
+        pass
+
+    @abstractmethod
+    def trigger_convertor_items(self, convertor_identifiers):
+        pass
+
     @abstractmethod
     def set_comment(self, comment):
         """Set comment on pyblish context.
@@ -1255,7 +1269,9 @@ class AbstractPublisherController(object):
         pass
 
     @abstractmethod
-    def emit_card_message(self, message):
+    def emit_card_message(
+        self, message, message_type=CardMessageTypes.standard
+    ):
         """Emit a card message which can have a lifetime.
 
         This is for UI purposes. Method can be extended to more arguments
@@ -1607,6 +1623,10 @@ class PublisherController(BasePublisherController):
         return self._create_context.instances_by_id
 
     @property
+    def convertor_items(self):
+        return self._create_context.convertor_items_by_id
+
+    @property
     def _creators(self):
         """All creators loaded in create context."""
 
@@ -1732,6 +1752,17 @@ class PublisherController(BasePublisherController):
                 )
 
             try:
+                self._create_context.find_convertor_items()
+            except ConvertorsOperationFailed as exc:
+                self._emit_event(
+                    "convertors.find.failed",
+                    {
+                        "title": "Collection of unsupported subset failed",
+                        "failed_info": exc.failed_info
+                    }
+                )
+
+            try:
                 self._create_context.execute_autocreators()
 
             except CreatorsOperationFailed as exc:
@@ -1747,8 +1778,16 @@ class PublisherController(BasePublisherController):
 
         self._on_create_instance_change()
 
-    def emit_card_message(self, message):
-        self._emit_event("show.card.message", {"message": message})
+    def emit_card_message(
+        self, message, message_type=CardMessageTypes.standard
+    ):
+        self._emit_event(
+            "show.card.message",
+            {
+                "message": message,
+                "message_type": message_type
+            }
+        )
 
     def get_creator_attribute_definitions(self, instances):
         """Collect creator attribute definitions for multuple instances.
@@ -1866,6 +1905,30 @@ class PublisherController(BasePublisherController):
             variant, task_name, asset_doc, project_name, instance=instance
         )
 
+    def trigger_convertor_items(self, convertor_identifiers):
+        self.save_changes()
+
+        success = True
+        try:
+            self._create_context.run_convertors(convertor_identifiers)
+
+        except ConvertorsOperationFailed as exc:
+            success = False
+            self._emit_event(
+                "convertors.convert.failed",
+                {
+                    "title": "Conversion failed",
+                    "failed_info": exc.failed_info
+                }
+            )
+
+        if success:
+            self.emit_card_message("Conversion finished")
+        else:
+            self.emit_card_message("Conversion failed", CardMessageTypes.error)
+
+        self.reset()
+
     def create(
         self, creator_identifier, subset_name, instance_data, options
     ):
@@ -1912,7 +1975,6 @@ class PublisherController(BasePublisherController):
         Args:
             instance_ids (List[str]): List of instance ids to remove.
         """
-        # TODO expect instance ids instead of instances
         # QUESTION Expect that instances are really removed? In that case save
         #   reset is not required and save changes too.
         self.save_changes()
