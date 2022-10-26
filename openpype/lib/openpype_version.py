@@ -207,7 +207,7 @@ def get_expected_version(staging=None):
     if expected_version is None:
         # Look for latest if expected version is not set in settings
         expected_version = get_latest_version(
-            staging=staging,
+            local=False,
             remote=True
         )
     return expected_version
