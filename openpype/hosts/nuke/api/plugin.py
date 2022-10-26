@@ -32,6 +32,7 @@ from .lib import (
     Knobby,
     check_subsetname_exists,
     maintained_selection,
+    get_avalon_knob_data,
     set_avalon_knob_data,
     add_publish_knob,
     get_nuke_imageio_settings,
@@ -1135,16 +1136,22 @@ def convert_to_valid_instaces():
         }
         return mapping[family]
 
-    from openpype.hosts.nuke.api.lib import (
-        get_avalon_knob_data
-    )
     from openpype.hosts.nuke.api import workio
 
     task_name = legacy_io.Session["AVALON_TASK"]
 
     # save into new workfile
     current_file = workio.current_file()
-    new_workfile = current_file[:-3] + "_publisherConvert" + current_file[-3:]
+
+    # add file suffex if not
+    if "_publisherConvert" not in current_file:
+        new_workfile = (
+            current_file[:-3]
+            + "_publisherConvert"
+            + current_file[-3:]
+        )
+    else:
+        new_workfile = current_file
 
     path = new_workfile.replace("\\", "/")
     nuke.scriptSaveAs(new_workfile, overwrite=1)

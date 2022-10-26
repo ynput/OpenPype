@@ -302,10 +302,6 @@ def _install_menu():
         lambda: host_tools.show_experimental_tools_dialog(parent=main_window)
     )
     menu.addSeparator()
-    menu.addCommand(
-        "Convert old publishing instances",
-        plugin.convert_to_valid_instaces
-    )
     # add reload pipeline only in debug mode
     if bool(os.getenv("NUKE_DEBUG")):
         menu.addSeparator()
