@@ -21,6 +21,7 @@ from openpype.pipeline.publish import (
     AbstractMetaInstancePlugin,
     KnownPublishError
 )
+from openpype.pipeline.farm.tools import get_published_workfile_instance
 
 JSONDecodeError = getattr(json.decoder, "JSONDecodeError", ValueError)
 
@@ -424,7 +425,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
 
         file_path = None
         if self.use_published:
-            file_path = self.from_published_scene()
+            file_path = get_published_workfile_instance(instance)
 
         # fallback if nothing was set
         if not file_path:
@@ -495,96 +496,6 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
         """
         return []
 
-    def from_published_scene(self, replace_in_path=True):
-        """Switch work scene for published scene.
-
-        If rendering/exporting from published scenes is enabled, this will
-        replace paths from working scene to published scene.
-
-        Args:
-            replace_in_path (bool): if True, it will try to find
-                old scene name in path of expected files and replace it
-                with name of published scene.
-
-        Returns:
-            str: Published scene path.
-            None: if no published scene is found.
-
-        Note:
-            Published scene path is actually determined from project Anatomy
-            as at the time this plugin is running scene can still no be
-            published.
-
-        """
-
-        instance = self._instance
-        workfile_instance = self._get_workfile_instance(instance.context)
-        if workfile_instance is None:
-            return
-
-        # determine published path from Anatomy.
-        template_data = workfile_instance.data.get("anatomyData")
-        rep = workfile_instance.data.get("representations")[0]
-        template_data["representation"] = rep.get("name")
-        template_data["ext"] = rep.get("ext")
-        template_data["comment"] = None
-
-        anatomy = instance.context.data['anatomy']
-        anatomy_filled = anatomy.format(template_data)
-        template_filled = anatomy_filled["publish"]["path"]
-        file_path = os.path.normpath(template_filled)
-
-        self.log.info("Using published scene for render {}".format(file_path))
-
-        if not os.path.exists(file_path):
-            self.log.error("published scene does not exist!")
-            raise
-
-        if not replace_in_path:
-            return file_path
-
-        # now we need to switch scene in expected files
-        # because <scene> token will now point to published
-        # scene file and that might differ from current one
-        def _clean_name(path):
-            return os.path.splitext(os.path.basename(path))[0]
-
-        new_scene = _clean_name(file_path)
-        orig_scene = _clean_name(instance.context.data["currentFile"])
-        expected_files = instance.data.get("expectedFiles")
-
-        if isinstance(expected_files[0], dict):
-            # we have aovs and we need to iterate over them
-            new_exp = {}
-            for aov, files in expected_files[0].items():
-                replaced_files = []
-                for f in files:
-                    replaced_files.append(
-                        str(f).replace(orig_scene, new_scene)
-                    )
-                new_exp[aov] = replaced_files
-            # [] might be too much here, TODO
-            instance.data["expectedFiles"] = [new_exp]
-        else:
-            new_exp = []
-            for f in expected_files:
-                new_exp.append(
-                    str(f).replace(orig_scene, new_scene)
-                )
-            instance.data["expectedFiles"] = new_exp
-
-        metadata_folder = instance.data.get("publishRenderMetadataFolder")
-        if metadata_folder:
-            metadata_folder = metadata_folder.replace(orig_scene,
-                                                      new_scene)
-            instance.data["publishRenderMetadataFolder"] = metadata_folder
-
-        self.log.info("Scene name was switched {} -> {}".format(
-            orig_scene, new_scene
-        ))
-
-        return file_path
-
     def assemble_payload(
             self, job_info=None, plugin_info=None, aux_files=None):
         """Assemble payload data from its various parts.
@@ -644,22 +555,3 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
         self._instance.data["deadlineSubmissionJob"] = result
 
         return result["_id"]
-
-    @staticmethod
-    def _get_workfile_instance(context):
-        """Find workfile instance in context"""
-        for i in context:
-
-            is_workfile = (
-                "workfile" in i.data.get("families", []) or
-                i.data["family"] == "workfile"
-            )
-            if not is_workfile:
-                continue
-
-            # test if there is instance of workfile waiting
-            # to be published.
-            assert i.data["publish"] is True, (
-                "Workfile (scene) must be published along")
-
-            return i
