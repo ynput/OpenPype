@@ -15,9 +15,8 @@ class Api:
     RR_SUBMIT_CONSOLE = 1
     RR_SUBMIT_API = 2
 
-    def __init__(self, settings, project=None):
+    def __init__(self, project=None):
         self.log = Logger.get_logger("RoyalRender")
-        self._settings = settings
         self._initialize_rr(project)
 
     def _initialize_rr(self, project=None):
@@ -91,21 +90,21 @@ class Api:
 
         sys.path.append(os.path.join(self._rr_path, rr_module_path))
 
-    def create_submission(self, jobs, submitter_attributes, file_name=None):
-        # type: (list[RRJob], list[SubmitterParameter], str) -> SubmitFile
+    @staticmethod
+    def create_submission(jobs, submitter_attributes):
+        # type: (list[RRJob], list[SubmitterParameter]) -> SubmitFile
         """Create jobs submission file.
 
         Args:
             jobs (list): List of :class:`RRJob`
             submitter_attributes (list): List of submitter attributes
                 :class:`SubmitterParameter` for whole submission batch.
-            file_name (str), optional): File path to write data to.
 
         Returns:
             str: XML data of job submission files.
 
         """
-        raise NotImplementedError
+        return SubmitFile(SubmitterParameters=submitter_attributes, Jobs=jobs)
 
     def submit_file(self, file, mode=RR_SUBMIT_CONSOLE):
         # type: (SubmitFile, int) -> None
@@ -119,15 +118,14 @@ class Api:
         # self._submit_using_api(file)
 
     def _submit_using_console(self, file):
-        # type: (SubmitFile) -> bool
+        # type: (SubmitFile) -> None
         rr_console = os.path.join(
             self._get_rr_bin_path(),
-            "rrSubmitterconsole"
+            "rrSubmitterConsole"
         )
 
-        if sys.platform.lower() == "darwin":
-            if "/bin/mac64" in rr_console:
-                rr_console = rr_console.replace("/bin/mac64", "/bin/mac")
+        if sys.platform.lower() == "darwin" and "/bin/mac64" in rr_console:
+            rr_console = rr_console.replace("/bin/mac64", "/bin/mac")
 
         if sys.platform.lower() == "win32":
             if "/bin/win64" in rr_console:
