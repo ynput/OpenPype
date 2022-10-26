@@ -1368,6 +1368,7 @@ def get_app_environments_for_context(
 
     from openpype.modules import ModulesManager
     from openpype.pipeline import AvalonMongoDB, Anatomy
+    from openpype.lib.openpype_version import is_running_staging
 
     # Avalon database connection
     dbcon = AvalonMongoDB()
@@ -1404,6 +1405,8 @@ def get_app_environments_for_context(
         "env": env
     })
     data["env"].update(anatomy.root_environments())
+    if is_running_staging():
+        data["env"]["OPENPYPE_IS_STAGING"] = "1"
 
     prepare_app_environments(data, env_group, modules_manager)
     prepare_context_environments(data, env_group, modules_manager)
