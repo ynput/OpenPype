@@ -1,6 +1,8 @@
 import os
+import sys
 import copy
 import logging
+import traceback
 import collections
 import inspect
 from uuid import uuid4
@@ -22,9 +24,16 @@ from .creator_plugins import (
     Creator,
     AutoCreator,
     discover_creator_plugins,
+    discover_convertor_plugins,
+    CreatorError,
 )
 
 UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
+
+
+class UnavailableSharedData(Exception):
+    """Shared data are not available at the moment when are accessed."""
+    pass
 
 
 class ImmutableKeyError(TypeError):
@@ -60,6 +69,112 @@ class HostMissRequiredMethod(Exception):
             host_name, joined_methods
         )
         super(HostMissRequiredMethod, self).__init__(msg)
+
+
+class ConvertorsOperationFailed(Exception):
+    def __init__(self, msg, failed_info):
+        super(ConvertorsOperationFailed, self).__init__(msg)
+        self.failed_info = failed_info
+
+
+class ConvertorsFindFailed(ConvertorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Failed to find incompatible subsets"
+        super(ConvertorsFindFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+class ConvertorsConversionFailed(ConvertorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Failed to convert incompatible subsets"
+        super(ConvertorsConversionFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+def prepare_failed_convertor_operation_info(identifier, exc_info):
+    exc_type, exc_value, exc_traceback = exc_info
+    formatted_traceback = "".join(traceback.format_exception(
+        exc_type, exc_value, exc_traceback
+    ))
+
+    return {
+        "convertor_identifier": identifier,
+        "message": str(exc_value),
+        "traceback": formatted_traceback
+    }
+
+
+class CreatorsOperationFailed(Exception):
+    """Raised when a creator process crashes in 'CreateContext'.
+
+    The exception contains information about the creator and error. The data
+    are prepared using 'prepare_failed_creator_operation_info' and can be
+    serialized using json.
+
+    Usage is for UI purposes which may not have access to exceptions directly
+    and would not have ability to catch exceptions 'per creator'.
+
+    Args:
+        msg (str): General error message.
+        failed_info (list[dict[str, Any]]): List of failed creators with
+            exception message and optionally formatted traceback.
+    """
+
+    def __init__(self, msg, failed_info):
+        super(CreatorsOperationFailed, self).__init__(msg)
+        self.failed_info = failed_info
+
+
+class CreatorsCollectionFailed(CreatorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Failed to collect instances"
+        super(CreatorsCollectionFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+class CreatorsSaveFailed(CreatorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Failed update instance changes"
+        super(CreatorsSaveFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+class CreatorsRemoveFailed(CreatorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Failed to remove instances"
+        super(CreatorsRemoveFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+class CreatorsCreateFailed(CreatorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Faled to create instances"
+        super(CreatorsCreateFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+def prepare_failed_creator_operation_info(
+    identifier, label, exc_info, add_traceback=True
+):
+    formatted_traceback = None
+    exc_type, exc_value, exc_traceback = exc_info
+    if add_traceback:
+        formatted_traceback = "".join(traceback.format_exception(
+            exc_type, exc_value, exc_traceback
+        ))
+
+    return {
+        "creator_identifier": identifier,
+        "creator_label": label,
+        "message": str(exc_value),
+        "traceback": formatted_traceback
+    }
 
 
 class InstanceMember:
@@ -847,6 +962,37 @@ class CreatedInstance:
                     self[key] = new_value
 
 
+class ConvertorItem(object):
+    """Item representing convertor plugin.
+
+    Args:
+        identifier (str): Identifier of convertor.
+        label (str): Label which will be shown in UI.
+    """
+
+    def __init__(self, identifier, label):
+        self._id = str(uuid4())
+        self.identifier = identifier
+        self.label = label
+
+    @property
+    def id(self):
+        return self._id
+
+    def to_data(self):
+        return {
+            "id": self.id,
+            "identifier": self.identifier,
+            "label": self.label
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        obj = cls(data["identifier"], data["label"])
+        obj._id = data["id"]
+        return obj
+
+
 class CreateContext:
     """Context of instance creation.
 
@@ -912,6 +1058,9 @@ class CreateContext:
         # Manual creators
         self.manual_creators = {}
 
+        self.convertors_plugins = {}
+        self.convertor_items_by_id = {}
+
         self.publish_discover_result = None
         self.publish_plugins_mismatch_targets = []
         self.publish_plugins = []
@@ -924,6 +1073,9 @@ class CreateContext:
         #       after leaving of last context manager scope
         self._bulk_counter = 0
         self._bulk_instances_to_process = []
+
+        # Shared data across creators during collection phase
+        self._collection_shared_data = None
 
         # Trigger reset if was enabled
         if reset:
@@ -980,13 +1132,31 @@ class CreateContext:
 
         All changes will be lost if were not saved explicitely.
         """
+
+        self.reset_preparation()
+
         self.reset_avalon_context()
         self.reset_plugins(discover_publish_plugins)
         self.reset_context_data()
 
         with self.bulk_instances_collection():
             self.reset_instances()
+            self.find_convertor_items()
             self.execute_autocreators()
+
+        self.reset_finalization()
+
+    def reset_preparation(self):
+        """Prepare attributes that must be prepared/cleaned before reset."""
+
+        # Give ability to store shared data for collection phase
+        self._collection_shared_data = {}
+
+    def reset_finalization(self):
+        """Cleanup of attributes after reset."""
+
+        # Stop access to collection shared data
+        self._collection_shared_data = None
 
     def reset_avalon_context(self):
         """Give ability to reset avalon context.
@@ -1026,6 +1196,12 @@ class CreateContext:
         Reloads creators from preregistered paths and can load publish plugins
         if it's enabled on context.
         """
+
+        self._reset_publish_plugins(discover_publish_plugins)
+        self._reset_creator_plugins()
+        self._reset_convertor_plugins()
+
+    def _reset_publish_plugins(self, discover_publish_plugins):
         import pyblish.logic
 
         from openpype.pipeline import OpenPypePyblishPluginMixin
@@ -1067,6 +1243,7 @@ class CreateContext:
         self.publish_plugins = plugins_by_targets
         self.plugins_with_defs = plugins_with_defs
 
+    def _reset_creator_plugins(self):
         # Prepare settings
         system_settings = get_system_settings()
         project_settings = get_project_settings(self.project_name)
@@ -1117,6 +1294,27 @@ class CreateContext:
         self.manual_creators = manual_creators
 
         self.creators = creators
+
+    def _reset_convertor_plugins(self):
+        convertors_plugins = {}
+        for convertor_class in discover_convertor_plugins():
+            if inspect.isabstract(convertor_class):
+                self.log.info(
+                    "Skipping abstract Creator {}".format(str(convertor_class))
+                )
+                continue
+
+            convertor_identifier = convertor_class.identifier
+            if convertor_identifier in convertors_plugins:
+                self.log.warning((
+                    "Duplicated Converter identifier. "
+                    "Using first and skipping following"
+                ))
+                continue
+
+            convertors_plugins[convertor_identifier] = convertor_class(self)
+
+        self.convertors_plugins = convertors_plugins
 
     def reset_context_data(self):
         """Reload context data using host implementation.
@@ -1186,8 +1384,74 @@ class CreateContext:
         with self.bulk_instances_collection():
             self._bulk_instances_to_process.append(instance)
 
+    def create(self, identifier, *args, **kwargs):
+        """Wrapper for creators to trigger created.
+
+        Different types of creators may expect different arguments thus the
+        hints for args are blind.
+
+        Args:
+            identifier (str): Creator's identifier.
+            *args (Tuple[Any]): Arguments for create method.
+            **kwargs (Dict[Any, Any]): Keyword argument for create method.
+        """
+
+        error_message = "Failed to run Creator with identifier \"{}\". {}"
+        creator = self.creators.get(identifier)
+        label = getattr(creator, "label", None)
+        failed = False
+        add_traceback = False
+        exc_info = None
+        try:
+            # Fake CreatorError (Could be maybe specific exception?)
+            if creator is None:
+                raise CreatorError(
+                    "Creator {} was not found".format(identifier)
+                )
+
+            creator.create(*args, **kwargs)
+
+        except CreatorError:
+            failed = True
+            exc_info = sys.exc_info()
+            self.log.warning(error_message.format(identifier, exc_info[1]))
+
+        except:
+            failed = True
+            add_traceback = True
+            exc_info = sys.exc_info()
+            self.log.warning(
+                error_message.format(identifier, ""),
+                exc_info=True
+            )
+
+        if failed:
+            raise CreatorsCreateFailed([
+                prepare_failed_creator_operation_info(
+                    identifier, label, exc_info, add_traceback
+                )
+            ])
+
     def creator_removed_instance(self, instance):
+        """When creator removes instance context should be acknowledged.
+
+        If creator removes instance conext should know about it to avoid
+        possible issues in the session.
+
+        Args:
+            instance (CreatedInstance): Object of instance which was removed
+                from scene metadata.
+        """
+
         self._instances_by_id.pop(instance.id, None)
+
+    def add_convertor_item(self, convertor_identifier, label):
+        self.convertor_items_by_id[convertor_identifier] = ConvertorItem(
+            convertor_identifier, label
+        )
+
+    def remove_convertor_item(self, convertor_identifier):
+        self.convertor_items_by_id.pop(convertor_identifier, None)
 
     @contextmanager
     def bulk_instances_collection(self):
@@ -1221,24 +1485,112 @@ class CreateContext:
         self._instances_by_id = {}
 
         # Collect instances
+        error_message = "Collection of instances for creator {} failed. {}"
+        failed_info = []
         for creator in self.creators.values():
-            creator.collect_instances()
+            label = creator.label
+            identifier = creator.identifier
+            failed = False
+            add_traceback = False
+            exc_info = None
+            try:
+                creator.collect_instances()
+
+            except CreatorError:
+                failed = True
+                exc_info = sys.exc_info()
+                self.log.warning(error_message.format(identifier, exc_info[1]))
+
+            except:
+                failed = True
+                add_traceback = True
+                exc_info = sys.exc_info()
+                self.log.warning(
+                    error_message.format(identifier, ""),
+                    exc_info=True
+                )
+
+            if failed:
+                failed_info.append(
+                    prepare_failed_creator_operation_info(
+                        identifier, label, exc_info, add_traceback
+                    )
+                )
+
+        if failed_info:
+            raise CreatorsCollectionFailed(failed_info)
+
+    def find_convertor_items(self):
+        """Go through convertor plugins to look for items to convert.
+
+        Raises:
+            ConvertorsFindFailed: When one or more convertors fails during
+                finding.
+        """
+
+        self.convertor_items_by_id = {}
+
+        failed_info = []
+        for convertor in self.convertors_plugins.values():
+            try:
+                convertor.find_instances()
+
+            except:
+                failed_info.append(
+                    prepare_failed_convertor_operation_info(
+                        convertor.identifier, sys.exc_info()
+                    )
+                )
+                self.log.warning(
+                    "Failed to find instances of convertor \"{}\"".format(
+                        convertor.identifier
+                    ),
+                    exc_info=True
+                )
+
+        if failed_info:
+            raise ConvertorsFindFailed(failed_info)
 
     def execute_autocreators(self):
         """Execute discovered AutoCreator plugins.
 
         Reset instances if any autocreator executed properly.
         """
+
+        error_message = "Failed to run AutoCreator with identifier \"{}\". {}"
+        failed_info = []
         for identifier, creator in self.autocreators.items():
+            label = creator.label
+            failed = False
+            add_traceback = False
             try:
                 creator.create()
 
-            except Exception:
-                # TODO raise report exception if any crashed
-                msg = (
-                    "Failed to run AutoCreator with identifier \"{}\" ({})."
-                ).format(identifier, inspect.getfile(creator.__class__))
-                self.log.warning(msg, exc_info=True)
+            except CreatorError:
+                failed = True
+                exc_info = sys.exc_info()
+                self.log.warning(error_message.format(identifier, exc_info[1]))
+
+            # Use bare except because some hosts raise their exceptions that
+            #   do not inherit from python's `BaseException`
+            except:
+                failed = True
+                add_traceback = True
+                exc_info = sys.exc_info()
+                self.log.warning(
+                    error_message.format(identifier, ""),
+                    exc_info=True
+                )
+
+            if failed:
+                failed_info.append(
+                    prepare_failed_creator_operation_info(
+                        identifier, label, exc_info, add_traceback
+                    )
+                )
+
+        if failed_info:
+            raise CreatorsCreateFailed(failed_info)
 
     def validate_instances_context(self, instances=None):
         """Validate 'asset' and 'task' instance context."""
@@ -1315,16 +1667,47 @@ class CreateContext:
             identifier = instance.creator_identifier
             instances_by_identifier[identifier].append(instance)
 
-        for identifier, cretor_instances in instances_by_identifier.items():
+        error_message = "Instances update of creator \"{}\" failed. {}"
+        failed_info = []
+        for identifier, creator_instances in instances_by_identifier.items():
             update_list = []
-            for instance in cretor_instances:
+            for instance in creator_instances:
                 instance_changes = instance.changes()
                 if instance_changes:
                     update_list.append(UpdateData(instance, instance_changes))
 
             creator = self.creators[identifier]
-            if update_list:
+            if not update_list:
+                continue
+
+            label = creator.label
+            failed = False
+            add_traceback = False
+            exc_info = None
+            try:
                 creator.update_instances(update_list)
+
+            except CreatorError:
+                failed = True
+                exc_info = sys.exc_info()
+                self.log.warning(error_message.format(identifier, exc_info[1]))
+
+            except:
+                failed = True
+                add_traceback = True
+                exc_info = sys.exc_info()
+                self.log.warning(
+                    error_message.format(identifier, ""), exc_info=True)
+
+            if failed:
+                failed_info.append(
+                    prepare_failed_creator_operation_info(
+                        identifier, label, exc_info, add_traceback
+                    )
+                )
+
+        if failed_info:
+            raise CreatorsSaveFailed(failed_info)
 
     def remove_instances(self, instances):
         """Remove instances from context.
@@ -1333,14 +1716,48 @@ class CreateContext:
             instances(list<CreatedInstance>): Instances that should be removed
                 from context.
         """
+
         instances_by_identifier = collections.defaultdict(list)
         for instance in instances:
             identifier = instance.creator_identifier
             instances_by_identifier[identifier].append(instance)
 
+        error_message = "Instances removement of creator \"{}\" failed. {}"
+        failed_info = []
         for identifier, creator_instances in instances_by_identifier.items():
             creator = self.creators.get(identifier)
-            creator.remove_instances(creator_instances)
+            label = creator.label
+            failed = False
+            add_traceback = False
+            exc_info = None
+            try:
+                creator.remove_instances(creator_instances)
+
+            except CreatorError:
+                failed = True
+                exc_info = sys.exc_info()
+                self.log.warning(
+                    error_message.format(identifier, exc_info[1])
+                )
+
+            except:
+                failed = True
+                add_traceback = True
+                exc_info = sys.exc_info()
+                self.log.warning(
+                    error_message.format(identifier, ""),
+                    exc_info=True
+                )
+
+            if failed:
+                failed_info.append(
+                    prepare_failed_creator_operation_info(
+                        identifier, label, exc_info, add_traceback
+                    )
+                )
+
+        if failed_info:
+            raise CreatorsRemoveFailed(failed_info)
 
     def _get_publish_plugins_with_attr_for_family(self, family):
         """Publish plugin attributes for passed family.
@@ -1372,3 +1789,68 @@ class CreateContext:
             if not plugin.__instanceEnabled__:
                 plugins.append(plugin)
         return plugins
+
+    @property
+    def collection_shared_data(self):
+        """Access to shared data that can be used during creator's collection.
+
+        Retruns:
+            Dict[str, Any]: Shared data.
+
+        Raises:
+            UnavailableSharedData: When called out of collection phase.
+        """
+
+        if self._collection_shared_data is None:
+            raise UnavailableSharedData(
+                "Accessed Collection shared data out of collection phase"
+            )
+        return self._collection_shared_data
+
+    def run_convertor(self, convertor_identifier):
+        """Run convertor plugin by it's idenfitifier.
+
+        Conversion is skipped if convertor is not available.
+
+        Args:
+            convertor_identifier (str): Identifier of convertor.
+        """
+
+        convertor = self.convertors_plugins.get(convertor_identifier)
+        if convertor is not None:
+            convertor.convert()
+
+    def run_convertors(self, convertor_identifiers):
+        """Run convertor plugins by idenfitifiers.
+
+        Conversion is skipped if convertor is not available. It is recommended
+        to trigger reset after conversion to reload instances.
+
+        Args:
+            convertor_identifiers (Iterator[str]): Identifiers of convertors
+                to run.
+
+        Raises:
+            ConvertorsConversionFailed: When one or more convertors fails.
+        """
+
+        failed_info = []
+        for convertor_identifier in convertor_identifiers:
+            try:
+                self.run_convertor(convertor_identifier)
+
+            except:
+                failed_info.append(
+                    prepare_failed_convertor_operation_info(
+                        convertor_identifier, sys.exc_info()
+                    )
+                )
+                self.log.warning(
+                    "Failed to convert instances of convertor \"{}\"".format(
+                        convertor_identifier
+                    ),
+                    exc_info=True
+                )
+
+        if failed_info:
+            raise ConvertorsConversionFailed(failed_info)

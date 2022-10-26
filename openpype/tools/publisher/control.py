@@ -31,9 +31,18 @@ from openpype.pipeline.create import (
     HiddenCreator,
     Creator,
 )
+from openpype.pipeline.create.context import (
+    CreatorsOperationFailed,
+    ConvertorsOperationFailed,
+)
 
 # Define constant for plugin orders offset
 PLUGIN_ORDER_OFFSET = 0.5
+
+
+class CardMessageTypes:
+    standard = None
+    error = "error"
 
 
 class MainThreadItem:
@@ -299,8 +308,11 @@ class PublishReport:
         }
 
     def _extract_context_data(self, context):
+        context_label = "Context"
+        if context is not None:
+            context_label = context.data.get("label")
         return {
-            "label": context.data.get("label")
+            "label": context_label
         }
 
     def _extract_instance_data(self, instance, exists):
@@ -1101,6 +1113,8 @@ class AbstractPublisherController(object):
             options (Dict[str, Any]): Data from pre-create attributes.
         """
 
+        pass
+
     def save_changes(self):
         """Save changes in create context."""
 
@@ -1234,6 +1248,14 @@ class AbstractPublisherController(object):
 
         pass
 
+    @abstractproperty
+    def convertor_items(self):
+        pass
+
+    @abstractmethod
+    def trigger_convertor_items(self, convertor_identifiers):
+        pass
+
     @abstractmethod
     def set_comment(self, comment):
         """Set comment on pyblish context.
@@ -1247,7 +1269,9 @@ class AbstractPublisherController(object):
         pass
 
     @abstractmethod
-    def emit_card_message(self, message):
+    def emit_card_message(
+        self, message, message_type=CardMessageTypes.standard
+    ):
         """Emit a card message which can have a lifetime.
 
         This is for UI purposes. Method can be extended to more arguments
@@ -1599,6 +1623,10 @@ class PublisherController(BasePublisherController):
         return self._create_context.instances_by_id
 
     @property
+    def convertor_items(self):
+        return self._create_context.convertor_items_by_id
+
+    @property
     def _creators(self):
         """All creators loaded in create context."""
 
@@ -1662,12 +1690,11 @@ class PublisherController(BasePublisherController):
 
     def reset(self):
         """Reset everything related to creation and publishing."""
-        # Stop publishing
         self.stop_publish()
 
-        self.save_changes()
-
         self.host_is_valid = self._create_context.host_is_valid
+
+        self._create_context.reset_preparation()
 
         # Reset avalon context
         self._create_context.reset_avalon_context()
@@ -1678,6 +1705,8 @@ class PublisherController(BasePublisherController):
         # Publish part must be reset after plugins
         self._reset_publish()
         self._reset_instances()
+
+        self._create_context.reset_finalization()
 
         self._emit_event("controller.reset.finished")
 
@@ -1711,15 +1740,54 @@ class PublisherController(BasePublisherController):
 
         self._create_context.reset_context_data()
         with self._create_context.bulk_instances_collection():
-            self._create_context.reset_instances()
-            self._create_context.execute_autocreators()
+            try:
+                self._create_context.reset_instances()
+            except CreatorsOperationFailed as exc:
+                self._emit_event(
+                    "instances.collection.failed",
+                    {
+                        "title": "Instance collection failed",
+                        "failed_info": exc.failed_info
+                    }
+                )
+
+            try:
+                self._create_context.find_convertor_items()
+            except ConvertorsOperationFailed as exc:
+                self._emit_event(
+                    "convertors.find.failed",
+                    {
+                        "title": "Collection of unsupported subset failed",
+                        "failed_info": exc.failed_info
+                    }
+                )
+
+            try:
+                self._create_context.execute_autocreators()
+
+            except CreatorsOperationFailed as exc:
+                self._emit_event(
+                    "instances.create.failed",
+                    {
+                        "title": "AutoCreation failed",
+                        "failed_info": exc.failed_info
+                    }
+                )
 
         self._resetting_instances = False
 
         self._on_create_instance_change()
 
-    def emit_card_message(self, message):
-        self._emit_event("show.card.message", {"message": message})
+    def emit_card_message(
+        self, message, message_type=CardMessageTypes.standard
+    ):
+        self._emit_event(
+            "show.card.message",
+            {
+                "message": message,
+                "message_type": message_type
+            }
+        )
 
     def get_creator_attribute_definitions(self, instances):
         """Collect creator attribute definitions for multuple instances.
@@ -1837,19 +1905,69 @@ class PublisherController(BasePublisherController):
             variant, task_name, asset_doc, project_name, instance=instance
         )
 
+    def trigger_convertor_items(self, convertor_identifiers):
+        self.save_changes()
+
+        success = True
+        try:
+            self._create_context.run_convertors(convertor_identifiers)
+
+        except ConvertorsOperationFailed as exc:
+            success = False
+            self._emit_event(
+                "convertors.convert.failed",
+                {
+                    "title": "Conversion failed",
+                    "failed_info": exc.failed_info
+                }
+            )
+
+        if success:
+            self.emit_card_message("Conversion finished")
+        else:
+            self.emit_card_message("Conversion failed", CardMessageTypes.error)
+
+        self.reset()
+
     def create(
         self, creator_identifier, subset_name, instance_data, options
     ):
         """Trigger creation and refresh of instances in UI."""
-        creator = self._creators[creator_identifier]
-        creator.create(subset_name, instance_data, options)
+
+        success = True
+        try:
+            self._create_context.create(
+                creator_identifier, subset_name, instance_data, options
+            )
+        except CreatorsOperationFailed as exc:
+            success = False
+            self._emit_event(
+                "instances.create.failed",
+                {
+                    "title": "Creation failed",
+                    "failed_info": exc.failed_info
+                }
+            )
 
         self._on_create_instance_change()
+        return success
 
     def save_changes(self):
         """Save changes happened during creation."""
-        if self._create_context.host_is_valid:
+        if not self._create_context.host_is_valid:
+            return
+
+        try:
             self._create_context.save_changes()
+
+        except CreatorsOperationFailed as exc:
+            self._emit_event(
+                "instances.save.failed",
+                {
+                    "title": "Instances save failed",
+                    "failed_info": exc.failed_info
+                }
+            )
 
     def remove_instances(self, instance_ids):
         """Remove instances based on instance ids.
@@ -1857,7 +1975,6 @@ class PublisherController(BasePublisherController):
         Args:
             instance_ids (List[str]): List of instance ids to remove.
         """
-        # TODO expect instance ids instead of instances
         # QUESTION Expect that instances are really removed? In that case save
         #   reset is not required and save changes too.
         self.save_changes()
@@ -1872,7 +1989,16 @@ class PublisherController(BasePublisherController):
             instances_by_id[instance_id]
             for instance_id in instance_ids
         ]
-        self._create_context.remove_instances(instances)
+        try:
+            self._create_context.remove_instances(instances)
+        except CreatorsOperationFailed as exc:
+            self._emit_event(
+                "instances.remove.failed",
+                {
+                    "title": "Instance removement failed",
+                    "failed_info": exc.failed_info
+                }
+            )
 
     def _on_create_instance_change(self):
         self._emit_event("instances.refresh.finished")

@@ -248,13 +248,13 @@ class PublishFrame(QtWidgets.QWidget):
             hint = self._top_content_widget.minimumSizeHint()
             end = hint.height()
 
-        self._shrunk_anim.setStartValue(start)
-        self._shrunk_anim.setEndValue(end)
+        self._shrunk_anim.setStartValue(float(start))
+        self._shrunk_anim.setEndValue(float(end))
         if not anim_is_running:
             self._shrunk_anim.start()
 
     def _on_shrunk_anim(self, value):
-        diff = self._top_content_widget.height() - value
+        diff = self._top_content_widget.height() - int(value)
         if not self._top_content_widget.isVisible():
             diff -= self._content_layout.spacing()
 
