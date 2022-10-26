@@ -195,9 +195,9 @@ def get_latest_version(local=None, remote=None):
 
 def get_expected_studio_version(staging=None):
     """Expected production or staging version in studio."""
-    if staging is None:
-        staging = is_running_staging()
     if op_version_control_available():
+        if staging is None:
+            staging = is_staging_enabled()
         return get_OpenPypeVersion().get_expected_studio_version(staging)
     return None
 
