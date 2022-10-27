@@ -5,6 +5,7 @@ import json
 import types
 import logging
 import platform
+import uuid
 
 import pyblish.api
 from pyblish.lib import MessageHandler
@@ -37,6 +38,7 @@ from . import (
 
 
 _is_installed = False
+_process_id = None
 _registered_root = {"_": ""}
 _registered_host = {"_": None}
 # Keep modules manager (and it's modules) in memory
@@ -546,3 +548,18 @@ def change_current_context(asset_doc, task_name, template_key=None):
     emit_event("taskChanged", data)
 
     return changes
+
+
+def get_process_id():
+    """Fake process id created on demand using uuid.
+
+    Can be used to create process specific folders in temp directory.
+
+    Returns:
+        str: Process id.
+    """
+
+    global _process_id
+    if _process_id is None:
+        _process_id = str(uuid.uuid4())
+    return _process_id
