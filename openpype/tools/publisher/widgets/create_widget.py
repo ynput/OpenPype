@@ -164,6 +164,7 @@ class CreateWidget(QtWidgets.QWidget):
         variant_subset_widget = QtWidgets.QWidget(creator_basics_widget)
         # Variant and subset input
         variant_widget = ResizeControlWidget(variant_subset_widget)
+        variant_widget.setObjectName("VariantInputsWidget")
 
         variant_input = QtWidgets.QLineEdit(variant_widget)
         variant_input.setObjectName("VariantInput")
