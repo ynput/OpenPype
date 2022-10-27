@@ -44,20 +44,25 @@ class ThumbnailWidget(QtWidgets.QWidget):
         default_image = get_image("thumbnail")
         default_pix = paint_image_with_color(default_image, border_color)
 
+        self._controller = controller
+        self._output_dir = controller.get_thumbnail_temp_dir_path()
+
         self.border_color = border_color
         self.thumbnail_bg_color = thumbnail_bg_color
         self._default_pix = default_pix
+
+        self._drop_enabled = True
+
         self._current_pixes = None
         self._cached_pix = None
+
+        self._review_extensions = set(IMAGE_EXTENSIONS) | set(VIDEO_EXTENSIONS)
+
         self._height = None
         self._width = None
         self._adapted_to_size = True
         self._last_width = None
         self._last_height = None
-        self._review_extensions = set(IMAGE_EXTENSIONS) | set(VIDEO_EXTENSIONS)
-
-        self._controller = controller
-        self._output_dir = controller.get_thumbnail_temp_dir_path()
 
     def _get_filepath_from_event(self, event):
         mime_data = event.mimeData()
@@ -78,6 +83,10 @@ class ThumbnailWidget(QtWidgets.QWidget):
         return None
 
     def dragEnterEvent(self, event):
+        if not self._drop_enabled:
+            event.ignore()
+            return
+
         filepath = self._get_filepath_from_event(event)
         if filepath:
             event.setDropAction(QtCore.Qt.CopyAction)
@@ -87,6 +96,9 @@ class ThumbnailWidget(QtWidgets.QWidget):
         event.accept()
 
     def dropEvent(self, event):
+        if not self._drop_enabled:
+            return
+
         filepath = self._get_filepath_from_event(event)
         if not filepath:
             return
@@ -99,6 +111,13 @@ class ThumbnailWidget(QtWidgets.QWidget):
                 "Couldn't convert the source for thumbnail",
                 CardMessageTypes.error
             )
+
+    def set_drop_enabled(self, enabled):
+        if self._drop_enabled is enabled:
+            return
+        self._drop_enabled = enabled
+        self._cached_pix = None
+        self.repaint()
 
     def set_adapted_to_hint(self, enabled):
         self._adapted_to_size = enabled
@@ -149,6 +168,10 @@ class ThumbnailWidget(QtWidgets.QWidget):
         self.repaint()
 
     def _get_current_pixes(self):
+        if not self._drop_enabled:
+            # TODO different image for disabled drop
+            return [self._default_pix]
+
         if self._current_pixes is None:
             return [self._default_pix]
         return self._current_pixes
