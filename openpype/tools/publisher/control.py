@@ -1118,11 +1118,13 @@ class AbstractPublisherController(object):
 
         pass
 
+    @abstractmethod
     def save_changes(self):
         """Save changes in create context."""
 
         pass
 
+    @abstractmethod
     def remove_instances(self, instance_ids):
         """Remove list of instances from create context."""
         # TODO expect instance ids
