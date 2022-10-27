@@ -22,7 +22,6 @@ class WorkfileCreator(AutoCreator):
         instance_data = api.get_node_data(
             root_node, api.INSTANCE_DATA_KNOB
         )
-        self.log.debug("__ instance_data: {}".format(instance_data))
 
         project_name = legacy_io.Session["AVALON_PROJECT"]
         asset_name = legacy_io.Session["AVALON_ASSET"]
@@ -34,7 +33,6 @@ class WorkfileCreator(AutoCreator):
             self.default_variant, task_name, asset_doc,
             project_name, host_name
         )
-        self.log.debug("__ subset_name: {}".format(subset_name))
         instance_data.update({
             "asset": asset_name,
             "task": task_name,

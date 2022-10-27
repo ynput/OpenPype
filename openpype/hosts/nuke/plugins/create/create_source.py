@@ -89,5 +89,3 @@ class CreateSource(NukeCreator):
         else:
             NukeCreatorError(
                 "Creator error: only supprted with active selection")
-
-        self.log.debug("Selection is: {}".format(self.selected_nodes))

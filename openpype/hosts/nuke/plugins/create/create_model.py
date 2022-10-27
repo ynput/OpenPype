@@ -63,5 +63,3 @@ class CreateModel(NukeCreator):
                 NukeCreatorError("Creator error: Select only one camera node")
         else:
             self.selected_nodes = []
-
-        self.log.debug("Selection is: {}".format(self.selected_nodes))
