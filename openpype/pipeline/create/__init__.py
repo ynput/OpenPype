@@ -1,6 +1,7 @@
 from .constants import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
     DEFAULT_SUBSET_TEMPLATE,
+    PRE_CREATE_THUMBNAIL_KEY,
 )
 
 from .subset_name import (
@@ -40,6 +41,7 @@ from .legacy_create import (
 __all__ = (
     "SUBSET_NAME_ALLOWED_SYMBOLS",
     "DEFAULT_SUBSET_TEMPLATE",
+    "PRE_CREATE_THUMBNAIL_KEY",
 
     "TaskNotSetError",
     "get_subset_name",
