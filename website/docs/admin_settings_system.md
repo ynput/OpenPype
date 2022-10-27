@@ -27,7 +27,8 @@ as a simple barrier to prevent artists from accidental setting changes.
 Uses `subst` command, if configured volume character in `Destination` field already exists, no re-mapping is done for that character(volume).
 
 ### FFmpeg and OpenImageIO tools
-We bundle FFmpeg tools for all platforms and OpenImageIO tools for Windows and Linux. By default are used bundled tools but it is possible to set environment variables `OPENPYPE_FFMPEG_PATHS` and `OPENPYPE_OIIO_PATHS` in system settings environments to look for them in different directory e.g. for different linux distributions or to add oiio support for MacOs. Values of both environment variables should lead to directory where tool executables are located (multiple paths are supported).
+We bundle FFmpeg tools for all platforms and OpenImageIO tools for Windows and Linux. By default, bundled tools are used, but it is possible to set environment variables `OPENPYPE_FFMPEG_PATHS` and `OPENPYPE_OIIO_PATHS` in system settings environments to look for them in different directory.
+For example—when using different Linux distributions in a facility that do not have a consistent install location or to add OIIO support for MacOS. Values of both environment variables should lead to directory where tool executables are located instead of an explicit path to the binary executable. Using multiple paths are supported, separated by colons, is supported—e.g. */usr/local/bin:$HOME/.local/bin*
 
 ### OpenPype deployment control
 **`Versions Repository`** - Location where automatic update mechanism searches for zip files with
@@ -41,11 +42,11 @@ For more information about Production and Staging go to [Distribute](admin_distr
 
 **Production version** and **Staging version** fields will define which version will be used in studio. Filling explicit version will force new OpenPype processes to use it. That gives more control over studio deployment especially when some workstations don't have access to version repository (e.g. remote users). It can be also used to downgrade studio version when newer version have production breaking bug.
 
-When fields are not filled the latest version in versions repository is used as studio version. That makes updating easier as it is not needed to modify settings but workstations without access to versions repository can't find out which OpenPype version should be used.
+When fields are not filled, the latest version in the versions repository is used as studio version. That makes updating easier as it is not needed to modify settings, though workstations without access to versions repository can't find out which OpenPype version should be used.
 
-If version repository is not set or is not accessible for workstation the latest available version on workstation is used or version inside build.
+If **`Version Repository`** is not set or is not accessible for workstation, the latest available version on workstation is used or the version inside build.
 
-**`Version check interval`** - OpenPype tray application check if currently used OpenPype version is up to date with production/staging version. It is possible to modify how often the validation is triggered in minutes. It is possible to set the interval to `0`. That will turn off version validations but it is not recommend.
+**`Version check interval`** - The OpenPype tray application has the ability to check if its version currently in use is up to date with the Studio's production/staging version. It is possible to modify how often the validation is triggered in minutes. The interval can also be set to `0`, which will turn off version validations, but it is not recommend.
 
 A dialog asking for restart is shown when OpenPype tray application detect that different version should be used.
 ![general_settings](assets/settings/settings_system_version_update.png)
