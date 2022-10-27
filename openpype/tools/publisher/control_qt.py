@@ -115,6 +115,11 @@ class QtRemotePublishController(BasePublisherController):
         super().__init__(*args, **kwargs)
 
         self._created_instances = {}
+        self._thumbnail_paths_by_instance_id = None
+
+    def _reset_attributes(self):
+        super()._reset_attributes()
+        self._thumbnail_paths_by_instance_id = None
 
     @abstractmethod
     def _get_serialized_instances(self):
@@ -179,6 +184,11 @@ class QtRemotePublishController(BasePublisherController):
         if event.topic == "publish.host_is_valid.changed":
             self.host_is_valid = event["value"]
             return
+
+        # Don't skip because UI want know about it too
+        if event.topic == "instance.thumbnail.changed":
+            for instance_id, path in event["mapping"].items():
+                self.thumbnail_paths_by_instance_id[instance_id] = path
 
         # Topics that can be just passed by because are not affecting
         #   controller itself
@@ -254,6 +264,42 @@ class QtRemotePublishController(BasePublisherController):
         pass
 
     def get_existing_subset_names(self, asset_name):
+        pass
+
+    @property
+    def thumbnail_paths_by_instance_id(self):
+        if self._thumbnail_paths_by_instance_id is None:
+            self._thumbnail_paths_by_instance_id = (
+                self._collect_thumbnail_paths_by_instance_id()
+            )
+        return self._thumbnail_paths_by_instance_id
+
+    def get_thumbnail_path_for_instance(self, instance_id):
+        return self.thumbnail_paths_by_instance_id.get(instance_id)
+
+    def set_thumbnail_path_for_instance(self, instance_id, thumbnail_path):
+        self._set_thumbnail_path_on_context(self, instance_id, thumbnail_path)
+
+    @abstractmethod
+    def _collect_thumbnail_paths_by_instance_id(self):
+        """Collect thumbnail paths by instance id in remote controller.
+
+        These should be collected from 'CreatedContext' there.
+
+        Returns:
+            Dict[str, str]: Mapping of thumbnail path by instance id.
+        """
+
+        pass
+
+    @abstractmethod
+    def _set_thumbnail_path_on_context(self, instance_id, thumbnail_path):
+        """Send change of thumbnail path in remote controller.
+
+        That should trigger event 'instance.thumbnail.changed' which is
+        captured and handled in default implementation in this class.
+        """
+
         pass
 
     @abstractmethod
