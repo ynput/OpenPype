@@ -119,7 +119,7 @@ Module that allows storing all logging into the database for easier retrieval an
 ## Applications
 
 In this section you can manage what Applications are available to your studio, locations of their
-executables and their additional environments. In OpenPype context each application that is integrated is
+executables, and their additional environments. In OpenPype context, each application that is integrated is
 also called a `Host` and these two terms might be used interchangeably in the documentation.
 
 Each Host is made of two levels.
