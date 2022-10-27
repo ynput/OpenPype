@@ -478,6 +478,9 @@ class Creator(BaseCreator):
     # A thumbnail can be passed in precreate attributes
     # - if is set to True is should expect that a thumbnail path under key
     #   PRE_CREATE_THUMBNAIL_KEY can be sent in data with precreate data
+    # - is disabled by default because the feature was added in later stages
+    #   and creators who would not expect PRE_CREATE_THUMBNAIL_KEY could
+    #   cause issues with instance data
     create_allow_thumbnail = False
 
     # Precreate attribute definitions showed before creation
