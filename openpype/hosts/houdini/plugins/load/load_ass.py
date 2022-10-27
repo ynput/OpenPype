@@ -50,10 +50,8 @@ class AssLoader(load.LoaderPlugin):
 
     def update(self, container, representation):
         # Update the file path
-        file_path = self.format_path(representation)
-
         procedural = container["node"]
-        procedural.setParms({"ar_filename": file_path})
+        procedural.setParms({"ar_filename": self.format_path(representation)})
 
         # Update attribute
         procedural.setParms({"representation": str(representation["_id"])})
