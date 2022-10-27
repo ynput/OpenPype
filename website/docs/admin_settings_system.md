@@ -75,8 +75,7 @@ Additional Action paths
 **`Intent`** - Special ftrack attribute that mark the intention of individual publishes. This setting will be reflected
 in publisher as well as ftrack custom attributes
 
-**`Custom Attributes`** - Write and Read permissions for all OpenPype required ftrack custom attributes. The values should be
-ftrack roles names.
+**`Custom Attributes`** - Write and Read permissions for all OpenPype required ftrack custom attributes. Each values needs to be name of an ftrack role.
 
 ### Sync Server
 
