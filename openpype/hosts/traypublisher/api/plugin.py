@@ -4,7 +4,8 @@ from openpype.lib.attribute_definitions import FileDef
 from openpype.pipeline.create import (
     Creator,
     HiddenCreator,
-    CreatedInstance
+    CreatedInstance,
+    PRE_CREATE_THUMBNAIL_KEY,
 )
 
 from .pipeline import (
@@ -114,17 +115,23 @@ class TrayPublishCreator(Creator):
 
 class SettingsCreator(TrayPublishCreator):
     create_allow_context_change = True
+    create_allow_thumbnail = True
 
     extensions = []
 
     def create(self, subset_name, data, pre_create_data):
         # Pass precreate data to creator attributes
+        thumbnail_path = pre_create_data.pop(PRE_CREATE_THUMBNAIL_KEY, None)
+
         data["creator_attributes"] = pre_create_data
         data["settings_creator"] = True
         # Create new instance
         new_instance = CreatedInstance(self.family, subset_name, data, self)
 
         self._store_new_instance(new_instance)
+
+        if thumbnail_path:
+            self.set_instance_thumbnail_path(new_instance.id, thumbnail_path)
 
     def get_instance_attr_defs(self):
         return [
