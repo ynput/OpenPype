@@ -7,6 +7,7 @@ Playblasting with independent viewport, camera and display options
 import re
 import sys
 import contextlib
+import logging
 
 from maya import cmds
 from maya import mel
@@ -21,6 +22,7 @@ version_info = (2, 3, 0)
 
 __version__ = "%s.%s.%s" % version_info
 __license__ = "MIT"
+logger = logging.getLogger("capture")
 
 
 def capture(camera=None,
@@ -46,7 +48,8 @@ def capture(camera=None,
             display_options=None,
             viewport_options=None,
             viewport2_options=None,
-            complete_filename=None):
+            complete_filename=None,
+            log=None):
     """Playblast in an independent panel
 
     Arguments:
@@ -91,6 +94,7 @@ def capture(camera=None,
             options, using `Viewport2Options`
         complete_filename (str, optional): Exact name of output file. Use this
             to override the output of `filename` so it excludes frame padding.
+        log (logger, optional): pass logger for logging messages.
 
     Example:
         >>> # Launch default capture
@@ -109,7 +113,9 @@ def capture(camera=None,
 
 
     """
-
+    global logger
+    if log:
+        logger = log
     camera = camera or "persp"
 
     # Ensure camera exists
@@ -736,7 +742,10 @@ def _applied_viewport_options(options, panel):
             plugin_options[plugin] = options.pop(plugin)
 
     # default options
-    cmds.modelEditor(panel, edit=True, **options)
+    try:
+        cmds.modelEditor(panel, edit=True, **options)
+    except TypeError as e:
+        logger.error("Cannot apply options {}".format(e))
 
     # plugin display filter options
     for plugin, state in plugin_options.items():
