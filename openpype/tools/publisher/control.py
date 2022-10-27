@@ -4,6 +4,8 @@ import logging
 import traceback
 import collections
 import uuid
+import tempfile
+import shutil
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
@@ -24,6 +26,7 @@ from openpype.pipeline import (
     KnownPublishError,
     registered_host,
     legacy_io,
+    get_process_id,
 )
 from openpype.pipeline.create import (
     CreateContext,
@@ -1283,6 +1286,22 @@ class AbstractPublisherController(object):
 
         pass
 
+    @abstractmethod
+    def get_thumbnail_temp_dir_path(self):
+        """Return path to directory where thumbnails can be temporary stored.
+
+        Returns:
+            str: Path to a directory.
+        """
+
+        pass
+
+    @abstractmethod
+    def clear_thumbnail_temp_dir_path(self):
+        """Remove content of thumbnail temp directory."""
+
+        pass
+
 
 class BasePublisherController(AbstractPublisherController):
     """Implement common logic for controllers.
@@ -1522,6 +1541,26 @@ class BasePublisherController(AbstractPublisherController):
         if creator_item is not None:
             return creator_item.icon
         return None
+
+    def get_thumbnail_temp_dir_path(self):
+        """Return path to directory where thumbnails can be temporary stored.
+
+        Returns:
+            str: Path to a directory.
+        """
+
+        return os.path.join(
+            tempfile.gettempdir(),
+            "publisher_thumbnails",
+            get_process_id()
+        )
+
+    def clear_thumbnail_temp_dir_path(self):
+        """Remove content of thumbnail temp directory."""
+
+        dirpath = self.get_thumbnail_temp_dir_path()
+        if os.path.exists(dirpath):
+            shutil.rmtree(dirpath)
 
 
 class PublisherController(BasePublisherController):
