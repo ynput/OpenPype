@@ -188,7 +188,8 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
         if "review" not in instance.data["families"]:
             instance.data["families"].append("review")
 
-        instance.data["thumbnailSource"] = first_filepath
+        if not instance.data.get("thumbnailSource"):
+            instance.data["thumbnailSource"] = first_filepath
 
         review_representation["tags"].append("review")
         self.log.debug("Representation {} was marked for review. {}".format(
