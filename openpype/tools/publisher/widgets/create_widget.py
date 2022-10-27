@@ -1,9 +1,11 @@
+import os
 import re
 
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.pipeline.create import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
+    PRE_CREATE_THUMBNAIL_KEY,
     TaskNotSetError,
 )
 
@@ -269,6 +271,7 @@ class CreateWidget(QtWidgets.QWidget):
             self._on_current_session_context_request
         )
         tasks_widget.task_changed.connect(self._on_task_change)
+        thumbnail_widget.thumbnail_created.connect(self._on_thumbnail_create)
 
         controller.event_system.add_callback(
             "plugins.refresh.finished", self._on_plugins_refresh
@@ -302,6 +305,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         self._prereq_timer = prereq_timer
         self._first_show = True
+        self._last_thumbnail_path = None
 
     @property
     def current_asset_name(self):
@@ -491,6 +495,14 @@ class CreateWidget(QtWidgets.QWidget):
     def _on_task_change(self):
         if self._context_change_is_enabled():
             self._invalidate_prereq_deffered()
+
+    def _on_thumbnail_create(self, thumbnail_path):
+        last_path = self._last_thumbnail_path
+        if last_path and os.path.exists(last_path):
+            os.remove(last_path)
+
+        self._last_thumbnail_path = thumbnail_path
+        self._thumbnail_widget.set_current_thumbnails([thumbnail_path])
 
     def _on_current_session_context_request(self):
         self._assets_widget.set_current_session_asset()
@@ -730,6 +742,8 @@ class CreateWidget(QtWidgets.QWidget):
             task_name = self._get_task_name()
 
         pre_create_data = self._pre_create_widget.current_value()
+        pre_create_data[PRE_CREATE_THUMBNAIL_KEY] = self._last_thumbnail_path
+
         # Where to define these data?
         # - what data show be stored?
         instance_data = {
@@ -749,3 +763,5 @@ class CreateWidget(QtWidgets.QWidget):
         if success:
             self._set_creator(self._selected_creator)
             self._controller.emit_card_message("Creation finished...")
+            self._last_thumbnail_path = None
+            self._thumbnail_widget.set_current_thumbnails()
