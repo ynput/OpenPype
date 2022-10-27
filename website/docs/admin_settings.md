@@ -9,7 +9,7 @@ import TabItem from '@theme/TabItem';
 
 OpenPype stores all of it's settings and configuration in the mongo database. To make the configuration as easy as possible we provide a robust GUI where you can access and change everything that is configurable
 
-**Settings** GUI can be started from the tray menu Admin -> Studio Settings.
+**Settings** GUI can be started from the tray menu *Admin -> Studio Settings*.
 
 Please keep in mind that these settings are set-up for the full studio and not per-individual. If you're looking for individual artist settings, you can head to
 [Local Settings](admin_settings_local.md) section in the artist documentation.
