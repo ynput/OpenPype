@@ -77,8 +77,10 @@ class ExtractPlayblast(publish.Extractor):
             preset['height'] = asset_height
         preset['start_frame'] = start
         preset['end_frame'] = end
-        camera_option = preset.get("camera_option", {})
-        camera_option["depthOfField"] = cmds.getAttr(
+
+        # Enforce persisting camera depth of field
+        camera_options = preset.setdefault("camera_options", {})
+        camera_options["depthOfField"] = cmds.getAttr(
             "{0}.depthOfField".format(camera))
 
         stagingdir = self.staging_dir(instance)
@@ -131,13 +133,15 @@ class ExtractPlayblast(publish.Extractor):
                 preset.update(panel_preset)
                 cmds.setFocus(panel)
 
-            path = capture.capture(**preset)
+            path = capture.capture(log=self.log, **preset)
 
         self.log.debug("playblast path  {}".format(path))
 
         collected_files = os.listdir(stagingdir)
+        patterns = [clique.PATTERNS["frames"]]
         collections, remainder = clique.assemble(collected_files,
-                                                 minimum_items=1)
+                                                 minimum_items=1,
+                                                 patterns=patterns)
 
         self.log.debug("filename {}".format(filename))
         frame_collection = None

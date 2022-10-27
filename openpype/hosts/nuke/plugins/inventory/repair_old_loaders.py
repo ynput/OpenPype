@@ -1,4 +1,4 @@
-from openpype.api import Logger
+from openpype.lib import Logger
 from openpype.pipeline import InventoryAction
 from openpype.hosts.nuke.api.lib import set_avalon_knob_data
 

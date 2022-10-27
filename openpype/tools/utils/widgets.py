@@ -448,3 +448,57 @@ class OptionDialog(QtWidgets.QDialog):
 
     def parse(self):
         return self._options.copy()
+
+
+class SeparatorWidget(QtWidgets.QFrame):
+    """Prepared widget that can be used as separator with predefined color.
+
+    Args:
+        size (int): Size of separator (width or height).
+        orientation (Qt.Horizontal|Qt.Vertical): Orintation of widget.
+        parent (QtWidgets.QWidget): Parent widget.
+    """
+
+    def __init__(self, size=2, orientation=QtCore.Qt.Horizontal, parent=None):
+        super(SeparatorWidget, self).__init__(parent)
+
+        self.setObjectName("Separator")
+
+        maximum_width = self.maximumWidth()
+        maximum_height = self.maximumHeight()
+
+        self._size = None
+        self._orientation = orientation
+        self._maximum_width = maximum_width
+        self._maximum_height = maximum_height
+        self.set_size(size)
+
+    def set_size(self, size):
+        if size == self._size:
+            return
+        if self._orientation == QtCore.Qt.Vertical:
+            self.setMinimumWidth(size)
+            self.setMaximumWidth(size)
+        else:
+            self.setMinimumHeight(size)
+            self.setMaximumHeight(size)
+
+        self._size = size
+
+    def set_orientation(self, orientation):
+        if self._orientation == orientation:
+            return
+
+        # Reset min/max sizes in opossite direction
+        if self._orientation == QtCore.Qt.Vertical:
+            self.setMinimumHeight(0)
+            self.setMaximumHeight(self._maximum_height)
+        else:
+            self.setMinimumWidth(0)
+            self.setMaximumWidth(self._maximum_width)
+
+        self._orientation = orientation
+
+        size = self._size
+        self._size = None
+        self.set_size(size)

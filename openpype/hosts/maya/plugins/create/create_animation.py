@@ -12,6 +12,7 @@ class CreateAnimation(plugin.Creator):
     family = "animation"
     icon = "male"
     write_color_sets = False
+    write_face_sets = False
 
     def __init__(self, *args, **kwargs):
         super(CreateAnimation, self).__init__(*args, **kwargs)
@@ -24,7 +25,7 @@ class CreateAnimation(plugin.Creator):
 
         # Write vertex colors with the geometry.
         self.data["writeColorSets"] = self.write_color_sets
-        self.data["writeFaceSets"] = False
+        self.data["writeFaceSets"] = self.write_face_sets
 
         # Include only renderable visible shapes.
         # Skips locators and empty transforms

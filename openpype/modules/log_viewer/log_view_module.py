@@ -1,4 +1,3 @@
-from openpype.api import Logger
 from openpype.modules import OpenPypeModule
 from openpype_interfaces import ITrayModule
 

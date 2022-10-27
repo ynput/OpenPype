@@ -133,6 +133,41 @@
                     "label": "Write Color Sets"
                 },
                 {
+                    "type": "boolean",
+                    "key": "write_face_sets",
+                    "label": "Write Face Sets"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateModel",
+            "label": "Create Model",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "write_color_sets",
+                    "label": "Write Color Sets"
+                },
+                {
+                    "type": "boolean",
+                    "key": "write_face_sets",
+                    "label": "Write Face Sets"
+                },
+                {
                     "type": "list",
                     "key": "defaults",
                     "label": "Default Subsets",
@@ -158,6 +193,11 @@
                     "label": "Write Color Sets"
                 },
                 {
+                    "type": "boolean",
+                    "key": "write_face_sets",
+                    "label": "Write Face Sets"
+                },
+                {
                     "type": "list",
                     "key": "defaults",
                     "label": "Default Subsets",
@@ -165,7 +205,7 @@
                 }
             ]
         },
-        
+
         {
             "type": "schema_template",
             "name": "template_create_plugin",
@@ -201,10 +241,6 @@
                 {
                     "key": "CreateMayaScene",
                     "label": "Create Maya Scene"
-                },
-                {
-                    "key": "CreateModel",
-                    "label": "Create Model"
                 },
                 {
                     "key": "CreateRenderSetup",

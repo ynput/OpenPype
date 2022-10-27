@@ -11,35 +11,33 @@ from .pipeline import (
     remove_instances,
     HostContext,
 )
+from openpype.lib.transcoding import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
 
-IMAGE_EXTENSIONS = [
-    ".ani", ".anim", ".apng", ".art", ".bmp", ".bpg", ".bsave", ".cal",
-    ".cin", ".cpc", ".cpt", ".dds", ".dpx", ".ecw", ".exr", ".fits",
-    ".flic", ".flif", ".fpx", ".gif", ".hdri", ".hevc", ".icer",
-    ".icns", ".ico", ".cur", ".ics", ".ilbm", ".jbig", ".jbig2",
-    ".jng", ".jpeg", ".jpeg-ls", ".jpeg", ".2000", ".jpg", ".xr",
-    ".jpeg", ".xt", ".jpeg-hdr", ".kra", ".mng", ".miff", ".nrrd",
-    ".ora", ".pam", ".pbm", ".pgm", ".ppm", ".pnm", ".pcx", ".pgf",
-    ".pictor", ".png", ".psb", ".psp", ".qtvr", ".ras",
-    ".rgbe", ".logluv", ".tiff", ".sgi", ".tga", ".tiff", ".tiff/ep",
-    ".tiff/it", ".ufo", ".ufp", ".wbmp", ".webp", ".xbm", ".xcf",
-    ".xpm", ".xwd"
-]
-VIDEO_EXTENSIONS = [
-    ".3g2", ".3gp", ".amv", ".asf", ".avi", ".drc", ".f4a", ".f4b",
-    ".f4p", ".f4v", ".flv", ".gif", ".gifv", ".m2v", ".m4p", ".m4v",
-    ".mkv", ".mng", ".mov", ".mp2", ".mp4", ".mpe", ".mpeg", ".mpg",
-    ".mpv", ".mxf", ".nsv", ".ogg", ".ogv", ".qt", ".rm", ".rmvb",
-    ".roq", ".svi", ".vob", ".webm", ".wmv", ".yuv"
-]
+
 REVIEW_EXTENSIONS = IMAGE_EXTENSIONS + VIDEO_EXTENSIONS
+
+
+def _cache_and_get_instances(creator):
+    """Cache instances in shared data.
+
+    Args:
+        creator (Creator): Plugin which would like to get instances from host.
+
+    Returns:
+        List[Dict[str, Any]]: Cached instances list from host implementation.
+    """
+
+    shared_key = "openpype.traypublisher.instances"
+    if shared_key not in creator.collection_shared_data:
+        creator.collection_shared_data[shared_key] = list_instances()
+    return creator.collection_shared_data[shared_key]
 
 
 class HiddenTrayPublishCreator(HiddenCreator):
     host_name = "traypublisher"
 
     def collect_instances(self):
-        for instance_data in list_instances():
+        for instance_data in _cache_and_get_instances(self):
             creator_id = instance_data.get("creator_identifier")
             if creator_id == self.identifier:
                 instance = CreatedInstance.from_existing(
@@ -76,7 +74,7 @@ class TrayPublishCreator(Creator):
     host_name = "traypublisher"
 
     def collect_instances(self):
-        for instance_data in list_instances():
+        for instance_data in _cache_and_get_instances(self):
             creator_id = instance_data.get("creator_identifier")
             if creator_id == self.identifier:
                 instance = CreatedInstance.from_existing(
@@ -104,6 +102,8 @@ class TrayPublishCreator(Creator):
 
         # Host implementation of storing metadata about instance
         HostContext.add_instance(new_instance.data_to_store())
+        new_instance.mark_as_stored()
+
         # Add instance to current context
         self._add_instance_to_context(new_instance)
 

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-import openpype.api
 import pyblish.api
 import hou
+
+from openpype.pipeline.publish import RepairAction
 
 
 class ValidateWorkfilePaths(pyblish.api.InstancePlugin):
@@ -11,7 +12,7 @@ class ValidateWorkfilePaths(pyblish.api.InstancePlugin):
     families = ["workfile"]
     hosts = ["houdini"]
     label = "Validate Workfile Paths"
-    actions = [openpype.api.RepairAction]
+    actions = [RepairAction]
     optional = True
 
     node_types = ["file", "alembic"]
@@ -35,6 +36,9 @@ class ValidateWorkfilePaths(pyblish.api.InstancePlugin):
     def get_invalid(cls):
         invalid = []
         for param, _ in hou.fileReferences():
+            if param is None:
+                continue
+
             # skip nodes we are not interested in
             if param.node().type().name() not in cls.node_types:
                 continue
