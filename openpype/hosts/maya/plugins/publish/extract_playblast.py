@@ -133,7 +133,7 @@ class ExtractPlayblast(publish.Extractor):
                 preset.update(panel_preset)
                 cmds.setFocus(panel)
 
-            path = capture.capture(**preset)
+            path = capture.capture(log=self.log, **preset)
 
         self.log.debug("playblast path  {}".format(path))
 
