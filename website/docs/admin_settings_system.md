@@ -19,11 +19,11 @@ Settings applicable to the full studio.
 
 **`Admin Password`** - After setting admin password, normal user won't have access to OpenPype settings
 and Project Manager GUI. Please keep in mind that this is a studio wide password and it is meant purely
-as a naive barier to prevent artists from accidental setting changes.
+as a simple barrier to prevent artists from accidental setting changes.
 
 **`Environment`** - Globally applied environment variables that will be appended to any OpenPype process in the studio.
 
-**`Disk mapping`** - Platform dependent configuration for mapping of virtual disk(s) on an artist's OpenPype machines before OP starts up. 
+**`Disk mapping`** - Platform dependent configuration for mapping of virtual disk(s) on an artist's OpenPype machines before OP starts up.
 Uses `subst` command, if configured volume character in `Destination` field already exists, no re-mapping is done for that character(volume).
 
 ### FFmpeg and OpenImageIO tools
@@ -58,10 +58,10 @@ their own attributes that need to be set, before they become fully functional.
 
 ### Avalon
 
-**`Avalon Mongo Timeout`** - You might need to change this if your mongo connection is a bit slow. Making the 
+**`Avalon Mongo Timeout`** - You might need to change this if your mongo connection is a bit slow. Making the
 timeout longer will give Avalon better chance to connect.
 
-**`Thumbnail Storage Location`** - simple disk storage path, where all thumbnails will be stored. 
+**`Thumbnail Storage Location`** - simple disk storage path, where all thumbnails will be stored.
 
 ### Ftrack
 
@@ -89,15 +89,15 @@ Disable/Enable Standalone Publisher option
 
 ### Deadline
 
-**`Deadline Rest URL`** - URL to deadline webservice that. This URL must be reachable from every 
+**`Deadline Rest URL`** - URL to deadline webservice that. This URL must be reachable from every
 workstation that should be submitting render jobs to deadline via OpenPype.
 
 ### Muster
 
-**`Muster Rest URL`** - URL to Muster webservice that. This URL must be reachable from every 
+**`Muster Rest URL`** - URL to Muster webservice that. This URL must be reachable from every
 workstation that should be submitting render jobs to muster via OpenPype.
 
-**`templates mapping`** - you can customize Muster templates to match your existing setup here. 
+**`templates mapping`** - you can customize Muster templates to match your existing setup here.
 
 ### Clockify
 
@@ -107,36 +107,36 @@ workstation that should be submitting render jobs to muster via OpenPype.
 
 **`Max Idle Time`** - Duration (minutes) of inactivity, after which currently running timer will be stopped.
 
-**`Dialog popup time`** - Time in minutes, before the end of Max Idle ti, when a notification will alert 
+**`Dialog popup time`** - Time in minutes, before the end of Max Idle ti, when a notification will alert
 the user that their timer is about to be stopped.
 
 ### Idle Manager
 
 Service monitoring the activity, which triggers the Timers Manager timeouts.
 
-### Logging 
+### Logging
 
 Module that allows storing all logging into the database for easier retrieval and support.
 
 ## Applications
 
-In this section you can manage what Applications are available to your studio, locations of their 
-executables and their additional environments. In OpenPype context each application that is integrated is 
+In this section you can manage what Applications are available to your studio, locations of their
+executables and their additional environments. In OpenPype context each application that is integrated is
 also called a `Host` and these two terms might be used interchangeably in the documentation.
 
-Each Host is made of two levels. 
+Each Host is made of two levels.
 1. **Application group** - This is the main name of the application and you can define extra environments
 that are applicable to all versions of the given application. For example any extra Maya scripts that are not
 version dependent, can be added to `Maya` environment here.
-2. **Application versions** - Here you can define executables (per platform) for each supported version of 
-the DCC and any default arguments (`--nukex` for instance). You can also further extend it's environment. 
+2. **Application versions** - Here you can define executables (per platform) for each supported version of
+the DCC and any default arguments (`--nukex` for instance). You can also further extend it's environment.
 
 ![settings_applications](assets/settings/applications_01.png)
 
 ### Environments
 
-Please keep in mind that the environments are not additive by default, so if you are extending variables like 
-`PYTHONPATH`, or `PATH` make sure that you add themselves to the end of the list. 
+Please keep in mind that the environments are not additive by default, so if you are extending variables like
+`PYTHONPATH`, or `PATH` make sure that you add themselves to the end of the list.
 
 For instance:
 
@@ -151,7 +151,7 @@ For instance:
 
 ### Adding versions
 
-It is possible to add new version for any supported application. There are two ways of doing it. 
+It is possible to add new version for any supported application. There are two ways of doing it.
 
 1. **Add new executable** to an existing application version. This is a good way if you have multiple fully compatible versions of your DCC across the studio. Nuke is a typical example where multiple artists might have different `v#` releases of the same minor Nuke release. For example `12.2v3` and `12.3v6`. When you add both to `12.2` Nuke executables they will be treated the same in OpenPype and the system will automatically pick the first that it finds on an artist machine when launching. Their order is also the order of their priority when choosing which version to run if multiple are present.
 ![settings_applications](assets/settings/settings_addapplication.gif)
@@ -161,16 +161,16 @@ It is possible to add new version for any supported application. There are two w
 
 ## Tools
 
-A tool in openPype is anything that needs to be selectively added to your DCC applications. Most often these are plugins, modules, extensions or similar depending on what your package happens to call it. 
+A tool in openPype is anything that needs to be selectively added to your DCC applications. Most often these are plugins, modules, extensions or similar depending on what your package happens to call it.
 
 OpenPype comes with some major CG renderers pre-configured as an example, but these and any others will need to be changed to match your particular environment.
 
-Their environment settings are split to two levels just like applications to allow more flexibility when setting them up. 
+Their environment settings are split to two levels just like applications to allow more flexibility when setting them up.
 
-In the image before you can see that we set most of the environment variables in the general MTOA level, and only specify the version variable in the individual versions below. Because all environments within pype setting will resolve any cross references, this is enough to get a fully dynamic plugin loading as far as your folder structure where you store the plugins is nicely organized. 
+In the image before you can see that we set most of the environment variables in the general MTOA level, and only specify the version variable in the individual versions below. Because all environments within pype setting will resolve any cross references, this is enough to get a fully dynamic plugin loading as far as your folder structure where you store the plugins is nicely organized.
 
 
-In this example MTOA will automatically will the `MAYA_VERSION`(which is set by Maya Application environment) and `MTOA_VERSION` into the `MTOA` variable. We then use the `MTOA` to set all the other variables needed for it to function within Maya. 
+In this example MTOA will automatically will the `MAYA_VERSION`(which is set by Maya Application environment) and `MTOA_VERSION` into the `MTOA` variable. We then use the `MTOA` to set all the other variables needed for it to function within Maya.
 ![tools](assets/settings/tools_01.png)
 
 All of the tools defined in here can then be assigned to projects. You can also change the tools versions on any project level all the way down to individual asset or shot overrides. So if you just need to upgrade you render plugin for a single shot, while not risking the incompatibilities on the rest of the project, it is possible.
