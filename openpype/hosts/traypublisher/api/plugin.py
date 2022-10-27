@@ -14,7 +14,7 @@ from .pipeline import (
 from openpype.lib.transcoding import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
 
 
-REVIEW_EXTENSIONS = IMAGE_EXTENSIONS + VIDEO_EXTENSIONS
+REVIEW_EXTENSIONS = set(IMAGE_EXTENSIONS) | set(VIDEO_EXTENSIONS)
 
 
 def _cache_and_get_instances(creator):
