@@ -7,10 +7,10 @@ from openpype.pipeline.create import (
     TaskNotSetError,
 )
 
+from .thumbnail_widget import ThumbnailWidget
 from .widgets import (
     IconValuePixmapLabel,
     CreateBtn,
-    ThumbnailWidget,
 )
 from .assets_widget import CreateWidgetAssetsWidget
 from .tasks_widget import CreateWidgetTasksWidget
