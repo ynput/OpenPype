@@ -26,7 +26,7 @@ class LegacyConverted(SubsetConvertorPlugin):
 
             # get data from avalon knob
             avalon_knob_data = get_avalon_knob_data(
-                node, ["avalon:", "ak:"])
+                node, ["avalon:", "ak:"], create=False)
 
             if not avalon_knob_data:
                 continue

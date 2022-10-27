@@ -490,7 +490,6 @@ def ls():
     nodes = [n for n in all_nodes]
 
     for n in nodes:
-        log.debug("name: `{}`".format(n.name()))
         container = parse_container(n)
         if container:
             yield container
@@ -513,9 +512,9 @@ def list_instances(creator_id=None):
         try:
             if node["disable"].value():
                 continue
-        except Exception as _exc:
-            log.debug("Node {} have no disable knob - {}".format(
-                node.fullName(), _exc))
+        except NameError:
+            # pass if disable knob doesn't exist
+            pass
 
         # get data from avalon knob
         instance_data = get_node_data(
@@ -527,7 +526,6 @@ def list_instances(creator_id=None):
         if instance_data["id"] != "pyblish.avalon.instance":
             continue
 
-        log.debug("_ creator_id: {}".format(creator_id))
         if creator_id and instance_data["creator_identifier"] != creator_id:
             continue
 

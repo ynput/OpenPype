@@ -1,4 +1,3 @@
-from pprint import pformat
 import nuke
 import re
 import os
@@ -6,7 +5,7 @@ import sys
 import six
 import random
 import string
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from abc import abstractmethod
 
 from openpype.client import (
@@ -47,6 +46,18 @@ from .pipeline import (
     list_instances,
     remove_instance
 )
+
+
+def _collect_and_cache_nodes(creator):
+    key = "openpype.nuke.nodes"
+    if key not in creator.collection_shared_data:
+        instances_by_identifier = defaultdict(list)
+        for item in list_instances():
+            _, instance_data = item
+            identifier = instance_data["creator_identifier"]
+            instances_by_identifier[identifier].append(item)
+        creator.collection_shared_data[key] = instances_by_identifier
+    return creator.collection_shared_data[key]
 
 
 class NukeCreatorError(CreatorError):
@@ -150,7 +161,6 @@ class NukeCreator(NewCreator):
         else:
             self.selected_nodes = []
 
-        self.log.debug("Selection is: {}".format(self.selected_nodes))
 
     def create(self, subset_name, instance_data, pre_create_data):
 
@@ -192,11 +202,8 @@ class NukeCreator(NewCreator):
                 sys.exc_info()[2])
 
     def collect_instances(self):
-        for (node, data) in list_instances(creator_id=self.identifier):
-            self.log.debug("_" * 50)
-            self.log.debug("_ self.identifier: `{}`".format(self.identifier))
-            self.log.debug("_ data: `{}`".format(pformat(data)))
-
+        cached_instances = _collect_and_cache_nodes(self)
+        for (node, data) in cached_instances[self.identifier]:
             created_instance = CreatedInstance.from_existing(
                 data, self
             )
@@ -555,7 +562,6 @@ class ExporterReview(object):
 
     def get_file_info(self):
         if self.collection:
-            self.log.debug("Collection: `{}`".format(self.collection))
             # get path
             self.fname = os.path.basename(self.collection.format(
                 "{head}{padding}{tail}"))
@@ -690,7 +696,6 @@ class ExporterReviewLut(ExporterReview):
         # connect
         self._temp_nodes.append(cms_node)
         self.previous_node = cms_node
-        self.log.debug("CMSTestPattern...   `{}`".format(self._temp_nodes))
 
         if bake_viewer_process:
             # Node View Process
@@ -723,8 +728,6 @@ class ExporterReviewLut(ExporterReview):
         # connect
         gen_lut_node.setInput(0, self.previous_node)
         self._temp_nodes.append(gen_lut_node)
-        self.log.debug("GenerateLUT...   `{}`".format(self._temp_nodes))
-
         # ---------- end nodes creation
 
         # Export lut file
@@ -737,8 +740,6 @@ class ExporterReviewLut(ExporterReview):
 
         # ---------- generate representation data
         self.get_representation_data()
-
-        self.log.debug("Representation...   `{}`".format(self.data))
 
         # ---------- Clean up
         self.clean_nodes()
@@ -990,7 +991,6 @@ class AbstractWriteRender(OpenPypeCreator):
 
         self.data = data
         self.nodes = nuke.selectedNodes()
-        self.log.debug("_ self.data: '{}'".format(self.data))
 
     def process(self):
 
