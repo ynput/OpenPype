@@ -1,5 +1,6 @@
 from pyblish import api
-import openpype.api as pype
+
+from openpype.lib import version_up
 
 
 class IntegrateVersionUpWorkfile(api.ContextPlugin):
@@ -15,7 +16,7 @@ class IntegrateVersionUpWorkfile(api.ContextPlugin):
     def process(self, context):
         project = context.data["activeProject"]
         path = context.data.get("currentFile")
-        new_path = pype.version_up(path)
+        new_path = version_up(path)
 
         if project:
             project.saveAs(new_path)

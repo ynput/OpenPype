@@ -39,13 +39,13 @@ Pype needs site-wide installation of **MongoDB**. It should be installed on
 reliable server, that all workstations (and possibly render nodes) can connect. This
 server holds **Avalon** database that is at the core of everything
 
-Depending on project size and number of artists working connection speed and
+Depending on project size and number of artists working, connection speed and
 latency influence performance experienced by artists. If remote working is required, this mongodb
 server must be accessible from Internet or cloud solution can be used. Reasonable backup plan
 or high availability options are recommended. *Replication* feature of MongoDB should be considered. This is beyond the
 scope of this documentation, please refer to [MongoDB Documentation](https://docs.mongodb.com/manual/replication/).
 
-Pype can run it's own instance of mongodb, mostly for testing and development purposes.
+Pype can run its own instance of mongodb, mostly for testing and development purposes.
 For that it uses locally installed MongoDB.
 
 Download it from [mognoDB website](https://www.mongodb.com/download-center/community), install it and
@@ -69,7 +69,7 @@ the major DCCs, it most probably can run openPYPE.
 Installed, it takes around 400MB of space, depending on the platform
 
 
-For well functioning ftrack event server, we recommend a linux virtual server with Ubuntu or CentOS. CPU and RAM allocation needs differ based on the studio size, but a 2GB of ram, with a dual core CPU and around 4GB of storage should suffice
+For a well functioning ftrack event server, we recommend a linux virtual server with Ubuntu or CentOS. CPU and RAM allocation needs differ based on the studio size, but a 2GB of ram, with a dual core CPU and around 4GB of storage should suffice
 
 
 ## Deployment
