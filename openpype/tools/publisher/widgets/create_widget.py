@@ -196,7 +196,7 @@ class CreateWidget(QtWidgets.QWidget):
         creator_basics_layout.addWidget(variant_subset_label, 0)
         creator_basics_layout.addWidget(variant_subset_widget, 0)
 
-        thumbnail_widget = ThumbnailWidget(creators_attrs_top)
+        thumbnail_widget = ThumbnailWidget(controller, creators_attrs_top)
 
         creators_attrs_top_layout = QtWidgets.QHBoxLayout(creators_attrs_top)
         creators_attrs_top_layout.setContentsMargins(0, 0, 0, 0)

@@ -1472,7 +1472,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         # Global attributes
         global_attrs_widget = GlobalAttrsWidget(controller, top_widget)
-        thumbnail_widget = ThumbnailWidget(top_widget)
+        thumbnail_widget = ThumbnailWidget(controller, top_widget)
 
         top_layout = QtWidgets.QHBoxLayout(top_widget)
         top_layout.setContentsMargins(0, 0, 0, 0)

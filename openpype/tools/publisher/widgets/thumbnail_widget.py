@@ -1,5 +1,4 @@
 import os
-import tempfile
 import uuid
 from Qt import QtWidgets, QtCore, QtGui
 
@@ -17,6 +16,8 @@ from openpype.lib.transcoding import (
 from openpype.tools.utils import (
     paint_image_with_color,
 )
+from openpype.tools.publisher.control import CardMessageTypes
+
 from .icons import get_image
 
 
@@ -30,7 +31,7 @@ class ThumbnailWidget(QtWidgets.QWidget):
     border_width = 1
     offset_sep = 4
 
-    def __init__(self, parent):
+    def __init__(self, controller, parent):
         # Missing implementation for thumbnail
         # - widget kept to make a visial offset of global attr widget offset
         super(ThumbnailWidget, self).__init__(parent)
@@ -54,6 +55,9 @@ class ThumbnailWidget(QtWidgets.QWidget):
         self._last_width = None
         self._last_height = None
         self._review_extensions = set(IMAGE_EXTENSIONS) | set(VIDEO_EXTENSIONS)
+
+        self._controller = controller
+        self._output_dir = controller.get_thumbnail_temp_dir_path()
 
     def _get_filepath_from_event(self, event):
         mime_data = event.mimeData()
@@ -84,10 +88,17 @@ class ThumbnailWidget(QtWidgets.QWidget):
 
     def dropEvent(self, event):
         filepath = self._get_filepath_from_event(event)
-        if filepath:
-            output = export_thumbnail(filepath)
-            if output:
-                self.thumbnail_created.emit(output)
+        if not filepath:
+            return
+
+        output = export_thumbnail(filepath, self._output_dir)
+        if output:
+            self.thumbnail_created.emit(output)
+        else:
+            self._controller.emit_card_message(
+                "Couldn't convert the source for thumbnail",
+                CardMessageTypes.error
+            )
 
     def set_adapted_to_hint(self, enabled):
         self._adapted_to_size = enabled
@@ -126,6 +137,16 @@ class ThumbnailWidget(QtWidgets.QWidget):
         if self._width is not None:
             self.setMinimumHeight(0)
             self._width = None
+
+    def set_current_thumbnails(self, thumbnail_paths=None):
+        pixes = []
+        if thumbnail_paths:
+            for thumbnail_path in thumbnail_paths:
+                pixes.append(QtGui.QPixmap(thumbnail_path))
+
+        self._current_pixes = pixes or None
+        self._cached_pix = None
+        self.repaint()
 
     def _get_current_pixes(self):
         if self._current_pixes is None:
@@ -181,10 +202,10 @@ class ThumbnailWidget(QtWidgets.QWidget):
             )
             pos_x = int(
                 (pix_width - scaled_pix.width()) / 2
-            ) + self.border_width
+            )
             pos_y = int(
                 (pix_height - scaled_pix.height()) / 2
-            ) + self.border_width
+            )
 
             new_pix = QtGui.QPixmap(pix_width, pix_height)
             pix_painter = QtGui.QPainter()
@@ -292,11 +313,7 @@ def _convert_thumbnail_ffmpeg(src_path, dst_path):
     return dst_path
 
 
-def export_thumbnail(src_path):
-    root_dir = os.path.join(
-        tempfile.gettempdir(),
-        "publisher_thumbnails"
-    )
+def export_thumbnail(src_path, root_dir):
     if not os.path.exists(root_dir):
         os.makedirs(root_dir)
 
