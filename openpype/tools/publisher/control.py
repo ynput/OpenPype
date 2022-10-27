@@ -1260,6 +1260,14 @@ class AbstractPublisherController(object):
         pass
 
     @abstractmethod
+    def get_thumbnail_paths_for_instances(self, instance_ids):
+        pass
+
+    @abstractmethod
+    def set_thumbnail_paths_for_instances(self, thumbnail_path_mapping):
+        pass
+
+    @abstractmethod
     def set_comment(self, comment):
         """Set comment on pyblish context.
 
@@ -1816,6 +1824,29 @@ class PublisherController(BasePublisherController):
         self._resetting_instances = False
 
         self._on_create_instance_change()
+
+    def get_thumbnail_paths_for_instances(self, instance_ids):
+        thumbnail_paths_by_instance_id = (
+            self._create_context.thumbnail_paths_by_instance_id
+        )
+        return {
+            instance_id: thumbnail_paths_by_instance_id.get(instance_id)
+            for instance_id in instance_ids
+        }
+
+    def set_thumbnail_paths_for_instances(self, thumbnail_path_mapping):
+        thumbnail_paths_by_instance_id = (
+            self._create_context.thumbnail_paths_by_instance_id
+        )
+        for instance_id, thumbnail_path in thumbnail_path_mapping.items():
+            thumbnail_paths_by_instance_id[instance_id] = thumbnail_path
+
+        self._emit_event(
+            "instance.thumbnail.changed",
+            {
+                "mapping": thumbnail_path_mapping
+            }
+        )
 
     def emit_card_message(
         self, message, message_type=CardMessageTypes.standard
