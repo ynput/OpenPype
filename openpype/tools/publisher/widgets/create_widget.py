@@ -20,7 +20,8 @@ from .precreate_widget import PreCreateWidget
 from ..constants import (
     VARIANT_TOOLTIP,
     CREATOR_IDENTIFIER_ROLE,
-    FAMILY_ROLE
+    FAMILY_ROLE,
+    CREATOR_THUMBNAIL_ENABLED_ROLE,
 )
 
 SEPARATORS = ("---separator---", "---")
@@ -457,6 +458,10 @@ class CreateWidget(QtWidgets.QWidget):
 
             item.setData(creator_item.label, QtCore.Qt.DisplayRole)
             item.setData(identifier, CREATOR_IDENTIFIER_ROLE)
+            item.setData(
+                creator_item.create_allow_thumbnail,
+                CREATOR_THUMBNAIL_ENABLED_ROLE
+            )
             item.setData(creator_item.family, FAMILY_ROLE)
 
         # Remove families that are no more available
@@ -557,6 +562,10 @@ class CreateWidget(QtWidgets.QWidget):
         ):
             self._set_context_enabled(creator_item.create_allow_context_change)
             self._refresh_asset()
+
+        self._thumbnail_widget.set_drop_enabled(
+            creator_item.create_allow_thumbnail
+        )
 
         default_variants = creator_item.default_variants
         if not default_variants:
@@ -742,7 +751,10 @@ class CreateWidget(QtWidgets.QWidget):
             task_name = self._get_task_name()
 
         pre_create_data = self._pre_create_widget.current_value()
-        pre_create_data[PRE_CREATE_THUMBNAIL_KEY] = self._last_thumbnail_path
+        if index.data(CREATOR_THUMBNAIL_ENABLED_ROLE):
+            pre_create_data[PRE_CREATE_THUMBNAIL_KEY] = (
+                self._last_thumbnail_path
+            )
 
         # Where to define these data?
         # - what data show be stored?

@@ -20,9 +20,10 @@ INSTANCE_ID_ROLE = QtCore.Qt.UserRole + 1
 SORT_VALUE_ROLE = QtCore.Qt.UserRole + 2
 IS_GROUP_ROLE = QtCore.Qt.UserRole + 3
 CREATOR_IDENTIFIER_ROLE = QtCore.Qt.UserRole + 4
-FAMILY_ROLE = QtCore.Qt.UserRole + 5
-GROUP_ROLE = QtCore.Qt.UserRole + 6
-CONVERTER_IDENTIFIER_ROLE = QtCore.Qt.UserRole + 7
+CREATOR_THUMBNAIL_ENABLED_ROLE = QtCore.Qt.UserRole + 5
+FAMILY_ROLE = QtCore.Qt.UserRole + 6
+GROUP_ROLE = QtCore.Qt.UserRole + 7
+CONVERTER_IDENTIFIER_ROLE = QtCore.Qt.UserRole + 8
 
 
 __all__ = (
