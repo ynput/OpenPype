@@ -828,6 +828,7 @@ class CreatorItem:
         default_variant,
         default_variants,
         create_allow_context_change,
+        create_allow_thumbnail,
         pre_create_attributes_defs
     ):
         self.identifier = identifier
@@ -841,6 +842,7 @@ class CreatorItem:
         self.default_variant = default_variant
         self.default_variants = default_variants
         self.create_allow_context_change = create_allow_context_change
+        self.create_allow_thumbnail = create_allow_thumbnail
         self.instance_attributes_defs = instance_attributes_defs
         self.pre_create_attributes_defs = pre_create_attributes_defs
 
@@ -867,6 +869,7 @@ class CreatorItem:
         default_variants = None
         pre_create_attr_defs = None
         create_allow_context_change = None
+        create_allow_thumbnail = None
         if creator_type is CreatorTypes.artist:
             description = creator.get_description()
             detail_description = creator.get_detail_description()
@@ -874,6 +877,7 @@ class CreatorItem:
             default_variants = creator.get_default_variants()
             pre_create_attr_defs = creator.get_pre_create_attr_defs()
             create_allow_context_change = creator.create_allow_context_change
+            create_allow_thumbnail = creator.create_allow_thumbnail
 
         identifier = creator.identifier
         return cls(
@@ -889,6 +893,7 @@ class CreatorItem:
             default_variant,
             default_variants,
             create_allow_context_change,
+            create_allow_thumbnail,
             pre_create_attr_defs
         )
 
@@ -917,6 +922,7 @@ class CreatorItem:
             "default_variant": self.default_variant,
             "default_variants": self.default_variants,
             "create_allow_context_change": self.create_allow_context_change,
+            "create_allow_thumbnail": self.create_allow_thumbnail,
             "instance_attributes_defs": instance_attributes_defs,
             "pre_create_attributes_defs": pre_create_attributes_defs,
         }
