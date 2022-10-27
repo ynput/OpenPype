@@ -54,15 +54,13 @@ A dialog asking for restart is shown when OpenPype tray application detect that 
 
 ## Modules
 
-Configuration of OpenPype modules. Some can only be turned on and off, others have
-their own attributes that need to be set, before they become fully functional.
+Configuration of OpenPype's various modules. Some can only be toggled on or off, while others have their own attributes that need to be set before they become fully functional.
 
 ### Avalon
 
-**`Avalon Mongo Timeout`** - You might need to change this if your mongo connection is a bit slow. Making the
-timeout longer will give Avalon better chance to connect.
+**`Avalon Mongo Timeout`** - This might need to be changed if your mongo connection is a bit slow. Making the timeout longer will give Avalon better chance to connect.
 
-**`Thumbnail Storage Location`** - simple disk storage path, where all thumbnails will be stored.
+**`Thumbnail Storage Location`** - simple disk storage path where all thumbnails will be stored.
 
 ### Ftrack
 
