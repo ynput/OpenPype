@@ -477,7 +477,7 @@ def set_avalon_knob_data(node, data=None, prefix="avalon:"):
     return node
 
 
-def get_avalon_knob_data(node, prefix="avalon:"):
+def get_avalon_knob_data(node, prefix="avalon:", create=True):
     """[DEPRICATED]  Gets a data from nodes's avalon knob
 
     Arguments:
@@ -506,8 +506,11 @@ def get_avalon_knob_data(node, prefix="avalon:"):
         except NameError as e:
             # if it doesn't then create it
             log.debug("Creating avalon knob: `{}`".format(e))
-            node = set_avalon_knob_data(node)
-            return get_avalon_knob_data(node)
+            if create:
+                node = set_avalon_knob_data(node)
+                return get_avalon_knob_data(node)
+            else:
+                return {}
 
         # get data from filtered knobs
         data.update({k.replace(p, ''): node[k].value()
@@ -2660,6 +2663,7 @@ def process_workfile_builder():
     open_file(last_workfile_path)
 
 
+@deprecated
 def recreate_instance(origin_node, avalon_data=None):
     """Recreate input instance to different data
 
