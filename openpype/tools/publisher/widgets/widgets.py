@@ -3,6 +3,8 @@ import os
 import re
 import copy
 import functools
+import uuid
+import shutil
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
@@ -1064,6 +1066,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
     def _on_submit(self):
         """Commit changes for selected instances."""
+
         variant_value = None
         asset_name = None
         task_name = None
@@ -1132,6 +1135,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
     def _on_cancel(self):
         """Cancel changes and set back to their irigin value."""
+
         self.variant_input.reset_to_origin()
         self.asset_value_widget.reset_to_origin()
         self.task_value_widget.reset_to_origin()
@@ -1257,6 +1261,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
 
     def set_instances_valid(self, valid):
         """Change valid state of current instances."""
+
         if (
             self._content_widget is not None
             and self._content_widget.isEnabled() != valid
@@ -1265,6 +1270,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
 
     def set_current_instances(self, instances):
         """Set current instances for which are attribute definitions shown."""
+
         prev_content_widget = self._scroll_area.widget()
         if prev_content_widget:
             self._scroll_area.takeWidget()
@@ -1354,6 +1360,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
     families. Similar definitions are merged into one (different label
     does not count).
     """
+
     def __init__(self, controller, parent):
         super(PublishPluginAttrsWidget, self).__init__(parent)
 
@@ -1387,6 +1394,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
 
     def set_current_instances(self, instances, context_selected):
         """Set current instances for which are attribute definitions shown."""
+
         prev_content_widget = self._scroll_area.widget()
         if prev_content_widget:
             self._scroll_area.takeWidget()
@@ -1560,6 +1568,11 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
             self._on_instance_context_changed
         )
         convert_btn.clicked.connect(self._on_convert_click)
+        thumbnail_widget.thumbnail_created.connect(self._on_thumbnail_create)
+
+        controller.event_system.add_callback(
+            "instance.thumbnail.changed", self._on_thumbnail_changed
+        )
 
         self._controller = controller
 
@@ -1596,10 +1609,11 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         """Change currently selected items.
 
         Args:
-            instances(list<CreatedInstance>): List of currently selected
+            instances(List[CreatedInstance]): List of currently selected
                 instances.
             context_selected(bool): Is context selected.
         """
+
         all_valid = True
         for instance in instances:
             if not instance.has_valid_context:
@@ -1620,3 +1634,52 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         )
         self.creator_attrs_widget.set_instances_valid(all_valid)
         self.publish_attrs_widget.set_instances_valid(all_valid)
+
+        self._update_thumbnails()
+
+    def _on_thumbnail_create(self, path):
+        instance_ids = [
+            instance.id
+            for instance in self._current_instances
+        ]
+        if self._context_selected:
+            instance_ids.append(None)
+
+        if not instance_ids:
+            return
+
+        mapping = {}
+        if len(instance_ids) == 1:
+            mapping[instance_ids[0]] = path
+
+        else:
+            for instance_id in range(len(instance_ids)):
+                root = os.path.dirname(path)
+                ext = os.path.splitext(path)[-1]
+                dst_path = os.path.join(root, str(uuid.uuid4()) + ext)
+                shutil.copy(path, dst_path)
+                mapping[instance_id] = dst_path
+
+        self._controller.set_thumbnail_paths_for_instances(mapping)
+
+    def _on_thumbnail_changed(self, event):
+        self._update_thumbnails()
+
+    def _update_thumbnails(self):
+        instance_ids = [
+            instance.id
+            for instance in self._current_instances
+        ]
+        if self._context_selected:
+            instance_ids.append(None)
+
+        mapping = self._controller.get_thumbnail_paths_for_instances(
+            instance_ids
+        )
+        thumbnail_paths = []
+        for instance_id in instance_ids:
+            path = mapping[instance_id]
+            if path:
+                thumbnail_paths.append(path)
+
+        self._thumbnail_widget.set_current_thumbnails(thumbnail_paths)
