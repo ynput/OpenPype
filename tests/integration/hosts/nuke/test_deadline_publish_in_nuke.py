@@ -42,7 +42,7 @@ class TestDeadlinePublishInNuke(NukeDeadlinePublishTestClass):
 
     APP = "nuke"
 
-    TIMEOUT = 120  # publish timeout
+    TIMEOUT = 180  # publish timeout
 
     # could be overwritten by command line arguments
     # keep empty to locate latest installed variant or explicit
