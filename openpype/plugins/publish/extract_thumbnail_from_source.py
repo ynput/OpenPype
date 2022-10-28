@@ -190,5 +190,5 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
             return
 
         thumbnail_source = context.data.get("thumbnailSource")
-        thumbnail_path = self._create_thumbnail(thumbnail_source)
+        thumbnail_path = self._create_thumbnail(context, thumbnail_source)
         context.data["thumbnailPath"] = thumbnail_path
