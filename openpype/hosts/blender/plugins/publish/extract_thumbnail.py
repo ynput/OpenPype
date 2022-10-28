@@ -37,14 +37,21 @@ class ExtractThumbnail(openpype.api.Extractor):
         family = instance.data.get("family")
         isolate = instance.data("isolate", None)
 
-        instance_collection = instance[-1]
-        instance_collection.hide_viewport = False
-        for layer in get_children_recursive(bpy.context.view_layer.layer_collection):
-            if layer.name == instance_collection.name:
-                layer.hide_viewport = False
+        if len(instance) and isinstance(instance[-1], bpy.types.Collection):
+            instance_collection = instance[-1]
+            instance_collection.hide_viewport = False
+            layer_collection = bpy.context.view_layer.layer_collection
+            for layer in get_children_recursive(layer_collection):
+                if layer.name == instance_collection.name:
+                    layer.hide_viewport = False
 
         if not isolate:
-            isolate = [obj for obj in bpy.context.scene.objects if obj.visible_get()]
+            isolate = [
+                obj
+                for obj in bpy.context.scene.objects
+                if obj.visible_get()
+                and obj.type in ("MESH", "CURVE", "SURFACE")
+            ]
             for sibling_instance in instance.context:
                 if sibling_instance is not instance:
                     for obj in sibling_instance:
@@ -73,7 +80,6 @@ class ExtractThumbnail(openpype.api.Extractor):
                 "focus": focus,
             }
         )
-        preset.setdefault("height", preset.setdefault("width", 512))
         preset.setdefault(
             "image_settings",
             {
@@ -92,10 +98,8 @@ class ExtractThumbnail(openpype.api.Extractor):
         shading_type = (
             current_area.spaces[0].shading.type if current_area else "SOLID"
         )
-        preset.setdefault(
-            "display_options",
-            {"shading": {"type": shading_type}},
-        )
+        preset.setdefault("display_options", {})
+        preset["display_options"].setdefault("shading", {"type": shading_type})
 
         with maintained_time():
             path = capture(**preset)
@@ -106,13 +110,19 @@ class ExtractThumbnail(openpype.api.Extractor):
 
         instance.data.setdefault("representations", [])
 
+        tags = ["thumbnail", "review"]
+        for repre in instance.data["representations"]:
+            if "review" in repre.get("tags", []):
+                tags.remove("review")
+                break
+
         representation = {
             "name": "thumbnail",
             "ext": "jpg",
             "files": thumbnail,
             "stagingDir": stagingdir,
             "thumbnail": True,
-            "tags": ["review", "thumbnail"],
+            "tags": tags,
         }
         instance.data["representations"].append(representation)
 

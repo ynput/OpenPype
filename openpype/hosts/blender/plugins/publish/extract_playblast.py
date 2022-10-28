@@ -1,12 +1,12 @@
 import os
 import clique
 
+import bpy
+
 import pyblish.api
 import openpype.api
 from openpype.hosts.blender.api import capture
 from openpype.hosts.blender.api.lib import maintained_time
-
-import bpy
 
 
 class ExtractPlayblast(openpype.api.Extractor):
@@ -40,11 +40,6 @@ class ExtractPlayblast(openpype.api.Extractor):
         end = instance.data.get("frameEnd", bpy.context.scene.frame_end)
 
         self.log.info(f"start: {start}, end: {end}")
-
-        # Stop if only one frame
-        if end == start:
-            self.log.info(f"Single frame render, skipping playblast")
-            return
 
         # get cameras
         camera = instance.data("review_camera", None)
@@ -82,29 +77,56 @@ class ExtractPlayblast(openpype.api.Extractor):
             },
         )
 
+        # Keep current display shading
+        # Catch source window because Win changes focus
+        screen = bpy.context.window_manager.windows[0].screen
+        current_area = next(
+            (a for a in screen.areas if a.type == "VIEW_3D"), None
+        )
+        shading_type = (
+            current_area.spaces[0].shading.type if current_area else "SOLID"
+        )
+        preset.setdefault("display_options", {})
+        preset["display_options"].setdefault("shading", {"type": shading_type})
+
         with maintained_time():
             path = capture(**preset)
 
         self.log.debug(f"playblast path {path}")
 
-        collected_files = os.listdir(stagingdir)
-        collections, remainder = clique.assemble(
-            collected_files,
-            patterns=[f"{filename}\\.{clique.DIGITS_PATTERN}\\.png$"],
-        )
-
-        if len(collections) > 1:
-            raise RuntimeError(
-                f"More than one collection found in stagingdir: {stagingdir}"
+        # if only one frame
+        if end == start:
+            files = next(
+                (
+                    frame for frame in os.listdir(stagingdir)
+                    if frame.endswith(".png")
+                ),
+                None
             )
-        elif len(collections) == 0:
-            raise RuntimeError(
-                f"No collection found in stagingdir: {stagingdir}"
+            if not files:
+                raise RuntimeError(
+                    f"No frame found in stagingdir: {stagingdir}"
+                )
+        else:
+            collected_files = os.listdir(stagingdir)
+            collections, _ = clique.assemble(
+                collected_files,
+                patterns=[f"{filename}\\.{clique.DIGITS_PATTERN}\\.png$"],
             )
 
-        frame_collection = collections[0]
+            if len(collections) > 1:
+                raise RuntimeError(
+                    "More than one collection found"
+                    f"in stagingdir: {stagingdir}"
+                )
+            elif len(collections) == 0:
+                raise RuntimeError(
+                    f"No collection found in stagingdir: {stagingdir}"
+                )
 
-        self.log.info(f"We found collection of interest {frame_collection}")
+            frame_collection = collections[0]
+            self.log.info(f"We found collection of interest {frame_collection}")
+            files = list(frame_collection)
 
         instance.data.setdefault("representations", [])
 
@@ -115,7 +137,7 @@ class ExtractPlayblast(openpype.api.Extractor):
         representation = {
             "name": "png",
             "ext": "png",
-            "files": list(frame_collection),
+            "files": files,
             "stagingDir": stagingdir,
             "frameStart": start,
             "frameEnd": end,
