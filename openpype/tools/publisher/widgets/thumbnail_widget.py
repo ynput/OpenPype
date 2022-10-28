@@ -1,5 +1,7 @@
 import os
 import uuid
+import math
+
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.style import get_objected_colors
@@ -40,6 +42,7 @@ class ThumbnailWidget(QtWidgets.QWidget):
 
         border_color = get_objected_colors("bg-buttons").get_qcolor()
         thumbnail_bg_color = get_objected_colors("border").get_qcolor()
+        overlay_color = get_objected_colors("font").get_qcolor()
 
         default_image = get_image("thumbnail")
         default_pix = paint_image_with_color(default_image, border_color)
@@ -49,6 +52,7 @@ class ThumbnailWidget(QtWidgets.QWidget):
 
         self.border_color = border_color
         self.thumbnail_bg_color = thumbnail_bg_color
+        self.overlay_color = overlay_color
         self._default_pix = default_pix
 
         self._drop_enabled = True
@@ -231,8 +235,14 @@ class ThumbnailWidget(QtWidgets.QWidget):
             )
 
             new_pix = QtGui.QPixmap(pix_width, pix_height)
+            new_pix.fill(QtCore.Qt.transparent)
             pix_painter = QtGui.QPainter()
             pix_painter.begin(new_pix)
+            pix_painter.setRenderHints(
+                pix_painter.Antialiasing
+                | pix_painter.SmoothPixmapTransform
+                | pix_painter.HighQualityAntialiasing
+            )
             pix_painter.setBrush(pix_bg_brush)
             pix_painter.setPen(pix_pen)
             pix_painter.drawRect(0, 0, pix_width - 1, pix_height - 1)
@@ -253,13 +263,62 @@ class ThumbnailWidget(QtWidgets.QWidget):
 
         final_painter = QtGui.QPainter()
         final_painter.begin(final_pix)
+        final_painter.setRenderHints(
+            final_painter.Antialiasing
+            | final_painter.SmoothPixmapTransform
+            | final_painter.HighQualityAntialiasing
+        )
         for idx, pix in enumerate(backgrounded_images):
             x_offset = full_width_offset - (width_offset_part * idx)
             y_offset = (height_offset_part * idx) + pix_y_offset
             final_painter.drawPixmap(x_offset, y_offset, pix)
+
+        if not self._drop_enabled:
+            overlay = self._get_drop_disabled_overlay(rect_width, rect_height)
+            final_painter.drawPixmap(0, 0, overlay)
+
         final_painter.end()
 
         self._cached_pix = final_pix
+
+    def _get_drop_disabled_overlay(self, width, height):
+        min_size = min(width, height)
+        circle_size = int(min_size * 0.8)
+        pen_width = int(circle_size * 0.1)
+        if pen_width < 1:
+            pen_width = 1
+
+        x_offset = int((width - circle_size) / 2)
+        y_offset = int((height - circle_size) / 2)
+        half_size = int(circle_size / 2)
+        angle = math.radians(45)
+        line_offset_p = QtCore.QPoint(
+            half_size * math.cos(angle),
+            half_size * math.sin(angle)
+        )
+        overlay_pix = QtGui.QPixmap(width, height)
+        overlay_pix.fill(QtCore.Qt.transparent)
+
+        painter = QtGui.QPainter()
+        painter.begin(overlay_pix)
+        painter.setRenderHints(
+            painter.Antialiasing
+            | painter.SmoothPixmapTransform
+            | painter.HighQualityAntialiasing
+        )
+        painter.setBrush(QtCore.Qt.transparent)
+        pen = QtGui.QPen(self.overlay_color)
+        pen.setWidth(pen_width)
+        painter.setPen(pen)
+        rect = QtCore.QRect(x_offset, y_offset, circle_size, circle_size)
+        painter.drawEllipse(rect)
+        painter.drawLine(
+            rect.center() - line_offset_p,
+            rect.center() + line_offset_p
+        )
+        painter.end()
+
+        return overlay_pix
 
     def _get_pix_offset_size(self, width, height, image_count):
         if image_count == 1:
