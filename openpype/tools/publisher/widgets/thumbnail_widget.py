@@ -2,6 +2,7 @@ import os
 import uuid
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.style import get_objected_colors
 from openpype.lib import (
     run_subprocess,
     is_oiio_supported,
@@ -37,9 +38,8 @@ class ThumbnailWidget(QtWidgets.QWidget):
         super(ThumbnailWidget, self).__init__(parent)
         self.setAcceptDrops(True)
 
-        # TODO remove hardcoded colors
-        border_color = QtGui.QColor(67, 74, 86)
-        thumbnail_bg_color = QtGui.QColor(54, 61, 72)
+        border_color = get_objected_colors("bg-buttons").get_qcolor()
+        thumbnail_bg_color = get_objected_colors("border").get_qcolor()
 
         default_image = get_image("thumbnail")
         default_pix = paint_image_with_color(default_image, border_color)
