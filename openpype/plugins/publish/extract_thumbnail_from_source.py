@@ -41,12 +41,6 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
         self.log.info(
             "Processing instance with subset name {}".format(subset_name)
         )
-
-        # Check if already has thumbnail created
-        if self._already_has_thumbnail(instance):
-            self.log.info("Thumbnail representation already present.")
-            return
-
         thumbnail_source = instance.data.get("thumbnailSource")
         if not thumbnail_source:
             thumbnail_source = instance.context.data.get("thumbnailSource")
@@ -55,10 +49,15 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
             self.log.debug("Thumbnail source not filled. Skipping.")
             return
 
-        elif not os.path.exists(thumbnail_source):
-            self.log.debug(
-                "Thumbnail source file was not found {}. Skipping.".format(
-                    thumbnail_source))
+        # Check if already has thumbnail created
+        if self._already_has_thumbnail(instance):
+            self.log.info("Thumbnail representation already present.")
+            return
+
+        if not os.path.exists(thumbnail_source):
+            self.log.debug((
+                "Thumbnail source is set but file was not found {}. Skipping."
+            ).format(thumbnail_source))
             return
 
         # Create temp directory for thumbnail
