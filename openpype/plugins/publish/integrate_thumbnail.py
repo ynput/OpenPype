@@ -33,6 +33,8 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
     ]
 
     def process(self, instance):
+        context_thumbnail_path = instance.context.get("thumbnailPath")
+
         env_key = "AVALON_THUMBNAIL_ROOT"
         thumbnail_root_format_key = "{thumbnail_root}"
         thumbnail_root = os.environ.get(env_key) or ""
@@ -66,36 +68,42 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
             ).format(env_key))
             return
 
+        version_id = None
         thumb_repre = None
         thumb_repre_anatomy_data = None
         for repre_info in published_repres.values():
             repre = repre_info["representation"]
+            if version_id is None:
+                version_id = repre["parent"]
+
             if repre["name"].lower() == "thumbnail":
                 thumb_repre = repre
                 thumb_repre_anatomy_data = repre_info["anatomy_data"]
                 break
 
+        # Use context thumbnail (if is available)
         if not thumb_repre:
             self.log.debug(
                 "There is not representation with name \"thumbnail\""
             )
-            return
+            src_full_path = context_thumbnail_path
+        else:
+            # Get full path to thumbnail file from representation
+            src_full_path = os.path.normpath(thumb_repre["data"]["path"])
 
-        version = get_version_by_id(project_name, thumb_repre["parent"])
-        if not version:
-            raise AssertionError(
-                "There does not exist version with id {}".format(
-                    str(thumb_repre["parent"])
-                )
-            )
-
-        # Get full path to thumbnail file from representation
-        src_full_path = os.path.normpath(thumb_repre["data"]["path"])
         if not os.path.exists(src_full_path):
             self.log.warning("Thumbnail file was not found. Path: {}".format(
                 src_full_path
             ))
             return
+
+        version = get_version_by_id(project_name, version_id)
+        if not version:
+            raise AssertionError(
+                "There does not exist version with id {}".format(
+                    str(version_id)
+                )
+            )
 
         filename, file_extension = os.path.splitext(src_full_path)
         # Create id for mongo entity now to fill anatomy template
