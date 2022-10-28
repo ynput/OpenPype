@@ -1673,6 +1673,11 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         if self._context_selected:
             instance_ids.append(None)
 
+        if not instance_ids:
+            self._thumbnail_widget.set_drop_enabled(False)
+            self._thumbnail_widget.set_current_thumbnails(None)
+            return
+
         mapping = self._controller.get_thumbnail_paths_for_instances(
             instance_ids
         )
