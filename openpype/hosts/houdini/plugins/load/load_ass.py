@@ -85,3 +85,6 @@ class AssLoader(load.LoaderPlugin):
             )
 
         return os.path.normpath(path).replace("\\", "/")
+
+    def switch(self, container, representation):
+        self.update(container, representation)
