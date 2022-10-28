@@ -91,7 +91,7 @@ class LoadClip(plugin.NukeLoader):
         frame = repre_cont.get("frame")
         assert frame, "Representation is not sequence"
 
-        padding = len(frame)
+        padding = len(str(frame))
         basename = basename.replace(frame, "#" * padding)
         return os.path.join(dirname, basename).replace("\\", "/")
 
