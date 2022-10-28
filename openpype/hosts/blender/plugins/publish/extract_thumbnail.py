@@ -99,7 +99,12 @@ class ExtractThumbnail(openpype.api.Extractor):
             current_area.spaces[0].shading.type if current_area else "SOLID"
         )
         preset.setdefault("display_options", {})
-        preset["display_options"].setdefault("shading", {"type": shading_type})
+        preset["display_options"].setdefault(
+            "shading", {"type": shading_type}
+        )
+        preset["display_options"].setdefault(
+            "overlay", {"show_overlays": False}
+        )
 
         with maintained_time():
             path = capture(**preset)
