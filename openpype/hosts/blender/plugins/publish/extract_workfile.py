@@ -11,7 +11,7 @@ class ExtractWorkfile(publish.Extractor):
     label = "Extract workfile"
     hosts = ["blender"]
     families = ["workfile"]
-    
+
     def process(self, instance):
         # Define extract output file path
 

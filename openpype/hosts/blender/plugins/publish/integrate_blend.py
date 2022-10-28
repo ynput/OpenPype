@@ -13,7 +13,7 @@ class IntegrateBlenderAsset(IntegrateAsset):
     def process(self, instance):
         representations = instance.data.get("published_representations")
 
-        for repre_id, representation in representations.items():
+        for representation in representations.values():
             published_path = (
                 representation.get("representation", {})
                 .get("data", {})
@@ -29,7 +29,8 @@ class IntegrateBlenderAsset(IntegrateAsset):
                 and published_path
             ):
                 self.log.info(
-                    f"Running {make_paths_relative.__file__} to {published_path}..."
+                    f"Running {make_paths_relative.__file__}"
+                    f"to {published_path}..."
                 )
                 # Run in subprocess
                 Popen(
