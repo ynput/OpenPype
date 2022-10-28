@@ -1,4 +1,3 @@
-import os
 import re
 
 from Qt import QtWidgets, QtCore, QtGui
