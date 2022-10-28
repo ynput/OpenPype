@@ -6,7 +6,7 @@ import six
 import sys
 
 from openpype.lib import Logger
-from openpype.api import (
+from openpype.settings import (
     get_project_settings,
     get_current_project_settings
 )
@@ -29,7 +29,7 @@ class RenderSettings(object):
     _image_prefixes = {
         'vray': get_current_project_settings()["maya"]["RenderSettings"]["vray_renderer"]["image_prefix"], # noqa
         'arnold': get_current_project_settings()["maya"]["RenderSettings"]["arnold_renderer"]["image_prefix"],  # noqa
-        'renderman': 'maya/<Scene>/<layer>/<layer>{aov_separator}<aov>',
+        'renderman': '<Scene>/<layer>/<layer>{aov_separator}<aov>',
         'redshift': get_current_project_settings()["maya"]["RenderSettings"]["redshift_renderer"]["image_prefix"]  # noqa
     }
 

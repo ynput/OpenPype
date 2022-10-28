@@ -1,6 +1,6 @@
 import os
 from openpype.lib import Logger
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 
 log = Logger.get_logger(__name__)
 

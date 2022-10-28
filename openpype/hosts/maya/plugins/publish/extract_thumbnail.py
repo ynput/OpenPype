@@ -1,5 +1,6 @@
 import os
 import glob
+import tempfile
 
 import capture
 
@@ -81,9 +82,17 @@ class ExtractThumbnail(publish.Extractor):
         elif asset_width and asset_height:
             preset['width'] = asset_width
             preset['height'] = asset_height
-        stagingDir = self.staging_dir(instance)
+
+        # Create temp directory for thumbnail
+        # - this is to avoid "override" of source file
+        dst_staging = tempfile.mkdtemp(prefix="pyblish_tmp_")
+        self.log.debug(
+            "Create temp directory {} for thumbnail".format(dst_staging)
+        )
+        # Store new staging to cleanup paths
+        instance.context.data["cleanupFullPaths"].append(dst_staging)
         filename = "{0}".format(instance.name)
-        path = os.path.join(stagingDir, filename)
+        path = os.path.join(dst_staging, filename)
 
         self.log.info("Outputting images to %s" % path)
 
@@ -137,7 +146,7 @@ class ExtractThumbnail(publish.Extractor):
             'name': 'thumbnail',
             'ext': 'jpg',
             'files': thumbnail,
-            "stagingDir": stagingDir,
+            "stagingDir": dst_staging,
             "thumbnail": True
         }
         instance.data["representations"].append(representation)

@@ -1,10 +1,6 @@
 """
 resolve api
 """
-
-bmdvr = None
-bmdvf = None
-
 from .utils import (
     get_resolve_module
 )
@@ -69,6 +65,9 @@ from .workio import (
 
 from .testing_utils import TestGUI
 
+
+bmdvr = None
+bmdvf = None
 
 __all__ = [
     "bmdvr",

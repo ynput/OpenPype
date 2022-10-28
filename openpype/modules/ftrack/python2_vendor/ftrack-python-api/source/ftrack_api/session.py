@@ -13,10 +13,9 @@ import functools
 import itertools
 import distutils.version
 import hashlib
-import tempfile
+import appdirs
 import threading
 import atexit
-import warnings
 
 import requests
 import requests.auth
@@ -241,7 +240,7 @@ class Session(object):
         )
 
         self._auto_connect_event_hub_thread = None
-        if auto_connect_event_hub in (None, True):
+        if auto_connect_event_hub is True:
             # Connect to event hub in background thread so as not to block main
             # session usage waiting for event hub connection.
             self._auto_connect_event_hub_thread = threading.Thread(
@@ -252,9 +251,7 @@ class Session(object):
 
         # To help with migration from auto_connect_event_hub default changing
         # from True to False.
-        self._event_hub._deprecation_warning_auto_connect = (
-            auto_connect_event_hub is None
-        )
+        self._event_hub._deprecation_warning_auto_connect = False
 
         # Register to auto-close session on exit.
         atexit.register(WeakMethod(self.close))
@@ -271,8 +268,9 @@ class Session(object):
         # rebuilding types)?
         if schema_cache_path is not False:
             if schema_cache_path is None:
+                schema_cache_path = appdirs.user_cache_dir()
                 schema_cache_path = os.environ.get(
-                    'FTRACK_API_SCHEMA_CACHE_PATH', tempfile.gettempdir()
+                    'FTRACK_API_SCHEMA_CACHE_PATH', schema_cache_path
                 )
 
             schema_cache_path = os.path.join(

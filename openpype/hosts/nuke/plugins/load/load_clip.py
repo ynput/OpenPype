@@ -425,7 +425,7 @@ class LoadClip(plugin.NukeLoader):
         colorspace = repre_data.get("colorspace")
         colorspace = colorspace or version_data.get("colorspace")
 
-        # colorspace from `project_anatomy/imageio/nuke/regexInputs`
+        # colorspace from `project_settings/nuke/imageio/regexInputs`
         iio_colorspace = get_imageio_input_colorspace(path)
 
         # Set colorspace defined in version data

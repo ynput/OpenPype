@@ -1,5 +1,5 @@
 import os
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 from openpype.pipeline import install_host
 from openpype.hosts.maya.api import MayaHost
 from maya import cmds

@@ -1,3 +1,13 @@
+""" Integrate Thumbnails for Openpype use in Loaders.
+
+    This thumbnail is different from 'thumbnail' representation which could
+    be uploaded to Ftrack, or used as any other representation in Loaders to
+    pull into a scene.
+
+    This one is used only as image describing content of published item and
+    shows up only in Loader in right column section.
+"""
+
 import os
 import sys
 import errno
@@ -12,7 +22,7 @@ from openpype.client.operations import OperationsSession, new_thumbnail_doc
 
 
 class IntegrateThumbnails(pyblish.api.InstancePlugin):
-    """Integrate Thumbnails."""
+    """Integrate Thumbnails for Openpype use in Loaders."""
 
     label = "Integrate Thumbnails"
     order = pyblish.api.IntegratorOrder + 0.01
