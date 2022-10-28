@@ -36,21 +36,47 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
     order = pyblish.api.ExtractorOrder - 0.00001
 
     def process(self, instance):
+        self._create_context_thumbnail(instance.context)
+
         subset_name = instance.data["subset"]
         self.log.info(
             "Processing instance with subset name {}".format(subset_name)
         )
         thumbnail_source = instance.data.get("thumbnailSource")
         if not thumbnail_source:
-            thumbnail_source = instance.context.data.get("thumbnailSource")
-
-        if not thumbnail_source:
             self.log.debug("Thumbnail source not filled. Skipping.")
             return
 
         # Check if already has thumbnail created
-        if self._already_has_thumbnail(instance):
+        if self._instance_has_thumbnail(instance):
             self.log.info("Thumbnail representation already present.")
+            return
+
+        dst_filepath = self._create_thumbnail(
+            instance.context, thumbnail_source
+        )
+        if not dst_filepath:
+            return
+
+        dst_staging, dst_filename = os.path.split(dst_filepath)
+        new_repre = {
+            "name": "thumbnail",
+            "ext": "jpg",
+            "files": dst_filename,
+            "stagingDir": dst_staging,
+            "thumbnail": True,
+            "tags": ["thumbnail"]
+        }
+
+        # adding representation
+        self.log.debug(
+            "Adding thumbnail representation: {}".format(new_repre)
+        )
+        instance.data["representations"].append(new_repre)
+
+    def _create_thumbnail(self, context, thumbnail_source):
+        if not thumbnail_source:
+            self.log.debug("Thumbnail source not filled. Skipping.")
             return
 
         if not os.path.exists(thumbnail_source):
@@ -66,7 +92,7 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
             "Create temp directory {} for thumbnail".format(dst_staging)
         )
         # Store new staging to cleanup paths
-        instance.context.data["cleanupFullPaths"].append(dst_staging)
+        context.data["cleanupFullPaths"].append(dst_staging)
 
         thumbnail_created = False
         oiio_supported = is_oiio_supported()
@@ -98,26 +124,12 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
             )
 
         # Skip representation and try next one if  wasn't created
-        if not thumbnail_created:
-            self.log.warning("Thumbanil has not been created.")
-            return
+        if thumbnail_created:
+            return full_output_path
 
-        new_repre = {
-            "name": "thumbnail",
-            "ext": "jpg",
-            "files": dst_filename,
-            "stagingDir": dst_staging,
-            "thumbnail": True,
-            "tags": ["thumbnail"]
-        }
+        self.log.warning("Thumbanil has not been created.")
 
-        # adding representation
-        self.log.debug(
-            "Adding thumbnail representation: {}".format(new_repre)
-        )
-        instance.data["representations"].append(new_repre)
-
-    def _already_has_thumbnail(self, instance):
+    def _instance_has_thumbnail(self, instance):
         if "representations" not in instance.data:
             self.log.warning(
                 "Instance does not have 'representations' key filled"
@@ -172,3 +184,11 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
                 exc_info=True
             )
             return False
+
+    def _create_context_thumbnail(self, context):
+        if "thumbnailPath" in context.data:
+            return
+
+        thumbnail_source = context.data.get("thumbnailSource")
+        thumbnail_path = self._create_thumbnail(thumbnail_source)
+        context.data["thumbnailPath"] = thumbnail_path
