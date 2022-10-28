@@ -41,11 +41,13 @@ class LoadEffects(load.LoaderPlugin):
             active_sequence, "LoadedEffects")
 
         # get main variables
-        version = context['version']
+        version = context["version"]
         version_data = version.get("data", {})
         vname = version.get("name", None)
-        namespace = namespace or context['asset']['name']
+        namespace = namespace or context["asset"]["name"]
         object_name = "{}_{}".format(name, namespace)
+        clip_in = context["asset"]["data"]["clipIn"]
+        clip_out = context["asset"]["data"]["clipOut"]
 
         data_imprint = {
             "source": version_data["source"],
@@ -69,7 +71,8 @@ class LoadEffects(load.LoaderPlugin):
             for stitem in phiero.flatten(active_track.subTrackItems())
         }
 
-        for ef_name, ef_val in nodes_order.items():
+        loaded = False
+        for index_order, (ef_name, ef_val) in enumerate(nodes_order.items()):
             pprint("_" * 100)
             pprint(ef_name)
             pprint(ef_val)
@@ -77,8 +80,10 @@ class LoadEffects(load.LoaderPlugin):
             if new_name not in used_subtracks:
                 effect_track_item = active_track.createEffect(
                     effectType=ef_val["class"],
-                    timelineIn=ef_val["timelineIn"],
-                    timelineOut=ef_val["timelineOut"]
+                    timelineIn=clip_in,
+                    timelineOut=clip_out,
+                    subTrackIndex=index_order
+
                 )
                 effect_track_item.setName(new_name)
                 node = effect_track_item.node()
@@ -90,6 +95,12 @@ class LoadEffects(load.LoaderPlugin):
                         continue
                     node[knob_name].setValue(knob_value)
 
+                # make sure containerisation will happen
+                loaded = True
+
+        if not loaded:
+            return
+
         self.containerise(
             active_track,
             name=name,
@@ -98,7 +109,6 @@ class LoadEffects(load.LoaderPlugin):
             context=context,
             loader=self.__class__.__name__,
             data=data_imprint)
-        return
 
     def update(self, container, representation):
         """Update the Loader's path
