@@ -126,7 +126,6 @@ class ExtractBlend(publish.Extractor):
                     packed_images.add((image, image.is_dirty))
                     image.pack()
 
-
         bpy.data.libraries.write(
             filepath,
             data_blocks,
