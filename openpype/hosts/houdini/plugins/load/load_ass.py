@@ -1,11 +1,10 @@
 import os
+import re
 
-import clique
 from openpype.pipeline import (
     load,
     get_representation_path,
 )
-
 from openpype.hosts.houdini.api import pipeline
 
 
@@ -20,7 +19,6 @@ class AssLoader(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name=None, namespace=None, data=None):
-
         import hou
 
         # Get the root node
@@ -32,7 +30,11 @@ class AssLoader(load.LoaderPlugin):
 
         # Create a new geo node
         procedural = obj.createNode("arnold::procedural", node_name=node_name)
-        procedural.setParms({"ar_filename": self.get_path(self.fname)})
+
+        procedural.setParms(
+            {
+                "ar_filename": self.format_path(context["representation"])
+            })
 
         nodes = [procedural]
         self[:] = nodes
@@ -46,62 +48,43 @@ class AssLoader(load.LoaderPlugin):
             suffix="",
         )
 
-    def get_path(self, path):
-
-        # Find all frames in the folder
-        ext = ".ass.gz" if path.endswith(".ass.gz") else ".ass"
-        folder = os.path.dirname(path)
-        frames = [f for f in os.listdir(folder) if f.endswith(ext)]
-
-        # Get the collection of frames to detect frame padding
-        patterns = [clique.PATTERNS["frames"]]
-        collections, remainder = clique.assemble(frames,
-                                                 minimum_items=1,
-                                                 patterns=patterns)
-        self.log.debug("Detected collections: {}".format(collections))
-        self.log.debug("Detected remainder: {}".format(remainder))
-
-        if not collections and remainder:
-            if len(remainder) != 1:
-                raise ValueError("Frames not correctly detected "
-                                 "in: {}".format(remainder))
-
-            # A single frame without frame range detected
-            filepath = remainder[0]
-            return os.path.normpath(filepath).replace("\\", "/")
-
-        # Frames detected with a valid "frame" number pattern
-        # Then we don't want to have any remainder files found
-        assert len(collections) == 1 and not remainder
-        collection = collections[0]
-
-        num_frames = len(collection.indexes)
-        if num_frames == 1:
-            # Return the input path without dynamic $F variable
-            result = path
-        else:
-            # More than a single frame detected - use $F{padding}
-            fname = "{}$F{}{}".format(collection.head,
-                                      collection.padding,
-                                      collection.tail)
-            result = os.path.join(folder, fname)
-
-        # Format file name, Houdini only wants forward slashes
-        return os.path.normpath(result).replace("\\", "/")
-
     def update(self, container, representation):
-
         # Update the file path
-        file_path = get_representation_path(representation)
-        file_path = file_path.replace("\\", "/")
-
         procedural = container["node"]
-        procedural.setParms({"ar_filename": self.get_path(file_path)})
+        procedural.setParms({"ar_filename": self.format_path(representation)})
 
         # Update attribute
         procedural.setParms({"representation": str(representation["_id"])})
 
     def remove(self, container):
-
         node = container["node"]
         node.destroy()
+
+    @staticmethod
+    def format_path(representation):
+        """Format file path correctly for single ass.* or ass.* sequence.
+
+        Args:
+            representation (dict): representation to be loaded.
+
+        Returns:
+             str: Formatted path to be used by the input node.
+
+        """
+        path = get_representation_path(representation)
+        if not os.path.exists(path):
+            raise RuntimeError("Path does not exist: {}".format(path))
+
+        is_sequence = bool(representation["context"].get("frame"))
+        # The path is either a single file or sequence in a folder.
+        if is_sequence:
+            dir_path, file_name = os.path.split(path)
+            path = os.path.join(
+                dir_path,
+                re.sub(r"(.*)\.(\d+)\.(ass.*)", "\\1.$F4.\\3", file_name)
+            )
+
+        return os.path.normpath(path).replace("\\", "/")
+
+    def switch(self, container, representation):
+        self.update(container, representation)
