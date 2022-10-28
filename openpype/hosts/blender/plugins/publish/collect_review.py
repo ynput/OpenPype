@@ -35,7 +35,8 @@ class CollectReview(pyblish.api.InstancePlugin):
         isolate_objects = [
             obj
             for obj in instance
-            if isinstance(obj, bpy.types.Object) and obj.type == "MESH"
+            if isinstance(obj, bpy.types.Object)
+            and obj.type in ("MESH", "CURVE", "SURFACE")
         ]
 
         reviewable_instances = [
