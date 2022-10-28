@@ -1687,4 +1687,5 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
             if path:
                 thumbnail_paths.append(path)
 
+        self._thumbnail_widget.set_drop_enabled(True)
         self._thumbnail_widget.set_current_thumbnails(thumbnail_paths)
