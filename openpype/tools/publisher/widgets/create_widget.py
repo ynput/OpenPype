@@ -502,10 +502,6 @@ class CreateWidget(QtWidgets.QWidget):
             self._invalidate_prereq_deffered()
 
     def _on_thumbnail_create(self, thumbnail_path):
-        last_path = self._last_thumbnail_path
-        if last_path and os.path.exists(last_path):
-            os.remove(last_path)
-
         self._last_thumbnail_path = thumbnail_path
         self._thumbnail_widget.set_current_thumbnails([thumbnail_path])
 
