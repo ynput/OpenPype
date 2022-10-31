@@ -1838,7 +1838,10 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
         )
         path.closeSubpath()
 
-        gradient = QtGui.QLinearGradient(left, pos_y, right, pos_y)
+        radius = height * 0.7
+        focal = QtCore.QPointF(left, pos_y)
+        start_p = QtCore.QPointF(right - (width * 0.5), pos_y)
+        gradient = QtGui.QRadialGradient(start_p, radius, focal)
         gradient.setColorAt(0, QtGui.QColor(22, 25, 29))
         gradient.setColorAt(1, QtGui.QColor(33, 37, 43))
 
