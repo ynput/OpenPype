@@ -110,7 +110,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         cameras = instance.data.get("cameras", [])
 
         if renderer == "_3delight":
-        	# 3delight is different enough to need it do it its own validation
+            # 3delight is different enough to need it do it its own validation
             return invalid
 
         # Get the node attributes for current renderer
@@ -257,7 +257,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         instance_lights_flag = instance.data.get("renderSetupIncludeLights")
         if settings_lights_flag != instance_lights_flag:
-            cls.log.warning('Instance flag for "Render Setup Include Lights" is set to {0} and Settings flag is set to {1}'.format(instance_lights_flag, settings_lights_flag)) # noqa
+            cls.log.warning('Instance flag for "Render Setup Include Lights" is set to {0} and Settings flag is set to {1}'.format(instance_lights_flag, settings_lights_flag))  # noqa
 
         # go through definitions and test if such node.attribute exists.
         # if so, compare its value from the one required.

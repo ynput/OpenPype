@@ -29,7 +29,7 @@ class RenderSettings(object):
     }
 
     _image_prefixes = {
-        'vray': get_current_project_settings()["maya"]["RenderSettings"]["vray_renderer"]["image_prefix"], # noqa
+        'vray': get_current_project_settings()["maya"]["RenderSettings"]["vray_renderer"]["image_prefix"],  # noqa
         'arnold': get_current_project_settings()["maya"]["RenderSettings"]["arnold_renderer"]["image_prefix"],  # noqa
         'renderman': '<Scene>/<layer>/<layer>{aov_separator}<aov>',
         'redshift': get_current_project_settings()["maya"]["RenderSettings"]["redshift_renderer"]["image_prefix"],  # noqa
@@ -71,7 +71,7 @@ class RenderSettings(object):
             )]
         except KeyError:
             aov_separator = "_"
-        reset_frame = self._project_settings["maya"]["RenderSettings"]["reset_current_frame"] # noqa
+        reset_frame = self._project_settings["maya"]["RenderSettings"]["reset_current_frame"]  # noqa
 
         if reset_frame:
             start_frame = cmds.getAttr("defaultRenderGlobals.startFrame")
@@ -83,7 +83,7 @@ class RenderSettings(object):
             cmds.setAttr(self._image_prefix_nodes[renderer],
                         prefix, type="string")  # noqa
         else:
-            print("{0} isn't a supported renderer to autoset settings.".format(renderer)) # noqa
+            print("{0} isn't a supported renderer to autoset settings.".format(renderer))  # noqa
 
         # TODO: handle not having res values in the doc
         width = asset_doc["data"].get("resolutionWidth")
@@ -273,8 +273,8 @@ class RenderSettings(object):
         """
         3delight doesn't use maya's render layers to indicate what to render,
         instead, it uses dlRenderSettings as specified by the connection to
-        dlRenderGlobals1, of which there is only one. Since this is not the 
-        "mayaonic" way, we must insert a pre-render MEL into maya's 
+        dlRenderGlobals1, of which there is only one. Since this is not the
+        "mayaonic" way, we must insert a pre-render MEL into maya's
         "defaultRenderGlobals.preMel", which will help us work this out. We
         wouldn't this this ... "hack" if deadline allowed us to insert commands
         into its MayaBatch stuff, or, if it allowed setting up renderers in a
@@ -283,11 +283,11 @@ class RenderSettings(object):
 
         # We need the DOTALL since the regex will now match across newlines.
         regex_match = re.compile(r"\/\*--\*3dl_v\d+\*--\*\/.*\/\*--\*\*--\*\/",
-            re.DOTALL)
+                                 re.DOTALL)
         PREMEL_TEMPLATE = """/*--*3dl_v4*--*/
 currentTime -e `getAttr ("defaultRenderGlobals.startFrame")`;
 string $lsCon[] = `listConnections renderLayerManager.renderLayerId`;
-for ($i = 0 ; $i<size($lsCon) ; $i++) 
+for ($i = 0 ; $i<size($lsCon) ; $i++)
 {
     string $cl = $lsCon[$i];
     if (!startsWith($cl, "rs_"))
@@ -300,9 +300,9 @@ for ($i = 0 ; $i<size($lsCon) ; $i++)
         string $rg = "dlRenderGlobals1.renderSettings";
         DL_disconnectNode( $rg );
         DL_connectNodeToMessagePlug( $_3l, $rg );
-        setAttr($_3l+".startFrame", 
+        setAttr($_3l+".startFrame",
             `getAttr ("defaultRenderGlobals.startFrame")`);
-        setAttr($_3l+".endFrame",   
+        setAttr($_3l+".endFrame",
             `getAttr ("defaultRenderGlobals.endFrame")`);
         setAttr($_3l+".isRenderingSequence", 1);
     }

@@ -1,5 +1,4 @@
 from maya import cmds
-import maya.app.renderSetup.model.renderSetup as renderSetup
 
 import pyblish.api
 import openpype.api
