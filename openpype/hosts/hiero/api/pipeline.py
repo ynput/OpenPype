@@ -220,13 +220,19 @@ def update_container(item, data=None):
     data = data or {}
 
     if type(item) == hiero.core.VideoTrack:
+        # form object data for test
         object_name = "{}_{}".format(
             data["name"], data["namespace"])
+
+        # get all available containers
         containers = lib.get_track_openpype_data(item)
         for obj_name, container in containers.items():
+            # ignore all which are not the same object
             if object_name != obj_name:
                 continue
+            # update data in container
             updated_container = update_container_data(container, data)
+            # merge updated container back to containers
             containers.update(updated_container)
 
         return bool(lib.set_track_openpype_tag(item, containers))
