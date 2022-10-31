@@ -27,7 +27,7 @@
         "bg": "#2C313A",
         "bg-inputs": "#21252B",
         "bg-buttons": "#434a56",
-        "bg-button-hover": "rgba(168, 175, 189, 0.3)",
+        "bg-button-hover": "rgb(81, 86, 97)",
         "bg-inputs-disabled": "#2C313A",
         "bg-buttons-disabled": "#434a56",
 
