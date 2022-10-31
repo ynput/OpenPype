@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<ExtensionManifest ExtensionBundleId="com.openpype.PS.panel" ExtensionBundleVersion="1.0.11" Version="7.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ExtensionManifest ExtensionBundleId="com.openpype.PS.panel" ExtensionBundleVersion="1.0.12" Version="7.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ExtensionList>
     <Extension Id="com.openpype.PS.panel" Version="1.0.1" />
   </ExtensionList>
