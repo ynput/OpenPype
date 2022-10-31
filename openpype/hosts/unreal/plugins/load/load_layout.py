@@ -398,7 +398,7 @@ class LayoutLoader(plugin.Loader):
         asset_name = f"{asset}_{name}" if asset else name
 
         asset_dir, container_name = up.send_request_literal(
-            "create_unique_asset_name", params=[root, asset, name])
+            "create_unique_asset_name", params=[hierarchy_dir, asset, name])
 
         container_name += suffix
 
