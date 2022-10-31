@@ -79,6 +79,11 @@ def paint_image_with_color(image, color):
     pixmap.fill(QtCore.Qt.transparent)
 
     painter = QtGui.QPainter(pixmap)
+    painter.setRenderHints(
+        painter.Antialiasing
+        | painter.SmoothPixmapTransform
+        | painter.HighQualityAntialiasing
+    )
     painter.setClipRegion(alpha_region)
     painter.setPen(QtCore.Qt.NoPen)
     painter.setBrush(color)
