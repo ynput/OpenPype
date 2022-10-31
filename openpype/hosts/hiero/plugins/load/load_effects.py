@@ -8,7 +8,6 @@ from openpype.pipeline import (
     load
 )
 from openpype.hosts.hiero import api as phiero
-from openpype.hosts.hiero.api import tags
 
 
 class LoadEffects(load.LoaderPlugin):
@@ -53,6 +52,7 @@ class LoadEffects(load.LoaderPlugin):
             "source": version_data["source"],
             "version": vname,
             "author": version_data["author"],
+            "children_names": []
         }
 
         # getting file path
@@ -95,6 +95,8 @@ class LoadEffects(load.LoaderPlugin):
                         continue
                     node[knob_name].setValue(knob_value)
 
+                # register all loaded children
+                data_imprint["children_names"].append(new_name)
                 # make sure containerisation will happen
                 loaded = True
 
@@ -187,11 +189,13 @@ class LoadEffects(load.LoaderPlugin):
         for loaded assets.
 
         Arguments:
-            track_item (hiero.core.TrackItem): object to imprint as container
+            track (hiero.core.VideoTrack): object to imprint as container
             name (str): Name of resulting assembly
             namespace (str): Namespace under which to host container
+            object_name (str): name of container
             context (dict): Asset information
-            loader (str, optional): Name of node used to produce this container.
+            loader (str, optional): Name of node used to produce this
+                                    container.
 
         Returns:
             track_item (hiero.core.TrackItem): containerised object
@@ -214,4 +218,4 @@ class LoadEffects(load.LoaderPlugin):
                 data_imprint[object_name].update({k: v})
 
         self.log.debug("_ data_imprint: {}".format(data_imprint))
-        self.set_track_openpype_tag(track, data_imprint)
+        phiero.set_track_openpype_tag(track, data_imprint)
