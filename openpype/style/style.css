@@ -896,6 +896,14 @@ PixmapButton:disabled {
     background: {color:bg-buttons-disabled};
 }
 
+#PixmapHoverButton {
+    font-size: 11pt;
+    background: {color:bg-view};
+}
+#PixmapHoverButton:hover {
+    background: {color:bg-button-hover};
+}
+
 #CreatorDetailedDescription {
     padding-left: 5px;
     padding-right: 5px;
