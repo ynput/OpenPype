@@ -124,11 +124,20 @@ def ls():
     """
 
     # get all track items from current timeline
-    all_track_items = lib.get_track_items()
+    all_items = lib.get_track_items()
 
-    for track_item in all_track_items:
-        container = parse_container(track_item)
-        if container:
+    # append all video tracks
+    for track in lib.get_current_sequence():
+        if type(track) != hiero.core.VideoTrack:
+            continue
+        all_items.append(track)
+
+    for item in all_items:
+        container = parse_container(item)
+        if isinstance(container, list):
+            for _c in container:
+                yield _c
+        elif container:
             yield container
 
 
@@ -144,39 +153,47 @@ def parse_container(item, validate=True):
         dict: The container schema data for input containerized track item.
 
     """
+    def data_to_container(item, data):
+        if (
+            not data
+            or data.get("id") != "pyblish.avalon.container"
+        ):
+            return
+
+        if validate and data and data.get("schema"):
+            schema.validate(data)
+
+        if not isinstance(data, dict):
+            return
+
+        # If not all required data return the empty container
+        required = ['schema', 'id', 'name',
+                    'namespace', 'loader', 'representation']
+
+        if any(key not in data for key in required):
+            return
+
+        container = {key: data[key] for key in required}
+
+        container["objectName"] = item.name()
+
+        # Store reference to the node object
+        container["_item"] = item
+
+        return container
+
     # convert tag metadata to normal keys names
     if type(item) == hiero.core.VideoTrack:
-        data = lib.set_track_openpype_data(item)
+        return_list = []
+        _data = lib.get_track_openpype_data(item)
+        # convert the data to list and validate them
+        for _, obj_data in _data.items():
+            cotnainer = data_to_container(item, obj_data)
+            return_list.append(cotnainer)
+        return return_list
     else:
-        data = lib.set_track_item_pype_data(item)
-
-    if (
-        not data
-        or data.get("id") != "pyblish.avalon.container"
-    ):
-        return
-
-    if validate and data and data.get("schema"):
-        schema.validate(data)
-
-    if not isinstance(data, dict):
-        return
-
-    # If not all required data return the empty container
-    required = ['schema', 'id', 'name',
-                'namespace', 'loader', 'representation']
-
-    if any(key not in data for key in required):
-        return
-
-    container = {key: data[key] for key in required}
-
-    container["objectName"] = item.name()
-
-    # Store reference to the node object
-    container["_item"] = item
-
-    return container
+        _data = lib.get_track_item_pype_data(item)
+        return data_to_container(item, _data)
 
 
 def update_container(track_item, data=None):
