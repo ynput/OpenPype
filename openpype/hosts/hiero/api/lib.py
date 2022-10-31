@@ -321,12 +321,66 @@ def get_track_item_pype_tag(track_item):
             return tag
 
 
-def set_track_item_pype_tag(track_item, data=None):
+def set_track_openpype_tag(track, data=None):
     """
-    Set pype track item tag to input track_item.
+    Set openpype track tag to input track object.
+
+    Attributes:
+        track (hiero.core.VideoTrack): hiero object
+
+    Returns:
+        hiero.core.Tag
+    """
+    data = data or {}
+
+    # basic Tag's attribute
+    tag_data = {
+        "editable": "0",
+        "note": "OpenPype data container",
+        "icon": "openpype_icon.png",
+        "metadata": dict(data.items())
+    }
+    # get available pype tag if any
+    _tag = get_track_openpype_tag(track)
+
+    if _tag:
+        # it not tag then create one
+        tag = tags.update_tag(_tag, tag_data)
+    else:
+        # if pype tag available then update with input data
+        tag = tags.create_tag(self.pype_tag_name, tag_data)
+        # add it to the input track item
+        track.addTag(tag)
+
+    return tag
+
+
+def get_track_openpype_tag(track):
+    """
+    Get pype track item tag created by creator or loader plugin.
 
     Attributes:
         trackItem (hiero.core.TrackItem): hiero object
+
+    Returns:
+        hiero.core.Tag: hierarchy, orig clip attributes
+    """
+    # get all tags from track item
+    _tags = track.tags()
+    if not _tags:
+        return None
+    for tag in _tags:
+        # return only correct tag defined by global name
+        if tag.name() == self.pype_tag_name:
+            return tag
+
+
+def set_trackitem_openpype_tag(track_item, data=None):
+    """
+    Set openpype track tag to input track object.
+
+    Attributes:
+        track (hiero.core.VideoTrack): hiero object
 
     Returns:
         hiero.core.Tag
@@ -1083,10 +1137,10 @@ def check_inventory_versions(track_items=None):
     project_name = legacy_io.active_project()
     filter_result = filter_containers(containers, project_name)
     for container in filter_result.latest:
-        set_track_color(container["_track_item"], clip_color)
+        set_track_color(container["_item"], clip_color)
 
     for container in filter_result.outdated:
-        set_track_color(container["_track_item"], clip_color_last)
+        set_track_color(container["_item"], clip_color_last)
 
 
 def selection_changed_timeline(event):

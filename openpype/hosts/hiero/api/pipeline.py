@@ -17,6 +17,7 @@ from openpype.pipeline import (
 )
 from openpype.tools.utils import host_tools
 from . import lib, menu, events
+import hiero
 
 log = Logger.get_logger(__name__)
 
@@ -131,11 +132,12 @@ def ls():
             yield container
 
 
-def parse_container(track_item, validate=True):
+def parse_container(item, validate=True):
     """Return container data from track_item's pype tag.
 
     Args:
-        track_item (hiero.core.TrackItem): A containerised track item.
+        item (hiero.core.TrackItem or hiero.core.VideoTrack):
+            A containerised track item.
         validate (bool)[optional]: validating with avalon scheme
 
     Returns:
@@ -143,7 +145,11 @@ def parse_container(track_item, validate=True):
 
     """
     # convert tag metadata to normal keys names
-    data = lib.get_track_item_pype_data(track_item)
+    if type(item) == hiero.core.VideoTrack:
+        data = lib.set_track_openpype_data(item)
+    else:
+        data = lib.set_track_item_pype_data(item)
+
     if (
         not data
         or data.get("id") != "pyblish.avalon.container"
@@ -160,15 +166,15 @@ def parse_container(track_item, validate=True):
     required = ['schema', 'id', 'name',
                 'namespace', 'loader', 'representation']
 
-    if not all(key in data for key in required):
+    if any(key not in data for key in required):
         return
 
     container = {key: data[key] for key in required}
 
-    container["objectName"] = track_item.name()
+    container["objectName"] = item.name()
 
     # Store reference to the node object
-    container["_track_item"] = track_item
+    container["_item"] = item
 
     return container
 
