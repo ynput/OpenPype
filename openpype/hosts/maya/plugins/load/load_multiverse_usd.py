@@ -13,7 +13,7 @@ from openpype.hosts.maya.api.lib import (
     unique_namespace
 )
 from openpype.hosts.maya.api.pipeline import containerise
-from openpype.client import get_representations, get_representation_by_id
+from openpype.client import get_representation_by_id
 
 
 class MultiverseUsdLoader(load.LoaderPlugin):

@@ -48,8 +48,8 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
     @classmethod
     def get_table_for_invalid(cls):
         ss = []
-        for k,v in cls.SUFFIX_NAMING_TABLE.items():
-            ss.append(" - {}: {}".format(k,", ".join(v)))
+        for k, v in cls.SUFFIX_NAMING_TABLE.items():
+            ss.append(" - {}: {}".format(k, ", ".join(v)))
         return "\n".join(ss)
 
     @staticmethod

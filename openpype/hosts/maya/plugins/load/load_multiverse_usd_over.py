@@ -10,12 +10,10 @@ from openpype.pipeline import (
     get_representation_path
 )
 from openpype.hosts.maya.api.lib import (
-    maintained_selection,
-    namespaced,
-    unique_namespace
+    maintained_selection
 )
 from openpype.hosts.maya.api.pipeline import containerise
-from openpype.client import get_representations, get_representation_by_id
+from openpype.client import get_representation_by_id
 
 
 class MultiverseUsdOverLoader(load.LoaderPlugin):
@@ -38,8 +36,6 @@ class MultiverseUsdOverLoader(load.LoaderPlugin):
     ]
 
     def load(self, context, name=None, namespace=None, options=None):
-        asset = context['asset']['name']
-
         current_usd = cmds.ls(selection=True,
                               type="mvUsdCompoundShape",
                               dag=True,

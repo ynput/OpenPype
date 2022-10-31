@@ -253,7 +253,7 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
     """Collect Multiverse Look
 
     Searches through the overrides finding all material overrides. From there
-    it extracts the shading group and then finds all texture files in the 
+    it extracts the shading group and then finds all texture files in the
     shading group network. It also checks for mipmap versions of texture files
     and adds them to the resouces to get published.
 
@@ -341,7 +341,7 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
         node_type = cmds.nodeType(node)
         self.log.debug("processing: {}/{}".format(node, node_type))
 
-        if not node_type in NODETYPES:
+        if node_type not in NODETYPES:
             self.log.error("Unsupported file node: {}".format(node_type))
             raise AssertionError("Unsupported file node")
 
@@ -361,7 +361,7 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
             # Compare with the computed file path, e.g. the one with the <UDIM>
             # pattern in it, to generate some logging information about this
             # difference
-            # computed_attribute = "{}.computedFileTextureNamePattern".format(node)
+            # computed_attribute = "{}.computedFileTextureNamePattern".format(node)  # noqa
             computed_source = cmds.getAttr(computed_fname_attrib)
             if source != computed_source:
                 self.log.debug("Detected computed file pattern difference "
