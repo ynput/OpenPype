@@ -114,11 +114,6 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
         pix_height = expected_height - height_offset
         full_border_width = 2 * self.border_width
 
-        pix_bg_brush = QtGui.QBrush(self.thumbnail_bg_color)
-
-        pix_pen = QtGui.QPen()
-        pix_pen.setWidth(self.border_width)
-        pix_pen.setColor(self.border_color)
 
         backgrounded_images = []
         for src_pix in pixes_to_draw:
@@ -144,9 +139,6 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
                 | pix_painter.SmoothPixmapTransform
                 | pix_painter.HighQualityAntialiasing
             )
-            pix_painter.setBrush(pix_bg_brush)
-            pix_painter.setPen(pix_pen)
-            pix_painter.drawRect(0, 0, pix_width - 1, pix_height - 1)
             pix_painter.drawPixmap(pos_x, pos_y, scaled_pix)
             pix_painter.end()
             backgrounded_images.append(new_pix)
@@ -162,6 +154,10 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
         final_pix = QtGui.QPixmap(rect_width, rect_height)
         final_pix.fill(QtCore.Qt.transparent)
 
+        bg_pen = QtGui.QPen()
+        bg_pen.setWidth(self.border_width)
+        bg_pen.setColor(self.border_color)
+
         final_painter = QtGui.QPainter()
         final_painter.begin(final_pix)
         final_painter.setRenderHints(
@@ -169,6 +165,10 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
             | final_painter.SmoothPixmapTransform
             | final_painter.HighQualityAntialiasing
         )
+        final_painter.setBrush(QtGui.QBrush(self.thumbnail_bg_color))
+        final_painter.setPen(bg_pen)
+        final_painter.drawRect(rect)
+
         for idx, pix in enumerate(backgrounded_images):
             x_offset = full_width_offset - (width_offset_part * idx)
             y_offset = (height_offset_part * idx) + pix_y_offset
