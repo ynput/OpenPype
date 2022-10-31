@@ -1569,6 +1569,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         )
         convert_btn.clicked.connect(self._on_convert_click)
         thumbnail_widget.thumbnail_created.connect(self._on_thumbnail_create)
+        thumbnail_widget.thumbnail_cleared.connect(self._on_thumbnail_clear)
 
         controller.event_system.add_callback(
             "instance.thumbnail.changed", self._on_thumbnail_changed
@@ -1660,6 +1661,23 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
                 shutil.copy(path, dst_path)
                 mapping[instance_id] = dst_path
 
+        self._controller.set_thumbnail_paths_for_instances(mapping)
+
+    def _on_thumbnail_clear(self):
+        instance_ids = [
+            instance.id
+            for instance in self._current_instances
+        ]
+        if self._context_selected:
+            instance_ids.append(None)
+
+        if not instance_ids:
+            return
+
+        mapping = {
+            instance_id: None
+            for instance_id in instance_ids
+        }
         self._controller.set_thumbnail_paths_for_instances(mapping)
 
     def _on_thumbnail_changed(self, event):

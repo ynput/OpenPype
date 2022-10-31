@@ -1,6 +1,5 @@
 import os
 import uuid
-import math
 
 from Qt import QtWidgets, QtCore, QtGui
 
@@ -24,22 +23,15 @@ from openpype.tools.publisher.control import CardMessageTypes
 from .icons import get_image
 
 
-class ThumbnailWidget(QtWidgets.QWidget):
-    """Instance thumbnail widget."""
-
-    thumbnail_created = QtCore.Signal(str)
-
+class ThumbnailPainterWidget(QtWidgets.QWidget):
     width_ratio = 3.0
     height_ratio = 2.0
     border_width = 1
-    offset_sep = 4
     max_thumbnails = 3
+    offset_sep = 4
 
-    def __init__(self, controller, parent):
-        # Missing implementation for thumbnail
-        # - widget kept to make a visial offset of global attr widget offset
-        super(ThumbnailWidget, self).__init__(parent)
-        self.setAcceptDrops(True)
+    def __init__(self, parent):
+        super(ThumbnailPainterWidget, self).__init__(parent)
 
         border_color = get_objected_colors("bg-buttons").get_qcolor()
         thumbnail_bg_color = get_objected_colors("border").get_qcolor()
@@ -48,103 +40,22 @@ class ThumbnailWidget(QtWidgets.QWidget):
         default_image = get_image("thumbnail")
         default_pix = paint_image_with_color(default_image, border_color)
 
-        self._controller = controller
-        self._output_dir = controller.get_thumbnail_temp_dir_path()
-
         self.border_color = border_color
         self.thumbnail_bg_color = thumbnail_bg_color
         self.overlay_color = overlay_color
         self._default_pix = default_pix
 
+        self._cached_pix = None
         self._current_pixes = None
+        self._has_pixes = False
+
+    @property
+    def has_pixes(self):
+        return self._has_pixes
+
+    def clear_cache(self):
         self._cached_pix = None
-
-        self._review_extensions = set(IMAGE_EXTENSIONS) | set(VIDEO_EXTENSIONS)
-
-        self._height = None
-        self._width = None
-        self._adapted_to_size = True
-        self._last_width = None
-        self._last_height = None
-
-    def _get_filepath_from_event(self, event):
-        mime_data = event.mimeData()
-        if not mime_data.hasUrls():
-            return None
-
-        filepaths = []
-        for url in mime_data.urls():
-            filepath = url.toLocalFile()
-            if os.path.exists(filepath):
-                filepaths.append(filepath)
-
-        if len(filepaths) == 1:
-            filepath = filepaths[0]
-            ext = os.path.splitext(filepath)[-1]
-            if ext in self._review_extensions:
-                return filepath
-        return None
-
-    def dragEnterEvent(self, event):
-        filepath = self._get_filepath_from_event(event)
-        if filepath:
-            event.setDropAction(QtCore.Qt.CopyAction)
-            event.accept()
-
-    def dragLeaveEvent(self, event):
-        event.accept()
-
-    def dropEvent(self, event):
-        filepath = self._get_filepath_from_event(event)
-        if not filepath:
-            return
-
-        output = export_thumbnail(filepath, self._output_dir)
-        if output:
-            self.thumbnail_created.emit(output)
-        else:
-            self._controller.emit_card_message(
-                "Couldn't convert the source for thumbnail",
-                CardMessageTypes.error
-            )
-
-    def set_adapted_to_hint(self, enabled):
-        self._adapted_to_size = enabled
-        if self._width is not None:
-            self.setMinimumHeight(0)
-            self._width = None
-
-        if self._height is not None:
-            self.setMinimumWidth(0)
-            self._height = None
-
-    def set_width(self, width):
-        if self._width == width:
-            return
-
-        self._adapted_to_size = False
-        self._width = width
-        self._cached_pix = None
-        self.setMinimumHeight(int(
-            (width / self.width_ratio) * self.height_ratio
-        ))
-        if self._height is not None:
-            self.setMinimumWidth(0)
-            self._height = None
-
-    def set_height(self, height):
-        if self._height == height:
-            return
-
-        self._height = height
-        self._adapted_to_size = False
-        self._cached_pix = None
-        self.setMinimumWidth(int(
-            (height / self.height_ratio) * self.width_ratio
-        ))
-        if self._width is not None:
-            self.setMinimumHeight(0)
-            self._width = None
+        self.repaint()
 
     def set_current_thumbnails(self, thumbnail_paths=None):
         pixes = []
@@ -153,8 +64,17 @@ class ThumbnailWidget(QtWidgets.QWidget):
                 pixes.append(QtGui.QPixmap(thumbnail_path))
 
         self._current_pixes = pixes or None
-        self._cached_pix = None
-        self.repaint()
+        self._has_pixes = self._current_pixes is not None
+        self.clear_cache()
+
+    def paintEvent(self, event):
+        if self._cached_pix is None:
+            self._cache_pix()
+
+        painter = QtGui.QPainter()
+        painter.begin(self)
+        painter.drawPixmap(0, 0, self._cached_pix)
+        painter.end()
 
     def _cache_pix(self):
         rect = self.rect()
@@ -276,14 +196,146 @@ class ThumbnailWidget(QtWidgets.QWidget):
         part_height = height / self.offset_sep
         return part_width, part_height
 
-    def paintEvent(self, event):
-        if self._cached_pix is None:
-            self._cache_pix()
 
-        painter = QtGui.QPainter()
-        painter.begin(self)
-        painter.drawPixmap(0, 0, self._cached_pix)
-        painter.end()
+class ThumbnailWidget(QtWidgets.QWidget):
+    """Instance thumbnail widget."""
+
+    thumbnail_created = QtCore.Signal(str)
+    thumbnail_cleared = QtCore.Signal()
+
+    def __init__(self, controller, parent):
+        # Missing implementation for thumbnail
+        # - widget kept to make a visial offset of global attr widget offset
+        super(ThumbnailWidget, self).__init__(parent)
+        self.setAcceptDrops(True)
+
+        thumbnail_painter = ThumbnailPainterWidget(self)
+
+        buttons_widget = QtWidgets.QWidget(self)
+        buttons_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        clear_button = QtWidgets.QPushButton("x", buttons_widget)
+
+        buttons_layout = QtWidgets.QHBoxLayout(buttons_widget)
+        buttons_layout.setContentsMargins(3, 3, 3, 3)
+        buttons_layout.addStretch(1)
+        buttons_layout.addWidget(clear_button, 0)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(thumbnail_painter)
+
+        clear_button.clicked.connect(self._on_clear_clicked)
+
+        self._controller = controller
+        self._output_dir = controller.get_thumbnail_temp_dir_path()
+
+        self._review_extensions = set(IMAGE_EXTENSIONS) | set(VIDEO_EXTENSIONS)
+
+        self._height = None
+        self._width = None
+        self._adapted_to_size = True
+        self._last_width = None
+        self._last_height = None
+
+        self._buttons_widget = buttons_widget
+        self._thumbnail_painter = thumbnail_painter
+
+    @property
+    def width_ratio(self):
+        return self._thumbnail_painter.width_ratio
+
+    @property
+    def height_ratio(self):
+        return self._thumbnail_painter.height_ratio
+
+    def _get_filepath_from_event(self, event):
+        mime_data = event.mimeData()
+        if not mime_data.hasUrls():
+            return None
+
+        filepaths = []
+        for url in mime_data.urls():
+            filepath = url.toLocalFile()
+            if os.path.exists(filepath):
+                filepaths.append(filepath)
+
+        if len(filepaths) == 1:
+            filepath = filepaths[0]
+            ext = os.path.splitext(filepath)[-1]
+            if ext in self._review_extensions:
+                return filepath
+        return None
+
+    def dragEnterEvent(self, event):
+        filepath = self._get_filepath_from_event(event)
+        if filepath:
+            event.setDropAction(QtCore.Qt.CopyAction)
+            event.accept()
+
+    def dragLeaveEvent(self, event):
+        event.accept()
+
+    def dropEvent(self, event):
+        filepath = self._get_filepath_from_event(event)
+        if not filepath:
+            return
+
+        output = export_thumbnail(filepath, self._output_dir)
+        if output:
+            self.thumbnail_created.emit(output)
+        else:
+            self._controller.emit_card_message(
+                "Couldn't convert the source for thumbnail",
+                CardMessageTypes.error
+            )
+
+    def set_adapted_to_hint(self, enabled):
+        self._adapted_to_size = enabled
+        if self._width is not None:
+            self.setMinimumHeight(0)
+            self._width = None
+
+        if self._height is not None:
+            self.setMinimumWidth(0)
+            self._height = None
+
+    def set_width(self, width):
+        if self._width == width:
+            return
+
+        self._adapted_to_size = False
+        self._width = width
+        self.setMinimumHeight(int(
+            (width / self.width_ratio) * self.height_ratio
+        ))
+        if self._height is not None:
+            self.setMinimumWidth(0)
+            self._height = None
+        self._thumbnail_painter.clear_cache()
+
+    def set_height(self, height):
+        if self._height == height:
+            return
+
+        self._height = height
+        self._adapted_to_size = False
+        self.setMinimumWidth(int(
+            (height / self.height_ratio) * self.width_ratio
+        ))
+        if self._width is not None:
+            self.setMinimumHeight(0)
+            self._width = None
+
+        self._thumbnail_painter.clear_cache()
+
+    def set_current_thumbnails(self, thumbnail_paths=None):
+        self._thumbnail_painter.set_current_thumbnails(thumbnail_paths)
+        self._update_buttons_position()
+
+    def _on_clear_clicked(self):
+        self.set_current_thumbnails()
+        self.thumbnail_cleared.emit()
 
     def _adapt_to_size(self):
         if not self._adapted_to_size:
@@ -296,15 +348,27 @@ class ThumbnailWidget(QtWidgets.QWidget):
 
         self._last_width = width
         self._last_height = height
-        self._cached_pix = None
+        self._thumbnail_painter.clear_cache()
+
+    def _update_buttons_position(self):
+        self._buttons_widget.setVisible(self._thumbnail_painter.has_pixes)
+        size = self.size()
+        my_height = size.height()
+        height = self._buttons_widget.sizeHint().height()
+        self._buttons_widget.setGeometry(
+            0, my_height - height,
+            size.width(), height
+        )
 
     def resizeEvent(self, event):
         super(ThumbnailWidget, self).resizeEvent(event)
         self._adapt_to_size()
+        self._update_buttons_position()
 
     def showEvent(self, event):
         super(ThumbnailWidget, self).showEvent(event)
         self._adapt_to_size()
+        self._update_buttons_position()
 
 
 def _run_silent_subprocess(args):

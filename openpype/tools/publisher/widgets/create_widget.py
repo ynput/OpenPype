@@ -272,6 +272,7 @@ class CreateWidget(QtWidgets.QWidget):
         )
         tasks_widget.task_changed.connect(self._on_task_change)
         thumbnail_widget.thumbnail_created.connect(self._on_thumbnail_create)
+        thumbnail_widget.thumbnail_cleared.connect(self._on_thumbnail_clear)
 
         controller.event_system.add_callback(
             "plugins.refresh.finished", self._on_plugins_refresh
@@ -503,6 +504,9 @@ class CreateWidget(QtWidgets.QWidget):
     def _on_thumbnail_create(self, thumbnail_path):
         self._last_thumbnail_path = thumbnail_path
         self._thumbnail_widget.set_current_thumbnails([thumbnail_path])
+
+    def _on_thumbnail_clear(self):
+        self._last_thumbnail_path = None
 
     def _on_current_session_context_request(self):
         self._assets_widget.set_current_session_asset()
