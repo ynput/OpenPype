@@ -393,6 +393,57 @@ def get_track_openpype_tag(track):
             return tag
 
 
+def get_track_openpype_data(track):
+    """
+    Get track's openpype tag data.
+
+    Attributes:
+        trackItem (hiero.core.VideoTrack): hiero object
+
+    Returns:
+        dict: data found on pype tag
+    """
+    return_data = {}
+    # get pype data tag from track item
+    tag = get_track_openpype_tag(track)
+
+    if not tag:
+        return None
+
+    # get tag metadata attribute
+    tag_data = deepcopy(dict(tag.metadata()))
+
+    for obj_name, obj_data in tag_data.items():
+        return_data[obj_name] = {}
+
+        # convert tag metadata to normal keys names and values to correct types
+        for k, v in obj_data.items():
+
+            key = k.replace("tag.", "")
+
+            try:
+                # capture exceptions which are related to strings only
+                if re.match(r"^[\d]+$", v):
+                    value = int(v)
+                elif re.match(r"^True$", v):
+                    value = True
+                elif re.match(r"^False$", v):
+                    value = False
+                elif re.match(r"^None$", v):
+                    value = None
+                elif re.match(r"^[\w\d_]+$", v):
+                    value = v
+                else:
+                    value = ast.literal_eval(v)
+            except (ValueError, SyntaxError) as msg:
+                log.warning(msg)
+                value = v
+
+            return_data[obj_name][key] = value
+
+    return return_data
+
+
 @deprecated("openpype.hosts.hiero.api.lib.get_trackitem_openpype_tag")
 def get_track_item_pype_tag(track_item):
     # backward compatibility alias
