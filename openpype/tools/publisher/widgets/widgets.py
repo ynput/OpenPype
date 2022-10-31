@@ -1652,3 +1652,204 @@ class ThumbnailWidget(QtWidgets.QWidget):
         self.thumbnail_label = thumbnail_label
         self.default_pix = default_pix
         self.current_pix = None
+
+
+class CreateNextPageOverlay(QtWidgets.QWidget):
+    max_value = 100.0
+    clicked = QtCore.Signal()
+
+    def __init__(self, parent):
+        super(CreateNextPageOverlay, self).__init__(parent)
+
+        self._bg_color = QtGui.QColor(127, 127, 255)
+        self._arrow_color = QtGui.QColor(255, 255, 255)
+
+        change_anim = QtCore.QVariantAnimation()
+        change_anim.setStartValue(0.0)
+        change_anim.setEndValue(self.max_value)
+        change_anim.setDuration(200)
+        change_anim.setEasingCurve(QtCore.QEasingCurve.InOutQuad)
+
+        change_anim.valueChanged.connect(self._on_anim)
+
+        self._change_anim = change_anim
+        self._is_visible = None
+        self._anim_value = 0.0
+        self._increasing = False
+        self._under_mouse = None
+        self._handle_show_on_own = True
+        self._mouse_pressed = False
+        self.set_visible(True)
+
+    def set_increasing(self, increasing):
+        if self._increasing is increasing:
+            return
+        self._increasing = increasing
+        if increasing:
+            self._change_anim.setDirection(self._change_anim.Forward)
+        else:
+            self._change_anim.setDirection(self._change_anim.Backward)
+
+        if self._change_anim.state() != self._change_anim.Running:
+            self._change_anim.start()
+
+    def set_visible(self, visible):
+        if self._is_visible is visible:
+            return
+
+        self._is_visible = visible
+        if not visible:
+            self.set_increasing(False)
+            if not self._is_anim_finished():
+                return
+
+        self.setVisible(visible)
+        self._check_anim_timer()
+
+    def _is_anim_finished(self):
+        if self._increasing:
+            return self._anim_value == self.max_value
+        return self._anim_value == 0.0
+
+    def _on_anim(self, value):
+        self._check_anim_timer()
+
+        self._anim_value = value
+
+        self.update()
+
+        if not self._is_anim_finished():
+            return
+
+        if not self._is_visible:
+            self.setVisible(False)
+
+    def set_handle_show_on_own(self, handle):
+        if self._handle_show_on_own is handle:
+            return
+        self._handle_show_on_own = handle
+        self._under_mouse = None
+        self._check_anim_timer()
+
+    def set_under_mouse(self, under_mouse):
+        if self._under_mouse is under_mouse:
+            return
+
+        if self._handle_show_on_own:
+            self._handle_show_on_own = False
+        self._under_mouse = under_mouse
+        self.set_increasing(under_mouse)
+
+    def _is_under_mouse(self):
+        mouse_pos = self.mapFromGlobal(QtGui.QCursor.pos())
+        under_mouse = self.rect().contains(mouse_pos)
+        return under_mouse
+
+    def _check_anim_timer(self):
+        if not self.isVisible():
+            return
+
+        if self._handle_show_on_own:
+            under_mouse = self._is_under_mouse()
+        else:
+            under_mouse = self._under_mouse
+
+        self.set_increasing(under_mouse)
+
+    def enterEvent(self, event):
+        super(CreateNextPageOverlay, self).enterEvent(event)
+        if self._handle_show_on_own:
+            self._check_anim_timer()
+
+    def leaveEvent(self, event):
+        super(CreateNextPageOverlay, self).leaveEvent(event)
+        if self._handle_show_on_own:
+            self._check_anim_timer()
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._mouse_pressed = True
+        super(CreateNextPageOverlay, self).mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self._mouse_pressed:
+            self._mouse_pressed = False
+            if self.rect().contains(event.pos()):
+                self.clicked.emit()
+
+        super(CreateNextPageOverlay, self).mouseReleaseEvent(event)
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter()
+        painter.begin(self)
+        if self._anim_value == 0.0:
+            painter.end()
+            return
+        painter.setRenderHints(
+            painter.Antialiasing
+            | painter.SmoothPixmapTransform
+        )
+
+        pen = QtGui.QPen()
+        pen.setWidth(0)
+        painter.setPen(pen)
+        rect = QtCore.QRect(self.rect())
+
+        offset = rect.width() - int(
+            float(rect.width()) * 0.01 * self._anim_value
+        )
+
+        pos_y = rect.center().y()
+        left = rect.left() + offset
+        right = rect.right()
+        top = rect.top()
+        bottom = rect.bottom()
+        width = right - left
+        height = bottom - top
+
+        q_height = height * 0.15
+
+        arrow_half_height = width * 0.2
+        arrow_x_start = left + (width * 0.4)
+        arrow_x_end = arrow_x_start + arrow_half_height
+        arrow_top_y_boundry = arrow_half_height + q_height
+        arrow_bottom_y_boundry = height - (arrow_half_height + q_height)
+        offset = 0
+        if pos_y < arrow_top_y_boundry:
+            pos_y = arrow_top_y_boundry
+        elif pos_y > arrow_bottom_y_boundry:
+            pos_y = arrow_bottom_y_boundry
+
+        top_cubic_y = pos_y - q_height
+        bottom_cubic_y = pos_y + q_height
+
+        path = QtGui.QPainterPath()
+        path.moveTo(right, top)
+        path.lineTo(right, bottom)
+
+        path.cubicTo(
+            right, bottom,
+            left, bottom_cubic_y,
+            left, pos_y
+        )
+        path.cubicTo(
+            left, top_cubic_y,
+            right, top,
+            right, top
+        )
+        path.closeSubpath()
+
+        painter.fillPath(path, self._bg_color)
+
+        src_arrow_path = QtGui.QPainterPath()
+        src_arrow_path.moveTo(arrow_x_start, pos_y - arrow_half_height)
+        src_arrow_path.lineTo(arrow_x_end, pos_y)
+        src_arrow_path.lineTo(arrow_x_start, pos_y + arrow_half_height)
+
+        arrow_stroker = QtGui.QPainterPathStroker()
+        arrow_stroker.setWidth(min(4, arrow_half_height * 0.2))
+        arrow_path = arrow_stroker.createStroke(src_arrow_path)
+
+        painter.fillPath(arrow_path, self._arrow_color)
+
+        painter.end()
