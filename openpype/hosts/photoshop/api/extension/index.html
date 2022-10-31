@@ -34,17 +34,6 @@
     
     <script type=text/javascript>
             $(function() {
-              $("a#creator-button").bind("click", function() {
-                RPC.call('Photoshop.creator_route').then(function (data) {
-                }, function (error) {
-                    alert(error);
-                });
-              });
-            });
-    </script>
-    
-    <script type=text/javascript>
-            $(function() {
               $("a#loader-button").bind("click", function() {
                 RPC.call('Photoshop.loader_route').then(function (data) {
                 }, function (error) {

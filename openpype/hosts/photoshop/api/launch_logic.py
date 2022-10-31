@@ -334,9 +334,6 @@ class PhotoshopRoute(WebSocketRoute):
         return await self.socket.call('photoshop.read')
 
     # panel routes for tools
-    async def creator_route(self):
-        self._tool_route("creator")
-
     async def workfiles_route(self):
         self._tool_route("workfiles")
 
@@ -344,7 +341,7 @@ class PhotoshopRoute(WebSocketRoute):
         self._tool_route("loader")
 
     async def publish_route(self):
-        self._tool_route("publish")
+        self._tool_route("publisher")
 
     async def sceneinventory_route(self):
         self._tool_route("sceneinventory")
