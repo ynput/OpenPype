@@ -24,14 +24,16 @@ class RenderSettings(object):
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
         'renderman': 'defaultRenderGlobals.imageFilePrefix',
-        'redshift': 'defaultRenderGlobals.imageFilePrefix'
+        'redshift': 'defaultRenderGlobals.imageFilePrefix',
+        '_3delight': 'defaultRenderGlobals.imageFilePrefix'
     }
 
     _image_prefixes = {
         'vray': get_current_project_settings()["maya"]["RenderSettings"]["vray_renderer"]["image_prefix"], # noqa
         'arnold': get_current_project_settings()["maya"]["RenderSettings"]["arnold_renderer"]["image_prefix"],  # noqa
         'renderman': '<Scene>/<layer>/<layer>{aov_separator}<aov>',
-        'redshift': get_current_project_settings()["maya"]["RenderSettings"]["redshift_renderer"]["image_prefix"]  # noqa
+        'redshift': get_current_project_settings()["maya"]["RenderSettings"]["redshift_renderer"]["image_prefix"],  # noqa
+        '_3delight': '<Scene>/<layer>/<layer>{aov_separator}<aov>'
     }
 
     _aov_chars = {
