@@ -358,3 +358,37 @@ def add_animation_to_sequencer(sequence_path, binding_guid, animation_path):
     sec_params = section.get_editor_property('params')
     sec_params.set_editor_property('animation', animation)
 
+
+def import_camera(sequence_path, import_filename):
+    sequence = get_asset(sequence_path)
+
+    world = unreal.EditorLevelLibrary.get_editor_world()
+
+    settings = unreal.MovieSceneUserImportFBXSettings()
+    settings.set_editor_property('reduce_keys', False)
+
+    ue_version = unreal.SystemLibrary.get_engine_version().split('.')
+    ue_major = int(ue_version[0])
+    ue_minor = int(ue_version[1])
+
+    print(import_filename)
+
+    if ue_major == 4 and ue_minor <= 26:
+        unreal.SequencerTools.import_fbx(
+            world,
+            sequence,
+            sequence.get_bindings(),
+            settings,
+            import_filename
+        )
+    elif (ue_major == 4 and ue_minor >= 27) or ue_major == 5:
+        unreal.SequencerTools.import_level_sequence_fbx(
+            world,
+            sequence,
+            sequence.get_bindings(),
+            settings,
+            import_filename
+        )
+    else:
+        raise NotImplementedError(
+            f"Unreal version {ue_major} not supported")

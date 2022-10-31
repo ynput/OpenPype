@@ -29,4 +29,5 @@ from plugins.load import (
     process_family,
     apply_animation_to_actor,
     add_animation_to_sequencer,
+    import_camera,
 )
