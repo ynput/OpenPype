@@ -1532,7 +1532,7 @@ def get_container_members(container):
         if ref.rsplit(":", 1)[-1].startswith("_UNKNOWN_REF_NODE_"):
             continue
 
-        reference_members = cmds.referenceQuery(ref, nodes=True)
+        reference_members = cmds.referenceQuery(ref, nodes=True, dagPath=True)
         reference_members = cmds.ls(reference_members,
                                     long=True,
                                     objectsOnly=True)
