@@ -33,6 +33,7 @@ class ThumbnailWidget(QtWidgets.QWidget):
     height_ratio = 2.0
     border_width = 1
     offset_sep = 4
+    max_thumbnails = 3
 
     def __init__(self, controller, parent):
         # Missing implementation for thumbnail
@@ -182,9 +183,8 @@ class ThumbnailWidget(QtWidgets.QWidget):
             draw_dashes = False
             pixes_to_draw = self._current_pixes
 
-        max_pix = 3
-        if len(pixes_to_draw) > max_pix:
-            pixes_to_draw = pixes_to_draw[:-max_pix]
+        if len(pixes_to_draw) > self.max_thumbnails:
+            pixes_to_draw = pixes_to_draw[:-self.max_thumbnails]
         pixes_len = len(pixes_to_draw)
 
         width_offset, height_offset = self._get_pix_offset_size(
