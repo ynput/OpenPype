@@ -35,7 +35,7 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
         super(ThumbnailPainterWidget, self).__init__(parent)
 
         border_color = get_objected_colors("bg-buttons").get_qcolor()
-        thumbnail_bg_color = get_objected_colors("border").get_qcolor()
+        thumbnail_bg_color = get_objected_colors("bg-view").get_qcolor()
         overlay_color = get_objected_colors("font").get_qcolor()
 
         default_image = get_image("thumbnail")
