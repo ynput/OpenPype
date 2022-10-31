@@ -107,7 +107,7 @@ def containerise(track_item,
             data_imprint.update({k: v})
 
     log.debug("_ data_imprint: {}".format(data_imprint))
-    lib.set_track_item_pype_tag(track_item, data_imprint)
+    lib.set_trackitem_openpype_tag(track_item, data_imprint)
 
     return track_item
 
@@ -192,7 +192,7 @@ def update_container(track_item, data=None):
     """
     data = data or dict()
 
-    container = lib.get_track_item_pype_data(track_item)
+    container = lib.get_trackitem_openpype_data(track_item)
 
     for _key, _value in container.items():
         try:
@@ -201,7 +201,7 @@ def update_container(track_item, data=None):
             pass
 
     log.info("Updating container: `{}`".format(track_item.name()))
-    return bool(lib.set_track_item_pype_tag(track_item, container))
+    return bool(lib.set_trackitem_openpype_tag(track_item, container))
 
 
 def launch_workfiles_app(*args):
@@ -278,11 +278,11 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
         instance, old_value, new_value))
 
     from openpype.hosts.hiero.api import (
-        get_track_item_pype_tag,
+        get_trackitem_openpype_tag,
         set_publish_attribute
     )
 
     # Whether instances should be passthrough based on new value
     track_item = instance.data["item"]
-    tag = get_track_item_pype_tag(track_item)
+    tag = get_trackitem_openpype_tag(track_item)
     set_publish_attribute(tag, new_value)

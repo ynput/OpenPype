@@ -48,7 +48,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             self.log.debug("clip_name: {}".format(clip_name))
 
             # get openpype tag data
-            tag_data = phiero.get_track_item_pype_data(track_item)
+            tag_data = phiero.get_trackitem_openpype_data(track_item)
             self.log.debug("__ tag_data: {}".format(pformat(tag_data)))
 
             if not tag_data:

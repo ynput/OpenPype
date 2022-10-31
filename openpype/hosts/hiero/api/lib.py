@@ -301,26 +301,6 @@ def get_track_item_tags(track_item):
     return returning_tag_data
 
 
-def get_track_item_pype_tag(track_item):
-    """
-    Get pype track item tag created by creator or loader plugin.
-
-    Attributes:
-        trackItem (hiero.core.TrackItem): hiero object
-
-    Returns:
-        hiero.core.Tag: hierarchy, orig clip attributes
-    """
-    # get all tags from track item
-    _tags = track_item.tags()
-    if not _tags:
-        return None
-    for tag in _tags:
-        # return only correct tag defined by global name
-        if tag.name() == self.pype_tag_name:
-            return tag
-
-
 def set_track_openpype_tag(track, data=None):
     """
     Set openpype track tag to input track object.
@@ -375,6 +355,41 @@ def get_track_openpype_tag(track):
             return tag
 
 
+def get_track_item_pype_tag(track_item):
+    # backward compatibility alias
+    return get_trackitem_openpype_tag(track_item)
+
+
+def set_track_item_pype_tag(track_item, data=None):
+    # backward compatibility alias
+    return set_trackitem_openpype_tag(track_item, data)
+
+
+def get_track_item_pype_data(track_item):
+    # backward compatibility alias
+    return get_trackitem_openpype_data(track_item)
+
+
+def get_trackitem_openpype_tag(track_item):
+    """
+    Get pype track item tag created by creator or loader plugin.
+
+    Attributes:
+        trackItem (hiero.core.TrackItem): hiero object
+
+    Returns:
+        hiero.core.Tag: hierarchy, orig clip attributes
+    """
+    # get all tags from track item
+    _tags = track_item.tags()
+    if not _tags:
+        return None
+    for tag in _tags:
+        # return only correct tag defined by global name
+        if tag.name() == self.pype_tag_name:
+            return tag
+
+
 def set_trackitem_openpype_tag(track_item, data=None):
     """
     Set openpype track tag to input track object.
@@ -395,7 +410,7 @@ def set_trackitem_openpype_tag(track_item, data=None):
         "metadata": dict(data.items())
     }
     # get available pype tag if any
-    _tag = get_track_item_pype_tag(track_item)
+    _tag = get_trackitem_openpype_tag(track_item)
 
     if _tag:
         # it not tag then create one
@@ -409,7 +424,7 @@ def set_trackitem_openpype_tag(track_item, data=None):
     return tag
 
 
-def get_track_item_pype_data(track_item):
+def get_trackitem_openpype_data(track_item):
     """
     Get track item's pype tag data.
 
@@ -421,7 +436,7 @@ def get_track_item_pype_data(track_item):
     """
     data = {}
     # get pype data tag from track item
-    tag = get_track_item_pype_tag(track_item)
+    tag = get_trackitem_openpype_tag(track_item)
 
     if not tag:
         return None
@@ -474,7 +489,7 @@ def imprint(track_item, data=None):
     """
     data = data or {}
 
-    tag = set_track_item_pype_tag(track_item, data)
+    tag = set_trackitem_openpype_tag(track_item, data)
 
     # add publish attribute
     set_publish_attribute(tag, True)
@@ -1084,7 +1099,7 @@ def sync_clip_name_to_data_asset(track_items_list):
 
         # get name and data
         ti_name = track_item.name()
-        data = get_track_item_pype_data(track_item)
+        data = get_trackitem_openpype_data(track_item)
 
         # ignore if no data on the clip or not publish instance
         if not data:
@@ -1096,10 +1111,10 @@ def sync_clip_name_to_data_asset(track_items_list):
         if data["asset"] != ti_name:
             data["asset"] = ti_name
             # remove the original tag
-            tag = get_track_item_pype_tag(track_item)
+            tag = get_trackitem_openpype_tag(track_item)
             track_item.removeTag(tag)
             # create new tag with updated data
-            set_track_item_pype_tag(track_item, data)
+            set_trackitem_openpype_tag(track_item, data)
             print("asset was changed in clip: {}".format(ti_name))
 
 
