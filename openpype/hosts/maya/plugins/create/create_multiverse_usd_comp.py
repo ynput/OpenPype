@@ -17,7 +17,7 @@ class CreateMultiverseUsdComp(plugin.Creator):
 
         # Order of `fileFormat` must match extract_multiverse_usd_comp.py
         self.data["fileFormat"] = ["usda", "usd"]
-        self.data["stripNamespaces"] = True
+        self.data["stripNamespaces"] = False
         self.data["mergeTransformAndShape"] = False
         self.data["flattenContent"] = False
         self.data["writeAsCompoundLayers"] = False
