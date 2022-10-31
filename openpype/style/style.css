@@ -896,11 +896,11 @@ PixmapButton:disabled {
     background: {color:bg-buttons-disabled};
 }
 
-#PixmapHoverButton {
+#ThumbnailPixmapHoverButton {
     font-size: 11pt;
     background: {color:bg-view};
 }
-#PixmapHoverButton:hover {
+#ThumbnailPixmapHoverButton:hover {
     background: {color:bg-button-hover};
 }
 

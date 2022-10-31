@@ -299,7 +299,7 @@ class ThumbnailWidget(QtWidgets.QWidget):
         clear_pix = paint_image_with_color(clear_image, icon_color)
 
         clear_button = PixmapButton(clear_pix, buttons_widget)
-        clear_button.setObjectName("PixmapHoverButton")
+        clear_button.setObjectName("ThumbnailPixmapHoverButton")
 
         buttons_layout = QtWidgets.QHBoxLayout(buttons_widget)
         buttons_layout.setContentsMargins(3, 3, 3, 3)
