@@ -1653,7 +1653,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
             mapping[instance_ids[0]] = path
 
         else:
-            for instance_id in range(len(instance_ids)):
+            for instance_id in instance_ids:
                 root = os.path.dirname(path)
                 ext = os.path.splitext(path)[-1]
                 dst_path = os.path.join(root, str(uuid.uuid4()) + ext)
