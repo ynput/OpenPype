@@ -30,6 +30,9 @@ from .lib import (
     get_timeline_selection,
     get_current_track,
     get_track_item_tags,
+    get_track_item_pype_tag,
+    set_track_item_pype_tag,
+    get_track_item_pype_data,
     get_trackitem_openpype_tag,
     set_trackitem_openpype_tag,
     get_trackitem_openpype_data,
@@ -99,6 +102,10 @@ __all__ = [
     "apply_colorspace_project",
     "apply_colorspace_clips",
     "get_sequence_pattern_and_padding",
+    # depricated
+    "get_track_item_pype_tag",
+    "set_track_item_pype_tag",
+    "get_track_item_pype_data",
 
     # plugins
     "CreatorWidget",

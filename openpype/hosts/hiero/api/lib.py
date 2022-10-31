@@ -7,11 +7,13 @@ import os
 import re
 import sys
 import platform
+import functools
+import warnings
 import ast
 import shutil
 import hiero
 
-from Qt import QtWidgets
+from Qt import QtWidgets, QtCore, QtXml
 
 from openpype.client import get_project
 from openpype.settings import get_project_settings
@@ -20,15 +22,51 @@ from openpype.pipeline.load import filter_containers
 from openpype.lib import Logger
 from . import tags
 
-try:
-    from PySide.QtCore import QFile, QTextStream
-    from PySide.QtXml import QDomDocument
-except ImportError:
-    from PySide2.QtCore import QFile, QTextStream
-    from PySide2.QtXml import QDomDocument
 
-# from opentimelineio import opentime
-# from pprint import pformat
+class DeprecatedWarning(DeprecationWarning):
+    pass
+
+
+def deprecated(new_destination):
+    """Mark functions as deprecated.
+
+    It will result in a warning being emitted when the function is used.
+    """
+
+    func = None
+    if callable(new_destination):
+        func = new_destination
+        new_destination = None
+
+    def _decorator(decorated_func):
+        if new_destination is None:
+            warning_message = (
+                " Please check content of deprecated function to figure out"
+                " possible replacement."
+            )
+        else:
+            warning_message = " Please replace your usage with '{}'.".format(
+                new_destination
+            )
+
+        @functools.wraps(decorated_func)
+        def wrapper(*args, **kwargs):
+            warnings.simplefilter("always", DeprecatedWarning)
+            warnings.warn(
+                (
+                    "Call to deprecated function '{}'"
+                    "\nFunction was moved or removed.{}"
+                ).format(decorated_func.__name__, warning_message),
+                category=DeprecatedWarning,
+                stacklevel=4
+            )
+            return decorated_func(*args, **kwargs)
+        return wrapper
+
+    if func is None:
+        return _decorator
+    return _decorator(func)
+
 
 log = Logger.get_logger(__name__)
 
@@ -355,16 +393,19 @@ def get_track_openpype_tag(track):
             return tag
 
 
+@deprecated("openpype.hosts.hiero.api.lib.get_trackitem_openpype_tag")
 def get_track_item_pype_tag(track_item):
     # backward compatibility alias
     return get_trackitem_openpype_tag(track_item)
 
 
+@deprecated("openpype.hosts.hiero.api.lib.set_trackitem_openpype_tag")
 def set_track_item_pype_tag(track_item, data=None):
     # backward compatibility alias
     return set_trackitem_openpype_tag(track_item, data)
 
 
+@deprecated("openpype.hosts.hiero.api.lib.get_trackitem_openpype_data")
 def get_track_item_pype_data(track_item):
     # backward compatibility alias
     return get_trackitem_openpype_data(track_item)
@@ -901,22 +942,22 @@ def set_selected_track_items(track_items_list, sequence=None):
 
 
 def _read_doc_from_path(path):
-    # reading QDomDocument from HROX path
-    hrox_file = QFile(path)
-    if not hrox_file.open(QFile.ReadOnly):
+    # reading QtXml.QDomDocument from HROX path
+    hrox_file = QtCore.QFile(path)
+    if not hrox_file.open(QtCore.QFile.ReadOnly):
         raise RuntimeError("Failed to open file for reading")
-    doc = QDomDocument()
+    doc = QtXml.QDomDocument()
     doc.setContent(hrox_file)
     hrox_file.close()
     return doc
 
 
 def _write_doc_to_path(doc, path):
-    # write QDomDocument to path as HROX
-    hrox_file = QFile(path)
-    if not hrox_file.open(QFile.WriteOnly):
+    # write QtXml.QDomDocument to path as HROX
+    hrox_file = QtCore.QFile(path)
+    if not hrox_file.open(QtCore.QFile.WriteOnly):
         raise RuntimeError("Failed to open file for writing")
-    stream = QTextStream(hrox_file)
+    stream = QtCore.QTextStream(hrox_file)
     doc.save(stream, 1)
     hrox_file.close()
 
