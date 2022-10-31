@@ -55,8 +55,6 @@ class ThumbnailWidget(QtWidgets.QWidget):
         self.overlay_color = overlay_color
         self._default_pix = default_pix
 
-        self._drop_enabled = True
-
         self._current_pixes = None
         self._cached_pix = None
 
@@ -87,10 +85,6 @@ class ThumbnailWidget(QtWidgets.QWidget):
         return None
 
     def dragEnterEvent(self, event):
-        if not self._drop_enabled:
-            event.ignore()
-            return
-
         filepath = self._get_filepath_from_event(event)
         if filepath:
             event.setDropAction(QtCore.Qt.CopyAction)
@@ -100,9 +94,6 @@ class ThumbnailWidget(QtWidgets.QWidget):
         event.accept()
 
     def dropEvent(self, event):
-        if not self._drop_enabled:
-            return
-
         filepath = self._get_filepath_from_event(event)
         if not filepath:
             return
@@ -115,13 +106,6 @@ class ThumbnailWidget(QtWidgets.QWidget):
                 "Couldn't convert the source for thumbnail",
                 CardMessageTypes.error
             )
-
-    def set_drop_enabled(self, enabled):
-        if self._drop_enabled is enabled:
-            return
-        self._drop_enabled = enabled
-        self._cached_pix = None
-        self.repaint()
 
     def set_adapted_to_hint(self, enabled):
         self._adapted_to_size = enabled
@@ -172,10 +156,6 @@ class ThumbnailWidget(QtWidgets.QWidget):
         self.repaint()
 
     def _get_current_pixes(self):
-        if not self._drop_enabled:
-            # TODO different image for disabled drop
-            return [self._default_pix]
-
         if self._current_pixes is None:
             return [self._default_pix]
         return self._current_pixes
@@ -273,52 +253,10 @@ class ThumbnailWidget(QtWidgets.QWidget):
             y_offset = (height_offset_part * idx) + pix_y_offset
             final_painter.drawPixmap(x_offset, y_offset, pix)
 
-        if not self._drop_enabled:
-            overlay = self._get_drop_disabled_overlay(rect_width, rect_height)
-            final_painter.drawPixmap(0, 0, overlay)
 
         final_painter.end()
 
         self._cached_pix = final_pix
-
-    def _get_drop_disabled_overlay(self, width, height):
-        min_size = min(width, height)
-        circle_size = int(min_size * 0.8)
-        pen_width = int(circle_size * 0.1)
-        if pen_width < 1:
-            pen_width = 1
-
-        x_offset = int((width - circle_size) / 2)
-        y_offset = int((height - circle_size) / 2)
-        half_size = int(circle_size / 2)
-        angle = math.radians(45)
-        line_offset_p = QtCore.QPoint(
-            half_size * math.cos(angle),
-            half_size * math.sin(angle)
-        )
-        overlay_pix = QtGui.QPixmap(width, height)
-        overlay_pix.fill(QtCore.Qt.transparent)
-
-        painter = QtGui.QPainter()
-        painter.begin(overlay_pix)
-        painter.setRenderHints(
-            painter.Antialiasing
-            | painter.SmoothPixmapTransform
-            | painter.HighQualityAntialiasing
-        )
-        painter.setBrush(QtCore.Qt.transparent)
-        pen = QtGui.QPen(self.overlay_color)
-        pen.setWidth(pen_width)
-        painter.setPen(pen)
-        rect = QtCore.QRect(x_offset, y_offset, circle_size, circle_size)
-        painter.drawEllipse(rect)
-        painter.drawLine(
-            rect.center() - line_offset_p,
-            rect.center() + line_offset_p
-        )
-        painter.end()
-
-        return overlay_pix
 
     def _get_pix_offset_size(self, width, height, image_count):
         if image_count == 1:

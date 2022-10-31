@@ -1674,7 +1674,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
             instance_ids.append(None)
 
         if not instance_ids:
-            self._thumbnail_widget.set_drop_enabled(False)
+            self._thumbnail_widget.setVisible(False)
             self._thumbnail_widget.set_current_thumbnails(None)
             return
 
@@ -1687,5 +1687,5 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
             if path:
                 thumbnail_paths.append(path)
 
-        self._thumbnail_widget.set_drop_enabled(True)
+        self._thumbnail_widget.setVisible(True)
         self._thumbnail_widget.set_current_thumbnails(thumbnail_paths)

@@ -558,7 +558,7 @@ class CreateWidget(QtWidgets.QWidget):
             self._set_context_enabled(creator_item.create_allow_context_change)
             self._refresh_asset()
 
-        self._thumbnail_widget.set_drop_enabled(
+        self._thumbnail_widget.setVisible(
             creator_item.create_allow_thumbnail
         )
 
