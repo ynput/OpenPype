@@ -121,7 +121,7 @@ def import_fbx_task(task_properties, options_properties, options_extra_propertie
 
 def get_sequence_frame_range(sequence_path):
     sequence = get_asset(sequence_path)
-    return str((sequence.get_playback_start(), sequence.get_playback_end()))
+    return (sequence.get_playback_start(), sequence.get_playback_end())
 
 
 def generate_sequence(asset_name, asset_path, start_frame, end_frame, fps):
@@ -160,31 +160,22 @@ def generate_master_sequence(
     return sequence.get_path_name()
 
 def set_sequence_hierarchy(
-    parent_path, child_path,
-    parent_end_frame, child_start_frame, child_end_frame, map_paths_str
+    parent_path, child_path, child_start_frame, child_end_frame
 ):
-    map_paths = ast.literal_eval(map_paths_str)
-
     parent = get_asset(parent_path)
     child = get_asset(child_path)
 
     # Get existing sequencer tracks or create them if they don't exist
     tracks = parent.get_master_tracks()
     subscene_track = None
-    visibility_track = None
     for t in tracks:
         if (t.get_class() == 
                 unreal.MovieSceneSubTrack.static_class()):
             subscene_track = t
-        if (t.get_class() ==
-                unreal.MovieSceneLevelVisibilityTrack.static_class()):
-            visibility_track = t
+            break
     if not subscene_track:
         subscene_track = parent.add_master_track(
             unreal.MovieSceneSubTrack)
-    if not visibility_track:
-        visibility_track = parent.add_master_track(
-            unreal.MovieSceneLevelVisibilityTrack)
 
     # Create the sub-scene section
     subscenes = subscene_track.get_sections()
@@ -198,6 +189,27 @@ def set_sequence_hierarchy(
         subscene.set_row_index(len(subscene_track.get_sections()))
         subscene.set_editor_property('sub_sequence', child)
         subscene.set_range(child_start_frame, child_end_frame + 1)
+
+
+def set_sequence_visibility(
+    parent_path, parent_end_frame, child_start_frame, child_end_frame,
+    map_paths_str
+):
+    map_paths = ast.literal_eval(map_paths_str)
+
+    parent = get_asset(parent_path)
+
+    # Get existing sequencer tracks or create them if they don't exist
+    tracks = parent.get_master_tracks()
+    visibility_track = None
+    for t in tracks:
+        if (t.get_class() ==
+                unreal.MovieSceneLevelVisibilityTrack.static_class()):
+            visibility_track = t
+            break
+    if not visibility_track:
+        visibility_track = parent.add_master_track(
+            unreal.MovieSceneLevelVisibilityTrack)
 
     # Create the visibility section
     ar = unreal.AssetRegistryHelpers.get_asset_registry()

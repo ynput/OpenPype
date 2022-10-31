@@ -25,6 +25,7 @@ from plugins.load import (
     generate_sequence,
     generate_master_sequence,
     set_sequence_hierarchy,
+    set_sequence_visibility,
     process_family,
     apply_animation_to_actor,
     add_animation_to_sequencer,

@@ -161,8 +161,8 @@ class LayoutLoader(plugin.Loader):
                     "get_assets_of_class",
                     params=[
                         actors_dict.get(instance_name), "SkeletalMeshActor"])
-                assert len(actors) == 1, ("There should be only one "
-                    "skeleton in the loaded assets.")
+                assert len(actors) == 1, (
+                    "There should be only one skeleton in the loaded assets.")
                 actor = actors[0]
 
             up.send_request(
@@ -304,15 +304,17 @@ class LayoutLoader(plugin.Loader):
                 asset_containers = up.send_request_literal(
                     "get_assets_of_class",
                     params=[assets, "AssetContainer"])
-                assert len(asset_containers) == 1, ("There should be only one "
-                    "AssetContainer in the loaded assets.")
+                assert len(asset_containers) == 1, (
+                    "There should be only one AssetContainer in "
+                    "the loaded assets.")
                 container = asset_containers[0]
 
                 skeletons = up.send_request_literal(
                     "get_assets_of_class",
                     params=[assets, "Skeleton"])
-                assert len(skeletons) <= 1, ("There should be one "
-                    "skeleton in the loaded assets at most.")
+                assert len(skeletons) <= 1, (
+                    "There should be one skeleton at most in "
+                    "the loaded assets.")
                 if skeletons:
                     skeleton = skeletons[0]
 
@@ -400,6 +402,9 @@ class LayoutLoader(plugin.Loader):
         asset_dir, container_name = up.send_request_literal(
             "create_unique_asset_name", params=[hierarchy_dir, asset, name])
 
+        asset_path = Path(asset_dir)
+        asset_path_parent = str(asset_path.parent.as_posix())
+
         container_name += suffix
 
         up.send_request("make_directory", params=[asset_dir])
@@ -408,8 +413,11 @@ class LayoutLoader(plugin.Loader):
         shot = ""
         sequences = []
 
-        level = f"{asset_dir}/{asset}_map.{asset}_map"
-        up.send_request("new_level", params=[f"{asset_dir}/{asset}_map"])
+        level = f"{asset_path_parent}/{asset}_map.{asset}_map"
+        if not up.send_request_literal(
+                "does_asset_exist", params=[level]):
+            up.send_request(
+                "new_level", params=[f"{asset_path_parent}/{asset}_map"])
 
         if create_sequences:
             # Create map for the shot, and create hierarchy of map. If the
@@ -434,7 +442,7 @@ class LayoutLoader(plugin.Loader):
             frame_ranges = []
             for (h_dir, h) in zip(hierarchy_dir_list, hierarchy):
                 root_content = up.send_request_literal(
-                    "list_assets", params=[asset_dir, "False", "False"])
+                    "list_assets", params=[h_dir, "False", "False"])
 
                 existing_sequences = up.send_request_literal(
                     "get_assets_of_class",
@@ -451,10 +459,10 @@ class LayoutLoader(plugin.Loader):
                 else:
                     for sequence in existing_sequences:
                         sequences.append(sequence)
-                        frame_ranges.append(
-                            up.send_request_literal(
+                        frame_range = up.send_request_literal(
                                 "get_sequence_frame_range",
-                                params=[sequence]))
+                                params=[sequence])
+                        frame_ranges.append(frame_range)
 
             project_name = legacy_io.active_project()
             data = get_asset_by_name(project_name, asset)["data"]
@@ -472,7 +480,12 @@ class LayoutLoader(plugin.Loader):
                 up.send_request(
                     "set_sequence_hierarchy",
                     params=[
-                        sequences[i], sequences[i + 1], frame_ranges[i][1],
+                        sequences[i], sequences[i + 1],
+                        frame_ranges[i + 1][0], frame_ranges[i + 1][1]])
+                up.send_request(
+                    "set_sequence_visibility",
+                    params=[
+                        sequences[i], frame_ranges[i][1],
                         frame_ranges[i + 1][0], frame_ranges[i + 1][1],
                         str([level])])
 
@@ -481,7 +494,11 @@ class LayoutLoader(plugin.Loader):
                     "set_sequence_hierarchy",
                     params=[
                         sequences[-1], shot,
-                        frame_ranges[-1][1],
+                        data.get('clipIn'), data.get('clipOut')])
+                up.send_request(
+                    "set_sequence_visibility",
+                    params=[
+                        sequences[-1], frame_ranges[-1][1],
                         data.get('clipIn'), data.get('clipOut'),
                         str([level])])
 
