@@ -12,13 +12,13 @@ from openpype.pipeline import (
     register_loader_plugin_path,
     AVALON_CONTAINER_ID,
 )
-import openpype.hosts.houdini
-from openpype.hosts.houdini.api import lib
+from openpype.pipeline.load import any_outdated_containers
+from openpype.hosts.houdini import HOUDINI_HOST_DIR
+from openpype.hosts.houdini.api import lib, shelves
 
 from openpype.lib import (
     register_event_callback,
     emit_event,
-    any_outdated,
 )
 
 from .lib import get_asset_fps
@@ -28,8 +28,7 @@ log = logging.getLogger("openpype.hosts.houdini")
 AVALON_CONTAINERS = "/obj/AVALON_CONTAINERS"
 IS_HEADLESS = not hasattr(hou, "ui")
 
-HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.houdini.__file__))
-PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PLUGINS_DIR = os.path.join(HOUDINI_HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
@@ -66,7 +65,7 @@ def install():
 
     self._has_been_setup = True
     # add houdini vendor packages
-    hou_pythonpath = os.path.join(os.path.dirname(HOST_DIR), "vendor")
+    hou_pythonpath = os.path.join(HOUDINI_HOST_DIR, "vendor")
 
     sys.path.append(hou_pythonpath)
 
@@ -74,6 +73,7 @@ def install():
     # so it initializes into the correct scene FPS, Frame Range, etc.
     # todo: make sure this doesn't trigger when opening with last workfile
     _set_context_settings()
+    shelves.generate_shelves()
 
 
 def uninstall():
@@ -245,7 +245,7 @@ def on_open():
     # ensure it is using correct FPS for the asset
     lib.validate_fps()
 
-    if any_outdated():
+    if any_outdated_containers():
         from openpype.widgets import popup
 
         log.warning("Scene has outdated content.")

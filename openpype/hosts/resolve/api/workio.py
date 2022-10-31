@@ -1,15 +1,15 @@
 """Host API required Work Files tool"""
 
 import os
-from openpype.api import Logger
-from .. import (
+from openpype.lib import Logger
+from .lib import (
     get_project_manager,
     get_current_project,
     set_project_manager_to_folder_name
 )
 
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 exported_projet_ext = ".drp"
 
@@ -60,7 +60,7 @@ def open_file(filepath):
         # load project from input path
         project = pm.LoadProject(fname)
         log.info(f"Project {project.GetName()} opened...")
-        return True
+
     except AttributeError:
         log.warning((f"Project with name `{fname}` does not exist! It will "
                      f"be imported from {filepath} and then loaded..."))
@@ -69,9 +69,8 @@ def open_file(filepath):
             project = pm.LoadProject(fname)
             log.info(f"Project imported/loaded {project.GetName()}...")
             return True
-        else:
-            return False
-
+        return False
+    return True
 
 def current_file():
     pm = get_project_manager()
@@ -80,13 +79,9 @@ def current_file():
     name = project.GetName()
     fname = name + exported_projet_ext
     current_file = os.path.join(current_dir, fname)
-    normalised = os.path.normpath(current_file)
-
-    # Unsaved current file
-    if normalised == "":
+    if not current_file:
         return None
-
-    return normalised
+    return os.path.normpath(current_file)
 
 
 def work_root(session):

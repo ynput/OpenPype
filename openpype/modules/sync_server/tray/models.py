@@ -9,8 +9,8 @@ import qtawesome
 
 from openpype.tools.utils.delegates import pretty_timestamp
 
-from openpype.lib import PypeLogger
-from openpype.api import get_local_site_id
+from openpype.lib import Logger, get_local_site_id
+from openpype.client import get_representation_by_id
 
 from . import lib
 
@@ -32,7 +32,7 @@ from openpype.tools.utils.constants import (
 )
 
 
-log = PypeLogger().get_logger("SyncServer")
+log = Logger.get_logger("SyncServer")
 
 
 class _SyncRepresentationModel(QtCore.QAbstractTableModel):
@@ -440,7 +440,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         full text filtering.
 
         Allows pagination, most of heavy lifting is being done on DB side.
-        Single model matches to single collection. When project is changed,
+        Single model matches to single project. When project is changed,
         model is reset and refreshed.
 
         Args:
@@ -919,11 +919,10 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
 
         repre_id = self.data(index, Qt.UserRole)
 
-        representation = list(self.dbcon.find({"type": "representation",
-                                               "_id": repre_id}))
+        representation = get_representation_by_id(self.project, repre_id)
         if representation:
             self.sync_server.update_db(self.project, None, None,
-                                       representation.pop(),
+                                       representation,
                                        get_local_site_id(),
                                        priority=value)
         self.is_editing = False
@@ -1357,11 +1356,10 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         file_id = self.data(index, Qt.UserRole)
 
         updated_file = None
-        # conversion from cursor to list
-        representations = list(self.dbcon.find({"type": "representation",
-                                               "_id": self._id}))
+        representation = get_representation_by_id(self.project, self._id)
+        if not representation:
+            return
 
-        representation = representations.pop()
         for repre_file in representation["files"]:
             if repre_file["_id"] == file_id:
                 updated_file = repre_file

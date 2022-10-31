@@ -1,6 +1,16 @@
 {
+    "timeout_profiles": [
+        {
+            "hosts": [
+                "photoshop"
+            ],
+            "task_types": [],
+            "timeout": 600
+        }
+    ],
     "publish": {
         "CollectPublishedFiles": {
+            "sync_next_version": false,
             "task_type_to_family": {
                 "Animation": [
                     {

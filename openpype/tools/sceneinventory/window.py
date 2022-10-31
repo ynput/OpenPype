@@ -4,8 +4,9 @@ import sys
 from Qt import QtWidgets, QtCore
 import qtawesome
 
-from openpype.pipeline import legacy_io
 from openpype import style
+from openpype.client import get_projects
+from openpype.pipeline import legacy_io
 from openpype.tools.utils.delegates import VersionDelegate
 from openpype.tools.utils.lib import (
     qt_app_context,
@@ -39,8 +40,6 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         project_name = os.getenv("AVALON_PROJECT") or "<Project not set>"
         self.setWindowTitle("Scene Inventory 1.0 - {}".format(project_name))
         self.setObjectName("SceneInventory")
-        # Maya only property
-        self.setProperty("saveWindowPref", True)
 
         self.resize(1100, 480)
 
@@ -88,7 +87,8 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         view.setColumnWidth(1, 55)   # version
         view.setColumnWidth(2, 55)   # count
         view.setColumnWidth(3, 150)  # family
-        view.setColumnWidth(4, 100)  # namespace
+        view.setColumnWidth(4, 120)  # group
+        view.setColumnWidth(5, 150)  # loader
 
         # apply delegates
         version_delegate = VersionDelegate(legacy_io, self)
@@ -195,8 +195,7 @@ def show(root=None, debug=False, parent=None, items=None):
 
         if not os.environ.get("AVALON_PROJECT"):
             any_project = next(
-                project for project in legacy_io.projects()
-                if project.get("active", True) is not False
+                project for project in get_projects()
             )
 
             project_name = any_project["name"]

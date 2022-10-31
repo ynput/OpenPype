@@ -7,12 +7,8 @@ import nuke
 import pyblish.api
 
 import openpype
-from openpype.api import (
-    Logger,
-    BuildWorkfile,
-    get_current_project_settings
-)
-from openpype.lib import register_event_callback
+from openpype.settings import get_current_project_settings
+from openpype.lib import register_event_callback, Logger
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
@@ -22,10 +18,13 @@ from openpype.pipeline import (
     deregister_inventory_action_path,
     AVALON_CONTAINER_ID,
 )
+from openpype.pipeline.workfile import BuildWorkfile
 from openpype.tools.utils import host_tools
 
 from .command import viewer_update_and_undo_stop
 from .lib import (
+    Context,
+    get_main_window,
     add_publish_knob,
     WorkfileSettings,
     process_workfile_builder,
@@ -33,7 +32,13 @@ from .lib import (
     check_inventory_versions,
     set_avalon_knob_data,
     read_avalon_data,
-    Context
+)
+from .workfile_template_builder import (
+    NukePlaceholderLoadPlugin,
+    build_workfile_template,
+    update_workfile_template,
+    create_placeholder,
+    update_placeholder,
 )
 
 log = Logger.get_logger(__name__)
@@ -53,23 +58,6 @@ if os.getenv("PYBLISH_GUI", None):
     pyblish.api.register_gui(os.getenv("PYBLISH_GUI", None))
 
 
-def get_main_window():
-    """Acquire Nuke's main window"""
-    if Context.main_window is None:
-        from Qt import QtWidgets
-
-        top_widgets = QtWidgets.QApplication.topLevelWidgets()
-        name = "Foundry::UI::DockMainWindow"
-        for widget in top_widgets:
-            if (
-                widget.inherits("QMainWindow")
-                and widget.metaObject().className() == name
-            ):
-                Context.main_window = widget
-                break
-    return Context.main_window
-
-
 def reload_config():
     """Attempt to reload pipeline at run-time.
 
@@ -78,7 +66,6 @@ def reload_config():
     """
 
     for module in (
-        "openpype.api",
         "openpype.hosts.nuke.api.actions",
         "openpype.hosts.nuke.api.menu",
         "openpype.hosts.nuke.api.plugin",
@@ -142,6 +129,20 @@ def uninstall():
     _uninstall_menu()
 
 
+def _show_workfiles():
+    # Make sure parent is not set
+    # - this makes Workfiles tool as separated window which
+    #   avoid issues with reopening
+    # - it is possible to explicitly change on top flag of the tool
+    host_tools.show_workfiles(parent=None, on_top=False)
+
+
+def get_workfile_build_placeholder_plugins():
+    return [
+        NukePlaceholderLoadPlugin
+    ]
+
+
 def _install_menu():
     # uninstall original avalon menu
     main_window = get_main_window()
@@ -158,7 +159,7 @@ def _install_menu():
     menu.addSeparator()
     menu.addCommand(
         "Work Files...",
-        lambda: host_tools.show_workfiles(parent=main_window)
+        _show_workfiles
     )
 
     menu.addSeparator()
@@ -211,6 +212,24 @@ def _install_menu():
         lambda: BuildWorkfile().process()
     )
 
+    menu_template = menu.addMenu("Template Builder")  # creating template menu
+    menu_template.addCommand(
+        "Build Workfile from template",
+        lambda: build_workfile_template()
+    )
+    menu_template.addCommand(
+        "Update Workfile",
+        lambda: update_workfile_template()
+    )
+    menu_template.addSeparator()
+    menu_template.addCommand(
+        "Create Place Holder",
+        lambda: create_placeholder()
+    )
+    menu_template.addCommand(
+        "Update Place Holder",
+        lambda: update_placeholder()
+    )
     menu.addSeparator()
     menu.addCommand(
         "Experimental tools...",

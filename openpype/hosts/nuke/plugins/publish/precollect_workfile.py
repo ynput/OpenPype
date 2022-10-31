@@ -3,11 +3,13 @@ import os
 import nuke
 
 import pyblish.api
-import openpype.api as pype
+
+from openpype.lib import get_version_from_path
 from openpype.hosts.nuke.api.lib import (
     add_publish_knob,
     get_avalon_knob_data
 )
+from openpype.pipeline import KnownPublishError
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -21,6 +23,12 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         root = nuke.root()
 
         current_file = os.path.normpath(nuke.root().name())
+
+        if current_file.lower() == "root":
+            raise KnownPublishError(
+                "Workfile is not correct file name. \n"
+                "Use workfile tool to manage the name correctly."
+            )
 
         knob_data = get_avalon_knob_data(root)
 
@@ -67,7 +75,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "fps": root['fps'].value(),
 
             "currentFile": current_file,
-            "version": int(pype.get_version_from_path(current_file)),
+            "version": int(get_version_from_path(current_file)),
 
             "host": pyblish.api.current_host(),
             "hostVersion": nuke.NUKE_VERSION_STRING

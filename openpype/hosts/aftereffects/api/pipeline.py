@@ -1,12 +1,10 @@
 import os
-import sys
 
 from Qt import QtWidgets
 
 import pyblish.api
 
-from openpype import lib
-from openpype.api import Logger
+from openpype.lib import Logger, register_event_callback
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
@@ -15,10 +13,10 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
     legacy_io,
 )
+from openpype.pipeline.load import any_outdated_containers
 import openpype.hosts.aftereffects
-from openpype.lib import register_event_callback
 
-from .launch_logic import get_stub
+from .launch_logic import get_stub, ConnectionNotEstablishedYet
 
 log = Logger.get_logger(__name__)
 
@@ -111,7 +109,7 @@ def ls():
     """
     try:
         stub = get_stub()  # only after AfterEffects is up
-    except lib.ConnectionNotEstablishedYet:
+    except ConnectionNotEstablishedYet:
         print("Not connected yet, ignoring")
         return
 
@@ -136,7 +134,7 @@ def ls():
 
 def check_inventory():
     """Checks loaded containers if they are of highest version"""
-    if not lib.any_outdated():
+    if not any_outdated_containers():
         return
 
     # Warn about outdated containers.
@@ -284,7 +282,7 @@ def _get_stub():
     """
     try:
         stub = get_stub()  # only after Photoshop is up
-    except lib.ConnectionNotEstablishedYet:
+    except ConnectionNotEstablishedYet:
         print("Not connected yet, ignoring")
         return
 

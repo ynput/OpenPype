@@ -3,6 +3,7 @@ import uuid
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
+from openpype.client import get_projects
 from openpype.pipeline import AvalonMongoDB
 from openpype.style import get_objected_colors
 from openpype.tools.utils.widgets import ImageButton
@@ -322,7 +323,7 @@ class SettingsToolBtn(ImageButton):
     @classmethod
     def _get_icon_type(cls, btn_type):
         if btn_type not in cls._cached_icons:
-            settings_colors = get_objected_colors()["settings"]
+            settings_colors = get_objected_colors("settings")
             normal_color = settings_colors["image-btn"].get_qcolor()
             hover_color = settings_colors["image-btn-hover"].get_qcolor()
             disabled_color = settings_colors["image-btn-disabled"].get_qcolor()
@@ -783,15 +784,12 @@ class ProjectModel(QtGui.QStandardItemModel):
 
         self.setColumnCount(2)
 
-        self.dbcon = None
-
         self._only_active = only_active
         self._default_item = None
         self._items_by_name = {}
         self._versions_by_project = {}
 
-        colors = get_objected_colors()
-        font_color = colors["font"].get_qcolor()
+        font_color = get_objected_colors("font").get_qcolor()
         font_color.setAlpha(67)
         self._version_font_color = font_color
         self._current_version = get_openpype_version()
@@ -828,9 +826,6 @@ class ProjectModel(QtGui.QStandardItemModel):
             index = self.index(index.row(), 0, index.parent())
         return super(ProjectModel, self).flags(index)
 
-    def set_dbcon(self, dbcon):
-        self.dbcon = dbcon
-
     def refresh(self):
         # Change id of versions refresh
         self._version_refresh_id = uuid.uuid4()
@@ -846,31 +841,30 @@ class ProjectModel(QtGui.QStandardItemModel):
 
         self._default_item.setData("", PROJECT_VERSION_ROLE)
         project_names = set()
-        if self.dbcon is not None:
-            for project_doc in self.dbcon.projects(
-                projection={"name": 1, "data.active": 1},
-                only_active=self._only_active
-            ):
-                project_name = project_doc["name"]
-                project_names.add(project_name)
-                if project_name in self._items_by_name:
-                    item = self._items_by_name[project_name]
-                else:
-                    item = QtGui.QStandardItem(project_name)
+        for project_doc in get_projects(
+            inactive=not self._only_active,
+            fields=["name", "data.active"]
+        ):
+            project_name = project_doc["name"]
+            project_names.add(project_name)
+            if project_name in self._items_by_name:
+                item = self._items_by_name[project_name]
+            else:
+                item = QtGui.QStandardItem(project_name)
 
-                    self._items_by_name[project_name] = item
-                    new_items.append(item)
+                self._items_by_name[project_name] = item
+                new_items.append(item)
 
-                is_active = project_doc.get("data", {}).get("active", True)
-                item.setData(project_name, PROJECT_NAME_ROLE)
-                item.setData(is_active, PROJECT_IS_ACTIVE_ROLE)
-                item.setData("", PROJECT_VERSION_ROLE)
-                item.setData(False, PROJECT_IS_SELECTED_ROLE)
+            is_active = project_doc.get("data", {}).get("active", True)
+            item.setData(project_name, PROJECT_NAME_ROLE)
+            item.setData(is_active, PROJECT_IS_ACTIVE_ROLE)
+            item.setData("", PROJECT_VERSION_ROLE)
+            item.setData(False, PROJECT_IS_SELECTED_ROLE)
 
-                if not is_active:
-                    font = item.font()
-                    font.setItalic(True)
-                    item.setFont(font)
+            if not is_active:
+                font = item.font()
+                font.setItalic(True)
+                item.setFont(font)
 
         root_item = self.invisibleRootItem()
         for project_name in tuple(self._items_by_name.keys()):
@@ -1067,8 +1061,6 @@ class ProjectListWidget(QtWidgets.QWidget):
         self.project_model = project_model
         self.inactive_chk = inactive_chk
 
-        self.dbcon = None
-
     def set_entity(self, entity):
         self._entity = entity
 
@@ -1211,15 +1203,6 @@ class ProjectListWidget(QtWidgets.QWidget):
             selected_project = index.data(PROJECT_NAME_ROLE)
             break
 
-        if not self.dbcon:
-            try:
-                self.dbcon = AvalonMongoDB()
-                self.dbcon.install()
-            except Exception:
-                self.dbcon = None
-                self.current_project = None
-
-        self.project_model.set_dbcon(self.dbcon)
         self.project_model.refresh()
 
         self.project_proxy.sort(0)

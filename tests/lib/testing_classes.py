@@ -10,9 +10,7 @@ import glob
 import platform
 
 from tests.lib.db_handler import DBHandler
-from tests.lib.file_handler import RemoteFileHandler
-
-from openpype.lib.remote_publish import find_variant_key
+from common.openpype_common.distribution.file_handler import RemoteFileHandler
 
 
 class BaseTest:
@@ -210,7 +208,10 @@ class PublishTest(ModuleUnitTest):
 
         application_manager = ApplicationManager()
         if not app_variant:
-            app_variant = find_variant_key(application_manager, self.APP)
+            variant = (
+                application_manager.find_latest_available_variant_for_group(
+                    self.APP))
+            app_variant = variant.name
 
         yield "{}/{}".format(self.APP, app_variant)
 
@@ -314,30 +315,22 @@ class PublishTest(ModuleUnitTest):
 
             Compares only presence, not size nor content!
         """
-        published_dir_base = download_test_data
-        published_dir = os.path.join(output_folder_url,
-                                     self.PROJECT,
-                                     self.ASSET,
-                                     self.TASK,
-                                     "**")
-        expected_dir_base = os.path.join(published_dir_base,
+        published_dir_base = output_folder_url
+        expected_dir_base = os.path.join(download_test_data,
                                          "expected")
-        expected_dir = os.path.join(expected_dir_base,
-                                    self.PROJECT,
-                                    self.ASSET,
-                                    self.TASK,
-                                    "**")
-        print("Comparing published:'{}' : expected:'{}'".format(published_dir,
-                                                                expected_dir))
-        published = set(f.replace(published_dir_base, '') for f in
-                        glob.glob(published_dir, recursive=True) if
-                        f != published_dir_base and os.path.exists(f))
-        expected = set(f.replace(expected_dir_base, '') for f in
-                       glob.glob(expected_dir, recursive=True) if
-                       f != expected_dir_base and os.path.exists(f))
 
-        not_matched = expected.difference(published)
-        assert not not_matched, "Missing {} files".format(not_matched)
+        print("Comparing published:'{}' : expected:'{}'".format(
+            published_dir_base, expected_dir_base))
+        published = set(f.replace(published_dir_base, '') for f in
+                        glob.glob(published_dir_base + "\\**", recursive=True)
+                        if f != published_dir_base and os.path.exists(f))
+        expected = set(f.replace(expected_dir_base, '') for f in
+                       glob.glob(expected_dir_base + "\\**", recursive=True)
+                       if f != expected_dir_base and os.path.exists(f))
+
+        not_matched = expected.symmetric_difference(published)
+        assert not not_matched, "Missing {} files".format(
+            "\n".join(sorted(not_matched)))
 
 
 class HostFixtures(PublishTest):

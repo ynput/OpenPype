@@ -6,6 +6,83 @@
     "is_file": true,
     "children": [
         {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (ImageIO)",
+            "collapsible": true,
+            "is_group": true,
+            "children": [
+                {
+                    "key": "colorManagementPreference_v2",
+                    "type": "dict",
+                    "label": "Color Management Preference v2 (Maya 2022+)",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Use Color Management Preference v2"
+                        },
+                        {
+                            "type": "path",
+                            "key": "configFilePath",
+                            "label": "OCIO Config File Path",
+                            "multiplatform": true,
+                            "multipath": true
+                        },
+                        {
+                            "type": "text",
+                            "key": "renderSpace",
+                            "label": "Rendering Space"
+                        },
+                        {
+                            "type": "text",
+                            "key": "displayName",
+                            "label": "Display"
+                        },
+                        {
+                            "type": "text",
+                            "key": "viewName",
+                            "label": "View"
+                        }
+                    ]
+                },
+                {
+                    "key": "colorManagementPreference",
+                    "type": "dict",
+                    "label": "Color Management Preference (legacy)",
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "path",
+                            "key": "configFilePath",
+                            "label": "OCIO Config File Path",
+                            "multiplatform": true,
+                            "multipath": true
+                        },
+                        {
+                            "type": "text",
+                            "key": "renderSpace",
+                            "label": "Rendering Space"
+                        },
+                        {
+                            "type": "text",
+                            "key": "viewTransform",
+                            "label": "Viewer Transform"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "text",
+            "multiline" : true,
+            "use_label_wrap": true,
+            "key": "mel_workspace",
+            "label": "Maya MEL Workspace"
+         },
+        {
             "type": "dict-modifiable",
             "key": "ext_mapping",
             "label": "Extension Mapping",
@@ -59,6 +136,10 @@
         },
         {
             "type": "schema",
+            "name": "schema_maya_render_settings"
+        },
+        {
+            "type": "schema",
             "name": "schema_maya_create"
         },
         {
@@ -72,6 +153,10 @@
         {
             "type": "schema",
             "name": "schema_workfile_build"
+        },
+        {
+            "type": "schema",
+            "name": "schema_templated_workfile_build"
         },
         {
             "type": "schema",

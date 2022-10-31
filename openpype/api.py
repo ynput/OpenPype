@@ -9,8 +9,8 @@ from .settings import (
 )
 from .lib import (
     PypeLogger,
+    Logger,
     Anatomy,
-    config,
     execute,
     run_subprocess,
     version_up,
@@ -48,7 +48,6 @@ from .plugin import (
     ValidateContentsOrder,
     ValidateSceneOrder,
     ValidateMeshOrder,
-    ValidationException
 )
 
 # temporary fix, might
@@ -58,8 +57,6 @@ from .action import (
     RepairContextAction
 )
 
-# for backward compatibility with Pype 2
-Logger = PypeLogger
 
 __all__ = [
     "get_system_settings",
@@ -74,7 +71,6 @@ __all__ = [
     "PypeLogger",
     "Logger",
     "Anatomy",
-    "config",
     "execute",
     "get_default_components",
     "ApplicationManager",
@@ -94,8 +90,6 @@ __all__ = [
     "get_errored_instances_from_context",
     "RepairAction",
     "RepairContextAction",
-
-    "ValidationException",
 
     # get contextual data
     "version_up",

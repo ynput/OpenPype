@@ -1,8 +1,11 @@
 from .utils import (
     HeroVersionType,
+
     IncompatibleLoaderError,
+    InvalidRepresentationContext,
 
     get_repres_contexts,
+    get_contexts_for_repre_docs,
     get_subset_contexts,
     get_representation_context,
 
@@ -16,14 +19,20 @@ from .utils import (
     switch_container,
 
     get_loader_identifier,
+    get_loaders_by_name,
 
     get_representation_path_from_context,
     get_representation_path,
+    get_representation_path_with_anatomy,
 
     is_compatible_loader,
 
     loaders_from_repre_context,
     loaders_from_representation,
+
+    any_outdated_containers,
+    get_outdated_containers,
+    filter_containers,
 )
 
 from .plugins import (
@@ -41,9 +50,12 @@ from .plugins import (
 __all__ = (
     # utils.py
     "HeroVersionType",
+
     "IncompatibleLoaderError",
+    "InvalidRepresentationContext",
 
     "get_repres_contexts",
+    "get_contexts_for_repre_docs",
     "get_subset_contexts",
     "get_representation_context",
 
@@ -57,14 +69,20 @@ __all__ = (
     "switch_container",
 
     "get_loader_identifier",
+    "get_loaders_by_name",
 
     "get_representation_path_from_context",
     "get_representation_path",
+    "get_representation_path_with_anatomy",
 
     "is_compatible_loader",
 
     "loaders_from_repre_context",
     "loaders_from_representation",
+
+    "any_outdated_containers",
+    "get_outdated_containers",
+    "filter_containers",
 
     # plugins.py
     "LoaderPlugin",

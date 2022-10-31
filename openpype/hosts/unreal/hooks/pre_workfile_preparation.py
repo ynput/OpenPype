@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 """Hook to launch Unreal and prepare projects."""
 import os
+import copy
 from pathlib import Path
 
 from openpype.lib import (
     PreLaunchHook,
     ApplicationLaunchFailed,
     ApplicationNotFound,
-    get_workdir_data,
-    get_workfile_template_key
 )
+from openpype.pipeline.workfile import get_workfile_template_key
 import openpype.hosts.unreal.lib as unreal_lib
 
 
@@ -35,18 +35,13 @@ class UnrealPrelaunchHook(PreLaunchHook):
                 return last_workfile.name
 
         # Prepare data for fill data and for getting workfile template key
-        task_name = self.data["task_name"]
         anatomy = self.data["anatomy"]
-        asset_doc = self.data["asset_doc"]
         project_doc = self.data["project_doc"]
 
-        asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
-        task_info = asset_tasks.get(task_name) or {}
-        task_type = task_info.get("type")
+        # Use already prepared workdir data
+        workdir_data = copy.deepcopy(self.data["workdir_data"])
+        task_type = workdir_data.get("task", {}).get("type")
 
-        workdir_data = get_workdir_data(
-            project_doc, asset_doc, task_name, self.host_name
-        )
         # QUESTION raise exception if version is part of filename template?
         workdir_data["version"] = 1
         workdir_data["ext"] = "uproject"

@@ -63,7 +63,10 @@ from .execute import (
     path_to_subprocess_arg,
     CREATE_NO_WINDOW
 )
-from .log import PypeLogger, timeit
+from .log import (
+    Logger,
+    PypeLogger,
+)
 
 from .path_templates import (
     merge_dict,
@@ -83,8 +86,9 @@ from .anatomy import (
     Anatomy
 )
 
-from .config import (
+from .dateutils import (
     get_datetime_data,
+    get_timestamp,
     get_formatted_current_time
 )
 
@@ -111,6 +115,7 @@ from .transcoding import (
     get_ffmpeg_codec_args,
     get_ffmpeg_format_args,
     convert_ffprobe_fps_value,
+    convert_ffprobe_fps_to_float,
 )
 from .avalon_context import (
     CURRENT_DOC_SCHEMAS,
@@ -184,11 +189,11 @@ from .plugin_tools import (
     filter_pyblish_plugins,
     set_plugin_attributes_from_settings,
     source_hash,
-    get_unique_layer_name,
-    get_background_layers,
 )
 
 from .path_tools import (
+    format_file_size,
+    collect_frames,
     create_hard_link,
     version_up,
     get_version_from_path,
@@ -196,19 +201,6 @@ from .path_tools import (
     create_project_folders,
     create_workdir_extra_folders,
     get_project_basic_paths,
-)
-
-from .editorial import (
-    is_overlapping_otio_ranges,
-    otio_range_to_frame_range,
-    otio_range_with_handles,
-    get_media_range_with_retimes,
-    convert_to_padded_path,
-    trim_media_range,
-    range_from_frames,
-    frames_to_secons,
-    frames_to_timecode,
-    make_sequence_collection
 )
 
 from .openpype_version import (
@@ -283,6 +275,7 @@ __all__ = [
     "get_ffmpeg_codec_args",
     "get_ffmpeg_format_args",
     "convert_ffprobe_fps_value",
+    "convert_ffprobe_fps_to_float",
 
     "CURRENT_DOC_SCHEMAS",
     "PROJECT_NAME_ALLOWED_SYMBOLS",
@@ -348,9 +341,9 @@ __all__ = [
     "filter_pyblish_plugins",
     "set_plugin_attributes_from_settings",
     "source_hash",
-    "get_unique_layer_name",
-    "get_background_layers",
 
+    "format_file_size",
+    "collect_frames",
     "create_hard_link",
     "version_up",
     "get_version_from_path",
@@ -370,23 +363,13 @@ __all__ = [
     "get_datetime_data",
     "get_formatted_current_time",
 
+    "Logger",
     "PypeLogger",
+
     "get_default_components",
     "validate_mongo_connection",
     "OpenPypeMongoConnection",
 
-    "timeit",
-
-    "is_overlapping_otio_ranges",
-    "otio_range_with_handles",
-    "convert_to_padded_path",
-    "otio_range_to_frame_range",
-    "get_media_range_with_retimes",
-    "trim_media_range",
-    "range_from_frames",
-    "frames_to_secons",
-    "frames_to_timecode",
-    "make_sequence_collection",
     "create_project_folders",
     "create_workdir_extra_folders",
     "get_project_basic_paths",

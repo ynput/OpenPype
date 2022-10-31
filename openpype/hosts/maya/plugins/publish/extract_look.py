@@ -13,8 +13,8 @@ from maya import cmds  # noqa
 
 import pyblish.api
 
-import openpype.api
-from openpype.pipeline import legacy_io
+from openpype.lib import source_hash, run_subprocess
+from openpype.pipeline import legacy_io, publish
 from openpype.hosts.maya.api import lib
 
 # Modes for transfer
@@ -25,6 +25,31 @@ HARDLINK = 2
 def escape_space(path):
     """Ensure path is enclosed by quotes to allow paths with spaces"""
     return '"{}"'.format(path) if " " in path else path
+
+
+def get_ocio_config_path(profile_folder):
+    """Path to OpenPype vendorized OCIO.
+
+    Vendorized OCIO config file path is grabbed from the specific path
+    hierarchy specified below.
+
+    "{OPENPYPE_ROOT}/vendor/OpenColorIO-Configs/{profile_folder}/config.ocio"
+    Args:
+        profile_folder (str): Name of folder to grab config file from.
+
+    Returns:
+        str: Path to vendorized config file.
+    """
+
+    return os.path.join(
+        os.environ["OPENPYPE_ROOT"],
+        "vendor",
+        "bin",
+        "ocioconfig",
+        "OpenColorIOConfigs",
+        profile_folder,
+        "config.ocio"
+    )
 
 
 def find_paths_by_hash(texture_hash):
@@ -43,7 +68,7 @@ def find_paths_by_hash(texture_hash):
     return legacy_io.distinct(key, {"type": "version"})
 
 
-def maketx(source, destination, *args):
+def maketx(source, destination, args, logger):
     """Make `.tx` using `maketx` with some default settings.
 
     The settings are based on default as used in Arnold's
@@ -54,7 +79,8 @@ def maketx(source, destination, *args):
     Args:
         source (str): Path to source file.
         destination (str): Writing destination path.
-        *args: Additional arguments for `maketx`.
+        args (list): Additional arguments for `maketx`.
+        logger (logging.Logger): Logger to log messages to.
 
     Returns:
         str: Output of `maketx` command.
@@ -69,7 +95,7 @@ def maketx(source, destination, *args):
             "OIIO tool not found in {}".format(maketx_path))
         raise AssertionError("OIIO tool not found")
 
-    cmd = [
+    subprocess_args = [
         maketx_path,
         "-v",  # verbose
         "-u",  # update mode
@@ -78,26 +104,20 @@ def maketx(source, destination, *args):
         "--checknan",
         # use oiio-optimized settings for tile-size, planarconfig, metadata
         "--oiio",
-        "--filter lanczos3",
+        "--filter", "lanczos3",
+        source
     ]
 
-    cmd.extend(args)
-    cmd.extend(["-o", escape_space(destination), escape_space(source)])
+    subprocess_args.extend(args)
+    subprocess_args.extend(["-o", destination])
 
-    cmd = " ".join(cmd)
+    cmd = " ".join(subprocess_args)
+    logger.debug(cmd)
 
-    CREATE_NO_WINDOW = 0x08000000  # noqa
-    kwargs = dict(args=cmd, stderr=subprocess.STDOUT)
-
-    if sys.platform == "win32":
-        kwargs["creationflags"] = CREATE_NO_WINDOW
     try:
-        out = subprocess.check_output(**kwargs)
-    except subprocess.CalledProcessError as exc:
-        print(exc)
-        import traceback
-
-        traceback.print_exc()
+        out = run_subprocess(subprocess_args)
+    except Exception:
+        logger.error("Maketx converion failed", exc_info=True)
         raise
 
     return out
@@ -135,7 +155,7 @@ def no_workspace_dir():
         os.rmdir(fake_workspace_dir)
 
 
-class ExtractLook(openpype.api.Extractor):
+class ExtractLook(publish.Extractor):
     """Extract Look (Maya Scene + JSON)
 
     Only extracts the sets (shadingEngines and alike) alongside a .json file
@@ -405,7 +425,19 @@ class ExtractLook(openpype.api.Extractor):
                 # node doesn't have color space attribute
                 color_space = "Raw"
             else:
-                if files_metadata[source]["color_space"] == "Raw":
+                # get the resolved files
+                metadata = files_metadata.get(source)
+                # if the files are unresolved from `source`
+                # assume color space from the first file of
+                # the resource
+                if not metadata:
+                    first_file = next(iter(resource.get(
+                        "files", [])), None)
+                    if not first_file:
+                        continue
+                    first_filepath = os.path.normpath(first_file)
+                    metadata = files_metadata[first_filepath]
+                if metadata["color_space"] == "Raw":
                     # set color space to raw if we linearized it
                     color_space = "Raw"
                 # Remap file node filename to destination
@@ -467,7 +499,7 @@ class ExtractLook(openpype.api.Extractor):
         args = []
         if do_maketx:
             args.append("maketx")
-        texture_hash = openpype.api.source_hash(filepath, *args)
+        texture_hash = source_hash(filepath, *args)
 
         # If source has been published before with the same settings,
         # then don't reprocess but hardlink from the original
@@ -486,13 +518,17 @@ class ExtractLook(openpype.api.Extractor):
         if do_maketx and ext != ".tx":
             # Produce .tx file in staging if source file is not .tx
             converted = os.path.join(staging, "resources", fname + ".tx")
-
+            additional_args = [
+                "--sattrib",
+                "sourceHash",
+                texture_hash
+            ]
             if linearize:
                 self.log.info("tx: converting sRGB -> linear")
-                colorconvert = "--colorconvert sRGB linear"
-            else:
-                colorconvert = ""
+                additional_args.extend(["--colorconvert", "sRGB", "linear"])
 
+            config_path = get_ocio_config_path("nuke-default")
+            additional_args.extend(["--colorconfig", config_path])
             # Ensure folder exists
             if not os.path.exists(os.path.dirname(converted)):
                 os.makedirs(os.path.dirname(converted))
@@ -501,11 +537,8 @@ class ExtractLook(openpype.api.Extractor):
             maketx(
                 filepath,
                 converted,
-                # Include `source-hash` as string metadata
-                "-sattrib",
-                "sourceHash",
-                escape_space(texture_hash),
-                colorconvert,
+                additional_args,
+                self.log
             )
 
             return converted, COPY, texture_hash

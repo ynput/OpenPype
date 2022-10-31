@@ -1,5 +1,5 @@
-#include "OpenPype.h"
 #include "OpenPypeStyle.h"
+#include "OpenPype.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Slate/SlateGameResources.h"

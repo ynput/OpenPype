@@ -1,11 +1,13 @@
-import pyblish.api
-import nuke
 import os
-import openpype
+
+import pyblish.api
 import clique
+import nuke
+
+from openpype.pipeline import publish
 
 
-class NukeRenderLocal(openpype.api.Extractor):
+class NukeRenderLocal(publish.Extractor):
     # TODO: rewrite docstring to nuke
     """Render the current Nuke composition locally.
 
@@ -30,10 +32,6 @@ class NukeRenderLocal(openpype.api.Extractor):
         self.log.debug("instance collected: {}".format(instance.data))
 
         first_frame = instance.data.get("frameStartHandle", None)
-
-        # exception for slate workflow
-        if "slate" in families:
-            first_frame -= 1
 
         last_frame = instance.data.get("frameEndHandle", None)
         node_subset_name = instance.data.get("name", None)
@@ -68,10 +66,6 @@ class NukeRenderLocal(openpype.api.Extractor):
             int(last_frame)
         )
 
-        # exception for slate workflow
-        if "slate" in families:
-            first_frame += 1
-
         ext = node["file_type"].value()
 
         if "representations" not in instance.data:
@@ -88,8 +82,11 @@ class NukeRenderLocal(openpype.api.Extractor):
             repre = {
                 'name': ext,
                 'ext': ext,
-                'frameStart': "%0{}d".format(
-                    len(str(last_frame))) % first_frame,
+                'frameStart': (
+                    "{{:0>{}}}"
+                    .format(len(str(last_frame)))
+                    .format(first_frame)
+                ),
                 'files': filenames,
                 "stagingDir": out_dir
             }
@@ -105,13 +102,16 @@ class NukeRenderLocal(openpype.api.Extractor):
             instance.data['family'] = 'render'
             families.remove('render.local')
             families.insert(0, "render2d")
+            instance.data["anatomyData"]["family"] = "render"
         elif "prerender.local" in families:
             instance.data['family'] = 'prerender'
             families.remove('prerender.local')
             families.insert(0, "prerender")
+            instance.data["anatomyData"]["family"] = "prerender"
         elif "still.local" in families:
             instance.data['family'] = 'image'
             families.remove('still.local')
+            instance.data["anatomyData"]["family"] = "image"
         instance.data["families"] = families
 
         collections, remainder = clique.assemble(filenames)
@@ -123,4 +123,4 @@ class NukeRenderLocal(openpype.api.Extractor):
 
         self.log.info('Finished render')
 
-        self.log.debug("instance extracted: {}".format(instance.data))
+        self.log.debug("_ instance.data: {}".format(instance.data))

@@ -162,7 +162,15 @@ class LoadClip(plugin.NukeLoader):
             data_imprint = {}
             for k in add_keys:
                 if k == 'version':
-                    data_imprint[k] = context["version"]['name']
+                    version_doc = context["version"]
+                    if version_doc["type"] == "hero_version":
+                        version = "hero"
+                    else:
+                        version = version_doc.get("name")
+
+                    if version:
+                        data_imprint[k] = version
+
                 elif k == 'colorspace':
                     colorspace = repre["data"].get(k)
                     colorspace = colorspace or version_data.get(k)
@@ -417,7 +425,7 @@ class LoadClip(plugin.NukeLoader):
         colorspace = repre_data.get("colorspace")
         colorspace = colorspace or version_data.get("colorspace")
 
-        # colorspace from `project_anatomy/imageio/nuke/regexInputs`
+        # colorspace from `project_settings/nuke/imageio/regexInputs`
         iio_colorspace = get_imageio_input_colorspace(path)
 
         # Set colorspace defined in version data

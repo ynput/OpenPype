@@ -1,14 +1,13 @@
 import os
 import hiero
 
-from openpype.api import Logger
-from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
+from openpype.lib import Logger
 
 log = Logger.get_logger(__name__)
 
 
 def file_extensions():
-    return HOST_WORKFILE_EXTENSIONS["hiero"]
+    return [".hrox"]
 
 
 def has_unsaved_changes():

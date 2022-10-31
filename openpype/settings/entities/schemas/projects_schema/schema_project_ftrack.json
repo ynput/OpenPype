@@ -301,24 +301,6 @@
                 },
                 {
                     "type": "dict",
-                    "key": "first_version_status",
-                    "label": "Set status on first created version",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "text",
-                            "key": "status",
-                            "label": "Status"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
                     "key": "next_task_update",
                     "is_group": true,
                     "label": "Update status on next task",
@@ -410,7 +392,41 @@
                         {
                             "type": "boolean",
                             "key": "cycle_enabled",
-                            "label": "Create daily review session"
+                            "label": "Run automatically every day"
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "list-strict",
+                            "key": "cycle_hour_start",
+                            "label": "Create daily review session at",
+                            "tooltip": "This may take affect on next day",
+                            "object_types": [
+                                {
+                                    "label": "H:",
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 23,
+                                    "decimal": 0
+                                }, {
+                                    "label": "M:",
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 59,
+                                    "decimal": 0
+                                }, {
+                                    "label": "S:",
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 59,
+                                    "decimal": 0
+                                }
+                            ]
+                        },
+                        {
+                            "type": "label",
+                            "label": "This can't be overriden per project and any change will take effect on the next day or on restart of event server."
                         },
                         {
                             "type": "separator"
@@ -809,6 +825,44 @@
                 },
                 {
                     "type": "dict",
+                    "key": "IntegrateHierarchyToFtrack",
+                    "label": "Integrate Hierarchy to ftrack",
+                    "is_group": true,
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Set task status on new task creation. Ftrack's default status is used otherwise."
+                        },
+                        {
+                            "type": "list",
+                            "key": "create_task_status_profiles",
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "task_types",
+                                        "label": "Task types",
+                                        "type": "task-types-enum"
+                                    },
+                                    {
+                                        "key": "task_names",
+                                        "label": "Task names",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "status_name",
+                                        "label": "Status name"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
                     "collapsible": true,
                     "checkbox_key": "enabled",
                     "key": "IntegrateFtrackNote",
@@ -898,8 +952,23 @@
                 },
                 {
                     "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "IntegrateFtrackComponentOverwrite",
+                    "label": "IntegrateFtrackComponentOverwrite",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
                     "key": "IntegrateFtrackInstance",
-                    "label": "IntegrateFtrackInstance",
+                    "label": "Integrate Ftrack Instance",
                     "is_group": true,
                     "children": [
                         {
@@ -947,6 +1016,82 @@
                                     },
                                     {
                                         "key": "status",
+                                        "label": "Status name",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "key": "additional_metadata_keys",
+                            "label": "Additional metadata keys on components",
+                            "type": "enum",
+                            "multiselection": true,
+                            "enum_items": [
+                                {"openpype_version": "OpenPype version"},
+                                {"frame_start": "Frame start"},
+                                {"frame_end": "Frame end"},
+                                {"duration": "Duration"},
+                                {"width": "Resolution width"},
+                                {"height": "Resolution height"},
+                                {"fps": "FPS"},
+                                {"code": "Codec"}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "IntegrateFtrackFarmStatus",
+                    "label": "Integrate Ftrack Farm Status",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Change status of task when it's subset is submitted to farm"
+                        },
+                        {
+                            "type": "list",
+                            "collapsible": true,
+                            "key": "farm_status_profiles",
+                            "label": "Farm status profiles",
+                            "use_label_wrap": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "hosts",
+                                        "label": "Host names",
+                                        "type": "hosts-enum",
+                                        "multiselection": true
+                                    },
+                                    {
+                                        "key": "task_types",
+                                        "label": "Task types",
+                                        "type": "task-types-enum"
+                                    },
+                                    {
+                                        "key": "task_names",
+                                        "label": "Task names",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "key": "families",
+                                        "label": "Families",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "key": "subsets",
+                                        "label": "Subset names",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "type": "separator"
+                                    },
+                                    {
+                                        "key": "status_name",
                                         "label": "Status name",
                                         "type": "text"
                                     }

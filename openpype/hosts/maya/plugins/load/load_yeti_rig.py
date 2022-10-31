@@ -1,7 +1,7 @@
 import os
 from collections import defaultdict
 
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api import lib
 
@@ -54,7 +54,7 @@ class YetiRigLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         # load rig
         with lib.maintained_selection():
             file_url = self.prepare_root_value(self.fname,
-                                               context["project"]["code"])
+                                               context["project"]["name"])
             nodes = cmds.file(file_url,
                               namespace=namespace,
                               reference=True,

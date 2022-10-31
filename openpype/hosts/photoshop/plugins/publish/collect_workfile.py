@@ -1,7 +1,7 @@
 import os
 import pyblish.api
 
-from openpype.lib import get_subset_name_with_asset_doc
+from openpype.pipeline.create import get_subset_name
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -10,6 +10,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.1
     label = "Collect Workfile"
     hosts = ["photoshop"]
+
+    default_variant = "Main"
 
     def process(self, context):
         existing_instance = None
@@ -20,13 +22,16 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
                 break
 
         family = "workfile"
-        subset = get_subset_name_with_asset_doc(
+        # context.data["variant"] might come only from collect_batch_data
+        variant = context.data.get("variant") or self.default_variant
+        subset = get_subset_name(
             family,
-            "",
+            variant,
             context.data["anatomyData"]["task"]["name"],
             context.data["assetEntity"],
             context.data["anatomyData"]["project"]["name"],
-            host_name=context.data["hostName"]
+            host_name=context.data["hostName"],
+            project_settings=context.data["project_settings"]
         )
 
         file_path = context.data["currentFile"]

@@ -2,11 +2,11 @@ import os
 
 from maya import cmds
 
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.maya.api.lib import maintained_selection
 
 
-class ExtractMultiverseLook(openpype.api.Extractor):
+class ExtractMultiverseLook(publish.Extractor):
     """Extractor for Multiverse USD look data.
 
     This will extract:

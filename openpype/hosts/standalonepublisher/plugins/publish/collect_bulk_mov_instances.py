@@ -2,8 +2,8 @@ import copy
 import json
 import pyblish.api
 
-from openpype.lib import get_subset_name_with_asset_doc
 from openpype.client import get_asset_by_name
+from openpype.pipeline.create import get_subset_name
 
 
 class CollectBulkMovInstances(pyblish.api.InstancePlugin):
@@ -44,12 +44,14 @@ class CollectBulkMovInstances(pyblish.api.InstancePlugin):
                 task_name = available_task_names[_task_name_low]
                 break
 
-        subset_name = get_subset_name_with_asset_doc(
+        subset_name = get_subset_name(
             self.new_instance_family,
             self.subset_name_variant,
             task_name,
             asset_doc,
-            project_name
+            project_name,
+            host_name=context.data["hostName"],
+            project_settings=context.data["project_settings"]
         )
         instance_name = f"{asset_name}_{subset_name}"
 

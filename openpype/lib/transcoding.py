@@ -42,6 +42,28 @@ XML_CHAR_REF_REGEX_HEX = re.compile(r"&#x?[0-9a-fA-F]+;")
 # Regex to parse array attributes
 ARRAY_TYPE_REGEX = re.compile(r"^(int|float|string)\[\d+\]$")
 
+IMAGE_EXTENSIONS = [
+    ".ani", ".anim", ".apng", ".art", ".bmp", ".bpg", ".bsave", ".cal",
+    ".cin", ".cpc", ".cpt", ".dds", ".dpx", ".ecw", ".exr", ".fits",
+    ".flic", ".flif", ".fpx", ".gif", ".hdri", ".hevc", ".icer",
+    ".icns", ".ico", ".cur", ".ics", ".ilbm", ".jbig", ".jbig2",
+    ".jng", ".jpeg", ".jpeg-ls", ".jpeg", ".2000", ".jpg", ".xr",
+    ".jpeg", ".xt", ".jpeg-hdr", ".kra", ".mng", ".miff", ".nrrd",
+    ".ora", ".pam", ".pbm", ".pgm", ".ppm", ".pnm", ".pcx", ".pgf",
+    ".pictor", ".png", ".psb", ".psp", ".qtvr", ".ras",
+    ".rgbe", ".logluv", ".tiff", ".sgi", ".tga", ".tiff", ".tiff/ep",
+    ".tiff/it", ".ufo", ".ufp", ".wbmp", ".webp", ".xbm", ".xcf",
+    ".xpm", ".xwd"
+]
+
+VIDEO_EXTENSIONS = [
+    ".3g2", ".3gp", ".amv", ".asf", ".avi", ".drc", ".f4a", ".f4b",
+    ".f4p", ".f4v", ".flv", ".gif", ".gifv", ".m2v", ".m4p", ".m4v",
+    ".mkv", ".mng", ".mov", ".mp2", ".mp4", ".mpe", ".mpeg", ".mpg",
+    ".mpv", ".mxf", ".nsv", ".ogg", ".ogv", ".qt", ".rm", ".rmvb",
+    ".roq", ".svi", ".vob", ".webm", ".wmv", ".yuv"
+]
+
 
 def get_transcode_temp_directory():
     """Creates temporary folder for transcoding.
@@ -139,7 +161,7 @@ def convert_value_by_type_name(value_type, value, logger=None):
         return float(value)
 
     # Vectors will probably have more types
-    if value_type == "vec2f":
+    if value_type in ("vec2f", "float2"):
         return [float(item) for item in value.split(",")]
 
     # Matrix should be always have square size of element 3x3, 4x4
@@ -154,7 +176,7 @@ def convert_value_by_type_name(value_type, value, logger=None):
         elif parts_len == 4:
             divisor = 2
         elif parts_len == 9:
-            divisor == 3
+            divisor = 3
         elif parts_len == 16:
             divisor = 4
         else:
@@ -204,8 +226,8 @@ def convert_value_by_type_name(value_type, value, logger=None):
             )
         return output
 
-    logger.info((
-        "MISSING IMPLEMENTATION:"
+    logger.debug((
+        "Dev note (missing implementation):"
         " Unknown attrib type \"{}\". Value: {}"
     ).format(value_type, value))
     return value
@@ -263,8 +285,8 @@ def parse_oiio_xml_output(xml_string, logger=None):
         # - feel free to add more tags
         else:
             value = child.text
-            logger.info((
-                "MISSING IMPLEMENTATION:"
+            logger.debug((
+                "Dev note (missing implementation):"
                 " Unknown tag \"{}\". Value \"{}\""
             ).format(tag_name, value))
 
@@ -938,3 +960,40 @@ def convert_ffprobe_fps_value(str_value):
         fps = int(fps)
 
     return str(fps)
+
+
+def convert_ffprobe_fps_to_float(value):
+    """Convert string value of frame rate to float.
+
+    Copy of 'convert_ffprobe_fps_value' which raises exceptions on invalid
+    value, does not convert value to string and does not return "Unknown"
+    string.
+
+    Args:
+        value (str): Value to be converted.
+
+    Returns:
+        Float: Converted frame rate in float. If divisor in value is '0' then
+            '0.0' is returned.
+
+    Raises:
+        ValueError: Passed value is invalid for conversion.
+    """
+
+    if not value:
+        raise ValueError("Got empty value.")
+
+    items = value.split("/")
+    if len(items) == 1:
+        return float(items[0])
+
+    if len(items) > 2:
+        raise ValueError((
+            "FPS expression contains multiple dividers \"{}\"."
+        ).format(value))
+
+    dividend = float(items.pop(0))
+    divisor = float(items.pop(0))
+    if divisor == 0.0:
+        return 0.0
+    return dividend / divisor

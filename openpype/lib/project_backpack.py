@@ -53,7 +53,7 @@ def pack_project(project_name, destination_dir=None):
 
     Args:
         project_name(str): Project that should be packaged.
-        destination_dir(str): Optinal path where zip will be stored. Project's
+        destination_dir(str): Optional path where zip will be stored. Project's
             root is used if not passed.
     """
     print("Creating package of project \"{}\"".format(project_name))

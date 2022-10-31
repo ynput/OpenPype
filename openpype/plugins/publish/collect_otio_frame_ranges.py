@@ -10,6 +10,7 @@ import opentimelineio as otio
 import pyblish.api
 from pprint import pformat
 from openpype.pipeline.editorial import (
+    get_media_range_with_retimes,
     otio_range_to_frame_range,
     otio_range_with_handles
 )
@@ -23,12 +24,13 @@ class CollectOtioFrameRanges(pyblish.api.InstancePlugin):
     label = "Collect OTIO Frame Ranges"
     order = pyblish.api.CollectorOrder - 0.08
     families = ["shot", "clip"]
-    hosts = ["resolve", "hiero", "flame"]
+    hosts = ["resolve", "hiero", "flame", "traypublisher"]
 
     def process(self, instance):
         # get basic variables
         otio_clip = instance.data["otioClip"]
         workfile_start = instance.data["workfileFrameStart"]
+        workfile_source_duration = instance.data.get("shotDurationFromSource")
 
         # get ranges
         otio_tl_range = otio_clip.range_in_parent()
@@ -53,6 +55,18 @@ class CollectOtioFrameRanges(pyblish.api.InstancePlugin):
         frame_start = workfile_start
         frame_end = frame_start + otio.opentime.to_frames(
             otio_tl_range.duration, otio_tl_range.duration.rate) - 1
+
+        # in case of retimed clip and frame range should not be retimed
+        if workfile_source_duration:
+            # get available range trimmed with processed retimes
+            retimed_attributes = get_media_range_with_retimes(
+                otio_clip, 0, 0)
+            self.log.debug(
+                ">> retimed_attributes: {}".format(retimed_attributes))
+            media_in = int(retimed_attributes["mediaIn"])
+            media_out = int(retimed_attributes["mediaOut"])
+            frame_end = frame_start + (media_out - media_in) + 1
+            self.log.debug(frame_end)
 
         data = {
             "frameStart": frame_start,

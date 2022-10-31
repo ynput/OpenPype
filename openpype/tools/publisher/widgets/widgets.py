@@ -2,11 +2,11 @@
 import os
 import re
 import copy
+import functools
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
-from openpype.lib import TaskNotSetError
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
 from openpype.tools.flickcharm import FlickCharm
@@ -17,7 +17,11 @@ from openpype.tools.utils import (
     BaseClickableFrame,
     set_style_property,
 )
-from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
+from openpype.style import get_objected_colors
+from openpype.pipeline.create import (
+    SUBSET_NAME_ALLOWED_SYMBOLS,
+    TaskNotSetError,
+)
 from .assets_widget import AssetsDialog
 from .tasks_widget import TasksModel
 from .icons import (
@@ -123,28 +127,21 @@ class PublishIconBtn(IconButton):
     def __init__(self, pixmap_path, *args, **kwargs):
         super(PublishIconBtn, self).__init__(*args, **kwargs)
 
-        loaded_image = QtGui.QImage(pixmap_path)
+        colors = get_objected_colors()
+        icon = self.generate_icon(
+            pixmap_path,
+            enabled_color=colors["font"].get_qcolor(),
+            disabled_color=colors["font-disabled"].get_qcolor())
+        self.setIcon(icon)
 
-        pixmap = self.paint_image_with_color(loaded_image, QtCore.Qt.white)
-
-        self._base_image = loaded_image
-        self._enabled_icon = QtGui.QIcon(pixmap)
-        self._disabled_icon = None
-
-        self.setIcon(self._enabled_icon)
-
-    def get_enabled_icon(self):
-        """Enabled icon."""
-        return self._enabled_icon
-
-    def get_disabled_icon(self):
-        """Disabled icon."""
-        if self._disabled_icon is None:
-            pixmap = self.paint_image_with_color(
-                self._base_image, QtCore.Qt.gray
-            )
-            self._disabled_icon = QtGui.QIcon(pixmap)
-        return self._disabled_icon
+    def generate_icon(self, pixmap_path, enabled_color, disabled_color):
+        icon = QtGui.QIcon()
+        image = QtGui.QImage(pixmap_path)
+        enabled_pixmap = self.paint_image_with_color(image, enabled_color)
+        icon.addPixmap(enabled_pixmap, icon.Normal)
+        disabled_pixmap = self.paint_image_with_color(image, disabled_color)
+        icon.addPixmap(disabled_pixmap, icon.Disabled)
+        return icon
 
     @staticmethod
     def paint_image_with_color(image, color):
@@ -185,12 +182,15 @@ class PublishIconBtn(IconButton):
 
         return pixmap
 
-    def setEnabled(self, enabled):
-        super(PublishIconBtn, self).setEnabled(enabled)
-        if self.isEnabled():
-            self.setIcon(self.get_enabled_icon())
-        else:
-            self.setIcon(self.get_disabled_icon())
+
+class CreateBtn(PublishIconBtn):
+    """Create instance button."""
+
+    def __init__(self, parent=None):
+        icon_path = get_icon_path("create")
+        super(CreateBtn, self).__init__(icon_path, "Create", parent)
+        self.setToolTip("Create new subset/s")
+        self.setLayoutDirection(QtCore.Qt.RightToLeft)
 
 
 class ResetBtn(PublishIconBtn):
@@ -233,28 +233,34 @@ class CreateInstanceBtn(PublishIconBtn):
         self.setToolTip("Create new instance")
 
 
-class CopyPublishReportBtn(PublishIconBtn):
-    """Copy report button."""
-    def __init__(self, parent=None):
-        icon_path = get_icon_path("copy")
-        super(CopyPublishReportBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Copy report")
+class PublishReportBtn(PublishIconBtn):
+    """Publish report button."""
 
+    triggered = QtCore.Signal(str)
 
-class SavePublishReportBtn(PublishIconBtn):
-    """Save report button."""
-    def __init__(self, parent=None):
-        icon_path = get_icon_path("download_arrow")
-        super(SavePublishReportBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Export and save report")
-
-
-class ShowPublishReportBtn(PublishIconBtn):
-    """Show report button."""
     def __init__(self, parent=None):
         icon_path = get_icon_path("view_report")
-        super(ShowPublishReportBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Show details")
+        super(PublishReportBtn, self).__init__(icon_path, parent)
+        self.setToolTip("Copy report")
+        self._actions = []
+
+    def add_action(self, label, identifier):
+        action = QtWidgets.QAction(label)
+        action.setData(identifier)
+        action.triggered.connect(
+            functools.partial(self._on_action_trigger, action)
+        )
+        self._actions.append(action)
+
+    def _on_action_trigger(self, action):
+        identifier = action.data()
+        self.triggered.emit(identifier)
+
+    def mouseReleaseEvent(self, event):
+        super(PublishReportBtn, self).mouseReleaseEvent(event)
+        menu = QtWidgets.QMenu(self)
+        menu.addActions(self._actions)
+        menu.exec_(event.globalPos())
 
 
 class RemoveInstanceBtn(PublishIconBtn):
@@ -300,8 +306,23 @@ class AbstractInstanceView(QtWidgets.QWidget):
 
         Example: When delete button is clicked to know what should be deleted.
         """
+
         raise NotImplementedError((
             "{} Method 'get_selected_items' is not implemented."
+        ).format(self.__class__.__name__))
+
+    def set_selected_items(self, instance_ids, context_selected):
+        """Change selection for instances and context.
+
+        Used to applying selection from one view to other.
+
+        Args:
+            instance_ids (List[str]): Selected instance ids.
+            context_selected (bool): Context is selected.
+        """
+
+        raise NotImplementedError((
+            "{} Method 'set_selected_items' is not implemented."
         ).format(self.__class__.__name__))
 
 
@@ -988,7 +1009,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent):
         super(GlobalAttrsWidget, self).__init__(parent)
 
-        self.controller = controller
+        self._controller = controller
         self._current_instances = []
 
         variant_input = VariantInputWidget(self)
@@ -1054,24 +1075,6 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         if self.task_value_widget.has_value_changed():
             task_name = self.task_value_widget.get_selected_items()[0]
 
-        asset_docs_by_name = {}
-        asset_names = set()
-        if asset_name is None:
-            for instance in self._current_instances:
-                asset_names.add(instance.get("asset"))
-        else:
-            asset_names.add(asset_name)
-
-        for asset_doc in self.controller.get_asset_docs():
-            _asset_name = asset_doc["name"]
-            if _asset_name in asset_names:
-                asset_names.remove(_asset_name)
-                asset_docs_by_name[_asset_name] = asset_doc
-
-            if not asset_names:
-                break
-
-        project_name = self.controller.project_name
         subset_names = set()
         invalid_tasks = False
         for instance in self._current_instances:
@@ -1087,12 +1090,15 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             if task_name is not None:
                 new_task_name = task_name
 
-            asset_doc = asset_docs_by_name[new_asset_name]
-
             try:
-                new_subset_name = instance.creator.get_subset_name(
-                    new_variant_value, new_task_name, asset_doc, project_name
+                new_subset_name = self._controller.get_subset_name(
+                    instance.creator_identifier,
+                    new_variant_value,
+                    new_task_name,
+                    new_asset_name,
+                    instance.id,
                 )
+
             except TaskNotSetError:
                 invalid_tasks = True
                 instance.set_task_invalid(True)
@@ -1239,7 +1245,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
 
         self._main_layout = main_layout
 
-        self.controller = controller
+        self._controller = controller
         self._scroll_area = scroll_area
 
         self._attr_def_id_to_instances = {}
@@ -1268,7 +1274,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
         self._attr_def_id_to_instances = {}
         self._attr_def_id_to_attr_def = {}
 
-        result = self.controller.get_creator_attribute_definitions(
+        result = self._controller.get_creator_attribute_definitions(
             instances
         )
 
@@ -1360,7 +1366,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
 
         self._main_layout = main_layout
 
-        self.controller = controller
+        self._controller = controller
         self._scroll_area = scroll_area
 
         self._attr_def_id_to_instances = {}
@@ -1392,7 +1398,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
         self._attr_def_id_to_attr_def = {}
         self._attr_def_id_to_plugin_name = {}
 
-        result = self.controller.get_publish_attribute_definitions(
+        result = self._controller.get_publish_attribute_definitions(
             instances, context_selected
         )
 
@@ -1455,6 +1461,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
     └───────────────────────────────┘
     """
     instance_context_changed = QtCore.Signal()
+    convert_requested = QtCore.Signal()
 
     def __init__(self, controller, parent):
         super(SubsetAttributesWidget, self).__init__(parent)
@@ -1473,9 +1480,53 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         # BOTTOM PART
         bottom_widget = QtWidgets.QWidget(self)
-        creator_attrs_widget = CreatorAttrsWidget(
-            controller, bottom_widget
+
+        # Wrap Creator attributes to widget to be able add convert button
+        creator_widget = QtWidgets.QWidget(bottom_widget)
+
+        # Convert button widget (with layout to handle stretch)
+        convert_widget = QtWidgets.QWidget(creator_widget)
+        convert_label = QtWidgets.QLabel(creator_widget)
+        # Set the label text with 'setText' to apply html
+        convert_label.setText(
+            (
+                "Found old publishable subsets"
+                " incompatible with new publisher."
+                "<br/><br/>Press the <b>update subsets</b> button"
+                " to automatically update them"
+                " to be able to publish again."
+            )
         )
+        convert_label.setWordWrap(True)
+        convert_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        convert_btn = QtWidgets.QPushButton(
+            "Update subsets", convert_widget
+        )
+        convert_separator = QtWidgets.QFrame(convert_widget)
+        convert_separator.setObjectName("Separator")
+        convert_separator.setMinimumHeight(1)
+        convert_separator.setMaximumHeight(1)
+
+        convert_layout = QtWidgets.QGridLayout(convert_widget)
+        convert_layout.setContentsMargins(5, 0, 5, 0)
+        convert_layout.setVerticalSpacing(10)
+        convert_layout.addWidget(convert_label, 0, 0, 1, 3)
+        convert_layout.addWidget(convert_btn, 1, 1)
+        convert_layout.addWidget(convert_separator, 2, 0, 1, 3)
+        convert_layout.setColumnStretch(0, 1)
+        convert_layout.setColumnStretch(1, 0)
+        convert_layout.setColumnStretch(2, 1)
+
+        # Creator attributes widget
+        creator_attrs_widget = CreatorAttrsWidget(
+            controller, creator_widget
+        )
+        creator_layout = QtWidgets.QVBoxLayout(creator_widget)
+        creator_layout.setContentsMargins(0, 0, 0, 0)
+        creator_layout.addWidget(convert_widget, 0)
+        creator_layout.addWidget(creator_attrs_widget, 1)
+
         publish_attrs_widget = PublishPluginAttrsWidget(
             controller, bottom_widget
         )
@@ -1486,7 +1537,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         bottom_layout = QtWidgets.QHBoxLayout(bottom_widget)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
-        bottom_layout.addWidget(creator_attrs_widget, 1)
+        bottom_layout.addWidget(creator_widget, 1)
         bottom_layout.addWidget(bottom_separator, 0)
         bottom_layout.addWidget(publish_attrs_widget, 1)
 
@@ -1499,6 +1550,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         layout.addWidget(top_bottom, 0)
         layout.addWidget(bottom_widget, 1)
 
+        self._convertor_identifiers = None
         self._current_instances = None
         self._context_selected = False
         self._all_instances_valid = True
@@ -1506,8 +1558,11 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         global_attrs_widget.instance_context_changed.connect(
             self._on_instance_context_changed
         )
+        convert_btn.clicked.connect(self._on_convert_click)
 
-        self.controller = controller
+        self._controller = controller
+
+        self._convert_widget = convert_widget
 
         self.global_attrs_widget = global_attrs_widget
 
@@ -1531,7 +1586,12 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         self.instance_context_changed.emit()
 
-    def set_current_instances(self, instances, context_selected):
+    def _on_convert_click(self):
+        self.convert_requested.emit()
+
+    def set_current_instances(
+        self, instances, context_selected, convertor_identifiers
+    ):
         """Change currently selected items.
 
         Args:
@@ -1545,10 +1605,13 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
                 all_valid = False
                 break
 
+        s_convertor_identifiers = set(convertor_identifiers)
+        self._convertor_identifiers = s_convertor_identifiers
         self._current_instances = instances
         self._context_selected = context_selected
         self._all_instances_valid = all_valid
 
+        self._convert_widget.setVisible(len(s_convertor_identifiers) > 0)
         self.global_attrs_widget.set_current_instances(instances)
         self.creator_attrs_widget.set_current_instances(instances)
         self.publish_attrs_widget.set_current_instances(

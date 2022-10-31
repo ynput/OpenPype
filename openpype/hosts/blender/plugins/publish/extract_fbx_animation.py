@@ -5,12 +5,12 @@ import bpy
 import bpy_extras
 import bpy_extras.anim_utils
 
-from openpype import api
+from openpype.pipeline import publish
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class ExtractAnimationFBX(api.Extractor):
+class ExtractAnimationFBX(publish.Extractor):
     """Extract as animation."""
 
     label = "Extract FBX"

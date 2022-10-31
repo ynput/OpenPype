@@ -1,11 +1,9 @@
 import os
 from Qt import QtWidgets
-from bson.objectid import ObjectId
 
 import pyblish.api
 
-from openpype.api import Logger
-from openpype.lib import register_event_callback
+from openpype.lib import register_event_callback, Logger
 from openpype.pipeline import (
     legacy_io,
     register_loader_plugin_path,
@@ -13,16 +11,15 @@ from openpype.pipeline import (
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
-    registered_host,
 )
-import openpype.hosts.photoshop
+from openpype.pipeline.load import any_outdated_containers
+from openpype.hosts.photoshop import PHOTOSHOP_HOST_DIR
 
 from . import lib
 
 log = Logger.get_logger(__name__)
 
-HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.photoshop.__file__))
-PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PLUGINS_DIR = os.path.join(PHOTOSHOP_HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
@@ -30,7 +27,7 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 def check_inventory():
-    if not lib.any_outdated():
+    if not any_outdated_containers():
         return
 
     # Warn about outdated containers.

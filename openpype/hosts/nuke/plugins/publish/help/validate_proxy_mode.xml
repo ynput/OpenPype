@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <error id="main">
+        <title>Proxy mode</title>
+        <description>
+## Invalid proxy mode value
+
+Nuke is set to use Proxy. This is not supported by publisher.
+
+### How to repair?
+
+1. Use Repair button.
+2. Hit Reload button on the publisher.
+        </description>
+    </error>
+</root>

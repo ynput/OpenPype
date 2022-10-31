@@ -2,10 +2,11 @@
 import os
 import json
 import pyblish.api
-import openpype
+
+from openpype.pipeline import publish
 
 
-class ExtractClipEffects(openpype.api.Extractor):
+class ExtractClipEffects(publish.Extractor):
     """Extract clip effects instances."""
 
     order = pyblish.api.ExtractorOrder

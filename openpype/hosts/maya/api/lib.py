@@ -23,8 +23,7 @@ from openpype.client import (
     get_last_versions,
     get_representation_by_name
 )
-from openpype import lib
-from openpype.api import get_anatomy_settings
+from openpype.settings import get_project_settings
 from openpype.pipeline import (
     legacy_io,
     discover_loader_plugins,
@@ -33,6 +32,7 @@ from openpype.pipeline import (
     load_container,
     registered_host,
 )
+from openpype.pipeline.context_tools import get_current_project_asset
 from .commands import reset_frame_range
 
 
@@ -2174,7 +2174,7 @@ def reset_scene_resolution():
     project_name = legacy_io.active_project()
     project_doc = get_project(project_name)
     project_data = project_doc["data"]
-    asset_data = lib.get_asset()["data"]
+    asset_data = get_current_project_asset()["data"]
 
     # Set project resolution
     width_key = "resolutionWidth"
@@ -2208,7 +2208,8 @@ def set_context_settings():
     project_name = legacy_io.active_project()
     project_doc = get_project(project_name)
     project_data = project_doc["data"]
-    asset_data = lib.get_asset()["data"]
+    asset_doc = get_current_project_asset(fields=["data.fps"])
+    asset_data = asset_doc.get("data", {})
 
     # Set project fps
     fps = asset_data.get("fps", project_data.get("fps", 25))
@@ -2233,7 +2234,7 @@ def validate_fps():
 
     """
 
-    fps = lib.get_asset()["data"]["fps"]
+    fps = get_current_project_asset(fields=["data.fps"])["data"]["fps"]
     # TODO(antirotor): This is hack as for framerates having multiple
     # decimal places. FTrack is ceiling decimal values on
     # fps to two decimal places but Maya 2019+ is reporting those fps
@@ -2458,181 +2459,119 @@ def bake_to_world_space(nodes,
 
 
 def load_capture_preset(data=None):
+    """Convert OpenPype Extract Playblast settings to `capture` arguments
+
+    Input data is the settings from:
+        `project_settings/maya/publish/ExtractPlayblast/capture_preset`
+
+    Args:
+        data (dict): Capture preset settings from OpenPype settings
+
+    Returns:
+        dict: `capture.capture` compatible keyword arguments
+
+    """
+
     import capture
 
-    preset = data
-
     options = dict()
+    viewport_options = dict()
+    viewport2_options = dict()
+    camera_options = dict()
 
-    # CODEC
-    id = 'Codec'
-    for key in preset[id]:
-        options[str(key)] = preset[id][key]
+    # Straight key-value match from settings to capture arguments
+    options.update(data["Codec"])
+    options.update(data["Generic"])
+    options.update(data["Resolution"])
 
-    # GENERIC
-    id = 'Generic'
-    for key in preset[id]:
-        options[str(key)] = preset[id][key]
-
-    # RESOLUTION
-    id = 'Resolution'
-    options['height'] = preset[id]['height']
-    options['width'] = preset[id]['width']
+    camera_options.update(data['Camera Options'])
+    viewport_options.update(data["Renderer"])
 
     # DISPLAY OPTIONS
-    id = 'Display Options'
     disp_options = {}
-    for key in preset['Display Options']:
+    for key, value in data['Display Options'].items():
         if key.startswith('background'):
-            disp_options[key] = preset['Display Options'][key]
-            if len(disp_options[key]) == 4:
-                disp_options[key][0] = (float(disp_options[key][0])/255)
-                disp_options[key][1] = (float(disp_options[key][1])/255)
-                disp_options[key][2] = (float(disp_options[key][2])/255)
-                disp_options[key].pop()
+            # Convert background, backgroundTop, backgroundBottom colors
+            if len(value) == 4:
+                # Ignore alpha + convert RGB to float
+                value = [
+                    float(value[0]) / 255,
+                    float(value[1]) / 255,
+                    float(value[2]) / 255
+                ]
+            disp_options[key] = value
         else:
             disp_options['displayGradient'] = True
 
     options['display_options'] = disp_options
 
-    # VIEWPORT OPTIONS
-    temp_options = {}
-    id = 'Renderer'
-    for key in preset[id]:
-        temp_options[str(key)] = preset[id][key]
+    # Viewport Options has a mixture of Viewport2 Options and Viewport Options
+    # to pass along to capture. So we'll need to differentiate between the two
+    VIEWPORT2_OPTIONS = {
+        "textureMaxResolution",
+        "renderDepthOfField",
+        "ssaoEnable",
+        "ssaoSamples",
+        "ssaoAmount",
+        "ssaoRadius",
+        "ssaoFilterRadius",
+        "hwFogStart",
+        "hwFogEnd",
+        "hwFogAlpha",
+        "hwFogFalloff",
+        "hwFogColorR",
+        "hwFogColorG",
+        "hwFogColorB",
+        "hwFogDensity",
+        "motionBlurEnable",
+        "motionBlurSampleCount",
+        "motionBlurShutterOpenFraction",
+        "lineAAEnable"
+    }
+    for key, value in data['Viewport Options'].items():
 
-    temp_options2 = {}
-    id = 'Viewport Options'
-    for key in preset[id]:
+        # There are some keys we want to ignore
+        if key in {"override_viewport_options", "high_quality"}:
+            continue
+
+        # First handle special cases where we do value conversion to
+        # separate option values
         if key == 'textureMaxResolution':
-            if preset[id][key] > 0:
-                temp_options2['textureMaxResolution'] = preset[id][key]
-                temp_options2['enableTextureMaxRes'] = True
-                temp_options2['textureMaxResMode'] = 1
+            viewport2_options['textureMaxResolution'] = value
+            if value > 0:
+                viewport2_options['enableTextureMaxRes'] = True
+                viewport2_options['textureMaxResMode'] = 1
             else:
-                temp_options2['textureMaxResolution'] = preset[id][key]
-                temp_options2['enableTextureMaxRes'] = False
-                temp_options2['textureMaxResMode'] = 0
+                viewport2_options['enableTextureMaxRes'] = False
+                viewport2_options['textureMaxResMode'] = 0
 
-        if key == 'multiSample':
-            if preset[id][key] > 0:
-                temp_options2['multiSampleEnable'] = True
-                temp_options2['multiSampleCount'] = preset[id][key]
-            else:
-                temp_options2['multiSampleEnable'] = False
-                temp_options2['multiSampleCount'] = preset[id][key]
+        elif key == 'multiSample':
+            viewport2_options['multiSampleEnable'] = value > 0
+            viewport2_options['multiSampleCount'] = value
 
-        if key == 'renderDepthOfField':
-            temp_options2['renderDepthOfField'] = preset[id][key]
+        elif key == 'alphaCut':
+            viewport2_options['transparencyAlgorithm'] = 5
+            viewport2_options['transparencyQuality'] = 1
 
-        if key == 'ssaoEnable':
-            if preset[id][key] is True:
-                temp_options2['ssaoEnable'] = True
-            else:
-                temp_options2['ssaoEnable'] = False
+        elif key == 'hwFogFalloff':
+            # Settings enum value string to integer
+            viewport2_options['hwFogFalloff'] = int(value)
 
-        if key == 'ssaoSamples':
-            temp_options2['ssaoSamples'] = preset[id][key]
+        # Then handle Viewport 2.0 Options
+        elif key in VIEWPORT2_OPTIONS:
+            viewport2_options[key] = value
 
-        if key == 'ssaoAmount':
-            temp_options2['ssaoAmount'] = preset[id][key]
-
-        if key == 'ssaoRadius':
-            temp_options2['ssaoRadius'] = preset[id][key]
-
-        if key == 'hwFogDensity':
-            temp_options2['hwFogDensity'] = preset[id][key]
-
-        if key == 'ssaoFilterRadius':
-            temp_options2['ssaoFilterRadius'] = preset[id][key]
-
-        if key == 'alphaCut':
-            temp_options2['transparencyAlgorithm'] = 5
-            temp_options2['transparencyQuality'] = 1
-
-        if key == 'headsUpDisplay':
-            temp_options['headsUpDisplay'] = True
-
-        if key == 'fogging':
-            temp_options['fogging'] = preset[id][key] or False
-
-        if key == 'hwFogStart':
-            temp_options2['hwFogStart'] = preset[id][key]
-
-        if key == 'hwFogEnd':
-            temp_options2['hwFogEnd'] = preset[id][key]
-
-        if key == 'hwFogAlpha':
-            temp_options2['hwFogAlpha'] = preset[id][key]
-
-        if key == 'hwFogFalloff':
-            temp_options2['hwFogFalloff'] = int(preset[id][key])
-
-        if key == 'hwFogColorR':
-            temp_options2['hwFogColorR'] = preset[id][key]
-
-        if key == 'hwFogColorG':
-            temp_options2['hwFogColorG'] = preset[id][key]
-
-        if key == 'hwFogColorB':
-            temp_options2['hwFogColorB'] = preset[id][key]
-
-        if key == 'motionBlurEnable':
-            if preset[id][key] is True:
-                temp_options2['motionBlurEnable'] = True
-            else:
-                temp_options2['motionBlurEnable'] = False
-
-        if key == 'motionBlurSampleCount':
-            temp_options2['motionBlurSampleCount'] = preset[id][key]
-
-        if key == 'motionBlurShutterOpenFraction':
-            temp_options2['motionBlurShutterOpenFraction'] = preset[id][key]
-
-        if key == 'lineAAEnable':
-            if preset[id][key] is True:
-                temp_options2['lineAAEnable'] = True
-            else:
-                temp_options2['lineAAEnable'] = False
-
+        # Then assume remainder is Viewport Options
         else:
-            temp_options[str(key)] = preset[id][key]
+            viewport_options[key] = value
 
-    for key in ['override_viewport_options',
-                'high_quality',
-                'alphaCut',
-                'gpuCacheDisplayFilter',
-                'multiSample',
-                'ssaoEnable',
-                'ssaoSamples',
-                'ssaoAmount',
-                'ssaoFilterRadius',
-                'ssaoRadius',
-                'hwFogStart',
-                'hwFogEnd',
-                'hwFogAlpha',
-                'hwFogFalloff',
-                'hwFogColorR',
-                'hwFogColorG',
-                'hwFogColorB',
-                'hwFogDensity',
-                'textureMaxResolution',
-                'motionBlurEnable',
-                'motionBlurSampleCount',
-                'motionBlurShutterOpenFraction',
-                'lineAAEnable',
-                'renderDepthOfField'
-                ]:
-        temp_options.pop(key, None)
-
-    options['viewport_options'] = temp_options
-    options['viewport2_options'] = temp_options2
+    options['viewport_options'] = viewport_options
+    options['viewport2_options'] = viewport2_options
+    options['camera_options'] = camera_options
 
     # use active sound track
     scene = capture.parse_active_scene()
     options['sound'] = scene['sound']
-
-    # options['display_options'] = temp_options
 
     return options
 
@@ -3051,8 +2990,9 @@ def update_content_on_context_change():
     This will update scene content to match new asset on context change
     """
     scene_sets = cmds.listSets(allSets=True)
-    new_asset = legacy_io.Session["AVALON_ASSET"]
-    new_data = lib.get_asset()["data"]
+    asset_doc = get_current_project_asset()
+    new_asset = asset_doc["name"]
+    new_data = asset_doc["data"]
     for s in scene_sets:
         try:
             if cmds.getAttr("{}.id".format(s)) == "pyblish.avalon.instance":
@@ -3157,7 +3097,7 @@ def set_colorspace():
     """Set Colorspace from project configuration
     """
     project_name = os.getenv("AVALON_PROJECT")
-    imageio = get_anatomy_settings(project_name)["imageio"]["maya"]
+    imageio = get_project_settings(project_name)["maya"]["imageio"]
 
     # Maya 2022+ introduces new OCIO v2 color management settings that
     # can override the old color managenement preferences. OpenPype has

@@ -101,6 +101,7 @@ module.exports = {
             items: [
                 "admin_hosts_blender",
                 "admin_hosts_hiero",
+                "admin_hosts_houdini",
                 "admin_hosts_maya",
                 "admin_hosts_nuke",
                 "admin_hosts_resolve",
@@ -109,11 +110,7 @@ module.exports = {
                 "admin_hosts_tvpaint"
             ],
         },
-        {
-            type: "category",
-            label: "Releases",
-            items: ["changelog", "update_notes"],
-        },
+        "admin_releases",
         {
             type: "category",
             collapsed: false,
@@ -146,12 +143,13 @@ module.exports = {
             ],
         },
     ],
-     Dev: [
+    Dev: [
         "dev_introduction",
         "dev_requirements",
         "dev_build",
         "dev_testing",
         "dev_contribute",
+        "dev_settings",
         {
             type: "category",
             label: "Hosts integrations",
@@ -160,5 +158,5 @@ module.exports = {
                 "dev_publishing"
             ]
         }
-     ]
+    ]
 };

@@ -6,14 +6,15 @@ import copy
 import pyblish.api
 import six
 
-import openpype
+from openpype.pipeline import publish
 from openpype.hosts.nuke.api import (
     maintained_selection,
     duplicate_node,
     get_view_process_node
 )
 
-class ExtractSlateFrame(openpype.api.Extractor):
+
+class ExtractSlateFrame(publish.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
     must be run after extract_render_local.py
@@ -236,6 +237,7 @@ class ExtractSlateFrame(openpype.api.Extractor):
     def _render_slate_to_sequence(self, instance):
         # set slate frame
         first_frame = instance.data["frameStartHandle"]
+        last_frame = instance.data["frameEndHandle"]
         slate_first_frame = first_frame - 1
 
         # render slate as sequence frame
@@ -284,6 +286,13 @@ class ExtractSlateFrame(openpype.api.Extractor):
             matching_repre["files"] = [first_filename, slate_filename]
         elif slate_filename not in matching_repre["files"]:
             matching_repre["files"].insert(0, slate_filename)
+            matching_repre["frameStart"] = (
+                "{{:0>{}}}"
+                .format(len(str(last_frame)))
+                .format(slate_first_frame)
+            )
+            self.log.debug(
+                "__ matching_repre: {}".format(pformat(matching_repre)))
 
         self.log.warning("Added slate frame to representation files")
 
