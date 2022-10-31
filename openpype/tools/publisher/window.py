@@ -225,6 +225,12 @@ class PublisherWindow(QtWidgets.QDialog):
         # Floating publish frame
         publish_frame = PublishFrame(controller, self.footer_border, self)
 
+        # Timer started on show -> connected to timer counter
+        # - helps to deffer on show logic by 3 event loops
+        show_timer = QtCore.QTimer()
+        show_timer.setInterval(1)
+        show_timer.timeout.connect(self._on_show_timer)
+
         errors_dialog_message_timer = QtCore.QTimer()
         errors_dialog_message_timer.setInterval(100)
         errors_dialog_message_timer.timeout.connect(
@@ -329,13 +335,15 @@ class PublisherWindow(QtWidgets.QDialog):
         #   forin init
         self._reset_on_first_show = reset_on_show
         self._reset_on_show = True
-        self._restart_timer = None
         self._publish_frame_visible = None
 
         self._error_messages_to_show = collections.deque()
         self._errors_dialog_message_timer = errors_dialog_message_timer
 
         self._set_publish_visibility(False)
+
+        self._show_timer = show_timer
+        self._show_counter = 0
 
     @property
     def controller(self):
@@ -347,17 +355,7 @@ class PublisherWindow(QtWidgets.QDialog):
             self._first_show = False
             self._on_first_show()
 
-        if not self._reset_on_show:
-            return
-
-        self._reset_on_show = False
-        # Detach showing - give OS chance to draw the window
-        timer = QtCore.QTimer()
-        timer.setSingleShot(True)
-        timer.setInterval(1)
-        timer.timeout.connect(self._on_show_restart_timer)
-        self._restart_timer = timer
-        timer.start()
+        self._show_timer.start()
 
     def resizeEvent(self, event):
         super(PublisherWindow, self).resizeEvent(event)
@@ -374,11 +372,21 @@ class PublisherWindow(QtWidgets.QDialog):
         self.setStyleSheet(style.load_stylesheet())
         self._reset_on_show = self._reset_on_first_show
 
-    def _on_show_restart_timer(self):
-        """Callback for '_restart_timer' timer."""
+    def _on_show_timer(self):
+        # Add 1 to counter until hits 2
+        if self._show_counter < 3:
+            self._show_counter += 1
+            return
 
-        self._restart_timer = None
-        self.reset()
+        # Stop the timer
+        self._show_timer.stop()
+        # Reset counter when done for next show event
+        self._show_counter = 0
+
+        # Reset if requested
+        if self._reset_on_show:
+            self._reset_on_show = False
+            self.reset()
 
     def closeEvent(self, event):
         self.save_changes()
