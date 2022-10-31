@@ -196,29 +196,46 @@ def parse_container(item, validate=True):
         return data_to_container(item, _data)
 
 
-def update_container(track_item, data=None):
-    """Update container data to input track_item's pype tag.
+def update_container(item, data=None):
+    """Update container data to input track_item or track's
+    openpype tag.
 
     Args:
-        track_item (hiero.core.TrackItem): A containerised track item.
+        item (hiero.core.TrackItem or hiero.core.VideoTrack):
+            A containerised track item.
         data (dict)[optional]: dictionery with data to be updated
 
     Returns:
         bool: True if container was updated correctly
 
     """
-    data = data or dict()
+    def update_container_data(container, data):
+        for key in container:
+            try:
+                container[key] = data[key]
+            except KeyError:
+                pass
+        return container
 
-    container = lib.get_trackitem_openpype_data(track_item)
+    data = data or {}
 
-    for _key, _value in container.items():
-        try:
-            container[_key] = data[_key]
-        except KeyError:
-            pass
+    if type(item) == hiero.core.VideoTrack:
+        object_name = "{}_{}".format(
+            data["name"], data["namespace"])
+        containers = lib.get_track_openpype_data(item)
+        for obj_name, container in containers.items():
+            if object_name != obj_name:
+                continue
+            updated_container = update_container_data(container, data)
+            containers.update(updated_container)
 
-    log.info("Updating container: `{}`".format(track_item.name()))
-    return bool(lib.set_trackitem_openpype_tag(track_item, container))
+        return bool(lib.set_track_openpype_tag(item, containers))
+    else:
+        container = lib.get_trackitem_openpype_data(item)
+        updated_container = update_container_data(container, data)
+
+        log.info("Updating container: `{}`".format(item.name()))
+        return bool(lib.set_trackitem_openpype_tag(item, updated_container))
 
 
 def launch_workfiles_app(*args):
