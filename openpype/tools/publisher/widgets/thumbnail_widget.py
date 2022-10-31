@@ -155,11 +155,6 @@ class ThumbnailWidget(QtWidgets.QWidget):
         self._cached_pix = None
         self.repaint()
 
-    def _get_current_pixes(self):
-        if self._current_pixes is None:
-            return [self._default_pix]
-        return self._current_pixes
-
     def _cache_pix(self):
         rect = self.rect()
         rect_width = rect.width()
@@ -180,7 +175,13 @@ class ThumbnailWidget(QtWidgets.QWidget):
             expected_width = rect_width
             pix_y_offset = (rect_height - expected_height) / 2
 
-        pixes_to_draw = self._get_current_pixes()
+        if self._current_pixes is None:
+            draw_dashes = True
+            pixes_to_draw = [self._default_pix]
+        else:
+            draw_dashes = False
+            pixes_to_draw = self._current_pixes
+
         max_pix = 3
         if len(pixes_to_draw) > max_pix:
             pixes_to_draw = pixes_to_draw[:-max_pix]
@@ -253,6 +254,15 @@ class ThumbnailWidget(QtWidgets.QWidget):
             y_offset = (height_offset_part * idx) + pix_y_offset
             final_painter.drawPixmap(x_offset, y_offset, pix)
 
+        # Draw drop enabled dashes
+        if draw_dashes:
+            pen = QtGui.QPen()
+            pen.setWidth(1)
+            pen.setBrush(QtCore.Qt.darkGray)
+            pen.setStyle(QtCore.Qt.DashLine)
+            final_painter.setPen(pen)
+            final_painter.setBrush(QtCore.Qt.transparent)
+            final_painter.drawRect(rect)
 
         final_painter.end()
 
