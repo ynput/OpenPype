@@ -52,6 +52,7 @@ class LoadEffects(load.LoaderPlugin):
             "source": version_data["source"],
             "version": vname,
             "author": version_data["author"],
+            "objectName": object_name,
             "children_names": []
         }
 

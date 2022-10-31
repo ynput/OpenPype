@@ -9,6 +9,7 @@ import sys
 import platform
 import functools
 import warnings
+import json
 import ast
 import shutil
 import hiero
@@ -414,32 +415,11 @@ def get_track_openpype_data(track):
     tag_data = deepcopy(dict(tag.metadata()))
 
     for obj_name, obj_data in tag_data.items():
-        return_data[obj_name] = {}
-
-        # convert tag metadata to normal keys names and values to correct types
-        for k, v in obj_data.items():
-
-            key = k.replace("tag.", "")
-
-            try:
-                # capture exceptions which are related to strings only
-                if re.match(r"^[\d]+$", v):
-                    value = int(v)
-                elif re.match(r"^True$", v):
-                    value = True
-                elif re.match(r"^False$", v):
-                    value = False
-                elif re.match(r"^None$", v):
-                    value = None
-                elif re.match(r"^[\w\d_]+$", v):
-                    value = v
-                else:
-                    value = ast.literal_eval(v)
-            except (ValueError, SyntaxError) as msg:
-                log.warning(msg)
-                value = v
-
-            return_data[obj_name][key] = value
+        obj_name = obj_name.replace("tag.", "")
+        print(obj_name)
+        if obj_name in ["applieswhole", "note", "label"]:
+            continue
+        return_data[obj_name] = json.loads(obj_data)
 
     return return_data
 
