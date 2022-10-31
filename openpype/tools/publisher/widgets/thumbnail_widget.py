@@ -29,6 +29,7 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
     border_width = 1
     max_thumbnails = 3
     offset_sep = 4
+    checker_boxes_count = 20
 
     def __init__(self, parent):
         super(ThumbnailPainterWidget, self).__init__(parent)
@@ -75,6 +76,43 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
         painter.begin(self)
         painter.drawPixmap(0, 0, self._cached_pix)
         painter.end()
+
+    def _draw_empty_checker(self, width, height):
+        checker_size = int(float(width) / self.checker_boxes_count)
+        if checker_size < 1:
+            checker_size = 1
+
+        single_checker_pix = QtGui.QPixmap(checker_size * 2, checker_size * 2)
+        single_checker_pix.fill(QtCore.Qt.transparent)
+        single_checker_painter = QtGui.QPainter()
+        single_checker_painter.begin(single_checker_pix)
+        single_checker_painter.setPen(QtCore.Qt.NoPen)
+        single_checker_painter.setBrush(QtGui.QColor(89, 89, 89))
+        single_checker_painter.drawRect(
+            0, 0, single_checker_pix.width(), single_checker_pix.height()
+        )
+        single_checker_painter.setBrush(QtGui.QColor(188, 187, 187))
+        single_checker_painter.drawRect(
+            0, 0, checker_size, checker_size
+        )
+        single_checker_painter.drawRect(
+            checker_size, checker_size, checker_size, checker_size
+        )
+        single_checker_painter.end()
+        x_offset = (width % checker_size) * -0.5
+        y_offset = (height % checker_size) * -0.5
+
+        empty_pix = QtGui.QPixmap(width, height)
+        empty_pix.fill(QtCore.Qt.transparent)
+        empty_painter = QtGui.QPainter()
+        empty_painter.begin(empty_pix)
+        empty_painter.drawTiledPixmap(
+            QtCore.QRectF(0, 0, width, height),
+            single_checker_pix,
+            QtCore.QPointF(x_offset, y_offset)
+        )
+        empty_painter.end()
+        return empty_pix
 
     def _cache_pix(self):
         rect = self.rect()
