@@ -1661,7 +1661,6 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
     def __init__(self, parent):
         super(CreateNextPageOverlay, self).__init__(parent)
 
-        self._bg_color = QtGui.QColor(127, 127, 255)
         self._arrow_color = QtGui.QColor(255, 255, 255)
 
         change_anim = QtCore.QVariantAnimation()
@@ -1839,7 +1838,11 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
         )
         path.closeSubpath()
 
-        painter.fillPath(path, self._bg_color)
+        gradient = QtGui.QLinearGradient(left, pos_y, right, pos_y)
+        gradient.setColorAt(0, QtGui.QColor(22, 25, 29))
+        gradient.setColorAt(1, QtGui.QColor(33, 37, 43))
+
+        painter.fillPath(path, gradient)
 
         src_arrow_path = QtGui.QPainterPath()
         src_arrow_path.moveTo(arrow_x_start, pos_y - arrow_half_height)
