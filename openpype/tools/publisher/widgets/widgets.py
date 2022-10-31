@@ -127,6 +127,7 @@ class PublishIconBtn(IconButton):
     - error            : other error happened
     - success          : publishing finished
     """
+
     def __init__(self, pixmap_path, *args, **kwargs):
         super(PublishIconBtn, self).__init__(*args, **kwargs)
 

@@ -17,6 +17,7 @@ from openpype.lib.transcoding import (
 
 from openpype.tools.utils import (
     paint_image_with_color,
+    PixmapButton,
 )
 from openpype.tools.publisher.control import CardMessageTypes
 
@@ -292,7 +293,13 @@ class ThumbnailWidget(QtWidgets.QWidget):
         buttons_widget = QtWidgets.QWidget(self)
         buttons_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
-        clear_button = QtWidgets.QPushButton("x", buttons_widget)
+        icon_color = get_objected_colors("bg-view-selection").get_qcolor()
+        icon_color.setAlpha(255)
+        clear_image = get_image("clear_thumbnail")
+        clear_pix = paint_image_with_color(clear_image, icon_color)
+
+        clear_button = PixmapButton(clear_pix, buttons_widget)
+        clear_button.setObjectName("PixmapHoverButton")
 
         buttons_layout = QtWidgets.QHBoxLayout(buttons_widget)
         buttons_layout.setContentsMargins(3, 3, 3, 3)
