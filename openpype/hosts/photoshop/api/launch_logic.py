@@ -346,9 +346,6 @@ class PhotoshopRoute(WebSocketRoute):
     async def sceneinventory_route(self):
         self._tool_route("sceneinventory")
 
-    async def subsetmanager_route(self):
-        self._tool_route("subsetmanager")
-
     async def experimental_tools_route(self):
         self._tool_route("experimental_tools")
 

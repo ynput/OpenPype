@@ -9,6 +9,7 @@ from openpype.pipeline import (
 )
 from openpype.lib import prepare_template_data
 from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
+from openpype.hosts.photoshop.api import PhotoshopHost
 
 
 class ImageCreator(Creator):
@@ -19,7 +20,7 @@ class ImageCreator(Creator):
     description = "Image creator"
 
     def collect_instances(self):
-        for instance_data in api.list_instances():
+        for instance_data in PhotoshopHost().list_instances():
             # legacy instances have family=='image'
             creator_id = (instance_data.get("creator_identifier") or
                           instance_data.get("family"))
@@ -121,7 +122,7 @@ class ImageCreator(Creator):
 
     def remove_instances(self, instances):
         for instance in instances:
-            api.remove_instance(instance)
+            PhotoshopHost().remove_instance(instance)
             self._remove_instance_from_context(instance)
 
     def get_default_variants(self):
