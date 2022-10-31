@@ -77,84 +77,70 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
         painter.drawPixmap(0, 0, self._cached_pix)
         painter.end()
 
-    def _draw_empty_checker(self, width, height):
+    def _paint_checker(self, width, height):
         checker_size = int(float(width) / self.checker_boxes_count)
         if checker_size < 1:
             checker_size = 1
 
-        single_checker_pix = QtGui.QPixmap(checker_size * 2, checker_size * 2)
-        single_checker_pix.fill(QtCore.Qt.transparent)
-        single_checker_painter = QtGui.QPainter()
-        single_checker_painter.begin(single_checker_pix)
-        single_checker_painter.setPen(QtCore.Qt.NoPen)
-        single_checker_painter.setBrush(QtGui.QColor(89, 89, 89))
-        single_checker_painter.drawRect(
-            0, 0, single_checker_pix.width(), single_checker_pix.height()
+        checker_pix = QtGui.QPixmap(checker_size * 2, checker_size * 2)
+        checker_pix.fill(QtCore.Qt.transparent)
+        checker_painter = QtGui.QPainter()
+        checker_painter.begin(checker_pix)
+        checker_painter.setPen(QtCore.Qt.NoPen)
+        checker_painter.setBrush(QtGui.QColor(89, 89, 89))
+        checker_painter.drawRect(
+            0, 0, checker_pix.width(), checker_pix.height()
         )
-        single_checker_painter.setBrush(QtGui.QColor(188, 187, 187))
-        single_checker_painter.drawRect(
+        checker_painter.setBrush(QtGui.QColor(188, 187, 187))
+        checker_painter.drawRect(
             0, 0, checker_size, checker_size
         )
-        single_checker_painter.drawRect(
+        checker_painter.drawRect(
             checker_size, checker_size, checker_size, checker_size
         )
-        single_checker_painter.end()
-        x_offset = (width % checker_size) * -0.5
-        y_offset = (height % checker_size) * -0.5
+        checker_painter.end()
+        return checker_pix
 
-        empty_pix = QtGui.QPixmap(width, height)
-        empty_pix.fill(QtCore.Qt.transparent)
-        empty_painter = QtGui.QPainter()
-        empty_painter.begin(empty_pix)
-        empty_painter.drawTiledPixmap(
-            QtCore.QRectF(0, 0, width, height),
-            single_checker_pix,
-            QtCore.QPointF(x_offset, y_offset)
+    def _paint_default_pix(self, pix_width, pix_height):
+        full_border_width = 2 * self.border_width
+        width = pix_width - full_border_width
+        height = pix_height - full_border_width
+        if width > 100:
+            width = int(width * 0.6)
+            height = int(height * 0.6)
+
+        scaled_pix = self._default_pix.scaled(
+            width,
+            height,
+            QtCore.Qt.KeepAspectRatio,
+            QtCore.Qt.SmoothTransformation
         )
-        empty_painter.end()
-        return empty_pix
-
-    def _cache_pix(self):
-        rect = self.rect()
-        rect_width = rect.width()
-        rect_height = rect.height()
-
-        pix_x_offset = 0
-        pix_y_offset = 0
-        expected_height = int(
-            (rect_width / self.width_ratio) * self.height_ratio
+        pos_x = int(
+            (pix_width - scaled_pix.width()) / 2
         )
-        if expected_height > rect_height:
-            expected_height = rect_height
-            expected_width = int(
-                (rect_height / self.height_ratio) * self.width_ratio
-            )
-            pix_x_offset = (rect_width - expected_width) / 2
-        else:
-            expected_width = rect_width
-            pix_y_offset = (rect_height - expected_height) / 2
-
-        if self._current_pixes is None:
-            draw_dashes = True
-            pixes_to_draw = [self._default_pix]
-        else:
-            draw_dashes = False
-            pixes_to_draw = self._current_pixes
-
-        if len(pixes_to_draw) > self.max_thumbnails:
-            pixes_to_draw = pixes_to_draw[:-self.max_thumbnails]
-        pixes_len = len(pixes_to_draw)
-
-        width_offset, height_offset = self._get_pix_offset_size(
-            expected_width, expected_height, pixes_len
+        pos_y = int(
+            (pix_height - scaled_pix.height()) / 2
         )
-        pix_width = expected_width - width_offset
-        pix_height = expected_height - height_offset
+        new_pix = QtGui.QPixmap(pix_width, pix_height)
+        new_pix.fill(QtCore.Qt.transparent)
+        pix_painter = QtGui.QPainter()
+        pix_painter.begin(new_pix)
+        pix_painter.setRenderHints(
+            pix_painter.Antialiasing
+            | pix_painter.SmoothPixmapTransform
+            | pix_painter.HighQualityAntialiasing
+        )
+        pix_painter.drawPixmap(pos_x, pos_y, scaled_pix)
+        pix_painter.end()
+        return new_pix
+
+    def _draw_thumbnails(self, thumbnails, pix_width, pix_height):
         full_border_width = 2 * self.border_width
 
+        checker_pix = self._paint_checker(pix_width, pix_height)
 
         backgrounded_images = []
-        for src_pix in pixes_to_draw:
+        for src_pix in thumbnails:
             scaled_pix = src_pix.scaled(
                 pix_width - full_border_width,
                 pix_height - full_border_width,
@@ -177,9 +163,63 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
                 | pix_painter.SmoothPixmapTransform
                 | pix_painter.HighQualityAntialiasing
             )
+
+            tiled_rect = QtCore.QRectF(
+                pos_x, pos_y, scaled_pix.width(), scaled_pix.height()
+            )
+            pix_painter.drawTiledPixmap(
+                tiled_rect,
+                checker_pix,
+                QtCore.QPointF(0.0, 0.0)
+            )
             pix_painter.drawPixmap(pos_x, pos_y, scaled_pix)
             pix_painter.end()
             backgrounded_images.append(new_pix)
+        return backgrounded_images
+
+    def _cache_pix(self):
+        rect = self.rect()
+        rect_width = rect.width()
+        rect_height = rect.height()
+
+        pix_x_offset = 0
+        pix_y_offset = 0
+        expected_height = int(
+            (rect_width / self.width_ratio) * self.height_ratio
+        )
+        if expected_height > rect_height:
+            expected_height = rect_height
+            expected_width = int(
+                (rect_height / self.height_ratio) * self.width_ratio
+            )
+            pix_x_offset = (rect_width - expected_width) / 2
+        else:
+            expected_width = rect_width
+            pix_y_offset = (rect_height - expected_height) / 2
+
+        if self._current_pixes is None:
+            used_default_pix = True
+            pixes_to_draw = None
+            pixes_len = 1
+        else:
+            used_default_pix = False
+            pixes_to_draw = self._current_pixes
+            if len(pixes_to_draw) > self.max_thumbnails:
+                pixes_to_draw = pixes_to_draw[:-self.max_thumbnails]
+            pixes_len = len(pixes_to_draw)
+
+        width_offset, height_offset = self._get_pix_offset_size(
+            expected_width, expected_height, pixes_len
+        )
+        pix_width = expected_width - width_offset
+        pix_height = expected_height - height_offset
+
+        if used_default_pix:
+            thumbnail_images = [self._paint_default_pix(pix_width, pix_height)]
+        else:
+            thumbnail_images = self._draw_thumbnails(
+                pixes_to_draw, pix_width, pix_height
+            )
 
         if pixes_len == 1:
             width_offset_part = 0
@@ -207,13 +247,13 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
         final_painter.setPen(bg_pen)
         final_painter.drawRect(rect)
 
-        for idx, pix in enumerate(backgrounded_images):
+        for idx, pix in enumerate(thumbnail_images):
             x_offset = full_width_offset - (width_offset_part * idx)
             y_offset = (height_offset_part * idx) + pix_y_offset
             final_painter.drawPixmap(x_offset, y_offset, pix)
 
         # Draw drop enabled dashes
-        if draw_dashes:
+        if used_default_pix:
             pen = QtGui.QPen()
             pen.setWidth(1)
             pen.setBrush(QtCore.Qt.darkGray)
