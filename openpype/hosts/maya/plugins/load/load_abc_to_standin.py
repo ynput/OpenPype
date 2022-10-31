@@ -1,5 +1,4 @@
 import os
-import clique
 
 from openpype.pipeline import (
     load,
@@ -41,7 +40,7 @@ class AlembicStandinLoader(load.LoaderPlugin):
             suffix="_",
         )
 
-        #Root group
+        # Root group
         label = "{}:{}".format(namespace, name)
         root = pm.group(name=label, empty=True)
 
