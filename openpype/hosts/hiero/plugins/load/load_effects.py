@@ -94,7 +94,12 @@ class LoadEffects(load.LoaderPlugin):
                         or knob_name == "name"
                     ):
                         continue
-                    node[knob_name].setValue(knob_value)
+
+                    try:
+                        node[knob_name].setValue(knob_value)
+                    except NameError:
+                        self.log.warning("Knob: {} cannot be set".format(
+                            knob_name))
 
                 # register all loaded children
                 data_imprint["children_names"].append(new_name)

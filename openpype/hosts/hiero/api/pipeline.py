@@ -134,7 +134,7 @@ def ls():
 
     for item in all_items:
         container_data = parse_container(item)
-        if isinstance(container, list):
+
         if isinstance(container_data, list):
             for _c in container_data:
                 yield _c
@@ -187,7 +187,7 @@ def parse_container(item, validate=True):
     if type(item) == hiero.core.VideoTrack:
         return_list = []
         _data = lib.get_track_openpype_data(item)
-        log.info("_data: {}".format(_data))
+
         if not _data:
             return
         # convert the data to list and validate them
@@ -196,7 +196,7 @@ def parse_container(item, validate=True):
             return_list.append(cotnainer)
         return return_list
     else:
-        _data = lib.get_track_item_pype_data(item)
+        _data = lib.get_trackitem_openpype_data(item)
         return data_to_container(item, _data)
 
 
