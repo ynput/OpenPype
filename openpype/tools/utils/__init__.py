@@ -7,6 +7,7 @@ from .widgets import (
     ExpandBtn,
     PixmapLabel,
     IconButton,
+    PixmapButton,
     SeparatorWidget,
 )
 from .views import DeselectableTreeView
@@ -38,6 +39,7 @@ __all__ = (
     "ExpandBtn",
     "PixmapLabel",
     "IconButton",
+    "PixmapButton",
     "SeparatorWidget",
 
     "DeselectableTreeView",

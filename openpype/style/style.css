@@ -884,6 +884,18 @@ PublisherTabBtn[active="1"]:hover {
     background: {color:bg};
 }
 
+PixmapButton{
+    border: 0px solid transparent;
+    border-radius: 0.2em;
+    background: {color:bg-buttons};
+}
+PixmapButton:hover {
+    background: {color:bg-button-hover};
+}
+PixmapButton:disabled {
+    background: {color:bg-buttons-disabled};
+}
+
 #CreatorDetailedDescription {
     padding-left: 5px;
     padding-right: 5px;
