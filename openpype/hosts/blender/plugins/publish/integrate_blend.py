@@ -4,6 +4,7 @@ import bpy
 
 from openpype.hosts.blender.utility_scripts import make_paths_relative
 from openpype.plugins.publish.integrate import IntegrateAsset
+from openpype.settings.lib import get_project_settings
 
 
 class IntegrateBlenderAsset(IntegrateAsset):
@@ -11,6 +12,19 @@ class IntegrateBlenderAsset(IntegrateAsset):
     hosts = ["blender"]
 
     def process(self, instance):
+        # Check enabled in settings
+        project_entity = instance.data["projectEntity"]
+        project_name = project_entity["name"]
+        project_settings = get_project_settings(project_name)
+        host_name = instance.context.data["hostName"]
+        host_settings = project_settings.get(host_name)
+        if not host_settings:
+            self.log.info('Host "{}" doesn\'t have settings'.format(host_name))
+            return None
+
+        if not host_settings.get("general", {}).get("use_paths_management"):
+            return
+
         representations = instance.data.get("published_representations")
 
         for representation in representations.values():
@@ -22,10 +36,7 @@ class IntegrateBlenderAsset(IntegrateAsset):
 
             # If not workfile, it is a blend and there is a published file
             if (
-                representation.get("anatomy_data", {}).get("family")
-                != "workfile"
-                and representation.get("representation", {}).get("name")
-                == "blend"
+                representation.get("representation", {}).get("name") == "blend"
                 and published_path
             ):
                 self.log.info(
