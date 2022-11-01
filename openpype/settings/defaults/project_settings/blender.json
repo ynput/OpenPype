@@ -15,7 +15,8 @@
         }
     },
     "general": {
-        "compress": false
+        "compress": false,
+        "use_paths_management": false
     },
     "workfile_builder": {
         "create_first_version": false,

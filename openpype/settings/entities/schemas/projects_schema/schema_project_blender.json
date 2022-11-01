@@ -57,6 +57,11 @@
                     "type": "boolean",
                     "key": "compress",
                     "label": "Use file compress on save"
+                },
+                {
+                    "type": "boolean",
+                    "key": "use_paths_management",
+                    "label": "Manage paths: Published -> Relative | Workfile -> Absolute"
                 }
             ]
         },
