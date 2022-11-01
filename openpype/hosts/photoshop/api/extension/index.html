@@ -64,17 +64,6 @@
               });
             });
     </script>
-
-    <script type=text/javascript>
-            $(function() {
-              $("a#subsetmanager-button").bind("click", function() {
-                RPC.call('Photoshop.subsetmanager_route').then(function (data) {
-                }, function (error) {
-                    alert(error);
-                });
-              });
-            });
-    </script>
     
     <script type=text/javascript>
             $(function() {
@@ -100,7 +89,6 @@
     <a href=# id=workfiles-button><button>Workfiles...</button></a>
     <a href=# id=loader-button><button>Load...</button></a>
     <a href=# id=publish-button><button>Publish...</button></a>
-    <a href=# id=sceneinventory-button><button>Manage...</button></a>
     <a href=# id=experimental-button><button>Experimental Tools...</button></a>
 </body>
 </html>
