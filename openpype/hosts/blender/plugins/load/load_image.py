@@ -10,7 +10,7 @@ class ImageLoader(plugin.AssetLoader):
     """Load image in Blender."""
 
     families = ["image"]
-    representations = ["png", "jpg"]
+    representations = ["png", "jpg", "mov", "mp4"]
 
     label = "Load Image"
     icon = "image"
@@ -26,6 +26,9 @@ class ImageLoader(plugin.AssetLoader):
 
         img = bpy.data.images.load(libpath)
         img.name = plugin.asset_name(asset, subset)
+
+        if libpath.endswith((".mov", "mp4")):
+            img.source = 'MOVIE'
 
         return img
 
@@ -55,6 +58,12 @@ class ReferenceLoader(ImageLoader):
         asset_group.show_empty_image_orthographic = True
         asset_group.show_empty_image_perspective = True
         asset_group.data = img
+        
+        if img.source == "MOVIE":
+            asset_group.image_user.frame_start = bpy.context.scene.frame_start
+            asset_group.image_user.frame_duration = (
+                bpy.context.scene.frame_end - bpy.context.scene.frame_start
+            )
 
         plugin.get_main_collection().objects.link(asset_group)
 
@@ -94,5 +103,10 @@ class BackgroundLoader(ImageLoader):
             bkg_img = camera.data.background_images.new()
             bkg_img.image = img
             bkg_img.frame_method = "FIT"
+            if img.source == "MOVIE":
+                bkg_img.image_user.frame_start = bpy.context.scene.frame_start
+                bkg_img.image_user.frame_duration = (
+                    bpy.context.scene.frame_end - bpy.context.scene.frame_start
+                )
 
-        return camera
+        return img
