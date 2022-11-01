@@ -394,7 +394,7 @@ def get_track_openpype_tag(track):
             return tag
 
 
-def get_track_openpype_data(track):
+def get_track_openpype_data(track, container_name=None):
     """
     Get track's openpype tag data.
 
@@ -416,12 +416,16 @@ def get_track_openpype_data(track):
 
     for obj_name, obj_data in tag_data.items():
         obj_name = obj_name.replace("tag.", "")
-        print(obj_name)
+
         if obj_name in ["applieswhole", "note", "label"]:
             continue
         return_data[obj_name] = json.loads(obj_data)
 
-    return return_data
+    return (
+        return_data[container_name]
+        if container_name
+        else return_data
+    )
 
 
 @deprecated("openpype.hosts.hiero.api.lib.get_trackitem_openpype_tag")
