@@ -1,5 +1,5 @@
 import os
-from openpype.api import ApplicationManager
+from openpype.lib import ApplicationManager
 from openpype.pipeline import load
 
 

@@ -195,7 +195,7 @@ class FtrackModule(
             app_definitions_from_app_manager,
             tool_definitions_from_app_manager
         )
-        from openpype.api import ApplicationManager
+        from openpype.lib import ApplicationManager
         query_keys = [
             "id",
             "key",
