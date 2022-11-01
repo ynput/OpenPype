@@ -193,10 +193,17 @@ def inject_openpype_environment(deadlinePlugin):
         env["AVALON_TIMEOUT"] = "5000"
 
         print(">>> Executing: {}".format(" ".join(args)))
-        std_output = subprocess.check_output(args,
-                                             cwd=os.path.dirname(exe),
-                                             env=env)
-        print(">>> Process result {}".format(std_output))
+        proc = subprocess.Popen(
+            args,
+            cwd=os.path.dirname(exe),
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        std_output, std_err = proc.communicate()
+        print(">>> Process result {}\n".format(std_output, std_err))
+        if proc.returncode != 0:
+            raise RuntimeError("OpenPype process failed.")
 
         print(">>> Loading file ...")
         with open(export_url) as fp:
