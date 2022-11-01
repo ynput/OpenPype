@@ -98,6 +98,7 @@ class ImageCreator(Creator):
 
             data.update({"subset": subset_name})
             data.update({"members": [str(group.id)]})
+            data.update({"layer_name": layer_name})
             data.update({"long_name": "_".join(layer_names_in_hierarchy)})
 
             new_instance = CreatedInstance(self.family, subset_name, data,
@@ -164,6 +165,12 @@ class ImageCreator(Creator):
     def _clean_highlights(self, stub, item):
         return item.replace(stub.PUBLISH_ICON, '').replace(stub.LOADED_ICON,
                                                            '')
-    @classmethod
-    def get_dynamic_data(cls, *args, **kwargs):
-        return {"layer": "{layer}"}
+
+    def get_dynamic_data(self, variant, task_name, asset_doc,
+                         project_name, host_name, instance):
+        if not instance:
+            return {"layer": "{layer}"}
+        else:
+            layer_name = instance.get("layer_name")
+            if layer_name:
+                return {"layer": layer_name}
