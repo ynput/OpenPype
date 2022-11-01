@@ -13,7 +13,7 @@ class AlembicStandinLoader(load.LoaderPlugin):
     families = ["model", "pointcache"]
     representations = ["abc"]
 
-    label = "Import Alembic as Standin"
+    label = "Import Alembic as Arnold Standin"
     order = -5
     icon = "code-fork"
     color = "orange"
@@ -21,7 +21,6 @@ class AlembicStandinLoader(load.LoaderPlugin):
     def load(self, context, name, namespace, options):
 
         import maya.cmds as cmds
-        import pymel.core as pm
         import mtoa.ui.arnoldmenu
         from openpype.hosts.maya.api.pipeline import containerise
         from openpype.hosts.maya.api.lib import unique_namespace
@@ -42,7 +41,7 @@ class AlembicStandinLoader(load.LoaderPlugin):
 
         # Root group
         label = "{}:{}".format(namespace, name)
-        root = pm.group(name=label, empty=True)
+        root = cmds.group(name=label, empty=True)
 
         settings = get_project_settings(os.environ['AVALON_PROJECT'])
         colors = settings["maya"]["load"]["colors"]
@@ -55,16 +54,17 @@ class AlembicStandinLoader(load.LoaderPlugin):
 
         transform_name = label + "_ABC"
 
-        standinShape = pm.PyNode(mtoa.ui.arnoldmenu.createStandIn())
-        standin = standinShape.getParent()
-        standin.rename(transform_name)
+        standinShape = cmds.ls(mtoa.ui.arnoldmenu.createStandIn())[0]
+        standin = cmds.listRelatives(standinShape, parent=True, typ="transform")
+        standin = cmds.rename(standin, transform_name)
+        standinShape = cmds.listRelatives(standin, children=True)[0]
 
-        pm.parent(standin, root)
+        cmds.parent(standin, root)
 
         # Set the standin filepath
-        standinShape.dso.set(self.fname)
+        cmds.setAttr(standinShape + ".dso", self.fname, type="string")
         if frameStart is not None:
-            standinShape.useFrameExtension.set(1)
+            cmds.setAttr(standinShape + ".useFrameExtension", 1)
 
         nodes = [root, standin]
         self[:] = nodes
