@@ -75,7 +75,7 @@ class ReferenceLoader(ImageLoader):
 class BackgroundLoader(ImageLoader):
     """Load image as Background linked to a camera."""
 
-    label = "Load Background (for camera)"
+    label = "Load Background for camera"
     order = 2
 
     def process_asset(self, *args, **kwargs) -> bpy.types.Image:
