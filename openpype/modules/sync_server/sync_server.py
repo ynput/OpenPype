@@ -239,7 +239,7 @@ class SyncServerThread(threading.Thread):
 
         # Event to trigger files have been processed
         self.files_processed = threading.Event()
-        
+
         super(SyncServerThread, self).__init__(args=(self.files_processed,))
         self.module = module
         self.loop = None
