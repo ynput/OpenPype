@@ -329,7 +329,7 @@ def prepare_workfile_info_update_data(old_doc, new_doc, replace=True):
 
 
 class MongoCreateOperation(CreateOperation):
-    """Opeartion to create an entity.
+    """Operation to create an entity.
 
     Args:
         project_name (str): On which project operation will happen.
@@ -341,7 +341,9 @@ class MongoCreateOperation(CreateOperation):
     operation_name = "create"
 
     def __init__(self, project_name, entity_type, data):
-        super(MongoCreateOperation, self).__init__(project_name, entity_type)
+        super(MongoCreateOperation, self).__init__(
+            project_name, entity_type, data
+        )
 
         if "_id" not in self._data:
             self._data["_id"] = ObjectId()
@@ -357,7 +359,7 @@ class MongoCreateOperation(CreateOperation):
 
 
 class MongoUpdateOperation(UpdateOperation):
-    """Opeartion to update an entity.
+    """Operation to update an entity.
 
     Args:
         project_name (str): On which project operation will happen.
@@ -403,7 +405,7 @@ class MongoUpdateOperation(UpdateOperation):
 
 
 class MongoDeleteOperation(DeleteOperation):
-    """Opeartion to delete an entity.
+    """Operation to delete an entity.
 
     Args:
         project_name (str): On which project operation will happen.
