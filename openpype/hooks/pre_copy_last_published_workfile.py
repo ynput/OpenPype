@@ -65,8 +65,8 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         elif use_last_published_workfile is False:
             self.log.info(
                 (
-                    'Project "{}" has turned off to use last published workfile'
-                    ' as first workfile for host "{}"'
+                    'Project "{}" has turned off to use last published'
+                    ' workfile as first workfile for host "{}"'
                 ).format(project_name, host_name)
             )
             return
