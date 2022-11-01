@@ -30,6 +30,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         1- Check if setting for this feature is enabled
         2- Check if workfile in work area doesn't exist
         3- Check if published workfile exists and is copied locally in publish
+        4- Substitute copied published workfile as first workfile
 
         Returns:
             None: This is a void method.
