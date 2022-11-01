@@ -197,35 +197,6 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
     instance[0].Visible = new_value
 
 
-def get_asset_settings(asset_doc):
-    """Get settings on current asset from database.
-
-    Returns:
-        dict: Scene data.
-
-    """
-    asset_data = asset_doc["data"]
-    fps = asset_data.get("fps")
-    frame_start = asset_data.get("frameStart")
-    frame_end = asset_data.get("frameEnd")
-    handle_start = asset_data.get("handleStart")
-    handle_end = asset_data.get("handleEnd")
-    resolution_width = asset_data.get("resolutionWidth")
-    resolution_height = asset_data.get("resolutionHeight")
-    duration = (frame_end - frame_start + 1) + handle_start + handle_end
-
-    return {
-        "fps": fps,
-        "frameStart": frame_start,
-        "frameEnd": frame_end,
-        "handleStart": handle_start,
-        "handleEnd": handle_end,
-        "resolutionWidth": resolution_width,
-        "resolutionHeight": resolution_height,
-        "duration": duration
-    }
-
-
 def ls():
     """Yields containers from active AfterEffects document.
 

@@ -12,13 +12,13 @@ from .launch_logic import (
 from .pipeline import (
     AfterEffectsHost,
     ls,
-    get_asset_settings,
     containerise
 )
 
 from .lib import (
     maintained_selection,
-    get_extension_manifest_path
+    get_extension_manifest_path,
+    get_asset_settings
 )
 
 from .plugin import (
@@ -33,12 +33,12 @@ __all__ = [
 
     # pipeline
     "ls",
-    "get_asset_settings",
     "containerise",
 
     # lib
     "maintained_selection",
     "get_extension_manifest_path",
+    "get_asset_settings",
 
     # plugin
     "AfterEffectsLoader"
