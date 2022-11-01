@@ -601,7 +601,8 @@ def get_v4_project(project_name, fields=None):
     parsed_data = query.query(con)
 
     data = parsed_data["project"]
-    data["name"] = project_name
+    if data is not None:
+        data["name"] = project_name
     return _convert_v4_project_to_v3(data)
 
 
