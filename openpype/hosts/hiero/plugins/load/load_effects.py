@@ -25,7 +25,6 @@ class LoadEffects(load.LoaderPlugin):
     order = 0
     icon = "cc"
     color = "white"
-    ignore_attr = ["useLifetime"]
 
     def load(self, context, name, namespace, data):
         """
