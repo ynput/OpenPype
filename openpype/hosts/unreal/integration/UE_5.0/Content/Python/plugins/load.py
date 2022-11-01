@@ -70,6 +70,25 @@ def get_assets_of_class(asset_list, class_name):
     return assets
 
 
+def get_all_assets_of_class(class_name, path, recursive):
+    recursive = ast.literal_eval(recursive)
+
+    ar = unreal.AssetRegistryHelpers.get_asset_registry()
+
+    filter = unreal.ARFilter(
+        class_names=[class_name],
+        package_paths=[path],
+        recursive_paths=recursive)
+
+    assets = ar.get_assets(filter)
+
+    return [asset.get_editor_property('object_path') for asset in assets]
+
+
+def get_first_asset_of_class(class_name, path, recursive):
+    return get_all_assets_of_class(class_name, path, recursive)[0]
+
+
 def save_listed_assets(asset_list):
     asset_list = ast.literal_eval(asset_list)
     for asset in asset_list:
@@ -99,7 +118,9 @@ def _import(
     return task, options
 
 
-def import_abc_task(task_properties, options_properties, options_extra_properties):
+def import_abc_task(
+    task_properties, options_properties, options_extra_properties
+):
     task, options = _import(
         unreal.AssetImportTask(), unreal.AbcImportSettings(),
         task_properties, options_properties, options_extra_properties)
@@ -109,7 +130,9 @@ def import_abc_task(task_properties, options_properties, options_extra_propertie
     unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
 
 
-def import_fbx_task(task_properties, options_properties, options_extra_properties):
+def import_fbx_task(
+    task_properties, options_properties, options_extra_properties
+):
     task, options = _import(
         unreal.AssetImportTask(), unreal.FbxImportUI(),
         task_properties, options_properties, options_extra_properties)
@@ -159,6 +182,7 @@ def generate_master_sequence(
 
     return sequence.get_path_name()
 
+
 def set_sequence_hierarchy(
     parent_path, child_path, child_start_frame, child_end_frame
 ):
@@ -169,7 +193,7 @@ def set_sequence_hierarchy(
     tracks = parent.get_master_tracks()
     subscene_track = None
     for t in tracks:
-        if (t.get_class() == 
+        if (t.get_class() ==
                 unreal.MovieSceneSubTrack.static_class()):
             subscene_track = t
             break
@@ -256,7 +280,6 @@ def process_family(
     sequence = get_asset(sequence_path) if sequence_path else None
 
     for asset in assets:
-        print(asset)
         obj = get_asset(asset)
         if obj and obj.get_class().get_name() == class_name:
             basis_matrix = unreal.Matrix(
@@ -315,6 +338,47 @@ def apply_animation_to_actor(actor_path, animation_path):
         'animation_mode', unreal.AnimationMode.ANIMATION_SINGLE_NODE)
     actor.skeletal_mesh_component.animation_data.set_editor_property(
         'anim_to_play', animation)
+
+
+def apply_animation(animation_path, instance_name, sequences):
+    animation = get_asset(animation_path)
+    sequences = ast.literal_eval(sequences)
+
+    anim_track_class = "MovieSceneSkeletalAnimationTrack"
+    anim_section_class = "MovieSceneSkeletalAnimationSection"
+
+    for sequence_path in sequences:
+        sequence = get_asset(sequence_path)
+        possessables = [
+            possessable for possessable in sequence.get_possessables()
+            if possessable.get_display_name() == instance_name]
+
+        for possessable in possessables:
+            tracks = [
+                track for track in possessable.get_tracks()
+                if (track.get_class().get_name() == anim_track_class)]
+
+            if not tracks:
+                track = possessable.add_track(
+                    unreal.MovieSceneSkeletalAnimationTrack)
+                tracks.append(track)
+
+            for track in tracks:
+                sections = [
+                    section for section in track.get_sections()
+                    if (section.get_class().get_name == anim_section_class)]
+
+                if not sections:
+                    sections.append(track.add_section())
+
+                for section in sections:
+                    section.params.set_editor_property('animation', animation)
+                    section.set_range(
+                        sequence.get_playback_start(),
+                        sequence.get_playback_end() - 1)
+                    section.set_completion_mode(
+                        unreal.MovieSceneCompletionMode.KEEP_STATE)
+
 
 def add_animation_to_sequencer(sequence_path, binding_guid, animation_path):
     sequence = get_asset(sequence_path)
@@ -379,8 +443,6 @@ def import_camera(sequence_path, import_filename):
     ue_major = int(ue_version[0])
     ue_minor = int(ue_version[1])
 
-    print(import_filename)
-
     if ue_major == 4 and ue_minor <= 26:
         unreal.SequencerTools.import_fbx(
             world,
@@ -400,3 +462,21 @@ def import_camera(sequence_path, import_filename):
     else:
         raise NotImplementedError(
             f"Unreal version {ue_major} not supported")
+
+
+def get_actor_and_skeleton(instance_name):
+    actor_subsystem = unreal.EditorActorSubsystem()
+    actors = actor_subsystem.get_all_level_actors()
+    actor = None
+    for a in actors:
+        if a.get_class().get_name() != "SkeletalMeshActor":
+            continue
+        if a.get_actor_label() == instance_name:
+            actor = a
+            break
+    if not actor:
+        raise Exception(f"Could not find actor {instance_name}")
+
+    skeleton = actor.skeletal_mesh_component.skeletal_mesh.skeleton
+
+    return (actor.get_path_name(), skeleton.get_path_name())

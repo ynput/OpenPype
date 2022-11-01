@@ -3,18 +3,13 @@
 import os
 import json
 
-import unreal
-from unreal import EditorAssetLibrary
-from unreal import MovieSceneSkeletalAnimationTrack
-from unreal import MovieSceneSkeletalAnimationSection
-
 from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline import (
     get_representation_path,
     AVALON_CONTAINER_ID
 )
 from openpype.hosts.unreal.api import plugin
-from openpype.hosts.unreal.api import pipeline as unreal_pipeline
+from openpype.hosts.unreal.api import pipeline as up
 
 
 class AnimationFBXLoader(plugin.Loader):
@@ -29,91 +24,75 @@ class AnimationFBXLoader(plugin.Loader):
     def _process(self, asset_dir, asset_name, instance_name):
         automated = False
         actor = None
-
-        task = unreal.AssetImportTask()
-        task.options = unreal.FbxImportUI()
+        skeleton = None
 
         if instance_name:
             automated = True
-            # Old method to get the actor
-            # actor_name = 'PersistentLevel.' + instance_name
-            # actor = unreal.EditorLevelLibrary.get_actor_reference(actor_name)
-            actors = unreal.EditorLevelLibrary.get_all_level_actors()
-            for a in actors:
-                if a.get_class().get_name() != "SkeletalMeshActor":
-                    continue
-                if a.get_actor_label() == instance_name:
-                    actor = a
-                    break
-            if not actor:
-                raise Exception(f"Could not find actor {instance_name}")
-            skeleton = actor.skeletal_mesh_component.skeletal_mesh.skeleton
-            task.options.set_editor_property('skeleton', skeleton)
+            actor, skeleton = up.send_request_literal(
+                "get_actor_and_skeleton", params=[instance_name])
 
         if not actor:
             return None
 
         asset_doc = get_current_project_asset(fields=["data.fps"])
+        fps = asset_doc.get("data", {}).get("fps")
 
-        task.set_editor_property('filename', self.fname)
-        task.set_editor_property('destination_path', asset_dir)
-        task.set_editor_property('destination_name', asset_name)
-        task.set_editor_property('replace_existing', False)
-        task.set_editor_property('automated', automated)
-        task.set_editor_property('save', False)
+        task_properties = [
+            ("filename", up.format_string(self.fname)),
+            ("destination_path", up.format_string(asset_dir)),
+            ("destination_name", up.format_string(asset_name)),
+            ("replace_existing", "False"),
+            ("automated", str(automated)),
+            ("save", "False")
+        ]
 
-        # set import options here
-        task.options.set_editor_property(
-            'automated_import_should_detect_type', False)
-        task.options.set_editor_property(
-            'original_import_type', unreal.FBXImportType.FBXIT_SKELETAL_MESH)
-        task.options.set_editor_property(
-            'mesh_type_to_import', unreal.FBXImportType.FBXIT_ANIMATION)
-        task.options.set_editor_property('import_mesh', False)
-        task.options.set_editor_property('import_animations', True)
-        task.options.set_editor_property('override_full_name', True)
+        options_properties = [
+            ("automated_import_should_detect_type", "False"),
+            ("original_import_type",
+                "unreal.FBXImportType.FBXIT_SKELETAL_MESH"),
+            ("mesh_type_to_import",
+                "unreal.FBXImportType.FBXIT_ANIMATION"),
+            ("import_mesh", "False"),
+            ("import_animations", "True"),
+            ("override_full_name", "True"),
+            ("skeleton", f"get_asset({up.format_string(skeleton)})")
+        ]
 
-        task.options.anim_sequence_import_data.set_editor_property(
-            'animation_length',
-            unreal.FBXAnimationLengthImportType.FBXALIT_EXPORTED_TIME
-        )
-        task.options.anim_sequence_import_data.set_editor_property(
-            'import_meshes_in_bone_hierarchy', False)
-        task.options.anim_sequence_import_data.set_editor_property(
-            'use_default_sample_rate', False)
-        task.options.anim_sequence_import_data.set_editor_property(
-            'custom_sample_rate', asset_doc.get("data", {}).get("fps"))
-        task.options.anim_sequence_import_data.set_editor_property(
-            'import_custom_attribute', True)
-        task.options.anim_sequence_import_data.set_editor_property(
-            'import_bone_tracks', True)
-        task.options.anim_sequence_import_data.set_editor_property(
-            'remove_redundant_keys', False)
-        task.options.anim_sequence_import_data.set_editor_property(
-            'convert_scene', True)
+        options_extra_properties = [
+            ("anim_sequence_import_data", "animation_length",
+                "unreal.FBXAnimationLengthImportType.FBXALIT_EXPORTED_TIME"),
+            ("anim_sequence_import_data",
+                "import_meshes_in_bone_hierarchy", "False"),
+            ("anim_sequence_import_data", "use_default_sample_rate", "False"),
+            ("anim_sequence_import_data", "custom_sample_rate", str(fps)),
+            ("anim_sequence_import_data", "import_custom_attribute", "True"),
+            ("anim_sequence_import_data", "import_bone_tracks", "True"),
+            ("anim_sequence_import_data", "remove_redundant_keys", "False"),
+            ("anim_sequence_import_data", "convert_scene", "True")
+        ]
 
-        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+        up.send_request(
+            "import_fbx_task",
+            params=[
+                str(task_properties),
+                str(options_properties),
+                str(options_extra_properties)
+            ])
 
-        asset_content = EditorAssetLibrary.list_assets(
-            asset_dir, recursive=True, include_folder=True
-        )
+        asset_content = up.send_request_literal(
+            "list_assets", params=[asset_dir, "True", "True"])
 
         animation = None
 
-        for a in asset_content:
-            imported_asset_data = EditorAssetLibrary.find_asset_data(a)
-            imported_asset = unreal.AssetRegistryHelpers.get_asset(
-                imported_asset_data)
-            if imported_asset.__class__ == unreal.AnimSequence:
-                animation = imported_asset
-                break
+        animations = up.send_request_literal(
+            "get_assets_of_class",
+            params=[asset_content, "AnimSequence"])
+        if animations:
+            animation = animations[0]
 
         if animation:
-            animation.set_editor_property('enable_root_motion', True)
-            actor.skeletal_mesh_component.set_editor_property(
-                'animation_mode', unreal.AnimationMode.ANIMATION_SINGLE_NODE)
-            actor.skeletal_mesh_component.animation_data.set_editor_property(
-                'anim_to_play', animation)
+            up.send_request(
+                "apply_animation_to_actor", params=[actor, animation])
 
         return animation
 
@@ -145,37 +124,30 @@ class AnimationFBXLoader(plugin.Loader):
         asset = context.get('asset').get('name')
         suffix = "_CON"
         asset_name = f"{asset}_{name}" if asset else f"{name}"
-        tools = unreal.AssetToolsHelpers().get_asset_tools()
-        asset_dir, container_name = tools.create_unique_asset_name(
-            f"{root}/Animations/{asset}/{name}", suffix="")
 
-        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+        asset_dir, container_name = up.send_request_literal(
+            "create_unique_asset_name",
+            params=[f"{root}/Animations", asset, name])
 
-        _filter = unreal.ARFilter(
-            class_names=["World"],
-            package_paths=[f"{root}/{hierarchy[0]}"],
-            recursive_paths=False)
-        levels = ar.get_assets(_filter)
-        master_level = levels[0].get_editor_property('object_path')
+        master_level = up.send_request(
+            "get_first_asset_of_class",
+            params=["World", f"{root}/{hierarchy[0]}", "False"])
 
         hierarchy_dir = root
         for h in hierarchy:
             hierarchy_dir = f"{hierarchy_dir}/{h}"
         hierarchy_dir = f"{hierarchy_dir}/{asset}"
 
-        _filter = unreal.ARFilter(
-            class_names=["World"],
-            package_paths=[f"{hierarchy_dir}/"],
-            recursive_paths=True)
-        levels = ar.get_assets(_filter)
-        level = levels[0].get_editor_property('object_path')
+        level = up.send_request(
+            "get_first_asset_of_class",
+            params=["World", f"{hierarchy_dir}/", "False"])
 
-        unreal.EditorLevelLibrary.save_all_dirty_levels()
-        unreal.EditorLevelLibrary.load_level(level)
+        up.send_request("save_all_dirty_levels")
+        up.send_request("load_level", params=[level])
 
         container_name += suffix
 
-        EditorAssetLibrary.make_directory(asset_dir)
+        up.send_request("make_directory", params=[asset_dir])
 
         libpath = self.fname.replace("fbx", "json")
 
@@ -186,41 +158,24 @@ class AnimationFBXLoader(plugin.Loader):
 
         animation = self._process(asset_dir, asset_name, instance_name)
 
-        asset_content = EditorAssetLibrary.list_assets(
-            hierarchy_dir, recursive=True, include_folder=False)
+        asset_content = up.send_request_literal(
+            "list_assets", params=[hierarchy_dir, "True", "False"])
 
         # Get the sequence for the layout, excluding the camera one.
-        sequences = [a for a in asset_content
-                     if (EditorAssetLibrary.find_asset_data(a).get_class() ==
-                         unreal.LevelSequence.static_class() and
-                         "_camera" not in a.split("/")[-1])]
+        all_sequences = up.send_request_literal(
+            "get_assets_of_class",
+            params=[asset_content, "LevelSequence"])
+        sequences = [
+            a for a in all_sequences
+            if "_camera" not in a.split("/")[-1]]
 
-        ar = unreal.AssetRegistryHelpers.get_asset_registry()
-
-        for s in sequences:
-            sequence = ar.get_asset_by_object_path(s).get_asset()
-            possessables = [
-                p for p in sequence.get_possessables()
-                if p.get_display_name() == instance_name]
-
-            for p in possessables:
-                tracks = [
-                    t for t in p.get_tracks()
-                    if (t.get_class() ==
-                        MovieSceneSkeletalAnimationTrack.static_class())]
-
-                for t in tracks:
-                    sections = [
-                        s for s in t.get_sections()
-                        if (s.get_class() ==
-                            MovieSceneSkeletalAnimationSection.static_class())]
-
-                    for s in sections:
-                        s.params.set_editor_property('animation', animation)
+        up.send_request(
+            "apply_animation",
+            params=[animation, instance_name, str(sequences)])
 
         # Create Asset Container
-        unreal_pipeline.create_container(
-            container=container_name, path=asset_dir)
+        up.send_request(
+            "create_container", params=[container_name, asset_dir])
 
         data = {
             "schema": "openpype:container-2.0",
@@ -230,100 +185,103 @@ class AnimationFBXLoader(plugin.Loader):
             "container_name": container_name,
             "asset_name": asset_name,
             "loader": str(self.__class__.__name__),
-            "representation": context["representation"]["_id"],
-            "parent": context["representation"]["parent"],
+            "representation": str(context["representation"]["_id"]),
+            "parent": str(context["representation"]["parent"]),
             "family": context["representation"]["context"]["family"]
         }
-        unreal_pipeline.imprint(f"{asset_dir}/{container_name}", data)
+        up.send_request(
+            "imprint", params=[f"{asset_dir}/{container_name}", str(data)])
 
-        imported_content = EditorAssetLibrary.list_assets(
-            asset_dir, recursive=True, include_folder=False)
+        asset_content = up.send_request_literal(
+            "list_assets", params=[asset_dir, "True", "False"])
 
-        for a in imported_content:
-            EditorAssetLibrary.save_asset(a)
+        up.send_request(
+            "save_listed_assets", params=[str(asset_content)])
 
-        unreal.EditorLevelLibrary.save_current_level()
-        unreal.EditorLevelLibrary.load_level(master_level)
+        up.send_request("save_current_level")
+        up.send_request("load_level", params=[master_level])
 
-    def update(self, container, representation):
-        name = container["asset_name"]
-        source_path = get_representation_path(representation)
-        asset_doc = get_current_project_asset(fields=["data.fps"])
-        destination_path = container["namespace"]
+        return asset_content
 
-        task = unreal.AssetImportTask()
-        task.options = unreal.FbxImportUI()
+    # def update(self, container, representation):
+    #     name = container["asset_name"]
+    #     source_path = get_representation_path(representation)
+    #     asset_doc = get_current_project_asset(fields=["data.fps"])
+    #     destination_path = container["namespace"]
 
-        task.set_editor_property('filename', source_path)
-        task.set_editor_property('destination_path', destination_path)
-        # strip suffix
-        task.set_editor_property('destination_name', name)
-        task.set_editor_property('replace_existing', True)
-        task.set_editor_property('automated', True)
-        task.set_editor_property('save', True)
+    #     task = unreal.AssetImportTask()
+    #     task.options = unreal.FbxImportUI()
 
-        # set import options here
-        task.options.set_editor_property(
-            'automated_import_should_detect_type', False)
-        task.options.set_editor_property(
-            'original_import_type', unreal.FBXImportType.FBXIT_SKELETAL_MESH)
-        task.options.set_editor_property(
-            'mesh_type_to_import', unreal.FBXImportType.FBXIT_ANIMATION)
-        task.options.set_editor_property('import_mesh', False)
-        task.options.set_editor_property('import_animations', True)
-        task.options.set_editor_property('override_full_name', True)
+    #     task.set_editor_property('filename', source_path)
+    #     task.set_editor_property('destination_path', destination_path)
+    #     # strip suffix
+    #     task.set_editor_property('destination_name', name)
+    #     task.set_editor_property('replace_existing', True)
+    #     task.set_editor_property('automated', True)
+    #     task.set_editor_property('save', True)
 
-        task.options.anim_sequence_import_data.set_editor_property(
-            'animation_length',
-            unreal.FBXAnimationLengthImportType.FBXALIT_EXPORTED_TIME
-        )
-        task.options.anim_sequence_import_data.set_editor_property(
-            'import_meshes_in_bone_hierarchy', False)
-        task.options.anim_sequence_import_data.set_editor_property(
-            'use_default_sample_rate', False)
-        task.options.anim_sequence_import_data.set_editor_property(
-            'custom_sample_rate', asset_doc.get("data", {}).get("fps"))
-        task.options.anim_sequence_import_data.set_editor_property(
-            'import_custom_attribute', True)
-        task.options.anim_sequence_import_data.set_editor_property(
-            'import_bone_tracks', True)
-        task.options.anim_sequence_import_data.set_editor_property(
-            'remove_redundant_keys', False)
-        task.options.anim_sequence_import_data.set_editor_property(
-            'convert_scene', True)
+    #     # set import options here
+    #     task.options.set_editor_property(
+    #         'automated_import_should_detect_type', False)
+    #     task.options.set_editor_property(
+    #         'original_import_type', unreal.FBXImportType.FBXIT_SKELETAL_MESH)
+    #     task.options.set_editor_property(
+    #         'mesh_type_to_import', unreal.FBXImportType.FBXIT_ANIMATION)
+    #     task.options.set_editor_property('import_mesh', False)
+    #     task.options.set_editor_property('import_animations', True)
+    #     task.options.set_editor_property('override_full_name', True)
 
-        skeletal_mesh = EditorAssetLibrary.load_asset(
-            container.get('namespace') + "/" + container.get('asset_name'))
-        skeleton = skeletal_mesh.get_editor_property('skeleton')
-        task.options.set_editor_property('skeleton', skeleton)
+    #     task.options.anim_sequence_import_data.set_editor_property(
+    #         'animation_length',
+    #         unreal.FBXAnimationLengthImportType.FBXALIT_EXPORTED_TIME
+    #     )
+    #     task.options.anim_sequence_import_data.set_editor_property(
+    #         'import_meshes_in_bone_hierarchy', False)
+    #     task.options.anim_sequence_import_data.set_editor_property(
+    #         'use_default_sample_rate', False)
+    #     task.options.anim_sequence_import_data.set_editor_property(
+    #         'custom_sample_rate', asset_doc.get("data", {}).get("fps"))
+    #     task.options.anim_sequence_import_data.set_editor_property(
+    #         'import_custom_attribute', True)
+    #     task.options.anim_sequence_import_data.set_editor_property(
+    #         'import_bone_tracks', True)
+    #     task.options.anim_sequence_import_data.set_editor_property(
+    #         'remove_redundant_keys', False)
+    #     task.options.anim_sequence_import_data.set_editor_property(
+    #         'convert_scene', True)
 
-        # do import fbx and replace existing data
-        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
-        container_path = f'{container["namespace"]}/{container["objectName"]}'
-        # update metadata
-        unreal_pipeline.imprint(
-            container_path,
-            {
-                "representation": str(representation["_id"]),
-                "parent": str(representation["parent"])
-            })
+    #     skeletal_mesh = EditorAssetLibrary.load_asset(
+    #         container.get('namespace') + "/" + container.get('asset_name'))
+    #     skeleton = skeletal_mesh.get_editor_property('skeleton')
+    #     task.options.set_editor_property('skeleton', skeleton)
 
-        asset_content = EditorAssetLibrary.list_assets(
-            destination_path, recursive=True, include_folder=True
-        )
+    #     # do import fbx and replace existing data
+    #     unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+    #     container_path = f'{container["namespace"]}/{container["objectName"]}'
+    #     # update metadata
+    #     up.imprint(
+    #         container_path,
+    #         {
+    #             "representation": str(representation["_id"]),
+    #             "parent": str(representation["parent"])
+    #         })
 
-        for a in asset_content:
-            EditorAssetLibrary.save_asset(a)
+    #     asset_content = EditorAssetLibrary.list_assets(
+    #         destination_path, recursive=True, include_folder=True
+    #     )
 
-    def remove(self, container):
-        path = container["namespace"]
-        parent_path = os.path.dirname(path)
+    #     for a in asset_content:
+    #         EditorAssetLibrary.save_asset(a)
 
-        EditorAssetLibrary.delete_directory(path)
+    # def remove(self, container):
+    #     path = container["namespace"]
+    #     parent_path = os.path.dirname(path)
 
-        asset_content = EditorAssetLibrary.list_assets(
-            parent_path, recursive=False, include_folder=True
-        )
+    #     EditorAssetLibrary.delete_directory(path)
 
-        if len(asset_content) == 0:
-            EditorAssetLibrary.delete_directory(parent_path)
+    #     asset_content = EditorAssetLibrary.list_assets(
+    #         parent_path, recursive=False, include_folder=True
+    #     )
+
+    #     if len(asset_content) == 0:
+    #         EditorAssetLibrary.delete_directory(parent_path)
