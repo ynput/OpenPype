@@ -58,7 +58,7 @@ class ReferenceLoader(ImageLoader):
         asset_group.show_empty_image_orthographic = True
         asset_group.show_empty_image_perspective = True
         asset_group.data = img
-        
+
         if img.source == "MOVIE":
             asset_group.image_user.frame_start = bpy.context.scene.frame_start
             asset_group.image_user.frame_duration = (
@@ -73,22 +73,26 @@ class ReferenceLoader(ImageLoader):
 
 
 class BackgroundLoader(ImageLoader):
-    """Load image as Background."""
+    """Load image as Background linked to a camera."""
 
-    label = "Load Background"
+    label = "Load Background (for camera)"
     order = 2
 
     def process_asset(self, *args, **kwargs) -> bpy.types.Image:
         img = super().process_asset(*args, **kwargs)
 
         camera = None
+        
+        # First try, catching camera with current active object.
         if bpy.context.object and bpy.context.object.type == "CAMERA":
             camera = bpy.context.object
+        # Second try, catching camera with current selection.
         if not camera:
             camera = next(
                 (obj for obj in get_selection() if obj.type == "CAMERA"),
                 None,
             )
+        # Last try, catching camera with current scene objects.
         if not camera:
             camera = next(
                 (
@@ -98,15 +102,16 @@ class BackgroundLoader(ImageLoader):
                 None,
             )
 
-        if camera:
-            camera.data.show_background_images = True
-            bkg_img = camera.data.background_images.new()
-            bkg_img.image = img
-            bkg_img.frame_method = "FIT"
-            if img.source == "MOVIE":
-                bkg_img.image_user.frame_start = bpy.context.scene.frame_start
-                bkg_img.image_user.frame_duration = (
-                    bpy.context.scene.frame_end - bpy.context.scene.frame_start
-                )
+        assert camera, "No camera found!"
+
+        camera.data.show_background_images = True
+        bkg_img = camera.data.background_images.new()
+        bkg_img.image = img
+        bkg_img.frame_method = "FIT"
+        if img.source == "MOVIE":
+            bkg_img.image_user.frame_start = bpy.context.scene.frame_start
+            bkg_img.image_user.frame_duration = (
+                bpy.context.scene.frame_end - bpy.context.scene.frame_start
+            )
 
         return img
