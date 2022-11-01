@@ -339,8 +339,8 @@ class ServerAPIBase(object):
             )
         else:
             if response.text == "":
-                data = None
-                response = RestApiResponse(response.status_code)
+                data = {}
+                response = RestApiResponse(response.status_code, data)
             else:
                 try:
                     data = response.json()
