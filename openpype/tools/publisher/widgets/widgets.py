@@ -1800,9 +1800,10 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
 
         pos_y = rect.center().y()
         left = rect.left() + offset
-        right = rect.right()
         top = rect.top()
-        bottom = rect.bottom()
+        # Right and bootm is pixel index
+        right = rect.right() + 1
+        bottom = rect.bottom() + 1
         width = right - left
         height = bottom - top
 
