@@ -24,13 +24,13 @@ class RenderCreator(Creator):
                                                   ["create"]
                                                   ["RenderCreator"]
                                                   ["defaults"])
-        self.host = AfterEffectsHost()
+        self._host = AfterEffectsHost()
 
     def get_icon(self):
         return resources.get_openpype_splash_filepath()
 
     def collect_instances(self):
-        for instance_data in self.host.list_instances():
+        for instance_data in self._host.list_instances():
             # legacy instances have family=='render' or 'renderLocal', use them
             creator_id = (instance_data.get("creator_identifier") or
                           instance_data.get("family", '').replace("Local", ''))
@@ -48,7 +48,7 @@ class RenderCreator(Creator):
 
     def remove_instances(self, instances):
         for instance in instances:
-            self.host.remove_instance(instance)
+            self._host.remove_instance(instance)
             self._remove_instance_from_context(instance)
 
     def create(self, subset_name, data, pre_create_data):
