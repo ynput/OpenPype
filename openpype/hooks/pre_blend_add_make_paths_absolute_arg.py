@@ -4,6 +4,7 @@ from pathlib import Path
 
 from openpype.lib import PreLaunchHook
 from openpype.hosts.blender import utility_scripts
+from openpype.settings.lib import get_project_settings
 
 
 class AddMakePathsAbsoluteToLaunchArgs(PreLaunchHook):
@@ -16,10 +17,20 @@ class AddMakePathsAbsoluteToLaunchArgs(PreLaunchHook):
     ]
 
     def execute(self):
-        # TODO Setting
+        # Check enabled in settings
+        project_name = self.data["project_name"]
+        project_settings = get_project_settings(project_name)
+        host_name = self.application.host_name
+        host_settings = project_settings.get(host_name)
+        if not host_settings:
+            self.log.info('Host "{}" doesn\'t have settings'.format(host_name))
+            return None
+
+        if not host_settings.get("general", {}).get("use_paths_management"):
+            return
 
         self.log.info(
-            "Opening blend file with all paths converted to absolute."
+            "Opening blend file with all paths converted to absolute"
         )
         # Add path to workfile to arguments
         self.launch_context.launch_args.extend(
