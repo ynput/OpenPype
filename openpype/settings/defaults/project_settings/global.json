@@ -458,7 +458,8 @@
                     "hosts": [],
                     "task_types": [],
                     "tasks": [],
-                    "enabled": true
+                    "enabled": true,
+                    "use_last_published_workfile": false
                 }
             ],
             "open_workfile_tool_on_startup": [
