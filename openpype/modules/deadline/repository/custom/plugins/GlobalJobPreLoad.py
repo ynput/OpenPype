@@ -189,7 +189,6 @@ def inject_openpype_environment(deadlinePlugin):
             print(">>> Missing OPENPYPE_MONGO env var, process won't work")
 
         env = os.environ
-        env["OPENPYPE_HEADLESS_MODE"] = "1"
         env["AVALON_TIMEOUT"] = "5000"
 
         print(">>> Executing: {}".format(" ".join(args)))
