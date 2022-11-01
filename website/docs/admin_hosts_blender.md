@@ -85,6 +85,6 @@ You can close new terminal. Run pip install command above again. Now should work
 ## Settings
 ### General
 - Use file compress on save: All published files are compressed using Blender's native algorithm.
-- Paths background management: In order to make remote working easier using sites sync by keeping blend file's references during file copies, paths must be constantly converted between relative and absolute. The user must always work in absolute paths, and the published files must store paths as relative. This option ensures this convertion in background. In short:
+- Paths background management: In order to make remote working easier using sites sync by keeping blend file's references during file copies, paths must be constantly converted between relative and absolute. The user must always work in absolute paths, and the published files must store paths as relative. This option ensures this conversion in background. In short:
   - Published files: Relative paths
   - Workfiles: Absolute paths
