@@ -129,7 +129,8 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
                 ).format(task_name, host_name)
                 return
 
-            # Get sync server from Tray, which handles the asynchronous thread instance
+            # Get sync server from Tray,
+            # which handles the asynchronous thread instance
             sync_server = next(
                 (
                     t["sync_server"]
