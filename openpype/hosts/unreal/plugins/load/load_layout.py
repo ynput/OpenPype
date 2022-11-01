@@ -114,9 +114,9 @@ class LayoutLoader(plugin.Loader):
                 "unreal.FBXImportType.FBXIT_SKELETAL_MESH"),
             ("original_import_type", "unreal.FBXImportType.FBXIT_ANIMATION"),
             ("import_mesh", "False"),
-            ("import_animations", ""),
-            ("override_full_name", ""),
-            ("skeleton", f"get_asset({skeleton})")
+            ("import_animations", "True"),
+            ("override_full_name", "True"),
+            ("skeleton", f"get_asset({up.format_string(skeleton)})")
         ]
 
         options_extra_properties = [
@@ -125,7 +125,7 @@ class LayoutLoader(plugin.Loader):
             ("anim_sequence_import_data",
                 "import_meshes_in_bone_hierarchy", "False"),
             ("anim_sequence_import_data", "use_default_sample_rate", "False"),
-            ("anim_sequence_import_data", "custom_sample_rate", fps),
+            ("anim_sequence_import_data", "custom_sample_rate", str(fps)),
             ("anim_sequence_import_data", "import_custom_attribute", "True"),
             ("anim_sequence_import_data", "import_bone_tracks", "True"),
             ("anim_sequence_import_data", "remove_redundant_keys", "False"),
