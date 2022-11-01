@@ -377,6 +377,10 @@ class PublisherWindow(QtWidgets.QDialog):
         self._reset_on_show = True
         super(PublisherWindow, self).closeEvent(event)
 
+    def leaveEvent(self, event):
+        super(PublisherWindow, self).leaveEvent(event)
+        self._update_create_overlay_visibility()
+
     def eventFilter(self, obj, event):
         if event.type() == QtCore.QEvent.MouseMove:
             self._update_create_overlay_visibility(event.globalPos())
