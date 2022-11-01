@@ -1661,7 +1661,15 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
     def __init__(self, parent):
         super(CreateNextPageOverlay, self).__init__(parent)
 
-        self._arrow_color = QtGui.QColor(255, 255, 255)
+        self._arrow_color = (
+            get_objected_colors("bg-buttons").get_qcolor()
+        )
+        self._gradient_start_color = (
+            get_objected_colors("publisher", "tab-bg").get_qcolor()
+        )
+        self._gradient_end_color = (
+            get_objected_colors("bg-inputs").get_qcolor()
+        )
 
         change_anim = QtCore.QVariantAnimation()
         change_anim.setStartValue(0.0)
@@ -1843,8 +1851,8 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
         focal = QtCore.QPointF(left, pos_y)
         start_p = QtCore.QPointF(right - (width * 0.5), pos_y)
         gradient = QtGui.QRadialGradient(start_p, radius, focal)
-        gradient.setColorAt(0, QtGui.QColor(22, 25, 29))
-        gradient.setColorAt(1, QtGui.QColor(33, 37, 43))
+        gradient.setColorAt(0, self._gradient_start_color)
+        gradient.setColorAt(1, self._gradient_end_color)
 
         painter.fillPath(path, gradient)
 
