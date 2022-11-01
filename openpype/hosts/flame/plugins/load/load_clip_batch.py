@@ -1,3 +1,4 @@
+from copy import deepcopy
 import os
 import flame
 from pprint import pformat
@@ -22,7 +23,7 @@ class LoadClipBatch(opfapi.ClipLoader):
 
     # settings
     reel_name = "OP_LoadedReel"
-    clip_name_template = "{asset}_{subset}<_{output}>"
+    clip_name_template = "{batch}_{asset}_{subset}<_{output}>"
 
     def load(self, context, name, namespace, options):
 
@@ -40,6 +41,9 @@ class LoadClipBatch(opfapi.ClipLoader):
         if not context["representation"]["context"].get("output"):
             self.clip_name_template.replace("output", "representation")
 
+        formating_data = deepcopy(context["representation"]["context"])
+        formating_data["batch"] = self.batch.name.get_value()
+
         clip_name = StringTemplate(self.clip_name_template).format(
             context["representation"]["context"])
 
@@ -56,6 +60,7 @@ class LoadClipBatch(opfapi.ClipLoader):
         openclip_path = os.path.join(
             openclip_dir, clip_name + ".clip"
         )
+
         if not os.path.exists(openclip_dir):
             os.makedirs(openclip_dir)
 
