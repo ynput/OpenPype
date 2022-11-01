@@ -1,11 +1,16 @@
 import json
 from collections import OrderedDict
-from pprint import pprint
 import six
+
+from openpype.client import (
+    get_version_by_id
+)
 
 from openpype.pipeline import (
     AVALON_CONTAINER_ID,
-    load
+    load,
+    legacy_io,
+    get_representation_path
 )
 from openpype.hosts.hiero import api as phiero
 
@@ -40,18 +45,12 @@ class LoadEffects(load.LoaderPlugin):
             active_sequence, "LoadedEffects")
 
         # get main variables
-        version = context["version"]
-        version_data = version.get("data", {})
-        vname = version.get("name", None)
         namespace = namespace or context["asset"]["name"]
         object_name = "{}_{}".format(name, namespace)
         clip_in = context["asset"]["data"]["clipIn"]
         clip_out = context["asset"]["data"]["clipOut"]
 
         data_imprint = {
-            "source": version_data["source"],
-            "version": vname,
-            "author": version_data["author"],
             "objectName": object_name,
             "children_names": []
         }
@@ -59,6 +58,31 @@ class LoadEffects(load.LoaderPlugin):
         # getting file path
         file = self.fname.replace("\\", "/")
 
+        if self._shared_loading(
+            file,
+            active_track,
+            clip_in,
+            clip_out,
+            data_imprint
+        ):
+            self.containerise(
+                active_track,
+                name=name,
+                namespace=namespace,
+                object_name=object_name,
+                context=context,
+                loader=self.__class__.__name__,
+                data=data_imprint)
+
+    def _shared_loading(
+        self,
+        file,
+        active_track,
+        clip_in,
+        clip_out,
+        data_imprint,
+        update=False
+    ):
         # getting data from json file with unicode conversion
         with open(file, "r") as f:
             json_f = {self.byteify(key): self.byteify(value)
@@ -74,9 +98,6 @@ class LoadEffects(load.LoaderPlugin):
 
         loaded = False
         for index_order, (ef_name, ef_val) in enumerate(nodes_order.items()):
-            pprint("_" * 100)
-            pprint(ef_name)
-            pprint(ef_val)
             new_name = "{}_loaded".format(ef_name)
             if new_name not in used_subtracks:
                 effect_track_item = active_track.createEffect(
@@ -87,46 +108,82 @@ class LoadEffects(load.LoaderPlugin):
 
                 )
                 effect_track_item.setName(new_name)
-                node = effect_track_item.node()
-                for knob_name, knob_value in ef_val["node"].items():
-                    if (
-                        not knob_value
-                        or knob_name == "name"
-                    ):
-                        continue
+            else:
+                effect_track_item = used_subtracks[new_name]
 
-                    try:
-                        node[knob_name].setValue(knob_value)
-                    except NameError:
-                        self.log.warning("Knob: {} cannot be set".format(
-                            knob_name))
+            node = effect_track_item.node()
+            for knob_name, knob_value in ef_val["node"].items():
+                if (
+                    not knob_value
+                    or knob_name == "name"
+                ):
+                    continue
 
-                # register all loaded children
-                data_imprint["children_names"].append(new_name)
-                # make sure containerisation will happen
-                loaded = True
+                try:
+                    node[knob_name].setValue(knob_value)
+                except NameError:
+                    self.log.warning("Knob: {} cannot be set".format(
+                        knob_name))
 
-        if not loaded:
-            return
+            # register all loaded children
+            data_imprint["children_names"].append(new_name)
 
-        self.containerise(
-            active_track,
-            name=name,
-            namespace=namespace,
-            object_name=object_name,
-            context=context,
-            loader=self.__class__.__name__,
-            data=data_imprint)
+            # make sure containerisation will happen
+            loaded = True
+
+        return loaded
 
     def update(self, container, representation):
-        """Update the Loader's path
-
-        Nuke automatically tries to reset some variables when changing
-        the loader's path to a new file. These automatic changes are to its
-        inputs:
-
+        """ Updating previously loaded effects
         """
-        pass
+        active_track = container["_item"]
+        file = get_representation_path(representation).replace("\\", "/")
+
+        # get main variables
+        name = container['name']
+        namespace = container['namespace']
+
+        # get timeline in out data
+        project_name = legacy_io.active_project()
+        version_doc = get_version_by_id(project_name, representation["parent"])
+        version_data = version_doc["data"]
+        clip_in = version_data["clipIn"]
+        clip_out = version_data["clipOut"]
+
+        object_name = "{}_{}".format(name, namespace)
+
+        # Disable previously created nodes
+        used_subtracks = {
+            stitem.name(): stitem
+            for stitem in phiero.flatten(active_track.subTrackItems())
+        }
+        container = phiero.get_track_openpype_data(
+            active_track, object_name
+        )
+
+        loaded_subtrack_items = container["children_names"]
+        for loaded_stitem in loaded_subtrack_items:
+            if loaded_stitem not in used_subtracks:
+                continue
+            item_to_remove = used_subtracks.pop(loaded_stitem)
+            item_to_remove.node()["enable"].setValue(0)
+
+        data_imprint = {
+            "objectName": object_name,
+            "name": name,
+            "representation": str(representation["_id"]),
+            "children_names": []
+        }
+
+        if self._shared_loading(
+            file,
+            active_track,
+            clip_in,
+            clip_out,
+            data_imprint,
+            update=True
+        ):
+            return phiero.update_container(active_track, data_imprint)
 
     def reorder_nodes(self, data):
         new_order = OrderedDict()
