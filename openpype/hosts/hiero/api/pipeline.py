@@ -1,6 +1,7 @@
 """
 Basic avalon integration
 """
+from copy import deepcopy
 import os
 import contextlib
 from collections import OrderedDict
@@ -225,19 +226,19 @@ def update_container(item, data=None):
 
     if type(item) == hiero.core.VideoTrack:
         # form object data for test
-        object_name = "{}_{}".format(
-            data["name"], data["namespace"])
+        object_name = data["objectName"]
 
         # get all available containers
         containers = lib.get_track_openpype_data(item)
-        for obj_name, container in containers.items():
-            # ignore all which are not the same object
-            if object_name != obj_name:
-                continue
-            # update data in container
-            updated_container = update_container_data(container, data)
-            # merge updated container back to containers
-            containers.update(updated_container)
+        container = lib.get_track_openpype_data(item, object_name)
+
+        containers = deepcopy(containers)
+        container = deepcopy(container)
+
+        # update data in container
+        updated_container = update_container_data(container, data)
+        # merge updated container back to containers
+        containers.update({object_name: updated_container})
 
         return bool(lib.set_track_openpype_tag(item, containers))
     else:
