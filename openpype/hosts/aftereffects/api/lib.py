@@ -26,9 +26,10 @@ def safe_excepthook(*args):
 def main(*subprocess_args):
     sys.excepthook = safe_excepthook
 
-    from openpype.hosts.aftereffects import api
+    from openpype.hosts.aftereffects.api import AfterEffectsHost
 
-    install_host(api)
+    host = AfterEffectsHost()
+    install_host(host)
 
     os.environ["OPENPYPE_LOG_NO_COLORS"] = "False"
     app = QtWidgets.QApplication([])
