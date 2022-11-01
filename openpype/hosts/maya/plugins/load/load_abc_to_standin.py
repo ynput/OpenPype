@@ -55,7 +55,8 @@ class AlembicStandinLoader(load.LoaderPlugin):
         transform_name = label + "_ABC"
 
         standinShape = cmds.ls(mtoa.ui.arnoldmenu.createStandIn())[0]
-        standin = cmds.listRelatives(standinShape, parent=True, typ="transform")
+        standin = cmds.listRelatives(standinShape, parent=True,
+                                     typ="transform")
         standin = cmds.rename(standin, transform_name)
         standinShape = cmds.listRelatives(standin, children=True)[0]
 
