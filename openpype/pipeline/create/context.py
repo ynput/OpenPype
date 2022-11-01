@@ -1159,9 +1159,7 @@ class CreateContext:
         for instance_id, path in self.thumbnail_paths_by_instance_id.items():
             instance_available = True
             if instance_id is not None:
-                instance_available = (
-                    instance_id not in self._instances_by_id
-                )
+                instance_available = instance_id in self._instances_by_id
 
             if (
                 not instance_available
@@ -1178,13 +1176,13 @@ class CreateContext:
 
         # Give ability to store shared data for collection phase
         self._collection_shared_data = {}
-        self.refresh_thumbnails()
 
     def reset_finalization(self):
         """Cleanup of attributes after reset."""
 
         # Stop access to collection shared data
         self._collection_shared_data = None
+        self.refresh_thumbnails()
 
     def reset_avalon_context(self):
         """Give ability to reset avalon context.
