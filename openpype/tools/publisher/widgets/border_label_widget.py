@@ -158,8 +158,7 @@ class BorderedLabelWidget(QtWidgets.QFrame):
     """
     def __init__(self, label, parent):
         super(BorderedLabelWidget, self).__init__(parent)
-        colors_data = get_objected_colors()
-        color_value = colors_data.get("border")
+        color_value = get_objected_colors("border")
         color = None
         if color_value:
             color = color_value.get_qcolor()

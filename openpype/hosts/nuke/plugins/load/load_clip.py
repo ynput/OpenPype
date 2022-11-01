@@ -1,3 +1,4 @@
+import os
 import nuke
 import qargparse
 
@@ -84,6 +85,16 @@ class LoadClip(plugin.NukeLoader):
             + plugin.get_review_presets_config()
         )
 
+    def _fix_path_for_knob(self, filepath, repre_cont):
+        basename = os.path.basename(filepath)
+        dirname = os.path.dirname(filepath)
+        frame = repre_cont.get("frame")
+        assert frame, "Representation is not sequence"
+
+        padding = len(str(frame))
+        basename = basename.replace(frame, "#" * padding)
+        return os.path.join(dirname, basename).replace("\\", "/")
+
     def load(self, context, name, namespace, options):
         repre = context["representation"]
         # reste container id so it is always unique for each instance
@@ -91,7 +102,7 @@ class LoadClip(plugin.NukeLoader):
 
         is_sequence = len(repre["files"]) > 1
 
-        file = self.fname.replace("\\", "/")
+        filepath = self.fname.replace("\\", "/")
 
         start_at_workfile = options.get(
             "start_at_workfile", self.options_defaults["start_at_workfile"])
@@ -121,18 +132,14 @@ class LoadClip(plugin.NukeLoader):
             duration = last - first
             first = 1
             last = first + duration
-        elif "#" not in file:
-            frame = repre_cont.get("frame")
-            assert frame, "Representation is not sequence"
-
-            padding = len(frame)
-            file = file.replace(frame, "#" * padding)
+        elif "#" not in filepath:
+            filepath = self._fix_path_for_knob(filepath, repre_cont)
 
         # Fallback to asset name when namespace is None
         if namespace is None:
             namespace = context['asset']['name']
 
-        if not file:
+        if not filepath:
             self.log.warning(
                 "Representation id `{}` is failing to load".format(repre_id))
             return
@@ -147,7 +154,7 @@ class LoadClip(plugin.NukeLoader):
         # to avoid multiple undo steps for rest of process
         # we will switch off undo-ing
         with viewer_update_and_undo_stop():
-            read_node["file"].setValue(file)
+            read_node["file"].setValue(filepath)
 
             used_colorspace = self._set_colorspace(
                 read_node, version_data, repre["data"])
@@ -218,7 +225,7 @@ class LoadClip(plugin.NukeLoader):
         is_sequence = len(representation["files"]) > 1
 
         read_node = nuke.toNode(container['objectName'])
-        file = get_representation_path(representation).replace("\\", "/")
+        filepath = get_representation_path(representation).replace("\\", "/")
 
         start_at_workfile = "start at" in read_node['frame_mode'].value()
 
@@ -251,14 +258,10 @@ class LoadClip(plugin.NukeLoader):
             duration = last - first
             first = 1
             last = first + duration
-        elif "#" not in file:
-            frame = repre_cont.get("frame")
-            assert frame, "Representation is not sequence"
+        elif "#" not in filepath:
+            filepath = self._fix_path_for_knob(filepath, repre_cont)
 
-            padding = len(frame)
-            file = file.replace(frame, "#" * padding)
-
-        if not file:
+        if not filepath:
             self.log.warning(
                 "Representation id `{}` is failing to load".format(repre_id))
             return
@@ -266,14 +269,14 @@ class LoadClip(plugin.NukeLoader):
         read_name = self._get_node_name(representation)
 
         read_node["name"].setValue(read_name)
-        read_node["file"].setValue(file)
+        read_node["file"].setValue(filepath)
 
         # to avoid multiple undo steps for rest of process
         # we will switch off undo-ing
         with viewer_update_and_undo_stop():
             used_colorspace = self._set_colorspace(
                 read_node, version_data, representation["data"],
-                path=file)
+                path=filepath)
 
             self._set_range_to_node(read_node, first, last, start_at_workfile)
 
@@ -425,7 +428,7 @@ class LoadClip(plugin.NukeLoader):
         colorspace = repre_data.get("colorspace")
         colorspace = colorspace or version_data.get("colorspace")
 
-        # colorspace from `project_anatomy/imageio/nuke/regexInputs`
+        # colorspace from `project_settings/nuke/imageio/regexInputs`
         iio_colorspace = get_imageio_input_colorspace(path)
 
         # Set colorspace defined in version data

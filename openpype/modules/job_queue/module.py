@@ -43,7 +43,7 @@ import platform
 
 import click
 from openpype.modules import OpenPypeModule
-from openpype.api import get_system_settings
+from openpype.settings import get_system_settings
 
 
 class JobQueueModule(OpenPypeModule):

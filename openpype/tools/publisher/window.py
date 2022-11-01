@@ -1,3 +1,5 @@
+import collections
+import copy
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype import (
@@ -5,35 +7,39 @@ from openpype import (
     style
 )
 from openpype.tools.utils import (
+    ErrorMessageBox,
     PlaceholderLineEdit,
-    PixmapLabel
+    MessageOverlayObject,
+    PixmapLabel,
 )
-from .control import PublisherController
+
+from .publish_report_viewer import PublishReportViewerWidget
+from .control_qt import QtPublisherController
 from .widgets import (
-    BorderedLabelWidget,
+    OverviewWidget,
+    ValidationsWidget,
     PublishFrame,
-    SubsetAttributesWidget,
-    InstanceCardView,
-    InstanceListView,
-    CreateDialog,
+
+    PublisherTabsWidget,
 
     StopBtn,
     ResetBtn,
     ValidateBtn,
     PublishBtn,
 
-    CreateInstanceBtn,
-    RemoveInstanceBtn,
-    ChangeViewBtn
+    HelpButton,
+    HelpDialog,
 )
 
 
 class PublisherWindow(QtWidgets.QDialog):
     """Main window of publisher."""
-    default_width = 1000
-    default_height = 600
+    default_width = 1300
+    default_height = 800
+    footer_border = 8
+    publish_footer_spacer = 2
 
-    def __init__(self, parent=None, reset_on_show=None):
+    def __init__(self, parent=None, controller=None, reset_on_show=None):
         super(PublisherWindow, self).__init__(parent)
 
         self.setWindowTitle("OpenPype publisher")
@@ -58,122 +64,122 @@ class PublisherWindow(QtWidgets.QDialog):
             | on_top_flag
         )
 
-        self._reset_on_show = reset_on_show
-        self._first_show = True
-        self._refreshing_instances = False
+        if controller is None:
+            controller = QtPublisherController()
 
-        controller = PublisherController()
+        help_dialog = HelpDialog(controller, self)
+
+        overlay_object = MessageOverlayObject(self)
 
         # Header
         header_widget = QtWidgets.QWidget(self)
+
         icon_pixmap = QtGui.QPixmap(resources.get_openpype_icon_filepath())
         icon_label = PixmapLabel(icon_pixmap, header_widget)
         icon_label.setObjectName("PublishContextLabel")
+
         context_label = QtWidgets.QLabel(header_widget)
         context_label.setObjectName("PublishContextLabel")
 
+        header_extra_widget = QtWidgets.QWidget(header_widget)
+
+        help_btn = HelpButton(header_widget)
+
         header_layout = QtWidgets.QHBoxLayout(header_widget)
-        header_layout.setContentsMargins(15, 15, 15, 15)
+        header_layout.setContentsMargins(15, 15, 0, 15)
         header_layout.setSpacing(15)
         header_layout.addWidget(icon_label, 0)
-        header_layout.addWidget(context_label, 1)
+        header_layout.addWidget(context_label, 0)
+        header_layout.addStretch(1)
+        header_layout.addWidget(header_extra_widget, 0)
+        header_layout.addWidget(help_btn, 0)
 
-        line_widget = QtWidgets.QWidget(self)
-        line_widget.setObjectName("Separator")
-        line_widget.setMinimumHeight(2)
+        # Tabs widget under header
+        tabs_widget = PublisherTabsWidget(self)
+        create_tab = tabs_widget.add_tab("Create", "create")
+        tabs_widget.add_tab("Publish", "publish")
+        tabs_widget.add_tab("Report", "report")
+        tabs_widget.add_tab("Details", "details")
 
-        # Content
-        content_stacked_widget = QtWidgets.QWidget(self)
-
-        # Subset widget
-        subset_frame = QtWidgets.QFrame(content_stacked_widget)
-
-        subset_views_widget = BorderedLabelWidget(
-            "Subsets to publish", subset_frame
-        )
-
-        subset_view_cards = InstanceCardView(controller, subset_views_widget)
-        subset_list_view = InstanceListView(controller, subset_views_widget)
-
-        subset_views_layout = QtWidgets.QStackedLayout()
-        subset_views_layout.addWidget(subset_view_cards)
-        subset_views_layout.addWidget(subset_list_view)
-
-        # Buttons at the bottom of subset view
-        create_btn = CreateInstanceBtn(subset_frame)
-        delete_btn = RemoveInstanceBtn(subset_frame)
-        change_view_btn = ChangeViewBtn(subset_frame)
-
-        # Subset details widget
-        subset_attributes_wrap = BorderedLabelWidget(
-            "Publish options", subset_frame
-        )
-        subset_attributes_widget = SubsetAttributesWidget(
-            controller, subset_attributes_wrap
-        )
-        subset_attributes_wrap.set_center_widget(subset_attributes_widget)
-
-        # Layout of buttons at the bottom of subset view
-        subset_view_btns_layout = QtWidgets.QHBoxLayout()
-        subset_view_btns_layout.setContentsMargins(0, 5, 0, 0)
-        subset_view_btns_layout.addWidget(create_btn)
-        subset_view_btns_layout.addSpacing(5)
-        subset_view_btns_layout.addWidget(delete_btn)
-        subset_view_btns_layout.addStretch(1)
-        subset_view_btns_layout.addWidget(change_view_btn)
-
-        # Layout of view and buttons
-        # - widget 'subset_view_widget' is necessary
-        # - only layout won't be resized automatically to minimum size hint
-        #   on child resize request!
-        subset_view_widget = QtWidgets.QWidget(subset_views_widget)
-        subset_view_layout = QtWidgets.QVBoxLayout(subset_view_widget)
-        subset_view_layout.setContentsMargins(0, 0, 0, 0)
-        subset_view_layout.addLayout(subset_views_layout, 1)
-        subset_view_layout.addLayout(subset_view_btns_layout, 0)
-
-        subset_views_widget.set_center_widget(subset_view_widget)
-
-        # Whole subset layout with attributes and details
-        subset_content_widget = QtWidgets.QWidget(subset_frame)
-        subset_content_layout = QtWidgets.QHBoxLayout(subset_content_widget)
-        subset_content_layout.setContentsMargins(0, 0, 0, 0)
-        subset_content_layout.addWidget(subset_views_widget, 3)
-        subset_content_layout.addWidget(subset_attributes_wrap, 7)
+        # Widget where is stacked publish overlay and widgets that should be
+        #   covered by it
+        under_publish_stack = QtWidgets.QWidget(self)
+        # Added wrap widget where all widgets under overlay are added
+        # - this is because footer is also under overlay and the top part
+        #       is faked with floating frame
+        under_publish_widget = QtWidgets.QWidget(under_publish_stack)
 
         # Footer
-        comment_input = PlaceholderLineEdit(subset_frame)
+        footer_widget = QtWidgets.QWidget(under_publish_widget)
+        footer_bottom_widget = QtWidgets.QWidget(footer_widget)
+
+        comment_input = PlaceholderLineEdit(footer_widget)
         comment_input.setObjectName("PublishCommentInput")
         comment_input.setPlaceholderText(
             "Attach a comment to your publish"
         )
 
-        reset_btn = ResetBtn(subset_frame)
-        stop_btn = StopBtn(subset_frame)
-        validate_btn = ValidateBtn(subset_frame)
-        publish_btn = PublishBtn(subset_frame)
+        reset_btn = ResetBtn(footer_widget)
+        stop_btn = StopBtn(footer_widget)
+        validate_btn = ValidateBtn(footer_widget)
+        publish_btn = PublishBtn(footer_widget)
 
-        footer_layout = QtWidgets.QHBoxLayout()
-        footer_layout.setContentsMargins(0, 0, 0, 0)
-        footer_layout.addWidget(comment_input, 1)
-        footer_layout.addWidget(reset_btn, 0)
-        footer_layout.addWidget(stop_btn, 0)
-        footer_layout.addWidget(validate_btn, 0)
-        footer_layout.addWidget(publish_btn, 0)
+        footer_bottom_layout = QtWidgets.QHBoxLayout(footer_bottom_widget)
+        footer_bottom_layout.setContentsMargins(0, 0, 0, 0)
+        footer_bottom_layout.addStretch(1)
+        footer_bottom_layout.addWidget(reset_btn, 0)
+        footer_bottom_layout.addWidget(stop_btn, 0)
+        footer_bottom_layout.addWidget(validate_btn, 0)
+        footer_bottom_layout.addWidget(publish_btn, 0)
 
-        # Subset frame layout
-        subset_layout = QtWidgets.QVBoxLayout(subset_frame)
-        marings = subset_layout.contentsMargins()
+        # Spacer helps keep distance of Publish Frame when comment input
+        #   is hidden - so when is shrunken it is not overlaying pages
+        footer_spacer = QtWidgets.QWidget(footer_widget)
+        footer_spacer.setMinimumHeight(self.publish_footer_spacer)
+        footer_spacer.setMaximumHeight(self.publish_footer_spacer)
+        footer_spacer.setVisible(False)
+
+        footer_layout = QtWidgets.QVBoxLayout(footer_widget)
+        footer_margins = footer_layout.contentsMargins()
+
+        footer_layout.setContentsMargins(
+            footer_margins.left() + self.footer_border,
+            footer_margins.top(),
+            footer_margins.right() + self.footer_border,
+            footer_margins.bottom() + self.footer_border
+        )
+
+        footer_layout.addWidget(comment_input, 0)
+        footer_layout.addWidget(footer_spacer, 0)
+        footer_layout.addWidget(footer_bottom_widget, 0)
+
+        # Content
+        # - wrap stacked widget under one more widget to be able propagate
+        #   margins (QStackedLayout can't have margins)
+        content_widget = QtWidgets.QWidget(under_publish_widget)
+
+        content_stacked_widget = QtWidgets.QWidget(content_widget)
+
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        marings = content_layout.contentsMargins()
         marings.setLeft(marings.left() * 2)
         marings.setRight(marings.right() * 2)
         marings.setTop(marings.top() * 2)
-        marings.setBottom(marings.bottom() * 2)
-        subset_layout.setContentsMargins(marings)
-        subset_layout.addWidget(subset_content_widget, 1)
-        subset_layout.addLayout(footer_layout, 0)
+        marings.setBottom(0)
+        content_layout.setContentsMargins(marings)
+        content_layout.addWidget(content_stacked_widget, 1)
 
-        # Create publish frame
-        publish_frame = PublishFrame(controller, content_stacked_widget)
+        # Overview - create and attributes part
+        overview_widget = OverviewWidget(
+            controller, content_stacked_widget
+        )
+
+        report_widget = ValidationsWidget(controller, parent)
+
+        # Details - Publish details
+        publish_details_widget = PublishReportViewerWidget(
+            content_stacked_widget
+        )
 
         content_stacked_layout = QtWidgets.QStackedLayout(
             content_stacked_widget
@@ -182,282 +188,393 @@ class PublisherWindow(QtWidgets.QDialog):
         content_stacked_layout.setStackingMode(
             QtWidgets.QStackedLayout.StackAll
         )
-        content_stacked_layout.addWidget(subset_frame)
-        content_stacked_layout.addWidget(publish_frame)
+        content_stacked_layout.addWidget(overview_widget)
+        content_stacked_layout.addWidget(report_widget)
+        content_stacked_layout.addWidget(publish_details_widget)
+        content_stacked_layout.setCurrentWidget(overview_widget)
+
+        under_publish_layout = QtWidgets.QVBoxLayout(under_publish_widget)
+        under_publish_layout.setContentsMargins(0, 0, 0, 0)
+        under_publish_layout.setSpacing(0)
+        under_publish_layout.addWidget(content_widget, 1)
+        under_publish_layout.addWidget(footer_widget, 0)
+
+        # Overlay which covers inputs during publishing
+        publish_overlay = QtWidgets.QFrame(under_publish_stack)
+        publish_overlay.setObjectName("OverlayFrame")
+
+        under_publish_stack_layout = QtWidgets.QStackedLayout(
+            under_publish_stack
+        )
+        under_publish_stack_layout.setContentsMargins(0, 0, 0, 0)
+        under_publish_stack_layout.setStackingMode(
+            QtWidgets.QStackedLayout.StackAll
+        )
+        under_publish_stack_layout.addWidget(under_publish_widget)
+        under_publish_stack_layout.addWidget(publish_overlay)
+        under_publish_stack_layout.setCurrentWidget(under_publish_widget)
 
         # Add main frame to this window
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         main_layout.addWidget(header_widget, 0)
-        main_layout.addWidget(line_widget, 0)
-        main_layout.addWidget(content_stacked_widget, 1)
+        main_layout.addWidget(tabs_widget, 0)
+        main_layout.addWidget(under_publish_stack, 1)
 
-        creator_window = CreateDialog(controller, parent=self)
+        # Floating publish frame
+        publish_frame = PublishFrame(controller, self.footer_border, self)
 
-        create_btn.clicked.connect(self._on_create_clicked)
-        delete_btn.clicked.connect(self._on_delete_clicked)
-        change_view_btn.clicked.connect(self._on_change_view_clicked)
+        errors_dialog_message_timer = QtCore.QTimer()
+        errors_dialog_message_timer.setInterval(100)
+        errors_dialog_message_timer.timeout.connect(
+            self._on_errors_message_timeout
+        )
+
+        help_btn.clicked.connect(self._on_help_click)
+        tabs_widget.tab_changed.connect(self._on_tab_change)
+        overview_widget.active_changed.connect(
+            self._on_context_or_active_change
+        )
+        overview_widget.instance_context_changed.connect(
+            self._on_context_or_active_change
+        )
+        overview_widget.create_requested.connect(
+            self._on_create_request
+        )
 
         reset_btn.clicked.connect(self._on_reset_clicked)
         stop_btn.clicked.connect(self._on_stop_clicked)
         validate_btn.clicked.connect(self._on_validate_clicked)
         publish_btn.clicked.connect(self._on_publish_clicked)
 
-        # Selection changed
-        subset_list_view.selection_changed.connect(
-            self._on_subset_change
+        publish_frame.details_page_requested.connect(self._go_to_details_tab)
+
+        controller.event_system.add_callback(
+            "instances.refresh.finished", self._on_instances_refresh
         )
-        subset_view_cards.selection_changed.connect(
-            self._on_subset_change
+        controller.event_system.add_callback(
+            "publish.reset.finished", self._on_publish_reset
         )
-        # Active instances changed
-        subset_list_view.active_changed.connect(
-            self._on_active_changed
+        controller.event_system.add_callback(
+            "publish.process.started", self._on_publish_start
         )
-        subset_view_cards.active_changed.connect(
-            self._on_active_changed
+        controller.event_system.add_callback(
+            "publish.has_validated.changed", self._on_publish_validated_change
         )
-        # Instance context has changed
-        subset_attributes_widget.instance_context_changed.connect(
-            self._on_instance_context_change
+        controller.event_system.add_callback(
+            "publish.process.stopped", self._on_publish_stop
+        )
+        controller.event_system.add_callback(
+            "show.card.message", self._on_overlay_message
+        )
+        controller.event_system.add_callback(
+            "instances.collection.failed", self._on_creator_error
+        )
+        controller.event_system.add_callback(
+            "instances.save.failed", self._on_creator_error
+        )
+        controller.event_system.add_callback(
+            "instances.remove.failed", self._on_creator_error
+        )
+        controller.event_system.add_callback(
+            "instances.create.failed", self._on_creator_error
+        )
+        controller.event_system.add_callback(
+            "convertors.convert.failed", self._on_convertor_error
+        )
+        controller.event_system.add_callback(
+            "convertors.find.failed", self._on_convertor_error
         )
 
-        controller.add_instances_refresh_callback(self._on_instances_refresh)
+        # Store extra header widget for TrayPublisher
+        # - can be used to add additional widgets to header between context
+        #   label and help button
+        self._help_dialog = help_dialog
+        self._help_btn = help_btn
 
-        controller.add_publish_reset_callback(self._on_publish_reset)
-        controller.add_publish_started_callback(self._on_publish_start)
-        controller.add_publish_validated_callback(self._on_publish_validated)
-        controller.add_publish_stopped_callback(self._on_publish_stop)
+        self._header_extra_widget = header_extra_widget
 
-        # Store header for TrayPublisher
-        self._header_layout = header_layout
+        self._tabs_widget = tabs_widget
+        self._create_tab = create_tab
 
-        self._content_stacked_widget = content_stacked_widget
-        self.content_stacked_layout = content_stacked_layout
-        self.publish_frame = publish_frame
-        self.subset_frame = subset_frame
-        self.subset_content_widget = subset_content_widget
+        self._under_publish_stack_layout = under_publish_stack_layout
 
-        self.context_label = context_label
+        self._under_publish_widget = under_publish_widget
+        self._publish_overlay = publish_overlay
+        self._publish_frame = publish_frame
 
-        self.subset_view_cards = subset_view_cards
-        self.subset_list_view = subset_list_view
-        self.subset_views_layout = subset_views_layout
+        self._content_stacked_layout = content_stacked_layout
 
-        self.delete_btn = delete_btn
+        self._overview_widget = overview_widget
+        self._report_widget = report_widget
+        self._publish_details_widget = publish_details_widget
 
-        self.subset_attributes_widget = subset_attributes_widget
+        self._context_label = context_label
 
-        self.comment_input = comment_input
+        self._comment_input = comment_input
+        self._footer_spacer = footer_spacer
 
-        self.stop_btn = stop_btn
-        self.reset_btn = reset_btn
-        self.validate_btn = validate_btn
-        self.publish_btn = publish_btn
+        self._stop_btn = stop_btn
+        self._reset_btn = reset_btn
+        self._validate_btn = validate_btn
+        self._publish_btn = publish_btn
 
-        self.controller = controller
+        self._overlay_object = overlay_object
 
-        self.creator_window = creator_window
+        self._controller = controller
+
+        self._first_show = True
+        # This is a little bit confusing but 'reset_on_first_show' is too long
+        #   forin init
+        self._reset_on_first_show = reset_on_show
+        self._reset_on_show = True
+        self._restart_timer = None
+        self._publish_frame_visible = None
+
+        self._error_messages_to_show = collections.deque()
+        self._errors_dialog_message_timer = errors_dialog_message_timer
+
+        self._set_publish_visibility(False)
+
+    @property
+    def controller(self):
+        return self._controller
 
     def showEvent(self, event):
         super(PublisherWindow, self).showEvent(event)
         if self._first_show:
             self._first_show = False
-            self.resize(self.default_width, self.default_height)
-            self.setStyleSheet(style.load_stylesheet())
-            if self._reset_on_show:
-                self.reset()
+            self._on_first_show()
 
-    def closeEvent(self, event):
-        self.controller.save_changes()
-        super(PublisherWindow, self).closeEvent(event)
-
-    def reset(self):
-        self.controller.reset()
-
-    def set_context_label(self, label):
-        self.context_label.setText(label)
-
-    def get_selected_items(self):
-        view = self.subset_views_layout.currentWidget()
-        return view.get_selected_items()
-
-    def _on_instance_context_change(self):
-        current_idx = self.subset_views_layout.currentIndex()
-        for idx in range(self.subset_views_layout.count()):
-            if idx == current_idx:
-                continue
-            widget = self.subset_views_layout.widget(idx)
-            if widget.refreshed:
-                widget.set_refreshed(False)
-
-        current_widget = self.subset_views_layout.widget(current_idx)
-        current_widget.refresh_instance_states()
-
-        self._validate_create_instances()
-
-    def _change_view_type(self):
-        idx = self.subset_views_layout.currentIndex()
-        new_idx = (idx + 1) % self.subset_views_layout.count()
-        self.subset_views_layout.setCurrentIndex(new_idx)
-
-        new_view = self.subset_views_layout.currentWidget()
-        if not new_view.refreshed:
-            new_view.refresh()
-            new_view.set_refreshed(True)
-        else:
-            new_view.refresh_instance_states()
-
-        self._on_subset_change()
-
-    def _on_create_clicked(self):
-        self.creator_window.show()
-
-    def _on_delete_clicked(self):
-        instances, _ = self.get_selected_items()
-
-        # Ask user if he really wants to remove instances
-        dialog = QtWidgets.QMessageBox(self)
-        dialog.setIcon(QtWidgets.QMessageBox.Question)
-        dialog.setWindowTitle("Are you sure?")
-        if len(instances) > 1:
-            msg = (
-                "Do you really want to remove {} instances?"
-            ).format(len(instances))
-        else:
-            msg = (
-                "Do you really want to remove the instance?"
-            )
-        dialog.setText(msg)
-        dialog.setStandardButtons(
-            QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel
-        )
-        dialog.setDefaultButton(QtWidgets.QMessageBox.Ok)
-        dialog.setEscapeButton(QtWidgets.QMessageBox.Cancel)
-        dialog.exec_()
-        # Skip if OK was not clicked
-        if dialog.result() == QtWidgets.QMessageBox.Ok:
-            self.controller.remove_instances(instances)
-
-    def _on_change_view_clicked(self):
-        self._change_view_type()
-
-    def _set_publish_visibility(self, visible):
-        if visible:
-            widget = self.publish_frame
-            publish_frame_visible = True
-        else:
-            widget = self.subset_frame
-            publish_frame_visible = False
-        self.content_stacked_layout.setCurrentWidget(widget)
-        self._set_publish_frame_visible(publish_frame_visible)
-
-    def _set_publish_frame_visible(self, publish_frame_visible):
-        """Publish frame visibility has changed.
-
-        Also used in TrayPublisher to be able handle start/end of publish
-        widget overlay.
-        """
-
-        # Hide creator dialog if visible
-        if publish_frame_visible and self.creator_window.isVisible():
-            self.creator_window.close()
-
-    def _on_reset_clicked(self):
-        self.controller.reset()
-
-    def _on_stop_clicked(self):
-        self.controller.stop_publish()
-
-    def _set_publish_comment(self):
-        if self.controller.publish_comment_is_set:
+        if not self._reset_on_show:
             return
 
-        comment = self.comment_input.text()
-        self.controller.set_comment(comment)
+        self._reset_on_show = False
+        # Detach showing - give OS chance to draw the window
+        timer = QtCore.QTimer()
+        timer.setSingleShot(True)
+        timer.setInterval(1)
+        timer.timeout.connect(self._on_show_restart_timer)
+        self._restart_timer = timer
+        timer.start()
+
+    def resizeEvent(self, event):
+        super(PublisherWindow, self).resizeEvent(event)
+        self._update_publish_frame_rect()
+
+    def _on_overlay_message(self, event):
+        self._overlay_object.add_message(
+            event["message"],
+            event.get("message_type")
+        )
+
+    def _on_first_show(self):
+        self.resize(self.default_width, self.default_height)
+        self.setStyleSheet(style.load_stylesheet())
+        self._reset_on_show = self._reset_on_first_show
+
+    def _on_show_restart_timer(self):
+        """Callback for '_restart_timer' timer."""
+
+        self._restart_timer = None
+        self.reset()
+
+    def closeEvent(self, event):
+        self.save_changes()
+        self._reset_on_show = True
+        super(PublisherWindow, self).closeEvent(event)
+
+    def save_changes(self):
+        self._controller.save_changes()
+
+    def reset(self):
+        self._controller.reset()
+
+    def set_context_label(self, label):
+        self._context_label.setText(label)
+
+    def _update_publish_details_widget(self, force=False):
+        if not force and self._tabs_widget.current_tab() != "details":
+            return
+
+        report_data = self.controller.get_publish_report()
+        self._publish_details_widget.set_report_data(report_data)
+
+    def _on_help_click(self):
+        if self._help_dialog.isVisible():
+            return
+
+        self._help_dialog.show()
+
+        window = self.window()
+        desktop = QtWidgets.QApplication.desktop()
+        screen_idx = desktop.screenNumber(window)
+        screen = desktop.screen(screen_idx)
+        screen_rect = screen.geometry()
+
+        window_geo = window.geometry()
+        dialog_x = window_geo.x() + window_geo.width()
+        dialog_right = (dialog_x + self._help_dialog.width()) - 1
+        diff = dialog_right - screen_rect.right()
+        if diff > 0:
+            dialog_x -= diff
+
+        self._help_dialog.setGeometry(
+            dialog_x, window_geo.y(),
+            self._help_dialog.width(), self._help_dialog.height()
+        )
+
+    def _on_tab_change(self, old_tab, new_tab):
+        if old_tab == "details":
+            self._publish_details_widget.close_details_popup()
+
+        if new_tab in ("create", "publish"):
+            animate = True
+            if old_tab not in ("create", "publish"):
+                animate = False
+                self._content_stacked_layout.setCurrentWidget(
+                    self._overview_widget
+                )
+            self._overview_widget.set_state(new_tab, animate)
+
+        elif new_tab == "details":
+            self._content_stacked_layout.setCurrentWidget(
+                self._publish_details_widget
+            )
+            self._update_publish_details_widget()
+
+        elif new_tab == "report":
+            self._content_stacked_layout.setCurrentWidget(
+                self._report_widget
+            )
+
+    def _on_context_or_active_change(self):
+        self._validate_create_instances()
+
+    def _on_create_request(self):
+        self._go_to_create_tab()
+
+    def _go_to_create_tab(self):
+        self._tabs_widget.set_current_tab("create")
+
+    def _go_to_details_tab(self):
+        self._tabs_widget.set_current_tab("details")
+
+    def _go_to_report_tab(self):
+        self._tabs_widget.set_current_tab("report")
+
+    def _set_publish_overlay_visibility(self, visible):
+        if visible:
+            widget = self._publish_overlay
+        else:
+            widget = self._under_publish_widget
+        self._under_publish_stack_layout.setCurrentWidget(widget)
+
+    def _set_publish_visibility(self, visible):
+        if visible is self._publish_frame_visible:
+            return
+        self._publish_frame_visible = visible
+        self._publish_frame.setVisible(visible)
+        self._update_publish_frame_rect()
+
+    def _on_reset_clicked(self):
+        self.save_changes()
+        self.reset()
+
+    def _on_stop_clicked(self):
+        self._controller.stop_publish()
+
+    def _set_publish_comment(self):
+        self._controller.set_comment(self._comment_input.text())
 
     def _on_validate_clicked(self):
         self._set_publish_comment()
-        self._set_publish_visibility(True)
-        self.controller.validate()
+        self._controller.validate()
 
     def _on_publish_clicked(self):
         self._set_publish_comment()
-        self._set_publish_visibility(True)
-        self.controller.publish()
-
-    def _refresh_instances(self):
-        if self._refreshing_instances:
-            return
-
-        self._refreshing_instances = True
-
-        for idx in range(self.subset_views_layout.count()):
-            widget = self.subset_views_layout.widget(idx)
-            widget.set_refreshed(False)
-
-        view = self.subset_views_layout.currentWidget()
-        view.refresh()
-        view.set_refreshed(True)
-
-        self._refreshing_instances = False
-
-        # Force to change instance and refresh details
-        self._on_subset_change()
-
-    def _on_instances_refresh(self):
-        self._refresh_instances()
-
-        self._validate_create_instances()
-
-        context_title = self.controller.get_context_title()
-        self.set_context_label(context_title)
-
-        # Give a change to process Resize Request
-        QtWidgets.QApplication.processEvents()
-        # Trigger update geometry of
-        widget = self.subset_views_layout.currentWidget()
-        widget.updateGeometry()
-
-    def _on_subset_change(self, *_args):
-        # Ignore changes if in middle of refreshing
-        if self._refreshing_instances:
-            return
-
-        instances, context_selected = self.get_selected_items()
-
-        # Disable delete button if nothing is selected
-        self.delete_btn.setEnabled(len(instances) > 0)
-
-        self.subset_attributes_widget.set_current_instances(
-            instances, context_selected
-        )
-
-    def _on_active_changed(self):
-        if self._refreshing_instances:
-            return
-        self._validate_create_instances()
+        self._controller.publish()
 
     def _set_footer_enabled(self, enabled):
-        self.comment_input.setEnabled(enabled)
-        self.reset_btn.setEnabled(True)
+        self._reset_btn.setEnabled(True)
         if enabled:
-            self.stop_btn.setEnabled(False)
-            self.validate_btn.setEnabled(True)
-            self.publish_btn.setEnabled(True)
+            self._stop_btn.setEnabled(False)
+            self._validate_btn.setEnabled(True)
+            self._publish_btn.setEnabled(True)
         else:
-            self.stop_btn.setEnabled(enabled)
-            self.validate_btn.setEnabled(enabled)
-            self.publish_btn.setEnabled(enabled)
+            self._stop_btn.setEnabled(enabled)
+            self._validate_btn.setEnabled(enabled)
+            self._publish_btn.setEnabled(enabled)
+
+    def _on_publish_reset(self):
+        self._create_tab.setEnabled(True)
+        self._set_comment_input_visiblity(True)
+        self._set_publish_overlay_visibility(False)
+        self._set_publish_visibility(False)
+        self._set_footer_enabled(False)
+        self._update_publish_details_widget()
+        if (
+            not self._tabs_widget.is_current_tab("create")
+            and not self._tabs_widget.is_current_tab("publish")
+        ):
+            self._tabs_widget.set_current_tab("publish")
+
+    def _on_publish_start(self):
+        self._create_tab.setEnabled(False)
+
+        self._reset_btn.setEnabled(False)
+        self._stop_btn.setEnabled(True)
+        self._validate_btn.setEnabled(False)
+        self._publish_btn.setEnabled(False)
+
+        self._set_comment_input_visiblity(False)
+        self._set_publish_visibility(True)
+        self._set_publish_overlay_visibility(True)
+
+        self._publish_details_widget.close_details_popup()
+
+        if self._tabs_widget.is_current_tab(self._create_tab):
+            self._tabs_widget.set_current_tab("publish")
+
+    def _on_publish_validated_change(self, event):
+        if event["value"]:
+            self._validate_btn.setEnabled(False)
+
+    def _on_publish_stop(self):
+        self._set_publish_overlay_visibility(False)
+        self._reset_btn.setEnabled(True)
+        self._stop_btn.setEnabled(False)
+        publish_has_crashed = self._controller.publish_has_crashed
+        validate_enabled = not publish_has_crashed
+        publish_enabled = not publish_has_crashed
+        if self._tabs_widget.is_current_tab("publish"):
+            self._go_to_report_tab()
+
+        if validate_enabled:
+            validate_enabled = not self._controller.publish_has_validated
+        if publish_enabled:
+            if (
+                self._controller.publish_has_validated
+                and self._controller.publish_has_validation_errors
+            ):
+                publish_enabled = False
+
+            else:
+                publish_enabled = not self._controller.publish_has_finished
+
+        self._validate_btn.setEnabled(validate_enabled)
+        self._publish_btn.setEnabled(publish_enabled)
+
+        self._update_publish_details_widget()
 
     def _validate_create_instances(self):
-        if not self.controller.host_is_valid:
+        if not self._controller.host_is_valid:
             self._set_footer_enabled(True)
             return
 
         all_valid = None
-        for instance in self.controller.instances:
+        for instance in self._controller.instances.values():
             if not instance["active"]:
                 continue
 
@@ -470,38 +587,170 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self._set_footer_enabled(bool(all_valid))
 
-    def _on_publish_reset(self):
-        self._set_publish_visibility(False)
+    def _on_instances_refresh(self):
+        self._validate_create_instances()
 
-        self.subset_content_widget.setEnabled(self.controller.host_is_valid)
+        context_title = self.controller.get_context_title()
+        self.set_context_label(context_title)
+        self._update_publish_details_widget()
 
-        self._set_footer_enabled(False)
+    def _set_comment_input_visiblity(self, visible):
+        self._comment_input.setVisible(visible)
+        self._footer_spacer.setVisible(not visible)
 
-    def _on_publish_start(self):
-        self.reset_btn.setEnabled(False)
-        self.stop_btn.setEnabled(True)
-        self.validate_btn.setEnabled(False)
-        self.publish_btn.setEnabled(False)
+    def _update_publish_frame_rect(self):
+        if not self._publish_frame_visible:
+            return
 
-    def _on_publish_validated(self):
-        self.validate_btn.setEnabled(False)
+        window_size = self.size()
+        size_hint = self._publish_frame.minimumSizeHint()
 
-    def _on_publish_stop(self):
-        self.reset_btn.setEnabled(True)
-        self.stop_btn.setEnabled(False)
-        validate_enabled = not self.controller.publish_has_crashed
-        publish_enabled = not self.controller.publish_has_crashed
-        if validate_enabled:
-            validate_enabled = not self.controller.publish_has_validated
-        if publish_enabled:
-            if (
-                self.controller.publish_has_validated
-                and self.controller.publish_has_validation_errors
-            ):
-                publish_enabled = False
+        width = window_size.width()
+        height = size_hint.height()
 
+        self._publish_frame.resize(width, height)
+
+        self._publish_frame.move(
+            0, window_size.height() - height
+        )
+
+    def add_error_message_dialog(self, title, failed_info, message_start=None):
+        self._error_messages_to_show.append(
+            (title, failed_info, message_start)
+        )
+        self._errors_dialog_message_timer.start()
+
+    def _on_errors_message_timeout(self):
+        if not self._error_messages_to_show:
+            self._errors_dialog_message_timer.stop()
+            return
+
+        item = self._error_messages_to_show.popleft()
+        title, failed_info, message_start = item
+        dialog = ErrorsMessageBox(
+            title, failed_info, message_start, self
+        )
+        dialog.exec_()
+        dialog.deleteLater()
+
+    def _on_creator_error(self, event):
+        new_failed_info = []
+        for item in event["failed_info"]:
+            new_item = copy.deepcopy(item)
+            new_item["label"] = new_item.pop("creator_label")
+            new_item["identifier"] = new_item.pop("creator_identifier")
+            new_failed_info.append(new_item)
+        self.add_error_message_dialog(event["title"], new_failed_info, "Creator:")
+
+    def _on_convertor_error(self, event):
+        new_failed_info = []
+        for item in event["failed_info"]:
+            new_item = copy.deepcopy(item)
+            new_item["identifier"] = new_item.pop("convertor_identifier")
+            new_failed_info.append(new_item)
+        self.add_error_message_dialog(
+            event["title"], new_failed_info, "Convertor:"
+        )
+
+
+class ErrorsMessageBox(ErrorMessageBox):
+    def __init__(self, error_title, failed_info, message_start, parent):
+        self._failed_info = failed_info
+        self._message_start = message_start
+        self._info_with_id = [
+            # Id must be string when used in tab widget
+            {"id": str(idx), "info": info}
+            for idx, info in enumerate(failed_info)
+        ]
+        self._widgets_by_id = {}
+        self._tabs_widget = None
+        self._stack_layout = None
+
+        super(ErrorsMessageBox, self).__init__(error_title, parent)
+
+        layout = self.layout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        footer_layout = self._footer_widget.layout()
+        footer_layout.setContentsMargins(5, 5, 5, 5)
+
+    def _create_top_widget(self, parent_widget):
+        return None
+
+    def _get_report_data(self):
+        output = []
+        for info in self._failed_info:
+            item_label = info.get("label")
+            item_identifier = info["identifier"]
+            if item_label:
+                report_message = "{} ({})".format(
+                    item_label, item_identifier)
             else:
-                publish_enabled = not self.controller.publish_has_finished
+                report_message = "{}".format(item_identifier)
 
-        self.validate_btn.setEnabled(validate_enabled)
-        self.publish_btn.setEnabled(publish_enabled)
+            if self._message_start:
+                report_message = "{} {}".format(
+                    self._message_start, report_message
+                )
+
+            report_message += "\n\nError: {}".format(info["message"])
+            formatted_traceback = info.get("traceback")
+            if formatted_traceback:
+                report_message += "\n\n{}".format(formatted_traceback)
+            output.append(report_message)
+        return output
+
+    def _create_content(self, content_layout):
+        tabs_widget = PublisherTabsWidget(self)
+
+        stack_widget = QtWidgets.QFrame(self._content_widget)
+        stack_layout = QtWidgets.QStackedLayout(stack_widget)
+
+        first = True
+        for item in self._info_with_id:
+            item_id = item["id"]
+            info = item["info"]
+            message = info["message"]
+            formatted_traceback = info.get("traceback")
+            item_label = info.get("label")
+            if not item_label:
+                item_label = info["identifier"]
+
+            msg_widget = QtWidgets.QWidget(stack_widget)
+            msg_layout = QtWidgets.QVBoxLayout(msg_widget)
+
+            exc_msg_template = "<span style='font-weight:bold'>{}</span>"
+            message_label_widget = QtWidgets.QLabel(msg_widget)
+            message_label_widget.setText(
+                exc_msg_template.format(self.convert_text_for_html(message))
+            )
+            msg_layout.addWidget(message_label_widget, 0)
+
+            if formatted_traceback:
+                line_widget = self._create_line(msg_widget)
+                tb_widget = self._create_traceback_widget(formatted_traceback)
+                msg_layout.addWidget(line_widget, 0)
+                msg_layout.addWidget(tb_widget, 0)
+
+            msg_layout.addStretch(1)
+
+            tabs_widget.add_tab(item_label, item_id)
+            stack_layout.addWidget(msg_widget)
+            if first:
+                first = False
+                stack_layout.setCurrentWidget(msg_widget)
+
+            self._widgets_by_id[item_id] = msg_widget
+
+        content_layout.addWidget(tabs_widget, 0)
+        content_layout.addWidget(stack_widget, 1)
+
+        tabs_widget.tab_changed.connect(self._on_tab_change)
+
+        self._tabs_widget = tabs_widget
+        self._stack_layout = stack_layout
+
+    def _on_tab_change(self, old_identifier, identifier):
+        widget = self._widgets_by_id[identifier]
+        self._stack_layout.setCurrentWidget(widget)

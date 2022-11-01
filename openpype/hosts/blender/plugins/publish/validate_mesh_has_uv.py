@@ -3,14 +3,15 @@ from typing import List
 import bpy
 
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline.publish import ValidateContentsOrder
 import openpype.hosts.blender.api.action
 
 
 class ValidateMeshHasUvs(pyblish.api.InstancePlugin):
     """Validate that the current mesh has UV's."""
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["blender"]
     families = ["model"]
     category = "geometry"

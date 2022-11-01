@@ -7,6 +7,7 @@ import os
 
 import pyblish.api
 from openpype.host import IWorkfileHost, ILoadHost
+from openpype.lib import Logger
 from openpype.pipeline import (
     registered_host,
     legacy_io,
@@ -23,6 +24,7 @@ class HostToolsHelper:
 
     Class may also contain tools that are available only for one or few hosts.
     """
+
     def __init__(self, parent=None):
         self._log = None
         # Global parent for all tools (may and may not be set)
@@ -32,6 +34,7 @@ class HostToolsHelper:
         self._workfiles_tool = None
         self._loader_tool = None
         self._creator_tool = None
+        self._publisher_tool = None
         self._subset_manager_tool = None
         self._scene_inventory_tool = None
         self._library_loader_tool = None
@@ -41,8 +44,6 @@ class HostToolsHelper:
     @property
     def log(self):
         if self._log is None:
-            from openpype.api import Logger
-
             self._log = Logger.get_logger(self.__class__.__name__)
         return self._log
 
@@ -193,7 +194,6 @@ class HostToolsHelper:
             library_loader_tool.showNormal()
             library_loader_tool.refresh()
 
-
     def show_publish(self, parent=None):
         """Try showing the most desirable publish GUI
 
@@ -269,6 +269,31 @@ class HostToolsHelper:
             dialog.activateWindow()
             dialog.showNormal()
 
+    def get_publisher_tool(self, parent=None, controller=None):
+        """Create, cache and return publisher window."""
+
+        if self._publisher_tool is None:
+            from openpype.tools.publisher.window import PublisherWindow
+
+            host = registered_host()
+            ILoadHost.validate_load_methods(host)
+
+            publisher_window = PublisherWindow(
+                controller=controller, parent=parent or self._parent
+            )
+            self._publisher_tool = publisher_window
+
+        return self._publisher_tool
+
+    def show_publisher_tool(self, parent=None, controller=None):
+        with qt_app_context():
+            dialog = self.get_publisher_tool(parent, controller)
+
+            dialog.show()
+            dialog.raise_()
+            dialog.activateWindow()
+            dialog.showNormal()
+
     def get_tool_by_name(self, tool_name, parent=None, *args, **kwargs):
         """Show tool by it's name.
 
@@ -297,6 +322,10 @@ class HostToolsHelper:
 
         elif tool_name == "publish":
             self.log.info("Can't return publish tool window.")
+
+        # "new" publisher
+        elif tool_name == "publisher":
+            return self.get_publisher_tool(parent, *args, **kwargs)
 
         elif tool_name == "experimental_tools":
             return self.get_experimental_tools_dialog(parent, *args, **kwargs)
@@ -334,6 +363,9 @@ class HostToolsHelper:
 
         elif tool_name == "publish":
             self.show_publish(parent, *args, **kwargs)
+
+        elif tool_name == "publisher":
+            self.show_publisher_tool(parent, *args, **kwargs)
 
         elif tool_name == "experimental_tools":
             self.show_experimental_tools_dialog(parent, *args, **kwargs)
@@ -412,6 +444,10 @@ def show_look_assigner(parent=None):
 
 def show_publish(parent=None):
     _SingletonPoint.show_tool_by_name("publish", parent)
+
+
+def show_publisher(parent=None):
+    _SingletonPoint.show_tool_by_name("publisher", parent)
 
 
 def show_experimental_tools_dialog(parent=None):
