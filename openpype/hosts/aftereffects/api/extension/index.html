@@ -73,17 +73,6 @@
     
     <script type=text/javascript>
             $(function() {
-              $("a#subsetmanager-button").bind("click", function() {
-                RPC.call('AfterEffects.subsetmanager_route').then(function (data) {
-                }, function (error) {
-                    alert(error);
-                });
-              });
-            });
-    </script> 
-    
-    <script type=text/javascript>
-            $(function() {
               $("a#experimental-button").bind("click", function() {
                 RPC.call('AfterEffects.experimental_tools_route').then(function (data) {
                 }, function (error) {
@@ -105,7 +94,6 @@
             <div><a href=# id=loader-button><button class="hostFontSize">Load...</button></a></div>
             <div><a href=# id=publish-button><button class="hostFontSize">Publish...</button></a></div>
             <div><a href=# id=sceneinventory-button><button class="hostFontSize">Manage...</button></a></div>
-            <div><a href=# id=subsetmanager-button><button class="hostFontSize">Subset Manager...</button></a></div>
             <div><a href=# id=experimental-button><button class="hostFontSize">Experimental Tools...</button></a></div>
         </div>   
         
