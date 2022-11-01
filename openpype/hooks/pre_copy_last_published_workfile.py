@@ -7,8 +7,10 @@ from openpype.client.entities import (
     get_subsets,
 )
 from openpype.lib import PreLaunchHook
+from openpype.lib.profiles_filtering import filter_profiles
 from openpype.modules.base import ModulesManager
 from openpype.pipeline.load.utils import get_representation_path
+from openpype.settings.lib import get_project_settings
 
 
 class CopyLastPublishedWorkfile(PreLaunchHook):
@@ -32,9 +34,45 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         Returns:
             None: This is a void method.
         """
-        # TODO setting
+        project_name = self.data["project_name"]
+        task_name = self.data["task_name"]
+        task_type = self.data["task_type"]
+        host_name = self.application.host_name
+
+        # Check settings has enabled it
+        project_settings = get_project_settings(project_name)
+        profiles = project_settings["global"]["tools"]["Workfiles"][
+            "last_workfile_on_startup"
+        ]
+        filter_data = {
+            "tasks": task_name,
+            "task_types": task_type,
+            "hosts": host_name,
+        }
+        last_workfile_settings = filter_profiles(profiles, filter_data)
+        use_last_published_workfile = last_workfile_settings.get(
+            "use_last_published_workfile"
+        )
+        if use_last_published_workfile is None:
+            self.log.info(
+                (
+                    "Seems like old version of settings is used."
+                    ' Can\'t access custom templates in host "{}".'
+                ).format(host_name)
+            )
+            return
+        elif use_last_published_workfile is False:
+            self.log.info(
+                (
+                    'Project "{}" has turned off to use last published workfile'
+                    ' as first workfile for host "{}"'
+                ).format(project_name, host_name)
+            )
+            return
+
         self.log.info("Trying to fetch last published workfile...")
 
+        # Check there is no workfile available
         last_workfile = self.data.get("last_workfile_path")
         if os.path.exists(last_workfile):
             self.log.debug(
@@ -43,9 +81,6 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
                 )
             )
             return
-
-        project_name = self.data["project_name"]
-        task_name = self.data["task_name"]
 
         project_doc = self.data.get("project_doc")
         asset_doc = self.data.get("asset_doc")
@@ -65,6 +100,9 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
                 None,
             )
             if not subset_id:
+                self.log.debug('No any workfile for asset "{}".').format(
+                    asset_doc["name"]
+                )
                 return
 
             # Get workfile representation
@@ -84,41 +122,46 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
                 None,
             )
 
-            if workfile_representation:  # TODO add setting
-                # Get sync server from Tray, which handles the asynchronous thread instance
-                sync_server = next(
-                    (
-                        t["sync_server"]
-                        for t in [
-                            obj
-                            for obj in gc.get_objects()
-                            if isinstance(obj, ModulesManager)
-                        ]
-                        if t["sync_server"].sync_server_thread
-                    ),
-                    None,
-                )
+            if not workfile_representation:
+                self.log.debug(
+                    'No published workfile for task "{}" and host "{}".'
+                ).format(task_name, host_name)
+                return
 
-                # Add site and reset timer
-                active_site = sync_server.get_active_site(project_name)
-                sync_server.add_site(
-                    project_name,
-                    workfile_representation["_id"],
-                    active_site,
-                    force=True,
-                )
-                sync_server.reset_timer()
+            # Get sync server from Tray, which handles the asynchronous thread instance
+            sync_server = next(
+                (
+                    t["sync_server"]
+                    for t in [
+                        obj
+                        for obj in gc.get_objects()
+                        if isinstance(obj, ModulesManager)
+                    ]
+                    if t["sync_server"].sync_server_thread
+                ),
+                None,
+            )
 
-                # Wait for the download loop to end
-                sync_server.sync_server_thread.files_processed.wait()
+            # Add site and reset timer
+            active_site = sync_server.get_active_site(project_name)
+            sync_server.add_site(
+                project_name,
+                workfile_representation["_id"],
+                active_site,
+                force=True,
+            )
+            sync_server.reset_timer()
 
-                # Get paths
-                published_workfile_path = get_representation_path(
-                    workfile_representation, root=anatomy.roots
-                )
-                local_workfile_dir = os.path.dirname(last_workfile)
+            # Wait for the download loop to end
+            sync_server.sync_server_thread.files_processed.wait()
 
-                # Copy file and substitute path
-                self.data["last_workfile_path"] = shutil.copy(
-                    published_workfile_path, local_workfile_dir
-                )
+            # Get paths
+            published_workfile_path = get_representation_path(
+                workfile_representation, root=anatomy.roots
+            )
+            local_workfile_dir = os.path.dirname(last_workfile)
+
+            # Copy file and substitute path
+            self.data["last_workfile_path"] = shutil.copy(
+                published_workfile_path, local_workfile_dir
+            )

@@ -149,6 +149,11 @@
                                 "type": "boolean",
                                 "key": "enabled",
                                 "label": "Enabled"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "use_last_published_workfile",
+                                "label": "Use last published workfile"
                             }
                         ]
                     }
