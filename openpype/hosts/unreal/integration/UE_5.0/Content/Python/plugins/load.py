@@ -242,7 +242,10 @@ def set_sequence_visibility(
         hid_section.set_level_names(maps)
 
 
-def process_family(assets_str, class_name, transform_str, basis_str, sequence_path):
+def process_family(
+    assets_str, class_name, instance_name,
+    transform_str, basis_str, sequence_path
+):
     assets = ast.literal_eval(assets_str)
     basis = ast.literal_eval(transform_str)
     transform = ast.literal_eval(basis_str)
@@ -273,6 +276,11 @@ def process_family(assets_str, class_name, transform_str, basis_str, sequence_pa
             ).transform()
             actor = unreal.EditorLevelLibrary.spawn_actor_from_object(
                 obj, new_transform.translation)
+            if instance_name:
+                try:
+                    actor.set_actor_label(instance_name)
+                except Exception as e:
+                    print(e)
             actor.set_actor_rotation(new_transform.rotation.rotator(), False)
             actor.set_actor_scale3d(new_transform.scale3d)
 

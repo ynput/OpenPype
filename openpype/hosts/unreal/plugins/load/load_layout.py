@@ -297,8 +297,6 @@ class LayoutLoader(plugin.Loader):
                     options=options
                 )
 
-                print(assets)
-
                 container = None
 
                 asset_containers = up.send_request_literal(
@@ -338,12 +336,12 @@ class LayoutLoader(plugin.Loader):
                     if family == 'model':
                         (actors, _) = up.send_request_literal(
                             "process_family", params=[
-                                assets, 'StaticMesh',
+                                assets, 'StaticMesh', instance_name,
                                 transform, basis, sequence])
                     elif family == 'rig':
                         (actors, bindings) = up.send_request_literal(
                             "process_family", params=[
-                                assets, 'SkeletalMesh',
+                                assets, 'SkeletalMesh', instance_name,
                                 transform, basis, sequence])
 
                         actors_dict[instance_name] = actors
