@@ -130,6 +130,8 @@ class ServerAPIBase(object):
         self._token_is_valid = None
         self._server_available = None
 
+        self._session = None
+
         self._base_functions_mapping = {
             RequestTypes.get: requests.get,
             RequestTypes.post: requests.post,
@@ -137,6 +139,7 @@ class ServerAPIBase(object):
             RequestTypes.patch: requests.patch,
             RequestTypes.delete: requests.delete
         }
+        self._session_functions_mapping = {}
 
     @property
     def access_token(self):
@@ -176,6 +179,31 @@ class ServerAPIBase(object):
     def reset_token(self):
         self._access_token = None
         self._token_validated = False
+        self.close_session()
+
+    def create_session(self):
+        if self._session is not None:
+            raise ValueError("Session is already created.")
+
+        session = requests.Session()
+        session.headers.update(self.get_headers())
+
+        self._session_functions_mapping = {
+            RequestTypes.get: session.get,
+            RequestTypes.post: session.post,
+            RequestTypes.put: session.put,
+            RequestTypes.patch: session.patch,
+            RequestTypes.delete: session.delete
+        }
+        self._session = session
+
+    def close_session(self):
+        if self._session is None:
+            return
+
+        self._session.close()
+        self._session = None
+        self._session_functions_mapping = {}
 
     def get_user_info(self):
         response = self.get("users/me")
@@ -206,6 +234,8 @@ class ServerAPIBase(object):
 
             current_username = user_info.get("name")
             if current_username == username:
+                self.close_session()
+                self.create_session()
                 return
 
         self.reset_token()
@@ -224,6 +254,7 @@ class ServerAPIBase(object):
 
         if not self.has_valid_token:
             raise AuthenticationError("Invalid credentials")
+        self.create_session()
 
     def logout(self):
         if self._access_token:
@@ -284,11 +315,15 @@ class ServerAPIBase(object):
         return self.query_graphql(INTROSPECTION_QUERY).data
 
     def _do_rest_request(self, function, url, **kwargs):
-        if "headers" not in kwargs:
-            kwargs["headers"] = self.get_headers()
+        if self._session is None:
+            if "headers" not in kwargs:
+                kwargs["headers"] = self.get_headers()
 
-        if isinstance(function, RequestType):
-            function = self._base_functions_mapping[function]
+            if isinstance(function, RequestType):
+                function = self._base_functions_mapping[function]
+
+        elif isinstance(function, RequestType):
+            function = self._session_functions_mapping[function]
 
         try:
             response = function(url, **kwargs)
@@ -463,6 +498,7 @@ class ServerAPI(ServerAPIBase):
         super(ServerAPI, self).__init__(url, token)
 
         self.validate_server_availability()
+        self.create_session()
 
     def login(self, username, password):
         previous_token = self._access_token
