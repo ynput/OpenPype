@@ -30,6 +30,9 @@ class RequestType:
     def __init__(self, name):
         self.name = name
 
+    def __hash__(self):
+        return self.name.__hash__()
+
 
 class RequestTypes:
     get = RequestType("GET")
@@ -65,13 +68,19 @@ class FolderNotFound(MissingEntityError):
 class RestApiResponse(object):
     """API Response."""
 
-    def __init__(self, status_code, data):
+    def __init__(self, status_code, data=None):
+        if data is None:
+            data = {}
         self.status = status_code
         self.data = data
 
     @property
     def detail(self):
         return self.get("detail", HTTPStatus(self.status).description)
+
+    @property
+    def status_code(self):
+        return self.status
 
     def __repr__(self):
         return "<{}: {} ({})>".format(
@@ -176,6 +185,11 @@ class ServerAPIBase(object):
             self._token_is_valid = False
         return self._token_is_valid
 
+    def set_token(self, token):
+        self.reset_token()
+        self._access_token = token
+        self.get_user_info()
+
     def reset_token(self):
         self._access_token = None
         self._token_validated = False
@@ -256,9 +270,10 @@ class ServerAPIBase(object):
             raise AuthenticationError("Invalid credentials")
         self.create_session()
 
-    def logout(self):
+    def logout(self, soft=False):
         if self._access_token:
-            self._logout()
+            if not soft:
+                self._logout()
             self.reset_token()
 
     def _logout(self):
@@ -339,11 +354,12 @@ class ServerAPIBase(object):
             )
         else:
             if response.text == "":
-                data = {}
-                response = RestApiResponse(response.status_code, data)
+                response = RestApiResponse(response.status_code)
             else:
                 try:
-                    data = response.json()
+                    response = RestApiResponse(
+                        response.status_code, response.json()
+                    )
                 except JSONDecodeError:
                     response = RestApiResponse(
                         500,
@@ -352,8 +368,7 @@ class ServerAPIBase(object):
                                 response.text)
                         }
                     )
-                else:
-                    response = RestApiResponse(response.status_code, data)
+
         self.log.debug("Response {}".format(str(response)))
         return response
 
@@ -488,7 +503,8 @@ class ServerAPI(ServerAPIBase):
     """Extended server api which also handles storing tokens and url.
 
     Created object expect to have set environment variables
-    'OPENPYPE_SERVER_URL' and 'OPENPYPE_TOKEN' to be able use it.
+    'OPENPYPE_SERVER_URL'. Also is expecting filled 'OPENPYPE_TOKEN'
+    but that can be filled afterwards with calling 'login' method.
     """
 
     def __init__(self):
@@ -501,6 +517,12 @@ class ServerAPI(ServerAPIBase):
         self.create_session()
 
     def login(self, username, password):
+        """Login to the server or change user.
+
+        If user is the same as current user and token is available the
+        login is skipped.
+        """
+
         previous_token = self._access_token
         super(ServerAPI, self).login(username, password)
         if self.has_valid_token and previous_token != self._access_token:
