@@ -577,3 +577,28 @@ def get_server_api_connection():
     """
 
     return GlobalContext.get_server_api_connection()
+
+
+def get(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get(*args, **kwargs)
+
+
+def post(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.post(*args, **kwargs)
+
+
+def put(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.put(*args, **kwargs)
+
+
+def patch(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.patch(*args, **kwargs)
+
+
+def delete(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.delete(*args, **kwargs)
