@@ -130,6 +130,7 @@ class ExtractBlend(publish.Extractor):
             filepath,
             data_blocks,
             path_remap="ABSOLUTE",
+            fake_user=True,
             compress=get_compress_setting(),
         )
 
