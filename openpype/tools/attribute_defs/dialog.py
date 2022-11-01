@@ -20,7 +20,8 @@ class AttributeDefinitionsDialog(QtWidgets.QDialog):
         btns_layout.addWidget(cancel_btn, 0)
 
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.addWidget(attrs_widget, 1)
+        main_layout.addWidget(attrs_widget, 0)
+        main_layout.addStretch(1)
         main_layout.addWidget(btns_widget, 0)
 
         ok_btn.clicked.connect(self.accept)
