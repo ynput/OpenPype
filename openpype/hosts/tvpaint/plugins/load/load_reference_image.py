@@ -1,7 +1,21 @@
 import collections
+
 import qargparse
-from openpype.pipeline import get_representation_context
-from openpype.hosts.tvpaint.api import lib, pipeline, plugin
+
+from openpype.pipeline import (
+    get_representation_context,
+    register_host,
+)
+from openpype.hosts.tvpaint.api import plugin
+from openpype.hosts.tvpaint.api.lib import (
+    get_layers_data,
+    execute_george_through_file,
+)
+from openpype.hosts.tvpaint.api.pipeline import (
+    write_workfile_metadata,
+    SECTION_NAME_CONTAINERS,
+    containerise,
+)
 
 
 class LoadImage(plugin.Loader):
@@ -79,10 +93,10 @@ class LoadImage(plugin.Loader):
             load_options_str
         )
 
-        lib.execute_george_through_file(george_script)
+        execute_george_through_file(george_script)
 
         loaded_layer = None
-        layers = lib.layers_data()
+        layers = get_layers_data()
         for layer in layers:
             if layer["name"] == layer_name:
                 loaded_layer = layer
@@ -95,7 +109,7 @@ class LoadImage(plugin.Loader):
 
         layer_names = [loaded_layer["name"]]
         namespace = namespace or layer_name
-        return pipeline.containerise(
+        return containerise(
             name=name,
             namespace=namespace,
             members=layer_names,
@@ -109,7 +123,7 @@ class LoadImage(plugin.Loader):
             return
 
         if layers is None:
-            layers = lib.layers_data()
+            layers = get_layers_data()
 
         available_ids = set(layer["layer_id"] for layer in layers)
 
@@ -152,14 +166,15 @@ class LoadImage(plugin.Loader):
             line = "tv_layerkill {}".format(layer_id)
             george_script_lines.append(line)
         george_script = "\n".join(george_script_lines)
-        lib.execute_george_through_file(george_script)
+        execute_george_through_file(george_script)
 
     def _remove_container(self, container, members=None):
         if not container:
             return
         representation = container["representation"]
         members = self.get_members_from_container(container)
-        current_containers = pipeline.ls()
+        host = register_host()
+        current_containers = host.get_containers()
         pop_idx = None
         for idx, cur_con in enumerate(current_containers):
             cur_members = self.get_members_from_container(cur_con)
@@ -179,8 +194,8 @@ class LoadImage(plugin.Loader):
             return
 
         current_containers.pop(pop_idx)
-        pipeline.write_workfile_metadata(
-            pipeline.SECTION_NAME_CONTAINERS, current_containers
+        write_workfile_metadata(
+            SECTION_NAME_CONTAINERS, current_containers
         )
 
     def remove(self, container):
@@ -214,7 +229,7 @@ class LoadImage(plugin.Loader):
             break
 
         old_layers = []
-        layers = lib.layers_data()
+        layers = get_layers_data()
         previous_layer_ids = set(layer["layer_id"] for layer in layers)
         if old_layers_are_ids:
             for layer in layers:
@@ -263,7 +278,7 @@ class LoadImage(plugin.Loader):
         new_container = self.load(context, name, namespace, {})
         new_layer_names = self.get_members_from_container(new_container)
 
-        layers = lib.layers_data()
+        layers = get_layers_data()
 
         new_layers = []
         for layer in layers:
@@ -304,4 +319,4 @@ class LoadImage(plugin.Loader):
         # Execute george scripts if there are any
         if george_script_lines:
             george_script = "\n".join(george_script_lines)
-            lib.execute_george_through_file(george_script)
+            execute_george_through_file(george_script)

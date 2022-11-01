@@ -1,17 +1,14 @@
 import sys
 import re
 import traceback
-import copy
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from openpype.client import get_asset_by_name, get_subsets
 from openpype.pipeline.create import (
     CreatorError,
     SUBSET_NAME_ALLOWED_SYMBOLS,
     TaskNotSetError,
 )
-from openpype.tools.utils import ErrorMessageBox
 
 from .widgets import (
     IconValuePixmapLabel,
@@ -35,79 +32,6 @@ class VariantInputsWidget(QtWidgets.QWidget):
     def resizeEvent(self, event):
         super(VariantInputsWidget, self).resizeEvent(event)
         self.resized.emit()
-
-
-class CreateErrorMessageBox(ErrorMessageBox):
-    def __init__(
-        self,
-        creator_label,
-        subset_name,
-        asset_name,
-        exc_msg,
-        formatted_traceback,
-        parent
-    ):
-        self._creator_label = creator_label
-        self._subset_name = subset_name
-        self._asset_name = asset_name
-        self._exc_msg = exc_msg
-        self._formatted_traceback = formatted_traceback
-        super(CreateErrorMessageBox, self).__init__("Creation failed", parent)
-
-    def _create_top_widget(self, parent_widget):
-        label_widget = QtWidgets.QLabel(parent_widget)
-        label_widget.setText(
-            "<span style='font-size:18pt;'>Failed to create</span>"
-        )
-        return label_widget
-
-    def _get_report_data(self):
-        report_message = (
-            "{creator}: Failed to create Subset: \"{subset}\""
-            " in Asset: \"{asset}\""
-            "\n\nError: {message}"
-        ).format(
-            creator=self._creator_label,
-            subset=self._subset_name,
-            asset=self._asset_name,
-            message=self._exc_msg,
-        )
-        if self._formatted_traceback:
-            report_message += "\n\n{}".format(self._formatted_traceback)
-        return [report_message]
-
-    def _create_content(self, content_layout):
-        item_name_template = (
-            "<span style='font-weight:bold;'>Creator:</span> {}<br>"
-            "<span style='font-weight:bold;'>Subset:</span> {}<br>"
-            "<span style='font-weight:bold;'>Asset:</span> {}<br>"
-        )
-        exc_msg_template = "<span style='font-weight:bold'>{}</span>"
-
-        line = self._create_line()
-        content_layout.addWidget(line)
-
-        item_name_widget = QtWidgets.QLabel(self)
-        item_name_widget.setText(
-            item_name_template.format(
-                self._creator_label, self._subset_name, self._asset_name
-            )
-        )
-        content_layout.addWidget(item_name_widget)
-
-        message_label_widget = QtWidgets.QLabel(self)
-        message_label_widget.setText(
-            exc_msg_template.format(self.convert_text_for_html(self._exc_msg))
-        )
-        content_layout.addWidget(message_label_widget)
-
-        if self._formatted_traceback:
-            line_widget = self._create_line()
-            tb_widget = self._create_traceback_widget(
-                self._formatted_traceback
-            )
-            content_layout.addWidget(line_widget)
-            content_layout.addWidget(tb_widget)
 
 
 # TODO add creator identifier/label to details
@@ -150,18 +74,18 @@ class CreatorShortDescWidget(QtWidgets.QWidget):
         self._family_label = family_label
         self._description_label = description_label
 
-    def set_plugin(self, plugin=None):
-        if not plugin:
+    def set_creator_item(self, creator_item=None):
+        if not creator_item:
             self._icon_widget.set_icon_def(None)
             self._family_label.setText("")
             self._description_label.setText("")
             return
 
-        plugin_icon = plugin.get_icon()
-        description = plugin.get_description() or ""
+        plugin_icon = creator_item.icon
+        description = creator_item.description or ""
 
         self._icon_widget.set_icon_def(plugin_icon)
-        self._family_label.setText("<b>{}</b>".format(plugin.family))
+        self._family_label.setText("<b>{}</b>".format(creator_item.family))
         self._family_label.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
         self._description_label.setText(description)
 
@@ -174,13 +98,11 @@ class CreateWidget(QtWidgets.QWidget):
 
         self._controller = controller
 
-        self._asset_doc = None
+        self._asset_name = None
         self._subset_names = None
         self._selected_creator = None
 
         self._prereq_available = False
-
-        self._message_dialog = None
 
         name_pattern = "^[{}]*$".format(SUBSET_NAME_ALLOWED_SYMBOLS)
         self._name_pattern = name_pattern
@@ -380,7 +302,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         if asset_name is None:
             asset_name = self.current_asset_name
-        return asset_name
+        return asset_name or None
 
     def _get_task_name(self):
         task_name = None
@@ -444,7 +366,7 @@ class CreateWidget(QtWidgets.QWidget):
             prereq_available = False
             creator_btn_tooltips.append("Creator is not selected")
 
-        if self._context_change_is_enabled() and self._asset_doc is None:
+        if self._context_change_is_enabled() and self._asset_name is None:
             # QUESTION how to handle invalid asset?
             prereq_available = False
             creator_btn_tooltips.append("Context is not selected")
@@ -468,30 +390,19 @@ class CreateWidget(QtWidgets.QWidget):
         asset_name = self._get_asset_name()
 
         # Skip if asset did not change
-        if self._asset_doc and self._asset_doc["name"] == asset_name:
+        if self._asset_name and self._asset_name == asset_name:
             return
 
-        # Make sure `_asset_doc` and `_subset_names` variables are reset
-        self._asset_doc = None
+        # Make sure `_asset_name` and `_subset_names` variables are reset
+        self._asset_name = asset_name
         self._subset_names = None
         if asset_name is None:
             return
 
-        project_name = self._controller.project_name
-        asset_doc = get_asset_by_name(project_name, asset_name)
-        self._asset_doc = asset_doc
+        subset_names = self._controller.get_existing_subset_names(asset_name)
 
-        if asset_doc:
-            asset_id = asset_doc["_id"]
-            subset_docs = get_subsets(
-                project_name, asset_ids=[asset_id], fields=["name"]
-            )
-            self._subset_names = {
-                subset_doc["name"]
-                for subset_doc in subset_docs
-            }
-
-        if not asset_doc:
+        self._subset_names = subset_names
+        if subset_names is None:
             self.subset_name_input.setText("< Asset is not set >")
 
     def _refresh_creators(self):
@@ -506,7 +417,10 @@ class CreateWidget(QtWidgets.QWidget):
 
         # Add new families
         new_creators = set()
-        for identifier, creator in self._controller.manual_creators.items():
+        for identifier, creator_item in self._controller.creator_items.items():
+            if creator_item.creator_type != "artist":
+                continue
+
             # TODO add details about creator
             new_creators.add(identifier)
             if identifier in existing_items:
@@ -518,10 +432,9 @@ class CreateWidget(QtWidgets.QWidget):
                 )
                 self._creators_model.appendRow(item)
 
-            label = creator.label or identifier
-            item.setData(label, QtCore.Qt.DisplayRole)
+            item.setData(creator_item.label, QtCore.Qt.DisplayRole)
             item.setData(identifier, CREATOR_IDENTIFIER_ROLE)
-            item.setData(creator.family, FAMILY_ROLE)
+            item.setData(creator_item.family, FAMILY_ROLE)
 
         # Remove families that are no more available
         for identifier in (old_creators - new_creators):
@@ -572,11 +485,11 @@ class CreateWidget(QtWidgets.QWidget):
             identifier = new_index.data(CREATOR_IDENTIFIER_ROLE)
         self._set_creator_by_identifier(identifier)
 
-    def _set_creator_detailed_text(self, creator):
+    def _set_creator_detailed_text(self, creator_item):
         # TODO implement
         description = ""
-        if creator is not None:
-            description = creator.get_detail_description() or description
+        if creator_item is not None:
+            description = creator_item.detailed_description or description
         self._controller.event_system.emit(
             "show.detailed.help",
             {
@@ -586,32 +499,39 @@ class CreateWidget(QtWidgets.QWidget):
         )
 
     def _set_creator_by_identifier(self, identifier):
-        creator = self._controller.manual_creators.get(identifier)
-        self._set_creator(creator)
+        creator_item = self._controller.creator_items.get(identifier)
+        self._set_creator(creator_item)
 
-    def _set_creator(self, creator):
-        self._creator_short_desc_widget.set_plugin(creator)
-        self._set_creator_detailed_text(creator)
-        self._pre_create_widget.set_plugin(creator)
+    def _set_creator(self, creator_item):
+        """Set current creator item.
 
-        self._selected_creator = creator
+        Args:
+            creator_item (CreatorItem): Item representing creator that can be
+                triggered by artist.
+        """
 
-        if not creator:
+        self._creator_short_desc_widget.set_creator_item(creator_item)
+        self._set_creator_detailed_text(creator_item)
+        self._pre_create_widget.set_creator_item(creator_item)
+
+        self._selected_creator = creator_item
+
+        if not creator_item:
             self._set_context_enabled(False)
             return
 
         if (
-            creator.create_allow_context_change
+            creator_item.create_allow_context_change
             != self._context_change_is_enabled()
         ):
-            self._set_context_enabled(creator.create_allow_context_change)
+            self._set_context_enabled(creator_item.create_allow_context_change)
             self._refresh_asset()
 
-        default_variants = creator.get_default_variants()
+        default_variants = creator_item.default_variants
         if not default_variants:
             default_variants = ["Main"]
 
-        default_variant = creator.get_default_variant()
+        default_variant = creator_item.default_variant
         if not default_variant:
             default_variant = default_variants[0]
 
@@ -670,14 +590,13 @@ class CreateWidget(QtWidgets.QWidget):
             self.subset_name_input.setText("< Valid variant >")
             return
 
-        project_name = self._controller.project_name
+        asset_name = self._get_asset_name()
         task_name = self._get_task_name()
-
-        asset_doc = copy.deepcopy(self._asset_doc)
+        creator_idenfier = self._selected_creator.identifier
         # Calculate subset name with Creator plugin
         try:
-            subset_name = self._selected_creator.get_subset_name(
-                variant_value, task_name, asset_doc, project_name
+            subset_name = self._controller.get_subset_name(
+                creator_idenfier, variant_value, task_name, asset_name
             )
         except TaskNotSetError:
             self._create_btn.setEnabled(False)
@@ -774,7 +693,6 @@ class CreateWidget(QtWidgets.QWidget):
             return
 
         index = indexes[0]
-        creator_label = index.data(QtCore.Qt.DisplayRole)
         creator_identifier = index.data(CREATOR_IDENTIFIER_ROLE)
         family = index.data(FAMILY_ROLE)
         variant = self.variant_input.text()
@@ -797,40 +715,13 @@ class CreateWidget(QtWidgets.QWidget):
             "family": family
         }
 
-        error_msg = None
-        formatted_traceback = None
-        try:
-            self._controller.create(
-                creator_identifier,
-                subset_name,
-                instance_data,
-                pre_create_data
-            )
+        success = self._controller.create(
+            creator_identifier,
+            subset_name,
+            instance_data,
+            pre_create_data
+        )
 
-        except CreatorError as exc:
-            error_msg = str(exc)
-
-        # Use bare except because some hosts raise their exceptions that
-        #   do not inherit from python's `BaseException`
-        except:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            formatted_traceback = "".join(traceback.format_exception(
-                exc_type, exc_value, exc_traceback
-            ))
-            error_msg = str(exc_value)
-
-        if error_msg is None:
+        if success:
             self._set_creator(self._selected_creator)
             self._controller.emit_card_message("Creation finished...")
-        else:
-            box = CreateErrorMessageBox(
-                creator_label,
-                subset_name,
-                asset_name,
-                error_msg,
-                formatted_traceback,
-                parent=self
-            )
-            box.show()
-            # Store dialog so is not garbage collected before is shown
-            self._message_dialog = box

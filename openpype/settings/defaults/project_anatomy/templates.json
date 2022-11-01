@@ -29,7 +29,7 @@
     "delivery": {},
     "unreal": {
         "folder": "{root[work]}/{project[name]}/unreal/{task[name]}",
-        "file": "{project[code]}_{asset}",
+        "file": "{project[code]}_{asset}.{ext}",
         "path": "{@folder}/{@file}"
     },
     "others": {

@@ -1,6 +1,7 @@
 import collections
 
 from Qt import QtWidgets, QtCore, QtGui
+
 from openpype.tools.utils import (
     PlaceholderLineEdit,
     RecursiveSortFilterProxyModel,
@@ -163,6 +164,16 @@ class AssetsHierarchyModel(QtGui.QStandardItemModel):
         return item_name in self._items_by_name
 
 
+class AssetDialogView(QtWidgets.QTreeView):
+    double_clicked = QtCore.Signal(QtCore.QModelIndex)
+
+    def mouseDoubleClickEvent(self, event):
+        index = self.indexAt(event.pos())
+        if index.isValid():
+            self.double_clicked.emit(index)
+            event.accept()
+
+
 class AssetsDialog(QtWidgets.QDialog):
     """Dialog to select asset for a context of instance."""
 
@@ -178,7 +189,7 @@ class AssetsDialog(QtWidgets.QDialog):
         filter_input = PlaceholderLineEdit(self)
         filter_input.setPlaceholderText("Filter assets..")
 
-        asset_view = QtWidgets.QTreeView(self)
+        asset_view = AssetDialogView(self)
         asset_view.setModel(proxy_model)
         asset_view.setHeaderHidden(True)
         asset_view.setFrameShape(QtWidgets.QFrame.NoFrame)
@@ -200,6 +211,7 @@ class AssetsDialog(QtWidgets.QDialog):
         layout.addWidget(asset_view, 1)
         layout.addLayout(btns_layout, 0)
 
+        asset_view.double_clicked.connect(self._on_ok_clicked)
         filter_input.textChanged.connect(self._on_filter_change)
         ok_btn.clicked.connect(self._on_ok_clicked)
         cancel_btn.clicked.connect(self._on_cancel_clicked)
@@ -274,7 +286,7 @@ class AssetsDialog(QtWidgets.QDialog):
         index = self._asset_view.currentIndex()
         asset_name = None
         if index.isValid():
-            asset_name = index.data(QtCore.Qt.DisplayRole)
+            asset_name = index.data(ASSET_NAME_ROLE)
         self._selected_asset = asset_name
         self.done(1)
 
