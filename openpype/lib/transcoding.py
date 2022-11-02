@@ -399,6 +399,10 @@ def should_convert_for_ffmpeg(src_filepath):
     if not input_info:
         return None
 
+    subimages = input_info.get("subimages")
+    if subimages is not None and subimages > 1:
+        return True
+
     # Check compression
     compression = input_info["attribs"].get("compression")
     if compression in ("dwaa", "dwab"):
@@ -507,13 +511,23 @@ def convert_for_ffmpeg(
         input_channels.append(alpha)
     input_channels_str = ",".join(input_channels)
 
-    oiio_cmd.extend([
+    subimages = input_info.get("subimages")
+    input_arg = "-i"
+    if subimages is None or subimages == 1:
         # Tell oiiotool which channels should be loaded
         # - other channels are not loaded to memory so helps to avoid memory
         #       leak issues
-        "-i:ch={}".format(input_channels_str), first_input_path,
+        # - this option is crashing if used on multipart/subimages exrs
+        input_arg += ":ch={}".format(input_channels_str)
+
+    oiio_cmd.extend([
+        input_arg, first_input_path,
         # Tell oiiotool which channels should be put to top stack (and output)
-        "--ch", channels_arg
+        "--ch", channels_arg,
+        # Use first subimage
+        # TODO we should look for all subimages and try (somehow) find the
+        #   best candidate for output
+        "--subimage", "0"
     ])
 
     # Add frame definitions to arguments
@@ -631,6 +645,15 @@ def convert_input_paths_for_ffmpeg(
         input_channels.append(alpha)
     input_channels_str = ",".join(input_channels)
 
+    subimages = input_info.get("subimages")
+    input_arg = "-i"
+    if subimages is None or subimages == 1:
+        # Tell oiiotool which channels should be loaded
+        # - other channels are not loaded to memory so helps to avoid memory
+        #       leak issues
+        # - this option is crashing if used on multipart/subimages exrs
+        input_arg += ":ch={}".format(input_channels_str)
+
     for input_path in input_paths:
         # Prepare subprocess arguments
         oiio_cmd = [
@@ -644,13 +667,13 @@ def convert_input_paths_for_ffmpeg(
             oiio_cmd.extend(["--compression", compression])
 
         oiio_cmd.extend([
-            # Tell oiiotool which channels should be loaded
-            # - other channels are not loaded to memory so helps to
-            #       avoid memory leak issues
-            "-i:ch={}".format(input_channels_str), input_path,
+            input_arg, input_path,
             # Tell oiiotool which channels should be put to top stack
             #   (and output)
-            "--ch", channels_arg
+            "--ch", channels_arg,
+            # Use first subimage
+            # TODO we should look for all subimages and try (somehow) find the
+            "--subimage", "0"
         ])
 
         for attr_name, attr_value in input_info["attribs"].items():
