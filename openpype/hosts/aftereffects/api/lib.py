@@ -163,4 +163,3 @@ def get_asset_settings(asset_doc):
         "resolutionHeight": resolution_height,
         "duration": duration
     }
-
