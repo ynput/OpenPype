@@ -20,6 +20,7 @@ from openpype.host import (
     HostBase,
     IWorkfileHost,
     ILoadHost,
+    IPublishHost
 )
 
 from .launch_logic import get_stub, ConnectionNotEstablishedYet
@@ -36,12 +37,8 @@ LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 
 
-class AfterEffectsHost(HostBase, IWorkfileHost, ILoadHost):
+class AfterEffectsHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     name = "aftereffects"
-
-    def __init__(self):
-        self._stub = None
-        super(AfterEffectsHost, self).__init__()
 
     @property
     def stub(self):
