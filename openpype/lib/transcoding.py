@@ -77,26 +77,38 @@ def get_transcode_temp_directory():
     )
 
 
-def get_oiio_info_for_input(filepath, logger=None):
+def get_oiio_info_for_input(filepath, logger=None, subimages=False):
     """Call oiiotool to get information about input and return stdout.
 
     Stdout should contain xml format string.
     """
     args = [
-        get_oiio_tools_path(), "--info", "-v", "-i:infoformat=xml", filepath
+        get_oiio_tools_path(),
+        "--info",
+        "-v"
     ]
+    if subimages:
+        args.append("-a")
+
+    args.extend(["-i:infoformat=xml", filepath])
+
     output = run_subprocess(args, logger=logger)
     output = output.replace("\r\n", "\n")
 
     xml_started = False
+    subimages = []
     lines = []
     for line in output.split("\n"):
         if not xml_started:
             if not line.startswith("<"):
                 continue
             xml_started = True
+
         if xml_started:
             lines.append(line)
+            if line == "</ImageSpec>":
+                subimages.append(lines)
+                lines = []
 
     if not xml_started:
         raise ValueError(
@@ -105,8 +117,14 @@ def get_oiio_info_for_input(filepath, logger=None):
             )
         )
 
-    xml_text = "\n".join(lines)
-    return parse_oiio_xml_output(xml_text, logger=logger)
+    output = []
+    for subimage in subimages:
+        xml_text = "\n".join(subimage)
+        output.append(parse_oiio_xml_output(xml_text, logger=logger))
+
+    if subimages:
+        return output
+    return output[0]
 
 
 class RationalToInt:
