@@ -1,22 +1,19 @@
 from openpype.lib.attribute_definitions import FileDef
+from openpype.lib.transcoding import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
 from openpype.pipeline.create import (
     Creator,
     HiddenCreator,
     CreatedInstance,
     cache_and_get_instances,
 )
-
 from .pipeline import (
     list_instances,
     update_instances,
     remove_instances,
     HostContext,
 )
-from openpype.lib.transcoding import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
 
-
-REVIEW_EXTENSIONS = IMAGE_EXTENSIONS + VIDEO_EXTENSIONS
-
+REVIEW_EXTENSIONS = set(IMAGE_EXTENSIONS) | set(VIDEO_EXTENSIONS)
 SHARED_DATA_KEY = "openpype.traypublisher.instances"
 
 
