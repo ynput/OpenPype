@@ -1,5 +1,3 @@
-import os
-
 from pathlib import Path
 
 from openpype.lib import PreLaunchHook
@@ -38,6 +36,6 @@ class AddMakePathsAbsoluteToLaunchArgs(PreLaunchHook):
                 "-P",
                 Path(utility_scripts.__file__).parent.joinpath(
                     "make_paths_absolute.py"
-                ),
+                ).as_posix(),
             ]
         )
