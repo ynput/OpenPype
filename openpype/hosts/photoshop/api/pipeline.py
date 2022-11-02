@@ -17,6 +17,7 @@ from openpype.host import (
     HostBase,
     IWorkfileHost,
     ILoadHost,
+    IPublishHost
 )
 
 from openpype.pipeline.load import any_outdated_containers
@@ -33,7 +34,7 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
-class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost):
+class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     name = "photoshop"
 
     def install(self):
