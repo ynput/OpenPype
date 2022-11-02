@@ -31,7 +31,7 @@ def load_subset(project_name, asset_name, subset_name, loader_type=None):
         get_representations(
             project_name,
             version_ids=[last_version["_id"]],
-            extensions=["blend"],
+            context_filters={"ext": ["blend"]},
         ),
         None
     )
