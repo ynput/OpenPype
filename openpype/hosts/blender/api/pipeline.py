@@ -1,8 +1,7 @@
 import os
-import re
 import sys
 import traceback
-from typing import Callable, Dict, Iterator, List, Optional, Union
+from typing import Callable, Dict, List, Optional
 
 import bpy
 
@@ -14,7 +13,6 @@ import pyblish.api
 from openpype.client import get_asset_by_name
 from openpype.settings import get_project_settings
 from openpype.pipeline import (
-    schema,
     legacy_io,
     register_loader_plugin_path,
     register_creator_plugin_path,
@@ -267,7 +265,7 @@ def _register_events():
     log.info("Installed event callback for 'taskChanged'...")
 
 
-def _discover_gui() -> Optional[Callable]:
+def _discover_gui() -> Optional[Callable]:  # TODO seem deprecated, delete?
     """Return the most desirable of the currently registered GUIs"""
 
     # Prefer last registered
@@ -382,68 +380,6 @@ def containerise_existing(
     return container
 
 
-def parse_container(
-    container: Union[bpy.types.Collection, bpy.types.Object],
-    validate: bool = True
-) -> Dict:
-    """Return the container node's full container data.
-
-    Args:
-        container: A container node name.
-        validate: turn the validation for the container on or off
-
-    Returns:
-        The container schema data for this container node.
-
-    """
-
-    data = lib.read(container)
-
-    # NOTE (kaamaurice): experimental for the internal Asset browser.
-    if (
-        not data
-        and isinstance(container, bpy.types.Object)
-        and container.is_instancer
-        and container.instance_collection
-    ):
-        data.update(lib.read(container.instance_collection))
-        # Fix namespace if empty
-        if not data.get("namespace"):
-            match = re.match(r"(^[^_]+(_\d+)?).*", container.name)
-            data["namespace"] = match.group(1) if match else container.name
-
-    # Append transient data
-    data["objectName"] = container.name
-
-    if validate:
-        schema.validate(data)
-
-    return data
-
-
-def ls() -> Iterator:
-    """List containers from active Blender scene.
-
-    This is the host-equivalent of api.ls(), but instead of listing assets on
-    disk, it lists assets already loaded in Blender; once loaded they are
-    called containers.
-    """
-
-    collections = lib.lsattr("id", AVALON_CONTAINER_ID)
-    scene_collections = list(bpy.context.scene.collection.children)
-    for collection in scene_collections:
-        if len(collection.children):
-            scene_collections.extend(collection.children)
-
-    for container in collections:
-        if container in scene_collections and not container.override_library:
-            yield parse_container(container)
-
-    for obj in bpy.context.scene.objects:
-        if obj.is_instancer and obj.instance_collection in collections:
-            yield parse_container(obj)
-
-
 def update_hierarchy(containers):
     """Hierarchical container support
 
@@ -454,7 +390,7 @@ def update_hierarchy(containers):
 
     """
 
-    all_containers = set(ls())  # lookup set
+    all_containers = set(lib.ls())  # lookup set
 
     for container in containers:
         # Find parent
