@@ -96,7 +96,7 @@ def get_oiio_info_for_input(filepath, logger=None, subimages=False):
     output = output.replace("\r\n", "\n")
 
     xml_started = False
-    subimages = []
+    subimages_lines = []
     lines = []
     for line in output.split("\n"):
         if not xml_started:
@@ -107,7 +107,7 @@ def get_oiio_info_for_input(filepath, logger=None, subimages=False):
         if xml_started:
             lines.append(line)
             if line == "</ImageSpec>":
-                subimages.append(lines)
+                subimages_lines.append(lines)
                 lines = []
 
     if not xml_started:
@@ -118,8 +118,8 @@ def get_oiio_info_for_input(filepath, logger=None, subimages=False):
         )
 
     output = []
-    for subimage in subimages:
-        xml_text = "\n".join(subimage)
+    for subimage_lines in subimages_lines:
+        xml_text = "\n".join(subimage_lines)
         output.append(parse_oiio_xml_output(xml_text, logger=logger))
 
     if subimages:
@@ -651,7 +651,7 @@ def convert_input_paths_for_ffmpeg(
         # Tell oiiotool which channels should be loaded
         # - other channels are not loaded to memory so helps to avoid memory
         #       leak issues
-        # - this option is crashing if used on multipart/subimages exrs
+        # - this option is crashing if used on multipart exrs
         input_arg += ":ch={}".format(input_channels_str)
 
     for input_path in input_paths:
