@@ -7,7 +7,12 @@ import json
 import platform
 import uuid
 import re
-from Deadline.Scripting import RepositoryUtils, FileUtils, DirectoryUtils
+from Deadline.Scripting import (
+    RepositoryUtils,
+    FileUtils,
+    DirectoryUtils,
+    ProcessUtils,
+)
 
 
 def get_openpype_version_from_path(path, build=True):
@@ -162,9 +167,8 @@ def inject_openpype_environment(deadlinePlugin):
         print(">>> Temporary path: {}".format(export_url))
 
         args = [
-            exe,
             "--headless",
-            'extractenvironments',
+            "extractenvironments",
             export_url
         ]
 
@@ -188,15 +192,18 @@ def inject_openpype_environment(deadlinePlugin):
         if not os.environ.get("OPENPYPE_MONGO"):
             print(">>> Missing OPENPYPE_MONGO env var, process won't work")
 
-        env = os.environ
-        env["OPENPYPE_HEADLESS_MODE"] = "1"
-        env["AVALON_TIMEOUT"] = "5000"
+        os.environ["AVALON_TIMEOUT"] = "5000"
 
-        print(">>> Executing: {}".format(" ".join(args)))
-        std_output = subprocess.check_output(args,
-                                             cwd=os.path.dirname(exe),
-                                             env=env)
-        print(">>> Process result {}".format(std_output))
+        args_str = subprocess.list2cmdline(args)
+        print(">>> Executing: {} {}".format(exe, args_str))
+        process = ProcessUtils.SpawnProcess(
+            exe, args_str, os.path.dirname(exe)
+        )
+        ProcessUtils.WaitForExit(process, -1)
+        if process.ExitCode != 0:
+            raise RuntimeError(
+                "Failed to run OpenPype process to extract environments."
+            )
 
         print(">>> Loading file ...")
         with open(export_url) as fp:
