@@ -3,26 +3,26 @@ import re
 import copy
 import json
 import shutil
-
 from abc import ABCMeta, abstractmethod
+
 import six
-
 import clique
-
+import speedcopy
 import pyblish.api
 
 from openpype.lib import (
     get_ffmpeg_tool_path,
-    get_ffprobe_streams,
 
     path_to_subprocess_arg,
     run_subprocess,
-
+)
+from openpype.lib.transcoding import (
+    IMAGE_EXTENSIONS,
+    get_ffprobe_streams,
     should_convert_for_ffmpeg,
     convert_input_paths_for_ffmpeg,
-    get_transcode_temp_directory
+    get_transcode_temp_directory,
 )
-import speedcopy
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -175,6 +175,26 @@ class ExtractReview(pyblish.api.InstancePlugin):
             outputs_per_representations.append((repre, outputs))
         return outputs_per_representations
 
+    def _single_frame_filter(self, input_filepaths, output_defs):
+        single_frame_image = False
+        if len(input_filepaths) == 1:
+            ext = os.path.splitext(input_filepaths[0])[-1]
+            single_frame_image = ext in IMAGE_EXTENSIONS
+
+        filtered_defs = []
+        for output_def in output_defs:
+            output_filters = output_def.get("filter") or {}
+            frame_filter = output_filters.get("single_frame_filter")
+            if (
+                (not single_frame_image and frame_filter == "single_frame")
+                or (single_frame_image and frame_filter == "multi_frame")
+            ):
+                continue
+
+            filtered_defs.append(output_def)
+
+        return filtered_defs
+
     @staticmethod
     def get_instance_label(instance):
         return (
@@ -195,7 +215,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         outputs_per_repres = self._get_outputs_per_representations(
             instance, profile_outputs
         )
-        for repre, outpu_defs in outputs_per_repres:
+        for repre, output_defs in outputs_per_repres:
             # Check if input should be preconverted before processing
             # Store original staging dir (it's value may change)
             src_repre_staging_dir = repre["stagingDir"]
@@ -215,6 +235,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     input_filepaths.append(filepath)
                     if first_input_path is None:
                         first_input_path = filepath
+
+            filtered_output_defs = self._single_frame_filter(
+                input_filepaths, output_defs
+            )
+            if not filtered_output_defs:
+                self.log.debug((
+                    "Repre: {} - All output definitions were filtered"
+                    " out by single frame filter. Skipping"
+                ).format(repre["name"]))
+                continue
 
             # Skip if file is not set
             if first_input_path is None:
@@ -249,7 +279,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             try:
                 self._render_output_definitions(
-                    instance, repre, src_repre_staging_dir, outpu_defs
+                    instance, repre, src_repre_staging_dir, filtered_output_defs
                 )
 
             finally:
@@ -263,10 +293,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         shutil.rmtree(new_staging_dir)
 
     def _render_output_definitions(
-        self, instance, repre, src_repre_staging_dir, outpu_defs
+        self, instance, repre, src_repre_staging_dir, output_defs
     ):
         fill_data = copy.deepcopy(instance.data["anatomyData"])
-        for _output_def in outpu_defs:
+        for _output_def in output_defs:
             output_def = copy.deepcopy(_output_def)
             # Make sure output definition has "tags" key
             if "tags" not in output_def:
@@ -1659,9 +1689,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 return True
         return False
 
-    def filter_output_defs(
-        self, profile, subset_name, families
-    ):
+    def filter_output_defs(self, profile, subset_name, families):
         """Return outputs matching input instance families.
 
         Output definitions without families filter are marked as valid.
