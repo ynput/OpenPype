@@ -1,8 +1,12 @@
+import asyncio
+import gc
 from subprocess import Popen
+from time import sleep
 
 import bpy
 
 from openpype.hosts.blender.utility_scripts import make_paths_relative
+from openpype.modules.base import ModulesManager
 from openpype.plugins.publish.integrate import IntegrateAsset
 
 
@@ -33,7 +37,7 @@ class IntegrateBlenderAsset(IntegrateAsset):
                     f"to {published_path}..."
                 )
                 # Run in subprocess
-                Popen(
+                subproc = Popen(
                     [
                         bpy.app.binary_path,
                         published_path,
@@ -42,3 +46,4 @@ class IntegrateBlenderAsset(IntegrateAsset):
                         make_paths_relative.__file__,
                     ]
                 )
+                subproc.wait()
