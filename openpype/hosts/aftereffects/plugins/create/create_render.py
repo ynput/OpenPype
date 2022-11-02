@@ -7,7 +7,6 @@ from openpype.pipeline import (
     CreatorError,
     legacy_io,
 )
-from openpype.hosts.aftereffects.api import AfterEffectsHost
 
 
 class RenderCreator(Creator):
@@ -24,13 +23,12 @@ class RenderCreator(Creator):
                                                   ["create"]
                                                   ["RenderCreator"]
                                                   ["defaults"])
-        self._host = AfterEffectsHost()
 
     def get_icon(self):
         return resources.get_openpype_splash_filepath()
 
     def collect_instances(self):
-        for instance_data in self._host.list_instances():
+        for instance_data in self.host.list_instances():
             # legacy instances have family=='render' or 'renderLocal', use them
             creator_id = (instance_data.get("creator_identifier") or
                           instance_data.get("family", '').replace("Local", ''))
