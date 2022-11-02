@@ -79,7 +79,8 @@
                                     "ftrack"
                                 ],
                                 "subsets": [],
-                                "custom_tags": []
+                                "custom_tags": [],
+                                "single_frame_filter": "everytime"
                             },
                             "overscan_crop": "",
                             "overscan_color": [

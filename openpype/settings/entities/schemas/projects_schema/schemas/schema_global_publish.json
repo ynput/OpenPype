@@ -304,6 +304,20 @@
                                                     "label": "Custom Tags",
                                                     "type": "list",
                                                     "object_type": "text"
+                                                },
+                                                {
+                                                    "type": "label",
+                                                    "label": "Use output <b>always</b> / only if input <b>is 1 frame</b> image / only if has <b>2+ frames</b> or <b>is video</b>"
+                                                },
+                                                {
+                                                    "type": "enum",
+                                                    "key": "single_frame_filter",
+                                                    "default": "everytime",
+                                                    "enum_items": [
+                                                        {"everytime": "Always"},
+                                                        {"single_frame": "On 1 frame input"},
+                                                        {"multi_frame": "On 2+ frame input"}
+                                                    ]
                                                 }
                                             ]
                                         },
