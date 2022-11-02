@@ -5,8 +5,6 @@ from openpype.pipeline import (
     CreatedInstance,
     legacy_io
 )
-from openpype.hosts.photoshop.api import PhotoshopHost
-
 
 class PSWorkfileCreator(AutoCreator):
     identifier = "workfile"
@@ -18,7 +16,7 @@ class PSWorkfileCreator(AutoCreator):
         return []
 
     def collect_instances(self):
-        for instance_data in PhotoshopHost().list_instances():
+        for instance_data in self.host.list_instances():
             creator_id = instance_data.get("creator_identifier")
             if creator_id == self.identifier:
                 subset_name = instance_data["subset"]

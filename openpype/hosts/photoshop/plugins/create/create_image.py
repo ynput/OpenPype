@@ -123,7 +123,7 @@ class ImageCreator(Creator):
 
     def remove_instances(self, instances):
         for instance in instances:
-            PhotoshopHost().remove_instance(instance)
+            self.host.remove_instance(instance)
             self._remove_instance_from_context(instance)
 
     def get_default_variants(self):
