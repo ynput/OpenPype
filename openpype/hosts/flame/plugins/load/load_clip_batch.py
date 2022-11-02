@@ -45,7 +45,7 @@ class LoadClipBatch(opfapi.ClipLoader):
         formating_data["batch"] = self.batch.name.get_value()
 
         clip_name = StringTemplate(self.clip_name_template).format(
-            context["representation"]["context"])
+            formating_data)
 
         # TODO: settings in imageio
         # convert colorspace with ocio to flame mapping
