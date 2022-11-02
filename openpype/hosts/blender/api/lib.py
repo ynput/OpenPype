@@ -1,16 +1,82 @@
 import os
+import re
 import traceback
 import importlib
 import contextlib
-from typing import Dict, List, Union
+from typing import Dict, Iterator, List, Union
 
 import bpy
 import addon_utils
+from openpype import lib
 from openpype.lib import Logger
+from openpype.pipeline import schema
+from openpype.pipeline.constants import AVALON_CONTAINER_ID
 
 from . import pipeline
 
 log = Logger.get_logger(__name__)
+
+
+def parse_container(
+    container: Union[bpy.types.Collection, bpy.types.Object],
+    validate: bool = True
+) -> Dict:
+    """Return the container node's full container data.
+
+    Args:
+        container: A container node name.
+        validate: turn the validation for the container on or off
+
+    Returns:
+        The container schema data for this container node.
+
+    """
+
+    data = read(container)
+
+    # NOTE (kaamaurice): experimental for the internal Asset browser.
+    if (
+        not data
+        and isinstance(container, bpy.types.Object)
+        and container.is_instancer
+        and container.instance_collection
+    ):
+        data.update(read(container.instance_collection))
+        # Fix namespace if empty
+        if not data.get("namespace"):
+            match = re.match(r"(^[^_]+(_\d+)?).*", container.name)
+            data["namespace"] = match.group(1) if match else container.name
+
+    # Append transient data
+    data["objectName"] = container.name
+
+    if validate:
+        schema.validate(data)
+
+    return data
+
+
+def ls() -> Iterator:
+    """List containers from active Blender scene.
+
+    This is the host-equivalent of api.ls(), but instead of listing assets on
+    disk, it lists assets already loaded in Blender; once loaded they are
+    called containers.
+    """
+
+    collections = lsattr("id", AVALON_CONTAINER_ID)
+    scene_collections = list(bpy.context.scene.collection.children)
+    for collection in scene_collections:
+        if len(collection.children):
+            scene_collections.extend(collection.children)
+
+    for container in collections:
+        if container in scene_collections and not container.override_library:
+            yield parse_container(container)
+
+    for obj in bpy.context.scene.objects:
+        if obj.is_instancer and obj.instance_collection in collections:
+            yield parse_container(obj)
 
 
 def load_scripts(paths):
