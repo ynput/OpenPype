@@ -672,7 +672,8 @@ def convert_input_paths_for_ffmpeg(
             #   (and output)
             "--ch", channels_arg,
             # WARNING: This is commented out because ffmpeg won't be able to
-            #   render proper output when only one subimage is outputed with oiio
+            #   render proper output when only one subimage is outputed
+            #   with oiiotool
             # Use first subimage
             # "--subimage", "0"
         ])
