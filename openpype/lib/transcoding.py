@@ -111,6 +111,7 @@ def get_oiio_info_for_input(filepath, logger=None):
 
 class RationalToInt:
     """Rational value stored as division of 2 integers using string."""
+
     def __init__(self, string_value):
         parts = string_value.split("/")
         top = float(parts[0])
@@ -157,16 +158,16 @@ def convert_value_by_type_name(value_type, value, logger=None):
     if value_type == "int":
         return int(value)
 
-    if value_type == "float":
+    if value_type in ("float", "double"):
         return float(value)
 
     # Vectors will probably have more types
-    if value_type in ("vec2f", "float2"):
+    if value_type in ("vec2f", "float2", "float2d"):
         return [float(item) for item in value.split(",")]
 
     # Matrix should be always have square size of element 3x3, 4x4
     # - are returned as list of lists
-    if value_type == "matrix":
+    if value_type in ("matrix", "matrixd"):
         output = []
         current_index = -1
         parts = value.split(",")
@@ -198,7 +199,7 @@ def convert_value_by_type_name(value_type, value, logger=None):
     if value_type == "rational2i":
         return RationalToInt(value)
 
-    if value_type == "vector":
+    if value_type in ("vector", "vectord"):
         parts = [part.strip() for part in value.split(",")]
         output = []
         for part in parts:
