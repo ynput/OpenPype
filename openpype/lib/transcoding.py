@@ -524,10 +524,10 @@ def convert_for_ffmpeg(
         input_arg, first_input_path,
         # Tell oiiotool which channels should be put to top stack (and output)
         "--ch", channels_arg,
+        # WARNING: This is commented out because ffmpeg won't be able to
+        #   render proper output when only one subimage is outputed with oiio
         # Use first subimage
-        # TODO we should look for all subimages and try (somehow) find the
-        #   best candidate for output
-        "--subimage", "0"
+        # "--subimage", "0"
     ])
 
     # Add frame definitions to arguments
@@ -671,9 +671,10 @@ def convert_input_paths_for_ffmpeg(
             # Tell oiiotool which channels should be put to top stack
             #   (and output)
             "--ch", channels_arg,
+            # WARNING: This is commented out because ffmpeg won't be able to
+            #   render proper output when only one subimage is outputed with oiio
             # Use first subimage
-            # TODO we should look for all subimages and try (somehow) find the
-            "--subimage", "0"
+            # "--subimage", "0"
         ])
 
         for attr_name, attr_value in input_info["attribs"].items():
