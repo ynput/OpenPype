@@ -401,12 +401,10 @@ def draw_avalon_menu(self, context):
 
 class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
     """Convert loaded container to a publishable one"""
+
     bl_idname = "scene.make_container_publishable"
     bl_label = "Make Container Publishable"
 
-    scene_containers: bpy.props.CollectionProperty(
-        name="Scene OpenPype Containers", type=bpy.types.PropertyGroup
-    )
     container_name: bpy.props.StringProperty(
         name="Container to make publishable"
     )
@@ -426,7 +424,7 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
             return {"CANCELLED"}
 
         # Recover required data
-        container_collection = context.scene.collection.children.get(self.container_name)
+        container_collection = bpy.data.collections.get(self.container_name)
         avalon_data = container_collection["avalon"]
         project_name = legacy_io.current_project()
         version_doc = get_version_by_id(project_name, avalon_data["parent"])
