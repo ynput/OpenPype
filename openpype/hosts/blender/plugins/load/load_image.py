@@ -32,7 +32,7 @@ class ImageLoader(plugin.AssetLoader):
         img = bpy.data.images.load(libpath)
         img.name = plugin.asset_name(asset, subset)
 
-        # Setup image as movie clip if source is file extension is mov or mp4.
+        # Setup image as movie clip if inpute file extension is mov or mp4.
         if libpath.endswith((".mov", "mp4")):
             img.source = 'MOVIE'
 
