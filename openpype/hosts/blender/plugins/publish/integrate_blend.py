@@ -1,12 +1,8 @@
-import asyncio
-import gc
 from subprocess import Popen
-from time import sleep
 
 import bpy
 
 from openpype.hosts.blender.utility_scripts import make_paths_relative
-from openpype.modules.base import ModulesManager
 from openpype.plugins.publish.integrate import IntegrateAsset
 
 
