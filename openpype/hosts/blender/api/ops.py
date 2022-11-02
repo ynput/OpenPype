@@ -426,9 +426,8 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
             return {"CANCELLED"}
 
         # Recover required data
-        avalon_data = bpy.data.collections.get(self.container_name).get(
-            "avalon"
-        )
+        container_collection = context.scene.collection.children.get(self.container_name)
+        avalon_data = container_collection["avalon"]
         project_name = legacy_io.current_project()
         version_doc = get_version_by_id(project_name, avalon_data["parent"])
         subset_doc = get_subset_by_id(project_name, version_doc["parent"])
@@ -442,9 +441,6 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
             "task": legacy_io.Session.get("AVALON_TASK"),
             "active": True,
         }
-        container_collection = context.scene.collection.children.get(
-            self.container_name
-        )
         container_collection["avalon"] = metadata
         return {"FINISHED"}
 
