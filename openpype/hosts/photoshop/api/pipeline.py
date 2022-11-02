@@ -36,9 +36,6 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost):
     name = "photoshop"
 
-    def __init__(self):
-        super(PhotoshopHost, self).__init__()
-
     def install(self):
         """Install Photoshop-specific functionality of avalon-core.
 
