@@ -279,7 +279,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             try:
                 self._render_output_definitions(
-                    instance, repre, src_repre_staging_dir, filtered_output_defs
+                    instance,
+                    repre,
+                    src_repre_staging_dir,
+                    filtered_output_defs
                 )
 
             finally:
