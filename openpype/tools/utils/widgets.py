@@ -632,7 +632,9 @@ class ItemViewHeaderWidget(QtWidgets.QWidget):
         refresh_btn.setIcon(refresh_icon)
         refresh_btn.setToolTip("Refresh items")
 
-        filter_input = PlaceholderHistoryLineEdit(placeholder_text="Filter...", parent=self)
+        filter_input = PlaceholderHistoryLineEdit(
+            placeholder_text="Filter...", parent=self
+        )
         clear_filter_icon = qtawesome.icon(
             "fa.close", color=get_default_tools_icon_color()
         )
@@ -650,7 +652,9 @@ class ItemViewHeaderWidget(QtWidgets.QWidget):
         header_top_row_layout.addWidget(refresh_btn)
 
         header_bottom_row_widget = QtWidgets.QWidget()
-        header_bottom_row_layout = QtWidgets.QHBoxLayout(header_bottom_row_widget)
+        header_bottom_row_layout = QtWidgets.QHBoxLayout(
+            header_bottom_row_widget
+        )
         header_bottom_row_layout.setContentsMargins(0, 0, 0, 0)
         header_bottom_row_layout.setSpacing(2)
         header_bottom_row_layout.addWidget(filter_input)
@@ -682,9 +686,13 @@ class ItemViewHeaderWidget(QtWidgets.QWidget):
 
         clear_filter_btn.clicked.connect(self._on_clear_filter_btn_released)
 
-        filter_input.currentTextChanged.connect(parent_item_widget._on_filter_text_change)
+        filter_input.currentTextChanged.connect(
+            parent_item_widget._on_filter_text_change
+        )
         refresh_btn.clicked.connect(parent_item_widget.refresh)
-        current_item_btn.clicked.connect(parent_item_widget._on_current_item_click)
+        current_item_btn.clicked.connect(
+            parent_item_widget._on_current_item_click
+        )
 
     @QtCore.Slot()
     def _on_clear_filter_btn_released(self):
@@ -698,8 +706,14 @@ class ItemViewWidget(QtWidgets.QWidget):
     selection_changed = QtCore.Signal()
     double_clicked = QtCore.Signal()
 
-    def __init__(self, dbcon, view_widget_type, item_name="Items", parent=None, show_search_bar=False):
-        # type: (mongodb.AvalonMongoDB, type[QtWidgets.QWidget], str, QtWidgets.QWidget | None, bool) -> None
+    def __init__(
+        self,
+        dbcon,  # type: mongodb.AvalonMongoDB
+        view_widget_type,  # type: type[QtWidgets.QWidget]
+        item_name="Items",  # type: str
+        parent=None,  # type: QtWidgets.QWidget | None
+        show_search_bar=False  # type: bool
+    ):
         super(ItemViewWidget, self).__init__(parent=parent)
 
         self.dbcon = dbcon
@@ -708,8 +722,9 @@ class ItemViewWidget(QtWidgets.QWidget):
         proxy = self._create_proxy_model(model)
 
         # Header
-        header_widget = ItemViewHeaderWidget(self, item_name, show_search_bar=show_search_bar)
-        # header_widget._fixed_filters_widget._checkbox.stateChanged.connect(self._on_filter_assignee_changed)
+        header_widget = ItemViewHeaderWidget(
+            self, item_name, show_search_bar=show_search_bar
+        )
 
         # View
         view = view_widget_type(self)

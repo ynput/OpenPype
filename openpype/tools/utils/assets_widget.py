@@ -577,7 +577,9 @@ class AssetsWidget(widgets.ItemViewWidget):
         _view = None    # type: AssetsView
 
     def __init__(self, dbcon, parent=None):
-        super(AssetsWidget, self).__init__(dbcon, AssetsView, "Assets", parent=parent)
+        super(AssetsWidget, self).__init__(
+            dbcon, AssetsView, "Assets", parent=parent
+        )
 
     def _create_source_model(self):
         model = AssetModel(dbcon=self.dbcon, parent=self)

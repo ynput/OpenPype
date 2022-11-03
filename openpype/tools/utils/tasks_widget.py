@@ -17,6 +17,11 @@ from openpype.tools.utils.lib import get_task_icon
 _typing = False
 if _typing:
     from typing import Any
+    from typing import Dict
+    from typing import Union
+
+    T_ViewItems = Union["TaskViewItem", QtGui.QStandardItem]
+    T_Dict = Dict[str, Any]
 del _typing
 
 
@@ -28,21 +33,31 @@ TASK_ASSIGNEE_ROLE = QtCore.Qt.UserRole + 4
 
 class TaskViewItem(QtGui.QStandardItem):
 
-    def __init__(self, task_name, task_info, asset_doc, project_doc, task_type_in_label=True):
-        # type: (str, dict[str, Any], dict[str, Any], dict[str, Any] | None, bool) -> None
+    def __init__(
+        self,
+        task_name,
+        task_info,
+        asset_doc,
+        project_doc,
+        task_type_in_label=True
+    ):
+        # type: (str, T_Dict, T_Dict, T_Dict | None, bool) -> None
         task_type = task_info.get("type")  # type: str | None
-        label = "{} ({})".format(task_name, task_type or "type N/A") if task_type_in_label else task_name
+        label = (
+            "{} ({})".format(task_name, task_type or "type N/A")
+            if task_type_in_label else task_name
+        )
         super(TaskViewItem, self).__init__(label)
 
-        task_assignees = set()                              # type: set[str]
-        assignees_data = task_info.get("assignees") or []   # list[dict[str, str]]
+        task_assignees = set()  # type: set[str]
+        assignees_data = task_info.get("assignees") or []  # list[dict[str, str]]
         for assignee in assignees_data:
             username = assignee.get("username")  # type: str
             if username:
                 task_assignees.add(username)
 
         icon = get_task_icon(project_doc, asset_doc, task_name)
-        task_order = task_info.get("order") # type: int | None
+        task_order = task_info.get("order")  # type: int | None
 
         self.setData(task_name, TASK_NAME_ROLE)
         self.setData(task_type, TASK_TYPE_ROLE)
@@ -123,7 +138,7 @@ class TasksModel(QtGui.QStandardItemModel):
         return self._empty_tasks_item
 
     def _get_view_item(self, task_name, task_info, asset_doc):
-        # type: (str, dict[str, Any], dict[str, Any]) -> TaskViewItem
+        # type: (str, T_Dict, T_Dict) -> TaskViewItem
         """
         Dependency injection to allow the task view item class to be
         overriden in child classes.
@@ -131,8 +146,8 @@ class TasksModel(QtGui.QStandardItemModel):
         return TaskViewItem(task_name, task_info, asset_doc, self._project_doc)
 
     def _create_task_items(self, asset_doc, asset_tasks):
-        # type: (dict[str, Any], dict[str, Any]) -> list[TaskViewItem | QtGui.QStandardItem]
-        items = []  # type: list[TaskViewItem | QtGui.QStandardItem]
+        # type: (T_Dict, T_Dict) -> list[T_ViewItems]
+        items = []  # type: list[T_ViewItems]
         for task_name, task_info in asset_tasks.items():
             item = self._get_view_item(task_name, task_info, asset_doc)
             items.append(item)
@@ -145,7 +160,7 @@ class TasksModel(QtGui.QStandardItemModel):
         return items
 
     def _set_asset(self, asset_doc):
-        # type: (dict[str, Any]) -> None
+        # type: (T_Dict) -> None
         """Set assets to track by their database id
 
         Arguments:
@@ -211,7 +226,13 @@ class TasksWidget(widgets.ItemViewWidget):
     def __init__(self, dbcon, parent=None, show_search_bar=False):
         self._dbcon = dbcon
 
-        super(TasksWidget, self).__init__(dbcon, TaskTreeView, "Tasks", parent=parent, show_search_bar=show_search_bar)
+        super(TasksWidget, self).__init__(
+            dbcon,
+            TaskTreeView,
+            "Tasks",
+            parent=parent,
+            show_search_bar=show_search_bar
+        )
 
         self._view.setIndentation(0)
         self._view.setSortingEnabled(True)
