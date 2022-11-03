@@ -5,6 +5,7 @@ from openpype.pipeline import (
     CreatedInstance,
     legacy_io,
 )
+from openpype.hosts.aftereffects.api.pipeline import cache_and_get_instances
 
 
 class AEWorkfileCreator(AutoCreator):
@@ -17,7 +18,7 @@ class AEWorkfileCreator(AutoCreator):
         return []
 
     def collect_instances(self):
-        for instance_data in self.host.list_instances():
+        for instance_data in cache_and_get_instances(self):
             creator_id = instance_data.get("creator_identifier")
             if creator_id == self.identifier:
                 subset_name = instance_data["subset"]
