@@ -646,6 +646,9 @@ class UnsavedChangesDialog(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
         super(UnsavedChangesDialog, self).__init__(parent)
+
+        self.setWindowTitle("Unsaved changes")
+
         message_label = QtWidgets.QLabel(self.message)
 
         btns_widget = QtWidgets.QWidget(self)
