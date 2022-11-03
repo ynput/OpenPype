@@ -1,6 +1,5 @@
 import os
 from Qt import QtWidgets
-import collections
 import pyblish.api
 
 from openpype.lib import register_event_callback, Logger
