@@ -1,19 +1,17 @@
 import datetime
+import uuid
 
 from .constants import (
-    FOLDER_ATTRIBS,
     DEFAULT_V3_FOLDER_FIELDS,
-    DEFAULT_FOLDER_FIELDS,
+    FOLDER_ATTRIBS,
+    FOLDER_ATTRIBS_FIELDS,
 
     SUBSET_ATTRIBS,
-    DEFAULT_SUBSET_FIELDS,
 
     VERSION_ATTRIBS_FIELDS,
-    DEFAULT_VERSION_FIELDS,
 
     REPRESENTATION_ATTRIBS_FIELDS,
     REPRESENTATION_FILES_FIELDS,
-    DEFAULT_REPRESENTATION_FIELDS,
 )
 
 # --- Project entity ---
@@ -527,3 +525,174 @@ def convert_v4_representation_to_v3(representation):
     output["data"] = output_data
 
     return output
+
+
+def convert_create_project_to_v4(project, anatomy_preset, con):
+    return project
+
+
+def convert_create_asset_to_v4(asset, project, con):
+    folder_attributes = con.get_attributes_for_type("folder")
+
+    asset_data = asset["data"]
+    parent_id = asset_data["visualParent"]
+
+    folder = {
+        "name": asset["name"],
+        "parentId": parent_id,
+    }
+    entity_id = asset.get("_id")
+    if entity_id:
+        folder["id"] = entity_id
+
+    attribs = {}
+    data = {}
+    for key, value in asset_data.items():
+        if key in (
+            "visualParent",
+            "thumbnail_id",
+            "parents",
+            "inputLinks",
+            "avalon_mongo_id",
+        ):
+            continue
+
+        if key not in folder_attributes:
+            data[key] = value
+        elif value is not None:
+            attribs[key] = value
+
+    if attribs:
+        folder["attrib"] = attribs
+
+    if data:
+        folder["data"] = data
+    return folder
+
+
+def convert_create_task_to_v4(task, project, con):
+    task_type = task["type"]
+    new_task = {
+        "name": task["name"],
+
+    }
+
+
+def convert_create_subset_to_v4(subset, con):
+    subset_attributes = con.get_attributes_for_type("subset")
+
+    subset_data = subset["data"]
+    family = subset_data.get("family")
+    if not family:
+        family = subset_data["families"][0]
+
+    converted_subset = {
+        "name": subset["name"],
+        "family": family,
+        "folderId": subset["parent"],
+    }
+    entity_id = subset.get("_id")
+    if entity_id:
+        converted_subset["id"] = entity_id
+
+    attribs = {}
+    data = {}
+    for key, value in subset_data.items():
+        if key not in subset_attributes:
+            data[key] = value
+        elif value is not None:
+            attribs[key] = value
+
+    if attribs:
+        converted_subset["attrib"] = attribs
+
+    if data:
+        converted_subset["data"] = data
+
+    return converted_subset
+
+
+def convert_create_version_to_v4(version, con):
+    version_attributes = con.get_attributes_for_type("version")
+    converted_version = {
+        "version": version["name"],
+        "subsetId": version["parent"],
+    }
+
+    version_data = version["data"]
+    attribs = {}
+    data = {}
+    for key, value in version_data.items():
+        if key not in version_attributes:
+            data[key] = value
+        elif value is not None:
+            attribs[key] = value
+
+    if attribs:
+        converted_version["attrib"] = attribs
+
+    if data:
+        converted_version["data"] = attribs
+
+    return converted_version
+
+
+def convert_create_representation_to_v4(representation, con):
+    representation_attributes = con.get_attributes_for_type("representation")
+
+    converted_representation = {
+        "name": representation["name"],
+        "versionId": representation["parent"],
+    }
+
+    new_files = []
+    for file_item in representation["files"]:
+        new_file_item = {
+            key: value
+            for key, value in file_item.items()
+            if key != "_id"
+        }
+        new_file_item["id"] = str(uuid.uuid1())
+        new_files.append(new_file_item)
+
+    attribs = {}
+    data = {
+        "files": new_files,
+        "context": representation["context"]
+    }
+
+    representation_data = representation["data"]
+
+    for key, value in representation_data.itmes():
+        if key not in representation_attributes:
+            data[key] = value
+        elif value is not None:
+            attribs[key] = value
+
+    if attribs:
+        converted_representation["attrib"] = attribs
+
+    if data:
+        converted_representation["data"] = data
+
+    return converted_representation
+
+
+def convert_update_folder_to_v4(update_data, con):
+    new_update_data = {}
+    return new_update_data
+
+
+def convert_update_subset_to_v4(update_data, con):
+    new_update_data = {}
+    return new_update_data
+
+
+def convert_update_version_to_v4(update_data, con):
+    new_update_data = {}
+    return new_update_data
+
+
+def convert_update_representation_to_v4(update_data, con):
+    new_update_data = {}
+    return new_update_data
