@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import copy
 from http import HTTPStatus
 
 import requests
@@ -149,6 +150,9 @@ class ServerAPIBase(object):
             RequestTypes.delete: requests.delete
         }
         self._session_functions_mapping = {}
+        # Variables related to attributes
+        self._attributes_schema = None
+        self._entity_type_attributes_cache = {}
 
     @property
     def access_token(self):
@@ -497,6 +501,35 @@ class ServerAPIBase(object):
             for project in data["projects"]:
                 project_names.append(project["name"])
         return project_names
+
+    def get_attributes_schema(self):
+        if self._attributes_schema is None:
+            result = self.get("attributes")
+            if result.status_code != 200:
+                raise UnauthorizedError(
+                    "User must be authorized to receive attributes"
+                )
+            self._attributes_schema = result.data
+        return copy.deepcopy(self._attributes_schema)
+
+    def reset_attributes_schema(self):
+        self._attributes_schema = None
+        self._entity_type_attributes_cache = {}
+
+    def get_attributes_for_type(self, entity_type):
+        attributes = self._entity_type_attributes_cache.get(entity_type)
+        if attributes is None:
+            attributes_schema = self.get_attributes_schema()
+            attributes = {}
+            for attr in attributes_schema["attributes"]:
+                if entity_type not in attr["scope"]:
+                    continue
+                attr_name = attr["name"]
+                attributes[attr_name] = attr["data"]
+
+            self._entity_type_attributes_cache[entity_type] = attributes
+
+        return copy.deepcopy(attributes)
 
 
 class ServerAPI(ServerAPIBase):
