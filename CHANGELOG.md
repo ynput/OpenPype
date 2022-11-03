@@ -1,8 +1,43 @@
 # Changelog
 
-## [3.14.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.14.6](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.4...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.5...HEAD)
+
+### 📖 Documentation
+
+- Documentation: Minor updates to dev\_requirements.md [\#4025](https://github.com/pypeclub/OpenPype/pull/4025)
+
+**🆕 New features**
+
+- Nuke: add 13.2 variant [\#4041](https://github.com/pypeclub/OpenPype/pull/4041)
+
+**🚀 Enhancements**
+
+- Publish Report Viewer: Store reports locally on machine [\#4040](https://github.com/pypeclub/OpenPype/pull/4040)
+- General: More specific error in burnins script [\#4026](https://github.com/pypeclub/OpenPype/pull/4026)
+- General: Extract review does not crash with old settings overrides [\#4023](https://github.com/pypeclub/OpenPype/pull/4023)
+- Publisher: Convertors for legacy instances [\#4020](https://github.com/pypeclub/OpenPype/pull/4020)
+- workflows: adding milestone creator and assigner [\#4018](https://github.com/pypeclub/OpenPype/pull/4018)
+- Publisher: Catch creator errors [\#4015](https://github.com/pypeclub/OpenPype/pull/4015)
+
+**🐛 Bug fixes**
+
+- Hiero - effect collection fixes [\#4038](https://github.com/pypeclub/OpenPype/pull/4038)
+- Nuke - loader clip correct hash conversion in path [\#4037](https://github.com/pypeclub/OpenPype/pull/4037)
+- Maya: Soft fail when applying capture preset [\#4034](https://github.com/pypeclub/OpenPype/pull/4034)
+- Igniter: handle missing directory [\#4032](https://github.com/pypeclub/OpenPype/pull/4032)
+- StandalonePublisher: Fix thumbnail publishing [\#4029](https://github.com/pypeclub/OpenPype/pull/4029)
+- Experimental Tools: Fix publisher import [\#4027](https://github.com/pypeclub/OpenPype/pull/4027)
+- Houdini: fix wrong path in ASS loader [\#4016](https://github.com/pypeclub/OpenPype/pull/4016)
+
+**🔀 Refactored code**
+
+- General: Import lib functions from lib [\#4017](https://github.com/pypeclub/OpenPype/pull/4017)
+
+## [3.14.5](https://github.com/pypeclub/OpenPype/tree/3.14.5) (2022-10-24)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.4...3.14.5)
 
 **🚀 Enhancements**
 

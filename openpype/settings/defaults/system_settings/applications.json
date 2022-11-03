@@ -192,6 +192,24 @@
             ]
         },
         "variants": {
+            "13-2": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.2v1\\Nuke13.2.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.2v1/Nuke13.2"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
             "13-0": {
                 "use_python_2": false,
                 "executables": {
@@ -281,6 +299,7 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
+                "13-2": "13.2",
                 "13-0": "13.0",
                 "12-2": "12.2",
                 "12-0": "12.0",
@@ -301,6 +320,30 @@
             ]
         },
         "variants": {
+            "13-2": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.2v1\\Nuke13.2.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.2v1/Nuke13.2"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--nukex"
+                    ],
+                    "darwin": [
+                        "--nukex"
+                    ],
+                    "linux": [
+                        "--nukex"
+                    ]
+                },
+                "environment": {}
+            },
             "13-0": {
                 "use_python_2": false,
                 "executables": {
@@ -420,6 +463,7 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
+                "13-2": "13.2",
                 "13-0": "13.0",
                 "12-2": "12.2",
                 "12-0": "12.0",
@@ -438,6 +482,30 @@
             "TAG_ASSETBUILD_STARTUP": "0"
         },
         "variants": {
+            "13-2": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.2v1\\Nuke13.2.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.2v1/Nuke13.2"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--studio"
+                    ],
+                    "darwin": [
+                        "--studio"
+                    ],
+                    "linux": [
+                        "--studio"
+                    ]
+                },
+                "environment": {}
+            },
             "13-0": {
                 "use_python_2": false,
                 "executables": {
@@ -555,6 +623,7 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
+                "13-2": "13.2",
                 "13-0": "13.0",
                 "12-2": "12.2",
                 "12-0": "12.0",
@@ -573,6 +642,30 @@
             "TAG_ASSETBUILD_STARTUP": "0"
         },
         "variants": {
+            "13-2": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.2v1\\Nuke13.2.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.2v1/Nuke13.2"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--hiero"
+                    ],
+                    "darwin": [
+                        "--hiero"
+                    ],
+                    "linux": [
+                        "--hiero"
+                    ]
+                },
+                "environment": {}
+            },
             "13-0": {
                 "use_python_2": false,
                 "executables": {
@@ -692,6 +785,7 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
+                "13-2": "13.2",
                 "13-0": "13.0",
                 "12-2": "12.2",
                 "12-0": "12.0",

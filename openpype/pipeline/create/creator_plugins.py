@@ -442,6 +442,13 @@ class BaseCreator:
 
         return self.create_context.collection_shared_data
 
+    def set_instance_thumbnail_path(self, instance_id, thumbnail_path=None):
+        """Set path to thumbnail for instance."""
+
+        self.create_context.thumbnail_paths_by_instance_id[instance_id] = (
+            thumbnail_path
+        )
+
 
 class Creator(BaseCreator):
     """Creator that has more information for artist to show in UI.
@@ -468,6 +475,13 @@ class Creator(BaseCreator):
     # - in some cases it may confuse artists because it would not be used
     #      e.g. for buld creators
     create_allow_context_change = True
+    # A thumbnail can be passed in precreate attributes
+    # - if is set to True is should expect that a thumbnail path under key
+    #   PRE_CREATE_THUMBNAIL_KEY can be sent in data with precreate data
+    # - is disabled by default because the feature was added in later stages
+    #   and creators who would not expect PRE_CREATE_THUMBNAIL_KEY could
+    #   cause issues with instance data
+    create_allow_thumbnail = False
 
     # Precreate attribute definitions showed before creation
     # - similar to instance attribute definitions
