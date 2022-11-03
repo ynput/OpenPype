@@ -315,8 +315,8 @@
                                                     "default": "everytime",
                                                     "enum_items": [
                                                         {"everytime": "Always"},
-                                                        {"single_frame": "On 1 frame input"},
-                                                        {"multi_frame": "On 2+ frame input"}
+                                                        {"single_frame": "Only if input has 1 image frame"},
+                                                        {"multi_frame": "Only if input is video or sequence of frames"}
                                                     ]
                                                 }
                                             ]
