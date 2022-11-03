@@ -1,8 +1,11 @@
+import collections
+
 from openpype.lib.attribute_definitions import FileDef
 from openpype.pipeline.create import (
     Creator,
     HiddenCreator,
-    CreatedInstance
+    CreatedInstance,
+    PRE_CREATE_THUMBNAIL_KEY,
 )
 
 from .pipeline import (
@@ -14,7 +17,7 @@ from .pipeline import (
 from openpype.lib.transcoding import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
 
 
-REVIEW_EXTENSIONS = IMAGE_EXTENSIONS + VIDEO_EXTENSIONS
+REVIEW_EXTENSIONS = set(IMAGE_EXTENSIONS) | set(VIDEO_EXTENSIONS)
 
 
 def _cache_and_get_instances(creator):
@@ -29,7 +32,11 @@ def _cache_and_get_instances(creator):
 
     shared_key = "openpype.traypublisher.instances"
     if shared_key not in creator.collection_shared_data:
-        creator.collection_shared_data[shared_key] = list_instances()
+        instances_by_creator_id = collections.defaultdict(list)
+        for instance_data in list_instances():
+            creator_id = instance_data.get("creator_identifier")
+            instances_by_creator_id[creator_id].append(instance_data)
+        creator.collection_shared_data[shared_key] = instances_by_creator_id
     return creator.collection_shared_data[shared_key]
 
 
@@ -37,13 +44,12 @@ class HiddenTrayPublishCreator(HiddenCreator):
     host_name = "traypublisher"
 
     def collect_instances(self):
-        for instance_data in _cache_and_get_instances(self):
-            creator_id = instance_data.get("creator_identifier")
-            if creator_id == self.identifier:
-                instance = CreatedInstance.from_existing(
-                    instance_data, self
-                )
-                self._add_instance_to_context(instance)
+        instance_data_by_identifier = _cache_and_get_instances(self)
+        for instance_data in instance_data_by_identifier[self.identifier]:
+            instance = CreatedInstance.from_existing(
+                instance_data, self
+            )
+            self._add_instance_to_context(instance)
 
     def update_instances(self, update_list):
         update_instances(update_list)
@@ -74,13 +80,12 @@ class TrayPublishCreator(Creator):
     host_name = "traypublisher"
 
     def collect_instances(self):
-        for instance_data in _cache_and_get_instances(self):
-            creator_id = instance_data.get("creator_identifier")
-            if creator_id == self.identifier:
-                instance = CreatedInstance.from_existing(
-                    instance_data, self
-                )
-                self._add_instance_to_context(instance)
+        instance_data_by_identifier = _cache_and_get_instances(self)
+        for instance_data in instance_data_by_identifier[self.identifier]:
+            instance = CreatedInstance.from_existing(
+                instance_data, self
+            )
+            self._add_instance_to_context(instance)
 
     def update_instances(self, update_list):
         update_instances(update_list)
@@ -110,17 +115,23 @@ class TrayPublishCreator(Creator):
 
 class SettingsCreator(TrayPublishCreator):
     create_allow_context_change = True
+    create_allow_thumbnail = True
 
     extensions = []
 
     def create(self, subset_name, data, pre_create_data):
         # Pass precreate data to creator attributes
+        thumbnail_path = pre_create_data.pop(PRE_CREATE_THUMBNAIL_KEY, None)
+
         data["creator_attributes"] = pre_create_data
         data["settings_creator"] = True
         # Create new instance
         new_instance = CreatedInstance(self.family, subset_name, data, self)
 
         self._store_new_instance(new_instance)
+
+        if thumbnail_path:
+            self.set_instance_thumbnail_path(new_instance.id, thumbnail_path)
 
     def get_instance_attr_defs(self):
         return [

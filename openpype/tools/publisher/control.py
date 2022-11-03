@@ -4,6 +4,8 @@ import logging
 import traceback
 import collections
 import uuid
+import tempfile
+import shutil
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
@@ -24,6 +26,7 @@ from openpype.pipeline import (
     KnownPublishError,
     registered_host,
     legacy_io,
+    get_process_id,
 )
 from openpype.pipeline.create import (
     CreateContext,
@@ -825,6 +828,7 @@ class CreatorItem:
         default_variant,
         default_variants,
         create_allow_context_change,
+        create_allow_thumbnail,
         pre_create_attributes_defs
     ):
         self.identifier = identifier
@@ -838,6 +842,7 @@ class CreatorItem:
         self.default_variant = default_variant
         self.default_variants = default_variants
         self.create_allow_context_change = create_allow_context_change
+        self.create_allow_thumbnail = create_allow_thumbnail
         self.instance_attributes_defs = instance_attributes_defs
         self.pre_create_attributes_defs = pre_create_attributes_defs
 
@@ -864,6 +869,7 @@ class CreatorItem:
         default_variants = None
         pre_create_attr_defs = None
         create_allow_context_change = None
+        create_allow_thumbnail = None
         if creator_type is CreatorTypes.artist:
             description = creator.get_description()
             detail_description = creator.get_detail_description()
@@ -871,6 +877,7 @@ class CreatorItem:
             default_variants = creator.get_default_variants()
             pre_create_attr_defs = creator.get_pre_create_attr_defs()
             create_allow_context_change = creator.create_allow_context_change
+            create_allow_thumbnail = creator.create_allow_thumbnail
 
         identifier = creator.identifier
         return cls(
@@ -886,6 +893,7 @@ class CreatorItem:
             default_variant,
             default_variants,
             create_allow_context_change,
+            create_allow_thumbnail,
             pre_create_attr_defs
         )
 
@@ -914,6 +922,7 @@ class CreatorItem:
             "default_variant": self.default_variant,
             "default_variants": self.default_variants,
             "create_allow_context_change": self.create_allow_context_change,
+            "create_allow_thumbnail": self.create_allow_thumbnail,
             "instance_attributes_defs": instance_attributes_defs,
             "pre_create_attributes_defs": pre_create_attributes_defs,
         }
@@ -1115,11 +1124,13 @@ class AbstractPublisherController(object):
 
         pass
 
+    @abstractmethod
     def save_changes(self):
         """Save changes in create context."""
 
         pass
 
+    @abstractmethod
     def remove_instances(self, instance_ids):
         """Remove list of instances from create context."""
         # TODO expect instance ids
@@ -1257,6 +1268,14 @@ class AbstractPublisherController(object):
         pass
 
     @abstractmethod
+    def get_thumbnail_paths_for_instances(self, instance_ids):
+        pass
+
+    @abstractmethod
+    def set_thumbnail_paths_for_instances(self, thumbnail_path_mapping):
+        pass
+
+    @abstractmethod
     def set_comment(self, comment):
         """Set comment on pyblish context.
 
@@ -1280,6 +1299,22 @@ class AbstractPublisherController(object):
         Args:
             message (str): Message that will be showed.
         """
+
+        pass
+
+    @abstractmethod
+    def get_thumbnail_temp_dir_path(self):
+        """Return path to directory where thumbnails can be temporary stored.
+
+        Returns:
+            str: Path to a directory.
+        """
+
+        pass
+
+    @abstractmethod
+    def clear_thumbnail_temp_dir_path(self):
+        """Remove content of thumbnail temp directory."""
 
         pass
 
@@ -1522,6 +1557,26 @@ class BasePublisherController(AbstractPublisherController):
         if creator_item is not None:
             return creator_item.icon
         return None
+
+    def get_thumbnail_temp_dir_path(self):
+        """Return path to directory where thumbnails can be temporary stored.
+
+        Returns:
+            str: Path to a directory.
+        """
+
+        return os.path.join(
+            tempfile.gettempdir(),
+            "publisher_thumbnails",
+            get_process_id()
+        )
+
+    def clear_thumbnail_temp_dir_path(self):
+        """Remove content of thumbnail temp directory."""
+
+        dirpath = self.get_thumbnail_temp_dir_path()
+        if os.path.exists(dirpath):
+            shutil.rmtree(dirpath)
 
 
 class PublisherController(BasePublisherController):
@@ -1777,6 +1832,29 @@ class PublisherController(BasePublisherController):
         self._resetting_instances = False
 
         self._on_create_instance_change()
+
+    def get_thumbnail_paths_for_instances(self, instance_ids):
+        thumbnail_paths_by_instance_id = (
+            self._create_context.thumbnail_paths_by_instance_id
+        )
+        return {
+            instance_id: thumbnail_paths_by_instance_id.get(instance_id)
+            for instance_id in instance_ids
+        }
+
+    def set_thumbnail_paths_for_instances(self, thumbnail_path_mapping):
+        thumbnail_paths_by_instance_id = (
+            self._create_context.thumbnail_paths_by_instance_id
+        )
+        for instance_id, thumbnail_path in thumbnail_path_mapping.items():
+            thumbnail_paths_by_instance_id[instance_id] = thumbnail_path
+
+        self._emit_event(
+            "instance.thumbnail.changed",
+            {
+                "mapping": thumbnail_path_mapping
+            }
+        )
 
     def emit_card_message(
         self, message, message_type=CardMessageTypes.standard

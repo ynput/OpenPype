@@ -391,6 +391,7 @@ class PublisherWindow(QtWidgets.QDialog):
     def closeEvent(self, event):
         self.save_changes()
         self._reset_on_show = True
+        self._controller.clear_thumbnail_temp_dir_path()
         super(PublisherWindow, self).closeEvent(event)
 
     def save_changes(self):
