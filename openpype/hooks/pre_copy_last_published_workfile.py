@@ -151,7 +151,8 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             import requests
         except Exception:
             self.log.warning(
-                "Couldn't add sites to representations ('requests' is not available)"
+                "Couldn't add sites to representations "
+                "('requests' is not available)"
             )
             return
 
