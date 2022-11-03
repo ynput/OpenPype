@@ -181,11 +181,6 @@ class AfterEffectsHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
                 stub.rename_item(item.id,
                                  item.name.replace(stub.PUBLISH_ICON, ''))
 
-    def uninstall(self):
-        pyblish.api.deregister_plugin_path(PUBLISH_PATH)
-        deregister_loader_plugin_path(LOAD_PATH)
-        deregister_creator_plugin_path(CREATE_PATH)
-
 
 def application_launch():
     """Triggered after start of app"""
