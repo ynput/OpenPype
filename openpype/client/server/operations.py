@@ -122,3 +122,21 @@ def create_project(
         ))
 
     return get_project(project_name)
+
+
+def delete_project(project_name, con=None):
+    if con is None:
+        con = get_server_api_connection()
+
+    if not get_project(project_name, fields=["name"], con=con):
+        raise ValueError("Project with name \"{}\" was not found".format(
+            project_name
+        ))
+
+    result = con.delete("projects/{}".format(project_name))
+    if result.status_code != 204:
+        raise ValueError(
+            "Failed to delete project \"{}\". {}".format(
+                project_name, result.data["detail"]
+            )
+        )
