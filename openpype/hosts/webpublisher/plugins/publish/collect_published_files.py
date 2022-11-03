@@ -149,9 +149,12 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                         self.log.warning("Unable to count frames "
                                          "duration {}".format(no_of_frames))
 
-            # raise ValueError("STOP")
             instance.data["handleStart"] = asset_doc["data"]["handleStart"]
             instance.data["handleEnd"] = asset_doc["data"]["handleEnd"]
+
+            if "review" in tags:
+                instance.data["thumbnailSource"] = \
+                    instance.data["representations"][0]
 
             instances.append(instance)
             self.log.info("instance.data:: {}".format(instance.data))
