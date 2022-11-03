@@ -44,12 +44,6 @@ class AbstractOperation(object):
 
         pass
 
-    @abstractmethod
-    def to_mongo_operation(self):
-        """Convert operation to Mongo batch operation."""
-
-        pass
-
     def to_data(self):
         """Convert opration to data that can be converted to json or others.
 
