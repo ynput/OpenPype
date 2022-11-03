@@ -1,6 +1,5 @@
 import os
 from Qt import QtWidgets
-import collections
 
 import pyblish.api
 
