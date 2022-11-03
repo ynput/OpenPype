@@ -168,7 +168,7 @@ def _process_app_events() -> Optional[float]:
             dialog.setWindowFlags(
                 dialog.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
             )
-            
+
             dialog.exec_()
 
         # Refresh Manager
@@ -416,7 +416,9 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
     def poll(cls, context):
         # Check selected collection is in loaded containers
         if context.collection is not context.scene.collection:
-            return context.collection.name in {container["objectName"] for container in ls()}
+            return context.collection.name in {
+                container["objectName"] for container in ls()
+            }
 
     def execute(self, context):
         if not self.container_name:
@@ -429,7 +431,7 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
         project_name = legacy_io.current_project()
         version_doc = get_version_by_id(project_name, avalon_data["parent"])
         subset_doc = get_subset_by_id(project_name, version_doc["parent"])
-        
+
         # Build and update metadata
         metadata = {
             "id": AVALON_INSTANCE_ID,
@@ -451,7 +453,10 @@ def draw_op_collection_menu(self, context):
     """
     layout = self.layout
     layout.separator()
-    op = layout.operator(SCENE_OT_MakeContainerPublishable.bl_idname, text=SCENE_OT_MakeContainerPublishable.bl_label)
+    op = layout.operator(
+        SCENE_OT_MakeContainerPublishable.bl_idname,
+        text=SCENE_OT_MakeContainerPublishable.bl_label,
+    )
     op.container_name = context.collection.name
 
 
