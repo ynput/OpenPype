@@ -39,6 +39,10 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 class AfterEffectsHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     name = "aftereffects"
 
+    def __init__(self):
+        self._stub = None
+        super(AfterEffectsHost, self).__init__()
+
     @property
     def stub(self):
         """
