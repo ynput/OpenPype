@@ -1,6 +1,5 @@
 import os
 from Qt import QtWidgets
-import collections
 
 import pyblish.api
 
@@ -291,21 +290,3 @@ def containerise(
     stub.imprint(layer.id, data)
 
     return layer
-
-
-def cache_and_get_instances(creator):
-    """Cache instances in shared data.
-    Args:
-        creator (Creator): Plugin which would like to get instances from host.
-    Returns:
-        Dict[str, Dict[str, Any]]: Cached instances list from host
-            implementation.
-    """
-    shared_key = "openpype.photoshop.instances"
-    if shared_key not in creator.collection_shared_data:
-        value = collections.defaultdict(list)
-        for instance in creator.list_instances():
-            identifier = instance["creator_identifier"]
-        value[identifier].append(instance)
-        creator.collection_shared_data[shared_key] = value
-    return creator.collection_shared_data[shared_key]
