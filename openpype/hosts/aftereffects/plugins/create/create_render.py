@@ -47,7 +47,7 @@ class RenderCreator(Creator):
 
     def remove_instances(self, instances):
         for instance in instances:
-            self._host.remove_instance(instance)
+            self.host.remove_instance(instance)
             self._remove_instance_from_context(instance)
 
     def create(self, subset_name, data, pre_create_data):
