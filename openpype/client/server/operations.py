@@ -1,5 +1,31 @@
 import re
-from openpype.client.operations_base import BaseOperationsSession
+import uuid
+import copy
+import json
+import collections
+
+from openpype.client.operations_base import (
+    REMOVED_VALUE,
+    CreateOperation,
+    UpdateOperation,
+    DeleteOperation,
+    BaseOperationsSession
+)
+
+from .server import get_server_api_connection
+from .entities import get_project, get_v4_project_anatomy_preset
+from .conversion_utils import (
+    convert_create_asset_to_v4,
+    convert_create_task_to_v4,
+    convert_create_subset_to_v4,
+    convert_create_version_to_v4,
+    convert_create_representation_to_v4,
+
+    convert_update_folder_to_v4,
+    convert_update_subset_to_v4,
+    convert_update_version_to_v4,
+    convert_update_representation_to_v4,
+)
 
 
 PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
@@ -15,7 +41,13 @@ class OperationsSession(BaseOperationsSession):
                 self.__class__.__name__))
 
 
-def create_project(project_name, project_code, library_project=False):
+def create_project(
+    project_name,
+    project_code,
+    library_project=False,
+    preset_name=None,
+    con=None
+):
     """Create project using OpenPype settings.
 
     This project creation function is not validating project document on
@@ -33,6 +65,8 @@ def create_project(project_name, project_code, library_project=False):
         project_name (str): New project name. Should be unique.
         project_code (str): Project's code should be unique too.
         library_project (bool): Project is library project.
+        preset_name (str): Name of anatomy preset. Default is used if not
+            passed.
         con (ServerAPI): Connection to server with logged user.
 
     Raises:
@@ -42,7 +76,10 @@ def create_project(project_name, project_code, library_project=False):
         dict: Created project document.
     """
 
-    if get_project(project_name, fields=["name"]):
+    if con is None:
+        con = get_server_api_connection()
+
+    if get_project(project_name, fields=["name"], con=con):
         raise ValueError("Project with name \"{}\" already exists".format(
             project_name
         ))
@@ -52,13 +89,29 @@ def create_project(project_name, project_code, library_project=False):
             "Project name \"{}\" contain invalid characters"
         ).format(project_name))
 
-    if con is None:
-        con = get_server_api_connection()
+    preset = get_v4_project_anatomy_preset(preset_name)
+    config = {
+        "templates": preset["templates"],
+        "roots": preset["roots"]
+    }
+    folder_types = {}
+    for folder_type in preset["folder_types"]:
+        name = folder_type.pop("name")
+        folder_types[name] = folder_type
+
+    task_types = {}
+    for task_type in preset["task_types"]:
+        name = task_type.pop("name")
+        task_types[name] = task_type
 
     result = con.put(
         "projects/{}".format(project_name),
         code=project_code,
-        library=library_project
+        library=library_project,
+        config=config,
+        attrib=preset["attributes"],
+        folderTypes=folder_types,
+        taskTypes=task_types
     )
     if result.status != 201:
         details = "Unknown details ({})".format(result.status)
