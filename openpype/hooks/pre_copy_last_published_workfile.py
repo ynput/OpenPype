@@ -1,14 +1,14 @@
-import gc
 import os
 import shutil
+from time import sleep
 from openpype.client.entities import (
     get_last_version_by_subset_id,
     get_representations,
     get_subsets,
 )
 from openpype.lib import PreLaunchHook
+from openpype.lib.local_settings import get_local_site_id
 from openpype.lib.profiles_filtering import filter_profiles
-from openpype.modules.base import ModulesManager
 from openpype.pipeline.load.utils import get_representation_path
 from openpype.settings.lib import get_project_settings
 
@@ -137,33 +137,37 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             ).format(task_name, host_name)
             return
 
-        # Get sync server from Tray,
-        # which handles the asynchronous thread instance
-        sync_server = next(
-            (
-                t["sync_server"]
-                for t in [
-                    obj
-                    for obj in gc.get_objects()
-                    if isinstance(obj, ModulesManager)
-                ]
-                if t["sync_server"].sync_server_thread
-            ),
-            None,
-        )
+        # POST to webserver sites to add to representations
+        webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
+        if not webserver_url:
+            self.log.warning("Couldn't find webserver url")
+            return
 
-        # Add site and reset timer
-        active_site = sync_server.get_active_site(project_name)
-        sync_server.add_site(
-            project_name,
-            workfile_representation["_id"],
-            active_site,
-            force=True,
+        entry_point_url = "{}/sync_server".format(webserver_url)
+        rest_api_url = "{}/add_sites_to_representations".format(
+            entry_point_url
         )
-        sync_server.reset_timer()
+        try:
+            import requests
+        except Exception:
+            self.log.warning(
+                "Couldn't add sites to representations ('requests' is not available)"
+            )
+            return
+
+        requests.post(
+            rest_api_url,
+            json={
+                "project_name": project_name,
+                "sites": [get_local_site_id()],
+                "representations": [str(workfile_representation["_id"])],
+            },
+        )
 
         # Wait for the download loop to end
-        sync_server.sync_server_thread.files_processed.wait()
+        rest_api_url = "{}/files_are_processed".format(entry_point_url)
+        while requests.get(rest_api_url).content:
+            sleep(5)
 
         # Get paths
         published_workfile_path = get_representation_path(

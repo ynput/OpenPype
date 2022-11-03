@@ -237,15 +237,13 @@ class SyncServerThread(threading.Thread):
     def __init__(self, module):
         self.log = Logger.get_logger(self.__class__.__name__)
 
-        # Event to trigger files have been processed
-        self.files_processed = threading.Event()
-
-        super(SyncServerThread, self).__init__(args=(self.files_processed,))
+        super(SyncServerThread, self).__init__()
         self.module = module
         self.loop = None
         self.is_running = False
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=3)
         self.timer = None
+        self.files_are_processed = False
 
     def run(self):
         self.is_running = True
@@ -400,8 +398,8 @@ class SyncServerThread(threading.Thread):
                                               representation,
                                               site,
                                               error)
-                    # Trigger files are processed
-                    self.files_processed.set()
+                    # Trigger files process finished
+                    self.files_are_processed = False
 
                 duration = time.time() - start_time
                 self.log.debug("One loop took {:.2f}s".format(duration))
@@ -460,7 +458,6 @@ class SyncServerThread(threading.Thread):
 
     async def run_timer(self, delay):
         """Wait for 'delay' seconds to start next loop"""
-        self.files_processed.clear()
         await asyncio.sleep(delay)
 
     def reset_timer(self):
@@ -469,6 +466,7 @@ class SyncServerThread(threading.Thread):
         if self.timer:
             self.timer.cancel()
             self.timer = None
+        self.files_are_processed = True
 
     def _working_sites(self, project_name):
         if self.module.is_project_paused(project_name):

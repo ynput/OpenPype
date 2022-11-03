@@ -2089,6 +2089,15 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
     def cli(self, click_group):
         click_group.add_command(cli_main)
 
+    # Webserver module implementation
+    def webserver_initialization(self, server_manager):
+        """Add routes for syncs."""
+        if self.tray_initialized:
+            from .rest_api import SyncServerModuleRestApi
+            self.rest_api_obj = SyncServerModuleRestApi(
+                self, server_manager
+            )
+
 
 @click.group(SyncServerModule.name, help="SyncServer module related commands.")
 def cli_main():
