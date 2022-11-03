@@ -1009,6 +1009,7 @@ class ProjectListWidget(QtWidgets.QWidget):
 
         self._entity = None
         self.current_project = None
+        self._edit_mode = True
 
         super(ProjectListWidget, self).__init__(parent)
         self.setObjectName("ProjectListWidget")
@@ -1061,6 +1062,10 @@ class ProjectListWidget(QtWidgets.QWidget):
         self.project_model = project_model
         self.inactive_chk = inactive_chk
 
+    def set_edit_mode(self, enabled):
+        if self._edit_mode is not enabled:
+            self._edit_mode = enabled
+
     def set_entity(self, entity):
         self._entity = entity
 
@@ -1112,7 +1117,7 @@ class ProjectListWidget(QtWidgets.QWidget):
 
         save_changes = False
         change_project = False
-        if self.validate_context_change():
+        if not self._edit_mode or self.validate_context_change():
             change_project = True
 
         else:
