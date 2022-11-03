@@ -9,7 +9,7 @@ from openpype.pipeline import (
 )
 from openpype.lib import prepare_template_data
 from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
-from openpype.pipeline.create.creator_plugins import cache_and_get_instances
+from openpype.hosts.photoshop.api.pipeline import cache_and_get_instances
 
 
 class ImageCreator(Creator):
@@ -20,10 +20,7 @@ class ImageCreator(Creator):
     description = "Image creator"
 
     def collect_instances(self):
-        instances = cache_and_get_instances(self,
-                                            "openpype.photoshop.instances",
-                                            self.host.list_instances)
-        for instance_data in instances.values():
+        for instance_data in cache_and_get_instances(self):
             # legacy instances have family=='image'
             creator_id = (instance_data.get("creator_identifier") or
                           instance_data.get("family"))
