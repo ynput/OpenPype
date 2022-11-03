@@ -120,14 +120,6 @@ class AfterEffectsHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         item["id"] = "publish_context"
         self.stub.imprint(item["id"], item)
 
-    def get_context_title(self):
-        """Returns title for Creator window"""
-
-        project_name = legacy_io.Session["AVALON_PROJECT"]
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-        task_name = legacy_io.Session["AVALON_TASK"]
-        return "{}/{}/{}".format(project_name, asset_name, task_name)
-
     # created instances section
     def list_instances(self):
         """List all created instances from current workfile which
