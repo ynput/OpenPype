@@ -1,25 +1,25 @@
-import time
 import collections
+import time
+import typing
 
 import Qt
 from Qt import QtWidgets, QtCore, QtGui
-import qtawesome
 
 from openpype.client import (
     get_project,
     get_assets,
 )
 from openpype.style import (
-    get_objected_colors,
-    get_default_tools_icon_color,
+    get_objected_colors
 )
 from openpype.tools.flickcharm import FlickCharm
+
+from . import widgets
 
 from .views import (
     TreeViewSpinner,
     DeselectableTreeView
 )
-from .widgets import PlaceholderLineEdit
 from .models import RecursiveSortFilterProxyModel
 from .lib import (
     DynamicQThread,
@@ -114,7 +114,7 @@ class UnderlinesAssetDelegate(QtWidgets.QItemDelegate):
 
     def __init__(self, *args, **kwargs):
         super(UnderlinesAssetDelegate, self).__init__(*args, **kwargs)
-        asset_view_colors = get_objected_colors("loader", "asset-view")
+        asset_view_colors = get_objected_colors()["loader"]["asset-view"]
         self._selected_color = (
             asset_view_colors["selected"].get_qcolor()
         )
@@ -427,6 +427,9 @@ class AssetModel(QtGui.QStandardItemModel):
 
     def _fill_assets(self, asset_docs):
         # Collect asset documents as needed
+        if not asset_docs:
+            return
+
         asset_ids = set()
         asset_docs_by_id = {}
         asset_ids_by_parents = collections.defaultdict(set)
@@ -550,7 +553,7 @@ class AssetModel(QtGui.QStandardItemModel):
             self._doc_fetching_thread = None
 
 
-class AssetsWidget(QtWidgets.QWidget):
+class AssetsWidget(widgets.ItemViewWidget):
     """Base widget to display a tree of assets with filter.
 
     Assets have only one column and are sorted by name.
@@ -568,95 +571,13 @@ class AssetsWidget(QtWidgets.QWidget):
         parent (QWidget): Parent Qt widget.
     """
 
-    # on model refresh
-    refresh_triggered = QtCore.Signal()
-    refreshed = QtCore.Signal()
-    # on view selection change
-    selection_changed = QtCore.Signal()
-    # It was double clicked on view
-    double_clicked = QtCore.Signal()
+    if typing.TYPE_CHECKING:
+        _model = None   # type: AssetModel
+        _proxy = None   # type: RecursiveSortFilterProxyModel
+        _view = None    # type: AssetsView
 
     def __init__(self, dbcon, parent=None):
-        super(AssetsWidget, self).__init__(parent=parent)
-
-        self.dbcon = dbcon
-
-        # Tree View
-        model = self._create_source_model()
-        proxy = self._create_proxy_model(model)
-
-        view = AssetsView(self)
-        view.setModel(proxy)
-
-        header_widget = QtWidgets.QWidget(self)
-
-        current_asset_icon = qtawesome.icon(
-            "fa.arrow-down", color=get_default_tools_icon_color()
-        )
-        current_asset_btn = QtWidgets.QPushButton(header_widget)
-        current_asset_btn.setIcon(current_asset_icon)
-        current_asset_btn.setToolTip("Go to Asset from current Session")
-        # Hide by default
-        current_asset_btn.setVisible(False)
-
-        refresh_icon = qtawesome.icon(
-            "fa.refresh", color=get_default_tools_icon_color()
-        )
-        refresh_btn = QtWidgets.QPushButton(header_widget)
-        refresh_btn.setIcon(refresh_icon)
-        refresh_btn.setToolTip("Refresh items")
-
-        filter_input = PlaceholderLineEdit(header_widget)
-        filter_input.setPlaceholderText("Filter assets..")
-
-        # Header
-        header_layout = QtWidgets.QHBoxLayout(header_widget)
-        header_layout.setContentsMargins(0, 0, 0, 0)
-        header_layout.addWidget(filter_input)
-        header_layout.addWidget(current_asset_btn)
-        header_layout.addWidget(refresh_btn)
-
-        # Make header widgets expand vertically if there is a place
-        for widget in (
-            current_asset_btn,
-            refresh_btn,
-            filter_input,
-        ):
-            size_policy = widget.sizePolicy()
-            size_policy.setVerticalPolicy(size_policy.MinimumExpanding)
-            widget.setSizePolicy(size_policy)
-
-        # Layout
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(header_widget, 0)
-        layout.addWidget(view, 1)
-
-        # Signals/Slots
-        filter_input.textChanged.connect(self._on_filter_text_change)
-
-        selection_model = view.selectionModel()
-        selection_model.selectionChanged.connect(self._on_selection_change)
-        refresh_btn.clicked.connect(self.refresh)
-        current_asset_btn.clicked.connect(self._on_current_asset_click)
-        view.doubleClicked.connect(self.double_clicked)
-
-        self._header_widget = header_widget
-        self._filter_input = filter_input
-        self._refresh_btn = refresh_btn
-        self._current_asset_btn = current_asset_btn
-        self._model = model
-        self._proxy = proxy
-        self._view = view
-        self._last_project_name = None
-
-        self._last_btns_height = None
-
-        self.model_selection = {}
-
-    @property
-    def header_widget(self):
-        return self._header_widget
+        super(AssetsWidget, self).__init__(dbcon, AssetsView, "Assets", parent=parent)
 
     def _create_source_model(self):
         model = AssetModel(dbcon=self.dbcon, parent=self)
@@ -670,20 +591,11 @@ class AssetsWidget(QtWidgets.QWidget):
         proxy.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
         return proxy
 
-    @property
-    def refreshing(self):
-        return self._model.refreshing
-
-    def refresh(self):
-        self._refresh_model()
-
-    def stop_refresh(self):
-        self._model.stop_refresh()
-
     def _get_current_session_asset(self):
         return self.dbcon.Session.get("AVALON_ASSET")
 
-    def _on_current_asset_click(self):
+    @QtCore.Slot()
+    def _on_current_item_click(self):
         """Trigger change of asset to current context asset.
         This separation gives ability to override this method and use it
         in differnt way.
@@ -713,8 +625,8 @@ class AssetsWidget(QtWidgets.QWidget):
         """
 
         if visible is None:
-            visible = not self._current_asset_btn.isVisible()
-        self._current_asset_btn.setVisible(visible)
+            visible = not self._current_item_btn.isVisible()
+        self._current_item_btn.setVisible(visible)
 
     def select_asset(self, asset_id):
         index = self._model.get_index_by_asset_id(asset_id)
@@ -734,9 +646,6 @@ class AssetsWidget(QtWidgets.QWidget):
 
     def _on_selection_change(self):
         self.selection_changed.emit()
-
-    def _on_filter_text_change(self, new_text):
-        self._proxy.setFilterFixedString(new_text)
 
     def _on_model_refresh(self, has_item):
         """This method should be triggered on model refresh.
@@ -767,22 +676,36 @@ class AssetsWidget(QtWidgets.QWidget):
         selection_model.clearSelection()
 
     def _select_indexes(self, indexes):
-        valid_indexes = [
-            index
-            for index in indexes
-            if index.isValid()
-        ]
-        if not valid_indexes:
+        # type: (list[QtCore.QModelIndex]) -> None
+        if not indexes:
             return
 
         selection_model = self._view.selectionModel()
-        selection_model.clearSelection()
-
         mode = selection_model.Select | selection_model.Rows
-        for index in valid_indexes:
-            self._view.expand(self._proxy.parent(index))
-            selection_model.select(index, mode)
-        self._view.setCurrentIndex(valid_indexes[0])
+        index_count = len(indexes) - 1
+        final_index = None
+        selection_cleared = False
+        # @sharkmob-shea.richardson:
+        # We block signals from being emitted whilst updating
+        # the selection is cleared and new indices are selected.
+        # This removes redundant signals being sent:
+        selection_model.blockSignals(True)
+        for i, index in enumerate(indexes):
+            if not index.isValid():
+                continue
+
+            if not selection_cleared:
+                selection_model.clearSelection()
+                selection_cleared = True
+
+            if index_count == i:
+                final_index = index
+
+        selection_model.blockSignals(False)
+        if selection_cleared and final_index:
+            self._view.setCurrentIndex(final_index)
+            self._view.expand(self._proxy.parent(final_index))
+            selection_model.select(final_index, mode)
 
 
 class SingleSelectAssetsWidget(AssetsWidget):

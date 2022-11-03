@@ -4,9 +4,15 @@ from Qt import QtWidgets, QtCore, QtGui
 import qargparse
 import qtawesome
 from openpype.style import (
+    get_default_tools_icon_color,
     get_objected_colors,
     get_style_image_path
 )
+
+_typing = False
+if _typing:
+    import openpype.pipeline.mongodb as mongodb
+del _typing
 
 log = logging.getLogger(__name__)
 
@@ -586,3 +592,187 @@ class SeparatorWidget(QtWidgets.QFrame):
         self._orientation = orientation
 
         self._set_size(self._size)
+
+
+class PlaceholderHistoryLineEdit(QtWidgets.QComboBox):
+    def __init__(self, placeholder_text="...", parent=None):
+        super(PlaceholderHistoryLineEdit, self).__init__(parent=parent)
+        self.setEditable(True)
+        self.setPlaceholderText(placeholder_text)
+
+
+class ToolbarButton(QtWidgets.QPushButton):
+    def __init__(self, *args, **kwargs):
+        super(ToolbarButton, self).__init__(*args, **kwargs)
+        self.setFixedWidth(35)
+        self.setFixedHeight(28)
+
+
+class ItemViewHeaderWidget(QtWidgets.QWidget):
+    def __init__(self, parent_item_widget, item_name="Items", show_search_bar=False):
+        # type: (ItemViewWidget, str, bool) -> None
+
+        super(ItemViewHeaderWidget, self).__init__()
+
+        title_label = QtWidgets.QLabel(item_name)
+        title_label.setStyleSheet("font-weight: bold;")
+        current_item_icon = qtawesome.icon(
+            "fa.arrow-down", color=get_default_tools_icon_color()
+        )
+        current_item_btn = ToolbarButton("")
+        current_item_btn.setIcon(current_item_icon)
+        current_item_btn.setToolTip("Go to Asset from current Session")
+        # Hide by default
+        current_item_btn.setVisible(False)
+
+        refresh_icon = qtawesome.icon(
+            "fa.refresh", color=get_default_tools_icon_color()
+        )
+        refresh_btn = ToolbarButton("")
+        refresh_btn.setIcon(refresh_icon)
+        refresh_btn.setToolTip("Refresh items")
+
+        filter_input = PlaceholderHistoryLineEdit(placeholder_text="Filter...", parent=self)
+        clear_filter_icon = qtawesome.icon(
+            "fa.close", color=get_default_tools_icon_color()
+        )
+        clear_filter_btn = ToolbarButton("")
+        clear_filter_btn.setIcon(clear_filter_icon)
+        clear_filter_btn.setToolTip("Clear current filter")
+
+        # Header:
+        header_top_row_widget = QtWidgets.QWidget()
+        header_top_row_layout = QtWidgets.QHBoxLayout(header_top_row_widget)
+        header_top_row_layout.setContentsMargins(0, 0, 0, 0)
+        header_top_row_layout.setSpacing(2)
+        header_top_row_layout.addWidget(title_label)
+        header_top_row_layout.addWidget(current_item_btn)
+        header_top_row_layout.addWidget(refresh_btn)
+
+        header_bottom_row_widget = QtWidgets.QWidget()
+        header_bottom_row_layout = QtWidgets.QHBoxLayout(header_bottom_row_widget)
+        header_bottom_row_layout.setContentsMargins(0, 0, 0, 0)
+        header_bottom_row_layout.setSpacing(2)
+        header_bottom_row_layout.addWidget(filter_input)
+        header_bottom_row_layout.addWidget(clear_filter_btn)
+
+        header_layout = QtWidgets.QVBoxLayout(self)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.addWidget(header_top_row_widget)
+        header_layout.addWidget(header_bottom_row_widget)
+
+        # Make header widgets expand vertically if there is a place
+        for widget in (
+            title_label,
+            current_item_btn,
+            refresh_btn,
+            clear_filter_btn,
+            filter_input,
+        ):
+            size_policy = widget.sizePolicy()
+            size_policy.setVerticalPolicy(size_policy.MinimumExpanding)
+            widget.setSizePolicy(size_policy)
+
+        if not show_search_bar:
+            header_bottom_row_widget.hide()
+
+        self._filter_input = filter_input
+        self._refresh_btn = refresh_btn
+        self._current_item_btn = current_item_btn
+
+        clear_filter_btn.clicked.connect(self._on_clear_filter_btn_released)
+
+        filter_input.currentTextChanged.connect(parent_item_widget._on_filter_text_change)
+        refresh_btn.clicked.connect(parent_item_widget.refresh)
+        current_item_btn.clicked.connect(parent_item_widget._on_current_item_click)
+
+    @QtCore.Slot()
+    def _on_clear_filter_btn_released(self):
+        self._filter_input.setCurrentText("")
+
+
+class ItemViewWidget(QtWidgets.QWidget):
+
+    refresh_triggered = QtCore.Signal()
+    refreshed = QtCore.Signal()
+    selection_changed = QtCore.Signal()
+    double_clicked = QtCore.Signal()
+
+    def __init__(self, dbcon, view_widget_type, item_name="Items", parent=None, show_search_bar=False):
+        # type: (mongodb.AvalonMongoDB, type[QtWidgets.QWidget], str, QtWidgets.QWidget | None, bool) -> None
+        super(ItemViewWidget, self).__init__(parent=parent)
+
+        self.dbcon = dbcon
+
+        model = self._create_source_model()
+        proxy = self._create_proxy_model(model)
+
+        # Header
+        header_widget = ItemViewHeaderWidget(self, item_name, show_search_bar=show_search_bar)
+        # header_widget._fixed_filters_widget._checkbox.stateChanged.connect(self._on_filter_assignee_changed)
+
+        # View
+        view = view_widget_type(self)
+        view.setModel(proxy)
+
+        # Layout
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(header_widget, 0)
+        layout.addWidget(view, 1)
+
+        # Signals/Slots
+        selection_model = view.selectionModel()
+        selection_model.selectionChanged.connect(self._on_selection_change)
+        view.doubleClicked.connect(self.double_clicked)
+
+        self._header_widget = header_widget
+        self._filter_input = header_widget._filter_input
+        self._refresh_btn = header_widget._refresh_btn
+        self._current_item_btn = header_widget._current_item_btn
+        self._model = model
+        self._proxy = proxy
+        self._view = view
+        self._last_project_name = None
+
+        self._last_btns_height = None
+
+        self.model_selection = {}
+
+    # Properties:
+    @property
+    def header_widget(self):
+        return self._header_widget
+
+    @property
+    def refreshing(self):
+        return self._model.refreshing
+
+    # Slots:
+    @QtCore.Slot()
+    def _on_filter_text_change(self, new_text):
+        # type: (str) -> None
+        self._proxy.setFilterFixedString(new_text)
+
+    @QtCore.Slot()
+    def _on_current_item_click(self):
+        raise NotImplementedError()
+
+    # Private Methods:
+    def _create_proxy_model(self, source_model):
+        # type: (QtGui.QStandardItemModel) -> QtCore.QSortFilterProxyModel
+        raise NotImplementedError()
+
+    def _create_source_model(self):
+        # type: () -> QtGui.QStandardItemModel
+        raise NotImplementedError()
+
+    def _refresh_model(self):
+        raise NotImplementedError()
+
+    # Public Methods:
+    def refresh(self):
+        self._refresh_model()
+
+    def stop_refresh(self):
+        self._model.stop_refresh()

@@ -1,14 +1,23 @@
 from Qt import QtWidgets, QtCore, QtGui
+
 import qtawesome
+import typing
 
 from openpype.client import (
     get_project,
     get_asset_by_id,
 )
+
+from . import widgets
+from .views import DeselectableTreeView
+
 from openpype.style import get_disabled_entity_icon_color
 from openpype.tools.utils.lib import get_task_icon
 
-from .views import DeselectableTreeView
+_typing = False
+if _typing:
+    from typing import Any
+del _typing
 
 
 TASK_NAME_ROLE = QtCore.Qt.UserRole + 1
@@ -17,15 +26,38 @@ TASK_ORDER_ROLE = QtCore.Qt.UserRole + 3
 TASK_ASSIGNEE_ROLE = QtCore.Qt.UserRole + 4
 
 
+class TaskViewItem(QtGui.QStandardItem):
+
+    def __init__(self, task_name, task_info, asset_doc, project_doc, task_type_in_label=True):
+        # type: (str, dict[str, Any], dict[str, Any], dict[str, Any] | None, bool) -> None
+        task_type = task_info.get("type")  # type: str | None
+        label = "{} ({})".format(task_name, task_type or "type N/A") if task_type_in_label else task_name
+        super(TaskViewItem, self).__init__(label)
+
+        task_assignees = set()                              # type: set[str]
+        assignees_data = task_info.get("assignees") or []   # list[dict[str, str]]
+        for assignee in assignees_data:
+            username = assignee.get("username")  # type: str
+            if username:
+                task_assignees.add(username)
+
+        icon = get_task_icon(project_doc, asset_doc, task_name)
+        task_order = task_info.get("order") # type: int | None
+
+        self.setData(task_name, TASK_NAME_ROLE)
+        self.setData(task_type, TASK_TYPE_ROLE)
+        self.setData(task_order, TASK_ORDER_ROLE)
+        self.setData(task_assignees, TASK_ASSIGNEE_ROLE)
+        self.setData(icon, QtCore.Qt.DecorationRole)
+        self.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
+
+
 class TasksModel(QtGui.QStandardItemModel):
     """A model listing the tasks combined for a list of assets"""
 
     def __init__(self, dbcon, parent=None):
         super(TasksModel, self).__init__(parent=parent)
         self.dbcon = dbcon
-        self.setHeaderData(
-            0, QtCore.Qt.Horizontal, "Tasks", QtCore.Qt.DisplayRole
-        )
 
         self._no_tasks_icon = qtawesome.icon(
             "fa.exclamation-circle",
@@ -90,7 +122,30 @@ class TasksModel(QtGui.QStandardItemModel):
             self._empty_tasks_item = item
         return self._empty_tasks_item
 
+    def _get_view_item(self, task_name, task_info, asset_doc):
+        # type: (str, dict[str, Any], dict[str, Any]) -> TaskViewItem
+        """
+        Dependency injection to allow the task view item class to be
+        overriden in child classes.
+        """
+        return TaskViewItem(task_name, task_info, asset_doc, self._project_doc)
+
+    def _create_task_items(self, asset_doc, asset_tasks):
+        # type: (dict[str, Any], dict[str, Any]) -> list[TaskViewItem | QtGui.QStandardItem]
+        items = []  # type: list[TaskViewItem | QtGui.QStandardItem]
+        for task_name, task_info in asset_tasks.items():
+            item = self._get_view_item(task_name, task_info, asset_doc)
+            items.append(item)
+
+        if not items:
+            item = QtGui.QStandardItem("No tasks!")
+            item.setData(self._no_tasks_icon, QtCore.Qt.DecorationRole)
+            item.setFlags(QtCore.Qt.NoItemFlags)
+            items.append(item)
+        return items
+
     def _set_asset(self, asset_doc):
+        # type: (dict[str, Any]) -> None
         """Set assets to track by their database id
 
         Arguments:
@@ -107,37 +162,7 @@ class TasksModel(QtGui.QStandardItemModel):
 
         root_item = self.invisibleRootItem()
         root_item.removeRows(0, root_item.rowCount())
-
-        items = []
-
-        for task_name, task_info in asset_tasks.items():
-            task_type = task_info.get("type")
-            task_order = task_info.get("order")
-            icon = get_task_icon(self._project_doc, asset_doc, task_name)
-
-            task_assignees = set()
-            assignees_data = task_info.get("assignees") or []
-            for assignee in assignees_data:
-                username = assignee.get("username")
-                if username:
-                    task_assignees.add(username)
-
-            label = "{} ({})".format(task_name, task_type or "type N/A")
-            item = QtGui.QStandardItem(label)
-            item.setData(task_name, TASK_NAME_ROLE)
-            item.setData(task_type, TASK_TYPE_ROLE)
-            item.setData(task_order, TASK_ORDER_ROLE)
-            item.setData(task_assignees, TASK_ASSIGNEE_ROLE)
-            item.setData(icon, QtCore.Qt.DecorationRole)
-            item.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
-            items.append(item)
-
-        if not items:
-            item = QtGui.QStandardItem("No task")
-            item.setData(self._no_tasks_icon, QtCore.Qt.DecorationRole)
-            item.setFlags(QtCore.Qt.NoItemFlags)
-            items.append(item)
-
+        items = self._create_task_items(asset_doc, asset_tasks)
         root_item.appendRows(items)
 
 
@@ -167,38 +192,37 @@ class TasksProxyModel(QtCore.QSortFilterProxyModel):
         return False
 
 
-class TasksWidget(QtWidgets.QWidget):
+class TaskTreeView(DeselectableTreeView):
+    def __init__(self, *args, **kwargs):
+        super(TaskTreeView, self).__init__(*args, **kwargs)
+        self.setHeaderHidden(True)
+
+
+class TasksWidget(widgets.ItemViewWidget):
     """Widget showing active Tasks"""
 
     task_changed = QtCore.Signal()
 
-    def __init__(self, dbcon, parent=None):
+    if typing.TYPE_CHECKING:
+        _model = None   # type: TasksModel
+        _proxy = None   # type: TasksProxyModel
+        _view = None    # type: TaskTreeView
+
+    def __init__(self, dbcon, parent=None, show_search_bar=False):
         self._dbcon = dbcon
 
-        super(TasksWidget, self).__init__(parent)
+        super(TasksWidget, self).__init__(dbcon, TaskTreeView, "Tasks", parent=parent, show_search_bar=show_search_bar)
 
-        tasks_view = DeselectableTreeView(self)
-        tasks_view.setIndentation(0)
-        tasks_view.setSortingEnabled(True)
-        tasks_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
+        self._view.setIndentation(0)
+        self._view.setSortingEnabled(True)
+        self._view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
 
-        header_view = tasks_view.header()
+        header_view = self._view.header()
         header_view.setSortIndicator(0, QtCore.Qt.AscendingOrder)
 
-        tasks_model = self._create_source_model()
-        tasks_proxy = self._create_proxy_model(tasks_model)
-        tasks_view.setModel(tasks_proxy)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(tasks_view)
-
-        selection_model = tasks_view.selectionModel()
-        selection_model.selectionChanged.connect(self._on_task_change)
-
-        self._tasks_model = tasks_model
-        self._tasks_proxy = tasks_proxy
-        self._tasks_view = tasks_view
+        self._tasks_model = self._model
+        self._tasks_proxy = self._proxy
+        self._tasks_view = self._view
 
         self._last_selected_task_name = None
 
@@ -213,6 +237,8 @@ class TasksWidget(QtWidgets.QWidget):
     def _create_proxy_model(self, source_model):
         proxy = TasksProxyModel()
         proxy.setSourceModel(source_model)
+        proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        proxy.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
         return proxy
 
     def refresh(self):
@@ -223,22 +249,21 @@ class TasksWidget(QtWidgets.QWidget):
         # after switching assets. If there's no currently selected
         # asset keep whatever the "last selected" was prior to it.
         current = self.get_selected_task_name()
-        if current:
-            self._last_selected_task_name = current
 
         self._tasks_model.set_asset_id(asset_id)
 
         if self._last_selected_task_name:
             self.select_task_name(self._last_selected_task_name)
 
-        # Force a task changed emit.
-        self.task_changed.emit()
+        if current:
+            self._last_selected_task_name = current
 
     def _clear_selection(self):
         selection_model = self._tasks_view.selectionModel()
         selection_model.clearSelection()
 
     def select_task_name(self, task_name):
+        # type: (str) -> None
         """Select a task by name.
 
         If the task does not exist in the current model then selection is only
@@ -254,23 +279,32 @@ class TasksWidget(QtWidgets.QWidget):
 
         # Clear selection
         selection_model = self._tasks_view.selectionModel()
+        # @sharkmob-shea.richardson:
+        # We block signals from being emitted whilst updating
+        # the selection is cleared.
+        # This removes redundant signals being sent:
+        selection_model.blockSignals(True)
         selection_model.clearSelection()
+        selection_model.blockSignals(False)
 
         # Select the task
         mode = selection_model.Select | selection_model.Rows
         for row in range(task_view_model.rowCount()):
             index = task_view_model.index(row, 0)
-            name = index.data(TASK_NAME_ROLE)
-            if name == task_name:
-                selection_model.select(index, mode)
+            name = index.data(TASK_NAME_ROLE)  # type: str
+            if name != task_name:
+                continue
 
-                # Set the currently active index
-                self._tasks_view.setCurrentIndex(index)
-                break
+            selection_model.select(index, mode)
 
-        last_selected_task_name = self.get_selected_task_name()
-        if last_selected_task_name:
-            self._last_selected_task_name = last_selected_task_name
+            # Set the currently active index
+            self._tasks_view.setCurrentIndex(index)
+            break
+
+        selected_task_name = self.get_selected_task_name()
+        if selected_task_name:
+            self._last_selected_task_name = selected_task_name
+            self.task_changed.emit()
 
     def get_selected_task_name(self):
         """Return name of task at current index (selected)
@@ -292,5 +326,5 @@ class TasksWidget(QtWidgets.QWidget):
             return index.data(TASK_TYPE_ROLE)
         return None
 
-    def _on_task_change(self):
+    def _on_selection_change(self):
         self.task_changed.emit()

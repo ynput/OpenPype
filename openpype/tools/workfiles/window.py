@@ -1,7 +1,7 @@
 import os
 import datetime
 import copy
-from Qt import QtCore, QtWidgets, QtGui
+from Qt import QtCore, QtWidgets, QtGui  # type: ignore
 
 from openpype.client import (
     get_asset_by_name,
@@ -20,6 +20,12 @@ from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
 
 from .files_widget import FilesWidget
+
+
+_typing = False
+if _typing:
+    from typing import Any
+del _typing
 
 
 def file_size_to_string(file_size):
@@ -188,21 +194,11 @@ class Window(QtWidgets.QWidget):
 
         body_layout.addWidget(split_widget)
 
-        # Add top margin for tasks to align it visually with files as
-        # the files widget has a filter field which tasks does not.
-        tasks_widget.setContentsMargins(0, 32, 0, 0)
-
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.addWidget(pages_widget, 1)
 
-        # Set context after asset widget is refreshed
-        # - to do so it is necessary to wait until refresh is done
-        set_context_timer = QtCore.QTimer()
-        set_context_timer.setInterval(100)
-
         # Connect signals
-        set_context_timer.timeout.connect(self._on_context_set_timeout)
-        assets_widget.selection_changed.connect(self._on_asset_changed)
+        assets_widget.selection_changed.connect(self._on_assets_widget_selection_changed)
         tasks_widget.task_changed.connect(self._on_task_changed)
         files_widget.file_selected.connect(self.on_file_select)
         files_widget.workfile_created.connect(self.on_workfile_create)
@@ -212,7 +208,6 @@ class Window(QtWidgets.QWidget):
         )
         side_panel.save_clicked.connect(self.on_side_panel_save)
 
-        self._set_context_timer = set_context_timer
         self.home_page_widget = home_page_widget
         self.pages_widget = pages_widget
         self.home_body_widget = home_body_widget
@@ -229,7 +224,6 @@ class Window(QtWidgets.QWidget):
         self.resize(1200, 600)
 
         self._first_show = True
-        self._context_to_set = None
 
     def ensure_visible(
         self, use_context=None, save=None, on_top=None
@@ -285,7 +279,7 @@ class Window(QtWidgets.QWidget):
             self.refresh()
             self.setStyleSheet(style.load_stylesheet())
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, _):
         """Custom keyPressEvent.
 
         Override keyPressEvent to do nothing so that Maya's panels won't
@@ -299,6 +293,7 @@ class Window(QtWidgets.QWidget):
         self.files_widget.set_save_enabled(enabled)
 
     def on_file_select(self, filepath):
+        # type: (str | None) -> None
         asset_id = self.assets_widget.get_selected_asset_id()
         task_name = self.tasks_widget.get_selected_task_name()
 
@@ -309,6 +304,7 @@ class Window(QtWidgets.QWidget):
             workfile_doc = get_workfile_info(
                 project_name, asset_id, task_name, filename
             )
+
         self.side_panel.set_context(
             asset_id, task_name, filepath, workfile_doc
         )
@@ -370,7 +366,7 @@ class Window(QtWidgets.QWidget):
         task_name = self.tasks_widget.get_selected_task_name()
 
         anatomy = Anatomy(project_name)
-        success, rootless_dir = anatomy.find_root_template_from_path(workdir)
+        _, rootless_dir = anatomy.find_root_template_from_path(workdir)
         filepath = "/".join([
             os.path.normpath(rootless_dir).replace("\\", "/"),
             filename
@@ -386,25 +382,25 @@ class Window(QtWidgets.QWidget):
         return workfile_doc
 
     def refresh(self):
-        # Refresh asset widget
+        """
+        Refresh asset widget,
+        which will refresh the task widget,
+        which will refresh the file widget
+        """
+
         self.assets_widget.refresh()
 
-        self._on_task_changed()
-
     def set_context(self, context):
-        self._context_to_set = context
-        self._set_context_timer.start()
-
-    def _on_context_set_timeout(self):
-        if self._context_to_set is None:
-            self._set_context_timer.stop()
+        # type: (dict[str, Any]) -> None
+        if context is None:
             return
 
         if self.assets_widget.refreshing:
-            return
+            def _set_context():
+                self.set_context(context)
 
-        self._set_context_timer.stop()
-        self._context_to_set, context = None, self._context_to_set
+            return QtCore.QTimer.singleShot(100, _set_context)
+
         if "asset" in context:
             asset_doc = get_asset_by_name(
                 self.project_name, context["asset"], fields=["_id"]
@@ -413,15 +409,19 @@ class Window(QtWidgets.QWidget):
             asset_id = None
             if asset_doc:
                 asset_id = asset_doc["_id"]
-            # Select the asset
+
             self.assets_widget.select_asset(asset_id)
-            self.tasks_widget.set_asset_id(asset_id)
 
         if "task" in context:
-            self.tasks_widget.select_task_name(context["task"])
-        self._on_task_changed()
+            selected_task_name = self.tasks_widget.get_selected_task_name()
+            context_task_name = context["task"]
+            if selected_task_name != context_task_name:
+                self.tasks_widget.select_task_name(context_task_name)
 
-    def _on_asset_changed(self):
+    def _on_assets_widget_selection_changed(self):
+        self.set_new_asset_from_selection()
+
+    def set_new_asset_from_selection(self):
         asset_id = self.assets_widget.get_selected_asset_id()
         if asset_id:
             self.tasks_widget.setEnabled(True)

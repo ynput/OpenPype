@@ -1,8 +1,12 @@
 import os
 import logging
 
-from Qt import QtCore, QtGui
 import qtawesome
+import six
+
+from Qt import QtCore, QtGui
+
+import openpype.modules.version_control.api as vcs_api
 
 from openpype.client import (
     get_subsets,
@@ -15,12 +19,26 @@ from openpype.style import (
 )
 from openpype.pipeline import get_representation_path
 
+if six.PY2:
+    import pathlib2 as pathlib
+else:
+    import pathlib
+
+_typing = False
+if _typing:
+    from typing import Any
+    from Qt.QtGui import QIcon
+del _typing
+
+
 log = logging.getLogger(__name__)
 
 
 FILEPATH_ROLE = QtCore.Qt.UserRole + 2
 DATE_MODIFIED_ROLE = QtCore.Qt.UserRole + 3
 ITEM_ID_ROLE = QtCore.Qt.UserRole + 4
+SERVER_VERSION_ROLE = QtCore.Qt.UserRole + 5
+ACTIVE_VERSION_ROLE = QtCore.Qt.UserRole + 6
 
 
 class WorkAreaFilesModel(QtGui.QStandardItemModel):
@@ -70,6 +88,18 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
             self._empty_root_item = item
         return self._empty_root_item
 
+    def _set_view_invalid(self, root_item=None):
+        self._clear()
+        item = self._get_invalid_path_item()
+        (root_item or self.invisibleRootItem()).appendRow(item)
+        self._invalid_item_visible = True
+
+    def _set_view_empty(self, root_item=None):
+        self._clear()
+        item = self._get_empty_root_item()
+        (root_item or self.invisibleRootItem()).appendRow(item)
+        self._invalid_item_visible = True
+
     def set_root(self, root):
         """Change directory where to look for file."""
         self._root = root
@@ -93,11 +123,7 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
         root_item = self.invisibleRootItem()
         # If path is not set or does not exist then add invalid path item
         if not self._root or not os.path.exists(self._root):
-            self._clear()
-            # Add Work Area does not exist placeholder
-            item = self._get_invalid_path_item()
-            root_item.appendRow(item)
-            self._invalid_item_visible = True
+            self._set_view_invalid(root_item=root_item)
             return
 
         # Clear items if previous refresh set '_invalid_item_visible' to True
@@ -151,9 +177,7 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
         if root_item.rowCount() > 0:
             self._invalid_item_visible = False
         else:
-            self._invalid_item_visible = True
-            item = self._get_empty_root_item()
-            root_item.appendRow(item)
+            self._set_view_empty(root_item=root_item)
 
     def has_valid_items(self):
         """Directory has files that are listed in items."""
@@ -189,11 +213,148 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
             if section == 0:
                 return "Name"
             elif section == 1:
-                return "Date modified"
+                return "Date Modified"
 
         return super(WorkAreaFilesModel, self).headerData(
             section, orientation, role
         )
+
+
+class VersionControlItem(QtGui.QStandardItem):
+    def __init__(self, text, path, icon, client_version=0, server_version=0):
+        # type: (str, str, QIcon, int, int) -> None
+        super(VersionControlItem, self).__init__(text)
+        self.setColumnCount(self.columnCount())
+        self.setFlags(
+            QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+        )
+        self.setData(icon, QtCore.Qt.DecorationRole)
+        self.setData(path, FILEPATH_ROLE)
+        self.setData(server_version, SERVER_VERSION_ROLE)
+        if server_version == client_version:
+            self.setData("<", ACTIVE_VERSION_ROLE)
+
+
+class WorkAreaFilesModelVersionControl(WorkAreaFilesModel):
+    def __init__(self, *args, **kwargs):
+        # type: (Any, Any) -> None
+        super(WorkAreaFilesModelVersionControl, self).__init__(*args, **kwargs)
+
+        self.setColumnCount(3)
+
+    def headerData(self, section, orientation, role):
+        # Show nice labels in the header
+        if (
+            role == QtCore.Qt.DisplayRole
+            and orientation == QtCore.Qt.Horizontal
+        ):
+            if section == 0:
+                return "Name"
+            elif section == 1:
+                return "Date modified"
+            elif section == 2:
+                return "Current Version"
+
+        return super(WorkAreaFilesModelVersionControl, self).headerData(
+            section, orientation, role
+        )
+
+    def data(self, index, role=None):
+        if role is None:
+            role = QtCore.Qt.DisplayRole
+
+        # Handle roles for first column
+        if index.column() == 2:
+            if role == QtCore.Qt.DecorationRole:
+                return None
+
+            if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
+                role = ACTIVE_VERSION_ROLE
+            index = self.index(index.row(), 0, index.parent())
+
+        return super(WorkAreaFilesModelVersionControl, self).data(index, role)
+
+    def refresh(self):
+        """Refresh and update model items."""
+        root_item = self.invisibleRootItem()
+        root_path = pathlib.Path(self._root) if self._root else None
+        if root_path is None or not root_path.exists():
+            self._set_view_invalid(root_item=root_item)
+            return
+
+        # Clear items if previous refresh set '_invalid_item_visible' to True
+        # - Invalid items are not stored to '_items_by_filename' so they would
+        #   not be removed
+        if self._invalid_item_visible:
+            self._clear()
+
+        files_to_query = [
+            path for path in root_path.iterdir() if path.is_file() and path.suffix in self._file_extensions
+        ]  # type: list[pathlib.Path]
+
+        if not files_to_query:
+            self._set_view_empty(root_item=root_item)
+            return
+
+        # Check for new items that should be added and items that should be
+        # removed
+        new_items = []
+        items_to_remove = set(self._items_by_filename.keys())
+
+        file_versions = vcs_api.get_version_info(files_to_query)
+        for path, (server_version, client_version) in file_versions.items():
+            # Use existing item or create new one
+            filename = os.path.basename(path)  # type: str
+            # @sharkmob-shea.richardson:
+            # If server_version is None this means the file is not
+            # on the server, so set to client and server version 0:
+            if server_version is None:
+                if filename in items_to_remove:
+                    items_to_remove.remove(filename)
+                    item = self._items_by_filename[filename]
+                else:
+                    item = VersionControlItem(filename, path, self._file_icon)
+                    new_items.append(item)
+                    self._items_by_filename[filename] = item
+
+                continue
+
+            for version in range(server_version):
+                # @sharkmob-shea.richardson:
+                # We want version to be 1 based as this matches
+                # perforce's versioning and this is the first vcs
+                # integrated we get to set the precedent <3:
+                version += 1
+                item_text = "{} - v{}".format(filename, str(version).zfill(3))
+                if item_text in items_to_remove:
+                    items_to_remove.remove(item_text)
+                    item = self._items_by_filename[item_text]
+                else:
+                    item = VersionControlItem(
+                        item_text,
+                        path,
+                        self._file_icon,
+                        server_version=version,
+                        client_version=client_version
+                    )
+                    new_items.append(item)
+                    self._items_by_filename[item_text] = item
+
+        # Add new items if there are any
+        if new_items:
+            root_item.appendRows(new_items)
+
+        # Remove items that are no longer available
+        for filename in items_to_remove:
+            item = self._items_by_filename.pop(filename)
+            root_item.removeRow(item.row())
+
+        # Add empty root item if there are not filenames that could be shown
+        if root_item.rowCount() > 0:
+            self._invalid_item_visible = False
+        else:
+            self._set_view_empty(root_item=root_item)
+            return
 
 
 class PublishFilesModel(QtGui.QStandardItemModel):
