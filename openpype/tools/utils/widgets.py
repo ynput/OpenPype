@@ -609,7 +609,9 @@ class ToolbarButton(QtWidgets.QPushButton):
 
 
 class ItemViewHeaderWidget(QtWidgets.QWidget):
-    def __init__(self, parent_item_widget, item_name="Items", show_search_bar=False):
+    def __init__(
+        self, parent_item_widget, item_name="Items", show_search_bar=False
+    ):
         # type: (ItemViewWidget, str, bool) -> None
 
         super(ItemViewHeaderWidget, self).__init__()

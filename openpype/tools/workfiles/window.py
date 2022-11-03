@@ -198,7 +198,9 @@ class Window(QtWidgets.QWidget):
         main_layout.addWidget(pages_widget, 1)
 
         # Connect signals
-        assets_widget.selection_changed.connect(self._on_assets_widget_selection_changed)
+        assets_widget.selection_changed.connect(
+            self._on_assets_widget_selection_changed
+        )
         tasks_widget.task_changed.connect(self._on_task_changed)
         files_widget.file_selected.connect(self.on_file_select)
         files_widget.workfile_created.connect(self.on_workfile_create)
