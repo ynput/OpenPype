@@ -6,8 +6,6 @@ import six
 
 from Qt import QtCore, QtGui
 
-import openpype.modules.version_control.api as vcs_api
-
 from openpype.client import (
     get_subsets,
     get_versions,
