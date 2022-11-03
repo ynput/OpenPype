@@ -24,6 +24,8 @@ from .creator_plugins import (
     deregister_creator_plugin,
     register_creator_plugin_path,
     deregister_creator_plugin_path,
+
+    cache_and_get_instances,
 )
 
 from .context import (
