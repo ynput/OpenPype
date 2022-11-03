@@ -166,11 +166,6 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
                 stub.rename_layer(item.id,
                                   item.name.replace(stub.PUBLISH_ICON, ''))
 
-    def uninstall(self):
-        pyblish.api.deregister_plugin_path(PUBLISH_PATH)
-        deregister_loader_plugin_path(LOAD_PATH)
-        deregister_creator_plugin_path(CREATE_PATH)
-
 
 def check_inventory():
     if not any_outdated_containers():
