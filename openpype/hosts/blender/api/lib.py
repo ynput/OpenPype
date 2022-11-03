@@ -7,7 +7,6 @@ from typing import Dict, Iterator, List, Union
 
 import bpy
 import addon_utils
-from openpype import lib
 from openpype.lib import Logger
 from openpype.pipeline import schema
 from openpype.pipeline.constants import AVALON_CONTAINER_ID

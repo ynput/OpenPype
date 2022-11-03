@@ -265,22 +265,6 @@ def _register_events():
     log.info("Installed event callback for 'taskChanged'...")
 
 
-def _discover_gui() -> Optional[Callable]:  # TODO seem deprecated, delete?
-    """Return the most desirable of the currently registered GUIs"""
-
-    # Prefer last registered
-    guis = reversed(pyblish.api.registered_guis())
-
-    for gui in guis:
-        try:
-            gui = __import__(gui).show
-        except (ImportError, AttributeError):
-            continue
-        else:
-            return gui
-
-    return None
-
 
 def metadata_update(node: bpy.types.bpy_struct_meta_idprop, data: Dict):
     """Imprint the node with metadata.
