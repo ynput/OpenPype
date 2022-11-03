@@ -95,6 +95,23 @@ def get_v4_project(project_name, fields=None):
     return convert_v4_project_to_v3(data)
 
 
+def get_v4_project_anatomy_presets(add_default=True, con=None):
+    if con is None:
+        con = get_server_api_connection()
+    result = con.get("anatomy/presets")
+    return result.data
+
+
+def get_v4_project_anatomy_preset(preset_name=None, con=None):
+    if con is None:
+        con = get_server_api_connection()
+
+    if preset_name is None:
+        preset_name = "_"
+    result = con.get("anatomy/presets/{}".format(preset_name))
+    return result.data
+
+
 def get_v4_folders(
     project_name,
     folder_ids=None,
