@@ -23,7 +23,7 @@ class ImageCreator(Creator):
         instances = cache_and_get_instances(self,
                                             "openpype.photoshop.instances",
                                             self.host.list_instances)
-        for instance_data in instances:
+        for instance_data in instances.get(self.family, []):
             # legacy instances have family=='image'
             creator_id = (instance_data.get("creator_identifier") or
                           instance_data.get("family"))
