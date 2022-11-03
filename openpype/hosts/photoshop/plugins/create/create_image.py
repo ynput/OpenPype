@@ -168,9 +168,8 @@ class ImageCreator(Creator):
 
     def get_dynamic_data(self, variant, task_name, asset_doc,
                          project_name, host_name, instance):
-        if not instance:
-            return {"layer": "{layer}"}
-        else:
+        if instance is not None:
             layer_name = instance.get("layer_name")
             if layer_name:
                 return {"layer": layer_name}
+        return {"layer": "{layer}"}
