@@ -1,54 +1,32 @@
-import collections
-
 from openpype.lib.attribute_definitions import FileDef
+from openpype.lib.transcoding import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
 from openpype.pipeline.create import (
     Creator,
     HiddenCreator,
     CreatedInstance,
+    cache_and_get_instances,
     PRE_CREATE_THUMBNAIL_KEY,
 )
-
 from .pipeline import (
     list_instances,
     update_instances,
     remove_instances,
     HostContext,
 )
-from openpype.lib.transcoding import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
-
 
 REVIEW_EXTENSIONS = set(IMAGE_EXTENSIONS) | set(VIDEO_EXTENSIONS)
-
-
-def _cache_and_get_instances(creator):
-    """Cache instances in shared data.
-
-    Args:
-        creator (Creator): Plugin which would like to get instances from host.
-
-    Returns:
-        List[Dict[str, Any]]: Cached instances list from host implementation.
-    """
-
-    shared_key = "openpype.traypublisher.instances"
-    if shared_key not in creator.collection_shared_data:
-        instances_by_creator_id = collections.defaultdict(list)
-        for instance_data in list_instances():
-            creator_id = instance_data.get("creator_identifier")
-            instances_by_creator_id[creator_id].append(instance_data)
-        creator.collection_shared_data[shared_key] = instances_by_creator_id
-    return creator.collection_shared_data[shared_key]
+SHARED_DATA_KEY = "openpype.traypublisher.instances"
 
 
 class HiddenTrayPublishCreator(HiddenCreator):
     host_name = "traypublisher"
 
     def collect_instances(self):
-        instance_data_by_identifier = _cache_and_get_instances(self)
-        for instance_data in instance_data_by_identifier[self.identifier]:
-            instance = CreatedInstance.from_existing(
-                instance_data, self
-            )
+        instances_by_identifier = cache_and_get_instances(
+            self, SHARED_DATA_KEY, list_instances
+        )
+        for instance_data in instances_by_identifier[self.identifier]:
+            instance = CreatedInstance.from_existing(instance_data, self)
             self._add_instance_to_context(instance)
 
     def update_instances(self, update_list):
@@ -80,11 +58,11 @@ class TrayPublishCreator(Creator):
     host_name = "traypublisher"
 
     def collect_instances(self):
-        instance_data_by_identifier = _cache_and_get_instances(self)
-        for instance_data in instance_data_by_identifier[self.identifier]:
-            instance = CreatedInstance.from_existing(
-                instance_data, self
-            )
+        instances_by_identifier = cache_and_get_instances(
+            self, SHARED_DATA_KEY, list_instances
+        )
+        for instance_data in instances_by_identifier[self.identifier]:
+            instance = CreatedInstance.from_existing(instance_data, self)
             self._add_instance_to_context(instance)
 
     def update_instances(self, update_list):
