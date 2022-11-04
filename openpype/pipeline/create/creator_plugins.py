@@ -1,5 +1,6 @@
 import os
 import copy
+import collections
 
 from abc import (
     ABCMeta,
@@ -660,3 +661,34 @@ def deregister_creator_plugin_path(path):
     deregister_plugin_path(BaseCreator, path)
     deregister_plugin_path(LegacyCreator, path)
     deregister_plugin_path(SubsetConvertorPlugin, path)
+
+
+def cache_and_get_instances(creator, shared_key, list_instances_func):
+    """Common approach to cache instances in shared data.
+
+    This is helper function which does not handle cases when a 'shared_key' is
+    used for different list instances functions. The same approach of caching
+    instances into 'collection_shared_data' is not required but is so common
+    we've decided to unify it to some degree.
+
+    Function 'list_instances_func' is called only if 'shared_key' is not
+    available in 'collection_shared_data' on creator.
+
+    Args:
+        creator (Creator): Plugin which would like to get instance data.
+        shared_key (str): Key under which output of function will be stored.
+        list_instances_func (Function): Function that will return instance data
+            if data were not yet stored under 'shared_key'.
+
+    Returns:
+        Dict[str, Dict[str, Any]]: Cached instances by creator identifier from
+            result of passed function.
+    """
+
+    if shared_key not in creator.collection_shared_data:
+        value = collections.defaultdict(list)
+        for instance in list_instances_func():
+            identifier = instance.get("creator_identifier")
+            value[identifier].append(instance)
+        creator.collection_shared_data[shared_key] = value
+    return creator.collection_shared_data[shared_key]
