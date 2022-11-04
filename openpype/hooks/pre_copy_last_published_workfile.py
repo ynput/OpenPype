@@ -99,9 +99,11 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
                 for subset in get_subsets(
                     project_name,
                     asset_ids=[asset_doc["_id"]],
-                    fields=["_id", "data.family"],
+                    fields=["_id", "data.family", "data.families"],
                 )
-                if subset["data"]["family"] == "workfile"
+                if subset["data"].get("family") == "workfile"
+                # Legacy compatibility
+                or "workfile" in subset["data"].get("families", {})
             ),
             None,
         )
