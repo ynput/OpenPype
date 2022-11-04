@@ -252,6 +252,90 @@ class PixmapLabel(QtWidgets.QLabel):
         super(PixmapLabel, self).resizeEvent(event)
 
 
+class PixmapButtonPainter(QtWidgets.QWidget):
+    def __init__(self, pixmap, parent):
+        super(PixmapButtonPainter, self).__init__(parent)
+
+        self._pixmap = pixmap
+        self._cached_pixmap = None
+
+    def set_pixmap(self, pixmap):
+        self._pixmap = pixmap
+        self._cached_pixmap = None
+
+        self.repaint()
+
+    def _cache_pixmap(self):
+        size = self.size()
+        self._cached_pixmap = self._pixmap.scaled(
+            size.width(),
+            size.height(),
+            QtCore.Qt.KeepAspectRatio,
+            QtCore.Qt.SmoothTransformation
+        )
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter()
+        painter.begin(self)
+        if self._pixmap is None:
+            painter.end()
+            return
+
+        painter.setRenderHints(
+            painter.Antialiasing
+            | painter.SmoothPixmapTransform
+            | painter.HighQualityAntialiasing
+        )
+        if self._cached_pixmap is None:
+            self._cache_pixmap()
+
+        painter.drawPixmap(0, 0, self._cached_pixmap)
+
+        painter.end()
+
+
+class PixmapButton(ClickableFrame):
+    def __init__(self, pixmap=None, parent=None):
+        super(PixmapButton, self).__init__(parent)
+
+        button_painter = PixmapButtonPainter(pixmap, self)
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(2, 2, 2, 2)
+
+        self._button_painter = button_painter
+
+    def setContentsMargins(self, *args):
+        layout = self.layout()
+        layout.setContentsMargins(*args)
+        self._update_painter_geo()
+
+    def set_pixmap(self, pixmap):
+        self._button_painter.set_pixmap(pixmap)
+
+    def sizeHint(self):
+        font_height = self.fontMetrics().height()
+        return QtCore.QSize(font_height, font_height)
+
+    def resizeEvent(self, event):
+        super(PixmapButton, self).resizeEvent(event)
+        self._update_painter_geo()
+
+    def showEvent(self, event):
+        super(PixmapButton, self).showEvent(event)
+        self._update_painter_geo()
+
+    def _update_painter_geo(self):
+        size = self.size()
+        layout = self.layout()
+        left, top, right, bottom = layout.getContentsMargins()
+        self._button_painter.setGeometry(
+            left,
+            top,
+            size.width() - (left + right),
+            size.height() - (top + bottom)
+        )
+
+
 class OptionalMenu(QtWidgets.QMenu):
     """A subclass of `QtWidgets.QMenu` to work with `OptionalAction`
 
@@ -474,8 +558,10 @@ class SeparatorWidget(QtWidgets.QFrame):
         self.set_size(size)
 
     def set_size(self, size):
-        if size == self._size:
-            return
+        if size != self._size:
+            self._set_size(size)
+
+    def _set_size(self, size):
         if self._orientation == QtCore.Qt.Vertical:
             self.setMinimumWidth(size)
             self.setMaximumWidth(size)
@@ -499,6 +585,4 @@ class SeparatorWidget(QtWidgets.QFrame):
 
         self._orientation = orientation
 
-        size = self._size
-        self._size = None
-        self.set_size(size)
+        self._set_size(self._size)
