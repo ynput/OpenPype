@@ -228,7 +228,6 @@ class PublisherWindow(QtWidgets.QDialog):
         publish_frame = PublishFrame(controller, self.footer_border, self)
 
         create_overlay_button = CreateNextPageOverlay(self)
-        create_overlay_button.set_handle_show_on_own(False)
 
         show_timer = QtCore.QTimer()
         show_timer.setInterval(1)
@@ -716,20 +715,20 @@ class PublisherWindow(QtWidgets.QDialog):
         )
 
     def _update_create_overlay_size(self):
-        height = self._content_widget.height()
         metrics = self._create_overlay_button.fontMetrics()
-        width = int(metrics.height() * 3)
-        pos_x = self.width() - width
+        size = int(metrics.height() * 3)
+        end_pos_x = self.width()
+        start_pos_x = end_pos_x - size
 
-        tab_pos = self._tabs_widget.parent().mapTo(
-            self, self._tabs_widget.pos()
+        center = self._content_widget.parent().mapTo(
+            self,
+            self._content_widget.rect().center()
         )
-        tab_height = self._tabs_widget.height()
-        pos_y = tab_pos.y() + tab_height
+        pos_y = center.y() - (size * 0.5)
 
         self._create_overlay_button.setGeometry(
-            pos_x, pos_y,
-            width, height
+            start_pos_x, pos_y,
+            size, size
         )
 
     def _update_create_overlay_visibility(self, global_pos=None):

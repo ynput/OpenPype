@@ -1660,22 +1660,19 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
 
     def __init__(self, parent):
         super(CreateNextPageOverlay, self).__init__(parent)
-
+        self.setCursor(QtCore.Qt.PointingHandCursor)
         self._arrow_color = (
             get_objected_colors("bg-buttons").get_qcolor()
         )
-        self._gradient_start_color = (
+        self._bg_color = (
             get_objected_colors("publisher", "tab-bg").get_qcolor()
-        )
-        self._gradient_end_color = (
-            get_objected_colors("bg-inputs").get_qcolor()
         )
 
         change_anim = QtCore.QVariantAnimation()
         change_anim.setStartValue(0.0)
         change_anim.setEndValue(self.max_value)
-        change_anim.setDuration(200)
-        change_anim.setEasingCurve(QtCore.QEasingCurve.InOutQuad)
+        change_anim.setDuration(400)
+        change_anim.setEasingCurve(QtCore.QEasingCurve.OutBounce)
 
         change_anim.valueChanged.connect(self._on_anim)
 
@@ -1731,19 +1728,10 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
         if not self._is_visible:
             self.setVisible(False)
 
-    def set_handle_show_on_own(self, handle):
-        if self._handle_show_on_own is handle:
-            return
-        self._handle_show_on_own = handle
-        self._under_mouse = None
-        self._check_anim_timer()
-
     def set_under_mouse(self, under_mouse):
         if self._under_mouse is under_mouse:
             return
 
-        if self._handle_show_on_own:
-            self._handle_show_on_own = False
         self._under_mouse = under_mouse
         self.set_increasing(under_mouse)
 
@@ -1756,22 +1744,7 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
         if not self.isVisible():
             return
 
-        if self._handle_show_on_own:
-            under_mouse = self._is_under_mouse()
-        else:
-            under_mouse = self._under_mouse
-
-        self.set_increasing(under_mouse)
-
-    def enterEvent(self, event):
-        super(CreateNextPageOverlay, self).enterEvent(event)
-        if self._handle_show_on_own:
-            self._check_anim_timer()
-
-    def leaveEvent(self, event):
-        super(CreateNextPageOverlay, self).leaveEvent(event)
-        if self._handle_show_on_own:
-            self._check_anim_timer()
+        self.set_increasing(self._under_mouse)
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
@@ -1792,74 +1765,41 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
         if self._anim_value == 0.0:
             painter.end()
             return
+
+        painter.setClipRect(event.rect())
         painter.setRenderHints(
             painter.Antialiasing
             | painter.SmoothPixmapTransform
         )
 
-        pen = QtGui.QPen()
-        pen.setWidth(0)
-        painter.setPen(pen)
+        painter.setPen(QtCore.Qt.NoPen)
+
         rect = QtCore.QRect(self.rect())
+        rect_width = rect.width()
+        rect_height = rect.height()
 
-        offset = rect.width() - int(
-            float(rect.width()) * 0.01 * self._anim_value
-        )
+        size = rect_width * 0.9
 
-        pos_y = rect.center().y()
-        left = rect.left() + offset
-        top = rect.top()
-        # Right and bootm is pixel index
-        right = rect.right() + 1
-        bottom = rect.bottom() + 1
-        width = right - left
-        height = bottom - top
+        x_offset = (rect_width - size) * 0.5
+        y_offset = (rect_height - size) * 0.5
+        if self._anim_value != self.max_value:
+            x_offset += rect_width - (rect_width * 0.01 * self._anim_value)
 
-        q_height = height * 0.15
-
-        arrow_half_height = width * 0.2
-        arrow_x_start = left + (width * 0.4)
+        arrow_half_height = size * 0.2
+        arrow_x_start = x_offset + (size * 0.4)
         arrow_x_end = arrow_x_start + arrow_half_height
-        arrow_top_y_boundry = arrow_half_height + q_height
-        arrow_bottom_y_boundry = height - (arrow_half_height + q_height)
-        offset = 0
-        if pos_y < arrow_top_y_boundry:
-            pos_y = arrow_top_y_boundry
-        elif pos_y > arrow_bottom_y_boundry:
-            pos_y = arrow_bottom_y_boundry
+        center_y = rect.center().y()
 
-        top_cubic_y = pos_y - q_height
-        bottom_cubic_y = pos_y + q_height
-
-        path = QtGui.QPainterPath()
-        path.moveTo(right, top)
-        path.lineTo(right, bottom)
-
-        path.cubicTo(
-            right, bottom,
-            left, bottom_cubic_y,
-            left, pos_y
+        painter.setBrush(self._bg_color)
+        painter.drawEllipse(
+            x_offset, y_offset,
+            size, size
         )
-        path.cubicTo(
-            left, top_cubic_y,
-            right, top,
-            right, top
-        )
-        path.closeSubpath()
-
-        radius = height * 0.7
-        focal = QtCore.QPointF(left, pos_y)
-        start_p = QtCore.QPointF(right - (width * 0.5), pos_y)
-        gradient = QtGui.QRadialGradient(start_p, radius, focal)
-        gradient.setColorAt(0, self._gradient_start_color)
-        gradient.setColorAt(1, self._gradient_end_color)
-
-        painter.fillPath(path, gradient)
 
         src_arrow_path = QtGui.QPainterPath()
-        src_arrow_path.moveTo(arrow_x_start, pos_y - arrow_half_height)
-        src_arrow_path.lineTo(arrow_x_end, pos_y)
-        src_arrow_path.lineTo(arrow_x_start, pos_y + arrow_half_height)
+        src_arrow_path.moveTo(arrow_x_start, center_y - arrow_half_height)
+        src_arrow_path.lineTo(arrow_x_end, center_y)
+        src_arrow_path.lineTo(arrow_x_start, center_y + arrow_half_height)
 
         arrow_stroker = QtGui.QPainterPathStroker()
         arrow_stroker.setWidth(min(4, arrow_half_height * 0.2))
