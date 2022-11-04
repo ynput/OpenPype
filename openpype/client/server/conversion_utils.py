@@ -578,7 +578,8 @@ def convert_create_task_to_v4(task, project, con):
 
     return {
         "name": task["name"],
-        "taskType": task_type
+        "taskType": task_type,
+        "folderId": task["folderId"]
     }
 
 
