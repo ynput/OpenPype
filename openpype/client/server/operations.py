@@ -249,6 +249,7 @@ class OperationsSession(BaseOperationsSession):
             con = get_server_api_connection()
         self._con = con
         self._project_cache = {}
+        self._nested_operations = collections.defaultdict(list)
 
     @property
     def con(self):
@@ -299,8 +300,16 @@ class OperationsSession(BaseOperationsSession):
                     )
                 )
 
-    def create_entity(self, project_name, entity_type, data):
+    def create_entity(self, project_name, entity_type, data, nested_id=None):
         """Fast access to 'MongoCreateOperation'.
+
+        Args:
+            project_name (str): On which project the creation happens.
+            entity_type (str): Which entity type will be created.
+            data (Dicst[str, Any]): Entity data.
+            nested_id (str): Id of other operation from which is triggered
+                operation -> Operations can trigger suboperations but they
+                must be added to operations list after it's parent is added.
 
         Returns:
             MongoCreateOperation: Object of update operation.
@@ -309,10 +318,18 @@ class OperationsSession(BaseOperationsSession):
         operation = ServerCreateOperation(
             project_name, entity_type, data, self
         )
-        self.add(operation)
+        if nested_id:
+            self._nested_operations[nested_id].append(operation)
+        else:
+            self.add(operation)
+            if operation.id in self._nested_operations:
+                self.extend(self._nested_operations.pop(operation.id))
+
         return operation
 
-    def update_entity(self, project_name, entity_type, entity_id, update_data):
+    def update_entity(
+        self, project_name, entity_type, entity_id, update_data, nested_id=None
+    ):
         """Fast access to 'MongoUpdateOperation'.
 
         Returns:
@@ -322,10 +339,17 @@ class OperationsSession(BaseOperationsSession):
         operation = ServerUpdateOperation(
             project_name, entity_type, entity_id, update_data, self
         )
-        self.add(operation)
+        if nested_id:
+            self._nested_operations[nested_id].append(operation)
+        else:
+            self.add(operation)
+            if operation.id in self._nested_operations:
+                self.extend(self._nested_operations.pop(operation.id))
         return operation
 
-    def delete_entity(self, project_name, entity_type, entity_id):
+    def delete_entity(
+        self, project_name, entity_type, entity_id, nested_id=None
+    ):
         """Fast access to 'MongoDeleteOperation'.
 
         Returns:
@@ -335,7 +359,12 @@ class OperationsSession(BaseOperationsSession):
         operation = ServerDeleteOperation(
             project_name, entity_type, entity_id, self
         )
-        self.add(operation)
+        if nested_id:
+            self._nested_operations[nested_id].append(operation)
+        else:
+            self.add(operation)
+            if operation.id in self._nested_operations:
+                self.extend(self._nested_operations.pop(operation.id))
         return operation
 
 
