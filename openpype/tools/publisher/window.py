@@ -472,7 +472,7 @@ class PublisherWindow(QtWidgets.QDialog):
         )
 
     def _on_tab_change(self, old_tab, new_tab):
-        if old_tab != "details":
+        if old_tab == "details":
             self._publish_details_widget.close_details_popup()
 
         if new_tab in ("create", "publish"):
