@@ -7,7 +7,7 @@ from bpy.utils import register_classes_factory
 
 class OpenpypeInstance(PropertyGroup):
     name: bpy.props.StringProperty(name="OpenPype Instance name")
-    
+
     # = Custom properties =
     # datablocks (List): all datablocks related to this instance
 
@@ -27,6 +27,10 @@ def register():
     bpy.types.Scene.openpype_instances = bpy.props.CollectionProperty(
         type=OpenpypeInstance, name="OpenPype Instances"
     )
+    bpy.types.Scene.openpype_instance_active_index = bpy.props.IntProperty(
+        name="OpenPype Instance Active Index"
+    )
+    bpy.types.Collection.is_openpype_instance = bpy.props.BoolProperty()
 
 
 def unregister():

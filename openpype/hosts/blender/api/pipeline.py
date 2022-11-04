@@ -6,7 +6,7 @@ from typing import Callable, Dict, List, Optional
 import bpy
 
 from . import lib
-from . import ops, properties
+from . import ops, properties, ui
 
 import pyblish.api
 
@@ -71,6 +71,7 @@ def install():
     if not IS_HEADLESS:
         ops.register()
         properties.register()
+        ui.register()
 
 
 def uninstall():
@@ -87,6 +88,7 @@ def uninstall():
     if not IS_HEADLESS:
         ops.unregister()
         properties.unregister()
+        ui.unregister()
 
 
 def set_start_end_frames():

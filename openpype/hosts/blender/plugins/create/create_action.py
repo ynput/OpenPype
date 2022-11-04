@@ -14,7 +14,7 @@ class CreateAction(plugin.Creator):
     family = "action"
     icon = "male"
     color_tag = "COLOR_07"
-    bl_types = (bpy.types.Action,)
+    bl_types = frozenset({bpy.types.Action})
 
     def _link_to_container_collection(self, container):
         for obj in get_selection():
