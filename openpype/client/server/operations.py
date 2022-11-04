@@ -276,12 +276,14 @@ class OperationsSession(BaseOperationsSession):
         for operation in operations:
             operations_by_project[operation.project_name].append(operation)
 
+        body_by_id = {}
         results = []
         for project_name, operations in operations_by_project.items():
             operations_body = []
             for operation in operations:
                 body = operation.to_server_operation()
                 if body is not None:
+                    body_by_id[operation.id] = body
                     operations_body.append(body)
 
             if operations_body:
@@ -293,16 +295,23 @@ class OperationsSession(BaseOperationsSession):
                 results.append(result.data)
 
         for result in results:
-            if not result["success"]:
-                if "id" not in result:
-                    raise FailedOperations(
-                        "Operation failed. Content: {}".format(str(result))
-                    )
+            if result["success"]:
+                continue
+
+            if "operations" not in result:
                 raise FailedOperations(
-                    "Operation \"{}\" failed. Error: {}".format(
-                        result["id"], result["error"]
-                    )
+                    "Operation failed. Content: {}".format(str(result))
                 )
+
+            for op_result in result["operations"]:
+                if not op_result["success"]:
+                    raise FailedOperations((
+                        "Operation \"{}\" failed with data:\n{}\nError: {}."
+                    ).format(
+                        op_result["id"],
+                        json.dumps(body_by_id[operation_id], indent=4),
+                        op_result["error"],
+                    ))
 
     def create_entity(self, project_name, entity_type, data, nested_id=None):
         """Fast access to 'MongoCreateOperation'.
