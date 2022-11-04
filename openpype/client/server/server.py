@@ -1400,6 +1400,12 @@ class ServerAPIBase(object):
         for parsed_data in query.continuous_query(self):
             for repre in parsed_data["project"]["representations"]:
                 if active is None or active is repre["active"]:
+                    if "context" in repre:
+                        orig_context = repre["context"]
+                        context = {}
+                        if orig_context and orig_context != "null":
+                            context = json.loads(orig_context)
+                        repre["context"] = context
                     yield repre
 
     def get_representation_by_id(
