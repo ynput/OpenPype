@@ -292,7 +292,7 @@ class ServerAPIBase(object):
             if _detail:
                 details = " {}".format(_detail)
 
-            raise AuthenticationError("Login failed".format(details))
+            raise AuthenticationError("Login failed {}".format(details))
 
         self._access_token = response["token"]
 
@@ -480,6 +480,20 @@ class ServerAPIBase(object):
             self._entity_type_attributes_cache[entity_type] = attributes
 
         return copy.deepcopy(attributes)
+
+    # Anatomy presets
+    def get_project_anatomy_presets(self, add_default=True):
+        result = self.get("anatomy/presets")
+        presets = result.data
+        if add_default:
+            presets.append(self.get_project_anatomy_preset())
+        return presets
+
+    def get_project_anatomy_preset(self, preset_name=None):
+        if preset_name is None:
+            preset_name = "_"
+        result = self.get("anatomy/presets/{}".format(preset_name))
+        return result.data
 
     # Settings getters
     def get_full_project_settings(self, project_name):

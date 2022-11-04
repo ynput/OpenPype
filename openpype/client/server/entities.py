@@ -19,20 +19,6 @@ from .conversion_utils import (
 )
 
 
-def get_v4_project_anatomy_presets(add_default=True):
-    con = get_server_api_connection()
-    result = con.get("anatomy/presets")
-    return result.data
-
-
-def get_v4_project_anatomy_preset(preset_name=None):
-    con = get_server_api_connection()
-    if preset_name is None:
-        preset_name = "_"
-    result = con.get("anatomy/presets/{}".format(preset_name))
-    return result.data
-
-
 def get_projects(active=True, inactive=False, library=None, fields=None):
     if not active and not inactive:
         return []
