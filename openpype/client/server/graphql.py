@@ -688,6 +688,12 @@ class GraphQlQueryEdgeField(BaseGraphQlQueryField):
                 self._name, str(type(data))
             ))
 
+        value = data.get(self._name)
+        if value is None:
+            self._fake_children_parse()
+            self._need_query = False
+            return
+
         if self._name in output:
             node_values = output[self._name]
         else:
@@ -702,11 +708,6 @@ class GraphQlQueryEdgeField(BaseGraphQlQueryField):
             else:
                 nodes_by_cursor = {}
                 progress_data[cursor_key] = nodes_by_cursor
-
-        value = data.get(self._name)
-        if value is None:
-            self._need_query = False
-            return
 
         page_info = value["pageInfo"]
         new_cursor = page_info["endCursor"]
