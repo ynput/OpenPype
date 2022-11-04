@@ -57,6 +57,9 @@ class ServerCreateOperation(CreateOperation):
         if entity_type == "project":
             raise ValueError("Project cannot be created using operations")
 
+        if entity_type == "hero_version":
+            raise ValueError("Hero version cannot be created using operations")
+
         tasks = None
         if entity_type in "asset":
             # TODO handle tasks
@@ -317,9 +320,13 @@ class OperationsSession(BaseOperationsSession):
             MongoCreateOperation: Object of update operation.
         """
 
+        if entity_type == "hero_version":
+            return None
+
         operation = ServerCreateOperation(
             project_name, entity_type, data, self
         )
+
         if nested_id:
             self._nested_operations[nested_id].append(operation)
         else:
