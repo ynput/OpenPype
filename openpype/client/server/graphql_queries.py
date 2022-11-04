@@ -282,7 +282,7 @@ def representations_graphql_query(fields):
     repres_field = project_field.add_field("representations", has_edges=True)
     repres_field.set_filter("ids", repre_ids_var)
     repres_field.set_filter("versionIds", version_ids_var)
-    repres_field.set_filter("representationNames", repre_names_var)
+    repres_field.set_filter("names", repre_names_var)
 
     nested_fields = fields_to_dict(set(fields))
 
