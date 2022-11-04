@@ -12,8 +12,8 @@ from openpype.client.operations_base import (
     BaseOperationsSession
 )
 
-from .server import get_server_api_connection
-from .entities import get_v4_project, get_project, get_v4_project_anatomy_preset
+from .server_api import get_server_api_connection
+from .entities import get_project, get_v4_project_anatomy_preset
 from .conversion_utils import (
     convert_create_asset_to_v4,
     convert_create_task_to_v4,
@@ -256,7 +256,8 @@ class OperationsSession(BaseOperationsSession):
 
     def get_project(self, project_name):
         if project_name not in self._project_cache:
-            self._project_cache[project_name] = get_v4_project(project_name)
+            self._project_cache[project_name] = self.con.get_project(
+                project_name)
         return copy.deepcopy(self._project_cache[project_name])
 
     def commit(self):
