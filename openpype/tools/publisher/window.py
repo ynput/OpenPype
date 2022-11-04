@@ -362,7 +362,6 @@ class PublisherWindow(QtWidgets.QDialog):
             self._first_show = False
             self._on_first_show()
 
-        self._show_counter = 0
         self._show_timer.start()
 
     def resizeEvent(self, event):
