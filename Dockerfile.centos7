@@ -1,6 +1,6 @@
 # Build Pype docker image
 FROM centos:7 AS builder
-ARG OPENPYPE_PYTHON_VERSION=3.7.12
+ARG OPENPYPE_PYTHON_VERSION=3.9.12
 
 LABEL org.opencontainers.image.name="pypeclub/openpype"
 LABEL org.opencontainers.image.title="OpenPype Docker Image"
@@ -96,11 +96,11 @@ RUN source $HOME/.bashrc \
 RUN source $HOME/.bashrc \
     && bash ./tools/build.sh
 
-RUN cp /usr/lib64/libffi* ./build/exe.linux-x86_64-3.7/lib \
-    && cp /usr/lib64/libssl* ./build/exe.linux-x86_64-3.7/lib \
-    && cp /usr/lib64/libcrypto* ./build/exe.linux-x86_64-3.7/lib \
-    && cp /root/.pyenv/versions/${OPENPYPE_PYTHON_VERSION}/lib/libpython* ./build/exe.linux-x86_64-3.7/lib \
-    && cp /usr/lib64/libxcb* ./build/exe.linux-x86_64-3.7/vendor/python/PySide2/Qt/lib
+RUN cp /usr/lib64/libffi* ./build/exe.linux-x86_64-3.9/lib \
+    && cp /usr/lib64/libssl* ./build/exe.linux-x86_64-3.9/lib \
+    && cp /usr/lib64/libcrypto* ./build/exe.linux-x86_64-3.9/lib \
+    && cp /root/.pyenv/versions/${OPENPYPE_PYTHON_VERSION}/lib/libpython* ./build/exe.linux-x86_64-3.9/lib \
+    && cp /usr/lib64/libxcb* ./build/exe.linux-x86_64-3.9/vendor/python/PySide2/Qt/lib
 
 RUN cd /opt/openpype \
     rm -rf ./vendor/bin

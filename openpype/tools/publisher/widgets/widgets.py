@@ -3,6 +3,8 @@ import os
 import re
 import copy
 import functools
+import uuid
+import shutil
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
@@ -22,6 +24,7 @@ from openpype.pipeline.create import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
     TaskNotSetError,
 )
+from .thumbnail_widget import ThumbnailWidget
 from .assets_widget import AssetsDialog
 from .tasks_widget import TasksModel
 from .icons import (
@@ -124,6 +127,7 @@ class PublishIconBtn(IconButton):
     - error            : other error happened
     - success          : publishing finished
     """
+
     def __init__(self, pixmap_path, *args, **kwargs):
         super(PublishIconBtn, self).__init__(*args, **kwargs)
 
@@ -1063,6 +1067,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
     def _on_submit(self):
         """Commit changes for selected instances."""
+
         variant_value = None
         asset_name = None
         task_name = None
@@ -1131,6 +1136,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
     def _on_cancel(self):
         """Cancel changes and set back to their irigin value."""
+
         self.variant_input.reset_to_origin()
         self.asset_value_widget.reset_to_origin()
         self.task_value_widget.reset_to_origin()
@@ -1256,6 +1262,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
 
     def set_instances_valid(self, valid):
         """Change valid state of current instances."""
+
         if (
             self._content_widget is not None
             and self._content_widget.isEnabled() != valid
@@ -1264,6 +1271,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
 
     def set_current_instances(self, instances):
         """Set current instances for which are attribute definitions shown."""
+
         prev_content_widget = self._scroll_area.widget()
         if prev_content_widget:
             self._scroll_area.takeWidget()
@@ -1353,6 +1361,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
     families. Similar definitions are merged into one (different label
     does not count).
     """
+
     def __init__(self, controller, parent):
         super(PublishPluginAttrsWidget, self).__init__(parent)
 
@@ -1386,6 +1395,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
 
     def set_current_instances(self, instances, context_selected):
         """Set current instances for which are attribute definitions shown."""
+
         prev_content_widget = self._scroll_area.widget()
         if prev_content_widget:
             self._scroll_area.takeWidget()
@@ -1471,7 +1481,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         # Global attributes
         global_attrs_widget = GlobalAttrsWidget(controller, top_widget)
-        thumbnail_widget = ThumbnailWidget(top_widget)
+        thumbnail_widget = ThumbnailWidget(controller, top_widget)
 
         top_layout = QtWidgets.QHBoxLayout(top_widget)
         top_layout.setContentsMargins(0, 0, 0, 0)
@@ -1559,6 +1569,12 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
             self._on_instance_context_changed
         )
         convert_btn.clicked.connect(self._on_convert_click)
+        thumbnail_widget.thumbnail_created.connect(self._on_thumbnail_create)
+        thumbnail_widget.thumbnail_cleared.connect(self._on_thumbnail_clear)
+
+        controller.event_system.add_callback(
+            "instance.thumbnail.changed", self._on_thumbnail_changed
+        )
 
         self._controller = controller
 
@@ -1568,7 +1584,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         self.creator_attrs_widget = creator_attrs_widget
         self.publish_attrs_widget = publish_attrs_widget
-        self.thumbnail_widget = thumbnail_widget
+        self._thumbnail_widget = thumbnail_widget
 
         self.top_bottom = top_bottom
         self.bottom_separator = bottom_separator
@@ -1595,10 +1611,11 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         """Change currently selected items.
 
         Args:
-            instances(list<CreatedInstance>): List of currently selected
+            instances(List[CreatedInstance]): List of currently selected
                 instances.
             context_selected(bool): Is context selected.
         """
+
         all_valid = True
         for instance in instances:
             if not instance.has_valid_context:
@@ -1620,35 +1637,74 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         self.creator_attrs_widget.set_instances_valid(all_valid)
         self.publish_attrs_widget.set_instances_valid(all_valid)
 
+        self._update_thumbnails()
 
-class ThumbnailWidget(QtWidgets.QWidget):
-    """Instance thumbnail widget.
+    def _on_thumbnail_create(self, path):
+        instance_ids = [
+            instance.id
+            for instance in self._current_instances
+        ]
+        if self._context_selected:
+            instance_ids.append(None)
 
-    Logic implementation of this widget is missing but widget is used
-    to offset `GlobalAttrsWidget` inputs visually.
-    """
-    def __init__(self, parent):
-        super(ThumbnailWidget, self).__init__(parent)
+        if not instance_ids:
+            return
 
-        # Missing implementation for thumbnail
-        # - widget kept to make a visial offset of global attr widget offset
-        # default_pix = get_pixmap("thumbnail")
-        default_pix = QtGui.QPixmap(10, 10)
-        default_pix.fill(QtCore.Qt.transparent)
+        mapping = {}
+        if len(instance_ids) == 1:
+            mapping[instance_ids[0]] = path
 
-        thumbnail_label = QtWidgets.QLabel(self)
-        thumbnail_label.setPixmap(
-            default_pix.scaled(
-                200, 100,
-                QtCore.Qt.KeepAspectRatio,
-                QtCore.Qt.SmoothTransformation
-            )
+        else:
+            for instance_id in instance_ids:
+                root = os.path.dirname(path)
+                ext = os.path.splitext(path)[-1]
+                dst_path = os.path.join(root, str(uuid.uuid4()) + ext)
+                shutil.copy(path, dst_path)
+                mapping[instance_id] = dst_path
+
+        self._controller.set_thumbnail_paths_for_instances(mapping)
+
+    def _on_thumbnail_clear(self):
+        instance_ids = [
+            instance.id
+            for instance in self._current_instances
+        ]
+        if self._context_selected:
+            instance_ids.append(None)
+
+        if not instance_ids:
+            return
+
+        mapping = {
+            instance_id: None
+            for instance_id in instance_ids
+        }
+        self._controller.set_thumbnail_paths_for_instances(mapping)
+
+    def _on_thumbnail_changed(self, event):
+        self._update_thumbnails()
+
+    def _update_thumbnails(self):
+        instance_ids = [
+            instance.id
+            for instance in self._current_instances
+        ]
+        if self._context_selected:
+            instance_ids.append(None)
+
+        if not instance_ids:
+            self._thumbnail_widget.setVisible(False)
+            self._thumbnail_widget.set_current_thumbnails(None)
+            return
+
+        mapping = self._controller.get_thumbnail_paths_for_instances(
+            instance_ids
         )
+        thumbnail_paths = []
+        for instance_id in instance_ids:
+            path = mapping[instance_id]
+            if path:
+                thumbnail_paths.append(path)
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(thumbnail_label, alignment=QtCore.Qt.AlignCenter)
-
-        self.thumbnail_label = thumbnail_label
-        self.default_pix = default_pix
-        self.current_pix = None
+        self._thumbnail_widget.setVisible(True)
+        self._thumbnail_widget.set_current_thumbnails(thumbnail_paths)
