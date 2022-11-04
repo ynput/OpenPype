@@ -294,5 +294,6 @@ def cache_and_get_instances(creator):
     """
     shared_key = "openpype.photoshop.instances"
     if shared_key not in creator.collection_shared_data:
-        creator.collection_shared_data[shared_key] = creator.list_instances()
+        creator.collection_shared_data[shared_key] = \
+            creator.host.list_instances()
     return creator.collection_shared_data[shared_key]
