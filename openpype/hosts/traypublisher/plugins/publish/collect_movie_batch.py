@@ -40,7 +40,8 @@ class CollectMovieBatch(
         if creator_attributes["add_review_family"]:
             repre["tags"].append("review")
             instance.data["families"].append("review")
-            instance.data["thumbnailSource"] = file_url
+            if not instance.data.get("thumbnailSource"):
+                instance.data["thumbnailSource"] = file_url
 
         instance.data["source"] = file_url
 
