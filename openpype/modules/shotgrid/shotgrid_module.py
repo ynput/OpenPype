@@ -1,11 +1,10 @@
 import os
 
-from openpype_interfaces import (
+from openpype.modules import (
+    OpenPypeModule,
     ITrayModule,
     IPluginPaths,
 )
-
-from openpype.modules import OpenPypeModule
 
 SHOTGRID_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 

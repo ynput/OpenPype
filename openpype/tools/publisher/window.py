@@ -374,6 +374,7 @@ class PublisherWindow(QtWidgets.QDialog):
         self._uninstall_app_event_listener()
         self.save_changes()
         self._reset_on_show = True
+        self._controller.clear_thumbnail_temp_dir_path()
         super(PublisherWindow, self).closeEvent(event)
 
     def leaveEvent(self, event):
