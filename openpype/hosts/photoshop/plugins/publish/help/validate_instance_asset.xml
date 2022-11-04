@@ -8,6 +8,8 @@
     {msg}
 ### How to repair?
     {repair_msg}
+    Refresh Publish afterwards (circle arrow at the bottom right).
+
     If that's not correct value, close workfile and reopen via Workfiles to get
     proper context asset name OR disable this validator and publish again
     if you are publishing to different context deliberately.
