@@ -623,6 +623,9 @@ def convert_create_version_to_v4(version, con):
         "version": version["name"],
         "subsetId": version["parent"],
     }
+    entity_id = version.get("_id")
+    if entity_id:
+        converted_version["id"] = entity_id
 
     version_data = version["data"]
     attribs = {}
@@ -649,6 +652,9 @@ def convert_create_representation_to_v4(representation, con):
         "name": representation["name"],
         "versionId": representation["parent"],
     }
+    entity_id = representation.get("_id")
+    if entity_id:
+        converted_representation["id"] = entity_id
 
     new_files = []
     for file_item in representation["files"]:
