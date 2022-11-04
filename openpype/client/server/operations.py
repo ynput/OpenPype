@@ -13,7 +13,7 @@ from openpype.client.operations_base import (
 )
 
 from .server_api import get_server_api_connection
-from .entities import get_project, get_v4_project_anatomy_preset
+from .entities import get_project
 from .conversion_utils import (
     convert_create_asset_to_v4,
     convert_create_task_to_v4,
@@ -387,7 +387,7 @@ def create_project(
             "Project name \"{}\" contain invalid characters"
         ).format(project_name))
 
-    preset = get_v4_project_anatomy_preset(preset_name)
+    preset = con.get_project_anatomy_preset(preset_name)
     config = {
         "templates": preset["templates"],
         "roots": preset["roots"]
