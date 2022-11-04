@@ -527,10 +527,6 @@ def convert_v4_representation_to_v3(representation):
     return output
 
 
-def convert_create_project_to_v4(project, anatomy_preset, con):
-    return project
-
-
 def convert_create_asset_to_v4(asset, project, con):
     folder_attributes = con.get_attributes_for_type("folder")
 
