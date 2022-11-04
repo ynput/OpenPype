@@ -1,5 +1,4 @@
 import datetime
-import uuid
 
 from .constants import (
     DEFAULT_V3_FOLDER_FIELDS,
@@ -13,6 +12,7 @@ from .constants import (
     REPRESENTATION_ATTRIBS_FIELDS,
     REPRESENTATION_FILES_FIELDS,
 )
+from .utils import create_entity_id
 
 # --- Project entity ---
 PROJECT_FIELDS_MAPPING_V3_V4 = {
@@ -657,7 +657,7 @@ def convert_create_representation_to_v4(representation, con):
             for key, value in file_item.items()
             if key != "_id"
         }
-        new_file_item["id"] = str(uuid.uuid1())
+        new_file_item["id"] = create_entity_id()
         new_files.append(new_file_item)
 
     attribs = {}
