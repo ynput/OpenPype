@@ -198,6 +198,9 @@ class BaseOperationsSession(object):
     def __init__(self):
         self._operations = []
 
+    def __len__(self):
+        return len(self._operations)
+
     def add(self, operation):
         """Add operation to be processed.
 
