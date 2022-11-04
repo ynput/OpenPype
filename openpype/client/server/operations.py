@@ -1,5 +1,4 @@
 import re
-import uuid
 import copy
 import json
 import collections
@@ -26,6 +25,7 @@ from .conversion_utils import (
     convert_update_version_to_v4,
     convert_update_representation_to_v4,
 )
+from .utils import create_entity_id
 
 
 PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
@@ -98,7 +98,7 @@ class ServerCreateOperation(CreateOperation):
         )
 
         if "id" not in self._data:
-            self._data["id"] = uuid.uuid1().hex
+            self._data["id"] = create_entity_id()
 
         if tasks:
             copied_tasks = copy.deepcopy(tasks)
