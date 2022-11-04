@@ -118,7 +118,7 @@ class DBHandler:
                                    "Run with overwrite=True")
             else:
                 if collection:
-                    if collection in self.client[db_name_out].list_collection_names():
+                    if collection in self.client[db_name_out].list_collection_names():  # noqa
                         self.client[db_name_out][collection].drop()
                 else:
                     self.teardown(db_name_out)
@@ -132,7 +132,11 @@ class DBHandler:
                                     db_name=db_name, db_name_out=db_name_out,
                                     collection=collection)
         print("mongorestore query:: {}".format(query))
-        subprocess.run(query)
+        try:
+            subprocess.run(query)
+        except FileNotFoundError:
+            raise RuntimeError("'mongorestore' utility must be on path."
+                               "Please install it.")
 
     def teardown(self, db_name):
         """Drops 'db_name' if exists."""
