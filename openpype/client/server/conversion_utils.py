@@ -668,7 +668,7 @@ def convert_create_representation_to_v4(representation, con):
 
     representation_data = representation["data"]
 
-    for key, value in representation_data.itmes():
+    for key, value in representation_data.items():
         if key not in representation_attributes:
             data[key] = value
         elif value is not None:
