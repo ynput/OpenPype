@@ -40,7 +40,7 @@ class TestDeadlinePublishInNuke(NukeDeadlinePublishTestClass):
          "test_nuke_deadline_publish.zip", "")
     ]
 
-    APP = "nuke"
+    APP_GROUP = "nuke"
 
     TIMEOUT = 180  # publish timeout
 

@@ -194,7 +194,7 @@ class PublishTest(ModuleUnitTest):
             TODO: implement test on file size, file content
     """
 
-    APP = ""
+    APP_GROUP = ""
 
     TIMEOUT = 120  # publish timeout
 
@@ -216,10 +216,10 @@ class PublishTest(ModuleUnitTest):
         if not app_variant:
             variant = (
                 application_manager.find_latest_available_variant_for_group(
-                    self.APP))
+                    self.APP_GROUP))
             app_variant = variant.name
 
-        yield "{}/{}".format(self.APP, app_variant)
+        yield "{}/{}".format(self.APP_GROUP, app_variant)
 
     @pytest.fixture(scope="module")
     def output_folder_url(self, download_test_data):

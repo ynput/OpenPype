@@ -34,10 +34,10 @@ class TestDeadlinePublishInAfterEffects(AEDeadlinePublishTestClass):
          "")
     ]
 
-    APP = "aftereffects"
+    APP_GROUP = "aftereffects"
     APP_VARIANT = ""
 
-    APP_NAME = "{}/{}".format(APP, APP_VARIANT)
+    APP_NAME = "{}/{}".format(APP_GROUP, APP_VARIANT)
 
     TIMEOUT = 120  # publish timeout
 

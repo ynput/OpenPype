@@ -29,7 +29,7 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
         ("1BTSIIULJTuDc8VvXseuiJV_fL6-Bu7FP", "test_maya_publish.zip", "")
     ]
 
-    APP = "maya"
+    APP_GROUP = "maya"
     # keep empty to locate latest installed variant or explicit
     APP_VARIANT = ""
 

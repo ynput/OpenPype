@@ -28,7 +28,7 @@ class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
          "test_maya_deadline_publish.zip", "")
     ]
 
-    APP = "maya"
+    APP_GROUP = "maya"
     # keep empty to locate latest installed variant or explicit
     APP_VARIANT = ""
 

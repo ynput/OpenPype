@@ -41,11 +41,11 @@ class TestPublishInPhotoshop(PhotoshopTestClass):
         ("1zD2v5cBgkyOm_xIgKz3WKn8aFB_j8qC-", "test_photoshop_publish.zip", "")
     ]
 
-    APP = "photoshop"
+    APP_GROUP = "photoshop"
     # keep empty to locate latest installed variant or explicit
     APP_VARIANT = ""
 
-    APP_NAME = "{}/{}".format(APP, APP_VARIANT)
+    APP_NAME = "{}/{}".format(APP_GROUP, APP_VARIANT)
 
     TIMEOUT = 120  # publish timeout
 

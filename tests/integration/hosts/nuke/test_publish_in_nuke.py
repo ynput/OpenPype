@@ -39,9 +39,9 @@ class TestPublishInNuke(NukeLocalPublishTestClass):
         ("1SUurHj2aiQ21ZIMJfGVBI2KjR8kIjBGI", "test_Nuke_publish.zip", "")
     ]
 
-    APP = "nuke"
+    APP_GROUP = "nuke"
 
-    TIMEOUT = 180  # publish timeout
+    TIMEOUT = 50  # publish timeout
 
     # could be overwritten by command line arguments
     # keep empty to locate latest installed variant or explicit
