@@ -167,7 +167,7 @@ def tasks_graphql_query(fields):
     project_field = query.add_field("project")
     project_field.set_filter("name", project_name_var)
 
-    tasks_field = project_field.add_field("folders", has_edges=True)
+    tasks_field = project_field.add_field("tasks", has_edges=True)
     tasks_field.set_filter("ids", task_ids_var)
     # WARNING: At moment when this been created 'names' filter is not supported
     tasks_field.set_filter("names", task_names_var)
