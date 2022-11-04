@@ -13,7 +13,7 @@ from openpype.client.operations_base import (
 )
 
 from .server import get_server_api_connection
-from .entities import get_project, get_v4_project_anatomy_preset
+from .entities import get_v4_project, get_project, get_v4_project_anatomy_preset
 from .conversion_utils import (
     convert_create_asset_to_v4,
     convert_create_task_to_v4,
@@ -34,11 +34,308 @@ PROJECT_NAME_REGEX = re.compile(
 )
 
 
+class FailedOperations(Exception):
+    pass
+
+
+class ServerCreateOperation(CreateOperation):
+    """Opeartion to create an entity.
+
+    Args:
+        project_name (str): On which project operation will happen.
+        entity_type (str): Type of entity on which change happens.
+            e.g. 'asset', 'representation' etc.
+        data (Dict[str, Any]): Data of entity that will be created.
+    """
+
+    def __init__(self, project_name, entity_type, data, session):
+        self._session = session
+
+        if not data:
+            data = {}
+        data = copy.deepcopy(data)
+        if entity_type == "project":
+            raise ValueError("Project cannot be created using operations")
+
+        tasks = None
+        if entity_type in "asset":
+            # TODO handle tasks
+            entity_type = "folder"
+            if "data" in data:
+                tasks = data["data"].get("tasks")
+
+            project = self._session.get_project(project_name)
+            new_data = convert_create_asset_to_v4(data, project, self.con)
+
+        elif entity_type == "task":
+            project = self._session.get_project(project_name)
+            new_data = convert_create_task_to_v4(data, project, self.con)
+
+        elif entity_type == "subset":
+            new_data = convert_create_subset_to_v4(data, self.con)
+
+        elif entity_type == "version":
+            new_data = convert_create_version_to_v4(data, self.con)
+
+        elif entity_type == "representation":
+            new_data = convert_create_representation_to_v4(data, self.con)
+
+        else:
+            raise ValueError("Unhandled entity type \"{}\"".format(entity_type))
+
+        # Simple check if data can be dumped into json
+        #   - should raise error on 'ObjectId' object
+        try:
+            json.dumps(new_data)
+        except:
+            print(json.dumps(
+                new_data,
+                default=lambda item: "< This Failed: {}>".format(str(item))))
+            raise
+
+        super(ServerCreateOperation, self).__init__(
+            project_name, entity_type, new_data
+        )
+
+        if "id" not in self._data:
+            self._data["id"] = str(uuid.uuid1())
+
+        if tasks:
+            copied_tasks = copy.deepcopy(tasks)
+            for task_name, task in copied_tasks.items():
+                task["name"] = task_name
+                task["folderId"] = self._data["id"]
+                self.session.create_entity(project_name, "task", task)
+
+    @property
+    def con(self):
+        return self.session.con
+
+    @property
+    def session(self):
+        return self._session
+
+    @property
+    def entity_id(self):
+        return self._data["id"]
+
+    def to_server_operation(self):
+        return {
+            "id": self.id,
+            "type": "create",
+            "entityType": self.entity_type,
+            "entityId": self.entity_id,
+            "data": self._data
+        }
+
+
+class ServerUpdateOperation(UpdateOperation):
+    """Operation to update an entity.
+
+    Args:
+        project_name (str): On which project operation will happen.
+        entity_type (str): Type of entity on which change happens.
+            e.g. 'asset', 'representation' etc.
+        entity_id (Union[str, ObjectId]): Identifier of an entity.
+        update_data (Dict[str, Any]): Key -> value changes that will be set in
+            database. If value is set to 'REMOVED_VALUE' the key will be
+            removed. Only first level of dictionary is checked (on purpose).
+    """
+
+    def __init__(
+        self, project_name, entity_type, entity_id, update_data, session
+    ):
+        self._session = session
+
+        update_data = copy.deepcopy(update_data)
+        if entity_type == "project":
+            raise ValueError("Project cannot be created using operations")
+
+        if entity_type == "asset":
+            new_update_data = convert_update_folder_to_v4(
+                update_data, self.con
+            )
+
+        elif entity_type == "subset":
+            new_update_data = convert_update_subset_to_v4(
+                update_data, self.con
+            )
+
+        elif entity_type == "version":
+            new_update_data = convert_update_version_to_v4(
+                update_data, self.con
+            )
+
+        elif entity_type == "representation":
+            new_update_data = convert_update_representation_to_v4(
+                update_data, self.con
+            )
+
+        else:
+            raise ValueError("Unhandled entity type \"{}\"".format(entity_type))
+
+        super(ServerUpdateOperation, self).__init__(
+            project_name, entity_type, entity_id, new_update_data
+        )
+
+    @property
+    def con(self):
+        return self.session.con
+
+    @property
+    def session(self):
+        return self._session
+
+    def to_server_operation(self):
+        if not self._update_data:
+            return None
+
+        update_data = {}
+        for key, value in self._update_data.items():
+            if value is REMOVED_VALUE:
+                value = None
+            update_data[key] = value
+
+        return {
+            "id": self.id,
+            "type": "update",
+            "entityType": self.entity_type,
+            "entityId": self.entity_id,
+            "data": update_data
+        }
+
+
+class ServerDeleteOperation(DeleteOperation):
+    """Opeartion to delete an entity.
+
+    Args:
+        project_name (str): On which project operation will happen.
+        entity_type (str): Type of entity on which change happens.
+            e.g. 'asset', 'representation' etc.
+        entity_id (Union[str, ObjectId]): Entity id that will be removed.
+    """
+
+    def __init__(self, project_name, entity_type, entity_id, session):
+        self._session = session
+
+        if entity_type == "asset":
+            entity_type == "folder"
+
+        super(ServerDeleteOperation, self).__init__(
+            project_name, entity_type, entity_id
+        )
+
+    @property
+    def con(self):
+        return self.session.con
+
+    @property
+    def session(self):
+        return self._session
+
+    def to_server_operation(self):
+        return {
+            "id": self.id,
+            "type": self.operation_name,
+            "entityId": self.entity_id,
+            "entityType": self.entity_type,
+        }
+
+
 class OperationsSession(BaseOperationsSession):
+    def __init__(self, con=None, *args, **kwargs):
+        super(OperationsSession, self).__init__(*args, **kwargs)
+        if con is None:
+            con = get_server_api_connection()
+        self._con = con
+        self._project_cache = {}
+
+    @property
+    def con(self):
+        return self._con
+
+    def get_project(self, project_name):
+        if project_name not in self._project_cache:
+            self._project_cache[project_name] = get_v4_project(project_name)
+        return copy.deepcopy(self._project_cache[project_name])
+
     def commit(self):
-        raise NotImplementedError(
-            "{} dose not have implemented 'commit'".format(
-                self.__class__.__name__))
+        """Commit session operations."""
+
+        operations, self._operations = self._operations, []
+        if not operations:
+            return
+
+        operations_by_project = collections.defaultdict(list)
+        for operation in operations:
+            operations_by_project[operation.project_name].append(operation)
+
+        results = []
+        for project_name, operations in operations_by_project.items():
+            operations_body = []
+            for operation in operations:
+                body = operation.to_server_operation()
+                if body is not None:
+                    operations_body.append(body)
+
+            if operations_body:
+                result = self._con.post(
+                    "projects/{}/operations".format(project_name),
+                    operations=operations_body,
+                    canFail=False
+                )
+                results.append(result.data)
+
+        for result in results:
+            if not result["success"]:
+                if "id" not in result:
+                    raise FailedOperations(
+                        "Operation failed. Content: {}".format(str(result))
+                    )
+                raise FailedOperations(
+                    "Operation \"{}\" failed. Error: {}".format(
+                        result["id"], result["error"]
+                    )
+                )
+
+    def create_entity(self, project_name, entity_type, data):
+        """Fast access to 'MongoCreateOperation'.
+
+        Returns:
+            MongoCreateOperation: Object of update operation.
+        """
+
+        operation = ServerCreateOperation(
+            project_name, entity_type, data, self
+        )
+        self.add(operation)
+        return operation
+
+    def update_entity(self, project_name, entity_type, entity_id, update_data):
+        """Fast access to 'MongoUpdateOperation'.
+
+        Returns:
+            MongoUpdateOperation: Object of update operation.
+        """
+
+        operation = ServerUpdateOperation(
+            project_name, entity_type, entity_id, update_data, self
+        )
+        self.add(operation)
+        return operation
+
+    def delete_entity(self, project_name, entity_type, entity_id):
+        """Fast access to 'MongoDeleteOperation'.
+
+        Returns:
+            MongoDeleteOperation: Object of delete operation.
+        """
+
+        operation = ServerDeleteOperation(
+            project_name, entity_type, entity_id, self
+        )
+        self.add(operation)
+        return operation
 
 
 def create_project(
