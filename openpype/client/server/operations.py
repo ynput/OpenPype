@@ -98,14 +98,16 @@ class ServerCreateOperation(CreateOperation):
         )
 
         if "id" not in self._data:
-            self._data["id"] = str(uuid.uuid1())
+            self._data["id"] = uuid.uuid1().hex
 
         if tasks:
             copied_tasks = copy.deepcopy(tasks)
             for task_name, task in copied_tasks.items():
                 task["name"] = task_name
                 task["folderId"] = self._data["id"]
-                self.session.create_entity(project_name, "task", task)
+                self.session.create_entity(
+                    project_name, "task", task, nested_id=self.id
+                )
 
     @property
     def con(self):
