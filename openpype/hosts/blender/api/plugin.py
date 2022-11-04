@@ -5,7 +5,6 @@ from inspect import getmembers
 from pathlib import Path
 from contextlib import contextmanager, ExitStack
 from typing import Dict, List, Optional, Set, Tuple, Union, Iterator
-from collections.abc import Iterable
 from bson.objectid import ObjectId
 
 import bpy
@@ -13,6 +12,7 @@ from mathutils import Matrix
 
 from openpype.api import Logger
 from openpype.hosts.blender.api.properties import OpenpypeInstance
+from openpype.hosts.blender.api.utils import BL_OUTLINER_TYPES, get_children_recursive, get_parent_collection, link_to_collection
 from openpype.pipeline import (
     legacy_io,
     LegacyCreator,
@@ -288,19 +288,6 @@ def get_container_objects(
     return objects
 
 
-def get_parent_collection(
-    collection: bpy.types.Collection
-) -> Optional[bpy.types.Collection]:
-    """Get the parent of the input collection."""
-    check_list = [bpy.context.scene.collection]
-    for c in check_list:
-        if collection.name in c.children.keys():
-            return c
-        check_list.extend(c.children)
-
-    return None
-
-
 def get_main_collection() -> bpy.types.Collection:
     """Get the main collection from scene.
     - the scene root collection if has no children.
@@ -383,65 +370,6 @@ def get_collections_by_armature(
             yield from get_collections_by_armature(
                 armature, collection.children
             )
-
-
-def get_children_recursive(
-    entity: Union[bpy.types.Collection, bpy.types.Object]
-) -> Iterator[Union[bpy.types.Collection, bpy.types.Object]]:
-    """Get childrens recursively from a object or a collection.
-
-    Arguments:
-        entity: The parent entity.
-
-    Yields:
-        The next childrens from parent entity.
-    """
-    # Since Blender 3.1.0 we can use "children_recursive" attribute.
-    if hasattr(entity, "children_recursive"):
-        for child in entity.children_recursive:
-            yield child
-    else:
-        for child in entity.children:
-            yield child
-            yield from get_children_recursive(child)
-
-
-def link_to_collection(
-    entity: Union[bpy.types.Collection, bpy.types.Object, Iterator],
-    collection: bpy.types.Collection
-):
-    """link an entity to a collection.
-
-    Note:
-        Recursive function if entity is iterable.
-
-    Arguments:
-        entity: The collection, object or list of valid entities who need to be
-            parenting with the given collection.
-        collection: The collection used for parenting.
-    """
-    # Entity is Iterable, execute function recursively.
-    if isinstance(entity, Iterable):
-        for i in entity:
-            link_to_collection(i, collection)
-    # Entity is a Collection.
-    elif (
-        isinstance(entity, bpy.types.Collection)
-        and entity not in collection.children.values()
-        and collection not in entity.children.values()
-        and entity is not collection
-    ):
-        collection.children.link(entity)
-    # Entity is an Object.
-    elif (
-        isinstance(entity, bpy.types.Object)
-        and entity not in collection.objects.values()
-        and entity.instance_collection is not collection
-        and entity.instance_collection not in set(
-            get_children_recursive(collection)
-        )
-    ):
-        collection.objects.link(entity)
 
 
 def deselect_all():
@@ -865,7 +793,7 @@ class Creator(LegacyCreator):
     """Base class for Creator plug-ins."""
     defaults = ['Main']
     color_tag = "NONE"
-    bl_types = ()
+    bl_types = frozenset()
 
     @staticmethod
     def _filter_outliner_datablocks(
@@ -938,7 +866,7 @@ class Creator(LegacyCreator):
             collections_as_list = list(collections)
             if len(collections) == 1 and objects.issubset(
                 set(collections_as_list[0].objects)
-            ):
+            ) and not collections_as_list[0].is_openpype_instance:
                 container_collection = collections_as_list[0]
                 container_collection.name = collection_name  # Rename
                 collections.clear()  # Remove it from collections to link
@@ -949,6 +877,7 @@ class Creator(LegacyCreator):
                 bpy.context.scene.collection.children.link(
                     container_collection
                 )
+            container_collection.is_openpype_instance = True
 
         # Set color tag
         if self.color_tag and hasattr(container_collection, "color_tag"):
@@ -1010,14 +939,19 @@ class Creator(LegacyCreator):
         container_collection = None
         if all(
             t in self.bl_types
-            for t in [bpy.types.Collection, bpy.types.Object]
+            for t in BL_OUTLINER_TYPES
         ):
             container_collection = self._process_outliner(datablocks, name)
 
         # Associate datablocks to openpype instance
-        op_instance["datablocks"] = list(op_instance.get("datablocks", [])) + (
-            [container_collection] if container_collection else datablocks
-        )
+        # Append datablocks only if not already listed, order is kept
+        op_instance["datablocks"] = list(op_instance.get("datablocks", [])) + [
+            d
+            for d in (
+                [container_collection] if container_collection else datablocks
+            )
+            if d not in op_instance.get("datablocks", [])
+        ]
 
         return op_instance
 

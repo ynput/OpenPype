@@ -12,4 +12,4 @@ class CreateSetdress(plugin.Creator):
     family = "setdress"
     icon = "cubes"
     color_tag = "COLOR_06"
-    bl_types = (bpy.types.Collection, bpy.types.Object)
+    bl_types = frozenset({bpy.types.Collection, bpy.types.Object})

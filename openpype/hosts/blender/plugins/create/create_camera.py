@@ -14,7 +14,7 @@ class CreateCamera(plugin.Creator):
     family = "camera"
     icon = "video-camera"
     color_tag = "COLOR_05"
-    bl_types = (bpy.types.Camera,)
+    bl_types = frozenset({bpy.types.Camera})
 
     def _link_to_container_collection(self, container):
         cameras = [obj for obj in get_selection() if obj.type == "CAMERA"]

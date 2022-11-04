@@ -17,11 +17,21 @@ from bpy.props import EnumProperty
 import bpy.utils.previews
 
 from openpype import style
-from openpype.client.entities import get_assets, get_asset_by_name, get_subset_by_id, get_version_by_id
+from openpype.client.entities import get_asset_by_name, get_assets, get_subset_by_id, get_version_by_id
 from openpype.hosts.blender.api.lib import ls
+from openpype.hosts.blender.api.utils import (
+    BL_OUTLINER_TYPES,
+    BL_TYPE_DATAPATH,
+    BL_TYPE_ICON,
+    get_parent_collection,
+    link_to_collection,
+)
 from openpype.pipeline import legacy_io
 from openpype.pipeline.constants import AVALON_INSTANCE_ID
-from openpype.pipeline.create.creator_plugins import discover_legacy_creator_plugins, get_legacy_creator_by_name
+from openpype.pipeline.create.creator_plugins import (
+    discover_legacy_creator_plugins,
+    get_legacy_creator_by_name,
+)
 from openpype.pipeline.create.subset_name import get_subset_name
 from openpype.tools.utils import host_tools
 
@@ -33,15 +43,6 @@ PREVIEW_COLLECTIONS: Dict = dict()
 # down Blender. At least on macOS I the interface of Blender gets very laggy if
 # you make it smaller.
 TIMER_INTERVAL: float = 0.01 if platform.system() == "Windows" else 0.1
-
-# Match Blender type to a datapath to look into. Needed for native UI creator.
-BL_TYPE_DATAPATH = {
-    bpy.types.Collection: "bpy.context.scene.collection.children",
-    bpy.types.Object: "bpy.context.scene.collection.all_objects",
-    bpy.types.Camera: "bpy.data.cameras",
-    bpy.types.Action: "bpy.data.actions",
-    bpy.types.Armature: "bpy.data.armatures",
-}
 
 
 class BlenderApplication(QtWidgets.QApplication):
@@ -349,8 +350,9 @@ def _update_entries_preset(self, _context):
     """
     creator_plugin = get_legacy_creator_by_name(self.creator)
 
-    # Set default datapath
-    self.datapath = BL_TYPE_DATAPATH.get(creator_plugin.bl_types[0])
+    # Set default datapath and datablock
+    self.datapath = BL_TYPE_DATAPATH.get(tuple(creator_plugin.bl_types)[0])
+    self.datablock = ""
 
     # Change names
     # Check if Creator plugin has set defaults
@@ -358,6 +360,9 @@ def _update_entries_preset(self, _context):
         creator_plugin.defaults, (list, tuple, set)
     ):
         self.variant_default = creator_plugin.defaults[0]
+
+    if creator_plugin.bl_types & BL_OUTLINER_TYPES:
+        self.use_selection = False
 
 
 def _update_subset_name(self: bpy.types.Operator, _context: bpy.types.Context):
@@ -389,7 +394,7 @@ def _update_subset_name(self: bpy.types.Operator, _context: bpy.types.Context):
 def _update_variant_name(
     self: bpy.types.Operator, _context: bpy.types.Context
 ):
-    """Update subset name by getting the family name from the creator plugin.
+    """Update variant name by setting the variant default
 
     Args:
         self (bpy.types.Operator): Current running operator
@@ -398,11 +403,11 @@ def _update_variant_name(
     self.variant_name = self.variant_default
 
 
-class SimpleOperator(bpy.types.Operator):
+class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
     """Create OpenPype instance"""
 
-    bl_idname = "scene.simple_operator"
-    bl_label = "Simple Object Operator"
+    bl_idname = "scene.create_openpype_instance"
+    bl_label = "Create OpenPype Instance"  # TODO
     bl_options = {"REGISTER", "UNDO"}
 
     creator: EnumProperty(
@@ -454,7 +459,7 @@ class SimpleOperator(bpy.types.Operator):
         self.all_assets.clear()
         for asset_doc in get_assets(legacy_io.active_project()):
             self.all_assets.add().name = asset_doc["name"]
-            
+
         self.asset_name = legacy_io.Session["AVALON_ASSET"]
 
         # Setup all data
@@ -518,14 +523,66 @@ class SimpleOperator(bpy.types.Operator):
         # Get creator class
         Creator = get_legacy_creator_by_name(self.creator)
 
-        # NOTE Shunting legacy_create because of useless overhead and deprecated design. 
+        # NOTE Shunting legacy_create because of useless overhead and deprecated design.
         # Will see if compatible with new creator when implemented for Blender
-        plugin = Creator(self.subset_name, self.asset_name, {"variant": self.variant_name})
+        plugin = Creator(
+            self.subset_name, self.asset_name, {"variant": self.variant_name}
+        )
         datapath = eval(self.datapath)
-        plugin._process(bpy.context.selected_objects if self.use_selection else [datapath.get(self.datablock)])
-        
+        op_instance = plugin._process(
+            bpy.context.selected_objects
+            if self.use_selection
+            else [datapath.get(self.datablock)]
+        )
+
+        # Keep creator
+        op_instance["bl_types_icons"] = [
+            BL_TYPE_ICON.get(t, "NONE") for t in plugin.bl_types
+        ]
+
         if not self.datablock and not self.use_selection:
-            self.report({'WARNING'}, f"No any datablock to process...")
+            self.report({"WARNING"}, f"No any datablock to process...")
+
+        return {"FINISHED"}
+
+
+class SCENE_OT_RemoveOpenpypeInstance(bpy.types.Operator):
+    """Remove OpenPype instance"""
+
+    bl_idname = "scene.remove_openpype_instance"
+    bl_label = "Remove OpenPype Instance"
+    bl_options = {"REGISTER", "UNDO"}
+
+    instance_name: bpy.props.StringProperty(name="Instance Name")
+
+    def execute(self, context):
+        # Get openpype instance
+        openpype_instances = context.scene.openpype_instances
+        op_instance_index = openpype_instances.find(self.instance_name)
+        op_instance = openpype_instances[op_instance_index]
+
+        # Clear outliner if outliner data
+        if op_instance["bl_types_icons"] & {
+            bpy.types.Collection,
+            bpy.types.Object,
+        }:
+            instance_collection = bpy.data.collections.get(self.instance_name)
+            parent_collection = get_parent_collection(instance_collection)
+
+            # Move all children collections and objects to parent collection
+            link_to_collection(
+                list(instance_collection.objects)
+                + list(instance_collection.children),
+                parent_collection,
+            )
+
+            # Remove collection
+            bpy.data.collections.remove(
+                bpy.data.collections.get(self.instance_name)
+            )
+
+        # Remove openpype instance
+        openpype_instances.remove(op_instance_index)
 
         return {"FINISHED"}
 
@@ -671,7 +728,8 @@ classes = [
     LaunchWorkFiles,
     TOPBAR_MT_avalon,
     SCENE_OT_MakeContainerPublishable,
-    SimpleOperator,
+    SCENE_OT_CreateOpenpypeInstance,
+    SCENE_OT_RemoveOpenpypeInstance,
 ]
 
 
