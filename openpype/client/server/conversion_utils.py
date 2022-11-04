@@ -571,10 +571,18 @@ def convert_create_asset_to_v4(asset, project, con):
 
 
 def convert_create_task_to_v4(task, project, con):
-    task_type = task["type"]
-    new_task = {
-        "name": task["name"],
+    if not project["taskTypes"]:
+        raise ValueError(
+            "Project \"{}\" does not have any task types".format(
+                project["name"]))
 
+    task_type = task["type"]
+    if task_type not in project["taskTypes"]:
+        task_type = tuple(project["taskTypes"].keys())[0]
+
+    return {
+        "name": task["name"],
+        "taskType": task_type
     }
 
 
