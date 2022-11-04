@@ -12,7 +12,6 @@ from openpype.client.operations_base import (
 )
 
 from .server_api import get_server_api_connection
-from .entities import get_project
 from .conversion_utils import (
     convert_create_asset_to_v4,
     convert_create_task_to_v4,
@@ -415,7 +414,7 @@ def create_project(
     if con is None:
         con = get_server_api_connection()
 
-    if get_project(project_name, fields=["name"], con=con):
+    if con.get_project(project_name, fields=["name"]):
         raise ValueError("Project with name \"{}\" already exists".format(
             project_name
         ))
@@ -457,14 +456,14 @@ def create_project(
             project_name, details
         ))
 
-    return get_project(project_name)
+    return con.get_project(project_name)
 
 
 def delete_project(project_name, con=None):
     if con is None:
         con = get_server_api_connection()
 
-    if not get_project(project_name, fields=["name"], con=con):
+    if not con.get_project(project_name, fields=["name"]):
         raise ValueError("Project with name \"{}\" was not found".format(
             project_name
         ))
