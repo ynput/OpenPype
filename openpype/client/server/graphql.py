@@ -397,6 +397,9 @@ class BaseGraphQlQueryField(object):
 
         self._path = None
 
+    def __repr__(self):
+        return "<{} {}>".format(self.__class__.__name__, self.path)
+
     @property
     def need_query(self):
         """Still need query from server.
