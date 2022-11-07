@@ -88,7 +88,10 @@ class ExperimentalTools:
                 "publisher",
                 "New publisher",
                 "Combined creation and publishing into one tool.",
-                self._show_publisher
+                self._show_publisher,
+                hosts_filter=["blender", "maya", "nuke", "celaction", "flame",
+                              "fusion", "harmony", "hiero", "resolve",
+                              "tvpaint", "unreal"]
             ),
             ExperimentalTool(
                 "traypublisher",

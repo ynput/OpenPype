@@ -9,6 +9,7 @@ from openpype.pipeline import (
 )
 from openpype.lib import prepare_template_data
 from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
+from openpype.hosts.photoshop.api.pipeline import cache_and_get_instances
 
 
 class ImageCreator(Creator):
@@ -19,7 +20,7 @@ class ImageCreator(Creator):
     description = "Image creator"
 
     def collect_instances(self):
-        for instance_data in api.list_instances():
+        for instance_data in cache_and_get_instances(self):
             # legacy instances have family=='image'
             creator_id = (instance_data.get("creator_identifier") or
                           instance_data.get("family"))
@@ -97,6 +98,7 @@ class ImageCreator(Creator):
 
             data.update({"subset": subset_name})
             data.update({"members": [str(group.id)]})
+            data.update({"layer_name": layer_name})
             data.update({"long_name": "_".join(layer_names_in_hierarchy)})
 
             new_instance = CreatedInstance(self.family, subset_name, data,
@@ -121,7 +123,7 @@ class ImageCreator(Creator):
 
     def remove_instances(self, instances):
         for instance in instances:
-            api.remove_instance(instance)
+            self.host.remove_instance(instance)
             self._remove_instance_from_context(instance)
 
     def get_default_variants(self):
@@ -163,6 +165,11 @@ class ImageCreator(Creator):
     def _clean_highlights(self, stub, item):
         return item.replace(stub.PUBLISH_ICON, '').replace(stub.LOADED_ICON,
                                                            '')
-    @classmethod
-    def get_dynamic_data(cls, *args, **kwargs):
+
+    def get_dynamic_data(self, variant, task_name, asset_doc,
+                         project_name, host_name, instance):
+        if instance is not None:
+            layer_name = instance.get("layer_name")
+            if layer_name:
+                return {"layer": layer_name}
         return {"layer": "{layer}"}
