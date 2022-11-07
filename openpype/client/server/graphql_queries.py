@@ -232,7 +232,7 @@ def versions_graphql_query(fields):
     project_name_var = query.add_variable("projectName", "String!")
     subset_ids_var = query.add_variable("subsetIds", "[String!]")
     version_ids_var = query.add_variable("versionIds", "[String!]")
-    versions_var = query.add_variable("versions", "[Int]")
+    versions_var = query.add_variable("versions", "[Int!]")
     hero_only_var = query.add_variable("heroOnly", "Boolean")
     latest_only_var = query.add_variable("latestOnly", "Boolean")
     hero_or_latest_only_var = query.add_variable(
