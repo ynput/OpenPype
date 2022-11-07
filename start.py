@@ -242,6 +242,10 @@ if "--debug" in sys.argv:
     sys.argv.remove("--debug")
     os.environ["OPENPYPE_DEBUG"] = "1"
 
+if "--automatic-tests" in sys.argv:
+    sys.argv.remove("--automatic-tests")
+    os.environ["IS_TEST"] = "1"
+
 
 import igniter  # noqa: E402
 from igniter import BootstrapRepos  # noqa: E402
@@ -486,7 +490,6 @@ def _process_arguments() -> tuple:
     use_version = None
     use_staging = False
     commands = []
-    automatic_tests = False
 
     # OpenPype version specification through arguments
     use_version_arg = "--use-version"
@@ -571,10 +574,7 @@ def _process_arguments() -> tuple:
         sys.argv.pop(idx)
         sys.argv.insert(idx, "tray")
 
-    if "--automatic_tests" in sys.argv:
-        automatic_tests = True
-
-    return use_version, use_staging, commands, automatic_tests
+    return use_version, use_staging, commands
 
 
 def _determine_mongodb() -> str:
@@ -1001,7 +1001,7 @@ def boot():
     # Process arguments
     # ------------------------------------------------------------------------
 
-    use_version, use_staging, commands, automatic_tests = _process_arguments()
+    use_version, use_staging, commands = _process_arguments()
 
     if os.getenv("OPENPYPE_VERSION"):
         if use_version:
@@ -1028,9 +1028,8 @@ def boot():
     os.environ["OPENPYPE_DATABASE_NAME"] = \
         os.environ.get("OPENPYPE_DATABASE_NAME") or "openpype"
 
-    if automatic_tests:
+    if os.environ.get("IS_TEST") == "1":
         # change source DBs to predefined ones set for automatic testing
-        os.environ["IS_TEST"] = "1"
         os.environ["OPENPYPE_DATABASE_NAME"] += "_tests"
         avalon_db = os.environ.get("AVALON_DB") or "avalon"
         os.environ["AVALON_DB"] = avalon_db + "_tests"

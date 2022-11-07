@@ -181,7 +181,7 @@ def inject_openpype_environment(deadlinePlugin):
         add_args["envgroup"] = "farm"
 
         if job.GetJobEnvironmentKeyValue('IS_TEST'):
-            add_args["automatic_tests"] = "true"
+            args.append("--automatic-tests")
 
         if all(add_args.values()):
             for key, value in add_args.items():

@@ -24,6 +24,8 @@ from .pype_commands import PypeCommands
               help=("Enable debug"))
 @click.option("--verbose", expose_value=False,
               help=("Change OpenPype log level (debug - critical or 0-50)"))
+@click.option("--automatic-tests", is_flag=True, expose_value=False,
+              help=("Run in automatic tests mode"))
 def main(ctx):
     """Pype is main command serving as entry point to pipeline system.
 
@@ -127,11 +129,7 @@ def webpublisherwebserver(executable, upload_dir, host=None, port=None):
 @click.option(
     "--envgroup", help="Environment group (e.g. \"farm\")", default=None
 )
-@click.option(
-    "--automatic_tests", help="Is this automatic test", default=None
-)
-def extractenvironments(output_json_path, project, asset, task, app, envgroup,
-                        automatic_tests):
+def extractenvironments(output_json_path, project, asset, task, app, envgroup):
     """Extract environment variables for entered context to a json file.
 
     Entered output filepath will be created if does not exists.
@@ -152,10 +150,7 @@ def extractenvironments(output_json_path, project, asset, task, app, envgroup,
               multiple=True)
 @click.option("-g", "--gui", is_flag=True,
               help="Show Publish UI", default=False)
-@click.option(
-    "--automatic_tests", help="Is this automatic test", default=None
-)
-def publish(paths, targets, gui, automatic_tests):
+def publish(paths, targets, gui):
     """Start CLI publishing.
 
     Publish collects json from paths provided as an argument.
