@@ -1718,10 +1718,10 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
         super(CreateNextPageOverlay, self).__init__(parent)
         self.setCursor(QtCore.Qt.PointingHandCursor)
         self._arrow_color = (
-            get_objected_colors("bg-buttons").get_qcolor()
+            get_objected_colors("font").get_qcolor()
         )
         self._bg_color = (
-            get_objected_colors("publisher", "tab-bg").get_qcolor()
+            get_objected_colors("bg-buttons").get_qcolor()
         )
 
         change_anim = QtCore.QVariantAnimation()
