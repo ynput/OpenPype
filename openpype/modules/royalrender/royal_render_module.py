@@ -2,8 +2,7 @@
 """Module providing support for Royal Render."""
 import os
 import openpype.modules
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import IPluginPaths
+from openpype.modules import OpenPypeModule, IPluginPaths
 
 
 class RoyalRenderModule(OpenPypeModule, IPluginPaths):

@@ -90,9 +90,9 @@ class AssetDocsCache:
             return
 
         project_name = self._controller.project_name
-        asset_docs = get_assets(
+        asset_docs = list(get_assets(
             project_name, fields=self.projection.keys()
-        )
+        ))
         asset_docs_by_name = {}
         task_names_by_asset_name = {}
         for asset_doc in asset_docs:
