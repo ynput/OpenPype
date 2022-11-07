@@ -6,11 +6,7 @@ import collections
 import asyncio
 import logging
 import socket
-import platform
-import filecmp
-import tempfile
 import threading
-import shutil
 from queue import Queue
 from contextlib import closing
 import aiohttp

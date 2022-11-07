@@ -7,20 +7,21 @@ import ctypes
 import platform
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
-
 from Qt import QtWidgets, QtCore, QtGui
 
-from openpype import style
-from openpype.pipeline import install_host
-from openpype.hosts.unreal.api import UnrealHost
 from openpype.hosts.unreal.api.communication_server import (
     CommunicationWrapper
 )
+from openpype.hosts.unreal.api import UnrealHost
+from openpype.pipeline import install_host
+from openpype import style
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def safe_excepthook(*args):
     traceback.print_exception(*args)
+
 
 def main(launch_args):
 
@@ -77,6 +78,7 @@ def main(launch_args):
 
     # Run Qt application event processing
     sys.exit(qt_app.exec_())
+
 
 if __name__ == "__main__":
     args = list(sys.argv)

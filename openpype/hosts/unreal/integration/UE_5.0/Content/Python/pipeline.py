@@ -227,7 +227,9 @@ def ls():
     return containers
 
 
-def containerise(name, namespc, str_nodes, str_context, loader="", suffix="_CON"):
+def containerise(
+    name, namespc, str_nodes, str_context, loader="", suffix="_CON"
+):
     """Bundles *nodes* (assets) into a *container* and add metadata to it.
 
     Unreal doesn't support *groups* of assets that you can add metadata to.

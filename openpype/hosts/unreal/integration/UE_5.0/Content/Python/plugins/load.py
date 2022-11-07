@@ -318,6 +318,7 @@ def get_transform(actor, import_data, basis_data, transform_data):
     new_transform = basis.inverse() * transform * basis
     return tuning * conversion.inverse() * new_transform
 
+
 def process_family(
     assets_str, class_name, instance_name,
     transform_str, basis_str, sequence_path
