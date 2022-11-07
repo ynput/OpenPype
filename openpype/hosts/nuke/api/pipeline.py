@@ -228,7 +228,9 @@ def _install_menu():
     menu.addCommand(
         "Create... [deprecated]",
         lambda: nuke.message(
-            "Creator has been moved, you'll find it in the Publish tool -> Create tab")
+            "Creator has been moved, you'll find it "
+            "in the Publish tool -> Create tab"
+        )
     )
     menu.addCommand(
         "Publish...",
