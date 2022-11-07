@@ -266,46 +266,96 @@ def set_sequence_visibility(
         hid_section.set_level_names(maps)
 
 
+def get_transform(actor, import_data, basis_data, transform_data):
+    filename = import_data.get_first_filename()
+    path = Path(filename)
+
+    conversion = unreal.Matrix.IDENTITY.transform()
+    tuning = unreal.Matrix.IDENTITY.transform()
+
+    basis = unreal.Matrix(
+        basis_data[0],
+        basis_data[1],
+        basis_data[2],
+        basis_data[3]
+    ).transform()
+    transform = unreal.Matrix(
+        transform_data[0],
+        transform_data[1],
+        transform_data[2],
+        transform_data[3]
+    ).transform()
+
+    # Check for the conversion settings. We cannot access
+    # the alembic conversion settings, so we assume that
+    # the maya ones have been applied.
+    if path.suffix == '.fbx':
+        loc = import_data.import_translation
+        rot = import_data.import_rotation.to_vector()
+        scale = import_data.import_uniform_scale
+        conversion = unreal.Transform(
+            location=[loc.x, loc.y, loc.z],
+            rotation=[rot.x, -rot.y, -rot.z],
+            scale=[scale, scale, scale]
+        )
+        tuning = unreal.Transform(
+            rotation=[0.0, 0.0, 0.0],
+            scale=[1.0, 1.0, 1.0]
+        )
+    elif path.suffix == '.abc':
+        # This is the standard conversion settings for
+        # alembic files from Maya.
+        conversion = unreal.Transform(
+            location=[0.0, 0.0, 0.0],
+            rotation=[90.0, 0.0, 0.0],
+            scale=[1.0, -1.0, 1.0]
+        )
+        tuning = unreal.Transform(
+            rotation=[0.0, 0.0, 0.0],
+            scale=[1.0, 1.0, 1.0]
+        )
+
+    new_transform = basis.inverse() * transform * basis
+    return tuning * conversion.inverse() * new_transform
+
 def process_family(
     assets_str, class_name, instance_name,
     transform_str, basis_str, sequence_path
 ):
     assets = ast.literal_eval(assets_str)
-    basis = ast.literal_eval(transform_str)
-    transform = ast.literal_eval(basis_str)
+    basis_data = ast.literal_eval(basis_str)
+    transform_data = ast.literal_eval(transform_str)
 
     actors = []
     bindings = []
+
+    component_property = ''
+    mesh_property = ''
+
+    if class_name == 'StaticMesh':
+        component_property = 'static_mesh_component'
+        mesh_property = 'static_mesh'
+    elif class_name == 'SkeletalMesh':
+        component_property = 'skeletal_mesh_component'
+        mesh_property = 'skeletal_mesh'
 
     sequence = get_asset(sequence_path) if sequence_path else None
 
     for asset in assets:
         obj = get_asset(asset)
         if obj and obj.get_class().get_name() == class_name:
-            basis_matrix = unreal.Matrix(
-                basis[0],
-                basis[1],
-                basis[2],
-                basis[3]
-            )
-            transform_matrix = unreal.Matrix(
-                transform[0],
-                transform[1],
-                transform[2],
-                transform[3]
-            )
-            new_transform = (
-                basis_matrix.get_inverse() * transform_matrix * basis_matrix
-            ).transform()
             actor = unreal.EditorLevelLibrary.spawn_actor_from_object(
-                obj, new_transform.translation)
-            if instance_name:
-                try:
-                    actor.set_actor_label(instance_name)
-                except Exception as e:
-                    print(e)
-            actor.set_actor_rotation(new_transform.rotation.rotator(), False)
-            actor.set_actor_scale3d(new_transform.scale3d)
+                obj, unreal.Vector(0.0, 0.0, 0.0))
+            actor.set_actor_label(instance_name)
+
+            component = actor.get_editor_property(component_property)
+            mesh = component.get_editor_property(mesh_property)
+            import_data = mesh.get_editor_property('asset_import_data')
+
+            transform = get_transform(
+                actor, import_data, basis_data, transform_data)
+
+            actor.set_actor_transform(transform, False, True)
 
             if class_name == 'SkeletalMesh':
                 skm_comp = actor.get_editor_property('skeletal_mesh_component')
