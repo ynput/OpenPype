@@ -9,6 +9,7 @@ import pyblish.api
 # import hou  ???
 
 from openpype.pipeline import legacy_io
+from openpype.tests.lib import is_in_tests
 
 
 class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
