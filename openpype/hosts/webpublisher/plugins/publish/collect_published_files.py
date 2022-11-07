@@ -83,8 +83,9 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             self.log.info("task_data:: {}".format(task_data))
 
             is_sequence = len(task_data["files"]) > 1
+            first_file = task_data["files"][0]
 
-            _, extension = os.path.splitext(task_data["files"][0])
+            _, extension = os.path.splitext(first_file)
             family, families, tags = self._get_family(
                 self.task_type_to_family,
                 task_type,
@@ -149,9 +150,12 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                         self.log.warning("Unable to count frames "
                                          "duration {}".format(no_of_frames))
 
-            # raise ValueError("STOP")
             instance.data["handleStart"] = asset_doc["data"]["handleStart"]
             instance.data["handleEnd"] = asset_doc["data"]["handleEnd"]
+
+            if "review" in tags:
+                first_file_path = os.path.join(task_dir, first_file)
+                instance.data["thumbnailSource"] = first_file_path
 
             instances.append(instance)
             self.log.info("instance.data:: {}".format(instance.data))
