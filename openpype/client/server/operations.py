@@ -167,8 +167,8 @@ class ServerUpdateOperation(UpdateOperation):
             raise ValueError("Project cannot be created using operations")
 
         if entity_type == "asset":
-            new_update_data = convert_update_folder_to_v4(
-                update_data, self.con
+            raise ValueError(
+                "Update operations for assets are not implemented yet"
             )
 
         elif entity_type == "subset":
