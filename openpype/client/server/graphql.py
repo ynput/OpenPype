@@ -29,6 +29,39 @@ def fields_to_dict(fields):
     return output
 
 
+class GraphQlQueryFailed(Exception):
+    def __init__(self, errors, query, variables):
+        if variables is None:
+            variables = {}
+
+        error_messages = []
+        for error in errors:
+            msg = error["message"]
+            path = error.get("path")
+            if path:
+                msg += " on item '{}'".format("/".join(path))
+            locations = error.get("locations")
+            if locations:
+                _locations = [
+                    "Line {} Column {}".format(
+                        location["line"], location["column"]
+                    )
+                    for location in locations
+                ]
+
+                msg += " ({})".format(" and ".join(_locations))
+            error_messages.append(msg)
+
+        message = "GraphQl query Failed"
+        if error_messages:
+            message = "{}: {}".format(message, " | ".join(error_messages))
+
+        self.errors = errors
+        self.query = query
+        self.variables = copy.deepcopy(variables)
+        super(GraphQlQueryFailed, self).__init__(message)
+
+
 class QueryVariable(object):
     """Object representing single varible used in GraphQlQuery.
 
@@ -313,14 +346,14 @@ class GraphQlQuery:
         progress_data = {}
         output = {}
         while self.need_query:
+            query_str = self.calculate_query()
+            variables = self.get_variables_values()
             response = con.query_graphql(
-                self.calculate_query(),
+                query_str,
                 self.get_variables_values()
             )
             if response.errors:
-                raise ValueError(
-                    "QueryFailed {}".format(str(response.errors))
-                )
+                raise GraphQlQueryFailed(response.errors, query_str, variables)
             self.parse_result(response.data["data"], output, progress_data)
 
         return output
@@ -339,13 +372,12 @@ class GraphQlQuery:
         if self.has_multiple_edge_fields:
             output = {}
             while self.need_query:
-                response = con.query_graphql(
-                    self.calculate_query(),
-                    self.get_variables_values()
-                )
+                query_str = self.calculate_query()
+                variables = self.get_variables_values()
+                response = con.query_graphql(query_str, variables)
                 if response.errors:
-                    raise ValueError(
-                        "QueryFailed {}".format(str(response.errors))
+                    raise GraphQlQueryFailed(
+                        response.errors, query_str, variables
                     )
                 self.parse_result(response.data["data"], output, progress_data)
 
@@ -354,14 +386,14 @@ class GraphQlQuery:
         else:
             while self.need_query:
                 output = {}
-                response = con.query_graphql(
-                    self.calculate_query(),
-                    self.get_variables_values()
-                )
+                query_str = self.calculate_query()
+                variables = self.get_variables_values()
+                response = con.query_graphql(query_str, variables)
                 if response.errors:
-                    raise ValueError(
-                        "QueryFailed {}".format(str(response.errors))
+                    raise GraphQlQueryFailed(
+                        response.errors, query_str, variables
                     )
+
                 self.parse_result(response.data["data"], output, progress_data)
 
                 yield output
