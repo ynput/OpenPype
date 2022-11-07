@@ -197,7 +197,13 @@ class Window(QtWidgets.QWidget):
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.addWidget(pages_widget, 1)
 
+        # Set context after asset widget is refreshed
+        # - to do so it is necessary to wait until refresh is done
+        set_context_timer = QtCore.QTimer()
+        set_context_timer.setInterval(100)
+
         # Connect signals
+        set_context_timer.timeout.connect(self._on_context_set_timeout)
         assets_widget.selection_changed.connect(
             self._on_assets_widget_selection_changed
         )
@@ -210,6 +216,7 @@ class Window(QtWidgets.QWidget):
         )
         side_panel.save_clicked.connect(self.on_side_panel_save)
 
+        self._set_context_timer = set_context_timer
         self.home_page_widget = home_page_widget
         self.pages_widget = pages_widget
         self.home_body_widget = home_body_widget
@@ -226,6 +233,7 @@ class Window(QtWidgets.QWidget):
         self.resize(1200, 600)
 
         self._first_show = True
+        self._context_to_set = None
 
     def ensure_visible(
         self, use_context=None, save=None, on_top=None
@@ -394,15 +402,19 @@ class Window(QtWidgets.QWidget):
 
     def set_context(self, context):
         # type: (dict[str, Any]) -> None
-        if context is None:
+        self._context_to_set = context
+        self._set_context_timer.start()
+
+    def _on_context_set_timeout(self):
+        if self._context_to_set is None:
+            self._set_context_timer.stop()
             return
 
         if self.assets_widget.refreshing:
-            def _set_context():
-                self.set_context(context)
+            return
 
-            return QtCore.QTimer.singleShot(100, _set_context)
-
+        self._set_context_timer.stop()
+        self._context_to_set, context = None, self._context_to_set
         if "asset" in context:
             asset_doc = get_asset_by_name(
                 self.project_name, context["asset"], fields=["_id"]

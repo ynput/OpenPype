@@ -630,9 +630,13 @@ class ToolbarButton(QtWidgets.QPushButton):
 
 class ItemViewHeaderWidget(QtWidgets.QWidget):
     def __init__(
-        self, parent_item_widget, item_name="Items", show_search_bar=False
+        self,
+        parent_item_widget,
+        item_name="Items",
+        show_search_bar=False,
+        show_refresh_button=False
     ):
-        # type: (ItemViewWidget, str, bool) -> None
+        # type: (ItemViewWidget, str, bool, bool) -> None
 
         super(ItemViewHeaderWidget, self).__init__()
 
@@ -702,6 +706,9 @@ class ItemViewHeaderWidget(QtWidgets.QWidget):
         if not show_search_bar:
             header_bottom_row_widget.hide()
 
+        if not show_refresh_button:
+            refresh_btn.hide()
+
         self._filter_input = filter_input
         self._refresh_btn = refresh_btn
         self._current_item_btn = current_item_btn
@@ -734,7 +741,8 @@ class ItemViewWidget(QtWidgets.QWidget):
         view_widget_type,  # type: type[QtWidgets.QWidget]
         item_name="Items",  # type: str
         parent=None,  # type: QtWidgets.QWidget | None
-        show_search_bar=False  # type: bool
+        show_search_bar=False,  # type: bool
+        show_refresh_button=False  # type: bool
     ):
         super(ItemViewWidget, self).__init__(parent=parent)
 
@@ -745,7 +753,10 @@ class ItemViewWidget(QtWidgets.QWidget):
 
         # Header
         header_widget = ItemViewHeaderWidget(
-            self, item_name, show_search_bar=show_search_bar
+            self,
+            item_name,
+            show_search_bar=show_search_bar,
+            show_refresh_button=show_refresh_button
         )
 
         # View

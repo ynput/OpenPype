@@ -112,3 +112,10 @@ tools/run_eventserver.*
 tools/dev_*
 
 .github_changelog_generator
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Pyright
+**/pyrightconfig.json
