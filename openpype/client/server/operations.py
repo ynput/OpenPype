@@ -37,6 +37,15 @@ class FailedOperations(Exception):
     pass
 
 
+def entity_data_json_default(value):
+    if isinstance(value, datetime.datetime):
+        return int(value.timestamp())
+
+    raise TypeError(
+        "Object of type {} is not JSON serializable".format(str(type(value)))
+    )
+
+
 class ServerCreateOperation(CreateOperation):
     """Opeartion to create an entity.
 
@@ -88,7 +97,9 @@ class ServerCreateOperation(CreateOperation):
         # Simple check if data can be dumped into json
         #   - should raise error on 'ObjectId' object
         try:
-            json.dumps(new_data)
+            new_data = json.loads(
+                json.dumps(new_data, default=entity_data_json_default)
+            )
         except:
             print(json.dumps(
                 new_data,
