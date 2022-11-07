@@ -3,7 +3,7 @@ from Qt import QtWidgets
 from openpype import style
 from openpype.lib import Logger
 from openpype.pipeline import legacy_io
-from openpype.widgets.attribute_defs import AttributeDefinitionsWidget
+from openpype.tools.attribute_defs import AttributeDefinitionsWidget
 
 
 class WorkfileBuildPlaceholderDialog(QtWidgets.QDialog):

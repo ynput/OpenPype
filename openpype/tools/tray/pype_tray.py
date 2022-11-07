@@ -401,7 +401,7 @@ class TrayManager:
 
     def initialize_modules(self):
         """Add modules to tray."""
-        from openpype_interfaces import (
+        from openpype.modules import (
             ITrayAction,
             ITrayService
         )
