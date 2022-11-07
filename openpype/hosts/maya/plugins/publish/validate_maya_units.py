@@ -3,7 +3,6 @@ import maya.cmds as cmds
 import pyblish.api
 
 import openpype.hosts.maya.api.lib as mayalib
-from openpype.pipeline.context_tools import get_current_project_asset
 from math import ceil
 from openpype.pipeline.publish import (
     RepairContextAction,
@@ -34,23 +33,21 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
     def process(self, context):
 
         # Collected units
-        linearunits = context.data.get('linearUnits')
-        angularunits = context.data.get('angularUnits')
-        # TODO(antirotor): This is hack as for framerates having multiple
+        linear_units = context.data.get('linearUnits')
+        angular_units = context.data.get('angularUnits')
+        # TODO(antirotor): This is hack as for frame rates having multiple
         # decimal places. FTrack is ceiling decimal values on
         # fps to two decimal places but Maya 2019+ is reporting those fps
         # with much higher resolution. As we currently cannot fix Ftrack
         # rounding, we have to round those numbers coming from Maya.
-        # NOTE: this must be revisited yet again as it seems that Ftrack is
-        # now flooring the value?
         fps = float_round(context.data.get('fps'), 2, ceil)
 
-        # TODO repace query with using 'context.data["assetEntity"]'
-        asset_doc = get_current_project_asset()
+        asset_doc = context.data["assetEntity"]
         asset_fps = asset_doc["data"]["fps"]
+        asset_fps = float_round(asset_fps, 2, ceil)
 
-        self.log.info('Units (linear): {0}'.format(linearunits))
-        self.log.info('Units (angular): {0}'.format(angularunits))
+        self.log.info('Units (linear): {0}'.format(linear_units))
+        self.log.info('Units (angular): {0}'.format(angular_units))
         self.log.info('Units (time): {0} FPS'.format(fps))
 
         valid = True
@@ -58,8 +55,8 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         # Check if units are correct
         if (
             self.validate_linear_units
-            and linearunits
-            and linearunits != self.linear_units
+            and linear_units
+            and linear_units != self.linear_units
         ):
             self.log.error("Scene linear units must be {}".format(
                 self.linear_units))
@@ -67,8 +64,8 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
 
         if (
             self.validate_angular_units
-            and angularunits
-            and angularunits != self.angular_units
+            and angular_units
+            and angular_units != self.angular_units
         ):
             self.log.error("Scene angular units must be {}".format(
                 self.angular_units))
@@ -97,7 +94,7 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         cls.log.debug(current_linear)
 
         cls.log.info("Setting time unit to match project")
-        # TODO repace query with using 'context.data["assetEntity"]'
-        asset_doc = get_current_project_asset()
+        asset_doc = context.data["assetEntity"]
         asset_fps = asset_doc["data"]["fps"]
+        asset_fps = float_round(asset_fps, 2, ceil)
         mayalib.set_scene_fps(asset_fps)
