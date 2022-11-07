@@ -1030,9 +1030,11 @@ def boot():
 
     if os.environ.get("IS_TEST") == "1":
         # change source DBs to predefined ones set for automatic testing
-        os.environ["OPENPYPE_DATABASE_NAME"] += "_tests"
+        if "_tests" not in os.environ["OPENPYPE_DATABASE_NAME"]:
+            os.environ["OPENPYPE_DATABASE_NAME"] += "_tests"
         avalon_db = os.environ.get("AVALON_DB") or "avalon"
-        os.environ["AVALON_DB"] = avalon_db + "_tests"
+        if "_tests" not in avalon_db:
+            os.environ["AVALON_DB"] = avalon_db + "_tests"
 
     global_settings = get_openpype_global_settings(openpype_mongo)
 
