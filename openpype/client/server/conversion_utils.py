@@ -1,5 +1,7 @@
 import datetime
+import collections
 
+from openpype.client.operations_base import REMOVED_VALUE
 from .constants import (
     DEFAULT_V3_FOLDER_FIELDS,
     FOLDER_ATTRIBS,
@@ -763,21 +765,172 @@ def convert_create_representation_to_v4(representation, con):
     return converted_representation
 
 
-def convert_update_folder_to_v4(update_data, con):
+def _from_flat_dict(data):
+    output = {}
+    for key, value in data.items():
+        output_value = output
+        for subkey in key.split("."):
+            if subkey not in output_value:
+                output_value[subkey] = {}
+            output_value = output_value[subkey]
+
+        output_value[subkey] = value
+    return output
+
+
+def _to_flat_dict(data):
+    output = {}
+    flat_queue = collections.deque()
+    flat_queue.append(([], data))
+    while flat_queue:
+        item = flat_queue.popleft()
+        parent_keys, data = item
+        for key, value in data.items():
+            keys = list(parent_keys)
+            keys.append(key)
+            if isinstance(value, dict):
+                flat_queue.append((keys, value))
+            else:
+                full_key = ".".join(keys)
+                output[full_key] = value
+
+    return output
+
+
+def convert_update_subset_to_v4(project_name, subset_id, update_data, con):
     new_update_data = {}
-    return new_update_data
+
+    subset_attributes = con.get_attributes_for_type("subset")
+    full_update_data = _from_flat_dict(update_data)
+    data = full_update_data.get("data")
+    new_data = {}
+    attribs = {}
+    if data:
+        if "family" in data:
+            family = data.pop("family")
+            new_update_data["family"] = family
+
+        if "families" in data:
+            families = data.pop("families")
+            if "family" not in new_update_data:
+                new_update_data["family"] = families[0]
+
+        for key, value in data.items():
+            if key in subset_attributes:
+                if value is REMOVED_VALUE:
+                    value = None
+                attribs[key] = value
+
+            elif value is not REMOVED_VALUE:
+                new_data[key] = value
+
+    if attribs:
+        new_update_data["attribs"] = attribs
+
+    if new_data:
+        print("Subset has new data: {}".format(new_data))
+        new_update_data["data"] = new_data
+
+    if "name" in update_data:
+        new_update_data["name"] = update_data["name"]
+
+    if "type" in update_data:
+        new_type = update_data["type"]
+        if new_type == "subset":
+            new_update_data["active"] = True
+        elif new_type == "archived_subset":
+            new_update_data["active"] = False
+
+    if "parent" in update_data:
+        new_update_data["folderId"] = update_data["parent"]
+
+    return _to_flat_dict(new_update_data)
 
 
-def convert_update_subset_to_v4(update_data, con):
+def convert_update_version_to_v4(project_name, version_id, update_data, con):
     new_update_data = {}
-    return new_update_data
+
+    version_attributes = con.get_attributes_for_type("version")
+    full_update_data = _from_flat_dict(update_data)
+    data = full_update_data.get("data")
+    new_data = {}
+    attribs = {}
+    if data:
+        if "author" in data:
+            new_update_data["author"] = data.pop("author")
+
+        if "thumbnail_id" in data:
+            data.pop("thumbnail_id")
+
+        for key, value in data.items():
+            if key in version_attributes:
+                if value is REMOVED_VALUE:
+                    value = None
+                attribs[key] = value
+
+            elif value is not REMOVED_VALUE:
+                new_data[key] = value
+
+    if attribs:
+        new_update_data["attribs"] = attribs
+
+    if new_data:
+        print("Version has new data: {}".format(new_data))
+        new_update_data["data"] = new_data
+
+    if "name" in update_data:
+        new_update_data["version"] = update_data["name"]
+
+    if "type" in update_data:
+        new_type = update_data["type"]
+        if new_type == "version":
+            new_update_data["active"] = True
+        elif new_type == "archived_version":
+            new_update_data["active"] = False
+
+    if "parent" in update_data:
+        new_update_data["subsetId"] = update_data["parent"]
+
+    return _to_flat_dict(new_update_data)
 
 
-def convert_update_version_to_v4(update_data, con):
+def convert_update_representation_to_v4(
+    project_name, repre_id, update_data, con
+):
     new_update_data = {}
-    return new_update_data
 
+    folder_attributes = con.get_attributes_for_type("folder")
+    full_update_data = _from_flat_dict(update_data)
+    data = full_update_data.get("data")
 
-def convert_update_representation_to_v4(update_data, con):
-    new_update_data = {}
-    return new_update_data
+    new_data = {}
+    attribs = {}
+    if data:
+        for key, value in data.items():
+            if key in folder_attributes:
+                attribs[key] = value
+            else:
+                new_data[key] = value
+
+    if "name" in update_data:
+        new_update_data["name"] = update_data["name"]
+
+    if "type" in update_data:
+        new_type = update_data["type"]
+        if new_type == "representation":
+            new_update_data["active"] = True
+        elif new_type == "archived_representation":
+            new_update_data["active"] = False
+
+    if "parent" in update_data:
+        new_update_data["versionId"] = update_data["parent"]
+
+    if "context" in update_data or "files" in update_data:
+        new_data["context"] = update_data["context"]
+        new_data["files"] = update_data["files"]
+
+    if new_data:
+        print("Representation has new data: {}".format(new_data))
+        new_update_data["data"] = new_data
+
+    return _to_flat_dict(new_update_data)
