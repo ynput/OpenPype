@@ -83,7 +83,8 @@ class StaticMeshAlembicLoader(plugin.Loader):
 
             if not default_conversion:
                 options_extra_properties.extend([
-                    ("conversion_settings", "preset", "unreal.AbcConversionPreset.CUSTOM"),
+                    ("conversion_settings", "preset",
+                        "unreal.AbcConversionPreset.CUSTOM"),
                     ("conversion_settings", "flip_u", "False"),
                     ("conversion_settings", "flip_v", "False"),
                     ("conversion_settings", "rotation", "[0.0, 0.0, 0.0]"),

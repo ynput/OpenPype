@@ -2,7 +2,6 @@ import os
 import sys
 import signal
 import traceback
-import subprocess
 import ctypes
 import platform
 import logging

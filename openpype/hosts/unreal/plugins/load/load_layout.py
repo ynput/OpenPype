@@ -458,8 +458,8 @@ class LayoutLoader(plugin.Loader):
                     for sequence in existing_sequences:
                         sequences.append(sequence)
                         frame_range = up.send_request_literal(
-                                "get_sequence_frame_range",
-                                params=[sequence])
+                            "get_sequence_frame_range",
+                            params=[sequence])
                         frame_ranges.append(frame_range)
 
             project_name = legacy_io.active_project()

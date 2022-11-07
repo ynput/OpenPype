@@ -79,7 +79,8 @@ class SkeletalMeshFBXLoader(plugin.Loader):
                 ("import_textures", "False"),
                 ("skeleton", "None"),
                 ("create_physics_asset", "False"),
-                ("mesh_type_to_import", "unreal.FBXImportType.FBXIT_SKELETAL_MESH")
+                ("mesh_type_to_import", 
+                    "unreal.FBXImportType.FBXIT_SKELETAL_MESH")
             ]
 
             options_extra_properties = [
