@@ -316,10 +316,11 @@ class OperationsSession(BaseOperationsSession):
 
             for op_result in result["operations"]:
                 if not op_result["success"]:
+                    operation_id = op_result["id"]
                     raise FailedOperations((
                         "Operation \"{}\" failed with data:\n{}\nError: {}."
                     ).format(
-                        op_result["id"],
+                        operation_id,
                         json.dumps(body_by_id[operation_id], indent=4),
                         op_result["error"],
                     ))
