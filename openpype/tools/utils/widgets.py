@@ -618,14 +618,17 @@ class PlaceholderHistoryLineEdit(QtWidgets.QComboBox):
     def __init__(self, placeholder_text="...", parent=None):
         super(PlaceholderHistoryLineEdit, self).__init__(parent=parent)
         self.setEditable(True)
-        self.setPlaceholderText(placeholder_text)
+        self.lineEdit().setPlaceholderText(placeholder_text)
 
 
-class ToolbarButton(QtWidgets.QPushButton):
+class ToolbarButton(QtWidgets.QToolButton):
     def __init__(self, *args, **kwargs):
         super(ToolbarButton, self).__init__(*args, **kwargs)
-        self.setFixedWidth(35)
-        self.setFixedHeight(28)
+
+    def showEvent(self, event):
+        # maintain square aspect ratio on all screen resolutions:
+        self.setFixedHeight(self.width())
+        return super().showEvent(event)
 
 
 class ItemViewHeaderWidget(QtWidgets.QWidget):
@@ -642,10 +645,11 @@ class ItemViewHeaderWidget(QtWidgets.QWidget):
 
         title_label = QtWidgets.QLabel(item_name)
         title_label.setStyleSheet("font-weight: bold;")
+
         current_item_icon = qtawesome.icon(
             "fa.arrow-down", color=get_default_tools_icon_color()
         )
-        current_item_btn = ToolbarButton("")
+        current_item_btn = ToolbarButton()
         current_item_btn.setIcon(current_item_icon)
         current_item_btn.setToolTip("Go to Asset from current Session")
         # Hide by default
@@ -654,17 +658,17 @@ class ItemViewHeaderWidget(QtWidgets.QWidget):
         refresh_icon = qtawesome.icon(
             "fa.refresh", color=get_default_tools_icon_color()
         )
-        refresh_btn = ToolbarButton("")
+        refresh_btn = ToolbarButton()
         refresh_btn.setIcon(refresh_icon)
         refresh_btn.setToolTip("Refresh items")
 
         filter_input = PlaceholderHistoryLineEdit(
-            placeholder_text="Filter...", parent=self
+            placeholder_text="Filter {}...".format(item_name), parent=self
         )
         clear_filter_icon = qtawesome.icon(
             "fa.close", color=get_default_tools_icon_color()
         )
-        clear_filter_btn = ToolbarButton("")
+        clear_filter_btn = ToolbarButton()
         clear_filter_btn.setIcon(clear_filter_icon)
         clear_filter_btn.setToolTip("Clear current filter")
 
@@ -683,8 +687,8 @@ class ItemViewHeaderWidget(QtWidgets.QWidget):
         )
         header_bottom_row_layout.setContentsMargins(0, 0, 0, 0)
         header_bottom_row_layout.setSpacing(2)
-        header_bottom_row_layout.addWidget(filter_input)
-        header_bottom_row_layout.addWidget(clear_filter_btn)
+        header_bottom_row_layout.addWidget(filter_input, 2)
+        header_bottom_row_layout.addWidget(clear_filter_btn, 1)
 
         header_layout = QtWidgets.QVBoxLayout(self)
         header_layout.setContentsMargins(0, 0, 0, 0)
@@ -709,12 +713,17 @@ class ItemViewHeaderWidget(QtWidgets.QWidget):
         if not show_refresh_button:
             refresh_btn.hide()
 
+        if not (show_search_bar and show_refresh_button):
+            # Add top and bottom margins to have labels
+            # match even if search and refresh button
+            # are hidden:
+            header_layout.setContentsMargins(0, 4, 0, 32)
+
         self._filter_input = filter_input
         self._refresh_btn = refresh_btn
         self._current_item_btn = current_item_btn
 
         clear_filter_btn.clicked.connect(self._on_clear_filter_btn_released)
-
         filter_input.currentTextChanged.connect(
             parent_item_widget._on_filter_text_change
         )
