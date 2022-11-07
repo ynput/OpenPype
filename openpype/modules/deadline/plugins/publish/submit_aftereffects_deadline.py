@@ -11,6 +11,7 @@ from openpype.lib import (
 from openpype.pipeline import legacy_io
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+from openpype.tests.lib import is_in_tests
 
 
 @attr.s
@@ -50,7 +51,7 @@ class AfterEffectsSubmitDeadline(
         context = self._instance.context
 
         batch_name = os.path.basename(self._instance.data["source"])
-        if os.environ.get("IS_TEST"):
+        if is_in_tests():
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
         dln_job_info.Name = self._instance.data["name"]
         dln_job_info.BatchName = batch_name

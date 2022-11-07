@@ -13,6 +13,7 @@ import pyblish.api
 from openpype.pipeline import legacy_io
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+from openpype.tests.lib import is_in_tests
 
 
 class _ZipFile(ZipFile):
@@ -263,7 +264,7 @@ class HarmonySubmitDeadline(
         job_info.SecondaryPool = self._instance.data.get("secondaryPool")
         job_info.ChunkSize = self.chunk_size
         batch_name = os.path.basename(self._instance.data["source"])
-        if os.environ.get("IS_TEST"):
+        if is_in_tests:
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
         job_info.BatchName = batch_name
         job_info.Department = self.department

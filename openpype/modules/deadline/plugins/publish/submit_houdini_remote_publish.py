@@ -8,6 +8,7 @@ import hou
 import pyblish.api
 
 from openpype.pipeline import legacy_io
+from openpype.tests.lib import is_in_tests
 
 
 class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
@@ -61,7 +62,7 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
 
         job_name = "{scene} [PUBLISH]".format(scene=scenename)
         batch_name = "{code} - {scene}".format(code=code, scene=scenename)
-        if os.environ.get("IS_TEST"):
+        if is_in_tests():
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
         deadline_user = "roy"  # todo: get deadline user dynamically
 

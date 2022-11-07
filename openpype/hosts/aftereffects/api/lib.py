@@ -13,6 +13,7 @@ from openpype.pipeline import install_host
 from openpype.modules import ModulesManager
 
 from openpype.tools.utils import host_tools
+from openpype.tests.lib import is_in_tests
 from .launch_logic import ProcessLauncher, get_stub
 
 log = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ def main(*subprocess_args):
                 webpublisher_addon.headless_publish,
                 log,
                 "CloseAE",
-                os.environ.get("IS_TEST")
+                is_in_tests()
             )
         )
 

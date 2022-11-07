@@ -18,6 +18,7 @@ from openpype.pipeline import (
     get_representation_path,
     legacy_io,
 )
+from openpype.tests.lib import is_in_tests
 from openpype.pipeline.farm.patterning import match_aov_pattern
 
 
@@ -249,7 +250,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         environment["OPENPYPE_USERNAME"] = instance.context.data["user"]
         environment["OPENPYPE_PUBLISH_JOB"] = "1"
         environment["OPENPYPE_RENDER_JOB"] = "0"
-        environment["IS_TEST"] = os.environ.get("IS_TEST")
+        environment["IS_TEST"] = is_in_tests()
         # Add mongo url if it's enabled
         if instance.context.data.get("deadlinePassMongoUrl"):
             mongo_url = os.environ.get("OPENPYPE_MONGO")
@@ -266,7 +267,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "--targets", "farm"
         ]
 
-        if os.environ.get("IS_TEST"):
+        if is_in_tests():
             args.append("--automatic-tests")
 
         # Generate the payload for Deadline submission

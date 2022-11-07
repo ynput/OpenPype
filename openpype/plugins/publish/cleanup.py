@@ -5,6 +5,8 @@ import shutil
 import pyblish.api
 import re
 
+from openpype.tests.lib import is_in_tests
+
 
 class CleanUp(pyblish.api.InstancePlugin):
     """Cleans up the staging directory after a successful publish.
@@ -44,7 +46,7 @@ class CleanUp(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Plugin entry point."""
-        if os.environ.get("IS_TEST"):
+        if is_in_tests():
             # let automatic test process clean up temporary data
             return
         # Get the errored instances

@@ -6,6 +6,7 @@ from maya import cmds
 
 from openpype.pipeline import legacy_io, PublishXmlValidationError
 from openpype.settings import get_project_settings
+from openpype.tests.lib import is_in_tests
 
 import pyblish.api
 
@@ -58,7 +59,7 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
         job_name = "{scene} [PUBLISH]".format(scene=scenename)
         batch_name = "{code} - {scene}".format(code=project_name,
                                                scene=scenename)
-        if os.environ.get("IS_TEST"):
+        if is_in_tests():
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
 
         # Generate the payload for Deadline submission

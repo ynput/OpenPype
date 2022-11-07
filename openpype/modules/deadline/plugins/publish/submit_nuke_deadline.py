@@ -9,6 +9,7 @@ import pyblish.api
 
 import nuke
 from openpype.pipeline import legacy_io
+from openpype.tests.lib import is_in_tests
 
 
 class NukeSubmitDeadline(pyblish.api.InstancePlugin):
@@ -144,7 +145,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         render_dir = os.path.normpath(os.path.dirname(render_path))
         batch_name = os.path.basename(script_path)
         jobname = "%s - %s" % (batch_name, instance.name)
-        if os.environ.get("IS_TEST"):
+        if is_in_tests():
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
 
 
