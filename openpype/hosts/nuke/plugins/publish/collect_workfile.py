@@ -6,7 +6,7 @@ import pyblish.api
 class CollectWorkfile(pyblish.api.InstancePlugin):
     """Collect current script for publish."""
 
-    order = pyblish.api.CollectorOrder - 0.498
+    order = pyblish.api.CollectorOrder
     label = "Collect Workfile"
     hosts = ['nuke']
     families = ["workfile"]
