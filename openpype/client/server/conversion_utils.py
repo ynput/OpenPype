@@ -325,6 +325,9 @@ def convert_v4_folder_to_v3(folder, project_name):
             output_data = {}
         output_data["tasks"] = convert_v4_tasks_to_v3(folder["tasks"])
 
+    if "parents" in folder:
+        output_data["parents"] = folder["parents"]
+
     output["data"] = output_data
 
     return output
