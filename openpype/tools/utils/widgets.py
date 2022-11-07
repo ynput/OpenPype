@@ -622,13 +622,21 @@ class PlaceholderHistoryLineEdit(QtWidgets.QComboBox):
 
 
 class ToolbarButton(QtWidgets.QToolButton):
-    def __init__(self, *args, **kwargs):
-        super(ToolbarButton, self).__init__(*args, **kwargs)
+    def __init__(self, icon_name):
+        super(ToolbarButton, self).__init__()
+        self.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
+
+        icon = qtawesome.icon(
+            icon_name, color=get_default_tools_icon_color()
+        )
+        self.setIcon(icon)
 
     def showEvent(self, event):
         # maintain square aspect ratio on all screen resolutions:
-        self.setFixedHeight(self.width())
-        return super().showEvent(event)
+        result = super().showEvent(event)
+        min_size = min(self.width(), self.height())
+        self.setFixedSize(QtCore.QSize(min_size, min_size))
+        return result
 
 
 class ItemViewHeaderWidget(QtWidgets.QWidget):
@@ -646,30 +654,18 @@ class ItemViewHeaderWidget(QtWidgets.QWidget):
         title_label = QtWidgets.QLabel(item_name)
         title_label.setStyleSheet("font-weight: bold;")
 
-        current_item_icon = qtawesome.icon(
-            "fa.arrow-down", color=get_default_tools_icon_color()
-        )
-        current_item_btn = ToolbarButton()
-        current_item_btn.setIcon(current_item_icon)
+        current_item_btn = ToolbarButton("fa.arrow-down")
         current_item_btn.setToolTip("Go to Asset from current Session")
         # Hide by default
         current_item_btn.setVisible(False)
 
-        refresh_icon = qtawesome.icon(
-            "fa.refresh", color=get_default_tools_icon_color()
-        )
-        refresh_btn = ToolbarButton()
-        refresh_btn.setIcon(refresh_icon)
+        refresh_btn = ToolbarButton("fa.refresh")
         refresh_btn.setToolTip("Refresh items")
 
         filter_input = PlaceholderHistoryLineEdit(
             placeholder_text="Filter {}...".format(item_name), parent=self
         )
-        clear_filter_icon = qtawesome.icon(
-            "fa.close", color=get_default_tools_icon_color()
-        )
-        clear_filter_btn = ToolbarButton()
-        clear_filter_btn.setIcon(clear_filter_icon)
+        clear_filter_btn = ToolbarButton("fa.close")
         clear_filter_btn.setToolTip("Clear current filter")
 
         # Header:
@@ -707,17 +703,8 @@ class ItemViewHeaderWidget(QtWidgets.QWidget):
             size_policy.setVerticalPolicy(size_policy.MinimumExpanding)
             widget.setSizePolicy(size_policy)
 
-        if not show_search_bar:
-            header_bottom_row_widget.hide()
-
-        if not show_refresh_button:
-            refresh_btn.hide()
-
-        if not (show_search_bar and show_refresh_button):
-            # Add top and bottom margins to have labels
-            # match even if search and refresh button
-            # are hidden:
-            header_layout.setContentsMargins(0, 4, 0, 32)
+        self._show_search_bar = show_search_bar
+        self._show_refresh_button = show_refresh_button
 
         self._filter_input = filter_input
         self._refresh_btn = refresh_btn
@@ -732,9 +719,43 @@ class ItemViewHeaderWidget(QtWidgets.QWidget):
             parent_item_widget._on_current_item_click
         )
 
+        self._header_bottom_row_widget = header_bottom_row_widget
+        self._refresh_btn = refresh_btn
+        self._header_layout = header_layout
+
     @QtCore.Slot()
     def _on_clear_filter_btn_released(self):
         self._filter_input.setCurrentText("")
+
+    def showEvent(self, event):
+        """
+        Use showEvent to add top and bottom margins to have labels
+        match even if search and refresh button are hidden.
+        This will work out the expected height ratio of the
+        header as there is slight variance depending on
+        environment where this code is run.
+        """
+
+        super().showEvent(event)
+        layout = self.layout()
+        layout.update()
+        layout.activate()
+        layout.invalidate()
+        show_search_bar = self._show_search_bar
+        show_refresh_button = self._show_refresh_button
+        if not show_search_bar:
+            self._header_bottom_row_widget.hide()
+
+        if not show_refresh_button:
+            self._refresh_btn.hide()
+
+        if not (show_search_bar and show_refresh_button):
+            height = self.height()
+            # these ratios were calculated using standard resolution
+            # and scaling:
+            top = int(height * 0.133333)
+            bottom = int(height * 0.533333)
+            self._header_layout.setContentsMargins(0, top, 0, bottom)
 
 
 class ItemViewWidget(QtWidgets.QWidget):
