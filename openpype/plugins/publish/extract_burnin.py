@@ -856,17 +856,12 @@ class ExtractBurnin(publish.Extractor):
                 ))
                 continue
 
-            kitsu_user = self.get_kitsu_user()
-
             # Burnin values
             burnin_values = {}
             for key, value in tuple(burnin_def.items()):
                 key_low = key.lower()
                 if key_low in self.positions and value:
-                    if key_low == "bottom_left" and kitsu_user:
-                        burnin_values[key_low] = kitsu_user
-                    else:
-                        burnin_values[key_low] = value
+                    burnin_values[key_low] = value
 
             # Skip processing if burnin values are not set
             if not burnin_values:
@@ -886,15 +881,6 @@ class ExtractBurnin(publish.Extractor):
             ).format(filename_suffix))
 
         return filtered_burnin_defs
-
-    def get_kitsu_user(self):
-        kitsu_login = os.environ.get("KITSU_LOGIN")
-        if not kitsu_login:
-            return None
-
-        kitsu_user = kitsu_login.split("@")[0]
-        kitsu_user = kitsu_user.replace('.', ' ').title()
-        return kitsu_user
 
     def families_filter_validation(self, families, output_families_filter):
         """Determine if entered families intersect with families filters.
