@@ -226,7 +226,7 @@ def _install_menu():
 
     menu.addSeparator()
     menu.addCommand(
-        "Create... [depricated]",
+        "Create... [deprecated]",
         lambda: nuke.message(
             "New position is in \"Publish...\" and \"Create\" tab")
     )
