@@ -46,7 +46,7 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
         if code:
             batch_name = "{0} - {1}".format(code, batch_name)
 
-        if is_in_tests:
+        if is_in_tests():
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
 
         # Output driver to render
