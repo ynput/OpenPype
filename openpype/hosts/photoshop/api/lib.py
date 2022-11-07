@@ -43,7 +43,7 @@ def main(*subprocess_args):
             webpublisher_addon.headless_publish,
             log,
             "ClosePS",
-            is_in_tests
+            is_in_tests()
         )
     elif env_value_to_bool("AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH",
                            default=True):
