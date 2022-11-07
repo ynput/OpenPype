@@ -1,7 +1,6 @@
 import os
 import platform
-from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import IHostAddon
+from openpype.modules import OpenPypeModule, IHostAddon
 
 NUKE_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 

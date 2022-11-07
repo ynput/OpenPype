@@ -1,5 +1,7 @@
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import ITrayAction
+from openpype.modules import (
+    OpenPypeModule,
+    ITrayAction,
+)
 
 
 class LauncherAction(OpenPypeModule, ITrayAction):

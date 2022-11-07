@@ -11,9 +11,12 @@ from collections import deque, defaultdict
 import click
 from bson.objectid import ObjectId
 
-from openpype.client import get_projects
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import ITrayModule
+from openpype.client import (
+    get_projects,
+    get_representations,
+    get_representation_by_id,
+)
+from openpype.modules import OpenPypeModule, ITrayModule
 from openpype.settings import (
     get_project_settings,
     get_system_settings,
@@ -29,9 +32,6 @@ from .providers.local_drive import LocalDriveHandler
 from .providers import lib
 
 from .utils import time_function, SyncStatus, SiteAlreadyPresentError
-
-from openpype.client import get_representations, get_representation_by_id
-
 
 log = Logger.get_logger("SyncServer")
 

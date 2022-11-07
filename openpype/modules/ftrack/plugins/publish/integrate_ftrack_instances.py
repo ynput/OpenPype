@@ -151,7 +151,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         first_thumbnail_component = None
         first_thumbnail_component_repre = None
 
-        if has_movie_review:
+        if not review_representations or has_movie_review:
             for repre in thumbnail_representations:
                 repre_path = self._get_repre_path(instance, repre, False)
                 if not repre_path:

@@ -47,10 +47,14 @@ Context discovers creator and publish plugins. Trigger collections of existing i
 
 Creator plugins can call **creator_adds_instance** or **creator_removed_instance** to add/remove instances but these methods are not meant to be called directly out of the creator. The reason is that it is the creator's responsibility to remove metadata or decide if it should remove the instance.
 
-#### Required functions in host implementation
-Host implementation **must** implement **get_context_data** and **update_context_data**. These two functions are needed to store metadata that are not related to any instance but are needed for Creating and publishing process. Right now only data about enabled/disabled optional publish plugins is stored there. When data is not stored and loaded properly, reset of publishing will cause that they will be set to default value. Context data also parsed to json string similarly as instance data.
+During reset are re-cached Creator plugins, re-collected instances, refreshed host context and more. Object of `CreateContext` supply shared data during the reset. They can be used by creators to share same data needed during collection phase or during creation for autocreators.
 
-There are also few optional functions. For UI purposes it is possible to implement **get_context_title** which can return a string shown in UI as a title. Output string may contain html tags. It is recommended to return context path (it will be created function this purposes) in this order `"{project name}/{asset hierarchy}/<b>{asset name}</b>/{task name}"`.
+#### Required functions in host implementation
+It is recommended to use `HostBase` class (`from openpype.host import HostBase`) as base for host implementation with combination of `IPublishHost` interface (`from openpype.host import IPublishHost`). These abstract classes should guide you to fill missing attributes and methods.
+
+To sum them and in case host implementation is inheriting `HostBase` the implementation **must** implement **get_context_data** and **update_context_data**. These two functions are needed to store metadata that are not related to any instance but are needed for Creating and publishing process. Right now only data about enabled/disabled optional publish plugins is stored there. When data is not stored and loaded properly, reset of publishing will cause that they will be set to default value. Context data also parsed to json string similarly as instance data.
+
+There are also few optional functions. For UI purposes it is possible to implement **get_context_title** which can return a string shown in UI as a title. Output string may contain html tags. It is recommended to return context path (it will be created function this purposes) in this order `"{project name}/{asset hierarchy}/<b>{asset name}</b>/{task name}"` (this is default implementation in `HostBase`).
 
 Another optional function is **get_current_context**. This function is handy in hosts where it is possible to open multiple workfiles in one process so using global context variables is not relevant because artists can switch between opened workfiles without being acknowledged. When a function is not implemented or won't return the right keys the global context is used.
 ```json
@@ -67,6 +71,9 @@ Main responsibility of create plugin is to create, update, collect and remove in
 
 #### *BaseCreator*
 Base implementation of creator plugin. It is not recommended to use this class as base for production plugins but rather use one of **HiddenCreator**, **AutoCreator** and **Creator** variants.
+
+**Access to shared data**
+Functions to work with "Collection shared data" can be used during reset phase of `CreateContext`. Creators can cache there data that are common for them. For example list of nodes in scene. Methods are implemented on `CreateContext` but their usage is primarily for Create plugins as nothing else should use it. Each creator can access `collection_shared_data` attribute which is a dictionary where shared data can be stored.
 
 **Abstractions**
 - **`family`** (class attr) - Tells what kind of instance will be created.

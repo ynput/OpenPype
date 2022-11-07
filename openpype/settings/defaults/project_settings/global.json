@@ -78,7 +78,8 @@
                                     "review",
                                     "ftrack"
                                 ],
-                                "subsets": []
+                                "subsets": [],
+                                "custom_tags": []
                             },
                             "overscan_crop": "",
                             "overscan_color": [

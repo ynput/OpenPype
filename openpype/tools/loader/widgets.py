@@ -515,7 +515,7 @@ class SubsetWidget(QtWidgets.QWidget):
         if not one_item_selected:
             # Filter loaders from first subset by intersected combinations
             for repre, loader in first_loaders:
-                if (repre["name"], loader) not in found_combinations:
+                if (repre["name"].lower(), loader) not in found_combinations:
                     continue
 
                 loaders.append((repre, loader))

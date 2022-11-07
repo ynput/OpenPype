@@ -15,6 +15,7 @@ import appdirs
 from openpype.lib import JSONSettingRegistry
 from openpype.pipeline import install_host
 from openpype.hosts.traypublisher.api import TrayPublisherHost
+from openpype.tools.publisher.control_qt import QtPublisherController
 from openpype.tools.publisher.window import PublisherWindow
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.constants import PROJECT_NAME_ROLE
@@ -22,6 +23,15 @@ from openpype.tools.utils.models import (
     ProjectModel,
     ProjectSortFilterProxy
 )
+
+
+class TrayPublisherController(QtPublisherController):
+    @property
+    def host(self):
+        return self._host
+
+    def reset_project_data_cache(self):
+        self._asset_docs_cache.reset()
 
 
 class TrayPublisherRegistry(JSONSettingRegistry):
@@ -179,7 +189,10 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
 
 class TrayPublishWindow(PublisherWindow):
     def __init__(self, *args, **kwargs):
-        super(TrayPublishWindow, self).__init__(reset_on_show=False)
+        controller = TrayPublisherController()
+        super(TrayPublishWindow, self).__init__(
+            controller=controller, reset_on_show=False
+        )
 
         flags = self.windowFlags()
         # Disable always on top hint

@@ -4,8 +4,6 @@ import time
 
 from Qt import QtWidgets, QtCore
 
-from openpype.pipeline import KnownPublishError
-
 from .widgets import (
     StopBtn,
     ResetBtn,
@@ -170,7 +168,7 @@ class PublishFrame(QtWidgets.QWidget):
             "publish.process.started", self._on_publish_start
         )
         controller.event_system.add_callback(
-            "publish.process.validated", self._on_publish_validated
+            "publish.has_validated.changed", self._on_publish_validated_change
         )
         controller.event_system.add_callback(
             "publish.process.stopped", self._on_publish_stop
@@ -185,7 +183,7 @@ class PublishFrame(QtWidgets.QWidget):
 
         self._shrunk_anim = shrunk_anim
 
-        self.controller = controller
+        self._controller = controller
 
         self._content_frame = content_frame
         self._content_layout = content_layout
@@ -250,13 +248,13 @@ class PublishFrame(QtWidgets.QWidget):
             hint = self._top_content_widget.minimumSizeHint()
             end = hint.height()
 
-        self._shrunk_anim.setStartValue(start)
-        self._shrunk_anim.setEndValue(end)
+        self._shrunk_anim.setStartValue(float(start))
+        self._shrunk_anim.setEndValue(float(end))
         if not anim_is_running:
             self._shrunk_anim.start()
 
     def _on_shrunk_anim(self, value):
-        diff = self._top_content_widget.height() - value
+        diff = self._top_content_widget.height() - int(value)
         if not self._top_content_widget.isVisible():
             diff -= self._content_layout.spacing()
 
@@ -320,8 +318,8 @@ class PublishFrame(QtWidgets.QWidget):
         self._validate_btn.setEnabled(True)
         self._publish_btn.setEnabled(True)
 
-        self._progress_bar.setValue(self.controller.publish_progress)
-        self._progress_bar.setMaximum(self.controller.publish_max_progress)
+        self._progress_bar.setValue(self._controller.publish_progress)
+        self._progress_bar.setMaximum(self._controller.publish_max_progress)
 
     def _on_publish_start(self):
         if self._last_plugin_label:
@@ -330,7 +328,7 @@ class PublishFrame(QtWidgets.QWidget):
         if self._last_instance_label:
             self._instance_label.setText(self._last_instance_label)
 
-        self._set_success_property(-1)
+        self._set_success_property(3)
         self._set_progress_visibility(True)
         self._set_main_label("Publishing...")
 
@@ -341,8 +339,9 @@ class PublishFrame(QtWidgets.QWidget):
 
         self.set_shrunk_state(False)
 
-    def _on_publish_validated(self):
-        self._validate_btn.setEnabled(False)
+    def _on_publish_validated_change(self, event):
+        if event["value"]:
+            self._validate_btn.setEnabled(False)
 
     def _on_instance_change(self, event):
         """Change instance label when instance is going to be processed."""
@@ -355,12 +354,12 @@ class PublishFrame(QtWidgets.QWidget):
         """Change plugin label when instance is going to be processed."""
 
         self._last_plugin_label = event["plugin_label"]
-        self._progress_bar.setValue(self.controller.publish_progress)
+        self._progress_bar.setValue(self._controller.publish_progress)
         self._plugin_label.setText(event["plugin_label"])
         QtWidgets.QApplication.processEvents()
 
     def _on_publish_stop(self):
-        self._progress_bar.setValue(self.controller.publish_progress)
+        self._progress_bar.setValue(self._controller.publish_progress)
 
         self._reset_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
@@ -368,33 +367,31 @@ class PublishFrame(QtWidgets.QWidget):
         self._instance_label.setText("")
         self._plugin_label.setText("")
 
-        validate_enabled = not self.controller.publish_has_crashed
-        publish_enabled = not self.controller.publish_has_crashed
+        validate_enabled = not self._controller.publish_has_crashed
+        publish_enabled = not self._controller.publish_has_crashed
         if validate_enabled:
-            validate_enabled = not self.controller.publish_has_validated
+            validate_enabled = not self._controller.publish_has_validated
         if publish_enabled:
             if (
-                self.controller.publish_has_validated
-                and self.controller.publish_has_validation_errors
+                self._controller.publish_has_validated
+                and self._controller.publish_has_validation_errors
             ):
                 publish_enabled = False
 
             else:
-                publish_enabled = not self.controller.publish_has_finished
+                publish_enabled = not self._controller.publish_has_finished
 
         self._validate_btn.setEnabled(validate_enabled)
         self._publish_btn.setEnabled(publish_enabled)
 
-        error = self.controller.get_publish_crash_error()
-        validation_errors = self.controller.get_validation_errors()
-        if error:
-            self._set_error(error)
+        if self._controller.publish_has_crashed:
+            self._set_error_msg()
 
-        elif validation_errors:
+        elif self._controller.publish_has_validation_errors:
             self._set_progress_visibility(False)
             self._set_validation_errors()
 
-        elif self.controller.publish_has_finished:
+        elif self._controller.publish_has_finished:
             self._set_finished()
 
         else:
@@ -402,7 +399,7 @@ class PublishFrame(QtWidgets.QWidget):
 
     def _set_stopped(self):
         main_label = "Publish paused"
-        if self.controller.publish_has_validated:
+        if self._controller.publish_has_validated:
             main_label += " - Validation passed"
 
         self._set_main_label(main_label)
@@ -410,20 +407,16 @@ class PublishFrame(QtWidgets.QWidget):
             "Hit publish (play button) to continue."
         )
 
-        self._set_success_property(-1)
+        self._set_success_property(4)
 
-    def _set_error(self, error):
+    def _set_error_msg(self):
+        """Show error message to artist on publish crash."""
+
         self._set_main_label("Error happened")
-        if isinstance(error, KnownPublishError):
-            msg = str(error)
-        else:
-            msg = (
-                "Something went wrong. Send report"
-                " to your supervisor or OpenPype."
-            )
-        self._message_label_top.setText(msg)
 
-        self._set_success_property(0)
+        self._message_label_top.setText(self._controller.publish_error_msg)
+
+        self._set_success_property(1)
 
     def _set_validation_errors(self):
         self._set_main_label("Your publish didn't pass studio validations")
@@ -433,7 +426,7 @@ class PublishFrame(QtWidgets.QWidget):
     def _set_finished(self):
         self._set_main_label("Finished")
         self._message_label_top.setText("")
-        self._set_success_property(1)
+        self._set_success_property(0)
 
     def _set_progress_visibility(self, visible):
         window_height = self.height()
@@ -454,6 +447,17 @@ class PublishFrame(QtWidgets.QWidget):
         self.move(window_pos.x(), window_pos_y)
 
     def _set_success_property(self, state=None):
+        """Apply styles by state.
+
+        State enum:
+        - None - Default state after restart
+        - 0 - Success finish
+        - 1 - Error happened
+        - 2 - Validation error
+        - 3 - In progress
+        - 4 - Stopped/Paused
+        """
+
         if state is None:
             state = ""
         else:
@@ -465,7 +469,7 @@ class PublishFrame(QtWidgets.QWidget):
                 widget.style().polish(widget)
 
     def _copy_report(self):
-        logs = self.controller.get_publish_report()
+        logs = self._controller.get_publish_report()
         logs_string = json.dumps(logs, indent=4)
 
         mime_data = QtCore.QMimeData()
@@ -488,7 +492,7 @@ class PublishFrame(QtWidgets.QWidget):
         if not ext or not new_filepath:
             return
 
-        logs = self.controller.get_publish_report()
+        logs = self._controller.get_publish_report()
         full_path = new_filepath + ext
         dir_path = os.path.dirname(full_path)
         if not os.path.exists(dir_path):
@@ -508,13 +512,13 @@ class PublishFrame(QtWidgets.QWidget):
             self.details_page_requested.emit()
 
     def _on_reset_clicked(self):
-        self.controller.reset()
+        self._controller.reset()
 
     def _on_stop_clicked(self):
-        self.controller.stop_publish()
+        self._controller.stop_publish()
 
     def _on_validate_clicked(self):
-        self.controller.validate()
+        self._controller.validate()
 
     def _on_publish_clicked(self):
-        self.controller.publish()
+        self._controller.publish()

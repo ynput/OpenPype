@@ -10,10 +10,10 @@ from Qt import QtWidgets, QtCore, QtGui
 
 from openpype import style
 from openpype.pipeline import install_host
-from openpype.hosts.tvpaint.api.communication_server import (
-    CommunicationWrapper
+from openpype.hosts.tvpaint.api import (
+    TVPaintHost,
+    CommunicationWrapper,
 )
-from openpype.hosts.tvpaint import api as tvpaint_host
 
 log = logging.getLogger(__name__)
 
@@ -30,6 +30,7 @@ def main(launch_args):
     # - QApplicaiton is also main thread/event loop of the server
     qt_app = QtWidgets.QApplication([])
 
+    tvpaint_host = TVPaintHost()
     # Execute pipeline installation
     install_host(tvpaint_host)
 

@@ -44,8 +44,10 @@ class HelpWidget(QtWidgets.QWidget):
         if commonmark:
             html = commonmark.commonmark(text)
             self._detail_description_input.setHtml(html)
-        else:
+        elif hasattr(self._detail_description_input, "setMarkdown"):
             self._detail_description_input.setMarkdown(text)
+        else:
+            self._detail_description_input.setText(text)
 
 
 class HelpDialog(QtWidgets.QDialog):

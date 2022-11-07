@@ -1,3 +1,5 @@
+import collections
+import copy
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype import (
@@ -5,13 +7,14 @@ from openpype import (
     style
 )
 from openpype.tools.utils import (
+    ErrorMessageBox,
     PlaceholderLineEdit,
     MessageOverlayObject,
     PixmapLabel,
 )
 
 from .publish_report_viewer import PublishReportViewerWidget
-from .control import PublisherController
+from .control_qt import QtPublisherController
 from .widgets import (
     OverviewWidget,
     ValidationsWidget,
@@ -36,7 +39,7 @@ class PublisherWindow(QtWidgets.QDialog):
     footer_border = 8
     publish_footer_spacer = 2
 
-    def __init__(self, parent=None, reset_on_show=None):
+    def __init__(self, parent=None, controller=None, reset_on_show=None):
         super(PublisherWindow, self).__init__(parent)
 
         self.setWindowTitle("OpenPype publisher")
@@ -61,7 +64,8 @@ class PublisherWindow(QtWidgets.QDialog):
             | on_top_flag
         )
 
-        controller = PublisherController()
+        if controller is None:
+            controller = QtPublisherController()
 
         help_dialog = HelpDialog(controller, self)
 
@@ -221,6 +225,18 @@ class PublisherWindow(QtWidgets.QDialog):
         # Floating publish frame
         publish_frame = PublishFrame(controller, self.footer_border, self)
 
+        # Timer started on show -> connected to timer counter
+        # - helps to deffer on show logic by 3 event loops
+        show_timer = QtCore.QTimer()
+        show_timer.setInterval(1)
+        show_timer.timeout.connect(self._on_show_timer)
+
+        errors_dialog_message_timer = QtCore.QTimer()
+        errors_dialog_message_timer.setInterval(100)
+        errors_dialog_message_timer.timeout.connect(
+            self._on_errors_message_timeout
+        )
+
         help_btn.clicked.connect(self._on_help_click)
         tabs_widget.tab_changed.connect(self._on_tab_change)
         overview_widget.active_changed.connect(
@@ -250,13 +266,31 @@ class PublisherWindow(QtWidgets.QDialog):
             "publish.process.started", self._on_publish_start
         )
         controller.event_system.add_callback(
-            "publish.process.validated", self._on_publish_validated
+            "publish.has_validated.changed", self._on_publish_validated_change
         )
         controller.event_system.add_callback(
             "publish.process.stopped", self._on_publish_stop
         )
         controller.event_system.add_callback(
             "show.card.message", self._on_overlay_message
+        )
+        controller.event_system.add_callback(
+            "instances.collection.failed", self._on_creator_error
+        )
+        controller.event_system.add_callback(
+            "instances.save.failed", self._on_creator_error
+        )
+        controller.event_system.add_callback(
+            "instances.remove.failed", self._on_creator_error
+        )
+        controller.event_system.add_callback(
+            "instances.create.failed", self._on_creator_error
+        )
+        controller.event_system.add_callback(
+            "convertors.convert.failed", self._on_convertor_error
+        )
+        controller.event_system.add_callback(
+            "convertors.find.failed", self._on_convertor_error
         )
 
         # Store extra header widget for TrayPublisher
@@ -297,11 +331,19 @@ class PublisherWindow(QtWidgets.QDialog):
         self._controller = controller
 
         self._first_show = True
-        self._reset_on_show = reset_on_show
-        self._restart_timer = None
+        # This is a little bit confusing but 'reset_on_first_show' is too long
+        #   forin init
+        self._reset_on_first_show = reset_on_show
+        self._reset_on_show = True
         self._publish_frame_visible = None
 
+        self._error_messages_to_show = collections.deque()
+        self._errors_dialog_message_timer = errors_dialog_message_timer
+
         self._set_publish_visibility(False)
+
+        self._show_timer = show_timer
+        self._show_counter = 0
 
     @property
     def controller(self):
@@ -313,36 +355,47 @@ class PublisherWindow(QtWidgets.QDialog):
             self._first_show = False
             self._on_first_show()
 
+        self._show_timer.start()
+
     def resizeEvent(self, event):
         super(PublisherWindow, self).resizeEvent(event)
         self._update_publish_frame_rect()
 
     def _on_overlay_message(self, event):
-        self._overlay_object.add_message(event["message"])
+        self._overlay_object.add_message(
+            event["message"],
+            event.get("message_type")
+        )
 
     def _on_first_show(self):
         self.resize(self.default_width, self.default_height)
         self.setStyleSheet(style.load_stylesheet())
-        if not self._reset_on_show:
+        self._reset_on_show = self._reset_on_first_show
+
+    def _on_show_timer(self):
+        # Add 1 to counter until hits 2
+        if self._show_counter < 3:
+            self._show_counter += 1
             return
 
-        # Detach showing - give OS chance to draw the window
-        timer = QtCore.QTimer()
-        timer.setSingleShot(True)
-        timer.setInterval(1)
-        timer.timeout.connect(self._on_show_restart_timer)
-        self._restart_timer = timer
-        timer.start()
+        # Stop the timer
+        self._show_timer.stop()
+        # Reset counter when done for next show event
+        self._show_counter = 0
 
-    def _on_show_restart_timer(self):
-        """Callback for '_restart_timer' timer."""
-
-        self._restart_timer = None
-        self.reset()
+        # Reset if requested
+        if self._reset_on_show:
+            self._reset_on_show = False
+            self.reset()
 
     def closeEvent(self, event):
-        self._controller.save_changes()
+        self.save_changes()
+        self._reset_on_show = True
+        self._controller.clear_thumbnail_temp_dir_path()
         super(PublisherWindow, self).closeEvent(event)
+
+    def save_changes(self):
+        self._controller.save_changes()
 
     def reset(self):
         self._controller.reset()
@@ -435,17 +488,14 @@ class PublisherWindow(QtWidgets.QDialog):
         self._update_publish_frame_rect()
 
     def _on_reset_clicked(self):
-        self._controller.reset()
+        self.save_changes()
+        self.reset()
 
     def _on_stop_clicked(self):
         self._controller.stop_publish()
 
     def _set_publish_comment(self):
-        if self._controller.publish_comment_is_set:
-            return
-
-        comment = self._comment_input.text()
-        self._controller.set_comment(comment)
+        self._controller.set_comment(self._comment_input.text())
 
     def _on_validate_clicked(self):
         self._set_publish_comment()
@@ -473,6 +523,11 @@ class PublisherWindow(QtWidgets.QDialog):
         self._set_publish_visibility(False)
         self._set_footer_enabled(False)
         self._update_publish_details_widget()
+        if (
+            not self._tabs_widget.is_current_tab("create")
+            and not self._tabs_widget.is_current_tab("publish")
+        ):
+            self._tabs_widget.set_current_tab("publish")
 
     def _on_publish_start(self):
         self._create_tab.setEnabled(False)
@@ -491,15 +546,20 @@ class PublisherWindow(QtWidgets.QDialog):
         if self._tabs_widget.is_current_tab(self._create_tab):
             self._tabs_widget.set_current_tab("publish")
 
-    def _on_publish_validated(self):
-        self._validate_btn.setEnabled(False)
+    def _on_publish_validated_change(self, event):
+        if event["value"]:
+            self._validate_btn.setEnabled(False)
 
     def _on_publish_stop(self):
         self._set_publish_overlay_visibility(False)
         self._reset_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
-        validate_enabled = not self._controller.publish_has_crashed
-        publish_enabled = not self._controller.publish_has_crashed
+        publish_has_crashed = self._controller.publish_has_crashed
+        validate_enabled = not publish_has_crashed
+        publish_enabled = not publish_has_crashed
+        if self._tabs_widget.is_current_tab("publish"):
+            self._go_to_report_tab()
+
         if validate_enabled:
             validate_enabled = not self._controller.publish_has_validated
         if publish_enabled:
@@ -508,8 +568,6 @@ class PublisherWindow(QtWidgets.QDialog):
                 and self._controller.publish_has_validation_errors
             ):
                 publish_enabled = False
-                if self._tabs_widget.is_current_tab("publish"):
-                    self._go_to_report_tab()
 
             else:
                 publish_enabled = not self._controller.publish_has_finished
@@ -525,7 +583,7 @@ class PublisherWindow(QtWidgets.QDialog):
             return
 
         all_valid = None
-        for instance in self._controller.instances:
+        for instance in self._controller.instances.values():
             if not instance["active"]:
                 continue
 
@@ -564,3 +622,144 @@ class PublisherWindow(QtWidgets.QDialog):
         self._publish_frame.move(
             0, window_size.height() - height
         )
+
+    def add_error_message_dialog(self, title, failed_info, message_start=None):
+        self._error_messages_to_show.append(
+            (title, failed_info, message_start)
+        )
+        self._errors_dialog_message_timer.start()
+
+    def _on_errors_message_timeout(self):
+        if not self._error_messages_to_show:
+            self._errors_dialog_message_timer.stop()
+            return
+
+        item = self._error_messages_to_show.popleft()
+        title, failed_info, message_start = item
+        dialog = ErrorsMessageBox(
+            title, failed_info, message_start, self
+        )
+        dialog.exec_()
+        dialog.deleteLater()
+
+    def _on_creator_error(self, event):
+        new_failed_info = []
+        for item in event["failed_info"]:
+            new_item = copy.deepcopy(item)
+            new_item["label"] = new_item.pop("creator_label")
+            new_item["identifier"] = new_item.pop("creator_identifier")
+            new_failed_info.append(new_item)
+        self.add_error_message_dialog(event["title"], new_failed_info, "Creator:")
+
+    def _on_convertor_error(self, event):
+        new_failed_info = []
+        for item in event["failed_info"]:
+            new_item = copy.deepcopy(item)
+            new_item["identifier"] = new_item.pop("convertor_identifier")
+            new_failed_info.append(new_item)
+        self.add_error_message_dialog(
+            event["title"], new_failed_info, "Convertor:"
+        )
+
+
+class ErrorsMessageBox(ErrorMessageBox):
+    def __init__(self, error_title, failed_info, message_start, parent):
+        self._failed_info = failed_info
+        self._message_start = message_start
+        self._info_with_id = [
+            # Id must be string when used in tab widget
+            {"id": str(idx), "info": info}
+            for idx, info in enumerate(failed_info)
+        ]
+        self._widgets_by_id = {}
+        self._tabs_widget = None
+        self._stack_layout = None
+
+        super(ErrorsMessageBox, self).__init__(error_title, parent)
+
+        layout = self.layout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        footer_layout = self._footer_widget.layout()
+        footer_layout.setContentsMargins(5, 5, 5, 5)
+
+    def _create_top_widget(self, parent_widget):
+        return None
+
+    def _get_report_data(self):
+        output = []
+        for info in self._failed_info:
+            item_label = info.get("label")
+            item_identifier = info["identifier"]
+            if item_label:
+                report_message = "{} ({})".format(
+                    item_label, item_identifier)
+            else:
+                report_message = "{}".format(item_identifier)
+
+            if self._message_start:
+                report_message = "{} {}".format(
+                    self._message_start, report_message
+                )
+
+            report_message += "\n\nError: {}".format(info["message"])
+            formatted_traceback = info.get("traceback")
+            if formatted_traceback:
+                report_message += "\n\n{}".format(formatted_traceback)
+            output.append(report_message)
+        return output
+
+    def _create_content(self, content_layout):
+        tabs_widget = PublisherTabsWidget(self)
+
+        stack_widget = QtWidgets.QFrame(self._content_widget)
+        stack_layout = QtWidgets.QStackedLayout(stack_widget)
+
+        first = True
+        for item in self._info_with_id:
+            item_id = item["id"]
+            info = item["info"]
+            message = info["message"]
+            formatted_traceback = info.get("traceback")
+            item_label = info.get("label")
+            if not item_label:
+                item_label = info["identifier"]
+
+            msg_widget = QtWidgets.QWidget(stack_widget)
+            msg_layout = QtWidgets.QVBoxLayout(msg_widget)
+
+            exc_msg_template = "<span style='font-weight:bold'>{}</span>"
+            message_label_widget = QtWidgets.QLabel(msg_widget)
+            message_label_widget.setText(
+                exc_msg_template.format(self.convert_text_for_html(message))
+            )
+            msg_layout.addWidget(message_label_widget, 0)
+
+            if formatted_traceback:
+                line_widget = self._create_line(msg_widget)
+                tb_widget = self._create_traceback_widget(formatted_traceback)
+                msg_layout.addWidget(line_widget, 0)
+                msg_layout.addWidget(tb_widget, 0)
+
+            msg_layout.addStretch(1)
+
+            tabs_widget.add_tab(item_label, item_id)
+            stack_layout.addWidget(msg_widget)
+            if first:
+                first = False
+                stack_layout.setCurrentWidget(msg_widget)
+
+            self._widgets_by_id[item_id] = msg_widget
+
+        content_layout.addWidget(tabs_widget, 0)
+        content_layout.addWidget(stack_widget, 1)
+
+        tabs_widget.tab_changed.connect(self._on_tab_change)
+
+        self._tabs_widget = tabs_widget
+        self._stack_layout = stack_layout
+
+    def _on_tab_change(self, old_identifier, identifier):
+        widget = self._widgets_by_id[identifier]
+        self._stack_layout.setCurrentWidget(widget)

@@ -269,25 +269,25 @@ class HostToolsHelper:
             dialog.activateWindow()
             dialog.showNormal()
 
-    def get_publisher_tool(self, parent):
+    def get_publisher_tool(self, parent=None, controller=None):
         """Create, cache and return publisher window."""
 
         if self._publisher_tool is None:
-            from openpype.tools.publisher import PublisherWindow
+            from openpype.tools.publisher.window import PublisherWindow
 
             host = registered_host()
             ILoadHost.validate_load_methods(host)
 
             publisher_window = PublisherWindow(
-                parent=parent or self._parent
+                controller=controller, parent=parent or self._parent
             )
             self._publisher_tool = publisher_window
 
         return self._publisher_tool
 
-    def show_publisher_tool(self, parent=None):
+    def show_publisher_tool(self, parent=None, controller=None):
         with qt_app_context():
-            dialog = self.get_publisher_tool(parent)
+            dialog = self.get_publisher_tool(parent, controller)
 
             dialog.show()
             dialog.raise_()

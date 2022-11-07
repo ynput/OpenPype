@@ -11,6 +11,7 @@ from openpype.lib import (
     get_workfile_template_key,
     get_openpype_execute_args
 )
+from openpype.pipeline.workfile import get_workfile_template_key
 import openpype.hosts.unreal.lib as unreal_lib
 
 

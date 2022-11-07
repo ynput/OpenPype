@@ -295,6 +295,15 @@
                                                     "label": "Subsets",
                                                     "type": "list",
                                                     "object_type": "text"
+                                                },
+                                                {
+                                                    "type": "separator"
+                                                },
+                                                {
+                                                    "key": "custom_tags",
+                                                    "label": "Custom Tags",
+                                                    "type": "list",
+                                                    "object_type": "text"
                                                 }
                                             ]
                                         },
