@@ -575,19 +575,38 @@ def convert_v4_representation_to_v3(representation):
     }
     for v3_key, v4_key in (
         ("name", "name"),
-        ("files", "files"),
-        ("context", "context"),
         ("parent", "versionId")
     ):
         if v4_key in representation:
             output[v3_key] = representation[v4_key]
 
-    if "files" in output and not output["files"]:
-        # Fake studio files
-        output["files"].append({
-            "name": "studio",
-            "created_dt": datetime.datetime.now()
-        })
+    if "context" in representation:
+        context = representation["context"]
+        if isinstance(context, six.string_types):
+            context = json.loads(context)
+        output["context"] = context
+
+    if "files" in representation:
+        files = representation["files"]
+        new_files = []
+        # From GraphQl is list
+        if isinstance(files, list):
+            for file_info in files:
+                file_info["_id"] = file_info["id"]
+                new_files.append(file_info)
+
+        # From RestPoint is dictionary
+        elif isinstance(files, dict):
+            for file_id, file_info in files:
+                file_info["_id"] = file_id
+                new_files.append(file_info)
+
+        if not new_files:
+            new_files.append({
+                "name": "studio"
+            })
+        output["files"] = new_files
+
     output_data = representation.get("data") or {}
     if "attrib" in representation:
         output_data.update(representation["attrib"])
