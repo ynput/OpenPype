@@ -1,5 +1,6 @@
 import nuke
 import qargparse
+from pprint import pformat
 from copy import deepcopy
 from openpype.lib import Logger
 from openpype.client import (
@@ -22,14 +23,13 @@ from openpype.hosts.nuke.api import (
 )
 from openpype.hosts.nuke.api import plugin
 
-log = Logger.get_logger(__name__)
-
 
 class LoadClip(plugin.NukeLoader):
     """Load clip into Nuke
 
     Either it is image sequence or video file.
     """
+    log = Logger.get_logger(__name__)
 
     families = [
         "source",
@@ -99,7 +99,7 @@ class LoadClip(plugin.NukeLoader):
                 representation
             )
         filepath = get_representation_path(representation).replace("\\", "/")
-        log.debug("_ filepath: {}".format(filepath))
+        self.log.debug("_ filepath: {}".format(filepath))
 
         start_at_workfile = options.get(
             "start_at_workfile", self.options_defaults["start_at_workfile"])
@@ -111,8 +111,9 @@ class LoadClip(plugin.NukeLoader):
         version_data = version.get("data", {})
         repre_id = representation["_id"]
 
-        log.info("version_data: {}\n".format(version_data))
-        log.debug(
+        self.log.debug("_ version_data: {}\n".format(
+            pformat(version_data)))
+        self.log.debug(
             "Representation id `{}` ".format(repre_id))
 
         self.handle_start = version_data.get("handleStart", 0)
@@ -133,7 +134,7 @@ class LoadClip(plugin.NukeLoader):
             namespace = context['asset']['name']
 
         if not filepath:
-            log.warning(
+            self.log.warning(
                 "Representation id `{}` is failing to load".format(repre_id))
             return
 
@@ -238,7 +239,7 @@ class LoadClip(plugin.NukeLoader):
                 representation
             )
         filepath = get_representation_path(representation).replace("\\", "/")
-        log.debug("_ filepath: {}".format(filepath))
+        self.log.debug("_ filepath: {}".format(filepath))
 
         start_at_workfile = "start at" in read_node['frame_mode'].value()
 
@@ -271,7 +272,7 @@ class LoadClip(plugin.NukeLoader):
             last = first + duration
 
         if not filepath:
-            log.warning(
+            self.log.warning(
                 "Representation id `{}` is failing to load".format(repre_id))
             return
 
@@ -321,7 +322,7 @@ class LoadClip(plugin.NukeLoader):
                 read_node,
                 updated_dict
             )
-            log.info(
+            self.log.info(
                 "updated to version: {}".format(version_doc.get("name"))
             )
 
@@ -357,8 +358,10 @@ class LoadClip(plugin.NukeLoader):
         time_warp_nodes = version_data.get('timewarps', [])
         last_node = None
         source_id = self.get_container_id(parent_node)
-        log.info("__ source_id: {}".format(source_id))
-        log.info("__ members: {}".format(self.get_members(parent_node)))
+        self.log.debug("__ source_id: {}".format(source_id))
+        self.log.debug("__ members: {}".format(
+            self.get_members(parent_node)))
+
         dependent_nodes = self.clear_members(parent_node)
 
         with maintained_selection():
