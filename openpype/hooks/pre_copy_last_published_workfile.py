@@ -3,6 +3,8 @@ import shutil
 from time import sleep
 from openpype.client.entities import (
     get_last_version_by_subset_id,
+    get_representation_by_id,
+    get_representation_last_created_time_on_site,
     get_representations,
     get_subsets,
 )
@@ -158,18 +160,29 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             )
             return
 
+        local_site_id = get_local_site_id()
         requests.post(
             rest_api_url,
             json={
                 "project_name": project_name,
-                "sites": [get_local_site_id()],
+                "sites": [local_site_id],
                 "representations": [str(workfile_representation["_id"])],
             },
         )
 
         # Wait for the download loop to end
-        rest_api_url = "{}/files_are_processed".format(entry_point_url)
-        while requests.get(rest_api_url).content:
+        last_created_time = get_representation_last_created_time_on_site(
+            workfile_representation, local_site_id
+        )
+        while (
+            last_created_time
+            >= get_representation_last_created_time_on_site(
+                get_representation_by_id(
+                    project_name, workfile_representation["_id"]
+                ),
+                local_site_id,
+            )
+        ):
             sleep(5)
 
         # Get paths
