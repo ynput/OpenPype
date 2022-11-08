@@ -178,7 +178,9 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             last_created_time
             >= get_representation_last_created_time_on_site(
                 get_representation_by_id(
-                    project_name, workfile_representation["_id"]
+                    project_name,
+                    workfile_representation["_id"],
+                    fields=["files"],
                 ),
                 local_site_id,
             )
