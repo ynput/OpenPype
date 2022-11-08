@@ -732,15 +732,15 @@ def convert_create_representation_to_v4(representation, con):
     if entity_id:
         converted_representation["id"] = entity_id
 
-    new_files = []
+    new_files = {}
     for file_item in representation["files"]:
         new_file_item = {
             key: value
             for key, value in file_item.items()
             if key != "_id"
         }
-        new_file_item["id"] = create_entity_id()
-        new_files.append(new_file_item)
+        file_item_id = create_entity_id()
+        new_files[file_item_id] = new_file_item
 
     attribs = {}
     data = {
@@ -927,7 +927,19 @@ def convert_update_representation_to_v4(
 
     if "context" in update_data or "files" in update_data:
         new_data["context"] = update_data["context"]
-        new_data["files"] = update_data["files"]
+        new_files = update_data["files"]
+        if isinstance(new_files, list):
+            _new_files = {}
+            for file_item in new_files:
+                _file_item = {
+                    key: value
+                    for key, value in file_item.items()
+                    if key != "_id"
+                }
+                file_item_id = create_entity_id()
+                _new_files[file_item_id] = _file_item
+            new_files = _new_files
+        new_data["files"] = new_files
 
     if new_data:
         print("Representation has new data: {}".format(new_data))
