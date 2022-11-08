@@ -1,5 +1,6 @@
 import datetime
 import collections
+import json
 
 import six
 
@@ -160,11 +161,10 @@ def convert_v4_project_to_v3(project):
 
     if project_config:
         config["apps"] = []
-
         config["roots"] = project_config["roots"]
 
         templates = project_config["templates"]
-        config["templates"] = templates
+        templates.update(templates.pop("common", None) or {})
 
         others_templates = templates.pop("others", None) or {}
         new_others_templates = {}
@@ -188,6 +188,8 @@ def convert_v4_project_to_v3(project):
                 (delivery_template["directory"], delivery_template["file"])
             )
         templates["delivery"] = new_delivery_templates
+
+        config["templates"] = templates
 
     if "taskTypes" in project:
         config["tasks"] = project["taskTypes"]
