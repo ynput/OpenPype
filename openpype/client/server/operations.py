@@ -828,28 +828,13 @@ def create_project(
         ).format(project_name))
 
     preset = con.get_project_anatomy_preset(preset_name)
-    config = {
-        "templates": preset["templates"],
-        "roots": preset["roots"]
-    }
-    folder_types = {}
-    for folder_type in preset["folder_types"]:
-        name = folder_type.pop("name")
-        folder_types[name] = folder_type
 
-    task_types = {}
-    for task_type in preset["task_types"]:
-        name = task_type.pop("name")
-        task_types[name] = task_type
-
-    result = con.put(
-        "projects/{}".format(project_name),
+    result = con.post(
+        "projects",
+        name=project_name,
         code=project_code,
-        library=library_project,
-        config=config,
-        attrib=preset["attributes"],
-        folderTypes=folder_types,
-        taskTypes=task_types
+        anatomy=preset,
+        library=library_project
     )
     if result.status != 201:
         details = "Unknown details ({})".format(result.status)
