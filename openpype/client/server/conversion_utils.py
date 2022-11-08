@@ -164,7 +164,7 @@ def convert_v4_project_to_v3(project):
         config["roots"] = project_config["roots"]
 
         templates = project_config["templates"]
-        templates.update(templates.pop("common", None) or {})
+        templates["defaults"] = templates.pop("common", None) or {}
 
         others_templates = templates.pop("others", None) or {}
         new_others_templates = {}
