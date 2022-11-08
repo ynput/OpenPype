@@ -1711,7 +1711,6 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
 
 class CreateNextPageOverlay(QtWidgets.QWidget):
-    max_value = 100.0
     clicked = QtCore.Signal()
 
     def __init__(self, parent):
@@ -1726,7 +1725,7 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
 
         change_anim = QtCore.QVariantAnimation()
         change_anim.setStartValue(0.0)
-        change_anim.setEndValue(self.max_value)
+        change_anim.setEndValue(1.0)
         change_anim.setDuration(400)
         change_anim.setEasingCurve(QtCore.QEasingCurve.OutCubic)
 
@@ -1768,7 +1767,7 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
 
     def _is_anim_finished(self):
         if self._increasing:
-            return self._anim_value == self.max_value
+            return self._anim_value == 1.0
         return self._anim_value == 0.0
 
     def _on_anim(self, value):
@@ -1838,8 +1837,8 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
 
         x_offset = (rect_width - size) * 0.5
         y_offset = (rect_height - size) * 0.5
-        if self._anim_value != self.max_value:
-            x_offset += rect_width - (rect_width * 0.01 * self._anim_value)
+        if self._anim_value != 1.0:
+            x_offset += rect_width - (rect_width * self._anim_value)
 
         arrow_half_height = size * 0.2
         arrow_x_start = x_offset + (size * 0.4)
