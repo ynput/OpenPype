@@ -51,6 +51,8 @@ class ModuleUnitTest(BaseTest):
 
     TEST_DATA_FOLDER = None
 
+    failed = False
+
     @pytest.fixture(scope='session')
     def monkeypatch_session(self):
         """Monkeypatch couldn't be used with module or session fixtures."""
