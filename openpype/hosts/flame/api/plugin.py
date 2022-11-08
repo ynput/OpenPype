@@ -690,6 +690,19 @@ class ClipLoader(LoaderPlugin):
         )
     ]
 
+    _mapping = None
+
+    def get_native_colorspace(self, input_colorspace):
+        if not self._mapping:
+            settings = get_current_project_settings()["flame"]
+            mapping = settings["imageio"]["profilesMapping"]["inputs"]
+            self._mapping = {
+                input["ocioName"]: input["flameName"]
+                for input in mapping
+            }
+
+        return self._mapping.get(input_colorspace)
+
 
 class OpenClipSolver(flib.MediaInfoFile):
     create_new_clip = False
