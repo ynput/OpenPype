@@ -1,7 +1,10 @@
 import datetime
 import collections
 
+import six
+
 from openpype.client.operations_base import REMOVED_VALUE
+
 from .constants import (
     DEFAULT_V3_FOLDER_FIELDS,
     FOLDER_ATTRIBS,
@@ -105,8 +108,8 @@ def project_fields_v3_to_v4(fields):
 
 def _get_default_template_name(templates):
     default_template = None
-    for template in templates:
-        if template["name"] == "default":
+    for name, template in templates.items():
+        if name == "default":
             return "default"
 
         if default_template is None:
@@ -116,18 +119,16 @@ def _get_default_template_name(templates):
 
 
 def _convert_template_item(template):
-    template_name = template.pop("name")
     template["folder"] = template.pop("directory")
     template["path"] = "/".join(
         (template["folder"], template["file"])
     )
-    return template_name
 
 
 def _fill_template_category(templates, cat_templates, cat_key):
     default_template_name = _get_default_template_name(cat_templates)
-    for cat_template in cat_templates:
-        template_name = _convert_template_item(cat_template)
+    for template_name, cat_template in cat_templates.items():
+        _convert_template_item(cat_template)
         if template_name == default_template_name:
             templates[cat_key] = cat_template
         else:
@@ -156,23 +157,20 @@ def convert_v4_project_to_v3(project):
     }
     config = {}
     project_config = project.get("config")
+
     if project_config:
         config["apps"] = []
 
-        roots = {}
-        config["roots"] = roots
-        for root in project_config["roots"]:
-            name = root.pop("name")
-            roots[name] = root
+        config["roots"] = project_config["roots"]
 
         templates = project_config["templates"]
         config["templates"] = templates
 
-        others_templates = templates.pop("others")
+        others_templates = templates.pop("others", None) or {}
         new_others_templates = {}
         templates["others"] = new_others_templates
-        for template in others_templates:
-            name = _convert_template_item(template)
+        for name, template in others_templates.items():
+            _convert_template_item(template)
             new_others_templates[name] = template
 
         for key in (
@@ -183,14 +181,13 @@ def convert_v4_project_to_v3(project):
             cat_templates = templates.pop(key)
             _fill_template_category(templates, cat_templates, key)
 
-        delivery_templates = templates.pop("delivery")
+        delivery_templates = templates.pop("delivery", None) or {}
         new_delivery_templates = {}
-        templates["delivery"] = new_delivery_templates
-        for delivery_template in delivery_templates:
-            name = delivery_template["name"]
+        for name, delivery_template in delivery_templates.items():
             new_delivery_templates[name] = "/".join(
                 (delivery_template["directory"], delivery_template["file"])
             )
+        templates["delivery"] = new_delivery_templates
 
     if "taskTypes" in project:
         config["tasks"] = project["taskTypes"]
