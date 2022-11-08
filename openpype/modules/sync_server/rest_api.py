@@ -1,4 +1,5 @@
 from aiohttp.web_response import Response
+from openpype.client.entities import get_representation_by_id
 from openpype.lib import Logger
 
 
@@ -29,11 +30,6 @@ class SyncServerModuleRestApi:
             self.prefix + "/add_sites_to_representations",
             self.add_sites_to_representations,
         )
-        self.server_manager.add_route(
-            "GET",
-            self.prefix + "/files_are_processed",
-            self.files_are_processed,
-        )
 
     async def add_sites_to_representations(self, request):
         # Extract data from request
@@ -54,15 +50,14 @@ class SyncServerModuleRestApi:
         for representation_id in representations:
             for site in sites:
                 self.module.add_site(
-                    project_name, representation_id, site, force=True
+                    project_name,
+                    representation_id,
+                    site,
+                    force=True,
+                    priority=99,
                 )
 
         # Force timer to run immediately
         self.module.reset_timer()
 
         return Response(status=200)
-
-    async def files_are_processed(self, _request):
-        return Response(
-            body=bytes(self.module.sync_server_thread.files_are_processed)
-        )

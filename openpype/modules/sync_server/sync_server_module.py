@@ -136,7 +136,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
     """ Start of Public API """
     def add_site(self, project_name, representation_id, site_name=None,
-                 force=False):
+                 force=False, priority=None):
         """
         Adds new site to representation to be synced.
 
@@ -152,6 +152,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             representation_id (string): MongoDB _id value
             site_name (string): name of configured and active site
             force (bool): reset site if exists
+            priority (int): set priority
 
         Throws:
             SiteAlreadyPresentError - if adding already existing site and
@@ -167,7 +168,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         self.reset_site_on_representation(project_name,
                                           representation_id,
                                           site_name=site_name,
-                                          force=force)
+                                          force=force,
+                                          priority=priority)
 
     def remove_site(self, project_name, representation_id, site_name,
                     remove_local_files=False):
@@ -1655,7 +1657,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
     def reset_site_on_representation(self, project_name, representation_id,
                                      side=None, file_id=None, site_name=None,
-                                     remove=False, pause=None, force=False):
+                                     remove=False, pause=None, force=False, priority=None):
         """
             Reset information about synchronization for particular 'file_id'
             and provider.
@@ -1678,6 +1680,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             remove (bool): if True remove site altogether
             pause (bool or None): if True - pause, False - unpause
             force (bool): hard reset - currently only for add_site
+            priority (int): set priority
 
         Raises:
             SiteAlreadyPresentError - if adding already existing site and
@@ -1704,6 +1707,10 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 site_name = remote_site
 
         elem = {"name": site_name}
+
+        # Add priority
+        if priority:
+            elem["priority"] = priority
 
         if file_id:  # reset site for particular file
             self._reset_site_for_file(project_name, representation_id,

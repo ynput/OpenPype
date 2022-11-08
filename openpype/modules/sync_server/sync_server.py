@@ -243,7 +243,6 @@ class SyncServerThread(threading.Thread):
         self.is_running = False
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=3)
         self.timer = None
-        self.files_are_processed = False
 
     def run(self):
         self.is_running = True
@@ -398,8 +397,6 @@ class SyncServerThread(threading.Thread):
                                               representation,
                                               site,
                                               error)
-                    # Trigger files process finished
-                    self.files_are_processed = False
 
                 duration = time.time() - start_time
                 self.log.debug("One loop took {:.2f}s".format(duration))
@@ -466,7 +463,6 @@ class SyncServerThread(threading.Thread):
         if self.timer:
             self.timer.cancel()
             self.timer = None
-        self.files_are_processed = True
 
     def _working_sites(self, project_name):
         if self.module.is_project_paused(project_name):
