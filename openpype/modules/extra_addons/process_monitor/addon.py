@@ -31,15 +31,10 @@ else:
 from openpype.modules import (
     JsonFilesSettingsDef,
     OpenPypeAddOn,
-    ModulesManager
-)
-from openpype_interfaces import (
+    ModulesManager,
     IPluginPaths,
     ITrayAction
 )
-######## PLUGINS_PATHS - MID
-#from openpype.lib import get_plugins_path
-######## PLUGINS_PATHS - END
 
 from openpype.api import get_anatomy_settings, get_system_settings
 
@@ -158,7 +153,6 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
         """Implementation of abstract method for `ITrayAction`."""
         self.show_dialog()
 
-    ######## PLUGINS_PATHS - BEGIN
     def get_plugin_paths(self):
         """Implementation of abstract method for `IPluginPaths`."""
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -166,18 +160,6 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
         return {
             "publish": [os.path.join(current_dir, "plugins", "publish")]
         }
-    ######## PLUGINS_PATHS - MID
-    '''
-    def get_plugin_paths(self):
-        """Implementation of abstract method for `IPluginPaths`."""
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-
-        plugins_dir = get_plugins_path(self.name, current_dir)
-        return {
-            "publish": [os.path.join(plugins_dir, "publish")]
-        }
-    '''
-    ######## PLUGINS_PATHS - END
 
     def cli(self, click_group):
         click_group.add_command(cli_main)
@@ -250,9 +232,23 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                         system_applications[application_name]["label"],
                         variant
                     )
+                    #TODO(2-REC): Find other way to determine executable (e.g.: Unreal)
+                    if not variants[variant].get("executables", False):
+                        self.log.warning((
+                            "No executable defined for '{}' variant '{}'"
+                        ).format(application_name, variant))
+                        continue
                     for executable in variants[variant]["executables"].get(current_platform):
+                        if not executable:
+                            self.log.warning((
+                                "Executable not defined for '{}'"
+                                " variant '{}' on '{}'"
+                            ).format(application_name,
+                                     variant,
+                                     platform.system()))
+                            continue
                         platform_executables.append(
-                            [name, executable]
+                            [name, executable.replace("\\", "/")]
                         )
 
         '''
@@ -299,10 +295,11 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
             if pid == 0:
                 continue
 
-            cmdline  = process.info["cmdline"]
-            #self.log.info("cmdline : {}".format(cmdline))
-            if not cmdline:
+            #self.log.info("cmdline : {}".format(process.info["cmdline"]))
+            if not process.info["cmdline"]:
                 continue
+            cmdline = [cmd.replace("\\", "/")
+                       for cmd in process.info["cmdline"]]
 
             name = process.info["name"]
             for application_name, project_application \
@@ -450,9 +447,10 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                 # => To avoid children daemon processes spawned in background
                 #  to be considered as running processes,
                 #  such as 'ADPClientService' for Maya/3dsMax.
-                cmdline  = process.info["cmdline"]
-                if not cmdline:
+                if not process.info["cmdline"]:
                     continue
+                cmdline = [cmd.replace("\\", "/")
+                           for cmd in process.info["cmdline"]]
 
                 process_cmd = terminated_process["cmdline"]
                 #TODO: OK? (or should only check 'cmdline[0]'?
@@ -488,7 +486,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
 
                     #if not self._timers_manager_module._idle_stopped:
                     if timer_running:
-                        #TODO: need timeout? (avoid if possible)
+                        #TODO(2-REC): need timeout? (avoid if possible)
                         import time
                         time.sleep(1)
                         self.start_process_timer(pid)
@@ -532,7 +530,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
 
                         #if not self._timers_manager_module._idle_stopped:
                         if timer_running:
-                            #TODO: need timeout? (avoid if possible)
+                            #TODO(2-REC): need timeout? (avoid if possible)
                             import time
                             time.sleep(1)
                             '''
@@ -569,7 +567,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                             self.timer_stopped()
 
                             if timer_running:
-                                #TODO: need timeout? (avoid if possible)
+                                #TODO(2-REC): need timeout? (avoid if possible)
                                 import time
                                 time.sleep(1)
                                 '''
