@@ -1,5 +1,4 @@
 from aiohttp.web_response import Response
-from openpype.client.entities import get_representation_by_id
 from openpype.lib import Logger
 
 
