@@ -2,8 +2,7 @@ import os
 import json
 import appdirs
 import requests
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import ITrayModule
+from openpype.modules import OpenPypeModule, ITrayModule
 
 
 class MusterModule(OpenPypeModule, ITrayModule):

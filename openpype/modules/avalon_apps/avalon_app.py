@@ -1,7 +1,6 @@
 import os
 
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import ITrayModule
+from openpype.modules import OpenPypeModule, ITrayModule
 
 
 class AvalonModule(OpenPypeModule, ITrayModule):

@@ -3,8 +3,8 @@ import platform
 
 
 from openpype.client import get_asset_by_name
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import (
+from openpype.modules import (
+    OpenPypeModule,
     ITrayService,
     IPluginPaths
 )
