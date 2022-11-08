@@ -1657,7 +1657,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
     def reset_site_on_representation(self, project_name, representation_id,
                                      side=None, file_id=None, site_name=None,
-                                     remove=False, pause=None, force=False, priority=None):
+                                     remove=False, pause=None, force=False, 
+                                     priority=None):
         """
             Reset information about synchronization for particular 'file_id'
             and provider.
