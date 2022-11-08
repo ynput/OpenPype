@@ -10,7 +10,7 @@ from openpype.settings import get_project_settings
 class AlembicStandinLoader(load.LoaderPlugin):
     """Load Alembic as Arnold Standin"""
 
-    families = ["model", "pointcache"]
+    families = ["animation", "model", "pointcache"]
     representations = ["abc"]
 
     label = "Import Alembic as Arnold Standin"
@@ -31,6 +31,7 @@ class AlembicStandinLoader(load.LoaderPlugin):
         self.log.info("version_data: {}\n".format(version_data))
 
         frameStart = version_data.get("frameStart", None)
+        frameEnd = version_data.get("frameEnd", None)
 
         asset = context["asset"]["name"]
         namespace = namespace or unique_namespace(
@@ -64,7 +65,13 @@ class AlembicStandinLoader(load.LoaderPlugin):
 
         # Set the standin filepath
         cmds.setAttr(standinShape + ".dso", self.fname, type="string")
-        if frameStart is not None:
+        cmds.setAttr(standinShape + ".abcFPS", 25)
+
+        if frameStart is None:
+            cmds.setAttr(standinShape + ".useFrameExtension", 0)
+        elif frameStart == 1 and frameEnd == 1:
+            cmds.setAttr(standinShape + ".useFrameExtension", 0)
+        else:
             cmds.setAttr(standinShape + ".useFrameExtension", 1)
 
         nodes = [root, standin]
@@ -93,7 +100,8 @@ class AlembicStandinLoader(load.LoaderPlugin):
 
         for standin in standins:
             standin.dso.set(path)
-            standin.useFrameExtension.set(1)
+            standin.useFrameExtension.set(0)
+            standin.abcFPS.set(25)
 
         container = pm.PyNode(container["objectName"])
         container.representation.set(str(representation["_id"]))
