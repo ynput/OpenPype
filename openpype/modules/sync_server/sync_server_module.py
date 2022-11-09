@@ -136,7 +136,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
     """ Start of Public API """
     def add_site(self, project_name, representation_id, site_name=None,
-                 force=False, priority=None):
+                 force=False, priority=None, reset_timer=False):
         """
         Adds new site to representation to be synced.
 
@@ -170,6 +170,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                                           site_name=site_name,
                                           force=force,
                                           priority=priority)
+
+        if reset_timer:
+            self.reset_timer()
 
     def remove_site(self, project_name, representation_id, site_name,
                     remove_local_files=False):
