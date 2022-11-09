@@ -1,6 +1,7 @@
 import os
 
 from openpype.pipeline import (
+    legacy_io,
     load,
     get_representation_path
 )
@@ -46,6 +47,7 @@ class AlembicStandinLoader(load.LoaderPlugin):
 
         settings = get_project_settings(os.environ['AVALON_PROJECT'])
         colors = settings["maya"]["load"]["colors"]
+        fps = legacy_io.Session["AVALON_FPS"]
 
         c = colors.get('ass')
         if c is not None:
@@ -65,12 +67,14 @@ class AlembicStandinLoader(load.LoaderPlugin):
 
         # Set the standin filepath
         cmds.setAttr(standinShape + ".dso", self.fname, type="string")
-        cmds.setAttr(standinShape + ".abcFPS", 25)
+        cmds.setAttr(standinShape + ".abcFPS", float(fps))
 
         if frameStart is None:
             cmds.setAttr(standinShape + ".useFrameExtension", 0)
+
         elif frameStart == 1 and frameEnd == 1:
             cmds.setAttr(standinShape + ".useFrameExtension", 0)
+
         else:
             cmds.setAttr(standinShape + ".useFrameExtension", 1)
 
@@ -89,7 +93,7 @@ class AlembicStandinLoader(load.LoaderPlugin):
         import pymel.core as pm
 
         path = get_representation_path(representation)
-
+        fps = legacy_io.Session["AVALON_FPS"]
         # Update the standin
         standins = list()
         members = pm.sets(container['objectName'], query=True)
@@ -101,7 +105,7 @@ class AlembicStandinLoader(load.LoaderPlugin):
         for standin in standins:
             standin.dso.set(path)
             standin.useFrameExtension.set(0)
-            standin.abcFPS.set(25)
+            standin.abcFPS.set(float(fps))
 
         container = pm.PyNode(container["objectName"])
         container.representation.set(str(representation["_id"]))
