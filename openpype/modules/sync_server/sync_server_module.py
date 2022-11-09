@@ -916,7 +916,42 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
             In case of user's involvement (reset site), start that right away.
         """
-        self.sync_server_thread.reset_timer()
+
+        if not self.enabled:
+            return
+
+        if self.sync_server_thread is None:
+            self._reset_timer_with_rest_api()
+        else:
+            self.sync_server_thread.reset_timer()
+
+    def is_representaion_on_site(
+        self, project_name, representation_id, site_id
+    ):
+        # TODO implement
+        return False
+
+    def _reset_timer_with_rest_api(self):
+        # POST to webserver sites to add to representations
+        webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
+        if not webserver_url:
+            self.log.warning("Couldn't find webserver url")
+            return
+
+        rest_api_url = "{}/sync_server/reset_timer".format(
+            webserver_url
+        )
+
+        try:
+            import requests
+        except Exception:
+            self.log.warning(
+                "Couldn't add sites to representations "
+                "('requests' is not available)"
+            )
+            return
+
+        requests.post(rest_api_url)
 
     def get_enabled_projects(self):
         """Returns list of projects which have SyncServer enabled."""
