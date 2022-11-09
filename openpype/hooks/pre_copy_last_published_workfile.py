@@ -37,6 +37,12 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         Returns:
             None: This is a void method.
         """
+
+        sync_server = self.modules_manager.get("sync_server")
+        if not sync_server or not sync_server.enabled:
+            self.log.deubg("Sync server module is not enabled or available")
+            return
+
         # Check there is no workfile available
         last_workfile = self.data.get("last_workfile_path")
         if os.path.exists(last_workfile):
@@ -142,7 +148,6 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             return
 
         local_site_id = get_local_site_id()
-        sync_server = self.modules_manager.get("sync_server")
         sync_server.add_site(
             project_name,
             workfile_representation["_id"],
