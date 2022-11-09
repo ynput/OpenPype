@@ -116,19 +116,19 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             return
 
         # Get workfile representation
+        last_version_doc = get_last_version_by_subset_id(
+            project_name, subset_id, fields=["_id"]
+        )
+        if not last_version_doc:
+            self.log.debug("Subset does not have any versions")
+            return
+
         workfile_representation = next(
             (
                 representation
                 for representation in get_representations(
                     project_name,
-                    version_ids=[
-                        (
-                            get_last_version_by_subset_id(
-                                project_name, subset_id, fields=["_id"]
-                            )
-                            or {}
-                        ).get("_id")
-                    ],
+                    version_ids=[last_version_doc["_id"]]
                 )
                 if representation["context"]["task"]["name"] == task_name
             ),
