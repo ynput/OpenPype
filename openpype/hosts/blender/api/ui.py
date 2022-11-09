@@ -14,13 +14,13 @@ class SCENE_UL_OpenpypeInstances(UIList):
         _active_propname,
         _index,
     ):
-        op_instance = item
+        item
         layout.alignment = "CENTER"
 
         row = layout.row(align=True)
-        row.label(text=op_instance.name)
+        row.label(text=item.name)
 
-        for type_icon in op_instance["bl_types_icons"]:
+        for type_icon in item.get("icons", []):
             row.label(icon=type_icon)
 
 
@@ -30,13 +30,18 @@ class ObjectSelectPanel(bpy.types.Panel):
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "scene"
-    bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
         layout = self.layout
 
+        # Exit if no any instance
+        if not len(context.scene.openpype_instances):
+            layout.operator("scene.create_openpype_instance", icon="ADD")
+            return
+
         row = layout.row(align=True)
         ob = context.scene
+
         # Add/Remove buttons
         col = row.column(align=True)
         col.operator("scene.create_openpype_instance", icon="ADD", text="")
@@ -59,13 +64,37 @@ class ObjectSelectPanel(bpy.types.Panel):
         row.separator()
 
         # List of datablocks embeded in instance
-        col = row.column(align=True).box()
-        col.scale_y = 0.5
         active_openpype_instance = context.scene.openpype_instances[
             context.scene.openpype_instance_active_index
         ]
-        for datablock in active_openpype_instance["datablocks"]:
-            col.label(text=datablock.name)
+
+        # List of datablocks for active instance
+        row.template_list(
+            "SCENE_UL_OpenpypeInstances",
+            "",
+            active_openpype_instance,
+            "datablocks",
+            active_openpype_instance,
+            "datablock_active_index",
+        )
+
+        # Add/Remove datablock to instance
+        col = row.column(align=True)
+        props = col.operator(
+            "scene.add_to_openpype_instance", icon="ADD", text=""
+        )
+        props.instance_name = active_openpype_instance.name
+        props.creator_name = active_openpype_instance["creator_name"]
+        props.datapath = active_openpype_instance.datablocks[0].datapath
+
+        props = col.operator(
+            "scene.remove_from_openpype_instance", icon="REMOVE", text=""
+        )
+        props.instance_name = active_openpype_instance.name
+        props.creator_name = active_openpype_instance["creator_name"]
+        props.datablock_name = active_openpype_instance.datablocks[
+            active_openpype_instance.datablock_active_index
+        ].name
 
 
 classes = (ObjectSelectPanel, SCENE_UL_OpenpypeInstances)
