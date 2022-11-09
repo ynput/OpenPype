@@ -26,36 +26,11 @@ class SyncServerModuleRestApi:
     def register(self):
         self.server_manager.add_route(
             "POST",
-            self.prefix + "/add_sites_to_representations",
-            self.add_sites_to_representations,
+            self.prefix + "/reset_timer",
+            self.reset_timer,
         )
 
-    async def add_sites_to_representations(self, request):
-        # Extract data from request
-        data = await request.json()
-        try:
-            project_name = data["project_name"]
-            sites = data["sites"]
-            representations = data["representations"]
-        except KeyError:
-            msg = (
-                "Payload must contain fields 'project_name,"
-                " 'sites' (list of names) and 'representations' (list of IDs)"
-            )
-            self.log.error(msg)
-            return Response(status=400, message=msg)
-
-        # Add all sites to each representation
-        for representation_id in representations:
-            for site in sites:
-                self.module.add_site(
-                    project_name,
-                    representation_id,
-                    site,
-                    force=True,
-                    priority=99,
-                )
-
+    async def reset_timer(self, request):
         # Force timer to run immediately
         self.module.reset_timer()
 
