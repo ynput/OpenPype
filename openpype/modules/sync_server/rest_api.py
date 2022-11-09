@@ -30,8 +30,8 @@ class SyncServerModuleRestApi:
             self.reset_timer,
         )
 
-    async def reset_timer(self, request):
-        # Force timer to run immediately
+    async def reset_timer(self, _request):
+        """Force timer to run immediately."""
         self.module.reset_timer()
 
         return Response(status=200)
