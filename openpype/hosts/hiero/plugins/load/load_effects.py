@@ -13,6 +13,7 @@ from openpype.pipeline import (
     get_representation_path
 )
 from openpype.hosts.hiero import api as phiero
+from openpype.lib import Logger
 
 
 class LoadEffects(load.LoaderPlugin):
@@ -25,6 +26,8 @@ class LoadEffects(load.LoaderPlugin):
     order = 0
     icon = "cc"
     color = "white"
+
+    log = Logger.get_logger(__name__)
 
     def load(self, context, name, namespace, data):
         """
@@ -41,7 +44,7 @@ class LoadEffects(load.LoaderPlugin):
         """
         active_sequence = phiero.get_current_sequence()
         active_track = phiero.get_current_track(
-            active_sequence, "LoadedEffects")
+            active_sequence, "Loaded_{}".format(name))
 
         # get main variables
         namespace = namespace or context["asset"]["name"]
@@ -119,7 +122,27 @@ class LoadEffects(load.LoaderPlugin):
                     continue
 
                 try:
-                    node[knob_name].setValue(knob_value)
+                    # assume list means animation
+                    # except 4 values could be RGBA or vector
+                    if isinstance(knob_value, list) and len(knob_value) > 4:
+                        node[knob_name].setAnimated()
+                        for i, value in enumerate(knob_value):
+                            if isinstance(value, list):
+                                # list can have vector animation
+                                for ci, cv in enumerate(value):
+                                    node[knob_name].setValueAt(
+                                        cv,
+                                        (clip_in + i),
+                                        ci
+                                    )
+                            else:
+                                # list is single values
+                                node[knob_name].setValueAt(
+                                    value,
+                                    (clip_in + i)
+                                )
+                    else:
+                        node[knob_name].setValue(knob_value)
                 except NameError:
                     self.log.warning("Knob: {} cannot be set".format(
                         knob_name))
