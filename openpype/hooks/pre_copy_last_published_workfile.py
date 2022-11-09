@@ -3,8 +3,6 @@ import shutil
 from time import sleep
 from openpype.client.entities import (
     get_last_version_by_subset_id,
-    get_representation_by_id,
-    get_representation_last_created_time_on_site,
     get_representations,
     get_subsets,
 )
