@@ -925,7 +925,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         else:
             self.sync_server_thread.reset_timer()
 
-    def is_representaion_on_site(
+    def is_representation_on_site(
         self, project_name, representation_id, site_id
     ):
         # TODO implement
