@@ -218,11 +218,11 @@ def new_hero_version_doc(version_id, subset_id, data=None, entity_id=None):
 def new_representation_doc(
     name, version_id, context, data=None, entity_id=None
 ):
-    """Create skeleton data of asset document.
+    """Create skeleton data of representation document.
 
     Args:
-        version (int): Is considered as unique identifier of version
-            under subset.
+        name (str): Representation name considered as unique identifier
+            of representation under version.
         version_id (Union[str, ObjectId]): Id of parent version.
         context (Dict[str, Any]): Representation context used for fill template
             of to query.
