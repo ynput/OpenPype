@@ -155,7 +155,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             reset_timer=True
         )
 
-        while not sync_server.is_representaion_on_site(
+        while not sync_server.is_representation_on_site(
             project_name,
             workfile_representation["_id"],
             local_site_id
