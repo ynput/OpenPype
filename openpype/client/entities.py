@@ -6,7 +6,6 @@ that has project name as a context (e.g. on 'ProjectEntity'?).
 + We will need more specific functions doing wery specific queires really fast.
 """
 
-from datetime import datetime
 import re
 import collections
 
