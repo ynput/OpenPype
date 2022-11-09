@@ -30,16 +30,16 @@ def get_projects(active=True, inactive=False, library=None, fields=None):
     elif inactive:
         active = False
 
-    fields = project_fields_v3_to_v4(fields)
     con = get_server_api_connection()
+    fields = project_fields_v3_to_v4(fields, con)
     for project in con.get_projects(active, library, fields):
         yield convert_v4_project_to_v3(project)
 
 
 def get_project(project_name, active=True, inactive=False, fields=None):
     # Skip if both are disabled
-    fields = project_fields_v3_to_v4(fields)
     con = get_server_api_connection()
+    fields = project_fields_v3_to_v4(fields, con)
     return convert_v4_project_to_v3(
         con.get_project(project_name, fields=fields)
     )
@@ -59,7 +59,8 @@ def _get_subsets(
     fields=None
 ):
     # Convert fields and add minimum required fields
-    fields = subset_fields_v3_to_v4(fields)
+    con = get_server_api_connection()
+    fields = subset_fields_v3_to_v4(fields, con)
     if fields is not None:
         for key in (
             "id",
@@ -67,7 +68,6 @@ def _get_subsets(
         ):
             fields.add(key)
 
-    con = get_server_api_connection()
     for subset in con.get_subsets(
         project_name,
         subset_ids,
@@ -90,9 +90,9 @@ def _get_versions(
     latest=None,
     fields=None
 ):
-    fields = version_fields_v3_to_v4(fields)
-
     con = get_server_api_connection()
+
+    fields = version_fields_v3_to_v4(fields, con)
 
     # Make sure 'subsetId' and 'version' are available when hero versions
     #   are queried
@@ -185,7 +185,7 @@ def get_assets(
         active = False
 
     con = get_server_api_connection()
-    fields = folder_fields_v3_to_v4(fields)
+    fields = folder_fields_v3_to_v4(fields, con)
     kwargs = dict(
         folder_ids=asset_ids,
         folder_names=asset_names,
@@ -194,7 +194,7 @@ def get_assets(
         fields=fields
     )
 
-    if "tasks" in fields:
+    if fields is None or "tasks" in fields:
         folders = con.get_folders_with_tasks(project_name, **kwargs)
 
     else:
@@ -452,8 +452,8 @@ def get_representations(
     else:
         active = None
 
-    fields = representation_fields_v3_to_v4(fields)
     con = get_server_api_connection()
+    fields = representation_fields_v3_to_v4(fields, con)
     representations = con.get_representations(
         project_name,
         representation_ids,

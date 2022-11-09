@@ -1,10 +1,5 @@
 import collections
 
-from .constants import (
-    DEFAULT_FOLDER_FIELDS,
-    DEFAULT_SUBSET_FIELDS,
-    DEFAULT_VERSION_FIELDS,
-)
 from .graphql import FIELD_VALUE, GraphQlQuery
 
 
@@ -302,7 +297,10 @@ def representations_graphql_query(fields):
     return query
 
 
-def reprersentations_parents_qraphql_query():
+def representations_parents_qraphql_query(
+    version_fields, subset_fields, folder_fields
+):
+
     query = GraphQlQuery("RepresentationsParentsQuery")
 
     project_name_var = query.add_variable("projectName", "String!")
@@ -317,15 +315,15 @@ def reprersentations_parents_qraphql_query():
     version_field = repres_field.add_field("version")
 
     fields_queue = collections.deque()
-    for key, value in fields_to_dict(DEFAULT_VERSION_FIELDS).items():
+    for key, value in fields_to_dict(version_fields).items():
         fields_queue.append((key, value, version_field))
 
     subset_field = version_field.add_field("subset")
-    for key, value in fields_to_dict(DEFAULT_SUBSET_FIELDS).items():
+    for key, value in fields_to_dict(subset_fields).items():
         fields_queue.append((key, value, subset_field))
 
     folder_field = subset_field.add_field("folder")
-    for key, value in fields_to_dict(DEFAULT_FOLDER_FIELDS).items():
+    for key, value in fields_to_dict(folder_fields).items():
         fields_queue.append((key, value, folder_field))
 
     while fields_queue:

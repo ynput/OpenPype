@@ -6,25 +6,14 @@ import six
 
 from openpype.client.operations_base import REMOVED_VALUE
 
-from .constants import (
-    DEFAULT_V3_FOLDER_FIELDS,
-    FOLDER_ATTRIBS,
-    FOLDER_ATTRIBS_FIELDS,
-
-    SUBSET_ATTRIBS,
-
-    VERSION_ATTRIBS_FIELDS,
-
-    REPRESENTATION_ATTRIBS_FIELDS,
-    REPRESENTATION_FILES_FIELDS,
-)
+from .constants import REPRESENTATION_FILES_FIELDS
 from .utils import create_entity_id
 
 # --- Project entity ---
 PROJECT_FIELDS_MAPPING_V3_V4 = {
     "_id": {"name"},
     "name": {"name"},
-    "data": {"data", "attrib", "code"},
+    "data": {"data", "code"},
     "data.library_project": {"library"},
     "data.code": {"code"},
     "data.active": {"active"},
@@ -38,7 +27,7 @@ FOLDER_FIELDS_MAPPING_V3_V4 = {
     "label": {"name"},
     "data": {
         "parentId", "parents", "active", "tasks", "thumbnailId"
-    } | FOLDER_ATTRIBS_FIELDS,
+    },
     "data.visualParent": {"parentId"},
     "data.parents": {"parents"},
     "data.active": {"active"},
@@ -70,7 +59,7 @@ REPRESENTATION_FIELDS_MAPPING_V3_V4 = {
 }
 
 
-def project_fields_v3_to_v4(fields):
+def project_fields_v3_to_v4(fields, con):
     """Convert project fields from v3 to v4 structure.
 
     Args:
@@ -86,6 +75,7 @@ def project_fields_v3_to_v4(fields):
     if not fields:
         return None
 
+    project_attribs = con.get_attributes_for_type("project")
     output = set()
     for field in fields:
         # If config is needed the rest api call must be used
@@ -94,10 +84,22 @@ def project_fields_v3_to_v4(fields):
 
         if field in PROJECT_FIELDS_MAPPING_V3_V4:
             output |= PROJECT_FIELDS_MAPPING_V3_V4[field]
+            if field == "data":
+                output |= {
+                    "attrib.{}".format(attr)
+                    for attr in project_attribs
+                }
+            continue
 
-        elif field.startswith("data"):
-            new_field = "attrib" + field[4:]
-            output.add(new_field)
+        if field.startswith("data"):
+            field_parts = field.split(".")
+            field_parts.pop(0)
+            data_key = ".".join(field_parts)
+            if data_key in project_attribs:
+                output.add("attrib.{}".format(data_key))
+            else:
+                output.add("data")
+                print("Requested specific key from data {}".format(data_key))
 
         else:
             raise ValueError("Unknown field mapping for {}".format(field))
@@ -216,7 +218,7 @@ def convert_v4_project_to_v3(project):
     return output
 
 
-def folder_fields_v3_to_v4(fields):
+def folder_fields_v3_to_v4(fields, con):
     """Convert folder fields from v3 to v4 structure.
 
     Args:
@@ -227,8 +229,9 @@ def folder_fields_v3_to_v4(fields):
     """
 
     if not fields:
-        return set(DEFAULT_V3_FOLDER_FIELDS)
+        return None
 
+    folder_attributes = con.get_attributes_for_type("folder")
     output = set()
     for field in fields:
         if field in ("schema", "type", "parent"):
@@ -236,6 +239,11 @@ def folder_fields_v3_to_v4(fields):
 
         if field in FOLDER_FIELDS_MAPPING_V3_V4:
             output |= FOLDER_FIELDS_MAPPING_V3_V4[field]
+            if field == "data":
+                output |= {
+                    "attrib.{}".format(attr)
+                    for attr in folder_attributes
+                }
 
         elif field.startswith("data"):
             field_parts = field.split(".")
@@ -249,12 +257,13 @@ def folder_fields_v3_to_v4(fields):
 
             elif data_key.startswith("tasks"):
                 output.add("tasks")
-            elif data_key in FOLDER_ATTRIBS:
-                new_field = "attrib" + field[4:]
-                output.add(new_field)
+
+            elif data_key in folder_attributes:
+                output.add("attrib.{}".format(data_key))
+
             else:
-                print(data_key)
-                raise ValueError("Can't query data for field {}".format(field))
+                output.add("data")
+                print("Requested specific key from data {}".format(data_key))
 
         else:
             raise ValueError("Unknown field mapping for {}".format(field))
@@ -334,7 +343,7 @@ def convert_v4_folder_to_v3(folder, project_name):
     return output
 
 
-def subset_fields_v3_to_v4(fields):
+def subset_fields_v3_to_v4(fields, con):
     """Convert subset fields from v3 to v4 structure.
 
     Args:
@@ -347,6 +356,8 @@ def subset_fields_v3_to_v4(fields):
     if not fields:
         return None
 
+    subset_attributes = con.get_attributes_for_type("subset")
+
     output = set()
     for field in fields:
         if field in ("schema", "type"):
@@ -357,21 +368,25 @@ def subset_fields_v3_to_v4(fields):
 
         elif field == "data":
             output.add("family")
-            output |= SUBSET_ATTRIBS
+            output.add("active")
+            output |= {
+                "attrib.{}".format(attr)
+                for attr in subset_attributes
+            }
 
         elif field.startswith("data"):
             field_parts = field.split(".")
             field_parts.pop(0)
             data_key = ".".join(field_parts)
-            if data_key == "subsetGroup":
-                output.add("attrib.subsetGroup")
-
-            elif data_key in ("family", "families"):
+            if data_key in ("family", "families"):
                 output.add("family")
 
+            elif data_key in subset_attributes:
+                output.add("attrib.{}".format(data_key))
+
             else:
-                print(data_key)
-                raise ValueError("Can't query data for field {}".format(field))
+                output.add("data")
+                print("Requested specific key from data {}".format(data_key))
 
         else:
             raise ValueError("Unknown field mapping for {}".format(field))
@@ -412,7 +427,7 @@ def convert_v4_subset_to_v3(subset):
     return output
 
 
-def version_fields_v3_to_v4(fields):
+def version_fields_v3_to_v4(fields, con):
     """Convert version fields from v3 to v4 structure.
 
     Args:
@@ -425,6 +440,8 @@ def version_fields_v3_to_v4(fields):
     if not fields:
         return None
 
+    version_attributes = con.get_attributes_for_type("version")
+
     output = set()
     for field in fields:
         if field in ("type", "schema", "version_id"):
@@ -434,7 +451,10 @@ def version_fields_v3_to_v4(fields):
             output |= VERSION_FIELDS_MAPPING_V3_V4[field]
 
         elif field == "data":
-            output |= VERSION_ATTRIBS_FIELDS
+            output |= {
+                "attrib.{}".format(attr)
+                for attr in version_attributes
+            }
             output |= {
                 "author",
                 "createdAt",
@@ -445,7 +465,10 @@ def version_fields_v3_to_v4(fields):
             field_parts = field.split(".")
             field_parts.pop(0)
             data_key = ".".join(field_parts)
-            if data_key == "thumbnail_id":
+            if data_key in version_attributes:
+                output.add("attrib.{}".format(data_key))
+
+            elif data_key == "thumbnail_id":
                 output.add("thumbnailId")
 
             elif data_key == "time":
@@ -458,8 +481,8 @@ def version_fields_v3_to_v4(fields):
                 continue
 
             else:
-                print(data_key)
-                raise ValueError("Can't query data for field {}".format(field))
+                output.add("data")
+                print("Requested specific key from data {}".format(data_key))
 
         else:
             raise ValueError("Unknown field mapping for {}".format(field))
@@ -517,7 +540,7 @@ def convert_v4_version_to_v3(version):
     return output
 
 
-def representation_fields_v3_to_v4(fields):
+def representation_fields_v3_to_v4(fields, con):
     """Convert representation fields from v3 to v4 structure.
 
     Args:
@@ -529,6 +552,8 @@ def representation_fields_v3_to_v4(fields):
 
     if not fields:
         return None
+
+    representation_attributes = con.get_attributes_for_type("representation")
 
     output = set()
     for field in fields:
@@ -547,7 +572,10 @@ def representation_fields_v3_to_v4(fields):
             output |= REPRESENTATION_FILES_FIELDS
 
         elif field.startswith("data"):
-            fields |= REPRESENTATION_ATTRIBS_FIELDS
+            fields |= {
+                "attrib.{}".format(attr)
+                for attr in representation_attributes
+            }
 
         else:
             raise ValueError("Unknown field mapping for {}".format(field))
