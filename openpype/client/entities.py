@@ -1368,33 +1368,6 @@ def get_representation_parents(project_name, representation):
     return parents_by_repre_id[repre_id]
 
 
-def get_representation_last_created_time_on_site(
-    representation: dict, site_name: str
-) -> datetime:
-    """Get `created_dt` value for representation on site.
-
-    Args:
-        representation (dict): Representation to get creation date of
-        site_name (str): Site from which to get the creation date
-
-    Returns:
-        datetime: Created time of representation on site
-    """
-    created_time = next(
-        (
-            site.get("created_dt")
-            for site in representation["files"][0].get("sites", [])
-            if site["name"] == site_name
-        ),
-        None,
-    )
-    if created_time:
-        return created_time
-    else:
-        # Use epoch as 'zero' time
-        return datetime.utcfromtimestamp(0)
-
-
 def get_thumbnail_id_from_source(project_name, src_type, src_id):
     """Receive thumbnail id from source entity.
 
