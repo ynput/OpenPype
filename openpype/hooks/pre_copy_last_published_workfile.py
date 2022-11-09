@@ -141,49 +141,21 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             ).format(task_name, host_name)
             return
 
-        # POST to webserver sites to add to representations
-        webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
-        if not webserver_url:
-            self.log.warning("Couldn't find webserver url")
-            return
-
-        entry_point_url = "{}/sync_server".format(webserver_url)
-        rest_api_url = "{}/add_sites_to_representations".format(
-            entry_point_url
-        )
-        try:
-            import requests
-        except Exception:
-            self.log.warning(
-                "Couldn't add sites to representations "
-                "('requests' is not available)"
-            )
-            return
-
         local_site_id = get_local_site_id()
-        requests.post(
-            rest_api_url,
-            json={
-                "project_name": project_name,
-                "sites": [local_site_id],
-                "representations": [str(workfile_representation["_id"])],
-            },
+        sync_server = self.modules_manager.get("sync_server")
+        sync_server.add_site(
+            project_name,
+            workfile_representation["_id"],
+            local_site_id,
+            force=True,
+            priority=99,
+            reset_timer=True
         )
 
-        # Wait for the download loop to end
-        last_created_time = get_representation_last_created_time_on_site(
-            workfile_representation, local_site_id
-        )
-        while (
-            last_created_time
-            >= get_representation_last_created_time_on_site(
-                get_representation_by_id(
-                    project_name,
-                    workfile_representation["_id"],
-                    fields=["files"],
-                ),
-                local_site_id,
-            )
+        while not sync_server.is_representaion_on_site(
+            project_name,
+            workfile_representation["_id"],
+            local_site_id
         ):
             sleep(5)
 
