@@ -926,10 +926,27 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             self.sync_server_thread.reset_timer()
 
     def is_representation_on_site(
-        self, project_name, representation_id, site_id
+        self, project_name, representation_id, site_name
     ):
-        # TODO implement
-        return False
+        """Checks if 'representation_id' has all files avail. on 'site_name'"""
+        representation = get_representation_by_id(project_name,
+                                                  representation_id,
+                                                  fields=["_id", "files"])
+        if not representation:
+            return False
+
+        on_site = False
+        for file_info in representation.get("files", []):
+            for site in file_info.get("sites", []):
+                if site["name"] != site_name:
+                    continue
+
+                if (site.get("progress") or site.get("error") or
+                        not site.get("created_dt")):
+                    return False
+                on_site = True
+
+        return on_site
 
     def _reset_timer_with_rest_api(self):
         # POST to webserver sites to add to representations
