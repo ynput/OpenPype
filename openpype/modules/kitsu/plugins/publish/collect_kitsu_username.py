@@ -12,7 +12,7 @@ class CollectKitsuUsername(pyblish.api.ContextPlugin):
     label = "Kitsu username"
 
     def process(self, context):
-        kitsu_login = os.environ['KITSU_LOGIN']
+        kitsu_login = os.environ.get('KITSU_LOGIN')
 
         if not kitsu_login:
             return
