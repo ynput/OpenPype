@@ -143,7 +143,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         'project_name' must have synchronization enabled (globally or
         project only)
 
-        Used as a API endpoint from outside applications (Loader etc).
+        Used as an API endpoint from outside applications (Loader etc).
 
         Use 'force' to reset existing site.
 
@@ -153,6 +153,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             site_name (string): name of configured and active site
             force (bool): reset site if exists
             priority (int): set priority
+            reset_timer (bool): if delay timer should be reset, eg. user mark
+                some representation to be synced manually
 
         Throws:
             SiteAlreadyPresentError - if adding already existing site and
@@ -1601,12 +1603,12 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         Args:
             project_name (string): name of project - force to db connection as
               each file might come from different collection
-            new_file_id (string):
+            new_file_id (string): only present if file synced successfully
             file (dictionary): info about processed file (pulled from DB)
             representation (dictionary): parent repr of file (from DB)
             site (string): label ('gdrive', 'S3')
             error (string): exception message
-            progress (float): 0-1 of progress of upload/download
+            progress (float): 0-0.99 of progress of upload/download
             priority (int): 0-100 set priority
 
         Returns:
