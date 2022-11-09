@@ -11,6 +11,7 @@ import functools
 import warnings
 import json
 import ast
+import secrets
 import shutil
 import hiero
 
@@ -350,6 +351,8 @@ def set_track_openpype_tag(track, data=None):
     Returns:
         hiero.core.Tag
     """
+    hash = secrets.token_hex(nbytes=4)
+
     data = data or {}
 
     # basic Tag's attribute
@@ -367,7 +370,10 @@ def set_track_openpype_tag(track, data=None):
         tag = tags.update_tag(_tag, tag_data)
     else:
         # if pype tag available then update with input data
-        tag = tags.create_tag(self.pype_tag_name, tag_data)
+        tag = tags.create_tag(
+            "{}_{}".format(self.pype_tag_name, hash),
+            tag_data
+        )
         # add it to the input track item
         track.addTag(tag)
 
@@ -390,7 +396,7 @@ def get_track_openpype_tag(track):
         return None
     for tag in _tags:
         # return only correct tag defined by global name
-        if tag.name() == self.pype_tag_name:
+        if self.pype_tag_name in tag.name():
             return tag
 
 

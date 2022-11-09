@@ -201,6 +201,15 @@ def parse_container(item, validate=True):
         return data_to_container(item, _data)
 
 
+def _update_container_data(container, data):
+    for key in container:
+        try:
+            container[key] = data[key]
+        except KeyError:
+            pass
+    return container
+
+
 def update_container(item, data=None):
     """Update container data to input track_item or track's
     openpype tag.
@@ -214,15 +223,9 @@ def update_container(item, data=None):
         bool: True if container was updated correctly
 
     """
-    def update_container_data(container, data):
-        for key in container:
-            try:
-                container[key] = data[key]
-            except KeyError:
-                pass
-        return container
 
     data = data or {}
+    data = deepcopy(data)
 
     if type(item) == hiero.core.VideoTrack:
         # form object data for test
@@ -236,14 +239,14 @@ def update_container(item, data=None):
         container = deepcopy(container)
 
         # update data in container
-        updated_container = update_container_data(container, data)
+        updated_container = _update_container_data(container, data)
         # merge updated container back to containers
         containers.update({object_name: updated_container})
 
         return bool(lib.set_track_openpype_tag(item, containers))
     else:
         container = lib.get_trackitem_openpype_data(item)
-        updated_container = update_container_data(container, data)
+        updated_container = _update_container_data(container, data)
 
         log.info("Updating container: `{}`".format(item.name()))
         return bool(lib.set_trackitem_openpype_tag(item, updated_container))
