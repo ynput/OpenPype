@@ -12,7 +12,7 @@ from mathutils import Matrix
 
 from openpype.api import Logger
 from openpype.hosts.blender.api.properties import OpenpypeInstance
-from openpype.hosts.blender.api.utils import BL_OUTLINER_TYPES, get_children_recursive, get_parent_collection, link_to_collection
+from openpype.hosts.blender.api.utils import BL_OUTLINER_TYPES, BL_TYPE_DATAPATH, BL_TYPE_ICON, get_children_recursive, get_parent_collection, link_to_collection
 from openpype.pipeline import (
     legacy_io,
     LegacyCreator,
@@ -926,6 +926,13 @@ class Creator(LegacyCreator):
         if op_instance is None:
             op_instance = bpy.context.scene.openpype_instances.add()
             op_instance.name = name
+
+            # Keep types matches
+            op_instance["icons"] = [
+                BL_TYPE_ICON.get(t, "NONE") for t in self.bl_types
+            ]
+            op_instance["creator_name"] = self.__class__.__name__
+            op_instance["plugin"] = [subset, asset, {"variant": name}]
         else:
             # If no datablocks, then empty instance is already existing
             if not datablocks:
@@ -936,22 +943,18 @@ class Creator(LegacyCreator):
         imprint(op_instance, self.data)
 
         # Process outliner if current creator relates to this types
-        container_collection = None
-        if all(
-            t in self.bl_types
-            for t in BL_OUTLINER_TYPES
-        ):
-            container_collection = self._process_outliner(datablocks, name)
+        if all(t in self.bl_types for t in BL_OUTLINER_TYPES):
+            self._process_outliner(datablocks, name)
 
-        # Associate datablocks to openpype instance
-        # Append datablocks only if not already listed, order is kept
-        op_instance["datablocks"] = list(op_instance.get("datablocks", [])) + [
-            d
-            for d in (
-                [container_collection] if container_collection else datablocks
-            )
-            if d not in op_instance.get("datablocks", [])
-        ]
+        # Add datablocks to openpype instance
+        for d in datablocks:
+            # Skip if already existing
+            if op_instance.datablocks.get(d.name):
+                continue
+
+            instance_datablock = op_instance.datablocks.add()
+            instance_datablock.name = d.name
+            instance_datablock.datapath = BL_TYPE_DATAPATH.get(type(d))
 
         return op_instance
 
@@ -960,6 +963,41 @@ class Creator(LegacyCreator):
         mti = MainThreadItem(self._process)
         execute_in_main_thread(mti)
         return mti
+
+    def _remove_instance(self, instance_name: str) -> bool:
+        """Remove a created instance from a Blender scene.
+
+        Arguments:
+            instance_name: Name of instance to remove.
+
+        Returns:
+            Whether the instance was deleted.
+        """
+        # Get openpype instance
+        openpype_instances = bpy.context.scene.openpype_instances
+        op_instance_index = openpype_instances.find(instance_name)
+
+        # Clear outliner if outliner data
+        instance_collection = bpy.data.collections.get(instance_name)
+        if instance_collection:
+            parent_collection = get_parent_collection(instance_collection)
+
+            # Move all children collections and objects to parent collection
+            link_to_collection(
+                list(instance_collection.objects)
+                + list(instance_collection.children),
+                parent_collection,
+            )
+
+            # Remove collection
+            bpy.data.collections.remove(
+                bpy.data.collections.get(instance_name)
+            )
+
+        # Remove openpype instance
+        openpype_instances.remove(op_instance_index)
+
+        return True
 
 
 class Loader(LoaderPlugin):

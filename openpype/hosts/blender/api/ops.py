@@ -346,13 +346,14 @@ def _update_entries_preset(self, _context):
 
     - Set `datapath`'s value to the first item of the list to avoid `None` values when
     the length of the items list reduces.
-    - Update variant name to the first item. TODO available variant names
+    - Update variant name to the first item.
     """
-    creator_plugin = get_legacy_creator_by_name(self.creator)
+    # TODO optimize
+    creator_plugin = get_legacy_creator_by_name(self.creator_name)
 
     # Set default datapath and datablock
     self.datapath = BL_TYPE_DATAPATH.get(tuple(creator_plugin.bl_types)[0])
-    self.datablock = ""
+    self.datablock_name = ""
 
     # Change names
     # Check if Creator plugin has set defaults
@@ -361,7 +362,7 @@ def _update_entries_preset(self, _context):
     ):
         self.variant_default = creator_plugin.defaults[0]
 
-    if creator_plugin.bl_types & BL_OUTLINER_TYPES:
+    if not creator_plugin.bl_types & BL_OUTLINER_TYPES:
         self.use_selection = False
 
 
@@ -379,7 +380,7 @@ def _update_subset_name(self: bpy.types.Operator, _context: bpy.types.Context):
     task_name = legacy_io.Session["AVALON_TASK"]
 
     # Get creator plugin
-    creator_plugin = get_legacy_creator_by_name(self.creator)
+    creator_plugin = get_legacy_creator_by_name(self.creator_name)
 
     # Build subset name and set it
     self.subset_name = get_subset_name(
@@ -410,7 +411,7 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
     bl_label = "Create OpenPype Instance"  # TODO
     bl_options = {"REGISTER", "UNDO"}
 
-    creator: EnumProperty(
+    creator_name: EnumProperty(
         name="Creator",
         # Items from all creator plugins, referenced by their class name, label is displayed in UI
         # creator class name is used later to get the creator plugin
@@ -436,7 +437,9 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
         # Items are defaults from current creator plugin
         items=lambda self, _: [
             (default, default, "")
-            for default in get_legacy_creator_by_name(self.creator).defaults
+            for default in get_legacy_creator_by_name(
+                self.creator_name
+            ).defaults
         ],
         update=_update_variant_name,
     )
@@ -449,10 +452,12 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
         # Matching the appropriate datapath using the bl_types field which lists all relevant data types
         items=lambda self, _: [
             (BL_TYPE_DATAPATH.get(bl_type), bl_type.__name__, "")
-            for bl_type in get_legacy_creator_by_name(self.creator).bl_types
+            for bl_type in get_legacy_creator_by_name(
+                self.creator_name
+            ).bl_types
         ],
     )
-    datablock: bpy.props.StringProperty(name="Datablock")
+    datablock_name: bpy.props.StringProperty(name="Datablock Name")
 
     def __init__(self) -> None:
         # Set assets list
@@ -466,7 +471,9 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
         _update_entries_preset(self, None)
 
         # Determine use_selection
-        self.use_selection = bool(bpy.context.selected_objects)
+        creator_plugin = get_legacy_creator_by_name(self.creator_name)
+        if creator_plugin.bl_types & BL_OUTLINER_TYPES:
+            self.use_selection = bool(bpy.context.selected_objects)
 
     def invoke(self, context, _event):
         wm = context.window_manager
@@ -475,7 +482,7 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
     def draw(self, _context):
         layout = self.layout
 
-        layout.prop(self, "creator")
+        layout.prop(self, "creator_name")
         layout.prop_search(self, "asset_name", self, "all_assets")
 
         # Variant with defaults list
@@ -489,7 +496,7 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
         sublayout.prop(self, "subset_name")
 
         # Use selection only if relevant to outliner data
-        if self.datapath.startswith("bpy.context.scene"):
+        if "collection" in self.datapath:
             sublayout = layout.row()
             # Enabled only if objects selected
             sublayout.enabled = bool(bpy.context.selected_objects)
@@ -499,16 +506,17 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
         if not self.use_selection:
             row = layout.row(align=True)
 
-            creator_plugin = get_legacy_creator_by_name(self.creator)
+            # TODO not optimized
+            creator_plugin = get_legacy_creator_by_name(self.creator_name)
 
             # Search data into list
             data_path, search_field = self.datapath.rsplit(
                 ".", 1
             )  # Split data path from search field
             row.prop_search(
-                self, "datablock", eval(data_path), search_field, text=""
+                self, "datablock_name", eval(data_path), search_field, text=""
             ) if self.datapath else layout.label(
-                text=f"Not supported family: {self.creator}"
+                text=f"Not supported family: {self.creator_name}"
             )
 
             # Pick list if several possibilities match
@@ -520,8 +528,11 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
             self.report({"ERROR"}, f"Asset name must be filled!")
             return {"CANCELLED"}
 
+        if not self.datablock_name and not self.use_selection:
+            self.report({"WARNING"}, f"No any datablock to process...")
+
         # Get creator class
-        Creator = get_legacy_creator_by_name(self.creator)
+        Creator = get_legacy_creator_by_name(self.creator_name)
 
         # NOTE Shunting legacy_create because of useless overhead and deprecated design.
         # Will see if compatible with new creator when implemented for Blender
@@ -529,60 +540,148 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
             self.subset_name, self.asset_name, {"variant": self.variant_name}
         )
         datapath = eval(self.datapath)
-        op_instance = plugin._process(
+        plugin._process(
             bpy.context.selected_objects
             if self.use_selection
-            else [datapath.get(self.datablock)]
+            else [datapath.get(self.datablock_name)]
         )
-
-        # Keep creator
-        op_instance["bl_types_icons"] = [
-            BL_TYPE_ICON.get(t, "NONE") for t in plugin.bl_types
-        ]
-
-        if not self.datablock and not self.use_selection:
-            self.report({"WARNING"}, f"No any datablock to process...")
 
         return {"FINISHED"}
 
 
-class SCENE_OT_RemoveOpenpypeInstance(bpy.types.Operator):
+class ManageOpenpypeInstance:
+    """Properties to manage an OpenPype instance once created."""
+
+    creator_name: EnumProperty(
+        name="Creator",
+        # Items from all creator plugins, referenced by their class name, label is displayed in UI
+        # creator class name is used later to get the creator plugin
+        items=lambda _, __: (
+            (p.__name__, p.label, "")
+            for p in discover_legacy_creator_plugins()
+        ),
+    )
+    instance_name: bpy.props.StringProperty(name="Instance Name")
+
+
+class SCENE_OT_RemoveOpenpypeInstance(
+    ManageOpenpypeInstance, bpy.types.Operator
+):
     """Remove OpenPype instance"""
 
     bl_idname = "scene.remove_openpype_instance"
     bl_label = "Remove OpenPype Instance"
     bl_options = {"REGISTER", "UNDO"}
 
-    instance_name: bpy.props.StringProperty(name="Instance Name")
+    def execute(self, context):
+        # Get openpype instance
+        openpype_instances = context.scene.openpype_instances
+        op_instance = openpype_instances.get(self.instance_name)
+
+        # Get creator class
+        Creator = get_legacy_creator_by_name(self.creator_name)
+
+        # NOTE Shunting legacy_create because of useless overhead and deprecated design.
+        # Will see if compatible with new creator when implemented for Blender
+        plugin = Creator(*op_instance["plugin"])
+        plugin._remove_instance(self.instance_name)
+
+        return {"FINISHED"}
+
+
+class SCENE_OT_AddToOpenpypeInstance(
+    ManageOpenpypeInstance, bpy.types.Operator
+):
+    """Add to OpenPype instance"""
+
+    bl_idname = "scene.add_to_openpype_instance"
+    bl_label = "Add to OpenPype Instance"
+    bl_options = {"REGISTER", "UNDO"}
+
+    datapath: EnumProperty(
+        name="Data type",
+        # Build datapath items by getting the creator by its name
+        # Matching the appropriate datapath using the bl_types field which lists all relevant data types
+        items=lambda self, _: [
+            (BL_TYPE_DATAPATH.get(bl_type), bl_type.__name__, "")
+            for bl_type in get_legacy_creator_by_name(
+                self.creator_name
+            ).bl_types
+        ],
+    )
+    datablock_name: bpy.props.StringProperty(name="Datablock Name")
+
+    # Used to determine either the datatype enum must be displayed or not
+    bl_types_count = bpy.props.IntProperty()
+
+    def __init__(self):
+        self.bl_types_count = len(
+            get_legacy_creator_by_name(self.creator_name).bl_types
+        )
+
+    def invoke(self, context, _event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+
+    def draw(self, _context):
+        layout = self.layout
+
+        # Pick the datablock in a field
+        row = layout.row(align=True)
+
+        # Search data into list
+        data_path, search_field = self.datapath.rsplit(
+            ".", 1
+        )  # Split data path from search field
+        row.prop_search(
+            self, "datablock_name", eval(data_path), search_field, text=""
+        )
+
+        # Pick list if several possibilities match
+        if self.bl_types_count > 1:
+            row.prop(self, "datapath", text="", icon_only=True)
 
     def execute(self, context):
         # Get openpype instance
         openpype_instances = context.scene.openpype_instances
-        op_instance_index = openpype_instances.find(self.instance_name)
-        op_instance = openpype_instances[op_instance_index]
+        op_instance = openpype_instances.get(self.instance_name)
 
-        # Clear outliner if outliner data
-        if op_instance["bl_types_icons"] & {
-            bpy.types.Collection,
-            bpy.types.Object,
-        }:
-            instance_collection = bpy.data.collections.get(self.instance_name)
-            parent_collection = get_parent_collection(instance_collection)
+        # Get creator class
+        Creator = get_legacy_creator_by_name(self.creator_name)
 
-            # Move all children collections and objects to parent collection
-            link_to_collection(
-                list(instance_collection.objects)
-                + list(instance_collection.children),
-                parent_collection,
-            )
+        # NOTE Shunting legacy_create because of useless overhead and deprecated design.
+        # Will see if compatible with new creator when implemented for Blender
+        plugin = Creator(*op_instance["plugin"])
+        datapath = eval(self.datapath)
+        plugin._process([datapath.get(self.datablock_name)])
 
-            # Remove collection
-            bpy.data.collections.remove(
-                bpy.data.collections.get(self.instance_name)
-            )
+        return {"FINISHED"}
 
-        # Remove openpype instance
-        openpype_instances.remove(op_instance_index)
+
+class SCENE_OT_RemoveFromOpenpypeInstance(
+    ManageOpenpypeInstance, bpy.types.Operator
+):
+    """Remove from OpenPype instance"""
+
+    bl_idname = "scene.remove_from_openpype_instance"
+    bl_label = "Remove from OpenPype Instance"
+    bl_options = {"REGISTER", "UNDO"}
+
+    datablock_name: bpy.props.StringProperty(name="Datablock Name")
+
+    def execute(self, context):
+        openpype_instances = context.scene.openpype_instances
+        op_instance = openpype_instances.get(self.instance_name)
+
+        # Remove from datablocks
+        for d in op_instance.datablocks:
+            op_instance.datablocks.remove(op_instance.datablocks.find(d.name))
+
+        if len(op_instance.datablocks) == 0:
+            # Get creator class and remove instance
+            Creator = get_legacy_creator_by_name(self.creator_name)
+            plugin = Creator(*op_instance["plugin"])
+            plugin._remove_instance(op_instance.name)
 
         return {"FINISHED"}
 
@@ -730,6 +829,8 @@ classes = [
     SCENE_OT_MakeContainerPublishable,
     SCENE_OT_CreateOpenpypeInstance,
     SCENE_OT_RemoveOpenpypeInstance,
+    SCENE_OT_AddToOpenpypeInstance,
+    SCENE_OT_RemoveFromOpenpypeInstance,
 ]
 
 
