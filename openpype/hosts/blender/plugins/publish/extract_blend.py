@@ -74,22 +74,20 @@ class ExtractBlend(publish.Extractor):
                 objects.add(member)
 
         # Store instance metadata
-        instance_collection = instance[-1]
-        instance_metadata = instance_collection[AVALON_PROPERTY].to_dict()
-        instance_collection[AVALON_PROPERTY] = dict()
+        instance_holder = instance[-1]  # TODO rename to op_instance
 
         # Add container metadata to collection
         metadata_update(
-            instance_collection,
+            instance_holder,
             {
                 "schema": "openpype:container-2.0",
                 "id": AVALON_CONTAINER_ID,
-                "name": instance_metadata["subset"],
+                "name": instance.data["subset"],
                 "loader": True,
                 # ^ To be subsituted by the appropriate loader matched after Blender native Load
                 "representation": True,
                 # ^ To be substituted by the created ObjectId after integration
-                "asset_name": instance_metadata["asset"],
+                "asset_name": instance.data["asset"],
                 "parent": str(instance.data["assetEntity"]["parent"]),
                 "family": instance.data["family"],
                 "namespace": "",
@@ -121,9 +119,6 @@ class ExtractBlend(publish.Extractor):
             else:
                 unpack_method = "USE_ORIGINAL"
             image.unpack(method=unpack_method)
-
-        # restor instance metadata
-        instance_collection[AVALON_PROPERTY] = instance_metadata
 
         plugin.deselect_all()
 

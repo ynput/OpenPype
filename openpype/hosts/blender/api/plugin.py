@@ -12,7 +12,14 @@ from mathutils import Matrix
 
 from openpype.api import Logger
 from openpype.hosts.blender.api.properties import OpenpypeInstance
-from openpype.hosts.blender.api.utils import BL_OUTLINER_TYPES, BL_TYPE_DATAPATH, BL_TYPE_ICON, get_children_recursive, get_parent_collection, link_to_collection
+from openpype.hosts.blender.api.utils import (
+    BL_OUTLINER_TYPES,
+    BL_TYPE_DATAPATH,
+    BL_TYPE_ICON,
+    get_children_recursive,
+    get_parent_collection,
+    link_to_collection,
+)
 from openpype.pipeline import (
     legacy_io,
     LegacyCreator,
@@ -932,7 +939,6 @@ class Creator(LegacyCreator):
                 BL_TYPE_ICON.get(t, "NONE") for t in self.bl_types
             ]
             op_instance["creator_name"] = self.__class__.__name__
-            op_instance["plugin"] = [subset, asset, {"variant": name}]
         else:
             # If no datablocks, then empty instance is already existing
             if not datablocks:
@@ -944,7 +950,12 @@ class Creator(LegacyCreator):
 
         # Process outliner if current creator relates to this types
         if all(t in self.bl_types for t in BL_OUTLINER_TYPES):
-            self._process_outliner(datablocks, name)
+            container_collection = self._process_outliner(datablocks, name)
+            if False:  # TODO setting
+                imprint(container_collection, self.data)
+
+            # Substitute collection to datablocks
+            datablocks = [container_collection]
 
         # Add datablocks to openpype instance
         for d in datablocks:

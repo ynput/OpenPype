@@ -583,7 +583,8 @@ class SCENE_OT_RemoveOpenpypeInstance(
 
         # NOTE Shunting legacy_create because of useless overhead and deprecated design.
         # Will see if compatible with new creator when implemented for Blender
-        plugin = Creator(*op_instance["plugin"])
+        avalon_prop = op_instance["avalon"]
+        plugin = Creator(avalon_prop['subset'], avalon_prop['asset'], {"variant": op_instance.name})
         plugin._remove_instance(self.instance_name)
 
         return {"FINISHED"}
@@ -651,7 +652,12 @@ class SCENE_OT_AddToOpenpypeInstance(
 
         # NOTE Shunting legacy_create because of useless overhead and deprecated design.
         # Will see if compatible with new creator when implemented for Blender
-        plugin = Creator(*op_instance["plugin"])
+        avalon_prop = op_instance["avalon"]
+        plugin = Creator(
+            avalon_prop["subset"],
+            avalon_prop["asset"],
+            {"variant": op_instance.name},
+        )
         datapath = eval(self.datapath)
         plugin._process([datapath.get(self.datablock_name)])
 
@@ -680,7 +686,12 @@ class SCENE_OT_RemoveFromOpenpypeInstance(
         if len(op_instance.datablocks) == 0:
             # Get creator class and remove instance
             Creator = get_legacy_creator_by_name(self.creator_name)
-            plugin = Creator(*op_instance["plugin"])
+            avalon_prop = op_instance["avalon"]
+            plugin = Creator(
+                avalon_prop["subset"],
+                avalon_prop["asset"],
+                {"variant": op_instance.name},
+            )
             plugin._remove_instance(op_instance.name)
 
         return {"FINISHED"}
