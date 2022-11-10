@@ -35,7 +35,7 @@ class LoadClipBatch(opfapi.ClipLoader):
         version = context['version']
         version_data = version.get("data", {})
         version_name = version.get("name", None)
-        colorspace = version_data.get("colorspace", None)
+        colorspace = self.get_colorspace(context)
 
         # in case output is not in context replace key to representation
         if not context["representation"]["context"].get("output"):

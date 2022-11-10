@@ -36,7 +36,8 @@ class LoadClip(opfapi.ClipLoader):
         version = context['version']
         version_data = version.get("data", {})
         version_name = version.get("name", None)
-        colorspace = version_data.get("colorspace", None)
+        colorspace = self.get_colorspace(context)
+
         clip_name = StringTemplate(self.clip_name_template).format(
             context["representation"]["context"])
 
