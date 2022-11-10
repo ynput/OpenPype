@@ -28,11 +28,10 @@ class AlembicStandinLoader(load.LoaderPlugin):
 
         version = context["version"]
         version_data = version.get("data", {})
-
+        family = version["data"]["families"]
         self.log.info("version_data: {}\n".format(version_data))
-
+        self.log.info("family: {}\n".format(family))
         frameStart = version_data.get("frameStart", None)
-        frameEnd = version_data.get("frameEnd", None)
 
         asset = context["asset"]["name"]
         namespace = namespace or unique_namespace(
@@ -48,12 +47,14 @@ class AlembicStandinLoader(load.LoaderPlugin):
         settings = get_project_settings(os.environ['AVALON_PROJECT'])
         colors = settings["maya"]["load"]["colors"]
         fps = legacy_io.Session["AVALON_FPS"]
-
-        c = colors.get('ass')
+        c = colors.get(family[0])
         if c is not None:
             cmds.setAttr(root + ".useOutlinerColor", 1)
             cmds.setAttr(root + ".outlinerColor",
-                         c[0], c[1], c[2])
+                (float(c[0])/255),
+                (float(c[1])/255),
+                (float(c[2])/255)
+            )
 
         transform_name = label + "_ABC"
 
@@ -72,7 +73,7 @@ class AlembicStandinLoader(load.LoaderPlugin):
         if frameStart is None:
             cmds.setAttr(standinShape + ".useFrameExtension", 0)
 
-        elif frameStart == 1 and frameEnd == 1:
+        elif "model" in family:
             cmds.setAttr(standinShape + ".useFrameExtension", 0)
 
         else:
