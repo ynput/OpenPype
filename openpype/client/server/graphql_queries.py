@@ -337,3 +337,36 @@ def representations_parents_qraphql_query(
             fields_queue.append((k, v, field))
 
     return query
+
+
+def workfiles_info_graphql_query(fields):
+    query = GraphQlQuery("WorkfilesInfo")
+    project_name_var = query.add_variable("projectName", "String!")
+    workfiles_info_ids = query.add_variable("workfileIds", "[String!]")
+    task_ids_var = query.add_variable("taskIds", "[String!]")
+    paths_var = query.add_variable("paths", "[String!]")
+
+    project_field = query.add_field("project")
+    project_field.set_filter("name", project_name_var)
+
+    workfiles_field = project_field.add_field("workfiles", has_edges=True)
+    workfiles_field.set_filter("ids", workfiles_info_ids)
+    workfiles_field.set_filter("taskIds", task_ids_var)
+    workfiles_field.set_filter("paths", paths_var)
+
+    nested_fields = fields_to_dict(set(fields))
+
+    query_queue = collections.deque()
+    for key, value in nested_fields.items():
+        query_queue.append((key, value, workfiles_field))
+
+    while query_queue:
+        item = query_queue.popleft()
+        key, value, parent = item
+        field = parent.add_field(key)
+        if value is FIELD_VALUE:
+            continue
+
+        for k, v in value.items():
+            query_queue.append((k, v, field))
+    return query
