@@ -1726,7 +1726,7 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
         change_anim = QtCore.QVariantAnimation()
         change_anim.setStartValue(0.0)
         change_anim.setEndValue(1.0)
-        change_anim.setDuration(400)
+        change_anim.setDuration(200)
         change_anim.setEasingCurve(QtCore.QEasingCurve.OutCubic)
 
         change_anim.valueChanged.connect(self._on_anim)
