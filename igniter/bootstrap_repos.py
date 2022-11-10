@@ -817,6 +817,13 @@ class BootstrapRepos:
             except Exception as e:
                 self._print(str(e), LOG_ERROR, exc_info=True)
                 return None
+        if not destination_dir.exists():
+            destination_dir.mkdir(parents=True)
+        elif not destination_dir.is_dir():
+            self._print(
+                "Destination exists but is not directory.", LOG_ERROR)
+            return None
+
         try:
             shutil.move(zip_file.as_posix(), destination_dir.as_posix())
         except shutil.Error as e:
