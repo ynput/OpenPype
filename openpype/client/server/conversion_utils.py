@@ -7,6 +7,12 @@ import six
 
 from openpype.client.operations_base import REMOVED_VALUE
 from openpype.client.mongo.operations import (
+    CURRENT_PROJECT_SCHEMA,
+    CURRENT_ASSET_DOC_SCHEMA,
+    CURRENT_SUBSET_SCHEMA,
+    CURRENT_VERSION_SCHEMA,
+    CURRENT_HERO_VERSION_SCHEMA,
+    CURRENT_REPRESENTATION_SCHEMA,
     CURRENT_WORKFILE_INFO_SCHEMA,
 )
 from .constants import REPRESENTATION_FILES_FIELDS
@@ -159,7 +165,7 @@ def convert_v4_project_to_v3(project):
     output = {
         "_id": project_name,
         "name": project_name,
-        "schema": "openpype:project-3.0"
+        "schema": CURRENT_PROJECT_SCHEMA
     }
     config = {}
     project_config = project.get("config")
@@ -311,7 +317,7 @@ def convert_v4_folder_to_v3(folder, project_name):
         "_id": folder["id"],
         "parent": project_name,
         "type": "asset",
-        "schema": "openpype:asset-3.0"
+        "schema": CURRENT_ASSET_DOC_SCHEMA
     }
 
     output_data = folder.get("data") or {}
@@ -403,7 +409,7 @@ def convert_v4_subset_to_v3(subset):
     output = {
         "_id": subset["id"],
         "type": "subset",
-        "schema": "openpype:subset-3.0"
+        "schema": CURRENT_SUBSET_SCHEMA
     }
     if "folderId" in subset:
         output["parent"] = subset["folderId"]
@@ -507,10 +513,10 @@ def convert_v4_version_to_v3(version):
 
     version_num = version["version"]
     doc_type = "version"
-    schema = "openpype:version-3.0"
+    schema = CURRENT_VERSION_SCHEMA
     if version_num < 0:
         doc_type = "hero_version"
-        schema = "openpype:hero_version-1.0"
+        schema = CURRENT_HERO_VERSION_SCHEMA
 
     output = {
         "_id": version["id"],
@@ -601,7 +607,7 @@ def convert_v4_representation_to_v3(representation):
     output = {
         "_id": representation["id"],
         "type": "representation",
-        "schema": "openpype:representation-2.0",
+        "schema": CURRENT_REPRESENTATION_SCHEMA,
     }
     for v3_key, v4_key in (
         ("name", "name"),
