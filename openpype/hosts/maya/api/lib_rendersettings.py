@@ -108,8 +108,10 @@ class RenderSettings(object):
         # function to revert render settings does not reset AOVs list in MtoA
         # Fetch current aovs in case there's any.
         current_aovs = AOVInterface().getAOVs()
+        remove_aovs = arnold_render_presets["remove_aovs"]
+        if remove_aovs:
         # Remove fetched AOVs
-        AOVInterface().removeAOVs(current_aovs)
+            AOVInterface().removeAOVs(current_aovs)
         mel.eval("unifiedRenderGlobalsRevertToDefault")
         img_ext = arnold_render_presets["image_format"]
         img_prefix = arnold_render_presets["image_prefix"]
@@ -118,6 +120,8 @@ class RenderSettings(object):
         multi_exr = arnold_render_presets["multilayer_exr"]
         additional_options = arnold_render_presets["additional_options"]
         for aov in aovs:
+            if aov in current_aovs and not remove_aovs:
+                continue
             AOVInterface('defaultArnoldRenderOptions').addAOV(aov)
 
         cmds.setAttr("defaultResolution.width", width)

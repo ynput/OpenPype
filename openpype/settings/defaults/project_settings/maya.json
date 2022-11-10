@@ -64,6 +64,7 @@
             "image_prefix": "<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>",
             "image_format": "exr",
             "multilayer_exr": true,
+            "remove_aovs": true,
             "tiled": true,
             "aov_list": [],
             "additional_options": []
