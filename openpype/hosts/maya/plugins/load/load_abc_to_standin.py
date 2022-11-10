@@ -30,7 +30,6 @@ class AlembicStandinLoader(load.LoaderPlugin):
         version_data = version.get("data", {})
         family = version["data"]["families"]
         self.log.info("version_data: {}\n".format(version_data))
-        self.log.info("family: {}\n".format(family))
         frameStart = version_data.get("frameStart", None)
 
         asset = context["asset"]["name"]
@@ -51,10 +50,10 @@ class AlembicStandinLoader(load.LoaderPlugin):
         if c is not None:
             cmds.setAttr(root + ".useOutlinerColor", 1)
             cmds.setAttr(root + ".outlinerColor",
-                (float(c[0])/255),
-                (float(c[1])/255),
-                (float(c[2])/255)
-            )
+                         (float(c[0])/255),
+                         (float(c[1])/255),
+                         (float(c[2])/255)
+                        )
 
         transform_name = label + "_ABC"
 
