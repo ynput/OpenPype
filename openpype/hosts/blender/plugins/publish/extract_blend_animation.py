@@ -38,6 +38,8 @@ class ExtractBlendAnimation(publish.Extractor):
                 and obj.animation_data.action
             ):
                 animated_objects.add(obj)
+            elif isinstance(obj, bpy.types.Action):
+                data_blocks.add(obj)
 
         for collection in collections:
             for obj in collection.all_objects:
@@ -73,9 +75,6 @@ class ExtractBlendAnimation(publish.Extractor):
             fake_user=True,
             compress=get_compress_setting(),
         )
-
-        for action in data_blocks:
-            bpy.data.actions.remove(action)
 
         representation = {
             "name": "blend",
