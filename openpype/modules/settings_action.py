@@ -1,3 +1,4 @@
+from openpype import OP4_TEST_ENABLED
 from openpype.modules import OpenPypeModule, ITrayAction
 
 
@@ -10,6 +11,8 @@ class SettingsAction(OpenPypeModule, ITrayAction):
     def initialize(self, _modules_settings):
         # This action is always enabled
         self.enabled = True
+        if OP4_TEST_ENABLED:
+            self.enabled = False
 
         # User role
         # TODO should be changeable
