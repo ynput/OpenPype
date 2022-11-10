@@ -188,7 +188,9 @@ class LoadEffects(load.LoaderPlugin):
             if loaded_stitem not in used_subtracks:
                 continue
             item_to_remove = used_subtracks.pop(loaded_stitem)
-            item_to_remove.node()["enable"].setValue(0)
+            # TODO: find a way to erase nodes
+            self.log.debug(
+                "This node needs to be removed: {}".format(item_to_remove))
 
         data_imprint = {
             "objectName": object_name,
