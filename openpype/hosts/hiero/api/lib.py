@@ -341,6 +341,11 @@ def get_track_item_tags(track_item):
     return returning_tag_data
 
 
+def _get_tag_unique_hash():
+    # sourcery skip: avoid-builtin-shadow
+    return secrets.token_hex(nbytes=4)
+
+
 def set_track_openpype_tag(track, data=None):
     """
     Set openpype track tag to input track object.
@@ -351,8 +356,6 @@ def set_track_openpype_tag(track, data=None):
     Returns:
         hiero.core.Tag
     """
-    hash = secrets.token_hex(nbytes=4)
-
     data = data or {}
 
     # basic Tag's attribute
@@ -371,7 +374,10 @@ def set_track_openpype_tag(track, data=None):
     else:
         # if pype tag available then update with input data
         tag = tags.create_tag(
-            "{}_{}".format(self.pype_tag_name, hash),
+            "{}_{}".format(
+                self.pype_tag_name,
+                _get_tag_unique_hash()
+            ),
             tag_data
         )
         # add it to the input track item
@@ -468,7 +474,7 @@ def get_trackitem_openpype_tag(track_item):
         return None
     for tag in _tags:
         # return only correct tag defined by global name
-        if tag.name() == self.pype_tag_name:
+        if self.pype_tag_name in tag.name():
             return tag
 
 
@@ -493,13 +499,18 @@ def set_trackitem_openpype_tag(track_item, data=None):
     }
     # get available pype tag if any
     _tag = get_trackitem_openpype_tag(track_item)
-
     if _tag:
         # it not tag then create one
         tag = tags.update_tag(_tag, tag_data)
     else:
         # if pype tag available then update with input data
-        tag = tags.create_tag(self.pype_tag_name, tag_data)
+        tag = tags.create_tag(
+            "{}_{}".format(
+                self.pype_tag_name,
+                _get_tag_unique_hash()
+            ),
+            tag_data
+        )
         # add it to the input track item
         track_item.addTag(tag)
 
