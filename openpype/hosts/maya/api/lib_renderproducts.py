@@ -536,6 +536,7 @@ class RenderProductsArnold(ARenderProducts):
 
         products = []
         aov_name = self._get_attr(aov, "name")
+        multipart = bool(self._get_attr("defaultArnoldDriver.multipart"))
         ai_drivers = cmds.listConnections("{}.outputs".format(aov),
                                           source=True,
                                           destination=False,
@@ -589,6 +590,7 @@ class RenderProductsArnold(ARenderProducts):
                                             ext=ext,
                                             aov=aov_name,
                                             driver=ai_driver,
+                                            multipart=multipart,
                                             camera=camera)
                     products.append(product)
 
@@ -1016,9 +1018,9 @@ class RenderProductsRedshift(ARenderProducts):
         # due to some AOVs still being written into separate files,
         # like Cryptomatte.
         # AOVs are merged in multi-channel file
+
         multipart = bool(self._get_attr("redshiftOptions.exrForceMultilayer")) \
-                    or \
-                    bool(self._get_attr("redshiftOptions.exrMultipart"))
+                    or bool(self._get_attr("redshiftOptions.exrMultipart"))
 
         # Get Redshift Extension from image format
         image_format = self._get_attr("redshiftOptions.imageFormat")  # integer

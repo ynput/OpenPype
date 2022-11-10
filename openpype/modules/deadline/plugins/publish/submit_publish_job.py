@@ -494,13 +494,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             else:
                 render_file_name = os.path.basename(col)
             aov_patterns = self.aov_filter
-            self.log.info("aov_pattern:{}".format(aov_patterns))
+
             # toggle preview on if multipart is on
             preview = match_aov_pattern(app, aov_patterns, render_file_name)
-            if "Cryptomatte" in render_file_name: # for redshift
+
+            if instance_data.get("multipartExr"):
                 preview = True
 
-            self.log.info("preview:{}".format(preview))
             new_instance = deepcopy(instance_data)
             new_instance["subset"] = subset_name
             new_instance["subsetGroup"] = group_name
