@@ -20,9 +20,11 @@ def safe_excepthook(*args):
 
 
 def main(*subprocess_args):
-    from openpype.hosts.photoshop import api
+    from openpype.hosts.photoshop.api import PhotoshopHost
 
-    install_host(api)
+    host = PhotoshopHost()
+    install_host(host)
+
     sys.excepthook = safe_excepthook
 
     # coloring in StdOutBroker
