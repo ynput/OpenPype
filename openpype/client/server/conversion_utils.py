@@ -1,3 +1,4 @@
+import os
 import datetime
 import collections
 import json
@@ -5,7 +6,9 @@ import json
 import six
 
 from openpype.client.operations_base import REMOVED_VALUE
-
+from openpype.client.mongo.operations import (
+    CURRENT_WORKFILE_INFO_SCHEMA,
+)
 from .constants import REPRESENTATION_FILES_FIELDS
 from .utils import create_entity_id
 
@@ -649,6 +652,48 @@ def convert_v4_representation_to_v3(representation):
     return output
 
 
+def workfile_info_fields_v3_to_v4(fields):
+    if not fields:
+        return None
+
+    new_fields = set()
+    fields = set(fields)
+    for v3_key, v4_key in (
+        ("_id", "id"),
+        ("files", "path"),
+        ("filename", "name"),
+        ("data", "data"),
+    ):
+        if v3_key in fields:
+            new_fields.add(v4_key)
+
+    if "parent" in fields or "task_name" in fields:
+        new_fields.add("taskId")
+
+    return new_fields
+
+
+def convert_v4_workfile_info_to_v3(workfile_info, task):
+    output = {
+        "type": "representation",
+        "schema": CURRENT_WORKFILE_INFO_SCHEMA,
+    }
+    if "id" in workfile_info:
+        output["_id"] = workfile_info["id"]
+
+    if "path" in workfile_info:
+        output["files"] = [workfile_info["path"]]
+
+    if "name" in workfile_info:
+        output["filename"] = workfile_info["name"]
+
+    if "taskId" in workfile_info:
+        output["task_name"] = task["name"]
+        output["parent"] = task["folderId"]
+
+    return output
+
+
 def convert_create_asset_to_v4(asset, project, con):
     folder_attributes = con.get_attributes_for_type("folder")
 
@@ -809,6 +854,40 @@ def convert_create_representation_to_v4(representation, con):
         converted_representation["data"] = data
 
     return converted_representation
+
+
+def convert_create_workfile_info_to_v4(data, project_name, con):
+    folder_id = data["parent"]
+    task_name = data["task_name"]
+    task = con.get_task_by_name(project_name, folder_id, task_name)
+    if not task:
+        return None
+
+    workfile_attributes = con.get_attributes_for_type("workfile")
+    filename = data["filename"]
+    possible_attribs = {
+        "extension": os.path.splitext(filename)[-1]
+    }
+    attribs = {}
+    for attr in workfile_attributes:
+        if attr in possible_attribs:
+            attribs[attr] = possible_attribs[attr]
+
+    output = {
+        "path": data["files"][0],
+        "name": filename,
+        "taskId": task["id"]
+    }
+    if "_id" in data:
+        output["id"] = data["_id"]
+
+    if attribs:
+        output["attrib"] = attribs
+
+    output_data = data.get("data")
+    if output_data:
+        output["data"] = output_data
+    return output
 
 
 def _from_flat_dict(data):
@@ -992,3 +1071,11 @@ def convert_update_representation_to_v4(
         new_update_data["data"] = new_data
 
     return _to_flat_dict(new_update_data)
+
+
+def convert_update_workfile_info_to_v4(update_data):
+    return {
+        key: value
+        for key, value in update_data.items()
+        if key.startswith("data")
+    }
