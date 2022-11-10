@@ -30,6 +30,7 @@ class AlembicStandinLoader(load.LoaderPlugin):
         version_data = version.get("data", {})
         family = version["data"]["families"]
         self.log.info("version_data: {}\n".format(version_data))
+        self.log.info("family: {}\n".format(family))
         frameStart = version_data.get("frameStart", None)
 
         asset = context["asset"]["name"]
@@ -48,12 +49,12 @@ class AlembicStandinLoader(load.LoaderPlugin):
         fps = legacy_io.Session["AVALON_FPS"]
         c = colors.get(family[0])
         if c is not None:
+            r = (float(c[0]) / 255)
+            g = (float(c[1]) / 255)
+            b = (float(c[2]) / 255)
             cmds.setAttr(root + ".useOutlinerColor", 1)
             cmds.setAttr(root + ".outlinerColor",
-                         (float(c[0])/255),
-                         (float(c[1])/255),
-                         (float(c[2])/255)
-                        )
+                         r, g, b)
 
         transform_name = label + "_ABC"
 
