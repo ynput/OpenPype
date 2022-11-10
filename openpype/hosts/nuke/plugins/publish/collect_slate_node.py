@@ -35,7 +35,6 @@ class CollectSlate(pyblish.api.InstancePlugin):
                 instance.data["slateNode"] = slate_node
                 instance.data["slate"] = True
                 instance.data["families"].append("slate")
-                instance.data["versionData"]["families"].append("slate")
                 self.log.info(
                     "Slate node is in node graph: `{}`".format(slate.name()))
                 self.log.debug(
