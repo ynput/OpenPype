@@ -38,8 +38,6 @@ In AfterEffects you'll find the tools in the `OpenPype` extension:
 
 You can show the extension panel by going to `Window` > `Extensions` > `OpenPype`.
 
-Because of current rendering limitations, it is expected that only single composition will be marked for publishing!
-
 ### Publish
 
 When you are ready to share some work, you will need to publish it. This is done by opening the `Publisher` through the `Publish...` button.
@@ -69,7 +67,8 @@ Publisher allows publishing into different context, just click on any instance, 
 
 #### RenderQueue
 
-AE's Render Queue is required for publishing locally or on a farm. Artist needs to configure expected result format (extension, resolution) in the Render Queue in an Output module. Currently its expected to have only single render item and single output module in the Render Queue.
+AE's Render Queue is required for publishing locally or on a farm. Artist needs to configure expected result format (extension, resolution) in the Render Queue in an Output module. 
+Currently its expected to have only single render item and single output module per composition in the Render Queue.
 
 AE might throw some warning windows during publishing locally, so please pay attention to them in a case publishing seems to be stuck in a `Extract Local Render`.
 
