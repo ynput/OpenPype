@@ -483,7 +483,19 @@
             ]
         },
         "publish": {
-            "template_name_profiles": [],
+            "template_name_profiles": [
+                {
+                    "families": [
+                        "online"
+                    ],
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "online"
+                }
+            ],
             "hero_template_name_profiles": []
         }
     },
