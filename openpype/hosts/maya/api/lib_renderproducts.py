@@ -1016,7 +1016,8 @@ class RenderProductsRedshift(ARenderProducts):
         # due to some AOVs still being written into separate files,
         # like Cryptomatte.
         # AOVs are merged in multi-channel file
-        multipart = bool(self._get_attr("redshiftOptions.exrForceMultilayer")) or \
+        multipart = bool(self._get_attr("redshiftOptions.exrForceMultilayer")) \
+                    or \
                     bool(self._get_attr("redshiftOptions.exrMultipart"))
 
         # Get Redshift Extension from image format

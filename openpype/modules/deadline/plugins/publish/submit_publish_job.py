@@ -497,7 +497,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self.log.info("aov_pattern:{}".format(aov_patterns))
             # toggle preview on if multipart is on
             preview = match_aov_pattern(app, aov_patterns, render_file_name)
-            #if instance_data.get("multipartExr"):
             if "Cryptomatte" in render_file_name: # for redshift
                 preview = True
 
