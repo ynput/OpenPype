@@ -5,6 +5,10 @@ from openpype.pipeline import (
     CreatedInstance,
     legacy_io,
 )
+from openpype.hosts.nuke.api import (
+    INSTANCE_DATA_KNOB,
+    set_node_data
+)
 import nuke
 
 
@@ -50,8 +54,14 @@ class WorkfileCreator(AutoCreator):
         self._add_instance_to_context(instance)
 
     def update_instances(self, update_list):
-        # nothing to change on workfiles
-        pass
+        for created_inst, _changes in update_list:
+            instance_node = created_inst.transient_data["node"]
+
+            set_node_data(
+                instance_node,
+                INSTANCE_DATA_KNOB,
+                created_inst.data_to_store()
+            )
 
     def create(self, options=None):
         # no need to create if it is created
