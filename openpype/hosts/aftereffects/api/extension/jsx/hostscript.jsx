@@ -769,6 +769,3 @@ function _prepareSingleValue(value){
 function _prepareError(error_msg){
     return JSON.stringify({"error": error_msg})
 }
-
-// render("c:/projects/test", 2);
-getRenderInfo(1);
