@@ -16,11 +16,11 @@ from openpype.client import get_project, get_asset_by_name
 from openpype.pipeline import legacy_io, KnownPublishError
 
 
-class CollectAvalonEntities(pyblish.api.ContextPlugin):
+class CollectContextEntities(pyblish.api.ContextPlugin):
     """Collect Anatomy into Context."""
 
     order = pyblish.api.CollectorOrder - 0.1
-    label = "Collect Avalon Entities"
+    label = "Collect Context Entities"
 
     def process(self, context):
         legacy_io.install()
