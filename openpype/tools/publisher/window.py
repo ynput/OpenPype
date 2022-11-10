@@ -1,4 +1,5 @@
 import collections
+import copy
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype import (
@@ -224,10 +225,16 @@ class PublisherWindow(QtWidgets.QDialog):
         # Floating publish frame
         publish_frame = PublishFrame(controller, self.footer_border, self)
 
-        creators_dialog_message_timer = QtCore.QTimer()
-        creators_dialog_message_timer.setInterval(100)
-        creators_dialog_message_timer.timeout.connect(
-            self._on_creators_message_timeout
+        # Timer started on show -> connected to timer counter
+        # - helps to deffer on show logic by 3 event loops
+        show_timer = QtCore.QTimer()
+        show_timer.setInterval(1)
+        show_timer.timeout.connect(self._on_show_timer)
+
+        errors_dialog_message_timer = QtCore.QTimer()
+        errors_dialog_message_timer.setInterval(100)
+        errors_dialog_message_timer.timeout.connect(
+            self._on_errors_message_timeout
         )
 
         help_btn.clicked.connect(self._on_help_click)
@@ -268,16 +275,22 @@ class PublisherWindow(QtWidgets.QDialog):
             "show.card.message", self._on_overlay_message
         )
         controller.event_system.add_callback(
-            "instances.collection.failed", self._instance_collection_failed
+            "instances.collection.failed", self._on_creator_error
         )
         controller.event_system.add_callback(
-            "instances.save.failed", self._instance_save_failed
+            "instances.save.failed", self._on_creator_error
         )
         controller.event_system.add_callback(
-            "instances.remove.failed", self._instance_remove_failed
+            "instances.remove.failed", self._on_creator_error
         )
         controller.event_system.add_callback(
-            "instances.create.failed", self._instance_create_failed
+            "instances.create.failed", self._on_creator_error
+        )
+        controller.event_system.add_callback(
+            "convertors.convert.failed", self._on_convertor_error
+        )
+        controller.event_system.add_callback(
+            "convertors.find.failed", self._on_convertor_error
         )
 
         # Store extra header widget for TrayPublisher
@@ -322,13 +335,15 @@ class PublisherWindow(QtWidgets.QDialog):
         #   forin init
         self._reset_on_first_show = reset_on_show
         self._reset_on_show = True
-        self._restart_timer = None
         self._publish_frame_visible = None
 
-        self._creators_messages_to_show = collections.deque()
-        self._creators_dialog_message_timer = creators_dialog_message_timer
+        self._error_messages_to_show = collections.deque()
+        self._errors_dialog_message_timer = errors_dialog_message_timer
 
         self._set_publish_visibility(False)
+
+        self._show_timer = show_timer
+        self._show_counter = 0
 
     @property
     def controller(self):
@@ -340,39 +355,43 @@ class PublisherWindow(QtWidgets.QDialog):
             self._first_show = False
             self._on_first_show()
 
-        if not self._reset_on_show:
-            return
-
-        self._reset_on_show = False
-        # Detach showing - give OS chance to draw the window
-        timer = QtCore.QTimer()
-        timer.setSingleShot(True)
-        timer.setInterval(1)
-        timer.timeout.connect(self._on_show_restart_timer)
-        self._restart_timer = timer
-        timer.start()
+        self._show_timer.start()
 
     def resizeEvent(self, event):
         super(PublisherWindow, self).resizeEvent(event)
         self._update_publish_frame_rect()
 
     def _on_overlay_message(self, event):
-        self._overlay_object.add_message(event["message"])
+        self._overlay_object.add_message(
+            event["message"],
+            event.get("message_type")
+        )
 
     def _on_first_show(self):
         self.resize(self.default_width, self.default_height)
         self.setStyleSheet(style.load_stylesheet())
         self._reset_on_show = self._reset_on_first_show
 
-    def _on_show_restart_timer(self):
-        """Callback for '_restart_timer' timer."""
+    def _on_show_timer(self):
+        # Add 1 to counter until hits 2
+        if self._show_counter < 3:
+            self._show_counter += 1
+            return
 
-        self._restart_timer = None
-        self.reset()
+        # Stop the timer
+        self._show_timer.stop()
+        # Reset counter when done for next show event
+        self._show_counter = 0
+
+        # Reset if requested
+        if self._reset_on_show:
+            self._reset_on_show = False
+            self.reset()
 
     def closeEvent(self, event):
         self.save_changes()
         self._reset_on_show = True
+        self._controller.clear_thumbnail_temp_dir_path()
         super(PublisherWindow, self).closeEvent(event)
 
     def save_changes(self):
@@ -604,37 +623,49 @@ class PublisherWindow(QtWidgets.QDialog):
             0, window_size.height() - height
         )
 
-    def add_message_dialog(self, title, failed_info):
-        self._creators_messages_to_show.append((title, failed_info))
-        self._creators_dialog_message_timer.start()
+    def add_error_message_dialog(self, title, failed_info, message_start=None):
+        self._error_messages_to_show.append(
+            (title, failed_info, message_start)
+        )
+        self._errors_dialog_message_timer.start()
 
-    def _on_creators_message_timeout(self):
-        if not self._creators_messages_to_show:
-            self._creators_dialog_message_timer.stop()
+    def _on_errors_message_timeout(self):
+        if not self._error_messages_to_show:
+            self._errors_dialog_message_timer.stop()
             return
 
-        item = self._creators_messages_to_show.popleft()
-        title, failed_info = item
-        dialog = CreatorsErrorMessageBox(title, failed_info, self)
+        item = self._error_messages_to_show.popleft()
+        title, failed_info, message_start = item
+        dialog = ErrorsMessageBox(
+            title, failed_info, message_start, self
+        )
         dialog.exec_()
         dialog.deleteLater()
 
-    def _instance_collection_failed(self, event):
-        self.add_message_dialog(event["title"], event["failed_info"])
+    def _on_creator_error(self, event):
+        new_failed_info = []
+        for item in event["failed_info"]:
+            new_item = copy.deepcopy(item)
+            new_item["label"] = new_item.pop("creator_label")
+            new_item["identifier"] = new_item.pop("creator_identifier")
+            new_failed_info.append(new_item)
+        self.add_error_message_dialog(event["title"], new_failed_info, "Creator:")
 
-    def _instance_save_failed(self, event):
-        self.add_message_dialog(event["title"], event["failed_info"])
+    def _on_convertor_error(self, event):
+        new_failed_info = []
+        for item in event["failed_info"]:
+            new_item = copy.deepcopy(item)
+            new_item["identifier"] = new_item.pop("convertor_identifier")
+            new_failed_info.append(new_item)
+        self.add_error_message_dialog(
+            event["title"], new_failed_info, "Convertor:"
+        )
 
-    def _instance_remove_failed(self, event):
-        self.add_message_dialog(event["title"], event["failed_info"])
 
-    def _instance_create_failed(self, event):
-        self.add_message_dialog(event["title"], event["failed_info"])
-
-
-class CreatorsErrorMessageBox(ErrorMessageBox):
-    def __init__(self, error_title, failed_info, parent):
+class ErrorsMessageBox(ErrorMessageBox):
+    def __init__(self, error_title, failed_info, message_start, parent):
         self._failed_info = failed_info
+        self._message_start = message_start
         self._info_with_id = [
             # Id must be string when used in tab widget
             {"id": str(idx), "info": info}
@@ -644,7 +675,7 @@ class CreatorsErrorMessageBox(ErrorMessageBox):
         self._tabs_widget = None
         self._stack_layout = None
 
-        super(CreatorsErrorMessageBox, self).__init__(error_title, parent)
+        super(ErrorsMessageBox, self).__init__(error_title, parent)
 
         layout = self.layout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -659,17 +690,21 @@ class CreatorsErrorMessageBox(ErrorMessageBox):
     def _get_report_data(self):
         output = []
         for info in self._failed_info:
-            creator_label = info["creator_label"]
-            creator_identifier = info["creator_identifier"]
-            report_message = "Creator:"
-            if creator_label:
-                report_message += " {} ({})".format(
-                    creator_label, creator_identifier)
+            item_label = info.get("label")
+            item_identifier = info["identifier"]
+            if item_label:
+                report_message = "{} ({})".format(
+                    item_label, item_identifier)
             else:
-                report_message += " {}".format(creator_identifier)
+                report_message = "{}".format(item_identifier)
+
+            if self._message_start:
+                report_message = "{} {}".format(
+                    self._message_start, report_message
+                )
 
             report_message += "\n\nError: {}".format(info["message"])
-            formatted_traceback = info["traceback"]
+            formatted_traceback = info.get("traceback")
             if formatted_traceback:
                 report_message += "\n\n{}".format(formatted_traceback)
             output.append(report_message)
@@ -686,11 +721,10 @@ class CreatorsErrorMessageBox(ErrorMessageBox):
             item_id = item["id"]
             info = item["info"]
             message = info["message"]
-            formatted_traceback = info["traceback"]
-            creator_label = info["creator_label"]
-            creator_identifier = info["creator_identifier"]
-            if not creator_label:
-                creator_label = creator_identifier
+            formatted_traceback = info.get("traceback")
+            item_label = info.get("label")
+            if not item_label:
+                item_label = info["identifier"]
 
             msg_widget = QtWidgets.QWidget(stack_widget)
             msg_layout = QtWidgets.QVBoxLayout(msg_widget)
@@ -710,7 +744,7 @@ class CreatorsErrorMessageBox(ErrorMessageBox):
 
             msg_layout.addStretch(1)
 
-            tabs_widget.add_tab(creator_label, item_id)
+            tabs_widget.add_tab(item_label, item_id)
             stack_layout.addWidget(msg_widget)
             if first:
                 first = False

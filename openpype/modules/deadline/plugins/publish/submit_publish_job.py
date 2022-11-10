@@ -457,9 +457,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             cam = [c for c in cameras if c in col.head]
             if cam:
-                subset_name = '{}_{}_{}'.format(group_name, cam, aov)
+                if aov:
+                    subset_name = '{}_{}_{}'.format(group_name, cam, aov)
+                else:
+                    subset_name = '{}_{}'.format(group_name, cam)
             else:
-                subset_name = '{}_{}'.format(group_name, aov)
+                if aov:
+                    subset_name = '{}_{}'.format(group_name, aov)
+                else:
+                    subset_name = '{}'.format(group_name)
 
             if isinstance(col, (list, tuple)):
                 staging = os.path.dirname(col[0])

@@ -1,9 +1,8 @@
 import os
 import pyblish
-import openpype.api
 from openpype.lib import (
     get_ffmpeg_tool_path,
-    path_to_subprocess_arg
+    run_subprocess
 )
 import tempfile
 import opentimelineio as otio
@@ -102,9 +101,7 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
 
                 # run subprocess
                 self.log.debug("Executing: {}".format(" ".join(cmd)))
-                openpype.api.run_subprocess(
-                    cmd, logger=self.log
-                )
+                run_subprocess(cmd, logger=self.log)
             else:
                 audio_fpath = recycling_file.pop()
 
@@ -225,7 +222,7 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         # run subprocess
         self.log.debug("Executing: {}".format(" ".join(cmd)))
 
-        openpype.api.run_subprocess(
+        run_subprocess(
             cmd, logger=self.log
         )
 
@@ -308,7 +305,7 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
 
         # run subprocess
         self.log.debug("Executing: {}".format(args))
-        openpype.api.run_subprocess(args, logger=self.log)
+        run_subprocess(args, logger=self.log)
 
         os.remove(filters_tmp_filepath)
 

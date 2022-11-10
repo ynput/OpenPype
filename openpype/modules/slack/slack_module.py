@@ -1,6 +1,5 @@
 import os
-from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import IPluginPaths
+from openpype.modules import OpenPypeModule, IPluginPaths
 
 SLACK_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 

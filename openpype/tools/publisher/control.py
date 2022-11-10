@@ -4,6 +4,8 @@ import logging
 import traceback
 import collections
 import uuid
+import tempfile
+import shutil
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
@@ -24,6 +26,7 @@ from openpype.pipeline import (
     KnownPublishError,
     registered_host,
     legacy_io,
+    get_process_id,
 )
 from openpype.pipeline.create import (
     CreateContext,
@@ -33,10 +36,16 @@ from openpype.pipeline.create import (
 )
 from openpype.pipeline.create.context import (
     CreatorsOperationFailed,
+    ConvertorsOperationFailed,
 )
 
 # Define constant for plugin orders offset
 PLUGIN_ORDER_OFFSET = 0.5
+
+
+class CardMessageTypes:
+    standard = None
+    error = "error"
 
 
 class MainThreadItem:
@@ -81,9 +90,9 @@ class AssetDocsCache:
             return
 
         project_name = self._controller.project_name
-        asset_docs = get_assets(
+        asset_docs = list(get_assets(
             project_name, fields=self.projection.keys()
-        )
+        ))
         asset_docs_by_name = {}
         task_names_by_asset_name = {}
         for asset_doc in asset_docs:
@@ -819,6 +828,7 @@ class CreatorItem:
         default_variant,
         default_variants,
         create_allow_context_change,
+        create_allow_thumbnail,
         pre_create_attributes_defs
     ):
         self.identifier = identifier
@@ -832,6 +842,7 @@ class CreatorItem:
         self.default_variant = default_variant
         self.default_variants = default_variants
         self.create_allow_context_change = create_allow_context_change
+        self.create_allow_thumbnail = create_allow_thumbnail
         self.instance_attributes_defs = instance_attributes_defs
         self.pre_create_attributes_defs = pre_create_attributes_defs
 
@@ -858,6 +869,7 @@ class CreatorItem:
         default_variants = None
         pre_create_attr_defs = None
         create_allow_context_change = None
+        create_allow_thumbnail = None
         if creator_type is CreatorTypes.artist:
             description = creator.get_description()
             detail_description = creator.get_detail_description()
@@ -865,6 +877,7 @@ class CreatorItem:
             default_variants = creator.get_default_variants()
             pre_create_attr_defs = creator.get_pre_create_attr_defs()
             create_allow_context_change = creator.create_allow_context_change
+            create_allow_thumbnail = creator.create_allow_thumbnail
 
         identifier = creator.identifier
         return cls(
@@ -880,6 +893,7 @@ class CreatorItem:
             default_variant,
             default_variants,
             create_allow_context_change,
+            create_allow_thumbnail,
             pre_create_attr_defs
         )
 
@@ -908,6 +922,7 @@ class CreatorItem:
             "default_variant": self.default_variant,
             "default_variants": self.default_variants,
             "create_allow_context_change": self.create_allow_context_change,
+            "create_allow_thumbnail": self.create_allow_thumbnail,
             "instance_attributes_defs": instance_attributes_defs,
             "pre_create_attributes_defs": pre_create_attributes_defs,
         }
@@ -1109,11 +1124,13 @@ class AbstractPublisherController(object):
 
         pass
 
+    @abstractmethod
     def save_changes(self):
         """Save changes in create context."""
 
         pass
 
+    @abstractmethod
     def remove_instances(self, instance_ids):
         """Remove list of instances from create context."""
         # TODO expect instance ids
@@ -1242,6 +1259,22 @@ class AbstractPublisherController(object):
 
         pass
 
+    @abstractproperty
+    def convertor_items(self):
+        pass
+
+    @abstractmethod
+    def trigger_convertor_items(self, convertor_identifiers):
+        pass
+
+    @abstractmethod
+    def get_thumbnail_paths_for_instances(self, instance_ids):
+        pass
+
+    @abstractmethod
+    def set_thumbnail_paths_for_instances(self, thumbnail_path_mapping):
+        pass
+
     @abstractmethod
     def set_comment(self, comment):
         """Set comment on pyblish context.
@@ -1255,7 +1288,9 @@ class AbstractPublisherController(object):
         pass
 
     @abstractmethod
-    def emit_card_message(self, message):
+    def emit_card_message(
+        self, message, message_type=CardMessageTypes.standard
+    ):
         """Emit a card message which can have a lifetime.
 
         This is for UI purposes. Method can be extended to more arguments
@@ -1264,6 +1299,22 @@ class AbstractPublisherController(object):
         Args:
             message (str): Message that will be showed.
         """
+
+        pass
+
+    @abstractmethod
+    def get_thumbnail_temp_dir_path(self):
+        """Return path to directory where thumbnails can be temporary stored.
+
+        Returns:
+            str: Path to a directory.
+        """
+
+        pass
+
+    @abstractmethod
+    def clear_thumbnail_temp_dir_path(self):
+        """Remove content of thumbnail temp directory."""
 
         pass
 
@@ -1507,6 +1558,26 @@ class BasePublisherController(AbstractPublisherController):
             return creator_item.icon
         return None
 
+    def get_thumbnail_temp_dir_path(self):
+        """Return path to directory where thumbnails can be temporary stored.
+
+        Returns:
+            str: Path to a directory.
+        """
+
+        return os.path.join(
+            tempfile.gettempdir(),
+            "publisher_thumbnails",
+            get_process_id()
+        )
+
+    def clear_thumbnail_temp_dir_path(self):
+        """Remove content of thumbnail temp directory."""
+
+        dirpath = self.get_thumbnail_temp_dir_path()
+        if os.path.exists(dirpath):
+            shutil.rmtree(dirpath)
+
 
 class PublisherController(BasePublisherController):
     """Middleware between UI, CreateContext and publish Context.
@@ -1605,6 +1676,10 @@ class PublisherController(BasePublisherController):
     def instances(self):
         """Current instances in create context."""
         return self._create_context.instances_by_id
+
+    @property
+    def convertor_items(self):
+        return self._create_context.convertor_items_by_id
 
     @property
     def _creators(self):
@@ -1732,6 +1807,17 @@ class PublisherController(BasePublisherController):
                 )
 
             try:
+                self._create_context.find_convertor_items()
+            except ConvertorsOperationFailed as exc:
+                self._emit_event(
+                    "convertors.find.failed",
+                    {
+                        "title": "Collection of unsupported subset failed",
+                        "failed_info": exc.failed_info
+                    }
+                )
+
+            try:
                 self._create_context.execute_autocreators()
 
             except CreatorsOperationFailed as exc:
@@ -1747,8 +1833,39 @@ class PublisherController(BasePublisherController):
 
         self._on_create_instance_change()
 
-    def emit_card_message(self, message):
-        self._emit_event("show.card.message", {"message": message})
+    def get_thumbnail_paths_for_instances(self, instance_ids):
+        thumbnail_paths_by_instance_id = (
+            self._create_context.thumbnail_paths_by_instance_id
+        )
+        return {
+            instance_id: thumbnail_paths_by_instance_id.get(instance_id)
+            for instance_id in instance_ids
+        }
+
+    def set_thumbnail_paths_for_instances(self, thumbnail_path_mapping):
+        thumbnail_paths_by_instance_id = (
+            self._create_context.thumbnail_paths_by_instance_id
+        )
+        for instance_id, thumbnail_path in thumbnail_path_mapping.items():
+            thumbnail_paths_by_instance_id[instance_id] = thumbnail_path
+
+        self._emit_event(
+            "instance.thumbnail.changed",
+            {
+                "mapping": thumbnail_path_mapping
+            }
+        )
+
+    def emit_card_message(
+        self, message, message_type=CardMessageTypes.standard
+    ):
+        self._emit_event(
+            "show.card.message",
+            {
+                "message": message,
+                "message_type": message_type
+            }
+        )
 
     def get_creator_attribute_definitions(self, instances):
         """Collect creator attribute definitions for multuple instances.
@@ -1866,6 +1983,30 @@ class PublisherController(BasePublisherController):
             variant, task_name, asset_doc, project_name, instance=instance
         )
 
+    def trigger_convertor_items(self, convertor_identifiers):
+        self.save_changes()
+
+        success = True
+        try:
+            self._create_context.run_convertors(convertor_identifiers)
+
+        except ConvertorsOperationFailed as exc:
+            success = False
+            self._emit_event(
+                "convertors.convert.failed",
+                {
+                    "title": "Conversion failed",
+                    "failed_info": exc.failed_info
+                }
+            )
+
+        if success:
+            self.emit_card_message("Conversion finished")
+        else:
+            self.emit_card_message("Conversion failed", CardMessageTypes.error)
+
+        self.reset()
+
     def create(
         self, creator_identifier, subset_name, instance_data, options
     ):
@@ -1912,7 +2053,6 @@ class PublisherController(BasePublisherController):
         Args:
             instance_ids (List[str]): List of instance ids to remove.
         """
-        # TODO expect instance ids instead of instances
         # QUESTION Expect that instances are really removed? In that case save
         #   reset is not required and save changes too.
         self.save_changes()
