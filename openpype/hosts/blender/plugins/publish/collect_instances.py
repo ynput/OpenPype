@@ -26,33 +26,46 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
         """Collect instances from the current Blender scene."""
-        collections = self.get_collections()
+        members = set()
 
-        for collection in collections:
-            avalon_prop = collection[AVALON_PROPERTY]
-            asset = avalon_prop["asset"]
-            family = avalon_prop["family"]
-            subset = avalon_prop["subset"]
-            task = avalon_prop["task"]
-            name = collection.name
+        if True:  # TODO setting | Instances are PropertyGroups
+            instances = list(bpy.context.scene.openpype_instances)
+
+            # Process datablocks
+            for op_instance in bpy.context.scene.openpype_instances:
+                members.update(
+                    {
+                        eval(datablock_ref.datapath).get(datablock_ref.name)
+                        for datablock_ref in op_instance.datablocks
+                    }
+                )
+        else:  # Instances are collections
+            instances = self.get_collections()
+
+        for op_instance in instances:
+            avalon_prop = op_instance[AVALON_PROPERTY]
             instance = context.create_instance(
-                name=name,
-                family=family,
-                families=[family],
-                subset=subset,
-                asset=asset,
-                task=task,
+                name=op_instance.name,
+                family=avalon_prop["family"],
+                families=[avalon_prop["family"]],
+                subset=avalon_prop["subset"],
+                asset=avalon_prop["asset"],
+                task=avalon_prop["task"],
             )
-            # collect all objects recursively
-            members = set()
-            objects = list(collection.all_objects)
-            for obj in objects:
-                objects.extend(list(obj.children))
-                members.add(obj)
-            # append the collections to members and update intances list
-            members.update(set(get_children_recursive(collection)))
-            members = list(members)
-            members.append(collection)
+
+            # If outliner data
+            instance_collection = bpy.data.collections.get(op_instance.name)
+            if instance_collection:
+                # collect all objects recursively
+                objects = list(instance_collection.all_objects)
+                for obj in objects:
+                    objects.extend(list(obj.children))
+                    members.add(obj)
+                # append the collections to members and update intances list
+                members.update(
+                    set(get_children_recursive(instance_collection))
+                )
+
             instance[:] = members
             self.log.debug(json.dumps(instance.data, indent=4))
             for obj in instance:
