@@ -6,11 +6,6 @@ import collections
 
 import six
 
-from .log import PypeLogger
-
-log = PypeLogger.get_logger(__name__)
-
-
 KEY_PATTERN = re.compile(r"(\{.*?[^{0]*\})")
 KEY_PADDING_PATTERN = re.compile(r"([^:]+)\S+[><]\S+")
 SUB_DICT_PATTERN = re.compile(r"([^\[\]]+)")

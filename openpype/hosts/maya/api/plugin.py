@@ -4,6 +4,7 @@ from maya import cmds
 
 import qargparse
 
+from openpype.lib import Logger
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
@@ -50,9 +51,7 @@ def get_reference_node(members, log=None):
     # Warn the user when we're taking the highest reference node
     if len(references) > 1:
         if not log:
-            from openpype.lib import PypeLogger
-
-            log = PypeLogger().get_logger(__name__)
+            log = Logger.get_logger(__name__)
 
         log.warning("More than one reference node found in "
                     "container, using highest reference node: "

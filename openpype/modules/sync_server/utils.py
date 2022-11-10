@@ -1,6 +1,8 @@
 import time
-from openpype.api import Logger
-log = Logger().get_logger("SyncServer")
+
+from openpype.lib import Logger
+
+log = Logger.get_logger("SyncServer")
 
 
 class ResumableError(Exception):

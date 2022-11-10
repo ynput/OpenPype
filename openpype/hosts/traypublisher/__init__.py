@@ -1,6 +1,6 @@
-from .module import TrayPublishModule
+from .addon import TrayPublishAddon
 
 
 __all__ = (
-    "TrayPublishModule",
+    "TrayPublishAddon",
 )

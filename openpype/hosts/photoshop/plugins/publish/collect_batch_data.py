@@ -17,11 +17,11 @@ import os
 
 import pyblish.api
 
-from openpype.lib.plugin_tools import (
-    parse_json,
-    get_batch_asset_task_info
-)
 from openpype.pipeline import legacy_io
+from openpype_modules.webpublisher.lib import (
+    get_batch_asset_task_info,
+    parse_json
+)
 
 
 class CollectBatchData(pyblish.api.ContextPlugin):

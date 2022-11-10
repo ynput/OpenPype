@@ -26,7 +26,7 @@ PREVIEW_COLLECTIONS: Dict = dict()
 # This seems like a good value to keep the Qt app responsive and doesn't slow
 # down Blender. At least on macOS I the interace of Blender gets very laggy if
 # you make it smaller.
-TIMER_INTERVAL: float = 0.01
+TIMER_INTERVAL: float = 0.01 if platform.system() == "Windows" else 0.1
 
 
 class BlenderApplication(QtWidgets.QApplication):
@@ -164,6 +164,12 @@ def _process_app_events() -> Optional[float]:
             dialog.setDetailedText(detail)
             dialog.exec_()
 
+        # Refresh Manager
+        if GlobalClass.app:
+            manager = GlobalClass.app.get_window("WM_OT_avalon_manager")
+            if manager:
+                manager.refresh()
+
     if not GlobalClass.is_windows:
         if OpenFileCacher.opening_file:
             return TIMER_INTERVAL
@@ -192,10 +198,11 @@ class LaunchQtApp(bpy.types.Operator):
         self._app = BlenderApplication.get_app()
         GlobalClass.app = self._app
 
-        bpy.app.timers.register(
-            _process_app_events,
-            persistent=True
-        )
+        if not bpy.app.timers.is_registered(_process_app_events):
+            bpy.app.timers.register(
+                _process_app_events,
+                persistent=True
+            )
 
     def execute(self, context):
         """Execute the operator.

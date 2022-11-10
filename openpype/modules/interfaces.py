@@ -1,8 +1,33 @@
-from abc import abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod, abstractproperty
+
+import six
 
 from openpype import resources
 
-from openpype.modules import OpenPypeInterface
+
+class _OpenPypeInterfaceMeta(ABCMeta):
+    """OpenPypeInterface meta class to print proper string."""
+
+    def __str__(self):
+        return "<'OpenPypeInterface.{}'>".format(self.__name__)
+
+    def __repr__(self):
+        return str(self)
+
+
+@six.add_metaclass(_OpenPypeInterfaceMeta)
+class OpenPypeInterface:
+    """Base class of Interface that can be used as Mixin with abstract parts.
+
+    This is way how OpenPype module or addon can tell OpenPype that contain
+    implementation for specific functionality.
+
+    Child classes of OpenPypeInterface may be used as mixin in different
+    OpenPype modules which means they have to have implemented methods defined
+    in the interface. By default interface does not have any abstract parts.
+    """
+
+    pass
 
 
 class IPluginPaths(OpenPypeInterface):
@@ -56,6 +81,13 @@ class ILaunchHookPaths(OpenPypeInterface):
 
     Expected result is list of paths.
     ["path/to/launch_hooks_dir"]
+
+    Deprecated:
+        This interface is not needed since OpenPype 3.14.*. Addon just have to
+        implement 'get_launch_hook_paths' which can expect Application object
+        or nothing as argument.
+
+        Interface class will be removed after 3.16.*.
     """
 
     @abstractmethod
@@ -353,8 +385,8 @@ class ISettingsChangeListener(OpenPypeInterface):
         pass
 
 
-class IHostModule(OpenPypeInterface):
-    """Module which also contain a host implementation."""
+class IHostAddon(OpenPypeInterface):
+    """Addon which also contain a host implementation."""
 
     @abstractproperty
     def host_name(self):

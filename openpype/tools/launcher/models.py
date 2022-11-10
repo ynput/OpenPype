@@ -281,18 +281,25 @@ class ActionModel(QtGui.QStandardItemModel):
         if not action_item:
             return
 
-        action = action_item.data(ACTION_ROLE)
-        actual_data = self._prepare_compare_data(action)
+        actions = action_item.data(ACTION_ROLE)
+        if not isinstance(actions, list):
+            actions = [actions]
+
+        action_actions_data = [
+            self._prepare_compare_data(action)
+            for action in actions
+        ]
 
         stored = self.launcher_registry.get_item("force_not_open_workfile")
-        if is_checked:
-            stored.append(actual_data)
-        else:
-            final_values = []
-            for config in stored:
-                if config != actual_data:
-                    final_values.append(config)
-            stored = final_values
+        for actual_data in action_actions_data:
+            if is_checked:
+                stored.append(actual_data)
+            else:
+                final_values = []
+                for config in stored:
+                    if config != actual_data:
+                        final_values.append(config)
+                stored = final_values
 
         self.launcher_registry.set_item("force_not_open_workfile", stored)
         self.launcher_registry._get_item.cache_clear()
@@ -329,21 +336,24 @@ class ActionModel(QtGui.QStandardItemModel):
             item (QStandardItem)
             stored (list) of dict
         """
-        action = item.data(ACTION_ROLE)
-        if not self.is_application_action(action):
+
+        actions = item.data(ACTION_ROLE)
+        if not isinstance(actions, list):
+            actions = [actions]
+
+        if not self.is_application_action(actions[0]):
             return False
 
-        actual_data = self._prepare_compare_data(action)
+        action_actions_data = [
+            self._prepare_compare_data(action)
+            for action in actions
+        ]
         for config in stored:
-            if config == actual_data:
+            if config in action_actions_data:
                 return True
-
         return False
 
     def _prepare_compare_data(self, action):
-        if isinstance(action, list) and action:
-            action = action[0]
-
         compare_data = {}
         if action and action.label:
             compare_data = {

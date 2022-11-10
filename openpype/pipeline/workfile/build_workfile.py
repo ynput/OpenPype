@@ -1,3 +1,14 @@
+"""Workfile build based on settings.
+
+Workfile builder will do stuff based on project settings. Advantage is that
+it need only access to settings. Disadvantage is that it is hard to focus
+build per context and being explicit about loaded content.
+
+For more explicit workfile build is recommended 'AbstractTemplateBuilder'
+from '~/openpype/pipeline/workfile/workfile_template_builder'. Which gives
+more abilities to define how build happens but require more code to achive it.
+"""
+
 import os
 import re
 import collections
@@ -8,10 +19,10 @@ from openpype.client import (
     get_subsets,
     get_last_versions,
     get_representations,
+    get_linked_assets,
 )
 from openpype.settings import get_project_settings
 from openpype.lib import (
-    get_linked_assets,
     filter_profiles,
     Logger,
 )

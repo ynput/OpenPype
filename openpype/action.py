@@ -1,44 +1,82 @@
-# absolute_import is needed to counter the `module has no cmds error` in Maya
-from __future__ import absolute_import
-
+import warnings
+import functools
 import pyblish.api
 
 
-def get_errored_instances_from_context(context):
-
-    instances = list()
-    for result in context.data["results"]:
-        if result["instance"] is None:
-            # When instance is None we are on the "context" result
-            continue
-
-        if result["error"]:
-            instances.append(result["instance"])
-
-    return instances
+class ActionDeprecatedWarning(DeprecationWarning):
+    pass
 
 
-def get_errored_plugins_from_data(context):
-    """Get all failed validation plugins
+def deprecated(new_destination):
+    """Mark functions as deprecated.
 
-    Args:
-        context (object):
-
-    Returns:
-        list of plugins which failed during validation
-
+    It will result in a warning being emitted when the function is used.
     """
 
-    plugins = list()
-    results = context.data.get("results", [])
-    for result in results:
-        if result["success"] is True:
-            continue
-        plugins.append(result["plugin"])
+    func = None
+    if callable(new_destination):
+        func = new_destination
+        new_destination = None
 
-    return plugins
+    def _decorator(decorated_func):
+        if new_destination is None:
+            warning_message = (
+                " Please check content of deprecated function to figure out"
+                " possible replacement."
+            )
+        else:
+            warning_message = " Please replace your usage with '{}'.".format(
+                new_destination
+            )
+
+        @functools.wraps(decorated_func)
+        def wrapper(*args, **kwargs):
+            warnings.simplefilter("always", ActionDeprecatedWarning)
+            warnings.warn(
+                (
+                    "Call to deprecated function '{}'"
+                    "\nFunction was moved or removed.{}"
+                ).format(decorated_func.__name__, warning_message),
+                category=ActionDeprecatedWarning,
+                stacklevel=4
+            )
+            return decorated_func(*args, **kwargs)
+        return wrapper
+
+    if func is None:
+        return _decorator
+    return _decorator(func)
 
 
+@deprecated("openpype.pipeline.publish.get_errored_instances_from_context")
+def get_errored_instances_from_context(context):
+    """
+    Deprecated:
+        Since 3.14.* will be removed in 3.16.* or later.
+    """
+
+    from openpype.pipeline.publish import get_errored_instances_from_context
+
+    return get_errored_instances_from_context(context)
+
+
+@deprecated("openpype.pipeline.publish.get_errored_plugins_from_context")
+def get_errored_plugins_from_data(context):
+    """
+    Deprecated:
+        Since 3.14.* will be removed in 3.16.* or later.
+    """
+
+    from openpype.pipeline.publish import get_errored_plugins_from_context
+
+    return get_errored_plugins_from_context(context)
+
+
+# 'RepairAction' and 'RepairContextAction' were moved to
+#   'openpype.pipeline.publish' please change you imports.
+# There is no "reasonable" way hot mark these classes as deprecated to show
+#   warning of wrong import.
+# Deprecated since 3.14.* will be removed in 3.16.*
 class RepairAction(pyblish.api.Action):
     """Repairs the action
 
@@ -65,6 +103,7 @@ class RepairAction(pyblish.api.Action):
             plugin.repair(instance)
 
 
+# Deprecated since 3.14.* will be removed in 3.16.*
 class RepairContextAction(pyblish.api.Action):
     """Repairs the action
 

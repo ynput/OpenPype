@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import pyblish.api
 
 
-from openpype.action import get_errored_instances_from_context
+from openpype.pipeline.publish import get_errored_instances_from_context
 
 
 class SelectInvalidAction(pyblish.api.Action):

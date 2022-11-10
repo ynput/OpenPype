@@ -6,12 +6,9 @@ import concurrent.futures
 from concurrent.futures._base import CancelledError
 
 from .providers import lib
-from openpype.lib import PypeLogger
+from openpype.lib import Logger
 
 from .utils import SyncStatus, ResumableError
-
-
-log = PypeLogger().get_logger("SyncServer")
 
 
 async def upload(module, project_name, file, representation, provider_name,
@@ -238,6 +235,7 @@ class SyncServerThread(threading.Thread):
         Stopped when tray is closed.
     """
     def __init__(self, module):
+        self.log = Logger.get_logger(self.__class__.__name__)
         super(SyncServerThread, self).__init__()
         self.module = module
         self.loop = None
@@ -249,17 +247,17 @@ class SyncServerThread(threading.Thread):
         self.is_running = True
 
         try:
-            log.info("Starting Sync Server")
+            self.log.info("Starting Sync Server")
             self.loop = asyncio.new_event_loop()  # create new loop for thread
             asyncio.set_event_loop(self.loop)
             self.loop.set_default_executor(self.executor)
 
             asyncio.ensure_future(self.check_shutdown(), loop=self.loop)
             asyncio.ensure_future(self.sync_loop(), loop=self.loop)
-            log.info("Sync Server Started")
+            self.log.info("Sync Server Started")
             self.loop.run_forever()
         except Exception:
-            log.warning(
+            self.log.warning(
                 "Sync Server service has failed", exc_info=True
             )
         finally:
@@ -379,8 +377,9 @@ class SyncServerThread(threading.Thread):
                                                                  ))
                                     processed_file_path.add(file_path)
 
-                    log.debug("Sync tasks count {}".
-                              format(len(task_files_to_process)))
+                    self.log.debug("Sync tasks count {}".format(
+                        len(task_files_to_process)
+                    ))
                     files_created = await asyncio.gather(
                         *task_files_to_process,
                         return_exceptions=True)
@@ -399,28 +398,31 @@ class SyncServerThread(threading.Thread):
                                               error)
 
                 duration = time.time() - start_time
-                log.debug("One loop took {:.2f}s".format(duration))
+                self.log.debug("One loop took {:.2f}s".format(duration))
 
                 delay = self.module.get_loop_delay(project_name)
-                log.debug("Waiting for {} seconds to new loop".format(delay))
+                self.log.debug(
+                    "Waiting for {} seconds to new loop".format(delay)
+                )
                 self.timer = asyncio.create_task(self.run_timer(delay))
                 await asyncio.gather(self.timer)
 
             except ConnectionResetError:
-                log.warning("ConnectionResetError in sync loop, "
-                            "trying next loop",
-                            exc_info=True)
+                self.log.warning(
+                    "ConnectionResetError in sync loop, trying next loop",
+                    exc_info=True)
             except CancelledError:
                 # just stopping server
                 pass
             except ResumableError:
-                log.warning("ResumableError in sync loop, "
-                            "trying next loop",
-                            exc_info=True)
+                self.log.warning(
+                    "ResumableError in sync loop, trying next loop",
+                    exc_info=True)
             except Exception:
                 self.stop()
-                log.warning("Unhandled except. in sync loop, stopping server",
-                            exc_info=True)
+                self.log.warning(
+                    "Unhandled except. in sync loop, stopping server",
+                    exc_info=True)
 
     def stop(self):
         """Sets is_running flag to false, 'check_shutdown' shuts server down"""
@@ -433,16 +435,17 @@ class SyncServerThread(threading.Thread):
         while self.is_running:
             if self.module.long_running_tasks:
                 task = self.module.long_running_tasks.pop()
-                log.info("starting long running")
+                self.log.info("starting long running")
                 await self.loop.run_in_executor(None, task["func"])
-                log.info("finished long running")
+                self.log.info("finished long running")
                 self.module.projects_processed.remove(task["project_name"])
             await asyncio.sleep(0.5)
         tasks = [task for task in asyncio.all_tasks() if
                  task is not asyncio.current_task()]
         list(map(lambda task: task.cancel(), tasks))  # cancel all the tasks
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        log.debug(f'Finished awaiting cancelled tasks, results: {results}...')
+        self.log.debug(
+            f'Finished awaiting cancelled tasks, results: {results}...')
         await self.loop.shutdown_asyncgens()
         # to really make sure everything else has time to stop
         self.executor.shutdown(wait=True)
@@ -455,29 +458,32 @@ class SyncServerThread(threading.Thread):
 
     def reset_timer(self):
         """Called when waiting for next loop should be skipped"""
-        log.debug("Resetting timer")
+        self.log.debug("Resetting timer")
         if self.timer:
             self.timer.cancel()
             self.timer = None
 
     def _working_sites(self, project_name):
         if self.module.is_project_paused(project_name):
-            log.debug("Both sites same, skipping")
+            self.log.debug("Both sites same, skipping")
             return None, None
 
         local_site = self.module.get_active_site(project_name)
         remote_site = self.module.get_remote_site(project_name)
         if local_site == remote_site:
-            log.debug("{}-{} sites same, skipping".format(local_site,
-                                                          remote_site))
+            self.log.debug("{}-{} sites same, skipping".format(
+                local_site, remote_site))
             return None, None
 
         configured_sites = _get_configured_sites(self.module, project_name)
         if not all([local_site in configured_sites,
                     remote_site in configured_sites]):
-            log.debug("Some of the sites {} - {} is not ".format(local_site,
-                                                                 remote_site) +
-                      "working properly")
+            self.log.debug(
+                "Some of the sites {} - {} is not working properly".format(
+                    local_site, remote_site
+                )
+            )
+
             return None, None
 
         return local_site, remote_site

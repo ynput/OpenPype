@@ -1,8 +1,8 @@
 import os
 
 import pyblish.api
-from openpype.lib import get_subset_name_with_asset_doc
 from openpype.pipeline import legacy_io
+from openpype.pipeline.create import get_subset_name
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -71,13 +71,14 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         # workfile instance
         family = "workfile"
-        subset = get_subset_name_with_asset_doc(
+        subset = get_subset_name(
             family,
             self.default_variant,
             context.data["anatomyData"]["task"]["name"],
             context.data["assetEntity"],
             context.data["anatomyData"]["project"]["name"],
-            host_name=context.data["hostName"]
+            host_name=context.data["hostName"],
+            project_settings=context.data["project_settings"]
         )
         # Create instance
         instance = context.create_instance(subset)

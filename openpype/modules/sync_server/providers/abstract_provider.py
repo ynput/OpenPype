@@ -1,14 +1,16 @@
 import abc
 import six
-from openpype.api import Logger
+from openpype.lib import Logger
 
-log = Logger().get_logger("SyncServer")
+log = Logger.get_logger("SyncServer")
 
 
 @six.add_metaclass(abc.ABCMeta)
 class AbstractProvider:
     CODE = ''
     LABEL = ''
+
+    _log = None
 
     def __init__(self, project_name, site_name, tree=None, presets=None):
         self.presets = None
@@ -18,6 +20,12 @@ class AbstractProvider:
         self.presets = presets
 
         super(AbstractProvider, self).__init__()
+
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = Logger.get_logger(self.__class__.__name__)
+        return self._log
 
     @abc.abstractmethod
     def is_active(self):
@@ -199,11 +207,11 @@ class AbstractProvider:
                 path = anatomy.fill_root(path)
             except KeyError:
                 msg = "Error in resolving local root from anatomy"
-                log.error(msg)
+                self.log.error(msg)
                 raise ValueError(msg)
         except IndexError:
             msg = "Path {} contains unfillable placeholder"
-            log.error(msg)
+            self.log.error(msg)
             raise ValueError(msg)
 
         return path

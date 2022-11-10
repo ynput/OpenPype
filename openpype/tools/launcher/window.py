@@ -4,7 +4,7 @@ import logging
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype import style
-from openpype.api import resources
+from openpype import resources
 from openpype.pipeline import AvalonMongoDB
 
 import qtawesome

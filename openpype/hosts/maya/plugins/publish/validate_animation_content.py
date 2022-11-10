@@ -1,6 +1,6 @@
 import pyblish.api
-import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateAnimationContent(pyblish.api.InstancePlugin):
@@ -11,7 +11,7 @@ class ValidateAnimationContent(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["maya"]
     families = ["animation"]
     label = "Animation Content"

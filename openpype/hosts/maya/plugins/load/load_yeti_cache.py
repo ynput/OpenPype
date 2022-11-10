@@ -6,7 +6,7 @@ from collections import defaultdict
 import clique
 from maya import cmds
 
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 from openpype.pipeline import (
     load,
     get_representation_path
@@ -250,7 +250,7 @@ class YetiCacheLoader(load.LoaderPlugin):
         """
 
         name = node_name.replace(":", "_")
-        pattern = r"^({name})(\.[0-4]+)?(\.fur)$".format(name=re.escape(name))
+        pattern = r"^({name})(\.[0-9]+)?(\.fur)$".format(name=re.escape(name))
 
         files = [fname for fname in os.listdir(root) if re.match(pattern,
                                                                  fname)]

@@ -6,7 +6,7 @@ from Qt import QtWidgets, QtCore
 
 from openpype.client import get_asset_by_name, get_subsets
 from openpype import style
-from openpype.api import get_current_project_settings
+from openpype.settings import get_current_project_settings
 from openpype.tools.utils.lib import qt_app_context
 from openpype.pipeline import legacy_io
 from openpype.pipeline.create import (

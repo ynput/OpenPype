@@ -132,7 +132,7 @@ class UserAssigmentEvent(BaseEvent):
         """
         Get data to fill template from task
 
-        .. seealso:: :mod:`openpype.api.Anatomy`
+        .. seealso:: :mod:`openpype.pipeline.Anatomy`
 
         :param task: Task entity
         :type task: dict

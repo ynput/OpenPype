@@ -7,25 +7,15 @@
     "children": [
         {
             "type": "schema",
+            "name": "schema_houdini_scriptshelf"
+        },
+        {
+            "type": "schema",
             "name": "schema_houdini_create"
         },
         {
-            "type": "dict",
-            "collapsible": true,
-            "key": "publish",
-            "label": "Publish plugins",
-            "children": [
-                {
-                    "type": "schema_template",
-                    "name": "template_publish_plugin",
-                    "template_data": [
-                        {
-                            "key": "ValidateContainers",
-                            "label": "ValidateContainers"
-                        }
-                    ]
-                }
-            ]
+            "type": "schema",
+            "name": "schema_houdini_publish"
         }
     ]
 }

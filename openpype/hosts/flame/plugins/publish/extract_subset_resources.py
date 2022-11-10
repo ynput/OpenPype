@@ -1,11 +1,11 @@
 import os
 import re
 import tempfile
-from pprint import pformat
 from copy import deepcopy
 
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline import publish
 from openpype.hosts.flame import api as opfapi
 from openpype.hosts.flame.api import MediaInfoFile
 from openpype.pipeline.editorial import (
@@ -15,7 +15,7 @@ from openpype.pipeline.editorial import (
 import flame
 
 
-class ExtractSubsetResources(openpype.api.Extractor):
+class ExtractSubsetResources(publish.Extractor):
     """
     Extractor for transcoding files from Flame clip
     """
@@ -80,40 +80,53 @@ class ExtractSubsetResources(openpype.api.Extractor):
         retimed_data = self._get_retimed_attributes(instance)
 
         # get individual keys
-        r_handle_start = retimed_data["handle_start"]
-        r_handle_end = retimed_data["handle_end"]
-        r_source_dur = retimed_data["source_duration"]
-        r_speed = retimed_data["speed"]
+        retimed_handle_start = retimed_data["handle_start"]
+        retimed_handle_end = retimed_data["handle_end"]
+        retimed_source_duration = retimed_data["source_duration"]
+        retimed_speed = retimed_data["speed"]
 
         # get handles value - take only the max from both
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
         handles = max(handle_start, handle_end)
         include_handles = instance.data.get("includeHandles")
+        retimed_handles = instance.data.get("retimedHandles")
 
         # get media source range with handles
         source_start_handles = instance.data["sourceStartH"]
         source_end_handles = instance.data["sourceEndH"]
+
         # retime if needed
-        if r_speed != 1.0:
-            source_start_handles = (
-                instance.data["sourceStart"] - r_handle_start)
-            source_end_handles = (
-                source_start_handles
-                + (r_source_dur - 1)
-                + r_handle_start
-                + r_handle_end
-            )
+        if retimed_speed != 1.0:
+            if retimed_handles:
+                # handles are retimed
+                source_start_handles = (
+                    instance.data["sourceStart"] - retimed_handle_start)
+                source_end_handles = (
+                    source_start_handles
+                    + (retimed_source_duration - 1)
+                    + retimed_handle_start
+                    + retimed_handle_end
+                )
+
+            else:
+                # handles are not retimed
+                source_end_handles = (
+                    source_start_handles
+                    + (retimed_source_duration - 1)
+                    + handle_start
+                    + handle_end
+                )
 
         # get frame range with handles for representation range
         frame_start_handle = frame_start - handle_start
         repre_frame_start = frame_start_handle
         if include_handles:
-            if r_speed == 1.0:
+            if retimed_speed == 1.0 or not retimed_handles:
                 frame_start_handle = frame_start
             else:
                 frame_start_handle = (
-                    frame_start - handle_start) + r_handle_start
+                    frame_start - handle_start) + retimed_handle_start
 
         self.log.debug("_ frame_start_handle: {}".format(
             frame_start_handle))
@@ -123,6 +136,9 @@ class ExtractSubsetResources(openpype.api.Extractor):
         # calculate duration with handles
         source_duration_handles = (
             source_end_handles - source_start_handles) + 1
+
+        self.log.debug("_ source_duration_handles: {}".format(
+            source_duration_handles))
 
         # create staging dir path
         staging_dir = self.staging_dir(instance)
@@ -147,15 +163,30 @@ class ExtractSubsetResources(openpype.api.Extractor):
         if version_data:
             instance.data["versionData"].update(version_data)
 
-        if r_speed != 1.0:
-            instance.data["versionData"].update({
-                "frameStart": frame_start_handle,
-                "frameEnd": (
-                    (frame_start_handle + source_duration_handles - 1)
-                    - (r_handle_start + r_handle_end)
-                )
-            })
-        self.log.debug("_ i_version_data: {}".format(
+        # version data start frame
+        version_frame_start = frame_start
+        if include_handles:
+            version_frame_start = frame_start_handle
+        if retimed_speed != 1.0:
+            if retimed_handles:
+                instance.data["versionData"].update({
+                    "frameStart": version_frame_start,
+                    "frameEnd": (
+                        (version_frame_start + source_duration_handles - 1)
+                        - (retimed_handle_start + retimed_handle_end)
+                    )
+                })
+            else:
+                instance.data["versionData"].update({
+                    "handleStart": handle_start,
+                    "handleEnd": handle_end,
+                    "frameStart": version_frame_start,
+                    "frameEnd": (
+                        (version_frame_start + source_duration_handles - 1)
+                        - (handle_start + handle_end)
+                    )
+                })
+        self.log.debug("_ version_data: {}".format(
             instance.data["versionData"]
         ))
 

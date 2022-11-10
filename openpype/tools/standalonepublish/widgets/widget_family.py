@@ -8,10 +8,12 @@ from openpype.client import (
     get_subsets,
     get_last_version_by_subset_id,
 )
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 from openpype.pipeline import LegacyCreator
-from openpype.lib import TaskNotSetError
-from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
+from openpype.pipeline.create import (
+    SUBSET_NAME_ALLOWED_SYMBOLS,
+    TaskNotSetError,
+)
 
 from . import HelpRole, FamilyRole, ExistsRole, PluginRole, PluginKeyRole
 from . import FamilyDescriptionWidget

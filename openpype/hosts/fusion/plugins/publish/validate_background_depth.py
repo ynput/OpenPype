@@ -1,6 +1,6 @@
 import pyblish.api
 
-from openpype import action
+from openpype.pipeline.publish import RepairAction
 
 
 class ValidateBackgroundDepth(pyblish.api.InstancePlugin):
@@ -8,7 +8,7 @@ class ValidateBackgroundDepth(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Background Depth 32 bit"
-    actions = [action.RepairAction]
+    actions = [RepairAction]
     hosts = ["fusion"]
     families = ["render"]
     optional = True

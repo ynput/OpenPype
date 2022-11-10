@@ -3,8 +3,7 @@ from Qt import QtWidgets
 
 import pyblish.api
 
-from openpype.api import Logger
-from openpype.lib import register_event_callback
+from openpype.lib import register_event_callback, Logger
 from openpype.pipeline import (
     legacy_io,
     register_loader_plugin_path,
@@ -14,14 +13,13 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
-import openpype.hosts.photoshop
+from openpype.hosts.photoshop import PHOTOSHOP_HOST_DIR
 
 from . import lib
 
 log = Logger.get_logger(__name__)
 
-HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.photoshop.__file__))
-PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PLUGINS_DIR = os.path.join(PHOTOSHOP_HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")

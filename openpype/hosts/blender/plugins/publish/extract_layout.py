@@ -6,12 +6,12 @@ import bpy_extras
 import bpy_extras.anim_utils
 
 from openpype.client import get_representation_by_name
+from openpype.pipeline import publish
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
-import openpype.api
 
 
-class ExtractLayout(openpype.api.Extractor):
+class ExtractLayout(publish.Extractor):
     """Extract a layout."""
 
     label = "Extract Layout"

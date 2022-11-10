@@ -2,11 +2,10 @@
 import os
 
 import hou
-from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
 
 
 def file_extensions():
-    return HOST_WORKFILE_EXTENSIONS["houdini"]
+    return [".hip", ".hiplc", ".hipnc"]
 
 
 def has_unsaved_changes():

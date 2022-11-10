@@ -7,11 +7,15 @@ from pymongo import UpdateOne
 import qargparse
 from Qt import QtWidgets, QtCore
 
-from openpype.client import get_versions, get_representations
 from openpype import style
-from openpype.pipeline import load, AvalonMongoDB, Anatomy
-from openpype.lib import StringTemplate
+from openpype.client import get_versions, get_representations
 from openpype.modules import ModulesManager
+from openpype.lib import format_file_size
+from openpype.pipeline import load, AvalonMongoDB, Anatomy
+from openpype.pipeline.load import (
+    get_representation_path_with_anatomy,
+    InvalidRepresentationContext,
+)
 
 
 class DeleteOldVersions(load.SubsetLoaderPlugin):
@@ -37,13 +41,6 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
             "remove_publish_folder", help="Remove publish folder:"
         )
     ]
-
-    def sizeof_fmt(self, num, suffix='B'):
-        for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
-            if abs(num) < 1024.0:
-                return "%3.1f%s%s" % (num, unit, suffix)
-            num /= 1024.0
-        return "%.1f%s%s" % (num, 'Yi', suffix)
 
     def delete_whole_dir_paths(self, dir_paths, delete=True):
         size = 0
@@ -80,27 +77,28 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
 
     def path_from_representation(self, representation, anatomy):
         try:
-            template = representation["data"]["template"]
-
+            context = representation["context"]
         except KeyError:
+            return (None, None)
+
+        try:
+            path = get_representation_path_with_anatomy(
+                representation, anatomy
+            )
+        except InvalidRepresentationContext:
             return (None, None)
 
         sequence_path = None
-        try:
-            context = representation["context"]
-            context["root"] = anatomy.roots
-            path = str(StringTemplate.format_template(template, context))
-            if "frame" in context:
-                context["frame"] = self.sequence_splitter
-                sequence_path = os.path.normpath(str(
-                    StringTemplate.format_template(template, context)
-                ))
+        if "frame" in context:
+            context["frame"] = self.sequence_splitter
+            sequence_path = get_representation_path_with_anatomy(
+                representation, anatomy
+            )
 
-        except KeyError:
-            # Template references unavailable data
-            return (None, None)
+        if sequence_path:
+            sequence_path = sequence_path.normalized()
 
-        return (os.path.normpath(path), sequence_path)
+        return (path.normalized(), sequence_path)
 
     def delete_only_repre_files(self, dir_paths, file_paths, delete=True):
         size = 0
@@ -456,7 +454,7 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
                 size += self.main(project_name, data, remove_publish_folder)
                 print("Progressing {}/{}".format(count + 1, len(contexts)))
 
-            msg = "Total size of files: " + self.sizeof_fmt(size)
+            msg = "Total size of files: {}".format(format_file_size(size))
             self.log.info(msg)
             self.message(msg)
 

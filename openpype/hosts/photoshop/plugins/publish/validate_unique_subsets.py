@@ -1,7 +1,9 @@
 import collections
 import pyblish.api
-import openpype.api
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishXmlValidationError,
+)
 
 
 class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
@@ -11,7 +13,7 @@ class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
 
     label = "Validate Subset Uniqueness"
     hosts = ["photoshop"]
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     families = ["image"]
 
     def process(self, context):

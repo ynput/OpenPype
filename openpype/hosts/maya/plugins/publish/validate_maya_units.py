@@ -1,10 +1,14 @@
 import maya.cmds as cmds
 
 import pyblish.api
-import openpype.api
+
 import openpype.hosts.maya.api.lib as mayalib
 from openpype.pipeline.context_tools import get_current_project_asset
 from math import ceil
+from openpype.pipeline.publish import (
+    RepairContextAction,
+    ValidateSceneOrder,
+)
 
 
 def float_round(num, places=0, direction=ceil):
@@ -14,10 +18,10 @@ def float_round(num, places=0, direction=ceil):
 class ValidateMayaUnits(pyblish.api.ContextPlugin):
     """Check if the Maya units are set correct"""
 
-    order = openpype.api.ValidateSceneOrder
+    order = ValidateSceneOrder
     label = "Maya Units"
     hosts = ['maya']
-    actions = [openpype.api.RepairContextAction]
+    actions = [RepairContextAction]
 
     validate_linear_units = True
     linear_units = "cm"

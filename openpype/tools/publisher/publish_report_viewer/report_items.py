@@ -79,7 +79,7 @@ class PublishReport:
 
         context_data = data["context"]
         context_data["name"] = "context"
-        context_data["label"] = context_data["label"] or "Context"
+        context_data["label"] = context_data.get("label") or "Context"
 
         logs = []
         plugins_items_by_id = {}

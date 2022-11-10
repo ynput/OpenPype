@@ -2,11 +2,8 @@ import os
 
 import dropbox
 
-from openpype.api import Logger
 from .abstract_provider import AbstractProvider
 from ..utils import EditableScopes
-
-log = Logger().get_logger("SyncServer")
 
 
 class DropboxHandler(AbstractProvider):
@@ -20,26 +17,26 @@ class DropboxHandler(AbstractProvider):
         self.dbx = None
 
         if not self.presets:
-            log.info(
+            self.log.info(
                 "Sync Server: There are no presets for {}.".format(site_name)
             )
             return
 
         if not self.presets["enabled"]:
-            log.debug("Sync Server: Site {} not enabled for {}.".
+            self.log.debug("Sync Server: Site {} not enabled for {}.".
                       format(site_name, project_name))
             return
 
         token = self.presets.get("token", "")
         if not token:
             msg = "Sync Server: No access token for dropbox provider"
-            log.info(msg)
+            self.log.info(msg)
             return
 
         team_folder_name = self.presets.get("team_folder_name", "")
         if not team_folder_name:
             msg = "Sync Server: No team folder name for dropbox provider"
-            log.info(msg)
+            self.log.info(msg)
             return
 
         acting_as_member = self.presets.get("acting_as_member", "")
@@ -47,7 +44,7 @@ class DropboxHandler(AbstractProvider):
             msg = (
                 "Sync Server: No acting member for dropbox provider"
             )
-            log.info(msg)
+            self.log.info(msg)
             return
 
         try:
@@ -55,7 +52,7 @@ class DropboxHandler(AbstractProvider):
                 token, acting_as_member, team_folder_name
             )
         except Exception as e:
-            log.info("Could not establish dropbox object: {}".format(e))
+            self.log.info("Could not establish dropbox object: {}".format(e))
             return
 
         super(AbstractProvider, self).__init__()
@@ -448,7 +445,7 @@ class DropboxHandler(AbstractProvider):
                 path = anatomy.fill_root(path)
             except KeyError:
                 msg = "Error in resolving local root from anatomy"
-                log.error(msg)
+                self.log.error(msg)
                 raise ValueError(msg)
 
         return path

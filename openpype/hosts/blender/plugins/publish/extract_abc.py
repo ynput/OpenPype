@@ -2,12 +2,12 @@ import os
 
 import bpy
 
-from openpype import api
+from openpype.pipeline import publish
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class ExtractABC(api.Extractor):
+class ExtractABC(publish.Extractor):
     """Extract as ABC."""
 
     label = "Extract ABC"

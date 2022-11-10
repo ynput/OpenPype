@@ -5,7 +5,8 @@ import os
 from maya import cmds  # noqa
 
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline import publish
 from openpype.hosts.maya.api.lib import (
     parent_nodes,
     maintained_selection
@@ -13,7 +14,7 @@ from openpype.hosts.maya.api.lib import (
 from openpype.hosts.maya.api import fbx
 
 
-class ExtractUnrealStaticMesh(openpype.api.Extractor):
+class ExtractUnrealStaticMesh(publish.Extractor):
     """Extract Unreal Static Mesh as FBX from Maya. """
 
     order = pyblish.api.ExtractorOrder - 0.1

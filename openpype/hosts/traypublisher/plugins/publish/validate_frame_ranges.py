@@ -2,10 +2,10 @@ import re
 
 import pyblish.api
 
-import openpype.api
-from openpype.pipeline import (
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
     PublishXmlValidationError,
-    OptionalPyblishPluginMixin
+    OptionalPyblishPluginMixin,
 )
 
 
@@ -16,7 +16,7 @@ class ValidateFrameRange(OptionalPyblishPluginMixin,
     label = "Validate Frame Range"
     hosts = ["traypublisher"]
     families = ["render"]
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
 
     optional = True
     # published data might be sequence (.mov, .mp4) in that counting files

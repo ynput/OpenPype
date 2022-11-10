@@ -4,10 +4,10 @@ import time
 import threading
 import platform
 
-from openpype.api import Logger
-from openpype.api import get_system_settings
+from openpype.lib import Logger
+from openpype.settings import get_system_settings
 from .abstract_provider import AbstractProvider
-log = Logger().get_logger("SyncServer")
+log = Logger.get_logger("SyncServer-SFTPHandler")
 
 pysftp = None
 try:
@@ -43,8 +43,9 @@ class SFTPHandler(AbstractProvider):
 
         self.presets = presets
         if not self.presets:
-            log.warning("Sync Server: There are no presets for {}.".
-                        format(site_name))
+            self.log.warning(
+                "Sync Server: There are no presets for {}.".format(site_name)
+            )
             return
 
         # store to instance for reconnect
@@ -423,7 +424,7 @@ class SFTPHandler(AbstractProvider):
             return pysftp.Connection(**conn_params)
         except (paramiko.ssh_exception.SSHException,
                 pysftp.exceptions.ConnectionException):
-            log.warning("Couldn't connect", exc_info=True)
+            self.log.warning("Couldn't connect", exc_info=True)
 
     def _mark_progress(self, project_name, file, representation, server, site,
                        source_path, target_path, direction):
@@ -445,7 +446,7 @@ class SFTPHandler(AbstractProvider):
                     time.time() - last_tick >= server.LOG_PROGRESS_SEC:
                 status_val = target_file_size / source_file_size
                 last_tick = time.time()
-                log.debug(direction + "ed %d%%." % int(status_val * 100))
+                self.log.debug(direction + "ed %d%%." % int(status_val * 100))
                 server.update_db(project_name=project_name,
                                  new_file_id=None,
                                  file=file,

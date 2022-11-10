@@ -10,6 +10,7 @@
     ],
     "publish": {
         "CollectPublishedFiles": {
+            "sync_next_version": false,
             "task_type_to_family": {
                 "Animation": [
                     {

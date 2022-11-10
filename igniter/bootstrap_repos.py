@@ -63,7 +63,7 @@ class OpenPypeVersion(semver.VersionInfo):
     """
     staging = False
     path = None
-    _VERSION_REGEX = re.compile(r"(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$")  # noqa: E501
+    _VERSION_REGEX = re.compile(r"(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?")  # noqa: E501
     _installed_version = None
 
     def __init__(self, *args, **kwargs):
@@ -815,6 +815,13 @@ class BootstrapRepos:
             except Exception as e:
                 self._print(str(e), LOG_ERROR, exc_info=True)
                 return None
+        if not destination_dir.exists():
+            destination_dir.mkdir(parents=True)
+        elif not destination_dir.is_dir():
+            self._print(
+                "Destination exists but is not directory.", LOG_ERROR)
+            return None
+
         try:
             shutil.move(zip_file.as_posix(), destination_dir.as_posix())
         except shutil.Error as e:

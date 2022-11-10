@@ -3,8 +3,8 @@ import re
 from maya import cmds
 
 import pyblish.api
-import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import ValidateMeshOrder
 
 
 def len_flattened(components):
@@ -45,7 +45,7 @@ class ValidateMeshHasUVs(pyblish.api.InstancePlugin):
     UVs for every face.
     """
 
-    order = openpype.api.ValidateMeshOrder
+    order = ValidateMeshOrder
     hosts = ['maya']
     families = ['model']
     category = 'geometry'

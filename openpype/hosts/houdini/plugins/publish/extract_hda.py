@@ -4,10 +4,11 @@ import os
 from pprint import pformat
 
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline import publish
 
 
-class ExtractHDA(openpype.api.Extractor):
+class ExtractHDA(publish.Extractor):
 
     order = pyblish.api.ExtractorOrder
     label = "Extract HDA"

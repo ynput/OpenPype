@@ -1,4 +1,4 @@
-from openpype.api import get_system_settings, get_project_settings
+from openpype.settings import get_system_settings, get_project_settings
 from openpype.modules.shotgrid.lib.const import MODULE_NAME
 
 

@@ -51,7 +51,8 @@ from .pipeline import (
 )
 from .menu import (
     FlameMenuProjectConnect,
-    FlameMenuTimeline
+    FlameMenuTimeline,
+    FlameMenuUniversal
 )
 from .plugin import (
     Creator,
@@ -131,6 +132,7 @@ __all__ = [
     # menu
     "FlameMenuProjectConnect",
     "FlameMenuTimeline",
+    "FlameMenuUniversal",
 
     # plugin
     "Creator",

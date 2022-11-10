@@ -1,7 +1,6 @@
 import os
 import hiero.core.events
-from openpype.api import Logger
-from openpype.lib import register_event_callback
+from openpype.lib import Logger, register_event_callback
 from .lib import (
     sync_avalon_data_to_workfile,
     launch_workfiles_app,
@@ -11,7 +10,7 @@ from .lib import (
 from .tags import add_tags_to_workfile
 from .menu import update_menu_task_label
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 def startupCompleted(event):

@@ -1,9 +1,12 @@
 from maya import cmds
 
 import pyblish.api
-import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
+from openpype.pipeline.publish import (
+    RepairAction,
+    ValidateMeshOrder,
+)
 
 
 class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin):
@@ -15,7 +18,7 @@ class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateMeshOrder
+    order = ValidateMeshOrder
     hosts = ['maya']
     families = ['model', 'pointcache']
     category = 'uv'
@@ -23,7 +26,7 @@ class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin):
     version = (0, 1, 0)
     label = "Mesh Single UV Set"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
-               openpype.api.RepairAction]
+               RepairAction]
 
     @staticmethod
     def get_invalid(instance):

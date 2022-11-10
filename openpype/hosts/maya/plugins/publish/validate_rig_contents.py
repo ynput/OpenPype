@@ -1,7 +1,7 @@
 from maya import cmds
 
 import pyblish.api
-import openpype.api
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateRigContents(pyblish.api.InstancePlugin):
@@ -13,7 +13,7 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     label = "Rig Contents"
     hosts = ["maya"]
     families = ["rig"]

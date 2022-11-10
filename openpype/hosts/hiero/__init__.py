@@ -1,10 +1,10 @@
-from .module import (
+from .addon import (
     HIERO_ROOT_DIR,
-    HieroModule,
+    HieroAddon,
 )
 
 
 __all__ = (
     "HIERO_ROOT_DIR",
-    "HieroModule",
+    "HieroAddon",
 )

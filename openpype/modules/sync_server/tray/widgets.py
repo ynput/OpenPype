@@ -9,8 +9,7 @@ import qtawesome
 
 from openpype.tools.settings import style
 
-from openpype.api import get_local_site_id
-from openpype.lib import PypeLogger
+from openpype.lib import Logger, get_local_site_id
 
 from openpype.tools.utils.delegates import pretty_timestamp
 
@@ -36,7 +35,7 @@ from openpype.tools.utils.constants import (
     TRIES_ROLE
 )
 
-log = PypeLogger().get_logger("SyncServer")
+log = Logger.get_logger("SyncServer")
 
 
 class SyncProjectListWidget(QtWidgets.QWidget):

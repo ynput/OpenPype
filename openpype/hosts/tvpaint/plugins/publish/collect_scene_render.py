@@ -3,7 +3,7 @@ import copy
 import pyblish.api
 
 from openpype.client import get_asset_by_name
-from openpype.lib import get_subset_name_with_asset_doc
+from openpype.pipeline.create import get_subset_name
 
 
 class CollectRenderScene(pyblish.api.ContextPlugin):
@@ -75,14 +75,15 @@ class CollectRenderScene(pyblish.api.ContextPlugin):
         dynamic_data["render_pass"] = dynamic_data["renderpass"]
 
         task_name = workfile_context["task"]
-        subset_name = get_subset_name_with_asset_doc(
+        subset_name = get_subset_name(
             "render",
             variant,
             task_name,
             asset_doc,
             project_name,
             host_name,
-            dynamic_data=dynamic_data
+            dynamic_data=dynamic_data,
+            project_settings=context.data["project_settings"]
         )
 
         instance_data = {

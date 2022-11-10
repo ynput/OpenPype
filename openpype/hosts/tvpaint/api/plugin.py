@@ -4,11 +4,11 @@ import uuid
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
+    registered_host,
 )
-from openpype.hosts.tvpaint.api import (
-    pipeline,
-    lib
-)
+
+from .lib import get_layers_data
+from .pipeline import get_current_workfile_context
 
 
 class Creator(LegacyCreator):
@@ -22,7 +22,7 @@ class Creator(LegacyCreator):
         dynamic_data = super(Creator, cls).get_dynamic_data(*args, **kwargs)
 
         # Change asset and name by current workfile context
-        workfile_context = pipeline.get_current_workfile_context()
+        workfile_context = get_current_workfile_context()
         asset_name = workfile_context.get("asset")
         task_name = workfile_context.get("task")
         if "asset" not in dynamic_data and asset_name:
@@ -67,10 +67,12 @@ class Creator(LegacyCreator):
         self.log.debug(
             "Storing instance data to workfile. {}".format(str(data))
         )
-        return pipeline.write_instances(data)
+        host = registered_host()
+        return host.write_instances(data)
 
     def process(self):
-        data = pipeline.list_instances()
+        host = registered_host()
+        data = host.list_instances()
         data.append(self.data)
         self.write_instances(data)
 
@@ -108,7 +110,7 @@ class Loader(LoaderPlugin):
         counter_regex = re.compile(r"_(\d{3})$")
 
         higher_counter = 0
-        for layer in lib.get_layers_data():
+        for layer in get_layers_data():
             layer_name = layer["name"]
             if not layer_name.startswith(layer_name_base):
                 continue

@@ -1,7 +1,8 @@
 import pyblish.api
-import openpype.api
 
 from collections import defaultdict
+
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
@@ -15,7 +16,7 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder + 0.1
+    order = ValidateContentsOrder + 0.1
     families = ["pointcache"]
     hosts = ["houdini"]
     label = "Validate Primitive to Detail (Abc)"

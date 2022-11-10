@@ -1,9 +1,9 @@
 from maya import cmds
 
 import pyblish.api
-import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateModelContent(pyblish.api.InstancePlugin):
@@ -14,7 +14,7 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["maya"]
     families = ["model"]
     label = "Model Content"

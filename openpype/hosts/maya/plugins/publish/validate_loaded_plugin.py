@@ -1,7 +1,8 @@
+import os
 import pyblish.api
 import maya.cmds as cmds
-import openpype.api
-import os
+
+from openpype.pipeline.publish import RepairContextAction
 
 
 class ValidateLoadedPlugin(pyblish.api.ContextPlugin):
@@ -10,7 +11,7 @@ class ValidateLoadedPlugin(pyblish.api.ContextPlugin):
     label = "Loaded Plugin"
     order = pyblish.api.ValidatorOrder
     host = ["maya"]
-    actions = [openpype.api.RepairContextAction]
+    actions = [RepairContextAction]
 
     @classmethod
     def get_invalid(cls, context):

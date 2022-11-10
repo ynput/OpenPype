@@ -2,15 +2,12 @@ from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.tools.settings import style
 
-from openpype.lib import PypeLogger
 from openpype import resources
 
 from .widgets import (
     SyncProjectListWidget,
     SyncRepresentationSummaryWidget
 )
-
-log = PypeLogger().get_logger("SyncServer")
 
 
 class SyncServerWindow(QtWidgets.QDialog):

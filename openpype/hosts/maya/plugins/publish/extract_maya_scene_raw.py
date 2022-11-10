@@ -4,12 +4,11 @@ import os
 
 from maya import cmds
 
-import openpype.api
 from openpype.hosts.maya.api.lib import maintained_selection
-from openpype.pipeline import AVALON_CONTAINER_ID
+from openpype.pipeline import AVALON_CONTAINER_ID, publish
 
 
-class ExtractMayaSceneRaw(openpype.api.Extractor):
+class ExtractMayaSceneRaw(publish.Extractor):
     """Extract as Maya Scene (raw).
 
     This will preserve all references, construction history, etc.

@@ -5,12 +5,12 @@ import sys
 import six
 import platform
 
-from openpype.api import Logger
-from openpype.api import get_system_settings
+from openpype.lib import Logger
+from openpype.settings import get_system_settings
 from .abstract_provider import AbstractProvider
 from ..utils import time_function, ResumableError
 
-log = Logger().get_logger("SyncServer")
+log = Logger.get_logger("GDriveHandler")
 
 try:
     from googleapiclient.discovery import build
@@ -69,13 +69,17 @@ class GDriveHandler(AbstractProvider):
 
         self.presets = presets
         if not self.presets:
-            log.info("Sync Server: There are no presets for {}.".
-                     format(site_name))
+            self.log.info(
+                "Sync Server: There are no presets for {}.".format(site_name)
+            )
             return
 
         if not self.presets["enabled"]:
-            log.debug("Sync Server: Site {} not enabled for {}.".
-                      format(site_name, project_name))
+            self.log.debug(
+                "Sync Server: Site {} not enabled for {}.".format(
+                    site_name, project_name
+                )
+            )
             return
 
         current_platform = platform.system().lower()
@@ -85,20 +89,22 @@ class GDriveHandler(AbstractProvider):
         if not cred_path:
             msg = "Sync Server: Please, fill the credentials for gdrive "\
                   "provider for platform '{}' !".format(current_platform)
-            log.info(msg)
+            self.log.info(msg)
             return
 
         try:
             cred_path = cred_path.format(**os.environ)
         except KeyError as e:
-            log.info("Sync Server: The key(s) {} does not exist in the "
-                     "environment variables".format(" ".join(e.args)))
+            self.log.info((
+                "Sync Server: The key(s) {} does not exist in the "
+                "environment variables"
+            ).format(" ".join(e.args)))
             return
 
         if not os.path.exists(cred_path):
             msg = "Sync Server: No credentials for gdrive provider " + \
                   "for '{}' on path '{}'!".format(site_name, cred_path)
-            log.info(msg)
+            self.log.info(msg)
             return
 
         self.service = None
@@ -318,7 +324,7 @@ class GDriveHandler(AbstractProvider):
                                                       fields='id')
 
             media.stream()
-            log.debug("Start Upload! {}".format(source_path))
+            self.log.debug("Start Upload! {}".format(source_path))
             last_tick = status = response = None
             status_val = 0
             while response is None:
@@ -331,7 +337,7 @@ class GDriveHandler(AbstractProvider):
                 if not last_tick or \
                         time.time() - last_tick >= server.LOG_PROGRESS_SEC:
                     last_tick = time.time()
-                    log.debug("Uploaded %d%%." %
+                    self.log.debug("Uploaded %d%%." %
                               int(status_val * 100))
                     server.update_db(project_name=project_name,
                                      new_file_id=None,
@@ -350,8 +356,9 @@ class GDriveHandler(AbstractProvider):
                 if 'has not granted' in ex._get_reason().strip():
                     raise PermissionError(ex._get_reason().strip())
 
-                log.warning("Forbidden received, hit quota. "
-                            "Injecting 60s delay.")
+                self.log.warning(
+                    "Forbidden received, hit quota. Injecting 60s delay."
+                )
                 time.sleep(60)
                 return False
             raise
@@ -417,7 +424,7 @@ class GDriveHandler(AbstractProvider):
                 if not last_tick or \
                         time.time() - last_tick >= server.LOG_PROGRESS_SEC:
                     last_tick = time.time()
-                    log.debug("Downloaded %d%%." %
+                    self.log.debug("Downloaded %d%%." %
                               int(status_val * 100))
                     server.update_db(project_name=project_name,
                                      new_file_id=None,
@@ -629,9 +636,9 @@ class GDriveHandler(AbstractProvider):
                 ["gdrive"]
             )
         except KeyError:
-            log.info(("Sync Server: There are no presets for Gdrive " +
-                      "provider.").
-                     format(str(provider_presets)))
+            log.info((
+                "Sync Server: There are no presets for Gdrive provider."
+            ).format(str(provider_presets)))
             return
         return provider_presets
 
@@ -704,7 +711,7 @@ class GDriveHandler(AbstractProvider):
                 roots[self.MY_DRIVE_STR] = self.service.files() \
                     .get(fileId='root').execute()
         except errors.HttpError:
-            log.warning("HttpError in sync loop, "
+            self.log.warning("HttpError in sync loop, "
                         "trying next loop",
                         exc_info=True)
             raise ResumableError
@@ -727,7 +734,7 @@ class GDriveHandler(AbstractProvider):
         Returns:
             (dictionary) path as a key, folder id as a value
         """
-        log.debug("build_tree len {}".format(len(folders)))
+        self.log.debug("build_tree len {}".format(len(folders)))
         if not self.root:  # build only when necessary, could be expensive
             self.root = self._prepare_root_info()
 
@@ -779,9 +786,9 @@ class GDriveHandler(AbstractProvider):
             loop_cnt += 1
 
         if len(no_parents_yet) > 0:
-            log.debug("Some folders path are not resolved {}".
+            self.log.debug("Some folders path are not resolved {}".
                       format(no_parents_yet))
-            log.debug("Remove deleted folders from trash.")
+            self.log.debug("Remove deleted folders from trash.")
 
         return tree
 

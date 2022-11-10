@@ -23,10 +23,8 @@ from openpype.lib import (
     get_ffprobe_streams,
     convert_ffprobe_fps_value,
 )
-from openpype.lib.plugin_tools import (
-    parse_json,
-    get_subset_name_with_asset_doc
-)
+from openpype.pipeline.create import get_subset_name
+from openpype_modules.webpublisher.lib import parse_json
 
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
@@ -39,6 +37,15 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
 
     This is not applicable for 'studio' processing where host application is
     called to process uploaded workfile and render frames itself.
+
+    For each task configure what properties should resulting instance have
+    based on uploaded files:
+    - uploading sequence of 'png' >> create instance of 'render' family,
+    by adding 'review' to 'Families' and 'Create review' to Tags it will
+    produce review.
+
+    There might be difference between single(>>image) and sequence(>>render)
+    uploaded files.
     """
     # must be really early, context values are only in json file
     order = pyblish.api.CollectorOrder - 0.490
@@ -48,6 +55,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
 
     # from Settings
     task_type_to_family = []
+    sync_next_version = False  # find max version to be published, use for all
 
     def process(self, context):
         batch_dir = context.data["batchDir"]
@@ -66,32 +74,44 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         task_type = context.data["taskType"]
         project_name = context.data["project_name"]
         variant = context.data["variant"]
+
+        next_versions = []
+        instances = []
         for task_dir in task_subfolders:
             task_data = parse_json(os.path.join(task_dir,
                                                 "manifest.json"))
             self.log.info("task_data:: {}".format(task_data))
 
             is_sequence = len(task_data["files"]) > 1
+            first_file = task_data["files"][0]
 
-            _, extension = os.path.splitext(task_data["files"][0])
+            _, extension = os.path.splitext(first_file)
             family, families, tags = self._get_family(
                 self.task_type_to_family,
                 task_type,
                 is_sequence,
                 extension.replace(".", ''))
 
-            subset_name = get_subset_name_with_asset_doc(
-                family, variant, task_name, asset_doc,
-                project_name=project_name, host_name="webpublisher"
+            subset_name = get_subset_name(
+                family,
+                variant,
+                task_name,
+                asset_doc,
+                project_name=project_name,
+                host_name="webpublisher",
+                project_settings=context.data["project_settings"]
             )
             version = self._get_next_version(
                 project_name, asset_doc, subset_name
             )
+            next_versions.append(version)
 
             instance = context.create_instance(subset_name)
             instance.data["asset"] = asset_name
             instance.data["subset"] = subset_name
+            # set configurable result family
             instance.data["family"] = family
+            # set configurable additional families
             instance.data["families"] = families
             instance.data["version"] = version
             instance.data["stagingDir"] = tempfile.mkdtemp()
@@ -130,11 +150,24 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                         self.log.warning("Unable to count frames "
                                          "duration {}".format(no_of_frames))
 
-            # raise ValueError("STOP")
             instance.data["handleStart"] = asset_doc["data"]["handleStart"]
             instance.data["handleEnd"] = asset_doc["data"]["handleEnd"]
 
+            if "review" in tags:
+                first_file_path = os.path.join(task_dir, first_file)
+                instance.data["thumbnailSource"] = first_file_path
+
+            instances.append(instance)
             self.log.info("instance.data:: {}".format(instance.data))
+
+        if not self.sync_next_version:
+            return
+
+        # overwrite specific version with same version for all
+        max_next_version = max(next_versions)
+        for inst in instances:
+            inst.data["version"] = max_next_version
+            self.log.debug("overwritten version:: {}".format(max_next_version))
 
     def _get_subset_name(self, family, subset_template, task_name, variant):
         fill_pairs = {
@@ -173,7 +206,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             "ext": ext[1:],
             "files": files,
             "stagingDir": task_dir,
-            "tags": tags
+            "tags": tags  # configurable tags from Settings
         }
         self.log.info("sequences repre_data.data:: {}".format(repre_data))
         return [repre_data]

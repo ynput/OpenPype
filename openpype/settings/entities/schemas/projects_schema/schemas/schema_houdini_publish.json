@@ -1,0 +1,50 @@
+{
+  "type": "dict",
+  "collapsible": true,
+  "key": "publish",
+  "label": "Publish plugins",
+  "children": [
+    {
+      "type": "dict",
+      "collapsible": true,
+      "checkbox_key": "enabled",
+      "key": "ValidateWorkfilePaths",
+      "label": "Validate Workfile Paths",
+      "is_group": true,
+      "children": [
+        {
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "type": "boolean",
+            "key": "optional",
+            "label": "Optional"
+        },
+        {
+            "key": "node_types",
+            "label": "Node types",
+            "type": "list",
+            "object_type": "text"
+        },
+        {
+            "key": "prohibited_vars",
+            "label": "Prohibited variables",
+            "type": "list",
+            "object_type": "text"
+        }
+      ]
+    },
+    {
+      "type": "schema_template",
+      "name": "template_publish_plugin",
+      "template_data": [
+          {
+              "key": "ValidateContainers",
+              "label": "ValidateContainers"
+          }
+      ]
+    }
+  ]
+}

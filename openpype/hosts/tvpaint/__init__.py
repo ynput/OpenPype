@@ -1,12 +1,12 @@
-from .tvpaint_module import (
+from .addon import (
     get_launch_script_path,
-    TVPaintModule,
+    TVPaintAddon,
     TVPAINT_ROOT_DIR,
 )
 
 
 __all__ = (
     "get_launch_script_path",
-    "TVPaintModule",
+    "TVPaintAddon",
     "TVPAINT_ROOT_DIR",
 )
