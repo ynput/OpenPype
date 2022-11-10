@@ -320,29 +320,6 @@ def _prepare_update_data(old_doc, new_doc, replace):
     return changes
 
 
-def prepare_asset_update_data(old_doc, new_doc, replace=True):
-    """Compare two subset documents and prepare update data.
-
-    Based on compared values will create update data for
-    'MongoUpdateOperation'.
-
-    Empty output means that documents are identical.
-
-    Returns:
-        Dict[str, Any]: Changes between old and new document.
-    """
-
-    changes = {}
-    for key, value in new_doc.items():
-        if key in ("data", ):
-            continue
-
-        if key not in old_doc or value != old_doc[key]:
-            changes[key] = value
-
-    return _prepare_update_data(old_doc, new_doc, replace)
-
-
 def prepare_subset_update_data(old_doc, new_doc, replace=True):
     """Compare two subset documents and prepare update data.
 
