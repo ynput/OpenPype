@@ -16,6 +16,9 @@ from .conversion_utils import (
 
     representation_fields_v3_to_v4,
     convert_v4_representation_to_v3,
+
+    workfile_info_fields_v3_to_v4,
+    convert_v4_workfile_info_to_v3,
 )
 
 
@@ -553,5 +556,21 @@ def get_thumbnail_id_from_source(project_name, src_type, src_id):
 def get_workfile_info(
     project_name, asset_id, task_name, filename, fields=None
 ):
-    # TODO workfile info not implemented in v4 yet
+    if not asset_id or not task_name or not filename:
+        return None
+
+    con = get_server_api_connection()
+    task = con.get_task_by_name(
+        project_name, asset_id, task_name, fields=["id", "name", "folderId"]
+    )
+    if not task:
+        return None
+
+    fields = workfile_info_fields_v3_to_v4(fields)
+
+    for workfile_info in con.get_workfiles_info(
+        project_name, task_ids=task["id"], fields=fields
+    ):
+        if workfile_info["name"] == filename:
+            return convert_v4_workfile_info_to_v3(workfile_info, task)
     return None
