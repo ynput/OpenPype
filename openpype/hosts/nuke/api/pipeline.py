@@ -545,7 +545,8 @@ def remove_instance(instance):
         instance (dict): instance representation from subsetmanager model
     """
     instance_node = instance.transient_data["node"]
-    nuke.delete(instance_node)
+    instance_knob = instance_node.knobs()[INSTANCE_DATA_KNOB]
+    instance_node.removeKnob(instance_knob)
 
 
 def select_instance(instance):
