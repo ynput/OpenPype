@@ -32,10 +32,12 @@ from .conversion_utils import (
     convert_create_subset_to_v4,
     convert_create_version_to_v4,
     convert_create_representation_to_v4,
+    convert_create_workfile_info_to_v4,
 
     convert_update_subset_to_v4,
     convert_update_version_to_v4,
     convert_update_representation_to_v4,
+    convert_update_workfile_info_to_v4,
 )
 from .utils import create_entity_id
 
@@ -473,6 +475,11 @@ class ServerCreateOperation(CreateOperation):
         elif entity_type == "representation":
             new_data = convert_create_representation_to_v4(data, self.con)
 
+        elif entity_type == "workfile":
+            new_data = convert_create_workfile_info_to_v4(
+                data, project_name, self.con
+            )
+
         else:
             raise ValueError("Unhandled entity type \"{}\"".format(entity_type))
 
@@ -565,6 +572,11 @@ class ServerUpdateOperation(UpdateOperation):
 
         elif entity_type == "representation":
             new_update_data = convert_update_representation_to_v4(
+                project_name, entity_id, update_data, self.con
+            )
+
+        elif entity_type == "workfile":
+            new_update_data = convert_update_workfile_info_to_v4(
                 project_name, entity_id, update_data, self.con
             )
 
