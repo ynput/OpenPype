@@ -605,10 +605,12 @@ def convert_v4_representation_to_v3(representation):
     """
 
     output = {
-        "_id": representation["id"],
         "type": "representation",
         "schema": CURRENT_REPRESENTATION_SCHEMA,
     }
+    if "id" in representation:
+        output["_id"] = representation["id"]
+
     for v3_key, v4_key in (
         ("name", "name"),
         ("parent", "versionId")
