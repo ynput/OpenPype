@@ -24,21 +24,27 @@ class ExtractLocalRender(publish.Extractor):
         self.log.info("staging_dir::{}".format(staging_dir))
 
         # pull file name from Render Queue Output module
-        render_q = stub.get_render_info()
-        stub.render(staging_dir)
+        comp_id = instance.data['comp_id']
+        render_q = stub.get_render_info(comp_id)  # re queue render item
         if not render_q:
             raise ValueError("No file extension set in Render Queue")
+
+        stub.render(staging_dir, comp_id)
+
         _, ext = os.path.splitext(os.path.basename(render_q.file_name))
         ext = ext[1:]
 
         first_file_path = None
         files = []
-        self.log.info("files::{}".format(os.listdir(staging_dir)))
         for file_name in os.listdir(staging_dir):
             files.append(file_name)
             if first_file_path is None:
                 first_file_path = os.path.join(staging_dir,
                                                file_name)
+
+        self.log.debug("files::{}".format(os.listdir(staging_dir)))
+        if not files:
+            raise ValueError("Nothing rendered!")
 
         resulting_files = files
         if len(files) == 1:

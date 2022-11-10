@@ -64,14 +64,13 @@ class CollectAERender(publish.AbstractCollectRender):
             if family not in ["render", "renderLocal"]:  # legacy
                 continue
 
-            item_id = inst.data["members"][0]
+            comp_id = int(inst.data["members"][0])
 
-            work_area_info = CollectAERender.get_stub().get_work_area(
-                int(item_id))
+            work_area_info = CollectAERender.get_stub().get_work_area(comp_id)
 
             if not work_area_info:
                 self.log.warning("Orphaned instance, deleting metadata")
-                inst_id = inst.get("instance_id") or item_id
+                inst_id = inst.get("instance_id") or str(comp_id)
                 CollectAERender.get_stub().remove_instance(inst_id)
                 continue
 
@@ -84,7 +83,7 @@ class CollectAERender(publish.AbstractCollectRender):
 
             task_name = inst.data.get("task")  # legacy
 
-            render_q = CollectAERender.get_stub().get_render_info()
+            render_q = CollectAERender.get_stub().get_render_info(comp_id)
             if not render_q:
                 raise ValueError("No file extension set in Render Queue")
 
@@ -118,13 +117,13 @@ class CollectAERender(publish.AbstractCollectRender):
                 file_name=render_q.file_name
             )
 
-            comp = compositions_by_id.get(int(item_id))
+            comp = compositions_by_id.get(comp_id)
             if not comp:
                 raise ValueError("There is no composition for item {}".
-                                 format(item_id))
+                                 format(comp_id))
             instance.outputDir = self._get_output_dir(instance)
             instance.comp_name = comp.name
-            instance.comp_id = item_id
+            instance.comp_id = comp_id
 
             is_local = "renderLocal" in inst.data["family"]  # legacy
             if inst.data.get("creator_attributes"):

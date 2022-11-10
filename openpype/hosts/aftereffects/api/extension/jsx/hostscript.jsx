@@ -395,25 +395,52 @@ function saveAs(path){
     app.project.save(fp = new File(path));
 }
 
-function getRenderInfo(){
+function getRenderInfo(comp_id){
     /***
         Get info from render queue.
         Currently pulls only file name to parse extension and 
         if it is sequence in Python
     **/
-    try{
-        var render_item = app.project.renderQueue.item(1);
-        if (render_item.status == RQItemStatus.DONE){
-            render_item.duplicate();  // create new, cannot change status if DONE
-            render_item.remove();  // remove existing to limit duplications
-            render_item = app.project.renderQueue.item(1);
-        }
+    var item = app.project.itemByID(comp_id);
+    if (!item){
+        return _prepareError("Composition with '" + comp_id + "' wasn't found! Recreate publishable instance(s)")
+    }
 
-        render_item.render = true; // always set render queue to render
-        var item = render_item.outputModule(1);
+    var comp_name = item.name;
+    try{
+        var comp_id_count = 0;
+        for (i = 1; i <= app.project.renderQueue.numItems; ++i){
+            var render_item = app.project.renderQueue.item(i);
+            if (render_item.comp.id != comp_id){
+                continue;
+            }
+            comp_id_count += 1;
+            
+            if (render_item.status == RQItemStatus.DONE){
+                var new_item = render_item.duplicate();  // create new, cannot change status if DONE
+                render_item.remove();  // remove existing to limit duplications
+                render_item = new_item;
+            }
+
+            render_item.render = true; // always set render queue to render
+            var item = render_item.outputModule(1);
+        }
     } catch (error) {
         return _prepareError("There is no render queue, create one");
     }
+
+    if (comp_id_count > 1){
+        return _prepareError("There cannot be more items in Render Queue for '" + comp_name + "'!")
+    }
+
+    if (comp_id_count == 0){
+        return _prepareError("There is no item in Render Queue for '" + comp_name + "'! Add composition to Render Queue.")
+    }
+
+    if (render_item.numOutputModules !=1){
+        return _prepareError("There must be just 1 Output Module in Render Queue for '" + comp_name + "'! Keep only correct one.")
+    }
+
     var file_url = item.file.toString();
 
     return JSON.stringify({
@@ -689,30 +716,42 @@ function isFileSequence (item){
     return false;
 }
 
-function render(target_folder){
+function render(target_folder, comp_id){
     var out_dir = new Folder(target_folder);
     var out_dir = out_dir.fsName;
     for (i = 1; i <= app.project.renderQueue.numItems; ++i){
         var render_item = app.project.renderQueue.item(i);
-        var om1 = app.project.renderQueue.item(i).outputModule(1);
-        var file_name = File.decode( om1.file.name ).replace('℗', ''); // Name contains special character, space?
+        var composition = render_item.comp;
+        if (composition.id == comp_id){
+            if (render_item.status == RQItemStatus.DONE){
+                var new_item = render_item.duplicate();
+                render_item.remove();
+                render_item = new_item;
+            }
+
+            render_item.render = true;
+
+            var om1 = app.project.renderQueue.item(i).outputModule(1);
+            var file_name = File.decode( om1.file.name ).replace('℗', ''); // Name contains special character, space?
+            
+            var omItem1_settable_str = app.project.renderQueue.item(i).outputModule(1).getSettings( GetSettingsFormat.STRING_SETTABLE );
+
+            var targetFolder = new Folder(target_folder);
+            if (!targetFolder.exists) {
+                targetFolder.create();
+            }
+
+            om1.file = new File(targetFolder.fsName + '/' + file_name);
+        }else{
+            if (render_item.status != RQItemStatus.DONE){
+                render_item.render = false;
+            }
+        }
         
-        var omItem1_settable_str = app.project.renderQueue.item(i).outputModule(1).getSettings( GetSettingsFormat.STRING_SETTABLE );
-
-        if (render_item.status == RQItemStatus.DONE){
-            render_item.duplicate();
-            render_item.remove();
-            continue;
-        }
-
-        var targetFolder = new Folder(target_folder);
-        if (!targetFolder.exists) {
-          targetFolder.create();
-        }
-
-        om1.file = new File(targetFolder.fsName + '/' + file_name);
     }
+    app.beginSuppressDialogs();
     app.project.renderQueue.render();
+    app.endSuppressDialogs(false);
 }
 
 function close(){
@@ -730,3 +769,6 @@ function _prepareSingleValue(value){
 function _prepareError(error_msg){
     return JSON.stringify({"error": error_msg})
 }
+
+// render("c:/projects/test", 2);
+getRenderInfo(1);

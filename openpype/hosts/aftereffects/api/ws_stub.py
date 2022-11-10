@@ -418,14 +418,15 @@ class AfterEffectsServerStub():
 
         return self._handle_return(res)
 
-    def get_render_info(self):
+    def get_render_info(self, comp_id):
         """ Get render queue info for render purposes
 
             Returns:
                 (AEItem): with 'file_name' field
         """
         res = self.websocketserver.call(self.client.call
-                                        ('AfterEffects.get_render_info'))
+                                        ('AfterEffects.get_render_info',
+                                         comp_id=comp_id))
 
         records = self._to_records(self._handle_return(res))
         if records:
@@ -522,7 +523,7 @@ class AfterEffectsServerStub():
         if records:
             return records.pop()
 
-    def render(self, folder_url):
+    def render(self, folder_url, comp_id):
         """
             Render all renderqueueitem to 'folder_url'
         Args:
@@ -531,7 +532,8 @@ class AfterEffectsServerStub():
         """
         res = self.websocketserver.call(self.client.call
                                         ('AfterEffects.render',
-                                         folder_url=folder_url))
+                                         folder_url=folder_url,
+                                         comp_id=comp_id))
         return self._handle_return(res)
 
     def get_extension_version(self):
