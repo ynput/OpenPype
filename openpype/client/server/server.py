@@ -14,6 +14,7 @@ from .constants import (
     DEFAULT_VERSION_FIELDS,
     DEFAULT_REPRESENTATION_FIELDS,
     REPRESENTATION_FILES_FIELDS,
+    DEFAULT_WORKFILE_INFO_FIELDS,
 )
 from .graphql import GraphQlQuery, INTROSPECTION_QUERY
 from .graphql_queries import (
@@ -26,6 +27,7 @@ from .graphql_queries import (
     versions_graphql_query,
     representations_graphql_query,
     representations_parents_qraphql_query,
+    workfiles_info_graphql_query,
 )
 
 JSONDecodeError = getattr(json, "JSONDecodeError", ValueError)
@@ -1580,4 +1582,73 @@ class ServerAPIBase(object):
             ) or {}
             return subset.get("data", {}).get("thumbnail_id")
 
+        return None
+
+    def get_workfiles_info(
+        self,
+        project_name,
+        workfile_ids=None,
+        task_ids=None,
+        paths=None,
+        fields=None
+    ):
+        filters = {}
+        if task_ids is not None:
+            task_ids = set(task_ids)
+            if not task_ids:
+                return []
+            filters["taskIds"] = list(task_ids)
+
+        if paths is not None:
+            paths = set(paths)
+            if not paths:
+                return []
+            filters["paths"] = list(paths)
+
+        if workfile_ids is not None:
+            workfile_ids = set(workfile_ids)
+            if not workfile_ids:
+                return []
+            filters["workfileIds"] = list(workfile_ids)
+
+        if not fields:
+            fields = DEFAULT_WORKFILE_INFO_FIELDS
+        fields = set(fields)
+
+        query = workfiles_info_graphql_query()
+
+        for attr, filter_value in filters.items():
+            query.set_variable_value(attr, filter_value)
+
+        for parsed_data in query.continuous_query(self):
+            for workfile_info in parsed_data["project"]["workfiles"]:
+                yield workfile_info
+
+    def get_workfile_info(
+        self, project_name, task_id, path, fields=None
+    ):
+        if not task_id or not path:
+            return None
+
+        for workfile_info in self.get_workfiles_info(
+            project_name,
+            task_ids=[task_id],
+            paths=[path],
+            fields=fields
+        ):
+            return workfile_info
+        return None
+
+    def get_workfile_info_by_id(
+        self, project_name, workfile_id, fields=None
+    ):
+        if not workfile_id:
+            return None
+
+        for workfile_info in self.get_workfiles_info(
+            project_name,
+            workfile_ids=[workfile_id],
+            fields=fields
+        ):
+            return workfile_info
         return None
