@@ -2,7 +2,6 @@ import pymel.core as pc
 
 import pyblish.api
 
-import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     RepairAction,

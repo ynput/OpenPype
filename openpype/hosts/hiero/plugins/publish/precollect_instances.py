@@ -318,17 +318,15 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
     @staticmethod
     def create_otio_time_range_from_timeline_item_data(track_item):
-        speed = track_item.playbackSpeed()
         timeline = phiero.get_current_sequence()
         frame_start = int(track_item.timelineIn())
-        frame_duration = int((track_item.duration() - 1) / speed)
+        frame_duration = int(track_item.duration())
         fps = timeline.framerate().toFloat()
 
         return hiero_export.create_otio_time_range(
             frame_start, frame_duration, fps)
 
-    @staticmethod
-    def collect_sub_track_items(tracks):
+    def collect_sub_track_items(self, tracks):
         """
         Returns dictionary with track index as key and list of subtracks
         """
@@ -337,8 +335,10 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         for track in tracks:
             items = track.items()
 
+            effet_items = track.subTrackItems()
+
             # skip if no clips on track > need track with effect only
-            if items:
+            if not effet_items:
                 continue
 
             # skip all disabled tracks
@@ -346,10 +346,11 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 continue
 
             track_index = track.trackIndex()
-            _sub_track_items = phiero.flatten(track.subTrackItems())
+            _sub_track_items = phiero.flatten(effet_items)
 
+            _sub_track_items = list(_sub_track_items)
             # continue only if any subtrack items are collected
-            if not list(_sub_track_items):
+            if not _sub_track_items:
                 continue
 
             enabled_sti = []

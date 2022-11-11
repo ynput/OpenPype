@@ -3,16 +3,17 @@ import json
 import tempfile
 import contextlib
 import socket
+from pprint import pformat
+
 from openpype.lib import (
     PreLaunchHook,
-    get_openpype_username
+    get_openpype_username,
+    run_subprocess,
 )
 from openpype.lib.applications import (
     ApplicationLaunchFailed
 )
 from openpype.hosts import flame as opflame
-import openpype
-from pprint import pformat
 
 
 class FlamePrelaunch(PreLaunchHook):
@@ -22,6 +23,7 @@ class FlamePrelaunch(PreLaunchHook):
     in environment var FLAME_SCRIPT_DIR.
     """
     app_groups = ["flame"]
+    permissions = 0o777
 
     wtc_script_path = os.path.join(
         opflame.HOST_DIR, "api", "scripts", "wiretap_com.py")
@@ -38,19 +40,12 @@ class FlamePrelaunch(PreLaunchHook):
         """Hook entry method."""
         project_doc = self.data["project_doc"]
         project_name = project_doc["name"]
+        volume_name = _env.get("FLAME_WIRETAP_VOLUME")
 
         # get image io
-        project_anatomy = self.data["anatomy"]
+        project_settings = self.data["project_settings"]
 
-        # make sure anatomy settings are having flame key
-        if not project_anatomy["imageio"].get("flame"):
-            raise ApplicationLaunchFailed((
-                "Anatomy project settings are missing `flame` key. "
-                "Please make sure you remove project overides on "
-                "Anatomy Image io")
-            )
-
-        imageio_flame = project_anatomy["imageio"]["flame"]
+        imageio_flame = project_settings["flame"]["imageio"]
 
         # get user name and host name
         user_name = get_openpype_username()
@@ -81,7 +76,7 @@ class FlamePrelaunch(PreLaunchHook):
         data_to_script = {
             # from settings
             "host_name": _env.get("FLAME_WIRETAP_HOSTNAME") or hostname,
-            "volume_name": _env.get("FLAME_WIRETAP_VOLUME"),
+            "volume_name": volume_name,
             "group_name": _env.get("FLAME_WIRETAP_GROUP"),
             "color_policy": str(imageio_flame["project"]["colourPolicy"]),
 
@@ -99,7 +94,39 @@ class FlamePrelaunch(PreLaunchHook):
 
         app_arguments = self._get_launch_arguments(data_to_script)
 
+        # fix project data permission issue
+        self._fix_permissions(project_name, volume_name)
+
         self.launch_context.launch_args.extend(app_arguments)
+
+    def _fix_permissions(self, project_name, volume_name):
+        """Work around for project data permissions
+
+        Reported issue: when project is created locally on one machine,
+        it is impossible to migrate it to other machine. Autodesk Flame
+        is crating some unmanagable files which needs to be opened to 0o777.
+
+        Args:
+            project_name (str): project name
+            volume_name (str): studio volume
+        """
+        dirs_to_modify = [
+            "/usr/discreet/project/{}".format(project_name),
+            "/opt/Autodesk/clip/{}/{}.prj".format(volume_name, project_name),
+            "/usr/discreet/clip/{}/{}.prj".format(volume_name, project_name)
+        ]
+
+        for dirtm in dirs_to_modify:
+            for root, dirs, files in os.walk(dirtm):
+                try:
+                    for name in set(dirs) | set(files):
+                        path = os.path.join(root, name)
+                        st = os.stat(path)
+                        if oct(st.st_mode) != self.permissions:
+                            os.chmod(path, self.permissions)
+
+                except OSError as exc:
+                    self.log.warning("Not able to open files: {}".format(exc))
 
     def _get_flame_fps(self, fps_num):
         fps_table = {
@@ -152,7 +179,7 @@ class FlamePrelaunch(PreLaunchHook):
                 "env": self.launch_context.env
             }
 
-            openpype.api.run_subprocess(args, **process_kwargs)
+            run_subprocess(args, **process_kwargs)
 
             # process returned json file to pass launch args
             return_json_data = open(tmp_json_path).read()

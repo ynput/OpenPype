@@ -9,6 +9,8 @@ from .path_resolving import (
 
     get_custom_workfile_template,
     get_custom_workfile_template_by_string_context,
+
+    create_workdir_extra_folders,
 )
 
 from .build_workfile import BuildWorkfile
@@ -25,6 +27,8 @@ __all__ = (
 
     "get_custom_workfile_template",
     "get_custom_workfile_template_by_string_context",
+
+    "create_workdir_extra_folders",
 
     "BuildWorkfile",
 )

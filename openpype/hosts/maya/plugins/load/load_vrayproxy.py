@@ -10,7 +10,7 @@ import os
 import maya.cmds as cmds
 
 from openpype.client import get_representation_by_name
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 from openpype.pipeline import (
     legacy_io,
     load,

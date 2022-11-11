@@ -14,6 +14,8 @@ from bson.objectid import ObjectId
 
 from .mongo import get_project_database, get_project_connection
 
+PatternType = type(re.compile(""))
+
 
 def _prepare_fields(fields, required_fields=None):
     if not fields:
@@ -1054,11 +1056,11 @@ def _regex_filters(filters):
     for key, value in filters.items():
         regexes = []
         a_values = []
-        if isinstance(value, re.Pattern):
+        if isinstance(value, PatternType):
             regexes.append(value)
         elif isinstance(value, (list, tuple, set)):
             for item in value:
-                if isinstance(item, re.Pattern):
+                if isinstance(item, PatternType):
                     regexes.append(item)
                 else:
                     a_values.append(item)
@@ -1194,7 +1196,7 @@ def get_representations(
             as filter. Filter ignored if 'None' is passed.
         version_ids (Iterable[str]): Subset ids used as parent filter. Filter
             ignored if 'None' is passed.
-        context_filters (Dict[str, List[str, re.Pattern]]): Filter by
+        context_filters (Dict[str, List[str, PatternType]]): Filter by
             representation context fields.
         names_by_version_ids (dict[ObjectId, list[str]]): Complex filtering
             using version ids and list of names under the version.
@@ -1240,7 +1242,7 @@ def get_archived_representations(
             as filter. Filter ignored if 'None' is passed.
         version_ids (Iterable[str]): Subset ids used as parent filter. Filter
             ignored if 'None' is passed.
-        context_filters (Dict[str, List[str, re.Pattern]]): Filter by
+        context_filters (Dict[str, List[str, PatternType]]): Filter by
             representation context fields.
         names_by_version_ids (dict[ObjectId, List[str]]): Complex filtering
             using version ids and list of names under the version.

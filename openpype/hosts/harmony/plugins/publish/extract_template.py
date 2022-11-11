@@ -3,12 +3,11 @@
 import os
 import shutil
 
-import openpype.api
+from openpype.pipeline import publish
 import openpype.hosts.harmony.api as harmony
-import openpype.hosts.harmony
 
 
-class ExtractTemplate(openpype.api.Extractor):
+class ExtractTemplate(publish.Extractor):
     """Extract the connected nodes to the composite instance."""
 
     label = "Extract Template"
@@ -50,7 +49,7 @@ class ExtractTemplate(openpype.api.Extractor):
             dependencies.remove(instance.data["setMembers"][0])
 
         # Export template.
-        openpype.hosts.harmony.api.export_template(
+        harmony.export_template(
             unique_backdrops, dependencies, filepath
         )
 

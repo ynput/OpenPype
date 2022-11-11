@@ -53,7 +53,7 @@ def get_project_template_data(project_doc=None, project_name=None):
         project_name = project_doc["name"]
 
     if not project_doc:
-        project_code = get_project(project_name, fields=["data.code"])
+        project_doc = get_project(project_name, fields=["data.code"])
 
     project_code = project_doc.get("data", {}).get("code")
     return {

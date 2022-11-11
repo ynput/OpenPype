@@ -1,5 +1,12 @@
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype import resources
+from openpype.style import load_stylesheet
+from openpype.widgets import PasswordDialog
+from openpype.lib import is_admin_password_required, Logger
+from openpype.pipeline import AvalonMongoDB
+from openpype.pipeline.project_folders import create_project_folders
+
 from . import (
     ProjectModel,
     ProjectProxyFilter,
@@ -13,17 +20,6 @@ from . import (
 )
 from .widgets import ConfirmProjectDeletion
 from .style import ResourceCache
-from openpype.style import load_stylesheet
-from openpype.lib import is_admin_password_required
-from openpype.widgets import PasswordDialog
-from openpype.pipeline import AvalonMongoDB
-
-from openpype import resources
-from openpype.api import (
-    get_project_basic_paths,
-    create_project_folders,
-    Logger
-)
 
 
 class ProjectManagerWindow(QtWidgets.QWidget):
@@ -259,12 +255,8 @@ class ProjectManagerWindow(QtWidgets.QWidget):
                           qm.Yes | qm.No)
         if ans == qm.Yes:
             try:
-                # Get paths based on presets
-                basic_paths = get_project_basic_paths(project_name)
-                if not basic_paths:
-                    pass
                 # Invoking OpenPype API to create the project folders
-                create_project_folders(basic_paths, project_name)
+                create_project_folders(project_name)
             except Exception as exc:
                 self.log.warning(
                     "Cannot create starting folders: {}".format(exc),

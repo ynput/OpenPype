@@ -1,3 +1,5 @@
+from Qt import QtWidgets
+
 from .report_items import (
     PublishReport
 )
@@ -16,4 +18,13 @@ __all__ = (
     "PublishReportViewerWidget",
 
     "PublishReportViewerWindow",
+
+    "main",
 )
+
+
+def main():
+    app = QtWidgets.QApplication([])
+    window = PublishReportViewerWindow()
+    window.show()
+    return app.exec_()

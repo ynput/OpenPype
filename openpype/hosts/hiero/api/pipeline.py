@@ -251,7 +251,6 @@ def reload_config():
     import importlib
 
     for module in (
-        "openpype.api",
         "openpype.hosts.hiero.lib",
         "openpype.hosts.hiero.menu",
         "openpype.hosts.hiero.tags"

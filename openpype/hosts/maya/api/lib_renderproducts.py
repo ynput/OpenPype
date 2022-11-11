@@ -80,7 +80,7 @@ IMAGE_PREFIXES = {
     "mayahardware2": "defaultRenderGlobals.imageFilePrefix"
 }
 
-RENDERMAN_IMAGE_DIR = "maya/<scene>/<layer>"
+RENDERMAN_IMAGE_DIR = "<scene>/<layer>"
 
 
 def has_tokens(string, tokens):
@@ -260,20 +260,20 @@ class ARenderProducts:
 
         """
         try:
-            file_prefix_attr = IMAGE_PREFIXES[self.renderer]
+            prefix_attr = IMAGE_PREFIXES[self.renderer]
         except KeyError:
             raise UnsupportedRendererException(
                 "Unsupported renderer {}".format(self.renderer)
             )
 
-        file_prefix = self._get_attr(file_prefix_attr)
+        prefix = self._get_attr(prefix_attr)
 
-        if not file_prefix:
+        if not prefix:
             # Fall back to scene name by default
             log.debug("Image prefix not set, using <Scene>")
             file_prefix = "<Scene>"
 
-        return file_prefix
+        return prefix
 
     def get_render_attribute(self, attribute):
         """Get attribute from render options.
@@ -730,13 +730,16 @@ class RenderProductsVray(ARenderProducts):
         """Get image prefix for V-Ray.
 
         This overrides :func:`ARenderProducts.get_renderer_prefix()` as
-        we must add `<aov>` token manually.
+        we must add `<aov>` token manually. This is done only for
+        non-multipart outputs, where `<aov>` token doesn't make sense.
 
         See also:
             :func:`ARenderProducts.get_renderer_prefix()`
 
         """
         prefix = super(RenderProductsVray, self).get_renderer_prefix()
+        if self.multipart:
+            return prefix
         aov_separator = self._get_aov_separator()
         prefix = "{}{}<aov>".format(prefix, aov_separator)
         return prefix
@@ -974,15 +977,18 @@ class RenderProductsRedshift(ARenderProducts):
         """Get image prefix for Redshift.
 
         This overrides :func:`ARenderProducts.get_renderer_prefix()` as
-        we must add `<aov>` token manually.
+        we must add `<aov>` token manually. This is done only for
+        non-multipart outputs, where `<aov>` token doesn't make sense.
 
         See also:
             :func:`ARenderProducts.get_renderer_prefix()`
 
         """
-        file_prefix = super(RenderProductsRedshift, self).get_renderer_prefix()
-        separator = self.extract_separator(file_prefix)
-        prefix = "{}{}<aov>".format(file_prefix, separator or "_")
+        prefix = super(RenderProductsRedshift, self).get_renderer_prefix()
+        if self.multipart:
+            return prefix
+        separator = self.extract_separator(prefix)
+        prefix = "{}{}<aov>".format(prefix, separator or "_")
         return prefix
 
     def get_render_products(self):

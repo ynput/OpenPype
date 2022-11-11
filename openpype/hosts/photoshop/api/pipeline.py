@@ -3,8 +3,7 @@ from Qt import QtWidgets
 
 import pyblish.api
 
-from openpype.api import Logger
-from openpype.lib import register_event_callback
+from openpype.lib import register_event_callback, Logger
 from openpype.pipeline import (
     legacy_io,
     register_loader_plugin_path,

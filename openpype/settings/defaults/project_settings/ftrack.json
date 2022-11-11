@@ -455,7 +455,7 @@
             "family_mapping": {
                 "camera": "cam",
                 "look": "look",
-                "mayaascii": "scene",
+                "mayaAscii": "scene",
                 "model": "geo",
                 "rig": "rig",
                 "setdress": "setdress",

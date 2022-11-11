@@ -282,7 +282,7 @@ class IWorkfileHost:
         return self.workfile_has_unsaved_changes()
 
 
-class INewPublisher:
+class IPublishHost:
     """Functions related to new creation system in new publisher.
 
     New publisher is not storing information only about each created instance
@@ -306,12 +306,14 @@ class INewPublisher:
                 workflow.
         """
 
-        if isinstance(host, INewPublisher):
+        if isinstance(host, IPublishHost):
             return []
 
         required = [
             "get_context_data",
             "update_context_data",
+            "get_context_title",
+            "get_current_context",
         ]
         missing = []
         for name in required:
@@ -330,7 +332,7 @@ class INewPublisher:
             MissingMethodsError: If there are missing methods on host
                 implementation.
         """
-        missing = INewPublisher.get_missing_publish_methods(host)
+        missing = IPublishHost.get_missing_publish_methods(host)
         if missing:
             raise MissingMethodsError(host, missing)
 
@@ -368,3 +370,17 @@ class INewPublisher:
         """
 
         pass
+
+
+class INewPublisher(IPublishHost):
+    """Legacy interface replaced by 'IPublishHost'.
+
+    Deprecated:
+        'INewPublisher' is replaced by 'IPublishHost' please change your
+        imports.
+        There is no "reasonable" way hot mark these classes as deprecated
+        to show warning of wrong import. Deprecated since 3.14.* will be
+        removed in 3.15.*
+    """
+
+    pass

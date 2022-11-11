@@ -3,11 +3,11 @@ import six
 
 from maya import cmds
 
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.maya.api.lib import maintained_selection
 
 
-class ExtractMultiverseUsd(openpype.api.Extractor):
+class ExtractMultiverseUsd(publish.Extractor):
     """Extractor for Multiverse USD Asset data.
 
     This will extract settings for a Multiverse Write Asset operation:
