@@ -1248,6 +1248,9 @@ class ServerAPIBase(object):
         if active is not None:
             fields.add("active")
 
+        # Make sure fields have minimum required fields
+        fields |= {"id", "version"}
+
         filters = {
             "projectName": project_name
         }
@@ -1273,25 +1276,48 @@ class ServerAPIBase(object):
         if not hero and not standard:
             return []
 
-        # Add filters based on 'hero' and 'stadard'
-        if hero and not standard:
-            filters["heroOnly"] = True
-        elif hero and latest:
-            filters["heroOrLatestOnly"] = True
-        elif latest:
-            filters["latestOnly"] = True
+        queries = []
+        # Add filters based on 'hero' and 'standard'
+        # NOTE: There is not a filter to "ignore" hero versions or to get
+        #   latest and hero version
+        # - if latest and hero versions should be returned it must be done in
+        #       2 graphql queries
+        if standard and not latest:
+            # This query all versions standard + hero
+            # - hero must be filtered out if is not enabled during loop
+            query = versions_graphql_query(fields)
+            for attr, filter_value in filters.items():
+                query.set_variable_value(attr, filter_value)
+            queries.append(query)
+        else:
+            if hero:
+                # Add hero query if hero is enabled
+                hero_query = versions_graphql_query(fields)
+                for attr, filter_value in filters.items():
+                    hero_query.set_variable_value(attr, filter_value)
 
-        # Make sure fields have minimum required fields
-        fields |= {"id", "version"}
+                hero_query.set_variable_value("heroOnly", True)
+                queries.append(hero_query)
 
-        query = versions_graphql_query(fields)
+            if standard:
+                standard_query = versions_graphql_query(fields)
+                for attr, filter_value in filters.items():
+                    standard_query.set_variable_value(attr, filter_value)
 
-        for attr, filter_value in filters.items():
-            query.set_variable_value(attr, filter_value)
+                if latest:
+                    standard_query.set_variable_value("latestOnly", True)
+                queries.append(standard_query)
 
-        for parsed_data in query.continuous_query(self):
-            for version in parsed_data["project"]["versions"]:
-                yield version
+        for query in queries:
+            for parsed_data in query.continuous_query(self):
+                for version in parsed_data["project"]["versions"]:
+                    if active is not None and version["active"] is not active:
+                        continue
+
+                    if not hero and version["version"] < 0:
+                        continue
+
+                    yield version
 
     def get_version_by_id(self, project_name, version_id, fields=None):
         versions = self.get_versions(
