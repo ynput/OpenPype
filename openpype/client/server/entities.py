@@ -348,6 +348,10 @@ def get_hero_versions(
 
 
 def get_last_versions(project_name, subset_ids, fields=None):
+    if fields:
+        fields = set(fields)
+        fields.add("parent")
+
     versions = _get_versions(
         project_name,
         subset_ids=subset_ids,
@@ -464,6 +468,9 @@ def get_representations(
 
     con = get_server_api_connection()
     fields = representation_fields_v3_to_v4(fields, con)
+    if fields and active is not None:
+        fields.add("active")
+
     representations = con.get_representations(
         project_name,
         representation_ids,
