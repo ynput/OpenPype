@@ -508,8 +508,26 @@ def get_representations_parents(project_name, representations):
     return new_parents
 
 
-def get_archived_representations(*args, **kwargs):
-    raise NotImplementedError("'get_archived_representations' not implemented")
+def get_archived_representations(
+    project_name,
+    representation_ids=None,
+    representation_names=None,
+    version_ids=None,
+    context_filters=None,
+    names_by_version_ids=None,
+    fields=None
+):
+    return get_representations(
+        project_name,
+        representation_ids=representation_ids,
+        representation_names=representation_names,
+        version_ids=version_ids,
+        context_filters=context_filters,
+        names_by_version_ids=names_by_version_ids,
+        archived=True,
+        standard=False,
+        fields=fields
+    )
 
 
 def get_thumbnail(project_name, thumbnail_id, fields=None):
