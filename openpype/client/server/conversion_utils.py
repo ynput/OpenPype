@@ -822,14 +822,21 @@ def convert_create_version_to_v4(version, con):
     return converted_version
 
 
-def convert_create_hero_version_to_v4(project_name, hero_version, con):
+def convert_create_hero_version_to_v4(hero_version, project_name, con):
     if "version_id" not in hero_version:
         return None
 
     version_id = hero_version["version_id"]
     version = con.get_version_by_id(project_name, version_id)
     version["version"] = - version["version"]
-    version["id"] = hero_version["id"]
+    version["id"] = hero_version["_id"]
+    for auto_key in (
+        "name",
+        "createdAt",
+        "updatedAt",
+        "author",
+    ):
+        version.pop(auto_key, None)
 
     return version
 
