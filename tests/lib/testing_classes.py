@@ -51,8 +51,6 @@ class ModuleUnitTest(BaseTest):
 
     TEST_DATA_FOLDER = None
 
-    failed = False
-
     @pytest.fixture(scope='session')
     def monkeypatch_session(self):
         """Monkeypatch couldn't be used with module or session fixtures."""
@@ -62,7 +60,7 @@ class ModuleUnitTest(BaseTest):
         m.undo()
 
     @pytest.fixture(scope="module")
-    def download_test_data(self, test_data_folder, persist=False):
+    def download_test_data(self, test_data_folder, persist, request):
         test_data_folder = test_data_folder or self.TEST_DATA_FOLDER
         if test_data_folder:
             print("Using existing folder {}".format(test_data_folder))
@@ -83,7 +81,8 @@ class ModuleUnitTest(BaseTest):
                 print("Temporary folder created:: {}".format(tmpdir))
                 yield tmpdir
 
-                persist = persist or self.PERSIST or ModuleUnitTest.failed
+                persist = (persist or self.PERSIST or
+                          request.node.rep_call.failed)
                 if not persist:
                     print("Removing {}".format(tmpdir))
                     shutil.rmtree(tmpdir)
@@ -130,7 +129,8 @@ class ModuleUnitTest(BaseTest):
         monkeypatch_session.setenv("TEST_SOURCE_FOLDER", download_test_data)
 
     @pytest.fixture(scope="module")
-    def db_setup(self, download_test_data, env_var, monkeypatch_session):
+    def db_setup(self, download_test_data, env_var, monkeypatch_session,
+                 request):
         """Restore prepared MongoDB dumps into selected DB."""
         backup_dir = os.path.join(download_test_data, "input", "dumps")
 
@@ -146,7 +146,7 @@ class ModuleUnitTest(BaseTest):
 
         yield db_handler
 
-        persist = self.PERSIST or ModuleUnitTest.failed
+        persist = self.PERSIST or request.node.rep_call.failed
         if not persist:
             db_handler.teardown(self.TEST_DB_NAME)
             db_handler.teardown(self.TEST_OPENPYPE_NAME)
@@ -308,7 +308,6 @@ class PublishTest(ModuleUnitTest):
         while launched_app.poll() is None:
             time.sleep(0.5)
             if time.time() - time_start > timeout:
-                ModuleUnitTest.failed = True
                 launched_app.terminate()
                 raise ValueError("Timeout reached")
 
@@ -345,7 +344,6 @@ class PublishTest(ModuleUnitTest):
 
         not_mtched = filtered_expected.symmetric_difference(filtered_published)
         if not_mtched:
-            ModuleUnitTest.failed = True
             raise AssertionError("Missing {} files".format(
                 "\n".join(sorted(not_mtched))))
 
@@ -362,6 +360,7 @@ class PublishTest(ModuleUnitTest):
 
         return filtered
 
+
 class DeadlinePublishTest(PublishTest):
     @pytest.fixture(scope="module")
     def publish_finished(self, dbcon, launched_app, download_test_data,
@@ -374,7 +373,6 @@ class DeadlinePublishTest(PublishTest):
         while launched_app.poll() is None:
             time.sleep(0.5)
             if time.time() - time_start > timeout:
-                ModuleUnitTest.failed = True
                 launched_app.terminate()
                 raise ValueError("Timeout reached")
 
@@ -383,7 +381,6 @@ class DeadlinePublishTest(PublishTest):
                                                "**/*_metadata.json"),
                                   recursive=True)
         if not metadata_json:
-            ModuleUnitTest.failed = True
             raise RuntimeError("No metadata file found. No job id.")
 
         if len(metadata_json) > 1:
@@ -400,7 +397,6 @@ class DeadlinePublishTest(PublishTest):
         deadline_url = deadline_module.deadline_urls["default"]
 
         if not deadline_url:
-            ModuleUnitTest.failed = True
             raise ValueError("Must have default deadline url.")
 
         url = "{}/api/jobs?JobId={}".format(deadline_url, deadline_job_id)
@@ -410,17 +406,14 @@ class DeadlinePublishTest(PublishTest):
         while not valid_date_finished:
             time.sleep(0.5)
             if time.time() - time_start > timeout:
-                ModuleUnitTest.failed = True
                 raise ValueError("Timeout for DL finish reached")
 
             response = requests.get(url, timeout=10)
             if not response.ok:
-                ModuleUnitTest.failed = True
                 msg = "Couldn't connect to {}".format(deadline_url)
                 raise RuntimeError(msg)
 
             if not response.json():
-                ModuleUnitTest.failed = True
                 raise ValueError("Couldn't find {}".format(deadline_job_id))
 
             # '0001-...' returned until job is finished
