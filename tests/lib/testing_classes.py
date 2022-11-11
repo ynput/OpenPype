@@ -336,21 +336,31 @@ class PublishTest(ModuleUnitTest):
                        glob.glob(expected_dir_base + "\\**", recursive=True)
                        if f != expected_dir_base and os.path.exists(f))
 
-        filtered_published = set()
-        for pub_path in published:
-            if skip_compare_folders:
-                if not any([re.search(val, pub_path)
-                            for val in skip_compare_folders]):
-                    filtered_published.add(pub_path)
-            else:
-                filtered_published.add(pub_path)
+        filtered_published = self._filter_files(published,
+                                                skip_compare_folders)
 
-        not_matched = expected.symmetric_difference(filtered_published)
-        if not_matched:
+        # filter out temp files also in expected
+        # could be polluted by accident by copying 'output' to zip file
+        filtered_expected = self._filter_files(expected, skip_compare_folders)
+
+        not_mtched = filtered_expected.symmetric_difference(filtered_published)
+        if not_mtched:
             ModuleUnitTest.failed = True
             raise AssertionError("Missing {} files".format(
-                "\n".join(sorted(not_matched))))
+                "\n".join(sorted(not_mtched))))
 
+    def _filter_files(self, source_files, skip_compare_folders):
+        """Filter list of files according to regex pattern."""
+        filtered = set()
+        for file_path in source_files:
+            if skip_compare_folders:
+                if not any([re.search(val, file_path)
+                            for val in skip_compare_folders]):
+                    filtered.add(file_path)
+            else:
+                filtered.add(file_path)
+
+        return filtered
 
 class DeadlinePublishTest(PublishTest):
     @pytest.fixture(scope="module")
