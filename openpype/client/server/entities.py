@@ -71,13 +71,17 @@ def _get_subsets(
         ):
             fields.add(key)
 
+    active = None
+    if archived:
+        active = False
+
     for subset in con.get_subsets(
         project_name,
         subset_ids,
         subset_names,
         folder_ids,
         names_by_folder_ids,
-        archived,
+        active,
         fields
     ):
         yield convert_v4_subset_to_v3(subset)
