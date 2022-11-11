@@ -72,9 +72,7 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
             DBAssert.count_of_types(dbcon, "representation", 1,
                                     additional_args=additional_args))
 
-        if any(failures):
-            ModuleUnitTest.failed = True
-            assert not any(failures)
+        assert not any(failures)
 
 
 if __name__ == "__main__":
