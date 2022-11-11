@@ -92,11 +92,6 @@ class ExperimentalTools:
                 hosts_filter=["blender", "maya", "nuke", "celaction", "flame",
                               "fusion", "harmony", "hiero", "resolve",
                               "tvpaint", "unreal"]
-            ),
-            ExperimentalTool(
-                "traypublisher",
-                "New Standalone Publisher",
-                "Standalone publisher using new publisher. Requires restart"
             )
         ]
 
