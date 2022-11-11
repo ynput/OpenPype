@@ -52,11 +52,7 @@ class OnlineCreator(TrayPublishCreator):
 
         instance_data["originalBasename"] = origin_basename
         subset_name = origin_basename
-        path = (
-                Path(
-                    pre_create_data.get("representation_file")["directory"]
-                ) / pre_create_data.get("representation_file")["filenames"][0]
-        ).as_posix()
+        path = (Path(pre_create_data.get("representation_file")["directory"]) / pre_create_data.get("representation_file")["filenames"][0]).as_posix()  # noqa
 
         instance_data["creator_attributes"] = {"path": path}
 
