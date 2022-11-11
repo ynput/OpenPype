@@ -77,7 +77,9 @@ class TestDeadlinePublishInNuke(NukeDeadlinePublishTestClass):
             DBAssert.count_of_types(dbcon, "representation", 1,
                                     additional_args=additional_args))
 
-        assert not any(failures)
+        if any(failures):
+            ModuleUnitTest.failed = True
+            assert not any(failures)
 
 
 if __name__ == "__main__":
