@@ -361,6 +361,13 @@ class PublisherWindow(QtWidgets.QDialog):
         super(PublisherWindow, self).resizeEvent(event)
         self._update_publish_frame_rect()
 
+    def keyPressEvent(self, event):
+        # Ignore escape button to close window
+        if event.key() == QtCore.Qt.Key_Escape:
+            event.accept()
+            return
+        super(PublisherWindow, self).keyPressEvent(event)
+
     def _on_overlay_message(self, event):
         self._overlay_object.add_message(
             event["message"],
