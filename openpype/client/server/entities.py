@@ -150,6 +150,7 @@ def _get_versions(
                     break
             conv_hero = convert_v4_version_to_v3(hero_version)
             conv_hero["version_id"] = version_id
+            versions.append(conv_hero)
 
     return versions
 
@@ -347,6 +348,7 @@ def get_last_versions(project_name, subset_ids, fields=None):
         project_name,
         subset_ids=subset_ids,
         latest=True,
+        hero=False,
         fields=fields
     )
     return {
@@ -360,6 +362,7 @@ def get_last_version_by_subset_id(project_name, subset_id, fields=None):
         project_name,
         subset_ids=[subset_id],
         latest=True,
+        hero=False,
         fields=fields
     )
     if not versions:
