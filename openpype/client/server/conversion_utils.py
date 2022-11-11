@@ -16,7 +16,7 @@ from openpype.client.mongo.operations import (
     CURRENT_WORKFILE_INFO_SCHEMA,
 )
 from .constants import REPRESENTATION_FILES_FIELDS
-from .utils import create_entity_id
+from .utils import create_entity_id, prepare_entity_changes
 
 # --- Project entity ---
 PROJECT_FIELDS_MAPPING_V3_V4 = {
@@ -512,11 +512,13 @@ def convert_v4_version_to_v3(version):
     """
 
     version_num = version["version"]
-    doc_type = "version"
-    schema = CURRENT_VERSION_SCHEMA
     if version_num < 0:
         doc_type = "hero_version"
         schema = CURRENT_HERO_VERSION_SCHEMA
+
+    else:
+        doc_type = "version"
+        schema = CURRENT_VERSION_SCHEMA
 
     output = {
         "_id": version["id"],
@@ -820,6 +822,18 @@ def convert_create_version_to_v4(version, con):
     return converted_version
 
 
+def convert_create_hero_version_to_v4(project_name, hero_version, con):
+    if "version_id" not in hero_version:
+        return None
+
+    version_id = hero_version["version_id"]
+    version = con.get_version_by_id(project_name, version_id)
+    version["version"] = - version["version"]
+    version["id"] = hero_version["id"]
+
+    return version
+
+
 def convert_create_representation_to_v4(representation, con):
     representation_attributes = con.get_attributes_for_type("representation")
 
@@ -1025,6 +1039,21 @@ def convert_update_version_to_v4(project_name, version_id, update_data, con):
         new_update_data["subsetId"] = update_data["parent"]
 
     return _to_flat_dict(new_update_data)
+
+
+def convert_update_hero_version_to_v4(
+    project_name, hero_version_id, update_data, con
+):
+    if "version_id" not in update_data:
+        return None
+
+    version_id = update_data["version_id"]
+    hero_version = con.get_hero_version_by_id(project_name, hero_version_id)
+    version = con.get_version_by_id(project_name, version_id)
+    version["version"] = - version["version"]
+    version["id"] = hero_version_id
+
+    return prepare_entity_changes(version, hero_version)
 
 
 def convert_update_representation_to_v4(
