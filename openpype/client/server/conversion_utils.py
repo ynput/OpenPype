@@ -993,10 +993,6 @@ def convert_update_subset_to_v4(project_name, subset_id, update_data, con):
     if attribs:
         new_update_data["attribs"] = attribs
 
-    if new_data:
-        print("Subset has new data: {}".format(new_data))
-        new_update_data["data"] = new_data
-
     if "name" in update_data:
         new_update_data["name"] = update_data["name"]
 
@@ -1010,7 +1006,12 @@ def convert_update_subset_to_v4(project_name, subset_id, update_data, con):
     if "parent" in update_data:
         new_update_data["folderId"] = update_data["parent"]
 
-    return _to_flat_dict(new_update_data)
+    flat_data = _to_flat_dict(new_update_data)
+    if new_data:
+        print("Subset has new data: {}".format(new_data))
+        flat_data["data"] = new_data
+
+    return flat_data
 
 
 def convert_update_version_to_v4(project_name, version_id, update_data, con):
@@ -1040,10 +1041,6 @@ def convert_update_version_to_v4(project_name, version_id, update_data, con):
     if attribs:
         new_update_data["attribs"] = attribs
 
-    if new_data:
-        print("Version has new data: {}".format(new_data))
-        new_update_data["data"] = new_data
-
     if "name" in update_data:
         new_update_data["version"] = update_data["name"]
 
@@ -1057,7 +1054,11 @@ def convert_update_version_to_v4(project_name, version_id, update_data, con):
     if "parent" in update_data:
         new_update_data["subsetId"] = update_data["parent"]
 
-    return _to_flat_dict(new_update_data)
+    flat_data = _to_flat_dict(new_update_data)
+    if new_data:
+        print("Version has new data: {}".format(new_data))
+        flat_data["data"] = new_data
+    return flat_data
 
 
 def convert_update_hero_version_to_v4(
@@ -1072,7 +1073,15 @@ def convert_update_hero_version_to_v4(
     version["version"] = - version["version"]
     version["id"] = hero_version_id
 
-    return prepare_entity_changes(version, hero_version)
+    for auto_key in (
+        "name",
+        "createdAt",
+        "updatedAt",
+        "author",
+    ):
+        version.pop(auto_key, None)
+
+    return prepare_entity_changes(hero_version, version)
 
 
 def convert_update_representation_to_v4(
@@ -1106,8 +1115,10 @@ def convert_update_representation_to_v4(
     if "parent" in update_data:
         new_update_data["versionId"] = update_data["parent"]
 
-    if "context" in update_data or "files" in update_data:
+    if "context" in update_data:
         new_data["context"] = update_data["context"]
+
+    if "files" in update_data:
         new_files = update_data["files"]
         if isinstance(new_files, list):
             _new_files = {}
@@ -1122,11 +1133,12 @@ def convert_update_representation_to_v4(
             new_files = _new_files
         new_data["files"] = new_files
 
+    flat_data = _to_flat_dict(new_update_data)
     if new_data:
         print("Representation has new data: {}".format(new_data))
-        new_update_data["data"] = new_data
+        flat_data["data"] = new_data
 
-    return _to_flat_dict(new_update_data)
+    return flat_data
 
 
 def convert_update_workfile_info_to_v4(update_data):
