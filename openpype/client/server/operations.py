@@ -409,6 +409,10 @@ def entity_data_json_default(value):
     )
 
 
+def failed_json_default(value):
+    return "< Failed value {} > {}".format(type(value), str(value))
+
+
 class ServerCreateOperation(CreateOperation):
     """Opeartion to create an entity.
 
@@ -474,11 +478,11 @@ class ServerCreateOperation(CreateOperation):
             new_data = json.loads(
                 json.dumps(new_data, default=entity_data_json_default)
             )
+
         except:
-            print(json.dumps(
-                new_data,
-                default=lambda item: "< This Failed: {}>".format(str(item))))
-            raise
+            raise ValueError("Couldn't json parse body: {}".format(
+                json.dumps(new_data, default=failed_json_default)
+            ))
 
         super(ServerCreateOperation, self).__init__(
             project_name, entity_type, new_data
@@ -576,6 +580,16 @@ class ServerUpdateOperation(UpdateOperation):
             raise ValueError(
                 "Unhandled entity type \"{}\"".format(entity_type)
             )
+
+        try:
+            new_update_data = json.loads(
+                json.dumps(new_update_data, default=entity_data_json_default)
+            )
+
+        except:
+            raise ValueError("Couldn't json parse body: {}".format(
+                json.dumps(new_update_data, default=failed_json_default)
+            ))
 
         super(ServerUpdateOperation, self).__init__(
             project_name, entity_type, entity_id, new_update_data
@@ -685,6 +699,15 @@ class OperationsSession(BaseOperationsSession):
             for operation in operations:
                 body = operation.to_server_operation()
                 if body is not None:
+                    try:
+                        json.dumps(body)
+                    except:
+                        raise ValueError("Couldn't json parse body: {}".format(
+                            json.dumps(
+                                body, indent=4, default=failed_json_default
+                            )
+                        ))
+
                     body_by_id[operation.id] = body
                     operations_body.append(body)
 
