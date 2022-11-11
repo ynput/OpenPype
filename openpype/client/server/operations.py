@@ -31,11 +31,13 @@ from .conversion_utils import (
     convert_create_task_to_v4,
     convert_create_subset_to_v4,
     convert_create_version_to_v4,
+    convert_create_hero_version_to_v4,
     convert_create_representation_to_v4,
     convert_create_workfile_info_to_v4,
 
     convert_update_subset_to_v4,
     convert_update_version_to_v4,
+    convert_update_hero_version_to_v4,
     convert_update_representation_to_v4,
     convert_update_workfile_info_to_v4,
 )
@@ -449,6 +451,9 @@ class ServerCreateOperation(CreateOperation):
         elif entity_type == "version":
             new_data = convert_create_version_to_v4(data, self.con)
 
+        elif entity_type == "hero_version":
+            new_data = convert_create_hero_version_to_v4(data, self.con)
+
         elif entity_type == "representation":
             new_data = convert_create_representation_to_v4(data, self.con)
 
@@ -544,6 +549,11 @@ class ServerUpdateOperation(UpdateOperation):
 
         elif entity_type == "version":
             new_update_data = convert_update_version_to_v4(
+                project_name, entity_id, update_data, self.con
+            )
+
+        elif entity_type == "hero_version":
+            new_update_data = convert_update_hero_version_to_v4(
                 project_name, entity_id, update_data, self.con
             )
 
