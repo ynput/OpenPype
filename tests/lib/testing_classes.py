@@ -387,8 +387,8 @@ class DeadlinePublishTest(PublishTest):
             raise RuntimeError("No metadata file found. No job id.")
 
         if len(metadata_json) > 1:
-            ModuleUnitTest.failed = True
-            raise RuntimeError("Too many metadata files found.")
+            # depends on creation order of published jobs
+            metadata_json.sort(key=os.path.getmtime, reverse=True)
 
         with open(metadata_json[0]) as fp:
             job_info = json.load(fp)
