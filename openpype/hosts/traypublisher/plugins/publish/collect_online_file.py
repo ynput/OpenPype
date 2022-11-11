@@ -3,9 +3,10 @@ import pyblish.api
 from pathlib import Path
 
 
-class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
+class CollectOnlineFile(pyblish.api.InstancePlugin):
     """Collect online file and retain its file name."""
-    label = "Collect online file"
+    label = "Collect Online File"
+    order = pyblish.api.CollectorOrder
     families = ["online"]
     hosts = ["traypublisher"]
 
@@ -21,4 +22,3 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
                     "stagingDir": file.parent.as_posix()
                 }
             ]
-

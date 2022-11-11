@@ -5,9 +5,6 @@ Online file retain their original name and use it as subset name. To
 avoid conflicts, this creator checks if subset with this name already
 exists under selected asset.
 """
-import copy
-import os
-import re
 from pathlib import Path
 
 from openpype.client import get_subset_by_name, get_asset_by_name
@@ -16,11 +13,6 @@ from openpype.pipeline import (
     CreatedInstance,
     CreatorError
 )
-from openpype.pipeline.create import (
-    get_subset_name,
-    TaskNotSetError,
-)
-
 from openpype.hosts.traypublisher.api.plugin import TrayPublishCreator
 
 
@@ -31,14 +23,16 @@ class OnlineCreator(TrayPublishCreator):
     label = "Online"
     family = "online"
     description = "Publish file retaining its original file name"
-    extensions = [".mov", ".mp4", ".mfx", ".m4v", ".mpg"]
+    extensions = [".mov", ".mp4", ".mxf", ".m4v", ".mpg"]
 
     def get_detail_description(self):
-        return """# Publish batch of .mov to multiple assets.
+        return """# Create file retaining its original file name.
 
-        File names must then contain only asset name, or asset name + version.
-        (eg. 'chair.mov', 'chair_v001.mov', not really safe `my_chair_v001.mov`
-        """
+        This will publish files using template helping to retain original
+        file name and that file name is used as subset name.
+        
+        Bz default it tries to guard against multiple publishes of the same
+        file."""
 
     def get_icon(self):
         return "fa.file"
