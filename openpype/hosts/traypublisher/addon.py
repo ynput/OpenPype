@@ -10,7 +10,7 @@ TRAYPUBLISH_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class TrayPublishAddon(OpenPypeModule, IHostAddon, ITrayAction):
-    label = "New Publish (beta)"
+    label = "Publisher"
     name = "traypublisher"
     host_name = "traypublisher"
 
@@ -19,20 +19,9 @@ class TrayPublishAddon(OpenPypeModule, IHostAddon, ITrayAction):
         self.publish_paths = [
             os.path.join(TRAYPUBLISH_ROOT_DIR, "plugins", "publish")
         ]
-        self._experimental_tools = None
 
     def tray_init(self):
-        from openpype.tools.experimental_tools import ExperimentalTools
-
-        self._experimental_tools = ExperimentalTools()
-
-    def tray_menu(self, *args, **kwargs):
-        super(TrayPublishAddon, self).tray_menu(*args, **kwargs)
-        traypublisher = self._experimental_tools.get("traypublisher")
-        visible = False
-        if traypublisher and traypublisher.enabled:
-            visible = True
-        self._action_item.setVisible(visible)
+        return
 
     def on_action_trigger(self):
         self.run_traypublisher()
