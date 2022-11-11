@@ -428,9 +428,6 @@ class ServerCreateOperation(CreateOperation):
         if entity_type == "project":
             raise ValueError("Project cannot be created using operations")
 
-        if entity_type == "hero_version":
-            raise ValueError("Hero version cannot be created using operations")
-
         tasks = None
         if entity_type in "asset":
             # TODO handle tasks
@@ -452,7 +449,10 @@ class ServerCreateOperation(CreateOperation):
             new_data = convert_create_version_to_v4(data, self.con)
 
         elif entity_type == "hero_version":
-            new_data = convert_create_hero_version_to_v4(data, self.con)
+            new_data = convert_create_hero_version_to_v4(
+                data, project_name, self.con
+            )
+            entity_type = "version"
 
         elif entity_type == "representation":
             new_data = convert_create_representation_to_v4(data, self.con)
@@ -463,7 +463,9 @@ class ServerCreateOperation(CreateOperation):
             )
 
         else:
-            raise ValueError("Unhandled entity type \"{}\"".format(entity_type))
+            raise ValueError(
+                "Unhandled entity type \"{}\"".format(entity_type)
+            )
 
         # Simple check if data can be dumped into json
         #   - should raise error on 'ObjectId' object
@@ -556,6 +558,7 @@ class ServerUpdateOperation(UpdateOperation):
             new_update_data = convert_update_hero_version_to_v4(
                 project_name, entity_id, update_data, self.con
             )
+            entity_type = "version"
 
         elif entity_type == "representation":
             new_update_data = convert_update_representation_to_v4(
@@ -568,7 +571,9 @@ class ServerUpdateOperation(UpdateOperation):
             )
 
         else:
-            raise ValueError("Unhandled entity type \"{}\"".format(entity_type))
+            raise ValueError(
+                "Unhandled entity type \"{}\"".format(entity_type)
+            )
 
         super(ServerUpdateOperation, self).__init__(
             project_name, entity_type, entity_id, new_update_data
@@ -616,6 +621,9 @@ class ServerDeleteOperation(DeleteOperation):
 
         if entity_type == "asset":
             entity_type == "folder"
+
+        if entity_type == "hero_version":
+            entity_type = "version"
 
         super(ServerDeleteOperation, self).__init__(
             project_name, entity_type, entity_id
@@ -687,7 +695,7 @@ class OperationsSession(BaseOperationsSession):
                 results.append(result.data)
 
         for result in results:
-            if result["success"]:
+            if result.get("success"):
                 continue
 
             if "operations" not in result:
@@ -707,7 +715,7 @@ class OperationsSession(BaseOperationsSession):
                     ))
 
     def create_entity(self, project_name, entity_type, data, nested_id=None):
-        """Fast access to 'MongoCreateOperation'.
+        """Fast access to 'ServerCreateOperation'.
 
         Args:
             project_name (str): On which project the creation happens.
@@ -718,11 +726,8 @@ class OperationsSession(BaseOperationsSession):
                 must be added to operations list after it's parent is added.
 
         Returns:
-            MongoCreateOperation: Object of update operation.
+            ServerCreateOperation: Object of update operation.
         """
-
-        if entity_type == "hero_version":
-            return None
 
         operation = ServerCreateOperation(
             project_name, entity_type, data, self
@@ -740,10 +745,10 @@ class OperationsSession(BaseOperationsSession):
     def update_entity(
         self, project_name, entity_type, entity_id, update_data, nested_id=None
     ):
-        """Fast access to 'MongoUpdateOperation'.
+        """Fast access to 'ServerUpdateOperation'.
 
         Returns:
-            MongoUpdateOperation: Object of update operation.
+            ServerUpdateOperation: Object of update operation.
         """
 
         operation = ServerUpdateOperation(
@@ -760,10 +765,10 @@ class OperationsSession(BaseOperationsSession):
     def delete_entity(
         self, project_name, entity_type, entity_id, nested_id=None
     ):
-        """Fast access to 'MongoDeleteOperation'.
+        """Fast access to 'ServerDeleteOperation'.
 
         Returns:
-            MongoDeleteOperation: Object of delete operation.
+            ServerDeleteOperation: Object of delete operation.
         """
 
         operation = ServerDeleteOperation(
