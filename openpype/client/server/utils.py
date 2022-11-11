@@ -52,3 +52,4 @@ def prepare_entity_changes(old_entity, new_entity, replace=False):
     attr_changes = prepare_attribute_changes(old_entity, new_entity, replace)
     if attr_changes:
         changes["attrib"] = attr_changes
+    return changes
