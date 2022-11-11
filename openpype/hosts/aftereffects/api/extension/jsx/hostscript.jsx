@@ -395,61 +395,6 @@ function saveAs(path){
     app.project.save(fp = new File(path));
 }
 
-function getRenderInfo(comp_id){
-    /***
-        Get info from render queue.
-        Currently pulls only file name to parse extension and 
-        if it is sequence in Python
-    **/
-    var item = app.project.itemByID(comp_id);
-    if (!item){
-        return _prepareError("Composition with '" + comp_id + "' wasn't found! Recreate publishable instance(s)")
-    }
-
-    var comp_name = item.name;
-    try{
-        var comp_id_count = 0;
-        for (i = 1; i <= app.project.renderQueue.numItems; ++i){
-            var render_item = app.project.renderQueue.item(i);
-            if (render_item.comp.id != comp_id){
-                continue;
-            }
-            comp_id_count += 1;
-            
-            if (render_item.status == RQItemStatus.DONE){
-                var new_item = render_item.duplicate();  // create new, cannot change status if DONE
-                render_item.remove();  // remove existing to limit duplications
-                render_item = new_item;
-            }
-
-            render_item.render = true; // always set render queue to render
-            var item = render_item.outputModule(1);
-        }
-    } catch (error) {
-        return _prepareError("There is no render queue, create one");
-    }
-
-    if (comp_id_count > 1){
-        return _prepareError("There cannot be more items in Render Queue for '" + comp_name + "'!")
-    }
-
-    if (comp_id_count == 0){
-        return _prepareError("There is no item in Render Queue for '" + comp_name + "'! Add composition to Render Queue.")
-    }
-
-    if (render_item.numOutputModules !=1){
-        return _prepareError("There must be just 1 Output Module in Render Queue for '" + comp_name + "'! Keep only correct one.")
-    }
-
-    var file_url = item.file.toString();
-
-    return JSON.stringify({
-        "file_name": file_url,
-        "width": render_item.comp.width,
-	    "height": render_item.comp.height
-    })
-}
-
 function getAudioUrlForComp(comp_id){
     /**
      * Searches composition for audio layer
@@ -714,6 +659,71 @@ function isFileSequence (item){
     }
 
     return false;
+}
+
+function getRenderInfo(comp_id){
+    /***
+        Get info from render queue.
+        Currently pulls only file name to parse extension and
+        if it is sequence in Python
+    **/
+    var item = app.project.itemByID(comp_id);
+    if (!item){
+        return _prepareError("Composition with '" + comp_id + "' wasn't found! Recreate publishable instance(s)")
+    }
+
+    var comp_name = item.name;
+    try{
+        // render_item.duplicate() should create new item on renderQueue
+        // BUT it works only sometimes, there are some weird synchronization issue
+        // this method will be called always before render, so prepare items here
+        // for render to spare the hassle
+        for (i = 1; i <= app.project.renderQueue.numItems; ++i){
+            var render_item = app.project.renderQueue.item(i);
+            if (render_item.comp.id != comp_id){
+                continue;
+            }
+
+            if (render_item.status == RQItemStatus.DONE){
+                render_item.duplicate();  // create new, cannot change status if DONE
+                render_item.remove();  // remove existing to limit duplications
+                continue;
+            }
+        }
+
+        // properly validate as `numItems` won't change magically
+        var comp_id_count = 0;
+        for (i = 1; i <= app.project.renderQueue.numItems; ++i){
+            var render_item = app.project.renderQueue.item(i);
+            if (render_item.comp.id != comp_id){
+                continue;
+            }
+            comp_id_count += 1;
+            var item = render_item.outputModule(1);
+        }
+    } catch (error) {
+        return _prepareError("There is no render queue, create one");
+    }
+
+    if (comp_id_count > 1){
+        return _prepareError("There cannot be more items in Render Queue for '" + comp_name + "'!")
+    }
+
+    if (comp_id_count == 0){
+        return _prepareError("There is no item in Render Queue for '" + comp_name + "'! Add composition to Render Queue.")
+    }
+
+    if (render_item.numOutputModules !=1){
+        return _prepareError("There must be just 1 Output Module in Render Queue for '" + comp_name + "'! Keep only correct one.")
+    }
+
+    var file_url = item.file.toString();
+
+    return JSON.stringify({
+        "file_name": file_url,
+        "width": render_item.comp.width,
+	    "height": render_item.comp.height
+    })
 }
 
 function render(target_folder, comp_id){
