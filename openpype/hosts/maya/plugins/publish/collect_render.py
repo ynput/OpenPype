@@ -225,7 +225,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             handle_end = None
             if context.data.get("handles"):
                 handle_start = context.data.get("handles")
-                handle_end  = context.data.get("handles")
+                handle_end = context.data.get("handles")
 
             if (int(context.data['frameStartHandle']) == frame_start_render
                     and int(context.data['frameEndHandle']) == frame_end_render):  # noqa: W503, E501
