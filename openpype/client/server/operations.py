@@ -454,8 +454,9 @@ class ServerCreateOperation(CreateOperation):
             )
             entity_type = "version"
 
-        elif entity_type == "representation":
+        elif entity_type in ("representation", "archived_representation"):
             new_data = convert_create_representation_to_v4(data, self.con)
+            entity_type = "representation"
 
         elif entity_type == "workfile":
             new_data = convert_create_workfile_info_to_v4(
@@ -560,10 +561,11 @@ class ServerUpdateOperation(UpdateOperation):
             )
             entity_type = "version"
 
-        elif entity_type == "representation":
+        elif entity_type in ("representation", "archived_representation"):
             new_update_data = convert_update_representation_to_v4(
                 project_name, entity_id, update_data, self.con
             )
+            entity_type = "representation"
 
         elif entity_type == "workfile":
             new_update_data = convert_update_workfile_info_to_v4(
