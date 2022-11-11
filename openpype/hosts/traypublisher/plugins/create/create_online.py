@@ -30,7 +30,7 @@ class OnlineCreator(TrayPublishCreator):
 
         This will publish files using template helping to retain original
         file name and that file name is used as subset name.
-        
+
         Bz default it tries to guard against multiple publishes of the same
         file."""
 
@@ -52,11 +52,11 @@ class OnlineCreator(TrayPublishCreator):
 
         instance_data["originalBasename"] = origin_basename
         subset_name = origin_basename
-        path = (Path(
-            pre_create_data.get(
-                "representation_file")["directory"]
-        ) / pre_create_data.get(
-                "representation_file")["filenames"][0]).as_posix()
+        path = (
+                Path(
+                    pre_create_data.get("representation_file")["directory"]
+                ) / pre_create_data.get("representation_file")["filenames"][0]
+        ).as_posix()
 
         instance_data["creator_attributes"] = {"path": path}
 

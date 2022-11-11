@@ -6,7 +6,7 @@ from openpype.pipeline.publish import (
     PublishValidationError,
     OptionalPyblishPluginMixin,
 )
-from openpype.client import get_subset_by_name, get_asset_by_name
+from openpype.client import get_subset_by_name
 
 
 class ValidateOnlineFile(OptionalPyblishPluginMixin,
