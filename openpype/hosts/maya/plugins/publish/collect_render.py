@@ -221,22 +221,28 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             frame_end_render = int(self.get_render_attribute(
                 "endFrame", layer=layer_name))
 
+            handle_start = None
+            handle_end = None
+            if context.data.get("handles"):
+                handle_start = context.data.get("handles")
+                handle_end  = context.data.get("handles")
+
             if (int(context.data['frameStartHandle']) == frame_start_render
                     and int(context.data['frameEndHandle']) == frame_end_render):  # noqa: W503, E501
 
-                handle_start = context.data['handleStart']
-                handle_end = context.data['handleEnd']
+                handle_start = context.data.get('handleStart') or handle_start
+                handle_end = context.data.get('handleEnd') or handle_end
                 frame_start = context.data['frameStart']
                 frame_end = context.data['frameEnd']
-                frame_start_handle = context.data['frameStartHandle']
-                frame_end_handle = context.data['frameEndHandle']
+
             else:
                 handle_start = 0
                 handle_end = 0
                 frame_start = frame_start_render
                 frame_end = frame_end_render
-                frame_start_handle = frame_start_render
-                frame_end_handle = frame_end_render
+
+            frame_start_handle = frame_start - handle_start
+            frame_end_handle = frame_end + handle_end
 
             # find common path to store metadata
             # so if image prefix is branching to many directories
