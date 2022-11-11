@@ -513,18 +513,23 @@ def convert_v4_version_to_v3(version):
 
     version_num = version["version"]
     if version_num < 0:
-        doc_type = "hero_version"
-        schema = CURRENT_HERO_VERSION_SCHEMA
+        output = {
+            "_id": version["id"],
+            "type": "hero_version",
+            "schema": CURRENT_HERO_VERSION_SCHEMA,
+        }
+        if "subsetId" in version:
+            output["parent"] = version["subsetId"]
 
-    else:
-        doc_type = "version"
-        schema = CURRENT_VERSION_SCHEMA
+        if "data" in version:
+            output["data"] = version["data"]
+        return output
 
     output = {
         "_id": version["id"],
-        "type": doc_type,
+        "type": "version",
         "name": version_num,
-        "schema": schema
+        "schema": CURRENT_VERSION_SCHEMA
     }
     if "subsetId" in version:
         output["parent"] = version["subsetId"]
