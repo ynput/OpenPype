@@ -51,21 +51,35 @@ class TestPublishInAfterEffects(AELocalPublishTestClass):
 
         failures.append(
             DBAssert.count_of_types(dbcon, "subset", 1,
-                                    name="imageMainBackgroundcopy"))
-
-        failures.append(
-            DBAssert.count_of_types(dbcon, "subset", 1,
                                     name="workfileTest_task"))
 
         failures.append(
             DBAssert.count_of_types(dbcon, "subset", 1,
-                                    name="reviewTesttask"))
+                                    name="renderTest_taskMain"))
 
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 4))
 
-        additional_args = {"context.subset": "renderTestTaskDefault",
+        additional_args = {"context.subset": "renderTest_taskMain",
+                           "context.ext": "aep"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        additional_args = {"context.subset": "renderTest_taskMain",
                            "context.ext": "png"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        additional_args = {"context.subset": "renderTest_taskMain",
+                           "name": "thumbnail"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        additional_args = {"context.subset": "renderTest_taskMain",
+                           "name": "h264_png"}
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 1,
                                     additional_args=additional_args))
