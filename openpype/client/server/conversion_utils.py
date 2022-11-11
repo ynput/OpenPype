@@ -652,6 +652,10 @@ def convert_v4_representation_to_v3(representation):
             })
         output["files"] = new_files
 
+    if representation.get("active") is False:
+        output["type"] = "archived_representation"
+        output["old_id"] = output["_id"]
+
     output_data = representation.get("data") or {}
     if "attrib" in representation:
         output_data.update(representation["attrib"])
@@ -856,6 +860,9 @@ def convert_create_representation_to_v4(representation, con):
     entity_id = representation.get("_id")
     if entity_id:
         converted_representation["id"] = entity_id
+
+    if representation.get("type") == "archived_representation":
+        converted_representation["active"] = False
 
     new_files = {}
     for file_item in representation["files"]:
