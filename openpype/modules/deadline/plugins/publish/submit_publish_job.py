@@ -500,7 +500,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             if instance_data.get("multipartExr"):
                 preview = True
-
+            self.log.info("preview:{}".format(preview))
             new_instance = deepcopy(instance_data)
             new_instance["subset"] = subset_name
             new_instance["subsetGroup"] = group_name
