@@ -185,7 +185,7 @@ class RenderSettings(object):
                 if enabled:
                     cmds.delete(aov)
             # remove LightSelect
-            lightSelect_aovs =cmds.ls(type='VRayRenderElementSet')
+            lightSelect_aovs = cmds.ls(type='VRayRenderElementSet')
             for light_aovs in lightSelect_aovs:
                 light_enabled = cmds.getAttr("{}.enabled".format(light_aovs))
                 if light_enabled:
