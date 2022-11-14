@@ -349,7 +349,7 @@ class FilesModel(QtGui.QStandardItemModel):
         item.setData(file_item.filenames, FILENAMES_ROLE)
         item.setData(file_item.directory, DIRPATH_ROLE)
         item.setData(icon_pixmap, ITEM_ICON_ROLE)
-        item.setData(file_item.ext, EXT_ROLE)
+        item.setData(file_item.lower_ext, EXT_ROLE)
         item.setData(file_item.is_dir, IS_DIR_ROLE)
         item.setData(file_item.is_sequence, IS_SEQUENCE_ROLE)
 
@@ -463,7 +463,7 @@ class FilesProxyModel(QtCore.QSortFilterProxyModel):
         for filepath in filepaths:
             if os.path.isfile(filepath):
                 _, ext = os.path.splitext(filepath)
-                if ext in self._allowed_extensions:
+                if ext.lower() in self._allowed_extensions:
                     return True
 
             elif self._allow_folders:
@@ -475,7 +475,7 @@ class FilesProxyModel(QtCore.QSortFilterProxyModel):
         for filepath in filepaths:
             if os.path.isfile(filepath):
                 _, ext = os.path.splitext(filepath)
-                if ext in self._allowed_extensions:
+                if ext.lower() in self._allowed_extensions:
                     filtered_paths.append(filepath)
 
             elif self._allow_folders:

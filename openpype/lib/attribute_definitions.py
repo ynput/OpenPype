@@ -542,6 +542,13 @@ class FileDefItem(object):
         return None
 
     @property
+    def lower_ext(self):
+        ext = self.ext
+        if ext is not None:
+            return ext.lower()
+        return ext
+
+    @property
     def is_dir(self):
         if self.is_empty:
             return False
