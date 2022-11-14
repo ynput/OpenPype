@@ -11,6 +11,12 @@
                 255,
                 255,
                 255
+            ],
+            "families_to_upload": [
+                "review",
+                "renderpass",
+                "renderlayer",
+                "renderscene"
             ]
         },
         "ValidateProjectSettings": {

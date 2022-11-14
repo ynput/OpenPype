@@ -56,6 +56,18 @@
                             "key": "review_bg",
                             "label": "Review BG color",
                             "use_alpha": false
+                        },
+                        {
+                            "type": "enum",
+                            "key": "families_to_upload",
+                            "label": "Families to upload",
+                            "multiselection": true,
+                            "enum_items": [
+                                {"review": "review"},
+                                {"renderpass": "renderPass"},
+                                {"renderlayer": "renderLayer"},
+                                {"renderscene": "renderScene"}
+                            ]
                         }
                     ]
                 },
