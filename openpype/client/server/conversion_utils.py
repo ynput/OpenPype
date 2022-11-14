@@ -935,12 +935,14 @@ def _from_flat_dict(data):
     output = {}
     for key, value in data.items():
         output_value = output
-        for subkey in key.split("."):
+        subkeys = key.split(".")
+        last_key = subkeys.pop(-1)
+        for subkey in subkeys:
             if subkey not in output_value:
                 output_value[subkey] = {}
             output_value = output_value[subkey]
 
-        output_value[subkey] = value
+        output_value[last_key] = value
     return output
 
 
