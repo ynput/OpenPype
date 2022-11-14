@@ -98,6 +98,7 @@ class AlembicStandinLoader(load.LoaderPlugin):
         # Update the standin
         standins = list()
         members = pm.sets(container['objectName'], query=True)
+        self.log.info("container:{}".format(container))
         for member in members:
             shape = member.getShape()
             if (shape and shape.type() == "aiStandIn"):
@@ -105,8 +106,11 @@ class AlembicStandinLoader(load.LoaderPlugin):
 
         for standin in standins:
             standin.dso.set(path)
-            standin.useFrameExtension.set(0)
             standin.abcFPS.set(float(fps))
+            if "modelMain" in container['objectName']:
+                standin.useFrameExtension.set(0)
+            else:
+                standin.useFrameExtension.set(1)
 
         container = pm.PyNode(container["objectName"])
         container.representation.set(str(representation["_id"]))
