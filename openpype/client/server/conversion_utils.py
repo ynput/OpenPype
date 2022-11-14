@@ -1086,7 +1086,7 @@ def convert_update_version_to_v4(project_name, version_id, update_data, con):
             new_update_data["author"] = data.pop("author")
 
         if "thumbnail_id" in data:
-            data.pop("thumbnail_id")
+            new_update_data["thumbnailId"] = data.pop("thumbnail_id")
 
         for key, value in data.items():
             if key in version_attributes:
