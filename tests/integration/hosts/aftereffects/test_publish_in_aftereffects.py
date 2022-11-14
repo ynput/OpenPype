@@ -79,7 +79,7 @@ class TestPublishInAfterEffects(AELocalPublishTestClass):
                                     additional_args=additional_args))
 
         additional_args = {"context.subset": "renderTest_taskMain",
-                           "name": "h264_png"}
+                           "name": "png_png"}
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 1,
                                     additional_args=additional_args))
