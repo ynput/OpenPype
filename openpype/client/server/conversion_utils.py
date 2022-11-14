@@ -326,26 +326,20 @@ def convert_v4_folder_to_v3(folder, project_name):
         output["name"] = folder["name"]
         output_data["label"] = folder["name"]
 
-    for data_key, key in (
-        ("visualParent", "parentId"),
+    for src_key, dst_key in (
+        ("parentId", "visualParent"),
         ("active", "active"),
-        ("thumbnail_id", "thumbnailId")
+        ("thumbnailId", "thumbnail_id"),
+        ("parents", "parents"),
     ):
-        if key not in folder:
-            continue
-
-        output_data[data_key] = folder[key]
+        if src_key in folder:
+            output_data[dst_key] = folder[src_key]
 
     if "attrib" in folder:
         output_data.update(folder["attrib"])
 
     if "tasks" in folder:
-        if output_data is None:
-            output_data = {}
         output_data["tasks"] = convert_v4_tasks_to_v3(folder["tasks"])
-
-    if "parents" in folder:
-        output_data["parents"] = folder["parents"]
 
     output["data"] = output_data
 
@@ -538,13 +532,13 @@ def convert_v4_version_to_v3(version):
     if "attrib" in version:
         output_data.update(version["attrib"])
 
-    for key, data_key in (
+    for src_key, dst_key in (
         ("active", "active"),
         ("thumbnailId", "thumbnail_id"),
         ("author", "author")
     ):
-        if key in version:
-            output_data[data_key] = version[key]
+        if src_key in version:
+            output_data[dst_key] = version[src_key]
 
     if "createdAt" in version:
         # TODO probably will need a conversion?
