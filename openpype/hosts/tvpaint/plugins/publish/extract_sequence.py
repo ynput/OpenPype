@@ -127,9 +127,9 @@ class ExtractSequence(pyblish.api.Extractor):
             output_frame_start
         )
 
-        # Fill tags and new families
+        # Fill tags and new families from project settings
         tags = []
-        if family_lowered in ("review", "renderlayer", "renderscene"):
+        if family_lowered in self.families_to_upload:
             tags.append("review")
 
         # Sequence of one frame
