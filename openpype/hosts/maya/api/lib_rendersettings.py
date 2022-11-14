@@ -176,10 +176,11 @@ class RenderSettings(object):
         render_settings = self._project_settings["maya"]["RenderSettings"]
         vray_render_presets = render_settings["vray_renderer"]
         # vrayRenderElement
-        remove_aovs = vray_render_presets["remove_aovs"]
+        remove_aovs = render_settings["remove_aovs"]
         if remove_aovs:
             aovs = cmds.ls(type='VRayRenderElement')
             for aov in aovs:
+                # remove all aovs except LightSelect
                 enabled = cmds.getAttr("{}.enabled".format(aov))
                 if enabled:
                     cmds.delete(aov)
