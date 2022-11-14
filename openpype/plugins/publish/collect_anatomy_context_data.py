@@ -15,7 +15,6 @@ Provides:
 import json
 import pyblish.api
 
-from openpype.pipeline import legacy_io
 from openpype.pipeline.template_data import get_template_data
 
 
@@ -53,7 +52,7 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
         asset_entity = context.data.get("assetEntity")
         task_name = None
         if asset_entity:
-            task_name = legacy_io.Session["AVALON_TASK"]
+            task_name = context.data["task"]
 
         anatomy_data = get_template_data(
             project_entity, asset_entity, task_name, host_name, system_settings

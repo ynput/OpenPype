@@ -367,6 +367,7 @@ class LoadedFilesView(QtWidgets.QTreeView):
     def _on_rows_inserted(self):
         header = self.header()
         header.resizeSections(header.ResizeToContents)
+        self._update_remove_btn()
 
     def resizeEvent(self, event):
         super(LoadedFilesView, self).resizeEvent(event)
