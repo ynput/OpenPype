@@ -146,7 +146,7 @@ class RenderSettings(object):
 
     def _set_redshift_settings(self, width, height):
         """Sets settings for Redshift."""
-        render_settings =  self._project_settings["maya"]["RenderSettings"]
+        render_settings = self._project_settings["maya"]["RenderSettings"]
         redshift_render_presets = render_settings["redshift_renderer"]
 
         remove_aovs = render_settings["remove_aovs"]
