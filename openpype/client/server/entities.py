@@ -614,17 +614,17 @@ def get_thumbnail_id_from_source(project_name, src_type, src_id):
     if not src_type or not src_id:
         return None
 
-    if src_type == "subset":
-        subset = get_subset_by_id(
+    if src_type == "version":
+        version = get_version_by_id(
             project_name, src_id, fields=["data.thumbnail_id"]
         ) or {}
-        return subset.get("data", {}).get("thumbnail_id")
+        return version.get("data", {}).get("thumbnail_id")
 
-    if src_type == "subset":
-        subset = get_asset_by_id(
+    if src_type == "asset":
+        asset = get_asset_by_id(
             project_name, src_id, fields=["data.thumbnail_id"]
         ) or {}
-        return subset.get("data", {}).get("thumbnail_id")
+        return asset.get("data", {}).get("thumbnail_id")
 
     return None
 
