@@ -35,6 +35,7 @@ from .conversion_utils import (
     convert_create_representation_to_v4,
     convert_create_workfile_info_to_v4,
 
+    convert_update_folder_to_v4,
     convert_update_subset_to_v4,
     convert_update_version_to_v4,
     convert_update_hero_version_to_v4,
@@ -544,10 +545,11 @@ class ServerUpdateOperation(UpdateOperation):
         if entity_type == "project":
             raise ValueError("Project cannot be created using operations")
 
-        if entity_type == "asset":
-            raise ValueError(
-                "Update operations for assets are not implemented yet"
+        if entity_type in ("asset", "archived_asset"):
+            new_update_data = convert_update_folder_to_v4(
+                project_name, entity_id, update_data, self.con
             )
+            entity_type = "folder"
 
         elif entity_type == "subset":
             new_update_data = convert_update_subset_to_v4(
