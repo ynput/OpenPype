@@ -1660,37 +1660,6 @@ class ServerAPIBase(object):
 
         return output
 
-    def get_thumbnail_id_from_source(self, project_name, src_type, src_id):
-        """Receive thumbnail id from source entity.
-
-        Args:
-            project_name (str): Name of project where to look for queried
-                entities.
-            src_type (str): Type of source entity ('folder', 'version').
-            src_id (Union[str, ObjectId]): Id of source entity.
-
-        Returns:
-            ObjectId: Thumbnail id assigned to entity.
-            None: If Source entity does not have any thumbnail id assigned.
-        """
-
-        if not src_type or not src_id:
-            return None
-
-        if src_type == "subset":
-            subset = self.get_subset_by_id(
-                project_name, src_id, fields=["data.thumbnail_id"]
-            ) or {}
-            return subset.get("data", {}).get("thumbnail_id")
-
-        if src_type == "folder":
-            subset = self.get_folder_by_id(
-                project_name, src_id, fields=["data.thumbnail_id"]
-            ) or {}
-            return subset.get("data", {}).get("thumbnail_id")
-
-        return None
-
     def get_workfiles_info(
         self,
         project_name,
