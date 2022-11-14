@@ -184,6 +184,12 @@ class RenderSettings(object):
                 enabled = cmds.getAttr("{}.enabled".format(aov))
                 if enabled:
                     cmds.delete(aov)
+            # remove LightSelect
+            lightSelect_aovs =cmds.ls(type='VRayRenderElementSet')
+            for light_aovs in lightSelect_aovs:
+                light_enabled = cmds.getAttr("{}.enabled".format(light_aovs))
+                if light_enabled:
+                    cmds.delete(lightSelect_aovs)
         # Set aov separator
         # First we need to explicitly set the UI items in Render Settings
         # because that is also what V-Ray updates to when that Render Settings
