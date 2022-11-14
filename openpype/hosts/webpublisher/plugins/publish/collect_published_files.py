@@ -247,9 +247,9 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 continue
 
             lower_extensions = [ext.lower()
-                                for ext in config.get("extensions", [])]
+                                for ext in config.get("extensions", [''])]
             if (extension.lower() in lower_extensions or
-                    '' in config["extensions"]):  # all extensions setting
+                    lower_extensions[0] == ''):  # all extensions setting
                 found_family = config["result_family"]
                 break
 
