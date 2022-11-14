@@ -32,6 +32,11 @@
             ]
         },
         {
+          "key": "remove_aovs",
+          "label": "Remove existing AOVs",
+          "type": "boolean"
+        },
+        {
           "key": "reset_current_frame",
           "label": "Reset Current Frame",
           "type": "boolean"
@@ -72,11 +77,6 @@
                 {
                   "key": "tiled",
                   "label": "Tiled (tif, exr)",
-                  "type": "boolean"
-                },
-                {
-                  "key": "remove_aovs",
-                  "label": "Remove existing AOVs",
                   "type": "boolean"
                 },
                 {

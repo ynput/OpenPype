@@ -101,14 +101,15 @@ class RenderSettings(object):
         from mtoa.core import createOptions  # noqa
         from mtoa.aovs import AOVInterface  # noqa
         createOptions()
-        arnold_render_presets = self._project_settings["maya"]["RenderSettings"]["arnold_renderer"] # noqa
+        render_settings = self._project_settings["maya"]["RenderSettings"]
+        arnold_render_presets = render_settings["arnold_renderer"] # noqa
         # Force resetting settings and AOV list to avoid having to deal with
         # AOV checking logic, for now.
         # This is a work around because the standard
         # function to revert render settings does not reset AOVs list in MtoA
         # Fetch current aovs in case there's any.
         current_aovs = AOVInterface().getAOVs()
-        remove_aovs = arnold_render_presets["remove_aovs"]
+        remove_aovs = render_settings["remove_aovs"]
         if remove_aovs:
         # Remove fetched AOVs
             AOVInterface().removeAOVs(current_aovs)
