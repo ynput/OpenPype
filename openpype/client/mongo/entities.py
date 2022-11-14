@@ -1390,7 +1390,7 @@ def get_thumbnail_id_from_source(project_name, src_type, src_id):
     return None
 
 
-def get_thumbnails(project_name, thumbnail_ids, fields=None):
+def get_thumbnails(project_name, thumbnail_contexts, fields=None):
     """Receive thumbnails entity data.
 
     Thumbnail entity can be used to receive binary content of thumbnail based
@@ -1398,8 +1398,8 @@ def get_thumbnails(project_name, thumbnail_ids, fields=None):
 
     Args:
         project_name (str): Name of project where to look for queried entities.
-        thumbnail_ids (Iterable[Union[str, ObjectId]]): Ids of thumbnail
-            entities.
+        thumbnail_contexts (Iterable[Tuple[str, str, str]]): Thumbnail contexts
+            with thumbnail id, entity type and entity id.
         fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
@@ -1407,25 +1407,32 @@ def get_thumbnails(project_name, thumbnail_ids, fields=None):
         cursor: Cursor of queried documents.
     """
 
-    if thumbnail_ids:
-        thumbnail_ids = convert_ids(thumbnail_ids)
+    thumbnail_ids = set()
+    for thumbnail_id, _, _ in thumbnail_contexts:
+        thumbnail_ids.add(convert_ids(thumbnail_id))
 
     if not thumbnail_ids:
         return []
     query_filter = {
         "type": "thumbnail",
-        "_id": {"$in": thumbnail_ids}
+        "_id": {"$in": list(thumbnail_ids)}
     }
     conn = get_project_connection(project_name)
     return conn.find(query_filter, _prepare_fields(fields))
 
 
-def get_thumbnail(project_name, thumbnail_id, fields=None):
+def get_thumbnail(
+    project_name, thumbnail_id, entity_type, entity_id, fields=None
+):
     """Receive thumbnail entity data.
 
     Args:
         project_name (str): Name of project where to look for queried entities.
         thumbnail_id (Union[str, ObjectId]): Id of thumbnail entity.
+        entity_type (str): Type of entity for which the thumbnail should be
+            received.
+        entity_id (str): Id of entity for which the thumbnail should be
+            received.
         fields (Iterable[str]): Fields that should be returned. All fields are
             returned if 'None' is passed.
 
