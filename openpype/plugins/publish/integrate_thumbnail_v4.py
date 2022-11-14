@@ -9,18 +9,13 @@
 """
 
 import os
-import sys
-import errno
-import shutil
-import copy
 import collections
 
-import six
 import pyblish.api
 
 from openpype import OP4_TEST_ENABLED
 from openpype.client import get_versions
-from openpype.client.operations import OperationsSession, new_thumbnail_doc
+from openpype.client.operations import OperationsSession
 
 InstanceFilterResult = collections.namedtuple(
     "InstanceFilterResult",
@@ -28,10 +23,10 @@ InstanceFilterResult = collections.namedtuple(
 )
 
 
-class IntegrateThumbnails(pyblish.api.ContextPlugin):
+class IntegrateThumbnailsv4(pyblish.api.ContextPlugin):
     """Integrate Thumbnails for Openpype use in Loaders."""
 
-    label = "Integrate Thumbnails"
+    label = "Integrate Thumbnails (v4)"
     order = pyblish.api.IntegratorOrder + 0.01
 
     required_context_keys = [
@@ -39,8 +34,8 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
     ]
 
     def process(self, context):
-        if OP4_TEST_ENABLED:
-            self.log.info("V4 is enabled. Skipping v3 thumbnail integration")
+        if not OP4_TEST_ENABLED:
+            self.log.info("V4 is not enabled. Skipping")
             return
 
         # Filter instances which can be used for integration
@@ -51,37 +46,7 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
             )
             return
 
-        # Initial validation of available templated and required keys
-        env_key = "AVALON_THUMBNAIL_ROOT"
-        thumbnail_root_format_key = "{thumbnail_root}"
-        thumbnail_root = os.environ.get(env_key) or ""
-
-        anatomy = context.data["anatomy"]
-        project_name = anatomy.project_name
-        if "publish" not in anatomy.templates:
-            self.log.warning(
-                "Anatomy is missing the \"publish\" key. Skipping."
-            )
-            return
-
-        if "thumbnail" not in anatomy.templates["publish"]:
-            self.log.warning((
-                "There is no \"thumbnail\" template set for the project"
-                " \"{}\". Skipping."
-            ).format(project_name))
-            return
-
-        thumbnail_template = anatomy.templates["publish"]["thumbnail"]
-        if not thumbnail_template:
-            self.log.info("Thumbnail template is not filled. Skipping.")
-            return
-
-        if (
-            not thumbnail_root
-            and thumbnail_root_format_key in thumbnail_template
-        ):
-            self.log.warning(("{} is not set. Skipping.").format(env_key))
-            return
+        project_name = context.data["projectName"]
 
         # Collect verion ids from all filtered instance
         version_ids = {
@@ -103,8 +68,7 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
         self._integrate_thumbnails(
             filtered_instance_items,
             version_docs_by_str_id,
-            anatomy,
-            thumbnail_root
+            project_name
         )
 
     def _prepare_instances(self, context):
@@ -188,11 +152,11 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
         self,
         filtered_instance_items,
         version_docs_by_str_id,
-        anatomy,
-        thumbnail_root
+        project_name
     ):
+        from openpype.client.server.operations import create_thumbnail
+
         op_session = OperationsSession()
-        project_name = anatomy.project_name
 
         for instance_item in filtered_instance_items:
             instance, thumbnail_path, version_id = instance_item
@@ -204,61 +168,7 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
                 ).format(instance_label))
                 continue
 
-            filename, file_extension = os.path.splitext(thumbnail_path)
-            # Create id for mongo entity now to fill anatomy template
-            thumbnail_doc = new_thumbnail_doc()
-            thumbnail_id = thumbnail_doc["_id"]
-
-            # Prepare anatomy template fill data
-            template_data = copy.deepcopy(instance.data["anatomyData"])
-            template_data.update({
-                "_id": str(thumbnail_id),
-                "ext": file_extension[1:],
-                "name": "thumbnail",
-                "thumbnail_root": thumbnail_root,
-                "thumbnail_type": "thumbnail"
-            })
-
-            anatomy_filled = anatomy.format(template_data)
-            thumbnail_template = anatomy.templates["publish"]["thumbnail"]
-            template_filled = anatomy_filled["publish"]["thumbnail"]
-
-            dst_full_path = os.path.normpath(str(template_filled))
-            self.log.debug("Copying file .. {} -> {}".format(
-                thumbnail_path, dst_full_path
-            ))
-            dirname = os.path.dirname(dst_full_path)
-            try:
-                os.makedirs(dirname)
-            except OSError as e:
-                if e.errno != errno.EEXIST:
-                    tp, value, tb = sys.exc_info()
-                    six.reraise(tp, value, tb)
-
-            shutil.copy(thumbnail_path, dst_full_path)
-
-            # Clean template data from keys that are dynamic
-            for key in ("_id", "thumbnail_root"):
-                template_data.pop(key, None)
-
-            repre_context = template_filled.used_values
-            for key in self.required_context_keys:
-                value = template_data.get(key)
-                if not value:
-                    continue
-                repre_context[key] = template_data[key]
-
-            thumbnail_doc["data"] = {
-                "template": thumbnail_template,
-                "template_data": repre_context
-            }
-            op_session.create_entity(
-                project_name, thumbnail_doc["type"], thumbnail_doc
-            )
-            # Create thumbnail entity
-            self.log.debug(
-                "Creating entity in database {}".format(str(thumbnail_doc))
-            )
+            thumbnail_id = create_thumbnail(project_name, thumbnail_path)
 
             # Set thumbnail id for version
             op_session.update_entity(
