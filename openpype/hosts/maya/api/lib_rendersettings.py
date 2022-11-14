@@ -173,12 +173,16 @@ class RenderSettings(object):
         """Sets important settings for Vray."""
         settings = cmds.ls(type="VRaySettingsNode")
         node = settings[0] if settings else cmds.createNode("VRaySettingsNode")
-        vray_render_presets = (
-            self._project_settings
-            ["maya"]
-            ["RenderSettings"]
-            ["vray_renderer"]
-        )
+        render_settings = self._project_settings["maya"]["RenderSettings"]
+        vray_render_presets = render_settings["vray_renderer"]
+        # vrayRenderElement
+        remove_aovs = vray_render_presets["remove_aovs"]
+        if remove_aovs:
+            aovs = cmds.ls(type='VRayRenderElement')
+            for aov in aovs:
+                enabled = cmds.getAttr("{}.enabled".format(aov))
+                if enabled:
+                    cmds.delete(aov)
         # Set aov separator
         # First we need to explicitly set the UI items in Render Settings
         # because that is also what V-Ray updates to when that Render Settings
