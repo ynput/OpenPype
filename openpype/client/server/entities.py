@@ -1,5 +1,7 @@
 import collections
 
+from openpype.client.mongo.operations import CURRENT_THUMBNAIL_SCHEMA
+
 from .server_api import get_server_api_connection
 from .conversion_utils import (
     project_fields_v3_to_v4,
@@ -544,14 +546,56 @@ def get_archived_representations(
     )
 
 
-def get_thumbnail(project_name, thumbnail_id, fields=None):
-    # TODO thumbnails are handled in a different way
-    return None
+def get_thumbnail(
+    project_name, thumbnail_id, entity_type, entity_id, fields=None
+):
+    """Receive thumbnail entity data.
+
+    Args:
+        project_name (str): Name of project where to look for queried entities.
+        thumbnail_id (Union[str, ObjectId]): Id of thumbnail entity.
+        entity_type (str): Type of entity for which the thumbnail should be
+            received.
+        entity_id (str): Id of entity for which the thumbnail should be
+            received.
+        fields (Iterable[str]): Fields that should be returned. All fields are
+            returned if 'None' is passed.
+
+    Returns:
+        None: If thumbnail with specified id was not found.
+        Dict: Thumbnail entity data which can be reduced to specified 'fields'.
+    """
+
+    if not thumbnail_id or not entity_type or not entity_id:
+        return None
+
+    if entity_type == "asset":
+        entity_type = "folder"
+
+    elif entity_type == "hero_version":
+        entity_type = "version"
+
+    return {
+        "_id": thumbnail_id,
+        "type": "thumbnail",
+        "schema": CURRENT_THUMBNAIL_SCHEMA,
+        "data": {
+            "entity_type": entity_type,
+            "entity_id": entity_id
+        }
+    }
 
 
-def get_thumbnails(project_name, thumbnail_ids, fields=None):
-    # TODO thumbnails are handled in a different way
-    return []
+def get_thumbnails(project_name, thumbnail_contexts, fields=None):
+    thumbnail_items = set()
+    for thumbnail_context in thumbnail_contexts:
+        thumbnail_id, entity_type, entity_id = thumbnail_context
+        thumbnail_item = get_thumbnail(
+            project_name, thumbnail_id, entity_type, entity_id
+        )
+        if thumbnail_item:
+            thumbnail_items.add(thumbnail_item)
+    return list(thumbnail_items)
 
 
 def get_thumbnail_id_from_source(project_name, src_type, src_id):
