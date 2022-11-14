@@ -3,6 +3,8 @@
 Requires:
     session -> AVALON_ASSET
     context -> projectName
+    context -> asset
+    context -> task
 
 Provides:
     context -> projectEntity - Project document from database.
@@ -13,20 +15,19 @@ Provides:
 import pyblish.api
 
 from openpype.client import get_project, get_asset_by_name
-from openpype.pipeline import legacy_io, KnownPublishError
+from openpype.pipeline import KnownPublishError
 
 
-class CollectAvalonEntities(pyblish.api.ContextPlugin):
-    """Collect Anatomy into Context."""
+class CollectContextEntities(pyblish.api.ContextPlugin):
+    """Collect entities into Context."""
 
     order = pyblish.api.CollectorOrder - 0.1
-    label = "Collect Avalon Entities"
+    label = "Collect Context Entities"
 
     def process(self, context):
-        legacy_io.install()
         project_name = context.data["projectName"]
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-        task_name = legacy_io.Session["AVALON_TASK"]
+        asset_name = context.data["asset"]
+        task_name = context.data["task"]
 
         project_entity = get_project(project_name)
         if not project_entity:
