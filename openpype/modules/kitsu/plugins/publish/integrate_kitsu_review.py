@@ -32,13 +32,8 @@ class IntegrateKitsuReview(pyblish.api.InstancePlugin):
                 continue
 
             review_path = representation.get("published_path")
-            file_name, file_extension = os.path.splitext(review_path)
-
-            if instance.data.get('name') != 'reviewMain' \
-                    or file_extension != '.mp4':
-                continue
-
             self.log.debug("Found review at: {}".format(review_path))
+
             gazu.task.add_preview(
                 task, comment, review_path, normalize_movie=True
             )
