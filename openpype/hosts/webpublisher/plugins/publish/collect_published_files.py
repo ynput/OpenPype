@@ -86,6 +86,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             first_file = task_data["files"][0]
 
             _, extension = os.path.splitext(first_file)
+            extension = extension.lower()
             family, families, tags = self._get_family(
                 self.task_type_to_family,
                 task_type,
@@ -244,7 +245,10 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         for config in families_config:
             if is_sequence != config["is_sequence"]:
                 continue
-            if (extension in config["extensions"] or
+
+            lower_extensions = [ext.lower()
+                                for ext in config.get("extensions", [])]
+            if (extension.lower() in lower_extensions or
                     '' in config["extensions"]):  # all extensions setting
                 found_family = config["result_family"]
                 break
