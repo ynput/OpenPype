@@ -146,12 +146,17 @@ class RenderSettings(object):
 
     def _set_redshift_settings(self, width, height):
         """Sets settings for Redshift."""
-        redshift_render_presets = (
-            self._project_settings
-            ["maya"]
-            ["RenderSettings"]
-            ["redshift_renderer"]
-        )
+        render_settings =  self._project_settings["maya"]["RenderSettings"]
+        redshift_render_presets = render_settings["redshift_renderer"]
+
+        remove_aovs = render_settings["remove_aovs"]
+        if remove_aovs:
+            aovs = cmds.ls(type='RedshiftAOV')
+            for aov in aovs:
+                enabled = cmds.getAttr("{}.enabled".format(aov))
+                if enabled:
+                    cmds.delete(aov)
+
         additional_options = redshift_render_presets["additional_options"]
         ext = redshift_render_presets["image_format"]
         img_exts = ["iff", "exr", "tif", "png", "tga", "jpg"]
