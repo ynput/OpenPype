@@ -134,7 +134,6 @@ class BinaryThumbnail(ThumbnailResolver):
 
 class ServerThumbnailResolver(ThumbnailResolver):
     def process(self, thumbnail_entity, thumbnail_type):
-        print(thumbnail_entity)
         if not OP4_TEST_ENABLED:
             return None
         data = thumbnail_entity["data"]
