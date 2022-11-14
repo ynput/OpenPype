@@ -70,13 +70,13 @@
                   "type": "boolean"
                 },
                 {
-                  "key": "remove_aovs",
-                  "label": "Remove AOVs",
+                  "key": "tiled",
+                  "label": "Tiled (tif, exr)",
                   "type": "boolean"
                 },
                 {
-                  "key": "tiled",
-                  "label": "Tiled (tif, exr)",
+                  "key": "remove_aovs",
+                  "label": "Remove existing AOVs",
                   "type": "boolean"
                 },
                 {
