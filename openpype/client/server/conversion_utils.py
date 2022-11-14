@@ -965,6 +965,63 @@ def _to_flat_dict(data):
     return output
 
 
+def convert_update_folder_to_v4(project_name, asset_id, update_data, con):
+    new_update_data = {}
+
+    folder_attributes = con.get_attributes_for_type("folder")
+    full_update_data = _from_flat_dict(update_data)
+    data = full_update_data.get("data")
+
+    has_new_parent = False
+    has_task_changes = False
+    parent_id = None
+    tasks = None
+    new_data = {}
+    attribs = {}
+    if "type" in update_data:
+        new_update_data["active"] = update_data["type"] == "asset"
+
+    if data:
+        if "thumbnail_id" in data:
+            new_update_data["thumbnailId"] = data.pop("thumbnail_id")
+
+        if "tasks" in data:
+            tasks = data.pop("tasks")
+            has_task_changes = True
+
+        if "visualParent" in data:
+            has_new_parent = True
+            parent_id = data.pop("visualParent")
+
+        for key, value in data.items():
+            if key in folder_attributes:
+                attribs[key] = value
+            else:
+                new_data[key] = value
+
+    if "name" in update_data:
+        new_update_data["name"] = update_data["name"]
+
+    if "type" in update_data:
+        new_type = update_data["type"]
+        if new_type == "asset":
+            new_update_data["active"] = True
+        elif new_type == "archived_asset":
+            new_update_data["active"] = False
+
+    if has_new_parent:
+        new_update_data["parentId"] = parent_id
+
+    if new_data:
+        print("Folder has new data: {}".format(new_data))
+        new_update_data["data"] = new_data
+
+    if has_task_changes:
+        raise ValueError("Task changes of folder are not implemented")
+
+    return _to_flat_dict(new_update_data)
+
+
 def convert_update_subset_to_v4(project_name, subset_id, update_data, con):
     new_update_data = {}
 
