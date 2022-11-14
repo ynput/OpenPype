@@ -91,11 +91,20 @@ class FolderNotFound(MissingEntityError):
 class RestApiResponse(object):
     """API Response."""
 
-    def __init__(self, status_code, data=None):
+    def __init__(self, status_code, data=None, content=None, headers=None):
         if data is None:
             data = {}
         self.status = status_code
         self.data = data
+        self.content = content
+        self.headers = headers or {}
+
+    def __getattr__(self, attr):
+        return getattr(self._response, attr)
+
+    @property
+    def content_type(self):
+        return self.headers.get("Content-Type")
 
     @property
     def detail(self):
@@ -176,6 +185,8 @@ class ServerAPIBase(object):
         # Attributes cache
         self._attributes_schema = None
         self._entity_type_attributes_cache = {}
+
+        self._thumbnail_cache = ThumbnailCache(True)
 
     @property
     def access_token(self):
@@ -332,25 +343,26 @@ class ServerAPIBase(object):
         try:
             response = function(url, **kwargs)
         except ConnectionRefusedError:
-            response = RestApiResponse(
+            new_response = RestApiResponse(
                 500,
                 {"detail": "Unable to connect the server. Connection refused"}
             )
         except requests.exceptions.ConnectionError:
-            response = RestApiResponse(
+            new_response = RestApiResponse(
                 500,
                 {"detail": "Unable to connect the server. Connection error"}
             )
         else:
-            if response.text == "":
-                response = RestApiResponse(response.status_code)
-            else:
+            content_type = response.headers.get("Content-Type")
+            if content_type == "application/json":
                 try:
-                    response = RestApiResponse(
-                        response.status_code, response.json()
+                    new_response = RestApiResponse(
+                        response.status_code,
+                        response.json(),
+                        headers=response.headers,
                     )
                 except JSONDecodeError:
-                    response = RestApiResponse(
+                    new_response = RestApiResponse(
                         500,
                         {
                             "detail": "The response is not a JSON: {}".format(
@@ -358,58 +370,86 @@ class ServerAPIBase(object):
                         }
                     )
 
-        self.log.debug("Response {}".format(str(response)))
-        return response
+            elif content_type in ("image/jpeg", "image/png"):
+                new_response = RestApiResponse(
+                    response.status_code,
+                    headers=response.headers,
+                    content=response.content
+                )
 
-    def post(self, entrypoint, **kwargs):
+            else:
+                new_response = RestApiResponse(
+                    response.status_code,
+                    headers=response.headers,
+                )
+
+        self.log.debug("Response {}".format(str(new_response)))
+        return new_response
+
+    def raw_post(self, entrypoint, **kwargs):
         entrypoint = entrypoint.lstrip("/").rstrip("/")
         self.log.debug("Executing [POST] {}".format(entrypoint))
         url = "{}/{}".format(self._rest_url, entrypoint)
         return self._do_rest_request(
             RequestTypes.post,
             url,
-            json=kwargs
+            **kwargs
         )
 
-    def put(self, entrypoint, **kwargs):
+    def raw_put(self, entrypoint, **kwargs):
         entrypoint = entrypoint.lstrip("/").rstrip("/")
         self.log.debug("Executing [PUT] {}".format(entrypoint))
         url = "{}/{}".format(self._rest_url, entrypoint)
         return self._do_rest_request(
             RequestTypes.put,
             url,
-            json=kwargs
+            **kwargs
         )
 
-    def patch(self, entrypoint, **kwargs):
+    def raw_patch(self, entrypoint, **kwargs):
         entrypoint = entrypoint.lstrip("/").rstrip("/")
         self.log.debug("Executing [PATCH] {}".format(entrypoint))
         url = "{}/{}".format(self._rest_url, entrypoint)
         return self._do_rest_request(
             RequestTypes.patch,
             url,
-            json=kwargs
+            **kwargs
         )
 
-    def get(self, entrypoint, **kwargs):
+    def raw_get(self, entrypoint, **kwargs):
         entrypoint = entrypoint.lstrip("/").rstrip("/")
         self.log.debug("Executing [GET] {}".format(entrypoint))
         url = "{}/{}".format(self._rest_url, entrypoint)
         return self._do_rest_request(
             RequestTypes.get,
             url,
-            params=kwargs
+            **kwargs
         )
 
-    def delete(self, entrypoint, **kwargs):
+    def raw_delete(self, entrypoint, **kwargs):
         entrypoint = entrypoint.lstrip("/").rstrip("/")
         self.log.debug("Executing [DELETE] {}".format(entrypoint))
         url = "{}/{}".format(self._rest_url, entrypoint)
         return self._do_rest_request(
             RequestTypes.delete,
             url,
-            params=kwargs
+            **kwargs
         )
+
+    def post(self, entrypoint, **kwargs):
+        return self.raw_post(entrypoint, json=kwargs)
+
+    def put(self, entrypoint, **kwargs):
+        return self.raw_put(entrypoint, json=kwargs)
+
+    def patch(self, entrypoint, **kwargs):
+        return self.raw_patch(entrypoint, json=kwargs)
+
+    def get(self, entrypoint, **kwargs):
+        return self.raw_get(entrypoint, params=kwargs)
+
+    def delete(self, entrypoint, **kwargs):
+        return self.raw_delete(entrypoint, params=kwargs)
 
     def query_graphql(self, query, variables=None):
         data = {"query": query, "variables": variables or {}}
