@@ -181,6 +181,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
 
     def _get_single_repre(self, task_dir, files, tags):
         _, ext = os.path.splitext(files[0])
+        ext = ext.lower()
         repre_data = {
             "name": ext[1:],
             "ext": ext[1:],
@@ -200,6 +201,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         frame_start = list(collections[0].indexes)[0]
         frame_end = list(collections[0].indexes)[-1]
         ext = collections[0].tail
+        ext = ext.lower()
         repre_data = {
             "frameStart": frame_start,
             "frameEnd": frame_end,
