@@ -92,8 +92,8 @@ class RenderCreator(Creator):
                 data["composition_name"] = composition_name
             else:
                 subset_name = subset_name_from_ui
-                re.sub(subset_name, r"{composition}", '',
-                       flags=re.IGNORECASE)
+                subset_name = re.sub(r"\{composition\}", '', subset_name,
+                                     flags=re.IGNORECASE)
 
             for inst in self.create_context.instances:
                 if subset_name == inst.subset_name:
