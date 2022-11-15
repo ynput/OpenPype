@@ -26,23 +26,27 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
         """Collect instances from the current Blender scene."""
-        members = set()
+        instances = set()
 
-        if True:  # TODO setting | Instances are PropertyGroups
-            instances = list(bpy.context.scene.openpype_instances)
+        # PropertyGroups instances
+        if hasattr(bpy.context.scene, "openpype_instances"):
+            instances.update(bpy.context.scene.openpype_instances)
 
-            # Process datablocks
-            for op_instance in bpy.context.scene.openpype_instances:
-                members.update(
-                    {
-                        eval(datablock_ref.datapath).get(datablock_ref.name)
-                        for datablock_ref in op_instance.datablocks
-                    }
-                )
-        else:  # Instances are collections
-            instances = self.get_collections()
+        # Collections instances
+        instances.update(
+            {
+                collection
+                for collection in self.get_collections()
+                if collection.name
+                not in {
+                    inst.name for inst in bpy.context.scene.openpype_instances
+                }
+            }
+        )
 
         for op_instance in instances:
+            members = set()
+
             avalon_prop = op_instance[AVALON_PROPERTY]
             instance = context.create_instance(
                 name=op_instance.name,
@@ -52,6 +56,15 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 asset=avalon_prop["asset"],
                 task=avalon_prop["task"],
             )
+
+            # Process datablocks
+            if hasattr(op_instance, "datablocks"):
+                members.update(
+                    {
+                        eval(datablock_ref.datapath).get(datablock_ref.name)
+                        for datablock_ref in op_instance.datablocks
+                    }
+                )
 
             # If outliner data
             instance_collection = bpy.data.collections.get(op_instance.name)
@@ -65,6 +78,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 members.update(
                     set(get_children_recursive(instance_collection))
                 )
+
+            # Add instance holder as first item
+            members = list(members)
+            members.insert(0, op_instance)
 
             instance[:] = members
             self.log.debug(json.dumps(instance.data, indent=4))

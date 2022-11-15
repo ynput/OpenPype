@@ -1,16 +1,15 @@
 import os
 
 import bpy
+from openpype.hosts.blender.api.properties import OpenpypeInstance
 
 from openpype.pipeline import (
     publish,
-    AVALON_CONTAINER_ID,
 )
-from openpype.pipeline.load.utils import loaders_from_repre_context
+from openpype.pipeline.constants import AVALON_CONTAINER_ID
 from openpype.hosts.blender.api import plugin, get_compress_setting
 from openpype.hosts.blender.api.pipeline import (
     metadata_update,
-    AVALON_PROPERTY,
 )
 
 
@@ -65,7 +64,13 @@ class ExtractBlend(publish.Extractor):
         # Adding all members of the instance to data blocks that will be
         # written into the blender library.
         for member in instance:
+            # Skip if listed in scene as OP instance
+            if isinstance(member, OpenpypeInstance):
+                continue
+
+            # Add member to be extracted
             data_blocks.add(member)
+
             # Get reference from override library.
             if member.override_library and member.override_library.reference:
                 data_blocks.add(member.override_library.reference)
@@ -74,7 +79,7 @@ class ExtractBlend(publish.Extractor):
                 objects.add(member)
 
         # Store instance metadata
-        instance_holder = instance[-1]  # TODO rename to op_instance
+        instance_holder = instance[0]
 
         # Add container metadata to collection
         metadata_update(

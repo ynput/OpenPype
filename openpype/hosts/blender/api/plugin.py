@@ -951,8 +951,7 @@ class Creator(LegacyCreator):
         # Process outliner if current creator relates to this types
         if all(t in self.bl_types for t in BL_OUTLINER_TYPES):
             container_collection = self._process_outliner(datablocks, name)
-            if False:  # TODO setting
-                imprint(container_collection, self.data)
+            imprint(container_collection, self.data)
 
             # Substitute collection to datablocks
             datablocks = [container_collection]
