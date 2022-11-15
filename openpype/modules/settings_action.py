@@ -83,6 +83,8 @@ class LocalSettingsAction(OpenPypeModule, ITrayAction):
     def initialize(self, _modules_settings):
         # This action is always enabled
         self.enabled = True
+        if OP4_TEST_ENABLED:
+            self.enabled = False
 
         # Tray attributes
         self.settings_window = None
