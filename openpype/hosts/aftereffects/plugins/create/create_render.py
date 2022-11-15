@@ -56,22 +56,22 @@ class RenderCreator(Creator):
     def create(self, subset_name_from_ui, data, pre_create_data):
         stub = api.get_stub()  # only after After Effects is up
         if pre_create_data.get("use_selection"):
-            items = stub.get_selected_items(
+            comps = stub.get_selected_items(
                 comps=True, folders=False, footages=False
             )
         else:
-            items = stub.get_items(comps=True, folders=False, footages=False)
+            comps = stub.get_items(comps=True, folders=False, footages=False)
 
-        if not items:
+        if not comps:
             raise CreatorError(
                 "Nothing to create. Select composition "
                 "if 'useSelection' or create at least "
                 "one composition."
             )
 
-        for item in items:
+        for comp in comps:
             if pre_create_data.get("use_composition_name"):
-                composition_name = item.name
+                composition_name = comp.name
                 dynamic_fill = prepare_template_data({"composition":
                                                       composition_name})
                 subset_name = subset_name_from_ui.format(**dynamic_fill)
@@ -86,7 +86,7 @@ class RenderCreator(Creator):
                     raise CreatorError("{} already exists".format(
                         inst.subset_name))
 
-            data["members"] = [items[0].id]
+            data["members"] = [comp.id]
             new_instance = CreatedInstance(self.family, subset_name, data,
                                            self)
             if "farm" in pre_create_data:
@@ -96,6 +96,8 @@ class RenderCreator(Creator):
             api.get_stub().imprint(new_instance.id,
                                    new_instance.data_to_store())
             self._add_instance_to_context(new_instance)
+
+            stub.rename_item(comp.id, subset_name)
 
     def get_default_variants(self):
         return self._default_variants
