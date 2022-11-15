@@ -2,6 +2,7 @@ import argparse
 import sys
 
 import bpy
+from openpype.pipeline.constants import AVALON_CONTAINER_ID
 
 
 if __name__ == "__main__":
@@ -30,5 +31,6 @@ if __name__ == "__main__":
                     datablock["avalon"][
                         "representation"
                     ] = args.representation_id
+                    datablock["avalon"]["id"] = AVALON_CONTAINER_ID
 
     bpy.ops.wm.save_mainfile()
