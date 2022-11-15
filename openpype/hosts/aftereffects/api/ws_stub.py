@@ -422,15 +422,14 @@ class AfterEffectsServerStub():
         """ Get render queue info for render purposes
 
             Returns:
-                (AEItem): with 'file_name' field
+               (list) of (AEItem): with 'file_name' field
         """
         res = self.websocketserver.call(self.client.call
                                         ('AfterEffects.get_render_info',
                                          comp_id=comp_id))
 
         records = self._to_records(self._handle_return(res))
-        if records:
-            return records.pop()
+        return records
 
     def get_audio_url(self, item_id):
         """ Get audio layer absolute url for comp

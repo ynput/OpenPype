@@ -22,7 +22,7 @@ class AERenderInstance(RenderInstance):
     stagingDir = attr.ib(default=None)
     app_version = attr.ib(default=None)
     publish_attributes = attr.ib(default={})
-    file_name = attr.ib(default=None)
+    file_names = attr.ib(default=[])
 
 
 class CollectAERender(publish.AbstractCollectRender):
@@ -86,6 +86,7 @@ class CollectAERender(publish.AbstractCollectRender):
             render_q = CollectAERender.get_stub().get_render_info(comp_id)
             if not render_q:
                 raise ValueError("No file extension set in Render Queue")
+            render_item = render_q[0]
 
             subset_name = inst.data["subset"]
             instance = AERenderInstance(
@@ -102,8 +103,8 @@ class CollectAERender(publish.AbstractCollectRender):
                 setMembers='',
                 publish=True,
                 name=subset_name,
-                resolutionWidth=render_q.width,
-                resolutionHeight=render_q.height,
+                resolutionWidth=render_item.width,
+                resolutionHeight=render_item.height,
                 pixelAspect=1,
                 tileRendering=False,
                 tilesX=0,
@@ -114,7 +115,7 @@ class CollectAERender(publish.AbstractCollectRender):
                 fps=fps,
                 app_version=app_version,
                 publish_attributes=inst.data.get("publish_attributes", {}),
-                file_name=render_q.file_name
+                file_names=[item.file_name for item in render_q]
             )
 
             comp = compositions_by_id.get(comp_id)
@@ -162,28 +163,30 @@ class CollectAERender(publish.AbstractCollectRender):
         start = render_instance.frameStart
         end = render_instance.frameEnd
 
-        _, ext = os.path.splitext(os.path.basename(render_instance.file_name))
-
         base_dir = self._get_output_dir(render_instance)
         expected_files = []
-        if "#" not in render_instance.file_name:  # single frame (mov)W
-            path = os.path.join(base_dir, "{}_{}_{}.{}".format(
-                render_instance.asset,
-                render_instance.subset,
-                "v{:03d}".format(render_instance.version),
-                ext.replace('.', '')
-            ))
-            expected_files.append(path)
-        else:
-            for frame in range(start, end + 1):
-                path = os.path.join(base_dir, "{}_{}_{}.{}.{}".format(
+        for file_name in render_instance.file_names:
+            _, ext = os.path.splitext(os.path.basename(file_name))
+            ext = ext.replace('.', '')
+            version_str = "v{:03d}".format(render_instance.version)
+            if "#" not in file_name:  # single frame (mov)W
+                path = os.path.join(base_dir, "{}_{}_{}.{}".format(
                     render_instance.asset,
                     render_instance.subset,
-                    "v{:03d}".format(render_instance.version),
-                    str(frame).zfill(self.padding_width),
-                    ext.replace('.', '')
+                    version_str,
+                    ext
                 ))
                 expected_files.append(path)
+            else:
+                for frame in range(start, end + 1):
+                    path = os.path.join(base_dir, "{}_{}_{}.{}.{}".format(
+                        render_instance.asset,
+                        render_instance.subset,
+                        version_str,
+                        str(frame).zfill(self.padding_width),
+                        ext
+                    ))
+                    expected_files.append(path)
         return expected_files
 
     def _get_output_dir(self, render_instance):

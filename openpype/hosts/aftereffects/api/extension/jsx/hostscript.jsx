@@ -395,13 +395,84 @@ function saveAs(path){
     app.project.save(fp = new File(path));
 }
 
+function getRenderInfo(comp_id){
+    /***
+        Get info from render queue.
+        Currently pulls only file name to parse extension and
+        if it is sequence in Python
+    Args:
+        comp_id (int): id of composition
+     Return:
+        (list) [{file_name:"xx.png", width:00, height:00}]
+    **/
+    var item = app.project.itemByID(comp_id);
+    if (!item){
+        return _prepareError("Composition with '" + comp_id + "' wasn't found! Recreate publishable instance(s)")
+    }
+
+    var comp_name = item.name;
+    var output_metadata = []
+    try{
+        // render_item.duplicate() should create new item on renderQueue
+        // BUT it works only sometimes, there are some weird synchronization issue
+        // this method will be called always before render, so prepare items here
+        // for render to spare the hassle
+        for (i = 1; i <= app.project.renderQueue.numItems; ++i){
+            var render_item = app.project.renderQueue.item(i);
+            if (render_item.comp.id != comp_id){
+                continue;
+            }
+
+            if (render_item.status == RQItemStatus.DONE){
+                render_item.duplicate();  // create new, cannot change status if DONE
+                render_item.remove();  // remove existing to limit duplications
+                continue;
+            }
+        }
+
+        // properly validate as `numItems` won't change magically
+        var comp_id_count = 0;
+        for (i = 1; i <= app.project.renderQueue.numItems; ++i){
+            var render_item = app.project.renderQueue.item(i);
+            if (render_item.comp.id != comp_id){
+                continue;
+            }
+            comp_id_count += 1;
+            var item = render_item.outputModule(1);
+
+            for (j = 1; j<= render_item.numOutputModules; ++j){
+                var file_url = item.file.toString();
+                output_metadata.push(
+                    JSON.stringify({
+                        "file_name": file_url,
+                        "width": render_item.comp.width,
+                        "height": render_item.comp.height
+                    })
+                );
+            }
+        }
+    } catch (error) {
+        return _prepareError("There is no render queue, create one");
+    }
+
+    if (comp_id_count > 1){
+        return _prepareError("There cannot be more items in Render Queue for '" + comp_name + "'!")
+    }
+
+    if (comp_id_count == 0){
+        return _prepareError("There is no item in Render Queue for '" + comp_name + "'! Add composition to Render Queue.")
+    }
+
+    return '[' + output_metadata.join() + ']';
+}
+
 function getAudioUrlForComp(comp_id){
     /**
      * Searches composition for audio layer
-     * 
+     *
      * Only single AVLayer is expected!
      * Used for collecting Audio
-     * 
+     *
      * Args:
      *    comp_id (int): id of composition
      * Return:
@@ -429,7 +500,7 @@ function addItemAsLayerToComp(comp_id, item_id, found_comp){
     /**
      * Adds already imported FootageItem ('item_id') as a new
      * layer to composition ('comp_id').
-     * 
+     *
      * Args:
      *  comp_id (int): id of target composition
      *  item_id (int): FootageItem.id
@@ -452,17 +523,17 @@ function addItemAsLayerToComp(comp_id, item_id, found_comp){
 function importBackground(comp_id, composition_name, files_to_import){
     /**
      * Imports backgrounds images to existing or new composition.
-     * 
+     *
      * If comp_id is not provided, new composition is created, basic
      * values (width, heights, frameRatio) takes from first imported
      * image.
-     * 
+     *
      * Args:
      *   comp_id (int): id of existing composition (null if new)
-     *   composition_name (str): used when new composition 
+     *   composition_name (str): used when new composition
      *   files_to_import (list): list of absolute paths to import and
      *      add as layers
-     * 
+     *
      * Returns:
      *  (str): json representation (id, name, members)
      */
@@ -484,7 +555,7 @@ function importBackground(comp_id, composition_name, files_to_import){
             }
         }
     }
-       
+
     if (files_to_import){
         for (i = 0; i < files_to_import.length; ++i){
             item = _importItem(files_to_import[i]);
@@ -496,8 +567,8 @@ function importBackground(comp_id, composition_name, files_to_import){
             if (!comp){
                 folder = app.project.items.addFolder(composition_name);
                 imported_ids.push(folder.id);
-                comp = app.project.items.addComp(composition_name, item.width, 
-                    item.height, item.pixelAspect, 
+                comp = app.project.items.addComp(composition_name, item.width,
+                    item.height, item.pixelAspect,
                     1, 26.7);  // hardcode defaults
                 imported_ids.push(comp.id);
                 comp.parentFolder = folder;
@@ -506,7 +577,7 @@ function importBackground(comp_id, composition_name, files_to_import){
             item.parentFolder = folder;
 
             addItemAsLayerToComp(comp.id, item.id, comp);
-        }       
+        }
     }
     var item = {"name": comp.name,
                 "id": folder.id,
@@ -517,19 +588,19 @@ function importBackground(comp_id, composition_name, files_to_import){
 function reloadBackground(comp_id, composition_name, files_to_import){
     /**
      * Reloads existing composition.
-     * 
+     *
      * It deletes complete composition with encompassing folder, recreates
      * from scratch via 'importBackground' functionality.
-     * 
+     *
      * Args:
      *   comp_id (int): id of existing composition (null if new)
-     *   composition_name (str): used when new composition 
+     *   composition_name (str): used when new composition
      *   files_to_import (list): list of absolute paths to import and
      *      add as layers
-     * 
+     *
      * Returns:
      *  (str): json representation (id, name, members)
-     * 
+     *
      */
     var imported_ids = []; // keep track of members of composition
     comp = app.project.itemByID(comp_id);
@@ -592,7 +663,7 @@ function reloadBackground(comp_id, composition_name, files_to_import){
 function _get_file_name(file_url){
     /**
      * Returns file name without extension from 'file_url'
-     * 
+     *
      * Args:
      *    file_url (str): full absolute url
      * Returns:
@@ -607,7 +678,7 @@ function _delete_obsolete_items(folder, new_filenames){
     /***
      * Goes through 'folder' and removes layers not in new
      * background
-     * 
+     *
      * Args:
      *   folder (FolderItem)
      *   new_filenames (array): list of layer names in new bg
@@ -632,14 +703,14 @@ function _delete_obsolete_items(folder, new_filenames){
 function _importItem(file_url){
     /**
      * Imports 'file_url' as new FootageItem
-     * 
+     *
      * Args:
      *    file_url (str): file url with content
      * Returns:
      *    (FootageItem)
      */
     file_name = _get_file_name(file_url);
-    
+
     //importFile prepared previously to return json
     item_json = importFile(file_url, file_name, JSON.stringify({"ImportAsType":"FOOTAGE"}));
     item_json = JSON.parse(item_json);
@@ -659,71 +730,6 @@ function isFileSequence (item){
     }
 
     return false;
-}
-
-function getRenderInfo(comp_id){
-    /***
-        Get info from render queue.
-        Currently pulls only file name to parse extension and
-        if it is sequence in Python
-    **/
-    var item = app.project.itemByID(comp_id);
-    if (!item){
-        return _prepareError("Composition with '" + comp_id + "' wasn't found! Recreate publishable instance(s)")
-    }
-
-    var comp_name = item.name;
-    try{
-        // render_item.duplicate() should create new item on renderQueue
-        // BUT it works only sometimes, there are some weird synchronization issue
-        // this method will be called always before render, so prepare items here
-        // for render to spare the hassle
-        for (i = 1; i <= app.project.renderQueue.numItems; ++i){
-            var render_item = app.project.renderQueue.item(i);
-            if (render_item.comp.id != comp_id){
-                continue;
-            }
-
-            if (render_item.status == RQItemStatus.DONE){
-                render_item.duplicate();  // create new, cannot change status if DONE
-                render_item.remove();  // remove existing to limit duplications
-                continue;
-            }
-        }
-
-        // properly validate as `numItems` won't change magically
-        var comp_id_count = 0;
-        for (i = 1; i <= app.project.renderQueue.numItems; ++i){
-            var render_item = app.project.renderQueue.item(i);
-            if (render_item.comp.id != comp_id){
-                continue;
-            }
-            comp_id_count += 1;
-            var item = render_item.outputModule(1);
-        }
-    } catch (error) {
-        return _prepareError("There is no render queue, create one");
-    }
-
-    if (comp_id_count > 1){
-        return _prepareError("There cannot be more items in Render Queue for '" + comp_name + "'!")
-    }
-
-    if (comp_id_count == 0){
-        return _prepareError("There is no item in Render Queue for '" + comp_name + "'! Add composition to Render Queue.")
-    }
-
-    if (render_item.numOutputModules !=1){
-        return _prepareError("There must be just 1 Output Module in Render Queue for '" + comp_name + "'! Keep only correct one.")
-    }
-
-    var file_url = item.file.toString();
-
-    return JSON.stringify({
-        "file_name": file_url,
-        "width": render_item.comp.width,
-	    "height": render_item.comp.height
-    })
 }
 
 function render(target_folder, comp_id){
