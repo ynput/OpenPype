@@ -15,6 +15,7 @@ class ExtractLayout(publish.Extractor):
     label = "Extract Layout"
     hosts = ["maya"]
     families = ["layout"]
+    project_container = "AVALON_CONTAINERS"
     optional = True
 
     def process(self, instance):
@@ -33,13 +34,17 @@ class ExtractLayout(publish.Extractor):
 
         for asset in cmds.sets(str(instance), query=True):
             # Find the container
-            grp_name = asset.split(':')[0]
-            containers = cmds.ls("{}*_CON".format(grp_name))
-
-            assert len(containers) == 1, \
-                "More than one container found for {}".format(asset)
-
-            container = containers[0]
+            project_container = self.project_container
+            container_list = cmds.ls(project_container)
+            assert len(container_list) == 1, \
+                "No project container found for {} " \
+                "Please create instance with loaded asset".format(asset)
+            containers = cmds.sets(project_container, query=True)
+            for con in containers:
+                if "_CON" not in con:
+                    assert containers == [], \
+                    "No container found for {}".format(asset)
+                container = con
 
             representation_id = cmds.getAttr(
                 "{}.representation".format(container))
