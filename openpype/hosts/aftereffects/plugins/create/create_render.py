@@ -47,11 +47,25 @@ class RenderCreator(Creator):
         for created_inst, _changes in update_list:
             api.get_stub().imprint(created_inst.get("instance_id"),
                                    created_inst.data_to_store())
+            subset_change = _changes.get("subset")
+            if subset_change:
+                api.get_stub().rename_item(created_inst.data["members"][0],
+                                           subset_change[1])
 
     def remove_instances(self, instances):
         for instance in instances:
-            self.host.remove_instance(instance)
             self._remove_instance_from_context(instance)
+            self.host.remove_instance(instance)
+
+            subset = instance.data["subset"]
+            comp_id = instance.data["members"][0]
+            comp = api.get_stub().get_item(comp_id)
+            if comp:
+                new_comp_name = comp.name.replace(subset, '')
+                if not new_comp_name:
+                    new_comp_name = "dummyCompName"
+                api.get_stub().rename_item(comp_id,
+                                           new_comp_name)
 
     def create(self, subset_name_from_ui, data, pre_create_data):
         stub = api.get_stub()  # only after After Effects is up
