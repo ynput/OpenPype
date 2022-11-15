@@ -75,16 +75,20 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             self.log.info(
                 (
                     "Seems like old version of settings is used."
-                    ' Can\'t access custom templates in host "{}".'
-                ).format(host_name)
+                    ' Can\'t access custom templates in host "{}".'.format(
+                        host_name
+                    )
+                )
             )
             return
         elif use_last_published_workfile is False:
             self.log.info(
                 (
                     'Project "{}" has turned off to use last published'
-                    ' workfile as first workfile for host "{}"'
-                ).format(project_name, host_name)
+                    ' workfile as first workfile for host "{}"'.format(
+                        project_name, host_name
+                    )
+                )
             )
             return
 
@@ -114,8 +118,8 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             None,
         )
         if not subset_id:
-            self.log.debug('No any workfile for asset "{}".').format(
-                asset_doc["name"]
+            self.log.debug(
+                'No any workfile for asset "{}".'.format(asset_doc["name"])
             )
             return
 
@@ -131,8 +135,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             (
                 representation
                 for representation in get_representations(
-                    project_name,
-                    version_ids=[last_version_doc["_id"]]
+                    project_name, version_ids=[last_version_doc["_id"]]
                 )
                 if representation["context"]["task"]["name"] == task_name
             ),
@@ -141,8 +144,10 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
 
         if not workfile_representation:
             self.log.debug(
-                'No published workfile for task "{}" and host "{}".'
-            ).format(task_name, host_name)
+                'No published workfile for task "{}" and host "{}".'.format(
+                    task_name, host_name
+                )
+            )
             return
 
         local_site_id = get_local_site_id()
@@ -152,13 +157,11 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             local_site_id,
             force=True,
             priority=99,
-            reset_timer=True
+            reset_timer=True,
         )
 
         while not sync_server.is_representation_on_site(
-            project_name,
-            workfile_representation["_id"],
-            local_site_id
+            project_name, workfile_representation["_id"], local_site_id
         ):
             sleep(5)
 
