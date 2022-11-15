@@ -37,13 +37,12 @@ class ExtractLayout(publish.Extractor):
             project_container = self.project_container
             container_list = cmds.ls(project_container)
             assert len(container_list) == 1, \
-                "No project container found for {} " \
-                "Please create instance with loaded asset".format(asset)
+                "Please create instance with loaded asset"
             containers = cmds.sets(project_container, query=True)
             for con in containers:
                 if "_CON" not in con:
                     assert containers == [], \
-                    "No container found for {}".format(asset)
+                        "No container found for {}".format(asset)
                 container = con
 
             representation_id = cmds.getAttr(
