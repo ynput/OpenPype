@@ -68,7 +68,8 @@ Publisher allows publishing into different context, just click on any instance, 
 #### RenderQueue
 
 AE's Render Queue is required for publishing locally or on a farm. Artist needs to configure expected result format (extension, resolution) in the Render Queue in an Output module. 
-Currently its expected to have only single render item and single output module per composition in the Render Queue.
+Currently its expected to have only single render item per composition in the Render Queue.
+
 
 AE might throw some warning windows during publishing locally, so please pay attention to them in a case publishing seems to be stuck in a `Extract Local Render`.
 
