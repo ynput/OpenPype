@@ -347,15 +347,13 @@
                     "template": "{family}{Task}"
                 },
                 {
-                    "families": [
-                        "renderLocal"
-                    ],
+                    "families": ["render"],
                     "hosts": [
                         "aftereffects"
                     ],
                     "task_types": [],
                     "tasks": [],
-                    "template": "render{Task}{Variant}"
+                    "template": "{family}{Task}{Composition}{Variant}"
                 },
                 {
                     "families": [

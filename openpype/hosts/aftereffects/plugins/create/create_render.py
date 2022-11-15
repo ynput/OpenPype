@@ -1,3 +1,5 @@
+import re
+
 from openpype import resources
 from openpype.lib import BoolDef, UISeparatorDef
 from openpype.hosts.aftereffects import api
@@ -8,6 +10,7 @@ from openpype.pipeline import (
     legacy_io,
 )
 from openpype.hosts.aftereffects.api.pipeline import cache_and_get_instances
+from openpype.lib import prepare_template_data
 
 
 class RenderCreator(Creator):
@@ -50,7 +53,7 @@ class RenderCreator(Creator):
             self.host.remove_instance(instance)
             self._remove_instance_from_context(instance)
 
-    def create(self, subset_name, data, pre_create_data):
+    def create(self, subset_name_from_ui, data, pre_create_data):
         stub = api.get_stub()  # only after After Effects is up
         if pre_create_data.get("use_selection"):
             items = stub.get_selected_items(
@@ -59,31 +62,40 @@ class RenderCreator(Creator):
         else:
             items = stub.get_items(comps=True, folders=False, footages=False)
 
-        if len(items) > 1:
-            raise CreatorError(
-                "Please select only single composition at time."
-            )
         if not items:
-            raise CreatorError((
+            raise CreatorError(
                 "Nothing to create. Select composition "
                 "if 'useSelection' or create at least "
                 "one composition."
-            ))
+            )
 
-        for inst in self.create_context.instances:
-            if subset_name == inst.subset_name:
-                raise CreatorError("{} already exists".format(
-                    inst.subset_name))
+        for item in items:
+            if pre_create_data.get("use_composition_name"):
+                composition_name = item.name
+                dynamic_fill = prepare_template_data({"composition":
+                                                      composition_name})
+                subset_name = subset_name_from_ui.format(**dynamic_fill)
+                data["composition_name"] = composition_name
+            else:
+                subset_name = subset_name_from_ui
+                re.sub(subset_name, r"{composition}", '',
+                       flags=re.IGNORECASE)
 
-        data["members"] = [items[0].id]
-        new_instance = CreatedInstance(self.family, subset_name, data, self)
-        if "farm" in pre_create_data:
-            use_farm = pre_create_data["farm"]
-            new_instance.creator_attributes["farm"] = use_farm
+            for inst in self.create_context.instances:
+                if subset_name == inst.subset_name:
+                    raise CreatorError("{} already exists".format(
+                        inst.subset_name))
 
-        api.get_stub().imprint(new_instance.id,
-                               new_instance.data_to_store())
-        self._add_instance_to_context(new_instance)
+            data["members"] = [items[0].id]
+            new_instance = CreatedInstance(self.family, subset_name, data,
+                                           self)
+            if "farm" in pre_create_data:
+                use_farm = pre_create_data["farm"]
+                new_instance.creator_attributes["farm"] = use_farm
+
+            api.get_stub().imprint(new_instance.id,
+                                   new_instance.data_to_store())
+            self._add_instance_to_context(new_instance)
 
     def get_default_variants(self):
         return self._default_variants
@@ -94,6 +106,8 @@ class RenderCreator(Creator):
     def get_pre_create_attr_defs(self):
         output = [
             BoolDef("use_selection", default=True, label="Use selection"),
+            BoolDef("use_composition_name",
+                    label="Use composition name in subset"),
             UISeparatorDef(),
             BoolDef("farm", label="Render on farm")
         ]
@@ -101,6 +115,22 @@ class RenderCreator(Creator):
 
     def get_detail_description(self):
         return """Creator for Render instances"""
+
+    def get_dynamic_data(self, variant, task_name, asset_doc,
+                         project_name, host_name, instance):
+        dynamic_data = super(RenderCreator, self).get_dynamic_data(
+            variant, task_name, asset_doc, project_name, host_name,
+            instance
+        )
+
+        if instance is not None:
+            composition_name = instance.get("composition_name")
+            if composition_name:
+                dynamic_data["composition"] = composition_name
+        else:
+            dynamic_data["composition"] = "{composition}"
+
+        return dynamic_data
 
     def _handle_legacy(self, instance_data):
         """Converts old instances to new format."""
