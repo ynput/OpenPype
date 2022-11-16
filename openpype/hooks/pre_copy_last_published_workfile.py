@@ -8,6 +8,7 @@ from openpype.client.entities import (
 )
 from openpype.lib import PreLaunchHook
 from openpype.lib.local_settings import get_local_site_id
+from openpype.lib.path_tools import version_up
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.pipeline.load.utils import get_representation_path
 from openpype.settings.lib import get_project_settings
@@ -31,6 +32,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         2- Check if workfile in work area doesn't exist
         3- Check if published workfile exists and is copied locally in publish
         4- Substitute copied published workfile as first workfile
+           with incremented version by +1
 
         Returns:
             None: This is a void method.
@@ -173,5 +175,9 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
 
         # Copy file and substitute path
         self.data["last_workfile_path"] = shutil.copy(
-            published_workfile_path, local_workfile_dir
+            published_workfile_path,
+            os.path.join(
+                local_workfile_dir,
+                os.path.basename(version_up(published_workfile_path)),
+            ),
         )
