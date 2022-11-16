@@ -1832,23 +1832,24 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
         rect = QtCore.QRect(self.rect())
         rect_width = rect.width()
         rect_height = rect.height()
+        radius = rect_width * 0.2
 
-        size = rect_width * 0.9
-
-        x_offset = (rect_width - size) * 0.5
-        y_offset = (rect_height - size) * 0.5
+        x_offset = 0
+        y_offset = 0
         if self._anim_value != 1.0:
             x_offset += rect_width - (rect_width * self._anim_value)
 
-        arrow_half_height = size * 0.2
-        arrow_x_start = x_offset + (size * 0.4)
+        arrow_height = rect_height * 0.4
+        arrow_half_height = arrow_height * 0.5
+        arrow_x_start = x_offset + ((rect_width - arrow_half_height) * 0.5)
         arrow_x_end = arrow_x_start + arrow_half_height
         center_y = rect.center().y()
 
         painter.setBrush(self._bg_color)
-        painter.drawEllipse(
+        painter.drawRoundedRect(
             x_offset, y_offset,
-            size, size
+            rect_width + radius, rect_height,
+            radius, radius
         )
 
         src_arrow_path = QtGui.QPainterPath()

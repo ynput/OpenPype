@@ -257,7 +257,9 @@ class PublisherWindow(QtWidgets.QDialog):
         publish_btn.clicked.connect(self._on_publish_clicked)
 
         publish_frame.details_page_requested.connect(self._go_to_details_tab)
-        create_overlay_button.clicked.connect(self._go_to_publish_tab)
+        create_overlay_button.clicked.connect(
+            self._on_create_overlay_button_click
+        )
 
         controller.event_system.add_callback(
             "instances.refresh.finished", self._on_instances_refresh
@@ -470,6 +472,10 @@ class PublisherWindow(QtWidgets.QDialog):
             dialog_x, window_geo.y(),
             self._help_dialog.width(), self._help_dialog.height()
         )
+
+    def _on_create_overlay_button_click(self):
+        self._create_overlay_button.set_under_mouse(False)
+        self._go_to_publish_tab()
 
     def _on_tab_change(self, old_tab, new_tab):
         if old_tab == "details":
@@ -716,19 +722,20 @@ class PublisherWindow(QtWidgets.QDialog):
 
     def _update_create_overlay_size(self):
         metrics = self._create_overlay_button.fontMetrics()
-        size = int(metrics.height())
+        height = int(metrics.height())
+        width = int(height * 0.7)
         end_pos_x = self.width()
-        start_pos_x = end_pos_x - size
+        start_pos_x = end_pos_x - width
 
         center = self._content_widget.parent().mapTo(
             self,
             self._content_widget.rect().center()
         )
-        pos_y = center.y() - (size * 0.5)
+        pos_y = center.y() - (height * 0.5)
 
         self._create_overlay_button.setGeometry(
             start_pos_x, pos_y,
-            size, size
+            width, height
         )
 
     def _update_create_overlay_visibility(self, global_pos=None):
