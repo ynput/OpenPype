@@ -6,6 +6,7 @@ import bpy
 
 import openpype.api
 from openpype.pipeline import legacy_io
+from openpype.hosts.blender.api import get_compress_setting
 
 
 class ExtractBlendLook(openpype.api.Extractor):
@@ -63,7 +64,6 @@ class ExtractBlendLook(openpype.api.Extractor):
                 for mtl_slot in obj.material_slots:
                     material = mtl_slot.material
                     if material:
-                        material.use_fake_user = True
                         materials.add(material)
                         data_blocks.add(material)
                     obj_materials.append(material)
@@ -88,7 +88,13 @@ class ExtractBlendLook(openpype.api.Extractor):
 
         data_blocks.add(collection)
 
-        bpy.data.libraries.write(filepath, data_blocks)
+        bpy.data.libraries.write(
+            filepath,
+            data_blocks,
+            path_remap="ABSOLUTE",
+            fake_user=True,
+            compress=get_compress_setting(),
+        )
 
         # Restore remapped path
         for image, sourcepath in remapped:
@@ -96,9 +102,6 @@ class ExtractBlendLook(openpype.api.Extractor):
 
         collection.pop("materials_assignment")
         collection.pop("materials_indexes")
-
-        for material in materials:
-            material.use_fake_user = False
 
         instance.data.setdefault("representations", [])
 
@@ -124,7 +127,8 @@ class ExtractBlendLook(openpype.api.Extractor):
     def _process_resources(
         self, instance: dict, images: set
     ) -> Tuple[List[Tuple[str, str]], dict, Set[Tuple[bpy.types.Image, Path]]]:
-        """Extract the textures to transfer, copy them to the resource directory and remap the node paths.
+        """Extract the textures to transfer, copy them to the resource
+        directory and remap the node paths.
 
         Args:
             instance (dict): Instance with textures
