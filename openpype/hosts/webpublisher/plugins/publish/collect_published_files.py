@@ -247,11 +247,17 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         for config in families_config:
             if is_sequence != config["is_sequence"]:
                 continue
+            extensions = config.get("extensions") or []
+            lower_extensions = set()
+            for ext in extensions:
+                if ext:
+                    ext = ext.lower()
+                    if ext.startswith("."):
+                         ext = ext[1:]
+                    lower_extensions.add(ext)
 
-            lower_extensions = [ext.lower()
-                                for ext in config.get("extensions", [''])]
-            if (extension.lower() in lower_extensions or
-                    lower_extensions[0] == ''):  # all extensions setting
+            # all extensions setting
+            if not lower_extensions or extension in lower_extensions:
                 found_family = config["result_family"]
                 break
 
