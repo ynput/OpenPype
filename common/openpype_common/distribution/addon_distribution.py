@@ -8,12 +8,13 @@ import platform
 import shutil
 
 from .file_handler import RemoteFileHandler
-from .addon_info import AddonInfo
+from .addon_info import AddonInfo, UrlType
 
 
 class UpdateState(Enum):
     EXISTS = "exists"
     UPDATED = "updated"
+    FAILED_MISSING_SOURCE = "failed_no_download_source"
     FAILED = "failed"
 
 
@@ -110,28 +111,16 @@ class HTTPAddonDownloader(AddonDownloader):
 
 def get_addons_info(server_endpoint):
     """Returns list of addon information from Server"""
-    # TODO temp
-    # addon_info = AddonInfo(
-    #     **{"name": "openpype_slack",
-    #        "version": "1.0.0",
-    #        "addon_url": "c:/projects/openpype_slack_1.0.0.zip",
-    #        "type": UrlType.FILESYSTEM,
-    #        "hash": "4be25eb6215e91e5894d3c5475aeb1e379d081d3f5b43b4ee15b0891cf5f5658"})  # noqa
-    #
-    # http_addon = AddonInfo(
-    #     **{"name": "openpype_slack",
-    #        "version": "1.0.0",
-    #        "addon_url": "https://drive.google.com/file/d/1TcuV8c2OV8CcbPeWi7lxOdqWsEqQNPYy/view?usp=sharing",  # noqa
-    #        "type": UrlType.HTTP,
-    #        "hash": "4be25eb6215e91e5894d3c5475aeb1e379d081d3f5b43b4ee15b0891cf5f5658"})  # noqa
-
     response = requests.get(server_endpoint)
     if not response.ok:
         raise Exception(response.text)
 
     addons_info = []
-    for addon in response.json():
-        addons_info.append(AddonInfo(**addon))
+    addons_list = response.json()["addons"]
+    for addon in addons_list:
+        addon_info = AddonInfo.from_dict(addon)
+        if addon_info:
+            addons_info.append(AddonInfo.from_dict(addon))
     return addons_info
 
 
@@ -159,10 +148,17 @@ def update_addon_state(addon_infos, destination_folder, factory,
     for addon in addon_infos:
         full_name = "{}_{}".format(addon.name, addon.version)
         addon_dest = os.path.join(destination_folder, full_name)
+        log.debug(f"Checking {full_name} in {addon_dest}")
 
         if os.path.isdir(addon_dest):
             log.debug(f"Addon version folder {addon_dest} already exists.")
             download_states[full_name] = UpdateState.EXISTS.value
+            continue
+
+        if not addon.sources:
+            log.debug(f"Addon doesn't have any sources to download from.")
+            failed_state = UpdateState.FAILED_MISSING_SOURCE.value
+            download_states[full_name] = failed_state
             continue
 
         for source in addon.sources:
@@ -200,7 +196,13 @@ def check_addons(server_endpoint, addon_folder, downloaders):
     result = update_addon_state(addons_info,
                                 addon_folder,
                                 downloaders)
-    if UpdateState.FAILED.value in result.values():
+    failed = False
+    ok_states = [UpdateState.UPDATED, UpdateState.EXISTS]
+    for res_val in result.values():
+        if res_val not in ok_states:
+            failed = True
+            break
+    if failed:
         raise RuntimeError(f"Unable to update some addons {result}")
 
 
