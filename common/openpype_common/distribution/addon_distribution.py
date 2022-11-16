@@ -206,5 +206,15 @@ def check_addons(server_endpoint, addon_folder, downloaders):
         raise RuntimeError(f"Unable to update some addons {result}")
 
 
+def default_addon_downloader():
+    addon_downloader = AddonDownloader()
+    addon_downloader.register_format(UrlType.FILESYSTEM,
+                                     OSAddonDownloader)
+    addon_downloader.register_format(UrlType.HTTP,
+                                     HTTPAddonDownloader)
+
+    return addon_downloader
+
+
 def cli(*args):
     raise NotImplementedError
