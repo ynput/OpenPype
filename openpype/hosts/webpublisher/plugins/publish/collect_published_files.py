@@ -253,7 +253,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 if ext:
                     ext = ext.lower()
                     if ext.startswith("."):
-                         ext = ext[1:]
+                        ext = ext[1:]
                     lower_extensions.add(ext)
 
             # all extensions setting
