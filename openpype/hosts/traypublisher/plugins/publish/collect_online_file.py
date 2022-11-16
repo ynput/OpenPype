@@ -15,9 +15,9 @@ class CollectOnlineFile(pyblish.api.InstancePlugin):
 
         instance.data["representations"].append(
             {
-                    "name": file.suffix.lstrip("."),
-                    "ext": file.suffix.lstrip("."),
-                    "files": file.name,
-                    "stagingDir": file.parent.as_posix()
+                "name": file.suffix.lstrip("."),
+                "ext": file.suffix.lstrip("."),
+                "files": file.name,
+                "stagingDir": file.parent.as_posix()
             }
         )
