@@ -152,7 +152,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if input_ext.startswith("."):
                 input_ext = input_ext[1:]
 
-            if input_ext not in self.supported_exts:
+            if input_ext.lower() not in self.supported_exts:
                 self.log.info(
                     "Representation has unsupported extension \"{}\"".format(
                         input_ext
@@ -179,7 +179,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         single_frame_image = False
         if len(input_filepaths) == 1:
             ext = os.path.splitext(input_filepaths[0])[-1]
-            single_frame_image = ext in IMAGE_EXTENSIONS
+            single_frame_image = ext.lower() in IMAGE_EXTENSIONS
 
         filtered_defs = []
         for output_def in output_defs:
@@ -501,7 +501,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 first_sequence_frame += handle_start
 
             ext = os.path.splitext(repre["files"][0])[1].replace(".", "")
-            if ext in self.alpha_exts:
+            if ext.lower() in self.alpha_exts:
                 input_allow_bg = True
 
         return {
@@ -933,6 +933,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # TODO Define if extension should have dot or not
         if output_ext.startswith("."):
             output_ext = output_ext[1:]
+
+        output_ext = output_ext.lower()
 
         # Store extension to representation
         new_repre["ext"] = output_ext
