@@ -134,11 +134,7 @@ class RenderCreator(Creator):
 
     def get_dynamic_data(self, variant, task_name, asset_doc,
                          project_name, host_name, instance):
-        dynamic_data = super(RenderCreator, self).get_dynamic_data(
-            variant, task_name, asset_doc, project_name, host_name,
-            instance
-        )
-
+        dynamic_data = {}
         if instance is not None:
             composition_name = instance.get("composition_name")
             if composition_name:
