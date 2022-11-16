@@ -19,6 +19,45 @@ class StaticMeshAlembicLoader(plugin.Loader):
     icon = "cube"
     color = "orange"
 
+    def _import_fbx_task(
+        self, filename, destination_path, destination_name, replace,
+        default_conversion
+    ):
+        task_properties = [
+            ("filename", up.format_string(filename)),
+            ("destination_path", up.format_string(destination_path)),
+            ("destination_name", up.format_string(destination_name)),
+            ("replace_existing", str(replace)),
+            ("automated", "True"),
+            ("save", "True")
+        ]
+
+        options_properties = [
+            ("import_type", "unreal.AlembicImportType.STATIC_MESH")
+        ]
+
+        options_extra_properties = [
+            ("static_mesh_settings", "merge_meshes", "True")
+        ]
+
+        if not default_conversion:
+            options_extra_properties.extend([
+                ("conversion_settings", "preset",
+                    "unreal.AbcConversionPreset.CUSTOM"),
+                ("conversion_settings", "flip_u", "False"),
+                ("conversion_settings", "flip_v", "False"),
+                ("conversion_settings", "rotation", "[0.0, 0.0, 0.0]"),
+                ("conversion_settings", "scale", "[1.0, 1.0, 1.0]")
+            ])
+
+        up.send_request(
+            "import_abc_task",
+            params=[
+                str(task_properties),
+                str(options_properties),
+                str(options_extra_properties)
+            ])
+
     def load(self, context, name, namespace, options):
         """Load and containerise representation into Content Browser.
 
@@ -64,40 +103,8 @@ class StaticMeshAlembicLoader(plugin.Loader):
                 "does_directory_exist", params=[asset_dir]):
             up.send_request("make_directory", params=[asset_dir])
 
-            task_properties = [
-                ("filename", up.format_string(self.fname)),
-                ("destination_path", up.format_string(asset_dir)),
-                ("destination_name", up.format_string(asset_name)),
-                ("replace_existing", "False"),
-                ("automated", "True"),
-                ("save", "True")
-            ]
-
-            options_properties = [
-                ("import_type", "unreal.AlembicImportType.STATIC_MESH")
-            ]
-
-            options_extra_properties = [
-                ("static_mesh_settings", "merge_meshes", "True")
-            ]
-
-            if not default_conversion:
-                options_extra_properties.extend([
-                    ("conversion_settings", "preset",
-                        "unreal.AbcConversionPreset.CUSTOM"),
-                    ("conversion_settings", "flip_u", "False"),
-                    ("conversion_settings", "flip_v", "False"),
-                    ("conversion_settings", "rotation", "[0.0, 0.0, 0.0]"),
-                    ("conversion_settings", "scale", "[1.0, 1.0, 1.0]")
-                ])
-
-            up.send_request(
-                "import_abc_task",
-                params=[
-                    str(task_properties),
-                    str(options_properties),
-                    str(options_extra_properties)
-                ])
+            self._import_fbx_task(
+                self.fname, asset_dir, asset_name, False, default_conversion)
 
             # Create Asset Container
             up.send_request(
@@ -113,7 +120,8 @@ class StaticMeshAlembicLoader(plugin.Loader):
             "loader": str(self.__class__.__name__),
             "representation": str(context["representation"]["_id"]),
             "parent": str(context["representation"]["parent"]),
-            "family": context["representation"]["context"]["family"]
+            "family": context["representation"]["context"]["family"],
+            "default_conversion": default_conversion
         }
         up.send_request(
             "imprint", params=[f"{asset_dir}/{container_name}", str(data)])
@@ -126,42 +134,31 @@ class StaticMeshAlembicLoader(plugin.Loader):
 
         return asset_content
 
-    # def update(self, container, representation):
-    #     name = container["asset_name"]
-    #     source_path = get_representation_path(representation)
-    #     destination_path = container["namespace"]
+    def update(self, container, representation):
+        filename = get_representation_path(representation)
+        asset_dir = container["namespace"]
+        asset_name = container["asset_name"]
+        container_name = container['objectName']
+        default_conversion = container["default_conversion"]
 
-    #     task = self.get_task(source_path, destination_path, name, True)
+        self._import_fbx_task(
+            filename, asset_dir, asset_name, True, default_conversion)
 
-    #     # do import fbx and replace existing data
-    #     unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+        data = {
+            "representation": str(representation["_id"]),
+            "parent": str(representation["parent"])
+        }
+        up.send_request(
+            "imprint", params=[f"{asset_dir}/{container_name}", str(data)])
 
-    #     container_path = "{}/{}".format(container["namespace"],
-    #                                     container["objectName"])
-    #     # update metadata
-    #     up.imprint(
-    #         container_path,
-    #         {
-    #             "representation": str(representation["_id"]),
-    #             "parent": str(representation["parent"])
-    #         })
+        asset_content = up.send_request_literal(
+            "list_assets", params=[asset_dir, "True", "True"])
 
-    #     asset_content = unreal.EditorAssetLibrary.list_assets(
-    #         destination_path, recursive=True, include_folder=True
-    #     )
+        up.send_request(
+            "save_listed_assets", params=[str(asset_content)])
 
-    #     for a in asset_content:
-    #         unreal.EditorAssetLibrary.save_asset(a)
+    def remove(self, container):
+        path = container["namespace"]
 
-    # def remove(self, container):
-    #     path = container["namespace"]
-    #     parent_path = os.path.dirname(path)
-
-    #     unreal.EditorAssetLibrary.delete_directory(path)
-
-    #     asset_content = unreal.EditorAssetLibrary.list_assets(
-    #         parent_path, recursive=False
-    #     )
-
-    #     if len(asset_content) == 0:
-    #         unreal.EditorAssetLibrary.delete_directory(parent_path)
+        up.send_request(
+            "remove_asset", params=[path])

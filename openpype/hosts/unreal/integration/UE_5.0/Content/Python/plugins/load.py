@@ -1,3 +1,5 @@
+from pipeline import ls
+
 import ast
 from pathlib import Path
 
@@ -44,6 +46,17 @@ def save_all_dirty_levels():
     unreal.EditorLevelLibrary.save_all_dirty_levels()
 
 
+def get_current_level():
+    curr_level = unreal.LevelEditorSubsystem().get_current_level()
+    curr_level_path = curr_level.get_outer().get_path_name()
+    # If the level path does not start with "/Game/", the current
+    # level is a temporary, unsaved level.
+    if curr_level_path.startswith("/Game/"):
+        return curr_level_path
+
+    return ""
+
+
 def add_level_to_world(level_path):
     unreal.EditorLevelUtils.add_level_to_world(
         unreal.EditorLevelLibrary.get_editor_world(),
@@ -82,7 +95,7 @@ def get_all_assets_of_class(class_name, path, recursive):
 
     assets = ar.get_assets(filter)
 
-    return [asset.get_editor_property('object_path') for asset in assets]
+    return [str(asset.get_editor_property('object_path')) for asset in assets]
 
 
 def get_first_asset_of_class(class_name, path, recursive):
@@ -174,7 +187,7 @@ def generate_master_sequence(
     tracks = sequence.get_master_tracks()
     track = None
     for t in tracks:
-        if (t.get_class() == unreal.MovieSceneCameraCutTrack.static_class()):
+        if t.get_class().get_name() == "MovieSceneCameraCutTrack":
             track = t
             break
     if not track:
@@ -193,8 +206,7 @@ def set_sequence_hierarchy(
     tracks = parent.get_master_tracks()
     subscene_track = None
     for t in tracks:
-        if (t.get_class() ==
-                unreal.MovieSceneSubTrack.static_class()):
+        if t.get_class().get_name() == "MovieSceneSubTrack":
             subscene_track = t
             break
     if not subscene_track:
@@ -227,8 +239,7 @@ def set_sequence_visibility(
     tracks = parent.get_master_tracks()
     visibility_track = None
     for t in tracks:
-        if (t.get_class() ==
-                unreal.MovieSceneLevelVisibilityTrack.static_class()):
+        if t.get_class().get_name() == "MovieSceneLevelVisibilityTrack":
             visibility_track = t
             break
     if not visibility_track:
@@ -531,3 +542,233 @@ def get_actor_and_skeleton(instance_name):
     skeleton = actor.skeletal_mesh_component.skeletal_mesh.skeleton
 
     return (actor.get_path_name(), skeleton.get_path_name())
+
+
+def remove_asset(path):
+    parent_path = Path(path).parent.as_posix()
+
+    unreal.EditorAssetLibrary.delete_directory(path)
+
+    asset_content = unreal.EditorAssetLibrary.list_assets(
+        parent_path, recursive=False, include_folder=True
+    )
+
+    if len(asset_content) == 0:
+        unreal.EditorAssetLibrary.delete_directory(parent_path)
+
+
+def delete_all_bound_assets(level_sequence_str):
+    level_sequence = get_asset(level_sequence_str)
+
+    # Delete from the current level all the assets that are bound to the
+    # level sequence.
+
+    # Get the actors in the level sequence.
+    bound_objs = unreal.SequencerTools.get_bound_objects(
+        unreal.EditorLevelLibrary.get_editor_world(),
+        level_sequence,
+        level_sequence.get_bindings(),
+        unreal.SequencerScriptingRange(
+            has_start_value=True,
+            has_end_value=True,
+            inclusive_start=level_sequence.get_playback_start(),
+            exclusive_end=level_sequence.get_playback_end()
+        )
+    )
+
+    # Delete actors from the map
+    for obj in bound_objs:
+        actor_path = obj.bound_objects[0].get_path_name().split(":")[-1]
+        actor = unreal.EditorLevelLibrary.get_actor_reference(actor_path)
+        unreal.EditorLevelLibrary.destroy_actor(actor)
+
+
+def remove_camera(root, asset_dir):
+    path = Path(asset_dir)
+    parent_path = path.parent.as_posix()
+
+    old_sequence = get_first_asset_of_class(
+        "LevelSequence", path.as_posix(), "False")
+    level = get_first_asset_of_class("World", parent_path, "True")
+
+    unreal.EditorLevelLibrary.save_all_dirty_levels()
+    unreal.EditorLevelLibrary.load_level(level)
+
+    # There should be only one sequence in the path.
+    level_sequence = get_asset(old_sequence)
+    sequence_name = level_sequence.get_fname()
+
+    delete_all_bound_assets(level_sequence.get_path_name())
+
+    # Remove the Level Sequence from the parent.
+    # We need to traverse the hierarchy from the master sequence to find
+    # the level sequence.
+    namespace = asset_dir.replace(f"{root}/", "")
+    ms_asset = namespace.split('/')[0]
+    master_sequence = get_asset(get_first_asset_of_class(
+        "LevelSequence", f"{root}/{ms_asset}", "False"))
+
+    sequences = [master_sequence]
+
+    parent_sequence = None
+    for sequence in sequences:
+        tracks = sequence.get_master_tracks()
+        subscene_track = None
+        for track in tracks:
+            if track.get_class().get_name() == "MovieSceneSubTrack":
+                subscene_track = track
+                break
+        if subscene_track:
+            sections = subscene_track.get_sections()
+            for section in sections:
+                if section.get_sequence().get_name() == sequence_name:
+                    parent_sequence = sequence
+                    subscene_track.remove_section(section)
+                    break
+                sequences.append(section.get_sequence())
+            # Update subscenes indexes.
+            for i, section in enumerate(sections):
+                section.set_row_index(i)
+
+        if parent_sequence:
+            break
+
+    assert parent_sequence, "Could not find the parent sequence"
+
+    unreal.EditorAssetLibrary.delete_asset(level_sequence.get_path_name())
+
+    # Check if there isn't any more assets in the parent folder, and
+    # delete it if not.
+    asset_content = unreal.EditorAssetLibrary.list_assets(
+        parent_path, recursive=False, include_folder=True
+    )
+
+    if len(asset_content) == 0:
+        unreal.EditorAssetLibrary.delete_directory(parent_path)
+
+    return parent_sequence.get_path_name()
+
+
+def remove_layout(
+    root, asset, asset_dir, asset_name, loaded_assets, create_sequences
+):
+    path = Path(asset_dir)
+    parent_path = path.parent.as_posix()
+
+    level_sequence = get_asset(get_first_asset_of_class(
+        "LevelSequence", path.as_posix(), "False"))
+    level = get_first_asset_of_class("World", parent_path, "True")
+
+    unreal.EditorLevelLibrary.load_level(level)
+
+    containers = ls()
+    layout_containers = [
+        c for c in containers
+        if c.get('asset_name') != asset_name and c.get('family') == "layout"]
+
+    # Check if the assets have been loaded by other layouts, and deletes
+    # them if they haven't.
+    for loaded_asset in eval(loaded_assets):
+        layouts = [
+            lc for lc in layout_containers
+            if loaded_asset in lc.get('loaded_assets')]
+
+        if not layouts:
+            unreal.EditorAssetLibrary.delete_directory(
+                Path(loaded_asset).parent.as_posix())
+
+            # Delete the parent folder if there aren't any more
+            # layouts in it.
+            asset_content = unreal.EditorAssetLibrary.list_assets(
+                Path(loaded_asset).parent.parent.as_posix(), recursive=False,
+                include_folder=True
+            )
+
+            if len(asset_content) == 0:
+                unreal.EditorAssetLibrary.delete_directory(
+                    str(Path(loaded_asset).parent.parent))
+
+    master_sequence = None
+    master_level = None
+    sequences = []
+
+    if create_sequences:
+        delete_all_bound_assets(level_sequence.get_path_name())
+
+        # Remove the Level Sequence from the parent.
+        # We need to traverse the hierarchy from the master sequence to
+        # find the level sequence.
+        namespace = asset_dir.replace(f"{root}/", "")
+        ms_asset = namespace.split('/')[0]
+        master_sequence = get_asset(get_first_asset_of_class(
+            "LevelSequence", f"{root}/{ms_asset}", "False"))
+        master_level = get_first_asset_of_class(
+            "World", f"{root}/{ms_asset}", "False")
+
+        sequences = [master_sequence]
+
+        parent = None
+        for sequence in sequences:
+            tracks = sequence.get_master_tracks()
+            subscene_track = None
+            visibility_track = None
+            for track in tracks:
+                if track.get_class().get_name() == "MovieSceneSubTrack":
+                    subscene_track = track
+                if (track.get_class().get_name() ==
+                        "MovieSceneLevelVisibilityTrack"):
+                    visibility_track = track
+            if subscene_track:
+                sections = subscene_track.get_sections()
+                for section in sections:
+                    if section.get_sequence().get_name() == asset:
+                        parent = sequence
+                        subscene_track.remove_section(section)
+                        break
+                    sequences.append(section.get_sequence())
+                # Update subscenes indexes.
+                for i, section in enumerate(sections):
+                    section.set_row_index(i)
+
+
+            if visibility_track:
+                sections = visibility_track.get_sections()
+                for section in sections:
+                    if (unreal.Name(f"{asset}_map")
+                            in section.get_level_names()):
+                        visibility_track.remove_section(section)
+                # Update visibility sections indexes.
+                i = -1
+                prev_name = []
+                for section in sections:
+                    if prev_name != section.get_level_names():
+                        i += 1
+                    section.set_row_index(i)
+                    prev_name = section.get_level_names()
+            if parent:
+                break
+
+        assert parent, "Could not find the parent sequence"
+
+    actors = unreal.EditorLevelLibrary.get_all_level_actors()
+
+    if not actors:
+        # Delete the level if it's empty.
+        # Create a temporary level to delete the layout level.
+        unreal.EditorLevelLibrary.save_all_dirty_levels()
+        unreal.EditorAssetLibrary.make_directory(f"{root}/tmp")
+        tmp_level = f"{root}/tmp/temp_map"
+        if not unreal.EditorAssetLibrary.does_asset_exist(f"{tmp_level}.temp_map"):
+            unreal.EditorLevelLibrary.new_level(tmp_level)
+        else:
+            unreal.EditorLevelLibrary.load_level(tmp_level)
+
+    # Delete the layout directory.
+    unreal.EditorAssetLibrary.delete_directory(path.as_posix())
+
+    if not actors:
+        unreal.EditorAssetLibrary.delete_directory(path.parent.as_posix())
+
+    if create_sequences:
+        unreal.EditorLevelLibrary.load_level(master_level)
+        unreal.EditorAssetLibrary.delete_directory(f"{root}/tmp")

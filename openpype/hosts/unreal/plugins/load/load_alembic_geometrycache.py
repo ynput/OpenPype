@@ -19,6 +19,47 @@ class PointCacheAlembicLoader(plugin.Loader):
     icon = "cube"
     color = "orange"
 
+    def _import_fbx_task(
+            self, filename, destination_path, destination_name, replace,
+            frame_start, frame_end, default_conversion
+    ):
+        task_properties = [
+            ("filename", up.format_string(filename)),
+            ("destination_path", up.format_string(destination_path)),
+            ("destination_name", up.format_string(destination_name)),
+            ("replace_existing", str(replace)),
+            ("automated", "True"),
+            ("save", "True")
+        ]
+
+        options_properties = [
+            ("import_type", "unreal.AlembicImportType.GEOMETRY_CACHE")
+        ]
+
+        options_extra_properties = [
+            ("geometry_cache_settings", "flatten_tracks", "False"),
+            ("sampling_settings", "frame_start", str(frame_start)),
+            ("sampling_settings", "frame_end", str(frame_end))
+        ]
+
+        if not default_conversion:
+            options_extra_properties.extend([
+                ("conversion_settings", "preset",
+                    "unreal.AbcConversionPreset.CUSTOM"),
+                ("conversion_settings", "flip_u", "False"),
+                ("conversion_settings", "flip_v", "True"),
+                ("conversion_settings", "rotation", "[0.0, 0.0, 0.0]"),
+                ("conversion_settings", "scale", "[1.0, 1.0, 1.0]")
+            ])
+
+        up.send_request(
+            "import_abc_task",
+            params=[
+                str(task_properties),
+                str(options_properties),
+                str(options_extra_properties)
+            ])
+
     def load(self, context, name, namespace, options):
         """Load and containerise representation into Content Browser.
 
@@ -72,42 +113,9 @@ class PointCacheAlembicLoader(plugin.Loader):
             if frame_start == frame_end:
                 frame_end += 1
 
-            task_properties = [
-                ("filename", up.format_string(self.fname)),
-                ("destination_path", up.format_string(asset_dir)),
-                ("destination_name", up.format_string(asset_name)),
-                ("replace_existing", "False"),
-                ("automated", "True"),
-                ("save", "True")
-            ]
-
-            options_properties = [
-                ("import_type", "unreal.AlembicImportType.GEOMETRY_CACHE")
-            ]
-
-            options_extra_properties = [
-                ("geometry_cache_settings", "flatten_tracks", "False"),
-                ("sampling_settings", "frame_start", str(frame_start)),
-                ("sampling_settings", "frame_end", str(frame_end))
-            ]
-
-            if not default_conversion:
-                options_extra_properties.extend([
-                    ("conversion_settings", "preset",
-                        "unreal.AbcConversionPreset.CUSTOM"),
-                    ("conversion_settings", "flip_u", "False"),
-                    ("conversion_settings", "flip_v", "True"),
-                    ("conversion_settings", "rotation", "[0.0, 0.0, 0.0]"),
-                    ("conversion_settings", "scale", "[1.0, 1.0, 1.0]")
-                ])
-
-            up.send_request(
-                "import_abc_task",
-                params=[
-                    str(task_properties),
-                    str(options_properties),
-                    str(options_extra_properties)
-                ])
+            self._import_fbx_task(
+                self.fname, asset_dir, asset_name, False,
+                frame_start, frame_end, default_conversion)
 
             # Create Asset Container
             up.send_request(
@@ -123,7 +131,10 @@ class PointCacheAlembicLoader(plugin.Loader):
             "loader": str(self.__class__.__name__),
             "representation": str(context["representation"]["_id"]),
             "parent": str(context["representation"]["parent"]),
-            "family": context["representation"]["context"]["family"]
+            "family": context["representation"]["context"]["family"],
+            "frame_start": context["asset"]["data"]["frameStart"],
+            "frame_end": context["asset"]["data"]["frameEnd"],
+            "default_conversion": default_conversion
         }
         up.send_request(
             "imprint", params=[f"{asset_dir}/{container_name}", str(data)])
@@ -136,42 +147,35 @@ class PointCacheAlembicLoader(plugin.Loader):
 
         return asset_content
 
-    # def update(self, container, representation):
-    #     name = container["asset_name"]
-    #     source_path = get_representation_path(representation)
-    #     destination_path = container["namespace"]
+    def update(self, container, representation):
+        filename = get_representation_path(representation)
+        asset_dir = container["namespace"]
+        asset_name = container["asset_name"]
+        container_name = container['objectName']
 
-    #     task = self.get_task(source_path, destination_path, name, True)
+        frame_start = container["frameStart"]
+        frame_end = container["frameStart"]
+        default_conversion = container["default_conversion"]
 
-    #     # do import fbx and replace existing data
-    #     unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+        self._import_fbx_task(
+            filename, asset_dir, asset_name, True,
+            frame_start, frame_end, default_conversion)
 
-    #     container_path = "{}/{}".format(container["namespace"],
-    #                                     container["objectName"])
-    #     # update metadata
-    #     up.imprint(
-    #         container_path,
-    #         {
-    #             "representation": str(representation["_id"]),
-    #             "parent": str(representation["parent"])
-    #         })
+        data = {
+            "representation": str(representation["_id"]),
+            "parent": str(representation["parent"])
+        }
+        up.send_request(
+            "imprint", params=[f"{asset_dir}/{container_name}", str(data)])
 
-    #     asset_content = unreal.EditorAssetLibrary.list_assets(
-    #         destination_path, recursive=True, include_folder=True
-    #     )
+        asset_content = up.send_request_literal(
+            "list_assets", params=[asset_dir, "True", "True"])
 
-    #     for a in asset_content:
-    #         unreal.EditorAssetLibrary.save_asset(a)
+        up.send_request(
+            "save_listed_assets", params=[str(asset_content)])
 
-    # def remove(self, container):
-    #     path = container["namespace"]
-    #     parent_path = os.path.dirname(path)
+    def remove(self, container):
+        path = container["namespace"]
 
-    #     unreal.EditorAssetLibrary.delete_directory(path)
-
-    #     asset_content = unreal.EditorAssetLibrary.list_assets(
-    #         parent_path, recursive=False
-    #     )
-
-    #     if len(asset_content) == 0:
-    #         unreal.EditorAssetLibrary.delete_directory(parent_path)
+        up.send_request(
+            "remove_asset", params=[path])

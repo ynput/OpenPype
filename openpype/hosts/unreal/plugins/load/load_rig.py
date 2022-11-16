@@ -19,6 +19,50 @@ class SkeletalMeshFBXLoader(plugin.Loader):
     icon = "cube"
     color = "orange"
 
+    def _import_fbx_task(
+            self, filename, destination_path, destination_name, replace):
+        task_properties = [
+            ("filename", up.format_string(filename)),
+            ("destination_path", up.format_string(destination_path)),
+            ("destination_name", up.format_string(destination_name)),
+            ("replace_existing", str(replace)),
+            ("automated", "True"),
+            ("save", "True")
+        ]
+
+        options_properties = [
+            ("import_as_skeletal", "True"),
+            ("import_animations", "False"),
+            ("import_mesh", "True"),
+            ("import_materials", "False"),
+            ("import_textures", "False"),
+            ("skeleton", "None"),
+            ("create_physics_asset", "False"),
+            ("mesh_type_to_import",
+                "unreal.FBXImportType.FBXIT_SKELETAL_MESH")
+        ]
+
+        options_extra_properties = [
+            (
+                "skeletal_mesh_import_data",
+                "import_content_type",
+                "unreal.FBXImportContentType.FBXICT_ALL"
+            ),
+            (
+                "skeletal_mesh_import_data",
+                "normal_import_method",
+                "unreal.FBXNormalImportMethod.FBXNIM_IMPORT_NORMALS"
+            )
+        ]
+
+        up.send_request(
+            "import_fbx_task",
+            params=[
+                str(task_properties),
+                str(options_properties),
+                str(options_extra_properties)
+            ])
+
     def load(self, context, name, namespace, options):
         """Load and containerise representation into Content Browser.
 
@@ -62,47 +106,7 @@ class SkeletalMeshFBXLoader(plugin.Loader):
                 "does_directory_exist", params=[asset_dir]):
             up.send_request("make_directory", params=[asset_dir])
 
-            task_properties = [
-                ("filename", up.format_string(self.fname)),
-                ("destination_path", up.format_string(asset_dir)),
-                ("destination_name", up.format_string(asset_name)),
-                ("replace_existing", "False"),
-                ("automated", "True"),
-                ("save", "False")
-            ]
-
-            options_properties = [
-                ("import_as_skeletal", "True"),
-                ("import_animations", "False"),
-                ("import_mesh", "True"),
-                ("import_materials", "False"),
-                ("import_textures", "False"),
-                ("skeleton", "None"),
-                ("create_physics_asset", "False"),
-                ("mesh_type_to_import", 
-                    "unreal.FBXImportType.FBXIT_SKELETAL_MESH")
-            ]
-
-            options_extra_properties = [
-                (
-                    "skeletal_mesh_import_data",
-                    "import_content_type",
-                    "unreal.FBXImportContentType.FBXICT_ALL"
-                ),
-                (
-                    "skeletal_mesh_import_data",
-                    "normal_import_method",
-                    "unreal.FBXNormalImportMethod.FBXNIM_IMPORT_NORMALS"
-                )
-            ]
-
-            up.send_request(
-                "import_fbx_task",
-                params=[
-                    str(task_properties),
-                    str(options_properties),
-                    str(options_extra_properties)
-                ])
+            self._import_fbx_task(self.fname, asset_dir, asset_name, False)
 
             # Create Asset Container
             up.send_request(
@@ -131,73 +135,29 @@ class SkeletalMeshFBXLoader(plugin.Loader):
 
         return asset_content
 
-    # def update(self, container, representation):
-    #     name = container["asset_name"]
-    #     source_path = get_representation_path(representation)
-    #     destination_path = container["namespace"]
+    def update(self, container, representation):
+        filename = get_representation_path(representation)
+        asset_dir = container["namespace"]
+        asset_name = container["asset_name"]
+        container_name = container['objectName']
 
-    #     task = unreal.AssetImportTask()
+        self._import_fbx_task(filename, asset_dir, asset_name, True)
 
-    #     task.set_editor_property('filename', source_path)
-    #     task.set_editor_property('destination_path', destination_path)
-    #     task.set_editor_property('destination_name', name)
-    #     task.set_editor_property('replace_existing', True)
-    #     task.set_editor_property('automated', True)
-    #     task.set_editor_property('save', True)
+        data = {
+            "representation": str(representation["_id"]),
+            "parent": str(representation["parent"])
+        }
+        up.send_request(
+            "imprint", params=[f"{asset_dir}/{container_name}", str(data)])
 
-    #     # set import options here
-    #     options = unreal.FbxImportUI()
-    #     options.set_editor_property('import_as_skeletal', True)
-    #     options.set_editor_property('import_animations', False)
-    #     options.set_editor_property('import_mesh', True)
-    #     options.set_editor_property('import_materials', True)
-    #     options.set_editor_property('import_textures', True)
-    #     options.set_editor_property('skeleton', None)
-    #     options.set_editor_property('create_physics_asset', False)
+        asset_content = up.send_request_literal(
+            "list_assets", params=[asset_dir, "True", "True"])
 
-    #     options.set_editor_property('mesh_type_to_import',
-    #                                 unreal.FBXImportType.FBXIT_SKELETAL_MESH)
+        up.send_request(
+            "save_listed_assets", params=[str(asset_content)])
 
-    #     options.skeletal_mesh_import_data.set_editor_property(
-    #         'import_content_type',
-    #         unreal.FBXImportContentType.FBXICT_ALL
-    #     )
-    #     # set to import normals, otherwise Unreal will compute them
-    #     # and it will take a long time, depending on the size of the mesh
-    #     options.skeletal_mesh_import_data.set_editor_property(
-    #         'normal_import_method',
-    #         unreal.FBXNormalImportMethod.FBXNIM_IMPORT_NORMALS
-    #     )
+    def remove(self, container):
+        path = container["namespace"]
 
-    #     task.options = options
-    #     # do import fbx and replace existing data
-    #     unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
-    #     container_path = "{}/{}".format(container["namespace"],
-    #                                     container["objectName"])
-    #     # update metadata
-    #     unreal_pipeline.imprint(
-    #         container_path,
-    #         {
-    #             "representation": str(representation["_id"]),
-    #             "parent": str(representation["parent"])
-    #         })
-
-    #     asset_content = unreal.EditorAssetLibrary.list_assets(
-    #         destination_path, recursive=True, include_folder=True
-    #     )
-
-    #     for a in asset_content:
-    #         unreal.EditorAssetLibrary.save_asset(a)
-
-    # def remove(self, container):
-    #     path = container["namespace"]
-    #     parent_path = os.path.dirname(path)
-
-    #     unreal.EditorAssetLibrary.delete_directory(path)
-
-    #     asset_content = unreal.EditorAssetLibrary.list_assets(
-    #         parent_path, recursive=False
-    #     )
-
-    #     if len(asset_content) == 0:
-    #         unreal.EditorAssetLibrary.delete_directory(parent_path)
+        up.send_request(
+            "remove_asset", params=[path])

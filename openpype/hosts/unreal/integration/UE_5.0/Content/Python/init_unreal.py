@@ -34,4 +34,8 @@ from plugins.load import (
     add_animation_to_sequencer,
     import_camera,
     get_actor_and_skeleton,
+    remove_asset,
+    delete_all_bound_assets,
+    remove_camera,
+    remove_layout,
 )

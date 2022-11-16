@@ -539,219 +539,85 @@ class LayoutLoader(plugin.Loader):
 
         return asset_content
 
-    # def update(self, container, representation):
-    #     data = get_current_project_settings()
-    #     create_sequences = data["unreal"]["level_sequences_for_layouts"]
+    def update(self, container, representation):
+        root = "/Game/OpenPype"
+        asset_dir = container.get('namespace')
+        context = representation.get("context")
 
-    #     ar = unreal.AssetRegistryHelpers.get_asset_registry()
+        data = get_current_project_settings()
+        create_sequences = data["unreal"]["level_sequences_for_layouts"]
 
-    #     root = "/Game/OpenPype"
+        master_level = None
+        prev_level = None
+        layout_sequence = ""
 
-    #     asset_dir = container.get('namespace')
-    #     context = representation.get("context")
+        if create_sequences:
+            hierarchy = context.get('hierarchy').split("/")
+            h_dir = f"{root}/{hierarchy[0]}"
+            h_asset = hierarchy[0]
+            master_level = f"{h_dir}/{h_asset}_map.{h_asset}_map"
 
-    #     sequence = None
-    #     master_level = None
+            parent_path = Path(asset_dir).parent.as_posix()
 
-    #     if create_sequences:
-    #         hierarchy = context.get('hierarchy').split("/")
-    #         h_dir = f"{root}/{hierarchy[0]}"
-    #         h_asset = hierarchy[0]
-    #         master_level = f"{h_dir}/{h_asset}_map.{h_asset}_map"
+            layout_level = up.send_request(
+                "get_first_asset_of_class",
+                params=["World", parent_path, "False"])
 
-    #         filter = unreal.ARFilter(
-    #             class_names=["LevelSequence"],
-    #             package_paths=[asset_dir],
-    #             recursive_paths=False)
-    #         sequences = ar.get_assets(filter)
-    #         sequence = sequences[0].get_asset()
+            up.send_request("load_level", params=[layout_level])
 
-    #     prev_level = None
+            layout_sequence = up.send_request(
+                "get_first_asset_of_class",
+                params=["LevelSequence", asset_dir, "False"])
 
-    #     if not master_level:
-    #         curr_level = unreal.LevelEditorSubsystem().get_current_level()
-    #         curr_level_path = curr_level.get_outer().get_path_name()
-    #         # If the level path does not start with "/Game/", the current
-    #         # level is a temporary, unsaved level.
-    #         if curr_level_path.startswith("/Game/"):
-    #             prev_level = curr_level_path
+            up.send_request(
+                "delete_all_bound_assets", params=[layout_sequence])
 
-    #     # Get layout level
-    #     filter = unreal.ARFilter(
-    #         class_names=["World"],
-    #         package_paths=[asset_dir],
-    #         recursive_paths=False)
-    #     levels = ar.get_assets(filter)
+        if not master_level:
+            prev_level = up.send_request("get_current_level")
 
-    #     layout_level = levels[0].get_editor_property('object_path')
+        source_path = get_representation_path(representation)
 
-    #     EditorLevelLibrary.save_all_dirty_levels()
-    #     EditorLevelLibrary.load_level(layout_level)
+        loaded_assets = self._process(source_path, asset_dir, layout_sequence)
 
-    #     # Delete all the actors in the level
-    #     actors = unreal.EditorLevelLibrary.get_all_level_actors()
-    #     for actor in actors:
-    #         unreal.EditorLevelLibrary.destroy_actor(actor)
+        data = {
+            "representation": str(representation["_id"]),
+            "parent": str(representation["parent"]),
+            "loaded_assets": loaded_assets
+        }
+        up.send_request(
+            "imprint", params=[
+                f"{asset_dir}/{container.get('container_name')}", str(data)])
 
-    #     if create_sequences:
-    #         EditorLevelLibrary.save_current_level()
+        up.send_request("save_current_level")
 
-    #     EditorAssetLibrary.delete_directory(f"{asset_dir}/animations/")
+        asset_content = up.send_request_literal(
+            "list_assets", params=[asset_dir, "True", "False"])
 
-    #     source_path = get_representation_path(representation)
+        up.send_request(
+            "save_listed_assets", params=[str(asset_content)])
 
-    #     loaded_assets = self._process(source_path, asset_dir, sequence)
+        if master_level:
+            up.send_request("load_level", params=[master_level])
+        elif prev_level:
+            up.send_request("load_level", params=[prev_level])
 
-    #     data = {
-    #         "representation": str(representation["_id"]),
-    #         "parent": str(representation["parent"]),
-    #         "loaded_assets": loaded_assets
-    #     }
-    #     up.imprint(
-    #         "{}/{}".format(asset_dir, container.get('container_name')), data)
 
-    #     EditorLevelLibrary.save_current_level()
+    def remove(self, container):
+        """
+        Delete the layout. First, check if the assets loaded with the layout
+        are used by other layouts. If not, delete the assets.
+        """
+        root = "/Game/OpenPype"
+        asset = container.get('asset')
+        asset_dir = container.get('namespace')
+        asset_name = container.get('asset_name')
+        loaded_assets = container.get('loaded_assets')
 
-    #     asset_content = EditorAssetLibrary.list_assets(
-    #         asset_dir, recursive=True, include_folder=False)
+        data = get_current_project_settings()
+        create_sequences = data["unreal"]["level_sequences_for_layouts"]
 
-    #     for a in asset_content:
-    #         EditorAssetLibrary.save_asset(a)
-
-    #     if master_level:
-    #         EditorLevelLibrary.load_level(master_level)
-    #     elif prev_level:
-    #         EditorLevelLibrary.load_level(prev_level)
-
-    # def remove(self, container):
-    #     """
-    #     Delete the layout. First, check if the assets loaded with the layout
-    #     are used by other layouts. If not, delete the assets.
-    #     """
-    #     data = get_current_project_settings()
-    #     create_sequences = data["unreal"]["level_sequences_for_layouts"]
-
-    #     root = "/Game/OpenPype"
-    #     path = Path(container.get("namespace"))
-
-    #     containers = up.ls()
-    #     layout_containers = [
-    #         c for c in containers
-    #         if (c.get('asset_name') != container.get('asset_name') and
-    #             c.get('family') == "layout")]
-
-    #     # Check if the assets have been loaded by other layouts, and deletes
-    #     # them if they haven't.
-    #     for asset in eval(container.get('loaded_assets')):
-    #         layouts = [
-    #             lc for lc in layout_containers
-    #             if asset in lc.get('loaded_assets')]
-
-    #         if not layouts:
-    #             EditorAssetLibrary.delete_directory(str(Path(asset).parent))
-
-    #             # Delete the parent folder if there aren't any more
-    #             # layouts in it.
-    #             asset_content = EditorAssetLibrary.list_assets(
-    #                 str(Path(asset).parent.parent), recursive=False,
-    #                 include_folder=True
-    #             )
-
-    #             if len(asset_content) == 0:
-    #                 EditorAssetLibrary.delete_directory(
-    #                     str(Path(asset).parent.parent))
-
-    #     master_sequence = None
-    #     master_level = None
-    #     sequences = []
-
-    #     if create_sequences:
-    #         # Remove the Level Sequence from the parent.
-    #         # We need to traverse the hierarchy from the master sequence to
-    #         # find the level sequence.
-    #         namespace = container.get('namespace').replace(f"{root}/", "")
-    #         ms_asset = namespace.split('/')[0]
-    #         ar = unreal.AssetRegistryHelpers.get_asset_registry()
-    #         _filter = unreal.ARFilter(
-    #             class_names=["LevelSequence"],
-    #             package_paths=[f"{root}/{ms_asset}"],
-    #             recursive_paths=False)
-    #         sequences = ar.get_assets(_filter)
-    #         master_sequence = sequences[0].get_asset()
-    #         _filter = unreal.ARFilter(
-    #             class_names=["World"],
-    #             package_paths=[f"{root}/{ms_asset}"],
-    #             recursive_paths=False)
-    #         levels = ar.get_assets(_filter)
-    #         master_level = levels[0].get_editor_property('object_path')
-
-    #         sequences = [master_sequence]
-
-    #         parent = None
-    #         for s in sequences:
-    #             tracks = s.get_master_tracks()
-    #             subscene_track = None
-    #             visibility_track = None
-    #             for t in tracks:
-    #                 if t.get_class() == MovieSceneSubTrack.static_class():
-    #                     subscene_track = t
-    #                 if (t.get_class() ==
-    #                         MovieSceneLevelVisibilityTrack.static_class()):
-    #                     visibility_track = t
-    #             if subscene_track:
-    #                 sections = subscene_track.get_sections()
-    #                 for ss in sections:
-    #                     if (ss.get_sequence().get_name() ==
-    #                             container.get('asset')):
-    #                         parent = s
-    #                         subscene_track.remove_section(ss)
-    #                         break
-    #                     sequences.append(ss.get_sequence())
-    #                 # Update subscenes indexes.
-    #                 i = 0
-    #                 for ss in sections:
-    #                     ss.set_row_index(i)
-    #                     i += 1
-
-    #             if visibility_track:
-    #                 sections = visibility_track.get_sections()
-    #                 for ss in sections:
-    #                     if (unreal.Name(f"{container.get('asset')}_map")
-    #                             in ss.get_level_names()):
-    #                         visibility_track.remove_section(ss)
-    #                 # Update visibility sections indexes.
-    #                 i = -1
-    #                 prev_name = []
-    #                 for ss in sections:
-    #                     if prev_name != ss.get_level_names():
-    #                         i += 1
-    #                     ss.set_row_index(i)
-    #                     prev_name = ss.get_level_names()
-    #             if parent:
-    #                 break
-
-    #         assert parent, "Could not find the parent sequence"
-
-    #     # Create a temporary level to delete the layout level.
-    #     EditorLevelLibrary.save_all_dirty_levels()
-    #     EditorAssetLibrary.make_directory(f"{root}/tmp")
-    #     tmp_level = f"{root}/tmp/temp_map"
-    #     if not EditorAssetLibrary.does_asset_exist(f"{tmp_level}.temp_map"):
-    #         EditorLevelLibrary.new_level(tmp_level)
-    #     else:
-    #         EditorLevelLibrary.load_level(tmp_level)
-
-    #     # Delete the layout directory.
-    #     EditorAssetLibrary.delete_directory(str(path))
-
-    #     if create_sequences:
-    #         EditorLevelLibrary.load_level(master_level)
-    #         EditorAssetLibrary.delete_directory(f"{root}/tmp")
-
-    #     # Delete the parent folder if there aren't any more layouts in it.
-    #     asset_content = EditorAssetLibrary.list_assets(
-    #         str(path.parent), recursive=False, include_folder=True
-    #     )
-
-    #     if len(asset_content) == 0:
-    #         EditorAssetLibrary.delete_directory(str(path.parent))
+        up.send_request(
+            "remove_layout",
+            params=[
+                root, asset, asset_dir, asset_name, loaded_assets,
+                "True" if create_sequences else "False"])
