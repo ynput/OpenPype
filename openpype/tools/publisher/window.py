@@ -716,7 +716,7 @@ class PublisherWindow(QtWidgets.QDialog):
 
     def _update_create_overlay_size(self):
         metrics = self._create_overlay_button.fontMetrics()
-        size = int(metrics.height() * 3)
+        size = int(metrics.height())
         end_pos_x = self.width()
         start_pos_x = end_pos_x - size
 
