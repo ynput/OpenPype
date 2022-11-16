@@ -38,23 +38,31 @@ class OnlineCreator(TrayPublishCreator):
         return "fa.file"
 
     def create(self, subset_name, instance_data, pre_create_data):
-        if not pre_create_data.get("representation_file")["filenames"]:
+        repr_file = pre_create_data.get("representation_file")
+        if not repr_file:
             raise CreatorError("No files specified")
 
-        asset = get_asset_by_name(self.project_name, instance_data["asset"])
-        origin_basename = Path(pre_create_data.get(
-            "representation_file")["filenames"][0]).stem
+        files = repr_file.get("filenames")
+        if not files:
+            # this should never happen
+            raise CreatorError("Missing files from representation")
 
+        origin_basename = Path(files[0]).stem
+
+        asset = get_asset_by_name(
+            self.project_name, instance_data["asset"], fields=["_id"])
         if get_subset_by_name(
-                self.project_name, origin_basename, asset["_id"]):
+                self.project_name, origin_basename, asset["_id"],
+                fields=["_id"]):
             raise CreatorError(f"subset with {origin_basename} already "
                                "exists in selected asset")
 
         instance_data["originalBasename"] = origin_basename
         subset_name = origin_basename
-        path = (Path(pre_create_data.get("representation_file")["directory"]) / pre_create_data.get("representation_file")["filenames"][0]).as_posix()  # noqa
 
-        instance_data["creator_attributes"] = {"path": path}
+        instance_data["creator_attributes"] = {
+            "path": (Path(repr_file["directory"]) / files[0]).as_posix()
+        }
 
         # Create new instance
         new_instance = CreatedInstance(self.family, subset_name,
