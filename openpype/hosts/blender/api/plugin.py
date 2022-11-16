@@ -1542,6 +1542,7 @@ class StructDescriptor:
         "name",
         "type",
         "is_override_data",
+        "vertex_indices_set",
     ]
 
     def _get_from_bpy_data(self, prop_value: Dict):
