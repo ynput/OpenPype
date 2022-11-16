@@ -476,7 +476,7 @@ def convert_for_ffmpeg(
     if input_frame_start is not None and input_frame_end is not None:
         is_sequence = int(input_frame_end) != int(input_frame_start)
 
-    input_info = get_oiio_info_for_input(first_input_path)
+    input_info = get_oiio_info_for_input(first_input_path, logger=logger)
 
     # Change compression only if source compression is "dwaa" or "dwab"
     #   - they're not supported in ffmpeg
@@ -524,10 +524,8 @@ def convert_for_ffmpeg(
         input_arg, first_input_path,
         # Tell oiiotool which channels should be put to top stack (and output)
         "--ch", channels_arg,
-        # WARNING: This is commented out because ffmpeg won't be able to
-        #   render proper output when only one subimage is outputed with oiio
         # Use first subimage
-        # "--subimage", "0"
+        "--subimage", "0"
     ])
 
     # Add frame definitions to arguments
@@ -621,7 +619,7 @@ def convert_input_paths_for_ffmpeg(
             " \".exr\" extension. Got \"{}\"."
         ).format(ext))
 
-    input_info = get_oiio_info_for_input(first_input_path)
+    input_info = get_oiio_info_for_input(first_input_path, logger=logger)
 
     # Change compression only if source compression is "dwaa" or "dwab"
     #   - they're not supported in ffmpeg
@@ -639,6 +637,7 @@ def convert_input_paths_for_ffmpeg(
 
     red, green, blue, alpha = review_channels
     input_channels = [red, green, blue]
+    # TODO find subimage inder where rgba is available for multipart exrs
     channels_arg = "R={},G={},B={}".format(red, green, blue)
     if alpha is not None:
         channels_arg += ",A={}".format(alpha)
@@ -671,11 +670,8 @@ def convert_input_paths_for_ffmpeg(
             # Tell oiiotool which channels should be put to top stack
             #   (and output)
             "--ch", channels_arg,
-            # WARNING: This is commented out because ffmpeg won't be able to
-            #   render proper output when only one subimage is outputed
-            #   with oiiotool
             # Use first subimage
-            # "--subimage", "0"
+            "--subimage", "0"
         ])
 
         for attr_name, attr_value in input_info["attribs"].items():
