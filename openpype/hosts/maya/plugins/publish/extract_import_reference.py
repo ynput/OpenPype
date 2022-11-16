@@ -79,16 +79,19 @@ current_name = "{current_name}"
 ref_scene_name = "{ref_scene_name}"
 print(">>> Opening {{}} ...".format(current_name))
 cmds.file(current_name, open=True, force=True)
-reference_node = cmds.ls(type='reference')
 print(">>> Processing references")
-for ref in reference_node:
-    ref_file = cmds.referenceQuery(ref, f=True)
-    print("--- {{}}".format(ref))
-    print("--> {{}}".format(ref_file))
-    if ref == 'sharedReferenceNode':
-        cmds.file(ref_file, removeReference=True, referenceNode=ref)
-    else:
-        cmds.file(ref_file, importReference=True)
+all_reference = cmds.file(q=True, reference=True) or []
+for ref in all_reference:
+    if cmds.referenceQuery(ref, f=True):
+        cmds.file(ref, importReference=True)
+
+        nested_ref = cmds.file(q=True, reference=True)
+        if nested_ref:
+            for new_ref in nested_ref:
+                if new_ref not in all_reference:
+                    all_reference.append(new_ref)
+
+print(">>> Finish importing references")
 print(">>> Saving scene as {{}}".format(ref_scene_name))
 
 cmds.file(rename=ref_scene_name)
