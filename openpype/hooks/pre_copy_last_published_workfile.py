@@ -8,9 +8,11 @@ from openpype.client.entities import (
 )
 from openpype.lib import PreLaunchHook
 from openpype.lib.local_settings import get_local_site_id
-from openpype.lib.path_tools import version_up
+from openpype.lib.path_tools import get_version_from_path, version_up
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.pipeline.load.utils import get_representation_path
+from openpype.pipeline.template_data import get_template_data_with_names
+from openpype.pipeline.workfile.path_resolving import get_last_workfile
 from openpype.settings.lib import get_project_settings
 
 
@@ -55,6 +57,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
 
         # Get data
         project_name = self.data["project_name"]
+        asset_name = self.data["asset_name"]
         task_name = self.data["task_name"]
         task_type = self.data["task_type"]
         host_name = self.application.host_name
@@ -176,11 +179,32 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         )
         local_workfile_dir = os.path.dirname(last_workfile)
 
+        # Build workfile to copy and open's name from anatomy template settings
+        workfile_data = get_template_data_with_names(
+            project_name, asset_name, task_name, host_name
+        )
+        local_workfile_path = get_last_workfile(
+            local_workfile_dir,
+            str(anatomy.templates["work"]["file"]),
+            workfile_data,
+            [os.path.splitext(published_workfile_path)[1]],
+            full_path=True,
+        )
+
+        # Substitute local workfile default version number 
+        # to published version's incremented by one
+        local_workfile_version = get_version_from_path(local_workfile_path)
+        published_workfile_version = get_version_from_path(
+            published_workfile_path
+        )
+        local_workfile_path = version_up(
+            local_workfile_path.replace(
+                local_workfile_version, published_workfile_version
+            )
+        )
+
         # Copy file and substitute path
         self.data["last_workfile_path"] = shutil.copy(
             published_workfile_path,
-            os.path.join(
-                local_workfile_dir,
-                os.path.basename(version_up(published_workfile_path)),
-            ),
+            local_workfile_path,
         )
