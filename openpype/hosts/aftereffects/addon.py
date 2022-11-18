@@ -1,5 +1,4 @@
-from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import IHostAddon
+from openpype.modules import OpenPypeModule, IHostAddon
 
 
 class AfterEffectsAddon(OpenPypeModule, IHostAddon):

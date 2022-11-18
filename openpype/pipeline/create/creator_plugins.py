@@ -1,5 +1,6 @@
 import os
 import copy
+import collections
 
 from abc import (
     ABCMeta,
@@ -442,6 +443,13 @@ class BaseCreator:
 
         return self.create_context.collection_shared_data
 
+    def set_instance_thumbnail_path(self, instance_id, thumbnail_path=None):
+        """Set path to thumbnail for instance."""
+
+        self.create_context.thumbnail_paths_by_instance_id[instance_id] = (
+            thumbnail_path
+        )
+
 
 class Creator(BaseCreator):
     """Creator that has more information for artist to show in UI.
@@ -468,6 +476,13 @@ class Creator(BaseCreator):
     # - in some cases it may confuse artists because it would not be used
     #      e.g. for buld creators
     create_allow_context_change = True
+    # A thumbnail can be passed in precreate attributes
+    # - if is set to True is should expect that a thumbnail path under key
+    #   PRE_CREATE_THUMBNAIL_KEY can be sent in data with precreate data
+    # - is disabled by default because the feature was added in later stages
+    #   and creators who would not expect PRE_CREATE_THUMBNAIL_KEY could
+    #   cause issues with instance data
+    create_allow_thumbnail = False
 
     # Precreate attribute definitions showed before creation
     # - similar to instance attribute definitions
@@ -660,3 +675,34 @@ def deregister_creator_plugin_path(path):
     deregister_plugin_path(BaseCreator, path)
     deregister_plugin_path(LegacyCreator, path)
     deregister_plugin_path(SubsetConvertorPlugin, path)
+
+
+def cache_and_get_instances(creator, shared_key, list_instances_func):
+    """Common approach to cache instances in shared data.
+
+    This is helper function which does not handle cases when a 'shared_key' is
+    used for different list instances functions. The same approach of caching
+    instances into 'collection_shared_data' is not required but is so common
+    we've decided to unify it to some degree.
+
+    Function 'list_instances_func' is called only if 'shared_key' is not
+    available in 'collection_shared_data' on creator.
+
+    Args:
+        creator (Creator): Plugin which would like to get instance data.
+        shared_key (str): Key under which output of function will be stored.
+        list_instances_func (Function): Function that will return instance data
+            if data were not yet stored under 'shared_key'.
+
+    Returns:
+        Dict[str, Dict[str, Any]]: Cached instances by creator identifier from
+            result of passed function.
+    """
+
+    if shared_key not in creator.collection_shared_data:
+        value = collections.defaultdict(list)
+        for instance in list_instances_func():
+            identifier = instance.get("creator_identifier")
+            value[identifier].append(instance)
+        creator.collection_shared_data[shared_key] = value
+    return creator.collection_shared_data[shared_key]

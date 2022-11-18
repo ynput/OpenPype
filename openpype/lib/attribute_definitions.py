@@ -91,7 +91,7 @@ class AbstractAttrDefMeta(ABCMeta):
 
 
 @six.add_metaclass(AbstractAttrDefMeta)
-class AbtractAttrDef:
+class AbtractAttrDef(object):
     """Abstraction of attribute definiton.
 
     Each attribute definition must have implemented validation and
@@ -540,6 +540,13 @@ class FileDefItem(object):
         if ext:
             return ext
         return None
+
+    @property
+    def lower_ext(self):
+        ext = self.ext
+        if ext is not None:
+            return ext.lower()
+        return ext
 
     @property
     def is_dir(self):
