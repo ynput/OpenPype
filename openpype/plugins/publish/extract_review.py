@@ -152,7 +152,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if input_ext.startswith("."):
                 input_ext = input_ext[1:]
 
-            if input_ext.lower() not in self.supported_exts:
+            if input_ext not in self.supported_exts:
                 self.log.info(
                     "Representation has unsupported extension \"{}\"".format(
                         input_ext
