@@ -681,6 +681,10 @@ class SCENE_OT_RemoveFromOpenpypeInstance(
 
         # Remove from datablocks
         for d in op_instance.datablocks:
+            # Rename datablock to remove prefix
+            datablock = eval(d.datapath).get(d.name)
+            datablock.name = d.name.replace(f"{op_instance.name}.", "")
+
             op_instance.datablocks.remove(op_instance.datablocks.find(d.name))
 
         if len(op_instance.datablocks) == 0:

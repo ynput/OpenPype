@@ -958,6 +958,10 @@ class Creator(LegacyCreator):
 
         # Add datablocks to openpype instance
         for d in datablocks:
+            # Rename datablock with instance name as prefix
+            if not d.name.startswith(name):
+                d.name = f"{name}.{d.name}"
+
             # Skip if already existing
             if op_instance.datablocks.get(d.name):
                 continue
@@ -1003,6 +1007,13 @@ class Creator(LegacyCreator):
             bpy.data.collections.remove(
                 bpy.data.collections.get(instance_name)
             )
+
+        # Rename datablocks associated to instance
+        op_instance = openpype_instances[op_instance_index]
+        for d in op_instance.datablocks:
+            # Remove instance name prefix from datablock
+            datablock = eval(d.datapath).get(d.name)
+            datablock.name = d.name.replace(f"{op_instance.name}.", "")
 
         # Remove openpype instance
         openpype_instances.remove(op_instance_index)
