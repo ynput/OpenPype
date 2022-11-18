@@ -112,6 +112,10 @@ class LoadImage(load.LoaderPlugin):
             r = nuke.createNode(
                 "Read",
                 "name {}".format(read_name))
+
+            # hide property panel
+            r.hideControlPanel()
+
             r["file"].setValue(file)
 
             # Set colorspace defined in version data
