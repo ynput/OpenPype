@@ -38,7 +38,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
 
         sync_server = self.modules_manager.get("sync_server")
         if not sync_server or not sync_server.enabled:
-            self.log.deubg("Sync server module is not enabled or available")
+            self.log.debug("Sync server module is not enabled or available")
             return
 
         # Check there is no workfile available
