@@ -8,7 +8,7 @@ import platform
 import shutil
 
 from .file_handler import RemoteFileHandler
-from .addon_info import AddonInfo, UrlType
+from .addon_info import AddonInfo, UrlType, DependencyItem
 
 
 class UpdateState(Enum):
@@ -124,6 +124,33 @@ def get_addons_info(server_endpoint):
     return addons_info
 
 
+def get_dependency_info(server_endpoint):
+    """Returns info about currently used dependency package.
+
+    Dependency package means .venv created from all activated addons from the
+    server (plus libraries for core Tray app TODO confirm).
+    This package needs to be downloaded, unpacked and added to sys.path for
+    Tray app to work.
+    Args:
+        server_endpoint (str): url to server
+    Returns:
+        (DependencyItem) or None if no production_package_name found
+    """
+    response = requests.get(server_endpoint)
+    if not response.ok:
+        raise Exception(response.text)
+
+    response_json = response.json()
+    dependency_list = response_json["dependency_packages"]
+    production_package_name = response_json["production_package_name"]
+    for dependency in dependency_list:
+        dependency["production_package_name"] = production_package_name
+        dependency_package = DependencyItem.from_dict(dependency)
+        if (dependency_package and
+                dependency_package.name == production_package_name):
+            return dependency_package
+
+
 def update_addon_state(addon_infos, destination_folder, factory,
                        log=None):
     """Loops through all 'addon_infos', compares local version, unzips.
@@ -198,12 +225,57 @@ def check_addons(server_endpoint, addon_folder, downloaders):
                                 downloaders)
     failed = False
     ok_states = [UpdateState.UPDATED, UpdateState.EXISTS]
+    ok_states.append(UpdateState.FAILED_MISSING_SOURCE)  # TODO remove test only  noqa
     for res_val in result.values():
         if res_val not in ok_states:
             failed = True
             break
     if failed:
         raise RuntimeError(f"Unable to update some addons {result}")
+
+
+def check_venv(server_endpoint, local_venv_dir, downloaders, log=None):
+    """Main entry point to compare existing addons with those on server.
+
+    Args:
+        server_endpoint (str): url to v4 server endpoint
+        local_venv_dir (str): local dir path for addons
+        downloaders (AddonDownloader): factory of downloaders
+
+    Raises:
+        (RuntimeError) if required production package failed update
+    """
+    if not log:
+        log = logging.getLogger(__name__)
+
+    package = get_dependency_info(server_endpoint)
+    venv_dest_dir = os.path.join(local_venv_dir, package.name)
+    log.debug(f"Checking {package.name} in {local_venv_dir}")
+
+    if os.path.isdir(venv_dest_dir):
+        log.debug(f"Venv folder {venv_dest_dir} already exists.")
+        return
+
+    if not package.sources:
+        msg = f"Package {package.name} doesn't have any "\
+               "sources to download from."
+        raise RuntimeError(msg)
+
+    for source in package.sources:
+        try:
+            downloader = downloaders.get_downloader(source.type)
+            zip_file_path = downloader.download(attr.asdict(source),
+                                                venv_dest_dir)
+            downloader.check_hash(zip_file_path, package.hash)
+            downloader.unzip(zip_file_path, venv_dest_dir)
+            break
+        except Exception:
+            log.warning(f"Error happened during updating {package.name}",
+                        exc_info=True)
+            if os.path.isdir(venv_dest_dir):
+                log.debug(f"Cleaning {venv_dest_dir}")
+                shutil.rmtree(venv_dest_dir)
+            raise RuntimeError(f"Unable to download {package.name}")
 
 
 def default_addon_downloader():
