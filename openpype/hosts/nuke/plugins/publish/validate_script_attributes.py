@@ -1,13 +1,19 @@
 from copy import deepcopy
 import pyblish.api
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline import (
+    PublishXmlValidationError,
+    OptionalPyblishPluginMixin
+)
 from openpype.pipeline.publish import RepairAction
 from openpype.hosts.nuke.api.lib import (
     WorkfileSettings
 )
 
 
-class ValidateScriptAttributes(pyblish.api.InstancePlugin):
+class ValidateScriptAttributes(
+    OptionalPyblishPluginMixin,
+    pyblish.api.InstancePlugin
+):
     """ Validates file output. """
 
     order = pyblish.api.ValidatorOrder + 0.1
@@ -18,6 +24,9 @@ class ValidateScriptAttributes(pyblish.api.InstancePlugin):
     actions = [RepairAction]
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         script_data = deepcopy(instance.context.data["scriptData"])
 
         asset = instance.data["assetEntity"]
