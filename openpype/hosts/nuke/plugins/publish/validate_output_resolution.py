@@ -1,12 +1,19 @@
 import pyblish.api
 
 from openpype.hosts.nuke import api as napi
-from openpype.pipeline import PublishXmlValidationError
 from openpype.pipeline.publish import RepairAction
+from openpype.pipeline import (
+    PublishXmlValidationError,
+    OptionalPyblishPluginMixin
+)
+
 import nuke
 
 
-class ValidateOutputResolution(pyblish.api.InstancePlugin):
+class ValidateOutputResolution(
+    OptionalPyblishPluginMixin,
+    pyblish.api.InstancePlugin
+):
     """Validates Output Resolution.
 
     It is making sure the resolution of write's input is the same as
@@ -15,7 +22,7 @@ class ValidateOutputResolution(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     optional = True
-    families = ["render", "render.local", "render.farm"]
+    families = ["render"]
     label = "Write Resolution"
     hosts = ["nuke"]
     actions = [RepairAction]
@@ -24,6 +31,9 @@ class ValidateOutputResolution(pyblish.api.InstancePlugin):
     resolution_msg = "Reformat is set to wrong format"
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishXmlValidationError(self, invalid)
