@@ -65,7 +65,7 @@ class AddonInfo(object):
                                                 path=source["path"])
             if source.get("type") == UrlType.HTTP.value:
                 source_addon = WebAddonSource(type=source["type"],
-                                              url=source["url"])
+                                              url=source["path"])
 
             sources.append(source_addon)
 
@@ -78,3 +78,36 @@ class AddonInfo(object):
                    license=data.get("license"),
                    authors=data.get("authors"))
 
+
+@attr.s
+class DependencyItem(object):
+    """Object matching payload from Server about single dependency package"""
+    package_name = attr.ib()
+    platform = attr.ib()
+    checksum = attr.ib()
+    sources = attr.ib(default=attr.Factory(dict))
+    addon_list = attr.ib(default=attr.Factory(list))
+    python_modules = attr.ib(default=attr.Factory(dict))
+
+    @classmethod
+    def from_dict(cls, package):
+        sources = []
+
+        package_data = package["data"]
+        for os_source, sources in package_data.get("sources", {}).items():
+            for source in sources:
+                if source.get("type") == UrlType.FILESYSTEM.value:
+                    source_addon = LocalAddonSource(type=source["type"],
+                                                    path=source["path"])
+                if source.get("type") == UrlType.HTTP.value:
+                    source_addon = WebAddonSource(type=source["type"],
+                                                  url=source["url"])
+
+            sources.append(source_addon)
+
+        return cls(name=package.get("package_name"),
+                   platform=package.get("platform"),
+                   sources=sources,
+                   checksum=package.get("platform"),
+                   addon_list=package_data.get("addon_list"),
+                   python_modules=package_data.get("python_modules"))
