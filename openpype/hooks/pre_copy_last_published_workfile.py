@@ -191,7 +191,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             full_path=True,
         )
 
-        # Substitute local workfile default version number 
+        # Substitute local workfile default version number
         # to published version's incremented by one
         local_workfile_version = get_version_from_path(local_workfile_path)
         published_workfile_version = get_version_from_path(
