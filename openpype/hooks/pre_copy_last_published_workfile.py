@@ -42,7 +42,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
 
         sync_server = self.modules_manager.get("sync_server")
         if not sync_server or not sync_server.enabled:
-            self.log.deubg("Sync server module is not enabled or available")
+            self.log.debug("Sync server module is not enabled or available")
             return
 
         # Check there is no workfile available
@@ -191,7 +191,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             full_path=True,
         )
 
-        # Substitute local workfile default version number 
+        # Substitute local workfile default version number
         # to published version's incremented by one
         local_workfile_version = get_version_from_path(local_workfile_path)
         published_workfile_version = get_version_from_path(
