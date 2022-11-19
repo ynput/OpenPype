@@ -238,6 +238,10 @@
                     "label": "Create Maya Scene"
                 },
                 {
+                    "key": "CreateProxyAlembic",
+                    "label": "Create Proxy Alembic"
+                },
+                {
                     "key": "CreateRenderSetup",
                     "label": "Create Render Setup"
                 },

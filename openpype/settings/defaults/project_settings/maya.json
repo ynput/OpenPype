@@ -197,6 +197,12 @@
                 "Main"
             ]
         },
+        "CreateProxyAlembic": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
         "CreateRenderSetup": {
             "enabled": true,
             "defaults": [
