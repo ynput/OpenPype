@@ -1110,7 +1110,7 @@ class RenderProductsRedshift(ARenderProducts):
         if light_groups_enabled:
             return products
 
-        beauty_name = "Beauty_other" if has_beauty_aov else ""
+        beauty_name = "BeautyAux" if has_beauty_aov else ""
         for camera in cameras:
             products.insert(0,
                             RenderProduct(productName=beauty_name,
