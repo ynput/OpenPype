@@ -195,6 +195,16 @@ class OverviewWidget(QtWidgets.QFrame):
             self._subset_views_widget.setMaximumWidth(view_width)
             self._change_anim.start()
 
+    def get_subset_views_geo(self):
+        parent = self._subset_views_widget.parent()
+        global_pos = parent.mapToGlobal(self._subset_views_widget.pos())
+        return QtCore.QRect(
+            global_pos.x(),
+            global_pos.y(),
+            self._subset_views_widget.width(),
+            self._subset_views_widget.height()
+        )
+
     def _on_create_clicked(self):
         """Pass signal to parent widget which should care about changing state.
 

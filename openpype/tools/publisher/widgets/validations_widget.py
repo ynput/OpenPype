@@ -511,7 +511,7 @@ class ValidationsWidget(QtWidgets.QFrame):
         )
         # After success publishing
         publish_started_widget = ValidationArtistMessage(
-            "Publishing went smoothly", self
+            "So far so good", self
         )
         # After success publishing
         publish_stop_ok_widget = ValidationArtistMessage(
