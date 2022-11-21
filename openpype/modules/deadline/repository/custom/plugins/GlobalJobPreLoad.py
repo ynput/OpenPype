@@ -14,6 +14,137 @@ from Deadline.Scripting import (
     ProcessUtils,
 )
 
+VERSION_REGEX = re.compile(
+    r"(?P<major>0|[1-9]\d*)"
+    r"\.(?P<minor>0|[1-9]\d*)"
+    r"\.(?P<patch>0|[1-9]\d*)"
+    r"(?:-(?P<prerelease>[a-zA-Z\d\-.]*))?"
+    r"(?:\+(?P<buildmetadata>[a-zA-Z\d\-.]*))?"
+)
+
+
+class OpenPypeVersion:
+    """Fake semver version class for OpenPype version purposes.
+
+    The version
+    """
+    def __init__(self, major, minor, patch, prerelease, origin=None):
+        self.major = major
+        self.minor = minor
+        self.patch = patch
+        self.prerelease = prerelease
+
+        is_valid = True
+        if not major or not minor or not patch:
+            is_valid = False
+        self.is_valid = is_valid
+
+        if origin is None:
+            base = "{}.{}.{}".format(str(major), str(minor), str(patch))
+            if not prerelease:
+                origin = base
+            else:
+                origin = "{}-{}".format(base, str(prerelease))
+
+        self.origin = origin
+
+    @classmethod
+    def from_string(cls, version):
+        """Create an object of version from string.
+
+        Args:
+            version (str): Version as a string.
+
+        Returns:
+            Union[OpenPypeVersion, None]: Version object if input is nonempty
+                string otherwise None.
+        """
+
+        if not version:
+            return None
+        valid_parts = VERSION_REGEX.findall(version)
+        if len(valid_parts) != 1:
+            # Return invalid version with filled 'origin' attribute
+            return cls(None, None, None, None, origin=str(version))
+
+        # Unpack found version
+        major, minor, patch, pre, post = valid_parts[0]
+        prerelease = pre
+        # Post release is not important anymore and should be considered as
+        #   part of prerelease
+        # - comparison is implemented to find suitable build and builds should
+        #       never contain prerelease part so "not proper" parsing is
+        #       acceptable for this use case.
+        if post:
+            prerelease = "{}+{}".format(pre, post)
+
+        return cls(
+            int(major), int(minor), int(patch), prerelease, origin=version
+        )
+
+    def has_compatible_release(self, other):
+        """Version has compatible release as other version.
+
+        Both major and minor versions must be exactly the same. In that case
+        a build can be considered as release compatible with any version.
+
+        Args:
+            other (OpenPypeVersion): Other version.
+
+        Returns:
+            bool: Version is release compatible with other version.
+        """
+
+        if self.is_valid and other.is_valid:
+            return self.major == other.major and self.minor == other.minor
+        return False
+
+    def __bool__(self):
+        return self.is_valid
+
+    def __repr__(self):
+        return "<{} {}>".format(self.__class__.__name__, self.origin)
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return self.origin == other
+        return self.origin == other.origin
+
+    def __lt__(self, other):
+        if not isinstance(other, self.__class__):
+            return None
+
+        if not self.is_valid:
+            return True
+
+        if not other.is_valid:
+            return False
+
+        if self.origin == other.origin:
+            return None
+
+        same_major = self.major == other.major
+        if not same_major:
+            return self.major < other.major
+
+        same_minor = self.minor == other.minor
+        if not same_minor:
+            return self.minor < other.minor
+
+        same_patch = self.patch == other.patch
+        if not same_patch:
+            return self.patch < other.patch
+
+        if not self.prerelease:
+            return False
+
+        if not other.prerelease:
+            return True
+
+        pres = [self.prerelease, other.prerelease]
+        pres.sort()
+        return pres[0] == self.prerelease
+
 
 def get_openpype_version_from_path(path, build=True):
     """Get OpenPype version from provided path.
