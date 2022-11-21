@@ -575,6 +575,12 @@
             "optional": false,
             "active": true
         },
+        "ExtractProxyAlembic": {
+            "enabled": true,
+            "families": [
+                "proxyAbc"
+            ]
+        },
         "ExtractAlembic": {
             "enabled": true,
             "families": [

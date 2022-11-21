@@ -11,7 +11,7 @@ from openpype.hosts.maya.api.lib import (
 )
 
 
-class ExtractAlembic(publish.Extractor):
+class ExtractProxyAlembic(publish.Extractor):
     """Produce an alembic for bounding box geometry
     """
 
@@ -22,6 +22,8 @@ class ExtractAlembic(publish.Extractor):
     def process(self, instance):
 
         nodes, roots = self.get_members_and_roots(instance)
+
+        # Collect the start and end including handles
         start = float(instance.data.get("frameStartHandle", 1))
         end = float(instance.data.get("frameEndHandle", 1))
 
@@ -32,9 +34,9 @@ class ExtractAlembic(publish.Extractor):
         attr_prefixes = instance.data.get("attrPrefix", "").split(";")
         attr_prefixes = [value for value in attr_prefixes if value.strip()]
 
-        self.log.info("Extracting Proxy Meshes...")
-
+        self.log.info("Extracting pointcache..")
         dirname = self.staging_dir(instance)
+
         filename = "{name}.abc".format(**instance.data)
         path = os.path.join(dirname, filename)
 
@@ -52,18 +54,17 @@ class ExtractAlembic(publish.Extractor):
         }
 
         if not instance.data.get("includeParentHierarchy", True):
-
             options["root"] = roots
+
+
         if instance.data.get("visibleOnly", False):
             nodes = list(iter_visible_nodes_in_range(nodes,
                                                      start=start,
                                                      end=end))
+
         with suspended_refresh():
             with maintained_selection():
-                # TODO: select the bb geometry
-                self.create_proxy_geometry(instance,
-                                           start,
-                                           end)
+                self.create_proxy_geometry(instance, nodes, start, end)
                 extract_alembic(file=path,
                                 startFrame=start,
                                 endFrame=end,
@@ -76,21 +77,35 @@ class ExtractAlembic(publish.Extractor):
             'name': 'abc',
             'ext': 'abc',
             'files': filename,
-            'stagingDir': dirname
+            "stagingDir": dirname
         }
         instance.data["representations"].append(representation)
 
         instance.context.data["cleanupFullPaths"].append(path)
 
         self.log.info("Extracted {} to {}".format(instance, dirname))
-        #TODO: delete the bounding box
 
     def get_members_and_roots(self, instance):
         return instance[:], instance.data.get("setMembers")
 
-    def create_proxy_geometry(self, instance, start, end):
-
-        inst_selection = cmds.ls(instance.name, long=True)
+    def create_proxy_geometry(self, instance, node, start, end):
+        inst_selection = cmds.ls(node, long=True)
         name_suffix = instance.data.get("nameSuffix")
         if instance.data.get("single", True):
-            pass
+            cmds.geomToBBox(inst_selection,
+                            name=instance.name,
+                            nameSuffix=name_suffix,
+                            single=True,
+                            keepOriginal=True,
+                            bakeAnimation=True,
+                            startTime=start,
+                            endTime=end)
+        else:
+            cmds.geomToBBox(inst_selection,
+                            name=instance.name,
+                            nameSuffix=name_suffix,
+                            single=False,
+                            keepOriginal=True,
+                            bakeAnimation=True,
+                            startTime=start,
+                            endTime=end)

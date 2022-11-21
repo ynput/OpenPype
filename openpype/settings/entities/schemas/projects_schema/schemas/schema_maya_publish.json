@@ -641,6 +641,26 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "ExtractProxyAlembic",
+                    "label": "Extract Proxy Alembic",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "key": "families",
+                            "label": "Families",
+                            "type": "list",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "ExtractAlembic",
                     "label": "Extract Alembic",
                     "checkbox_key": "enabled",
