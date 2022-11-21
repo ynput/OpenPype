@@ -19,6 +19,7 @@ class ExtractSequence(pyblish.api.Extractor):
     label = "Extract Sequence"
     hosts = ["tvpaint"]
     families = ["review", "renderPass", "renderLayer", "renderScene"]
+    families_to_review = ["review"]
 
     # Modifiable with settings
     review_bg = [255, 255, 255, 255]
@@ -129,7 +130,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
         # Fill tags and new families from project settings
         tags = []
-        if family_lowered in self.families_to_upload:
+        if family_lowered in self.families_to_review:
             tags.append("review")
 
         # Sequence of one frame

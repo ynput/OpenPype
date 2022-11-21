@@ -59,8 +59,8 @@
                         },
                         {
                             "type": "enum",
-                            "key": "families_to_upload",
-                            "label": "Families to upload",
+                            "key": "families_to_review",
+                            "label": "Families to review",
                             "multiselection": true,
                             "enum_items": [
                                 {"review": "review"},
