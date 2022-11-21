@@ -62,7 +62,9 @@ class LoadImage(load.LoaderPlugin):
 
     def load(self, context, name, namespace, options):
         self.log.info("__ options: `{}`".format(options))
-        frame_number = options.get("frame_number", 1)
+        frame_number = options.get(
+            "frame_number", int(nuke.root()["first_frame"].getValue())
+        )
 
         version = context['version']
         version_data = version.get("data", {})
