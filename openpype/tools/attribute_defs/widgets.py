@@ -6,6 +6,7 @@ from Qt import QtWidgets, QtCore
 from openpype.lib.attribute_definitions import (
     AbtractAttrDef,
     UnknownDef,
+    HiddenDef,
     NumberDef,
     TextDef,
     EnumDef,
@@ -457,6 +458,29 @@ class UnknownAttrWidget(_BaseAttrDefWidget):
         if str_value != self._value:
             self._value = str_value
             self._input_widget.setText(str_value)
+
+
+class HiddenAttrWidget(_BaseAttrDefWidget):
+    def _ui_init(self):
+        self.setVisible(False)
+        self._value = None
+        self._multivalue = False
+
+    def setVisible(self, visible):
+        if visible:
+            visible = False
+        super(HiddenAttrWidget, self).setVisible(visible)
+
+    def current_value(self):
+        if self._multivalue:
+            raise ValueError(
+                "{} can't output for multivalue.".format(self.__class__.__name__)
+            )
+        return self._value
+
+    def set_value(self, value, multivalue=False):
+        self._value = copy.deepcopy(value)
+        self._multivalue = multivalue
 
 
 class FileAttrWidget(_BaseAttrDefWidget):
