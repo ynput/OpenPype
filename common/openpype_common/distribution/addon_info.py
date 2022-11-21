@@ -6,6 +6,7 @@ class UrlType(Enum):
     HTTP = "http"
     GIT = "git"
     FILESYSTEM = "filesystem"
+    SERVER = "server"
 
 
 @attr.s
@@ -28,6 +29,11 @@ class LocalAddonSource(AddonSource):
 @attr.s
 class WebAddonSource(AddonSource):
     url = attr.ib(default=None)
+
+
+@attr.s
+class ServerResourceSource(AddonSource):
+    filename = attr.ib(default=None)
 
 
 @attr.s
@@ -82,7 +88,7 @@ class AddonInfo(object):
 @attr.s
 class DependencyItem(object):
     """Object matching payload from Server about single dependency package"""
-    package_name = attr.ib()
+    name = attr.ib()
     platform = attr.ib()
     checksum = attr.ib()
     sources = attr.ib(default=attr.Factory(dict))
@@ -94,20 +100,25 @@ class DependencyItem(object):
         sources = []
 
         package_data = package["data"]
-        for os_source, sources in package_data.get("sources", {}).items():
-            for source in sources:
-                if source.get("type") == UrlType.FILESYSTEM.value:
-                    source_addon = LocalAddonSource(type=source["type"],
-                                                    path=source["path"])
-                if source.get("type") == UrlType.HTTP.value:
-                    source_addon = WebAddonSource(type=source["type"],
-                                                  url=source["url"])
+        for source in package_data.get("sources", []):
+            source_type = source.get("type")
+            if source_type == UrlType.FILESYSTEM.value:
+                source_addon = LocalAddonSource(type=source["type"],
+                                                path=source["path"])
+            elif source_type == UrlType.HTTP.value:
+                source_addon = WebAddonSource(type=source["type"],
+                                              url=source["url"])
+            elif source_type == UrlType.SERVER.value:
+                source_addon = ServerResourceSource(
+                    type=source["type"], filename=source["filename"])
+            else:
+                raise ValueError(f"Unknown source {source_type}")
 
             sources.append(source_addon)
 
         return cls(name=package.get("package_name"),
                    platform=package.get("platform"),
                    sources=sources,
-                   checksum=package.get("platform"),
+                   checksum=package.get("checksum"),
                    addon_list=package_data.get("addon_list"),
                    python_modules=package_data.get("python_modules"))
