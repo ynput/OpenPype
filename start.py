@@ -698,7 +698,8 @@ def _check_and_update_addons(addons_dir=None):
     server_endpoint = "{}/api/addons?details=1".format(
         os.environ.get("OPENPYPE_SERVER_URL"))
 
-    local_addon_folder = _get_local_dir("OPENPYPE_ADDON_DIR", addons_dir)
+    local_addon_folder = _get_local_dir("OPENPYPE_ADDON_DIR", addons_dir,
+                                        "addons")
 
     _print(f">>> Checking addons in {local_addon_folder} ...")
     check_addons(server_endpoint,
@@ -722,7 +723,7 @@ def _check_and_update_dependency_package(packages_dir=None):
     server_endpoint = "{}/api/dependency?details=1".format(
         os.environ.get("OPENPYPE_SERVER_URL"))
 
-    local_dir = _get_local_dir("OPENPYPE_VENV_DIR", packages_dir)
+    local_dir = _get_local_dir("OPENPYPE_VENV_DIR", packages_dir, "venvs")
 
     _print(f">>> Checking venvs in {local_dir} ...")
     check_venv(server_endpoint,
@@ -730,14 +731,14 @@ def _check_and_update_dependency_package(packages_dir=None):
                default_addon_downloader())
 
 
-def _get_local_dir(env_key, local_dir=None):
-    # TODO rename OPENPYPE_ADDON_DIR
+def _get_local_dir(env_key, local_dir=None, dir_name=None):
     local_dir = local_dir or os.environ.get(env_key)
     if not local_dir:
         import appdirs
         local_dir = appdirs.user_data_dir("openpype", "pypeclub")
-        last_dir_name = os.path.basename(local_dir)
-        local_dir = os.path.join(local_dir, last_dir_name)
+        if not dir_name:
+            raise RuntimeError("Must fill dir_name if nothing else provided!")
+        local_dir = os.path.join(local_dir, dir_name)
         os.environ[env_key] = local_dir
 
     if not os.path.isdir(local_dir):
