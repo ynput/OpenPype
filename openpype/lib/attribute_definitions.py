@@ -105,11 +105,14 @@ class AbtractAttrDef(object):
     How to force to set `key` attribute?
 
     Args:
-        key(str): Under which key will be attribute value stored.
-        label(str): Attribute label.
-        tooltip(str): Attribute tooltip.
-        is_label_horizontal(bool): UI specific argument. Specify if label is
+        key (str): Under which key will be attribute value stored.
+        default (Any): Default value of an attribute.
+        label (str): Attribute label.
+        tooltip (str): Attribute tooltip.
+        is_label_horizontal (bool): UI specific argument. Specify if label is
             next to value input or ahead.
+        hidden (bool): Will be item hidden (for UI purposes).
+        disabled (bool): Item will be visible but disabled (for UI purposes).
     """
 
     type_attributes = []
@@ -117,16 +120,29 @@ class AbtractAttrDef(object):
     is_value_def = True
 
     def __init__(
-        self, key, default, label=None, tooltip=None, is_label_horizontal=None
+        self,
+        key,
+        default,
+        label=None,
+        tooltip=None,
+        is_label_horizontal=None,
+        hidden=False,
+        disabled=False
     ):
         if is_label_horizontal is None:
             is_label_horizontal = True
+
+        if hidden is None:
+            hidden = False
+
         self.key = key
         self.label = label
         self.tooltip = tooltip
         self.default = default
         self.is_label_horizontal = is_label_horizontal
-        self._id = uuid.uuid4()
+        self.hidden = hidden
+        self.disabled = disabled
+        self._id = uuid.uuid4().hex
 
         self.__init__class__ = AbtractAttrDef
 
@@ -173,7 +189,9 @@ class AbtractAttrDef(object):
             "label": self.label,
             "tooltip": self.tooltip,
             "default": self.default,
-            "is_label_horizontal": self.is_label_horizontal
+            "is_label_horizontal": self.is_label_horizontal,
+            "hidden": self.hidden,
+            "disabled": self.disabled
         }
         for attr in self.type_attributes:
             data[attr] = getattr(self, attr)
