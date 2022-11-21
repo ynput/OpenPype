@@ -14,8 +14,8 @@
             ],
             "families_to_review": [
                 "review",
-                "renderpass",
-                "renderlayer"
+                "renderlayer",
+                "renderscene"
             ]
         },
         "ValidateProjectSettings": {
