@@ -489,9 +489,9 @@ class HiddenAttrWidget(_BaseAttrDefWidget):
 
     def current_value(self):
         if self._multivalue:
-            raise ValueError(
-                "{} can't output for multivalue.".format(self.__class__.__name__)
-            )
+            raise ValueError("{} can't output for multivalue.".format(
+                self.__class__.__name__
+            ))
         return self._value
 
     def set_value(self, value, multivalue=False):
