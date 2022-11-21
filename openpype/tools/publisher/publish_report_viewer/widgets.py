@@ -27,6 +27,9 @@ class PluginLoadReportModel(QtGui.QStandardItemModel):
         parent = self.invisibleRootItem()
         parent.removeRows(0, parent.rowCount())
 
+        if report is None:
+            return
+
         new_items = []
         new_items_by_filepath = {}
         for filepath in report.crashed_plugin_paths.keys():

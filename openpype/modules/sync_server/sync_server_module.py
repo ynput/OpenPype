@@ -136,14 +136,14 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
     """ Start of Public API """
     def add_site(self, project_name, representation_id, site_name=None,
-                 force=False):
+                 force=False, priority=None, reset_timer=False):
         """
         Adds new site to representation to be synced.
 
         'project_name' must have synchronization enabled (globally or
         project only)
 
-        Used as a API endpoint from outside applications (Loader etc).
+        Used as an API endpoint from outside applications (Loader etc).
 
         Use 'force' to reset existing site.
 
@@ -152,6 +152,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             representation_id (string): MongoDB _id value
             site_name (string): name of configured and active site
             force (bool): reset site if exists
+            priority (int): set priority
+            reset_timer (bool): if delay timer should be reset, eg. user mark
+                some representation to be synced manually
 
         Throws:
             SiteAlreadyPresentError - if adding already existing site and
@@ -167,7 +170,11 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         self.reset_site_on_representation(project_name,
                                           representation_id,
                                           site_name=site_name,
-                                          force=force)
+                                          force=force,
+                                          priority=priority)
+
+        if reset_timer:
+            self.reset_timer()
 
     def remove_site(self, project_name, representation_id, site_name,
                     remove_local_files=False):
@@ -911,7 +918,59 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
             In case of user's involvement (reset site), start that right away.
         """
-        self.sync_server_thread.reset_timer()
+
+        if not self.enabled:
+            return
+
+        if self.sync_server_thread is None:
+            self._reset_timer_with_rest_api()
+        else:
+            self.sync_server_thread.reset_timer()
+
+    def is_representation_on_site(
+        self, project_name, representation_id, site_name
+    ):
+        """Checks if 'representation_id' has all files avail. on 'site_name'"""
+        representation = get_representation_by_id(project_name,
+                                                  representation_id,
+                                                  fields=["_id", "files"])
+        if not representation:
+            return False
+
+        on_site = False
+        for file_info in representation.get("files", []):
+            for site in file_info.get("sites", []):
+                if site["name"] != site_name:
+                    continue
+
+                if (site.get("progress") or site.get("error") or
+                        not site.get("created_dt")):
+                    return False
+                on_site = True
+
+        return on_site
+
+    def _reset_timer_with_rest_api(self):
+        # POST to webserver sites to add to representations
+        webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
+        if not webserver_url:
+            self.log.warning("Couldn't find webserver url")
+            return
+
+        rest_api_url = "{}/sync_server/reset_timer".format(
+            webserver_url
+        )
+
+        try:
+            import requests
+        except Exception:
+            self.log.warning(
+                "Couldn't add sites to representations "
+                "('requests' is not available)"
+            )
+            return
+
+        requests.post(rest_api_url)
 
     def get_enabled_projects(self):
         """Returns list of projects which have SyncServer enabled."""
@@ -1544,12 +1603,12 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         Args:
             project_name (string): name of project - force to db connection as
               each file might come from different collection
-            new_file_id (string):
+            new_file_id (string): only present if file synced successfully
             file (dictionary): info about processed file (pulled from DB)
             representation (dictionary): parent repr of file (from DB)
             site (string): label ('gdrive', 'S3')
             error (string): exception message
-            progress (float): 0-1 of progress of upload/download
+            progress (float): 0-0.99 of progress of upload/download
             priority (int): 0-100 set priority
 
         Returns:
@@ -1655,7 +1714,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
     def reset_site_on_representation(self, project_name, representation_id,
                                      side=None, file_id=None, site_name=None,
-                                     remove=False, pause=None, force=False):
+                                     remove=False, pause=None, force=False,
+                                     priority=None):
         """
             Reset information about synchronization for particular 'file_id'
             and provider.
@@ -1678,6 +1738,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             remove (bool): if True remove site altogether
             pause (bool or None): if True - pause, False - unpause
             force (bool): hard reset - currently only for add_site
+            priority (int): set priority
 
         Raises:
             SiteAlreadyPresentError - if adding already existing site and
@@ -1704,6 +1765,10 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 site_name = remote_site
 
         elem = {"name": site_name}
+
+        # Add priority
+        if priority:
+            elem["priority"] = priority
 
         if file_id:  # reset site for particular file
             self._reset_site_for_file(project_name, representation_id,
@@ -2088,6 +2153,15 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
     def cli(self, click_group):
         click_group.add_command(cli_main)
+
+    # Webserver module implementation
+    def webserver_initialization(self, server_manager):
+        """Add routes for syncs."""
+        if self.tray_initialized:
+            from .rest_api import SyncServerModuleRestApi
+            self.rest_api_obj = SyncServerModuleRestApi(
+                self, server_manager
+            )
 
 
 @click.group(SyncServerModule.name, help="SyncServer module related commands.")

@@ -21,7 +21,7 @@ class TimersManagerModuleRestApi:
     @property
     def log(self):
         if self._log is None:
-            self._log = Logger.get_logger(self.__ckass__.__name__)
+            self._log = Logger.get_logger(self.__class__.__name__)
         return self._log
 
     def register(self):
