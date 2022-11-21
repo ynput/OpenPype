@@ -109,6 +109,36 @@ class HTTPAddonDownloader(AddonDownloader):
         return os.path.join(destination, file_name)
 
 
+class ServerAddonDownloader(AddonDownloader):
+    """Downloads static resource file from v4 Server.
+
+    Expects filled env var OPENPYPE_SERVER_URL.
+    """
+    CHUNK_SIZE = 100000
+
+    @classmethod
+    def download(cls, source, destination):
+        filename = source["filename"]
+        cls.log.debug(f"Downloading {filename} to {destination}")
+
+        if not os.environ.get("OPENPYPE_SERVER_URL"):
+            raise RuntimeError(f"Must have OPENPYPE_SERVER_URL env var!")
+
+        server_endpoint = "{}/{}".format(
+            os.environ.get("OPENPYPE_SERVER_URL"), filename)
+
+        file_name = os.path.basename(destination)
+        _, ext = os.path.splitext(file_name)
+        if (ext.replace(".", '') not
+                in set(RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS)):
+            file_name += ".zip"
+        RemoteFileHandler.download_url(server_endpoint,
+                                       destination,
+                                       filename=file_name)
+
+        return os.path.join(destination, file_name)
+
+
 def get_addons_info(server_endpoint):
     """Returns list of addon information from Server"""
     response = requests.get(server_endpoint)
@@ -284,6 +314,8 @@ def default_addon_downloader():
                                      OSAddonDownloader)
     addon_downloader.register_format(UrlType.HTTP,
                                      HTTPAddonDownloader)
+    addon_downloader.register_format(UrlType.SERVER,
+                                     ServerAddonDownloader)
 
     return addon_downloader
 
