@@ -82,7 +82,7 @@ class ModuleUnitTest(BaseTest):
                 yield tmpdir
 
                 persist = (persist or self.PERSIST or
-                          request.node.rep_call.failed)
+                           self.is_test_failed(request))
                 if not persist:
                     print("Removing {}".format(tmpdir))
                     shutil.rmtree(tmpdir)
@@ -146,7 +146,7 @@ class ModuleUnitTest(BaseTest):
 
         yield db_handler
 
-        persist = self.PERSIST or request.node.rep_call.failed
+        persist = self.PERSIST or self.is_test_failed(request)
         if not persist:
             db_handler.teardown(self.TEST_DB_NAME)
             db_handler.teardown(self.TEST_OPENPYPE_NAME)
@@ -171,6 +171,13 @@ class ModuleUnitTest(BaseTest):
         from openpype.lib import OpenPypeMongoConnection
         mongo_client = OpenPypeMongoConnection.get_mongo_client()
         yield mongo_client[self.TEST_OPENPYPE_NAME]["settings"]
+
+    def is_test_failed(self, request):
+        # if request.node doesn't have rep_call, something failed
+        try:
+            return request.node.rep_call.failed
+        except AttributeError:
+            return True
 
 
 class PublishTest(ModuleUnitTest):
