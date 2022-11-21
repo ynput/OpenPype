@@ -253,6 +253,26 @@ class UnknownDef(AbtractAttrDef):
         return value
 
 
+class HiddenDef(AbtractAttrDef):
+    """Hidden value of Any type.
+
+    This attribute can be used for UI purposes to pass values related
+    to other attributes (e.g. in multi-page UIs).
+
+    Keep in mind the value should be possible to parse by json parser.
+    """
+
+    type = "hidden"
+
+    def __init__(self, key, default=None, **kwargs):
+        kwargs["default"] = default
+        kwargs["hidden"] = True
+        super(UnknownDef, self).__init__(key, **kwargs)
+
+    def convert_value(self, value):
+        return value
+
+
 class NumberDef(AbtractAttrDef):
     """Number definition.
 
