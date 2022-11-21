@@ -326,22 +326,22 @@ def inject_openpype_environment(deadlinePlugin):
             export_url
         ]
 
-        add_args = {}
-        add_args['project'] = \
-            job.GetJobEnvironmentKeyValue('AVALON_PROJECT')
-        add_args['asset'] = job.GetJobEnvironmentKeyValue('AVALON_ASSET')
-        add_args['task'] = job.GetJobEnvironmentKeyValue('AVALON_TASK')
-        add_args['app'] = job.GetJobEnvironmentKeyValue('AVALON_APP_NAME')
-        add_args["envgroup"] = "farm"
+        add_kwargs = {
+            "project": job.GetJobEnvironmentKeyValue("AVALON_PROJECT"),
+            "asset": job.GetJobEnvironmentKeyValue("AVALON_ASSET"),
+            "task": job.GetJobEnvironmentKeyValue("AVALON_TASK"),
+            "app": job.GetJobEnvironmentKeyValue("AVALON_APP_NAME"),
+            "envgroup": "farm"
+        }
+        if all(add_kwargs.values()):
+            for key, value in add_kwargs.items():
+                args.extend(["--{}".format(key), value])
 
-        if all(add_args.values()):
-            for key, value in add_args.items():
-                args.append("--{}".format(key))
-                args.append(value)
         else:
-            msg = "Required env vars: AVALON_PROJECT, AVALON_ASSET, " + \
-                  "AVALON_TASK, AVALON_APP_NAME"
-            raise RuntimeError(msg)
+            raise RuntimeError((
+                "Missing required env vars: AVALON_PROJECT, AVALON_ASSET,"
+                " AVALON_TASK, AVALON_APP_NAME"
+            ))
 
         if not os.environ.get("OPENPYPE_MONGO"):
             print(">>> Missing OPENPYPE_MONGO env var, process won't work")
@@ -362,12 +362,12 @@ def inject_openpype_environment(deadlinePlugin):
         print(">>> Loading file ...")
         with open(export_url) as fp:
             contents = json.load(fp)
-            for key, value in contents.items():
-                deadlinePlugin.SetProcessEnvironmentVariable(key, value)
+
+        for key, value in contents.items():
+            deadlinePlugin.SetProcessEnvironmentVariable(key, value)
 
         script_url = job.GetJobPluginInfoKeyValue("ScriptFilename")
         if script_url:
-
             script_url = script_url.format(**contents).replace("\\", "/")
             print(">>> Setting script path {}".format(script_url))
             job.SetJobPluginInfoKeyValue("ScriptFilename", script_url)
