@@ -90,7 +90,7 @@ class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
                                     additional_args=additional_args))
 
         additional_args = {"context.subset": "renderTest_taskMain_beauty",
-                           "context.ext": "h264_exr"}
+                           "context.ext": "png"}
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 1,
                                     additional_args=additional_args))
