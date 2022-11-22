@@ -148,13 +148,11 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         thumbnail_path = None
         for repre in instance.data.get("representations", []):
             if repre.get('thumbnail') or "thumbnail" in repre.get('tags', []):
-                self.log.info(repre)
                 repre_thumbnail_path = (
                     repre.get("published_path") or
                     os.path.join(repre["stagingDir"], repre["files"])
                 )
                 if os.path.exists(repre_thumbnail_path):
-                    self.log.info("exists")
                     thumbnail_path = repre_thumbnail_path
                 break
         return thumbnail_path
