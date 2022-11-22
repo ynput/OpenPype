@@ -68,7 +68,16 @@ class PublisherTabsWidget(QtWidgets.QFrame):
             self.set_current_tab(identifier)
         return button
 
+    def get_tab_by_index(self, index):
+        if index < 0 or index > self._btns_layout.count():
+            return None
+        item = self._btns_layout.itemAt(index)
+        return item.widget()
+
     def set_current_tab(self, identifier):
+        if isinstance(identifier, int):
+            identifier = self.get_tab_by_index(identifier)
+
         if isinstance(identifier, PublisherTabBtn):
             identifier = identifier.identifier
 
