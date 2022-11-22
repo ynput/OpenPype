@@ -121,10 +121,13 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             ):
                 fill_pairs.append(("task", task_data["name"]))
 
-            else:
+            elif isinstance(task_data, dict):
                 for key, value in task_data.items():
                     fill_key = "task[{}]".format(key)
                     fill_pairs.append((fill_key, value))
+            else:
+                # fallback for legacy - if task_data is only task name
+                fill_pairs.append(("task", task_data))
 
         self.log.debug("fill_pairs ::{}".format(fill_pairs))
         multiple_case_variants = prepare_template_data(fill_pairs)
