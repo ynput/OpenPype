@@ -578,6 +578,11 @@ class TasksCombobox(QtWidgets.QComboBox):
 
         self._text = None
 
+        # Make sure combobox is extended horizontally
+        size_policy = self.sizePolicy()
+        size_policy.setHorizontalPolicy(size_policy.MinimumExpanding)
+        self.setSizePolicy(size_policy)
+
     def set_invalid_empty_task(self, invalid=True):
         self._proxy_model.set_filter_empty(invalid)
         if invalid:
