@@ -6,9 +6,10 @@ import string
 
 from Qt import QtWidgets, QtCore
 
-from openpype.api import execute, Logger
 from openpype.pipeline import legacy_io
 from openpype.lib import (
+    execute,
+    Logger,
     get_openpype_execute_args,
     apply_project_environments_value
 )
@@ -202,6 +203,7 @@ def cli_publish(data, publish_paths, gui=True):
     if os.path.exists(json_data_path):
         with open(json_data_path, "r") as f:
             result = json.load(f)
+        os.remove(json_data_path)
 
     log.info(f"Publish result: {result}")
 

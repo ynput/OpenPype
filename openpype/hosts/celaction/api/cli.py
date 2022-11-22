@@ -6,15 +6,14 @@ import argparse
 import pyblish.api
 import pyblish.util
 
-from openpype.api import Logger
-import openpype
 import openpype.hosts.celaction
+from openpype.lib import Logger
 from openpype.hosts.celaction import api as celaction
 from openpype.tools.utils import host_tools
 from openpype.pipeline import install_openpype_plugins
 
 
-log = Logger().get_logger("Celaction_cli_publisher")
+log = Logger.get_logger("Celaction_cli_publisher")
 
 publish_host = "celaction"
 

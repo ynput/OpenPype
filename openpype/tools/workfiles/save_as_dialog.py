@@ -5,14 +5,12 @@ import logging
 
 from Qt import QtWidgets, QtCore
 
-from openpype.lib import (
-    get_last_workfile_with_version,
-    get_workdir_data,
-)
 from openpype.pipeline import (
     registered_host,
     legacy_io,
 )
+from openpype.pipeline.workfile import get_last_workfile_with_version
+from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.tools.utils import PlaceholderLineEdit
 
 log = logging.getLogger(__name__)
@@ -22,30 +20,14 @@ def build_workfile_data(session):
     """Get the data required for workfile formatting from avalon `session`"""
 
     # Set work file data for template formatting
+    project_name = session["AVALON_PROJECT"]
     asset_name = session["AVALON_ASSET"]
     task_name = session["AVALON_TASK"]
     host_name = session["AVALON_APP"]
-    project_doc = legacy_io.find_one(
-        {"type": "project"},
-        {
-            "name": True,
-            "data.code": True,
-            "config.tasks": True,
-        }
-    )
 
-    asset_doc = legacy_io.find_one(
-        {
-            "type": "asset",
-            "name": asset_name
-        },
-        {
-            "name": True,
-            "data.tasks": True,
-            "data.parents": True
-        }
+    data = get_template_data_with_names(
+        project_name, asset_name, task_name, host_name
     )
-    data = get_workdir_data(project_doc, asset_doc, task_name, host_name)
     data.update({
         "version": 1,
         "comment": "",

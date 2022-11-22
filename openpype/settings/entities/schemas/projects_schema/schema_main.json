@@ -64,6 +64,14 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_shotgrid"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_kitsu"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_deadline"
                 },
                 {
@@ -81,6 +89,10 @@
                 {
                     "type": "schema",
                     "name": "schema_project_nuke"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_fusion"
                 },
                 {
                     "type": "schema",

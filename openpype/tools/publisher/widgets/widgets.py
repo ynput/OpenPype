@@ -2,12 +2,14 @@
 import os
 import re
 import copy
+import functools
+import uuid
+import shutil
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
-from openpype.lib import TaskNotSetError
-from openpype.widgets.attribute_defs import create_widget_for_attr_def
+from openpype.tools.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
 from openpype.tools.flickcharm import FlickCharm
 from openpype.tools.utils import (
@@ -17,7 +19,12 @@ from openpype.tools.utils import (
     BaseClickableFrame,
     set_style_property,
 )
-from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
+from openpype.style import get_objected_colors
+from openpype.pipeline.create import (
+    SUBSET_NAME_ALLOWED_SYMBOLS,
+    TaskNotSetError,
+)
+from .thumbnail_widget import ThumbnailWidget
 from .assets_widget import AssetsDialog
 from .tasks_widget import TasksModel
 from .icons import (
@@ -120,31 +127,25 @@ class PublishIconBtn(IconButton):
     - error            : other error happened
     - success          : publishing finished
     """
+
     def __init__(self, pixmap_path, *args, **kwargs):
         super(PublishIconBtn, self).__init__(*args, **kwargs)
 
-        loaded_image = QtGui.QImage(pixmap_path)
+        colors = get_objected_colors()
+        icon = self.generate_icon(
+            pixmap_path,
+            enabled_color=colors["font"].get_qcolor(),
+            disabled_color=colors["font-disabled"].get_qcolor())
+        self.setIcon(icon)
 
-        pixmap = self.paint_image_with_color(loaded_image, QtCore.Qt.white)
-
-        self._base_image = loaded_image
-        self._enabled_icon = QtGui.QIcon(pixmap)
-        self._disabled_icon = None
-
-        self.setIcon(self._enabled_icon)
-
-    def get_enabled_icon(self):
-        """Enabled icon."""
-        return self._enabled_icon
-
-    def get_disabled_icon(self):
-        """Disabled icon."""
-        if self._disabled_icon is None:
-            pixmap = self.paint_image_with_color(
-                self._base_image, QtCore.Qt.gray
-            )
-            self._disabled_icon = QtGui.QIcon(pixmap)
-        return self._disabled_icon
+    def generate_icon(self, pixmap_path, enabled_color, disabled_color):
+        icon = QtGui.QIcon()
+        image = QtGui.QImage(pixmap_path)
+        enabled_pixmap = self.paint_image_with_color(image, enabled_color)
+        icon.addPixmap(enabled_pixmap, icon.Normal)
+        disabled_pixmap = self.paint_image_with_color(image, disabled_color)
+        icon.addPixmap(disabled_pixmap, icon.Disabled)
+        return icon
 
     @staticmethod
     def paint_image_with_color(image, color):
@@ -185,12 +186,15 @@ class PublishIconBtn(IconButton):
 
         return pixmap
 
-    def setEnabled(self, enabled):
-        super(PublishIconBtn, self).setEnabled(enabled)
-        if self.isEnabled():
-            self.setIcon(self.get_enabled_icon())
-        else:
-            self.setIcon(self.get_disabled_icon())
+
+class CreateBtn(PublishIconBtn):
+    """Create instance button."""
+
+    def __init__(self, parent=None):
+        icon_path = get_icon_path("create")
+        super(CreateBtn, self).__init__(icon_path, "Create", parent)
+        self.setToolTip("Create new subset/s")
+        self.setLayoutDirection(QtCore.Qt.RightToLeft)
 
 
 class ResetBtn(PublishIconBtn):
@@ -233,28 +237,34 @@ class CreateInstanceBtn(PublishIconBtn):
         self.setToolTip("Create new instance")
 
 
-class CopyPublishReportBtn(PublishIconBtn):
-    """Copy report button."""
-    def __init__(self, parent=None):
-        icon_path = get_icon_path("copy")
-        super(CopyPublishReportBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Copy report")
+class PublishReportBtn(PublishIconBtn):
+    """Publish report button."""
 
+    triggered = QtCore.Signal(str)
 
-class SavePublishReportBtn(PublishIconBtn):
-    """Save report button."""
-    def __init__(self, parent=None):
-        icon_path = get_icon_path("download_arrow")
-        super(SavePublishReportBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Export and save report")
-
-
-class ShowPublishReportBtn(PublishIconBtn):
-    """Show report button."""
     def __init__(self, parent=None):
         icon_path = get_icon_path("view_report")
-        super(ShowPublishReportBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Show details")
+        super(PublishReportBtn, self).__init__(icon_path, parent)
+        self.setToolTip("Copy report")
+        self._actions = []
+
+    def add_action(self, label, identifier):
+        action = QtWidgets.QAction(label)
+        action.setData(identifier)
+        action.triggered.connect(
+            functools.partial(self._on_action_trigger, action)
+        )
+        self._actions.append(action)
+
+    def _on_action_trigger(self, action):
+        identifier = action.data()
+        self.triggered.emit(identifier)
+
+    def mouseReleaseEvent(self, event):
+        super(PublishReportBtn, self).mouseReleaseEvent(event)
+        menu = QtWidgets.QMenu(self)
+        menu.addActions(self._actions)
+        menu.exec_(event.globalPos())
 
 
 class RemoveInstanceBtn(PublishIconBtn):
@@ -300,8 +310,23 @@ class AbstractInstanceView(QtWidgets.QWidget):
 
         Example: When delete button is clicked to know what should be deleted.
         """
+
         raise NotImplementedError((
             "{} Method 'get_selected_items' is not implemented."
+        ).format(self.__class__.__name__))
+
+    def set_selected_items(self, instance_ids, context_selected):
+        """Change selection for instances and context.
+
+        Used to applying selection from one view to other.
+
+        Args:
+            instance_ids (List[str]): Selected instance ids.
+            context_selected (bool): Context is selected.
+        """
+
+        raise NotImplementedError((
+            "{} Method 'set_selected_items' is not implemented."
         ).format(self.__class__.__name__))
 
 
@@ -988,7 +1013,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent):
         super(GlobalAttrsWidget, self).__init__(parent)
 
-        self.controller = controller
+        self._controller = controller
         self._current_instances = []
 
         variant_input = VariantInputWidget(self)
@@ -1042,6 +1067,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
     def _on_submit(self):
         """Commit changes for selected instances."""
+
         variant_value = None
         asset_name = None
         task_name = None
@@ -1054,24 +1080,6 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         if self.task_value_widget.has_value_changed():
             task_name = self.task_value_widget.get_selected_items()[0]
 
-        asset_docs_by_name = {}
-        asset_names = set()
-        if asset_name is None:
-            for instance in self._current_instances:
-                asset_names.add(instance.get("asset"))
-        else:
-            asset_names.add(asset_name)
-
-        for asset_doc in self.controller.get_asset_docs():
-            _asset_name = asset_doc["name"]
-            if _asset_name in asset_names:
-                asset_names.remove(_asset_name)
-                asset_docs_by_name[_asset_name] = asset_doc
-
-            if not asset_names:
-                break
-
-        project_name = self.controller.project_name
         subset_names = set()
         invalid_tasks = False
         for instance in self._current_instances:
@@ -1087,12 +1095,15 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             if task_name is not None:
                 new_task_name = task_name
 
-            asset_doc = asset_docs_by_name[new_asset_name]
-
             try:
-                new_subset_name = instance.creator.get_subset_name(
-                    new_variant_value, new_task_name, asset_doc, project_name
+                new_subset_name = self._controller.get_subset_name(
+                    instance.creator_identifier,
+                    new_variant_value,
+                    new_task_name,
+                    new_asset_name,
+                    instance.id,
                 )
+
             except TaskNotSetError:
                 invalid_tasks = True
                 instance.set_task_invalid(True)
@@ -1125,6 +1136,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
     def _on_cancel(self):
         """Cancel changes and set back to their irigin value."""
+
         self.variant_input.reset_to_origin()
         self.asset_value_widget.reset_to_origin()
         self.task_value_widget.reset_to_origin()
@@ -1217,7 +1229,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
     Attributes are defined on creator so are dynamic. Their look and type is
     based on attribute definitions that are defined in
     `~/openpype/pipeline/lib/attribute_definitions.py` and their widget
-    representation in `~/openpype/widgets/attribute_defs/*`.
+    representation in `~/openpype/tools/attribute_defs/*`.
 
     Widgets are disabled if context of instance is not valid.
 
@@ -1225,6 +1237,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
     different creators. If creator have same (similar) definitions their
     widgets are merged into one (different label does not count).
     """
+
     def __init__(self, controller, parent):
         super(CreatorAttrsWidget, self).__init__(parent)
 
@@ -1238,7 +1251,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
 
         self._main_layout = main_layout
 
-        self.controller = controller
+        self._controller = controller
         self._scroll_area = scroll_area
 
         self._attr_def_id_to_instances = {}
@@ -1249,6 +1262,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
 
     def set_instances_valid(self, valid):
         """Change valid state of current instances."""
+
         if (
             self._content_widget is not None
             and self._content_widget.isEnabled() != valid
@@ -1257,6 +1271,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
 
     def set_current_instances(self, instances):
         """Set current instances for which are attribute definitions shown."""
+
         prev_content_widget = self._scroll_area.widget()
         if prev_content_widget:
             self._scroll_area.takeWidget()
@@ -1267,7 +1282,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
         self._attr_def_id_to_instances = {}
         self._attr_def_id_to_attr_def = {}
 
-        result = self.controller.get_creator_attribute_definitions(
+        result = self._controller.get_creator_attribute_definitions(
             instances
         )
 
@@ -1275,6 +1290,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
         content_layout = QtWidgets.QGridLayout(content_widget)
         content_layout.setColumnStretch(0, 0)
         content_layout.setColumnStretch(1, 1)
+        content_layout.setAlignment(QtCore.Qt.AlignTop)
 
         row = 0
         for attr_def, attr_instances, values in result:
@@ -1337,7 +1353,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
 
     Look and type of attributes is based on attribute definitions that are
     defined in `~/openpype/pipeline/lib/attribute_definitions.py` and their
-    widget representation in `~/openpype/widgets/attribute_defs/*`.
+    widget representation in `~/openpype/tools/attribute_defs/*`.
 
     Widgets are disabled if context of instance is not valid.
 
@@ -1345,6 +1361,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
     families. Similar definitions are merged into one (different label
     does not count).
     """
+
     def __init__(self, controller, parent):
         super(PublishPluginAttrsWidget, self).__init__(parent)
 
@@ -1358,7 +1375,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
 
         self._main_layout = main_layout
 
-        self.controller = controller
+        self._controller = controller
         self._scroll_area = scroll_area
 
         self._attr_def_id_to_instances = {}
@@ -1378,6 +1395,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
 
     def set_current_instances(self, instances, context_selected):
         """Set current instances for which are attribute definitions shown."""
+
         prev_content_widget = self._scroll_area.widget()
         if prev_content_widget:
             self._scroll_area.takeWidget()
@@ -1390,7 +1408,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
         self._attr_def_id_to_attr_def = {}
         self._attr_def_id_to_plugin_name = {}
 
-        result = self.controller.get_publish_attribute_definitions(
+        result = self._controller.get_publish_attribute_definitions(
             instances, context_selected
         )
 
@@ -1453,6 +1471,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
     └───────────────────────────────┘
     """
     instance_context_changed = QtCore.Signal()
+    convert_requested = QtCore.Signal()
 
     def __init__(self, controller, parent):
         super(SubsetAttributesWidget, self).__init__(parent)
@@ -1462,7 +1481,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         # Global attributes
         global_attrs_widget = GlobalAttrsWidget(controller, top_widget)
-        thumbnail_widget = ThumbnailWidget(top_widget)
+        thumbnail_widget = ThumbnailWidget(controller, top_widget)
 
         top_layout = QtWidgets.QHBoxLayout(top_widget)
         top_layout.setContentsMargins(0, 0, 0, 0)
@@ -1471,9 +1490,53 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         # BOTTOM PART
         bottom_widget = QtWidgets.QWidget(self)
-        creator_attrs_widget = CreatorAttrsWidget(
-            controller, bottom_widget
+
+        # Wrap Creator attributes to widget to be able add convert button
+        creator_widget = QtWidgets.QWidget(bottom_widget)
+
+        # Convert button widget (with layout to handle stretch)
+        convert_widget = QtWidgets.QWidget(creator_widget)
+        convert_label = QtWidgets.QLabel(creator_widget)
+        # Set the label text with 'setText' to apply html
+        convert_label.setText(
+            (
+                "Found old publishable subsets"
+                " incompatible with new publisher."
+                "<br/><br/>Press the <b>update subsets</b> button"
+                " to automatically update them"
+                " to be able to publish again."
+            )
         )
+        convert_label.setWordWrap(True)
+        convert_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        convert_btn = QtWidgets.QPushButton(
+            "Update subsets", convert_widget
+        )
+        convert_separator = QtWidgets.QFrame(convert_widget)
+        convert_separator.setObjectName("Separator")
+        convert_separator.setMinimumHeight(1)
+        convert_separator.setMaximumHeight(1)
+
+        convert_layout = QtWidgets.QGridLayout(convert_widget)
+        convert_layout.setContentsMargins(5, 0, 5, 0)
+        convert_layout.setVerticalSpacing(10)
+        convert_layout.addWidget(convert_label, 0, 0, 1, 3)
+        convert_layout.addWidget(convert_btn, 1, 1)
+        convert_layout.addWidget(convert_separator, 2, 0, 1, 3)
+        convert_layout.setColumnStretch(0, 1)
+        convert_layout.setColumnStretch(1, 0)
+        convert_layout.setColumnStretch(2, 1)
+
+        # Creator attributes widget
+        creator_attrs_widget = CreatorAttrsWidget(
+            controller, creator_widget
+        )
+        creator_layout = QtWidgets.QVBoxLayout(creator_widget)
+        creator_layout.setContentsMargins(0, 0, 0, 0)
+        creator_layout.addWidget(convert_widget, 0)
+        creator_layout.addWidget(creator_attrs_widget, 1)
+
         publish_attrs_widget = PublishPluginAttrsWidget(
             controller, bottom_widget
         )
@@ -1484,7 +1547,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         bottom_layout = QtWidgets.QHBoxLayout(bottom_widget)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
-        bottom_layout.addWidget(creator_attrs_widget, 1)
+        bottom_layout.addWidget(creator_widget, 1)
         bottom_layout.addWidget(bottom_separator, 0)
         bottom_layout.addWidget(publish_attrs_widget, 1)
 
@@ -1497,6 +1560,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         layout.addWidget(top_bottom, 0)
         layout.addWidget(bottom_widget, 1)
 
+        self._convertor_identifiers = None
         self._current_instances = None
         self._context_selected = False
         self._all_instances_valid = True
@@ -1504,14 +1568,23 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         global_attrs_widget.instance_context_changed.connect(
             self._on_instance_context_changed
         )
+        convert_btn.clicked.connect(self._on_convert_click)
+        thumbnail_widget.thumbnail_created.connect(self._on_thumbnail_create)
+        thumbnail_widget.thumbnail_cleared.connect(self._on_thumbnail_clear)
 
-        self.controller = controller
+        controller.event_system.add_callback(
+            "instance.thumbnail.changed", self._on_thumbnail_changed
+        )
+
+        self._controller = controller
+
+        self._convert_widget = convert_widget
 
         self.global_attrs_widget = global_attrs_widget
 
         self.creator_attrs_widget = creator_attrs_widget
         self.publish_attrs_widget = publish_attrs_widget
-        self.thumbnail_widget = thumbnail_widget
+        self._thumbnail_widget = thumbnail_widget
 
         self.top_bottom = top_bottom
         self.bottom_separator = bottom_separator
@@ -1529,24 +1602,33 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         self.instance_context_changed.emit()
 
-    def set_current_instances(self, instances, context_selected):
+    def _on_convert_click(self):
+        self.convert_requested.emit()
+
+    def set_current_instances(
+        self, instances, context_selected, convertor_identifiers
+    ):
         """Change currently selected items.
 
         Args:
-            instances(list<CreatedInstance>): List of currently selected
+            instances(List[CreatedInstance]): List of currently selected
                 instances.
             context_selected(bool): Is context selected.
         """
+
         all_valid = True
         for instance in instances:
             if not instance.has_valid_context:
                 all_valid = False
                 break
 
+        s_convertor_identifiers = set(convertor_identifiers)
+        self._convertor_identifiers = s_convertor_identifiers
         self._current_instances = instances
         self._context_selected = context_selected
         self._all_instances_valid = all_valid
 
+        self._convert_widget.setVisible(len(s_convertor_identifiers) > 0)
         self.global_attrs_widget.set_current_instances(instances)
         self.creator_attrs_widget.set_current_instances(instances)
         self.publish_attrs_widget.set_current_instances(
@@ -1555,35 +1637,230 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         self.creator_attrs_widget.set_instances_valid(all_valid)
         self.publish_attrs_widget.set_instances_valid(all_valid)
 
+        self._update_thumbnails()
 
-class ThumbnailWidget(QtWidgets.QWidget):
-    """Instance thumbnail widget.
+    def _on_thumbnail_create(self, path):
+        instance_ids = [
+            instance.id
+            for instance in self._current_instances
+        ]
+        if self._context_selected:
+            instance_ids.append(None)
 
-    Logic implementation of this widget is missing but widget is used
-    to offset `GlobalAttrsWidget` inputs visually.
-    """
+        if not instance_ids:
+            return
+
+        mapping = {}
+        if len(instance_ids) == 1:
+            mapping[instance_ids[0]] = path
+
+        else:
+            for instance_id in instance_ids:
+                root = os.path.dirname(path)
+                ext = os.path.splitext(path)[-1]
+                dst_path = os.path.join(root, str(uuid.uuid4()) + ext)
+                shutil.copy(path, dst_path)
+                mapping[instance_id] = dst_path
+
+        self._controller.set_thumbnail_paths_for_instances(mapping)
+
+    def _on_thumbnail_clear(self):
+        instance_ids = [
+            instance.id
+            for instance in self._current_instances
+        ]
+        if self._context_selected:
+            instance_ids.append(None)
+
+        if not instance_ids:
+            return
+
+        mapping = {
+            instance_id: None
+            for instance_id in instance_ids
+        }
+        self._controller.set_thumbnail_paths_for_instances(mapping)
+
+    def _on_thumbnail_changed(self, event):
+        self._update_thumbnails()
+
+    def _update_thumbnails(self):
+        instance_ids = [
+            instance.id
+            for instance in self._current_instances
+        ]
+        if self._context_selected:
+            instance_ids.append(None)
+
+        if not instance_ids:
+            self._thumbnail_widget.setVisible(False)
+            self._thumbnail_widget.set_current_thumbnails(None)
+            return
+
+        mapping = self._controller.get_thumbnail_paths_for_instances(
+            instance_ids
+        )
+        thumbnail_paths = []
+        for instance_id in instance_ids:
+            path = mapping[instance_id]
+            if path:
+                thumbnail_paths.append(path)
+
+        self._thumbnail_widget.setVisible(True)
+        self._thumbnail_widget.set_current_thumbnails(thumbnail_paths)
+
+
+class CreateNextPageOverlay(QtWidgets.QWidget):
+    clicked = QtCore.Signal()
+
     def __init__(self, parent):
-        super(ThumbnailWidget, self).__init__(parent)
-
-        # Missing implementation for thumbnail
-        # - widget kept to make a visial offset of global attr widget offset
-        # default_pix = get_pixmap("thumbnail")
-        default_pix = QtGui.QPixmap(10, 10)
-        default_pix.fill(QtCore.Qt.transparent)
-
-        thumbnail_label = QtWidgets.QLabel(self)
-        thumbnail_label.setPixmap(
-            default_pix.scaled(
-                200, 100,
-                QtCore.Qt.KeepAspectRatio,
-                QtCore.Qt.SmoothTransformation
-            )
+        super(CreateNextPageOverlay, self).__init__(parent)
+        self.setCursor(QtCore.Qt.PointingHandCursor)
+        self._arrow_color = (
+            get_objected_colors("font").get_qcolor()
+        )
+        self._bg_color = (
+            get_objected_colors("bg-buttons").get_qcolor()
         )
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(thumbnail_label, alignment=QtCore.Qt.AlignCenter)
+        change_anim = QtCore.QVariantAnimation()
+        change_anim.setStartValue(0.0)
+        change_anim.setEndValue(1.0)
+        change_anim.setDuration(200)
+        change_anim.setEasingCurve(QtCore.QEasingCurve.OutCubic)
 
-        self.thumbnail_label = thumbnail_label
-        self.default_pix = default_pix
-        self.current_pix = None
+        change_anim.valueChanged.connect(self._on_anim)
+
+        self._change_anim = change_anim
+        self._is_visible = None
+        self._anim_value = 0.0
+        self._increasing = False
+        self._under_mouse = None
+        self._handle_show_on_own = True
+        self._mouse_pressed = False
+        self.set_visible(True)
+
+    def set_increasing(self, increasing):
+        if self._increasing is increasing:
+            return
+        self._increasing = increasing
+        if increasing:
+            self._change_anim.setDirection(self._change_anim.Forward)
+        else:
+            self._change_anim.setDirection(self._change_anim.Backward)
+
+        if self._change_anim.state() != self._change_anim.Running:
+            self._change_anim.start()
+
+    def set_visible(self, visible):
+        if self._is_visible is visible:
+            return
+
+        self._is_visible = visible
+        if not visible:
+            self.set_increasing(False)
+            if not self._is_anim_finished():
+                return
+
+        self.setVisible(visible)
+        self._check_anim_timer()
+
+    def _is_anim_finished(self):
+        if self._increasing:
+            return self._anim_value == 1.0
+        return self._anim_value == 0.0
+
+    def _on_anim(self, value):
+        self._check_anim_timer()
+
+        self._anim_value = value
+
+        self.update()
+
+        if not self._is_anim_finished():
+            return
+
+        if not self._is_visible:
+            self.setVisible(False)
+
+    def set_under_mouse(self, under_mouse):
+        if self._under_mouse is under_mouse:
+            return
+
+        self._under_mouse = under_mouse
+        self.set_increasing(under_mouse)
+
+    def _is_under_mouse(self):
+        mouse_pos = self.mapFromGlobal(QtGui.QCursor.pos())
+        under_mouse = self.rect().contains(mouse_pos)
+        return under_mouse
+
+    def _check_anim_timer(self):
+        if not self.isVisible():
+            return
+
+        self.set_increasing(self._under_mouse)
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._mouse_pressed = True
+        super(CreateNextPageOverlay, self).mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self._mouse_pressed:
+            self._mouse_pressed = False
+            if self.rect().contains(event.pos()):
+                self.clicked.emit()
+
+        super(CreateNextPageOverlay, self).mouseReleaseEvent(event)
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter()
+        painter.begin(self)
+        if self._anim_value == 0.0:
+            painter.end()
+            return
+
+        painter.setClipRect(event.rect())
+        painter.setRenderHints(
+            painter.Antialiasing
+            | painter.SmoothPixmapTransform
+        )
+
+        painter.setPen(QtCore.Qt.NoPen)
+
+        rect = QtCore.QRect(self.rect())
+        rect_width = rect.width()
+        rect_height = rect.height()
+        radius = rect_width * 0.2
+
+        x_offset = 0
+        y_offset = 0
+        if self._anim_value != 1.0:
+            x_offset += rect_width - (rect_width * self._anim_value)
+
+        arrow_height = rect_height * 0.4
+        arrow_half_height = arrow_height * 0.5
+        arrow_x_start = x_offset + ((rect_width - arrow_half_height) * 0.5)
+        arrow_x_end = arrow_x_start + arrow_half_height
+        center_y = rect.center().y()
+
+        painter.setBrush(self._bg_color)
+        painter.drawRoundedRect(
+            x_offset, y_offset,
+            rect_width + radius, rect_height,
+            radius, radius
+        )
+
+        src_arrow_path = QtGui.QPainterPath()
+        src_arrow_path.moveTo(arrow_x_start, center_y - arrow_half_height)
+        src_arrow_path.lineTo(arrow_x_end, center_y)
+        src_arrow_path.lineTo(arrow_x_start, center_y + arrow_half_height)
+
+        arrow_stroker = QtGui.QPainterPathStroker()
+        arrow_stroker.setWidth(min(4, arrow_half_height * 0.2))
+        arrow_path = arrow_stroker.createStroke(src_arrow_path)
+
+        painter.fillPath(arrow_path, self._arrow_color)
+
+        painter.end()

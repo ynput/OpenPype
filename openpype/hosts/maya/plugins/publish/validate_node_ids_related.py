@@ -1,7 +1,6 @@
 import pyblish.api
-import openpype.api
 
-from openpype.pipeline import legacy_io
+from openpype.pipeline.publish import ValidatePipelineOrder
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
 
@@ -11,7 +10,7 @@ class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidatePipelineOrder
+    order = ValidatePipelineOrder
     label = 'Node Ids Related (ID)'
     hosts = ['maya']
     families = ["model",
@@ -36,15 +35,7 @@ class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
         """Return the member nodes that are invalid"""
         invalid = list()
 
-        asset = instance.data['asset']
-        asset_data = legacy_io.find_one(
-            {
-                "name": asset,
-                "type": "asset"
-            },
-            projection={"_id": True}
-        )
-        asset_id = str(asset_data['_id'])
+        asset_id = str(instance.data['assetEntity']["_id"])
 
         # We do want to check the referenced nodes as we it might be
         # part of the end product

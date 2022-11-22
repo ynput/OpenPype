@@ -1,6 +1,7 @@
 import nuke
 import pyblish
 from openpype.hosts.nuke.api.lib import maintained_selection
+from openpype.pipeline import PublishXmlValidationError
 
 
 class SelectCenterInNodeGraph(pyblish.api.Action):
@@ -47,8 +48,9 @@ class SelectCenterInNodeGraph(pyblish.api.Action):
 
 @pyblish.api.log
 class ValidateBackdrop(pyblish.api.InstancePlugin):
-    """Validate amount of nodes on backdrop node in case user
-    forgotten to add nodes above the publishing backdrop node"""
+    """ Validate amount of nodes on backdrop node in case user
+    forgoten to add nodes above the publishing backdrop node.
+    """
 
     order = pyblish.api.ValidatorOrder
     optional = True
@@ -63,8 +65,25 @@ class ValidateBackdrop(pyblish.api.InstancePlugin):
         msg_multiple_outputs = (
             "Only one outcoming connection from "
             "\"{}\" is allowed").format(instance.data["name"])
-        assert len(connections_out.keys()) <= 1, msg_multiple_outputs
 
-        msg_no_content = "No content on backdrop node: \"{}\"".format(
+        if len(connections_out.keys()) > 1:
+            raise PublishXmlValidationError(
+                self,
+                msg_multiple_outputs,
+                "multiple_outputs"
+            )
+
+        msg_no_nodes = "No content on backdrop node: \"{}\"".format(
             instance.data["name"])
-        assert len(instance) > 1, msg_no_content
+
+        self.log.debug(
+            "Amount of nodes on instance: {}".format(
+                len(instance))
+        )
+
+        if len(instance) == 1:
+            raise PublishXmlValidationError(
+                self,
+                msg_no_nodes,
+                "no_nodes"
+            )

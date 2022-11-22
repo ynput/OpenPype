@@ -2,15 +2,12 @@ from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.tools.settings import style
 
-from openpype.lib import PypeLogger
 from openpype import resources
 
 from .widgets import (
     SyncProjectListWidget,
     SyncRepresentationSummaryWidget
 )
-
-log = PypeLogger().get_logger("SyncServer")
 
 
 class SyncServerWindow(QtWidgets.QDialog):
@@ -45,6 +42,14 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.pause_btn = QtWidgets.QPushButton("Pause server")
 
         left_column_layout.addWidget(self.pause_btn)
+
+        checkbox = QtWidgets.QCheckBox("Show only enabled", self)
+        checkbox.setStyleSheet("QCheckBox{spacing: 5px;"
+                               "padding:5px 5px 5px 5px;}")
+        checkbox.setChecked(True)
+        self.show_only_enabled_chk = checkbox
+
+        left_column_layout.addWidget(self.show_only_enabled_chk)
 
         repres = SyncRepresentationSummaryWidget(
             sync_server,
@@ -86,15 +91,27 @@ class SyncServerWindow(QtWidgets.QDialog):
         repres.message_generated.connect(self._update_message)
         self.projects.message_generated.connect(self._update_message)
 
+        self.show_only_enabled_chk.stateChanged.connect(
+            self._on_enabled_change
+        )
+
         self.representationWidget = repres
+
+    def showEvent(self, event):
+        self.representationWidget.set_project(self.projects.current_project)
+        self.projects.refresh()
+        self._set_running(True)
+        super().showEvent(event)
+
+    def closeEvent(self, event):
+        self._set_running(False)
+        super().closeEvent(event)
 
     def _on_project_change(self):
         if self.projects.current_project is None:
             return
 
-        self.representationWidget.table_view.model().set_project(
-            self.projects.current_project
-        )
+        self.representationWidget.set_project(self.projects.current_project)
 
         project_name = self.projects.current_project
         if not self.sync_server.get_sync_project_setting(project_name):
@@ -103,16 +120,12 @@ class SyncServerWindow(QtWidgets.QDialog):
             self.projects.refresh()
             return
 
-    def showEvent(self, event):
-        self.representationWidget.model.set_project(
-            self.projects.current_project)
+    def _on_enabled_change(self):
+        """Called when enabled projects only checkbox is toggled."""
+        self.projects.show_only_enabled = \
+            self.show_only_enabled_chk.isChecked()
         self.projects.refresh()
-        self._set_running(True)
-        super().showEvent(event)
-
-    def closeEvent(self, event):
-        self._set_running(False)
-        super().closeEvent(event)
+        self.representationWidget.set_project(None)
 
     def _set_running(self, running):
         self.representationWidget.model.is_running = running

@@ -22,10 +22,6 @@ FFMPEG = (
     '"{}"%(input_args)s -i "%(input)s" %(filters)s %(args)s%(output)s'
 ).format(ffmpeg_path)
 
-FFPROBE = (
-    '"{}" -v quiet -print_format json -show_format -show_streams "%(source)s"'
-).format(ffprobe_path)
-
 DRAWTEXT = (
     "drawtext=fontfile='%(font)s':text=\\'%(text)s\\':"
     "x=%(x)s:y=%(y)s:fontcolor=%(color)s@%(opacity).1f:fontsize=%(size)d"
@@ -48,8 +44,15 @@ def _get_ffprobe_data(source):
     :param str source: source media file
     :rtype: [{}, ...]
     """
-    command = FFPROBE % {'source': source}
-    proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    command = [
+        ffprobe_path,
+        "-v", "quiet",
+        "-print_format", "json",
+        "-show_format",
+        "-show_streams",
+        source
+    ]
+    proc = subprocess.Popen(command, stdout=subprocess.PIPE)
     out = proc.communicate()[0]
     if proc.returncode != 0:
         raise RuntimeError("Failed to run: %s" % command)
@@ -113,11 +116,20 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if not ffprobe_data:
             ffprobe_data = _get_ffprobe_data(source)
 
+        # Validate 'streams' before calling super to raise more specific
+        #   error
+        source_streams = ffprobe_data.get("streams")
+        if not source_streams:
+            raise ValueError((
+                "Input file \"{}\" does not contain any streams"
+                " with image/video content."
+            ).format(source))
+
         self.ffprobe_data = ffprobe_data
         self.first_frame = first_frame
         self.input_args = []
 
-        super().__init__(source, ffprobe_data["streams"])
+        super().__init__(source, source_streams)
 
         if options_init:
             self.options_init.update(options_init)
@@ -568,6 +580,7 @@ def burnins_from_data(
         if source_ffmpeg_cmd:
             copy_args = (
                 "-metadata",
+                "-metadata:s:v:0",
             )
             args = source_ffmpeg_cmd.split(" ")
             for idx, arg in enumerate(args):

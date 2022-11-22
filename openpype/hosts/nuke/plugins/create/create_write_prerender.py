@@ -27,6 +27,10 @@ class CreateWritePrerender(plugin.AbstractWriteRender):
         # add fpath_template
         write_data["fpath_template"] = self.fpath_template
         write_data["use_range_limit"] = self.use_range_limit
+        write_data["frame_range"] = (
+            nuke.root()["first_frame"].value(),
+            nuke.root()["last_frame"].value()
+        )
 
         if not self.is_legacy():
             return create_write_node(

@@ -2,6 +2,7 @@
 """OpenPype script commands to be used directly in Maya."""
 from maya import cmds
 
+from openpype.client import get_asset_by_name, get_project
 from openpype.pipeline import legacy_io
 
 
@@ -79,8 +80,9 @@ def reset_frame_range():
     cmds.currentUnit(time=fps)
 
     # Set frame start/end
+    project_name = legacy_io.active_project()
     asset_name = legacy_io.Session["AVALON_ASSET"]
-    asset = legacy_io.find_one({"name": asset_name, "type": "asset"})
+    asset = get_asset_by_name(project_name, asset_name)
 
     frame_start = asset["data"].get("frameStart")
     frame_end = asset["data"].get("frameEnd")
@@ -145,8 +147,9 @@ def reset_resolution():
     resolution_height = 1080
 
     # Get resolution from asset
+    project_name = legacy_io.active_project()
     asset_name = legacy_io.Session["AVALON_ASSET"]
-    asset_doc = legacy_io.find_one({"name": asset_name, "type": "asset"})
+    asset_doc = get_asset_by_name(project_name, asset_name)
     resolution = _resolution_from_document(asset_doc)
     # Try get resolution from project
     if resolution is None:
@@ -155,7 +158,7 @@ def reset_resolution():
             "Asset \"{}\" does not have set resolution."
             " Trying to get resolution from project"
         ).format(asset_name))
-        project_doc = legacy_io.find_one({"type": "project"})
+        project_doc = get_project(project_name)
         resolution = _resolution_from_document(project_doc)
 
     if resolution is None:

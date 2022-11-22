@@ -36,6 +36,11 @@ from openpype.settings.entities.op_version_entity import (
 )
 
 from openpype.settings import SaveWarningExc
+from openpype.settings.lib import (
+    get_system_last_saved_info,
+    get_project_last_saved_info,
+)
+from .dialogs import SettingsLastSavedChanged, SettingsControlTaken
 from .widgets import (
     ProjectListWidget,
     VersionAction
@@ -45,8 +50,15 @@ from .breadcrumbs_widget import (
     SystemSettingsBreadcrumbs,
     ProjectSettingsBreadcrumbs
 )
-
-from .base import GUIWidget
+from .constants import (
+    SETTINGS_PATH_KEY,
+    ROOT_KEY,
+    VALUE_KEY,
+)
+from .base import (
+    ExtractHelper,
+    GUIWidget,
+)
 from .list_item_widget import ListWidget
 from .list_strict_widget import ListStrictWidget
 from .dict_mutable_widget import DictMutableKeysWidget
@@ -108,12 +120,19 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         "settings to update them to you current running OpenPype version."
     )
 
-    def __init__(self, user_role, parent=None):
+    def __init__(self, controller, parent=None):
         super(SettingsCategoryWidget, self).__init__(parent)
 
-        self.user_role = user_role
+        self._controller = controller
+        controller.event_system.add_callback(
+            "edit.mode.changed",
+            self._edit_mode_changed
+        )
 
         self.entity = None
+        self._edit_mode = None
+        self._last_saved_info = None
+        self._reset_crashed = False
 
         self._state = CategoryState.Idle
 
@@ -183,6 +202,31 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             entity.__class__.__name__, entity.path, entity.value
         )
         raise TypeError("Unknown type: {}".format(label))
+
+    def _edit_mode_changed(self, event):
+        self.set_edit_mode(event["edit_mode"])
+
+    def set_edit_mode(self, enabled):
+        if enabled is self._edit_mode:
+            return
+
+        was_false = self._edit_mode is False
+        self._edit_mode = enabled
+
+        self.save_btn.setEnabled(enabled and not self._reset_crashed)
+        if enabled:
+            tooltip = (
+                "Someone else has opened settings UI."
+                "\nTry hit refresh to check if settings are already available."
+            )
+        else:
+            tooltip = "Save settings"
+
+        self.save_btn.setToolTip(tooltip)
+
+        # Reset when last saved information has changed
+        if was_false and not self._check_last_saved_info():
+            self.reset()
 
     @property
     def state(self):
@@ -279,7 +323,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
         footer_layout.setContentsMargins(5, 5, 5, 5)
-        if self.user_role == "developer":
+        if self._controller.user_role == "developer":
             self._add_developer_ui(footer_layout, footer_widget)
 
         footer_layout.addWidget(empty_label, 1)
@@ -427,6 +471,9 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self.set_state(CategoryState.Idle)
 
     def save(self):
+        if not self._edit_mode:
+            return
+
         if not self.items_are_valid():
             return
 
@@ -627,20 +674,46 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
                 self._on_context_version_trigger
             )
             submenu.addAction(action)
+
         menu.addMenu(submenu)
+
+        extract_action = QtWidgets.QAction("Extract to file", menu)
+        extract_action.triggered.connect(self._on_extract_to_file)
+
+        menu.addAction(extract_action)
 
     def _on_context_version_trigger(self, version):
         self._on_source_version_change(version)
 
+    def _on_extract_to_file(self):
+        filepath = ExtractHelper.ask_for_save_filepath(self)
+        if not filepath:
+            return
+
+        settings_data = {
+            SETTINGS_PATH_KEY: self.entity.root_key,
+            ROOT_KEY: self.entity.root_key,
+            VALUE_KEY: self.entity.value
+        }
+        project_name = 0
+        if hasattr(self, "project_name"):
+            project_name = self.project_name
+
+        ExtractHelper.extract_settings_to_json(
+            filepath, settings_data, project_name
+        )
+
     def _on_reset_crash(self):
+        self._reset_crashed = True
         self.save_btn.setEnabled(False)
 
         if self.breadcrumbs_model is not None:
             self.breadcrumbs_model.set_entity(None)
 
     def _on_reset_success(self):
+        self._reset_crashed = False
         if not self.save_btn.isEnabled():
-            self.save_btn.setEnabled(True)
+            self.save_btn.setEnabled(self._edit_mode)
 
         if self.breadcrumbs_model is not None:
             path = self.breadcrumbs_bar.path()
@@ -685,7 +758,24 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         """Callback on any tab widget save."""
         return
 
+    def _check_last_saved_info(self):
+        raise NotImplementedError((
+            "{} does not have implemented '_check_last_saved_info'"
+        ).format(self.__class__.__name__))
+
     def _save(self):
+        self._controller.update_last_opened_info()
+        if not self._controller.opened_info:
+            dialog = SettingsControlTaken(self._last_saved_info, self)
+            dialog.exec_()
+            return
+
+        if not self._check_last_saved_info():
+            dialog = SettingsLastSavedChanged(self._last_saved_info, self)
+            dialog.exec_()
+            if dialog.result() == 0:
+                return
+
         # Don't trigger restart if defaults are modified
         if self.is_modifying_defaults:
             require_restart = False
@@ -744,6 +834,13 @@ class SystemWidget(SettingsCategoryWidget):
         self._actions = []
         super(SystemWidget, self).__init__(*args, **kwargs)
 
+    def _check_last_saved_info(self):
+        if self.is_modifying_defaults:
+            return True
+
+        last_saved_info = get_system_last_saved_info()
+        return self._last_saved_info == last_saved_info
+
     def contain_category_key(self, category):
         if category == "system_settings":
             return True
@@ -758,6 +855,10 @@ class SystemWidget(SettingsCategoryWidget):
         )
         entity.on_change_callbacks.append(self._on_entity_change)
         self.entity = entity
+        last_saved_info = None
+        if not self.is_modifying_defaults:
+            last_saved_info = get_system_last_saved_info()
+        self._last_saved_info = last_saved_info
         try:
             if self.is_modifying_defaults:
                 entity.set_defaults_state()
@@ -791,6 +892,17 @@ class ProjectWidget(SettingsCategoryWidget):
     def __init__(self, *args, **kwargs):
         super(ProjectWidget, self).__init__(*args, **kwargs)
 
+    def set_edit_mode(self, enabled):
+        super(ProjectWidget, self).set_edit_mode(enabled)
+        self.project_list_widget.set_edit_mode(enabled)
+
+    def _check_last_saved_info(self):
+        if self.is_modifying_defaults:
+            return True
+
+        last_saved_info = get_project_last_saved_info(self.project_name)
+        return self._last_saved_info == last_saved_info
+
     def contain_category_key(self, category):
         if category in ("project_settings", "project_anatomy"):
             return True
@@ -822,6 +934,9 @@ class ProjectWidget(SettingsCategoryWidget):
         project_list_widget.project_changed.connect(self._on_project_change)
         project_list_widget.version_change_requested.connect(
             self._on_source_version_change
+        )
+        project_list_widget.extract_to_file_requested.connect(
+            self._on_extract_to_file
         )
 
         self.project_list_widget = project_list_widget
@@ -867,6 +982,11 @@ class ProjectWidget(SettingsCategoryWidget):
         entity.on_change_callbacks.append(self._on_entity_change)
         self.project_list_widget.set_entity(entity)
         self.entity = entity
+
+        last_saved_info = None
+        if not self.is_modifying_defaults:
+            last_saved_info = get_project_last_saved_info(self.project_name)
+        self._last_saved_info = last_saved_info
         try:
             if self.is_modifying_defaults:
                 self.entity.set_defaults_state()

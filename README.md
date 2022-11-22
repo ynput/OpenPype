@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-26-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-27-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 OpenPype
 ====
@@ -41,7 +41,7 @@ It can be built and ran on all common platforms. We develop and test on the foll
 - **Linux**
     - **Ubuntu** 20.04 LTS
     - **Centos** 7
-- **Mac OSX** 
+- **Mac OSX**
     - **10.15** Catalina
     - **11.1** Big Sur (using Rosetta2)
 
@@ -287,6 +287,14 @@ To run tests, execute `.\tools\run_tests(.ps1|.sh)`.
 
 **Note that it needs existing virtual environment.**
 
+
+Developer tools
+-------------
+
+In case you wish to add your own tools to  `.\tools` folder without git tracking, it is possible by adding it with `dev_*` suffix (example: `dev_clear_pyc(.ps1|.sh)`).
+
+
+
 ## Contributors ✨
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
@@ -328,6 +336,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/Malthaldar"><img src="https://avatars.githubusercontent.com/u/33671694?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Malthaldar</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=Malthaldar" title="Code">💻</a></td>
     <td align="center"><a href="http://www.svenneve.com/"><img src="https://avatars.githubusercontent.com/u/2472863?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Sven Neve</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=svenneve" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/zafrs"><img src="https://avatars.githubusercontent.com/u/26890002?v=4?s=100" width="100px;" alt=""/><br /><sub><b>zafrs</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=zafrs" title="Code">💻</a></td>
+    <td align="center"><a href="http://felixdavid.com/"><img src="https://avatars.githubusercontent.com/u/22875539?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Félix David</b></sub></a><br /><a href="https://github.com/pypeclub/OpenPype/commits?author=Tilix4" title="Code">💻</a> <a href="https://github.com/pypeclub/OpenPype/commits?author=Tilix4" title="Documentation">📖</a></td>
   </tr>
 </table>
 

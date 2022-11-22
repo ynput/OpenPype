@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 from unreal import EditorLevelLibrary
 
-from openpype.hosts.unreal.api import plugin
+from openpype.pipeline import LegacyCreator
 from openpype.hosts.unreal.api.pipeline import instantiate
 
 
-class CreateLayout(plugin.Creator):
+class CreateLayout(LegacyCreator):
     """Layout output for character rigs."""
 
     name = "layoutMain"

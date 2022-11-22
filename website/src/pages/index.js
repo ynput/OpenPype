@@ -65,9 +65,17 @@ const collab = [
     image: '/img/clothcat.png',
     infoLink: 'https://www.clothcatanimation.com/'
   }, {
-    title: 'Ellipse Studio',
-    image: '/img/ellipse-studio.png',
-    infoLink: 'http://www.dargaudmedia.com'
+    title: 'Ellipse Animation',
+    image: '/img/ellipse_animation.svg',
+    infoLink: 'http://www.ellipseanimation.com'
+  }, {
+    title: 'J Cube Inc',
+    image: '/img/jcube_logo_bw.png',
+    infoLink: 'https://j-cube.jp'
+  }, {
+    title: 'Normaal Animation',
+    image: '/img/logo_normaal.png',
+    infoLink: 'https://j-cube.jp'
   }
 ];
 
@@ -149,7 +157,32 @@ const studios = [
       title: "IGG Canada",
       image: "/img/igg-logo.png",
       infoLink: "https://www.igg.com/",
-  }
+  },
+  {
+      title: "Agora Studio",
+      image: "/img/agora_studio.png",
+      infoLink: "https://agora.studio/",
+  },
+  {
+      title: "Lucan Visuals",
+      image: "/img/lucan_Logo_On_White-HR.png",
+      infoLink: "https://www.lucan.tv/",
+  },
+  {
+      title: "No Ghost",
+      image: "/img/noghost.png",
+      infoLink: "https://www.noghost.co.uk/",
+  },
+  {
+    title: "Static VFX",
+    image: "/img/staticvfx.png",
+    infoLink: "http://www.staticvfx.com/",
+  },
+  {
+    title: "Method n Madness",
+    image: "/img/methodmadness.png",
+    infoLink: "https://www.methodnmadness.com/",
+}
 ];
 
 function Service({imageUrl, title, description}) {
@@ -162,10 +195,10 @@ function Service({imageUrl, title, description}) {
   );
 }
 
-function Client({title, image, infoLink}) {
+function Studio({title, image, infoLink}) {
   const imgUrl = useBaseUrl(image);
   return (
-    <a className="client" href={infoLink}>
+    <a className="studio" href={infoLink}>
       <img src={image} alt="" title={title}></img>
     </a>
   );
@@ -229,7 +262,7 @@ function Home() {
               Get Support
             </Link>
           </div>
-          
+
           <p>
           OpenPYPE is developed, maintained and supported by <b><a href="https://pype.club">PYPE.club</a></b> </p>
 
@@ -290,7 +323,7 @@ function Home() {
             </div>
           </div>
         </section>
-        
+
         <section className={classnames(styles.gallery, "center darkBackground")}>
           <div className="container">
               <h2>Integrations</h2>
@@ -299,6 +332,11 @@ function Home() {
                   <img src="/img/app_maya.png" alt="" title=""></img>
                   <span className="caption">Maya</span>
                 </a>
+				
+                <a className="link" href="https://www.autodesk.com/products/flame">
+                  <img src="/img/app_flame.png" alt="" title=""></img>
+                  <span className="caption">Flame</span>
+                </a>
 
                 <a className="link" href="https://www.foundry.com/products/nuke-family/nuke">
                   <img src="/img/app_nuke.png" alt="" title=""></img>
@@ -306,7 +344,7 @@ function Home() {
                 </a>
 
                 <a className="link" href="https://www.foundry.com/products/nuke-family/nuke-studio">
-                  <img src="/img/app_nuke.png" alt="" title=""></img>
+                  <img src="/img/app_nukestudio.png" alt="" title=""></img>
                   <span className="caption">Nuke Studio</span>
                 </a>
 
@@ -339,7 +377,7 @@ function Home() {
                   <img src="/img/app_aftereffects.png" alt="" title=""></img>
                   <span className="caption">After Effects</span>
                 </a>
-                
+
                 <a className="link" href="https://www.unrealengine.com">
                   <img src="/img/app_unreal.png" alt="" title=""></img>
                   <span className="caption">Unreal Engine (Beta)</span>
@@ -352,7 +390,7 @@ function Home() {
 
                 <a className="link" href="https://www.blackmagicdesign.com/products/davinciresolve">
                   <img src="/img/app_resolve.png" alt="" title=""></img>
-                  <span className="caption">DaVinci Resolve (Beta)</span>
+                  <span className="caption">Resolve (Beta)</span>
                 </a>
 
                 <a className="link" href="https://www.blackmagicdesign.com/products/fusion">
@@ -365,6 +403,16 @@ function Home() {
                   <span className="caption">Ftrack</span>
                 </a>
 
+                <a className="link" href="https://www.shotgridsoftware.com/">
+                  <img src="/img/app_shotgrid.png" alt="" title=""></img>
+                  <span className="caption">Shotgrid (Beta)</span>
+                </a>
+
+                <a className="link" href="https://www.cg-wire.com/en/kitsu.html">
+                  <img src="/img/app_kitsu.png" alt="" title=""></img>
+                  <span className="caption">Kitsu (Beta)</span>
+                </a>
+
                 <a className="link" href="https://clockify.me">
                   <img src="/img/app_clockify.png" alt="" title=""></img>
                   <span className="caption">Clockify</span>
@@ -374,10 +422,10 @@ function Home() {
                   <img src="/img/app_deadline.png" alt="" title=""></img>
                   <span className="caption">Deadline</span>
                 </a>
-
-                <a className="link" href="https://www.vvertex.com">
-                  <img src="/img/app_muster.png" alt="" title=""></img>
-                  <span className="caption">Muster</span>
+				
+				        <a className="link" href="https://www.royalrender.de/index.php/startseite.html">
+                  <img src="/img/app_royalrender.png" alt="" title=""></img>
+                  <span className="caption">Royal Render</span>
                 </a>
 
                 <a className="link" href="https://www.slack.com">
@@ -385,30 +433,30 @@ function Home() {
                   <span className="caption">Slack</span>
                 </a>
 
+                <a className="link" href="https://j-cube.jp/solutions/multiverse/">
+                  <img src="/img/app_multiverse.png" alt="" title=""></img>
+                  <span className="caption">Multiverse</span>
+                </a>
+
               </div>
 
-              <p> <b>In development by us or OpenPype community.</b></p>
+              <p> <b>Planned or in development by us and OpenPype community.</b></p>
 
               <div className={classnames('showcase',)}>
-
-                <a className="link" href="https://www.autodesk.com/products/flame">
-                  <img src="/img/app_flame.png" alt="" title=""></img>
-                  <span className="caption">Flame</span>
-                </a>
-
-                <a className="link" href="https://www.shotgridsoftware.com/">
-                  <img src="/img/app_shotgrid.png" alt="" title=""></img>
-                  <span className="caption">Shotgrid</span>
-                </a>
-
+			  
                 <a className="link" href="https://fatfi.sh/aquarium/en">
                   <img src="/img/app_aquarium.png" alt="" title=""></img>
                   <span className="caption">Aquarium</span>
                 </a>
 
-                <a className="link" href="https://www.cg-wire.com/en/kitsu.html">
-                  <img src="/img/app_kitsu.png" alt="" title=""></img>
-                  <span className="caption">Kitsu</span>
+                <a className="link" href="https://www.vvertex.com">
+                  <img src="/img/app_muster.png" alt="" title=""></img>
+                  <span className="caption">Muster</span>
+                </a>
+
+                <a className="link" href="https://www.hibob.com">
+                  <img src="/img/app_hibob.png" alt="Hi Bob" title="Hi Bob"></img>
+                  <span className="caption">Bob</span>
                 </a>
 
               </div>
@@ -446,7 +494,7 @@ function Home() {
               <h2>Studios using openPype</h2>
               <div className="showcase">
                 {studios.map((props, idx) => (
-                  <Client key={idx} {...props} />
+                  <Studio key={idx} {...props} />
                 ))}
               </div>
             </div>

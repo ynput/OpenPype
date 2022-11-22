@@ -1,7 +1,8 @@
 import pyblish.api
 
-import openpype.api
+from openpype.client import get_assets
 from openpype.pipeline import legacy_io
+from openpype.pipeline.publish import ValidatePipelineOrder
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
 
@@ -17,7 +18,7 @@ class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidatePipelineOrder
+    order = ValidatePipelineOrder
     label = 'Node Ids in Database'
     hosts = ['maya']
     families = ["*"]
@@ -42,8 +43,12 @@ class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
                                                       nodes=instance[:])
 
         # check ids against database ids
-        db_asset_ids = legacy_io.find({"type": "asset"}).distinct("_id")
-        db_asset_ids = set(str(i) for i in db_asset_ids)
+        project_name = legacy_io.active_project()
+        asset_docs = get_assets(project_name, fields=["_id"])
+        db_asset_ids = {
+            str(asset_doc["_id"])
+            for asset_doc in asset_docs
+        }
 
         # Get all asset IDs
         for node in id_required_nodes:

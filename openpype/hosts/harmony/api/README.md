@@ -610,7 +610,8 @@ class ImageSequenceLoader(load.LoaderPlugin):
     def update(self, container, representation):
         node = container.pop("node")
 
-        version = legacy_io.find_one({"_id": representation["parent"]})
+        project_name = legacy_io.active_project()
+        version = get_version_by_id(project_name, representation["parent"])
         files = []
         for f in version["data"]["files"]:
             files.append(

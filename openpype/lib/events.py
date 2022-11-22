@@ -1,6 +1,7 @@
 """Events holding data about specific event."""
 import os
 import re
+import copy
 import inspect
 import logging
 import weakref
@@ -9,6 +10,10 @@ try:
     from weakref import WeakMethod
 except Exception:
     from openpype.lib.python_2_comp import WeakMethod
+
+
+class MissingEventSystem(Exception):
+    pass
 
 
 class EventCallback(object):
@@ -176,16 +181,20 @@ class Event(object):
         topic (str): Identifier of event.
         data (Any): Data specific for event. Dictionary is recommended.
         source (str): Identifier of source.
+        event_system (EventSystem): Event system in which can be event
+            triggered.
     """
+
     _data = {}
 
-    def __init__(self, topic, data=None, source=None):
+    def __init__(self, topic, data=None, source=None, event_system=None):
         self._id = str(uuid4())
         self._topic = topic
         if data is None:
             data = {}
         self._data = data
         self._source = source
+        self._event_system = event_system
 
     def __getitem__(self, key):
         return self._data[key]
@@ -199,6 +208,12 @@ class Event(object):
 
     @property
     def source(self):
+        """Event's source used for triggering callbacks.
+
+        Returns:
+            Union[str, None]: Source string or None. Source is optional.
+        """
+
         return self._source
 
     @property
@@ -207,32 +222,164 @@ class Event(object):
 
     @property
     def topic(self):
+        """Event's topic used for triggering callbacks.
+
+        Returns:
+            str: Topic string.
+        """
+
         return self._topic
 
     def emit(self):
         """Emit event and trigger callbacks."""
-        StoredCallbacks.emit_event(self)
+        if self._event_system is None:
+            raise MissingEventSystem(
+                "Can't emit event {}. Does not have set event system.".format(
+                    str(repr(self))
+                )
+            )
+        self._event_system.emit_event(self)
 
+    def to_data(self):
+        """Convert Event object to data.
 
-class StoredCallbacks:
-    _registered_callbacks = []
+        Returns:
+            Dict[str, Any]: Event data.
+        """
+
+        return {
+            "id": self.id,
+            "topic": self.topic,
+            "source": self.source,
+            "data": copy.deepcopy(self.data)
+        }
 
     @classmethod
-    def add_callback(cls, topic, callback):
+    def from_data(cls, event_data, event_system=None):
+        """Create event from data.
+
+        Args:
+            event_data (Dict[str, Any]): Event data with defined keys. Can be
+                created using 'to_data' method.
+            event_system (EventSystem): System to which the event belongs.
+
+        Returns:
+            Event: Event with attributes from passed data.
+        """
+
+        obj = cls(
+            event_data["topic"],
+            event_data["data"],
+            event_data["source"],
+            event_system
+        )
+        obj._id = event_data["id"]
+        return obj
+
+
+class EventSystem(object):
+    """Encapsulate event handling into an object.
+
+    System wraps registered callbacks and triggered events into single object
+    so it is possible to create mutltiple independent systems that have their
+    topics and callbacks.
+
+
+    """
+
+    def __init__(self):
+        self._registered_callbacks = []
+
+    def add_callback(self, topic, callback):
+        """Register callback in event system.
+
+        Args:
+            topic (str): Topic for EventCallback.
+            callback (Callable): Function or method that will be called
+                when topic is triggered.
+
+        Returns:
+            EventCallback: Created callback object which can be used to
+                stop listening.
+        """
+
         callback = EventCallback(topic, callback)
-        cls._registered_callbacks.append(callback)
+        self._registered_callbacks.append(callback)
         return callback
 
-    @classmethod
-    def emit_event(cls, event):
+    def create_event(self, topic, data, source):
+        """Create new event which is bound to event system.
+
+        Args:
+            topic (str): Event topic.
+            data (dict): Data related to event.
+            source (str): Source of event.
+
+        Returns:
+            Event: Object of event.
+        """
+
+        return Event(topic, data, source, self)
+
+    def emit(self, topic, data, source):
+        """Create event based on passed data and emit it.
+
+        This is easiest way how to trigger event in an event system.
+
+        Args:
+            topic (str): Event topic.
+            data (dict): Data related to event.
+            source (str): Source of event.
+
+        Returns:
+            Event: Created and emitted event.
+        """
+
+        event = self.create_event(topic, data, source)
+        event.emit()
+        return event
+
+    def emit_event(self, event):
+        """Emit event object.
+
+        Args:
+            event (Event): Prepared event with topic and data.
+        """
+
         invalid_callbacks = []
-        for callback in cls._registered_callbacks:
+        for callback in self._registered_callbacks:
             callback.process_event(event)
             if not callback.is_ref_valid:
                 invalid_callbacks.append(callback)
 
         for callback in invalid_callbacks:
-            cls._registered_callbacks.remove(callback)
+            self._registered_callbacks.remove(callback)
+
+
+class GlobalEventSystem:
+    """Event system living in global scope of process.
+
+    This is primarily used in host implementation to trigger events
+    related to DCC changes or changes of context in the host implementation.
+    """
+
+    _global_event_system = None
+
+    @classmethod
+    def get_global_event_system(cls):
+        if cls._global_event_system is None:
+            cls._global_event_system = EventSystem()
+        return cls._global_event_system
+
+    @classmethod
+    def add_callback(cls, topic, callback):
+        event_system = cls.get_global_event_system()
+        return event_system.add_callback(topic, callback)
+
+    @classmethod
+    def emit(cls, topic, data, source):
+        event_system = cls.get_global_event_system()
+        return event_system.emit(topic, data, source)
 
 
 def register_event_callback(topic, callback):
@@ -249,7 +396,8 @@ def register_event_callback(topic, callback):
             enable/disable listening to a topic or remove the callback from
             the topic completely.
     """
-    return StoredCallbacks.add_callback(topic, callback)
+
+    return GlobalEventSystem.add_callback(topic, callback)
 
 
 def emit_event(topic, data=None, source=None):
@@ -263,6 +411,5 @@ def emit_event(topic, data=None, source=None):
     Returns:
         Event: Object of event that was emitted.
     """
-    event = Event(topic, data, source)
-    event.emit()
-    return event
+
+    return GlobalEventSystem.emit(topic, data, source)

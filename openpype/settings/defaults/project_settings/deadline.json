@@ -83,9 +83,6 @@
                 "maya": [
                     ".*([Bb]eauty).*"
                 ],
-                "nuke": [
-                    ".*"
-                ],
                 "aftereffects": [
                     ".*"
                 ],

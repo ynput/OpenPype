@@ -1,5 +1,5 @@
 import pyblish.api
-import openpype.api
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateVDBInputNode(pyblish.api.InstancePlugin):
@@ -16,7 +16,7 @@ class ValidateVDBInputNode(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder + 0.1
+    order = ValidateContentsOrder + 0.1
     families = ["vdbcache"]
     hosts = ["houdini"]
     label = "Validate Input Node (VDB)"

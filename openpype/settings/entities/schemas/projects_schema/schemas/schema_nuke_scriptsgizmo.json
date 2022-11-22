@@ -1,0 +1,124 @@
+{
+    "type": "list",
+    "key": "gizmo",
+    "label": "Gizmo Menu",
+    "is_group": true,
+    "use_label_wrap": true,
+    "object_type": {
+        "type": "dict",
+        "children": [
+            {
+                "type": "text",
+                "key": "toolbar_menu_name",
+                "label": "Toolbar Menu Name"
+            },
+            {
+                "type": "path",
+                "key": "gizmo_source_dir",
+                "label": "Gizmo directory path",
+                "multipath": true,
+                "multiplatform": true
+            },
+            {
+                "type": "collapsible-wrap",
+                "label": "Options",
+                "collapsible": true,
+                "collapsed": true,
+                "children": [
+                    {
+                        "type": "path",
+                        "key": "toolbar_icon_path",
+                        "label": "Toolbar Icon Path",
+                        "multipath": false,
+                        "multiplatform": true
+                    },
+                    {
+                        "type": "splitter"
+                    },
+                    {
+                        "type": "list",
+                        "key": "gizmo_definition",
+                        "label": "Gizmo definitions",
+                        "use_label_wrap": true,
+                        "object_type": {
+                            "type": "dict",
+                            "children": [
+                                {
+                                    "type": "text",
+                                    "key": "gizmo_toolbar_path",
+                                    "label": "Gizmo Menu Path"
+                                },
+                                {
+                                    "type": "list",
+                                    "key": "sub_gizmo_list",
+                                    "label": "Sub Gizmo List",
+                                    "use_label_wrap": true,
+                                    "object_type": {
+                                        "type": "dict-conditional",
+                                        "enum_key": "sourcetype",
+                                        "enum_label": "Type of usage",
+                                        "enum_children": [
+                                            {
+                                                "key": "python",
+                                                "label": "Python",
+                                                "children": [
+                                                    {
+                                                        "type": "text",
+                                                        "key": "title",
+                                                        "label": "Title"
+                                                    },
+                                                    {
+                                                        "type": "text",
+                                                        "key": "command",
+                                                        "label": "Python command"
+                                                    },
+                                                    {
+                                                        "type": "text",
+                                                        "key": "shortcut",
+                                                        "label": "Hotkey"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "key": "file",
+                                                "label": "File",
+                                                "children": [
+                                                    {
+                                                        "type": "text",
+                                                        "key": "title",
+                                                        "label": "Title"
+                                                    },
+                                                    {
+                                                        "type": "text",
+                                                        "key": "file_name",
+                                                        "label": "Gizmo file name"
+                                                    },
+                                                    {
+                                                        "type": "text",
+                                                        "key": "shortcut",
+                                                        "label": "Hotkey"
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "key": "separator",
+                                                "label": "Separator",
+                                                "children": [
+                                                {
+                                                    "type": "text",
+                                                    "key": "gizmo_toolbar_path",
+                                                    "label": "Toolbar path"
+                                                }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}

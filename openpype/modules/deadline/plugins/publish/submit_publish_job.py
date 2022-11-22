@@ -10,7 +10,10 @@ import clique
 
 import pyblish.api
 
-import openpype.api
+from openpype.client import (
+    get_last_version_by_subset_name,
+    get_representations,
+)
 from openpype.pipeline import (
     get_representation_path,
     legacy_io,
@@ -18,15 +21,23 @@ from openpype.pipeline import (
 from openpype.pipeline.farm.patterning import match_aov_pattern
 
 
-def get_resources(version, extension=None):
+def get_resources(project_name, version, extension=None):
     """Get the files from the specific version."""
-    query = {"type": "representation", "parent": version["_id"]}
+
+    # TODO this functions seems to be weird
+    #   - it's looking for representation with one extension or first (any)
+    #       representation from a version?
+    #  - not sure how this should work, maybe it does for specific use cases
+    #       but probably can't be used for all resources from 2D workflows
+    extensions = None
     if extension:
-        query["name"] = extension
+        extensions = [extension]
+    repre_docs = list(get_representations(
+        project_name, version_ids=[version["_id"]], extensions=extensions
+    ))
+    assert repre_docs, "This is a bug"
 
-    representation = legacy_io.find_one(query)
-    assert representation, "This is a bug"
-
+    representation = repre_docs[0]
     directory = get_representation_path(representation)
     print("Source: ", directory)
     resources = sorted(
@@ -103,6 +114,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
     deadline_plugin = "OpenPype"
+    targets = ["local"]
 
     hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects", "harmony"]
 
@@ -128,7 +140,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "OPENPYPE_LOG_NO_COLORS",
         "OPENPYPE_USERNAME",
         "OPENPYPE_RENDER_JOB",
-        "OPENPYPE_PUBLISH_JOB"
+        "OPENPYPE_PUBLISH_JOB",
+        "OPENPYPE_MONGO",
+        "OPENPYPE_VERSION"
     ]
 
     # custom deadline attributes
@@ -145,7 +159,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     # mapping of instance properties to be transfered to new instance for every
     # specified family
     instance_transfer = {
-        "slate": ["slateFrame"],
+        "slate": ["slateFrames", "slate"],
         "review": ["lutPath"],
         "render2d": ["bakingNukeScripts", "version"],
         "renderlayer": ["convertToScanline"]
@@ -282,6 +296,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             for assembly_id in instance.data.get("assemblySubmissionJobs"):
                 payload["JobInfo"]["JobDependency{}".format(job_index)] = assembly_id  # noqa: E501
                 job_index += 1
+        elif instance.data.get("bakingSubmissionJobs"):
+            self.log.info("Adding baking submission jobs as dependencies...")
+            job_index = 0
+            for assembly_id in instance.data["bakingSubmissionJobs"]:
+                payload["JobInfo"]["JobDependency{}".format(job_index)] = assembly_id  # noqa: E501
+                job_index += 1
         else:
             payload["JobInfo"]["JobDependency0"] = job["_id"]
 
@@ -328,13 +348,21 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         self.log.info("Preparing to copy ...")
         start = instance.data.get("frameStart")
         end = instance.data.get("frameEnd")
+        project_name = legacy_io.active_project()
 
         # get latest version of subset
         # this will stop if subset wasn't published yet
-        version = openpype.api.get_latest_version(instance.data.get("asset"),
-                                                  instance.data.get("subset"))
+        project_name = legacy_io.active_project()
+        version = get_last_version_by_subset_name(
+            project_name,
+            instance.data.get("subset"),
+            asset_name=instance.data.get("asset")
+        )
+
         # get its files based on extension
-        subset_resources = get_resources(version, representation.get("ext"))
+        subset_resources = get_resources(
+            project_name, version, representation.get("ext")
+        )
         r_col, _ = clique.assemble(subset_resources)
 
         # if override remove all frames we are expecting to be rendered
@@ -429,9 +457,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             cam = [c for c in cameras if c in col.head]
             if cam:
-                subset_name = '{}_{}_{}'.format(group_name, cam, aov)
+                if aov:
+                    subset_name = '{}_{}_{}'.format(group_name, cam, aov)
+                else:
+                    subset_name = '{}_{}'.format(group_name, cam)
             else:
-                subset_name = '{}_{}'.format(group_name, aov)
+                if aov:
+                    subset_name = '{}_{}'.format(group_name, aov)
+                else:
+                    subset_name = '{}'.format(group_name)
 
             if isinstance(col, (list, tuple)):
                 staging = os.path.dirname(col[0])
@@ -466,7 +500,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if instance_data.get("multipartExr"):
                 preview = True
 
-            new_instance = copy(instance_data)
+            new_instance = deepcopy(instance_data)
             new_instance["subset"] = subset_name
             new_instance["subsetGroup"] = group_name
             if preview:
@@ -564,11 +598,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     " This may cause issues on farm."
                 ).format(staging))
 
+            frame_start = int(instance.get("frameStartHandle"))
+            if instance.get("slate"):
+                frame_start -= 1
+
             rep = {
                 "name": ext,
                 "ext": ext,
                 "files": [os.path.basename(f) for f in list(collection)],
-                "frameStart": int(instance.get("frameStartHandle")),
+                "frameStart": frame_start,
                 "frameEnd": int(instance.get("frameEndHandle")),
                 # If expectedFile are absolute, we need only filenames
                 "stagingDir": staging,
@@ -640,6 +678,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
     def _solve_families(self, instance, preview=False):
         families = instance.get("families")
+
         # if we have one representation with preview tag
         # flag whole instance for review and for ftrack
         if preview:
@@ -666,9 +705,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         context = instance.context
         self.context = context
         self.anatomy = instance.context.data["anatomy"]
-
-        if hasattr(instance, "_log"):
-            data['_log'] = instance._log
 
         asset = data.get("asset") or legacy_io.Session["AVALON_ASSET"]
         subset = data.get("subset")
@@ -719,10 +755,17 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 " This may cause issues."
             ).format(source))
 
-        families = ["render"]
+        family = "render"
+        if "prerender" in instance.data["families"]:
+            family = "prerender"
+        families = [family]
+
+        # pass review to families if marked as review
+        if data.get("review"):
+            families.append("review")
 
         instance_skeleton_data = {
-            "family": "render",
+            "family": family,
             "subset": subset,
             "families": families,
             "asset": asset,
@@ -741,13 +784,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "resolutionHeight": data.get("resolutionHeight", 1080),
             "multipartExr": data.get("multipartExr", False),
             "jobBatchName": data.get("jobBatchName", ""),
-            "useSequenceForReview": data.get("useSequenceForReview", True)
+            "useSequenceForReview": data.get("useSequenceForReview", True),
+            # map inputVersions `ObjectId` -> `str` so json supports it
+            "inputVersions": list(map(str, data.get("inputVersions", [])))
         }
-
-        if "prerender" in instance.data["families"]:
-            instance_skeleton_data.update({
-                "family": "prerender",
-                "families": []})
 
         # skip locking version if we are creating v01
         instance_version = instance.data.get("version")  # take this if exists
@@ -883,8 +923,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     new_i = copy(i)
                     new_i["version"] = at.get("version")
                     new_i["subset"] = at.get("subset")
+                    new_i["family"] = at.get("family")
                     new_i["append"] = True
-                    new_i["families"].append(at.get("family"))
+                    # don't set subsetGroup if we are attaching
+                    new_i.pop("subsetGroup")
                     new_instances.append(new_i)
                     self.log.info("  - {} / v{}".format(
                         at.get("subset"), at.get("version")))
@@ -1006,9 +1048,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         prev_start = None
         prev_end = None
 
-        version = openpype.api.get_latest_version(asset_name=asset,
-                                                  subset_name=subset
-                                                  )
+        project_name = legacy_io.active_project()
+        version = get_last_version_by_subset_name(
+            project_name,
+            subset,
+            asset_name=asset
+        )
 
         # Set prev start / end frames for comparison
         if not prev_start and not prev_end:
@@ -1038,7 +1083,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     get publish_path
 
         Args:
-            anatomy (pype.lib.anatomy.Anatomy):
+            anatomy (openpype.pipeline.anatomy.Anatomy):
             template_data (dict): pre-calculated collected data for process
             asset (string): asset name
             subset (string): subset name (actually group name of subset)
@@ -1053,7 +1098,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 based on 'publish' template
         """
         if not version:
-            version = openpype.api.get_latest_version(asset, subset)
+            project_name = legacy_io.active_project()
+            version = get_last_version_by_subset_name(
+                project_name,
+                subset,
+                asset_name=asset
+            )
             if version:
                 version = int(version["name"]) + 1
             else:

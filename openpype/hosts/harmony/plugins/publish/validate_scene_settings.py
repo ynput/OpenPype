@@ -55,6 +55,10 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Plugin entry point."""
+
+        # TODO 'get_asset_settings' could expect asset document as argument
+        #   which is available on 'context.data["assetEntity"]'
+        #   - the same approach can be used in 'ValidateSceneSettingsRepair'
         expected_settings = harmony.get_asset_settings()
         self.log.info("scene settings from DB:".format(expected_settings))
 

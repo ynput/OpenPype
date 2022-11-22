@@ -21,6 +21,11 @@ class OpenPypeVersionNotFound(Exception):
     pass
 
 
+class OpenPypeVersionIncompatible(Exception):
+    """OpenPype version is not compatible with the installed one (build)."""
+    pass
+
+
 def should_add_certificate_path_to_mongo_url(mongo_url):
     """Check if should add ca certificate to mongo url.
 

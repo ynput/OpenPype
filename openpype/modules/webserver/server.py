@@ -1,16 +1,19 @@
+import re
 import threading
 import asyncio
 
 from aiohttp import web
 
-from openpype.lib import PypeLogger
-
-log = PypeLogger.get_logger("WebServer")
+from openpype.lib import Logger
+from .cors_middleware import cors_middleware
 
 
 class WebServerManager:
     """Manger that care about web server thread."""
+
     def __init__(self, port=None, host=None):
+        self._log = None
+
         self.port = port or 8079
         self.host = host or "localhost"
 
@@ -18,11 +21,23 @@ class WebServerManager:
         self.handlers = {}
         self.on_stop_callbacks = []
 
-        self.app = web.Application()
+        self.app = web.Application(
+            middlewares=[
+                cors_middleware(
+                    origins=[re.compile(r"^https?\:\/\/localhost")]
+                )
+            ]
+        )
 
         # add route with multiple methods for single "external app"
 
         self.webserver_thread = WebServerThread(self)
+
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = Logger.get_logger(self.__class__.__name__)
+        return self._log
 
     @property
     def url(self):
@@ -42,12 +57,12 @@ class WebServerManager:
         if not self.is_running:
             return
         try:
-            log.debug("Stopping Web server")
+            self.log.debug("Stopping Web server")
             self.webserver_thread.is_running = False
             self.webserver_thread.stop()
 
         except Exception:
-            log.warning(
+            self.log.warning(
                 "Error has happened during Killing Web server",
                 exc_info=True
             )
@@ -65,7 +80,10 @@ class WebServerManager:
 
 class WebServerThread(threading.Thread):
     """ Listener for requests in thread."""
+
     def __init__(self, manager):
+        self._log = None
+
         super(WebServerThread, self).__init__()
 
         self.is_running = False
@@ -74,6 +92,12 @@ class WebServerThread(threading.Thread):
         self.runner = None
         self.site = None
         self.tasks = []
+
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = Logger.get_logger(self.__class__.__name__)
+        return self._log
 
     @property
     def port(self):
@@ -87,13 +111,13 @@ class WebServerThread(threading.Thread):
         self.is_running = True
 
         try:
-            log.info("Starting WebServer server")
+            self.log.info("Starting WebServer server")
             self.loop = asyncio.new_event_loop()  # create new loop for thread
             asyncio.set_event_loop(self.loop)
 
             self.loop.run_until_complete(self.start_server())
 
-            log.debug(
+            self.log.debug(
                 "Running Web server on URL: \"localhost:{}\"".format(self.port)
             )
 
@@ -101,7 +125,7 @@ class WebServerThread(threading.Thread):
             self.loop.run_forever()
 
         except Exception:
-            log.warning(
+            self.log.warning(
                 "Web Server service has failed", exc_info=True
             )
         finally:
@@ -109,7 +133,7 @@ class WebServerThread(threading.Thread):
 
         self.is_running = False
         self.manager.thread_stopped()
-        log.info("Web server stopped")
+        self.log.info("Web server stopped")
 
     async def start_server(self):
         """ Starts runner and TCPsite """
@@ -129,17 +153,17 @@ class WebServerThread(threading.Thread):
         while self.is_running:
             while self.tasks:
                 task = self.tasks.pop(0)
-                log.debug("waiting for task {}".format(task))
+                self.log.debug("waiting for task {}".format(task))
                 await task
-                log.debug("returned value {}".format(task.result))
+                self.log.debug("returned value {}".format(task.result))
 
             await asyncio.sleep(0.5)
 
-        log.debug("Starting shutdown")
+        self.log.debug("Starting shutdown")
         await self.site.stop()
-        log.debug("Site stopped")
+        self.log.debug("Site stopped")
         await self.runner.cleanup()
-        log.debug("Runner stopped")
+        self.log.debug("Runner stopped")
         tasks = [
             task
             for task in asyncio.all_tasks()
@@ -147,7 +171,9 @@ class WebServerThread(threading.Thread):
         ]
         list(map(lambda task: task.cancel(), tasks))  # cancel all the tasks
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        log.debug(f'Finished awaiting cancelled tasks, results: {results}...')
+        self.log.debug(
+            f'Finished awaiting cancelled tasks, results: {results}...'
+        )
         await self.loop.shutdown_asyncgens()
         # to really make sure everything else has time to stop
         await asyncio.sleep(0.07)

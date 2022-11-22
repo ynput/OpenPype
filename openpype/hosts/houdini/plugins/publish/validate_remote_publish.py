@@ -1,7 +1,7 @@
 import pyblish.api
-import openpype.api
 
 from openpype.hosts.houdini.api import lib
+from openpype.pipeline.publish import RepairContextAction
 
 import hou
 
@@ -14,7 +14,7 @@ class ValidateRemotePublishOutNode(pyblish.api.ContextPlugin):
     hosts = ["houdini"]
     targets = ["deadline"]
     label = "Remote Publish ROP node"
-    actions = [openpype.api.RepairContextAction]
+    actions = [RepairContextAction]
 
     def process(self, context):
 

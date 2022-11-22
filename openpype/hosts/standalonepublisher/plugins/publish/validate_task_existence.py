@@ -1,9 +1,7 @@
 import pyblish.api
 
-from openpype.pipeline import (
-    PublishXmlValidationError,
-    legacy_io,
-)
+from openpype.client import get_assets
+from openpype.pipeline import PublishXmlValidationError
 
 
 class ValidateTaskExistence(pyblish.api.ContextPlugin):
@@ -20,15 +18,11 @@ class ValidateTaskExistence(pyblish.api.ContextPlugin):
         for instance in context:
             asset_names.add(instance.data["asset"])
 
-        asset_docs = legacy_io.find(
-            {
-                "type": "asset",
-                "name": {"$in": list(asset_names)}
-            },
-            {
-                "name": 1,
-                "data.tasks": 1
-            }
+        project_name = context.data["projectEntity"]["name"]
+        asset_docs = get_assets(
+            project_name,
+            asset_names=asset_names,
+            fields=["name", "data.tasks"]
         )
         tasks_by_asset_names = {}
         for asset_doc in asset_docs:

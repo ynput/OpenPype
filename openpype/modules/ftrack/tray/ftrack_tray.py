@@ -2,24 +2,22 @@ import os
 import time
 import datetime
 import threading
+
 from Qt import QtCore, QtWidgets, QtGui
 
 import ftrack_api
-from ..ftrack_server.lib import check_ftrack_url
-from ..ftrack_server import socket_thread
-from ..lib import credentials
-from ..ftrack_module import FTRACK_MODULE_DIR
+from openpype import resources
+from openpype.lib import Logger
+from openpype_modules.ftrack import resolve_ftrack_url, FTRACK_MODULE_DIR
+from openpype_modules.ftrack.ftrack_server import socket_thread
+from openpype_modules.ftrack.lib import credentials
 from . import login_dialog
-
-from openpype.api import Logger, resources
-
-
-log = Logger().get_logger("FtrackModule")
 
 
 class FtrackTrayWrapper:
     def __init__(self, module):
         self.module = module
+        self.log = Logger.get_logger(self.__class__.__name__)
 
         self.thread_action_server = None
         self.thread_socket_server = None
@@ -48,6 +46,9 @@ class FtrackTrayWrapper:
         self.widget_login.activateWindow()
         self.widget_login.raise_()
 
+    def show_ftrack_browser(self):
+        QtGui.QDesktopServices.openUrl(self.module.ftrack_url)
+
     def validate(self):
         validation = False
         cred = credentials.get_credentials()
@@ -57,19 +58,19 @@ class FtrackTrayWrapper:
         if validation:
             self.widget_login.set_credentials(ft_user, ft_api_key)
             self.module.set_credentials_to_env(ft_user, ft_api_key)
-            log.info("Connected to Ftrack successfully")
+            self.log.info("Connected to Ftrack successfully")
             self.on_login_change()
 
             return validation
 
         if not validation and ft_user and ft_api_key:
-            log.warning(
+            self.log.warning(
                 "Current Ftrack credentials are not valid. {}: {} - {}".format(
                     str(os.environ.get("FTRACK_SERVER")), ft_user, ft_api_key
                 )
             )
 
-        log.info("Please sign in to Ftrack")
+        self.log.info("Please sign in to Ftrack")
         self.bool_logged = False
         self.show_login_widget()
         self.set_menu_visibility()
@@ -99,7 +100,7 @@ class FtrackTrayWrapper:
             self.action_credentials.setIcon(self.icon_not_logged)
             self.action_credentials.setToolTip("Logged out")
 
-        log.info("Logged out of Ftrack")
+        self.log.info("Logged out of Ftrack")
         self.bool_logged = False
         self.set_menu_visibility()
 
@@ -120,10 +121,6 @@ class FtrackTrayWrapper:
 
         ftrack_url = self.module.ftrack_url
         os.environ["FTRACK_SERVER"] = ftrack_url
-
-        parent_file_path = os.path.dirname(
-            os.path.dirname(os.path.realpath(__file__))
-        )
 
         min_fail_seconds = 5
         max_fail_count = 3
@@ -149,17 +146,19 @@ class FtrackTrayWrapper:
         # Main loop
         while True:
             if not self.bool_action_server_running:
-                log.debug("Action server was pushed to stop.")
+                self.log.debug("Action server was pushed to stop.")
                 break
 
             # Check if accessible Ftrack and Mongo url
             if not ftrack_accessible:
-                ftrack_accessible = check_ftrack_url(ftrack_url)
+                ftrack_accessible = resolve_ftrack_url(ftrack_url)
 
             # Run threads only if Ftrack is accessible
             if not ftrack_accessible:
                 if not printed_ftrack_error:
-                    log.warning("Can't access Ftrack {}".format(ftrack_url))
+                    self.log.warning(
+                        "Can't access Ftrack {}".format(ftrack_url)
+                    )
 
                 if self.thread_socket_server is not None:
                     self.thread_socket_server.stop()
@@ -186,7 +185,7 @@ class FtrackTrayWrapper:
                     self.set_menu_visibility()
 
                 elif failed_count == max_fail_count:
-                    log.warning((
+                    self.log.warning((
                         "Action server failed {} times."
                         " I'll try to run again {}s later"
                     ).format(
@@ -238,10 +237,10 @@ class FtrackTrayWrapper:
                 self.thread_action_server.join()
                 self.thread_action_server = None
 
-            log.info("Ftrack action server was forced to stop")
+            self.log.info("Ftrack action server was forced to stop")
 
         except Exception:
-            log.warning(
+            self.log.warning(
                 "Error has happened during Killing action server",
                 exc_info=True
             )
@@ -284,6 +283,13 @@ class FtrackTrayWrapper:
         tray_server_menu.addAction(self.action_server_stop)
 
         self.tray_server_menu = tray_server_menu
+
+        # Ftrack Browser
+        browser_open = QtWidgets.QAction("Open Ftrack...", tray_menu)
+        browser_open.triggered.connect(self.show_ftrack_browser)
+        tray_menu.addAction(browser_open)
+        self.browser_open = browser_open
+
         self.bool_logged = False
         self.set_menu_visibility()
 
@@ -331,7 +337,7 @@ class FtrackTrayWrapper:
                 self.thread_timer = None
 
         except Exception as e:
-            log.error("During Killing Timer event server: {0}".format(e))
+            self.log.error("During Killing Timer event server: {0}".format(e))
 
     def changed_user(self):
         self.stop_action_server()

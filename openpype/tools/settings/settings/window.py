@@ -1,4 +1,18 @@
 from Qt import QtWidgets, QtGui, QtCore
+
+from openpype import style
+
+from openpype.lib import is_admin_password_required
+from openpype.lib.events import EventSystem
+from openpype.widgets import PasswordDialog
+
+from openpype.settings.lib import (
+    get_last_opened_info,
+    opened_settings_ui,
+    closed_settings_ui,
+)
+
+from .dialogs import SettingsUIOpenedElsewhere
 from .categories import (
     CategoryState,
     SystemWidget,
@@ -10,10 +24,80 @@ from .widgets import (
     SettingsTabWidget
 )
 from .search_dialog import SearchEntitiesDialog
-from openpype import style
 
-from openpype.lib import is_admin_password_required
-from openpype.widgets import PasswordDialog
+
+class SettingsController:
+    """Controller for settings tools.
+
+    Added when tool was finished for checks of last opened in settings
+    categories and being able communicated with main widget logic.
+    """
+
+    def __init__(self, user_role):
+        self._user_role = user_role
+        self._event_system = EventSystem()
+
+        self._opened_info = None
+        self._last_opened_info = None
+        self._edit_mode = None
+
+    @property
+    def user_role(self):
+        return self._user_role
+
+    @property
+    def event_system(self):
+        return self._event_system
+
+    @property
+    def opened_info(self):
+        return self._opened_info
+
+    @property
+    def last_opened_info(self):
+        return self._last_opened_info
+
+    @property
+    def edit_mode(self):
+        return self._edit_mode
+
+    def ui_closed(self):
+        if self._opened_info is not None:
+            closed_settings_ui(self._opened_info)
+
+        self._opened_info = None
+        self._edit_mode = None
+
+    def set_edit_mode(self, enabled):
+        if self._edit_mode is enabled:
+            return
+
+        opened_info = None
+        if enabled:
+            opened_info = opened_settings_ui()
+            self._last_opened_info = opened_info
+
+        self._opened_info = opened_info
+        self._edit_mode = enabled
+
+        self.event_system.emit(
+            "edit.mode.changed",
+            {"edit_mode": enabled},
+            "controller"
+        )
+
+    def update_last_opened_info(self):
+        last_opened_info = get_last_opened_info()
+        enabled = False
+        if (
+            last_opened_info is None
+            or self._opened_info == last_opened_info
+        ):
+            enabled = True
+
+        self._last_opened_info = last_opened_info
+
+        self.set_edit_mode(enabled)
 
 
 class MainWidget(QtWidgets.QWidget):
@@ -21,9 +105,17 @@ class MainWidget(QtWidgets.QWidget):
 
     widget_width = 1000
     widget_height = 600
+    window_title = "OpenPype Settings"
 
     def __init__(self, user_role, parent=None, reset_on_show=True):
         super(MainWidget, self).__init__(parent)
+
+        controller = SettingsController(user_role)
+
+        # Object referencing to this machine and time when UI was opened
+        # - is used on close event
+        self._main_reset = False
+        self._controller = controller
 
         self._user_passed = False
         self._reset_on_show = reset_on_show
@@ -31,7 +123,7 @@ class MainWidget(QtWidgets.QWidget):
         self._password_dialog = None
 
         self.setObjectName("SettingsMainWidget")
-        self.setWindowTitle("OpenPype Settings")
+        self.setWindowTitle(self.window_title)
 
         self.resize(self.widget_width, self.widget_height)
 
@@ -41,8 +133,8 @@ class MainWidget(QtWidgets.QWidget):
 
         header_tab_widget = SettingsTabWidget(parent=self)
 
-        studio_widget = SystemWidget(user_role, header_tab_widget)
-        project_widget = ProjectWidget(user_role, header_tab_widget)
+        studio_widget = SystemWidget(controller, header_tab_widget)
+        project_widget = ProjectWidget(controller, header_tab_widget)
 
         tab_widgets = [
             studio_widget,
@@ -64,6 +156,11 @@ class MainWidget(QtWidgets.QWidget):
         self._shadow_widget = ShadowWidget("Working...", self)
         self._shadow_widget.setVisible(False)
 
+        controller.event_system.add_callback(
+            "edit.mode.changed",
+            self._edit_mode_changed
+        )
+
         header_tab_widget.currentChanged.connect(self._on_tab_changed)
         search_dialog.path_clicked.connect(self._on_search_path_clicked)
 
@@ -74,7 +171,7 @@ class MainWidget(QtWidgets.QWidget):
                 self._on_restart_required
             )
             tab_widget.reset_started.connect(self._on_reset_started)
-            tab_widget.reset_started.connect(self._on_reset_finished)
+            tab_widget.reset_finished.connect(self._on_reset_finished)
             tab_widget.full_path_requested.connect(self._on_full_path_request)
 
         header_tab_widget.context_menu_requested.connect(
@@ -131,10 +228,30 @@ class MainWidget(QtWidgets.QWidget):
 
     def showEvent(self, event):
         super(MainWidget, self).showEvent(event)
+
         if self._reset_on_show:
             self._reset_on_show = False
             # Trigger reset with 100ms delay
             QtCore.QTimer.singleShot(100, self.reset)
+
+    def closeEvent(self, event):
+        self._controller.ui_closed()
+
+        super(MainWidget, self).closeEvent(event)
+
+    def _check_on_reset(self):
+        self._controller.update_last_opened_info()
+        if self._controller.edit_mode:
+            return
+
+        # if self._edit_mode is False:
+        #     return
+
+        dialog = SettingsUIOpenedElsewhere(
+            self._controller.last_opened_info, self
+        )
+        dialog.exec_()
+        self._controller.set_edit_mode(dialog.result() == 1)
 
     def _show_password_dialog(self):
         if self._password_dialog:
@@ -176,8 +293,11 @@ class MainWidget(QtWidgets.QWidget):
         if self._reset_on_show:
             self._reset_on_show = False
 
+        self._main_reset = True
         for tab_widget in self.tab_widgets:
             tab_widget.reset()
+        self._main_reset = False
+        self._check_on_reset()
 
     def _update_search_dialog(self, clear=False):
         if self._search_dialog.isVisible():
@@ -186,6 +306,12 @@ class MainWidget(QtWidgets.QWidget):
                 widget = self._header_tab_widget.currentWidget()
                 entity = widget.entity
             self._search_dialog.set_root_entity(entity)
+
+    def _edit_mode_changed(self, event):
+        title = self.window_title
+        if not event["edit_mode"]:
+            title += " [View only]"
+        self.setWindowTitle(title)
 
     def _on_tab_changed(self):
         self._update_search_dialog()
@@ -220,6 +346,9 @@ class MainWidget(QtWidgets.QWidget):
         current_widget = self._header_tab_widget.currentWidget()
         if current_widget is widget:
             self._update_search_dialog()
+
+        if not self._main_reset:
+            self._check_on_reset()
 
     def keyPressEvent(self, event):
         if event.matches(QtGui.QKeySequence.Find):

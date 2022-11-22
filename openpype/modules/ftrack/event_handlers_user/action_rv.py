@@ -5,9 +5,16 @@ import json
 
 import ftrack_api
 
+from openpype.client import (
+    get_asset_by_name,
+    get_subset_by_name,
+    get_version_by_name,
+    get_representation_by_name
+)
 from openpype.pipeline import (
     get_representation_path,
-    legacy_io,
+    AvalonMongoDB,
+    Anatomy,
 )
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 
@@ -255,9 +262,10 @@ class RVAction(BaseAction):
             "Component", list(event["data"]["values"].values())[0]
         )["version"]["asset"]["parent"]["link"][0]
         project = session.get(link["type"], link["id"])
-        os.environ["AVALON_PROJECT"] = project["name"]
-        legacy_io.Session["AVALON_PROJECT"] = project["name"]
-        legacy_io.install()
+        project_name = project["full_name"]
+        dbcon = AvalonMongoDB()
+        dbcon.Session["AVALON_PROJECT"] = project_name
+        anatomy = Anatomy(project_name)
 
         location = ftrack_api.Session().pick_location()
 
@@ -281,37 +289,38 @@ class RVAction(BaseAction):
             if online_source:
                 continue
 
-            asset = legacy_io.find_one({"type": "asset", "name": parent_name})
-            subset = legacy_io.find_one(
-                {
-                    "type": "subset",
-                    "name": component["version"]["asset"]["name"],
-                    "parent": asset["_id"]
-                }
+            subset_name = component["version"]["asset"]["name"]
+            version_name = component["version"]["version"]
+            representation_name = component["file_type"][1:]
+
+            asset_doc = get_asset_by_name(
+                project_name, parent_name, fields=["_id"]
             )
-            version = legacy_io.find_one(
-                {
-                    "type": "version",
-                    "name": component["version"]["version"],
-                    "parent": subset["_id"]
-                }
+            subset_doc = get_subset_by_name(
+                project_name,
+                subset_name=subset_name,
+                asset_id=asset_doc["_id"]
             )
-            representation = legacy_io.find_one(
-                {
-                    "type": "representation",
-                    "parent": version["_id"],
-                    "name": component["file_type"][1:]
-                }
+            version_doc = get_version_by_name(
+                project_name,
+                version=version_name,
+                subset_id=subset_doc["_id"]
             )
-            if representation is None:
-                representation = legacy_io.find_one(
-                    {
-                        "type": "representation",
-                        "parent": version["_id"],
-                        "name": "preview"
-                    }
+            repre_doc = get_representation_by_name(
+                project_name,
+                version_id=version_doc["_id"],
+                representation_name=representation_name
+            )
+            if not repre_doc:
+                repre_doc = get_representation_by_name(
+                    project_name,
+                    version_id=version_doc["_id"],
+                    representation_name="preview"
                 )
-            paths.append(get_representation_path(representation))
+
+            paths.append(get_representation_path(
+                repre_doc, root=anatomy.roots, dbcon=dbcon
+            ))
 
         return paths
 

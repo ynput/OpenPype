@@ -1,3 +1,5 @@
+import re
+
 from openpype.hosts.photoshop import api
 from openpype.lib import BoolDef
 from openpype.pipeline import (
@@ -5,6 +7,8 @@ from openpype.pipeline import (
     CreatedInstance,
     legacy_io
 )
+from openpype.lib import prepare_template_data
+from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 
 
 class ImageCreator(Creator):
@@ -38,17 +42,24 @@ class ImageCreator(Creator):
         top_level_selected_items = stub.get_selected_layers()
         if pre_create_data.get("use_selection"):
             only_single_item_selected = len(top_level_selected_items) == 1
-            for selected_item in top_level_selected_items:
-                if (
-                        only_single_item_selected or
-                        pre_create_data.get("create_multiple")):
+            if (
+                    only_single_item_selected or
+                    pre_create_data.get("create_multiple")):
+                for selected_item in top_level_selected_items:
                     if selected_item.group:
                         groups_to_create.append(selected_item)
                     else:
                         top_layers_to_wrap.append(selected_item)
-                else:
-                    group = stub.group_selected_layers(subset_name_from_ui)
-                    groups_to_create.append(group)
+            else:
+                group = stub.group_selected_layers(subset_name_from_ui)
+                groups_to_create.append(group)
+        else:
+            stub.select_layers(stub.get_layers())
+            try:
+                group = stub.group_selected_layers(subset_name_from_ui)
+            except:
+                raise ValueError("Cannot group locked Bakcground layer!")
+            groups_to_create.append(group)
 
         if not groups_to_create and not top_layers_to_wrap:
             group = stub.create_group(subset_name_from_ui)
@@ -60,6 +71,7 @@ class ImageCreator(Creator):
             group = stub.group_selected_layers(layer.name)
             groups_to_create.append(group)
 
+        layer_name = ''
         creating_multiple_groups = len(groups_to_create) > 1
         for group in groups_to_create:
             subset_name = subset_name_from_ui  # reset to name from creator UI
@@ -67,8 +79,16 @@ class ImageCreator(Creator):
             created_group_name = self._clean_highlights(stub, group.name)
 
             if creating_multiple_groups:
-                # concatenate with layer name to differentiate subsets
-                subset_name += group.name.title().replace(" ", "")
+                layer_name = re.sub(
+                    "[^{}]+".format(SUBSET_NAME_ALLOWED_SYMBOLS),
+                    "",
+                    group.name
+                )
+                if "{layer}" not in subset_name.lower():
+                    subset_name += "{Layer}"
+
+            layer_fill = prepare_template_data({"layer": layer_name})
+            subset_name = subset_name.format(**layer_fill)
 
             if group.long_name:
                 for directory in group.long_name[::-1]:
@@ -143,3 +163,6 @@ class ImageCreator(Creator):
     def _clean_highlights(self, stub, item):
         return item.replace(stub.PUBLISH_ICON, '').replace(stub.LOADED_ICON,
                                                            '')
+    @classmethod
+    def get_dynamic_data(cls, *args, **kwargs):
+        return {"layer": "{layer}"}

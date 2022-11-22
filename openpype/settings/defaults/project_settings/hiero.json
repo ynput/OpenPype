@@ -1,4 +1,29 @@
 {
+    "imageio": {
+        "workfile": {
+            "ocioConfigName": "nuke-default",
+            "ocioconfigpath": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "workingSpace": "linear",
+            "sixteenBitLut": "sRGB",
+            "eightBitLut": "sRGB",
+            "floatLut": "linear",
+            "logLut": "Cineon",
+            "viewerLut": "sRGB",
+            "thumbnailLut": "sRGB"
+        },
+        "regexInputs": {
+            "inputs": [
+                {
+                    "regex": "[^-a-zA-Z0-9](plateRef).*(?=mp4)",
+                    "colorspace": "sRGB"
+                }
+            ]
+        }
+    },
     "create": {
         "CreateShotClip": {
             "hierarchy": "{folder}/{sequence}",
@@ -51,5 +76,17 @@
             ]
         }
     },
-    "filters": {}
+    "filters": {},
+    "scriptsmenu": {
+        "name": "OpenPype Tools",
+        "definition": [
+            {
+                "type": "action",
+                "sourcetype": "python",
+                "title": "OpenPype Docs",
+                "command": "import webbrowser;webbrowser.open(url='https://openpype.io/docs/artist_hosts_hiero')",
+                "tooltip": "Open the OpenPype Hiero user doc page"
+            }
+        ]
+    }
 }

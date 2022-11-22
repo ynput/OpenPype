@@ -7,11 +7,9 @@ import traceback
 import ftrack_api
 
 from openpype.lib import (
-    PypeLogger,
+    Logger,
     modules_from_path
 )
-
-log = PypeLogger.get_logger(__name__)
 
 """
 # Required - Needed for connection to Ftrack
@@ -43,9 +41,12 @@ class FtrackServer:
                 server.run_server()
                 ..
         """
+
         # set Ftrack logging to Warning only - OPTIONAL
         ftrack_log = logging.getLogger("ftrack_api")
         ftrack_log.setLevel(logging.WARNING)
+
+        self.log = Logger.get_logger(__name__)
 
         self.stopped = True
         self.is_running = False
@@ -72,7 +73,7 @@ class FtrackServer:
             # Get all modules with functions
             modules, crashed = modules_from_path(path)
             for filepath, exc_info in crashed:
-                log.warning("Filepath load crashed {}.\n{}".format(
+                self.log.warning("Filepath load crashed {}.\n{}".format(
                     filepath, traceback.format_exception(*exc_info)
                 ))
 
@@ -87,7 +88,7 @@ class FtrackServer:
                         break
 
                 if not register_function:
-                    log.warning(
+                    self.log.warning(
                         "\"{}\" - Missing register method".format(filepath)
                     )
                     continue
@@ -97,7 +98,7 @@ class FtrackServer:
                 )
 
         if not register_functions:
-            log.warning((
+            self.log.warning((
                 "There are no events with `register` function"
                 " in registered paths: \"{}\""
             ).format("| ".join(paths)))
@@ -106,7 +107,7 @@ class FtrackServer:
             try:
                 register_func(self.session)
             except Exception:
-                log.warning(
+                self.log.warning(
                     "\"{}\" - register was not successful".format(filepath),
                     exc_info=True
                 )
@@ -141,7 +142,7 @@ class FtrackServer:
         self.session = session
         if load_files:
             if not self.handler_paths:
-                log.warning((
+                self.log.warning((
                     "Paths to event handlers are not set."
                     " Ftrack server won't launch."
                 ))
@@ -151,8 +152,8 @@ class FtrackServer:
             self.set_files(self.handler_paths)
 
             msg = "Registration of event handlers has finished!"
-            log.info(len(msg) * "*")
-            log.info(msg)
+            self.log.info(len(msg) * "*")
+            self.log.info(msg)
 
         # keep event_hub on session running
         self.session.event_hub.wait()

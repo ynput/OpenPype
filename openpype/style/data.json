@@ -20,14 +20,14 @@
     "color": {
         "font": "#D3D8DE",
         "font-hover": "#F0F2F5",
-        "font-disabled": "#99A3B2",
+        "font-disabled": "#5b6779",
         "font-view-selection": "#ffffff",
         "font-view-hover": "#F0F2F5",
 
         "bg": "#2C313A",
         "bg-inputs": "#21252B",
         "bg-buttons": "#434a56",
-        "bg-button-hover": "rgba(168, 175, 189, 0.3)",
+        "bg-button-hover": "rgb(81, 86, 97)",
         "bg-inputs-disabled": "#2C313A",
         "bg-buttons-disabled": "#434a56",
 
@@ -64,7 +64,9 @@
         "overlay-messages": {
             "close-btn": "#D3D8DE",
             "bg-success": "#458056",
-            "bg-success-hover": "#55a066"
+            "bg-success-hover": "#55a066",
+            "bg-error": "#AD2E2E",
+            "bg-error-hover": "#C93636"
         },
         "tab-widget": {
             "bg": "#21252B",
@@ -89,8 +91,10 @@
         },
         "publisher": {
             "error": "#AA5050",
+            "crash": "#FF6432",
             "success": "#458056",
             "warning": "#ffc671",
+            "tab-bg": "#16191d",
             "list-view-group": {
                 "bg": "#434a56",
                 "bg-hover": "rgba(168, 175, 189, 0.3)",

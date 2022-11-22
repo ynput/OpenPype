@@ -1,8 +1,6 @@
 import os
-from openpype.lib import (
-    PreLaunchHook,
-    create_workdir_extra_folders
-)
+from openpype.lib import PreLaunchHook
+from openpype.pipeline.workfile import create_workdir_extra_folders
 
 
 class AddLastWorkfileToLaunchArgs(PreLaunchHook):

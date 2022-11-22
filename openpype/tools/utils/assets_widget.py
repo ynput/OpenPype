@@ -5,6 +5,10 @@ import Qt
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
+from openpype.client import (
+    get_project,
+    get_assets,
+)
 from openpype.style import (
     get_objected_colors,
     get_default_tools_icon_color,
@@ -110,7 +114,7 @@ class UnderlinesAssetDelegate(QtWidgets.QItemDelegate):
 
     def __init__(self, *args, **kwargs):
         super(UnderlinesAssetDelegate, self).__init__(*args, **kwargs)
-        asset_view_colors = get_objected_colors()["loader"]["asset-view"]
+        asset_view_colors = get_objected_colors("loader", "asset-view")
         self._selected_color = (
             asset_view_colors["selected"].get_qcolor()
         )
@@ -494,8 +498,6 @@ class AssetModel(QtGui.QStandardItemModel):
         # Remove cache of removed items
         for asset_id in removed_asset_ids:
             self._items_by_asset_id.pop(asset_id)
-            if asset_id in self._items_with_color_by_id:
-                self._items_with_color_by_id.pop(asset_id)
 
         # Refresh data
         # - all items refresh all data except id
@@ -527,21 +529,18 @@ class AssetModel(QtGui.QStandardItemModel):
         self._doc_fetched.emit()
 
     def _fetch_asset_docs(self):
-        if not self.dbcon.Session.get("AVALON_PROJECT"):
+        project_name = self.dbcon.current_project()
+        if not project_name:
             return []
 
-        project_doc = self.dbcon.find_one(
-            {"type": "project"},
-            {"_id": True}
-        )
+        project_doc = get_project(project_name, fields=["_id"])
         if not project_doc:
             return []
 
         # Get all assets sorted by name
-        return list(self.dbcon.find(
-            {"type": "asset"},
-            self._asset_projection
-        ))
+        return list(
+            get_assets(project_name, fields=self._asset_projection.keys())
+        )
 
     def _stop_fetch_thread(self):
         self._refreshing = False

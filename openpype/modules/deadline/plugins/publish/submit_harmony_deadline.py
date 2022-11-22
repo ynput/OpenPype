@@ -238,6 +238,7 @@ class HarmonySubmitDeadline(
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["harmony"]
     families = ["render.farm"]
+    targets = ["local"]
 
     optional = True
     use_published = False
@@ -273,7 +274,8 @@ class HarmonySubmitDeadline(
             "AVALON_TASK",
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
-            "OPENPYPE_LOG_NO_COLORS"
+            "OPENPYPE_LOG_NO_COLORS",
+            "OPENPYPE_VERSION"
         ]
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):
@@ -282,14 +284,12 @@ class HarmonySubmitDeadline(
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
         for key in keys:
-            val = environment.get(key)
-            if val:
-                job_info.EnvironmentKeyValue = "{key}={value}".format(
-                    key=key,
-                    value=val)
+            value = environment.get(key)
+            if value:
+                job_info.EnvironmentKeyValue[key] = value
 
         # to recognize job from PYPE for turning Event On/Off
-        job_info.EnvironmentKeyValue = "OPENPYPE_RENDER_JOB=1"
+        job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
 
         return job_info
 
@@ -321,7 +321,9 @@ class HarmonySubmitDeadline(
         )
         unzip_dir = (published_scene.parent / published_scene.stem)
         with _ZipFile(published_scene, "r") as zip_ref:
-            zip_ref.extractall(unzip_dir.as_posix())
+            # UNC path (//?/) added to minimalize risk with extracting
+            # to large file paths
+            zip_ref.extractall("//?/" + str(unzip_dir.as_posix()))
 
         # find any xstage files in directory, prefer the one with the same name
         # as directory (plus extension)

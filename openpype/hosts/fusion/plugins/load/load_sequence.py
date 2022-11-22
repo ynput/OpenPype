@@ -1,6 +1,7 @@
 import os
 import contextlib
 
+from openpype.client import get_version_by_id
 from openpype.pipeline import (
     load,
     legacy_io,
@@ -100,6 +101,9 @@ def loader_shift(loader, frame, relative=True):
     else:
         shift = frame - old_in
 
+    if not shift:
+        return 0
+
     # Shifting global in will try to automatically compensate for the change
     # in the "ClipTimeStart" and "HoldFirstFrame" inputs, so we preserve those
     # input values to "just shift" the clip
@@ -123,7 +127,7 @@ def loader_shift(loader, frame, relative=True):
 class FusionLoadSequence(load.LoaderPlugin):
     """Load image sequence into Fusion"""
 
-    families = ["imagesequence", "review", "render"]
+    families = ["imagesequence", "review", "render", "plate"]
     representations = ["*"]
 
     label = "Load sequence"
@@ -148,9 +152,8 @@ class FusionLoadSequence(load.LoaderPlugin):
             tool["Clip"] = path
 
             # Set global in point to start frame (if in version.data)
-            start = context["version"]["data"].get("frameStart", None)
-            if start is not None:
-                loader_shift(tool, start, relative=False)
+            start = self._get_start(context["version"], tool)
+            loader_shift(tool, start, relative=False)
 
             imprint_container(tool,
                               name=name,
@@ -211,16 +214,9 @@ class FusionLoadSequence(load.LoaderPlugin):
         path = self._get_first_image(root)
 
         # Get start frame from version data
-        version = legacy_io.find_one({
-            "type": "version",
-            "_id": representation["parent"]
-        })
-        start = version["data"].get("frameStart")
-        if start is None:
-            self.log.warning("Missing start frame for updated version"
-                             "assuming starts at frame 0 for: "
-                             "{} ({})".format(tool.Name, representation))
-            start = 0
+        project_name = legacy_io.active_project()
+        version = get_version_by_id(project_name, representation["parent"])
+        start = self._get_start(version, tool)
 
         with comp_lock_and_undo_chunk(comp, "Update Loader"):
 
@@ -257,3 +253,27 @@ class FusionLoadSequence(load.LoaderPlugin):
         """Get first file in representation root"""
         files = sorted(os.listdir(root))
         return os.path.join(root, files[0])
+
+    def _get_start(self, version_doc, tool):
+        """Return real start frame of published files (incl. handles)"""
+        data = version_doc["data"]
+
+        # Get start frame directly with handle if it's in data
+        start = data.get("frameStartHandle")
+        if start is not None:
+            return start
+
+        # Get frame start without handles
+        start = data.get("frameStart")
+        if start is None:
+            self.log.warning("Missing start frame for version "
+                             "assuming starts at frame 0 for: "
+                             "{}".format(tool.Name))
+            return 0
+
+        # Use `handleStart` if the data is available
+        handle_start = data.get("handleStart")
+        if handle_start:
+            start -= handle_start
+
+        return start

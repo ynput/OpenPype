@@ -6,6 +6,7 @@ import logging
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype import style
+from openpype.client import get_asset_by_name
 from openpype.pipeline import legacy_io
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 
@@ -46,10 +47,8 @@ class SelectAssetDialog(QtWidgets.QWidget):
         select_id = None
         name = self._parm.eval()
         if name:
-            db_asset = legacy_io.find_one(
-                {"name": name, "type": "asset"},
-                {"_id": True}
-            )
+            project_name = legacy_io.active_project()
+            db_asset = get_asset_by_name(project_name, name, fields=["_id"])
             if db_asset:
                 select_id = db_asset["_id"]
 

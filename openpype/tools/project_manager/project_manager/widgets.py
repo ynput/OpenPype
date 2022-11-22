@@ -1,13 +1,13 @@
 import re
 
+from openpype.client import get_projects, create_project
 from .constants import (
     NAME_ALLOWED_SYMBOLS,
     NAME_REGEX
 )
-from openpype.lib import (
-    create_project,
+from openpype.client.operations import (
     PROJECT_NAME_ALLOWED_SYMBOLS,
-    PROJECT_NAME_REGEX
+    PROJECT_NAME_REGEX,
 )
 from openpype.style import load_stylesheet
 from openpype.pipeline import AvalonMongoDB
@@ -265,22 +265,16 @@ class CreateProjectDialog(QtWidgets.QDialog):
         project_name = self.project_name_input.text()
         project_code = self.project_code_input.text()
         library_project = self.library_project_input.isChecked()
-        create_project(project_name, project_code, library_project, self.dbcon)
+        create_project(project_name, project_code, library_project)
 
         self.done(1)
 
     def _get_existing_projects(self):
         project_names = set()
         project_codes = set()
-        for project_name in self.dbcon.database.collection_names():
-            # Each collection will have exactly one project document
-            project_doc = self.dbcon.database[project_name].find_one(
-                {"type": "project"},
-                {"name": 1, "data.code": 1}
-            )
-            if not project_doc:
-                continue
-
+        for project_doc in get_projects(
+            inactive=True, fields=["name", "data.code"]
+        ):
             project_name = project_doc.get("name")
             if not project_name:
                 continue

@@ -5,11 +5,12 @@ from pprint import pformat
 import nuke
 
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline import publish
 from openpype.hosts.nuke.api.lib import maintained_selection
 
 
-class ExtractCamera(openpype.api.Extractor):
+class ExtractCamera(publish.Extractor):
     """ 3D camera exctractor
     """
     label = 'Exctract Camera'

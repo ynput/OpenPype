@@ -6,11 +6,21 @@ import numbers
 
 import six
 
-from openpype.api import (
-    Logger,
-    get_anatomy_settings
+from openpype.client import (
+    get_project,
+    get_assets,
+    get_archived_assets,
+    get_subsets,
+    get_versions,
+    get_representations
 )
-from openpype.lib import ApplicationManager
+from openpype.client.operations import (
+    CURRENT_ASSET_DOC_SCHEMA,
+    CURRENT_PROJECT_SCHEMA,
+    CURRENT_PROJECT_CONFIG_SCHEMA,
+)
+from openpype.settings import get_anatomy_settings
+from openpype.lib import ApplicationManager, Logger
 from openpype.pipeline import AvalonMongoDB, schema
 
 from .constants import CUST_ATTR_ID_KEY, FPS_KEYS
@@ -22,14 +32,6 @@ from pymongo import UpdateOne, ReplaceOne
 import ftrack_api
 
 log = Logger.get_logger(__name__)
-
-
-# Current schemas for avalon types
-CURRENT_DOC_SCHEMAS = {
-    "project": "openpype:project-3.0",
-    "asset": "openpype:asset-3.0",
-    "config": "openpype:config-2.0"
-}
 
 
 class InvalidFpsValue(Exception):
@@ -143,13 +145,16 @@ def create_chunks(iterable, chunk_size=None):
         list<list>: Chunked items.
     """
     chunks = []
-    if not iterable:
-        return chunks
 
     tupled_iterable = tuple(iterable)
+    if not tupled_iterable:
+        return chunks
     iterable_size = len(tupled_iterable)
     if chunk_size is None:
         chunk_size = 200
+
+    if chunk_size < 1:
+        chunk_size = 1
 
     for idx in range(0, iterable_size, chunk_size):
         chunks.append(tupled_iterable[idx:idx + chunk_size])
@@ -432,6 +437,7 @@ class SyncEntitiesFactory:
         }
 
         self.create_list = []
+        self.project_created = False
         self.unarchive_list = []
         self.updates = collections.defaultdict(dict)
 
@@ -574,6 +580,10 @@ class SyncEntitiesFactory:
         self.entities_dict = entities_dict
 
     @property
+    def project_name(self):
+        return self.entities_dict[self.ft_project_id]["name"]
+
+    @property
     def avalon_ents_by_id(self):
         """
             Returns dictionary of avalon tracked entities (assets stored in
@@ -657,9 +667,9 @@ class SyncEntitiesFactory:
             (list) of assets
         """
         if self._avalon_archived_ents is None:
-            self._avalon_archived_ents = [
-                ent for ent in self.dbcon.find({"type": "archived_asset"})
-            ]
+            self._avalon_archived_ents = list(
+                get_archived_assets(self.project_name)
+            )
         return self._avalon_archived_ents
 
     @property
@@ -727,7 +737,7 @@ class SyncEntitiesFactory:
         """
         if self._subsets_by_parent_id is None:
             self._subsets_by_parent_id = collections.defaultdict(list)
-            for subset in self.dbcon.find({"type": "subset"}):
+            for subset in get_subsets(self.project_name):
                 self._subsets_by_parent_id[str(subset["parent"])].append(
                     subset
                 )
@@ -1418,8 +1428,8 @@ class SyncEntitiesFactory:
         # Avalon entities
         self.dbcon.install()
         self.dbcon.Session["AVALON_PROJECT"] = ft_project_name
-        avalon_project = self.dbcon.find_one({"type": "project"})
-        avalon_entities = self.dbcon.find({"type": "asset"})
+        avalon_project = get_project(ft_project_name)
+        avalon_entities = get_assets(ft_project_name)
         self.avalon_project = avalon_project
         self.avalon_entities = avalon_entities
 
@@ -2047,7 +2057,7 @@ class SyncEntitiesFactory:
 
         item["_id"] = new_id
         item["parent"] = self.avalon_project_id
-        item["schema"] = CURRENT_DOC_SCHEMAS["asset"]
+        item["schema"] = CURRENT_ASSET_DOC_SCHEMA
         item["data"]["visualParent"] = avalon_parent
 
         new_id_str = str(new_id)
@@ -2182,8 +2192,8 @@ class SyncEntitiesFactory:
 
         project_item["_id"] = new_id
         project_item["parent"] = None
-        project_item["schema"] = CURRENT_DOC_SCHEMAS["project"]
-        project_item["config"]["schema"] = CURRENT_DOC_SCHEMAS["config"]
+        project_item["schema"] = CURRENT_PROJECT_SCHEMA
+        project_item["config"]["schema"] = CURRENT_PROJECT_CONFIG_SCHEMA
 
         self.ftrack_avalon_mapper[self.ft_project_id] = new_id
         self.avalon_ftrack_mapper[new_id] = self.ft_project_id
@@ -2199,6 +2209,7 @@ class SyncEntitiesFactory:
         self._avalon_ents_by_name[project_item["name"]] = str(new_id)
 
         self.create_list.append(project_item)
+        self.project_created = True
 
         # store mongo id to ftrack entity
         entity = self.entities_dict[self.ft_project_id]["entity"]
@@ -2255,46 +2266,37 @@ class SyncEntitiesFactory:
         self._delete_subsets_without_asset(subsets_to_remove)
 
     def _delete_subsets_without_asset(self, not_existing_parents):
-        subset_ids = []
-        version_ids = []
         repre_ids = []
         to_delete = []
 
+        subset_ids = []
         for parent_id in not_existing_parents:
             subsets = self.subsets_by_parent_id.get(parent_id)
             if not subsets:
                 continue
             for subset in subsets:
-                if subset.get("type") != "subset":
-                    continue
-                subset_ids.append(subset["_id"])
+                if subset.get("type") == "subset":
+                    subset_ids.append(subset["_id"])
 
-        db_subsets = self.dbcon.find({
-            "_id": {"$in": subset_ids},
-            "type": "subset"
-        })
-        if not db_subsets:
-            return
-
-        db_versions = self.dbcon.find({
-            "parent": {"$in": subset_ids},
-            "type": "version"
-        })
-        if db_versions:
-            version_ids = [ver["_id"] for ver in db_versions]
-
-        db_repres = self.dbcon.find({
-            "parent": {"$in": version_ids},
-            "type": "representation"
-        })
-        if db_repres:
-            repre_ids = [repre["_id"] for repre in db_repres]
+        db_versions = get_versions(
+            self.project_name,
+            subset_ids=subset_ids,
+            fields=["_id"]
+        )
+        version_ids = [ver["_id"] for ver in db_versions]
+        db_repres = get_representations(
+            self.project_name,
+            version_ids=version_ids,
+            fields=["_id"]
+        )
+        repre_ids = [repre["_id"] for repre in db_repres]
 
         to_delete.extend(subset_ids)
         to_delete.extend(version_ids)
         to_delete.extend(repre_ids)
 
-        self.dbcon.delete_many({"_id": {"$in": to_delete}})
+        if to_delete:
+            self.dbcon.delete_many({"_id": {"$in": to_delete}})
 
     # Probably deprecated
     def _check_changeability(self, parent_id=None):
@@ -2776,8 +2778,7 @@ class SyncEntitiesFactory:
 
     def report(self):
         items = []
-        project_name = self.entities_dict[self.ft_project_id]["name"]
-        title = "Synchronization report ({}):".format(project_name)
+        title = "Synchronization report ({}):".format(self.project_name)
 
         keys = ["error", "warning", "info"]
         for key in keys:

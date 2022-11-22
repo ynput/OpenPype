@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <error id="main">
+        <title>Output format</title>
+        <description>
+## Invalid format setting
+
+Either the Reformat node inside of the render group is missing or the Reformat node output format knob is not set to `root.format`.
+
+### How to repair?
+
+1. Use Repair button.
+2. Hit Reload button on the publisher.
+        </description>
+    </error>
+</root>

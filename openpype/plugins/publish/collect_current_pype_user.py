@@ -1,5 +1,3 @@
-import os
-import getpass
 import pyblish.api
 from openpype.lib import get_openpype_username
 

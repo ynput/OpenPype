@@ -2,20 +2,22 @@ import os
 import sys
 import contextlib
 import collections
+import traceback
 
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
+from openpype.client import (
+    get_project,
+    get_asset_by_name,
+)
 from openpype.style import (
     get_default_entity_icon_color,
     get_objected_colors,
 )
 from openpype.resources import get_image_path
-from openpype.lib import filter_profiles
-from openpype.api import (
-    get_project_settings,
-    Logger
-)
+from openpype.lib import filter_profiles, Logger
+from openpype.settings import get_project_settings
 from openpype.pipeline import registered_host
 
 log = Logger.get_logger(__name__)
@@ -31,6 +33,19 @@ def center_window(window):
     if geo.y() < screen_geo.y():
         geo.setY(screen_geo.y())
     window.move(geo.topLeft())
+
+
+def html_escape(text):
+    """Basic escape of html syntax symbols in text."""
+
+    return (
+        text
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&#x27;")
+    )
 
 
 def set_style_property(widget, property_name, property_value):
@@ -64,6 +79,11 @@ def paint_image_with_color(image, color):
     pixmap.fill(QtCore.Qt.transparent)
 
     painter = QtGui.QPainter(pixmap)
+    painter.setRenderHints(
+        painter.Antialiasing
+        | painter.SmoothPixmapTransform
+        | painter.HighQualityAntialiasing
+    )
     painter.setClipRegion(alpha_region)
     painter.setPen(QtCore.Qt.NoPen)
     painter.setBrush(color)
@@ -426,13 +446,8 @@ class FamilyConfigCache:
         if profiles:
             # Make sure connection is installed
             # - accessing attribute which does not have auto-install
-            self.dbcon.install()
-            database = getattr(self.dbcon, "database", None)
-            if database is None:
-                database = self.dbcon._database
-            asset_doc = database[project_name].find_one(
-                {"type": "asset", "name": asset_name},
-                {"data.tasks": True}
+            asset_doc = get_asset_by_name(
+                project_name, asset_name, fields=["data.tasks"]
             ) or {}
             tasks_info = asset_doc.get("data", {}).get("tasks") or {}
             task_type = tasks_info.get(task_name, {}).get("type")
@@ -500,10 +515,7 @@ class GroupsConfig:
         project_name = self.dbcon.Session.get("AVALON_PROJECT")
         if project_name:
             # Get pre-defined group name and appearance from project config
-            project_doc = self.dbcon.find_one(
-                {"type": "project"},
-                projection={"config.groups": True}
-            )
+            project_doc = get_project(project_name, fields=["config.groups"])
 
             if project_doc:
                 group_configs = project_doc["config"].get("groups") or []
@@ -634,7 +646,11 @@ class DynamicQThread(QtCore.QThread):
 def create_qthread(func, *args, **kwargs):
     class Thread(QtCore.QThread):
         def run(self):
-            func(*args, **kwargs)
+            try:
+                func(*args, **kwargs)
+            except BaseException:
+                traceback.print_exception(*sys.exc_info())
+                raise
     return Thread()
 
 
@@ -808,8 +824,6 @@ def get_warning_pixmap(color=None):
     src_image_path = get_image_path("warning.png")
     src_image = QtGui.QImage(src_image_path)
     if color is None:
-        colors = get_objected_colors()
-        color_value = colors["delete-btn-bg"]
-        color = color_value.get_qcolor()
+        color = get_objected_colors("delete-btn-bg").get_qcolor()
 
     return paint_image_with_color(src_image, color)

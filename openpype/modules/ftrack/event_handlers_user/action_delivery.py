@@ -3,23 +3,30 @@ import copy
 import json
 import collections
 
-from bson.objectid import ObjectId
-
-from openpype.api import Anatomy, config
+from openpype.client import (
+    get_project,
+    get_assets,
+    get_subsets,
+    get_versions,
+    get_representations
+)
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 from openpype_modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
-from openpype.lib.delivery import (
-    path_from_representation,
+from openpype_modules.ftrack.lib.custom_attributes import (
+    query_custom_attributes
+)
+from openpype.lib.dateutils import get_datetime_data
+from openpype.pipeline import Anatomy
+from openpype.pipeline.load import get_representation_path_with_anatomy
+from openpype.pipeline.delivery import (
     get_format_dict,
     check_destination_path,
-    process_single_file,
-    process_sequence
+    deliver_single_file,
+    deliver_sequence,
 )
-from openpype.pipeline import AvalonMongoDB
 
 
 class Delivery(BaseAction):
-
     identifier = "delivery.action"
     label = "Delivery"
     description = "Deliver data to client"
@@ -27,15 +34,10 @@ class Delivery(BaseAction):
     icon = statics_icon("ftrack", "action_icons", "Delivery.svg")
     settings_key = "delivery_action"
 
-    def __init__(self, *args, **kwargs):
-        self.db_con = AvalonMongoDB()
-
-        super(Delivery, self).__init__(*args, **kwargs)
-
     def discover(self, session, entities, event):
         is_valid = False
         for entity in entities:
-            if entity.entity_type.lower() == "assetversion":
+            if entity.entity_type.lower() in ("assetversion", "reviewsession"):
                 is_valid = True
                 break
 
@@ -54,9 +56,7 @@ class Delivery(BaseAction):
 
         project_entity = self.get_project_from_entity(entities[0])
         project_name = project_entity["full_name"]
-        self.db_con.install()
-        self.db_con.Session["AVALON_PROJECT"] = project_name
-        project_doc = self.db_con.find_one({"type": "project"})
+        project_doc = get_project(project_name, fields=["name"])
         if not project_doc:
             return {
                 "success": False,
@@ -65,8 +65,7 @@ class Delivery(BaseAction):
                 ).format(project_name)
             }
 
-        repre_names = self._get_repre_names(entities)
-        self.db_con.uninstall()
+        repre_names = self._get_repre_names(project_name, session, entities)
 
         items.append({
             "type": "hidden",
@@ -195,51 +194,122 @@ class Delivery(BaseAction):
             "title": title
         }
 
-    def _get_repre_names(self, entities):
-        version_ids = self._get_interest_version_ids(entities)
-        repre_docs = self.db_con.find({
-            "type": "representation",
-            "parent": {"$in": version_ids}
-        })
-        return list(sorted(repre_docs.distinct("name")))
+    def _get_repre_names(self, project_name, session, entities):
+        version_ids = self._get_interest_version_ids(
+            project_name, session, entities
+        )
+        if not version_ids:
+            return []
+        repre_docs = get_representations(
+            project_name,
+            version_ids=version_ids,
+            fields=["name"]
+        )
+        repre_names = {repre_doc["name"] for repre_doc in repre_docs}
+        return list(sorted(repre_names))
 
-    def _get_interest_version_ids(self, entities):
-        parent_ent_by_id = {}
+    def _get_interest_version_ids(self, project_name, session, entities):
+        # Extract AssetVersion entities
+        asset_versions = self._extract_asset_versions(session, entities)
+        # Prepare Asset ids
+        asset_ids = {
+            asset_version["asset_id"]
+            for asset_version in asset_versions
+        }
+        # Query Asset entities
+        assets = session.query((
+            "select id, name, context_id from Asset where id in ({})"
+        ).format(self.join_query_keys(asset_ids))).all()
+        assets_by_id = {
+            asset["id"]: asset
+            for asset in assets
+        }
+        parent_ids = set()
         subset_names = set()
         version_nums = set()
-        for entity in entities:
-            asset = entity["asset"]
-            parent = asset["parent"]
-            parent_ent_by_id[parent["id"]] = parent
+        for asset_version in asset_versions:
+            asset_id = asset_version["asset_id"]
+            asset = assets_by_id[asset_id]
 
-            subset_name = asset["name"]
-            subset_names.add(subset_name)
+            parent_ids.add(asset["context_id"])
+            subset_names.add(asset["name"])
+            version_nums.add(asset_version["version"])
 
-            version = entity["version"]
-            version_nums.add(version)
-
-        asset_docs_by_ftrack_id = self._get_asset_docs(parent_ent_by_id)
+        asset_docs_by_ftrack_id = self._get_asset_docs(
+            project_name, session, parent_ids
+        )
         subset_docs = self._get_subset_docs(
-            asset_docs_by_ftrack_id, subset_names, entities
+            project_name,
+            asset_docs_by_ftrack_id,
+            subset_names,
+            asset_versions,
+            assets_by_id
         )
         version_docs = self._get_version_docs(
-            asset_docs_by_ftrack_id, subset_docs, version_nums, entities
+            project_name,
+            asset_docs_by_ftrack_id,
+            subset_docs,
+            version_nums,
+            asset_versions,
+            assets_by_id
         )
 
         return [version_doc["_id"] for version_doc in version_docs]
 
+    def _extract_asset_versions(self, session, entities):
+        asset_version_ids = set()
+        review_session_ids = set()
+        for entity in entities:
+            entity_type_low = entity.entity_type.lower()
+            if entity_type_low == "assetversion":
+                asset_version_ids.add(entity["id"])
+            elif entity_type_low == "reviewsession":
+                review_session_ids.add(entity["id"])
+
+        for version_id in self._get_asset_version_ids_from_review_sessions(
+            session, review_session_ids
+        ):
+            asset_version_ids.add(version_id)
+
+        asset_versions = session.query((
+            "select id, version, asset_id from AssetVersion where id in ({})"
+        ).format(self.join_query_keys(asset_version_ids))).all()
+
+        return asset_versions
+
+    def _get_asset_version_ids_from_review_sessions(
+        self, session, review_session_ids
+    ):
+        if not review_session_ids:
+            return set()
+        review_session_objects = session.query((
+            "select version_id from ReviewSessionObject"
+            " where review_session_id in ({})"
+        ).format(self.join_query_keys(review_session_ids))).all()
+
+        return {
+            review_session_object["version_id"]
+            for review_session_object in review_session_objects
+        }
+
     def _get_version_docs(
-        self, asset_docs_by_ftrack_id, subset_docs, version_nums, entities
+        self,
+        project_name,
+        asset_docs_by_ftrack_id,
+        subset_docs,
+        version_nums,
+        asset_versions,
+        assets_by_id
     ):
         subset_docs_by_id = {
             subset_doc["_id"]: subset_doc
             for subset_doc in subset_docs
         }
-        version_docs = list(self.db_con.find({
-            "type": "version",
-            "parent": {"$in": list(subset_docs_by_id.keys())},
-            "name": {"$in": list(version_nums)}
-        }))
+        version_docs = list(get_versions(
+            project_name,
+            subset_ids=subset_docs_by_id.keys(),
+            versions=version_nums
+        ))
         version_docs_by_parent_id = collections.defaultdict(dict)
         for version_doc in version_docs:
             subset_doc = subset_docs_by_id[version_doc["parent"]]
@@ -255,11 +325,13 @@ class Delivery(BaseAction):
             )
 
         filtered_versions = []
-        for entity in entities:
-            asset = entity["asset"]
-
-            parent = asset["parent"]
-            asset_doc = asset_docs_by_ftrack_id[parent["id"]]
+        for asset_version in asset_versions:
+            asset_id = asset_version["asset_id"]
+            asset = assets_by_id[asset_id]
+            parent_id = asset["context_id"]
+            asset_doc = asset_docs_by_ftrack_id.get(parent_id)
+            if not asset_doc:
+                continue
 
             subsets_by_name = version_docs_by_parent_id.get(asset_doc["_id"])
             if not subsets_by_name:
@@ -270,24 +342,29 @@ class Delivery(BaseAction):
             if not version_docs_by_version:
                 continue
 
-            version = entity["version"]
+            version = asset_version["version"]
             version_doc = version_docs_by_version.get(version)
             if version_doc:
                 filtered_versions.append(version_doc)
         return filtered_versions
 
     def _get_subset_docs(
-        self, asset_docs_by_ftrack_id, subset_names, entities
+        self,
+        project_name,
+        asset_docs_by_ftrack_id,
+        subset_names,
+        asset_versions,
+        assets_by_id
     ):
-        asset_doc_ids = list()
-        for asset_doc in asset_docs_by_ftrack_id.values():
-            asset_doc_ids.append(asset_doc["_id"])
-
-        subset_docs = list(self.db_con.find({
-            "type": "subset",
-            "parent": {"$in": asset_doc_ids},
-            "name": {"$in": list(subset_names)}
-        }))
+        asset_doc_ids = [
+            asset_doc["_id"]
+            for asset_doc in asset_docs_by_ftrack_id.values()
+        ]
+        subset_docs = list(get_subsets(
+            project_name,
+            asset_ids=asset_doc_ids,
+            subset_names=subset_names
+        ))
         subset_docs_by_parent_id = collections.defaultdict(dict)
         for subset_doc in subset_docs:
             asset_id = subset_doc["parent"]
@@ -295,11 +372,14 @@ class Delivery(BaseAction):
             subset_docs_by_parent_id[asset_id][subset_name] = subset_doc
 
         filtered_subsets = []
-        for entity in entities:
-            asset = entity["asset"]
+        for asset_version in asset_versions:
+            asset_id = asset_version["asset_id"]
+            asset = assets_by_id[asset_id]
 
-            parent = asset["parent"]
-            asset_doc = asset_docs_by_ftrack_id[parent["id"]]
+            parent_id = asset["context_id"]
+            asset_doc = asset_docs_by_ftrack_id.get(parent_id)
+            if not asset_doc:
+                continue
 
             subsets_by_name = subset_docs_by_parent_id.get(asset_doc["_id"])
             if not subsets_by_name:
@@ -311,58 +391,58 @@ class Delivery(BaseAction):
                 filtered_subsets.append(subset_doc)
         return filtered_subsets
 
-    def _get_asset_docs(self, parent_ent_by_id):
-        asset_docs = list(self.db_con.find({
-            "type": "asset",
-            "data.ftrackId": {"$in": list(parent_ent_by_id.keys())}
-        }))
-        asset_docs_by_ftrack_id = {
-            asset_doc["data"]["ftrackId"]: asset_doc
-            for asset_doc in asset_docs
-        }
+    def _get_asset_docs(self, project_name, session, parent_ids):
+        asset_docs = list(get_assets(
+            project_name, fields=["_id", "name", "data.ftrackId"]
+        ))
 
-        entities_by_mongo_id = {}
-        entities_by_names = {}
-        for ftrack_id, entity in parent_ent_by_id.items():
-            if ftrack_id not in asset_docs_by_ftrack_id:
-                parent_mongo_id = entity["custom_attributes"].get(
-                    CUST_ATTR_ID_KEY
-                )
-                if parent_mongo_id:
-                    entities_by_mongo_id[ObjectId(parent_mongo_id)] = entity
-                else:
-                    entities_by_names[entity["name"]] = entity
+        asset_docs_by_id = {}
+        asset_docs_by_name = {}
+        asset_docs_by_ftrack_id = {}
+        for asset_doc in asset_docs:
+            asset_id = str(asset_doc["_id"])
+            asset_name = asset_doc["name"]
+            ftrack_id = asset_doc["data"].get("ftrackId")
 
-        expressions = []
-        if entities_by_mongo_id:
-            expression = {
-                "type": "asset",
-                "_id": {"$in": list(entities_by_mongo_id.keys())}
+            asset_docs_by_id[asset_id] = asset_doc
+            asset_docs_by_name[asset_name] = asset_doc
+            if ftrack_id:
+                asset_docs_by_ftrack_id[ftrack_id] = asset_doc
+
+        attr_def = session.query((
+            "select id from CustomAttributeConfiguration where key is \"{}\""
+        ).format(CUST_ATTR_ID_KEY)).first()
+        if attr_def is None:
+            return asset_docs_by_ftrack_id
+
+        avalon_mongo_id_values = query_custom_attributes(
+            session, [attr_def["id"]], parent_ids, True
+        )
+        missing_ids = set(parent_ids)
+        for item in avalon_mongo_id_values:
+            if not item["value"]:
+                continue
+            asset_id = item["value"]
+            entity_id = item["entity_id"]
+            asset_doc = asset_docs_by_id.get(asset_id)
+            if asset_doc:
+                asset_docs_by_ftrack_id[entity_id] = asset_doc
+                missing_ids.remove(entity_id)
+
+        entity_ids_by_name = {}
+        if missing_ids:
+            not_found_entities = session.query((
+                "select id, name from TypedContext where id in ({})"
+            ).format(self.join_query_keys(missing_ids))).all()
+            entity_ids_by_name = {
+                entity["name"]: entity["id"]
+                for entity in not_found_entities
             }
-            expressions.append(expression)
 
-        if entities_by_names:
-            expression = {
-                "type": "asset",
-                "name": {"$in": list(entities_by_names.keys())}
-            }
-            expressions.append(expression)
-
-        if expressions:
-            if len(expressions) == 1:
-                filter = expressions[0]
-            else:
-                filter = {"$or": expressions}
-
-            asset_docs = self.db_con.find(filter)
-            for asset_doc in asset_docs:
-                if asset_doc["_id"] in entities_by_mongo_id:
-                    entity = entities_by_mongo_id[asset_doc["_id"]]
-                    asset_docs_by_ftrack_id[entity["id"]] = asset_doc
-
-                elif asset_doc["name"] in entities_by_names:
-                    entity = entities_by_names[asset_doc["name"]]
-                    asset_docs_by_ftrack_id[entity["id"]] = asset_doc
+        for asset_name, entity_id in entity_ids_by_name.items():
+            asset_doc = asset_docs_by_name.get(asset_name)
+            if asset_doc:
+                asset_docs_by_ftrack_id[entity_id] = asset_doc
 
         return asset_docs_by_ftrack_id
 
@@ -396,7 +476,6 @@ class Delivery(BaseAction):
         session.commit()
 
         try:
-            self.db_con.install()
             report = self.real_launch(session, entities, event)
 
         except Exception as exc:
@@ -422,7 +501,6 @@ class Delivery(BaseAction):
             else:
                 job["status"] = "failed"
             session.commit()
-            self.db_con.uninstall()
 
         if not report["success"]:
             self.show_interface(
@@ -464,21 +542,20 @@ class Delivery(BaseAction):
             if not os.path.exists(location_path):
                 os.makedirs(location_path)
 
-        self.db_con.Session["AVALON_PROJECT"] = project_name
-
         self.log.debug("Collecting representations to process.")
-        version_ids = self._get_interest_version_ids(entities)
-        repres_to_deliver = list(self.db_con.find({
-            "type": "representation",
-            "parent": {"$in": version_ids},
-            "name": {"$in": repre_names}
-        }))
-
+        version_ids = self._get_interest_version_ids(
+            project_name, session, entities
+        )
+        repres_to_deliver = list(get_representations(
+            project_name,
+            representation_names=repre_names,
+            version_ids=version_ids
+        ))
         anatomy = Anatomy(project_name)
 
         format_dict = get_format_dict(anatomy, location_path)
 
-        datetime_data = config.get_datetime_data()
+        datetime_data = get_datetime_data()
         for repre in repres_to_deliver:
             source_path = repre.get("data", {}).get("path")
             debug_msg = "Processing representation {}".format(repre["_id"])
@@ -503,7 +580,7 @@ class Delivery(BaseAction):
             if frame:
                 repre["context"]["frame"] = len(str(frame)) * "#"
 
-            repre_path = path_from_representation(repre, anatomy)
+            repre_path = get_representation_path_with_anatomy(repre, anatomy)
             # TODO add backup solution where root of path from component
             # is replaced with root
             args = (
@@ -517,9 +594,9 @@ class Delivery(BaseAction):
                 self.log
             )
             if not frame:
-                process_single_file(*args)
+                deliver_single_file(*args)
             else:
-                process_sequence(*args)
+                deliver_sequence(*args)
 
         return self.report(report_items)
 

@@ -3,17 +3,15 @@ import os
 import json
 import math
 
-from bson.objectid import ObjectId
-
 import unreal
 from unreal import EditorLevelLibrary as ell
 from unreal import EditorAssetLibrary as eal
 
-import openpype.api
-from openpype.pipeline import legacy_io
+from openpype.client import get_representation_by_name
+from openpype.pipeline import legacy_io, publish
 
 
-class ExtractLayout(openpype.api.Extractor):
+class ExtractLayout(publish.Extractor):
     """Extract a layout."""
 
     label = "Extract Layout"
@@ -34,6 +32,7 @@ class ExtractLayout(openpype.api.Extractor):
             "Wrong level loaded"
 
         json_data = []
+        project_name = legacy_io.active_project()
 
         for member in instance[:]:
             actor = ell.get_actor_reference(member)
@@ -57,17 +56,13 @@ class ExtractLayout(openpype.api.Extractor):
                     self.log.error("AssetContainer not found.")
                     return
 
-                parent = eal.get_metadata_tag(asset_container, "parent")
+                parent_id = eal.get_metadata_tag(asset_container, "parent")
                 family = eal.get_metadata_tag(asset_container, "family")
 
-                self.log.info("Parent: {}".format(parent))
-                blend = legacy_io.find_one(
-                    {
-                        "type": "representation",
-                        "parent": ObjectId(parent),
-                        "name": "blend"
-                    },
-                    projection={"_id": True})
+                self.log.info("Parent: {}".format(parent_id))
+                blend = get_representation_by_name(
+                    project_name, "blend", parent_id, fields=["_id"]
+                )
                 blend_id = blend["_id"]
 
                 json_element = {}

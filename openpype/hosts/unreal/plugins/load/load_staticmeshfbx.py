@@ -14,7 +14,7 @@ import unreal  # noqa
 class StaticMeshFBXLoader(plugin.Loader):
     """Load Unreal StaticMesh from FBX."""
 
-    families = ["model", "unrealStaticMesh"]
+    families = ["model", "staticMesh"]
     label = "Import FBX Static Mesh"
     representations = ["fbx"]
     icon = "cube"

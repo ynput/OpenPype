@@ -4,7 +4,7 @@ import nuke
 
 import pyblish.api
 
-import openpype
+from openpype.pipeline import publish
 from openpype.hosts.nuke.api.lib import (
     maintained_selection,
     reset_selection,
@@ -12,7 +12,7 @@ from openpype.hosts.nuke.api.lib import (
 )
 
 
-class ExtractBackdropNode(openpype.api.Extractor):
+class ExtractBackdropNode(publish.Extractor):
     """Extracting content of backdrop nodes
 
     Will create nuke script only with containing nodes.

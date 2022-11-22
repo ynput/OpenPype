@@ -41,6 +41,9 @@
                         },
                         {
                             "render": "render"
+                        },
+                        {
+                            "write": "write"
                         }
                     ]
                 }
@@ -58,8 +61,8 @@
             "name": "template_publish_plugin",
             "template_data": [
                 {
-                    "key": "ValidateInstanceInContext",
-                    "label": "Validate Instance In Context"
+                    "key": "ValidateCorrectAssetName",
+                    "label": "Validate Correct Asset name"
                 }
             ]
         },
@@ -132,9 +135,31 @@
                     "label": "Enabled"
                 },
                 {
-                    "type": "raw-json",
-                    "key": "nodes",
-                    "label": "Nodes"
+                    "type": "boolean",
+                    "key": "use_rendered",
+                    "label": "Use rendered images"
+                },
+                {
+                    "type": "boolean",
+                    "key": "bake_viewer_process",
+                    "label": "Bake viewer process"
+                },
+                {
+                    "type": "boolean",
+                    "key": "bake_viewer_input_process",
+                    "label": "Bake viewer input process"
+                },
+                {
+                    "type": "collapsible-wrap",
+                    "label": "Nodes",
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "raw-json",
+                            "key": "nodes",
+                            "label": "Nodes"
+                        }
+                    ]
                 }
             ]
         },
@@ -271,8 +296,8 @@
                                 "label": "Write node file type"
                             },
                             {
-                                "key": "add_tags",
-                                "label": "Add additional tags to representations",
+                                "key": "add_custom_tags",
+                                "label": "Add custom tags",
                                 "type": "list",
                                 "object_type": "text"
                             }

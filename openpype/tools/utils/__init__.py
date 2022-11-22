@@ -1,4 +1,5 @@
 from .widgets import (
+    CustomTextComboBox,
     PlaceholderLineEdit,
     BaseClickableFrame,
     ClickableFrame,
@@ -6,6 +7,8 @@ from .widgets import (
     ExpandBtn,
     PixmapLabel,
     IconButton,
+    PixmapButton,
+    SeparatorWidget,
 )
 from .views import DeselectableTreeView
 from .error_dialog import ErrorMessageBox
@@ -28,6 +31,7 @@ from .overlay_messages import (
 
 
 __all__ = (
+    "CustomTextComboBox",
     "PlaceholderLineEdit",
     "BaseClickableFrame",
     "ClickableFrame",
@@ -35,6 +39,8 @@ __all__ = (
     "ExpandBtn",
     "PixmapLabel",
     "IconButton",
+    "PixmapButton",
+    "SeparatorWidget",
 
     "DeselectableTreeView",
 

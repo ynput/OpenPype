@@ -29,6 +29,7 @@ import shutil
 import blessed
 import enlighten
 import time
+import re
 
 
 term = blessed.Terminal()
@@ -52,7 +53,7 @@ def _print(msg: str, type: int = 0) -> None:
     else:
         header = term.darkolivegreen3("--- ")
 
-    print("{}{}".format(header, msg))
+    print(f"{header}{msg}")
 
 
 def count_folders(path: Path) -> int:
@@ -95,16 +96,22 @@ assert site_pkg, "No venv site-packages are found."
 _print(f"Working with: {site_pkg}", 2)
 
 openpype_root = Path(os.path.dirname(__file__)).parent
+version = {}
+with open(openpype_root / "openpype" / "version.py") as fp:
+    exec(fp.read(), version)
+
+version_match = re.search(r"(\d+\.\d+.\d+).*", version["__version__"])
+openpype_version = version_match[1]
 
 # create full path
 if platform.system().lower() == "darwin":
     build_dir = openpype_root.joinpath(
         "build",
-        "OpenPype.app",
+        f"OpenPype {openpype_version}.app",
         "Contents",
         "MacOS")
 else:
-    build_subdir = "exe.{}-{}".format(get_platform(), sys.version[0:3])
+    build_subdir = f"exe.{get_platform()}-{sys.version[:3]}"
     build_dir = openpype_root / "build" / build_subdir
 
 _print(f"Using build at {build_dir}", 2)

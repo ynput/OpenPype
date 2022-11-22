@@ -1,11 +1,9 @@
 import pyblish.api
 from pprint import pformat
-from importlib import reload
 
-from openpype.hosts import resolve
+from openpype.hosts.resolve import api as rapi
 from openpype.pipeline import legacy_io
 from openpype.hosts.resolve.otio import davinci_export
-reload(davinci_export)
 
 
 class PrecollectWorkfile(pyblish.api.ContextPlugin):
@@ -18,9 +16,9 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
 
         asset = legacy_io.Session["AVALON_ASSET"]
         subset = "workfile"
-        project = resolve.get_current_project()
+        project = rapi.get_current_project()
         fps = project.GetSetting("timelineFrameRate")
-        video_tracks = resolve.get_video_track_names()
+        video_tracks = rapi.get_video_track_names()
 
         # adding otio timeline to context
         otio_timeline = davinci_export.create_otio_timeline(project)
@@ -30,7 +28,8 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
             "asset": asset,
             "subset": "{}{}".format(asset, subset.capitalize()),
             "item": project,
-            "family": "workfile"
+            "family": "workfile",
+            "families": []
         }
 
         # create instance with workfile

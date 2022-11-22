@@ -1,17 +1,17 @@
+import os
 import copy
-import logging
+import collections
 
 from abc import (
     ABCMeta,
     abstractmethod,
     abstractproperty
 )
+
 import six
 
-from openpype.lib import (
-    get_subset_name_with_asset_doc,
-    set_plugin_attributes_from_settings,
-)
+from openpype.settings import get_system_settings, get_project_settings
+from openpype.lib import Logger
 from openpype.pipeline.plugin_discover import (
     discover,
     register_plugin,
@@ -20,6 +20,7 @@ from openpype.pipeline.plugin_discover import (
     deregister_plugin_path
 )
 
+from .subset_name import get_subset_name
 from .legacy_create import LegacyCreator
 
 
@@ -31,6 +32,111 @@ class CreatorError(Exception):
 
     def __init__(self, message):
         super(CreatorError, self).__init__(message)
+
+
+@six.add_metaclass(ABCMeta)
+class SubsetConvertorPlugin(object):
+    """Helper for conversion of instances created using legacy creators.
+
+    Conversion from legacy creators would mean to loose legacy instances,
+    convert them automatically or write a script which must user run. All of
+    these solutions are workign but will happen without asking or user must
+    know about them. This plugin can be used to show legacy instances in
+    Publisher and give user ability to run conversion script.
+
+    Convertor logic should be very simple. Method 'find_instances' is to
+    look for legacy instances in scene a possibly call
+    pre-implemented 'add_convertor_item'.
+
+    User will have ability to trigger conversion which is executed by calling
+    'convert' which should call 'remove_convertor_item' when is done.
+
+    It does make sense to add only one or none legacy item to create context
+    for convertor as it's not possible to choose which instace are converted
+    and which are not.
+
+    Convertor can use 'collection_shared_data' property like creators. Also
+    can store any information to it's object for conversion purposes.
+
+    Args:
+        create_context
+    """
+
+    _log = None
+
+    def __init__(self, create_context):
+        self._create_context = create_context
+
+    @property
+    def log(self):
+        """Logger of the plugin.
+
+        Returns:
+            logging.Logger: Logger with name of the plugin.
+        """
+
+        if self._log is None:
+            self._log = Logger.get_logger(self.__class__.__name__)
+        return self._log
+
+    @abstractproperty
+    def identifier(self):
+        """Converted identifier.
+
+        Returns:
+            str: Converted identifier unique for all converters in host.
+        """
+
+        pass
+
+    @abstractmethod
+    def find_instances(self):
+        """Look for legacy instances in the scene.
+
+        Should call 'add_convertor_item' if there is at least one instance to
+        convert.
+        """
+
+        pass
+
+    @abstractmethod
+    def convert(self):
+        """Conversion code."""
+
+        pass
+
+    @property
+    def create_context(self):
+        """Quick access to create context."""
+
+        return self._create_context
+
+    @property
+    def collection_shared_data(self):
+        """Access to shared data that can be used during 'find_instances'.
+
+        Retruns:
+            Dict[str, Any]: Shared data.
+
+        Raises:
+            UnavailableSharedData: When called out of collection phase.
+        """
+
+        return self._create_context.collection_shared_data
+
+    def add_convertor_item(self, label):
+        """Add item to CreateContext.
+
+        Args:
+            label (str): Label of item which will show in UI.
+        """
+
+        self._create_context.add_convertor_item(self.identifier, label)
+
+    def remove_convertor_item(self):
+        """Remove legacy item from create context when conversion finished."""
+
+        self._create_context.remove_convertor_item(self.identifier)
 
 
 @six.add_metaclass(ABCMeta)
@@ -47,6 +153,9 @@ class BaseCreator:
 
     # Label shown in UI
     label = None
+    group_label = None
+    # Cached group label after first call 'get_group_label'
+    _cached_group_label = None
 
     # Variable to store logger
     _log = None
@@ -63,15 +172,29 @@ class BaseCreator:
     #       `openpype.pipeline.attribute_definitions`
     instance_attr_defs = []
 
+    # Filtering by host name - can be used to be filtered by host name
+    # - used on all hosts when set to 'None' for Backwards compatibility
+    #   - was added afterwards
+    # QUESTION make this required?
+    host_name = None
+
     def __init__(
-        self, create_context, system_settings, project_settings, headless=False
+        self, project_settings, system_settings, create_context, headless=False
     ):
         # Reference to CreateContext
         self.create_context = create_context
+        self.project_settings = project_settings
 
         # Creator is running in headless mode (without UI elemets)
         # - we may use UI inside processing this attribute should be checked
         self.headless = headless
+
+        self.apply_settings(project_settings, system_settings)
+
+    def apply_settings(self, project_settings, system_settings):
+        """Method called on initialization of plugin to apply settings."""
+
+        pass
 
     @property
     def identifier(self):
@@ -79,26 +202,83 @@ class BaseCreator:
 
         Default implementation returns plugin's family.
         """
+
         return self.family
 
     @abstractproperty
     def family(self):
         """Family that plugin represents."""
+
         pass
 
     @property
-    def log(self):
-        if self._log is None:
-            from openpype.api import Logger
+    def project_name(self):
+        """Family that plugin represents."""
 
+        return self.create_context.project_name
+
+    @property
+    def host(self):
+        return self.create_context.host
+
+    def get_group_label(self):
+        """Group label under which are instances grouped in UI.
+
+        Default implementation use attributes in this order:
+            - 'group_label' -> 'label' -> 'identifier'
+                Keep in mind that 'identifier' use 'family' by default.
+
+        Returns:
+            str: Group label that can be used for grouping of instances in UI.
+                Group label can be overriden by instance itself.
+        """
+
+        if self._cached_group_label is None:
+            label = self.identifier
+            if self.group_label:
+                label = self.group_label
+            elif self.label:
+                label = self.label
+            self._cached_group_label = label
+        return self._cached_group_label
+
+    @property
+    def log(self):
+        """Logger of the plugin.
+
+        Returns:
+            logging.Logger: Logger with name of the plugin.
+        """
+
+        if self._log is None:
             self._log = Logger.get_logger(self.__class__.__name__)
         return self._log
 
     def _add_instance_to_context(self, instance):
-        """Helper method to ad d"""
+        """Helper method to add instance to create context.
+
+        Instances should be stored to DCC workfile metadata to be able reload
+        them and also stored to CreateContext in which is creator plugin
+        existing at the moment to be able use it without refresh of
+        CreateContext.
+
+        Args:
+            instance (CreatedInstance): New created instance.
+        """
+
         self.create_context.creator_adds_instance(instance)
 
     def _remove_instance_from_context(self, instance):
+        """Helper method to remove instance from create context.
+
+        Instances must be removed from DCC workfile metadat aand from create
+        context in which plugin is existing at the moment of removement to
+        propagate the change without restarting create context.
+
+        Args:
+            instance (CreatedInstance): Instance which should be removed.
+        """
+
         self.create_context.creator_removed_instance(instance)
 
     @abstractmethod
@@ -109,6 +289,7 @@ class BaseCreator:
         - must expect all data that were passed to init in previous
             implementation
         """
+
         pass
 
     @abstractmethod
@@ -135,6 +316,7 @@ class BaseCreator:
                     self._add_instance_to_context(instance)
         ```
         """
+
         pass
 
     @abstractmethod
@@ -142,9 +324,10 @@ class BaseCreator:
         """Store changes of existing instances so they can be recollected.
 
         Args:
-            update_list(list<UpdateData>): Gets list of tuples. Each item
+            update_list(List[UpdateData]): Gets list of tuples. Each item
                 contain changed instance and it's changes.
         """
+
         pass
 
     @abstractmethod
@@ -155,9 +338,10 @@ class BaseCreator:
         'True' if did so.
 
         Args:
-            instance(list<CreatedInstance>): Instance objects which should be
+            instance(List[CreatedInstance]): Instance objects which should be
                 removed.
         """
+
         pass
 
     def get_icon(self):
@@ -165,20 +349,28 @@ class BaseCreator:
 
         Can return path to image file or awesome icon name.
         """
+
         return self.icon
 
     def get_dynamic_data(
-        self, variant, task_name, asset_doc, project_name, host_name
+        self, variant, task_name, asset_doc, project_name, host_name, instance
     ):
         """Dynamic data for subset name filling.
 
         These may be get dynamically created based on current context of
         workfile.
         """
+
         return {}
 
     def get_subset_name(
-        self, variant, task_name, asset_doc, project_name, host_name=None
+        self,
+        variant,
+        task_name,
+        asset_doc,
+        project_name,
+        host_name=None,
+        instance=None
     ):
         """Return subset name for passed context.
 
@@ -192,25 +384,33 @@ class BaseCreator:
         Asset document is not used yet but is required if would like to use
         task type in subset templates.
 
+        Method is also called on subset name update. In that case origin
+        instance is passed in.
+
         Args:
             variant(str): Subset name variant. In most of cases user input.
             task_name(str): For which task subset is created.
             asset_doc(dict): Asset document for which subset is created.
             project_name(str): Project name.
             host_name(str): Which host creates subset.
+            instance(CreatedInstance|None): Object of 'CreatedInstance' for
+                which is subset name updated. Passed only on subset name
+                update.
         """
+
         dynamic_data = self.get_dynamic_data(
-            variant, task_name, asset_doc, project_name, host_name
+            variant, task_name, asset_doc, project_name, host_name, instance
         )
 
-        return get_subset_name_with_asset_doc(
+        return get_subset_name(
             self.family,
             variant,
             task_name,
             asset_doc,
             project_name,
             host_name,
-            dynamic_data=dynamic_data
+            dynamic_data=dynamic_data,
+            project_settings=self.project_settings
         )
 
     def get_instance_attr_defs(self):
@@ -225,10 +425,31 @@ class BaseCreator:
         keys/values when plugin attributes change.
 
         Returns:
-            list<AbtractAttrDef>: Attribute definitions that can be tweaked for
+            List[AbtractAttrDef]: Attribute definitions that can be tweaked for
                 created instance.
         """
+
         return self.instance_attr_defs
+
+    @property
+    def collection_shared_data(self):
+        """Access to shared data that can be used during creator's collection.
+
+        Retruns:
+            Dict[str, Any]: Shared data.
+
+        Raises:
+            UnavailableSharedData: When called out of collection phase.
+        """
+
+        return self.create_context.collection_shared_data
+
+    def set_instance_thumbnail_path(self, instance_id, thumbnail_path=None):
+        """Set path to thumbnail for instance."""
+
+        self.create_context.thumbnail_paths_by_instance_id[instance_id] = (
+            thumbnail_path
+        )
 
 
 class Creator(BaseCreator):
@@ -256,6 +477,13 @@ class Creator(BaseCreator):
     # - in some cases it may confuse artists because it would not be used
     #      e.g. for buld creators
     create_allow_context_change = True
+    # A thumbnail can be passed in precreate attributes
+    # - if is set to True is should expect that a thumbnail path under key
+    #   PRE_CREATE_THUMBNAIL_KEY can be sent in data with precreate data
+    # - is disabled by default because the feature was added in later stages
+    #   and creators who would not expect PRE_CREATE_THUMBNAIL_KEY could
+    #   cause issues with instance data
+    create_allow_thumbnail = False
 
     # Precreate attribute definitions showed before creation
     # - similar to instance attribute definitions
@@ -285,6 +513,7 @@ class Creator(BaseCreator):
         Returns:
             str: Short description of family.
         """
+
         return self.description
 
     def get_detail_description(self):
@@ -295,6 +524,7 @@ class Creator(BaseCreator):
         Returns:
             str: Detailed description of family for artist.
         """
+
         return self.detailed_description
 
     def get_default_variants(self):
@@ -306,8 +536,9 @@ class Creator(BaseCreator):
         By default returns `default_variants` value.
 
         Returns:
-            list<str>: Whisper variants for user input.
+            List[str]: Whisper variants for user input.
         """
+
         return copy.deepcopy(self.default_variants)
 
     def get_default_variant(self):
@@ -326,14 +557,22 @@ class Creator(BaseCreator):
         """Plugin attribute definitions needed for creation.
         Attribute definitions of plugin that define how creation will work.
         Values of these definitions are passed to `create` method.
-        NOTE:
-        Convert method should be implemented which should care about updating
-        keys/values when plugin attributes change.
+
+        Note:
+            Convert method should be implemented which should care about
+            updating keys/values when plugin attributes change.
+
         Returns:
-            list<AbtractAttrDef>: Attribute definitions that can be tweaked for
+            List[AbtractAttrDef]: Attribute definitions that can be tweaked for
                 created instance.
         """
         return self.pre_create_attr_defs
+
+
+class HiddenCreator(BaseCreator):
+    @abstractmethod
+    def create(self, instance_data, source_data):
+        pass
 
 
 class AutoCreator(BaseCreator):
@@ -351,10 +590,58 @@ def discover_creator_plugins():
     return discover(BaseCreator)
 
 
+def discover_convertor_plugins():
+    return discover(SubsetConvertorPlugin)
+
+
 def discover_legacy_creator_plugins():
+    from openpype.lib import Logger
+
+    log = Logger.get_logger("CreatorDiscover")
+
     plugins = discover(LegacyCreator)
-    set_plugin_attributes_from_settings(plugins, LegacyCreator)
+    project_name = os.environ.get("AVALON_PROJECT")
+    system_settings = get_system_settings()
+    project_settings = get_project_settings(project_name)
+    for plugin in plugins:
+        try:
+            plugin.apply_settings(project_settings, system_settings)
+        except Exception:
+            log.warning(
+                "Failed to apply settings to loader {}".format(
+                    plugin.__name__
+                ),
+                exc_info=True
+            )
     return plugins
+
+
+def get_legacy_creator_by_name(creator_name, case_sensitive=False):
+    """Find creator plugin by name.
+
+    Args:
+        creator_name (str): Name of creator class that should be returned.
+        case_sensitive (bool): Match of creator plugin name is case sensitive.
+            Set to `False` by default.
+
+    Returns:
+        Creator: Return first matching plugin or `None`.
+    """
+
+    # Lower input creator name if is not case sensitive
+    if not case_sensitive:
+        creator_name = creator_name.lower()
+
+    for creator_plugin in discover_legacy_creator_plugins():
+        _creator_name = creator_plugin.__name__
+
+        # Lower creator plugin name if is not case sensitive
+        if not case_sensitive:
+            _creator_name = _creator_name.lower()
+
+        if _creator_name == creator_name:
+            return creator_plugin
+    return None
 
 
 def register_creator_plugin(plugin):
@@ -364,6 +651,9 @@ def register_creator_plugin(plugin):
     elif issubclass(plugin, LegacyCreator):
         register_plugin(LegacyCreator, plugin)
 
+    elif issubclass(plugin, SubsetConvertorPlugin):
+        register_plugin(SubsetConvertorPlugin, plugin)
+
 
 def deregister_creator_plugin(plugin):
     if issubclass(plugin, BaseCreator):
@@ -372,12 +662,48 @@ def deregister_creator_plugin(plugin):
     elif issubclass(plugin, LegacyCreator):
         deregister_plugin(LegacyCreator, plugin)
 
+    elif issubclass(plugin, SubsetConvertorPlugin):
+        deregister_plugin(SubsetConvertorPlugin, plugin)
+
 
 def register_creator_plugin_path(path):
     register_plugin_path(BaseCreator, path)
     register_plugin_path(LegacyCreator, path)
+    register_plugin_path(SubsetConvertorPlugin, path)
 
 
 def deregister_creator_plugin_path(path):
     deregister_plugin_path(BaseCreator, path)
     deregister_plugin_path(LegacyCreator, path)
+    deregister_plugin_path(SubsetConvertorPlugin, path)
+
+
+def cache_and_get_instances(creator, shared_key, list_instances_func):
+    """Common approach to cache instances in shared data.
+
+    This is helper function which does not handle cases when a 'shared_key' is
+    used for different list instances functions. The same approach of caching
+    instances into 'collection_shared_data' is not required but is so common
+    we've decided to unify it to some degree.
+
+    Function 'list_instances_func' is called only if 'shared_key' is not
+    available in 'collection_shared_data' on creator.
+
+    Args:
+        creator (Creator): Plugin which would like to get instance data.
+        shared_key (str): Key under which output of function will be stored.
+        list_instances_func (Function): Function that will return instance data
+            if data were not yet stored under 'shared_key'.
+
+    Returns:
+        Dict[str, Dict[str, Any]]: Cached instances by creator identifier from
+            result of passed function.
+    """
+
+    if shared_key not in creator.collection_shared_data:
+        value = collections.defaultdict(list)
+        for instance in list_instances_func():
+            identifier = instance.get("creator_identifier")
+            value[identifier].append(instance)
+        creator.collection_shared_data[shared_key] = value
+    return creator.collection_shared_data[shared_key]

@@ -1,8 +1,10 @@
+import json
 import re
 import os
 import hiero
 
-from openpype.api import Logger
+from openpype.client import get_project, get_assets
+from openpype.lib import Logger
 from openpype.pipeline import legacy_io
 
 log = Logger.get_logger(__name__)
@@ -84,17 +86,16 @@ def update_tag(tag, data):
     # get metadata key from data
     data_mtd = data.get("metadata", {})
 
-    # due to hiero bug we have to make sure keys which are not existent in
-    # data are cleared of value by `None`
-    for _mk in mtd.keys():
-        if _mk.replace("tag.", "") not in data_mtd.keys():
-            mtd.setValue(_mk, str(None))
-
     # set all data metadata to tag metadata
-    for k, v in data_mtd.items():
+    for _k, _v in data_mtd.items():
+        value = str(_v)
+        if type(_v) == dict:
+            value = json.dumps(_v)
+
+        # set the value
         mtd.setValue(
-            "tag.{}".format(str(k)),
-            str(v)
+            "tag.{}".format(str(_k)),
+            value
         )
 
     # set note description of tag
@@ -141,7 +142,9 @@ def add_tags_to_workfile():
     nks_pres_tags = tag_data()
 
     # Get project task types.
-    tasks = legacy_io.find_one({"type": "project"})["config"]["tasks"]
+    project_name = legacy_io.active_project()
+    project_doc = get_project(project_name)
+    tasks = project_doc["config"]["tasks"]
     nks_pres_tags["[Tasks]"] = {}
     log.debug("__ tasks: {}".format(tasks))
     for task_type in tasks.keys():
@@ -159,7 +162,9 @@ def add_tags_to_workfile():
     # asset builds and shots.
     if int(os.getenv("TAG_ASSETBUILD_STARTUP", 0)) == 1:
         nks_pres_tags["[AssetBuilds]"] = {}
-        for asset in legacy_io.find({"type": "asset"}):
+        for asset in get_assets(
+            project_name, fields=["name", "data.entityType"]
+        ):
             if asset["data"]["entityType"] == "AssetBuild":
                 nks_pres_tags["[AssetBuilds]"][asset["name"]] = {
                     "editable": "1",

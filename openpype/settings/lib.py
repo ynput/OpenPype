@@ -92,6 +92,31 @@ def calculate_changes(old_value, new_value):
 
 
 @require_handler
+def get_system_last_saved_info():
+    return _SETTINGS_HANDLER.get_system_last_saved_info()
+
+
+@require_handler
+def get_project_last_saved_info(project_name):
+    return _SETTINGS_HANDLER.get_project_last_saved_info(project_name)
+
+
+@require_handler
+def get_last_opened_info():
+    return _SETTINGS_HANDLER.get_last_opened_info()
+
+
+@require_handler
+def opened_settings_ui():
+    return _SETTINGS_HANDLER.opened_settings_ui()
+
+
+@require_handler
+def closed_settings_ui(info_obj):
+    return _SETTINGS_HANDLER.closed_settings_ui(info_obj)
+
+
+@require_handler
 def save_studio_settings(data):
     """Save studio overrides of system settings.
 
@@ -113,8 +138,7 @@ def save_studio_settings(data):
         SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
-    from openpype.modules import ModulesManager
-    from openpype_interfaces import ISettingsChangeListener
+    from openpype.modules import ModulesManager, ISettingsChangeListener
 
     old_data = get_system_settings()
     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
@@ -161,8 +185,7 @@ def save_project_settings(project_name, overrides):
         SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
-    from openpype.modules import ModulesManager
-    from openpype_interfaces import ISettingsChangeListener
+    from openpype.modules import ModulesManager, ISettingsChangeListener
 
     default_values = get_default_settings()[PROJECT_SETTINGS_KEY]
     if project_name:
@@ -223,8 +246,7 @@ def save_project_anatomy(project_name, anatomy_data):
         SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
-    from openpype.modules import ModulesManager
-    from openpype_interfaces import ISettingsChangeListener
+    from openpype.modules import ModulesManager, ISettingsChangeListener
 
     default_values = get_default_settings()[PROJECT_ANATOMY_KEY]
     if project_name:

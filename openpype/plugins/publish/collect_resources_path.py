@@ -13,8 +13,6 @@ import copy
 
 import pyblish.api
 
-from openpype.pipeline import legacy_io
-
 
 class CollectResourcesPath(pyblish.api.InstancePlugin):
     """Generate directory path where the files and resources will be stored"""
@@ -41,6 +39,7 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 "rig",
                 "plate",
                 "look",
+                "mvLook",
                 "yetiRig",
                 "yeticache",
                 "nukenodes",
@@ -57,7 +56,6 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 "effect",
                 "staticMesh",
                 "skeletalMesh"
-
                 ]
 
     def process(self, instance):
@@ -85,11 +83,10 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
         else:
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
-            project_name = legacy_io.Session["AVALON_PROJECT"]
             self.log.warning((
                 "Deprecation warning: Anatomy does not have set `folder`"
                 " key underneath `publish` (in global of for project `{}`)."
-            ).format(project_name))
+            ).format(anatomy.project_name))
 
             file_path = anatomy_filled["publish"]["path"]
             # Directory

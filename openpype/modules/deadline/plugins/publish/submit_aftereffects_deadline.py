@@ -3,8 +3,10 @@ import attr
 import getpass
 import pyblish.api
 
-from openpype.lib import env_value_to_bool
-from openpype.lib.delivery import collect_frames
+from openpype.lib import (
+    env_value_to_bool,
+    collect_frames,
+)
 from openpype.pipeline import legacy_io
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
@@ -33,6 +35,7 @@ class AfterEffectsSubmitDeadline(
     hosts = ["aftereffects"]
     families = ["render.farm"]  # cannot be "render' as that is integrated
     use_published = True
+    targets = ["local"]
 
     priority = 50
     chunk_size = 1000000
@@ -64,9 +67,9 @@ class AfterEffectsSubmitDeadline(
         dln_job_info.Group = self.group
         dln_job_info.Department = self.department
         dln_job_info.ChunkSize = self.chunk_size
-        dln_job_info.OutputFilename = \
+        dln_job_info.OutputFilename += \
             os.path.basename(self._instance.data["expectedFiles"][0])
-        dln_job_info.OutputDirectory = \
+        dln_job_info.OutputDirectory += \
             os.path.dirname(self._instance.data["expectedFiles"][0])
         dln_job_info.JobDelay = "00:00:00"
 
@@ -79,7 +82,8 @@ class AfterEffectsSubmitDeadline(
             "AVALON_TASK",
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
-            "OPENPYPE_LOG_NO_COLORS"
+            "OPENPYPE_LOG_NO_COLORS",
+            "OPENPYPE_VERSION"
         ]
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):
@@ -88,13 +92,12 @@ class AfterEffectsSubmitDeadline(
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
         for key in keys:
-            val = environment.get(key)
-            if val:
-                dln_job_info.EnvironmentKeyValue = "{key}={value}".format(
-                     key=key,
-                     value=val)
+            value = environment.get(key)
+            if value:
+                dln_job_info.EnvironmentKeyValue[key] = value
+
         # to recognize job from PYPE for turning Event On/Off
-        dln_job_info.EnvironmentKeyValue = "OPENPYPE_RENDER_JOB=1"
+        dln_job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
 
         return dln_job_info
 

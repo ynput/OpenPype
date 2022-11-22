@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Validate scene settings."""
+"""Validate scene settings.
+Requires:
+    instance    -> assetEntity
+    instance    -> anatomyData
+"""
 import os
 import re
 
@@ -54,7 +58,7 @@ class ValidateSceneSettings(OptionalPyblishPluginMixin,
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Scene Settings"
-    families = ["render.farm", "render"]
+    families = ["render.farm", "render.local", "render"]
     hosts = ["aftereffects"]
     optional = True
 
@@ -67,7 +71,8 @@ class ValidateSceneSettings(OptionalPyblishPluginMixin,
         if not self.is_active(instance.data):
             return
 
-        expected_settings = get_asset_settings()
+        asset_doc = instance.data["assetEntity"]
+        expected_settings = get_asset_settings(asset_doc)
         self.log.info("config from DB::{}".format(expected_settings))
 
         task_name = instance.data["anatomyData"]["task"]["name"]

@@ -118,7 +118,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
         # Camera creation when loading a layout is not necessary for now,
         # but the code is worth keeping in case we need it in the future.
         # # Create the camera asset and the camera instance
-        # creator_plugin = lib.get_creator_by_name("CreateCamera")
+        # creator_plugin = get_legacy_creator_by_name("CreateCamera")
         # if not creator_plugin:
         #     raise ValueError("Creator plugin \"CreateCamera\" was "
         #                      "not found.")

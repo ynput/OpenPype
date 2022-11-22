@@ -4,13 +4,13 @@ import os
 from maya import cmds  # noqa
 import maya.mel as mel  # noqa
 import pyblish.api
-import openpype.api
-from openpype.hosts.maya.api.lib import maintained_selection
 
+from openpype.pipeline import publish
+from openpype.hosts.maya.api.lib import maintained_selection
 from openpype.hosts.maya.api import fbx
 
 
-class ExtractFBX(openpype.api.Extractor):
+class ExtractFBX(publish.Extractor):
     """Extract FBX from Maya.
 
     This extracts reproducible FBX exports ignoring any of the

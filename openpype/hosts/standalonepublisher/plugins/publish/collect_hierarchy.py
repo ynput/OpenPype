@@ -1,9 +1,10 @@
 import os
+from pprint import pformat
 import re
 from copy import deepcopy
 import pyblish.api
 
-from openpype.pipeline import legacy_io
+from openpype.client import get_asset_by_id
 
 
 class CollectHierarchyInstance(pyblish.api.ContextPlugin):
@@ -21,6 +22,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
     families = ["shot"]
 
     # presets
+    shot_rename = True
     shot_rename_template = None
     shot_rename_search_patterns = None
     shot_add_hierarchy = None
@@ -46,7 +48,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
         parent_name = instance.context.data["assetEntity"]["name"]
         clip = instance.data["item"]
         clip_name = os.path.splitext(clip.name)[0].lower()
-        if self.shot_rename_search_patterns:
+        if self.shot_rename_search_patterns and self.shot_rename:
             search_text += parent_name + clip_name
             instance.data["anatomyData"].update({"clip_name": clip_name})
             for type, pattern in self.shot_rename_search_patterns.items():
@@ -56,33 +58,38 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                     continue
                 instance.data["anatomyData"][type] = match[-1]
 
-        # format to new shot name
-        instance.data["asset"] = self.shot_rename_template.format(
-            **instance.data["anatomyData"])
+            # format to new shot name
+            instance.data["asset"] = self.shot_rename_template.format(
+                **instance.data["anatomyData"])
 
     def create_hierarchy(self, instance):
-        parents = list()
-        hierarchy = list()
-        visual_hierarchy = [instance.context.data["assetEntity"]]
+        asset_doc = instance.context.data["assetEntity"]
+        project_doc = instance.context.data["projectEntity"]
+        project_name = project_doc["name"]
+        visual_hierarchy = [asset_doc]
+        current_doc = asset_doc
         while True:
-            visual_parent = legacy_io.find_one(
-                {"_id": visual_hierarchy[-1]["data"]["visualParent"]}
-            )
-            if visual_parent:
-                visual_hierarchy.append(visual_parent)
-            else:
-                visual_hierarchy.append(
-                    instance.context.data["projectEntity"])
+            visual_parent_id = current_doc["data"]["visualParent"]
+            visual_parent = None
+            if visual_parent_id:
+                visual_parent = get_asset_by_id(project_name, visual_parent_id)
+
+            if not visual_parent:
+                visual_hierarchy.append(project_doc)
                 break
+            visual_hierarchy.append(visual_parent)
+            current_doc = visual_parent
 
         # add current selection context hierarchy from standalonepublisher
+        parents = list()
         for entity in reversed(visual_hierarchy):
             parents.append({
                 "entity_type": entity["data"]["entityType"],
                 "entity_name": entity["name"]
             })
 
-        if self.shot_add_hierarchy:
+        hierarchy = list()
+        if self.shot_add_hierarchy.get("enabled"):
             parent_template_patern = re.compile(r"\{([a-z]*?)\}")
             # fill the parents parts from presets
             shot_add_hierarchy = self.shot_add_hierarchy.copy()
@@ -126,12 +133,11 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
         instance.data["parents"] = parents
 
         # print
-        self.log.debug(f"Hierarchy: {hierarchy}")
-        self.log.debug(f"parents: {parents}")
+        self.log.warning(f"Hierarchy: {hierarchy}")
+        self.log.info(f"parents: {parents}")
 
+        tasks_to_add = dict()
         if self.shot_add_tasks:
-            tasks_to_add = dict()
-            project_doc = legacy_io.find_one({"type": "project"})
             project_tasks = project_doc["config"]["tasks"]
             for task_name, task_data in self.shot_add_tasks.items():
                 _task_data = deepcopy(task_data)
@@ -150,9 +156,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                             task_name,
                             list(project_tasks.keys())))
 
-            instance.data["tasks"] = tasks_to_add
-        else:
-            instance.data["tasks"] = dict()
+        instance.data["tasks"] = tasks_to_add
 
         # updating hierarchy data
         instance.data["anatomyData"].update({
@@ -161,6 +165,9 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
         })
 
     def process(self, context):
+        self.log.info("self.shot_add_hierarchy: {}".format(
+            pformat(self.shot_add_hierarchy)
+        ))
         for instance in context:
             if instance.data["family"] in self.families:
                 self.processing_instance(instance)

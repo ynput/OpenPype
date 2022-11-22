@@ -1,6 +1,9 @@
 import os
 
-from openpype.pipeline import LegacyCreator
+from openpype.pipeline import (
+    LegacyCreator,
+    legacy_io
+)
 from openpype.hosts.fusion.api import (
     get_current_comp,
     comp_lock_and_undo_chunk
@@ -21,12 +24,9 @@ class CreateOpenEXRSaver(LegacyCreator):
 
         comp = get_current_comp()
 
-        # todo: improve method of getting current environment
-        # todo: pref avalon.Session over os.environ
+        workdir = os.path.normpath(legacy_io.Session["AVALON_WORKDIR"])
 
-        workdir = os.path.normpath(os.environ["AVALON_WORKDIR"])
-
-        filename = "{}..tiff".format(self.name)
+        filename = "{}..exr".format(self.name)
         filepath = os.path.join(workdir, "render", filename)
 
         with comp_lock_and_undo_chunk(comp):
@@ -39,10 +39,10 @@ class CreateOpenEXRSaver(LegacyCreator):
             saver["Clip"] = filepath
             saver["OutputFormat"] = file_format
 
-            # # # Set standard TIFF settings
+            # Check file format settings are available
             if saver[file_format] is None:
-                raise RuntimeError("File format is not set to TiffFormat, "
-                                   "this is a bug")
+                raise RuntimeError("File format is not set to {}, "
+                                   "this is a bug".format(file_format))
 
             # Set file format attributes
             saver[file_format]["Depth"] = 1  # int8 | int16 | float32 | other

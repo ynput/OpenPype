@@ -5,6 +5,7 @@ from collections import defaultdict
 
 from Qt import QtWidgets
 
+from openpype.client import get_representation_by_name
 from openpype.pipeline import (
     legacy_io,
     get_representation_path,
@@ -31,7 +32,9 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         import maya.cmds as cmds
 
         with lib.maintained_selection():
-            nodes = cmds.file(self.fname,
+            file_url = self.prepare_root_value(self.fname,
+                                               context["project"]["name"])
+            nodes = cmds.file(file_url,
                               namespace=namespace,
                               reference=True,
                               returnNewNodes=True)
@@ -73,11 +76,10 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         shader_nodes = cmds.ls(members, type='shadingEngine')
         nodes = set(self._get_nodes_with_shader(shader_nodes))
 
-        json_representation = legacy_io.find_one({
-            "type": "representation",
-            "parent": representation['parent'],
-            "name": "json"
-        })
+        project_name = legacy_io.active_project()
+        json_representation = get_representation_by_name(
+            project_name, "json", representation["parent"]
+        )
 
         # Load relationships
         shader_relation = get_representation_path(json_representation)

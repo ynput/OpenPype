@@ -12,6 +12,8 @@ Provides:
 
 import os
 import sys
+import collections
+
 import six
 import pyblish.api
 import clique
@@ -20,13 +22,11 @@ import clique
 class IntegrateFtrackApi(pyblish.api.InstancePlugin):
     """ Commit components to server. """
 
-    order = pyblish.api.IntegratorOrder+0.499
+    order = pyblish.api.IntegratorOrder + 0.499
     label = "Integrate Ftrack Api"
     families = ["ftrack"]
 
     def process(self, instance):
-        session = instance.context.data["ftrackSession"]
-        context = instance.context
         component_list = instance.data.get("ftrackComponentsList")
         if not component_list:
             self.log.info(
@@ -35,8 +35,8 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             )
             return
 
-        session = instance.context.data["ftrackSession"]
         context = instance.context
+        session = context.data["ftrackSession"]
 
         parent_entity = None
         default_asset_name = None
@@ -84,9 +84,11 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
         asset_types_by_short = self._ensure_asset_types_exists(
             session, component_list
         )
+        self._fill_component_locations(session, component_list)
 
         asset_versions_data_by_id = {}
         used_asset_versions = []
+
         # Iterate over components and publish
         for data in component_list:
             self.log.debug("data: {}".format(data))
@@ -116,9 +118,6 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 asset_version_status_ids_by_name
             )
 
-            # Component
-            self.create_component(session, asset_version_entity, data)
-
             # Store asset version and components items that were
             version_id = asset_version_entity["id"]
             if version_id not in asset_versions_data_by_id:
@@ -134,6 +133,8 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             # Backwards compatibility
             if asset_version_entity not in used_asset_versions:
                 used_asset_versions.append(asset_version_entity)
+
+        self._create_components(session, asset_versions_data_by_id)
 
         instance.data["ftrackIntegratedAssetVersionsData"] = (
             asset_versions_data_by_id
@@ -192,6 +193,70 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             session.rollback()
             session._configure_locations()
             six.reraise(tp, value, tb)
+
+    def _fill_component_locations(self, session, component_list):
+        components_by_location_name = collections.defaultdict(list)
+        components_by_location_id = collections.defaultdict(list)
+        for component_item in component_list:
+            # Location entity can be prefilled
+            # - this is not recommended as connection to ftrack server may
+            #   be lost and in that case the entity is not valid when gets
+            #   to this plugin
+            location = component_item.get("component_location")
+            if location is not None:
+                continue
+
+            # Collect location id
+            location_id = component_item.get("component_location_id")
+            if location_id:
+                components_by_location_id[location_id].append(
+                    component_item
+                )
+                continue
+
+            location_name = component_item.get("component_location_name")
+            if location_name:
+                components_by_location_name[location_name].append(
+                    component_item
+                )
+                continue
+
+        # Skip if there is nothing to do
+        if not components_by_location_name and not components_by_location_id:
+            return
+
+        # Query locations
+        query_filters = []
+        if components_by_location_id:
+            joined_location_ids = ",".join([
+                '"{}"'.format(location_id)
+                for location_id in components_by_location_id
+            ])
+            query_filters.append("id in ({})".format(joined_location_ids))
+
+        if components_by_location_name:
+            joined_location_names = ",".join([
+                '"{}"'.format(location_name)
+                for location_name in components_by_location_name
+            ])
+            query_filters.append("name in ({})".format(joined_location_names))
+
+        locations = session.query(
+            "select id, name from Location where {}".format(
+                " or ".join(query_filters)
+            )
+        ).all()
+        # Fill locations in components
+        for location in locations:
+            location_id = location["id"]
+            location_name = location["name"]
+            if location_id in components_by_location_id:
+                for component in components_by_location_id[location_id]:
+                    component["component_location"] = location
+
+            if location_name in components_by_location_name:
+                for component in components_by_location_name[location_name]:
+                    component["component_location"] = location
 
     def _ensure_asset_types_exists(self, session, component_list):
         """Make sure that all AssetType entities exists for integration.
@@ -559,3 +624,40 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 session.rollback()
                 session._configure_locations()
                 six.reraise(tp, value, tb)
+
+    def _create_components(self, session, asset_versions_data_by_id):
+        for item in asset_versions_data_by_id.values():
+            asset_version_entity = item["asset_version"]
+            component_items = item["component_items"]
+
+            component_entities = session.query(
+                (
+                    "select id, name from Component where version_id is \"{}\""
+                ).format(asset_version_entity["id"])
+            ).all()
+
+            existing_component_names = {
+                component["name"]
+                for component in component_entities
+            }
+
+            contain_review = "ftrackreview-mp4" in existing_component_names
+            thumbnail_component_item = None
+            for component_item in component_items:
+                component_data = component_item.get("component_data") or {}
+                component_name = component_data.get("name")
+                if component_name == "ftrackreview-mp4":
+                    contain_review = True
+                elif component_name == "ftrackreview-image":
+                    thumbnail_component_item = component_item
+
+            if contain_review and thumbnail_component_item:
+                thumbnail_component_item["component_data"]["name"] = (
+                    "thumbnail"
+                )
+
+            # Component
+            for component_item in component_items:
+                self.create_component(
+                    session, asset_version_entity, component_item
+                )

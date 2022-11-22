@@ -9,11 +9,11 @@ import logging
 import platform
 import threading
 import collections
+import traceback
 from uuid import uuid4
 from abc import ABCMeta, abstractmethod
 import six
 
-import openpype
 from openpype.settings import (
     get_system_settings,
     SYSTEM_SETTINGS_KEY,
@@ -26,7 +26,20 @@ from openpype.settings.lib import (
     get_studio_system_settings_overrides,
     load_json_file
 )
-from openpype.lib import PypeLogger
+
+from openpype.lib import (
+    Logger,
+    import_filepath,
+    import_module_from_dirpath
+)
+
+from .interfaces import (
+    OpenPypeInterface,
+    IPluginPaths,
+    IHostAddon,
+    ITrayModule,
+    ITrayService
+)
 
 # Files that will be always ignored on modules import
 IGNORED_FILENAMES = (
@@ -49,6 +62,7 @@ class _ModuleClass(object):
     Object of this class can be stored to `sys.modules` and used for storing
     dynamically imported modules.
     """
+
     def __init__(self, name):
         # Call setattr on super class
         super(_ModuleClass, self).__setattr__("name", name)
@@ -92,7 +106,7 @@ class _ModuleClass(object):
     def log(self):
         if self._log is None:
             super(_ModuleClass, self).__setattr__(
-                "_log", PypeLogger.get_logger(self.name)
+                "_log", Logger.get_logger(self.name)
             )
         return self._log
 
@@ -116,15 +130,25 @@ class _InterfacesClass(_ModuleClass):
     - this is because interfaces must be available even if are missing
         implementation
     """
+
     def __getattr__(self, attr_name):
         if attr_name not in self.__attributes__:
             if attr_name in ("__path__", "__file__"):
                 return None
 
-            raise ImportError((
+            raise AttributeError((
                 "cannot import name '{}' from 'openpype_interfaces'"
             ).format(attr_name))
 
+        if _LoadCache.interfaces_loaded and attr_name != "log":
+            stack = list(traceback.extract_stack())
+            stack.pop(-1)
+            self.log.warning((
+                "Using deprecated import of \"{}\" from 'openpype_interfaces'."
+                " Please switch to use import"
+                " from 'openpype.modules.interfaces'"
+                " (will be removed after 3.16.x).{}"
+            ).format(attr_name, "".join(traceback.format_list(stack))))
         return self.__attributes__[attr_name]
 
 
@@ -138,7 +162,7 @@ class _LoadCache:
 def get_default_modules_dir():
     """Path to default OpenPype modules."""
 
-    current_dir = os.path.abspath(os.path.dirname(__file__))
+    current_dir = os.path.dirname(os.path.abspath(__file__))
 
     output = []
     for folder_name in ("default_modules", ):
@@ -276,19 +300,13 @@ def load_modules(force=False):
 
 
 def _load_modules():
-    # Import helper functions from lib
-    from openpype.lib import (
-        import_filepath,
-        import_module_from_dirpath
-    )
-
     # Key under which will be modules imported in `sys.modules`
     modules_key = "openpype_modules"
 
     # Change `sys.modules`
     sys.modules[modules_key] = openpype_modules = _ModuleClass(modules_key)
 
-    log = PypeLogger.get_logger("ModulesLoader")
+    log = Logger.get_logger("ModulesLoader")
 
     # Look for OpenPype modules in paths defined with `get_module_dirs`
     #   - dynamically imported OpenPype modules and addons
@@ -296,6 +314,8 @@ def _load_modules():
     # Add current directory at first place
     #   - has small differences in import logic
     current_dir = os.path.abspath(os.path.dirname(__file__))
+    hosts_dir = os.path.join(os.path.dirname(current_dir), "hosts")
+    module_dirs.insert(0, hosts_dir)
     module_dirs.insert(0, current_dir)
 
     processed_paths = set()
@@ -312,6 +332,7 @@ def _load_modules():
             continue
 
         is_in_current_dir = dirpath == current_dir
+        is_in_host_dir = dirpath == hosts_dir
         for filename in os.listdir(dirpath):
             # Ignore filenames
             if filename in IGNORED_FILENAMES:
@@ -351,6 +372,24 @@ def _load_modules():
                     sys.modules[new_import_str] = default_module
                     setattr(openpype_modules, basename, default_module)
 
+                elif is_in_host_dir:
+                    import_str = "openpype.hosts.{}".format(basename)
+                    new_import_str = "{}.{}".format(modules_key, basename)
+                    # Until all hosts are converted to be able use them as
+                    #   modules is this error check needed
+                    try:
+                        default_module = __import__(
+                            import_str, fromlist=("", )
+                        )
+                        sys.modules[new_import_str] = default_module
+                        setattr(openpype_modules, basename, default_module)
+
+                    except Exception:
+                        log.warning(
+                            "Failed to import host folder {}".format(basename),
+                            exc_info=True
+                        )
+
                 elif os.path.isdir(fullpath):
                     import_module_from_dirpath(dirpath, filename, modules_key)
 
@@ -366,29 +405,6 @@ def _load_modules():
                 else:
                     msg = "Failed to import module '{}'.".format(fullpath)
                 log.error(msg, exc_info=True)
-
-
-class _OpenPypeInterfaceMeta(ABCMeta):
-    """OpenPypeInterface meta class to print proper string."""
-    def __str__(self):
-        return "<'OpenPypeInterface.{}'>".format(self.__name__)
-
-    def __repr__(self):
-        return str(self)
-
-
-@six.add_metaclass(_OpenPypeInterfaceMeta)
-class OpenPypeInterface:
-    """Base class of Interface that can be used as Mixin with abstract parts.
-
-    This is way how OpenPype module or addon can tell that has implementation
-    for specific part or for other module/addon.
-
-    Child classes of OpenPypeInterface may be used as mixin in different
-    OpenPype modules which means they have to have implemented methods defined
-    in the interface. By default interface does not have any abstract parts.
-    """
-    pass
 
 
 @six.add_metaclass(ABCMeta)
@@ -415,7 +431,7 @@ class OpenPypeModule:
     def __init__(self, manager, settings):
         self.manager = manager
 
-        self.log = PypeLogger.get_logger(self.name)
+        self.log = Logger.get_logger(self.name)
 
         self.initialize(settings)
 
@@ -432,10 +448,12 @@ class OpenPypeModule:
         It is not recommended to override __init__ that's why specific method
         was implemented.
         """
+
         pass
 
     def connect_with_modules(self, enabled_modules):
         """Connect with other enabled modules."""
+
         pass
 
     def get_global_environments(self):
@@ -443,7 +461,40 @@ class OpenPypeModule:
 
         Environment variables that can be get only from system settings.
         """
+
         return {}
+
+    def modify_application_launch_arguments(self, application, env):
+        """Give option to modify launch environments before application launch.
+
+        Implementation is optional. To change environments modify passed
+        dictionary of environments.
+
+        Args:
+            application (Application): Application that is launched.
+            env (dict): Current environemnt variables.
+        """
+
+        pass
+
+    def on_host_install(self, host, host_name, project_name):
+        """Host was installed which gives option to handle in-host logic.
+
+        It is a good option to register in-host event callbacks which are
+        specific for the module. The module is kept in memory for rest of
+        the process.
+
+        Arguments may change in future. E.g. 'host_name' should be possible
+        to receive from 'host' object.
+
+        Args:
+            host (ModuleType): Access to installed/registered host object.
+            host_name (str): Name of host.
+            project_name (str): Project name which is main part of host
+                context.
+        """
+
+        pass
 
     def cli(self, module_click_group):
         """Add commands to click group.
@@ -465,6 +516,7 @@ class OpenPypeModule:
         def mycommand():
             print("my_command")
         """
+
         pass
 
 
@@ -500,6 +552,40 @@ class ModulesManager:
 
         self.initialize_modules()
         self.connect_modules()
+
+    def __getitem__(self, module_name):
+        return self.modules_by_name[module_name]
+
+    def get(self, module_name, default=None):
+        """Access module by name.
+
+        Args:
+            module_name (str): Name of module which should be returned.
+            default (Any): Default output if module is not available.
+
+        Returns:
+            Union[OpenPypeModule, None]: Module found by name or None.
+        """
+        return self.modules_by_name.get(module_name, default)
+
+    def get_enabled_module(self, module_name, default=None):
+        """Fast access to enabled module.
+
+        If module is available but is not enabled default value is returned.
+
+        Args:
+            module_name (str): Name of module which should be returned.
+            default (Any): Default output if module is not available or is
+                not enabled.
+
+        Returns:
+            Union[OpenPypeModule, None]: Enabled module found by name or None.
+        """
+
+        module = self.get(module_name)
+        if module is not None and module.enabled:
+            return module
+        return default
 
     def initialize_modules(self):
         """Import and initialize modules."""
@@ -654,8 +740,6 @@ class ModulesManager:
                 and "actions" each containing list of paths.
         """
         # Output structure
-        from openpype_interfaces import IPluginPaths
-
         output = {
             "publish": [],
             "create": [],
@@ -702,41 +786,64 @@ class ModulesManager:
             ).format(expected_keys, " | ".join(msg_items)))
         return output
 
-    def collect_launch_hook_paths(self):
-        """Helper to collect hooks from modules inherited ILaunchHookPaths.
+    def collect_creator_plugin_paths(self, host_name):
+        """Helper to collect creator plugin paths from modules.
+
+        Args:
+            host_name (str): For which host are creators meants.
 
         Returns:
-            list: Paths to launch hook directories.
+            list: List of creator plugin paths.
         """
-        from openpype_interfaces import ILaunchHookPaths
-
-        str_type = type("")
-        expected_types = (list, tuple, set)
-
+        # Output structure
         output = []
         for module in self.get_enabled_modules():
-            # Skip module that do not inherit from `ILaunchHookPaths`
-            if not isinstance(module, ILaunchHookPaths):
+            # Skip module that do not inherit from `IPluginPaths`
+            if not isinstance(module, IPluginPaths):
                 continue
 
-            hook_paths = module.get_launch_hook_paths()
-            if not hook_paths:
-                continue
-
-            # Convert string to list
-            if isinstance(hook_paths, str_type):
-                hook_paths = [hook_paths]
-
-            # Skip invalid types
-            if not isinstance(hook_paths, expected_types):
-                self.log.warning((
-                    "Result of `get_launch_hook_paths`"
-                    " has invalid type {}. Expected {}"
-                ).format(type(hook_paths), expected_types))
-                continue
-
-            output.extend(hook_paths)
+            paths = module.get_creator_plugin_paths(host_name)
+            if paths:
+                # Convert to list if value is not list
+                if not isinstance(paths, (list, tuple, set)):
+                    paths = [paths]
+                output.extend(paths)
         return output
+
+    def get_host_module(self, host_name):
+        """Find host module by host name.
+
+        Args:
+            host_name (str): Host name for which is found host module.
+
+        Returns:
+            OpenPypeModule: Found host module by name.
+            None: There was not found module inheriting IHostAddon which has
+                host name set to passed 'host_name'.
+        """
+
+        for module in self.get_enabled_modules():
+            if (
+                isinstance(module, IHostAddon)
+                and module.host_name == host_name
+            ):
+                return module
+        return None
+
+    def get_host_names(self):
+        """List of available host names based on host modules.
+
+        Returns:
+            Iterable[str]: All available host names based on enabled modules
+                inheriting 'IHostAddon'.
+        """
+
+        host_names = {
+            module.host_name
+            for module in self.get_enabled_modules()
+            if isinstance(module, IHostAddon)
+        }
+        return host_names
 
     def print_report(self):
         """Print out report of time spent on modules initialization parts.
@@ -860,6 +967,7 @@ class TrayModulesManager(ModulesManager):
     modules_menu_order = (
         "user",
         "ftrack",
+        "kitsu",
         "muster",
         "launcher_tool",
         "avalon",
@@ -872,7 +980,7 @@ class TrayModulesManager(ModulesManager):
     )
 
     def __init__(self):
-        self.log = PypeLogger.get_logger(self.__class__.__name__)
+        self.log = Logger.get_logger(self.__class__.__name__)
 
         self.modules = []
         self.modules_by_id = {}
@@ -911,8 +1019,6 @@ class TrayModulesManager(ModulesManager):
         self.tray_menu(tray_menu)
 
     def get_enabled_tray_modules(self):
-        from openpype_interfaces import ITrayModule
-
         output = []
         for module in self.modules:
             if module.enabled and isinstance(module, ITrayModule):
@@ -988,8 +1094,6 @@ class TrayModulesManager(ModulesManager):
             self._report["Tray menu"] = report
 
     def start_modules(self):
-        from openpype_interfaces import ITrayService
-
         report = {}
         time_start = time.time()
         prev_start_time = time_start
@@ -1048,7 +1152,7 @@ def get_module_settings_defs():
 
     settings_defs = []
 
-    log = PypeLogger.get_logger("ModuleSettingsLoad")
+    log = Logger.get_logger("ModuleSettingsLoad")
 
     for raw_module in openpype_modules:
         for attr_name in dir(raw_module):

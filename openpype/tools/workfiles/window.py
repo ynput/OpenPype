@@ -1,13 +1,20 @@
 import os
 import datetime
-from Qt import QtCore, QtWidgets
+import copy
+from Qt import QtCore, QtWidgets, QtGui
 
-from openpype import style
-from openpype.lib import (
-    get_workfile_doc,
-    create_workfile_doc,
-    save_workfile_data_to_doc,
+from openpype.client import (
+    get_asset_by_name,
+    get_workfile_info,
 )
+from openpype.client.operations import (
+    OperationsSession,
+    new_workfile_info_doc,
+    prepare_workfile_info_update_data,
+)
+from openpype import style
+from openpype import resources
+from openpype.pipeline import Anatomy
 from openpype.pipeline import legacy_io
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
@@ -138,21 +145,19 @@ class SidePanelWidget(QtWidgets.QWidget):
         return self._workfile_doc, data
 
 
-class Window(QtWidgets.QMainWindow):
+class Window(QtWidgets.QWidget):
     """Work Files Window"""
     title = "Work Files"
 
     def __init__(self, parent=None):
         super(Window, self).__init__(parent=parent)
         self.setWindowTitle(self.title)
-        window_flags = QtCore.Qt.Window | QtCore.Qt.WindowCloseButtonHint
-        if not parent:
-            window_flags |= QtCore.Qt.WindowStaysOnTopHint
-        self.setWindowFlags(window_flags)
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
+        self.setWindowIcon(icon)
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.Window)
 
         # Create pages widget and set it as central widget
         pages_widget = QtWidgets.QStackedWidget(self)
-        self.setCentralWidget(pages_widget)
 
         home_page_widget = QtWidgets.QWidget(pages_widget)
         home_body_widget = QtWidgets.QWidget(home_page_widget)
@@ -186,6 +191,9 @@ class Window(QtWidgets.QMainWindow):
         # Add top margin for tasks to align it visually with files as
         # the files widget has a filter field which tasks does not.
         tasks_widget.setContentsMargins(0, 32, 0, 0)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.addWidget(pages_widget, 1)
 
         # Set context after asset widget is refreshed
         # - to do so it is necessary to wait until refresh is done
@@ -223,6 +231,53 @@ class Window(QtWidgets.QMainWindow):
         self._first_show = True
         self._context_to_set = None
 
+    def ensure_visible(
+        self, use_context=None, save=None, on_top=None
+    ):
+        if save is None:
+            save = True
+
+        self.set_save_enabled(save)
+
+        if self.isVisible():
+            use_context = False
+        elif use_context is None:
+            use_context = True
+
+        if on_top is None and self._first_show:
+            on_top = self.parent() is None
+
+        window_flags = self.windowFlags()
+        new_window_flags = window_flags
+        if on_top is True:
+            new_window_flags = window_flags | QtCore.Qt.WindowStaysOnTopHint
+        elif on_top is False:
+            new_window_flags = window_flags & ~QtCore.Qt.WindowStaysOnTopHint
+
+        if new_window_flags != window_flags:
+            # Note this is not propagated after initialization of widget in
+            #   some Qt builds
+            self.setWindowFlags(new_window_flags)
+            self.show()
+
+        elif not self.isVisible():
+            self.show()
+
+        if use_context is None or use_context is True:
+            context = {
+                "asset": legacy_io.Session["AVALON_ASSET"],
+                "task": legacy_io.Session["AVALON_TASK"]
+            }
+            self.set_context(context)
+
+        # Pull window to the front.
+        self.raise_()
+        self.activateWindow()
+
+    @property
+    def project_name(self):
+        return legacy_io.Session["AVALON_PROJECT"]
+
     def showEvent(self, event):
         super(Window, self).showEvent(event)
         if self._first_show:
@@ -250,8 +305,9 @@ class Window(QtWidgets.QMainWindow):
         workfile_doc = None
         if asset_id and task_name and filepath:
             filename = os.path.split(filepath)[1]
-            workfile_doc = get_workfile_doc(
-                asset_id, task_name, filename, legacy_io
+            project_name = legacy_io.active_project()
+            workfile_doc = get_workfile_info(
+                project_name, asset_id, task_name, filename
             )
         self.side_panel.set_context(
             asset_id, task_name, filepath, workfile_doc
@@ -270,10 +326,23 @@ class Window(QtWidgets.QMainWindow):
         workfile_doc, data = self.side_panel.get_workfile_data()
         if not workfile_doc:
             filepath = self.files_widget._get_selected_filepath()
-            self._create_workfile_doc(filepath, force=True)
-            workfile_doc = self._get_current_workfile_doc()
+            workfile_doc = self._create_workfile_doc(filepath)
 
-        save_workfile_data_to_doc(workfile_doc, data, legacy_io)
+        new_workfile_doc = copy.deepcopy(workfile_doc)
+        new_workfile_doc["data"] = data
+        update_data = prepare_workfile_info_update_data(
+            workfile_doc, new_workfile_doc
+        )
+        if not update_data:
+            return
+
+        project_name = legacy_io.active_project()
+
+        session = OperationsSession()
+        session.update_entity(
+            project_name, "workfile", workfile_doc["_id"], update_data
+        )
+        session.commit()
 
     def _get_current_workfile_doc(self, filepath=None):
         if filepath is None:
@@ -284,23 +353,37 @@ class Window(QtWidgets.QMainWindow):
             return
 
         filename = os.path.split(filepath)[1]
-        return get_workfile_doc(
-            asset_id, task_name, filename, legacy_io
+        project_name = legacy_io.active_project()
+        return get_workfile_info(
+            project_name, asset_id, task_name, filename
         )
 
-    def _create_workfile_doc(self, filepath, force=False):
-        workfile_doc = None
-        if not force:
-            workfile_doc = self._get_current_workfile_doc(filepath)
+    def _create_workfile_doc(self, filepath):
+        workfile_doc = self._get_current_workfile_doc(filepath)
+        if workfile_doc:
+            return workfile_doc
 
-        if not workfile_doc:
-            workdir, filename = os.path.split(filepath)
-            asset_id = self.assets_widget.get_selected_asset_id()
-            asset_doc = legacy_io.find_one({"_id": asset_id})
-            task_name = self.tasks_widget.get_selected_task_name()
-            create_workfile_doc(
-                asset_doc, task_name, filename, workdir, legacy_io
-            )
+        workdir, filename = os.path.split(filepath)
+
+        project_name = legacy_io.active_project()
+        asset_id = self.assets_widget.get_selected_asset_id()
+        task_name = self.tasks_widget.get_selected_task_name()
+
+        anatomy = Anatomy(project_name)
+        success, rootless_dir = anatomy.find_root_template_from_path(workdir)
+        filepath = "/".join([
+            os.path.normpath(rootless_dir).replace("\\", "/"),
+            filename
+        ])
+
+        workfile_doc = new_workfile_info_doc(
+            filename, asset_id, task_name, [filepath]
+        )
+
+        session = OperationsSession()
+        session.create_entity(project_name, "workfile", workfile_doc)
+        session.commit()
+        return workfile_doc
 
     def refresh(self):
         # Refresh asset widget
@@ -320,16 +403,16 @@ class Window(QtWidgets.QMainWindow):
         if self.assets_widget.refreshing:
             return
 
+        self._set_context_timer.stop()
         self._context_to_set, context = None, self._context_to_set
         if "asset" in context:
-            asset_doc = legacy_io.find_one(
-                {
-                    "name": context["asset"],
-                    "type": "asset"
-                },
-                {"_id": 1}
-            ) or {}
-            asset_id = asset_doc.get("_id")
+            asset_doc = get_asset_by_name(
+                self.project_name, context["asset"], fields=["_id"]
+            )
+
+            asset_id = None
+            if asset_doc:
+                asset_id = asset_doc["_id"]
             # Select the asset
             self.assets_widget.select_asset(asset_id)
             self.tasks_widget.set_asset_id(asset_id)

@@ -23,6 +23,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     hosts = ["nuke", "nukestudio"]
     families = ["render.farm", "prerender.farm"]
     optional = True
+    targets = ["local"]
 
     # presets
     priority = 50
@@ -54,8 +55,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         self._ver = re.search(r"\d+\.\d+", context.data.get("hostVersion"))
         self._deadline_user = context.data.get(
             "deadlineUser", getpass.getuser())
-        self._frame_start = int(instance.data["frameStartHandle"])
-        self._frame_end = int(instance.data["frameEndHandle"])
+        submit_frame_start = int(instance.data["frameStartHandle"])
+        submit_frame_end = int(instance.data["frameEndHandle"])
 
         # get output path
         render_path = instance.data['path']
@@ -79,15 +80,14 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                     "Using published scene for render {}".format(script_path)
                 )
 
-        # exception for slate workflow
-        if "slate" in instance.data["families"]:
-            self._frame_start -= 1
-
-        response = self.payload_submit(instance,
-                                       script_path,
-                                       render_path,
-                                       node.name()
-                                       )
+        response = self.payload_submit(
+            instance,
+            script_path,
+            render_path,
+            node.name(),
+            submit_frame_start,
+            submit_frame_end
+        )
         # Store output dir for unified publisher (filesequence)
         instance.data["deadlineSubmissionJob"] = response.json()
         instance.data["outputDir"] = os.path.dirname(
@@ -100,21 +100,26 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 script_path = baking_script["bakeScriptPath"]
                 exe_node_name = baking_script["bakeWriteNodeName"]
 
-                # exception for slate workflow
-                if "slate" in instance.data["families"]:
-                    self._frame_start += 1
-
                 resp = self.payload_submit(
                     instance,
                     script_path,
                     render_path,
                     exe_node_name,
+                    submit_frame_start,
+                    submit_frame_end,
                     response.json()
                 )
 
                 # Store output dir for unified publisher (filesequence)
                 instance.data["deadlineSubmissionJob"] = resp.json()
                 instance.data["publishJobState"] = "Suspended"
+
+                # add to list of job Id
+                if not instance.data.get("bakingSubmissionJobs"):
+                    instance.data["bakingSubmissionJobs"] = []
+
+                instance.data["bakingSubmissionJobs"].append(
+                    resp.json()["_id"])
 
         # redefinition of families
         if "render.farm" in families:
@@ -125,13 +130,16 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             families.insert(0, "prerender")
         instance.data["families"] = families
 
-    def payload_submit(self,
-                       instance,
-                       script_path,
-                       render_path,
-                       exe_node_name,
-                       responce_data=None
-                       ):
+    def payload_submit(
+        self,
+        instance,
+        script_path,
+        render_path,
+        exe_node_name,
+        start_frame,
+        end_frame,
+        responce_data=None
+    ):
         render_dir = os.path.normpath(os.path.dirname(render_path))
         script_name = os.path.basename(script_path)
         jobname = "%s - %s" % (script_name, instance.name)
@@ -191,8 +199,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
                 "Plugin": "Nuke",
                 "Frames": "{start}-{end}".format(
-                    start=self._frame_start,
-                    end=self._frame_end
+                    start=start_frame,
+                    end=end_frame
                 ),
                 "Comment": self._comment,
 
@@ -252,7 +260,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             "PYBLISHPLUGINPATH",
             "NUKE_PATH",
             "TOOL_ENV",
-            "FOUNDRY_LICENSE"
+            "FOUNDRY_LICENSE",
+            "OPENPYPE_VERSION"
         ]
         # Add mongo url if it's enabled
         if instance.context.data.get("deadlinePassMongoUrl"):
@@ -292,7 +301,13 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
         # adding expectied files to instance.data
-        self.expected_files(instance, render_path)
+        self.expected_files(
+            instance,
+            render_path,
+            start_frame,
+            end_frame
+        )
+
         self.log.debug("__ expectedFiles: `{}`".format(
             instance.data["expectedFiles"]))
         response = requests.post(self.deadline_url, json=payload, timeout=10)
@@ -338,15 +353,19 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             self.log.debug("_ path: `{}`".format(path))
         return path
 
-    def expected_files(self,
-                       instance,
-                       path):
+    def expected_files(
+        self,
+        instance,
+        path,
+        start_frame,
+        end_frame
+    ):
         """ Create expected files in instance data
         """
         if not instance.data.get("expectedFiles"):
             instance.data["expectedFiles"] = []
 
-        dir = os.path.dirname(path)
+        dirname = os.path.dirname(path)
         file = os.path.basename(path)
 
         if "#" in file:
@@ -358,9 +377,12 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             instance.data["expectedFiles"].append(path)
             return
 
-        for i in range(self._frame_start, (self._frame_end + 1)):
+        if instance.data.get("slate"):
+            start_frame -= 1
+
+        for i in range(start_frame, (end_frame + 1)):
             instance.data["expectedFiles"].append(
-                os.path.join(dir, (file % i)).replace("\\", "/"))
+                os.path.join(dirname, (file % i)).replace("\\", "/"))
 
     def get_limit_groups(self):
         """Search for limit group nodes and return group name.

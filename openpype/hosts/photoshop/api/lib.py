@@ -5,11 +5,10 @@ import traceback
 
 from Qt import QtWidgets
 
-from openpype.api import Logger
+from openpype.lib import env_value_to_bool, Logger
+from openpype.modules import ModulesManager
 from openpype.pipeline import install_host
 from openpype.tools.utils import host_tools
-from openpype.lib.remote_publish import headless_publish
-from openpype.lib import env_value_to_bool
 
 from .launch_logic import ProcessLauncher, stub
 
@@ -35,8 +34,10 @@ def main(*subprocess_args):
     launcher.start()
 
     if env_value_to_bool("HEADLESS_PUBLISH"):
+        manager = ModulesManager()
+        webpublisher_addon = manager["webpublisher"]
         launcher.execute_in_main_thread(
-            headless_publish,
+            webpublisher_addon.headless_publish,
             log,
             "ClosePS",
             os.environ.get("IS_TEST")
@@ -63,10 +64,15 @@ def maintained_selection():
 
 
 @contextlib.contextmanager
-def maintained_visibility():
-    """Maintain visibility during context."""
+def maintained_visibility(layers=None):
+    """Maintain visibility during context.
+
+    Args:
+        layers (list) of PSItem (used for caching)
+    """
     visibility = {}
-    layers = stub().get_layers()
+    if not layers:
+        layers = stub().get_layers()
     for layer in layers:
         visibility[layer.id] = layer.visible
     try:

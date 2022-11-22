@@ -1,12 +1,12 @@
+from openpype.client import (
+    get_version_by_id,
+    get_last_version_by_subset_id
+)
 from openpype.pipeline import (
     legacy_io,
     get_representation_path,
 )
 import openpype.hosts.hiero.api as phiero
-# from openpype.hosts.hiero.api import plugin, lib
-# reload(lib)
-# reload(plugin)
-# reload(phiero)
 
 
 class LoadClip(phiero.SequenceLoader):
@@ -106,13 +106,13 @@ class LoadClip(phiero.SequenceLoader):
         name = container['name']
         namespace = container['namespace']
         track_item = phiero.get_track_items(
-            track_item_name=namespace)
-        version = legacy_io.find_one({
-            "type": "version",
-            "_id": representation["parent"]
-        })
-        version_data = version.get("data", {})
-        version_name = version.get("name", None)
+            track_item_name=namespace).pop()
+
+        project_name = legacy_io.active_project()
+        version_doc = get_version_by_id(project_name, representation["parent"])
+
+        version_data = version_doc.get("data", {})
+        version_name = version_doc.get("name", None)
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
         file = get_representation_path(representation).replace("\\", "/")
@@ -147,7 +147,7 @@ class LoadClip(phiero.SequenceLoader):
         })
 
         # update color of clip regarding the version order
-        self.set_item_color(track_item, version)
+        self.set_item_color(track_item, version_doc)
 
         return phiero.update_container(track_item, data_imprint)
 
@@ -157,7 +157,7 @@ class LoadClip(phiero.SequenceLoader):
         # load clip to timeline and get main variables
         namespace = container['namespace']
         track_item = phiero.get_track_items(
-            track_item_name=namespace)
+            track_item_name=namespace).pop()
         track = track_item.parent()
 
         # remove track item from track
@@ -170,21 +170,14 @@ class LoadClip(phiero.SequenceLoader):
             cls.sequence = cls.track.parent()
 
     @classmethod
-    def set_item_color(cls, track_item, version):
-
+    def set_item_color(cls, track_item, version_doc):
+        project_name = legacy_io.active_project()
+        last_version_doc = get_last_version_by_subset_id(
+            project_name, version_doc["parent"], fields=["_id"]
+        )
         clip = track_item.source()
-        # define version name
-        version_name = version.get("name", None)
-        # get all versions in list
-        versions = legacy_io.find({
-            "type": "version",
-            "parent": version["parent"]
-        }).distinct('name')
-
-        max_version = max(versions)
-
         # set clip colour
-        if version_name == max_version:
+        if version_doc["_id"] == last_version_doc["_id"]:
             clip.binItem().setColor(cls.clip_color_last)
         else:
             clip.binItem().setColor(cls.clip_color)

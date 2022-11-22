@@ -2,44 +2,37 @@ import re
 
 import pyblish.api
 
-import openpype.api
+from openpype.client import get_subset_by_name
 from openpype.pipeline import legacy_io
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateUSDShadeModelExists(pyblish.api.InstancePlugin):
     """Validate the Instance has no current cooking errors."""
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["houdini"]
     families = ["usdShade"]
     label = "USD Shade model exists"
 
     def process(self, instance):
-
-        asset = instance.data["asset"]
+        project_name = legacy_io.active_project()
+        asset_name = instance.data["asset"]
         subset = instance.data["subset"]
 
         # Assume shading variation starts after a dot separator
         shade_subset = subset.split(".", 1)[0]
         model_subset = re.sub("^usdShade", "usdModel", shade_subset)
 
-        asset_doc = legacy_io.find_one(
-            {"name": asset, "type": "asset"},
-            {"_id": True}
-        )
+        asset_doc = instance.data.get("assetEntity")
         if not asset_doc:
-            raise RuntimeError("Asset does not exist: %s" % asset)
+            raise RuntimeError("Asset document is not filled on instance.")
 
-        subset_doc = legacy_io.find_one(
-            {
-                "name": model_subset,
-                "type": "subset",
-                "parent": asset_doc["_id"],
-            },
-            {"_id": True}
+        subset_doc = get_subset_by_name(
+            project_name, model_subset, asset_doc["_id"], fields=["_id"]
         )
         if not subset_doc:
             raise RuntimeError(
                 "USD Model subset not found: "
-                "%s (%s)" % (model_subset, asset)
+                "%s (%s)" % (model_subset, asset_name)
             )

@@ -1,4 +1,5 @@
 import openpype.hosts.photoshop.api as api
+from openpype.client import get_asset_by_name
 from openpype.pipeline import (
     AutoCreator,
     CreatedInstance,
@@ -9,6 +10,8 @@ from openpype.pipeline import (
 class PSWorkfileCreator(AutoCreator):
     identifier = "workfile"
     family = "workfile"
+
+    default_variant = "Main"
 
     def get_instance_attr_defs(self):
         return []
@@ -34,26 +37,24 @@ class PSWorkfileCreator(AutoCreator):
                 existing_instance = instance
                 break
 
-        variant = ''
         project_name = legacy_io.Session["AVALON_PROJECT"]
         asset_name = legacy_io.Session["AVALON_ASSET"]
         task_name = legacy_io.Session["AVALON_TASK"]
         host_name = legacy_io.Session["AVALON_APP"]
         if existing_instance is None:
-            asset_doc = legacy_io.find_one({
-                "type": "asset",
-                "name": asset_name
-            })
+            asset_doc = get_asset_by_name(project_name, asset_name)
             subset_name = self.get_subset_name(
-                variant, task_name, asset_doc, project_name, host_name
+                self.default_variant, task_name, asset_doc,
+                project_name, host_name
             )
             data = {
                 "asset": asset_name,
                 "task": task_name,
-                "variant": variant
+                "variant": self.default_variant
             }
             data.update(self.get_dynamic_data(
-                variant, task_name, asset_doc, project_name, host_name
+                self.default_variant, task_name, asset_doc,
+                project_name, host_name
             ))
 
             new_instance = CreatedInstance(
@@ -67,12 +68,11 @@ class PSWorkfileCreator(AutoCreator):
             existing_instance["asset"] != asset_name
             or existing_instance["task"] != task_name
         ):
-            asset_doc = legacy_io.find_one({
-                "type": "asset",
-                "name": asset_name
-            })
+            asset_doc = get_asset_by_name(project_name, asset_name)
             subset_name = self.get_subset_name(
-                variant, task_name, asset_doc, project_name, host_name
+                self.default_variant, task_name, asset_doc,
+                project_name, host_name
             )
             existing_instance["asset"] = asset_name
             existing_instance["task"] = task_name
+            existing_instance["subset"] = subset_name

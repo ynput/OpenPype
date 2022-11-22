@@ -12,6 +12,7 @@ from wsrpc_aiohttp import (
 
 from Qt import QtCore
 
+from openpype.lib import Logger
 from openpype.pipeline import legacy_io
 from openpype.tools.utils import host_tools
 from openpype.tools.adobe_webserver.app import WebServerTool
@@ -84,8 +85,6 @@ class ProcessLauncher(QtCore.QObject):
     @property
     def log(self):
         if self._log is None:
-            from openpype.api import Logger
-
             self._log = Logger.get_logger("{}-launcher".format(
                 self.route_name))
         return self._log

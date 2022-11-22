@@ -2,7 +2,7 @@
 """Package for handling pype command line arguments."""
 import os
 import sys
-
+import code
 import click
 
 # import sys
@@ -38,18 +38,6 @@ def main(ctx):
 def settings(dev):
     """Show Pype Settings UI."""
     PypeCommands().launch_settings_gui(dev)
-
-
-@main.command()
-def standalonepublisher():
-    """Show Pype Standalone publisher UI."""
-    PypeCommands().launch_standalone_publisher()
-
-
-@main.command()
-def traypublisher():
-    """Show new OpenPype Standalone publisher UI."""
-    PypeCommands().launch_traypublisher()
 
 
 @main.command()
@@ -289,6 +277,13 @@ def projectmanager():
     PypeCommands().launch_project_manager()
 
 
+@main.command(context_settings={"ignore_unknown_options": True})
+def publish_report_viewer():
+    from openpype.tools.publisher.publish_report_viewer import main
+
+    sys.exit(main())
+
+
 @main.command()
 @click.argument("output_path")
 @click.option("--project", help="Define project context")
@@ -424,3 +419,45 @@ def pack_project(project, dirpath):
 def unpack_project(zipfile, root):
     """Create a package of project with all files and database dump."""
     PypeCommands().unpack_project(zipfile, root)
+
+
+@main.command()
+def interactive():
+    """Interative (Python like) console.
+
+    Helpfull command not only for development to directly work with python
+    interpreter.
+
+    Warning:
+        Executable 'openpype_gui' on windows won't work.
+    """
+
+    from openpype.version import __version__
+
+    banner = "OpenPype {}\nPython {} on {}".format(
+        __version__, sys.version, sys.platform
+    )
+    code.interact(banner)
+
+
+@main.command()
+@click.option("--build", help="Print only build version",
+              is_flag=True, default=False)
+def version(build):
+    """Print OpenPype version."""
+
+    from openpype.version import __version__
+    from igniter.bootstrap_repos import BootstrapRepos, OpenPypeVersion
+    from pathlib import Path
+    import os
+
+    if getattr(sys, 'frozen', False):
+        local_version = BootstrapRepos.get_version(
+            Path(os.getenv("OPENPYPE_ROOT")))
+    else:
+        local_version = OpenPypeVersion.get_installed_version_str()
+
+    if build:
+        print(local_version)
+        return
+    print(f"{__version__} (booted: {local_version})")

@@ -1,17 +1,16 @@
 import os
-import glob
-import contextlib
+
 import clique
 import capture
 
+from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
-import openpype.api
 
 from maya import cmds
 import pymel.core as pm
 
 
-class ExtractPlayblast(openpype.api.Extractor):
+class ExtractPlayblast(publish.Extractor):
     """Extract viewport playblast.
 
     Takes review camera and creates review Quicktime video based on viewport
@@ -50,12 +49,38 @@ class ExtractPlayblast(openpype.api.Extractor):
                                ['override_viewport_options']
         )
         preset = lib.load_capture_preset(data=self.capture_preset)
-
+        # Grab capture presets from the project settings
+        capture_presets = self.capture_preset
+        # Set resolution variables from capture presets
+        width_preset = capture_presets["Resolution"]["width"]
+        height_preset = capture_presets["Resolution"]["height"]
+        # Set resolution variables from asset values
+        asset_data = instance.data["assetEntity"]["data"]
+        asset_width = asset_data.get("resolutionWidth")
+        asset_height = asset_data.get("resolutionHeight")
+        review_instance_width = instance.data.get("review_width")
+        review_instance_height = instance.data.get("review_height")
         preset['camera'] = camera
+
+        # Tests if project resolution is set,
+        # if it is a value other than zero, that value is
+        # used, if not then the asset resolution is
+        # used
+        if review_instance_width and review_instance_height:
+            preset['width'] = review_instance_width
+            preset['height'] = review_instance_height
+        elif width_preset and height_preset:
+            preset['width'] = width_preset
+            preset['height'] = height_preset
+        elif asset_width and asset_height:
+            preset['width'] = asset_width
+            preset['height'] = asset_height
         preset['start_frame'] = start
         preset['end_frame'] = end
-        camera_option = preset.get("camera_option", {})
-        camera_option["depthOfField"] = cmds.getAttr(
+
+        # Enforce persisting camera depth of field
+        camera_options = preset.setdefault("camera_options", {})
+        camera_options["depthOfField"] = cmds.getAttr(
             "{0}.depthOfField".format(camera))
 
         stagingdir = self.staging_dir(instance)
@@ -90,7 +115,7 @@ class ExtractPlayblast(openpype.api.Extractor):
         else:
             preset["viewport_options"] = {"imagePlane": image_plane}
 
-        with maintained_time():
+        with lib.maintained_time():
             filename = preset.get("filename", "%TEMP%")
 
             # Force viewer to False in call to capture because we have our own
@@ -103,15 +128,20 @@ class ExtractPlayblast(openpype.api.Extractor):
             # Update preset with current panel setting
             # if override_viewport_options is turned off
             if not override_viewport_options:
+                panel = cmds.getPanel(withFocus=True)
                 panel_preset = capture.parse_active_view()
                 preset.update(panel_preset)
+                cmds.setFocus(panel)
 
-            path = capture.capture(**preset)
+            path = capture.capture(log=self.log, **preset)
 
         self.log.debug("playblast path  {}".format(path))
 
         collected_files = os.listdir(stagingdir)
-        collections, remainder = clique.assemble(collected_files)
+        patterns = [clique.PATTERNS["frames"]]
+        collections, remainder = clique.assemble(collected_files,
+                                                 minimum_items=1,
+                                                 patterns=patterns)
 
         self.log.debug("filename {}".format(filename))
         frame_collection = None
@@ -134,10 +164,15 @@ class ExtractPlayblast(openpype.api.Extractor):
         # Add camera node name to representation data
         camera_node_name = pm.ls(camera)[0].getTransform().name()
 
+        collected_files = list(frame_collection)
+        # single frame file shouldn't be in list, only as a string
+        if len(collected_files) == 1:
+            collected_files = collected_files[0]
+
         representation = {
             'name': 'png',
             'ext': 'png',
-            'files': list(frame_collection),
+            'files': collected_files,
             "stagingDir": stagingdir,
             "frameStart": start,
             "frameEnd": end,
@@ -147,12 +182,3 @@ class ExtractPlayblast(openpype.api.Extractor):
             'camera_name': camera_node_name
         }
         instance.data["representations"].append(representation)
-
-
-@contextlib.contextmanager
-def maintained_time():
-    ct = cmds.currentTime(query=True)
-    try:
-        yield
-    finally:
-        cmds.currentTime(ct, edit=True)

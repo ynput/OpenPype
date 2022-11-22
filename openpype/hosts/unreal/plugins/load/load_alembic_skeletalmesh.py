@@ -20,6 +20,34 @@ class SkeletalMeshAlembicLoader(plugin.Loader):
     icon = "cube"
     color = "orange"
 
+    def get_task(self, filename, asset_dir, asset_name, replace):
+        task = unreal.AssetImportTask()
+        options = unreal.AbcImportSettings()
+        sm_settings = unreal.AbcStaticMeshSettings()
+        conversion_settings = unreal.AbcConversionSettings(
+            preset=unreal.AbcConversionPreset.CUSTOM,
+            flip_u=False, flip_v=False,
+            rotation=[0.0, 0.0, 0.0],
+            scale=[1.0, 1.0, 1.0])
+
+        task.set_editor_property('filename', filename)
+        task.set_editor_property('destination_path', asset_dir)
+        task.set_editor_property('destination_name', asset_name)
+        task.set_editor_property('replace_existing', replace)
+        task.set_editor_property('automated', True)
+        task.set_editor_property('save', True)
+
+        # set import options here
+        # Unreal 4.24 ignores the settings. It works with Unreal 4.26
+        options.set_editor_property(
+            'import_type', unreal.AlembicImportType.SKELETAL)
+
+        options.static_mesh_settings = sm_settings
+        options.conversion_settings = conversion_settings
+        task.options = options
+
+        return task
+
     def load(self, context, name, namespace, data):
         """Load and containerise representation into Content Browser.
 
@@ -50,36 +78,24 @@ class SkeletalMeshAlembicLoader(plugin.Loader):
             asset_name = "{}_{}".format(asset, name)
         else:
             asset_name = "{}".format(name)
+        version = context.get('version').get('name')
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
-            "{}/{}/{}".format(root, asset, name), suffix="")
+            f"{root}/{asset}/{name}_v{version:03d}", suffix="")
 
         container_name += suffix
 
-        unreal.EditorAssetLibrary.make_directory(asset_dir)
+        if not unreal.EditorAssetLibrary.does_directory_exist(asset_dir):
+            unreal.EditorAssetLibrary.make_directory(asset_dir)
 
-        task = unreal.AssetImportTask()
+            task = self.get_task(self.fname, asset_dir, asset_name, False)
 
-        task.set_editor_property('filename', self.fname)
-        task.set_editor_property('destination_path', asset_dir)
-        task.set_editor_property('destination_name', asset_name)
-        task.set_editor_property('replace_existing', False)
-        task.set_editor_property('automated', True)
-        task.set_editor_property('save', True)
+            unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
 
-        # set import options here
-        # Unreal 4.24 ignores the settings. It works with Unreal 4.26
-        options = unreal.AbcImportSettings()
-        options.set_editor_property(
-            'import_type', unreal.AlembicImportType.SKELETAL)
-
-        task.options = options
-        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
-
-        # Create Asset Container
-        unreal_pipeline.create_container(
-            container=container_name, path=asset_dir)
+            # Create Asset Container
+            unreal_pipeline.create_container(
+                container=container_name, path=asset_dir)
 
         data = {
             "schema": "openpype:container-2.0",
@@ -110,23 +126,8 @@ class SkeletalMeshAlembicLoader(plugin.Loader):
         source_path = get_representation_path(representation)
         destination_path = container["namespace"]
 
-        task = unreal.AssetImportTask()
+        task = self.get_task(source_path, destination_path, name, True)
 
-        task.set_editor_property('filename', source_path)
-        task.set_editor_property('destination_path', destination_path)
-        # strip suffix
-        task.set_editor_property('destination_name', name)
-        task.set_editor_property('replace_existing', True)
-        task.set_editor_property('automated', True)
-        task.set_editor_property('save', True)
-
-        # set import options here
-        # Unreal 4.24 ignores the settings. It works with Unreal 4.26
-        options = unreal.AbcImportSettings()
-        options.set_editor_property(
-            'import_type', unreal.AlembicImportType.SKELETAL)
-
-        task.options = options
         # do import fbx and replace existing data
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
         container_path = "{}/{}".format(container["namespace"],

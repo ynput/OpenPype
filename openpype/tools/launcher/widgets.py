@@ -312,11 +312,12 @@ class ActionBar(QtWidgets.QWidget):
 
         is_group = index.data(GROUP_ROLE)
         is_variant_group = index.data(VARIANT_GROUP_ROLE)
+        force_not_open_workfile = index.data(FORCE_NOT_OPEN_WORKFILE_ROLE)
         if not is_group and not is_variant_group:
             action = index.data(ACTION_ROLE)
             # Change data of application action
             if issubclass(action, ApplicationAction):
-                if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
+                if force_not_open_workfile:
                     action.data["start_last_workfile"] = False
                 else:
                     action.data.pop("start_last_workfile", None)
@@ -385,10 +386,18 @@ class ActionBar(QtWidgets.QWidget):
                 menu.addMenu(sub_menu)
 
         result = menu.exec_(QtGui.QCursor.pos())
-        if result:
-            action = actions_mapping[result]
-            self._start_animation(index)
-            self.action_clicked.emit(action)
+        if not result:
+            return
+
+        action = actions_mapping[result]
+        if issubclass(action, ApplicationAction):
+            if force_not_open_workfile:
+                action.data["start_last_workfile"] = False
+            else:
+                action.data.pop("start_last_workfile", None)
+
+        self._start_animation(index)
+        self.action_clicked.emit(action)
 
 
 class ActionHistory(QtWidgets.QPushButton):

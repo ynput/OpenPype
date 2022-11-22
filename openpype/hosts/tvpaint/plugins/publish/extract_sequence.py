@@ -5,7 +5,13 @@ import tempfile
 from PIL import Image
 
 import pyblish.api
-from openpype.hosts.tvpaint.api import lib
+
+from openpype.hosts.tvpaint.api.lib import (
+    execute_george,
+    execute_george_through_file,
+    get_layers_pre_post_behavior,
+    get_layers_exposure_frames,
+)
 from openpype.hosts.tvpaint.lib import (
     calculate_layers_extraction_data,
     get_frame_filename_template,
@@ -61,7 +67,7 @@ class ExtractSequence(pyblish.api.Extractor):
         #     different way when Start Frame is not `0`
         # NOTE It will be set back after rendering
         scene_start_frame = instance.context.data["sceneStartFrame"]
-        lib.execute_george("tv_startframe 0")
+        execute_george("tv_startframe 0")
 
         # Frame start/end may be stored as float
         frame_start = int(instance.data["frameStart"])
@@ -73,14 +79,8 @@ class ExtractSequence(pyblish.api.Extractor):
 
         scene_bg_color = instance.context.data["sceneBgColor"]
 
-        # --- Fallbacks ----------------------------------------------------
-        # This is required if validations of ranges are ignored.
-        # - all of this code won't change processing if range to render
-        #   match to range of expected output
-
         # Prepare output frames
         output_frame_start = frame_start - handle_start
-        output_frame_end = frame_end + handle_end
 
         # Change output frame start to 0 if handles cause it's negative number
         if output_frame_start < 0:
@@ -90,32 +90,8 @@ class ExtractSequence(pyblish.api.Extractor):
             ).format(frame_start, handle_start))
             output_frame_start = 0
 
-        # Check Marks range and output range
-        output_range = output_frame_end - output_frame_start
-        marks_range = mark_out - mark_in
-
-        # Lower Mark Out if mark range is bigger than output
-        # - do not rendered not used frames
-        if output_range < marks_range:
-            new_mark_out = mark_out - (marks_range - output_range)
-            self.log.warning((
-                "Lowering render range to {} frames. Changed Mark Out {} -> {}"
-            ).format(marks_range + 1, mark_out, new_mark_out))
-            # Assign new mark out to variable
-            mark_out = new_mark_out
-
-        # Lower output frame end so representation has right `frameEnd` value
-        elif output_range > marks_range:
-            new_output_frame_end = (
-                output_frame_end - (output_range - marks_range)
-            )
-            self.log.warning((
-                "Lowering representation range to {} frames."
-                " Changed frame end {} -> {}"
-            ).format(output_range + 1, mark_out, new_output_frame_end))
-            output_frame_end = new_output_frame_end
-
-        # -------------------------------------------------------------------
+        # Calculate frame end
+        output_frame_end = output_frame_start + (mark_out - mark_in)
 
         # Save to staging dir
         output_dir = instance.data.get("stagingDir")
@@ -143,7 +119,7 @@ class ExtractSequence(pyblish.api.Extractor):
         output_filepaths_by_frame_idx, thumbnail_fullpath = result
 
         # Change scene frame Start back to previous value
-        lib.execute_george("tv_startframe {}".format(scene_start_frame))
+        execute_george("tv_startframe {}".format(scene_start_frame))
 
         # Sequence of one frame
         if not output_filepaths_by_frame_idx:
@@ -271,7 +247,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
             george_script_lines.append(" ".join(orig_color_command))
 
-        lib.execute_george_through_file("\n".join(george_script_lines))
+        execute_george_through_file("\n".join(george_script_lines))
 
         first_frame_filepath = None
         output_filepaths_by_frame_idx = {}
@@ -334,8 +310,8 @@ class ExtractSequence(pyblish.api.Extractor):
             return [], None
 
         self.log.debug("Collecting pre/post behavior of individual layers.")
-        behavior_by_layer_id = lib.get_layers_pre_post_behavior(layer_ids)
-        exposure_frames_by_layer_id = lib.get_layers_exposure_frames(
+        behavior_by_layer_id = get_layers_pre_post_behavior(layer_ids)
+        exposure_frames_by_layer_id = get_layers_exposure_frames(
             layer_ids, layers
         )
         extraction_data_by_layer_id = calculate_layers_extraction_data(
@@ -440,7 +416,7 @@ class ExtractSequence(pyblish.api.Extractor):
             ",".join(frames_to_render), layer_id, layer["name"]
         ))
         # Let TVPaint render layer's image
-        lib.execute_george_through_file("\n".join(george_script_lines))
+        execute_george_through_file("\n".join(george_script_lines))
 
         # Fill frames between `frame_start_index` and `frame_end_index`
         self.log.debug("Filling frames not rendered frames.")

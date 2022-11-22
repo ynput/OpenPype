@@ -1,12 +1,14 @@
 import os
 import re
+from pprint import pformat
 import pyblish.api
-import openpype
+
+from openpype.pipeline import publish
 from openpype.hosts.nuke.api import plugin
 from openpype.hosts.nuke.api.lib import maintained_selection
 
 
-class ExtractReviewDataMov(openpype.api.Extractor):
+class ExtractReviewDataMov(publish.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
     must be run after extract_render_local.py
@@ -50,6 +52,8 @@ class ExtractReviewDataMov(openpype.api.Extractor):
         with maintained_selection():
             generated_repres = []
             for o_name, o_data in self.outputs.items():
+                self.log.debug(
+                    "o_name: {}, o_data: {}".format(o_name, pformat(o_data)))
                 f_families = o_data["filter"]["families"]
                 f_task_types = o_data["filter"]["task_types"]
                 f_subsets = o_data["filter"]["subsets"]
@@ -88,14 +92,23 @@ class ExtractReviewDataMov(openpype.api.Extractor):
                 # check if settings have more then one preset
                 # so we dont need to add outputName to representation
                 # in case there is only one preset
-                multiple_presets = bool(len(self.outputs.keys()) > 1)
+                multiple_presets = len(self.outputs.keys()) > 1
+
+                # adding bake presets to instance data for other plugins
+                if not instance.data.get("bakePresets"):
+                    instance.data["bakePresets"] = {}
+                # add preset to bakePresets
+                instance.data["bakePresets"][o_name] = o_data
 
                 # create exporter instance
                 exporter = plugin.ExporterReviewMov(
                     self, instance, o_name, o_data["extension"],
                     multiple_presets)
 
-                if "render.farm" in families:
+                if (
+                    "render.farm" in families or
+                    "prerender.farm" in families
+                ):
                     if "review" in instance.data["families"]:
                         instance.data["families"].remove("review")
 

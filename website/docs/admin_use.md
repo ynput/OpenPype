@@ -105,6 +105,10 @@ save it in secure way to your systems keyring - on Windows it is **Credential Ma
 This can be also set beforehand with environment variable `OPENPYPE_MONGO`. If set it takes precedence
 over the one set in keyring.
 
+:::tip Minimal permissions for DB user
+- `readWrite` role to `openpype` and `avalon` databases
+- `find` permission on `openpype`, `avalon` and `local`
+  
 #### Check for OpenPype version path
 When connection to MongoDB is made, OpenPype will get various settings from there - one among them is
 directory location where OpenPype versions are stored. If this directory exists OpenPype tries to

@@ -13,17 +13,18 @@ import tempfile
 import math
 
 import pyblish.api
+
+from openpype.client import (
+    get_asset_by_name,
+    get_last_version_by_subset_name
+)
 from openpype.lib import (
     prepare_template_data,
-    get_asset,
     get_ffprobe_streams,
     convert_ffprobe_fps_value,
 )
-from openpype.lib.plugin_tools import (
-    parse_json,
-    get_subset_name_with_asset_doc
-)
-from openpype.pipeline import legacy_io
+from openpype.pipeline.create import get_subset_name
+from openpype_modules.webpublisher.lib import parse_json
 
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
@@ -36,6 +37,15 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
 
     This is not applicable for 'studio' processing where host application is
     called to process uploaded workfile and render frames itself.
+
+    For each task configure what properties should resulting instance have
+    based on uploaded files:
+    - uploading sequence of 'png' >> create instance of 'render' family,
+    by adding 'review' to 'Families' and 'Create review' to Tags it will
+    produce review.
+
+    There might be difference between single(>>image) and sequence(>>render)
+    uploaded files.
     """
     # must be really early, context values are only in json file
     order = pyblish.api.CollectorOrder - 0.490
@@ -45,6 +55,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
 
     # from Settings
     task_type_to_family = []
+    sync_next_version = False  # find max version to be published, use for all
 
     def process(self, context):
         batch_dir = context.data["batchDir"]
@@ -56,36 +67,52 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
 
         self.log.info("task_sub:: {}".format(task_subfolders))
 
+        project_name = context.data["project_name"]
         asset_name = context.data["asset"]
-        asset_doc = get_asset()
+        asset_doc = get_asset_by_name(project_name, asset_name)
         task_name = context.data["task"]
         task_type = context.data["taskType"]
         project_name = context.data["project_name"]
         variant = context.data["variant"]
+
+        next_versions = []
+        instances = []
         for task_dir in task_subfolders:
             task_data = parse_json(os.path.join(task_dir,
                                                 "manifest.json"))
             self.log.info("task_data:: {}".format(task_data))
 
             is_sequence = len(task_data["files"]) > 1
+            first_file = task_data["files"][0]
 
-            _, extension = os.path.splitext(task_data["files"][0])
+            _, extension = os.path.splitext(first_file)
+            extension = extension.lower()
             family, families, tags = self._get_family(
                 self.task_type_to_family,
                 task_type,
                 is_sequence,
                 extension.replace(".", ''))
 
-            subset_name = get_subset_name_with_asset_doc(
-                family, variant, task_name, asset_doc,
-                project_name=project_name, host_name="webpublisher"
+            subset_name = get_subset_name(
+                family,
+                variant,
+                task_name,
+                asset_doc,
+                project_name=project_name,
+                host_name="webpublisher",
+                project_settings=context.data["project_settings"]
             )
-            version = self._get_last_version(asset_name, subset_name) + 1
+            version = self._get_next_version(
+                project_name, asset_doc, subset_name
+            )
+            next_versions.append(version)
 
             instance = context.create_instance(subset_name)
             instance.data["asset"] = asset_name
             instance.data["subset"] = subset_name
+            # set configurable result family
             instance.data["family"] = family
+            # set configurable additional families
             instance.data["families"] = families
             instance.data["version"] = version
             instance.data["stagingDir"] = tempfile.mkdtemp()
@@ -124,11 +151,24 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                         self.log.warning("Unable to count frames "
                                          "duration {}".format(no_of_frames))
 
-            # raise ValueError("STOP")
             instance.data["handleStart"] = asset_doc["data"]["handleStart"]
             instance.data["handleEnd"] = asset_doc["data"]["handleEnd"]
 
+            if "review" in tags:
+                first_file_path = os.path.join(task_dir, first_file)
+                instance.data["thumbnailSource"] = first_file_path
+
+            instances.append(instance)
             self.log.info("instance.data:: {}".format(instance.data))
+
+        if not self.sync_next_version:
+            return
+
+        # overwrite specific version with same version for all
+        max_next_version = max(next_versions)
+        for inst in instances:
+            inst.data["version"] = max_next_version
+            self.log.debug("overwritten version:: {}".format(max_next_version))
 
     def _get_subset_name(self, family, subset_template, task_name, variant):
         fill_pairs = {
@@ -141,6 +181,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
 
     def _get_single_repre(self, task_dir, files, tags):
         _, ext = os.path.splitext(files[0])
+        ext = ext.lower()
         repre_data = {
             "name": ext[1:],
             "ext": ext[1:],
@@ -160,6 +201,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         frame_start = list(collections[0].indexes)[0]
         frame_end = list(collections[0].indexes)[-1]
         ext = collections[0].tail
+        ext = ext.lower()
         repre_data = {
             "frameStart": frame_start,
             "frameEnd": frame_end,
@@ -167,7 +209,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             "ext": ext[1:],
             "files": files,
             "stagingDir": task_dir,
-            "tags": tags
+            "tags": tags  # configurable tags from Settings
         }
         self.log.info("sequences repre_data.data:: {}".format(repre_data))
         return [repre_data]
@@ -205,8 +247,17 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         for config in families_config:
             if is_sequence != config["is_sequence"]:
                 continue
-            if (extension in config["extensions"] or
-                    '' in config["extensions"]):  # all extensions setting
+            extensions = config.get("extensions") or []
+            lower_extensions = set()
+            for ext in extensions:
+                if ext:
+                    ext = ext.lower()
+                    if ext.startswith("."):
+                        ext = ext[1:]
+                    lower_extensions.add(ext)
+
+            # all extensions setting
+            if not lower_extensions or extension in lower_extensions:
                 found_family = config["result_family"]
                 break
 
@@ -219,55 +270,19 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 config["families"],
                 config["tags"])
 
-    def _get_last_version(self, asset_name, subset_name):
-        """Returns version number or 0 for 'asset' and 'subset'"""
-        query = [
-            {
-                "$match": {"type": "asset", "name": asset_name}
-            },
-            {
-                "$lookup":
-                    {
-                        "from": os.environ["AVALON_PROJECT"],
-                        "localField": "_id",
-                        "foreignField": "parent",
-                        "as": "subsets"
-                    }
-            },
-            {
-                "$unwind": "$subsets"
-            },
-            {
-                "$match": {"subsets.type": "subset",
-                           "subsets.name": subset_name}},
-            {
-                "$lookup":
-                    {
-                        "from": os.environ["AVALON_PROJECT"],
-                        "localField": "subsets._id",
-                        "foreignField": "parent",
-                        "as": "versions"
-                    }
-            },
-            {
-                "$unwind": "$versions"
-            },
-            {
-                "$group": {
-                    "_id": {
-                        "asset_name": "$name",
-                        "subset_name": "$subsets.name"
-                    },
-                    'version': {'$max': "$versions.name"}
-                }
-            }
-        ]
-        version = list(legacy_io.aggregate(query))
+    def _get_next_version(self, project_name, asset_doc, subset_name):
+        """Returns version number or 1 for 'asset' and 'subset'"""
 
-        if version:
-            return version[0].get("version") or 0
-        else:
-            return 0
+        version_doc = get_last_version_by_subset_name(
+            project_name,
+            subset_name,
+            asset_doc["_id"],
+            fields=["name"]
+        )
+        version = 1
+        if version_doc:
+            version += int(version_doc["name"])
+        return version
 
     def _get_number_of_frames(self, file_url):
         """Return duration in frames"""

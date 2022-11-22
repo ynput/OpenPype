@@ -2,8 +2,9 @@ import json
 import copy
 import pyblish.api
 
-from openpype.lib import get_subset_name_with_asset_doc
+from openpype.client import get_asset_by_name
 from openpype.pipeline import legacy_io
+from openpype.pipeline.create import get_subset_name
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -92,29 +93,28 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if family == "review":
                 # Change subset name of review instance
 
+                # Project name from workfile context
+                project_name = context.data["workfile_context"]["project"]
+
                 # Collect asset doc to get asset id
                 # - not sure if it's good idea to require asset id in
                 #   get_subset_name?
                 asset_name = context.data["workfile_context"]["asset"]
-                asset_doc = legacy_io.find_one({
-                    "type": "asset",
-                    "name": asset_name
-                })
+                asset_doc = get_asset_by_name(project_name, asset_name)
 
-                # Project name from workfile context
-                project_name = context.data["workfile_context"]["project"]
                 # Host name from environment variable
                 host_name = context.data["hostName"]
                 # Use empty variant value
                 variant = ""
                 task_name = legacy_io.Session["AVALON_TASK"]
-                new_subset_name = get_subset_name_with_asset_doc(
+                new_subset_name = get_subset_name(
                     family,
                     variant,
                     task_name,
                     asset_doc,
                     project_name,
-                    host_name
+                    host_name,
+                    project_settings=context.data["project_settings"]
                 )
                 instance_data["subset"] = new_subset_name
 

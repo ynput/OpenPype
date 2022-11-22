@@ -1,32 +1,76 @@
 """
 Host specific functions where host api is connected
 """
+
+from copy import deepcopy
 import os
 import re
 import sys
 import platform
+import functools
+import warnings
+import json
 import ast
+import secrets
 import shutil
 import hiero
 
-from Qt import QtWidgets
-from bson.objectid import ObjectId
+from Qt import QtWidgets, QtCore, QtXml
 
-from openpype.pipeline import legacy_io
-from openpype.api import (Logger, Anatomy, get_anatomy_settings)
+from openpype.client import get_project
+from openpype.settings import get_project_settings
+from openpype.pipeline import legacy_io, Anatomy
+from openpype.pipeline.load import filter_containers
+from openpype.lib import Logger
 from . import tags
 
-try:
-    from PySide.QtCore import QFile, QTextStream
-    from PySide.QtXml import QDomDocument
-except ImportError:
-    from PySide2.QtCore import QFile, QTextStream
-    from PySide2.QtXml import QDomDocument
 
-# from opentimelineio import opentime
-# from pprint import pformat
+class DeprecatedWarning(DeprecationWarning):
+    pass
 
-log = Logger().get_logger(__name__)
+
+def deprecated(new_destination):
+    """Mark functions as deprecated.
+
+    It will result in a warning being emitted when the function is used.
+    """
+
+    func = None
+    if callable(new_destination):
+        func = new_destination
+        new_destination = None
+
+    def _decorator(decorated_func):
+        if new_destination is None:
+            warning_message = (
+                " Please check content of deprecated function to figure out"
+                " possible replacement."
+            )
+        else:
+            warning_message = " Please replace your usage with '{}'.".format(
+                new_destination
+            )
+
+        @functools.wraps(decorated_func)
+        def wrapper(*args, **kwargs):
+            warnings.simplefilter("always", DeprecatedWarning)
+            warnings.warn(
+                (
+                    "Call to deprecated function '{}'"
+                    "\nFunction was moved or removed.{}"
+                ).format(decorated_func.__name__, warning_message),
+                category=DeprecatedWarning,
+                stacklevel=4
+            )
+            return decorated_func(*args, **kwargs)
+        return wrapper
+
+    if func is None:
+        return _decorator
+    return _decorator(func)
+
+
+log = Logger.get_logger(__name__)
 
 self = sys.modules[__name__]
 self._has_been_setup = False
@@ -89,11 +133,17 @@ def get_current_sequence(name=None, new=False):
         if not sequence:
             # if nothing found create new with input name
             sequence = get_current_sequence(name, True)
-    elif not name and not new:
+    else:
         # if name is none and new is False then return current open sequence
         sequence = hiero.ui.activeSequence()
 
     return sequence
+
+
+def get_timeline_selection():
+    active_sequence = hiero.ui.activeSequence()
+    timeline_editor = hiero.ui.getTimelineEditor(active_sequence)
+    return list(timeline_editor.selection())
 
 
 def get_current_track(sequence, name, audio=False):
@@ -118,7 +168,7 @@ def get_current_track(sequence, name, audio=False):
     # get track by name
     track = None
     for _track in tracks:
-        if _track.name() in name:
+        if _track.name() == name:
             track = _track
 
     if not track:
@@ -126,13 +176,14 @@ def get_current_track(sequence, name, audio=False):
             track = hiero.core.VideoTrack(name)
         else:
             track = hiero.core.AudioTrack(name)
+
         sequence.addTrack(track)
 
     return track
 
 
 def get_track_items(
-        selected=False,
+        selection=False,
         sequence_name=None,
         track_item_name=None,
         track_name=None,
@@ -143,7 +194,7 @@ def get_track_items(
     """Get all available current timeline track items.
 
     Attribute:
-        selected (bool)[optional]: return only selected items on timeline
+        selection (list)[optional]: list of selected track items
         sequence_name (str)[optional]: return only clips from input sequence
         track_item_name (str)[optional]: return only item with input name
         track_name (str)[optional]: return only items from track name
@@ -155,32 +206,34 @@ def get_track_items(
     Return:
         list or hiero.core.TrackItem: list of track items or single track item
     """
-    return_list = list()
-    track_items = list()
+    track_type = track_type or "video"
+    selection = selection or []
+    return_list = []
 
     # get selected track items or all in active sequence
-    if selected:
+    if selection:
         try:
-            selected_items = list(hiero.selection)
-            for item in selected_items:
-                if track_name and track_name in item.parent().name():
-                    # filter only items fitting input track name
-                    track_items.append(item)
-                elif not track_name:
-                    # or add all if no track_name was defined
-                    track_items.append(item)
+            for track_item in selection:
+                log.info("___ track_item: {}".format(track_item))
+                # make sure only trackitems are selected
+                if not isinstance(track_item, hiero.core.TrackItem):
+                    continue
+
+                if _validate_all_atrributes(
+                    track_item,
+                    track_item_name,
+                    track_name,
+                    track_type,
+                    check_enabled,
+                    check_tagged
+                ):
+                    log.info("___ valid trackitem: {}".format(track_item))
+                    return_list.append(track_item)
         except AttributeError:
             pass
 
-    # check if any collected track items are
-    # `core.Hiero.Python.TrackItem` instance
-    if track_items:
-        any_track_item = track_items[0]
-        if not isinstance(any_track_item, hiero.core.TrackItem):
-            selected_items = []
-
     # collect all available active sequence track items
-    if not track_items:
+    if not return_list:
         sequence = get_current_sequence(name=sequence_name)
         # get all available tracks from sequence
         tracks = list(sequence.audioTracks()) + list(sequence.videoTracks())
@@ -191,45 +244,221 @@ def get_track_items(
             if check_enabled and not track.isEnabled():
                 continue
             # and all items in track
-            for item in track.items():
-                if check_tagged and not item.tags():
+            for track_item in track.items():
+                # make sure no subtrackitem is also track items
+                if not isinstance(track_item, hiero.core.TrackItem):
                     continue
 
-                # check if track item is enabled
-                if check_enabled:
-                    if not item.isEnabled():
-                        continue
-                if track_item_name:
-                    if track_item_name in item.name():
-                        return item
-                # make sure only track items with correct track names are added
-                if track_name and track_name in track.name():
-                    # filter out only defined track_name items
-                    track_items.append(item)
-                elif not track_name:
-                    # or add all if no track_name is defined
-                    track_items.append(item)
+                if _validate_all_atrributes(
+                    track_item,
+                    track_item_name,
+                    track_name,
+                    track_type,
+                    check_enabled,
+                    check_tagged
+                ):
+                    return_list.append(track_item)
 
-    # filter out only track items with defined track_type
-    for track_item in track_items:
-        if track_type and track_type == "video" and isinstance(
+    return return_list
+
+
+def _validate_all_atrributes(
+    track_item,
+    track_item_name,
+    track_name,
+    track_type,
+    check_enabled,
+    check_tagged
+):
+    def _validate_correct_name_track_item():
+        if track_item_name and track_item_name in track_item.name():
+            return True
+        elif not track_item_name:
+            return True
+
+    def _validate_tagged_track_item():
+        if check_tagged and track_item.tags():
+            return True
+        elif not check_tagged:
+            return True
+
+    def _validate_enabled_track_item():
+        if check_enabled and track_item.isEnabled():
+            return True
+        elif not check_enabled:
+            return True
+
+    def _validate_parent_track_item():
+        if track_name and track_name in track_item.parent().name():
+            # filter only items fitting input track name
+            return True
+        elif not track_name:
+            # or add all if no track_name was defined
+            return True
+
+    def _validate_type_track_item():
+        if track_type == "video" and isinstance(
                 track_item.parent(), hiero.core.VideoTrack):
             # only video track items are allowed
-            return_list.append(track_item)
-        elif track_type and track_type == "audio" and isinstance(
+            return True
+        elif track_type == "audio" and isinstance(
                 track_item.parent(), hiero.core.AudioTrack):
             # only audio track items are allowed
-            return_list.append(track_item)
-        elif not track_type:
-            # add all if no track_type is defined
-            return_list.append(track_item)
+            return True
 
-    # return output list but make sure all items are TrackItems
-    return [_i for _i in return_list
-            if type(_i) == hiero.core.TrackItem]
+    # check if track item is enabled
+    return all([
+        _validate_enabled_track_item(),
+        _validate_type_track_item(),
+        _validate_tagged_track_item(),
+        _validate_parent_track_item(),
+        _validate_correct_name_track_item()
+    ])
 
 
+def get_track_item_tags(track_item):
+    """
+    Get track item tags excluded openpype tag
+
+    Attributes:
+        trackItem (hiero.core.TrackItem): hiero object
+
+    Returns:
+        hiero.core.Tag: hierarchy, orig clip attributes
+    """
+    returning_tag_data = []
+    # get all tags from track item
+    _tags = track_item.tags()
+    if not _tags:
+        return []
+
+    # collect all tags which are not openpype tag
+    returning_tag_data.extend(
+        tag for tag in _tags
+        if tag.name() != self.pype_tag_name
+    )
+
+    return returning_tag_data
+
+
+def _get_tag_unique_hash():
+    # sourcery skip: avoid-builtin-shadow
+    return secrets.token_hex(nbytes=4)
+
+
+def set_track_openpype_tag(track, data=None):
+    """
+    Set openpype track tag to input track object.
+
+    Attributes:
+        track (hiero.core.VideoTrack): hiero object
+
+    Returns:
+        hiero.core.Tag
+    """
+    data = data or {}
+
+    # basic Tag's attribute
+    tag_data = {
+        "editable": "0",
+        "note": "OpenPype data container",
+        "icon": "openpype_icon.png",
+        "metadata": dict(data.items())
+    }
+    # get available pype tag if any
+    _tag = get_track_openpype_tag(track)
+
+    if _tag:
+        # it not tag then create one
+        tag = tags.update_tag(_tag, tag_data)
+    else:
+        # if pype tag available then update with input data
+        tag = tags.create_tag(
+            "{}_{}".format(
+                self.pype_tag_name,
+                _get_tag_unique_hash()
+            ),
+            tag_data
+        )
+        # add it to the input track item
+        track.addTag(tag)
+
+    return tag
+
+
+def get_track_openpype_tag(track):
+    """
+    Get pype track item tag created by creator or loader plugin.
+
+    Attributes:
+        trackItem (hiero.core.TrackItem): hiero object
+
+    Returns:
+        hiero.core.Tag: hierarchy, orig clip attributes
+    """
+    # get all tags from track item
+    _tags = track.tags()
+    if not _tags:
+        return None
+    for tag in _tags:
+        # return only correct tag defined by global name
+        if self.pype_tag_name in tag.name():
+            return tag
+
+
+def get_track_openpype_data(track, container_name=None):
+    """
+    Get track's openpype tag data.
+
+    Attributes:
+        trackItem (hiero.core.VideoTrack): hiero object
+
+    Returns:
+        dict: data found on pype tag
+    """
+    return_data = {}
+    # get pype data tag from track item
+    tag = get_track_openpype_tag(track)
+
+    if not tag:
+        return None
+
+    # get tag metadata attribute
+    tag_data = deepcopy(dict(tag.metadata()))
+
+    for obj_name, obj_data in tag_data.items():
+        obj_name = obj_name.replace("tag.", "")
+
+        if obj_name in ["applieswhole", "note", "label"]:
+            continue
+        return_data[obj_name] = json.loads(obj_data)
+
+    return (
+        return_data[container_name]
+        if container_name
+        else return_data
+    )
+
+
+@deprecated("openpype.hosts.hiero.api.lib.get_trackitem_openpype_tag")
 def get_track_item_pype_tag(track_item):
+    # backward compatibility alias
+    return get_trackitem_openpype_tag(track_item)
+
+
+@deprecated("openpype.hosts.hiero.api.lib.set_trackitem_openpype_tag")
+def set_track_item_pype_tag(track_item, data=None):
+    # backward compatibility alias
+    return set_trackitem_openpype_tag(track_item, data)
+
+
+@deprecated("openpype.hosts.hiero.api.lib.get_trackitem_openpype_data")
+def get_track_item_pype_data(track_item):
+    # backward compatibility alias
+    return get_trackitem_openpype_data(track_item)
+
+
+def get_trackitem_openpype_tag(track_item):
     """
     Get pype track item tag created by creator or loader plugin.
 
@@ -245,16 +474,16 @@ def get_track_item_pype_tag(track_item):
         return None
     for tag in _tags:
         # return only correct tag defined by global name
-        if tag.name() in self.pype_tag_name:
+        if self.pype_tag_name in tag.name():
             return tag
 
 
-def set_track_item_pype_tag(track_item, data=None):
+def set_trackitem_openpype_tag(track_item, data=None):
     """
-    Set pype track item tag to input track_item.
+    Set openpype track tag to input track object.
 
     Attributes:
-        trackItem (hiero.core.TrackItem): hiero object
+        track (hiero.core.VideoTrack): hiero object
 
     Returns:
         hiero.core.Tag
@@ -266,24 +495,29 @@ def set_track_item_pype_tag(track_item, data=None):
         "editable": "0",
         "note": "OpenPype data container",
         "icon": "openpype_icon.png",
-        "metadata": {k: v for k, v in data.items()}
+        "metadata": dict(data.items())
     }
     # get available pype tag if any
-    _tag = get_track_item_pype_tag(track_item)
-
+    _tag = get_trackitem_openpype_tag(track_item)
     if _tag:
         # it not tag then create one
         tag = tags.update_tag(_tag, tag_data)
     else:
         # if pype tag available then update with input data
-        tag = tags.create_tag(self.pype_tag_name, tag_data)
+        tag = tags.create_tag(
+            "{}_{}".format(
+                self.pype_tag_name,
+                _get_tag_unique_hash()
+            ),
+            tag_data
+        )
         # add it to the input track item
         track_item.addTag(tag)
 
     return tag
 
 
-def get_track_item_pype_data(track_item):
+def get_trackitem_openpype_data(track_item):
     """
     Get track item's pype tag data.
 
@@ -295,15 +529,15 @@ def get_track_item_pype_data(track_item):
     """
     data = {}
     # get pype data tag from track item
-    tag = get_track_item_pype_tag(track_item)
+    tag = get_trackitem_openpype_tag(track_item)
 
     if not tag:
         return None
 
     # get tag metadata attribute
-    tag_data = tag.metadata()
+    tag_data = deepcopy(dict(tag.metadata()))
     # convert tag metadata to normal keys names and values to correct types
-    for k, v in dict(tag_data).items():
+    for k, v in tag_data.items():
         key = k.replace("tag.", "")
 
         try:
@@ -324,7 +558,7 @@ def get_track_item_pype_data(track_item):
             log.warning(msg)
             value = v
 
-        data.update({key: value})
+        data[key] = value
 
     return data
 
@@ -348,7 +582,7 @@ def imprint(track_item, data=None):
     """
     data = data or {}
 
-    tag = set_track_item_pype_tag(track_item, data)
+    tag = set_trackitem_openpype_tag(track_item, data)
 
     # add publish attribute
     set_publish_attribute(tag, True)
@@ -407,7 +641,7 @@ def sync_avalon_data_to_workfile():
         project.setProjectRoot(active_project_root)
 
     # get project data from avalon db
-    project_doc = legacy_io.find_one({"type": "project"})
+    project_doc = get_project(project_name)
     project_data = project_doc["data"]
 
     log.debug("project_data: {}".format(project_data))
@@ -497,7 +731,7 @@ class PyblishSubmission(hiero.exporters.FnSubmission.Submission):
         from . import publish
         # Add submission to Hiero module for retrieval in plugins.
         hiero.submission = self
-        publish()
+        publish(hiero.ui.mainWindow())
 
 
 def add_submission():
@@ -527,7 +761,7 @@ class PublishAction(QtWidgets.QAction):
         # from getting picked up when not using the "Export" dialog.
         if hasattr(hiero, "submission"):
             del hiero.submission
-        publish()
+        publish(hiero.ui.mainWindow())
 
     def eventHandler(self, event):
         # Add the Menu to the right-click menu
@@ -760,22 +994,22 @@ def set_selected_track_items(track_items_list, sequence=None):
 
 
 def _read_doc_from_path(path):
-    # reading QDomDocument from HROX path
-    hrox_file = QFile(path)
-    if not hrox_file.open(QFile.ReadOnly):
+    # reading QtXml.QDomDocument from HROX path
+    hrox_file = QtCore.QFile(path)
+    if not hrox_file.open(QtCore.QFile.ReadOnly):
         raise RuntimeError("Failed to open file for reading")
-    doc = QDomDocument()
+    doc = QtXml.QDomDocument()
     doc.setContent(hrox_file)
     hrox_file.close()
     return doc
 
 
 def _write_doc_to_path(doc, path):
-    # write QDomDocument to path as HROX
-    hrox_file = QFile(path)
-    if not hrox_file.open(QFile.WriteOnly):
+    # write QtXml.QDomDocument to path as HROX
+    hrox_file = QtCore.QFile(path)
+    if not hrox_file.open(QtCore.QFile.WriteOnly):
         raise RuntimeError("Failed to open file for writing")
-    stream = QTextStream(hrox_file)
+    stream = QtCore.QTextStream(hrox_file)
     doc.save(stream, 1)
     hrox_file.close()
 
@@ -806,8 +1040,7 @@ def apply_colorspace_project():
     project.close()
 
     # get presets for hiero
-    imageio = get_anatomy_settings(
-        project_name)["imageio"].get("hiero", None)
+    imageio = get_project_settings(project_name)["hiero"]["imageio"]
     presets = imageio.get("workfile")
 
     # save the workfile as subversion "comment:_colorspaceChange"
@@ -860,8 +1093,7 @@ def apply_colorspace_clips():
     clips = project.clips()
 
     # get presets for hiero
-    imageio = get_anatomy_settings(
-        project_name)["imageio"].get("hiero", None)
+    imageio = get_project_settings(project_name)["hiero"]["imageio"]
     from pprint import pprint
 
     presets = imageio.get("regexInputs", {}).get("inputs", {})
@@ -893,32 +1125,33 @@ def apply_colorspace_clips():
 
 
 def is_overlapping(ti_test, ti_original, strict=False):
-    covering_exp = bool(
+    covering_exp = (
         (ti_test.timelineIn() <= ti_original.timelineIn())
         and (ti_test.timelineOut() >= ti_original.timelineOut())
     )
-    inside_exp = bool(
+
+    if strict:
+        return covering_exp
+
+    inside_exp = (
         (ti_test.timelineIn() >= ti_original.timelineIn())
         and (ti_test.timelineOut() <= ti_original.timelineOut())
     )
-    overlaying_right_exp = bool(
+    overlaying_right_exp = (
         (ti_test.timelineIn() < ti_original.timelineOut())
         and (ti_test.timelineOut() >= ti_original.timelineOut())
     )
-    overlaying_left_exp = bool(
+    overlaying_left_exp = (
         (ti_test.timelineOut() > ti_original.timelineIn())
         and (ti_test.timelineIn() <= ti_original.timelineIn())
     )
 
-    if not strict:
-        return any((
-            covering_exp,
-            inside_exp,
-            overlaying_right_exp,
-            overlaying_left_exp
-        ))
-    else:
-        return covering_exp
+    return any((
+        covering_exp,
+        inside_exp,
+        overlaying_right_exp,
+        overlaying_left_exp
+    ))
 
 
 def get_sequence_pattern_and_padding(file):
@@ -936,17 +1169,13 @@ def get_sequence_pattern_and_padding(file):
     """
     foundall = re.findall(
         r"(#+)|(%\d+d)|(?<=[^a-zA-Z0-9])(\d+)(?=\.\w+$)", file)
-    if foundall:
-        found = sorted(list(set(foundall[0])))[-1]
-
-        if "%" in found:
-            padding = int(re.findall(r"\d+", found)[-1])
-        else:
-            padding = len(found)
-
-        return found, padding
-    else:
+    if not foundall:
         return None, None
+    found = sorted(list(set(foundall[0])))[-1]
+
+    padding = int(
+        re.findall(r"\d+", found)[-1]) if "%" in found else len(found)
+    return found, padding
 
 
 def sync_clip_name_to_data_asset(track_items_list):
@@ -963,7 +1192,7 @@ def sync_clip_name_to_data_asset(track_items_list):
 
         # get name and data
         ti_name = track_item.name()
-        data = get_track_item_pype_data(track_item)
+        data = get_trackitem_openpype_data(track_item)
 
         # ignore if no data on the clip or not publish instance
         if not data:
@@ -975,14 +1204,18 @@ def sync_clip_name_to_data_asset(track_items_list):
         if data["asset"] != ti_name:
             data["asset"] = ti_name
             # remove the original tag
-            tag = get_track_item_pype_tag(track_item)
+            tag = get_trackitem_openpype_tag(track_item)
             track_item.removeTag(tag)
             # create new tag with updated data
-            set_track_item_pype_tag(track_item, data)
+            set_trackitem_openpype_tag(track_item, data)
             print("asset was changed in clip: {}".format(ti_name))
 
 
-def check_inventory_versions():
+def set_track_color(track_item, color):
+    track_item.source().binItem().setColor(color)
+
+
+def check_inventory_versions(track_items=None):
     """
     Actual version color idetifier of Loaded containers
 
@@ -993,40 +1226,29 @@ def check_inventory_versions():
     """
     from . import parse_container
 
+    track_items = track_items or get_track_items()
     # presets
     clip_color_last = "green"
     clip_color = "red"
 
-    # get all track items from current timeline
-    for track_item in get_track_items():
+    containers = []
+    # Find all containers and collect it's node and representation ids
+    for track_item in track_items:
         container = parse_container(track_item)
-
         if container:
-            # get representation from io
-            representation = legacy_io.find_one({
-                "type": "representation",
-                "_id": ObjectId(container["representation"])
-            })
+            containers.append(container)
 
-            # Get start frame from version data
-            version = legacy_io.find_one({
-                "type": "version",
-                "_id": representation["parent"]
-            })
+    # Skip if nothing was found
+    if not containers:
+        return
 
-            # get all versions in list
-            versions = legacy_io.find({
-                "type": "version",
-                "parent": version["parent"]
-            }).distinct('name')
+    project_name = legacy_io.active_project()
+    filter_result = filter_containers(containers, project_name)
+    for container in filter_result.latest:
+        set_track_color(container["_item"], clip_color)
 
-            max_version = max(versions)
-
-            # set clip colour
-            if version.get("name") == max_version:
-                track_item.source().binItem().setColor(clip_color_last)
-            else:
-                track_item.source().binItem().setColor(clip_color)
+    for container in filter_result.outdated:
+        set_track_color(container["_item"], clip_color_last)
 
 
 def selection_changed_timeline(event):
@@ -1038,29 +1260,31 @@ def selection_changed_timeline(event):
     timeline_editor = event.sender
     selection = timeline_editor.selection()
 
-    selection = [ti for ti in selection
-                 if isinstance(ti, hiero.core.TrackItem)]
+    track_items = get_track_items(
+        selection=selection,
+        track_type="video",
+        check_enabled=True,
+        check_locked=True,
+        check_tagged=True
+    )
 
     # run checking function
-    sync_clip_name_to_data_asset(selection)
-
-    # also mark old versions of loaded containers
-    check_inventory_versions()
+    sync_clip_name_to_data_asset(track_items)
 
 
 def before_project_save(event):
     track_items = get_track_items(
-        selected=False,
         track_type="video",
         check_enabled=True,
         check_locked=True,
-        check_tagged=True)
+        check_tagged=True
+    )
 
     # run checking function
     sync_clip_name_to_data_asset(track_items)
 
     # also mark old versions of loaded containers
-    check_inventory_versions()
+    check_inventory_versions(track_items)
 
 
 def get_main_window():

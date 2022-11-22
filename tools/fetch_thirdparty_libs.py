@@ -109,13 +109,20 @@ except AttributeError:
 
 for k, v in thirdparty.items():
     _print(f"processing {k}")
-    destination_path = openpype_root / "vendor" / "bin" / k / platform_name
-    url = v.get(platform_name).get("url")
+    destination_path = openpype_root / "vendor" / "bin" / k
+
 
     if not v.get(platform_name):
         _print(("missing definition for current "
-                f"platform [ {platform_name} ]"), 1)
-        sys.exit(1)
+                f"platform [ {platform_name} ]"), 2)
+        _print("trying to get universal url for all platforms")
+        url = v.get("url")
+        if not url:
+            _print("cannot get url", 1)
+            sys.exit(1)
+    else:
+        url = v.get(platform_name).get("url")
+        destination_path = destination_path / platform_name
 
     parsed_url = urlparse(url)
 
@@ -147,7 +154,13 @@ for k, v in thirdparty.items():
         # get file with checksum
         _print("Calculating sha256 ...", 2)
         calc_checksum = sha256_sum(temp_file)
-        if v.get(platform_name).get("hash") != calc_checksum:
+
+        if v.get(platform_name):
+            item_hash = v.get(platform_name).get("hash")
+        else:
+            item_hash = v.get("hash")
+
+        if item_hash != calc_checksum:
             _print("Downloaded files checksum invalid.")
             sys.exit(1)
 

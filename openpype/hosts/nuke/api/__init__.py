@@ -8,9 +8,6 @@ from .workio import (
 )
 
 from .command import (
-    reset_frame_range,
-    get_handles,
-    reset_resolution,
     viewer_update_and_undo_stop
 )
 
@@ -24,9 +21,15 @@ from .pipeline import (
     containerise,
     parse_container,
     update_container,
+
+    get_workfile_build_placeholder_plugins,
 )
 from .lib import (
-    maintained_selection
+    maintained_selection,
+    reset_selection,
+    get_view_process_node,
+    duplicate_node,
+    convert_knob_value_to_correct_type
 )
 
 from .utils import (
@@ -42,9 +45,6 @@ __all__ = (
     "current_file",
     "work_root",
 
-    "reset_frame_range",
-    "get_handles",
-    "reset_resolution",
     "viewer_update_and_undo_stop",
 
     "OpenPypeCreator",
@@ -57,7 +57,13 @@ __all__ = (
     "parse_container",
     "update_container",
 
+    "get_workfile_build_placeholder_plugins",
+
     "maintained_selection",
+    "reset_selection",
+    "get_view_process_node",
+    "duplicate_node",
+    "convert_knob_value_to_correct_type",
 
     "colorspace_exists_on_node",
     "get_colorspace_list"

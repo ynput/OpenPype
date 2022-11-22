@@ -9,6 +9,11 @@ import appdirs
 from Qt import QtCore, QtGui
 import qtawesome
 
+from openpype.client import (
+    get_projects,
+    get_project,
+    get_assets,
+)
 from openpype.lib import JSONSettingRegistry
 from openpype.lib.applications import (
     CUSTOM_LAUNCH_APP_GROUPS,
@@ -81,13 +86,11 @@ class ActionModel(QtGui.QStandardItemModel):
 
     def get_application_actions(self):
         actions = []
-        if not self.dbcon.Session.get("AVALON_PROJECT"):
+        if not self.dbcon.current_project():
             return actions
 
-        project_doc = self.dbcon.find_one(
-            {"type": "project"},
-            {"config.apps": True}
-        )
+        project_name = self.dbcon.active_project()
+        project_doc = get_project(project_name, fields=["config.apps"])
         if not project_doc:
             return actions
 
@@ -278,18 +281,25 @@ class ActionModel(QtGui.QStandardItemModel):
         if not action_item:
             return
 
-        action = action_item.data(ACTION_ROLE)
-        actual_data = self._prepare_compare_data(action)
+        actions = action_item.data(ACTION_ROLE)
+        if not isinstance(actions, list):
+            actions = [actions]
+
+        action_actions_data = [
+            self._prepare_compare_data(action)
+            for action in actions
+        ]
 
         stored = self.launcher_registry.get_item("force_not_open_workfile")
-        if is_checked:
-            stored.append(actual_data)
-        else:
-            final_values = []
-            for config in stored:
-                if config != actual_data:
-                    final_values.append(config)
-            stored = final_values
+        for actual_data in action_actions_data:
+            if is_checked:
+                stored.append(actual_data)
+            else:
+                final_values = []
+                for config in stored:
+                    if config != actual_data:
+                        final_values.append(config)
+                stored = final_values
 
         self.launcher_registry.set_item("force_not_open_workfile", stored)
         self.launcher_registry._get_item.cache_clear()
@@ -326,21 +336,24 @@ class ActionModel(QtGui.QStandardItemModel):
             item (QStandardItem)
             stored (list) of dict
         """
-        action = item.data(ACTION_ROLE)
-        if not self.is_application_action(action):
+
+        actions = item.data(ACTION_ROLE)
+        if not isinstance(actions, list):
+            actions = [actions]
+
+        if not self.is_application_action(actions[0]):
             return False
 
-        actual_data = self._prepare_compare_data(action)
+        action_actions_data = [
+            self._prepare_compare_data(action)
+            for action in actions
+        ]
         for config in stored:
-            if config == actual_data:
+            if config in action_actions_data:
                 return True
-
         return False
 
     def _prepare_compare_data(self, action):
-        if isinstance(action, list) and action:
-            action = action[0]
-
         compare_data = {}
         if action and action.label:
             compare_data = {
@@ -448,7 +461,7 @@ class LauncherModel(QtCore.QObject):
     @property
     def project_name(self):
         """Current project name."""
-        return self._dbcon.Session.get("AVALON_PROJECT")
+        return self._dbcon.current_project()
 
     @property
     def refreshing_assets(self):
@@ -525,7 +538,7 @@ class LauncherModel(QtCore.QObject):
         current_project = self.project_name
         project_names = set()
         project_docs_by_name = {}
-        for project_doc in self._dbcon.projects(only_active=True):
+        for project_doc in get_projects():
             project_name = project_doc["name"]
             project_names.add(project_name)
             project_docs_by_name[project_name] = project_doc
@@ -649,9 +662,8 @@ class LauncherModel(QtCore.QObject):
             self._asset_refresh_thread = None
 
     def _refresh_assets(self):
-        asset_docs = list(self._dbcon.find(
-            {"type": "asset"},
-            self._asset_projection
+        asset_docs = list(get_assets(
+            self._last_project_name, fields=self._asset_projection.keys()
         ))
         if not self._refreshing_assets:
             return

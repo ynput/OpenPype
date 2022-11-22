@@ -2,8 +2,8 @@ import json
 import copy
 import pyblish.api
 
-from openpype.lib import get_subset_name_with_asset_doc
-from openpype.pipeline import legacy_io
+from openpype.client import get_asset_by_name
+from openpype.pipeline.create import get_subset_name
 
 
 class CollectRenderScene(pyblish.api.ContextPlugin):
@@ -56,14 +56,11 @@ class CollectRenderScene(pyblish.api.ContextPlugin):
         # - not sure if it's good idea to require asset id in
         #   get_subset_name?
         workfile_context = context.data["workfile_context"]
-        asset_name = workfile_context["asset"]
-        asset_doc = legacy_io.find_one({
-            "type": "asset",
-            "name": asset_name
-        })
-
         # Project name from workfile context
         project_name = context.data["workfile_context"]["project"]
+        asset_name = workfile_context["asset"]
+        asset_doc = get_asset_by_name(project_name, asset_name)
+
         # Host name from environment variable
         host_name = context.data["hostName"]
         # Variant is using render pass name
@@ -78,14 +75,15 @@ class CollectRenderScene(pyblish.api.ContextPlugin):
         dynamic_data["render_pass"] = dynamic_data["renderpass"]
 
         task_name = workfile_context["task"]
-        subset_name = get_subset_name_with_asset_doc(
+        subset_name = get_subset_name(
             "render",
             variant,
             task_name,
             asset_doc,
             project_name,
             host_name,
-            dynamic_data=dynamic_data
+            dynamic_data=dynamic_data,
+            project_settings=context.data["project_settings"]
         )
 
         instance_data = {

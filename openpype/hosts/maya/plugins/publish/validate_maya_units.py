@@ -1,10 +1,14 @@
 import maya.cmds as cmds
 
 import pyblish.api
-import openpype.api
-from openpype import lib
+
 import openpype.hosts.maya.api.lib as mayalib
+from openpype.pipeline.context_tools import get_current_project_asset
 from math import ceil
+from openpype.pipeline.publish import (
+    RepairContextAction,
+    ValidateSceneOrder,
+)
 
 
 def float_round(num, places=0, direction=ceil):
@@ -14,10 +18,10 @@ def float_round(num, places=0, direction=ceil):
 class ValidateMayaUnits(pyblish.api.ContextPlugin):
     """Check if the Maya units are set correct"""
 
-    order = openpype.api.ValidateSceneOrder
+    order = ValidateSceneOrder
     label = "Maya Units"
     hosts = ['maya']
-    actions = [openpype.api.RepairContextAction]
+    actions = [RepairContextAction]
 
     validate_linear_units = True
     linear_units = "cm"
@@ -41,7 +45,9 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         # now flooring the value?
         fps = float_round(context.data.get('fps'), 2, ceil)
 
-        asset_fps = lib.get_asset()["data"]["fps"]
+        # TODO repace query with using 'context.data["assetEntity"]'
+        asset_doc = get_current_project_asset()
+        asset_fps = asset_doc["data"]["fps"]
 
         self.log.info('Units (linear): {0}'.format(linearunits))
         self.log.info('Units (angular): {0}'.format(angularunits))
@@ -91,5 +97,7 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         cls.log.debug(current_linear)
 
         cls.log.info("Setting time unit to match project")
-        asset_fps = lib.get_asset()["data"]["fps"]
+        # TODO repace query with using 'context.data["assetEntity"]'
+        asset_doc = get_current_project_asset()
+        asset_fps = asset_doc["data"]["fps"]
         mayalib.set_scene_fps(asset_fps)

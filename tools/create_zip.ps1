@@ -19,6 +19,13 @@ PS> .\create_zip.ps1 --path C:\OpenPype
 
 #>
 
+$current_dir = Get-Location
+$script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+$openpype_root = (Get-Item $script_dir).parent.FullName
+
+# Install PSWriteColor to support colorized output to terminal
+$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\tools\modules\powershell"
+
 function Exit-WithCode($exitcode) {
    # Only exit this host process if it's a child of another PowerShell parent process...
    $parentPID = (Get-CimInstance -ClassName Win32_Process -Filter "ProcessId=$PID" | Select-Object -Property ParentProcessId).ParentProcessId
@@ -31,17 +38,11 @@ function Exit-WithCode($exitcode) {
 
 function Show-PSWarning() {
     if ($PSVersionTable.PSVersion.Major -lt 7) {
-        Write-Host "!!! " -NoNewline -ForegroundColor Red
-        Write-Host "You are using old version of PowerShell. $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)"
-        Write-Host "Please update to at least 7.0 - " -NoNewline -ForegroundColor Gray
-        Write-Host "https://github.com/PowerShell/PowerShell/releases" -ForegroundColor White
+        Write-Color -Text "!!! ", "You are using old version of PowerShell - ",  "$($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)" -Color Red, Yellow, White
+        Write-Color -Text "    Please update to at least 7.0 - ", "https://github.com/PowerShell/PowerShell/releases" -Color Yellow, White
         Exit-WithCode 1
     }
 }
-
-$current_dir = Get-Location
-$script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$openpype_root = (Get-Item $script_dir).parent.FullName
 
 $env:_INSIDE_OPENPYPE_TOOL = "1"
 
@@ -78,31 +79,26 @@ $version_file = Get-Content -Path "$($openpype_root)\openpype\version.py"
 $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
 $openpype_version = $result[0].Groups['version'].Value
 if (-not $openpype_version) {
-  Write-Host "!!! " -ForegroundColor yellow -NoNewline
-  Write-Host "Cannot determine OpenPype version."
+  Write-Color -Text "!!! ", "Cannot determine OpenPype version." -Color Yellow, Gray
   Exit-WithCode 1
 }
 
-Write-Host ">>> " -NoNewline -ForegroundColor Green
-Write-Host "Reading Poetry ... " -NoNewline
+Write-Color -Text ">>> ", "Reading Poetry ... " -Color Green, Gray -NoNewline
 if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
-    Write-Host "NOT FOUND" -ForegroundColor Yellow
-    Write-Host "*** " -NoNewline -ForegroundColor Yellow
-    Write-Host "We need to install Poetry create virtual env first ..."
+    Write-Color -Text "NOT FOUND" -Color Yellow
+    Write-Color -Text "*** ", "We need to install Poetry create virtual env first ..." -Color Yellow, Gray
     & "$openpype_root\tools\create_env.ps1"
 } else {
-    Write-Host "OK" -ForegroundColor Green
+    Write-Color -Text "OK" -Color Green
 }
 
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Cleaning cache files ... " -NoNewline
+Write-Color -Text ">>> ", "Cleaning cache files ... " -Color Green, Gray -NoNewline
 Get-ChildItem $openpype_root -Filter "__pycache__" -Force -Recurse|  Where-Object {( $_.FullName -inotmatch '\\build\\' ) -and ( $_.FullName -inotmatch '\\.venv' )} | Remove-Item -Force -Recurse
 Get-ChildItem $openpype_root -Filter "*.pyc" -Force -Recurse | Where-Object {( $_.FullName -inotmatch '\\build\\' ) -and ( $_.FullName -inotmatch '\\.venv' )} | Remove-Item -Force
 Get-ChildItem $openpype_root -Filter "*.pyo" -Force -Recurse | Where-Object {( $_.FullName -inotmatch '\\build\\' ) -and ( $_.FullName -inotmatch '\\.venv' )} | Remove-Item -Force
-Write-Host "OK" -ForegroundColor green
+Write-Color -Text "OK" -Color Green
 
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Generating zip from current sources ..."
+Write-Color -Text ">>> ", "Generating zip from current sources ..." -Color Green, Gray
 $env:PYTHONPATH="$($openpype_root);$($env:PYTHONPATH)"
 $env:OPENPYPE_ROOT="$($openpype_root)"
 & "$($env:POETRY_HOME)\bin\poetry" run python "$($openpype_root)\tools\create_zip.py" $ARGS

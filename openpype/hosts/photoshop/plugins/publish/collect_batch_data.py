@@ -17,11 +17,11 @@ import os
 
 import pyblish.api
 
-from openpype.lib.plugin_tools import (
-    parse_json,
-    get_batch_asset_task_info
-)
 from openpype.pipeline import legacy_io
+from openpype_modules.webpublisher.lib import (
+    get_batch_asset_task_info,
+    parse_json
+)
 
 
 class CollectBatchData(pyblish.api.ContextPlugin):
@@ -39,6 +39,9 @@ class CollectBatchData(pyblish.api.ContextPlugin):
     def process(self, context):
         self.log.info("CollectBatchData")
         batch_dir = os.environ.get("OPENPYPE_PUBLISH_DATA")
+        if os.environ.get("IS_TEST"):
+            self.log.debug("Automatic testing, no batch data, skipping")
+            return
 
         assert batch_dir, (
             "Missing `OPENPYPE_PUBLISH_DATA`")

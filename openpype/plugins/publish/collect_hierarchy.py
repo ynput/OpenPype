@@ -1,7 +1,5 @@
 import pyblish.api
 
-from openpype.pipeline import legacy_io
-
 
 class CollectHierarchy(pyblish.api.ContextPlugin):
     """Collecting hierarchy from `parents`.
@@ -20,7 +18,7 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
 
     def process(self, context):
         temp_context = {}
-        project_name = legacy_io.Session["AVALON_PROJECT"]
+        project_name = context.data["projectName"]
         final_context = {}
         final_context[project_name] = {}
         final_context[project_name]['entity_type'] = 'Project'
@@ -32,10 +30,6 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
             shot_data = {}
             family = instance.data["family"]
             families = instance.data["families"]
-
-            # filter out all unepropriate instances
-            if not instance.data["publish"]:
-                continue
 
             # exclude other families then self.families with intersection
             if not set(self.families).intersection(set(families + [family])):
@@ -62,7 +56,7 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
                 "frameEnd": instance.data["frameEnd"],
                 "clipIn": instance.data["clipIn"],
                 "clipOut": instance.data["clipOut"],
-                'fps': instance.context.data["fps"],
+                "fps": instance.data["fps"],
                 "resolutionWidth": instance.data["resolutionWidth"],
                 "resolutionHeight": instance.data["resolutionHeight"],
                 "pixelAspect": instance.data["pixelAspect"]

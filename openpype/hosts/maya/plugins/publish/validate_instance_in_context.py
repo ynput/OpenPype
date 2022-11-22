@@ -3,7 +3,7 @@
 from __future__ import absolute_import
 
 import pyblish.api
-import openpype.api
+from openpype.pipeline.publish import ValidateContentsOrder
 
 from maya import cmds
 
@@ -98,7 +98,7 @@ class ValidateInstanceInContext(pyblish.api.InstancePlugin):
     Action on this validator will select invalid instances in Outliner.
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     label = "Instance in same Context"
     optional = True
     hosts = ["maya"]

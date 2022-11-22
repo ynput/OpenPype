@@ -5,9 +5,16 @@ import requests
 
 from bson.objectid import ObjectId
 
+from openpype.client import (
+    get_project,
+    get_asset_by_id,
+    get_assets,
+    get_subset_by_name,
+    get_version_by_name,
+    get_representations
+)
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
-from openpype.api import Anatomy
-from openpype.pipeline import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB, Anatomy
 
 from openpype_modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
 
@@ -385,7 +392,7 @@ class StoreThumbnailsToAvalon(BaseAction):
 
         db_con.Session["AVALON_PROJECT"] = project_name
 
-        avalon_project = db_con.find_one({"type": "project"})
+        avalon_project = get_project(project_name)
         output["project"] = avalon_project
 
         if not avalon_project:
@@ -399,19 +406,17 @@ class StoreThumbnailsToAvalon(BaseAction):
         asset_mongo_id = parent["custom_attributes"].get(CUST_ATTR_ID_KEY)
         if asset_mongo_id:
             try:
-                asset_mongo_id = ObjectId(asset_mongo_id)
-                asset_ent = db_con.find_one({
-                    "type": "asset",
-                    "_id": asset_mongo_id
-                })
+                asset_ent = get_asset_by_id(project_name, asset_mongo_id)
             except Exception:
                 pass
 
         if not asset_ent:
-            asset_ent = db_con.find_one({
-                "type": "asset",
-                "data.ftrackId": parent["id"]
-            })
+            asset_docs = get_assets(project_name, asset_names=[parent["name"]])
+            for asset_doc in asset_docs:
+                ftrack_id = asset_doc.get("data", {}).get("ftrackId")
+                if ftrack_id == parent["id"]:
+                    asset_ent = asset_doc
+                    break
 
         output["asset"] = asset_ent
 
@@ -422,13 +427,11 @@ class StoreThumbnailsToAvalon(BaseAction):
             )
             return output
 
-        asset_mongo_id = asset_ent["_id"]
-
-        subset_ent = db_con.find_one({
-            "type": "subset",
-            "parent": asset_mongo_id,
-            "name": subset_name
-        })
+        subset_ent = get_subset_by_name(
+            project_name,
+            subset_name=subset_name,
+            asset_id=asset_ent["_id"]
+        )
 
         output["subset"] = subset_ent
 
@@ -439,11 +442,11 @@ class StoreThumbnailsToAvalon(BaseAction):
             ).format(subset_name, ent_path)
             return output
 
-        version_ent = db_con.find_one({
-            "type": "version",
-            "name": version,
-            "parent": subset_ent["_id"]
-        })
+        version_ent = get_version_by_name(
+            project_name,
+            version,
+            subset_ent["_id"]
+        )
 
         output["version"] = version_ent
 
@@ -454,10 +457,10 @@ class StoreThumbnailsToAvalon(BaseAction):
             ).format(version, subset_name, ent_path)
             return output
 
-        repre_ents = list(db_con.find({
-            "type": "representation",
-            "parent": version_ent["_id"]
-        }))
+        repre_ents = list(get_representations(
+            project_name,
+            version_ids=[version_ent["_id"]]
+        ))
 
         output["representations"] = repre_ents
         return output
