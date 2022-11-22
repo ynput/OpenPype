@@ -122,7 +122,7 @@ class ExtractBlend(publish.Extractor):
         packed_images = set()
         if self.pack_images:
             for image in self._get_images_from_objects(objects):
-                if not image.packed_file:
+                if not image.packed_file and image.source != "GENERATED":
                     packed_images.add((image, image.is_dirty))
                     image.pack()
 
