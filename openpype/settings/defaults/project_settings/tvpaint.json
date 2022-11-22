@@ -37,6 +37,9 @@
             "enabled": false,
             "replace_pngs": true,
             "exr_compression": "ZIP"
+        },
+        "ExtractJson": {
+            "enabled": false
         }
     },
     "load": {
