@@ -432,7 +432,7 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self._update_create_overlay_size()
         self._update_create_overlay_visibility()
-        if self._is_current_tab("create"):
+        if self._is_on_create_tab():
             self._install_app_event_listener()
 
         # Reset if requested
@@ -450,7 +450,7 @@ class PublisherWindow(QtWidgets.QDialog):
         self._context_label.setText(label)
 
     def _update_publish_details_widget(self, force=False):
-        if not force and not self._is_current_tab("details"):
+        if not force and not self._is_on_details_tab():
             return
 
         report_data = self.controller.get_publish_report()
@@ -540,16 +540,16 @@ class PublisherWindow(QtWidgets.QDialog):
         self._set_current_tab("report")
 
     def _is_on_create_tab(self):
-        self._is_current_tab("create")
+        return self._is_current_tab("create")
 
     def _is_on_publish_tab(self):
-        self._is_current_tab("publish")
+        return self._is_current_tab("publish")
 
     def _is_on_details_tab(self):
-        self._is_current_tab("details")
+        return self._is_current_tab("details")
 
     def _is_on_report_tab(self):
-        self._is_current_tab("report")
+        return self._is_current_tab("report")
 
     def _set_publish_overlay_visibility(self, visible):
         if visible:
@@ -601,11 +601,8 @@ class PublisherWindow(QtWidgets.QDialog):
         self._set_publish_visibility(False)
         self._set_footer_enabled(False)
         self._update_publish_details_widget()
-        if (
-            not self._is_current_tab("create")
-            and not self._is_current_tab("publish")
         ):
-            self._set_current_tab("publish")
+            self._go_to_publish_tab()
 
     def _on_publish_start(self):
         self._create_tab.setEnabled(False)
@@ -621,8 +618,8 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self._publish_details_widget.close_details_popup()
 
-        if self._is_current_tab(self._create_tab):
-            self._set_current_tab("publish")
+        if self._is_on_create_tab():
+            self._go_to_publish_tab()
 
     def _on_publish_validated_change(self, event):
         if event["value"]:
@@ -635,7 +632,7 @@ class PublisherWindow(QtWidgets.QDialog):
         publish_has_crashed = self._controller.publish_has_crashed
         validate_enabled = not publish_has_crashed
         publish_enabled = not publish_has_crashed
-        if self._is_current_tab("publish"):
+        if self._is_on_publish_tab():
             self._go_to_report_tab()
 
         if validate_enabled:
