@@ -42,6 +42,9 @@
             "enabled": false,
             "replace_pngs": true,
             "exr_compression": "ZIP"
+        },
+        "ExtractPsd": {
+            "enabled": false
         }
     },
     "load": {
