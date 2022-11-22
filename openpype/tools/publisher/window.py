@@ -156,7 +156,7 @@ class PublisherWindow(QtWidgets.QDialog):
         footer_layout.addWidget(footer_bottom_widget, 0)
 
         # Content
-        # - wrap stacked widget under one more widget to be able propagate
+        # - wrap stacked widget under one more widget to be able to propagate
         #   margins (QStackedLayout can't have margins)
         content_widget = QtWidgets.QWidget(under_publish_widget)
 
@@ -268,6 +268,9 @@ class PublisherWindow(QtWidgets.QDialog):
             "publish.reset.finished", self._on_publish_reset
         )
         controller.event_system.add_callback(
+            "controller.reset.finished", self._on_controller_reset
+        )
+        controller.event_system.add_callback(
             "publish.process.started", self._on_publish_start
         )
         controller.event_system.add_callback(
@@ -337,11 +340,13 @@ class PublisherWindow(QtWidgets.QDialog):
         self._controller = controller
 
         self._first_show = True
+        self._first_reset = True
         # This is a little bit confusing but 'reset_on_first_show' is too long
-        #   forin init
+        #   for init
         self._reset_on_first_show = reset_on_show
         self._reset_on_show = True
         self._publish_frame_visible = None
+        self._tab_on_reset = None
 
         self._error_messages_to_show = collections.deque()
         self._errors_dialog_message_timer = errors_dialog_message_timer
@@ -353,12 +358,21 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self._show_timer = show_timer
         self._show_counter = 0
+        self._window_is_visible = False
 
     @property
     def controller(self):
         return self._controller
 
+    def make_sure_is_visible(self):
+        if self._window_is_visible:
+            self.setWindowState(QtCore.Qt.ActiveWindow)
+
+        else:
+            self.show()
+
     def showEvent(self, event):
+        self._window_is_visible = True
         super(PublisherWindow, self).showEvent(event)
         if self._first_show:
             self._first_show = False
@@ -372,6 +386,7 @@ class PublisherWindow(QtWidgets.QDialog):
         self._update_create_overlay_size()
 
     def closeEvent(self, event):
+        self._window_is_visible = False
         self._uninstall_app_event_listener()
         self.save_changes()
         self._reset_on_show = True
@@ -449,6 +464,19 @@ class PublisherWindow(QtWidgets.QDialog):
     def set_context_label(self, label):
         self._context_label.setText(label)
 
+    def set_tab_on_reset(self, tab):
+        """Define tab that will be selected on window show.
+
+        This is single use method, when publisher window is showed the value is
+            unset and not used on next show.
+
+        Args:
+            tab (Union[int, Literal[create, publish, details, report]]: Index
+                or name of tab which will be selected on show (after reset).
+        """
+
+        self._tab_on_reset = tab
+
     def _update_publish_details_widget(self, force=False):
         if not force and not self._is_on_details_tab():
             return
@@ -523,6 +551,11 @@ class PublisherWindow(QtWidgets.QDialog):
 
     def _set_current_tab(self, identifier):
         self._tabs_widget.set_current_tab(identifier)
+
+    def set_current_tab(self, tab):
+        self._set_current_tab(tab)
+        if not self._window_is_visible:
+            self.set_tab_on_reset(tab)
 
     def _is_current_tab(self, identifier):
         return self._tabs_widget.is_current_tab(identifier)
@@ -601,7 +634,32 @@ class PublisherWindow(QtWidgets.QDialog):
         self._set_publish_visibility(False)
         self._set_footer_enabled(False)
         self._update_publish_details_widget()
+
+    def _on_controller_reset(self):
+        self._first_reset, first_reset = False, self._first_reset
+        if self._tab_on_reset is not None:
+            self._tab_on_reset, new_tab = None, self._tab_on_reset
+            self._set_current_tab(new_tab)
+            return
+
+        # On first reset change tab based on available items
+        # - if there is at least one instance the tab is changed to 'publish'
+        #   otherwise 'create' is used
+        # - this happens only on first show
+        if first_reset:
+            if self._overview_widget.has_items():
+                self._go_to_publish_tab()
+            else:
+                self._go_to_create_tab()
+
+        elif (
+            not self._is_on_create_tab()
+            and not self._is_on_publish_tab()
         ):
+            # If current tab is not 'Create' or 'Publish' go to 'Publish'
+            #   - this can happen when publishing started and was reset
+            #       at that moment it doesn't make sense to stay at publish
+            #       specific tabs.
             self._go_to_publish_tab()
 
     def _on_publish_start(self):
