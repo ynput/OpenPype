@@ -1,8 +1,9 @@
 import os
-import copy
+import re
 import tempfile
 
 from PIL import Image
+from copy import deepcopy
 
 import pyblish.api
 
@@ -23,12 +24,14 @@ from openpype.hosts.tvpaint.lib import (
 
 
 class ExtractSequence(pyblish.api.Extractor):
+    order = pyblish.api.ExtractorOrder + 0.01
     label = "Extract Sequence"
     hosts = ["tvpaint"]
     families = ["review", "render"]
 
     # Modifiable with settings
     review_bg = [255, 255, 255, 255]
+    extract_json = False
 
     def process(self, instance):
         self.log.info(
@@ -76,11 +79,9 @@ class ExtractSequence(pyblish.api.Extractor):
 
         # Frame start/end may be stored as float
         frame_start = int(instance.data["frameStart"])
-        frame_end = int(instance.data["frameEnd"])
 
         # Handles are not stored per instance but on Context
         handle_start = instance.context.data["handleStart"]
-        handle_end = instance.context.data["handleEnd"]
 
         scene_bg_color = instance.context.data["sceneBgColor"]
 
@@ -111,11 +112,16 @@ class ExtractSequence(pyblish.api.Extractor):
             "Files will be rendered to folder: {}".format(output_dir)
         )
 
+        result = None
         if instance.data["family"] == "review":
             result = self.render_review(
                 output_dir, mark_in, mark_out, scene_bg_color
             )
-        else:
+        elif self.extract_json and instance.data['family'] == 'renderLayer':
+            self.add_render_layer_to_repre(instance)
+            return
+
+        if not result:
             # Render output
             result = self.render(
                 output_dir,
@@ -187,6 +193,60 @@ class ExtractSequence(pyblish.api.Extractor):
         }
         instance.data["representations"].append(thumbnail_repre)
 
+    def add_render_layer_to_repre(self, instance):
+        """ Add render layers to representation with only frameranged frames
+
+        Args:
+            instance (dict): the current instance of the sequence
+        """
+        json_output_dir = instance.context.data['json_output_dir']
+        layers = instance.data['layers']
+        if len(layers) != 1:
+            raise Exception("ERROR")
+
+        layer_name = layers[0]['name']
+        output_dir = os.path.join(json_output_dir, layer_name)
+
+        frame_start = int(instance.data["frameStart"])
+        frame_end = int(instance.data["frameEnd"])
+
+        layers_data = instance.context.data['tvpaint_layers_data']
+        layer_data = [l for l in layers_data if l['name'] == layer_name]  # noqa
+        if not len(layer_data) == 1:
+            raise Exception("Layer not found in json data")
+        layer_data = layer_data[0]
+        link_data = {
+            os.path.basename(l['file']): l for l in layer_data['link']  # noqa
+        }
+
+        files = []
+        filter_link_data = []
+        for file_name in os.listdir(output_dir):
+            if file_name not in link_data:
+                continue
+
+            # Regex to search the frame number in the name of the file
+            frame_number = re.search(r'\.(\d*)\.png$', file_name)
+            if not frame_number:
+                continue
+
+            if frame_start <= int(frame_number.groups()[0]) <= frame_end:
+                files.append(file_name)
+                filter_link_data.append(link_data[file_name])
+
+        png_repres = {
+            "name": "png",
+            "ext": "png",
+            "files": files,
+            "stagingDir": output_dir,
+            "tags": [],
+        }
+        self.log.debug("Add png representation: {}".format(png_repres))
+        instance.data["representations"].append(png_repres)
+
+        layer_data['link'] = filter_link_data
+        instance.data['layers_data'] = layer_data
+
     def _rename_output_files(
         self, filepaths_by_frame, mark_in, mark_out, output_frame_start
     ):
@@ -195,8 +255,9 @@ class ExtractSequence(pyblish.api.Extractor):
         )
 
         repre_filenames = []
-        for filepath in new_filepaths_by_frame.values():
-            repre_filenames.append(os.path.basename(filepath))
+        if new_filepaths_by_frame:
+            for filepath in new_filepaths_by_frame.values():
+                repre_filenames.append(os.path.basename(filepath))
 
         if mark_in < output_frame_start:
             repre_filenames = list(reversed(repre_filenames))
@@ -242,7 +303,7 @@ class ExtractSequence(pyblish.api.Extractor):
         ]
         if scene_bg_color:
             # Change bg color back to previous scene bg color
-            _scene_bg_color = copy.deepcopy(scene_bg_color)
+            _scene_bg_color = deepcopy(scene_bg_color)
             bg_type = _scene_bg_color.pop(0)
             orig_color_command = [
                 "tv_background",

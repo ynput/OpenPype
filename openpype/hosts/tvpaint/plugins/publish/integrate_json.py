@@ -12,7 +12,7 @@ class IntegrateJson(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.05
 
     hosts = ["tvpaint"]
-    families = ["renderLayer", "renderPass"]
+    families = ["renderLayer"]
 
     def process(self, instance):
         self.log.info(
