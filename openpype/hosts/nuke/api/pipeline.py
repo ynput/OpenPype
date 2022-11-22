@@ -226,15 +226,16 @@ def _install_menu():
 
     menu.addSeparator()
     menu.addCommand(
-        "Create... [deprecated]",
-        lambda: nuke.message(
-            "Creator has been moved, you'll find it "
-            "in the Publish tool -> Create tab"
+        "Create...",
+        lambda: host_tools.show_publisher(
+            tab="create"
         )
     )
     menu.addCommand(
         "Publish...",
-        host_tools.show_publisher
+        lambda: host_tools.show_publisher(
+            tab="publish"
+        )
     )
     menu.addCommand(
         "Load...",
