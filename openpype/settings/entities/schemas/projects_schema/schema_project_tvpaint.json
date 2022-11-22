@@ -376,6 +376,20 @@
                             ]
                         }
                     ]
+                },
+                {
+                    "type": "dict",
+                    "key": "ExtractPsd",
+                    "label": "Extract PSD",
+                    "is_group": false,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        }
+                    ]
                 }
             ]
         },
