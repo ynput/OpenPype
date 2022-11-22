@@ -285,14 +285,12 @@ class HostToolsHelper:
 
         return self._publisher_tool
 
-    def show_publisher_tool(self, parent=None, controller=None):
+    def show_publisher_tool(self, parent=None, controller=None, tab=None):
         with qt_app_context():
-            dialog = self.get_publisher_tool(parent, controller)
-
-            dialog.show()
-            dialog.raise_()
-            dialog.activateWindow()
-            dialog.showNormal()
+            window = self.get_publisher_tool(parent, controller)
+            if tab:
+                window.set_current_tab(tab)
+            window.make_sure_is_visible()
 
     def get_tool_by_name(self, tool_name, parent=None, *args, **kwargs):
         """Show tool by it's name.
@@ -446,8 +444,8 @@ def show_publish(parent=None):
     _SingletonPoint.show_tool_by_name("publish", parent)
 
 
-def show_publisher(parent=None):
-    _SingletonPoint.show_tool_by_name("publisher", parent)
+def show_publisher(parent=None, **kwargs):
+    _SingletonPoint.show_tool_by_name("publisher", parent, **kwargs)
 
 
 def show_experimental_tools_dialog(parent=None):

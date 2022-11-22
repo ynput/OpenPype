@@ -35,7 +35,7 @@ class LoadClipBatch(opfapi.ClipLoader):
         version = context['version']
         version_data = version.get("data", {})
         version_name = version.get("name", None)
-        colorspace = version_data.get("colorspace", None)
+        colorspace = self.get_colorspace(context)
 
         # in case output is not in context replace key to representation
         if not context["representation"]["context"].get("output"):
@@ -47,10 +47,10 @@ class LoadClipBatch(opfapi.ClipLoader):
         clip_name = StringTemplate(self.clip_name_template).format(
             formating_data)
 
-        # TODO: settings in imageio
         # convert colorspace with ocio to flame mapping
         # in imageio flame section
-        colorspace = colorspace
+        colorspace = self.get_native_colorspace(colorspace)
+        self.log.info("Loading with colorspace: `{}`".format(colorspace))
 
         # create workfile path
         workfile_dir = options.get("workdir") or os.environ["AVALON_WORKDIR"]
