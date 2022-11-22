@@ -113,7 +113,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             fill_pairs.append(("review_filepath", review_path))
 
         task_data = (
-                copy.deepcopy(instance.data.get("anatomyData", [])).get("task")
+                copy.deepcopy(instance.data.get("anatomyData", {})).get("task")
                 or fill_data.get("task")
         )
         if not isinstance(task_data, dict):
