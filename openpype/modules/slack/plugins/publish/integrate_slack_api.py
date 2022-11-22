@@ -188,10 +188,17 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                         channel=channel,
                         title=os.path.basename(p_file)
                     )
-                    attachment_str += "\n<{}|{}>".format(
-                        response["file"]["permalink"],
-                        os.path.basename(p_file))
-                    file_ids.append(response["file"]["id"])
+                    if response.get("error"):
+                        error_str = self._enrich_error(
+                            str(response.get("error")),
+                            channel)
+                        self.log.warning(
+                            "Error happened: {}".format(error_str))
+                    else:
+                        attachment_str += "\n<{}|{}>".format(
+                            response["file"]["permalink"],
+                            os.path.basename(p_file))
+                        file_ids.append(response["file"]["id"])
 
             if publish_files:
                 message += attachment_str
