@@ -22,7 +22,8 @@ class ExtractProxyAlembic(publish.Extractor):
     def process(self, instance):
 
         nodes, roots = self.get_members_and_roots(instance)
-
+        self.log.info("nodes:{}".format(nodes))
+        self.log.info("roots:{}".format(roots))
         # Collect the start and end including handles
         start = float(instance.data.get("frameStartHandle", 1))
         end = float(instance.data.get("frameEndHandle", 1))
@@ -34,7 +35,7 @@ class ExtractProxyAlembic(publish.Extractor):
         attr_prefixes = instance.data.get("attrPrefix", "").split(";")
         attr_prefixes = [value for value in attr_prefixes if value.strip()]
 
-        self.log.info("Extracting pointcache..")
+        self.log.info("Extracting Proxy Alembic..")
         dirname = self.staging_dir(instance)
 
         filename = "{name}.abc".format(**instance.data)
@@ -55,16 +56,22 @@ class ExtractProxyAlembic(publish.Extractor):
 
         if not instance.data.get("includeParentHierarchy", True):
             options["root"] = roots
+            self.log.info("{}".format(options["root"]))
 
+        if int(cmds.about(version=True)) >= 2017:
+            # Since Maya 2017 alembic supports multiple uv sets - write them.
+            options["writeUVSets"] = True
 
         if instance.data.get("visibleOnly", False):
             nodes = list(iter_visible_nodes_in_range(nodes,
                                                      start=start,
                                                      end=end))
-
         with suspended_refresh():
             with maintained_selection():
-                self.create_proxy_geometry(instance, nodes, start, end)
+                self.create_proxy_geometry(instance,
+                                           nodes,
+                                           start,
+                                           end)
                 extract_alembic(file=path,
                                 startFrame=start,
                                 endFrame=end,
@@ -91,21 +98,13 @@ class ExtractProxyAlembic(publish.Extractor):
     def create_proxy_geometry(self, instance, node, start, end):
         inst_selection = cmds.ls(node, long=True)
         name_suffix = instance.data.get("nameSuffix")
-        if instance.data.get("single", True):
-            cmds.geomToBBox(inst_selection,
-                            name=instance.name,
-                            nameSuffix=name_suffix,
-                            single=True,
-                            keepOriginal=True,
-                            bakeAnimation=True,
-                            startTime=start,
-                            endTime=end)
-        else:
-            cmds.geomToBBox(inst_selection,
-                            name=instance.name,
-                            nameSuffix=name_suffix,
-                            single=False,
-                            keepOriginal=True,
-                            bakeAnimation=True,
-                            startTime=start,
-                            endTime=end)
+        bbox = cmds.geomToBBox(inst_selection,
+                               name=instance.name,
+                               nameSuffix=name_suffix,
+                               single=instance.data.get("single", False),
+                               keepOriginal=True,
+                               bakeAnimation=True,
+                               startTime=start,
+                               endTime=end)
+        return cmds.select(bbox, noExpand=True)
+

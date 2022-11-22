@@ -944,7 +944,8 @@
                         "subset_name_filters": [],
                         "families": [
                             "animation",
-                            "pointcache"
+                            "pointcache",
+                            "proxyAbc"
                         ],
                         "repre_names": [
                             "abc"

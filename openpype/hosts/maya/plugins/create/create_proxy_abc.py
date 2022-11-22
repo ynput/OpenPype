@@ -34,6 +34,8 @@ class CreateProxyAlembic(plugin.Creator):
 
         # Creating a single bounding box per shape selected
         self.data["single"] = False
+        # remove the bbBox after publish
+        #self.data["removeBoundingBoxAfterPublish"] = False
         # name suffix for the bounding box
         self.data["nameSuffix"] = "_BBox"
 

@@ -11,7 +11,7 @@ from openpype.settings import get_project_settings
 class AlembicStandinLoader(load.LoaderPlugin):
     """Load Alembic as Arnold Standin"""
 
-    families = ["animation", "model", "pointcache"]
+    families = ["animation", "model", "proxyAbc", "pointcache"]
     representations = ["abc"]
 
     label = "Import Alembic as Arnold Standin"
