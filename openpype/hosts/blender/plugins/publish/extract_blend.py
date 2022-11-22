@@ -78,27 +78,6 @@ class ExtractBlend(publish.Extractor):
             if isinstance(member, bpy.types.Object):
                 objects.add(member)
 
-        # Store instance metadata
-        instance_holder = instance[0]
-
-        # Add container metadata to collection
-        metadata_update(
-            instance_holder,
-            {
-                "schema": "openpype:container-2.0",
-                "id": AVALON_CONTAINER_ID,
-                "name": instance.data["subset"],
-                "loader": True,
-                # ^ To be subsituted by the appropriate loader matched after Blender native Load
-                "representation": True,
-                # ^ To be substituted by the created ObjectId after integration
-                "asset_name": instance.data["asset"],
-                "parent": str(instance.data["assetEntity"]["parent"]),
-                "family": instance.data["family"],
-                "namespace": "",
-            },
-        )
-
         # Pack used images in the blend files.
         packed_images = set()
         if self.pack_images:

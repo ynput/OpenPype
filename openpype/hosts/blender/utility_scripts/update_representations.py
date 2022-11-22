@@ -2,8 +2,14 @@ import argparse
 import sys
 
 import bpy
+from openpype.client.entities import (
+    get_asset_by_name,
+    get_representation_by_id,
+    get_subset_by_name,
+)
+from openpype.hosts.blender.api.pipeline import metadata_update
+from openpype.pipeline import legacy_io
 from openpype.pipeline.constants import AVALON_CONTAINER_ID
-
 
 if __name__ == "__main__":
     # Parse arguments
@@ -11,26 +17,65 @@ if __name__ == "__main__":
         description="Update AVALON metadata with given representation ID."
     )
     parser.add_argument(
-        "representation_id",
+        "subset_name",
+        type=str,
+        nargs="?",
+        help="subset name",
+    )
+    parser.add_argument(
+        "--datablocks",
+        type=str,
+        nargs="*",
+        help="list of datablocks names to add container metadata to",
+        required=True,
+    )
+    parser.add_argument(
+        "--datapaths",
+        type=str,
+        nargs="*",
+        help="list of datapaths to get datablocks from",
+        required=True,
+        # TODO set default with outliner types
+    )
+    parser.add_argument(
+        "--id",
+        dest="representation_id",
         type=str,
         nargs="?",
         help="representation ID",
+        required=True,
     )
-    args = parser.parse_args(sys.argv[sys.argv.index("--") :])
+    args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :])
 
-    # Get all types
-    all_types = [
-        getattr(bpy.data, a) for a in dir(bpy.data) if not a.startswith("__")
-    ]
-    for bl_type in all_types:
-        # Filter type for only collections (and not functions)
-        if isinstance(bl_type, bpy.types.bpy_prop_collection) and len(bl_type):
-            for datablock in bl_type:
-                # If 'representation' is set to boolean True, set given ID
-                if datablock.get("avalon", {}).get("representation") == True:
-                    datablock["avalon"][
-                        "representation"
-                    ] = args.representation_id
-                    datablock["avalon"]["id"] = AVALON_CONTAINER_ID
+    for datapath in args.datapaths:
+        for datablock_name in args.datablocks:
+            datablock = eval(datapath).get(datablock_name)
+
+            # Get docs
+            project_name = legacy_io.Session["AVALON_PROJECT"]
+            asset_name = legacy_io.Session["AVALON_ASSET"]
+
+            asset_doc = get_asset_by_name(project_name, asset_name)
+            subset_doc = get_subset_by_name(
+                project_name, args.subset_name, asset_doc["_id"]
+            )
+            representation_doc = get_representation_by_id(
+                project_name, args.representation_id
+            )
+
+            # Update container metadata
+            metadata_update(
+                datablock,
+                {
+                    "schema": "openpype:container-2.0",
+                    "id": AVALON_CONTAINER_ID,
+                    "name": args.subset_name,
+                    "representation": args.representation_id,
+                    "asset_name": legacy_io.Session["AVALON_ASSET"],
+                    "parent": str(asset_doc["parent"]),
+                    "family": representation_doc.data["family"],
+                    "namespace": "",
+                },
+            )
 
     bpy.ops.wm.save_mainfile()

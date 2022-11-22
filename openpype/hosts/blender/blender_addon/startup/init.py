@@ -7,7 +7,7 @@ from bpy.app.handlers import persistent
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 from openpype.pipeline import install_host
 from openpype.hosts.blender import api
-from openpype.pipeline.constants import AVALON_CONTAINER_ID
+from openpype.pipeline.constants import AVALON_CONTAINER_ID, AVALON_INSTANCE_ID
 from openpype.pipeline.load.plugins import (
     LoaderPlugin,
     discover_loader_plugins,
@@ -53,8 +53,10 @@ def load_handler(scene):
         if isinstance(bl_type, bpy.types.bpy_prop_collection) and len(bl_type):
             for datablock in bl_type:
                 avalon_data = datablock.get(AVALON_PROPERTY, {})
-                loader_name = avalon_data.get("loader")
-                if not avalon_data or not loader_name:
+                if (
+                    not avalon_data
+                    or avalon_data.get("id") == AVALON_INSTANCE_ID
+                ):
                     continue
 
                 # Get available loaders

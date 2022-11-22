@@ -7,7 +7,7 @@ import bpy
 # Match Blender type to a datapath to look into. Needed for native UI creator.
 BL_TYPE_DATAPATH = {
     bpy.types.Collection: "bpy.data.collections",
-    bpy.types.Object: "bpy.context.scene.collection.all_objects",
+    bpy.types.Object: "bpy.data.objects",
     bpy.types.Camera: "bpy.data.cameras",
     bpy.types.Action: "bpy.data.actions",
     bpy.types.Armature: "bpy.data.armatures",
