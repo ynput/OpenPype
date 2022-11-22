@@ -205,6 +205,10 @@ class OverviewWidget(QtWidgets.QFrame):
             self._subset_views_widget.height()
         )
 
+    def has_items(self):
+        view = self._subset_views_layout.currentWidget()
+        return view.has_items()
+
     def _on_create_clicked(self):
         """Pass signal to parent widget which should care about changing state.
 
