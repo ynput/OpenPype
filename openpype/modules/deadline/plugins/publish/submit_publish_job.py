@@ -500,7 +500,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             if instance_data.get("multipartExr"):
                 preview = True
-            self.log.info("preview:{}".format(preview))
+            self.log.debug("preview:{}".format(preview))
             new_instance = deepcopy(instance_data)
             new_instance["subset"] = subset_name
             new_instance["subsetGroup"] = group_name
@@ -543,7 +543,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if new_instance.get("extendFrames", False):
                 self._copy_extend_frames(new_instance, rep)
             instances.append(new_instance)
-            self.log.info("instances:{}".format(instances))
+            self.log.debug("instances:{}".format(instances))
         return instances
 
     def _get_representations(self, instance, exp_files):

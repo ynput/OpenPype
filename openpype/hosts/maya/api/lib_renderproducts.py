@@ -1054,7 +1054,6 @@ class RenderProductsRedshift(ARenderProducts):
 
             # Any AOVs that still get processed, like Cryptomatte
             # by themselves are not multipart files.
-            # aov_multipart = not multipart
 
             # Redshift skips rendering of masterlayer without AOV suffix
             # when a Beauty AOV is rendered. It overrides the main layer.
