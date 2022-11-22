@@ -316,7 +316,7 @@ class AbstractInstanceView(QtWidgets.QWidget):
         """
 
         raise NotImplementedError((
-          "{} Method 'has_items' is not implemented."
+            "{} Method 'has_items' is not implemented."
         ).format(self.__class__.__name__))
 
     def get_selected_items(self):
