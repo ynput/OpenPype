@@ -539,6 +539,18 @@ class PublisherWindow(QtWidgets.QDialog):
     def _go_to_report_tab(self):
         self._set_current_tab("report")
 
+    def _is_on_create_tab(self):
+        self._is_current_tab("create")
+
+    def _is_on_publish_tab(self):
+        self._is_current_tab("publish")
+
+    def _is_on_details_tab(self):
+        self._is_current_tab("details")
+
+    def _is_on_report_tab(self):
+        self._is_current_tab("report")
+
     def _set_publish_overlay_visibility(self, visible):
         if visible:
             widget = self._publish_overlay
