@@ -29,6 +29,8 @@ from .widgets import (
 
     HelpButton,
     HelpDialog,
+
+    CreateNextPageOverlay,
 )
 
 
@@ -154,7 +156,7 @@ class PublisherWindow(QtWidgets.QDialog):
         footer_layout.addWidget(footer_bottom_widget, 0)
 
         # Content
-        # - wrap stacked widget under one more widget to be able propagate
+        # - wrap stacked widget under one more widget to be able to propagate
         #   margins (QStackedLayout can't have margins)
         content_widget = QtWidgets.QWidget(under_publish_widget)
 
@@ -225,8 +227,8 @@ class PublisherWindow(QtWidgets.QDialog):
         # Floating publish frame
         publish_frame = PublishFrame(controller, self.footer_border, self)
 
-        # Timer started on show -> connected to timer counter
-        # - helps to deffer on show logic by 3 event loops
+        create_overlay_button = CreateNextPageOverlay(self)
+
         show_timer = QtCore.QTimer()
         show_timer.setInterval(1)
         show_timer.timeout.connect(self._on_show_timer)
@@ -255,12 +257,18 @@ class PublisherWindow(QtWidgets.QDialog):
         publish_btn.clicked.connect(self._on_publish_clicked)
 
         publish_frame.details_page_requested.connect(self._go_to_details_tab)
+        create_overlay_button.clicked.connect(
+            self._on_create_overlay_button_click
+        )
 
         controller.event_system.add_callback(
             "instances.refresh.finished", self._on_instances_refresh
         )
         controller.event_system.add_callback(
             "publish.reset.finished", self._on_publish_reset
+        )
+        controller.event_system.add_callback(
+            "controller.reset.finished", self._on_controller_reset
         )
         controller.event_system.add_callback(
             "publish.process.started", self._on_publish_start
@@ -310,6 +318,7 @@ class PublisherWindow(QtWidgets.QDialog):
         self._publish_overlay = publish_overlay
         self._publish_frame = publish_frame
 
+        self._content_widget = content_widget
         self._content_stacked_layout = content_stacked_layout
 
         self._overview_widget = overview_widget
@@ -331,25 +340,39 @@ class PublisherWindow(QtWidgets.QDialog):
         self._controller = controller
 
         self._first_show = True
+        self._first_reset = True
         # This is a little bit confusing but 'reset_on_first_show' is too long
-        #   forin init
+        #   for init
         self._reset_on_first_show = reset_on_show
         self._reset_on_show = True
         self._publish_frame_visible = None
+        self._tab_on_reset = None
 
         self._error_messages_to_show = collections.deque()
         self._errors_dialog_message_timer = errors_dialog_message_timer
 
         self._set_publish_visibility(False)
 
+        self._create_overlay_button = create_overlay_button
+        self._app_event_listener_installed = False
+
         self._show_timer = show_timer
         self._show_counter = 0
+        self._window_is_visible = False
 
     @property
     def controller(self):
         return self._controller
 
+    def make_sure_is_visible(self):
+        if self._window_is_visible:
+            self.setWindowState(QtCore.Qt.ActiveWindow)
+
+        else:
+            self.show()
+
     def showEvent(self, event):
+        self._window_is_visible = True
         super(PublisherWindow, self).showEvent(event)
         if self._first_show:
             self._first_show = False
@@ -360,6 +383,38 @@ class PublisherWindow(QtWidgets.QDialog):
     def resizeEvent(self, event):
         super(PublisherWindow, self).resizeEvent(event)
         self._update_publish_frame_rect()
+        self._update_create_overlay_size()
+
+    def closeEvent(self, event):
+        self._window_is_visible = False
+        self._uninstall_app_event_listener()
+        self.save_changes()
+        self._reset_on_show = True
+        self._controller.clear_thumbnail_temp_dir_path()
+        super(PublisherWindow, self).closeEvent(event)
+
+    def leaveEvent(self, event):
+        super(PublisherWindow, self).leaveEvent(event)
+        self._update_create_overlay_visibility()
+
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.MouseMove:
+            self._update_create_overlay_visibility(event.globalPos())
+        return super(PublisherWindow, self).eventFilter(obj, event)
+
+    def _install_app_event_listener(self):
+        if self._app_event_listener_installed:
+            return
+        self._app_event_listener_installed = True
+        app = QtWidgets.QApplication.instance()
+        app.installEventFilter(self)
+
+    def _uninstall_app_event_listener(self):
+        if not self._app_event_listener_installed:
+            return
+        self._app_event_listener_installed = False
+        app = QtWidgets.QApplication.instance()
+        app.removeEventFilter(self)
 
     def keyPressEvent(self, event):
         # Ignore escape button to close window
@@ -390,16 +445,15 @@ class PublisherWindow(QtWidgets.QDialog):
         # Reset counter when done for next show event
         self._show_counter = 0
 
+        self._update_create_overlay_size()
+        self._update_create_overlay_visibility()
+        if self._is_on_create_tab():
+            self._install_app_event_listener()
+
         # Reset if requested
         if self._reset_on_show:
             self._reset_on_show = False
             self.reset()
-
-    def closeEvent(self, event):
-        self.save_changes()
-        self._reset_on_show = True
-        self._controller.clear_thumbnail_temp_dir_path()
-        super(PublisherWindow, self).closeEvent(event)
 
     def save_changes(self):
         self._controller.save_changes()
@@ -410,8 +464,21 @@ class PublisherWindow(QtWidgets.QDialog):
     def set_context_label(self, label):
         self._context_label.setText(label)
 
+    def set_tab_on_reset(self, tab):
+        """Define tab that will be selected on window show.
+
+        This is single use method, when publisher window is showed the value is
+            unset and not used on next show.
+
+        Args:
+            tab (Union[int, Literal[create, publish, details, report]]: Index
+                or name of tab which will be selected on show (after reset).
+        """
+
+        self._tab_on_reset = tab
+
     def _update_publish_details_widget(self, force=False):
-        if not force and self._tabs_widget.current_tab() != "details":
+        if not force and not self._is_on_details_tab():
             return
 
         report_data = self.controller.get_publish_report()
@@ -441,6 +508,10 @@ class PublisherWindow(QtWidgets.QDialog):
             self._help_dialog.width(), self._help_dialog.height()
         )
 
+    def _on_create_overlay_button_click(self):
+        self._create_overlay_button.set_under_mouse(False)
+        self._go_to_publish_tab()
+
     def _on_tab_change(self, old_tab, new_tab):
         if old_tab == "details":
             self._publish_details_widget.close_details_popup()
@@ -465,20 +536,53 @@ class PublisherWindow(QtWidgets.QDialog):
                 self._report_widget
             )
 
+        is_create = new_tab == "create"
+        if is_create:
+            self._install_app_event_listener()
+        else:
+            self._uninstall_app_event_listener()
+        self._create_overlay_button.set_visible(is_create)
+
     def _on_context_or_active_change(self):
         self._validate_create_instances()
 
     def _on_create_request(self):
         self._go_to_create_tab()
 
+    def _set_current_tab(self, identifier):
+        self._tabs_widget.set_current_tab(identifier)
+
+    def set_current_tab(self, tab):
+        self._set_current_tab(tab)
+        if not self._window_is_visible:
+            self.set_tab_on_reset(tab)
+
+    def _is_current_tab(self, identifier):
+        return self._tabs_widget.is_current_tab(identifier)
+
     def _go_to_create_tab(self):
-        self._tabs_widget.set_current_tab("create")
+        self._set_current_tab("create")
+
+    def _go_to_publish_tab(self):
+        self._set_current_tab("publish")
 
     def _go_to_details_tab(self):
-        self._tabs_widget.set_current_tab("details")
+        self._set_current_tab("details")
 
     def _go_to_report_tab(self):
-        self._tabs_widget.set_current_tab("report")
+        self._set_current_tab("report")
+
+    def _is_on_create_tab(self):
+        return self._is_current_tab("create")
+
+    def _is_on_publish_tab(self):
+        return self._is_current_tab("publish")
+
+    def _is_on_details_tab(self):
+        return self._is_current_tab("details")
+
+    def _is_on_report_tab(self):
+        return self._is_current_tab("report")
 
     def _set_publish_overlay_visibility(self, visible):
         if visible:
@@ -530,11 +634,33 @@ class PublisherWindow(QtWidgets.QDialog):
         self._set_publish_visibility(False)
         self._set_footer_enabled(False)
         self._update_publish_details_widget()
-        if (
-            not self._tabs_widget.is_current_tab("create")
-            and not self._tabs_widget.is_current_tab("publish")
+
+    def _on_controller_reset(self):
+        self._first_reset, first_reset = False, self._first_reset
+        if self._tab_on_reset is not None:
+            self._tab_on_reset, new_tab = None, self._tab_on_reset
+            self._set_current_tab(new_tab)
+            return
+
+        # On first reset change tab based on available items
+        # - if there is at least one instance the tab is changed to 'publish'
+        #   otherwise 'create' is used
+        # - this happens only on first show
+        if first_reset:
+            if self._overview_widget.has_items():
+                self._go_to_publish_tab()
+            else:
+                self._go_to_create_tab()
+
+        elif (
+            not self._is_on_create_tab()
+            and not self._is_on_publish_tab()
         ):
-            self._tabs_widget.set_current_tab("publish")
+            # If current tab is not 'Create' or 'Publish' go to 'Publish'
+            #   - this can happen when publishing started and was reset
+            #       at that moment it doesn't make sense to stay at publish
+            #       specific tabs.
+            self._go_to_publish_tab()
 
     def _on_publish_start(self):
         self._create_tab.setEnabled(False)
@@ -550,8 +676,8 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self._publish_details_widget.close_details_popup()
 
-        if self._tabs_widget.is_current_tab(self._create_tab):
-            self._tabs_widget.set_current_tab("publish")
+        if self._is_on_create_tab():
+            self._go_to_publish_tab()
 
     def _on_publish_validated_change(self, event):
         if event["value"]:
@@ -564,7 +690,7 @@ class PublisherWindow(QtWidgets.QDialog):
         publish_has_crashed = self._controller.publish_has_crashed
         validate_enabled = not publish_has_crashed
         publish_enabled = not publish_has_crashed
-        if self._tabs_widget.is_current_tab("publish"):
+        if self._is_on_publish_tab():
             self._go_to_report_tab()
 
         if validate_enabled:
@@ -667,6 +793,36 @@ class PublisherWindow(QtWidgets.QDialog):
         self.add_error_message_dialog(
             event["title"], new_failed_info, "Convertor:"
         )
+
+    def _update_create_overlay_size(self):
+        metrics = self._create_overlay_button.fontMetrics()
+        height = int(metrics.height())
+        width = int(height * 0.7)
+        end_pos_x = self.width()
+        start_pos_x = end_pos_x - width
+
+        center = self._content_widget.parent().mapTo(
+            self,
+            self._content_widget.rect().center()
+        )
+        pos_y = center.y() - (height * 0.5)
+
+        self._create_overlay_button.setGeometry(
+            start_pos_x, pos_y,
+            width, height
+        )
+
+    def _update_create_overlay_visibility(self, global_pos=None):
+        if global_pos is None:
+            global_pos = QtGui.QCursor.pos()
+
+        under_mouse = False
+        my_pos = self.mapFromGlobal(global_pos)
+        if self.rect().contains(my_pos):
+            widget_geo = self._overview_widget.get_subset_views_geo()
+            widget_x = widget_geo.left() + (widget_geo.width() * 0.5)
+            under_mouse = widget_x < global_pos.x()
+        self._create_overlay_button.set_under_mouse(under_mouse)
 
 
 class ErrorsMessageBox(ErrorMessageBox):

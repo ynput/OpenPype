@@ -912,6 +912,13 @@ class InstanceListView(AbstractInstanceView):
         if not self._instance_view.isExpanded(proxy_index):
             self._instance_view.expand(proxy_index)
 
+    def has_items(self):
+        if self._convertor_group_widget is not None:
+            return True
+        if self._group_items:
+            return True
+        return False
+
     def get_selected_items(self):
         """Get selected instance ids and context selection.
 
