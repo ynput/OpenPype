@@ -7,6 +7,7 @@ import pyblish.api
 
 from openpype.client import get_asset_by_id
 from openpype.lib import filter_profiles
+from openpype.pipeline import KnownPublishError
 
 CUST_ATTR_GROUP = "openpype"
 
@@ -16,7 +17,6 @@ CUST_ATTR_GROUP = "openpype"
 def get_pype_attr(session, split_hierarchical=True):
     custom_attributes = []
     hier_custom_attributes = []
-    # TODO remove deprecated "avalon" group from query
     cust_attrs_query = (
         "select id, entity_type, object_type_id, is_hierarchical, default"
         " from CustomAttributeConfiguration"
@@ -76,19 +76,25 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
     create_task_status_profiles = []
 
     def process(self, context):
-        self.context = context
-        if "hierarchyContext" not in self.context.data:
+        if "hierarchyContext" not in context.data:
             return
 
         hierarchy_context = self._get_active_assets(context)
         self.log.debug("__ hierarchy_context: {}".format(hierarchy_context))
 
-        session = self.context.data["ftrackSession"]
-        project_name = self.context.data["projectEntity"]["name"]
-        query = 'Project where full_name is "{}"'.format(project_name)
-        project = session.query(query).one()
-        auto_sync_state = project["custom_attributes"][CUST_ATTR_AUTO_SYNC]
+        session = context.data["ftrackSession"]
+        project_name = context.data["projectName"]
+        project = session.query(
+            'select id, full_name from Project where full_name is "{}"'.format(
+                project_name
+            )
+        ).first()
+        if not project:
+            raise KnownPublishError(
+                "Project \"{}\" was not found on ftrack.".format(project_name)
+            )
 
+        self.context = context
         self.session = session
         self.ft_project = project
         self.task_types = self.get_all_task_types(project)
