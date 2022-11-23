@@ -27,17 +27,24 @@ class CelactionPrelaunchHook(PreLaunchHook):
         app = "celaction_publish"
 
         # setting output parameters
-        path = r"Software\CelAction\CelAction2D\User Settings"
-        winreg.CreateKey(winreg.HKEY_CURRENT_USER, path)
+        path_user_settings = "\\".join([
+            "Software", "CelAction", "CelAction2D", "User Settings"
+        ])
+        winreg.CreateKey(winreg.HKEY_CURRENT_USER, path_user_settings)
         hKey = winreg.OpenKey(
-            winreg.HKEY_CURRENT_USER,
-            "Software\\CelAction\\CelAction2D\\User Settings", 0,
-            winreg.KEY_ALL_ACCESS)
+            winreg.HKEY_CURRENT_USER, path_user_settings, 0,
+            winreg.KEY_ALL_ACCESS
+        )
 
-        # TODO: this will need to be checked more thoroughly
-        pype_exe = os.getenv("OPENPYPE_EXECUTABLE")
+        openpype_executable = os.getenv("OPENPYPE_EXECUTABLE")
 
-        winreg.SetValueEx(hKey, "SubmitAppTitle", 0, winreg.REG_SZ, pype_exe)
+        winreg.SetValueEx(
+            hKey,
+            "SubmitAppTitle",
+            0,
+            winreg.REG_SZ,
+            openpype_executable
+        )
 
         parameters = [
             "launch",
@@ -53,33 +60,45 @@ class CelactionPrelaunchHook(PreLaunchHook):
             "--resolutionHeight *Y*",
             # "--programDir \"'*PROGPATH*'\""
         ]
-        winreg.SetValueEx(hKey, "SubmitParametersTitle", 0, winreg.REG_SZ,
-                          " ".join(parameters))
+        winreg.SetValueEx(
+            hKey, "SubmitParametersTitle", 0, winreg.REG_SZ,
+            " ".join(parameters)
+        )
 
         # setting resolution parameters
-        path = r"Software\CelAction\CelAction2D\User Settings\Dialogs"
-        path += r"\SubmitOutput"
-        winreg.CreateKey(winreg.HKEY_CURRENT_USER, path)
-        hKey = winreg.OpenKey(winreg.HKEY_CURRENT_USER, path, 0,
-                              winreg.KEY_ALL_ACCESS)
+        path_submit = "\\".join([
+            path_user_settings, "Dialogs", "SubmitOutput"
+        ])
+        winreg.CreateKey(winreg.HKEY_CURRENT_USER, path_submit)
+        hKey = winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER, path_submit, 0,
+            winreg.KEY_ALL_ACCESS
+        )
         winreg.SetValueEx(hKey, "SaveScene", 0, winreg.REG_DWORD, 1)
         winreg.SetValueEx(hKey, "CustomX", 0, winreg.REG_DWORD, 1920)
         winreg.SetValueEx(hKey, "CustomY", 0, winreg.REG_DWORD, 1080)
 
         # making sure message dialogs don't appear when overwriting
-        path = r"Software\CelAction\CelAction2D\User Settings\Messages"
-        path += r"\OverwriteScene"
-        winreg.CreateKey(winreg.HKEY_CURRENT_USER, path)
-        hKey = winreg.OpenKey(winreg.HKEY_CURRENT_USER, path, 0,
-                              winreg.KEY_ALL_ACCESS)
+        path_overwrite_scene = "\\".join([
+            path_user_settings, "Messages", "OverwriteScene"
+        ])
+        winreg.CreateKey(winreg.HKEY_CURRENT_USER, path_overwrite_scene)
+        hKey = winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER, path_overwrite_scene, 0,
+            winreg.KEY_ALL_ACCESS
+        )
         winreg.SetValueEx(hKey, "Result", 0, winreg.REG_DWORD, 6)
         winreg.SetValueEx(hKey, "Valid", 0, winreg.REG_DWORD, 1)
 
-        path = r"Software\CelAction\CelAction2D\User Settings\Messages"
-        path += r"\SceneSaved"
-        winreg.CreateKey(winreg.HKEY_CURRENT_USER, path)
-        hKey = winreg.OpenKey(winreg.HKEY_CURRENT_USER, path, 0,
-                              winreg.KEY_ALL_ACCESS)
+        # set scane as not saved
+        path_scene_saved = "\\".join([
+            path_user_settings, "Messages", "SceneSaved"
+        ])
+        winreg.CreateKey(winreg.HKEY_CURRENT_USER, path_scene_saved)
+        hKey = winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER, path_scene_saved, 0,
+            winreg.KEY_ALL_ACCESS
+        )
         winreg.SetValueEx(hKey, "Result", 0, winreg.REG_DWORD, 1)
         winreg.SetValueEx(hKey, "Valid", 0, winreg.REG_DWORD, 1)
 
@@ -90,11 +109,11 @@ class CelactionPrelaunchHook(PreLaunchHook):
         if not os.path.exists(workfile_path):
             # TODO add ability to set different template workfile path via
             # settings
-            pype_celaction_dir = os.path.dirname(os.path.dirname(
+            openpype_celaction_dir = os.path.dirname(os.path.dirname(
                 os.path.abspath(celaction.__file__)
             ))
             template_path = os.path.join(
-                pype_celaction_dir,
+                openpype_celaction_dir,
                 "resources",
                 "celaction_template_scene.scn"
             )
