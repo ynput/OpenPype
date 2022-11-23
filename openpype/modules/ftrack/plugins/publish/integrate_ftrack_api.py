@@ -36,10 +36,42 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             return
 
         context = instance.context
-        session = context.data["ftrackSession"]
+        task_entity, parent_entity = self.get_instance_entities(
+            instance, context)
+        if parent_entity is None:
+            self.log.info((
+               "Skipping ftrack integration. Instance \"{}\" does not"
+               " have specified ftrack entities."
+            ).format(str(instance)))
+            return
 
+        context_session = context.data["ftrackSession"]
+        ftrack_api = context.data["ftrackPythonModule"]
+        # Create new session for uploading
+        # - this was added to prevent failed uploads due to connection lost
+        #   it is possible it won't fix the issue and potentially make it worse
+        #   in that case new session should not be created and should not be
+        #   closed at the end.
+        #       - also rename variable 'context_session' -> 'session'
+        session = ftrack_api.Session(
+            context_session.server_url,
+            context_session.api_key,
+            context_session.api_user,
+            auto_connect_event_hub=False,
+        )
+        try:
+            self.integrate_to_ftrack(
+                session,
+                instance,
+                task_entity,
+                parent_entity,
+                component_list
+            )
+        finally:
+            session.close()
+
+    def get_instance_entities(self, instance, context):
         parent_entity = None
-        default_asset_name = None
         # If instance has set "ftrackEntity" or "ftrackTask" then use them from
         #   instance. Even if they are set to None. If they are set to None it
         #   has a reason. (like has different context)
@@ -52,15 +84,21 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             parent_entity = context.data.get("ftrackEntity")
 
         if task_entity:
-            default_asset_name = task_entity["name"]
             parent_entity = task_entity["parent"]
 
-        if parent_entity is None:
-            self.log.info((
-                "Skipping ftrack integration. Instance \"{}\" does not"
-                " have specified ftrack entities."
-            ).format(str(instance)))
-            return
+        return task_entity, parent_entity
+
+    def integrate_to_ftrack(
+        self,
+        session,
+        instance,
+        task_entity,
+        parent_entity,
+        component_list
+    ):
+        default_asset_name = None
+        if task_entity:
+            default_asset_name = task_entity["name"]
 
         if not default_asset_name:
             default_asset_name = parent_entity["name"]
