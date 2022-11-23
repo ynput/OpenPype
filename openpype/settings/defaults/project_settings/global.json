@@ -288,6 +288,17 @@
                     "task_types": [],
                     "tasks": [],
                     "template_name": "maya2unreal"
+                },
+                {
+                    "families": [
+                        "online"
+                    ],
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template_name": "online"
                 }
             ]
         },
