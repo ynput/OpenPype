@@ -4,7 +4,6 @@ import bpy
 
 from openpype.pipeline import publish
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class ExtractAnimationABC(publish.Extractor):
@@ -22,8 +21,6 @@ class ExtractAnimationABC(publish.Extractor):
         filepath = os.path.join(stagingdir, filename)
 
         context = bpy.context
-        scene = context.scene
-        view_layer = context.view_layer
 
         # Perform extraction
         self.log.info("Performing extraction..")
