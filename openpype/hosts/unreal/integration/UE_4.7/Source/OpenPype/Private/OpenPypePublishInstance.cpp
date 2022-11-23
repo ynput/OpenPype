@@ -15,6 +15,9 @@ UOpenPypePublishInstance::UOpenPypePublishInstance(const FObjectInitializer& Obj
 	const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<
 		FAssetRegistryModule>("AssetRegistry");
 
+	const FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>(
+		"PropertyEditor");
+
 	FString Left, Right;
 	GetPathName().Split("/" + GetName(), &Left, &Right);
 
@@ -33,7 +36,6 @@ UOpenPypePublishInstance::UOpenPypePublishInstance(const FObjectInitializer& Obj
 	AssetRegistryModule.Get().OnAssetAdded().AddUObject(this, &UOpenPypePublishInstance::OnAssetCreated);
 	AssetRegistryModule.Get().OnAssetRemoved().AddUObject(this, &UOpenPypePublishInstance::OnAssetRemoved);
 	AssetRegistryModule.Get().OnAssetUpdated().AddUObject(this, &UOpenPypePublishInstance::OnAssetUpdated);
-	
 }
 
 void UOpenPypePublishInstance::OnAssetCreated(const FAssetData& InAssetData)
@@ -53,9 +55,11 @@ void UOpenPypePublishInstance::OnAssetCreated(const FAssetData& InAssetData)
 
 	if (result)
 	{
-		AssetDataInternal.Emplace(Asset);
-		UE_LOG(LogTemp, Log, TEXT("Added an Asset to PublishInstance - Publish Instance: %s, Asset %s"),
-		       *this->GetName(), *Asset->GetName());
+		if (AssetDataInternal.Emplace(Asset).IsValidId())
+		{
+			UE_LOG(LogTemp, Log, TEXT("Added an Asset to PublishInstance - Publish Instance: %s, Asset %s"),
+				*this->GetName(), *Asset->GetName());
+		}
 	}
 }
 
@@ -63,14 +67,14 @@ void UOpenPypePublishInstance::OnAssetRemoved(const FAssetData& InAssetData)
 {
 	if (Cast<UOpenPypePublishInstance>(InAssetData.GetAsset()) == nullptr)
 	{
-		if (AssetDataInternal.Contains(NULL))
+		if (AssetDataInternal.Contains(nullptr))
 		{
-			AssetDataInternal.Remove(NULL);
+			AssetDataInternal.Remove(nullptr);
 			REMOVE_INVALID_ENTRIES(AssetDataInternal)
 		}
 		else
 		{
-			AssetDataExternal.Remove(NULL);
+			AssetDataExternal.Remove(nullptr);
 			REMOVE_INVALID_ENTRIES(AssetDataExternal)
 		}
 	}
@@ -121,22 +125,21 @@ void UOpenPypePublishInstance::PostEditChangeProperty(FPropertyChangedEvent& Pro
 		PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(
 			UOpenPypePublishInstance, AssetDataExternal))
 	{
-
 		// Check for duplicated assets
 		for (const auto& Asset : AssetDataInternal)
 		{
 			if (AssetDataExternal.Contains(Asset))
 			{
 				AssetDataExternal.Remove(Asset);
-				return SendNotification("You are not allowed to add assets into AssetDataExternal which are already included in AssetDataInternal!");
+				return SendNotification(
+					"You are not allowed to add assets into AssetDataExternal which are already included in AssetDataInternal!");
 			}
-			
 		}
 
 		// Check if no UOpenPypePublishInstance type assets are included
 		for (const auto& Asset : AssetDataExternal)
 		{
-			if (Cast<UOpenPypePublishInstance>(Asset) != nullptr)
+			if (Cast<UOpenPypePublishInstance>(Asset.Get()) != nullptr)
 			{
 				AssetDataExternal.Remove(Asset);
 				return SendNotification("You are not allowed to add publish instances!");

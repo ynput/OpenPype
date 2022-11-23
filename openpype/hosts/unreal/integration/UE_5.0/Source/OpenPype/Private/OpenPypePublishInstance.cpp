@@ -35,6 +35,7 @@ UOpenPypePublishInstance::UOpenPypePublishInstance(const FObjectInitializer& Obj
 	AssetRegistryModule.Get().OnAssetRemoved().AddUObject(this, &UOpenPypePublishInstance::OnAssetRemoved);
 	AssetRegistryModule.Get().OnAssetUpdated().AddUObject(this, &UOpenPypePublishInstance::OnAssetUpdated);
 	
+	
 }
 
 void UOpenPypePublishInstance::OnAssetCreated(const FAssetData& InAssetData)
@@ -54,9 +55,11 @@ void UOpenPypePublishInstance::OnAssetCreated(const FAssetData& InAssetData)
 
 	if (result)
 	{
-		AssetDataInternal.Emplace(Asset);
-		UE_LOG(LogTemp, Log, TEXT("Added an Asset to PublishInstance - Publish Instance: %s, Asset %s"),
-		       *this->GetName(), *Asset->GetName());
+		if (AssetDataInternal.Emplace(Asset).IsValidId())
+		{
+			UE_LOG(LogTemp, Log, TEXT("Added an Asset to PublishInstance - Publish Instance: %s, Asset %s"),
+				*this->GetName(), *Asset->GetName());
+		}
 	}
 }
 
@@ -124,7 +127,7 @@ void UOpenPypePublishInstance::PostEditChangeProperty(FPropertyChangedEvent& Pro
 	{
 
 		// Check for duplicated assets
-		for (const TObjectPtr<UObject>& Asset : AssetDataInternal)
+		for (const auto& Asset : AssetDataInternal)
 		{
 			if (AssetDataExternal.Contains(Asset))
 			{
@@ -135,9 +138,9 @@ void UOpenPypePublishInstance::PostEditChangeProperty(FPropertyChangedEvent& Pro
 		}
 
 		// Check if no UOpenPypePublishInstance type assets are included
-		for (const TObjectPtr<UObject>& Asset : AssetDataExternal)
+		for (const auto& Asset : AssetDataExternal)
 		{
-			if (Cast<UOpenPypePublishInstance>(Asset) != nullptr)
+			if (Cast<UOpenPypePublishInstance>(Asset.Get()) != nullptr)
 			{
 				AssetDataExternal.Remove(Asset);
 				return SendNotification("You are not allowed to add publish instances!");
