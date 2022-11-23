@@ -208,3 +208,6 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             published_workfile_path,
             local_workfile_path,
         )
+
+        # Keep source filepath for further path conformation
+        self.data["source_filepath"] = published_workfile_path
