@@ -192,7 +192,7 @@ def get_openpype_executable():
     return exe_list, dir_list
 
 
-def get_openpype_versions(exe_list, dir_list):
+def get_openpype_versions(dir_list):
     print(">>> Getting OpenPype executable ...")
     openpype_versions = []
 
