@@ -40,25 +40,15 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             instance, context)
         if parent_entity is None:
             self.log.info((
-               "Skipping ftrack integration. Instance \"{}\" does not"
-               " have specified ftrack entities."
+                "Skipping ftrack integration. Instance \"{}\" does not"
+                " have specified ftrack entities."
             ).format(str(instance)))
             return
 
-        context_session = context.data["ftrackSession"]
-        ftrack_api = context.data["ftrackPythonModule"]
-        # Create new session for uploading
-        # - this was added to prevent failed uploads due to connection lost
-        #   it is possible it won't fix the issue and potentially make it worse
-        #   in that case new session should not be created and should not be
-        #   closed at the end.
-        #       - also rename variable 'context_session' -> 'session'
-        session = ftrack_api.Session(
-            context_session.server_url,
-            context_session.api_key,
-            context_session.api_user,
-            auto_connect_event_hub=False,
-        )
+        session = context.data["ftrackSession"]
+        # Reset session and reconfigure locations
+        session.reset()
+
         try:
             self.integrate_to_ftrack(
                 session,
@@ -67,8 +57,10 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 parent_entity,
                 component_list
             )
-        finally:
-            session.close()
+
+        except Exception:
+            session.reset()
+            raise
 
     def get_instance_entities(self, instance, context):
         parent_entity = None
@@ -224,13 +216,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
 
         self.log.info("Setting task status to \"{}\"".format(status_name))
         task_entity["status"] = status
-        try:
-            session.commit()
-        except Exception:
-            tp, value, tb = sys.exc_info()
-            session.rollback()
-            session._configure_locations()
-            six.reraise(tp, value, tb)
+        session.commit()
 
     def _fill_component_locations(self, session, component_list):
         components_by_location_name = collections.defaultdict(list)
@@ -533,13 +519,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 session.delete(member)
                 del(member)
 
-            try:
-                session.commit()
-            except Exception:
-                tp, value, tb = sys.exc_info()
-                session.rollback()
-                session._configure_locations()
-                six.reraise(tp, value, tb)
+            session.commit()
 
             # Reset members in memory
             if "members" in component_entity.keys():
@@ -655,13 +635,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             )
         else:
             # Commit changes.
-            try:
-                session.commit()
-            except Exception:
-                tp, value, tb = sys.exc_info()
-                session.rollback()
-                session._configure_locations()
-                six.reraise(tp, value, tb)
+            session.commit()
 
     def _create_components(self, session, asset_versions_data_by_id):
         for item in asset_versions_data_by_id.values():
