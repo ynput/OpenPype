@@ -103,6 +103,129 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         # import ftrack hierarchy
         self.import_to_ftrack(project_name, hierarchy_context)
 
+    def query_ftrack_entitites(self, session, ft_project):
+        project_id = ft_project["id"]
+        entities = session.query((
+            "select id, name, parent_id"
+            " from TypedContext where project_id is \"{}\""
+        ).format(project_id)).all()
+
+        entities_by_id = {}
+        entities_by_parent_id = collections.defaultdict(list)
+        for entity in entities:
+            entities_by_id[entity["id"]] = entity
+            parent_id = entity["parent_id"]
+            entities_by_parent_id[parent_id].append(entity)
+
+        ftrack_hierarchy = []
+        ftrack_id_queue = collections.deque()
+        ftrack_id_queue.append((project_id, ftrack_hierarchy))
+        while ftrack_id_queue:
+            item = ftrack_id_queue.popleft()
+            ftrack_id, parent_list = item
+            if ftrack_id == project_id:
+                entity = ft_project
+                name = entity["full_name"]
+            else:
+                entity = entities_by_id[ftrack_id]
+                name = entity["name"]
+
+            children = []
+            parent_list.append({
+                "name": name,
+                "low_name": name.lower(),
+                "entity": entity,
+                "children": children,
+            })
+            for child in entities_by_parent_id[ftrack_id]:
+                ftrack_id_queue.append((child["id"], children))
+        return ftrack_hierarchy
+
+    def find_matching_ftrack_entities(
+        self, hierarchy_context, ftrack_hierarchy
+    ):
+        walk_queue = collections.deque()
+        for entity_name, entity_data in hierarchy_context.items():
+            walk_queue.append(
+                (entity_name, entity_data, ftrack_hierarchy)
+            )
+
+        matching_ftrack_entities = []
+        while walk_queue:
+            item = walk_queue.popleft()
+            entity_name, entity_data, ft_children = item
+            matching_ft_child = None
+            for ft_child in ft_children:
+                if ft_child["low_name"] == entity_name.lower():
+                    matching_ft_child = ft_child
+                    break
+
+            if matching_ft_child is None:
+                continue
+
+            entity = matching_ft_child["entity"]
+            entity_data["ft_entity"] = entity
+            matching_ftrack_entities.append(entity)
+
+            hierarchy_children = entity_data.get("childs")
+            if not hierarchy_children:
+                continue
+
+            for child_name, child_data in hierarchy_children.items():
+                walk_queue.append(
+                    (child_name, child_data, matching_ft_child["children"])
+                )
+        return matching_ftrack_entities
+
+    def query_custom_attribute_values(self, session, entities, hier_attrs):
+        attr_ids = {
+            attr["id"]
+            for attr in hier_attrs
+        }
+        entity_ids = {
+            entity["id"]
+            for entity in entities
+        }
+        output = {
+            entity_id: {}
+            for entity_id in entity_ids
+        }
+        if not attr_ids or not entity_ids:
+            return {}
+
+        joined_attr_ids = ",".join(
+            ['"{}"'.format(attr_id) for attr_id in attr_ids]
+        )
+
+        # Query values in chunks
+        chunk_size = int(5000 / len(attr_ids))
+        # Make sure entity_ids is `list` for chunk selection
+        entity_ids = list(entity_ids)
+        results = []
+        for idx in range(0, len(entity_ids), chunk_size):
+            joined_entity_ids = ",".join([
+                '"{}"'.format(entity_id)
+                for entity_id in entity_ids[idx:idx + chunk_size]
+            ])
+            results.extend(
+                session.query(
+                    (
+                        "select value, entity_id, configuration_id"
+                        " from CustomAttributeValue"
+                        " where entity_id in ({}) and configuration_id in ({})"
+                    ).format(
+                        joined_entity_ids,
+                        joined_attr_ids
+                    )
+                ).all()
+            )
+
+        for result in results:
+            attr_id = result["configuration_id"]
+            entity_id = result["entity_id"]
+            output[entity_id][attr_id] = result["value"]
+
+        return output
 
     def import_to_ftrack(self, project_name, input_data, parent=None):
         # Prequery hiearchical custom attributes
