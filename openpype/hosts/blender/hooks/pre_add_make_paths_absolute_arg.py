@@ -37,5 +37,8 @@ class AddMakePathsAbsoluteToLaunchArgs(PreLaunchHook):
                 Path(utility_scripts.__file__).parent.joinpath(
                     "make_paths_absolute.py"
                 ).as_posix(),
+                "--",
+                "--source_filepath",
+                self.data.get("source_filepath", ''),
             ]
         )
