@@ -9,6 +9,7 @@ import collections
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
 
+from openpype.lib.attribute_definitions import UnknownDef
 from openpype.tools.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
 from openpype.tools.flickcharm import FlickCharm
@@ -305,6 +306,20 @@ class AbstractInstanceView(QtWidgets.QWidget):
             "{} Method 'refresh' is not implemented."
         ).format(self.__class__.__name__))
 
+    def has_items(self):
+        """View has at least one item.
+
+        This is more a question for controller but is called from widget
+        which should probably should not use controller.
+
+        Returns:
+            bool: There is at least one instance or conversion item.
+        """
+
+        raise NotImplementedError((
+            "{} Method 'has_items' is not implemented."
+        ).format(self.__class__.__name__))
+
     def get_selected_items(self):
         """Selected instances required for callbacks.
 
@@ -577,6 +592,11 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._is_valid = True
 
         self._text = None
+
+        # Make sure combobox is extended horizontally
+        size_policy = self.sizePolicy()
+        size_policy.setHorizontalPolicy(size_policy.MinimumExpanding)
+        self.setSizePolicy(size_policy)
 
     def set_invalid_empty_task(self, invalid=True):
         self._proxy_model.set_filter_empty(invalid)
@@ -1180,7 +1200,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         """Set currently selected instances.
 
         Args:
-            instances(list<CreatedInstance>): List of selected instances.
+            instances(List[CreatedInstance]): List of selected instances.
                 Empty instances tells that nothing or context is selected.
         """
         self._set_btns_visible(False)
@@ -1303,6 +1323,13 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
                 else:
                     widget.set_value(values, True)
 
+            widget.value_changed.connect(self._input_value_changed)
+            self._attr_def_id_to_instances[attr_def.id] = attr_instances
+            self._attr_def_id_to_attr_def[attr_def.id] = attr_def
+
+            if attr_def.hidden:
+                continue
+
             expand_cols = 2
             if attr_def.is_value_def and attr_def.is_label_horizontal:
                 expand_cols = 1
@@ -1321,12 +1348,7 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
             content_layout.addWidget(
                 widget, row, col_num, 1, expand_cols
             )
-
             row += 1
-
-            widget.value_changed.connect(self._input_value_changed)
-            self._attr_def_id_to_instances[attr_def.id] = attr_instances
-            self._attr_def_id_to_attr_def[attr_def.id] = attr_def
 
         self._scroll_area.setWidget(content_widget)
         self._content_widget = content_widget
@@ -1421,8 +1443,17 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
                 widget = create_widget_for_attr_def(
                     attr_def, content_widget
                 )
-                label = attr_def.label or attr_def.key
-                content_layout.addRow(label, widget)
+                hidden_widget = attr_def.hidden
+                # Hide unknown values of publish plugins
+                # - The keys in most of cases does not represent what would
+                #   label represent
+                if isinstance(attr_def, UnknownDef):
+                    widget.setVisible(False)
+                    hidden_widget = True
+
+                if not hidden_widget:
+                    label = attr_def.label or attr_def.key
+                    content_layout.addRow(label, widget)
 
                 widget.value_changed.connect(self._input_value_changed)
 
@@ -1614,6 +1645,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
             instances(List[CreatedInstance]): List of currently selected
                 instances.
             context_selected(bool): Is context selected.
+            convertor_identifiers(List[str]): Identifiers of convert items.
         """
 
         all_valid = True

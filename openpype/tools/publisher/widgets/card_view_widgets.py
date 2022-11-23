@@ -674,9 +674,16 @@ class InstanceCardView(AbstractInstanceView):
                 instances_by_group[group_name]
             )
 
-        self._update_ordered_group_nameS()
+        self._update_ordered_group_names()
 
-    def _update_ordered_group_nameS(self):
+    def has_items(self):
+        if self._convertor_items_group is not None:
+            return True
+        if self._widgets_by_group:
+            return True
+        return False
+
+    def _update_ordered_group_names(self):
         ordered_group_names = [CONTEXT_GROUP]
         for idx in range(self._content_layout.count()):
             if idx > 0:
