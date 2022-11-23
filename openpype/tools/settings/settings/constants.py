@@ -24,7 +24,6 @@ __all__ = (
 
     "SETTINGS_PATH_KEY",
     "ROOT_KEY",
-    "SETTINGS_PATH_KEY",
     "VALUE_KEY",
     "SAVE_TIME_KEY",
     "PROJECT_NAME_KEY",

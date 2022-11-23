@@ -1126,6 +1126,10 @@ ValidationArtistMessage QLabel {
     background: transparent;
 }
 
+CreateNextPageOverlay {
+    font-size: 32pt;
+}
+
 /* Settings - NOT USED YET
 - we need to define font family for settings UI */
 
