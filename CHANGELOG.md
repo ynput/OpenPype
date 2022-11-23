@@ -10,6 +10,9 @@
 
 **🚀 Enhancements**
 
+- Photoshop: bug with pop-up window on Instance Creator [\#4121](https://github.com/pypeclub/OpenPype/pull/4121)
+- Publisher: Open on specific tab [\#4120](https://github.com/pypeclub/OpenPype/pull/4120)
+- Publisher: Hide unknown publish values [\#4116](https://github.com/pypeclub/OpenPype/pull/4116)
 - Ftrack: Event server status give more information about version locations [\#4112](https://github.com/pypeclub/OpenPype/pull/4112)
 - General: Allow higher numbers in frames and clips [\#4101](https://github.com/pypeclub/OpenPype/pull/4101)
 - Publisher: Settings for validate frame range [\#4097](https://github.com/pypeclub/OpenPype/pull/4097)
@@ -25,6 +28,7 @@
 **🐛 Bug fixes**
 
 - General: Move default settings for template name [\#4119](https://github.com/pypeclub/OpenPype/pull/4119)
+- Slack: notification fail in new tray publisher [\#4118](https://github.com/pypeclub/OpenPype/pull/4118)
 - Nuke: loaded nodes set to first tab [\#4114](https://github.com/pypeclub/OpenPype/pull/4114)
 - Nuke: load image first frame [\#4113](https://github.com/pypeclub/OpenPype/pull/4113)
 - Files Widget: Ignore case sensitivity of extensions [\#4096](https://github.com/pypeclub/OpenPype/pull/4096)
@@ -53,7 +57,6 @@
 - Bump loader-utils from 1.4.0 to 1.4.1 in /website [\#4081](https://github.com/pypeclub/OpenPype/pull/4081)
 - remove underscore from subset name [\#4059](https://github.com/pypeclub/OpenPype/pull/4059)
 - Alembic Loader as Arnold Standin [\#4047](https://github.com/pypeclub/OpenPype/pull/4047)
-
 
 ## [3.14.6](https://github.com/pypeclub/OpenPype/tree/3.14.6)
 
