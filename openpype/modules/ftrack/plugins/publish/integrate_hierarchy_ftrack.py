@@ -227,7 +227,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
         return output
 
-    def import_to_ftrack(self, project_name, input_data, parent=None):
+    def import_to_ftrack(self, project_name, hierarchy_context):
         # Prequery hiearchical custom attributes
         hier_custom_attributes = get_pype_attr(self.session)[1]
         hier_attr_by_key = {
@@ -247,8 +247,17 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         # Get ftrack api module (as they are different per python version)
         ftrack_api = self.context.data["ftrackPythonModule"]
 
-        for entity_name in input_data:
-            entity_data = input_data[entity_name]
+        # Use queue of hierarchy items to process
+        import_queue = collections.deque()
+        for entity_name, entity_data in hierarchy_context.items():
+            import_queue.append(
+                (entity_name, entity_data, None)
+            )
+
+        while import_queue:
+            item = import_queue.popleft()
+            entity_name, entity_data, parent = item
+
             entity_type = entity_data['entity_type']
             self.log.debug(entity_data)
             self.log.debug(entity_type)
@@ -388,9 +397,14 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                     six.reraise(tp, value, tb)
 
             # Import children.
-            if 'childs' in entity_data:
-                self.import_to_ftrack(
-                    project_name, entity_data['childs'], entity)
+            children = entity_data.get("childs")
+            if not children:
+                continue
+
+            for entity_name, entity_data in children.items():
+                import_queue.append(
+                    (entity_name, entity_data, entity)
+                )
 
     def create_links(self, project_name, entity_data, entity):
         # Clear existing links.
