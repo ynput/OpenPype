@@ -234,6 +234,16 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             attr["key"]: attr
             for attr in hier_custom_attributes
         }
+        # Query user entity (for comments)
+        user = self.session.query(
+            "User where username is \"{}\"".format(self.session.api_user)
+        ).first()
+        if not user:
+            self.log.warning(
+                "Was not able to query current User {}".format(
+                    self.session.api_user
+                )
+            )
         # Get ftrack api module (as they are different per python version)
         ftrack_api = self.context.data["ftrackPythonModule"]
 
@@ -364,25 +374,18 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 six.reraise(tp, value, tb)
 
             # Create notes.
-            user = self.session.query(
-                "User where username is \"{}\"".format(self.session.api_user)
-            ).first()
-            if user:
-                for comment in entity_data.get("comments", []):
+            entity_comments = entity_data.get("comments")
+            if user and entity_comments:
+                for comment in entity_comments:
                     entity.create_note(comment, user)
-            else:
-                self.log.warning(
-                    "Was not able to query current User {}".format(
-                        self.session.api_user
-                    )
-                )
-            try:
-                self.session.commit()
-            except Exception:
-                tp, value, tb = sys.exc_info()
-                self.session.rollback()
-                self.session._configure_locations()
-                six.reraise(tp, value, tb)
+
+                try:
+                    self.session.commit()
+                except Exception:
+                    tp, value, tb = sys.exc_info()
+                    self.session.rollback()
+                    self.session._configure_locations()
+                    six.reraise(tp, value, tb)
 
             # Import children.
             if 'childs' in entity_data:
