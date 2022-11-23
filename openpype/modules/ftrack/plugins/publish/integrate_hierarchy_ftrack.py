@@ -8,9 +8,6 @@ import pyblish.api
 from openpype.client import get_asset_by_id
 from openpype.lib import filter_profiles
 
-
-# Copy of constant `openpype_modules.ftrack.lib.avalon_sync.CUST_ATTR_AUTO_SYNC`
-CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
 CUST_ATTR_GROUP = "openpype"
 
 
@@ -97,18 +94,9 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         self.task_types = self.get_all_task_types(project)
         self.task_statuses = self.get_task_statuses(project)
 
-        # disable termporarily ftrack project's autosyncing
-        if auto_sync_state:
-            self.auto_sync_off(project)
+        # import ftrack hierarchy
+        self.import_to_ftrack(project_name, hierarchy_context)
 
-        try:
-            # import ftrack hierarchy
-            self.import_to_ftrack(project_name, hierarchy_context)
-        except Exception:
-            raise
-        finally:
-            if auto_sync_state:
-                self.auto_sync_on(project)
 
     def import_to_ftrack(self, project_name, input_data, parent=None):
         # Prequery hiearchical custom attributes
@@ -380,33 +368,6 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             six.reraise(tp, value, tb)
 
         return entity
-
-    def auto_sync_off(self, project):
-        project["custom_attributes"][CUST_ATTR_AUTO_SYNC] = False
-
-        self.log.info("Ftrack autosync swithed off")
-
-        try:
-            self.session.commit()
-        except Exception:
-            tp, value, tb = sys.exc_info()
-            self.session.rollback()
-            self.session._configure_locations()
-            six.reraise(tp, value, tb)
-
-    def auto_sync_on(self, project):
-
-        project["custom_attributes"][CUST_ATTR_AUTO_SYNC] = True
-
-        self.log.info("Ftrack autosync swithed on")
-
-        try:
-            self.session.commit()
-        except Exception:
-            tp, value, tb = sys.exc_info()
-            self.session.rollback()
-            self.session._configure_locations()
-            six.reraise(tp, value, tb)
 
     def _get_active_assets(self, context):
         """ Returns only asset dictionary.
