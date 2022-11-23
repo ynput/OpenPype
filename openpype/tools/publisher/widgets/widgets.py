@@ -306,6 +306,20 @@ class AbstractInstanceView(QtWidgets.QWidget):
             "{} Method 'refresh' is not implemented."
         ).format(self.__class__.__name__))
 
+    def has_items(self):
+        """View has at least one item.
+
+        This is more a question for controller but is called from widget
+        which should probably should not use controller.
+
+        Returns:
+            bool: There is at least one instance or conversion item.
+        """
+
+        raise NotImplementedError((
+            "{} Method 'has_items' is not implemented."
+        ).format(self.__class__.__name__))
+
     def get_selected_items(self):
         """Selected instances required for callbacks.
 
@@ -578,6 +592,11 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._is_valid = True
 
         self._text = None
+
+        # Make sure combobox is extended horizontally
+        size_policy = self.sizePolicy()
+        size_policy.setHorizontalPolicy(size_policy.MinimumExpanding)
+        self.setSizePolicy(size_policy)
 
     def set_invalid_empty_task(self, invalid=True):
         self._proxy_model.set_filter_empty(invalid)
@@ -1181,7 +1200,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         """Set currently selected instances.
 
         Args:
-            instances(list<CreatedInstance>): List of selected instances.
+            instances(List[CreatedInstance]): List of selected instances.
                 Empty instances tells that nothing or context is selected.
         """
         self._set_btns_visible(False)
@@ -1626,6 +1645,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
             instances(List[CreatedInstance]): List of currently selected
                 instances.
             context_selected(bool): Is context selected.
+            convertor_identifiers(List[str]): Identifiers of convert items.
         """
 
         all_valid = True
