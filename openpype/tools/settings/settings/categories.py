@@ -892,6 +892,10 @@ class ProjectWidget(SettingsCategoryWidget):
     def __init__(self, *args, **kwargs):
         super(ProjectWidget, self).__init__(*args, **kwargs)
 
+    def set_edit_mode(self, enabled):
+        super(ProjectWidget, self).set_edit_mode(enabled)
+        self.project_list_widget.set_edit_mode(enabled)
+
     def _check_last_saved_info(self):
         if self.is_modifying_defaults:
             return True

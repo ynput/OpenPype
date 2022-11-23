@@ -1,6 +1,9 @@
 import os
 import tempfile
-from openpype.hosts.tvpaint.api import lib, plugin
+from openpype.hosts.tvpaint.api import plugin
+from openpype.hosts.tvpaint.api.lib import (
+    execute_george_through_file,
+)
 
 
 class ImportSound(plugin.Loader):
@@ -64,7 +67,7 @@ class ImportSound(plugin.Loader):
         )
         self.log.info("*** George script:\n{}\n***".format(george_script))
         # Execute geoge script
-        lib.execute_george_through_file(george_script)
+        execute_george_through_file(george_script)
 
         # Read output file
         lines = []

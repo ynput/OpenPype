@@ -20,15 +20,11 @@ class StaticMeshAlembicLoader(plugin.Loader):
     icon = "cube"
     color = "orange"
 
-    def get_task(self, filename, asset_dir, asset_name, replace):
+    @staticmethod
+    def get_task(filename, asset_dir, asset_name, replace, default_conversion):
         task = unreal.AssetImportTask()
         options = unreal.AbcImportSettings()
         sm_settings = unreal.AbcStaticMeshSettings()
-        conversion_settings = unreal.AbcConversionSettings(
-            preset=unreal.AbcConversionPreset.CUSTOM,
-            flip_u=False, flip_v=False,
-            rotation=[0.0, 0.0, 0.0],
-            scale=[1.0, 1.0, 1.0])
 
         task.set_editor_property('filename', filename)
         task.set_editor_property('destination_path', asset_dir)
@@ -44,13 +40,20 @@ class StaticMeshAlembicLoader(plugin.Loader):
 
         sm_settings.set_editor_property('merge_meshes', True)
 
+        if not default_conversion:
+            conversion_settings = unreal.AbcConversionSettings(
+                preset=unreal.AbcConversionPreset.CUSTOM,
+                flip_u=False, flip_v=False,
+                rotation=[0.0, 0.0, 0.0],
+                scale=[1.0, 1.0, 1.0])
+            options.conversion_settings = conversion_settings
+
         options.static_mesh_settings = sm_settings
-        options.conversion_settings = conversion_settings
         task.options = options
 
         return task
 
-    def load(self, context, name, namespace, data):
+    def load(self, context, name, namespace, options):
         """Load and containerise representation into Content Browser.
 
         This is two step process. First, import FBX to temporary path and
@@ -82,6 +85,10 @@ class StaticMeshAlembicLoader(plugin.Loader):
             asset_name = "{}".format(name)
         version = context.get('version').get('name')
 
+        default_conversion = False
+        if options.get("default_conversion"):
+            default_conversion = options.get("default_conversion")
+
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
             f"{root}/{asset}/{name}_v{version:03d}", suffix="")
@@ -91,7 +98,8 @@ class StaticMeshAlembicLoader(plugin.Loader):
         if not unreal.EditorAssetLibrary.does_directory_exist(asset_dir):
             unreal.EditorAssetLibrary.make_directory(asset_dir)
 
-            task = self.get_task(self.fname, asset_dir, asset_name, False)
+            task = self.get_task(
+                self.fname, asset_dir, asset_name, False, default_conversion)
 
             unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
 

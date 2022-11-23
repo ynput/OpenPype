@@ -12,7 +12,7 @@ from openpype.client import (
     get_assets,
 )
 from openpype.pipeline import AvalonMongoDB
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 from openpype.modules.kitsu.utils.credentials import validate_credentials
 
 

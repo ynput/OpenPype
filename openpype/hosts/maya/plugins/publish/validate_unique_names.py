@@ -1,7 +1,6 @@
 from maya import cmds
 
 import pyblish.api
-import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import ValidateContentsOrder
 
@@ -24,7 +23,7 @@ class ValidateUniqueNames(pyblish.api.Validator):
         """Returns the invalid transforms in the instance.
 
         Returns:
-            list: Non unique name transforms
+            list: Non-unique name transforms.
 
         """
 

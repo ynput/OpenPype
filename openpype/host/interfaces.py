@@ -312,6 +312,8 @@ class IPublishHost:
         required = [
             "get_context_data",
             "update_context_data",
+            "get_context_title",
+            "get_current_context",
         ]
         missing = []
         for name in required:

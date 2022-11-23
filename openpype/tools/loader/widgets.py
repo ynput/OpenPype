@@ -515,7 +515,7 @@ class SubsetWidget(QtWidgets.QWidget):
         if not one_item_selected:
             # Filter loaders from first subset by intersected combinations
             for repre, loader in first_loaders:
-                if (repre["name"], loader) not in found_combinations:
+                if (repre["name"].lower(), loader) not in found_combinations:
                     continue
 
                 loaders.append((repre, loader))
@@ -1256,7 +1256,11 @@ class RepresentationWidget(QtWidgets.QWidget):
             repre_doc["parent"]
             for repre_doc in repre_docs
         ]
-        version_docs = get_versions(project_name, version_ids=version_ids)
+        version_docs = get_versions(
+            project_name,
+            version_ids=version_ids,
+            hero=True
+        )
 
         version_docs_by_id = {}
         version_docs_by_subset_id = collections.defaultdict(list)

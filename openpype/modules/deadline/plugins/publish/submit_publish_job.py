@@ -457,9 +457,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             cam = [c for c in cameras if c in col.head]
             if cam:
-                subset_name = '{}_{}_{}'.format(group_name, cam, aov)
+                if aov:
+                    subset_name = '{}_{}_{}'.format(group_name, cam, aov)
+                else:
+                    subset_name = '{}_{}'.format(group_name, cam)
             else:
-                subset_name = '{}_{}'.format(group_name, aov)
+                if aov:
+                    subset_name = '{}_{}'.format(group_name, aov)
+                else:
+                    subset_name = '{}'.format(group_name)
 
             if isinstance(col, (list, tuple)):
                 staging = os.path.dirname(col[0])
@@ -488,12 +494,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             else:
                 render_file_name = os.path.basename(col)
             aov_patterns = self.aov_filter
-            preview = match_aov_pattern(app, aov_patterns, render_file_name)
 
+            preview = match_aov_pattern(app, aov_patterns, render_file_name)
             # toggle preview on if multipart is on
+
             if instance_data.get("multipartExr"):
                 preview = True
-
+            self.log.debug("preview:{}".format(preview))
             new_instance = deepcopy(instance_data)
             new_instance["subset"] = subset_name
             new_instance["subsetGroup"] = group_name
@@ -536,7 +543,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if new_instance.get("extendFrames", False):
                 self._copy_extend_frames(new_instance, rep)
             instances.append(new_instance)
-
+            self.log.debug("instances:{}".format(instances))
         return instances
 
     def _get_representations(self, instance, exp_files):

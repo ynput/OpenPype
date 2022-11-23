@@ -283,6 +283,15 @@ class FilesModel(QtGui.QStandardItemModel):
         if not items:
             return
 
+        if self._multivalue:
+            _items = []
+            for item in items:
+                if isinstance(item, (tuple, list, set)):
+                    _items.extend(item)
+                else:
+                    _items.append(item)
+            items = _items
+
         file_items = FileDefItem.from_value(items, self._allow_sequences)
         if not file_items:
             return
@@ -340,7 +349,7 @@ class FilesModel(QtGui.QStandardItemModel):
         item.setData(file_item.filenames, FILENAMES_ROLE)
         item.setData(file_item.directory, DIRPATH_ROLE)
         item.setData(icon_pixmap, ITEM_ICON_ROLE)
-        item.setData(file_item.ext, EXT_ROLE)
+        item.setData(file_item.lower_ext, EXT_ROLE)
         item.setData(file_item.is_dir, IS_DIR_ROLE)
         item.setData(file_item.is_sequence, IS_SEQUENCE_ROLE)
 
@@ -454,7 +463,7 @@ class FilesProxyModel(QtCore.QSortFilterProxyModel):
         for filepath in filepaths:
             if os.path.isfile(filepath):
                 _, ext = os.path.splitext(filepath)
-                if ext in self._allowed_extensions:
+                if ext.lower() in self._allowed_extensions:
                     return True
 
             elif self._allow_folders:
@@ -466,7 +475,7 @@ class FilesProxyModel(QtCore.QSortFilterProxyModel):
         for filepath in filepaths:
             if os.path.isfile(filepath):
                 _, ext = os.path.splitext(filepath)
-                if ext in self._allowed_extensions:
+                if ext.lower() in self._allowed_extensions:
                     filtered_paths.append(filepath)
 
             elif self._allow_folders:
@@ -615,6 +624,7 @@ class FilesView(QtWidgets.QListView):
         self.customContextMenuRequested.connect(self._on_context_menu_request)
 
         self._remove_btn = remove_btn
+        self._multivalue = False
 
     def setSelectionModel(self, *args, **kwargs):
         """Catch selection model set to register signal callback.
@@ -629,12 +639,13 @@ class FilesView(QtWidgets.QListView):
     def set_multivalue(self, multivalue):
         """Disable remove button on multivalue."""
 
+        self._multivalue = multivalue
         self._remove_btn.setVisible(not multivalue)
 
     def update_remove_btn_visibility(self):
         model = self.model()
         visible = False
-        if model:
+        if not self._multivalue and model:
             visible = model.rowCount() > 0
         self._remove_btn.setVisible(visible)
 
@@ -749,12 +760,13 @@ class FilesWidget(QtWidgets.QFrame):
         self._layout = layout
 
     def _set_multivalue(self, multivalue):
-        if self._multivalue == multivalue:
+        if self._multivalue is multivalue:
             return
         self._multivalue = multivalue
         self._files_view.set_multivalue(multivalue)
         self._files_model.set_multivalue(multivalue)
         self._files_proxy_model.set_multivalue(multivalue)
+        self.setEnabled(not multivalue)
 
     def set_value(self, value, multivalue):
         self._in_set_value = True

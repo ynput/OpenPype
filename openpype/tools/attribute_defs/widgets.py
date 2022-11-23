@@ -6,6 +6,7 @@ from Qt import QtWidgets, QtCore
 from openpype.lib.attribute_definitions import (
     AbtractAttrDef,
     UnknownDef,
+    HiddenDef,
     NumberDef,
     TextDef,
     EnumDef,
@@ -22,6 +23,16 @@ from .files_widget import FilesWidget
 
 
 def create_widget_for_attr_def(attr_def, parent=None):
+    widget = _create_widget_for_attr_def(attr_def, parent)
+    if attr_def.hidden:
+        widget.setVisible(False)
+
+    if attr_def.disabled:
+        widget.setEnabled(False)
+    return widget
+
+
+def _create_widget_for_attr_def(attr_def, parent=None):
     if not isinstance(attr_def, AbtractAttrDef):
         raise TypeError("Unexpected type \"{}\" expected \"{}\"".format(
             str(type(attr_def)), AbtractAttrDef
@@ -41,6 +52,9 @@ def create_widget_for_attr_def(attr_def, parent=None):
 
     if isinstance(attr_def, UnknownDef):
         return UnknownAttrWidget(attr_def, parent)
+
+    if isinstance(attr_def, HiddenDef):
+        return HiddenAttrWidget(attr_def, parent)
 
     if isinstance(attr_def, FileDef):
         return FileAttrWidget(attr_def, parent)
@@ -115,6 +129,10 @@ class AttributeDefinitionsWidget(QtWidgets.QWidget):
 
                 self._current_keys.add(attr_def.key)
             widget = create_widget_for_attr_def(attr_def, self)
+            self._widgets.append(widget)
+
+            if attr_def.hidden:
+                continue
 
             expand_cols = 2
             if attr_def.is_value_def and attr_def.is_label_horizontal:
@@ -133,7 +151,6 @@ class AttributeDefinitionsWidget(QtWidgets.QWidget):
             layout.addWidget(
                 widget, row, col_num, 1, expand_cols
             )
-            self._widgets.append(widget)
             row += 1
 
     def set_value(self, value):
@@ -457,6 +474,29 @@ class UnknownAttrWidget(_BaseAttrDefWidget):
         if str_value != self._value:
             self._value = str_value
             self._input_widget.setText(str_value)
+
+
+class HiddenAttrWidget(_BaseAttrDefWidget):
+    def _ui_init(self):
+        self.setVisible(False)
+        self._value = None
+        self._multivalue = False
+
+    def setVisible(self, visible):
+        if visible:
+            visible = False
+        super(HiddenAttrWidget, self).setVisible(visible)
+
+    def current_value(self):
+        if self._multivalue:
+            raise ValueError("{} can't output for multivalue.".format(
+                self.__class__.__name__
+            ))
+        return self._value
+
+    def set_value(self, value, multivalue=False):
+        self._value = copy.deepcopy(value)
+        self._multivalue = multivalue
 
 
 class FileAttrWidget(_BaseAttrDefWidget):
