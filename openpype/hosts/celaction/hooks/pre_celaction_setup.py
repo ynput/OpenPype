@@ -42,10 +42,10 @@ class CelactionPrelaunchHook(PreLaunchHook):
             "SubmitAppTitle",
             0,
             winreg.REG_SZ,
-            subprocess.list2cmdline(subproces_args)
+            subproces_args.pop(0)
         )
 
-        parameters = [
+        parameters = subproces_args + [
             "--currentFile \\\"\"*SCENE*\"\\\"",
             "--chunk 10",
             "--frameStart *START*",
