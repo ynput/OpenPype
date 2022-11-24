@@ -44,17 +44,7 @@ def cli():
     celaction.kwargs = parser.parse_args(sys.argv[1:]).__dict__
 
 
-# def _prepare_publish_environments():
-#     """Prepares environments based on request data."""
-#     env = copy.deepcopy(os.environ)
-
-#     os.environ.update(env)
-
-
 def main():
-    # prepare all environments
-    # _prepare_publish_environments()
-
     # Registers pype's Global pyblish plugins
     install_openpype_plugins()
 
