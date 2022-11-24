@@ -21,7 +21,8 @@ class CollectRenderPath(pyblish.api.InstancePlugin):
         padding = anatomy.templates.get("frame_padding", 4)
         anatomy_data.update({
             "frame": f"%0{padding}d",
-            "representation": "png"
+            "representation": "png",
+            "ext": "png"
         })
 
         anatomy_filled = anatomy.format(anatomy_data)
