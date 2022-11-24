@@ -70,24 +70,21 @@ def find_executable(executable):
     low_platform = platform.system().lower()
     _, ext = os.path.splitext(executable)
 
-    # Prepare variants for which it will be looked
-    variants = [executable]
-    # Add other extension variants only if passed executable does not have one
-    if not ext:
-        if low_platform == "windows":
-            exts = [".exe", ".ps1", ".bat"]
-            for ext in os.getenv("PATHEXT", "").split(os.pathsep):
-                ext = ext.lower()
-                if ext and ext not in exts:
-                    exts.append(ext)
-        else:
-            exts = [".sh"]
+    # Prepare extensions to check
+    exts = set()
+    if ext:
+        exts.add(ext.lower())
 
-        for ext in exts:
-            variant = executable + ext
-            if is_file_executable(variant):
-                return variant
-            variants.append(variant)
+    else:
+        # Add other possible extension variants only if passed executable
+        #   does not have any
+        if low_platform == "windows":
+            exts |= {".exe", ".ps1", ".bat"}
+            for ext in os.getenv("PATHEXT", "").split(os.pathsep):
+                exts.add(ext.lower())
+
+        else:
+            exts |= {".sh"}
 
     # Get paths where to look for executable
     path_str = os.environ.get("PATH", None)
@@ -97,13 +94,26 @@ def find_executable(executable):
         elif hasattr(os, "defpath"):
             path_str = os.defpath
 
-    if path_str:
-        paths = path_str.split(os.pathsep)
-        for path in paths:
-            for variant in variants:
-                filepath = os.path.abspath(os.path.join(path, variant))
-                if is_file_executable(filepath):
-                    return filepath
+    if not path_str:
+        return None
+
+    paths = path_str.split(os.pathsep)
+    for path in paths:
+        if not os.path.isdir(path):
+            continue
+        for filename in os.listdir(path):
+            filepath = os.path.abspath(os.path.join(path, filename))
+            # Filename matches executable exactly
+            if filename == executable and is_file_executable(filepath):
+                return filepath
+
+            basename, ext = os.path.splitext(filename)
+            if (
+                basename == executable
+                and ext.lower() in exts
+                and is_file_executable(filepath)
+            ):
+                return filepath
     return None
 
 
