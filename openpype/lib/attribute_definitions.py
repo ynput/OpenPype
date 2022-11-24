@@ -3,10 +3,32 @@ import re
 import collections
 import uuid
 import json
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
 import clique
+
+# Global variable which store attribude definitions by type
+#   - default types are registered on import
+_attr_defs_by_type = {}
+
+
+def register_attr_def_class(cls):
+    """Register attribute definition.
+
+    Currently are registered definitions used to deserialize data to objects.
+
+    Attrs:
+        cls (AbtractAttrDef): Non-abstract class to be registered with unique
+            'type' attribute.
+
+    Raises:
+        KeyError: When type was already registered.
+    """
+
+    if cls.type in _attr_defs_by_type:
+        raise KeyError("Type \"{}\" was already registered".format(cls.type))
+    _attr_defs_by_type[cls.type] = cls
 
 
 def get_attributes_keys(attribute_definitions):
@@ -69,7 +91,7 @@ class AbstractAttrDefMeta(ABCMeta):
 
 
 @six.add_metaclass(AbstractAttrDefMeta)
-class AbtractAttrDef:
+class AbtractAttrDef(object):
     """Abstraction of attribute definiton.
 
     Each attribute definition must have implemented validation and
@@ -83,26 +105,44 @@ class AbtractAttrDef:
     How to force to set `key` attribute?
 
     Args:
-        key(str): Under which key will be attribute value stored.
-        label(str): Attribute label.
-        tooltip(str): Attribute tooltip.
-        is_label_horizontal(bool): UI specific argument. Specify if label is
+        key (str): Under which key will be attribute value stored.
+        default (Any): Default value of an attribute.
+        label (str): Attribute label.
+        tooltip (str): Attribute tooltip.
+        is_label_horizontal (bool): UI specific argument. Specify if label is
             next to value input or ahead.
+        hidden (bool): Will be item hidden (for UI purposes).
+        disabled (bool): Item will be visible but disabled (for UI purposes).
     """
+
+    type_attributes = []
 
     is_value_def = True
 
     def __init__(
-        self, key, default, label=None, tooltip=None, is_label_horizontal=None
+        self,
+        key,
+        default,
+        label=None,
+        tooltip=None,
+        is_label_horizontal=None,
+        hidden=False,
+        disabled=False
     ):
         if is_label_horizontal is None:
             is_label_horizontal = True
+
+        if hidden is None:
+            hidden = False
+
         self.key = key
         self.label = label
         self.tooltip = tooltip
         self.default = default
         self.is_label_horizontal = is_label_horizontal
-        self._id = uuid.uuid4()
+        self.hidden = hidden
+        self.disabled = disabled
+        self._id = uuid.uuid4().hex
 
         self.__init__class__ = AbtractAttrDef
 
@@ -115,6 +155,16 @@ class AbtractAttrDef:
             return False
         return self.key == other.key
 
+    @abstractproperty
+    def type(self):
+        """Attribute definition type also used as identifier of class.
+
+        Returns:
+            str: Type of attribute definition.
+        """
+
+        pass
+
     @abstractmethod
     def convert_value(self, value):
         """Convert value to a valid one.
@@ -124,6 +174,37 @@ class AbtractAttrDef:
         """
 
         pass
+
+    def serialize(self):
+        """Serialize object to data so it's possible to recreate it.
+
+        Returns:
+            Dict[str, Any]: Serialized object that can be passed to
+                'deserialize' method.
+        """
+
+        data = {
+            "type": self.type,
+            "key": self.key,
+            "label": self.label,
+            "tooltip": self.tooltip,
+            "default": self.default,
+            "is_label_horizontal": self.is_label_horizontal,
+            "hidden": self.hidden,
+            "disabled": self.disabled
+        }
+        for attr in self.type_attributes:
+            data[attr] = getattr(self, attr)
+        return data
+
+    @classmethod
+    def deserialize(cls, data):
+        """Recreate object from data.
+
+        Data can be received using 'serialize' method.
+        """
+
+        return cls(**data)
 
 
 # -----------------------------------------
@@ -141,10 +222,12 @@ class UIDef(AbtractAttrDef):
 
 
 class UISeparatorDef(UIDef):
-    pass
+    type = "separator"
 
 
 class UILabelDef(UIDef):
+    type = "label"
+
     def __init__(self, label):
         super(UILabelDef, self).__init__(label=label)
 
@@ -160,8 +243,30 @@ class UnknownDef(AbtractAttrDef):
     have known definition of type.
     """
 
+    type = "unknown"
+
     def __init__(self, key, default=None, **kwargs):
         kwargs["default"] = default
+        super(UnknownDef, self).__init__(key, **kwargs)
+
+    def convert_value(self, value):
+        return value
+
+
+class HiddenDef(AbtractAttrDef):
+    """Hidden value of Any type.
+
+    This attribute can be used for UI purposes to pass values related
+    to other attributes (e.g. in multi-page UIs).
+
+    Keep in mind the value should be possible to parse by json parser.
+    """
+
+    type = "hidden"
+
+    def __init__(self, key, default=None, **kwargs):
+        kwargs["default"] = default
+        kwargs["hidden"] = True
         super(UnknownDef, self).__init__(key, **kwargs)
 
     def convert_value(self, value):
@@ -180,6 +285,13 @@ class NumberDef(AbtractAttrDef):
         decimals(int): Maximum decimal points of value.
         default(int, float): Default value for conversion.
     """
+
+    type = "number"
+    type_attributes = [
+        "minimum",
+        "maximum",
+        "decimals"
+    ]
 
     def __init__(
         self, key, minimum=None, maximum=None, decimals=None, default=None,
@@ -252,6 +364,12 @@ class TextDef(AbtractAttrDef):
         default(str, None): Default value. Empty string used when not defined.
     """
 
+    type = "text"
+    type_attributes = [
+        "multiline",
+        "placeholder",
+    ]
+
     def __init__(
         self, key, multiline=None, regex=None, placeholder=None, default=None,
         **kwargs
@@ -290,6 +408,11 @@ class TextDef(AbtractAttrDef):
             return value
         return self.default
 
+    def serialize(self):
+        data = super(TextDef, self).serialize()
+        data["regex"] = self.regex.pattern
+        return data
+
 
 class EnumDef(AbtractAttrDef):
     """Enumeration of single item from items.
@@ -300,6 +423,8 @@ class EnumDef(AbtractAttrDef):
             relation.
         default: Default value. Must be one key(value) from passed items.
     """
+
+    type = "enum"
 
     def __init__(self, key, items, default=None, **kwargs):
         if not items:
@@ -335,6 +460,11 @@ class EnumDef(AbtractAttrDef):
             return value
         return self.default
 
+    def serialize(self):
+        data = super(TextDef, self).serialize()
+        data["items"] = list(self.items)
+        return data
+
 
 class BoolDef(AbtractAttrDef):
     """Boolean representation.
@@ -342,6 +472,8 @@ class BoolDef(AbtractAttrDef):
     Args:
         default(bool): Default value. Set to `False` if not defined.
     """
+
+    type = "bool"
 
     def __init__(self, key, default=None, **kwargs):
         if default is None:
@@ -446,6 +578,13 @@ class FileDefItem(object):
         if ext:
             return ext
         return None
+
+    @property
+    def lower_ext(self):
+        ext = self.ext
+        if ext is not None:
+            return ext.lower()
+        return ext
 
     @property
     def is_dir(self):
@@ -585,6 +724,15 @@ class FileDef(AbtractAttrDef):
         default(str, List[str]): Default value.
     """
 
+    type = "path"
+    type_attributes = [
+        "single_item",
+        "folders",
+        "extensions",
+        "allow_sequences",
+        "extensions_label",
+    ]
+
     def __init__(
         self, key, single_item=True, folders=None, extensions=None,
         allow_sequences=True, extensions_label=None, default=None, **kwargs
@@ -675,3 +823,71 @@ class FileDef(AbtractAttrDef):
         if self.single_item:
             return FileDefItem.create_empty_item().to_dict()
         return []
+
+
+def serialize_attr_def(attr_def):
+    """Serialize attribute definition to data.
+
+    Args:
+        attr_def (AbtractAttrDef): Attribute definition to serialize.
+
+    Returns:
+        Dict[str, Any]: Serialized data.
+    """
+
+    return attr_def.serialize()
+
+
+def serialize_attr_defs(attr_defs):
+    """Serialize attribute definitions to data.
+
+    Args:
+        attr_defs (List[AbtractAttrDef]): Attribute definitions to serialize.
+
+    Returns:
+        List[Dict[str, Any]]: Serialized data.
+    """
+
+    return [
+        serialize_attr_def(attr_def)
+        for attr_def in attr_defs
+    ]
+
+
+def deserialize_attr_def(attr_def_data):
+    """Deserialize attribute definition from data.
+
+    Args:
+        attr_def (Dict[str, Any]): Attribute definition data to deserialize.
+    """
+
+    attr_type = attr_def_data.pop("type")
+    cls = _attr_defs_by_type[attr_type]
+    return cls.deserialize(attr_def_data)
+
+
+def deserialize_attr_defs(attr_defs_data):
+    """Deserialize attribute definitions.
+
+    Args:
+        List[Dict[str, Any]]: List of attribute definitions.
+    """
+
+    return [
+        deserialize_attr_def(attr_def_data)
+        for attr_def_data in attr_defs_data
+    ]
+
+
+# Register attribute definitions
+for _attr_class in (
+    UISeparatorDef,
+    UILabelDef,
+    UnknownDef,
+    NumberDef,
+    TextDef,
+    EnumDef,
+    BoolDef,
+    FileDef
+):
+    register_attr_def_class(_attr_class)

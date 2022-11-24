@@ -1,16 +1,7 @@
 # -*- coding: utf-8 -*-
 from abc import ABC
 
-from openpype.pipeline import (
-    LegacyCreator,
-    LoaderPlugin,
-)
-
-
-class Creator(LegacyCreator):
-    """This serves as skeleton for future OpenPype specific functionality"""
-    defaults = ['Main']
-    maintain_selection = False
+from openpype.pipeline import LoaderPlugin
 
 
 class Loader(LoaderPlugin, ABC):

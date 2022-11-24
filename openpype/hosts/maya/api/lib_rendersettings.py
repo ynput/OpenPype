@@ -6,7 +6,7 @@ import six
 import sys
 
 from openpype.lib import Logger
-from openpype.api import (
+from openpype.settings import (
     get_project_settings,
     get_current_project_settings
 )

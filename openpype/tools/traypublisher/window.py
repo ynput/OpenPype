@@ -6,24 +6,32 @@ Tray publisher can be considered as host implementeation with creators and
 publishing plugins.
 """
 
+import platform
+
 from Qt import QtWidgets, QtCore
 import qtawesome
+import appdirs
 
-from openpype.pipeline import (
-    install_host,
-    AvalonMongoDB,
-)
+from openpype.lib import JSONSettingRegistry
+from openpype.pipeline import install_host
 from openpype.hosts.traypublisher.api import TrayPublisherHost
-from openpype.tools.publisher import PublisherWindow
+from openpype.tools.publisher.control_qt import QtPublisherController
+from openpype.tools.publisher.window import PublisherWindow
+from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.constants import PROJECT_NAME_ROLE
 from openpype.tools.utils.models import (
     ProjectModel,
     ProjectSortFilterProxy
 )
 
-from openpype.tools.utils import PlaceholderLineEdit
-import appdirs
-from openpype.lib import JSONSettingRegistry
+
+class TrayPublisherController(QtPublisherController):
+    @property
+    def host(self):
+        return self._host
+
+    def reset_project_data_cache(self):
+        self._asset_docs_cache.reset()
 
 
 class TrayPublisherRegistry(JSONSettingRegistry):
@@ -55,14 +63,10 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
 
         content_widget = QtWidgets.QWidget(middle_frame)
 
-        # Create db connection for projects model
-        dbcon = AvalonMongoDB()
-        dbcon.install()
-
         header_label = QtWidgets.QLabel("Choose project", content_widget)
         header_label.setObjectName("ChooseProjectLabel")
         # Create project models and view
-        projects_model = ProjectModel(dbcon)
+        projects_model = ProjectModel()
         projects_proxy = ProjectSortFilterProxy()
         projects_proxy.setSourceModel(projects_model)
         projects_proxy.setFilterKeyColumn(0)
@@ -137,11 +141,14 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
             src_index = self._projects_model.find_project(project_name)
             if src_index is not None:
                 index = self._projects_proxy.mapFromSource(src_index)
-            if index:
-                mode = (
-                    QtCore.QItemSelectionModel.Select
-                    | QtCore.QItemSelectionModel.Rows)
-                self._projects_view.selectionModel().select(index, mode)
+
+            if index is not None:
+                selection_model = self._projects_view.selectionModel()
+                selection_model.select(
+                    index,
+                    QtCore.QItemSelectionModel.SelectCurrent
+                )
+                self._projects_view.setCurrentIndex(index)
 
         self._cancel_btn.setVisible(self._project_name is not None)
         super(StandaloneOverlayWidget, self).showEvent(event)
@@ -182,7 +189,10 @@ class StandaloneOverlayWidget(QtWidgets.QFrame):
 
 class TrayPublishWindow(PublisherWindow):
     def __init__(self, *args, **kwargs):
-        super(TrayPublishWindow, self).__init__(reset_on_show=False)
+        controller = TrayPublisherController()
+        super(TrayPublishWindow, self).__init__(
+            controller=controller, reset_on_show=False
+        )
 
         flags = self.windowFlags()
         # Disable always on top hint
@@ -193,7 +203,7 @@ class TrayPublishWindow(PublisherWindow):
 
         overlay_widget = StandaloneOverlayWidget(self)
 
-        btns_widget = QtWidgets.QWidget(self)
+        btns_widget = self._header_extra_widget
 
         back_to_overlay_btn = QtWidgets.QPushButton(
             "Change project", btns_widget
@@ -207,8 +217,6 @@ class TrayPublishWindow(PublisherWindow):
 
         btns_layout.addWidget(save_btn, 0)
         btns_layout.addWidget(back_to_overlay_btn, 0)
-
-        self._header_layout.addWidget(btns_widget, 0)
 
         overlay_widget.project_selected.connect(self._on_project_select)
         back_to_overlay_btn.clicked.connect(self._on_back_to_overlay)
@@ -239,22 +247,32 @@ class TrayPublishWindow(PublisherWindow):
 
     def _on_project_select(self, project_name):
         # TODO register project specific plugin paths
-        self.controller.save_changes()
-        self.controller.reset_project_data_cache()
+        self._controller.save_changes()
+        self._controller.reset_project_data_cache()
 
         self.reset()
-        if not self.controller.instances:
-            self._on_create_clicked()
+        if not self._controller.instances:
+            self._go_to_create_tab()
 
     def _on_tray_publish_save(self):
-        self.controller.save_changes()
+        self._controller.save_changes()
         print("NOT YET IMPLEMENTED")
 
 
 def main():
     host = TrayPublisherHost()
     install_host(host)
-    app = QtWidgets.QApplication([])
+
+    app_instance = QtWidgets.QApplication.instance()
+    if app_instance is None:
+        app_instance = QtWidgets.QApplication([])
+
+    if platform.system().lower() == "windows":
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            u"traypublisher"
+        )
+
     window = TrayPublishWindow()
     window.show()
-    app.exec_()
+    app_instance.exec_()

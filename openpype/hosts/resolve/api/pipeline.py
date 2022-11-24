@@ -244,7 +244,7 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
     log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
         instance, old_value, new_value))
 
-    from openpype.hosts.resolve import (
+    from openpype.hosts.resolve.api import (
         set_publish_attribute
     )
 

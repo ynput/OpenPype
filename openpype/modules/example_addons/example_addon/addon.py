@@ -13,10 +13,7 @@ import click
 from openpype.modules import (
     JsonFilesSettingsDef,
     OpenPypeAddOn,
-    ModulesManager
-)
-# Import interface defined by this addon to be able find other addons using it
-from openpype_interfaces import (
+    ModulesManager,
     IPluginPaths,
     ITrayAction
 )

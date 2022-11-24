@@ -1,4 +1,23 @@
 {
+    "imageio": {
+        "project": {
+            "colourPolicy": "ACES 1.1",
+            "frameDepth": "16-bit fp",
+            "fieldDominance": "PROGRESSIVE"
+        },
+        "profilesMapping": {
+            "inputs": [
+                {
+                    "flameName": "ACEScg",
+                    "ocioName": "ACES - ACEScg"
+                },
+                {
+                    "flameName": "Rec.709 video",
+                    "ocioName": "Output - Rec.709"
+                }
+            ]
+        }
+    },
     "create": {
         "CreateShotClip": {
             "hierarchy": "{folder}/{sequence}",
@@ -123,7 +142,7 @@
                 "exr16fpdwaa"
             ],
             "reel_name": "OP_LoadedReel",
-            "clip_name_template": "{asset}_{subset}<_{output}>"
+            "clip_name_template": "{batch}_{asset}_{subset}<_{output}>"
         }
     }
 }
