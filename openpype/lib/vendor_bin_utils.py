@@ -60,9 +60,10 @@ def find_executable(executable):
             path to file.
 
     Returns:
-        str: Full path to executable with extension (is file).
-        None: When the executable was not found.
+        Union[str, None]: Full path to executable with extension which was
+            found otherwise None.
     """
+
     # Skip if passed path is file
     if is_file_executable(executable):
         return executable
@@ -85,6 +86,21 @@ def find_executable(executable):
 
         else:
             exts |= {".sh"}
+
+    # Executable is a path but there may be missing extension
+    #   - this can happen primarily on windows where
+    #       e.g. "ffmpeg" should be "ffmpeg.exe"
+    exe_dir, exe_filename = os.path.split(executable)
+    if exe_dir and os.path.isdir(exe_dir):
+        for filename in os.listdir(exe_dir):
+            filepath = os.path.join(exe_dir, filename)
+            basename, ext = os.path.splitext(filename)
+            if (
+                basename == exe_filename
+                and ext.lower() in exts
+                and is_file_executable(filepath)
+            ):
+                return filepath
 
     # Get paths where to look for executable
     path_str = os.environ.get("PATH", None)
@@ -114,6 +130,7 @@ def find_executable(executable):
                 and is_file_executable(filepath)
             ):
                 return filepath
+
     return None
 
 
