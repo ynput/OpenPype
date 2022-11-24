@@ -1,8 +1,13 @@
 import os
 import shutil
+import subprocess
 import winreg
-from openpype.lib import PreLaunchHook
-from openpype.hosts.celaction import api as celaction
+from openpype.lib import PreLaunchHook, get_openpype_execute_args
+from openpype.hosts.celaction import api as caapi
+
+CELACTION_API_DIR = os.path.dirname(
+    os.path.abspath(caapi.__file__)
+)
 
 
 class CelactionPrelaunchHook(PreLaunchHook):
@@ -19,13 +24,6 @@ class CelactionPrelaunchHook(PreLaunchHook):
         if workfile_path:
             self.launch_context.launch_args.append(workfile_path)
 
-        project_name = self.data["project_name"]
-        asset_name = self.data["asset_name"]
-        task_name = self.data["task_name"]
-
-        # get publish version of celaction
-        app = "celaction_publish"
-
         # setting output parameters
         path_user_settings = "\\".join([
             "Software", "CelAction", "CelAction2D", "User Settings"
@@ -36,29 +34,24 @@ class CelactionPrelaunchHook(PreLaunchHook):
             winreg.KEY_ALL_ACCESS
         )
 
-        openpype_executable = os.getenv("OPENPYPE_EXECUTABLE")
+        path_to_cli = os.path.join(CELACTION_API_DIR, "cli.py")
+        subproces_args = get_openpype_execute_args("run", path_to_cli)
 
         winreg.SetValueEx(
             hKey,
             "SubmitAppTitle",
             0,
             winreg.REG_SZ,
-            openpype_executable
+            subprocess.list2cmdline(subproces_args)
         )
 
         parameters = [
-            "launch",
-            f"--app {app}",
-            f"--project {project_name}",
-            f"--asset {asset_name}",
-            f"--task {task_name}",
             "--currentFile \\\"\"*SCENE*\"\\\"",
             "--chunk 10",
             "--frameStart *START*",
             "--frameEnd *END*",
             "--resolutionWidth *X*",
             "--resolutionHeight *Y*",
-            # "--programDir \"'*PROGPATH*'\""
         ]
         winreg.SetValueEx(
             hKey, "SubmitParametersTitle", 0, winreg.REG_SZ,
@@ -109,9 +102,7 @@ class CelactionPrelaunchHook(PreLaunchHook):
         if not os.path.exists(workfile_path):
             # TODO add ability to set different template workfile path via
             # settings
-            openpype_celaction_dir = os.path.dirname(os.path.dirname(
-                os.path.abspath(celaction.__file__)
-            ))
+            openpype_celaction_dir = os.path.dirname(CELACTION_API_DIR)
             template_path = os.path.join(
                 openpype_celaction_dir,
                 "resources",
