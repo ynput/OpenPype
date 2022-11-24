@@ -31,7 +31,6 @@ class IntegrateKitsuReview(pyblish.api.InstancePlugin):
                 continue
 
             review_path = representation.get("published_path")
-
             self.log.debug("Found review at: {}".format(review_path))
 
             gazu.task.add_preview(
