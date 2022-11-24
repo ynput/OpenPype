@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 import pyblish.api
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateUSDOutputNode(pyblish.api.InstancePlugin):
@@ -20,9 +22,10 @@ class ValidateUSDOutputNode(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
-                "Output node(s) `%s` are incorrect. "
-                "See plug-in log for details." % invalid
+            raise PublishValidationError(
+                ("Output node(s) `{}` are incorrect. "
+                 "See plug-in log for details.").format(invalid),
+                title=self.label
             )
 
     @classmethod
@@ -33,7 +36,7 @@ class ValidateUSDOutputNode(pyblish.api.InstancePlugin):
         output_node = instance.data["output_node"]
 
         if output_node is None:
-            node = instance[0]
+            node = hou.node(instance.get("instance_node"))
             cls.log.error(
                 "USD node '%s' LOP path does not exist. "
                 "Ensure a valid LOP path is set." % node.path()

@@ -1,6 +1,10 @@
+# -*- coding: utf-8 -*-
 import pyblish.api
 
 import openpype.hosts.houdini.api.usd as hou_usdlib
+from openpype.pipeline import PublishValidationError
+
+import hou
 
 
 class ValidateUSDLayerPathBackslashes(pyblish.api.InstancePlugin):
@@ -24,7 +28,7 @@ class ValidateUSDLayerPathBackslashes(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        rop = instance[0]
+        rop = hou.node(instance.get("instance_node"))
         lop_path = hou_usdlib.get_usd_rop_loppath(rop)
         stage = lop_path.stage(apply_viewport_overrides=False)
 
@@ -44,7 +48,7 @@ class ValidateUSDLayerPathBackslashes(pyblish.api.InstancePlugin):
                     invalid.append(layer)
 
         if invalid:
-            raise RuntimeError(
+            raise PublishValidationError((
                 "Loaded layers have backslashes. "
-                "This is invalid for HUSK USD rendering."
-            )
+                "This is invalid for HUSK USD rendering."),
+                title=self.label)
