@@ -35,6 +35,12 @@ def cli():
     parser.add_argument("--frameEnd",
                         help=("End of frame range"))
 
+    parser.add_argument("--resolutionWidth",
+                        help=("Width of resolution"))
+
+    parser.add_argument("--resolutionHeight",
+                        help=("Height of resolution"))
+
     celaction.kwargs = parser.parse_args(sys.argv[1:]).__dict__
 
 
