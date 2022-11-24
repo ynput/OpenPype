@@ -50,9 +50,7 @@ class CelactionPrelaunchHook(PreLaunchHook):
             "--currentFile *SCENE*",
             "--chunk *CHUNK*",
             "--frameStart *START*",
-            "--frameEnd *END*",
-            "--resolutionWidth *X*",
-            "--resolutionHeight *Y*",
+            "--frameEnd *END*"
         ]
 
         winreg.SetValueEx(

@@ -52,8 +52,8 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
             "subset": subset,
             "label": scene_file,
             "family": family,
-            "families": [family, "ftrack"],
-            "representations": list()
+            "families": [],
+            "representations": []
         })
 
         # adding basic script data
@@ -72,7 +72,6 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
         self.log.info('Publishing Celaction workfile')
 
         # render instance
-        family = "render.farm"
         subset = f"render{task}Main"
         instance = context.create_instance(name=subset)
         # getting instance state
@@ -81,8 +80,8 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
         # add assetEntity data into instance
         instance.data.update({
             "label": "{} - farm".format(subset),
-            "family": family,
-            "families": [family],
+            "family": "render.farm",
+            "families": [],
             "subset": subset
         })
 
