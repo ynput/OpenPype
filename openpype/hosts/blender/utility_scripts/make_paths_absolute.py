@@ -31,16 +31,17 @@ if __name__ == "__main__":
         datablocks_with_filepath = list(bpy.data.libraries) + list(
             bpy.data.images
         )
-        for lib in datablocks_with_filepath:
-            lib.filepath = str(
-                Path(
-                    bpy.path.abspath(
-                        lib.filepath, start=args.source_filepath.parent
-                    )
-                ).resolve()
-            )
+        for datablock in datablocks_with_filepath:
             try:
-                lib.reload()
+                datablock.filepath = str(
+                    Path(
+                        bpy.path.abspath(
+                            datablock.filepath,
+                            start=args.source_filepath.parent,
+                        )
+                    ).resolve()
+                )
+                datablock.reload()
             except RuntimeError as e:
                 log.error(e)
     else:
