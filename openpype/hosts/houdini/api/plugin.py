@@ -259,7 +259,7 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
 
     @staticmethod
     def customize_node_look(
-            node, color=hou.Color((0.616, 0.871, 0.769)),
+            node, color=None,
             shape="chevron_down"):
         """Set custom look for instance nodes.
 
@@ -272,5 +272,7 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
             None
 
         """
+        if not color:
+            color = hou.Color((0.616, 0.871, 0.769))
         node.setUserData('nodeshape', shape)
         node.setColor(color)
