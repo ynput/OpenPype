@@ -37,13 +37,12 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
         instance.data["toBeRenderedOn"] = "deadline"
         context = instance.context
 
-        deadline_url = (
-            context.data["system_settings"]
-            ["modules"]
-            ["deadline"]
-            ["DEADLINE_REST_URL"]
-        )
-        assert deadline_url, "Requires DEADLINE_REST_URL"
+        # get default deadline webservice url from deadline module
+        deadline_url = instance.context.data["defaultDeadline"]
+        # if custom one is set in instance, use that
+        if instance.data.get("deadlineUrl"):
+            deadline_url = instance.data.get("deadlineUrl")
+        assert deadline_url, "Requires Deadline Webservice URL"
 
         self.deadline_url = "{}/api/jobs".format(deadline_url)
         self._comment = context.data.get("comment", "")
