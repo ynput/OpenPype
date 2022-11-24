@@ -47,8 +47,8 @@ class CelactionPrelaunchHook(PreLaunchHook):
         )
 
         parameters = subproces_args + [
-            "--currentFile \\\"\"*SCENE*\"\\\"",
-            "--chunk 10",
+            "--currentFile *SCENE*",
+            "--chunk *CHUNK*",
             "--frameStart *START*",
             "--frameEnd *END*",
             "--resolutionWidth *X*",
