@@ -13,7 +13,10 @@ from openpype.lib.path_tools import get_version_from_path, version_up
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.pipeline.load.utils import get_representation_path
 from openpype.pipeline.template_data import get_template_data_with_names
-from openpype.pipeline.workfile.path_resolving import get_last_workfile
+from openpype.pipeline.workfile.path_resolving import (
+    get_last_workfile,
+    get_workfile_template_key,
+)
 from openpype.settings.lib import get_project_settings
 
 
@@ -109,32 +112,48 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             return
 
         # Get subset id
-        subset_id = next(
-            (
-                subset["_id"]
-                for subset in get_subsets(
-                    project_name,
-                    asset_ids=[asset_doc["_id"]],
-                    fields=["_id", "name", "data.family", "data.families"],
-                )
-                if (
-                    subset["data"].get("family") == "workfile"
-                    # Legacy compatibility
-                    or "workfile" in subset["data"].get("families", {})
-                )
-                and task_name in subset["name"]
-            ),
-            None,
-        )
-        if not subset_id:
+        filtered_subsets = [
+            subset
+            for subset in get_subsets(
+                project_name,
+                asset_ids=[asset_doc["_id"]],
+                fields=["_id", "name", "data.family", "data.families"],
+            )
+            if (
+                subset["data"].get("family") == "workfile"
+                # Legacy compatibility
+                or "workfile" in subset["data"].get("families", {})
+            )
+        ]
+        if not filtered_subsets:
             self.log.debug(
-                'No any workfile for asset "{}".'.format(asset_doc["name"])
+                "No any subset for asset '{}' with id '{}'.".format(
+                    asset_name, asset_doc["_id"]
+                )
+            )
+            return
+
+        # Matching subset which has task name in its name
+        subset_id = None
+        low_task_name = task_name.lower()
+        if len(filtered_subsets) > 1:
+            for subset in filtered_subsets:
+                if low_task_name in subset["name"].lower():
+                    subset_id = subset["_id"]
+                    break
+
+        # Set default matched subset
+        if subset_id is None:
+            self.log.debug(
+                "No any matched subset for task '{}' of '{}'.".format(
+                    low_task_name, asset_name
+                )
             )
             return
 
         # Get workfile representation
         last_version_doc = get_last_version_by_subset_id(
-            project_name, subset_id, fields=["_id"]
+            project_name, subset_id, fields=["_id", "name"]
         )
         if not last_version_doc:
             self.log.debug("Subset does not have any versions")
@@ -187,31 +206,18 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         published_workfile_path = get_representation_path(
             workfile_representation, root=anatomy.roots
         )
-        local_workfile_dir = os.path.dirname(last_workfile)
 
         # Build workfile to copy and open's name from anatomy template settings
         workfile_data = get_template_data_with_names(
             project_name, asset_name, task_name, host_name
         )
-        local_workfile_path = get_last_workfile(
-            local_workfile_dir,
-            str(anatomy.templates["work"]["file"]),
-            workfile_data,
-            [os.path.splitext(published_workfile_path)[1]],
-            full_path=True,
+        workfile_data["version"] = last_version_doc["name"] + 1
+        workfile_data["ext"] = os.path.splitext(published_workfile_path)[-1]
+        template_key = get_workfile_template_key(
+            task_type, host_name, project_name, project_settings
         )
-
-        # Substitute local workfile default version number
-        # to published version's incremented by one
-        local_workfile_version = get_version_from_path(local_workfile_path)
-        published_workfile_version = get_version_from_path(
-            published_workfile_path
-        )
-        local_workfile_path = version_up(
-            local_workfile_path.replace(
-                local_workfile_version, published_workfile_version
-            )
-        )
+        anatomy_result = anatomy.format(workfile_data)
+        local_workfile_path = anatomy_result[template_key]["path"]
 
         # Copy file and substitute path
         self.data["last_workfile_path"] = shutil.copy(
