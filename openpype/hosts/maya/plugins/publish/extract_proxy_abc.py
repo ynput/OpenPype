@@ -83,7 +83,7 @@ class ExtractProxyAlembic(publish.Extractor):
         instance.context.data["cleanupFullPaths"].append(path)
 
         self.log.info("Extracted {} to {}".format(instance, dirname))
-#TODO: clean up the bounding box
+
         remove_bb = instance.data.get("removeBoundingBoxAfterPublish")
         if remove_bb:
             for bbox in proxy_root:

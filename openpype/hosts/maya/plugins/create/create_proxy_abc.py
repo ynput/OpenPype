@@ -14,7 +14,6 @@ class CreateProxyAlembic(plugin.Creator):
     write_color_sets = False
     write_face_sets = False
 
-
     def __init__(self, *args, **kwargs):
         super(CreateProxyAlembic, self).__init__(*args, **kwargs)
 

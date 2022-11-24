@@ -149,6 +149,14 @@
                 "Main"
             ]
         },
+        "CreateProxyAlembic": {
+            "enabled": true,
+            "write_color_sets": false,
+            "write_face_sets": false,
+            "defaults": [
+                "Main"
+            ]
+        },
         "CreateMultiverseUsd": {
             "enabled": true,
             "defaults": [
@@ -192,12 +200,6 @@
             ]
         },
         "CreateMayaScene": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateProxyAlembic": {
             "enabled": true,
             "defaults": [
                 "Main"

@@ -200,6 +200,36 @@
                 }
             ]
         },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateProxyAlembic",
+            "label": "Create Proxy Alembic",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "write_color_sets",
+                    "label": "Write Color Sets"
+                },
+                {
+                    "type": "boolean",
+                    "key": "write_face_sets",
+                    "label": "Write Face Sets"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                }
+            ]
+        },
 
         {
             "type": "schema_template",
@@ -236,10 +266,6 @@
                 {
                     "key": "CreateMayaScene",
                     "label": "Create Maya Scene"
-                },
-                {
-                    "key": "CreateProxyAlembic",
-                    "label": "Create Proxy Alembic"
                 },
                 {
                     "key": "CreateRenderSetup",
