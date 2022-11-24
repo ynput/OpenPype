@@ -1,4 +1,6 @@
-"""Goal is that most of functions here are called on (or with) an object
+"""Unclear if these will have public functions like these.
+
+Goal is that most of functions here are called on (or with) an object
 that has project name as a context (e.g. on 'ProjectEntity'?).
 
 + We will need more specific functions doing wery specific queires really fast.
@@ -387,10 +389,11 @@ def get_subset_by_name(project_name, subset_name, asset_id, fields=None):
             returned if 'None' is passed.
 
     Returns:
-        None: If subset with specified filters was not found.
-        Dict: Subset document which can be reduced to specified 'fields'.
-    """
+        Union[None, Dict[str, Any]]: None if subset with specified filters was
+            not found or dict subset document which can be reduced to
+            specified 'fields'.
 
+    """
     if not subset_name:
         return None
 
