@@ -1,6 +1,8 @@
 import nuke
 import qargparse
-
+from pprint import pformat
+from copy import deepcopy
+from openpype.lib import Logger
 from openpype.client import (
     get_version_by_id,
     get_last_version_by_subset_id,
@@ -27,6 +29,7 @@ class LoadClip(plugin.NukeLoader):
 
     Either it is image sequence or video file.
     """
+    log = Logger.get_logger(__name__)
 
     families = [
         "source",
@@ -85,13 +88,18 @@ class LoadClip(plugin.NukeLoader):
         )
 
     def load(self, context, name, namespace, options):
-        repre = context["representation"]
+        representation = context["representation"]
         # reste container id so it is always unique for each instance
         self.reset_container_id()
 
-        is_sequence = len(repre["files"]) > 1
+        is_sequence = len(representation["files"]) > 1
 
-        file = self.fname.replace("\\", "/")
+        if is_sequence:
+            representation = self._representation_with_hash_in_frame(
+                representation
+            )
+        filepath = get_representation_path(representation).replace("\\", "/")
+        self.log.debug("_ filepath: {}".format(filepath))
 
         start_at_workfile = options.get(
             "start_at_workfile", self.options_defaults["start_at_workfile"])
@@ -101,11 +109,10 @@ class LoadClip(plugin.NukeLoader):
 
         version = context['version']
         version_data = version.get("data", {})
-        repre_id = repre["_id"]
+        repre_id = representation["_id"]
 
-        repre_cont = repre["context"]
-
-        self.log.info("version_data: {}\n".format(version_data))
+        self.log.debug("_ version_data: {}\n".format(
+            pformat(version_data)))
         self.log.debug(
             "Representation id `{}` ".format(repre_id))
 
@@ -121,36 +128,33 @@ class LoadClip(plugin.NukeLoader):
             duration = last - first
             first = 1
             last = first + duration
-        elif "#" not in file:
-            frame = repre_cont.get("frame")
-            assert frame, "Representation is not sequence"
-
-            padding = len(frame)
-            file = file.replace(frame, "#" * padding)
 
         # Fallback to asset name when namespace is None
         if namespace is None:
             namespace = context['asset']['name']
 
-        if not file:
+        if not filepath:
             self.log.warning(
                 "Representation id `{}` is failing to load".format(repre_id))
             return
 
-        read_name = self._get_node_name(repre)
+        read_name = self._get_node_name(representation)
 
         # Create the Loader with the filename path set
         read_node = nuke.createNode(
             "Read",
             "name {}".format(read_name))
 
+        # hide property panel
+        read_node.hideControlPanel()
+
         # to avoid multiple undo steps for rest of process
         # we will switch off undo-ing
         with viewer_update_and_undo_stop():
-            read_node["file"].setValue(file)
+            read_node["file"].setValue(filepath)
 
             used_colorspace = self._set_colorspace(
-                read_node, version_data, repre["data"])
+                read_node, version_data, representation["data"])
 
             self._set_range_to_node(read_node, first, last, start_at_workfile)
 
@@ -172,7 +176,7 @@ class LoadClip(plugin.NukeLoader):
                         data_imprint[k] = version
 
                 elif k == 'colorspace':
-                    colorspace = repre["data"].get(k)
+                    colorspace = representation["data"].get(k)
                     colorspace = colorspace or version_data.get(k)
                     data_imprint["db_colorspace"] = colorspace
                     if used_colorspace:
@@ -206,6 +210,20 @@ class LoadClip(plugin.NukeLoader):
     def switch(self, container, representation):
         self.update(container, representation)
 
+    def _representation_with_hash_in_frame(self, representation):
+        """Convert frame key value to padded hash
+
+        Args:
+            representation (dict): representation data
+
+        Returns:
+            dict: altered representation data
+        """
+        representation = deepcopy(representation)
+        frame = representation["context"]["frame"]
+        representation["context"]["frame"] = "#" * len(str(frame))
+        return representation
+
     def update(self, container, representation):
         """Update the Loader's path
 
@@ -218,7 +236,13 @@ class LoadClip(plugin.NukeLoader):
         is_sequence = len(representation["files"]) > 1
 
         read_node = nuke.toNode(container['objectName'])
-        file = get_representation_path(representation).replace("\\", "/")
+
+        if is_sequence:
+            representation = self._representation_with_hash_in_frame(
+                representation
+            )
+        filepath = get_representation_path(representation).replace("\\", "/")
+        self.log.debug("_ filepath: {}".format(filepath))
 
         start_at_workfile = "start at" in read_node['frame_mode'].value()
 
@@ -232,8 +256,6 @@ class LoadClip(plugin.NukeLoader):
 
         version_data = version_doc.get("data", {})
         repre_id = representation["_id"]
-
-        repre_cont = representation["context"]
 
         # colorspace profile
         colorspace = representation["data"].get("colorspace")
@@ -251,14 +273,8 @@ class LoadClip(plugin.NukeLoader):
             duration = last - first
             first = 1
             last = first + duration
-        elif "#" not in file:
-            frame = repre_cont.get("frame")
-            assert frame, "Representation is not sequence"
 
-            padding = len(frame)
-            file = file.replace(frame, "#" * padding)
-
-        if not file:
+        if not filepath:
             self.log.warning(
                 "Representation id `{}` is failing to load".format(repre_id))
             return
@@ -266,14 +282,14 @@ class LoadClip(plugin.NukeLoader):
         read_name = self._get_node_name(representation)
 
         read_node["name"].setValue(read_name)
-        read_node["file"].setValue(file)
+        read_node["file"].setValue(filepath)
 
         # to avoid multiple undo steps for rest of process
         # we will switch off undo-ing
         with viewer_update_and_undo_stop():
             used_colorspace = self._set_colorspace(
                 read_node, version_data, representation["data"],
-                path=file)
+                path=filepath)
 
             self._set_range_to_node(read_node, first, last, start_at_workfile)
 
@@ -345,8 +361,10 @@ class LoadClip(plugin.NukeLoader):
         time_warp_nodes = version_data.get('timewarps', [])
         last_node = None
         source_id = self.get_container_id(parent_node)
-        self.log.info("__ source_id: {}".format(source_id))
-        self.log.info("__ members: {}".format(self.get_members(parent_node)))
+        self.log.debug("__ source_id: {}".format(source_id))
+        self.log.debug("__ members: {}".format(
+            self.get_members(parent_node)))
+
         dependent_nodes = self.clear_members(parent_node)
 
         with maintained_selection():

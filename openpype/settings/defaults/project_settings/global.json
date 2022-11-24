@@ -53,6 +53,62 @@
                     "families": [],
                     "hosts": [],
                     "outputs": {
+                        "png": {
+                            "ext": "png",
+                            "tags": [
+                                "ftrackreview"
+                            ],
+                            "burnins": [],
+                            "ffmpeg_args": {
+                                "video_filters": [],
+                                "audio_filters": [],
+                                "input": [],
+                                "output": []
+                            },
+                            "filter": {
+                                "families": [
+                                    "render",
+                                    "review",
+                                    "ftrack"
+                                ],
+                                "subsets": [],
+                                "custom_tags": [],
+                                "single_frame_filter": "single_frame"
+                            },
+                            "overscan_crop": "",
+                            "overscan_color": [
+                                0,
+                                0,
+                                0,
+                                255
+                            ],
+                            "width": 1920,
+                            "height": 1080,
+                            "scale_pixel_aspect": true,
+                            "bg_color": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "letter_box": {
+                                "enabled": false,
+                                "ratio": 0.0,
+                                "fill_color": [
+                                    0,
+                                    0,
+                                    0,
+                                    255
+                                ],
+                                "line_thickness": 0,
+                                "line_color": [
+                                    255,
+                                    0,
+                                    0,
+                                    255
+                                ]
+                            }
+                        },
                         "h264": {
                             "ext": "mp4",
                             "tags": [
@@ -79,7 +135,8 @@
                                     "ftrack"
                                 ],
                                 "subsets": [],
-                                "custom_tags": []
+                                "custom_tags": [],
+                                "single_frame_filter": "multi_frame"
                             },
                             "overscan_crop": "",
                             "overscan_color": [
@@ -231,6 +288,17 @@
                     "task_types": [],
                     "tasks": [],
                     "template_name": "maya2unreal"
+                },
+                {
+                    "families": [
+                        "online"
+                    ],
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template_name": "online"
                 }
             ]
         },
@@ -401,7 +469,8 @@
                     "hosts": [],
                     "task_types": [],
                     "tasks": [],
-                    "enabled": true
+                    "enabled": true,
+                    "use_last_published_workfile": false
                 }
             ],
             "open_workfile_tool_on_startup": [

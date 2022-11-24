@@ -9,6 +9,7 @@ import logging
 import platform
 import threading
 import collections
+import traceback
 from uuid import uuid4
 from abc import ABCMeta, abstractmethod
 import six
@@ -139,6 +140,15 @@ class _InterfacesClass(_ModuleClass):
                 "cannot import name '{}' from 'openpype_interfaces'"
             ).format(attr_name))
 
+        if _LoadCache.interfaces_loaded and attr_name != "log":
+            stack = list(traceback.extract_stack())
+            stack.pop(-1)
+            self.log.warning((
+                "Using deprecated import of \"{}\" from 'openpype_interfaces'."
+                " Please switch to use import"
+                " from 'openpype.modules.interfaces'"
+                " (will be removed after 3.16.x).{}"
+            ).format(attr_name, "".join(traceback.format_list(stack))))
         return self.__attributes__[attr_name]
 
 

@@ -1,5 +1,222 @@
 # Changelog
 
+
+## [3.14.7](https://github.com/pypeclub/OpenPype/tree/3.14.7)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.6...3.14.7)
+
+**🆕 New features**
+
+- Hiero: loading effect family to timeline [\#4055](https://github.com/pypeclub/OpenPype/pull/4055)
+
+**🚀 Enhancements**
+
+- Photoshop: bug with pop-up window on Instance Creator [\#4121](https://github.com/pypeclub/OpenPype/pull/4121)
+- Publisher: Open on specific tab [\#4120](https://github.com/pypeclub/OpenPype/pull/4120)
+- Publisher: Hide unknown publish values [\#4116](https://github.com/pypeclub/OpenPype/pull/4116)
+- Ftrack: Event server status give more information about version locations [\#4112](https://github.com/pypeclub/OpenPype/pull/4112)
+- General: Allow higher numbers in frames and clips [\#4101](https://github.com/pypeclub/OpenPype/pull/4101)
+- Publisher: Settings for validate frame range [\#4097](https://github.com/pypeclub/OpenPype/pull/4097)
+- Publisher: Ignore escape button [\#4090](https://github.com/pypeclub/OpenPype/pull/4090)
+- Flame: Loading clip with native colorspace resolved from mapping [\#4079](https://github.com/pypeclub/OpenPype/pull/4079)
+- General: Extract review single frame output [\#4064](https://github.com/pypeclub/OpenPype/pull/4064)
+- Publisher: Prepared common function for instance data cache [\#4063](https://github.com/pypeclub/OpenPype/pull/4063)
+- Publisher: Easy access to publish page from create page [\#4058](https://github.com/pypeclub/OpenPype/pull/4058)
+- General/TVPaint: Attribute defs dialog [\#4052](https://github.com/pypeclub/OpenPype/pull/4052)
+- Publisher: Better reset defer [\#4048](https://github.com/pypeclub/OpenPype/pull/4048)
+- Publisher: Add thumbnail sources [\#4042](https://github.com/pypeclub/OpenPype/pull/4042)
+
+**🐛 Bug fixes**
+
+- General: Move default settings for template name [\#4119](https://github.com/pypeclub/OpenPype/pull/4119)
+- Slack: notification fail in new tray publisher [\#4118](https://github.com/pypeclub/OpenPype/pull/4118)
+- Nuke: loaded nodes set to first tab [\#4114](https://github.com/pypeclub/OpenPype/pull/4114)
+- Nuke: load image first frame [\#4113](https://github.com/pypeclub/OpenPype/pull/4113)
+- Files Widget: Ignore case sensitivity of extensions [\#4096](https://github.com/pypeclub/OpenPype/pull/4096)
+- Webpublisher: extension is lowercased in Setting and in uploaded files [\#4095](https://github.com/pypeclub/OpenPype/pull/4095)
+- Publish Report Viewer: Fix small bugs [\#4086](https://github.com/pypeclub/OpenPype/pull/4086)
+- Igniter: fix regex to match semver better [\#4085](https://github.com/pypeclub/OpenPype/pull/4085)
+- Maya: aov filtering [\#4083](https://github.com/pypeclub/OpenPype/pull/4083)
+- Flame/Flare: Loading to multiple batches [\#4080](https://github.com/pypeclub/OpenPype/pull/4080)
+- hiero: creator from settings with set maximum [\#4077](https://github.com/pypeclub/OpenPype/pull/4077)
+- Nuke: resolve hashes in file name only for frame token [\#4074](https://github.com/pypeclub/OpenPype/pull/4074)
+- Publisher: Fix cache of asset docs [\#4070](https://github.com/pypeclub/OpenPype/pull/4070)
+- Webpublisher: cleanup wp extract thumbnail [\#4067](https://github.com/pypeclub/OpenPype/pull/4067)
+- Settings UI: Locked setting can't bypass lock [\#4066](https://github.com/pypeclub/OpenPype/pull/4066)
+- Loader: Fix comparison of repre name [\#4053](https://github.com/pypeclub/OpenPype/pull/4053)
+- Deadline: Extract environment subprocess failure [\#4050](https://github.com/pypeclub/OpenPype/pull/4050)
+
+**🔀 Refactored code**
+
+- General: Collect entities plugin minor changes [\#4089](https://github.com/pypeclub/OpenPype/pull/4089)
+- General: Direct interfaces import [\#4065](https://github.com/pypeclub/OpenPype/pull/4065)
+
+**Merged pull requests:**
+
+- Bump loader-utils from 1.4.1 to 1.4.2 in /website [\#4100](https://github.com/pypeclub/OpenPype/pull/4100)
+- Online family for Tray Publisher [\#4093](https://github.com/pypeclub/OpenPype/pull/4093)
+- Bump loader-utils from 1.4.0 to 1.4.1 in /website [\#4081](https://github.com/pypeclub/OpenPype/pull/4081)
+- remove underscore from subset name [\#4059](https://github.com/pypeclub/OpenPype/pull/4059)
+- Alembic Loader as Arnold Standin [\#4047](https://github.com/pypeclub/OpenPype/pull/4047)
+
+## [3.14.6](https://github.com/pypeclub/OpenPype/tree/3.14.6)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.5...3.14.6)
+
+### 📖 Documentation
+
+- Documentation: Minor updates to dev\_requirements.md [\#4025](https://github.com/pypeclub/OpenPype/pull/4025)
+
+**🆕 New features**
+
+- Nuke: add 13.2 variant [\#4041](https://github.com/pypeclub/OpenPype/pull/4041)
+
+**🚀 Enhancements**
+
+- Publish Report Viewer: Store reports locally on machine [\#4040](https://github.com/pypeclub/OpenPype/pull/4040)
+- General: More specific error in burnins script [\#4026](https://github.com/pypeclub/OpenPype/pull/4026)
+- General: Extract review does not crash with old settings overrides [\#4023](https://github.com/pypeclub/OpenPype/pull/4023)
+- Publisher: Convertors for legacy instances [\#4020](https://github.com/pypeclub/OpenPype/pull/4020)
+- workflows: adding milestone creator and assigner [\#4018](https://github.com/pypeclub/OpenPype/pull/4018)
+- Publisher: Catch creator errors [\#4015](https://github.com/pypeclub/OpenPype/pull/4015)
+
+**🐛 Bug fixes**
+
+- Hiero - effect collection fixes [\#4038](https://github.com/pypeclub/OpenPype/pull/4038)
+- Nuke - loader clip correct hash conversion in path [\#4037](https://github.com/pypeclub/OpenPype/pull/4037)
+- Maya: Soft fail when applying capture preset [\#4034](https://github.com/pypeclub/OpenPype/pull/4034)
+- Igniter: handle missing directory [\#4032](https://github.com/pypeclub/OpenPype/pull/4032)
+- StandalonePublisher: Fix thumbnail publishing [\#4029](https://github.com/pypeclub/OpenPype/pull/4029)
+- Experimental Tools: Fix publisher import [\#4027](https://github.com/pypeclub/OpenPype/pull/4027)
+- Houdini: fix wrong path in ASS loader [\#4016](https://github.com/pypeclub/OpenPype/pull/4016)
+
+**🔀 Refactored code**
+
+- General: Import lib functions from lib [\#4017](https://github.com/pypeclub/OpenPype/pull/4017)
+
+## [3.14.5](https://github.com/pypeclub/OpenPype/tree/3.14.5) (2022-10-24)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.4...3.14.5)
+
+**🚀 Enhancements**
+
+- Maya: add OBJ extractor to model family [\#4021](https://github.com/pypeclub/OpenPype/pull/4021)
+- Publish report viewer tool [\#4010](https://github.com/pypeclub/OpenPype/pull/4010)
+- Nuke | Global: adding custom tags representation filtering [\#4009](https://github.com/pypeclub/OpenPype/pull/4009)
+- Publisher: Create context has shared data for collection phase [\#3995](https://github.com/pypeclub/OpenPype/pull/3995)
+- Resolve: updating to v18 compatibility [\#3986](https://github.com/pypeclub/OpenPype/pull/3986)
+
+**🐛 Bug fixes**
+
+- TrayPublisher: Fix missing argument [\#4019](https://github.com/pypeclub/OpenPype/pull/4019)
+- General: Fix python 2 compatibility of ffmpeg and oiio tools discovery [\#4011](https://github.com/pypeclub/OpenPype/pull/4011)
+
+**🔀 Refactored code**
+
+- Maya: Removed unused imports [\#4008](https://github.com/pypeclub/OpenPype/pull/4008)
+- Unreal: Fix import of moved function [\#4007](https://github.com/pypeclub/OpenPype/pull/4007)
+- Houdini: Change import of RepairAction [\#4005](https://github.com/pypeclub/OpenPype/pull/4005)
+- Nuke/Hiero: Refactor openpype.api imports [\#4000](https://github.com/pypeclub/OpenPype/pull/4000)
+- TVPaint: Defined with HostBase [\#3994](https://github.com/pypeclub/OpenPype/pull/3994)
+
+**Merged pull requests:**
+
+- Unreal: Remove redundant Creator stub [\#4012](https://github.com/pypeclub/OpenPype/pull/4012)
+- Unreal: add `uproject` extension to Unreal project template [\#4004](https://github.com/pypeclub/OpenPype/pull/4004)
+- Unreal: fix order of includes [\#4002](https://github.com/pypeclub/OpenPype/pull/4002)
+- Fusion: Implement backwards compatibility \(+/- Fusion 17.2\) [\#3958](https://github.com/pypeclub/OpenPype/pull/3958)
+
+## [3.14.4](https://github.com/pypeclub/OpenPype/tree/3.14.4) (2022-10-19)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.3...3.14.4)
+
+**🆕 New features**
+
+- Webpublisher: use max next published version number  for all items in batch [\#3961](https://github.com/pypeclub/OpenPype/pull/3961)
+- General: Control Thumbnail integration via explicit configuration profiles [\#3951](https://github.com/pypeclub/OpenPype/pull/3951)
+
+**🚀 Enhancements**
+
+- Publisher: Multiselection in card view [\#3993](https://github.com/pypeclub/OpenPype/pull/3993)
+- TrayPublisher: Original Basename cause crash too early [\#3990](https://github.com/pypeclub/OpenPype/pull/3990)
+- Tray Publisher: add `originalBasename` data to simple creators [\#3988](https://github.com/pypeclub/OpenPype/pull/3988)
+- General: Custom paths to ffmpeg and OpenImageIO tools [\#3982](https://github.com/pypeclub/OpenPype/pull/3982)
+- Integrate: Preserve existing subset group if instance does not set it for new version [\#3976](https://github.com/pypeclub/OpenPype/pull/3976)
+- Publisher: Prepare publisher controller  for remote publishing [\#3972](https://github.com/pypeclub/OpenPype/pull/3972)
+- Maya: new style dataclasses in maya deadline submitter plugin [\#3968](https://github.com/pypeclub/OpenPype/pull/3968)
+- Maya: Define preffered Qt bindings for Qt.py and qtpy [\#3963](https://github.com/pypeclub/OpenPype/pull/3963)
+- Settings: Move imageio from project anatomy to project settings \[pypeclub\] [\#3959](https://github.com/pypeclub/OpenPype/pull/3959)
+- TrayPublisher: Extract thumbnail for other families [\#3952](https://github.com/pypeclub/OpenPype/pull/3952)
+- Publisher: Pass instance to subset name method on update [\#3949](https://github.com/pypeclub/OpenPype/pull/3949)
+- General: Set root environments before DCC launch [\#3947](https://github.com/pypeclub/OpenPype/pull/3947)
+- Refactor: changed legacy way to update database for Hero version integrate [\#3941](https://github.com/pypeclub/OpenPype/pull/3941)
+- Maya: Moved plugin from global to maya [\#3939](https://github.com/pypeclub/OpenPype/pull/3939)
+- Publisher: Create dialog is part of main window [\#3936](https://github.com/pypeclub/OpenPype/pull/3936)
+- Fusion: Implement Alembic and FBX mesh loader [\#3927](https://github.com/pypeclub/OpenPype/pull/3927)
+
+**🐛 Bug fixes**
+
+- TrayPublisher: Disable sequences in batch mov creator [\#3996](https://github.com/pypeclub/OpenPype/pull/3996)
+- Fix - tags might be missing on representation [\#3985](https://github.com/pypeclub/OpenPype/pull/3985)
+- Resolve: Fix usage of functions from lib [\#3983](https://github.com/pypeclub/OpenPype/pull/3983)
+- Maya: remove invalid prefix token for non-multipart outputs [\#3981](https://github.com/pypeclub/OpenPype/pull/3981)
+- Ftrack: Fix schema cache for Python 2 [\#3980](https://github.com/pypeclub/OpenPype/pull/3980)
+- Maya: add object to attr.s declaration [\#3973](https://github.com/pypeclub/OpenPype/pull/3973)
+- Maya: Deadline OutputFilePath hack regression for Renderman [\#3950](https://github.com/pypeclub/OpenPype/pull/3950)
+- Houdini: Fix validate workfile paths for non-parm file references [\#3948](https://github.com/pypeclub/OpenPype/pull/3948)
+- Photoshop: missed sync published version of workfile with workfile [\#3946](https://github.com/pypeclub/OpenPype/pull/3946)
+- Maya: Set default value for RenderSetupIncludeLights option [\#3944](https://github.com/pypeclub/OpenPype/pull/3944)
+- Maya: fix regression of Renderman Deadline hack [\#3943](https://github.com/pypeclub/OpenPype/pull/3943)
+- Kitsu: 2 fixes, nb\_frames and Shot type error [\#3940](https://github.com/pypeclub/OpenPype/pull/3940)
+- Tray: Change order of attribute changes [\#3938](https://github.com/pypeclub/OpenPype/pull/3938)
+- AttributeDefs: Fix crashing multivalue of files widget [\#3937](https://github.com/pypeclub/OpenPype/pull/3937)
+- General: Fix links query on hero version [\#3900](https://github.com/pypeclub/OpenPype/pull/3900)
+- Publisher: Files Drag n Drop cleanup [\#3888](https://github.com/pypeclub/OpenPype/pull/3888)
+
+**🔀 Refactored code**
+
+- Flame: Import lib functions from lib [\#3992](https://github.com/pypeclub/OpenPype/pull/3992)
+- General: Fix deprecated warning in legacy creator [\#3978](https://github.com/pypeclub/OpenPype/pull/3978)
+- Blender: Remove openpype api imports [\#3977](https://github.com/pypeclub/OpenPype/pull/3977)
+- General: Use direct import of resources [\#3964](https://github.com/pypeclub/OpenPype/pull/3964)
+- General: Direct settings imports [\#3934](https://github.com/pypeclub/OpenPype/pull/3934)
+- General: import 'Logger' from 'openpype.lib' [\#3926](https://github.com/pypeclub/OpenPype/pull/3926)
+- General: Remove deprecated functions from lib [\#3907](https://github.com/pypeclub/OpenPype/pull/3907)
+
+**Merged pull requests:**
+
+- Maya + Yeti: Load Yeti Cache fix frame number recognition [\#3942](https://github.com/pypeclub/OpenPype/pull/3942)
+- Fusion: Implement callbacks to Fusion's event system thread [\#3928](https://github.com/pypeclub/OpenPype/pull/3928)
+- Photoshop: create single frame image in Ftrack as review [\#3908](https://github.com/pypeclub/OpenPype/pull/3908)
+
+## [3.14.3](https://github.com/pypeclub/OpenPype/tree/3.14.3) (2022-10-03)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.2...3.14.3)
+
+**🚀 Enhancements**
+
+- Publisher: Enhancement proposals [\#3897](https://github.com/pypeclub/OpenPype/pull/3897)
+
+**🐛 Bug fixes**
+
+- Maya: Fix Render single camera validator [\#3929](https://github.com/pypeclub/OpenPype/pull/3929)
+- Flame: loading multilayer exr to batch/reel is working [\#3901](https://github.com/pypeclub/OpenPype/pull/3901)
+- Hiero: Fix inventory check on launch [\#3895](https://github.com/pypeclub/OpenPype/pull/3895)
+- WebPublisher: Fix import after refactor [\#3891](https://github.com/pypeclub/OpenPype/pull/3891)
+
+**🔀 Refactored code**
+
+- Maya: Remove unused 'openpype.api' imports in plugins [\#3925](https://github.com/pypeclub/OpenPype/pull/3925)
+- Resolve: Use new Extractor location [\#3918](https://github.com/pypeclub/OpenPype/pull/3918)
+- Unreal: Use new Extractor location [\#3917](https://github.com/pypeclub/OpenPype/pull/3917)
+- Flame: Use new Extractor location [\#3916](https://github.com/pypeclub/OpenPype/pull/3916)
+- Houdini: Use new Extractor location [\#3894](https://github.com/pypeclub/OpenPype/pull/3894)
+- Harmony: Use new Extractor location [\#3893](https://github.com/pypeclub/OpenPype/pull/3893)
+
+**Merged pull requests:**
+
+- Maya: Fix Scene Inventory possibly starting off-screen due to maya preferences [\#3923](https://github.com/pypeclub/OpenPype/pull/3923)
+
 ## [3.14.2](https://github.com/pypeclub/OpenPype/tree/3.14.2) (2022-09-12)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.1...3.14.2)

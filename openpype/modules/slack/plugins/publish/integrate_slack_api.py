@@ -112,7 +112,13 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         if review_path:
             fill_pairs.append(("review_filepath", review_path))
 
-        task_data = fill_data.get("task")
+        task_data = (
+                copy.deepcopy(instance.data.get("anatomyData", {})).get("task")
+                or fill_data.get("task")
+        )
+        if not isinstance(task_data, dict):
+            # fallback for legacy - if task_data is only task name
+            task_data["name"] = task_data
         if task_data:
             if (
                 "{task}" in message_templ
@@ -142,13 +148,17 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
 
     def _get_thumbnail_path(self, instance):
         """Returns abs url for thumbnail if present in instance repres"""
-        published_path = None
+        thumbnail_path = None
         for repre in instance.data.get("representations", []):
             if repre.get('thumbnail') or "thumbnail" in repre.get('tags', []):
-                if os.path.exists(repre["published_path"]):
-                    published_path = repre["published_path"]
+                repre_thumbnail_path = (
+                    repre.get("published_path") or
+                    os.path.join(repre["stagingDir"], repre["files"])
+                )
+                if os.path.exists(repre_thumbnail_path):
+                    thumbnail_path = repre_thumbnail_path
                 break
-        return published_path
+        return thumbnail_path
 
     def _get_review_path(self, instance):
         """Returns abs url for review if present in instance repres"""
@@ -178,10 +188,17 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                         channel=channel,
                         title=os.path.basename(p_file)
                     )
-                    attachment_str += "\n<{}|{}>".format(
-                        response["file"]["permalink"],
-                        os.path.basename(p_file))
-                    file_ids.append(response["file"]["id"])
+                    if response.get("error"):
+                        error_str = self._enrich_error(
+                            str(response.get("error")),
+                            channel)
+                        self.log.warning(
+                            "Error happened: {}".format(error_str))
+                    else:
+                        attachment_str += "\n<{}|{}>".format(
+                            response["file"]["permalink"],
+                            os.path.basename(p_file))
+                        file_ids.append(response["file"]["id"])
 
             if publish_files:
                 message += attachment_str
