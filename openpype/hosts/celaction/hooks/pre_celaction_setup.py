@@ -19,6 +19,10 @@ class CelactionPrelaunchHook(PreLaunchHook):
     platforms = ["windows"]
 
     def execute(self):
+        project_doc = self.data["project_doc"]
+        width = project_doc["data"]["resolutionWidth"]
+        height = project_doc["data"]["resolutionHeight"]
+
         # Add workfile path to launch arguments
         workfile_path = self.workfile_path()
         if workfile_path:
@@ -70,8 +74,8 @@ class CelactionPrelaunchHook(PreLaunchHook):
             winreg.KEY_ALL_ACCESS
         )
         winreg.SetValueEx(hKey, "SaveScene", 0, winreg.REG_DWORD, 1)
-        winreg.SetValueEx(hKey, "CustomX", 0, winreg.REG_DWORD, 1920)
-        winreg.SetValueEx(hKey, "CustomY", 0, winreg.REG_DWORD, 1080)
+        winreg.SetValueEx(hKey, "CustomX", 0, winreg.REG_DWORD, width)
+        winreg.SetValueEx(hKey, "CustomY", 0, winreg.REG_DWORD, height)
 
         # making sure message dialogs don't appear when overwriting
         path_overwrite_scene = "\\".join([
