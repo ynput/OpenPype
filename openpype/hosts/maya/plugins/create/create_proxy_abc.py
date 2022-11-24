@@ -25,17 +25,13 @@ class CreateProxyAlembic(plugin.Creator):
         self.data["writeColorSets"] = self.write_color_sets
         # Vertex colors with the geometry.
         self.data["writeFaceSets"] = self.write_face_sets
-        # Include parent groups
-        self.data["includeParentHierarchy"] = False
         # only nodes which are visible
         self.data["visibleOnly"] = False
         # Default to exporting world-space
         self.data["worldSpace"] = True
 
-        # Creating a single bounding box per shape selected
-        self.data["single"] = False
         # remove the bbBox after publish
-        #self.data["removeBoundingBoxAfterPublish"] = False
+        self.data["removeBoundingBoxAfterPublish"] = False
         # name suffix for the bounding box
         self.data["nameSuffix"] = "_BBox"
 

@@ -20,10 +20,7 @@ class ExtractProxyAlembic(publish.Extractor):
     families = ["proxyAbc"]
 
     def process(self, instance):
-
-        nodes, roots = self.get_members_and_roots(instance)
-        self.log.info("nodes:{}".format(nodes))
-        self.log.info("roots:{}".format(roots))
+        name_suffix = instance.data.get("nameSuffix")
         # Collect the start and end including handles
         start = float(instance.data.get("frameStartHandle", 1))
         end = float(instance.data.get("frameEndHandle", 1))
@@ -41,6 +38,11 @@ class ExtractProxyAlembic(publish.Extractor):
         filename = "{name}.abc".format(**instance.data)
         path = os.path.join(dirname, filename)
 
+        proxy_root = self.create_proxy_geometry(instance,
+                                                name_suffix,
+                                                start,
+                                                end)
+
         options = {
             "step": instance.data.get("step", 1.0),
             "attr": attrs,
@@ -51,27 +53,17 @@ class ExtractProxyAlembic(publish.Extractor):
             "writeFaceSets": instance.data.get("writeFaceSets", False),
             "uvWrite": True,
             "selection": True,
-            "worldSpace": instance.data.get("worldSpace", True)
+            "worldSpace": instance.data.get("worldSpace", True),
+            "root": proxy_root
         }
-
-        if not instance.data.get("includeParentHierarchy", True):
-            options["root"] = roots
-            self.log.info("{}".format(options["root"]))
 
         if int(cmds.about(version=True)) >= 2017:
             # Since Maya 2017 alembic supports multiple uv sets - write them.
             options["writeUVSets"] = True
 
-        if instance.data.get("visibleOnly", False):
-            nodes = list(iter_visible_nodes_in_range(nodes,
-                                                     start=start,
-                                                     end=end))
         with suspended_refresh():
             with maintained_selection():
-                self.create_proxy_geometry(instance,
-                                           nodes,
-                                           start,
-                                           end)
+                cmds.select(proxy_root, hi=True, noExpand=True)
                 extract_alembic(file=path,
                                 startFrame=start,
                                 endFrame=end,
@@ -91,20 +83,35 @@ class ExtractProxyAlembic(publish.Extractor):
         instance.context.data["cleanupFullPaths"].append(path)
 
         self.log.info("Extracted {} to {}".format(instance, dirname))
+#TODO: clean up the bounding box
+        remove_bb = instance.data.get("removeBoundingBoxAfterPublish")
+        if remove_bb:
+            for bbox in proxy_root:
+                bounding_box = cmds.listRelatives(bbox, parent=True)
+                cmds.delete(bounding_box)
 
-    def get_members_and_roots(self, instance):
-        return instance[:], instance.data.get("setMembers")
-
-    def create_proxy_geometry(self, instance, node, start, end):
-        inst_selection = cmds.ls(node, long=True)
-        name_suffix = instance.data.get("nameSuffix")
+    def create_proxy_geometry(self, instance, name_suffix, start, end):
+        nodes = instance[:]
+        if instance.data.get("visibleOnly", False):
+            nodes = list(iter_visible_nodes_in_range(nodes,
+                                                     start=start,
+                                                     end=end))
+        inst_selection = cmds.ls(nodes, long=True)
+        proxy_root = []
         bbox = cmds.geomToBBox(inst_selection,
-                               name=instance.name,
                                nameSuffix=name_suffix,
-                               single=instance.data.get("single", False),
                                keepOriginal=True,
+                               single=False,
                                bakeAnimation=True,
                                startTime=start,
                                endTime=end)
-        return cmds.select(bbox, noExpand=True)
+        for b in bbox:
+            dep_node = cmds.ls(b, dag=True, shapes=False,
+                               noIntermediate=True, sn=True)
 
+            for dep in dep_node:
+                if "Shape" in dep:
+                    continue
+                proxy_root.append(dep)
+            self.log.debug("proxy_root: {}".format(proxy_root))
+        return proxy_root
