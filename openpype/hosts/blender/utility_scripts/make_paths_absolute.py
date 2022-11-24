@@ -27,8 +27,11 @@ if __name__ == "__main__":
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :])
 
     if args.source_filepath:
-        # Resolve path from source filepath with the lib relative filepath 
-        for lib in bpy.data.libraries:
+        # Resolve path from source filepath with the relative filepath
+        datablocks_with_filepath = list(bpy.data.libraries) + list(
+            bpy.data.images
+        )
+        for lib in datablocks_with_filepath:
             lib.filepath = str(
                 Path(
                     bpy.path.abspath(
