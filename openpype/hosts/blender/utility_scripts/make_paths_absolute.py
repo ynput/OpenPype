@@ -26,10 +26,16 @@ if __name__ == "__main__":
     )
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :])
 
-    current_filepath = Path(bpy.data.filepath)
     if args.source_filepath:
+        # Resolve path from source filepath with the lib relative filepath 
         for lib in bpy.data.libraries:
-            lib.filepath = str(Path(bpy.path.abspath(lib.filepath, start=args.source_filepath.parent)).resolve())
+            lib.filepath = str(
+                Path(
+                    bpy.path.abspath(
+                        lib.filepath, start=args.source_filepath.parent
+                    )
+                ).resolve()
+            )
             try:
                 lib.reload()
             except RuntimeError as e:
