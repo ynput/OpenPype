@@ -299,8 +299,8 @@ def get_oiio_tools_path(tool="oiiotool"):
         oiio_dir = get_vendor_bin_path("oiio")
         if platform.system().lower() == "linux":
             oiio_dir = os.path.join(oiio_dir, "bin")
-        default_path = os.path.join(oiio_dir, tool)
-        if _oiio_executable_validation(default_path):
+        default_path = find_executable(os.path.join(oiio_dir, tool))
+        if default_path and _oiio_executable_validation(default_path):
             tool_executable_path = default_path
 
     # Look to PATH for the tool
