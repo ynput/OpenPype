@@ -137,6 +137,8 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
                 if low_task_name in subset["name"].lower():
                     subset_id = subset["_id"]
                     break
+        else:
+            subset_id = filtered_subsets[0]["_id"]
 
         # Set default matched subset
         if subset_id is None:
