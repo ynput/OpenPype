@@ -9,14 +9,10 @@ from openpype.client.entities import (
 from openpype.client.entity_links import get_linked_representation_id
 from openpype.lib import PreLaunchHook
 from openpype.lib.local_settings import get_local_site_id
-from openpype.lib.path_tools import get_version_from_path, version_up
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.pipeline.load.utils import get_representation_path
 from openpype.pipeline.template_data import get_template_data_with_names
-from openpype.pipeline.workfile.path_resolving import (
-    get_last_workfile,
-    get_workfile_template_key,
-)
+from openpype.pipeline.workfile.path_resolving import get_workfile_template_key
 from openpype.settings.lib import get_project_settings
 
 
