@@ -54,6 +54,7 @@ class CelactionPrelaunchHook(PreLaunchHook):
             "--resolutionWidth *X*",
             "--resolutionHeight *Y*",
         ]
+
         winreg.SetValueEx(
             hKey, "SubmitParametersTitle", 0, winreg.REG_SZ,
             " ".join(parameters)

@@ -1,6 +1,5 @@
 import os
 import sys
-import copy
 import argparse
 
 import pyblish.api
@@ -13,10 +12,9 @@ from openpype.tools.utils import host_tools
 from openpype.pipeline import install_openpype_plugins
 
 
-log = Logger.get_logger("Celaction_cli_publisher")
+log = Logger.get_logger("celaction")
 
-publish_host = "celaction"
-
+PUBLISH_HOST = "celaction"
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.celaction.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
@@ -46,28 +44,16 @@ def cli():
     celaction.kwargs = parser.parse_args(sys.argv[1:]).__dict__
 
 
-def _prepare_publish_environments():
-    """Prepares environments based on request data."""
-    env = copy.deepcopy(os.environ)
+# def _prepare_publish_environments():
+#     """Prepares environments based on request data."""
+#     env = copy.deepcopy(os.environ)
 
-    project_name = os.getenv("AVALON_PROJECT")
-    asset_name = os.getenv("AVALON_ASSET")
-
-    env["AVALON_PROJECT"] = project_name
-    env["AVALON_ASSET"] = asset_name
-    env["AVALON_TASK"] = os.getenv("AVALON_TASK")
-    env["AVALON_WORKDIR"] = os.getenv("AVALON_WORKDIR")
-    env["AVALON_APP"] = f"hosts.{publish_host}"
-    env["AVALON_APP_NAME"] = "celaction/local"
-
-    env["PYBLISH_HOSTS"] = publish_host
-
-    os.environ.update(env)
+#     os.environ.update(env)
 
 
 def main():
     # prepare all environments
-    _prepare_publish_environments()
+    # _prepare_publish_environments()
 
     # Registers pype's Global pyblish plugins
     install_openpype_plugins()
@@ -76,7 +62,7 @@ def main():
         log.info(f"Registering path: {PUBLISH_PATH}")
         pyblish.api.register_plugin_path(PUBLISH_PATH)
 
-    pyblish.api.register_host(publish_host)
+    pyblish.api.register_host(PUBLISH_HOST)
 
     return host_tools.show_publish()
 
