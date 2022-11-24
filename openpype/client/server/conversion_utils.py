@@ -203,7 +203,13 @@ def convert_v4_project_to_v3(project):
         config["templates"] = templates
 
     if "taskTypes" in project:
-        config["tasks"] = project["taskTypes"]
+        task_types = project["taskTypes"]
+        new_task_types = {}
+        for task_type in task_types:
+            name = task_type.pop("name")
+            new_task_types[name] = task_type
+
+        config["tasks"] = new_task_types
 
     if config:
         output["config"] = config
