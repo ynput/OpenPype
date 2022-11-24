@@ -25,7 +25,6 @@ from openpype.client import (
 )
 from openpype.lib import source_hash
 from openpype.lib.file_transaction import FileTransaction
-from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import (
     KnownPublishError,
     get_publish_template_name,
@@ -242,7 +241,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         return filtered_repres
 
     def register(self, instance, file_transactions, filtered_repres):
-        project_name = legacy_io.active_project()
+        project_name = instance.context["projectName"]
 
         instance_stagingdir = instance.data.get("stagingDir")
         if not instance_stagingdir:
@@ -803,11 +802,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         """Return anatomy template name to use for integration"""
 
         # Anatomy data is pre-filled by Collectors
-
-        project_name = legacy_io.active_project()
+        context = instance.context
+        project_name = context.data["projectName"]
 
         # Task can be optional in anatomy data
-        host_name = instance.context.data["hostName"]
+        host_name = context.data["hostName"]
         anatomy_data = instance.data["anatomyData"]
         family = anatomy_data["family"]
         task_info = anatomy_data.get("task") or {}
@@ -818,7 +817,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             family,
             task_name=task_info.get("name"),
             task_type=task_info.get("type"),
-            project_settings=instance.context.data["project_settings"],
+            project_settings=context.data["project_settings"],
             logger=self.log
         )
 
