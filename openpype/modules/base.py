@@ -12,8 +12,11 @@ import collections
 import traceback
 from uuid import uuid4
 from abc import ABCMeta, abstractmethod
-import six
 
+import six
+import appdirs
+
+from openpype import OP4_TEST_ENABLED
 from openpype.settings import (
     get_system_settings,
     SYSTEM_SETTINGS_KEY,
@@ -299,6 +302,102 @@ def load_modules(force=False):
             time.sleep(0.1)
 
 
+def _get_v4_addons_information():
+    """Receive information about addons to use from server.
+
+    Todos:
+        Actually ask server for the information.
+        Allow project name as optional argument to be able to query information
+            about used addons for specific project.
+
+    Returns:
+        List[Dict[str, Any]]: List of addon information to use.
+    """
+
+    return []
+
+
+def _load_v4_addons(openpype_modules, modules_key, log):
+    """Load v4 addons based on information from server.
+
+    This function should not trigger downloading of any addons but only use
+    what is already available on the machine (at least in first stages of
+    development).
+
+    Args:
+        openpype_modules (_ModuleClass): Module object where modules are
+            stored.
+        log (logging.Logger): Logger object.
+
+    Returns:
+        List[str]: List of v3 addons to skip to load because v4 alternative is
+            imported.
+    """
+
+    v3_addons_to_skip = []
+    addons_info = _get_v4_addons_information()
+    if not addons_info:
+        return v3_addons_to_skip
+    addons_dir = os.path.join(
+        appdirs.user_data_dir("openpype", "pypeclub"),
+        "addons"
+    )
+    if not os.path.exists(addons_dir):
+        log.warning("Addons directory does not exists. Path \"{}\"".format(
+            addons_dir
+        ))
+        return v3_addons_to_skip
+
+    for addon_info in addons_info:
+        addon_name = addon_info["name"]
+        addon_version = addon_info["version"]
+        folder_name = "{}_{}".format(addon_name, addon_version)
+        addon_dir = os.path.join(addons_dir, folder_name)
+        if not os.path.exists(addon_dir):
+            log.warning((
+                "Directory for addon {} {} does not exists. Path \"{}\""
+            ).format(addon_name, addon_version, addons_dir))
+            continue
+
+        sys.path.insert(0, addon_dir)
+        imported_modules = []
+        for name in os.listdir(addon_dir):
+            path = os.path.join(addon_dir, name)
+            basename, ext = os.path.splitext(name)
+            is_dir = os.path.isdir(path)
+            is_py_file = ext.lower() == ".py"
+            if not is_py_file and not is_dir:
+                continue
+
+            try:
+                mod = __import__(basename, fromlist=("",))
+                imported_modules.append(mod)
+            except BaseException:
+                log.warning(
+                    "Failed to import \"{}\"".format(basename),
+                    exc_info=True
+                )
+
+        if not imported_modules:
+            log.warning("Addon {} {} has no content to import".format(
+                addon_name, addon_version
+            ))
+            continue
+
+        if len(imported_modules) == 1:
+            v3_addons_to_skip.append(addon_name)
+            mod = imported_modules[0]
+            new_import_str = "{}.{}".format(modules_key, addon_name)
+
+            sys.modules[new_import_str] = mod
+            setattr(openpype_modules, addon_name, mod)
+
+        else:
+            log.info("More then one module was imported")
+
+    return v3_addons_to_skip
+
+
 def _load_modules():
     # Key under which will be modules imported in `sys.modules`
     modules_key = "openpype_modules"
@@ -307,6 +406,12 @@ def _load_modules():
     sys.modules[modules_key] = openpype_modules = _ModuleClass(modules_key)
 
     log = Logger.get_logger("ModulesLoader")
+
+    ignore_addon_names = []
+    if OP4_TEST_ENABLED:
+        ignore_addon_names = _load_v4_addons(
+            openpype_modules, modules_key, log
+        )
 
     # Look for OpenPype modules in paths defined with `get_module_dirs`
     #   - dynamically imported OpenPype modules and addons
@@ -346,6 +451,9 @@ def _load_modules():
 
             fullpath = os.path.join(dirpath, filename)
             basename, ext = os.path.splitext(filename)
+
+            if basename in ignore_addon_names:
+                continue
 
             # Validations
             if os.path.isdir(fullpath):
