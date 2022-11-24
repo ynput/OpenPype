@@ -36,13 +36,14 @@ class CelactionPrelaunchHook(PreLaunchHook):
 
         path_to_cli = os.path.join(CELACTION_API_DIR, "cli.py")
         subproces_args = get_openpype_execute_args("run", path_to_cli)
+        openpype_executables = subproces_args.pop(0)
 
         winreg.SetValueEx(
             hKey,
             "SubmitAppTitle",
             0,
             winreg.REG_SZ,
-            subproces_args.pop(0)
+            openpype_executables
         )
 
         parameters = subproces_args + [
