@@ -1273,7 +1273,7 @@
                 "variant_label": "Local",
                 "use_python_2": false,
                 "executables": {
-                    "windows": [],
+                    "windows": ["C:/Program Files/CelAction/CelAction2D Studio/CelAction2D.exe"],
                     "darwin": [],
                     "linux": []
                 },
