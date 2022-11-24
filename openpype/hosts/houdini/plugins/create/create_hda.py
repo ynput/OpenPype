@@ -70,6 +70,7 @@ class CreateHDA(plugin.HoudiniCreator):
             hda_node = to_hda
 
         hda_node.setName(node_name)
+        self.customize_node_look(hda_node)
         return hda_node
 
     def create(self, subset_name, instance_data, pre_create_data):

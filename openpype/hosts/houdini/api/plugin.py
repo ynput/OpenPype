@@ -43,7 +43,7 @@ class Creator(LegacyCreator):
 
     def __init__(self, *args, **kwargs):
         super(Creator, self).__init__(*args, **kwargs)
-        self.nodes = list()
+        self.nodes = []
 
     def process(self):
         """This is the base functionality to create instances in Houdini
@@ -181,6 +181,8 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
             instance_node = self.create_instance_node(
                 subset_name, "/out", node_type)
 
+            self.customize_node_look(instance_node)
+
             instance_data["instance_node"] = instance_node.path()
             instance = CreatedInstance(
                 self.family,
@@ -245,15 +247,30 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
         """
         for instance in instances:
             instance_node = hou.node(instance.data.get("instance_node"))
-            to_delete = None
-            for parameter in instance_node.spareParms():
-                if parameter.name() == "id" and \
-                        parameter.eval() == "pyblish.avalon.instance":
-                    to_delete = parameter
-            instance_node.removeSpareParmTuple(to_delete)
+            if instance_node:
+                instance_node.destroy()
+
             self._remove_instance_from_context(instance)
 
     def get_pre_create_attr_defs(self):
         return [
             BoolDef("use_selection", label="Use selection")
         ]
+
+    @staticmethod
+    def customize_node_look(
+            node, color=hou.Color((0.616, 0.871, 0.769)),
+            shape="chevron_down"):
+        """Set custom look for instance nodes.
+
+        Args:
+            node (hou.Node): Node to set look.
+            color (hou.Color, Optional): Color of the node.
+            shape (str, Optional): Shape name of the node.
+
+        Returns:
+            None
+
+        """
+        node.setUserData('nodeshape', shape)
+        node.setColor(color)
