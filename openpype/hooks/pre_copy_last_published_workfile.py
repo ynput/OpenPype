@@ -6,6 +6,7 @@ from openpype.client.entities import (
     get_representations,
     get_subsets,
 )
+from openpype.client.entity_links import get_linked_representation_id
 from openpype.lib import PreLaunchHook
 from openpype.lib.local_settings import get_local_site_id
 from openpype.lib.path_tools import get_version_from_path, version_up
@@ -159,14 +160,23 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             return
 
         local_site_id = get_local_site_id()
-        sync_server.add_site(
-            project_name,
-            workfile_representation["_id"],
-            local_site_id,
-            force=True,
-            priority=99,
-            reset_timer=True,
+
+        # Tag worfile and linked representations to be downloaded
+        representation_ids = {workfile_representation["_id"]}
+        representation_ids.update(
+            get_linked_representation_id(
+                project_name, repre_id=workfile_representation["_id"]
+            )
         )
+        for repre_id in representation_ids:
+            sync_server.add_site(
+                project_name,
+                repre_id,
+                local_site_id,
+                force=True,
+                priority=99,
+                reset_timer=True,
+            )
 
         while not sync_server.is_representation_on_site(
             project_name, workfile_representation["_id"], local_site_id
