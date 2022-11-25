@@ -4,6 +4,7 @@ if not OP4_TEST_ENABLED:
     from .mongo.entities import *
 else:
     from .server.entities import *
+
 """
 Goal is that most of functions here are called on (or with) an object
 that has project name as a context (e.g. on 'ProjectEntity'?).
