@@ -80,6 +80,26 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
         render_dir = os.path.normpath(os.path.dirname(render_path))
         render_path = os.path.normpath(render_path)
         script_name = os.path.basename(script_path)
+
+        for item in instance.context:
+            if "workfile" in item.data["families"]:
+                msg = "Workfile (scene) must be published along"
+                assert item.data["publish"] is True, msg
+
+                template_data = item.data.get("anatomyData")
+                rep = item.data.get("representations")[0].get("name")
+                template_data["representation"] = rep
+                template_data["ext"] = rep
+                template_data["comment"] = None
+                anatomy_filled = instance.context.data["anatomy"].format(
+                    template_data)
+                template_filled = anatomy_filled["publish"]["path"]
+                script_path = os.path.normpath(template_filled)
+
+                self.log.info(
+                    "Using published scene for render {}".format(script_path)
+                )
+
         jobname = "%s - %s" % (script_name, instance.name)
 
         output_filename_0 = self.preview_fname(render_path)
@@ -96,7 +116,7 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
             chunk_size = self.deadline_chunk_size
 
         # search for %02d pattern in name, and padding number
-        search_results = re.search(r"(.%0)(\d)(d)[._]", render_path).groups()
+        search_results = re.search(r"(%0)(\d)(d)[._]", render_path).groups()
         split_patern = "".join(search_results)
         padding_number = int(search_results[1])
 
