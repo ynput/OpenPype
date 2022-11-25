@@ -99,8 +99,7 @@ class DependencyItem(object):
     def from_dict(cls, package):
         sources = []
 
-        package_data = package["data"]
-        for source in package_data.get("sources", []):
+        for source in package.get("sources", []):
             source_type = source.get("type")
             if source_type == UrlType.FILESYSTEM.value:
                 source_addon = LocalAddonSource(type=source["type"],
@@ -115,10 +114,13 @@ class DependencyItem(object):
                 raise ValueError(f"Unknown source {source_type}")
 
             sources.append(source_addon)
+        addon_list = [f"{name}_{version}"
+                      for name, version in
+                      package.get("supportedAddons").items()]
 
-        return cls(name=package.get("package_name"),
+        return cls(name=package.get("name"),
                    platform=package.get("platform"),
                    sources=sources,
                    checksum=package.get("checksum"),
-                   addon_list=package_data.get("addon_list"),
-                   python_modules=package_data.get("python_modules"))
+                   addon_list=addon_list,
+                   python_modules=package.get("pythonModules"))
