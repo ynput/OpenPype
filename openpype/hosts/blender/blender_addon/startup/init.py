@@ -30,7 +30,7 @@ def get_loader_name(loaders: List[LoaderPlugin], load_type: str) -> str:
         str: Loader name
     """
     return next(
-        [l.__name__ for l in loaders if l.__name__.startswith(load_type)],
+        (l.__name__ for l in loaders if l.__name__.startswith(load_type)),
         None,
     )
 
