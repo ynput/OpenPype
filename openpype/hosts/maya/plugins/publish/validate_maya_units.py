@@ -58,7 +58,7 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
 
         self.log.info('Units (linear): {0}'.format(linear_units))
         self.log.info('Units (angular): {0}'.format(angular_units))
-        self.log.info('Units (time): {0} FPS'.format(fps))
+        self.log.info('Units (time): {0} FPS'.format(context.data.get('fps')))
 
         valid = True
 
@@ -83,7 +83,9 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
 
         if self.validate_fps and fps and fps != asset_fps:
             self.log.error(
-                "Scene must be {} FPS (now is {})".format(asset_fps, fps))
+                "Scene must be {} FPS (now is {})".format(
+                    asset_doc["data"]["fps"],
+                    context.data.get('fps')))
             valid = False
 
         if not valid:
