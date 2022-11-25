@@ -59,13 +59,18 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
 
             else:
                 new_parent = self.sync_asset(
-                    context,
                     name,
                     entity_data,
                     parent,
                     project_doc,
                     asset_docs_by_name,
                     archived_asset_docs_by_name
+                )
+                # make sure all relative instances have correct avalon data
+                self._set_avalon_data_to_relative_instances(
+                    context,
+                    project_name,
+                    new_parent
                 )
 
             children = entity_data.get("childs")
@@ -132,7 +137,6 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
 
     def sync_asset(
         self,
-        context,
         asset_name,
         entity_data,
         parent,
@@ -140,7 +144,6 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
         asset_docs_by_name,
         archived_asset_docs_by_name
     ):
-        project_name = project["name"]
         # Prepare data for new asset or for update comparison
         data = {
             "entityType": entity_data["entity_type"]
@@ -218,13 +221,6 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                 update_key = "data.{}".format(key)
                 changes[update_key] = value
                 cur_entity_data[key] = value
-
-        # make sure all relative instances have correct avalon data
-        self._set_avalon_data_to_relative_instances(
-            context,
-            project_name,
-            asset_doc
-        )
 
         # Update asset in database if necessary
         if changes:
