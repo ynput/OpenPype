@@ -53,6 +53,7 @@ def main():
         pyblish.api.register_plugin_path(PUBLISH_PATH)
 
     pyblish.api.register_host(PUBLISH_HOST)
+    pyblish.api.register_target("local")
 
     return host_tools.show_publish()
 
