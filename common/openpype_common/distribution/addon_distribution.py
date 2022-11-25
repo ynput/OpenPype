@@ -35,19 +35,20 @@ class AddonDownloader:
 
     @classmethod
     @abstractmethod
-    def download(cls, source, destination):
+    def download(cls, source, destination_dir, data=None):
         """Returns url to downloaded addon zip file.
 
         Args:
             source (dict): {type:"http", "url":"https://} ...}
-            destination (str): local folder to unzip
+            destination_dir (str): local folder to unzip
+            data (dict): dynamic values, different per downloader type
         Returns:
             (str) local path to addon zip file
         """
         pass
 
     @classmethod
-    def check_hash(cls, addon_path, addon_hash):
+    def check_hash(cls, addon_path, addon_hash, hash_type="sha256"):
         """Compares 'hash' of downloaded 'addon_url' file.
 
         Args:
@@ -60,18 +61,18 @@ class AddonDownloader:
             raise ValueError(f"{addon_path} doesn't exist.")
         if not RemoteFileHandler.check_integrity(addon_path,
                                                  addon_hash,
-                                                 hash_type="sha256"):
+                                                 hash_type=hash_type):
             raise ValueError(f"{addon_path} doesn't match expected hash.")
 
     @classmethod
-    def unzip(cls, addon_zip_path, destination):
+    def unzip(cls, addon_zip_path, destination_dir):
         """Unzips local 'addon_zip_path' to 'destination'.
 
         Args:
             addon_zip_path (str): local path to addon zip file
             destination (str): local folder to unzip
         """
-        RemoteFileHandler.unzip(addon_zip_path, destination)
+        RemoteFileHandler.unzip(addon_zip_path, destination_dir)
         os.remove(addon_zip_path)
 
     @classmethod
@@ -82,7 +83,7 @@ class AddonDownloader:
 class OSAddonDownloader(AddonDownloader):
 
     @classmethod
-    def download(cls, source, destination):
+    def download(cls, source, destination_dir, data=None):
         # OS doesnt need to download, unzip directly
         addon_url = source["path"].get(platform.system().lower())
         if not os.path.exists(addon_url):
@@ -94,32 +95,32 @@ class HTTPAddonDownloader(AddonDownloader):
     CHUNK_SIZE = 100000
 
     @classmethod
-    def download(cls, source, destination):
+    def download(cls, source, destination_dir, data=None):
         source_url = source["url"]
-        cls.log.debug(f"Downloading {source_url} to {destination}")
-        file_name = os.path.basename(destination)
+        cls.log.debug(f"Downloading {source_url} to {destination_dir}")
+        file_name = os.path.basename(destination_dir)
         _, ext = os.path.splitext(file_name)
         if (ext.replace(".", '') not
                 in set(RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS)):
             file_name += ".zip"
         RemoteFileHandler.download_url(source_url,
-                                       destination,
+                                       destination_dir,
                                        filename=file_name)
 
-        return os.path.join(destination, file_name)
+        return os.path.join(destination_dir, file_name)
 
 
-class ServerAddonDownloader(AddonDownloader):
+class DependencyDownloader(AddonDownloader):
     """Downloads static resource file from v4 Server.
 
     Expects filled env var OPENPYPE_SERVER_URL.
     """
-    CHUNK_SIZE = 100000
+    CHUNK_SIZE = 8192
 
     @classmethod
-    def download(cls, source, destination):
+    def download(cls, source, destination_dir, data=None):
         filename = source["filename"]
-        cls.log.debug(f"Downloading {filename} to {destination}")
+        cls.log.debug(f"Downloading {filename} to {destination_dir}")
 
         if not os.environ.get("OPENPYPE_SERVER_URL"):
             raise RuntimeError(f"Must have OPENPYPE_SERVER_URL env var!")
@@ -315,7 +316,7 @@ def default_addon_downloader():
     addon_downloader.register_format(UrlType.HTTP,
                                      HTTPAddonDownloader)
     addon_downloader.register_format(UrlType.SERVER,
-                                     ServerAddonDownloader)
+                                     DependencyDownloader)
 
     return addon_downloader
 
