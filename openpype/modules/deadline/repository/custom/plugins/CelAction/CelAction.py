@@ -71,6 +71,7 @@ class CelActionPlugin(DeadlinePlugin):
 
         # Ignore 'celaction' Pop-up dialog
         self.AddPopupIgnorer(".*Rendering.*")
+        self.AddPopupIgnorer(".*AutoRender.*")
 
         # Ignore 'celaction' Pop-up dialog
         self.AddPopupIgnorer(".*Wait.*")
