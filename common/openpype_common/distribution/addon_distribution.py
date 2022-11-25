@@ -107,7 +107,8 @@ class HTTPAddonDownloader(AddonDownloader):
             file_name += ".zip"
         RemoteFileHandler.download_url(source_url,
                                        destination_dir,
-                                       filename=file_name)
+                                       filename=file_name,
+                                       headers=data.get("headers"))
 
         return os.path.join(destination_dir, file_name)
 
@@ -190,7 +191,7 @@ def get_dependency_info(server_endpoint):
             return dependency_package
 
 
-def update_addon_state(addon_infos, destination_folder, factory,
+def update_addon_state(addon_infos, destination_folder, factory, token,
                        log=None):
     """Loops through all 'addon_infos', compares local version, unzips.
 
@@ -202,14 +203,15 @@ def update_addon_state(addon_infos, destination_folder, factory,
         destination_folder (str): local path
         factory (AddonDownloader): factory to get appropriate downloader per
             addon type
+        token (str): authorization token
         log (logging.Logger)
     Returns:
-        (dict): {"addon_full_name": UpdateState.value
-            (eg. "exists"|"updated"|"failed")
+        (dict): {"addon_full_name": UpdateState}
     """
     if not log:
         log = logging.getLogger(__name__)
 
+    data = {"headers": {"Authorization": f"Bearer {token}"}}
     download_states = {}
     for addon in addon_infos:
         full_name = "{}_{}".format(addon.name, addon.version)
@@ -232,7 +234,8 @@ def update_addon_state(addon_infos, destination_folder, factory,
             try:
                 downloader = factory.get_downloader(source.type)
                 zip_file_path = downloader.download(attr.asdict(source),
-                                                    addon_dest)
+                                                    destination_folder,
+                                                    data=data)
                 downloader.check_hash(zip_file_path, addon.hash)
                 downloader.unzip(zip_file_path)
                 download_states[full_name] = UpdateState.UPDATED
@@ -247,21 +250,22 @@ def update_addon_state(addon_infos, destination_folder, factory,
     return download_states
 
 
-def check_addons(server_endpoint, addon_folder, downloaders):
+def check_addons(server_endpoint, addon_folder, downloaders, token):
     """Main entry point to compare existing addons with those on server.
 
     Args:
         server_endpoint (str): url to v4 server endpoint
         addon_folder (str): local dir path for addons
         downloaders (AddonDownloader): factory of downloaders
-
+        token (str): authentication token
     Raises:
         (RuntimeError) if any addon failed update
     """
     addons_info = get_addons_info(server_endpoint)
     result = update_addon_state(addons_info,
                                 addon_folder,
-                                downloaders)
+                                downloaders,
+                                token=token)
     failed = {}
     ok_states = [UpdateState.UPDATED, UpdateState.EXISTS]
     ok_states.append(UpdateState.FAILED_MISSING_SOURCE)  # TODO remove test only  noqa
@@ -273,13 +277,14 @@ def check_addons(server_endpoint, addon_folder, downloaders):
         raise RuntimeError(f"Unable to update some addons {failed}")
 
 
-def check_venv(server_endpoint, local_venv_dir, downloaders, log=None):
+def check_venv(server_endpoint, local_venv_dir, downloaders, token, log=None):
     """Main entry point to compare existing addons with those on server.
 
     Args:
         server_endpoint (str): url to v4 server endpoint
         local_venv_dir (str): local dir path for addons
         downloaders (AddonDownloader): factory of downloaders
+        token (str): authorization token
 
     Raises:
         (RuntimeError) if required production package failed update
