@@ -208,10 +208,6 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
         if instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
 
-        # add allowed keys from preset if any
-        if self.env_allowed_keys:
-            keys += self.env_allowed_keys
-
         environment = dict({
             key: os.environ[key] for key in keys
             if key in os.environ}, **legacy_io.Session
@@ -226,12 +222,6 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
             "OPENPYPE_LOG_NO_COLORS": "1",
             "OPENPYPE_RENDER_JOB": "1"
         })
-
-        # finally search replace in values of any key
-        if self.env_search_replace_values:
-            for key, value in environment.items():
-                for _k, _v in self.env_search_replace_values.items():
-                    environment[key] = value.replace(_k, _v)
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
