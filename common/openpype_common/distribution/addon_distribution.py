@@ -6,9 +6,11 @@ import logging
 import requests
 import platform
 import shutil
+import urllib.parse as urlparse
 
 from .file_handler import RemoteFileHandler
 from .addon_info import AddonInfo, UrlType, DependencyItem
+from common.openpype_common.connection.credentials import load_token
 
 
 class UpdateState(Enum):
@@ -125,19 +127,25 @@ class DependencyDownloader(AddonDownloader):
         if not os.environ.get("OPENPYPE_SERVER_URL"):
             raise RuntimeError(f"Must have OPENPYPE_SERVER_URL env var!")
 
-        server_endpoint = "{}/{}".format(
-            os.environ.get("OPENPYPE_SERVER_URL"), filename)
-
-        file_name = os.path.basename(destination)
+        file_name = os.path.basename(filename)
         _, ext = os.path.splitext(file_name)
         if (ext.replace(".", '') not
                 in set(RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS)):
             file_name += ".zip"
-        RemoteFileHandler.download_url(server_endpoint,
-                                       destination,
-                                       filename=file_name)
 
-        return os.path.join(destination, file_name)
+        session = requests.Session()
+        session.headers.update({
+            "Content-Type": "application/octet-steam",
+            "Authorization": "Bearer " + data["token"]
+        })
+        destination_path = os.path.join(destination_dir, file_name)
+        with session.get(data["server_endpoint"], stream=True) as r:
+            r.raise_for_status()
+            with open(destination_path, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=cls.CHUNK_SIZE):
+                    f.write(chunk)
+
+        return destination_path
 
 
 def get_addons_info(server_endpoint):
@@ -172,10 +180,10 @@ def get_dependency_info(server_endpoint):
         raise Exception(response.text)
 
     response_json = response.json()
-    dependency_list = response_json["dependency_packages"]
-    production_package_name = response_json["production_package_name"]
+    dependency_list = response_json["packages"]
+    production_package_name = response_json["productionPackage"]
     for dependency in dependency_list:
-        dependency["production_package_name"] = production_package_name
+        dependency["productionPackage"] = production_package_name
         dependency_package = DependencyItem.from_dict(dependency)
         if (dependency_package and
                 dependency_package.name == production_package_name):
@@ -287,17 +295,28 @@ def check_venv(server_endpoint, local_venv_dir, downloaders, log=None):
         log.debug(f"Venv folder {venv_dest_dir} already exists.")
         return
 
+    os.makedirs(venv_dest_dir)
+
     if not package.sources:
         msg = f"Package {package.name} doesn't have any "\
                "sources to download from."
         raise RuntimeError(msg)
 
+    parsed_uri = urlparse.urlparse(server_endpoint)
+    server_url = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
+    token = load_token(server_url)
+    server_endpoint = "{}/api/dependencies/{}/{}".format(
+        server_url, package.name, package.platform)
+    data = {"server_endpoint": server_endpoint,
+            "token": token}
+
     for source in package.sources:
         try:
             downloader = downloaders.get_downloader(source.type)
             zip_file_path = downloader.download(attr.asdict(source),
-                                                venv_dest_dir)
-            downloader.check_hash(zip_file_path, package.hash)
+                                                venv_dest_dir,
+                                                data)
+            downloader.check_hash(zip_file_path, package.checksum, "md5")
             downloader.unzip(zip_file_path, venv_dest_dir)
             break
         except Exception:

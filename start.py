@@ -728,7 +728,7 @@ def _check_and_update_dependency_package(packages_dir=None):
         default_addon_downloader,
     )
 
-    server_endpoint = "{}/api/dependency?details=1".format(
+    server_endpoint = "{}/api/dependencies".format(
         os.environ.get("OPENPYPE_SERVER_URL"))
 
     local_dir = _get_local_dir(
