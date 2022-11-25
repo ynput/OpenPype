@@ -7,7 +7,7 @@ import pyblish.util
 
 import openpype.hosts.celaction
 from openpype.lib import Logger
-from openpype.hosts.celaction import api as celaction
+from openpype.hosts.celaction import scripts
 from openpype.tools.utils import host_tools
 from openpype.pipeline import install_openpype_plugins
 
@@ -41,7 +41,7 @@ def cli():
     parser.add_argument("--resolutionHeight",
                         help=("Height of resolution"))
 
-    celaction.kwargs = parser.parse_args(sys.argv[1:]).__dict__
+    scripts.PASSING_KWARGS = parser.parse_args(sys.argv[1:]).__dict__
 
 
 def main():

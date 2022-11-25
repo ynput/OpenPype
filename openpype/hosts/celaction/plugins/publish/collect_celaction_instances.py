@@ -36,7 +36,8 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
             "version": version
         }
 
-        celaction_kwargs = context.data.get("kwargs", {})
+        celaction_kwargs = context.data.get(
+            "passingKwargs", {})
 
         if celaction_kwargs:
             shared_instance_data.update(celaction_kwargs)
