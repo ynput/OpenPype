@@ -662,7 +662,7 @@ def _connect_to_v4_server():
     from openpype_common.connection.credentials import (
         ask_to_login_ui,
         add_server,
-        store_token,
+        store_token
     )
 
     load_environments()
@@ -704,15 +704,21 @@ def _check_and_update_addons():
         check_addons,
         default_addon_downloader,
     )
+    from openpype_common.connection.credentials import (
+        load_token
+    )
+
     server_endpoint = "{}/api/addons?details=1".format(
         os.environ.get("OPENPYPE_SERVER_URL"))
 
     local_addon_folder = _get_local_dir("OPENPYPE_ADDONS_DIR", "addons")
 
     _print(f">>> Checking addons in {local_addon_folder} ...")
+    token = load_token(os.environ.get("OPENPYPE_SERVER_URL"))
     check_addons(server_endpoint,
                  local_addon_folder,
-                 default_addon_downloader())
+                 default_addon_downloader(),
+                 token)
 
     if local_addon_folder not in sys.path:
         _print(f"Adding {local_addon_folder} to sys path.")
@@ -727,9 +733,14 @@ def _check_and_update_dependency_package(packages_dir=None):
         check_venv,
         default_addon_downloader,
     )
+    from openpype_common.connection.credentials import (
+        load_token
+    )
 
     server_endpoint = "{}/api/dependencies".format(
         os.environ.get("OPENPYPE_SERVER_URL"))
+
+    token = load_token(os.environ.get("OPENPYPE_SERVER_URL"))
 
     local_dir = _get_local_dir(
         "OPENPYPE_DEPENDENCIES_DIR", "dependency_packages"
@@ -738,7 +749,8 @@ def _check_and_update_dependency_package(packages_dir=None):
     _print(f">>> Checking venvs in {local_dir} ...")
     check_venv(server_endpoint,
                local_dir,
-               default_addon_downloader())
+               default_addon_downloader(),
+               token)
 
 
 def _get_local_dir(env_key, dir_name=None):
@@ -1120,7 +1132,7 @@ def boot():
 
     _connect_to_v4_server()
 
-    #_check_and_update_addons()
+    _check_and_update_addons()
 
     _check_and_update_dependency_package()
 
