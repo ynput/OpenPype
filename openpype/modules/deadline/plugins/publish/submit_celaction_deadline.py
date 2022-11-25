@@ -187,47 +187,6 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
         plugin = payload["JobInfo"]["Plugin"]
         self.log.info("using render plugin : {}".format(plugin))
 
-        # Include critical environment variables with submission
-        keys = [
-            "PYTHONPATH",
-            "PATH",
-            "AVALON_PROJECT",
-            "AVALON_ASSET",
-            "AVALON_TASK",
-            "AVALON_APP_NAME",
-            "FTRACK_API_KEY",
-            "FTRACK_API_USER",
-            "FTRACK_SERVER",
-            "PYBLISHPLUGINPATH",
-            "TOOL_ENV",
-            "OPENPYPE_VERSION"
-        ]
-        # Add mongo url if it's enabled
-        if instance.context.data.get("deadlinePassMongoUrl"):
-            keys.append("OPENPYPE_MONGO")
-
-        environment = dict({
-            key: os.environ[key] for key in keys
-            if key in os.environ}, **legacy_io.Session
-        )
-
-        for _path in os.environ:
-            if _path.lower().startswith('openpype_'):
-                environment[_path] = os.environ[_path]
-
-        # to recognize job from OPENPYPE for turning Event On/Off
-        environment.update({
-            "OPENPYPE_LOG_NO_COLORS": "1",
-            "OPENPYPE_RENDER_JOB": "1"
-        })
-
-        payload["JobInfo"].update({
-            "EnvironmentKeyValue%d" % index: "{key}={value}".format(
-                key=key,
-                value=environment[key]
-            ) for index, key in enumerate(environment)
-        })
-
         self.log.info("Submitting..")
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
