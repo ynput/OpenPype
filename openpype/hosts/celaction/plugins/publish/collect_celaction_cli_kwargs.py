@@ -1,5 +1,6 @@
 import pyblish.api
 from openpype.hosts.celaction import scripts
+from pprint import pformat
 
 
 class CollectCelactionCliKwargs(pyblish.api.Collector):
@@ -11,7 +12,10 @@ class CollectCelactionCliKwargs(pyblish.api.Collector):
     def process(self, context):
         passing_kwargs = scripts.PASSING_KWARGS.copy()
 
-        self.log.info("Storing kwargs: %s" % kwargs)
+        self.log.info("Storing kwargs ...")
+        self.log.debug("_ passing_kwargs: {}".format(pformat(passing_kwargs)))
+
+        # set kwargs to context data
         context.set_data("passingKwargs", passing_kwargs)
 
         # get kwargs onto context data as keys with values
