@@ -18,7 +18,9 @@ class CollectRenderPath(pyblish.api.InstancePlugin):
     def process(self, instance):
         anatomy = instance.context.data["anatomy"]
         anatomy_data = copy.deepcopy(instance.data["anatomyData"])
+        padding = anatomy.templates.get("frame_padding", 4)
         anatomy_data.update({
+            "frame": f"%0{padding}d",
             "family": "render",
             "representation": self.output_extension,
             "ext": self.output_extension
