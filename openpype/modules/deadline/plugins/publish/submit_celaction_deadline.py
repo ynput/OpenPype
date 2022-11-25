@@ -199,9 +199,7 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
             "FTRACK_API_USER",
             "FTRACK_SERVER",
             "PYBLISHPLUGINPATH",
-            "NUKE_PATH",
             "TOOL_ENV",
-            "FOUNDRY_LICENSE",
             "OPENPYPE_VERSION"
         ]
         # Add mongo url if it's enabled
