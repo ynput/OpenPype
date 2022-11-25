@@ -218,24 +218,24 @@ def update_addon_state(addon_infos, destination_folder, factory,
 
         if os.path.isdir(addon_dest):
             log.debug(f"Addon version folder {addon_dest} already exists.")
-            download_states[full_name] = UpdateState.EXISTS.value
+            download_states[full_name] = UpdateState.EXISTS
             continue
 
         if not addon.sources:
             log.debug(f"Addon doesn't have any sources to download from.")
-            failed_state = UpdateState.FAILED_MISSING_SOURCE.value
+            failed_state = UpdateState.FAILED_MISSING_SOURCE
             download_states[full_name] = failed_state
             continue
 
         for source in addon.sources:
-            download_states[full_name] = UpdateState.FAILED.value
+            download_states[full_name] = UpdateState.FAILED
             try:
                 downloader = factory.get_downloader(source.type)
                 zip_file_path = downloader.download(attr.asdict(source),
                                                     addon_dest)
                 downloader.check_hash(zip_file_path, addon.hash)
-                downloader.unzip(zip_file_path, addon_dest)
-                download_states[full_name] = UpdateState.UPDATED.value
+                downloader.unzip(zip_file_path)
+                download_states[full_name] = UpdateState.UPDATED
                 break
             except Exception:
                 log.warning(f"Error happened during updating {addon.name}",
@@ -262,15 +262,15 @@ def check_addons(server_endpoint, addon_folder, downloaders):
     result = update_addon_state(addons_info,
                                 addon_folder,
                                 downloaders)
-    failed = False
+    failed = {}
     ok_states = [UpdateState.UPDATED, UpdateState.EXISTS]
     ok_states.append(UpdateState.FAILED_MISSING_SOURCE)  # TODO remove test only  noqa
-    for res_val in result.values():
+    for addon_name, res_val in result.items():
         if res_val not in ok_states:
-            failed = True
-            break
+            failed[addon_name] = res_val.value
+
     if failed:
-        raise RuntimeError(f"Unable to update some addons {result}")
+        raise RuntimeError(f"Unable to update some addons {failed}")
 
 
 def check_venv(server_endpoint, local_venv_dir, downloaders, log=None):
