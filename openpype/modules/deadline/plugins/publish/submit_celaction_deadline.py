@@ -5,7 +5,7 @@ import getpass
 
 import requests
 import pyblish.api
-
+from openpype.pipeline import legacy_io
 
 class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
     """Submit CelAction2D scene to Deadline
@@ -25,12 +25,7 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
     deadline_pool_secondary = ""
     deadline_group = ""
     deadline_chunk_size = 1
-
-    enviro_filter = [
-        "FTRACK_API_USER",
-        "FTRACK_API_KEY",
-        "FTRACK_SERVER"
-    ]
+    deadline_job_delay = "00:00:08:00"
 
     def process(self, instance):
         instance.data["toBeRenderedOn"] = "deadline"
@@ -163,10 +158,11 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
                 # frames from Deadline Monitor
                 "OutputFilename0": output_filename_0.replace("\\", "/"),
 
-                # # Asset dependency to wait for at least the scene file to sync.
+                # # Asset dependency to wait for at least
+                # the scene file to sync.
                 # "AssetDependency0": script_path
                 "ScheduledType": "Once",
-                "JobDelay": "00:00:08:00"
+                "JobDelay": self.deadline_job_delay
             },
             "PluginInfo": {
                 # Input
@@ -191,18 +187,58 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
         plugin = payload["JobInfo"]["Plugin"]
         self.log.info("using render plugin : {}".format(plugin))
 
-        i = 0
-        for key, values in dict(os.environ).items():
-            if key.upper() in self.enviro_filter:
-                payload["JobInfo"].update(
-                    {
-                        "EnvironmentKeyValue%d"
-                        % i: "{key}={value}".format(
-                            key=key, value=values
-                        )
-                    }
-                )
-                i += 1
+        # Include critical environment variables with submission
+        keys = [
+            "PYTHONPATH",
+            "PATH",
+            "AVALON_PROJECT",
+            "AVALON_ASSET",
+            "AVALON_TASK",
+            "AVALON_APP_NAME",
+            "FTRACK_API_KEY",
+            "FTRACK_API_USER",
+            "FTRACK_SERVER",
+            "PYBLISHPLUGINPATH",
+            "NUKE_PATH",
+            "TOOL_ENV",
+            "FOUNDRY_LICENSE",
+            "OPENPYPE_VERSION"
+        ]
+        # Add mongo url if it's enabled
+        if instance.context.data.get("deadlinePassMongoUrl"):
+            keys.append("OPENPYPE_MONGO")
+
+        # add allowed keys from preset if any
+        if self.env_allowed_keys:
+            keys += self.env_allowed_keys
+
+        environment = dict({
+            key: os.environ[key] for key in keys
+            if key in os.environ}, **legacy_io.Session
+        )
+
+        for _path in os.environ:
+            if _path.lower().startswith('openpype_'):
+                environment[_path] = os.environ[_path]
+
+        # to recognize job from OPENPYPE for turning Event On/Off
+        environment.update({
+            "OPENPYPE_LOG_NO_COLORS": "1",
+            "OPENPYPE_RENDER_JOB": "1"
+        })
+
+        # finally search replace in values of any key
+        if self.env_search_replace_values:
+            for key, value in environment.items():
+                for _k, _v in self.env_search_replace_values.items():
+                    environment[key] = value.replace(_k, _v)
+
+        payload["JobInfo"].update({
+            "EnvironmentKeyValue%d" % index: "{key}={value}".format(
+                key=key,
+                value=environment[key]
+            ) for index, key in enumerate(environment)
+        })
 
         self.log.info("Submitting..")
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
