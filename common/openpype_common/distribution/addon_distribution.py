@@ -181,6 +181,7 @@ def get_dependency_info(server_endpoint):
     response_json = response.json()
     dependency_list = response_json["packages"]
     production_package_name = response_json["productionPackage"]
+    production_package_name = "openpype-win-amd64-python3.7.9-4c24c188e6b9bdb895cd5ff77a5af7a374d65aa3"  # TEMP!
     for dependency in dependency_list:
         dependency["productionPackage"] = production_package_name
         dependency_package = DependencyItem.from_dict(dependency)
@@ -199,6 +200,7 @@ def update_addon_state(addon_infos, destination_folder, factory, token,
     Args:
         addon_infos (list of AddonInfo)
         destination_folder (str): local path
+            ('...AppData/Local/pypeclub/openpype/addons')
         factory (AddonDownloader): factory to get appropriate downloader per
             addon type
         token (str): authorization token
