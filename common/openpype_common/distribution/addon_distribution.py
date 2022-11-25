@@ -6,11 +6,9 @@ import logging
 import requests
 import platform
 import shutil
-import urllib.parse as urlparse
 
 from .file_handler import RemoteFileHandler
 from .addon_info import AddonInfo, UrlType, DependencyItem
-from common.openpype_common.connection.credentials import load_token
 
 
 class UpdateState(Enum):
@@ -307,11 +305,8 @@ def check_venv(server_endpoint, local_venv_dir, downloaders, token, log=None):
                "sources to download from."
         raise RuntimeError(msg)
 
-    parsed_uri = urlparse.urlparse(server_endpoint)
-    server_url = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
-    token = load_token(server_url)
-    server_endpoint = "{}/api/dependencies/{}/{}".format(
-        server_url, package.name, package.platform)
+    server_endpoint = "{}/{}/{}".format(
+        server_endpoint, package.name, package.platform)
     data = {"server_endpoint": server_endpoint,
             "token": token}
 
