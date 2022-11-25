@@ -70,6 +70,15 @@
             "department": "",
             "multiprocess": true
         },
+        "CelactionSubmitDeadline": {
+            "enabled": true,
+            "deadline_department": "",
+            "deadline_priority": 50,
+            "deadline_pool": "",
+            "deadline_pool_secondary": "",
+            "deadline_group": "",
+            "deadline_chunk_size": 10
+        },
         "ProcessSubmittedJobOnFarm": {
             "enabled": true,
             "deadline_department": "",

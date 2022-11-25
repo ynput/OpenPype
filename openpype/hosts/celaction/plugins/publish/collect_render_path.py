@@ -11,29 +11,29 @@ class CollectRenderPath(pyblish.api.InstancePlugin):
     families = ["render.farm"]
 
     # Presets
-    anatomy_render_key = None
-    publish_render_metadata = None
+    output_extension = "png"
+    anatomy_template_key_render_files = None
+    anatomy_template_key_metadata = None
 
     def process(self, instance):
         anatomy = instance.context.data["anatomy"]
         anatomy_data = copy.deepcopy(instance.data["anatomyData"])
-        anatomy_data["family"] = "render"
-        padding = anatomy.templates.get("frame_padding", 4)
         anatomy_data.update({
-            "frame": f"%0{padding}d",
-            "representation": "png",
-            "ext": "png"
+            "family": "render",
+            "representation": self.output_extension,
+            "ext": self.output_extension
         })
 
         anatomy_filled = anatomy.format(anatomy_data)
 
         # get anatomy rendering keys
-        anatomy_render_key = self.anatomy_render_key or "render"
-        publish_render_metadata = self.publish_render_metadata or "render"
+        r_anatomy_key = self.anatomy_template_key_render_files
+        m_anatomy_key = self.anatomy_template_key_metadata
 
         # get folder and path for rendering images from celaction
-        render_dir = anatomy_filled[anatomy_render_key]["folder"]
-        render_path = anatomy_filled[anatomy_render_key]["path"]
+        render_dir = anatomy_filled[r_anatomy_key]["folder"]
+        render_path = anatomy_filled[r_anatomy_key]["path"]
+        self.log.debug("__ render_path: `{}`".format(render_path))
 
         # create dir if it doesnt exists
         try:
@@ -47,9 +47,9 @@ class CollectRenderPath(pyblish.api.InstancePlugin):
         instance.data["path"] = render_path
 
         # get anatomy for published renders folder path
-        if anatomy_filled.get(publish_render_metadata):
+        if anatomy_filled.get(m_anatomy_key):
             instance.data["publishRenderMetadataFolder"] = anatomy_filled[
-                publish_render_metadata]["folder"]
+                m_anatomy_key]["folder"]
             self.log.info("Metadata render path: `{}`".format(
                 instance.data["publishRenderMetadataFolder"]
             ))

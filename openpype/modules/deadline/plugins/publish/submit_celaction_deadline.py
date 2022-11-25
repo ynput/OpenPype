@@ -7,11 +7,10 @@ import requests
 import pyblish.api
 
 
-class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
+class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
     """Submit CelAction2D scene to Deadline
 
-    Renders are submitted to a Deadline Web Service as
-    supplied via settings key "DEADLINE_REST_URL".
+    Renders are submitted to a Deadline Web Service.
 
     """
 
