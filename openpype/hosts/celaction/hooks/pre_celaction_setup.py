@@ -18,9 +18,9 @@ class CelactionPrelaunchHook(PreLaunchHook):
     platforms = ["windows"]
 
     def execute(self):
-        project_doc = self.data["project_doc"]
-        width = project_doc["data"]["resolutionWidth"]
-        height = project_doc["data"]["resolutionHeight"]
+        asset_doc = self.data["asset_doc"]
+        width = asset_doc["data"]["resolutionWidth"]
+        height = asset_doc["data"]["resolutionHeight"]
 
         # Add workfile path to launch arguments
         workfile_path = self.workfile_path()
