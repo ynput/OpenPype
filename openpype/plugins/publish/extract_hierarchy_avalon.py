@@ -1,9 +1,8 @@
+import collections
 from copy import deepcopy
 import pyblish.api
 from openpype.client import (
-    get_project,
-    get_asset_by_id,
-    get_asset_by_name,
+    get_assets,
     get_archived_assets
 )
 from openpype.pipeline import legacy_io
@@ -17,7 +16,6 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
     families = ["clip", "shot"]
 
     def process(self, context):
-        # processing starts here
         if "hierarchyContext" not in context.data:
             self.log.info("skipping IntegrateHierarchyToAvalon")
             return
@@ -25,161 +23,240 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
         if not legacy_io.Session:
             legacy_io.install()
 
-        project_name = legacy_io.active_project()
         hierarchy_context = self._get_active_assets(context)
         self.log.debug("__ hierarchy_context: {}".format(hierarchy_context))
 
-        self.project = None
-        self.import_to_avalon(context, project_name, hierarchy_context)
+        project_name = context.data["projectName"]
+        asset_names = self.extract_asset_names(hierarchy_context)
 
-    def import_to_avalon(
+        asset_docs_by_name = {}
+        for asset_doc in get_assets(project_name, asset_names=asset_names):
+            name = asset_doc["name"]
+            asset_docs_by_name[name] = asset_doc
+
+        archived_asset_docs_by_name = collections.defaultdict(list)
+        for asset_doc in get_archived_assets(
+            project_name, asset_names=asset_names
+        ):
+            name = asset_doc["name"]
+            archived_asset_docs_by_name[name].append(asset_doc)
+
+        project_doc = None
+        hierarchy_queue = collections.deque()
+        for name, data in hierarchy_context.items():
+            hierarchy_queue.append((name, data, None))
+
+        while hierarchy_queue:
+            item = hierarchy_queue.popleft()
+            name, entity_data, parent = item
+
+            entity_type = entity_data["entity_type"]
+            if entity_type.lower() == "project":
+                new_parent = project_doc = self.sync_project(
+                    context,
+                    entity_data
+                )
+
+            else:
+                new_parent = self.sync_asset(
+                    context,
+                    name,
+                    entity_data,
+                    parent,
+                    project_doc,
+                    asset_docs_by_name,
+                    archived_asset_docs_by_name
+                )
+
+            children = entity_data.get("childs")
+            if not children:
+                continue
+
+            for child_name, child_data in children.items():
+                hierarchy_queue.append((child_name, child_data, new_parent))
+
+    def extract_asset_names(self, hierarchy_context):
+        """Extract all possible asset names from hierarchy context.
+
+        Args:
+            hierarchy_context (Dict[str, Any]): Nested hierarchy structure.
+
+        Returns:
+            Set[str]: All asset names from the hierarchy structure.
+        """
+
+        hierarchy_queue = collections.deque()
+        for name, data in hierarchy_context.items():
+            hierarchy_queue.append((name, data))
+
+        asset_names = set()
+        while hierarchy_queue:
+            item = hierarchy_queue.popleft()
+            name, data = item
+            if data["entity_type"].lower() != "project":
+                asset_names.add(name)
+
+            children = data.get("childs")
+            if children:
+                for child_name, child_data in children.items():
+                    hierarchy_queue.append((child_name, child_data))
+        return asset_names
+
+    def sync_project(self, context, entity_data):
+        project_doc = context.data["projectEntity"]
+
+        if "data" not in project_doc:
+            project_doc["data"] = {}
+        current_data = project_doc["data"]
+
+        changes = {}
+        entity_type = entity_data["entity_type"]
+        if current_data.get("entityType") != entity_type:
+            changes["entityType"] = entity_type
+
+        # Custom attributes.
+        attributes = entity_data.get("custom_attributes") or {}
+        for key, value in attributes.items():
+            if key not in current_data or current_data[key] != value:
+                update_key = "data.{}".format(key)
+                changes[update_key] = value
+                current_data[key] = value
+
+        if changes:
+            # Update entity data with input data
+            legacy_io.update_one(
+                {"_id": project_doc["_id"]},
+                {"$set": changes}
+            )
+        return project_doc
+
+    def sync_asset(
         self,
         context,
-        project_name,
-        input_data,
-        parent=None,
+        asset_name,
+        entity_data,
+        parent,
+        project,
+        asset_docs_by_name,
+        archived_asset_docs_by_name
     ):
-        for name in input_data:
-            self.log.info("input_data[name]: {}".format(input_data[name]))
-            entity_data = input_data[name]
-            entity_type = entity_data["entity_type"]
+        project_name = project["name"]
+        # Prepare data for new asset or for update comparison
+        data = {
+            "entityType": entity_data["entity_type"]
+        }
 
-            data = {}
-            data["entityType"] = entity_type
+        # Custom attributes.
+        attributes = entity_data.get("custom_attributes") or {}
+        for key, value in attributes.items():
+            data[key] = value
 
-            # Custom attributes.
-            for k, val in entity_data.get("custom_attributes", {}).items():
-                data[k] = val
+        data["inputs"] = entity_data.get("inputs") or []
 
-            if entity_type.lower() != "project":
-                data["inputs"] = entity_data.get("inputs", [])
+        # Parents and visual parent are empty if parent is project
+        parents = []
+        parent_id = None
+        if project["_id"] != parent["_id"]:
+            parent_id = parent["_id"]
+            # Use parent's parents as source value
+            parents.extend(parent["data"]["parents"])
+            # Add parent's name to parents
+            parents.append(parent["name"])
 
-                # Tasks.
-                tasks = entity_data.get("tasks", {})
-                if tasks is not None or len(tasks) > 0:
-                    data["tasks"] = tasks
-                parents = []
-                visualParent = None
-                # do not store project"s id as visualParent
-                if self.project is not None:
-                    if self.project["_id"] != parent["_id"]:
-                        visualParent = parent["_id"]
-                        parents.extend(
-                            parent.get("data", {}).get("parents", [])
-                        )
-                        parents.append(parent["name"])
-                data["visualParent"] = visualParent
-                data["parents"] = parents
+        data["visualParent"] = parent_id
+        data["parents"] = parents
 
-            update_data = True
-            # Process project
-            if entity_type.lower() == "project":
-                entity = get_project(project_name)
-                # TODO: should be in validator?
-                assert (entity is not None), "Did not find project in DB"
-
-                # get data from already existing project
-                cur_entity_data = entity.get("data") or {}
-                cur_entity_data.update(data)
-                data = cur_entity_data
-
-                self.project = entity
-            # Raise error if project or parent are not set
-            elif self.project is None or parent is None:
-                raise AssertionError(
-                    "Collected items are not in right order!"
+        asset_doc = asset_docs_by_name.get(asset_name)
+        # --- Create/Unarchive asset and end ---
+        if not asset_doc:
+            # Just use tasks from entity data as they are
+            # - this is different from the case when tasks are updated
+            data["tasks"] = entity_data.get("tasks") or {}
+            archived_asset_doc = None
+            for archived_entity in archived_asset_docs_by_name[asset_name]:
+                archived_parents = (
+                    archived_entity
+                    .get("data", {})
+                    .get("parents")
                 )
-            # Else process assset
-            else:
-                entity = get_asset_by_name(project_name, name)
-                if entity:
-                    # Do not override data, only update
-                    cur_entity_data = entity.get("data") or {}
-                    entity_tasks = cur_entity_data["tasks"] or {}
+                if data["parents"] == archived_parents:
+                    archived_asset_doc = archived_entity
+                    break
 
-                    # create tasks as dict by default
-                    if not entity_tasks:
-                        cur_entity_data["tasks"] = entity_tasks
-
-                    new_tasks = data.pop("tasks", {})
-                    if "tasks" not in cur_entity_data and not new_tasks:
-                        continue
-                    for task_name in new_tasks:
-                        if task_name in entity_tasks.keys():
-                            continue
-                        cur_entity_data["tasks"][task_name] = new_tasks[
-                            task_name]
-                    cur_entity_data.update(data)
-                    data = cur_entity_data
-                else:
-                    # Skip updating data
-                    update_data = False
-
-                    archived_entities = get_archived_assets(
-                        project_name,
-                        asset_names=[name]
-                    )
-                    unarchive_entity = None
-                    for archived_entity in archived_entities:
-                        archived_parents = (
-                            archived_entity
-                            .get("data", {})
-                            .get("parents")
-                        )
-                        if data["parents"] == archived_parents:
-                            unarchive_entity = archived_entity
-                            break
-
-                    if unarchive_entity is None:
-                        # Create entity if doesn"t exist
-                        entity = self.create_avalon_asset(
-                            name, data
-                        )
-                    else:
-                        # Unarchive if entity was archived
-                        entity = self.unarchive_entity(unarchive_entity, data)
-
-                # make sure all relative instances have correct avalon data
-                self._set_avalon_data_to_relative_instances(
-                    context,
-                    project_name,
-                    entity
+            # Create entity if doesn't exist
+            if archived_asset_doc is None:
+                return self.create_avalon_asset(
+                    asset_name, data, project
                 )
 
-            if update_data:
-                # Update entity data with input data
-                legacy_io.update_many(
-                    {"_id": entity["_id"]},
-                    {"$set": {"data": data}}
-                )
+            return self.unarchive_entity(
+                archived_asset_doc, data, project
+            )
 
-            if "childs" in entity_data:
-                self.import_to_avalon(
-                    context, project_name, entity_data["childs"], entity
-                )
+        # --- Update existing asset ---
+        # Make sure current entity has "data" key
+        if "data" not in asset_doc:
+            asset_doc["data"] = {}
+        cur_entity_data = asset_doc["data"]
+        cur_entity_tasks = cur_entity_data.get("tasks") or {}
 
-    def unarchive_entity(self, entity, data):
+        # Tasks
+        data["tasks"] = {}
+        new_tasks = entity_data.get("tasks") or {}
+        for task_name, task_info in new_tasks.items():
+            task_info = deepcopy(task_info)
+            if task_name in cur_entity_tasks:
+                src_task_info = deepcopy(cur_entity_tasks[task_name])
+                src_task_info.update(task_info)
+                task_info = src_task_info
+
+            data["tasks"][task_name] = task_info
+
+        changes = {}
+        for key, value in data.items():
+            if key not in cur_entity_data or value != cur_entity_data[key]:
+                update_key = "data.{}".format(key)
+                changes[update_key] = value
+                cur_entity_data[key] = value
+
+        # make sure all relative instances have correct avalon data
+        self._set_avalon_data_to_relative_instances(
+            context,
+            project_name,
+            asset_doc
+        )
+
+        # Update asset in database if necessary
+        if changes:
+            # Update entity data with input data
+            legacy_io.update_one(
+                {"_id": asset_doc["_id"]},
+                {"$set": changes}
+            )
+        return asset_doc
+
+    def unarchive_entity(self, archived_doc, data, project):
         # Unarchived asset should not use same data
-        new_entity = {
-            "_id": entity["_id"],
+        asset_doc = {
+            "_id": archived_doc["_id"],
             "schema": "openpype:asset-3.0",
-            "name": entity["name"],
-            "parent": self.project["_id"],
+            "name": archived_doc["name"],
+            "parent": project["_id"],
             "type": "asset",
             "data": data
         }
         legacy_io.replace_one(
-            {"_id": entity["_id"]},
-            new_entity
+            {"_id": archived_doc["_id"]},
+            asset_doc
         )
 
-        return new_entity
+        return asset_doc
 
-    def create_avalon_asset(self, name, data):
+    def create_avalon_asset(self, name, data, project):
         asset_doc = {
             "schema": "openpype:asset-3.0",
             "name": name,
-            "parent": self.project["_id"],
+            "parent": project["_id"],
             "type": "asset",
             "data": data
         }
@@ -194,27 +271,27 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
         project_name,
         asset_doc
     ):
+        asset_name = asset_doc["name"]
+        new_parents = asset_doc["data"]["parents"]
+        hierarchy = "/".join(new_parents)
+        parent_name = project_name
+        if new_parents:
+            parent_name = new_parents[-1]
+
         for instance in context:
-            # Skip instance if has filled asset entity
-            if instance.data.get("assetEntity"):
+            # Skip if instance asset does not match
+            instance_asset_name = instance.data.get("asset")
+            if asset_name != instance_asset_name:
                 continue
-            asset_name = asset_doc["name"]
-            inst_asset_name = instance.data["asset"]
 
-            if asset_name == inst_asset_name:
-                instance.data["assetEntity"] = asset_doc
+            instance_asset_doc = instance.data.get("assetEntity")
+            # Update asset entity with new possible changes of asset document
+            instance.data["assetEntity"] = asset_doc
 
-                # get parenting data
-                parents = asset_doc["data"].get("parents") or list()
-
-                # equire only relative parent
-                parent_name = project_name
-                if parents:
-                    parent_name = parents[-1]
-
-                # update avalon data on instance
+            # Update anatomy data if asset was not set on instance
+            if not instance_asset_doc:
                 instance.data["anatomyData"].update({
-                    "hierarchy": "/".join(parents),
+                    "hierarchy": hierarchy,
                     "task": {},
                     "parent": parent_name
                 })
@@ -241,7 +318,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
         hierarchy_context = context.data["hierarchyContext"]
 
         active_assets = []
-        # filter only the active publishing insatnces
+        # filter only the active publishing instances
         for instance in context:
             if instance.data.get("publish") is False:
                 continue
