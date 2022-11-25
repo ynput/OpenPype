@@ -1,3 +1,0 @@
-[flake8]
-exclude =
-  */deadline_custom_plugin/CelAction
