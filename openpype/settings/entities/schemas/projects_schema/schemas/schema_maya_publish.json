@@ -36,6 +36,25 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CollectGLTF",
+            "label": "Collect Assets for GLTF/GLB export",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "glb",
+                    "label": "Export GLB"
+                }
+            ]
+        },
+        {
             "type": "splitter"
         },
         {
@@ -62,7 +81,7 @@
                 }
             ]
         },
-        {   
+        {
             "type": "dict",
             "collapsible": true,
             "key": "ValidateFrameRange",

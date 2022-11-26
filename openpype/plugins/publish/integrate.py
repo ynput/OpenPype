@@ -111,6 +111,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "image",
                 "assembly",
                 "fbx",
+                "gltf",
                 "textures",
                 "action",
                 "harmony.template",
