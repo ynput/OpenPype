@@ -7,34 +7,34 @@ from maya import cmds, mel  # noqa
 log = logging.getLogger(__name__)
 
 _gltf_options = {
-    "of" : str,                  # outputFolder
-    "cpr" : str,                 # copyright
-    "sno" : bool,                # selectedNodeOnly
-    "sn" : str,                  # sceneName
-    "glb" : bool,                # binary
-    "nbu" : bool,                # niceBufferURIs
-    "hbu" : bool,                # hashBufferURI
-    "ext" : bool,                # externalTextures
-    "ivt" : int,                 # initialValuesTime
-    "acn" : str,                 # animationClipName
-    "ast" : int,                 # animationClipStartTime
-    "aet" : int,                 # animationClipEndTime
-    "afr" : float,               # animationClipFrameRate
-    "dsa" : int,                 # detectStepAnimations
-    "mpa" : str,                 # meshPrimitiveAttributes
-    "bpa" : str,                 # blendPrimitiveAttributes
-    "i32" : bool,                # force32bitIndices
-    "ssm" : bool,                # skipStandardMaterials
+    "of": str,                  # outputFolder
+    "cpr": str,                 # copyright
+    "sno": bool,                # selectedNodeOnly
+    "sn": str,                  # sceneName
+    "glb": bool,                # binary
+    "nbu": bool,                # niceBufferURIs
+    "hbu": bool,                # hashBufferURI
+    "ext": bool,                # externalTextures
+    "ivt": int,                 # initialValuesTime
+    "acn": str,                 # animationClipName
+    "ast": int,                 # animationClipStartTime
+    "aet": int,                 # animationClipEndTime
+    "afr": float,               # animationClipFrameRate
+    "dsa": int,                 # detectStepAnimations
+    "mpa": str,                 # meshPrimitiveAttributes
+    "bpa": str,                 # blendPrimitiveAttributes
+    "i32": bool,                # force32bitIndices
+    "ssm": bool,                # skipStandardMaterials
     "eut": bool,                 # excludeUnusedTexcoord
-    "dm" : bool,                 # defaultMaterial
-    "cm" : bool,                 # colorizeMaterials
-    "dmy" : str,                 # dumpMaya
-    "dgl" : str,                 # dumpGLTF
-    "imd" : str,                 # ignoreMeshDeformers
-    "ssc" : bool,                # skipSkinClusters
-    "sbs" : bool,                # skipBlendShapes
-    "rvp" : bool,                # redrawViewport
-    "vno" : bool                 # visibleNodesOnly
+    "dm": bool,                 # defaultMaterial
+    "cm": bool,                 # colorizeMaterials
+    "dmy": str,                 # dumpMaya
+    "dgl": str,                 # dumpGLTF
+    "imd": str,                 # ignoreMeshDeformers
+    "ssc": bool,                # skipSkinClusters
+    "sbs": bool,                # skipBlendShapes
+    "rvp": bool,                # redrawViewport
+    "vno": bool                 # visibleNodesOnly
 }
 
 
