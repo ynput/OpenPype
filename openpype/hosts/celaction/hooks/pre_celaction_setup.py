@@ -1,6 +1,7 @@
 import os
 import shutil
 import winreg
+import subprocess
 from openpype.lib import PreLaunchHook, get_openpype_execute_args
 from openpype.hosts.celaction import scripts
 
@@ -13,7 +14,6 @@ class CelactionPrelaunchHook(PreLaunchHook):
     """
     Bootstrap celacion with pype
     """
-    workfile_ext = "scn"
     app_groups = ["celaction"]
     platforms = ["windows"]
 
@@ -39,28 +39,28 @@ class CelactionPrelaunchHook(PreLaunchHook):
 
         path_to_cli = os.path.join(CELACTION_SCRIPTS_DIR, "publish_cli.py")
         subproces_args = get_openpype_execute_args("run", path_to_cli)
-        openpype_executables = subproces_args.pop(0)
+        openpype_executable = subproces_args.pop(0)
 
         winreg.SetValueEx(
             hKey,
             "SubmitAppTitle",
             0,
             winreg.REG_SZ,
-            openpype_executables
+            openpype_executable
         )
 
         parameters = subproces_args + [
-            "--currentFile *SCENE*",
-            "--chunk *CHUNK*",
-            "--frameStart *START*",
-            "--frameEnd *END*",
-            "--resolutionWidth *X*",
-            "--resolutionHeight *Y*"
+            "--currentFile", "*SCENE*",
+            "--chunk", "*CHUNK*",
+            "--frameStart", "*START*",
+            "--frameEnd", "*END*",
+            "--resolutionWidth", "*X*",
+            "--resolutionHeight", "*Y*"
         ]
 
         winreg.SetValueEx(
             hKey, "SubmitParametersTitle", 0, winreg.REG_SZ,
-            " ".join(parameters)
+            subprocess.list2cmdline(parameters)
         )
 
         # setting resolution parameters
