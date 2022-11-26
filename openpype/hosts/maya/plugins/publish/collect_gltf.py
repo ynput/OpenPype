@@ -15,4 +15,3 @@ class CollectGLTF(pyblish.api.InstancePlugin):
 
         if "fbx" not in instance.data["families"]:
             instance.data["families"].append("gltf")
-

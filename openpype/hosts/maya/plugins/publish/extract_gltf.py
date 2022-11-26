@@ -7,6 +7,7 @@ from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
 from openpype.hosts.maya.api.gltf import extract_gltf
 
+
 class ExtractGLB(publish.Extractor):
 
     order = pyblish.api.ExtractorOrder
@@ -19,7 +20,6 @@ class ExtractGLB(publish.Extractor):
         filename = "{0}.glb".format(instance.name)
         path = os.path.join(staging_dir, filename)
 
-
         self.log.info("Extracting GLB to: {}".format(path))
 
         nodes = instance[:]
@@ -28,14 +28,14 @@ class ExtractGLB(publish.Extractor):
 
         start_frame = instance.data('frameStart') or \
                       int(cmds.playbackOptions(query=True,
-                                               animationStartTime=True))
+                                               animationStartTime=True))# noqa
         end_frame = instance.data('frameEnd') or \
                     int(cmds.playbackOptions(query=True,
-                                             animationEndTime=True))
+                                             animationEndTime=True)) # noqa
         fps = mel.eval('currentTimeUnitToFPS()')
 
         options = {
-            "sno": True,    #selectedNodeOnly
+            "sno": True,    # selectedNodeOnly
             "nbu": True,    # .bin instead of .bin0
             "ast": start_frame,
             "aet": end_frame,
@@ -43,7 +43,7 @@ class ExtractGLB(publish.Extractor):
             "dsa": 1,
             "acn": instance.name,
             "glb": True,
-            "vno": True    #visibleNodeOnly
+            "vno": True    # visibleNodeOnly
         }
         with lib.maintained_selection():
             cmds.select(nodes, hi=True, noExpand=True)

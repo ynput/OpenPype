@@ -251,7 +251,7 @@
             "enabled": false
         },
         "CollectGLTF": {
-            "enabled": true,
+            "enabled": false,
             "glb" : true
         },
         "ValidateInstanceInContext": {
