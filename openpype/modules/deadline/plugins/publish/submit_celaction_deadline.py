@@ -2,10 +2,9 @@ import os
 import re
 import json
 import getpass
-
 import requests
 import pyblish.api
-from openpype.pipeline import legacy_io
+
 
 class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
     """Submit CelAction2D scene to Deadline
@@ -194,10 +193,15 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
         self.expected_files(instance, render_path)
         self.log.debug("__ expectedFiles: `{}`".format(
             instance.data["expectedFiles"]))
+
         response = requests.post(self.deadline_url, json=payload)
 
         if not response.ok:
-            raise Exception(response.text)
+            self.log.error("Submission failed!")
+            self.log.error(response.status_code)
+            self.log.error(response.content)
+            self.log.debug(payload)
+            raise SystemExit(response.text)
 
         return response
 
@@ -235,32 +239,29 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
             split_path = path.split(split_patern)
             hashes = "#" * int(search_results[1])
             return "".join([split_path[0], hashes, split_path[-1]])
-        if "#" in path:
-            self.log.debug("_ path: `{}`".format(path))
-            return path
-        else:
-            return path
 
-    def expected_files(self,
-                       instance,
-                       path):
+        self.log.debug("_ path: `{}`".format(path))
+        return path
+
+    def expected_files(self, instance, filepath):
         """ Create expected files in instance data
         """
         if not instance.data.get("expectedFiles"):
-            instance.data["expectedFiles"] = list()
+            instance.data["expectedFiles"] = []
 
-        dir = os.path.dirname(path)
-        file = os.path.basename(path)
+        dirpath = os.path.dirname(filepath)
+        filename = os.path.basename(filepath)
 
-        if "#" in file:
-            pparts = file.split("#")
+        if "#" in filename:
+            pparts = filename.split("#")
             padding = "%0{}d".format(len(pparts) - 1)
-            file = pparts[0] + padding + pparts[-1]
+            filename = pparts[0] + padding + pparts[-1]
 
-        if "%" not in file:
-            instance.data["expectedFiles"].append(path)
+        if "%" not in filename:
+            instance.data["expectedFiles"].append(filepath)
             return
 
         for i in range(self._frame_start, (self._frame_end + 1)):
             instance.data["expectedFiles"].append(
-                os.path.join(dir, (file % i)).replace("\\", "/"))
+                os.path.join(dirpath, (filename % i)).replace("\\", "/")
+            )
