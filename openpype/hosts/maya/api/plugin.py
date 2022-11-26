@@ -217,7 +217,7 @@ class ReferenceLoader(Loader):
 
         # Need to save alembic settings and reapply, cause referencing resets
         # them to incoming data.
-        alembic_attrs = ["speed", "offset", "cycleType"]
+        alembic_attrs = ["speed", "offset", "cycleType", "time"]
         alembic_data = {}
         if representation["name"] == "abc":
             alembic_nodes = cmds.ls(
@@ -226,7 +226,17 @@ class ReferenceLoader(Loader):
             if alembic_nodes:
                 for attr in alembic_attrs:
                     node_attr = "{}.{}".format(alembic_nodes[0], attr)
-                    alembic_data[attr] = cmds.getAttr(node_attr)
+                    connections = cmds.listConnections(node_attr, plugs=True)
+                    data = {
+                        "connected": False,
+                        "attribute": None,
+                        "value": cmds.getAttr(node_attr)
+                    }
+                    if connections:
+                        data["connected"] = True
+                        data["attribute"] = connections[0]
+
+                    alembic_data[attr] = data
             else:
                 self.log.debug("No alembic nodes found in {}".format(members))
 
@@ -263,8 +273,14 @@ class ReferenceLoader(Loader):
                 "{}:*".format(namespace), type="AlembicNode"
             )
             if alembic_nodes:
-                for attr, value in alembic_data.items():
-                    cmds.setAttr("{}.{}".format(alembic_nodes[0], attr), value)
+                for attr, data in alembic_data.items():
+                    node_attr = "{}.{}".format(alembic_nodes[0], attr)
+                    if data["connected"]:
+                        cmds.connectAttr(
+                            data["attribute"], node_attr, force=True
+                        )
+                    else:
+                        cmds.setAttr(node_attr, data["value"])
 
         # Fix PLN-40 for older containers created with Avalon that had the
         # `.verticesOnlySet` set to True.
