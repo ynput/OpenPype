@@ -3,7 +3,7 @@
 #include "OpenPypePublishInstance.h"
 #include "AssetRegistryModule.h"
 #include "AssetToolsModule.h"
-#include "NotificationManager.h"
+#include "Framework/Notifications/NotificationManager.h"
 #include "SNotificationList.h"
 
 //Moves all the invalid pointers to the end to prepare them for the shrinking
