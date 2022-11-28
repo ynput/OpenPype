@@ -25,6 +25,7 @@ class CreateReview(plugin.Creator):
         "depth peeling",
         "alpha cut"
     ]
+    displayLights = ["default", "all", "selected", "active", "none"]
 
     def __init__(self, *args, **kwargs):
         super(CreateReview, self).__init__(*args, **kwargs)
@@ -41,5 +42,6 @@ class CreateReview(plugin.Creator):
         data["keepImages"] = self.keepImages
         data["imagePlane"] = self.imagePlane
         data["transparency"] = self.transparency
+        data["displayLights"] = self.displayLights
 
         self.data = data

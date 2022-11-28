@@ -97,6 +97,10 @@ class ExtractPlayblast(publish.Extractor):
         refreshFrameInt = int(pm.playbackOptions(q=True, minTime=True))
         pm.currentTime(refreshFrameInt - 1, edit=True)
         pm.currentTime(refreshFrameInt, edit=True)
+        
+        # Show lighting mode.
+        index = instance.data.get("displayLights", 0)
+        preset["viewport_options"]["displayLights"] = self.displayLights[index]
 
         # Override transparency if requested.
         transparency = instance.data.get("transparency", 0)
