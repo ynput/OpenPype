@@ -369,7 +369,7 @@ def collect_animation_data(fps=False):
     data["frameEnd"] = end
     data["handleStart"] = 0
     data["handleEnd"] = 0
-    data["step"] = 1.0
+    data["step"] = 0.25
 
     if fps:
         data["fps"] = mel.eval('currentTimeUnitToFPS()')
