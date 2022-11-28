@@ -118,7 +118,7 @@ class ExtractPlayblast(publish.Extractor):
         # Disable Pan/Zoom.
         pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
         cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), False)
-        
+
         with lib.maintained_time():
             filename = preset.get("filename", "%TEMP%")
 
@@ -140,7 +140,7 @@ class ExtractPlayblast(publish.Extractor):
             path = capture.capture(log=self.log, **preset)
 
         cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
-        
+
         self.log.debug("playblast path  {}".format(path))
 
         collected_files = os.listdir(stagingdir)
