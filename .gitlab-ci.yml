@@ -17,9 +17,11 @@ workflow:
   rules:
     - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG != ""
       variables:
+        OP_VERSION: "$CI_COMMIT_TAG"
         OP_VERSION_PATH: "$OP_APP_DIR/$CI_COMMIT_TAG"
     - if: $CI_COMMIT_TAG == null || $CI_COMMIT_TAG ==""
       variables:
+        OP_VERSION: "$CI_COMMIT_BRANCH/$CI_COMMIT_SHORT_SHA"
         OP_VERSION_PATH: "$OP_APP_DIR/$CI_COMMIT_BRANCH/$CI_COMMIT_SHORT_SHA"
     - when: always
 
@@ -125,8 +127,8 @@ deploy-prod:
   needs: [{job: deploy-staged-on-tags, optional: true }, {job: deploy-staged-manual, optional: true }]
   tags: [shell, centos]
   script:
-    - echo "Set prod link $OP_PROD_PATH to $OP_VERSION_PATH"
-    - ln -sfn $OP_VERSION_PATH $OP_PROD_PATH
+    - echo "Set prod link $OP_VERSION/ to $OP_PROD_PATH"
+    - ln -sfn $OP_VERSION/ $OP_PROD_PATH
 
 deploy-deadline:
   stage: production
