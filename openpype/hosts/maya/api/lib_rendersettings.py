@@ -106,8 +106,7 @@ class RenderSettings(object):
         if renderer == "renderman":
             image_dir = self._image_dir["renderman"]
             rman_image_dir_attr = "rmanGlobals.imageOutputDir"
-            cmds.setAttr(rman_image_dir_attr,
-                         image_dir,type= "string")
+            cmds.setAttr(rman_image_dir_attr, image_dir, type= "string")
             self._set_renderman_settings(width, height)
 
     def _set_arnold_settings(self, width, height):
