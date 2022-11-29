@@ -221,7 +221,7 @@ class RenderSettings(object):
             elif filter_nodes.startswith("PxrWatermarkFilter"):
                 watermark_dir = self._image_dir["watermark"]
                 watermark_dir = watermark_dir.replace("{aov_separator}",
-                                              aov_separator)
+                                                      aov_separator)
                 cmds.setAttr(filter_nodes + ".filename",
                              watermark_dir, type="string")
 
