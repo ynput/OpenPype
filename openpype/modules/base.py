@@ -376,7 +376,7 @@ def _load_v4_addons(openpype_modules, modules_key, log):
 
         if len(imported_modules) == 1:
             mod = imported_modules[0]
-            addon_alias = getattr(mod, "v3_alias", None)
+            addon_alias = getattr(mod, "V3_ALIAS", None)
             if not addon_alias:
                 addon_alias = addon_name
             v3_addons_to_skip.append(addon_alias)
