@@ -18,6 +18,9 @@ class UpdateState(Enum):
     FAILED = "failed"
 
 
+DEPENDENCIES_ENDPOINT = "api/dependencies"
+ADDON_ENDPOINT = "api/addons?details=1"
+
 class AddonDownloader:
     log = logging.getLogger(__name__)
 
@@ -147,8 +150,20 @@ class DependencyDownloader(AddonDownloader):
         return destination_path
 
 
-def get_addons_info(server_endpoint):
-    """Returns list of addon information from Server"""
+def get_addons_info(server_endpoint=None):
+    """Returns list of addon information from Server
+
+    Arg:
+        server_endpoint (str): SERVER_URL/api/addons?details=1
+
+    Returns:
+        List[AddonInfo]: List of metadata for addons sent from server,
+            parsed in AddonInfo objects
+    """
+    if not server_endpoint:
+        server_endpoint = "{}/{}".format(os.environ.get("OPENPYPE_SERVER_URL"),
+                                         ADDON_ENDPOINT)
+
     response = requests.get(server_endpoint)
     if not response.ok:
         raise Exception(response.text)
@@ -162,7 +177,7 @@ def get_addons_info(server_endpoint):
     return addons_info
 
 
-def get_dependency_info(server_endpoint):
+def get_dependency_info(server_endpoint=None):
     """Returns info about currently used dependency package.
 
     Dependency package means .venv created from all activated addons from the
@@ -174,6 +189,10 @@ def get_dependency_info(server_endpoint):
     Returns:
         (DependencyItem) or None if no production_package_name found
     """
+    if not server_endpoint:
+        server_endpoint = "{}/{}".format(os.environ.get("OPENPYPE_SERVER_URL"),
+                                         DEPENDENCIES_ENDPOINT)
+
     response = requests.get(server_endpoint)
     if not response.ok:
         raise Exception(response.text)
@@ -181,7 +200,7 @@ def get_dependency_info(server_endpoint):
     response_json = response.json()
     dependency_list = response_json["packages"]
     production_package_name = response_json["productionPackage"]
-    production_package_name = "openpype-win-amd64-python3.7.9-4c24c188e6b9bdb895cd5ff77a5af7a374d65aa3"  # TEMP!
+
     for dependency in dependency_list:
         dependency["productionPackage"] = production_package_name
         dependency_package = DependencyItem.from_dict(dependency)
