@@ -44,6 +44,10 @@ from .interfaces import (
     ITrayService
 )
 
+from common.openpype_common.distribution.addon_distribution import (
+    get_addons_info
+)
+
 # Files that will be always ignored on modules import
 IGNORED_FILENAMES = (
     "__pycache__",
@@ -302,21 +306,6 @@ def load_modules(force=False):
             time.sleep(0.1)
 
 
-def _get_v4_addons_information():
-    """Receive information about addons to use from server.
-
-    Todos:
-        Actually ask server for the information.
-        Allow project name as optional argument to be able to query information
-            about used addons for specific project.
-
-    Returns:
-        List[Dict[str, Any]]: List of addon information to use.
-    """
-
-    return []
-
-
 def _load_v4_addons(openpype_modules, modules_key, log):
     """Load v4 addons based on information from server.
 
@@ -335,7 +324,8 @@ def _load_v4_addons(openpype_modules, modules_key, log):
     """
 
     v3_addons_to_skip = []
-    addons_info = _get_v4_addons_information()
+
+    addons_info = get_addons_info()
     if not addons_info:
         return v3_addons_to_skip
     addons_dir = os.path.join(
@@ -349,8 +339,8 @@ def _load_v4_addons(openpype_modules, modules_key, log):
         return v3_addons_to_skip
 
     for addon_info in addons_info:
-        addon_name = addon_info["name"]
-        addon_version = addon_info["version"]
+        addon_name = addon_info.name
+        addon_version = addon_info.version
         folder_name = "{}_{}".format(addon_name, addon_version)
         addon_dir = os.path.join(addons_dir, folder_name)
         if not os.path.exists(addon_dir):
