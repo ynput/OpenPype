@@ -46,11 +46,6 @@
                     "type": "boolean",
                     "key": "enabled",
                     "label": "Enabled"
-                },
-                {
-                    "type": "boolean",
-                    "key": "glb",
-                    "label": "Export GLB"
                 }
             ]
         },
