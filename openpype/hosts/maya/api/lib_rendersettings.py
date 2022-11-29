@@ -22,15 +22,23 @@ class RenderSettings(object):
     _image_prefix_nodes = {
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
-        'renderman': 'defaultRenderGlobals.imageFilePrefix',
+        'renderman': 'rmanGlobals.imageFileFormat',
         'redshift': 'defaultRenderGlobals.imageFilePrefix'
     }
 
     _image_prefixes = {
         'vray': get_current_project_settings()["maya"]["RenderSettings"]["vray_renderer"]["image_prefix"], # noqa
         'arnold': get_current_project_settings()["maya"]["RenderSettings"]["arnold_renderer"]["image_prefix"],  # noqa
-        'renderman': '<Scene>/<layer>/<layer>{aov_separator}<aov>',
+        'renderman': get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["image_prefix"], # noqa
         'redshift': get_current_project_settings()["maya"]["RenderSettings"]["redshift_renderer"]["image_prefix"]  # noqa
+    }
+
+    # Renderman only
+    _image_dir ={
+        'renderman': get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["image_dir"], # noqa
+        'cryptomatte': get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["cryptomatte_dir"], # noqa
+        'imageDisplay': get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["imageDisplay_dir"], # noqa
+        "watermark": get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["watermark_dir"] # noqa
     }
 
     _aov_chars = {
@@ -81,7 +89,6 @@ class RenderSettings(object):
                         prefix, type="string")  # noqa
         else:
             print("{0} isn't a supported renderer to autoset settings.".format(renderer)) # noqa
-
         # TODO: handle not having res values in the doc
         width = asset_doc["data"].get("resolutionWidth")
         height = asset_doc["data"].get("resolutionHeight")
@@ -97,6 +104,9 @@ class RenderSettings(object):
             self._set_redshift_settings(width, height)
 
         if renderer == "renderman":
+            image_dir = self._image_dir["renderman"]
+            cmds.setAttr("rmanGlobals.imageOutputDir",
+                         image_dir, type= "string")
             self._set_renderman_settings(width, height)
 
     def _set_arnold_settings(self, width, height):
@@ -181,6 +191,10 @@ class RenderSettings(object):
             cmds.connectAttr(filter_nodes + ".message",
                              "rmanGlobals.displayFilters[%i]" % i,
                              force=True)
+            if filter_nodes.startswith("PxrImageDisplayFilter"):
+                imageDisplay_dir = self._image_dir["imageDisplay"]
+                cmds.setAttr(filter_nodes + ".filename",
+                             imageDisplay_dir, type="string")
 
         sample_filters = rman_render_presets["sample_filters"]
         s_filters_number = len(sample_filters)
@@ -194,6 +208,15 @@ class RenderSettings(object):
             cmds.connectAttr(filter_nodes + ".message",
                              "rmanGlobals.sampleFilters[%i]" % n,
                              force=True)
+
+            if filter_nodes.startswith("PxrCryptomatte"):
+                matte_dir = self._image_dir["cryptomatte"]
+                cmds.setAttr(filter_nodes + ".filename",
+                             matte_dir, type="string")
+            elif filter_nodes.startswith("PxrWatermarkFilter"):
+                watermark_dir = self._image_dir["watermark"]
+                cmds.setAttr(filter_nodes + ".filename",
+                             watermark_dir, type="string")
 
         additional_options = rman_render_presets["additional_options"]
 

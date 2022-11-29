@@ -86,9 +86,13 @@
             "additional_options": []
         },
         "renderman_renderer": {
-            "image_prefix": "<Scene>/<layer>/<layer>{aov_separator}<aov>",
+            "image_prefix": "<layer>{aov_separator}<aov>.<f4>.<ext>",
+            "image_dir": "<scene>/<layer>",
             "display_filters": [],
+            "imageDisplay_dir": "<imagedir>/imageDisplayFilter.<f4>.<ext>",
             "sample_filters": [],
+            "cryptomatte_dir": "<imagedir>/cryptomatte.<f4>.<ext>",
+            "watermark_dir": "<imagedir>/watermarkFilter.<f4>.<ext>",
             "additional_options": []
         }
     },

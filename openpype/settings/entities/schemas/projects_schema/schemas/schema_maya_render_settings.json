@@ -432,6 +432,11 @@
                 "type": "text"
             },
             {
+              "key": "image_dir",
+              "label": "Image Output Directory",
+              "type": "text"
+            },
+            {
               "key": "display_filters",
               "label": "Display Filters",
               "type": "enum",
@@ -454,6 +459,11 @@
               ]
             },
             {
+              "key": "imageDisplay_dir",
+              "label": "Image Display Filter Directory",
+              "type": "text"
+            },
+            {
               "key": "sample_filters",
               "label": "Sample Filters",
               "type": "enum",
@@ -469,6 +479,16 @@
                 {"PxrWatermarkFilter": "PxrWatermarkFilter"},
                 {"PxrWhitePointSampleFilter": "PxrWhitePointSampleFilter"}
               ]
+            },
+            {
+              "key": "cryptomatte_dir",
+              "label": "Cryptomatte Output Directory",
+              "type": "text"
+            },
+            {
+              "key": "watermark_dir",
+              "label": "Watermark Filter Directory",
+              "type": "text"
             },
             {
                 "type": "label",
