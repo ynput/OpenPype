@@ -107,7 +107,8 @@ class RenderSettings(object):
             image_dir = self._image_dir["renderman"]
             cmds.setAttr("rmanGlobals.imageOutputDir",
                          image_dir, type="string")
-            self._set_renderman_settings(width, height)
+            self._set_renderman_settings(width, height,
+                                         aov_separator)
 
     def _set_arnold_settings(self, width, height):
         """Sets settings for Arnold."""
@@ -171,7 +172,7 @@ class RenderSettings(object):
         cmds.setAttr("defaultResolution.height", height)
         self._additional_attribs_setter(additional_options)
 
-    def _set_renderman_settings(self, width, height):
+    def _set_renderman_settings(self, width, height, aov_separator):
         """Sets settings for Renderman"""
         rman_render_presets = (
             self._project_settings
@@ -193,6 +194,8 @@ class RenderSettings(object):
                              force=True)
             if filter_nodes.startswith("PxrImageDisplayFilter"):
                 imageDisplay_dir = self._image_dir["imageDisplay"]
+                imageDisplay_dir = imageDisplay_dir.replace("{aov_separator}",
+                                                            aov_separator)
                 cmds.setAttr(filter_nodes + ".filename",
                              imageDisplay_dir, type="string")
 
@@ -211,10 +214,14 @@ class RenderSettings(object):
 
             if filter_nodes.startswith("PxrCryptomatte"):
                 matte_dir = self._image_dir["cryptomatte"]
+                matte_dir = matte_dir.replace("{aov_separator}",
+                                              aov_separator)
                 cmds.setAttr(filter_nodes + ".filename",
                              matte_dir, type="string")
             elif filter_nodes.startswith("PxrWatermarkFilter"):
                 watermark_dir = self._image_dir["watermark"]
+                watermark_dir = watermark_dir.replace("{aov_separator}",
+                                              aov_separator)
                 cmds.setAttr(filter_nodes + ".filename",
                              watermark_dir, type="string")
 
