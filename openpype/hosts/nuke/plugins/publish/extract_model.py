@@ -2,14 +2,15 @@ import os
 from pprint import pformat
 import nuke
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline import publish
 from openpype.hosts.nuke.api.lib import (
     maintained_selection,
     select_nodes
 )
 
 
-class ExtractModel(openpype.api.Extractor):
+class ExtractModel(publish.Extractor):
     """ 3D model exctractor
     """
     label = 'Exctract Model'

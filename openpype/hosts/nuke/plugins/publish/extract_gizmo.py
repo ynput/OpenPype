@@ -3,7 +3,7 @@ import nuke
 
 import pyblish.api
 
-import openpype
+from openpype.pipeline import publish
 from openpype.hosts.nuke.api import utils as pnutils
 from openpype.hosts.nuke.api.lib import (
     maintained_selection,
@@ -12,7 +12,7 @@ from openpype.hosts.nuke.api.lib import (
 )
 
 
-class ExtractGizmo(openpype.api.Extractor):
+class ExtractGizmo(publish.Extractor):
     """Extracting Gizmo (Group) node
 
     Will create nuke script only with the Gizmo node.

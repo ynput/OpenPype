@@ -10,7 +10,7 @@ from wsrpc_aiohttp import (
 
 from Qt import QtCore
 
-from openpype.api import Logger
+from openpype.lib import Logger
 from openpype.pipeline import legacy_io
 from openpype.tools.utils import host_tools
 from openpype.tools.adobe_webserver.app import WebServerTool

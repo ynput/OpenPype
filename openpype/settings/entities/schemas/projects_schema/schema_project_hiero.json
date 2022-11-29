@@ -5,6 +5,116 @@
     "label": "Hiero",
     "is_file": true,
     "children": [
+          {
+              "key": "imageio",
+              "type": "dict",
+              "label": "Color Management (ImageIO)",
+              "is_group": true,
+              "collapsible": true,
+              "children": [
+                  {
+                      "key": "workfile",
+                      "type": "dict",
+                      "label": "Workfile",
+                      "collapsible": false,
+                      "children": [
+                          {
+                              "type": "form",
+                              "children": [
+                                  {
+                                      "type": "enum",
+                                      "key": "ocioConfigName",
+                                      "label": "OpenColorIO Config",
+                                      "enum_items": [
+                                          {
+                                              "nuke-default": "nuke-default"
+                                          },
+                                          {
+                                              "aces_1.0.3": "aces_1.0.3"
+                                          },
+                                          {
+                                              "aces_1.1": "aces_1.1"
+                                          },
+                                          {
+                                              "custom": "custom"
+                                          }
+                                      ]
+                                  },
+                                  {
+                                      "type": "path",
+                                      "key": "ocioconfigpath",
+                                      "label": "Custom OCIO path",
+                                      "multiplatform": true,
+                                      "multipath": true
+                                  },
+                                  {
+                                      "type": "text",
+                                      "key": "workingSpace",
+                                      "label": "Working Space"
+                                  },
+                                  {
+                                      "type": "text",
+                                      "key": "sixteenBitLut",
+                                      "label": "16 Bit Files"
+                                  },
+                                  {
+                                      "type": "text",
+                                      "key": "eightBitLut",
+                                      "label": "8 Bit Files"
+                                  },
+                                  {
+                                      "type": "text",
+                                      "key": "floatLut",
+                                      "label": "Floating Point Files"
+                                  },
+                                  {
+                                      "type": "text",
+                                      "key": "logLut",
+                                      "label": "Log Files"
+                                  },
+                                  {
+                                      "type": "text",
+                                      "key": "viewerLut",
+                                      "label": "Viewer"
+                                  },
+                                  {
+                                      "type": "text",
+                                      "key": "thumbnailLut",
+                                      "label": "Thumbnails"
+                                  }
+                              ]
+                          }
+                      ]
+                  },
+                  {
+                      "key": "regexInputs",
+                      "type": "dict",
+                      "label": "Colorspace on Inputs by regex detection",
+                      "collapsible": true,
+                      "children": [
+                          {
+                              "type": "list",
+                              "key": "inputs",
+                              "object_type": {
+                                  "type": "dict",
+                                  "children": [
+                                      {
+                                          "type": "text",
+                                          "key": "regex",
+                                          "label": "Regex"
+                                      },
+                                      {
+                                          "type": "text",
+                                          "key": "colorspace",
+                                          "label": "Colorspace"
+                                      }
+                                  ]
+                              }
+                          }
+                      ]
+                  }
+              ]
+          },
         {
             "type": "dict",
             "collapsible": true,

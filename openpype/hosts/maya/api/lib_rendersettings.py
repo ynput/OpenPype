@@ -5,7 +5,8 @@ import maya.mel as mel
 import six
 import sys
 
-from openpype.api import (
+from openpype.lib import Logger
+from openpype.settings import (
     get_project_settings,
     get_current_project_settings
 )
@@ -28,7 +29,7 @@ class RenderSettings(object):
     _image_prefixes = {
         'vray': get_current_project_settings()["maya"]["RenderSettings"]["vray_renderer"]["image_prefix"], # noqa
         'arnold': get_current_project_settings()["maya"]["RenderSettings"]["arnold_renderer"]["image_prefix"],  # noqa
-        'renderman': 'maya/<Scene>/<layer>/<layer>{aov_separator}<aov>',
+        'renderman': '<Scene>/<layer>/<layer>{aov_separator}<aov>',
         'redshift': get_current_project_settings()["maya"]["RenderSettings"]["redshift_renderer"]["image_prefix"]  # noqa
     }
 
@@ -37,6 +38,8 @@ class RenderSettings(object):
         "dash": "-",
         "underscore": "_"
     }
+
+    log = Logger.get_logger("RenderSettings")
 
     @classmethod
     def get_image_prefix_attr(cls, renderer):
@@ -133,20 +136,7 @@ class RenderSettings(object):
 
         cmds.setAttr(
             "defaultArnoldDriver.mergeAOVs", multi_exr)
-        # Passes additional options in from the schema as a list
-        # but converts it to a dictionary because ftrack doesn't
-        # allow fullstops in custom attributes. Then checks for
-        # type of MtoA attribute passed to adjust the `setAttr`
-        # command accordingly.
         self._additional_attribs_setter(additional_options)
-        for item in additional_options:
-            attribute, value = item
-            if (cmds.getAttr(str(attribute), type=True)) == "long":
-                cmds.setAttr(str(attribute), int(value))
-            elif (cmds.getAttr(str(attribute), type=True)) == "bool":
-                cmds.setAttr(str(attribute), int(value), type = "Boolean") # noqa
-            elif (cmds.getAttr(str(attribute), type=True)) == "string":
-                cmds.setAttr(str(attribute), str(value), type = "string") # noqa
         reset_frame_range()
 
     def _set_redshift_settings(self, width, height):
@@ -230,12 +220,20 @@ class RenderSettings(object):
         cmds.setAttr("defaultRenderGlobals.extensionPadding", 4)
 
     def _additional_attribs_setter(self, additional_attribs):
-        print(additional_attribs)
         for item in additional_attribs:
             attribute, value = item
-            if (cmds.getAttr(str(attribute), type=True)) == "long":
-                cmds.setAttr(str(attribute), int(value))
-            elif (cmds.getAttr(str(attribute), type=True)) == "bool":
-                cmds.setAttr(str(attribute), int(value)) # noqa
-            elif (cmds.getAttr(str(attribute), type=True)) == "string":
-                cmds.setAttr(str(attribute), str(value), type = "string") # noqa
+            attribute = str(attribute)  # ensure str conversion from settings
+            attribute_type = cmds.getAttr(attribute, type=True)
+            if attribute_type in {"long", "bool"}:
+                cmds.setAttr(attribute, int(value))
+            elif attribute_type == "string":
+                cmds.setAttr(attribute, str(value), type="string")
+            elif attribute_type in {"double", "doubleAngle", "doubleLinear"}:
+                cmds.setAttr(attribute, float(value))
+            else:
+                self.log.error(
+                    "Attribute {attribute} can not be set due to unsupported "
+                    "type: {attribute_type}".format(
+                        attribute=attribute,
+                        attribute_type=attribute_type)
+                )

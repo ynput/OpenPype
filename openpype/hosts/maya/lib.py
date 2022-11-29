@@ -1,26 +1,24 @@
 import os
-import shutil
+from openpype.settings import get_project_settings
+from openpype.lib import Logger
 
 
-def copy_workspace_mel(workdir):
-    # Check that source mel exists
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    src_filepath = os.path.join(current_dir, "resources", "workspace.mel")
-    if not os.path.exists(src_filepath):
-        print("Source mel file does not exist. {}".format(src_filepath))
-        return
-
-    # Skip if workspace.mel already exists
+def create_workspace_mel(workdir, project_name):
     dst_filepath = os.path.join(workdir, "workspace.mel")
     if os.path.exists(dst_filepath):
         return
 
-    # Create workdir if does not exists yet
     if not os.path.exists(workdir):
         os.makedirs(workdir)
 
-    # Copy file
-    print("Copying workspace mel \"{}\" -> \"{}\"".format(
-        src_filepath, dst_filepath
-    ))
-    shutil.copy(src_filepath, dst_filepath)
+    project_setting = get_project_settings(project_name)
+    mel_script = project_setting["maya"].get("mel_workspace")
+
+    # Skip if mel script in settings is empty
+    if not mel_script:
+        log = Logger.get_logger("create_workspace_mel")
+        log.debug("File 'workspace.mel' not created. Settings value is empty.")
+        return
+
+    with open(dst_filepath, "w") as mel_file:
+        mel_file.write(mel_script)

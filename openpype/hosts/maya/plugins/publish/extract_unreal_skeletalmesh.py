@@ -6,7 +6,8 @@ from contextlib import contextmanager
 from maya import cmds  # noqa
 
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline import publish
 from openpype.hosts.maya.api import fbx
 
 
@@ -20,7 +21,7 @@ def renamed(original_name, renamed_name):
         cmds.rename(renamed_name, original_name)
 
 
-class ExtractUnrealSkeletalMesh(openpype.api.Extractor):
+class ExtractUnrealSkeletalMesh(publish.Extractor):
     """Extract Unreal Skeletal Mesh as FBX from Maya. """
 
     order = pyblish.api.ExtractorOrder - 0.1

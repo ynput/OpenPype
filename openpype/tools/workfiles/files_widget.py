@@ -8,9 +8,15 @@ from Qt import QtWidgets, QtCore
 
 from openpype.host import IWorkfileHost
 from openpype.client import get_asset_by_id
+from openpype.pipeline.workfile.lock_workfile import (
+    is_workfile_locked,
+    is_workfile_lock_enabled,
+    is_workfile_locked_for_current_process
+)
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 from openpype.lib import emit_event
+from openpype.tools.workfiles.lock_dialog import WorkfileLockDialog
 from openpype.pipeline import (
     registered_host,
     legacy_io,
@@ -452,8 +458,19 @@ class FilesWidget(QtWidgets.QWidget):
             "host_name": self.host_name
         }
 
+    def _is_workfile_locked(self, filepath):
+        if not is_workfile_lock_enabled(self.host_name, self.project_name):
+            return False
+        if not is_workfile_locked(filepath):
+            return False
+        return not is_workfile_locked_for_current_process(filepath)
+
     def open_file(self, filepath):
         host = self.host
+        if self._is_workfile_locked(filepath):
+            # add lockfile dialog
+            WorkfileLockDialog(filepath)
+
         if isinstance(host, IWorkfileHost):
             has_unsaved_changes = host.workfile_has_unsaved_changes()
         else:
@@ -561,7 +578,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         src = self._get_selected_filepath()
         dst = os.path.join(self._workfiles_root, work_file)
-        shutil.copy(src, dst)
+        shutil.copyfile(src, dst)
 
         self.workfile_created.emit(dst)
 
@@ -658,7 +675,7 @@ class FilesWidget(QtWidgets.QWidget):
             else:
                 self.host.save_file(filepath)
         else:
-            shutil.copy(src_path, filepath)
+            shutil.copyfile(src_path, filepath)
             if isinstance(self.host, IWorkfileHost):
                 self.host.open_workfile(filepath)
             else:

@@ -21,6 +21,8 @@ from .pipeline import (
     containerise,
     parse_container,
     update_container,
+
+    get_workfile_build_placeholder_plugins,
 )
 from .lib import (
     maintained_selection,
@@ -54,6 +56,8 @@ __all__ = (
     "containerise",
     "parse_container",
     "update_container",
+
+    "get_workfile_build_placeholder_plugins",
 
     "maintained_selection",
     "reset_selection",

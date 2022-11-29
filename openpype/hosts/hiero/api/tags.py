@@ -1,9 +1,10 @@
+import json
 import re
 import os
 import hiero
 
 from openpype.client import get_project, get_assets
-from openpype.api import Logger
+from openpype.lib import Logger
 from openpype.pipeline import legacy_io
 
 log = Logger.get_logger(__name__)
@@ -85,17 +86,16 @@ def update_tag(tag, data):
     # get metadata key from data
     data_mtd = data.get("metadata", {})
 
-    # due to hiero bug we have to make sure keys which are not existent in
-    # data are cleared of value by `None`
-    for _mk in mtd.dict().keys():
-        if _mk.replace("tag.", "") not in data_mtd.keys():
-            mtd.setValue(_mk, str(None))
-
     # set all data metadata to tag metadata
-    for k, v in data_mtd.items():
+    for _k, _v in data_mtd.items():
+        value = str(_v)
+        if type(_v) == dict:
+            value = json.dumps(_v)
+
+        # set the value
         mtd.setValue(
-            "tag.{}".format(str(k)),
-            str(v)
+            "tag.{}".format(str(_k)),
+            value
         )
 
     # set note description of tag

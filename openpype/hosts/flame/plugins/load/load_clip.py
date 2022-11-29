@@ -4,6 +4,7 @@ from pprint import pformat
 import openpype.hosts.flame.api as opfapi
 from openpype.lib import StringTemplate
 
+
 class LoadClip(opfapi.ClipLoader):
     """Load a subset to timeline as clip
 
@@ -35,14 +36,15 @@ class LoadClip(opfapi.ClipLoader):
         version = context['version']
         version_data = version.get("data", {})
         version_name = version.get("name", None)
-        colorspace = version_data.get("colorspace", None)
+        colorspace = self.get_colorspace(context)
+
         clip_name = StringTemplate(self.clip_name_template).format(
             context["representation"]["context"])
 
-        # TODO: settings in imageio
         # convert colorspace with ocio to flame mapping
         # in imageio flame section
-        colorspace = colorspace
+        colorspace = self.get_native_colorspace(colorspace)
+        self.log.info("Loading with colorspace: `{}`".format(colorspace))
 
         # create workfile path
         workfile_dir = os.environ["AVALON_WORKDIR"]
@@ -60,8 +62,6 @@ class LoadClip(opfapi.ClipLoader):
             "path": self.fname.replace("\\", "/"),
             "colorspace": colorspace,
             "version": "v{:0>3}".format(version_name),
-            "logger": self.log
-
         }
         self.log.debug(pformat(
             loading_context
@@ -69,7 +69,8 @@ class LoadClip(opfapi.ClipLoader):
         self.log.debug(openclip_path)
 
         # make openpype clip file
-        opfapi.OpenClipSolver(openclip_path, loading_context).make()
+        opfapi.OpenClipSolver(
+            openclip_path, loading_context, logger=self.log).make()
 
         # prepare Reel group in actual desktop
         opc = self._get_clip(

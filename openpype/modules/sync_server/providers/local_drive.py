@@ -4,7 +4,7 @@ import shutil
 import threading
 import time
 
-from openpype.api import Logger
+from openpype.lib import Logger
 from openpype.pipeline import Anatomy
 from .abstract_provider import AbstractProvider
 

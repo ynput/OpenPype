@@ -8,7 +8,7 @@ import hiero
 from Qt import QtWidgets, QtCore
 import qargparse
 
-import openpype.api as openpype
+from openpype.settings import get_current_project_settings
 from openpype.lib import Logger
 from openpype.pipeline import LoaderPlugin, LegacyCreator
 from openpype.pipeline.context_tools import get_current_project_asset
@@ -170,7 +170,10 @@ class CreatorWidget(QtWidgets.QDialog):
         for func, val in kwargs.items():
             if getattr(item, func):
                 func_attr = getattr(item, func)
-                func_attr(val)
+                if isinstance(val, tuple):
+                    func_attr(*val)
+                else:
+                    func_attr(val)
 
         # add to layout
         layout.addRow(label, item)
@@ -273,8 +276,8 @@ class CreatorWidget(QtWidgets.QDialog):
             elif v["type"] == "QSpinBox":
                 data[k]["value"] = self.create_row(
                     content_layout, "QSpinBox", v["label"],
-                    setValue=v["value"], setMinimum=0,
-                    setMaximum=100000, setToolTip=tool_tip)
+                    setRange=(1, 9999999), setValue=v["value"],
+                    setToolTip=tool_tip)
         return data
 
 
@@ -606,7 +609,7 @@ class Creator(LegacyCreator):
     def __init__(self, *args, **kwargs):
         super(Creator, self).__init__(*args, **kwargs)
         import openpype.hosts.hiero.api as phiero
-        self.presets = openpype.get_current_project_settings()[
+        self.presets = get_current_project_settings()[
             "hiero"]["create"].get(self.__class__.__name__, {})
 
         # adding basic current context resolve objects
