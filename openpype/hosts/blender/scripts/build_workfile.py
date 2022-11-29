@@ -7,7 +7,6 @@ from openpype.client import (
     get_last_version_by_subset_id,
     get_representations,
 )
-from openpype.lib import get_creator_by_name
 from openpype.modules import ModulesManager
 from openpype.pipeline import (
     legacy_io,
@@ -16,11 +15,26 @@ from openpype.pipeline import (
     load_container,
     loaders_from_representation,
 )
+from openpype.pipeline.create import get_legacy_creator_by_name
+from openpype.hosts.blender.api.plugin import deselect_all
+from openpype.hosts.blender.api.ops import _process_app_events
 
 
 def load_subset(
     project_name, asset_name, subset_name, loader_type=None, ext="blend"
 ):
+    """Load the representation of the last version of subset.
+
+    Args:
+        project_name (str): The project name.
+        asset_name (str): The asset name.
+        subset_name (str): The subset name.
+        loader_type (str, optional): The loader name. Defaults to None.
+        ext (str, optional): The representation extension. Defaults to "blend".
+
+    Returns:
+        The return of the `load_container()` function.
+    """
 
     asset = get_asset_by_name(
         project_name,
@@ -67,8 +81,10 @@ def load_subset(
 
 
 def create_instance(creator_name, instance_name, **options):
+    """Create openpype publishable instance.
+    """
     legacy_create(
-        get_creator_by_name(creator_name),
+        get_legacy_creator_by_name(creator_name),
         name=instance_name,
         asset=legacy_io.Session.get("AVALON_ASSET"),
         options=options,
@@ -76,6 +92,8 @@ def create_instance(creator_name, instance_name, **options):
 
 
 def load_casting(project_name, shot_name):
+    """Load casting from shot_name using kitsu api.
+    """
 
     modules_manager = ModulesManager()
     kitsu_module = modules_manager.modules_by_name.get("kitsu")
@@ -99,50 +117,148 @@ def load_casting(project_name, shot_name):
     gazu.log_out()
 
 
+def build_model(asset_name):
+    """Build model workfile.
+
+    Args:
+        asset_name (str): The current asset name from OpenPype Session.
+    """
+    bpy.ops.mesh.primitive_cube_add()
+    bpy.context.object.name = f"{asset_name}_model"
+    bpy.context.object.data.name = f"{asset_name}_model"
+    create_instance("CreateModel", "modelMain", useSelection=True)
+
+
+def build_look(project_name, asset_name):
+    """Build look workfile.
+
+    Args:
+        project_name (str):  The current project name from OpenPype Session.
+        asset_name (str):  The current asset name from OpenPype Session.
+    """
+    create_instance("CreateLook", "lookMain")
+    load_subset(project_name, asset_name, "modelMain", "Append")
+
+
+def build_rig(project_name, asset_name):
+    """Build rig workfile.
+
+    Args:
+        project_name (str):  The current project name from OpenPype Session.
+        asset_name (str):  The current asset name from OpenPype Session.
+    """
+    bpy.ops.object.armature_add()
+    bpy.context.object.name = f"{asset_name}_armature"
+    bpy.context.object.data.name = f"{asset_name}_armature"
+    create_instance("CreateRig", "rigMain", useSelection=True)
+    load_subset(project_name, asset_name, "modelMain", "Append")
+
+
+def build_layout(project_name, asset_name):
+    """Build layout workfile.
+
+    Args:
+        project_name (str):  The current project name from OpenPype Session.
+        asset_name (str):  The current asset name from OpenPype Session.
+    """
+
+    create_instance("CreateLayout", "layoutMain")
+
+    # Load casting from kitsu breakdown.
+    try:
+        load_casting(project_name, asset_name)
+    except RuntimeError:
+        pass
+    _process_app_events()
+
+    # Try using camera from loaded casting for the creation of
+    # the instance camera collection.
+    deselect_all()
+    for obj in bpy.context.scene.objects:
+        if obj.type == "CAMERA":
+            obj.select_set(True)
+            break
+    create_instance("CreateCamera", "cameraMain", useSelection=True)
+    _process_app_events()
+
+    # Select camera from cameraMain instance to link with the review.
+    deselect_all()
+    for obj in bpy.context.scene.objects:
+        if obj.type == "CAMERA":
+            obj.select_set(True)
+            break
+    create_instance("CreateReview", "reviewMain", useSelection=True)
+
+    # load the board mov as image background linked into the camera.
+    load_subset(project_name, asset_name, "BoardReview", "Background", "mov")
+
+
+def build_anim(project_name, asset_name):
+    """Build anim workfile.
+
+    Args:
+        project_name (str):  The current project name from OpenPype Session.
+        asset_name (str):  The current asset name from OpenPype Session.
+    """
+
+    load_subset(project_name, asset_name, "layoutMain", "Append")
+    load_subset(project_name, asset_name, "cameraMain", "Link")
+
+    # Select camera from cameraMain instance to link with the review.
+    deselect_all()
+    for obj in bpy.context.scene.objects:
+        if obj.type == "CAMERA":
+            obj.select_set(True)
+            break
+    create_instance("CreateReview", "reviewMain", useSelection=True)
+
+
+def build_render(project_name, asset_name):
+    """Build render workfile.
+
+    Args:
+        project_name (str):  The current project name from OpenPype Session.
+        asset_name (str):  The current asset name from OpenPype Session.
+    """
+
+    if not load_subset(project_name, asset_name, "layoutFromAnim", "Link"):
+        load_subset(project_name, asset_name, "layoutMain", "Append")
+    if not load_subset(project_name, asset_name, "cameraFromAnim", "Link"):
+        load_subset(project_name, asset_name, "cameraMain", "Link")
+    load_subset(project_name, asset_name, "animationMain", "Link")
+
+
 def build_workfile():
-    project = legacy_io.Session["AVALON_PROJECT"]
-    task = legacy_io.Session.get("AVALON_TASK").lower()
-    asset = legacy_io.Session.get("AVALON_ASSET")
+    """build first workfile Main function.
+    """
+    project_name = legacy_io.Session["AVALON_PROJECT"]
+    asset_name = legacy_io.Session.get("AVALON_ASSET")
+    task_name = legacy_io.Session.get("AVALON_TASK").lower()
 
-    if task in ("model", "modeling"):
-        bpy.ops.mesh.primitive_cube_add()
-        bpy.context.object.name = f"{asset}_model"
-        bpy.context.object.data.name = f"{asset}_model"
-        create_instance("CreateModel", "modelMain", useSelection=True)
+    if task_name in ("model", "modeling", "fabrication"):
+        build_model(asset_name)
 
-    elif task in ("texture", "look", "lookdev", "shader"):
-        create_instance("CreateLook", "lookMain")
-        load_subset(project, asset, "modelMain", "Append")
+    elif task_name in ("texture", "look", "lookdev", "shader"):
+        build_look(project_name, asset_name)
 
-    elif task in ("rig", "rigging"):
-        bpy.ops.object.armature_add()
-        bpy.context.object.name = f"{asset}_armature"
-        bpy.context.object.data.name = f"{asset}_armature"
-        create_instance("CreateRig", "rigMain", useSelection=True)
-        load_subset(project, asset, "modelMain", "Append")
+    elif task_name in ("rig", "rigging"):
+        build_rig(project_name, asset_name)
 
-    elif task == "layout":
-        create_instance("CreateLayout", "layoutMain")
-        create_instance("CreateCamera", "cameraMain")
-        create_instance("CreateReview", "reviewMain")
-        load_subset(project, asset, "BoardReview", "Background", "mov")
-        try:
-            load_casting(project, asset)
-        except RuntimeError:
-            pass
+    elif task_name == "layout":
+        build_layout(project_name, asset_name)
 
-    elif task in ("anim", "animation"):
-        load_subset(project, asset, "layoutMain", "Append")
-        load_subset(project, asset, "cameraMain", "Link")
-        create_instance("CreateReview", "reviewMain")
+    elif task_name in ("anim", "animation"):
+        build_anim(project_name, asset_name)
 
-    elif task in ("lighting", "light", "render", "rendering"):
-        if not load_subset(project, asset, "layoutFromAnim", "Link"):
-            load_subset(project, asset, "layoutMain", "Append")
-        if not load_subset(project, asset, "cameraFromAnim", "Link"):
-            load_subset(project, asset, "cameraMain", "Link")
-        load_subset(project, asset, "animationMain", "Link")
+    elif task_name in ("lighting", "light", "render", "rendering"):
+        build_render(project_name, asset_name)
+
     else:
         return False
 
     return True
+
+
+if __name__ == "__main__":
+    build_workfile()
+    _process_app_events()
