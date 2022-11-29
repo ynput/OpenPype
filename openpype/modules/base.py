@@ -375,12 +375,15 @@ def _load_v4_addons(openpype_modules, modules_key, log):
             continue
 
         if len(imported_modules) == 1:
-            v3_addons_to_skip.append(addon_name)
             mod = imported_modules[0]
-            new_import_str = "{}.{}".format(modules_key, addon_name)
+            addon_alias = getattr(mod, "v3_alias", None)
+            if not addon_alias:
+                addon_alias = addon_name
+            v3_addons_to_skip.append(addon_alias)
+            new_import_str = "{}.{}".format(modules_key, addon_alias)
 
             sys.modules[new_import_str] = mod
-            setattr(openpype_modules, addon_name, mod)
+            setattr(openpype_modules, addon_alias, mod)
 
         else:
             log.info("More then one module was imported")
