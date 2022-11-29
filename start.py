@@ -700,7 +700,7 @@ def _check_and_update_addons():
         return
 
     from openpype_common.distribution.addon_distribution import (
-        get_addons_info,
+        ADDON_ENDPOINT,
         check_addons,
         default_addon_downloader,
     )
@@ -708,8 +708,8 @@ def _check_and_update_addons():
         load_token
     )
 
-    server_endpoint = "{}/api/addons?details=1".format(
-        os.environ.get("OPENPYPE_SERVER_URL"))
+    server_endpoint = "{}/{}".format(os.environ.get("OPENPYPE_SERVER_URL"),
+                                     ADDON_ENDPOINT)
 
     local_addon_folder = _get_local_dir("OPENPYPE_ADDONS_DIR", "addons")
 
@@ -725,11 +725,12 @@ def _check_and_update_addons():
         sys.path.insert(0, local_addon_folder)
 
 
-def _check_and_update_dependency_package(packages_dir=None):
+def _check_and_update_dependency_package():
     if not OP4_TEST_ENABLED:
         return
 
     from openpype_common.distribution.addon_distribution import (
+        DEPENDENCIES_ENDPOINT,
         check_venv,
         default_addon_downloader,
     )
@@ -737,8 +738,8 @@ def _check_and_update_dependency_package(packages_dir=None):
         load_token
     )
 
-    server_endpoint = "{}/api/dependencies".format(
-        os.environ.get("OPENPYPE_SERVER_URL"))
+    server_endpoint = "{}/{}".format(os.environ.get("OPENPYPE_SERVER_URL"),
+                                     DEPENDENCIES_ENDPOINT)
 
     token = load_token(os.environ.get("OPENPYPE_SERVER_URL"))
 
