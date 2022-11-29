@@ -237,7 +237,7 @@ def update_addon_state(addon_infos, destination_folder, factory, token,
                                                     destination_folder,
                                                     data=data)
                 downloader.check_hash(zip_file_path, addon.hash)
-                downloader.unzip(zip_file_path)
+                downloader.unzip(zip_file_path, destination_folder)
                 download_states[full_name] = UpdateState.UPDATED
                 break
             except Exception:
