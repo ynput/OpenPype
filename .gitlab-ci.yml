@@ -106,8 +106,8 @@ build-windows-manual:
       when: always
   tags: [shell, centos]
   script:
-    - echo "Set staging link $OP_STAGING_PATH to $OP_VERSION_PATH"
-    - ln -sfn $OP_VERSION_PATH $OP_STAGING_PATH
+    - echo "Set staging link $OP_VERSION/ to $OP_VERSION_PATH"
+    - ln -sfn $OP_VERSION/ $OP_STAGING_PATH
 
 deploy-staged-on-tags:
   extends: .deploy-staged
