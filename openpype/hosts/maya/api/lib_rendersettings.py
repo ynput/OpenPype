@@ -34,7 +34,7 @@ class RenderSettings(object):
     }
 
     # Renderman only
-    _image_dir ={
+    _image_dir = {
         'renderman': get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["image_dir"], # noqa
         'cryptomatte': get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["cryptomatte_dir"], # noqa
         'imageDisplay': get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["imageDisplay_dir"], # noqa
@@ -105,8 +105,8 @@ class RenderSettings(object):
 
         if renderer == "renderman":
             image_dir = self._image_dir["renderman"]
-            cmds.setAttr("rmanGlobals.imageOutputDir",
-                         image_dir, type= "string")
+            cmds.setAttr("rmanGlobals.imageOutputDir", image_dir,
+                         type= "string")
             self._set_renderman_settings(width, height)
 
     def _set_arnold_settings(self, width, height):
