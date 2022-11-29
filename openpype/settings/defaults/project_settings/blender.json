@@ -37,6 +37,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateNoColonsInName": {
+            "enabled": true,
+            "optional": false,
+            "active": true
+        },
         "ValidateMeshHasUvs": {
             "enabled": true,
             "optional": true,
