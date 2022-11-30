@@ -616,6 +616,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
             ffmpeg_input_args.extend([
                 "-framerate", str(temp_data["fps"])
             ])
+            # Add duration of an input sequence if output is video
+            if not temp_data["output_is_sequence"]:
+                ffmpeg_input_args.extend([
+                    "-to", "{:0.10f}".format(duration_seconds)
+                ])
 
         if temp_data["output_is_sequence"]:
             # Set start frame of output sequence (just frame in filename)
@@ -627,6 +632,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Change output's duration and start point if should not contain
         # handles
         if temp_data["without_handles"] and temp_data["handles_are_set"]:
+            # Set output duration in seconds
+            ffmpeg_output_args.extend([
+                "-t", "{:0.10}".format(duration_seconds)
+            ])
+
             # Add -ss (start offset in seconds) if input is not sequence
             if not temp_data["input_is_sequence"]:
                 start_sec = float(temp_data["handle_start"]) / temp_data["fps"]
@@ -637,24 +647,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         "-ss", "{:0.10f}".format(start_sec)
                     ])
 
-            # Set output duration inn seconds
-            ffmpeg_output_args.extend([
-                "-t", "{:0.10}".format(duration_seconds)
-            ])
-
         # Set frame range of output when input or output is sequence
         elif temp_data["output_is_sequence"]:
             ffmpeg_output_args.extend([
                 "-frames:v", str(output_frames_len)
-            ])
-
-        # Add duration of an input sequence if output is video
-        if (
-            temp_data["input_is_sequence"]
-            and not temp_data["output_is_sequence"]
-        ):
-            ffmpeg_input_args.extend([
-                "-to", "{:0.10f}".format(duration_seconds)
             ])
 
         # Add video/image input path
