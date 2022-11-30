@@ -197,9 +197,9 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
         response = requests.post(self.deadline_url, json=payload)
 
         if not response.ok:
-            self.log.error("Submission failed!")
-            self.log.error(response.status_code)
-            self.log.error(response.content)
+            self.log.error(
+                "Submission failed! [{}] {}".format(
+                    response.status_code, response.content))
             self.log.debug(payload)
             raise SystemExit(response.text)
 
