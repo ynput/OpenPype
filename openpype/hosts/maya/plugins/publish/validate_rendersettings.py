@@ -47,6 +47,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["renderlayer"]
     actions = [RepairAction]
+    optional = True
 
     ImagePrefixes = {
         'mentalray': 'defaultRenderGlobals.imageFilePrefix',

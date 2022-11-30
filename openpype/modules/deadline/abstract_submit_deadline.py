@@ -265,10 +265,10 @@ class DeadlineJobInfo(object):
 
     # Failure Detection
     # ----------------------------------------------
-    OverrideJobFailureDetection = attr.ib(default=None)  # Default: false
-    FailureDetectionJobErrors = attr.ib(default=None)  # 0..x
-    OverrideTaskFailureDetection = attr.ib(default=None)  # Default: false
-    FailureDetectionTaskErrors = attr.ib(default=None)  # 0..x
+    #OverrideJobFailureDetection = attr.ib(default=None)  # Default: false
+    #FailureDetectionJobErrors = attr.ib(default=None)  # 0..x
+    #OverrideTaskFailureDetection = attr.ib(default=None)  # Default: false
+    #FailureDetectionTaskErrors = attr.ib(default=None)  # 0..x
     IgnoreBadJobDetection = attr.ib(default=None)  # Default: false
     SendJobErrorWarning = attr.ib(default=None)  # Default: false
 

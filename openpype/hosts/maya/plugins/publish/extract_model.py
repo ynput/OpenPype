@@ -71,19 +71,19 @@ class ExtractModel(publish.Extractor):
                                        pointsWire=4,
                                        pointsShaded=1,
                                        polygonObject=1):
-                with lib.shader(members,
-                                shadingEngine="initialShadingGroup"):
-                    with lib.maintained_selection():
-                        cmds.select(members, noExpand=True)
-                        cmds.file(path,
-                                  force=True,
-                                  typ="mayaAscii" if self.scene_type == "ma" else "mayaBinary",  # noqa: E501
-                                  exportSelected=True,
-                                  preserveReferences=False,
-                                  channels=False,
-                                  constraints=False,
-                                  expressions=False,
-                                  constructionHistory=False)
+                #with lib.shader(members,
+                #                shadingEngine="initialShadingGroup"):
+                with lib.maintained_selection():
+                    cmds.select(members, noExpand=True)
+                    cmds.file(path,
+                                force=True,
+                                typ="mayaAscii" if self.scene_type == "ma" else "mayaBinary",  # noqa: E501
+                                exportSelected=True,
+                                preserveReferences=False,
+                                channels=False,
+                                constraints=False,
+                                expressions=False,
+                                constructionHistory=False)
 
                         # Store reference for integration
 
