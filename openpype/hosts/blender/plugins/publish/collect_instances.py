@@ -28,13 +28,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 continue
 
             collection_id = collection.get(AVALON_PROPERTY, {}).get("id")
-            if (
-                collection_id == AVALON_CONTAINER_ID
-            ):  # Skip all collections of container
+            if collection_id == AVALON_CONTAINER_ID:
+                # Skip all collections of container
                 children_to_skip.update(collection.children_recursive)
-            elif (
-                collection_id == AVALON_INSTANCE_ID
-            ):  # Match instance to publish
+            elif collection_id == AVALON_INSTANCE_ID:
+                # Match instance to publish
                 yield collection
 
     def process(self, context):
