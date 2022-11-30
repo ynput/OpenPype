@@ -24,8 +24,7 @@ import os
 import socket
 
 from openpype import resources
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import ITrayService
+from openpype.modules import OpenPypeModule, ITrayService
 
 
 class WebServerModule(OpenPypeModule, ITrayService):

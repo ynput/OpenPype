@@ -3,8 +3,11 @@
 import click
 import os
 
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import IPluginPaths, ITrayAction
+from openpype.modules import (
+    OpenPypeModule,
+    IPluginPaths,
+    ITrayAction,
+)
 
 
 class KitsuModule(OpenPypeModule, IPluginPaths, ITrayAction):

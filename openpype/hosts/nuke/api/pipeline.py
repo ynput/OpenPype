@@ -364,6 +364,9 @@ def containerise(node,
 
     set_avalon_knob_data(node, data)
 
+    # set tab to first native
+    node.setTab(0)
+
     return node
 
 
