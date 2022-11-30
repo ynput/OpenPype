@@ -226,15 +226,13 @@ class ReferenceLoader(Loader):
             if alembic_nodes:
                 for attr in alembic_attrs:
                     node_attr = "{}.{}".format(alembic_nodes[0], attr)
-                    connections = cmds.listConnections(node_attr, plugs=True)
+                    inputs = cmds.listConnections(
+                        node_attr, plugs=True, destination=False
+                    )
                     data = {
-                        "connected": False,
-                        "attribute": None,
+                        "input": None if inputs is None else inputs[0],
                         "value": cmds.getAttr(node_attr)
                     }
-                    if connections:
-                        data["connected"] = True
-                        data["attribute"] = connections[0]
 
                     alembic_data[attr] = data
             else:
@@ -275,11 +273,16 @@ class ReferenceLoader(Loader):
             if alembic_nodes:
                 for attr, data in alembic_data.items():
                     node_attr = "{}.{}".format(alembic_nodes[0], attr)
-                    if data["connected"]:
+                    if data["input"]:
                         cmds.connectAttr(
-                            data["attribute"], node_attr, force=True
+                            data["input"], node_attr, force=True
                         )
                     else:
+                        inputs = cmds.listConnections(
+                            node_attr, plugs=True, destination=False
+                        )
+                        if inputs:
+                            cmds.disconnectAttr(inputs[0], node_attr)
                         cmds.setAttr(node_attr, data["value"])
 
         # Fix PLN-40 for older containers created with Avalon that had the
