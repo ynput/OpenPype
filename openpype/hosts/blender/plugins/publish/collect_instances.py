@@ -4,7 +4,7 @@ from typing import Generator
 import bpy
 
 import pyblish.api
-from openpype.pipeline import AVALON_INSTANCE_ID
+from openpype.pipeline import AVALON_CONTAINER_ID, AVALON_INSTANCE_ID
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 from openpype.hosts.blender.api.plugin import get_children_recursive
 
@@ -18,10 +18,23 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     @staticmethod
     def get_collections() -> Generator:
-        """Return all collections marked as OpenPype instance."""
+        """Return all collections marked as OpenPype instance.
+
+        When a container embeds instances they must be skipped.
+        """
+        children_to_skip = set()
         for collection in bpy.context.scene.collection.children_recursive:
-            avalon_prop = collection.get(AVALON_PROPERTY) or dict()
-            if avalon_prop.get("id") == AVALON_INSTANCE_ID:
+            if collection in children_to_skip:
+                continue
+
+            collection_id = collection.get(AVALON_PROPERTY, {}).get("id")
+            if (
+                collection_id == AVALON_CONTAINER_ID
+            ):  # Skip all collections of container
+                children_to_skip.update(collection.children_recursive)
+            elif (
+                collection_id == AVALON_INSTANCE_ID
+            ):  # Match instance to publish
                 yield collection
 
     def process(self, context):
