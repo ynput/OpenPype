@@ -602,9 +602,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
             start_number = temp_data["first_sequence_frame"]
             if temp_data["without_handles"] and temp_data["handles_are_set"]:
                 start_number += temp_data["handle_start"]
-            ffmpeg_input_args.extend(
-                ["-start_number", str(start_number)]
-            )
+            ffmpeg_input_args.extend([
+                "-start_number", str(start_number)
+            ])
 
             # TODO add fps mapping `{fps: fraction}` ?
             # - e.g.: {
