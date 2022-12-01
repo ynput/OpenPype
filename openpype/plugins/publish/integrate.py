@@ -268,6 +268,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         )
         instance.data["versionEntity"] = version
 
+        anatomy = instance.context.data["anatomy"]
+
         # Get existing representations (if any)
         existing_repres_by_name = {
             repre_doc["name"].lower(): repre_doc
@@ -291,6 +293,19 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 instance)
 
             for src, dst in prepared["transfers"]:
+                if src == dst:
+                    self.log.info(
+                        "Source '{}' same as destination '{}'. Skipping."
+                            .format(src, dst))
+                    continue
+
+                if not self._is_path_in_project_roots(anatomy.all_root_paths,
+                                                      dst):
+                    self.log.warning(
+                        "Destination '{}' is not in project folder. Skipping"
+                            .format(dst))
+                    continue
+
                 # todo: add support for hardlink transfers
                 file_transactions.add(src, dst)
 
@@ -340,7 +355,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # Compute the resource file infos once (files belonging to the
         # version instance instead of an individual representation) so
         # we can re-use those file infos per representation
-        anatomy = instance.context.data["anatomy"]
         resource_file_infos = self.get_files_info(resource_destinations,
                                                   sites=sites,
                                                   anatomy=anatomy)
@@ -889,3 +903,22 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             "hash": source_hash(path),
             "sites": sites
         }
+
+    def _is_path_in_project_roots(self, roots, file_path):
+        """Checks if 'file_path' starts with any of the roots.
+
+        Used to check that published path belongs to project, eg. we are not
+        trying to publish to local only folder.
+        Args:
+            roots (list of RootItem): {ROOT_NAME: ROOT_PATH}
+            file_path (str)
+        Returns:
+            (bool)
+        """
+        file_path = str(file_path).replace("\\", "/")
+        for root_item in roots.values():
+            if file_path.startswith(root_item.clean_value):
+                return True
+
+        return False
+
