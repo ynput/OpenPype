@@ -49,12 +49,17 @@ workflow:
 .build-windows:
   stage: build
   tags: [shell, windows]
+  artifacts:
+    paths:
+      - mycv.pdf
   script:
     - echo "Build then copy to $env:OP_VERSION_PATH"
     # Add python 3.7.9 from softprod
     - $env:PATH="c:\prod\softprod\apps\python\3.7.9\windows\;"+$env:PATH
     # Setup git from softprod and remove git ssl verification
     - $env:PATH="c:\prod\softprod\apps\git-bash\latest\windows\cmd\;"+$env:PATH
+    # Add InnoSetup in PATH
+    - $env:PATH="C:\Program Files (x86)\Inno Setup 6\Compil32.exe;"+$env:PATH
     - git config --global http.sslVerify false
     # Create virtual environment in ./venv
     - .\tools\create_env.ps1
@@ -65,6 +70,9 @@ workflow:
     # Copy to softprod
     - echo "Copy to $OP_VERSION_PATH\windows"
     - Copy-Item -Force -Recurse .\build\exe.win-amd64-3.7 $env:OP_VERSION_PATH\windows
+    # Build exe
+    - .\tools\build_win_installer.ps1
+    - dir .\build
 
 build-centos-on-tags:
   extends: .build-centos
