@@ -46,8 +46,9 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             return
 
         session = context.data["ftrackSession"]
-        # Reset session and reconfigure locations
-        session.reset()
+        # Reset session operations and reconfigure locations
+        session.recorded_operations.clear()
+        session._configure_locations()
 
         try:
             self.integrate_to_ftrack(
