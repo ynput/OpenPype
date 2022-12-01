@@ -111,7 +111,7 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
         current_file = instance.data.get("currentFile")
         source = instance.data.get("source")
         source_file = current_file or source
-        if os.path.exists(source_file):
+        if source_file and os.path.exists(source_file):
             self.log.debug("Parsing paths for {}".format(source_file))
             if not instance.data.get("originalBasename"):
                 instance.data["originalBasename"] = \
