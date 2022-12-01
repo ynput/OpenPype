@@ -1,4 +1,4 @@
-from openpype.lib.attribute_definitions import FileDef, BoolDef
+from openpype.lib.attribute_definitions import FileDef
 from openpype.lib.transcoding import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
 from openpype.pipeline.create import (
     Creator,
@@ -129,11 +129,6 @@ class SettingsCreator(TrayPublishCreator):
                 single_item=True,
                 label="Reviewable representations",
                 extensions_label="Single reviewable item"
-            ),
-            BoolDef(
-                "publish_prepared",
-                default=False,
-                label="Just publish already prepared"
             )
         ]
 
