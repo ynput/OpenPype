@@ -299,7 +299,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                             .format(src, dst))
                     continue
 
-                if not self._is_path_in_project_roots(anatomy.all_root_paths,
+                if not self._is_path_in_project_roots(anatomy.all_root_paths(),
                                                       dst):
                     self.log.warning(
                         "Destination '{}' is not in project folder. Skipping"
@@ -915,9 +915,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         Returns:
             (bool)
         """
-        file_path = str(file_path).replace("\\", "/")
-        for root_item in roots.values():
-            if file_path.startswith(root_item.clean_value):
+        file_path = str(file_path).replace("\\", "/").lower()
+        for root_item in roots:
+            if file_path.startswith(root_item.lower()):
                 return True
 
         return False
