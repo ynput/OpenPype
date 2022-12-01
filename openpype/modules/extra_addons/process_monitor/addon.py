@@ -18,14 +18,8 @@ import platform
 
 from openpype.lib import Logger
 
-#TODO: Move psutil to OpenPype (add to dependencies)?
-# Or better to keep dependencies here as module is optional?
-import sys
-if sys.version_info.major == 3:
-    from .vendor import psutil
-else:
-    log = Logger().get_logger("ProcessMonitor")
-    log.warning("Module not supported in Python 2, operations will fail.")
+#TODO: Test with Python2
+import psutil
 
 
 from openpype.modules import (
