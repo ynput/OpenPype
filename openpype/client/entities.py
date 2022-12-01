@@ -519,6 +519,53 @@ def get_subset_families(project_name, subset_ids=None):
     return set()
 
 
+def match_subset_id(
+    project_name: str, task_name: str, family: str, asset_doc: dict
+) -> str:
+    """Match subset ID for given project, task and family.
+
+    Args:
+        project_name (str): Project_name.
+        task_name (str): Task name.
+        family (str): Family.
+        asset_doc (dict): Asset doc.
+
+    Returns:
+        str: Subset ID.
+    """
+
+    # Get subsets of the correct family
+    filtered_subsets = [
+        subset
+        for subset in get_subsets(
+            project_name,
+            asset_ids=[asset_doc["_id"]],
+            fields=["_id", "name", "data.family", "data.families"],
+        )
+        if (
+            subset["data"].get("family") == family
+            # Legacy compatibility
+            or family in subset["data"].get("families", {})
+        )
+    ]
+    if not filtered_subsets:
+        print(
+            "No any subset for asset '{}' with id '{}'.".format(
+                asset_doc("name"), asset_doc["_id"]
+            )
+        )
+        return
+
+    # Match subset which has `task_name` in its name
+    subset_id = None
+    low_task_name = task_name.lower()
+    if len(filtered_subsets) > 1:
+        for subset in filtered_subsets:
+            if low_task_name in subset["name"].lower():
+                subset_id = subset["_id"]
+                return subset_id
+
+
 def get_version_by_id(project_name, version_id, fields=None):
     """Single version entity data by it's id.
 
@@ -1031,6 +1078,31 @@ def get_representation_by_name(
 
     conn = get_project_connection(project_name)
     return conn.find_one(query_filter, _prepare_fields(fields))
+
+
+def get_representation_by_task(
+    project_name: str, task_name: str, version_doc: dict
+) -> str:
+    """Return representation for given project and task, and version.
+
+    Args:
+        project_name (str): Project name.
+        task_name (str): Task name.
+        version_doc (dict): Version doc.
+
+    Returns:
+        str: Representation.
+    """
+    return next(
+        (
+            representation
+            for representation in get_representations(
+                project_name, version_ids=[version_doc["_id"]]
+            )
+            if representation["context"]["task"]["name"] == task_name
+        ),
+        None,
+    )
 
 
 def _flatten_dict(data):
