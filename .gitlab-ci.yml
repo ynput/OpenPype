@@ -51,7 +51,7 @@ workflow:
   tags: [shell, windows]
   artifacts:
     paths:
-      - mycv.pdf
+      - .\build\OpenPype-*-install.exe
   script:
     - echo "Build then copy to $env:OP_VERSION_PATH"
     # Add python 3.7.9 from softprod
