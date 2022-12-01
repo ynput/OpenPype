@@ -288,6 +288,17 @@
                     "task_types": [],
                     "tasks": [],
                     "template_name": "maya2unreal"
+                },
+                {
+                    "families": [
+                        "online"
+                    ],
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template_name": "online"
                 }
             ]
         },
@@ -404,15 +415,13 @@
                     "template": "{family}{Task}"
                 },
                 {
-                    "families": [
-                        "renderLocal"
-                    ],
+                    "families": ["render"],
                     "hosts": [
                         "aftereffects"
                     ],
                     "task_types": [],
                     "tasks": [],
-                    "template": "render{Task}{Variant}"
+                    "template": "{family}{Task}{Composition}{Variant}"
                 },
                 {
                     "families": [
@@ -484,19 +493,7 @@
             ]
         },
         "publish": {
-            "template_name_profiles": [
-                {
-                    "families": [
-                        "online"
-                    ],
-                    "hosts": [
-                        "traypublisher"
-                    ],
-                    "task_types": [],
-                    "task_names": [],
-                    "template_name": "online"
-                }
-            ],
+            "template_name_profiles": [],
             "hero_template_name_profiles": []
         }
     },
