@@ -24,9 +24,3 @@ class CollectSource(pyblish.api.ContextPlugin):
                 self.log.info((
                     "Source of instance \"{}\" was already set to \"{}\""
                 ).format(instance.data["name"], source))
-
-            if not instance.data.get("originalBasename"):
-                instance.data["originalBasename"] = os.path.basename(source)
-
-            if not instance.data.get("originalDirname"):
-                instance.data["originalDirname"] = os.path.dirname(source)

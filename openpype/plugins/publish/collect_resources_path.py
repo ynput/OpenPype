@@ -15,7 +15,11 @@ import pyblish.api
 
 
 class CollectResourcesPath(pyblish.api.InstancePlugin):
-    """Generate directory path where the files and resources will be stored"""
+    """Generate directory path where the files and resources will be stored.
+
+    Collects folder name and file name from files, if exists, for in-situ
+    publishing.
+    """
 
     label = "Collect Resources Path"
     order = pyblish.api.CollectorOrder + 0.495
@@ -100,3 +104,19 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
 
         self.log.debug("publishDir: \"{}\"".format(publish_folder))
         self.log.debug("resourcesDir: \"{}\"".format(resources_folder))
+
+        # parse folder name and file name for online and source templates
+        # currentFile comes from hosts workfiles
+        # source comes from Publisher
+        current_file = instance.data.get("currentFile")
+        source = instance.data.get("source")
+        source_file = current_file or source
+        if os.path.exists(source_file):
+            self.log.debug("Parsing paths for {}".format(source_file))
+            if not instance.data.get("originalBasename"):
+                instance.data["originalBasename"] = \
+                    os.path.basename(source_file)
+
+            if not instance.data.get("originalDirname"):
+                instance.data["originalDirname"] = \
+                    os.path.dirname(source_file)
