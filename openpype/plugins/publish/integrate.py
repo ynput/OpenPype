@@ -541,8 +541,25 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         template_data["representation"] = repre["name"]
         template_data["ext"] = repre["ext"]
 
+        stagingdir = repre.get("stagingDir")
+        if not stagingdir:
+            # Fall back to instance staging dir if not explicitly
+            # set for representation in the instance
+            self.log.debug((
+                "Representation uses instance staging dir: {}"
+            ).format(instance_stagingdir))
+            stagingdir = instance_stagingdir
+
+        if not stagingdir:
+            raise KnownPublishError(
+                "No staging directory set for representation: {}".format(repre)
+            )
+
         # optionals
         # retrieve additional anatomy data from representation if exists
+        if not instance.data.get("originalDirname"):
+            instance.data["originalDirname"] = stagingdir
+
         for key, anatomy_key in {
             # Representation Key: Anatomy data key
             "resolutionWidth": "resolution_width",
@@ -560,20 +577,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
             if value is not None:
                 template_data[anatomy_key] = value
-
-        stagingdir = repre.get("stagingDir")
-        if not stagingdir:
-            # Fall back to instance staging dir if not explicitly
-            # set for representation in the instance
-            self.log.debug((
-                "Representation uses instance staging dir: {}"
-            ).format(instance_stagingdir))
-            stagingdir = instance_stagingdir
-
-        if not stagingdir:
-            raise KnownPublishError(
-                "No staging directory set for representation: {}".format(repre)
-            )
 
         self.log.debug("Anatomy template name: {}".format(template_name))
         anatomy = instance.context.data["anatomy"]
@@ -600,6 +603,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 ))
 
             src_collection = src_collections[0]
+            template_data["originalBasename"] = src_collection.head[:-1]
             destination_indexes = list(src_collection.indexes)
             # Use last frame for minimum padding
             #   - that should cover both 'udim' and 'frame' minimum padding
@@ -684,7 +688,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 raise KnownPublishError(
                     "This is a bug. Representation file name is full path"
                 )
-
+            if not template_data.get("originalBasename"):
+                template_data["originalBasename"] = fname
             # Manage anatomy template data
             template_data.pop("frame", None)
             if is_udim:
