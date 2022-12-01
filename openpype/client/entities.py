@@ -557,13 +557,13 @@ def match_subset_id(
         return
 
     # Match subset which has `task_name` in its name
-    subset_id = None
     low_task_name = task_name.lower()
     if len(filtered_subsets) > 1:
         for subset in filtered_subsets:
             if low_task_name in subset["name"].lower():
-                subset_id = subset["_id"]
-                return subset_id
+                return subset["_id"]
+    else:
+        return filtered_subsets[0]["_id"]
 
 
 def get_version_by_id(project_name, version_id, fields=None):
