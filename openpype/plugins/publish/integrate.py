@@ -293,17 +293,12 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 instance)
 
             for src, dst in prepared["transfers"]:
-                if src == dst:
-                    self.log.info(
-                        "Source '{}' same as destination '{}'. Skipping."
-                            .format(src, dst))
+
+                if self._are_paths_same(src, dst):
                     continue
 
                 if not self._is_path_in_project_roots(anatomy.all_root_paths(),
                                                       dst):
-                    self.log.warning(
-                        "Destination '{}' is not in project folder. Skipping"
-                            .format(dst))
                     continue
 
                 # todo: add support for hardlink transfers
@@ -316,13 +311,20 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # .ma representation. Those destination paths are pre-defined, etc.
         # todo: should we move or simplify this logic?
         resource_destinations = set()
-        for src, dst in instance.data.get("transfers", []):
-            file_transactions.add(src, dst, mode=FileTransaction.MODE_COPY)
-            resource_destinations.add(os.path.abspath(dst))
 
-        for src, dst in instance.data.get("hardlinks", []):
-            file_transactions.add(src, dst, mode=FileTransaction.MODE_HARDLINK)
-            resource_destinations.add(os.path.abspath(dst))
+        file_copy_modes = [
+            ("transfers", FileTransaction.MODE_COPY),
+            ("hardlinks", FileTransaction.MODE_HARDLINK)
+        ]
+        for files_type, copy_mode in zip(*file_copy_modes):  # unpack
+            for src, dst in instance.data.get(files_type, []):
+                if self._are_paths_same(src, dst):
+                    continue
+                if not self._is_path_in_project_roots(anatomy.all_root_paths(),
+                                                      dst):
+                    continue
+                file_transactions.add(src, dst, mode=copy_mode)
+                resource_destinations.add(os.path.abspath(dst))
 
         # Bulk write to the database
         # We write the subset and version to the database before the File
@@ -924,6 +926,19 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         for root_item in roots:
             if file_path.startswith(root_item.lower()):
                 return True
-
+        self.log.warning(
+            "Destination '{}' is not in project folder. Skipping"
+            .format(file_path))
         return False
+
+    def _are_paths_same(self, src, dst):
+        src = str(src).replace("\\", "/").lower()
+        dst = str(dst).replace("\\", "/").lower()
+
+        same = src == dst
+        if same:
+            self.log.info(
+                "Source '{}' same as destination '{}'. Skipping."
+                .format(src, dst))
+        return same
 
