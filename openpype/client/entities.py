@@ -551,7 +551,7 @@ def match_subset_id(
     if not filtered_subsets:
         print(
             "No any subset for asset '{}' with id '{}'.".format(
-                asset_doc("name"), asset_doc["_id"]
+                asset_doc["name"], asset_doc["_id"]
             )
         )
         return
