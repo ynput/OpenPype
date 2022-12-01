@@ -59,7 +59,7 @@ workflow:
     # Setup git from softprod and remove git ssl verification
     - $env:PATH="c:\prod\softprod\apps\git-bash\latest\windows\cmd\;"+$env:PATH
     # Add InnoSetup in PATH
-    - $env:PATH="C:\Program Files (x86)\Inno Setup 6\Compil32.exe;"+$env:PATH
+    - $env:PATH="C:\Program Files (x86)\Inno Setup 6\;"+$env:PATH
     - git config --global http.sslVerify false
     # Create virtual environment in ./venv
     - .\tools\create_env.ps1
