@@ -57,7 +57,7 @@ class NukeHostFixtures(HostFixtures):
 
     @pytest.fixture(scope="module")
     def skip_compare_folders(self):
-        yield []
+        yield ["renders"]
 
 
 class NukeLocalPublishTestClass(NukeHostFixtures, PublishTest):
