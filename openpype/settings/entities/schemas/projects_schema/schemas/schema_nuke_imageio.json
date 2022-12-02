@@ -53,7 +53,7 @@
             "children": [
                 {
                     "type": "label",
-                    "label": "<b>'customOCIOConfigPath'</b> will be deprecated. <br>Please move values to : <i>project_settings/{app}/imageio/ocio_config/filepath</i>."
+                    "label": "<b style='color:red'>'customOCIOConfigPath'</b> will be deprecated. <br>Please move values to : <i>project_settings/{app}/imageio/ocio_config/filepath</i>."
                 },
                 {
                     "type": "form",
