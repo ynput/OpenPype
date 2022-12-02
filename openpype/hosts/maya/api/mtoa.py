@@ -56,7 +56,8 @@ class _AssExtractor(publish.Extractor):
         return mask
 
     def process(self, instance):
-
+        #What is a dry run?
+        #ass.rr seems like an abstract variable. Needs clarification.
         dry_run = instance.data.get("ass.rr")
 
         staging_dir = self.staging_dir(instance)
@@ -92,6 +93,7 @@ class _AssExtractor(publish.Extractor):
         else:
             mask = 44
 
+        #get/set should be plugin options.
         # Generic options
         if self.get_set_attr("{}.inf_ass_expand_procedurals".format(set_),
                              False):
@@ -108,6 +110,7 @@ class _AssExtractor(publish.Extractor):
         keys = self.get_set_attr("{}.inf_ass_mb_keys".format(set_), -1)
         length = self.get_set_attr("{}.inf_ass_mb_length".format(set_), -1)
 
+        #Targets should already be collected
         targets = self.get_targets(instance)
 
         _sorted_kwargs = sorted(kwargs.items(), key=lambda x: x[0])
@@ -116,6 +119,8 @@ class _AssExtractor(publish.Extractor):
         if not dry_run:
             self.log.debug("Running command: cmds.arnoldExportAss({})"
                            .format(", ".join(_sorted_kwargs)))
+            #There should be a context for not updating the viewport from
+            #pointcache extraction.
             with vp2_paused_context():
                 with selection(targets):
                     with self.motion_blur_ctx(mb, keys, length):
@@ -131,11 +136,14 @@ class _AssExtractor(publish.Extractor):
                 range_ = range(int(start), int(end) + 1)
 
             for i in range_:
+                #padding amount should be configurable. 3 does not seems
+                #enough as default.
                 fp = "{}.{:03d}.ass".format(export_path.name, i)
                 with open(fp, "w"):
                     pass
                 result.append(fp)
 
+        #Whether its a sequence or not, should already have been determined.
         if len(result) == 1:
             filepath = result[0]
         else:
