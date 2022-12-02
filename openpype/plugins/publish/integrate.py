@@ -941,4 +941,3 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "Source '{}' same as destination '{}'. Skipping."
                 .format(src, dst))
         return same
-
