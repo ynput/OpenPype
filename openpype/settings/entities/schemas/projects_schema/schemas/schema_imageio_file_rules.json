@@ -7,7 +7,8 @@
     "children": [
         {
             "type": "boolean",
-            "key": "enabled"
+            "key": "enabled",
+            "label": "Enabled"
         },
         {
             "key": "rules",
