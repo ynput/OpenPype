@@ -1,5 +1,99 @@
 # Changelog
 
+
+## [3.14.7](https://github.com/pypeclub/OpenPype/tree/3.14.7)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.6...3.14.7)
+
+**🆕 New features**
+
+- Hiero: loading effect family to timeline [\#4055](https://github.com/pypeclub/OpenPype/pull/4055)
+
+**🚀 Enhancements**
+
+- Photoshop: bug with pop-up window on Instance Creator [\#4121](https://github.com/pypeclub/OpenPype/pull/4121)
+- Publisher: Open on specific tab [\#4120](https://github.com/pypeclub/OpenPype/pull/4120)
+- Publisher: Hide unknown publish values [\#4116](https://github.com/pypeclub/OpenPype/pull/4116)
+- Ftrack: Event server status give more information about version locations [\#4112](https://github.com/pypeclub/OpenPype/pull/4112)
+- General: Allow higher numbers in frames and clips [\#4101](https://github.com/pypeclub/OpenPype/pull/4101)
+- Publisher: Settings for validate frame range [\#4097](https://github.com/pypeclub/OpenPype/pull/4097)
+- Publisher: Ignore escape button [\#4090](https://github.com/pypeclub/OpenPype/pull/4090)
+- Flame: Loading clip with native colorspace resolved from mapping [\#4079](https://github.com/pypeclub/OpenPype/pull/4079)
+- General: Extract review single frame output [\#4064](https://github.com/pypeclub/OpenPype/pull/4064)
+- Publisher: Prepared common function for instance data cache [\#4063](https://github.com/pypeclub/OpenPype/pull/4063)
+- Publisher: Easy access to publish page from create page [\#4058](https://github.com/pypeclub/OpenPype/pull/4058)
+- General/TVPaint: Attribute defs dialog [\#4052](https://github.com/pypeclub/OpenPype/pull/4052)
+- Publisher: Better reset defer [\#4048](https://github.com/pypeclub/OpenPype/pull/4048)
+- Publisher: Add thumbnail sources [\#4042](https://github.com/pypeclub/OpenPype/pull/4042)
+
+**🐛 Bug fixes**
+
+- General: Move default settings for template name [\#4119](https://github.com/pypeclub/OpenPype/pull/4119)
+- Slack: notification fail in new tray publisher [\#4118](https://github.com/pypeclub/OpenPype/pull/4118)
+- Nuke: loaded nodes set to first tab [\#4114](https://github.com/pypeclub/OpenPype/pull/4114)
+- Nuke: load image first frame [\#4113](https://github.com/pypeclub/OpenPype/pull/4113)
+- Files Widget: Ignore case sensitivity of extensions [\#4096](https://github.com/pypeclub/OpenPype/pull/4096)
+- Webpublisher: extension is lowercased in Setting and in uploaded files [\#4095](https://github.com/pypeclub/OpenPype/pull/4095)
+- Publish Report Viewer: Fix small bugs [\#4086](https://github.com/pypeclub/OpenPype/pull/4086)
+- Igniter: fix regex to match semver better [\#4085](https://github.com/pypeclub/OpenPype/pull/4085)
+- Maya: aov filtering [\#4083](https://github.com/pypeclub/OpenPype/pull/4083)
+- Flame/Flare: Loading to multiple batches [\#4080](https://github.com/pypeclub/OpenPype/pull/4080)
+- hiero: creator from settings with set maximum [\#4077](https://github.com/pypeclub/OpenPype/pull/4077)
+- Nuke: resolve hashes in file name only for frame token [\#4074](https://github.com/pypeclub/OpenPype/pull/4074)
+- Publisher: Fix cache of asset docs [\#4070](https://github.com/pypeclub/OpenPype/pull/4070)
+- Webpublisher: cleanup wp extract thumbnail [\#4067](https://github.com/pypeclub/OpenPype/pull/4067)
+- Settings UI: Locked setting can't bypass lock [\#4066](https://github.com/pypeclub/OpenPype/pull/4066)
+- Loader: Fix comparison of repre name [\#4053](https://github.com/pypeclub/OpenPype/pull/4053)
+- Deadline: Extract environment subprocess failure [\#4050](https://github.com/pypeclub/OpenPype/pull/4050)
+
+**🔀 Refactored code**
+
+- General: Collect entities plugin minor changes [\#4089](https://github.com/pypeclub/OpenPype/pull/4089)
+- General: Direct interfaces import [\#4065](https://github.com/pypeclub/OpenPype/pull/4065)
+
+**Merged pull requests:**
+
+- Bump loader-utils from 1.4.1 to 1.4.2 in /website [\#4100](https://github.com/pypeclub/OpenPype/pull/4100)
+- Online family for Tray Publisher [\#4093](https://github.com/pypeclub/OpenPype/pull/4093)
+- Bump loader-utils from 1.4.0 to 1.4.1 in /website [\#4081](https://github.com/pypeclub/OpenPype/pull/4081)
+- remove underscore from subset name [\#4059](https://github.com/pypeclub/OpenPype/pull/4059)
+- Alembic Loader as Arnold Standin [\#4047](https://github.com/pypeclub/OpenPype/pull/4047)
+
+## [3.14.6](https://github.com/pypeclub/OpenPype/tree/3.14.6)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.5...3.14.6)
+
+### 📖 Documentation
+
+- Documentation: Minor updates to dev\_requirements.md [\#4025](https://github.com/pypeclub/OpenPype/pull/4025)
+
+**🆕 New features**
+
+- Nuke: add 13.2 variant [\#4041](https://github.com/pypeclub/OpenPype/pull/4041)
+
+**🚀 Enhancements**
+
+- Publish Report Viewer: Store reports locally on machine [\#4040](https://github.com/pypeclub/OpenPype/pull/4040)
+- General: More specific error in burnins script [\#4026](https://github.com/pypeclub/OpenPype/pull/4026)
+- General: Extract review does not crash with old settings overrides [\#4023](https://github.com/pypeclub/OpenPype/pull/4023)
+- Publisher: Convertors for legacy instances [\#4020](https://github.com/pypeclub/OpenPype/pull/4020)
+- workflows: adding milestone creator and assigner [\#4018](https://github.com/pypeclub/OpenPype/pull/4018)
+- Publisher: Catch creator errors [\#4015](https://github.com/pypeclub/OpenPype/pull/4015)
+
+**🐛 Bug fixes**
+
+- Hiero - effect collection fixes [\#4038](https://github.com/pypeclub/OpenPype/pull/4038)
+- Nuke - loader clip correct hash conversion in path [\#4037](https://github.com/pypeclub/OpenPype/pull/4037)
+- Maya: Soft fail when applying capture preset [\#4034](https://github.com/pypeclub/OpenPype/pull/4034)
+- Igniter: handle missing directory [\#4032](https://github.com/pypeclub/OpenPype/pull/4032)
+- StandalonePublisher: Fix thumbnail publishing [\#4029](https://github.com/pypeclub/OpenPype/pull/4029)
+- Experimental Tools: Fix publisher import [\#4027](https://github.com/pypeclub/OpenPype/pull/4027)
+- Houdini: fix wrong path in ASS loader [\#4016](https://github.com/pypeclub/OpenPype/pull/4016)
+
+**🔀 Refactored code**
+
+- General: Import lib functions from lib [\#4017](https://github.com/pypeclub/OpenPype/pull/4017)
+
 ## [3.14.5](https://github.com/pypeclub/OpenPype/tree/3.14.5) (2022-10-24)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.4...3.14.5)
