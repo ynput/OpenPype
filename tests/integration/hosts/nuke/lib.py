@@ -59,5 +59,6 @@ class NukeHostFixtures(HostFixtures):
     def skip_compare_folders(self):
         yield []
 
+
 class NukeLocalPublishTestClass(NukeHostFixtures, PublishTest):
     """Testing class for local publishes."""

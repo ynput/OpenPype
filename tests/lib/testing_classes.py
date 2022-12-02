@@ -8,12 +8,10 @@ import tempfile
 import shutil
 import glob
 import platform
-import requests
 import re
 
 from tests.lib.db_handler import DBHandler
 from common.openpype_common.distribution.file_handler import RemoteFileHandler
-from openpype.modules import ModulesManager
 
 
 class BaseTest:
