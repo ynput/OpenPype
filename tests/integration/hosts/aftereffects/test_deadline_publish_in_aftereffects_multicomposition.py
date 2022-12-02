@@ -1,23 +1,26 @@
 import logging
 
 from tests.lib.assert_classes import DBAssert
-from tests.integration.hosts.aftereffects.lib import AELocalPublishTestClass
+from tests.integration.hosts.aftereffects.lib import AEDeadlinePublishTestClass
 
 log = logging.getLogger("test_publish_in_aftereffects")
 
 
-class TestPublishInAfterEffects(AELocalPublishTestClass):
-    """Basic test case for publishing in AfterEffects
+class TestDeadlinePublishInAfterEffectsMultiComposition(AEDeadlinePublishTestClass):  # noqa
+    """est case for DL publishing in AfterEffects with multiple compositions.
 
         Uses generic TestCase to prepare fixtures for test data, testing DBs,
         env vars.
 
-        Opens AfterEffects, run publish on prepared workile.
+        Opens AfterEffects, run DL publish on prepared workile.
 
         Test zip file sets 3 required env vars:
         - HEADLESS_PUBLISH - this triggers publish immediately app is open
         - IS_TEST - this differentiate between regular webpublish
         - PYBLISH_TARGETS
+
+        As there are multiple render and publish jobs, it waits for publish job
+        of later render job. Depends on date created of metadata.json.
 
         Then checks content of DB (if subset, version, representations were
         created.
@@ -27,8 +30,8 @@ class TestPublishInAfterEffects(AELocalPublishTestClass):
     PERSIST = False
 
     TEST_FILES = [
-        ("1c8261CmHwyMgS-g7S4xL5epAp0jCBmhf",
-         "test_aftereffects_publish.zip",
+        ("16xIm3U5P7WQJXpa9E06jWebMK9QKUATN",
+         "test_aftereffects_deadline_publish_multicomposition.zip",
          "")
     ]
 
@@ -50,6 +53,9 @@ class TestPublishInAfterEffects(AELocalPublishTestClass):
             DBAssert.count_of_types(dbcon, "version", 0, name={"$ne": 1}))
 
         failures.append(
+            DBAssert.count_of_types(dbcon, "subset", 3))
+
+        failures.append(
             DBAssert.count_of_types(dbcon, "subset", 1,
                                     name="workfileTest_task"))
 
@@ -58,14 +64,19 @@ class TestPublishInAfterEffects(AELocalPublishTestClass):
                                     name="renderTest_taskMain"))
 
         failures.append(
-            DBAssert.count_of_types(dbcon, "representation", 4))
+            DBAssert.count_of_types(dbcon, "subset", 1,
+                                    name="renderTest_taskMain2"))
 
-        additional_args = {"context.subset": "renderTest_taskMain",
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 7))
+
+        additional_args = {"context.subset": "workfileTest_task",
                            "context.ext": "aep"}
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 1,
                                     additional_args=additional_args))
 
+        # renderTest_taskMain
         additional_args = {"context.subset": "renderTest_taskMain",
                            "context.ext": "png"}
         failures.append(
@@ -84,8 +95,27 @@ class TestPublishInAfterEffects(AELocalPublishTestClass):
             DBAssert.count_of_types(dbcon, "representation", 1,
                                     additional_args=additional_args))
 
+        # renderTest_taskMain2
+        additional_args = {"context.subset": "renderTest_taskMain2",
+                           "context.ext": "exr"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        additional_args = {"context.subset": "renderTest_taskMain2",
+                           "name": "thumbnail"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        additional_args = {"context.subset": "renderTest_taskMain2",
+                           "name": "png_exr"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
         assert not any(failures)
 
 
 if __name__ == "__main__":
-    test_case = TestPublishInAfterEffects()
+    test_case = TestDeadlinePublishInAfterEffectsMultiComposition()

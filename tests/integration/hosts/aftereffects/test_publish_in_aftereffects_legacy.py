@@ -9,13 +9,28 @@ log = logging.getLogger("test_publish_in_aftereffects")
 class TestPublishInAfterEffects(AELocalPublishTestClass):
     """Basic test case for publishing in AfterEffects
 
-    Should publish 10 frames
+        Uses old Pyblish schema of created instances.
+
+        Uses generic TestCase to prepare fixtures for test data, testing DBs,
+        env vars.
+
+        Opens AfterEffects, run publish on prepared workile.
+
+        Test zip file sets 3 required env vars:
+        - HEADLESS_PUBLISH - this triggers publish immediately app is open
+        - IS_TEST - this differentiate between regular webpublish
+        - PYBLISH_TARGETS
+
+        Then checks content of DB (if subset, version, representations were
+        created.
+        Checks tmp folder if all expected files were published.
+
     """
-    PERSIST = True
+    PERSIST = False
 
     TEST_FILES = [
-        ("12aSDRjthn4X3yw83gz_0FZJcRRiVDEYT",
-         "test_aftereffects_publish_multiframe.zip",
+        ("1jqI_uG2NusKFvZZF7C0ScHjxFJrlc9F-",
+         "test_aftereffects_publish_legacy.zip",
          "")
     ]
 
@@ -66,7 +81,7 @@ class TestPublishInAfterEffects(AELocalPublishTestClass):
                                     additional_args=additional_args))
 
         additional_args = {"context.subset": "renderTest_taskMain",
-                           "name": "h264_png"}
+                           "name": "png_png"}
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 1,
                                     additional_args=additional_args))

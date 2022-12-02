@@ -6,6 +6,7 @@ import pyblish.api
 from openpype.lib import prepare_template_data
 from openpype.hosts.photoshop import api as photoshop
 from openpype.settings import get_project_settings
+from openpype.tests.lib import is_in_tests
 
 
 class CollectColorCodedInstances(pyblish.api.ContextPlugin):
@@ -46,7 +47,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
     def process(self, context):
         self.log.info("CollectColorCodedInstances")
         batch_dir = os.environ.get("OPENPYPE_PUBLISH_DATA")
-        if (os.environ.get("IS_TEST") and
+        if (is_in_tests() and
                 (not batch_dir or not os.path.exists(batch_dir))):
             self.log.debug("Automatic testing, no batch data, skipping")
             return

@@ -1,12 +1,12 @@
 import logging
 
 from tests.lib.assert_classes import DBAssert
-from tests.integration.hosts.nuke.lib import NukeLocalPublishTestClass
+from tests.integration.hosts.nuke.lib import NukeDeadlinePublishTestClass
 
 log = logging.getLogger("test_publish_in_nuke")
 
 
-class TestPublishInNuke(NukeLocalPublishTestClass):
+class TestDeadlinePublishInNuke(NukeDeadlinePublishTestClass):
     """Basic test case for publishing in Nuke
 
         Uses generic TestCase to prepare fixtures for test data, testing DBs,
@@ -15,7 +15,7 @@ class TestPublishInNuke(NukeLocalPublishTestClass):
         !!!
         It expects modified path in WriteNode,
         use '[python {nuke.script_directory()}]' instead of regular root
-        dir (eg. instead of `c:/projects/test_project/test_asset/test_task`).
+        dir (eg. instead of `c:/projects`).
         Access file path by selecting WriteNode group, CTRL+Enter, update file
         input
         !!!
@@ -36,12 +36,13 @@ class TestPublishInNuke(NukeLocalPublishTestClass):
     """
     # https://drive.google.com/file/d/1SUurHj2aiQ21ZIMJfGVBI2KjR8kIjBGI/view?usp=sharing  # noqa: E501
     TEST_FILES = [
-        ("1SUurHj2aiQ21ZIMJfGVBI2KjR8kIjBGI", "test_Nuke_publish.zip", "")
+        ("1SeWprClKhWMv2xVC9AcnekIJFExxnp_b",
+         "test_nuke_deadline_publish.zip", "")
     ]
 
     APP_GROUP = "nuke"
 
-    TIMEOUT = 50  # publish timeout
+    TIMEOUT = 180  # publish timeout
 
     # could be overwritten by command line arguments
     # keep empty to locate latest installed variant or explicit
@@ -80,4 +81,4 @@ class TestPublishInNuke(NukeLocalPublishTestClass):
 
 
 if __name__ == "__main__":
-    test_case = TestPublishInNuke()
+    test_case = TestDeadlinePublishInNuke()
