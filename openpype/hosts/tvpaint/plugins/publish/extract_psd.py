@@ -12,7 +12,7 @@ class ExtractPsd(pyblish.api.InstancePlugin):
     order = pyblish.api.ExtractorOrder + 0.02
     label = "Extract PSD"
     hosts = ["tvpaint"]
-    families = ["renderPass"]
+    families = ["renderLayer"]
 
     enabled = False
 
