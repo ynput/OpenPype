@@ -24,8 +24,6 @@ class CreateProxyAlembic(plugin.Creator):
         self.data["writeColorSets"] = self.write_color_sets
         # Vertex colors with the geometry.
         self.data["writeFaceSets"] = self.write_face_sets
-        # only nodes which are visible
-        self.data["visibleOnly"] = False
         # Default to exporting world-space
         self.data["worldSpace"] = True
 

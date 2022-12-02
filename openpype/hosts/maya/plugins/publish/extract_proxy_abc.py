@@ -92,12 +92,10 @@ class ExtractProxyAlembic(publish.Extractor):
 
     def create_proxy_geometry(self, instance, name_suffix, start, end):
         nodes = instance[:]
-        if instance.data.get("visibleOnly", False):
-            nodes = list(iter_visible_nodes_in_range(nodes,
-                                                     start=start,
-                                                     end=end))
+        nodes = list(iter_visible_nodes_in_range(nodes,
+                                                 start=start,
+                                                 end=end))
         inst_selection = cmds.ls(nodes, long=True)
-        proxy_root = []
         bbox = cmds.geomToBBox(inst_selection,
                                nameSuffix=name_suffix,
                                keepOriginal=True,
@@ -105,13 +103,7 @@ class ExtractProxyAlembic(publish.Extractor):
                                bakeAnimation=True,
                                startTime=start,
                                endTime=end)
-        for b in bbox:
-            dep_node = cmds.ls(b, dag=True, shapes=False,
-                               noIntermediate=True, sn=True)
-
-            for dep in dep_node:
-                if "Shape" in dep:
-                    continue
-                proxy_root.append(dep)
-            self.log.debug("proxy_root: {}".format(proxy_root))
-        return proxy_root
+        bbox_sel = cmds.ls(sl=True, long=True)
+        # bbox_sel = cmds.listRelatives(allDescendents=True, fullPath=True, type="mesh")
+        self.log.debug("proxy_root: {}".format(bbox_sel))
+        return bbox_sel
