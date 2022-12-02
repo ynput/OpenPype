@@ -71,7 +71,7 @@ def get_default_values(attribute_definitions):
     for attr_def in attribute_definitions:
         # Skip UI definitions
         if not isinstance(attr_def, UIDef):
-            output[attr_def.key] = attr_def.default
+            output[attr_def.key] = copy.deepcopy(attr_def.default)
     return output
 
 
