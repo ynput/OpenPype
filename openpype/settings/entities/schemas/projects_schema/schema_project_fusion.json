@@ -32,6 +32,10 @@
                             "label": "Set OCIO variable for Fusion"
                         },
                         {
+                            "type": "label",
+                            "label": "<b>'configFilePath'</b> will be deprecated. <br>Please move values to : <i>project_settings/{app}/imageio/ocio_config/filepath</i>."
+                        },
+                        {
                             "type": "path",
                             "key": "configFilePath",
                             "label": "OCIO Config File Path",
