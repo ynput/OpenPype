@@ -42,8 +42,8 @@ class ExtractLayout(publish.Extractor):
             grp_name = asset.split(':')[0]
             container_sel = cmds.ls("{}*_CON".format(grp_name))
             if not container_sel:
-                    assert container_sel == [], \
-                        "Use all loaded contents without renaming and grouping!" # noqa
+                assert container_sel == [], \
+                    "Use all loaded contents without renaming and grouping!" # noqa
             for con in container_sel:
                 container = con
 
