@@ -486,6 +486,114 @@ class BoolDef(AbtractAttrDef):
         return self.default
 
 
+class TupleDef(AbtractAttrDef):
+    """Tuple of other definitions.
+
+    Output is list if specified attributes.
+
+    Default values are defined on passed items.
+
+    Example:
+        ```
+        TupleDef(
+            "transform_value",
+            horizontal=True,
+            items=[
+                NumberDef(decimals=3, minimum=0.0, maximum=1.0),
+                NumberDef(decimals=3, minimum=0.0, maximum=1.0),
+                NumberDef(decimals=3, minimum=0.0, maximum=1.0)
+            ]
+        )
+        ```
+
+    Args:
+        items (List[AbtractAttrDef]): Other item definitions.
+        horizontal (bool): How to layout items in UI. UI specific information.
+    """
+
+    type = "tuple"
+
+    def __init__(self, key=None, items=None, horizontal=False, **kwargs):
+        if not items:
+            raise ValueError((
+                "Empty 'items' value. {} must have"
+                " at least one value definition."
+            ).format(self.__class__.__name__))
+
+        value_items = []
+        items = list(items)
+        for item in items:
+            if not isinstance(item, AbtractAttrDef):
+                raise TypeError("Expected 'AbtractAttrDef' got '{}'".format(
+                    str(type(item))
+                ))
+
+            if not isinstance(item, UIDef):
+                value_items.append(item)
+
+        if not value_items:
+            raise ValueError((
+                "Passed 'items' contain only UI definitions. {} must have"
+                " at least one value definitionitem."
+            ).format(self.__class__.__name__))
+
+        default = [
+            item.default
+            for item in items
+        ]
+
+        super(TupleDef, self).__init__(key=key, default=default, **kwargs)
+        self.horizontal = horizontal
+        self.items = items
+
+    def __eq__(self, other):
+        if not super(TupleDef, self).__eq__(other):
+            return False
+
+        if len(self.items) != len(other.items):
+            return
+
+        for my_item, o_item in zip(self.items, other.items):
+            if my_item != o_item:
+                return False
+        return True
+
+    def convert_value(self, value):
+        if (
+            isinstance(value, (list, tuple))
+            and len(value) == len(self.value)
+        ):
+            return [
+                item.convert_value(item_value)
+                for item_value, item in zip(value, self.items)
+            ]
+
+        return copy.deepcopy(self.default)
+
+    def serialize(self):
+        data = super(TextDef, self).serialize()
+        data["items"] = [
+            item.serialize()
+            for item in self.items
+        ]
+        return data
+
+    @classmethod
+    def deserialize(cls, data):
+        """Recreate object from data.
+
+        Data can be received using 'serialize' method.
+        """
+
+        data_copy = copy.deepcopy(data)
+        items = [
+            deserialize_attr_def(item)
+            for item in data_copy["items"]
+        ]
+        data_copy["items"] = items
+        return cls(**data_copy)
+
+
 class FileDefItem(object):
     def __init__(
         self, directory, filenames, frames=None, template=None
