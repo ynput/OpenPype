@@ -5,6 +5,8 @@ import sys
 import logging
 import contextlib
 
+import json
+
 from openpype.host import HostBase, IWorkfileHost, ILoadHost, INewPublisher
 import pyblish.api
 from openpype.pipeline import (
@@ -12,7 +14,7 @@ from openpype.pipeline import (
     register_loader_plugin_path,
     AVALON_CONTAINER_ID,
 )
-from openpype.hosts.max.api import OpenPypeMenu
+from openpype.hosts.max.api.menu import OpenPypeMenu
 from openpype.hosts.max.api import lib
 from openpype.hosts.max import MAX_HOST_DIR
 from openpype.pipeline.load import any_outdated_containers
@@ -32,6 +34,7 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 class MaxHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
+
     name = "max"
     menu = None
 
@@ -46,22 +49,9 @@ class MaxHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
         pyblish.api.register_plugin_path(PUBLISH_PATH)
         register_loader_plugin_path(LOAD_PATH)
         register_creator_plugin_path(CREATE_PATH)
-        log.info("Building menu ...")
 
+        # self._register_callbacks()
         self.menu = OpenPypeMenu()
-
-        log.info("Installing callbacks ... ")
-        # register_event_callback("init", on_init)
-        self._register_callbacks()
-
-        # register_event_callback("before.save", before_save)
-        # register_event_callback("save", on_save)
-        # register_event_callback("open", on_open)
-        # register_event_callback("new", on_new)
-
-        # pyblish.api.register_callback(
-        #     "instanceToggled", on_pyblish_instance_toggled
-        # )
 
         self._has_been_setup = True
 
@@ -70,7 +60,7 @@ class MaxHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
         return True
 
     def get_workfile_extensions(self):
-        return [".hip", ".hiplc", ".hipnc"]
+        return [".max"]
 
     def save_workfile(self, dst_path=None):
         rt.saveMaxFile(dst_path)
@@ -88,17 +78,15 @@ class MaxHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
         return ls()
 
     def _register_callbacks(self):
-        for event in self._op_events.copy().values():
-            if event is None:
-                continue
+        rt.callbacks.removeScripts(id=rt.name("OpenPypeCallbacks"))
 
-            try:
-                rt.callbacks.removeScript(id=rt.name(event.name))
-            except RuntimeError as e:
-                log.info(e)
+        rt.callbacks.addScript(
+            rt.Name("postLoadingMenus"),
+            self._deferred_menu_creation, id=rt.Name('OpenPypeCallbacks'))
 
-            rt.callbacks.addScript(
-                event.name, event.callback, id=rt.Name('OpenPype'))
+    def _deferred_menu_creation(self):
+        self.log.info("Building menu ...")
+        self.menu = OpenPypeMenu()
 
     @staticmethod
     def create_context_node():
@@ -128,12 +116,12 @@ attributes "OpenPypeContext"
 
     def update_context_data(self, data, changes):
         try:
-            context = rt.rootScene.OpenPypeContext.context
+            _ = rt.rootScene.OpenPypeContext.context
         except AttributeError:
             # context node doesn't exists
-            context = self.create_context_node()
+            self.create_context_node()
 
-        lib.imprint(context, data)
+        rt.rootScene.OpenPypeContext.context = json.dumps(data)
 
     def get_context_data(self):
         try:
@@ -141,7 +129,9 @@ attributes "OpenPypeContext"
         except AttributeError:
             # context node doesn't exists
             context = self.create_context_node()
-        return lib.read(context)
+        if not context:
+            context = "{}"
+        return json.loads(context)
 
     def save_file(self, dst_path=None):
         # Force forwards slashes to avoid segfault
@@ -149,5 +139,16 @@ attributes "OpenPypeContext"
         rt.saveMaxFile(dst_path)
 
 
-def ls():
-    ...
+def ls() -> list:
+    """Get all OpenPype instances."""
+    objs = rt.objects
+    containers = [
+        obj for obj in objs
+        if rt.getUserProp(obj, "id") == AVALON_CONTAINER_ID
+    ]
+
+    for container in sorted(containers, key=lambda name: container.name):
+        yield lib.read(container)
+
+
+

@@ -4,10 +4,8 @@
 from .pipeline import (
     MaxHost
 )
-from .menu import OpenPypeMenu
 
 
 __all__ = [
     "MaxHost",
-    "OpenPypeMenu"
 ]
