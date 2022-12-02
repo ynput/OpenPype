@@ -3,6 +3,7 @@ import re
 import collections
 import uuid
 import json
+import copy
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
@@ -105,8 +106,10 @@ class AbtractAttrDef(object):
     How to force to set `key` attribute?
 
     Args:
-        key (str): Under which key will be attribute value stored.
-        default (Any): Default value of an attribute.
+        key (str): Under which key will be attribute value stored. Is required
+            except if are under parents which don't need it (e.g. 'TupleDef').
+        default (Any): Default value of an attribute. If definition represents
+            a value it should never be set to 'None'.
         label (str): Attribute label.
         tooltip (str): Attribute tooltip.
         is_label_horizontal (bool): UI specific argument. Specify if label is
@@ -121,8 +124,8 @@ class AbtractAttrDef(object):
 
     def __init__(
         self,
-        key,
-        default,
+        key=None,
+        default=None,
         label=None,
         tooltip=None,
         is_label_horizontal=None,
@@ -214,9 +217,6 @@ class AbtractAttrDef(object):
 class UIDef(AbtractAttrDef):
     is_value_def = False
 
-    def __init__(self, key=None, default=None, *args, **kwargs):
-        super(UIDef, self).__init__(key, default, *args, **kwargs)
-
     def convert_value(self, value):
         return value
 
@@ -245,10 +245,6 @@ class UnknownDef(AbtractAttrDef):
 
     type = "unknown"
 
-    def __init__(self, key, default=None, **kwargs):
-        kwargs["default"] = default
-        super(UnknownDef, self).__init__(key, **kwargs)
-
     def convert_value(self, value):
         return value
 
@@ -264,10 +260,9 @@ class HiddenDef(AbtractAttrDef):
 
     type = "hidden"
 
-    def __init__(self, key, default=None, **kwargs):
-        kwargs["default"] = default
+    def __init__(self, *args, **kwargs):
         kwargs["hidden"] = True
-        super(UnknownDef, self).__init__(key, **kwargs)
+        super(UnknownDef, self).__init__(*args, **kwargs)
 
     def convert_value(self, value):
         return value
@@ -294,7 +289,7 @@ class NumberDef(AbtractAttrDef):
     ]
 
     def __init__(
-        self, key, minimum=None, maximum=None, decimals=None, default=None,
+        self, key=None, minimum=None, maximum=None, decimals=None, default=None,
         **kwargs
     ):
         minimum = 0 if minimum is None else minimum
@@ -371,13 +366,18 @@ class TextDef(AbtractAttrDef):
     ]
 
     def __init__(
-        self, key, multiline=None, regex=None, placeholder=None, default=None,
+        self,
+        key=None,
+        multiline=None,
+        regex=None,
+        placeholder=None,
+        default=None,
         **kwargs
     ):
         if default is None:
             default = ""
 
-        super(TextDef, self).__init__(key, default=default, **kwargs)
+        super(TextDef, self).__init__(key=key, default=default, **kwargs)
 
         if multiline is None:
             multiline = False
@@ -418,15 +418,17 @@ class EnumDef(AbtractAttrDef):
     """Enumeration of single item from items.
 
     Args:
-        items: Items definition that can be coverted to
-            `collections.OrderedDict`. Dictionary represent {value: label}
-            relation.
-        default: Default value. Must be one key(value) from passed items.
+        key (str): Attribute key.
+        items (Iterable[Tuple[Any, Any]]): Items definition that can be
+            coverted to `collections.OrderedDict`. Dictionary represent
+            {value: label} relation.
+        default (Any): Default value. Must be one key(value) from passed items.
+            First item from 'items' is used if not passed.
     """
 
     type = "enum"
 
-    def __init__(self, key, items, default=None, **kwargs):
+    def __init__(self, key=None, items=None, default=None, **kwargs):
         if not items:
             raise ValueError((
                 "Empty 'items' value. {} must have"
@@ -475,10 +477,10 @@ class BoolDef(AbtractAttrDef):
 
     type = "bool"
 
-    def __init__(self, key, default=None, **kwargs):
+    def __init__(self, key=None, default=None, **kwargs):
         if default is None:
             default = False
-        super(BoolDef, self).__init__(key, default=default, **kwargs)
+        super(BoolDef, self).__init__(key=key, default=default, **kwargs)
 
     def convert_value(self, value):
         if isinstance(value, bool):
@@ -842,7 +844,7 @@ class FileDef(AbtractAttrDef):
     ]
 
     def __init__(
-        self, key, single_item=True, folders=None, extensions=None,
+        self, key=None, single_item=True, folders=None, extensions=None,
         allow_sequences=True, extensions_label=None, default=None, **kwargs
     ):
         if folders is None and extensions is None:
@@ -884,7 +886,7 @@ class FileDef(AbtractAttrDef):
         self.extensions = set(extensions)
         self.allow_sequences = allow_sequences
         self.extensions_label = extensions_label
-        super(FileDef, self).__init__(key, default=default, **kwargs)
+        super(FileDef, self).__init__(key=key, default=default, **kwargs)
 
     def __eq__(self, other):
         if not super(FileDef, self).__eq__(other):
