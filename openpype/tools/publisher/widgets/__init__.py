@@ -8,6 +8,7 @@ from .widgets import (
     ResetBtn,
     ValidateBtn,
     PublishBtn,
+    CreateNextPageOverlay,
 )
 from .help_widget import (
     HelpButton,
@@ -28,6 +29,7 @@ __all__ = (
     "ResetBtn",
     "ValidateBtn",
     "PublishBtn",
+    "CreateNextPageOverlay",
 
     "HelpButton",
     "HelpDialog",

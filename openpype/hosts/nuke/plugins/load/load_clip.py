@@ -145,6 +145,9 @@ class LoadClip(plugin.NukeLoader):
             "Read",
             "name {}".format(read_name))
 
+        # hide property panel
+        read_node.hideControlPanel()
+
         # to avoid multiple undo steps for rest of process
         # we will switch off undo-ing
         with viewer_update_and_undo_stop():

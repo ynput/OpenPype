@@ -63,6 +63,10 @@ class AlembicModelLoader(load.LoaderPlugin):
                     object_name, file),
                 inpanel=False
             )
+
+            # hide property panel
+            model_node.hideControlPanel()
+
             model_node.forceValidate()
 
             # Ensure all items are imported and selected.
