@@ -596,18 +596,19 @@ class PublishableClip:
         if not hero_track and self.vertical_sync:
             # driving layer is set as negative match
             for (_in, _out), hero_data in self.vertical_clip_match.items():
-                hero_data.update({"heroTrack": False})
-                if _in == self.clip_in and _out == self.clip_out:
+                _hero_data = deepcopy(hero_data)
+                _hero_data.update({"heroTrack": False})
+                if _in <= self.clip_in and _out >= self.clip_out:
                     data_subset = hero_data["subset"]
                     # add track index in case duplicity of names in hero data
                     if self.subset in data_subset:
-                        hero_data["subset"] = self.subset + str(
+                        _hero_data["subset"] = self.subset + str(
                             self.track_index)
                     # in case track name and subset name is the same then add
                     if self.subset_name == self.track_name:
-                        hero_data["subset"] = self.subset
+                        _hero_data["subset"] = self.subset
                     # assing data to return hierarchy data to tag
-                    tag_hierarchy_data = hero_data
+                    tag_hierarchy_data = _hero_data
 
         # add data to return data dict
         self.marker_data.update(tag_hierarchy_data)
