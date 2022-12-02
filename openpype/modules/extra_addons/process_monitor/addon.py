@@ -550,7 +550,8 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                             break
 
                     if all_same:
-                        if (terminated_process
+                        if (
+                            terminated_process
                             and self._compare_data(new_data,
                                                    terminated_process["data"])
                         ):
@@ -617,19 +618,19 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
     @staticmethod
     def _compare_data(new, old):
         if (
-            not "project_name" in new
+            "project_name" not in new
             or new["project_name"] != old.get("project_name", None)
         ):
             return False
 
         if (
-            not "task_name" in new
+            "task_name" not in new
             or new["task_name"] != old.get("task_name", None)
         ):
             return False
 
         if (
-            not "hierarchy" in new
+            "hierarchy" not in new
             or new["hierarchy"][-1] != old.get("hierarchy", [])[-1]
         ):
             return False
@@ -667,12 +668,13 @@ class StoppableThread(threading.Thread):
 
     def stop(self):
         thread_id = self.get_id()
-        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id,
-                                                         ctypes.py_object(SystemExit))
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(
+            thread_id,
+            ctypes.py_object(SystemExit)
+        )
         if res > 1:
             ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
             self.log.warning('Exception raise failure')
-
 
 
 #TODO: want cli?
