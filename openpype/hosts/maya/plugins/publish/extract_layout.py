@@ -37,19 +37,14 @@ class ExtractLayout(publish.Extractor):
             project_container = self.project_container
             container_list = cmds.ls(project_container)
             assert len(container_list) == 1, \
-                "Please create instance with loaded asset"
-            containers = cmds.sets(project_container, query=True)
+                "Please create instance with loaded asset!"
             # list the children of the containers
-            ass_transform = cmds.listRelatives(containers, allParents=True)
-            ass = cmds.listRelatives(asset, children=True, type="transform")
-            # compare the group of the asset with
-            # the children list of the container
-            # to find the content which is not loaded from the loader
-            for a in ass:
-                if a not in ass_transform:
+            grp_name = asset.split(':')[0]
+            con_sel = cmds.ls("{}*_CON".format(grp_name))
+            if not con_sel:
                     assert containers == [], \
-                        "no container found in {}".format(a)
-            for con in containers:
+                        "Use all loaded contents without renaming and grouping!" # noqa
+            for con in con_sel:
                 container = con
 
             representation_id = cmds.getAttr(
