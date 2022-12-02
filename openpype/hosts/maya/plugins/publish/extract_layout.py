@@ -40,11 +40,11 @@ class ExtractLayout(publish.Extractor):
                 "Please create instance with loaded asset!"
             # list the children of the containers
             grp_name = asset.split(':')[0]
-            containers = cmds.ls("{}*_CON".format(grp_name))
-            if not containers:
-                    assert containers == [], \
+            container_sel = cmds.ls("{}*_CON".format(grp_name))
+            if not container_sel:
+                    assert container_sel == [], \
                         "Use all loaded contents without renaming and grouping!" # noqa
-            for con in containers:
+            for con in container_sel:
                 container = con
 
             representation_id = cmds.getAttr(
