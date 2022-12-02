@@ -27,6 +27,10 @@
                     "collapsible": false,
                     "children": [
                         {
+                            "type": "label",
+                            "label": "<b>'ocioconfigpath'</b> will be deprecated. <br>Please move values to : <i>project_settings/{app}/imageio/ocio_config/filepath</i>."
+                        },
+                        {
                             "type": "form",
                             "children": [
                                 {
