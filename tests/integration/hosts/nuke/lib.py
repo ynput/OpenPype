@@ -1,17 +1,20 @@
 import os
 import pytest
-import shutil
+import re
 
-from tests.lib.testing_classes import HostFixtures
+from tests.lib.testing_classes import (
+    HostFixtures,
+    PublishTest,
+)
 
 
-class NukeTestClass(HostFixtures):
+class NukeHostFixtures(HostFixtures):
     @pytest.fixture(scope="module")
     def last_workfile_path(self, download_test_data, output_folder_url):
         """Get last_workfile_path from source data.
 
         """
-        source_file_name = "test_project_test_asset_CompositingInNuke_v001.nk"
+        source_file_name = "test_project_test_asset_test_task_v001.nk"
         src_path = os.path.join(download_test_data,
                                 "input",
                                 "workfile",
@@ -27,7 +30,16 @@ class NukeTestClass(HostFixtures):
         dest_path = os.path.join(dest_folder,
                                  source_file_name)
 
-        shutil.copy(src_path, dest_path)
+        # rewrite old root with temporary file
+        # TODO - using only C:/projects seems wrong - but where to get root ?
+        replace_pattern = re.compile(re.escape("C:/projects"), re.IGNORECASE)
+        with open(src_path, "r") as fp:
+            updated = fp.read()
+            updated = replace_pattern.sub(output_folder_url.replace("\\", '/'),
+                                          updated)
+
+        with open(dest_path, "w") as fp:
+            fp.write(updated)
 
         yield dest_path
 
@@ -42,3 +54,10 @@ class NukeTestClass(HostFixtures):
                                    "{}{}{}".format(startup_path,
                                                    os.pathsep,
                                                    original_nuke_path))
+
+    @pytest.fixture(scope="module")
+    def skip_compare_folders(self):
+        yield []
+
+class NukeLocalPublishTestClass(NukeHostFixtures, PublishTest):
+    """Testing class for local publishes."""
