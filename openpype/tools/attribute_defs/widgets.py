@@ -11,10 +11,11 @@ from openpype.lib.attribute_definitions import (
     TextDef,
     EnumDef,
     BoolDef,
+    TupleDef,
     FileDef,
     UIDef,
     UISeparatorDef,
-    UILabelDef
+    UILabelDef,
 )
 from openpype.tools.utils import CustomTextComboBox
 from openpype.widgets.nice_checkbox import NiceCheckbox
@@ -55,6 +56,9 @@ def _create_widget_for_attr_def(attr_def, parent=None):
 
     if isinstance(attr_def, HiddenDef):
         return HiddenAttrWidget(attr_def, parent)
+
+    if isinstance(attr_def, TupleDef):
+        return TupleAttrWidget(attr_def, parent)
 
     if isinstance(attr_def, FileDef):
         return FileAttrWidget(attr_def, parent)
@@ -496,6 +500,63 @@ class HiddenAttrWidget(_BaseAttrDefWidget):
 
     def set_value(self, value, multivalue=False):
         self._value = copy.deepcopy(value)
+        self._multivalue = multivalue
+
+
+class TupleAttrWidget(_BaseAttrDefWidget):
+    def _ui_init(self):
+        content_widget = QtWidgets.QWidget(self)
+        if self.attr_def.horizontal:
+            content_layout = QtWidgets.QHBoxLayout(content_widget)
+        else:
+            content_layout = QtWidgets.QVBoxLayout(content_widget)
+        item_widgets = []
+        for item in self.attr_def.items:
+            item_widget = create_widget_for_attr_def(item, content_widget)
+            if item.is_value_def:
+                item_widget.value_changed.connect(self._on_item_value_change)
+
+            content_layout.addWidget(item_widget, 0)
+            item_widgets.append(item_widget)
+
+        if self.attr_def.tooltip:
+            content_widget.setToolTip(self.attr_def.tooltip)
+
+        self._item_widgets = item_widgets
+        self._multivalue = False
+
+        self.main_layout.addWidget(content_widget, 0)
+
+    def _on_item_value_change(self, new_value, attr_def_id):
+        value = self._get_current_value(new_value, attr_def_id)
+        self.value_changed.emit(value, self.attr_def.id)
+
+    def _get_current_value(self, new_value=None, attr_def_id=None):
+        if self._multivalue:
+            raise ValueError("{} can't output for multivalue.".format(
+                self.__class__.__name__
+            ))
+        output = []
+        for item_widget in self._item_widgets:
+            attr_def = item_widget.attr_def
+            if not attr_def.is_value_def:
+                continue
+
+            if attr_def_id is not None and attr_def_id == attr_def.id:
+                value = new_value
+            else:
+                value = item_widget.current_value()
+            output.append(value)
+        return output
+
+    def current_value(self):
+        return self._get_current_value()
+
+    def set_value(self, value, multivalue=False):
+        for item_value, item_widget in zip(value, self._item_widgets):
+            item_widget.set_value(item_value, multivalue)
+
+        self.setEnabled(not multivalue)
         self._multivalue = multivalue
 
 
