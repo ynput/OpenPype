@@ -1,5 +1,17 @@
 {
     "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            }
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        },
         "ocio": {
             "enabled": false,
             "configFilePath": {
