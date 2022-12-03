@@ -20,10 +20,6 @@ class ValidateTextureBatchWorkfiles(pyblish.api.InstancePlugin):
     families = ["texture_batch_workfile"]
     optional = True
 
-    #TODO(2-rec): remove/change comment
-    # from presets
-    main_workfile_extensions = ['mra']
-
     def process(self, instance):
         if instance.data["family"] == "workfile":
             ext = instance.data["representations"][0]["ext"]
@@ -43,17 +39,19 @@ class ValidateTextureBatchWorkfiles(pyblish.api.InstancePlugin):
                                                 formatting_data=formatting_data
                                                 )
 
-    @classmethod
-    def get_main_workfile_extensions(cls):
+    @staticmethod
+    def get_main_workfile_extensions():
         project_settings = get_project_settings(os.environ["AVALON_PROJECT"])
 
-        #TODO: find better way? (depends on other plugin)
         try:
             extensions = (project_settings["standalonepublisher"]
                                           ["publish"]
                                           ["CollectTextures"]
                                           ["main_workfile_extensions"])
         except KeyError:
-            extensions = cls.main_workfile_extensions
+            raise Exception("Setting 'Main workfile extensions' not found."
+                            " The setting must be set for the"
+                            " 'Collect Texture' publish plugin of the"
+                            " 'Standalone Publish' tool.")
 
         return extensions
