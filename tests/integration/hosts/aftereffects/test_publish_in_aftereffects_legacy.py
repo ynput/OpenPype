@@ -1,13 +1,15 @@
 import logging
 
 from tests.lib.assert_classes import DBAssert
-from tests.integration.hosts.aftereffects.lib import AfterEffectsTestClass
+from tests.integration.hosts.aftereffects.lib import AELocalPublishTestClass
 
 log = logging.getLogger("test_publish_in_aftereffects")
 
 
-class TestPublishInAfterEffects(AfterEffectsTestClass):
+class TestPublishInAfterEffects(AELocalPublishTestClass):
     """Basic test case for publishing in AfterEffects
+
+        Uses old Pyblish schema of created instances.
 
         Uses generic TestCase to prepare fixtures for test data, testing DBs,
         env vars.
@@ -27,15 +29,15 @@ class TestPublishInAfterEffects(AfterEffectsTestClass):
     PERSIST = False
 
     TEST_FILES = [
-        ("1c8261CmHwyMgS-g7S4xL5epAp0jCBmhf",
-         "test_aftereffects_publish.zip",
+        ("1jqI_uG2NusKFvZZF7C0ScHjxFJrlc9F-",
+         "test_aftereffects_publish_legacy.zip",
          "")
     ]
 
-    APP = "aftereffects"
+    APP_GROUP = "aftereffects"
     APP_VARIANT = ""
 
-    APP_NAME = "{}/{}".format(APP, APP_VARIANT)
+    APP_NAME = "{}/{}".format(APP_GROUP, APP_VARIANT)
 
     TIMEOUT = 120  # publish timeout
 
@@ -51,21 +53,35 @@ class TestPublishInAfterEffects(AfterEffectsTestClass):
 
         failures.append(
             DBAssert.count_of_types(dbcon, "subset", 1,
-                                    name="imageMainBackgroundcopy"))
-
-        failures.append(
-            DBAssert.count_of_types(dbcon, "subset", 1,
                                     name="workfileTest_task"))
 
         failures.append(
             DBAssert.count_of_types(dbcon, "subset", 1,
-                                    name="reviewTesttask"))
+                                    name="renderTest_taskMain"))
 
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 4))
 
-        additional_args = {"context.subset": "renderTestTaskDefault",
+        additional_args = {"context.subset": "workfileTest_task",
+                           "context.ext": "aep"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        additional_args = {"context.subset": "renderTest_taskMain",
                            "context.ext": "png"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 2,
+                                    additional_args=additional_args))
+
+        additional_args = {"context.subset": "renderTest_taskMain",
+                           "name": "thumbnail"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        additional_args = {"context.subset": "renderTest_taskMain",
+                           "name": "png_png"}
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 1,
                                     additional_args=additional_args))
