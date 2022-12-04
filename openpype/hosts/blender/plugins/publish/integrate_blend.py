@@ -26,8 +26,9 @@ class IntegrateBlenderAsset(IntegrateAsset):
             self.log.info('Host "{}" doesn\'t have settings'.format(host_name))
             return None
 
-        if not host_settings.get("general", {}).get("use_paths_management"):
-            return
+        use_path_management = host_settings.get("general", {}).get(
+            "use_paths_management"
+        )
 
         representations = instance.data.get("published_representations")
 
@@ -37,20 +38,21 @@ class IntegrateBlenderAsset(IntegrateAsset):
 
             # If not workfile, it is a blend and there is a published file
             if representation.get("name") == "blend" and published_path:
-                self.log.info(
-                    f"Running {make_paths_relative.__file__}"
-                    f"to {published_path}..."
-                )
-                # Run in subprocess
-                Popen(
-                    [
-                        bpy.app.binary_path,
-                        published_path,
-                        "-b",
-                        "-P",
-                        make_paths_relative.__file__,
-                    ]
-                ).wait()
+                if use_path_management:
+                    self.log.info(
+                        f"Running {make_paths_relative.__file__}"
+                        f"to {published_path}..."
+                    )
+                    # Run in subprocess
+                    Popen(
+                        [
+                            bpy.app.binary_path,
+                            published_path,
+                            "-b",
+                            "-P",
+                            make_paths_relative.__file__,
+                        ]
+                    ).wait()
 
                 self.log.info(
                     f"Running {update_representations.__file__}"
