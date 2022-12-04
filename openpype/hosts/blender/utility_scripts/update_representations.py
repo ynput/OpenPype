@@ -4,7 +4,6 @@ import sys
 import bpy
 from openpype.client.entities import (
     get_asset_by_name,
-    get_representation_by_id,
     get_subset_by_name,
 )
 from openpype.hosts.blender.api.pipeline import metadata_update
@@ -47,9 +46,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args(sys.argv[sys.argv.index("--") + 1 :])
 
+    containerized_datablocks = set()
     for datapath in args.datapaths:
         for datablock_name in args.datablocks:
             datablock = eval(datapath).get(datablock_name)
+            if not datablock or datablock in containerized_datablocks:
+                continue
 
             # Get docs
             project_name = legacy_io.Session["AVALON_PROJECT"]
@@ -57,10 +59,10 @@ if __name__ == "__main__":
 
             asset_doc = get_asset_by_name(project_name, asset_name)
             subset_doc = get_subset_by_name(
-                project_name, args.subset_name, asset_doc["_id"]
-            )
-            representation_doc = get_representation_by_id(
-                project_name, args.representation_id
+                project_name,
+                args.subset_name,
+                asset_doc["_id"],
+                fields=["data.family"],
             )
 
             # Update container metadata
@@ -73,9 +75,17 @@ if __name__ == "__main__":
                     "representation": args.representation_id,
                     "asset_name": legacy_io.Session["AVALON_ASSET"],
                     "parent": str(asset_doc["parent"]),
-                    "family": representation_doc.data["family"],
+                    "family": subset_doc["data"]["family"],
                     "namespace": "",
                 },
             )
+
+            # Keep children and objects to avoid containerizing hierarchy
+            if type(datablock) is bpy.types.Collection:
+                containerized_datablocks.update(
+                    [datablock],
+                    datablock.children_recursive,
+                    datablock.all_objects,
+                )
 
     bpy.ops.wm.save_mainfile()
