@@ -8,6 +8,7 @@ class CreateLayout(plugin.Creator):
     label = "Layout"
     family = "layout"
     icon = "cubes"
+
     def __init__(self, *args, **kwargs):
         super(CreateLayout, self).__init__(*args, **kwargs)
 
