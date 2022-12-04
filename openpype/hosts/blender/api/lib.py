@@ -7,6 +7,8 @@ from typing import Dict, Iterator, List, Union
 
 import bpy
 import addon_utils
+from openpype.hosts.blender.api.properties import OpenpypeContainer
+from openpype.hosts.blender.api.utils import BL_TYPE_DATAPATH
 from openpype.lib import Logger
 from openpype.pipeline import schema
 from openpype.pipeline.constants import AVALON_CONTAINER_ID
@@ -14,6 +16,27 @@ from openpype.pipeline.constants import AVALON_CONTAINER_ID
 from . import pipeline
 
 log = Logger.get_logger(__name__)
+
+def create_container(
+    name: str, datablocks: List[bpy.types.ID]
+) -> OpenpypeContainer:
+    """Create OpenPype container in scene with name and relevant datablocks.
+
+    Args:
+        name (str): Container's name
+        datablocks (List[bpy.types.ID]): Datablocks included by the datablock
+
+    Returns:
+        OpenpypeContainer: Created container
+    """
+    container = bpy.context.scene.openpype_containers.add()
+    container.name = name
+    for d in datablocks:
+        d_ref = container.datablocks.add()
+        d_ref.name = d.name
+        d_ref.datapath = BL_TYPE_DATAPATH.get(type(d))
+
+    return container
 
 
 def parse_container(
@@ -62,21 +85,48 @@ def ls() -> Iterator:
     disk, it lists assets already loaded in Blender; once loaded they are
     called containers.
     """
-
-    collections = lsattr("id", AVALON_CONTAINER_ID)
+    # Ensure containers
     scene_collections = list(bpy.context.scene.collection.children)
     for collection in scene_collections:
         if len(collection.children):
             scene_collections.extend(collection.children)
 
-    for container in collections:
-        if container in scene_collections and not container.override_library:
-            yield parse_container(container)
+    openpype_containers = bpy.context.scene.openpype_containers
+    collections = lsattr("id", AVALON_CONTAINER_ID)
+    for collection in collections:
+        if (
+            collection in scene_collections
+            and not collection.override_library
+            and not openpype_containers.get(collection.name)
+        ):
+            container = create_container(
+                collection.name, [collection, *collection.children_recursive]
+            )
 
-    for obj in bpy.context.scene.objects:
-        if obj.is_instancer and obj.instance_collection in collections:
-            yield parse_container(obj)
+            # Transfer container metadata and keep original outliner entity
+            container[pipeline.AVALON_PROPERTY] = collection.get(
+                pipeline.AVALON_PROPERTY
+            )
+            container["outliner_entity"] = collection
 
+    # TODO does it work for object containers? may not be necessary
+    # for obj in [o for o in bpy.context.scene.objects if o.get(pipeline.AVALON_PROPERTY, {}).get("id") == AVALON_CONTAINER_ID
+    # and o.is_instancer and o.instance_collection in collections and not openpype_containers.get(o.name)]:
+    #     container = create_container(obj.name, [obj, *obj.instance_collection])
+    #     container["outliner_entity"] = obj
+
+    # Parse containers
+    for container in openpype_containers:
+        # In case outliner entity removed, remove container
+        if "outliner_entity" in container.keys() and not container.get(
+            "outliner_entity"
+        ):
+            openpype_containers.remove(
+                openpype_containers.find(container.name)
+            )
+
+        yield parse_container(container)
+    
 
 def load_scripts(paths):
     """Copy of `load_scripts` from Blender's implementation.
@@ -299,7 +349,7 @@ def lsattrs(attrs: Dict) -> List:
 def read(node: bpy.types.bpy_struct_meta_idprop):
     """Return user-defined attributes from `node`"""
 
-    data = dict(node.get(pipeline.AVALON_PROPERTY, {}))
+    data = node[pipeline.AVALON_PROPERTY]
 
     # Ignore hidden/internal data
     data = {
