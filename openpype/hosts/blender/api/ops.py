@@ -17,8 +17,6 @@ import bpy.utils.previews
 
 from openpype import style
 from openpype.client.entities import (
-    get_subset_by_id,
-    get_version_by_id,
     match_subset_id,
     get_representation_by_task,
 )
