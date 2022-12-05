@@ -11,6 +11,9 @@ from . import ops
 import pyblish.api
 
 from openpype.client import get_asset_by_name
+from openpype.hosts.blender.utility_scripts.is_workfile_out_of_date import (
+    is_work_file_out_of_date,
+)
 from openpype.pipeline import (
     schema,
     legacy_io,
@@ -178,6 +181,10 @@ def on_new():
     if set_frames_startup:
         set_frame_range(data)
 
+    bpy.types.WindowManager.is_workfile_out_of_date = bpy.props.BoolProperty(
+        name="Is Workfile Out Of Date",
+    )
+
     unit_scale_settings = settings.get("unit_scale_settings")
     unit_scale_enabled = unit_scale_settings.get("enabled")
     if unit_scale_enabled:
@@ -198,6 +205,10 @@ def on_open():
         set_resolution(data)
     if set_frames_startup:
         set_frame_range(data)
+
+    if is_work_file_out_of_date():
+        bpy.context.window_manager.is_workfile_out_of_date = True
+        bpy.ops.wm.workfile_out_of_date("INVOKE_DEFAULT")
 
     unit_scale_settings = settings.get("unit_scale_settings")
     unit_scale_enabled = unit_scale_settings.get("enabled")
