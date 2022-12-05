@@ -194,9 +194,6 @@ class FamilyWidget(QtWidgets.QWidget):
                 project_name, asset_name, fields=["_id"]
             )
 
-        # Get plugin and family
-        plugin = item.data(PluginRole)
-
         # Early exit if no asset name
         if not asset_name.strip():
             self._build_menu([])
