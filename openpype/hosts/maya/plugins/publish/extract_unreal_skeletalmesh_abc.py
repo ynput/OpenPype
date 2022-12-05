@@ -5,14 +5,11 @@ from contextlib import contextmanager
 
 from maya import cmds  # noqa
 
-import pyblish.api
-
 from openpype.pipeline import publish
 from openpype.hosts.maya.api.lib import (
     extract_alembic,
     suspended_refresh,
-    maintained_selection,
-    iter_visible_nodes_in_range
+    maintained_selection
 )
 
 
