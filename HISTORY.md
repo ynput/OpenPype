@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.14.8](https://github.com/pypeclub/OpenPype/tree/3.14.8)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.7...3.14.8)
+
+**🚀 Enhancements**
+
+- General: Refactored extract hierarchy plugin [\#4139](https://github.com/pypeclub/OpenPype/pull/4139)
+- General: Find executable enhancement [\#4137](https://github.com/pypeclub/OpenPype/pull/4137)
+- Ftrack: Reset session before instance processing [\#4129](https://github.com/pypeclub/OpenPype/pull/4129)
+- Ftrack: Editorial asset sync issue [\#4126](https://github.com/pypeclub/OpenPype/pull/4126)
+- Deadline: Build version resolving [\#4115](https://github.com/pypeclub/OpenPype/pull/4115)
+- Houdini: New Publisher [\#3046](https://github.com/pypeclub/OpenPype/pull/3046)
+- Fix: Standalone Publish Directories [\#4148](https://github.com/pypeclub/OpenPype/pull/4148)
+
+**🐛 Bug fixes**
+
+- Ftrack: Fix occational double parents issue [\#4153](https://github.com/pypeclub/OpenPype/pull/4153)
+- General: Maketx executable issue [\#4136](https://github.com/pypeclub/OpenPype/pull/4136)
+- Maya: Looks - add all connections [\#4135](https://github.com/pypeclub/OpenPype/pull/4135)
+- General: Fix variable check in collect anatomy instance data [\#4117](https://github.com/pypeclub/OpenPype/pull/4117)
 
 ## [3.14.7](https://github.com/pypeclub/OpenPype/tree/3.14.7)
 

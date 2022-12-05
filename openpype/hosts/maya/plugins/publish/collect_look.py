@@ -403,13 +403,13 @@ class CollectLook(pyblish.api.InstancePlugin):
             # history = cmds.listHistory(look_sets)
             history = []
             for material in materials:
-                history.extend(cmds.listHistory(material))
+                history.extend(cmds.listHistory(material, ac=True))
 
             # handle VrayPluginNodeMtl node - see #1397
             vray_plugin_nodes = cmds.ls(
                 history, type="VRayPluginNodeMtl", long=True)
             for vray_node in vray_plugin_nodes:
-                history.extend(cmds.listHistory(vray_node))
+                history.extend(cmds.listHistory(vray_node, ac=True))
 
             # handling render attribute sets
             render_set_types = [
