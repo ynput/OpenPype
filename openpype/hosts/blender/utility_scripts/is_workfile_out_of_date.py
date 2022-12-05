@@ -8,10 +8,10 @@ from openpype.hosts.blender.api.workio import current_file
 
 
 def is_work_file_out_of_date() -> bool:
-    """Checks if the current workfile is out of date.
-    This is based on last modification date, so if a user modifies an out of date
-    workfile, this will return `False`. Also, in case of partial publish, this will
-    return `True`.
+    """Check if the current workfile is out of date.
+    This is based on last modification date, so if a user modifies an out of 
+    date workfile, this will return `False`. Also, in case of partial publish, 
+    this will return `True`.
 
     Returns:
         bool: True if the current workfile is out of date.

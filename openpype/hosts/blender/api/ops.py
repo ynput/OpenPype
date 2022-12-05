@@ -1105,18 +1105,18 @@ class BuildWorkFile(bpy.types.Operator):
     def invoke(self, context, event):
         return bpy.context.window_manager.invoke_props_dialog(self, width=150)
 class DownloadLastWorkfile(bpy.types.Operator):
-    """Downloads Last Workfile."""
+    """Download Last Workfile."""
 
     bl_idname = "wm.download_last_workfile"
     bl_label = "Download Latest Workfile"
 
     @classmethod
     def poll(cls, context):
-        """Returns if this operator is available or not."""
+        """Return if this operator is available or not."""
         return context.window_manager.is_workfile_out_of_date
 
     def execute(self, context):
-        """Executes this operator."""
+        """Execute this operator."""
         session = legacy_io.Session
         project_name = session.get("AVALON_PROJECT")
         task_name = session.get("AVALON_TASK")
@@ -1181,11 +1181,12 @@ class DownloadLastWorkfile(bpy.types.Operator):
         return {"FINISHED"}
 
     def invoke(self, context, event):
+        """Invoke this operator."""
         return self.execute(context)
 
 
 class DrawWorkFileOutOfDateWarning(bpy.types.Operator):
-    """Displays a warning message about the workfile being out of date.
+    """Display a warning message about the workfile being out of date.
     Either the user chooses to willingly proceed with their out of date
     workfile, or blender will be closed after clicking on `OK`."""
 
@@ -1202,7 +1203,7 @@ class DrawWorkFileOutOfDateWarning(bpy.types.Operator):
     )
 
     def execute(self, context):
-        """Executes this operator."""
+        """Execute this operator."""
         if self.action_enum == "DL":
             bpy.ops.wm.download_last_workfile("EXEC_DEFAULT")
         elif self.action_enum == "QUIT":
@@ -1213,15 +1214,15 @@ class DrawWorkFileOutOfDateWarning(bpy.types.Operator):
         return {"FINISHED"}
 
     def cancel(self, context):
-        """Runs when this operator is cancelled."""
+        """Run when this operator is cancelled."""
         bpy.ops.wm.workfile_out_of_date("INVOKE_DEFAULT")
 
     def invoke(self, context, event):
-        """Invokes this operator."""
+        """Invoke this operator."""
         return context.window_manager.invoke_props_dialog(self)
 
     def draw(self, context):
-        """Draws UI."""
+        """Draw UI."""
         col = self.layout.column()
 
         # Display alert
