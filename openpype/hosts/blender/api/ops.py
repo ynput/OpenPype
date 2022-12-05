@@ -18,8 +18,6 @@ import bpy.utils.previews
 from openpype import style
 from openpype.pipeline import get_current_asset_name, get_current_task_name
 from openpype.client.entities import (
-    get_subset_by_id,
-    get_version_by_id,
     match_subset_id,
     get_representation_by_task,
 )
