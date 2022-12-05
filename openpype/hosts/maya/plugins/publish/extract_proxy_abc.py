@@ -96,13 +96,13 @@ class ExtractProxyAlembic(publish.Extractor):
                                                  start=start,
                                                  end=end))
         inst_selection = cmds.ls(nodes, long=True)
-        bbox = cmds.geomToBBox(inst_selection,
-                               nameSuffix=name_suffix,
-                               keepOriginal=True,
-                               single=False,
-                               bakeAnimation=True,
-                               startTime=start,
-                               endTime=end)
+        cmds.geomToBBox(inst_selection,
+                        nameSuffix=name_suffix,
+                        keepOriginal=True,
+                        single=False,
+                        bakeAnimation=True,
+                        startTime=start,
+                        endTime=end)
         bbox_sel = cmds.ls(sl=True, long=True)
         # bbox_sel = cmds.listRelatives(allDescendents=True, fullPath=True, type="mesh")
         self.log.debug("proxy_root: {}".format(bbox_sel))
