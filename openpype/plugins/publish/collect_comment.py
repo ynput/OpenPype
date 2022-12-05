@@ -6,6 +6,28 @@ Provides:
 """
 
 import pyblish.api
+from openpype.lib.attribute_definitions import TextDef
+from openpype.pipeline.publish import OpenPypePyblishPluginMixin
+
+
+class CollectInstanceCommentDef(
+    pyblish.api.ContextPlugin,
+    OpenPypePyblishPluginMixin
+):
+    label = "Comment per instance"
+    targets = ["local"]
+    # Disable plugin by default
+    families = ["*"]
+    enabled = True
+
+    def process(self, instance):
+        pass
+
+    @classmethod
+    def get_attribute_defs(cls):
+        return [
+            TextDef("comment", label="Comment")
+        ]
 
 
 class CollectComment(pyblish.api.ContextPlugin):
