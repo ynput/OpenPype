@@ -609,7 +609,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
         wait_thread = running_process["thread"]
         # TODO: remove try/except?
         try:
-            if wait_thread.isAlive():
+            if wait_thread.is_alive():
                 wait_thread.stop()
                 wait_thread.join()
         except Exception as e:
