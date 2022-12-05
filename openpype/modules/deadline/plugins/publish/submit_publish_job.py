@@ -241,6 +241,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         environment["AVALON_ASSET"] = legacy_io.Session["AVALON_ASSET"]
         environment["AVALON_TASK"] = legacy_io.Session["AVALON_TASK"]
         environment["AVALON_APP_NAME"] = os.environ.get("AVALON_APP_NAME")
+        environment["OPENPYPE_VERSION"] = os.environ.get("OPENPYPE_VERSION")
         environment["OPENPYPE_LOG_NO_COLORS"] = "1"
         environment["OPENPYPE_USERNAME"] = instance.context.data["user"]
         environment["OPENPYPE_PUBLISH_JOB"] = "1"
