@@ -1,14 +1,3 @@
-"""
-
-psutil 'process_iter' parameters:
-'cmdline', 'connections', 'cpu_affinity', 'cpu_num', 'cpu_percent',
-'cpu_times', 'create_time', 'cwd', 'environ', 'exe', 'gids', 'io_counters',
-'ionice', 'memory_full_info', 'memory_info', 'memory_maps', 'memory_percent',
-'name', 'nice', 'num_ctx_switches', 'num_fds', 'num_handles', 'num_threads',
-'open_files', 'pid', 'ppid', 'status', 'terminal', 'threads', 'uids', 'username'
-
-"""
-
 import os
 import click
 
@@ -117,7 +106,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
             return
 
         # TODO(2-REC): Can happen? Do what in this case?
-        if not pid in self._running_processes:
+        if pid not in self._running_processes:
             self.log.error((
                 "Process ID '{}' not found in running processes!"
             ).format(pid))
@@ -180,8 +169,8 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
         project_anatomy_settings = get_anatomy_settings(project_name)
         project_applications = project_anatomy_settings.get(
             "attributes",
-            {}).get("applications", []
-        )
+            {}
+        ).get("applications", [])
         self.log.debug((
             "Project '{}' applications: {}"
         ).format(project_name, project_applications))
@@ -189,8 +178,8 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
         application_variants = {}
         for project_application in project_applications:
             app_name, app_variant = project_application.split("/")
-            if not app_name in application_variants:
-                application_variants[app_name] = [ app_variant ]
+            if app_name not in application_variants:
+                application_variants[app_name] = [app_variant]
             elif app_variant not in application_variants[app_name]:
                 application_variants[app_name].append(app_variant)
 

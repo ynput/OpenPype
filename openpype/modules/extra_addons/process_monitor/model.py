@@ -1,5 +1,3 @@
-import os
-
 from Qt import QtCore
 import qtawesome
 
@@ -9,7 +7,7 @@ from openpype.tools.utils.models import TreeModel, Item
 
 class ProcessModel(TreeModel):
     """Model listing running processes"""
-    #TODO: use dictionary instead of 'hardcoded' order everywhere (?)
+    # TODO(2-REC): use dictionary instead of "hardcoded" order everywhere
     Columns = [
         "application",
         "project",
@@ -59,15 +57,14 @@ class ProcessModel(TreeModel):
 
         self.add_child(item)
 
-
     def update(self, processes, current_pid=None):
         self.clear()
         self.beginResetModel()
 
         ########
-        #TODO: 'merge' lines with same context, and add child for each PID
-        # => Finish / make better
-        # + handle changes elesewhere (selection, double click, context menu, etc.))
+        # TODO(2-REC): Finish / make better
+        # - "merge" lines with same context, and add child for each PID
+        # - handle changes elesewhere (selection, double click, context menu)
         """
         items = {}
 
@@ -125,7 +122,6 @@ class ProcessModel(TreeModel):
             self._add_empty()
 
         self.endResetModel()
-
 
     def rowCount(self, parent=None):
         if parent is None or not parent.isValid():

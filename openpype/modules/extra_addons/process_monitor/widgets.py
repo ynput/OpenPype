@@ -1,5 +1,5 @@
-#TODO:
-# - add 'process start time' column (+get info) (?)
+# TODO(2-REC):
+# - add "process start time" column (?)
 
 from Qt import QtWidgets, QtGui, QtCore
 
@@ -43,15 +43,14 @@ class ProcessMonitorDialog(QtWidgets.QDialog):
         process_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         process_view.setIndentation(3)
 
-        #TODO: delegates? (=> could use for 'started time')
+        # TODO(2-REC): delegates? (=> could use for 'started time')
         '''
         # Date modified delegate
         time_delegate = PrettyTimeDelegate()
         process_view.setItemDelegateForColumn(1, time_delegate)
         '''
 
-
-        #TODO: move elsewhere (as dictionary with names definition)
+        # TODO(2-REC): move elsewhere (as dictionary with names definition)
         default_widths = (
             ("application", 150),
             ("project", 150),
@@ -64,10 +63,9 @@ class ProcessMonitorDialog(QtWidgets.QDialog):
             index = process_model.Columns.index(column_name)
             process_view.setColumnWidth(index, width)
 
-
         process_view.doubleClickedLeft.connect(self.start_timer)
         process_view.customContextMenuRequested.connect(self.on_context_menu)
-        #TODO: want?
+        # TODO(2-REC): want?
         '''
         process_view.selectionModel().selectionChanged.connect(
             self.on_process_select
@@ -80,7 +78,6 @@ class ProcessMonitorDialog(QtWidgets.QDialog):
         self._process_model = process_model
         ########
 
-
         # Buttons
         buttons_layout = QtWidgets.QHBoxLayout()
         buttons_layout.addStretch(1)
@@ -90,7 +87,6 @@ class ProcessMonitorDialog(QtWidgets.QDialog):
         close_button.clicked.connect(self._on_close_clicked)
         buttons_layout.addWidget(close_button)
 
-
         self.setStyleSheet(load_stylesheet())
         self.signal_update_table.connect(self.update_running_processes)
         self.signal_select_task.connect(self.show_selector)
@@ -98,7 +94,6 @@ class ProcessMonitorDialog(QtWidgets.QDialog):
         self.resize(1024, self.height())
 
         self._process_model.update({})
-
 
     @property
     def log(self):
@@ -144,7 +139,6 @@ class ProcessMonitorDialog(QtWidgets.QDialog):
 
         self._module.request_start_timer(None)
 
-
     def on_context_menu(self, point):
         index = self._process_view.indexAt(point)
         if not index.isValid():
@@ -156,7 +150,7 @@ class ProcessMonitorDialog(QtWidgets.QDialog):
 
         menu = QtWidgets.QMenu(self)
 
-        #TODO: hide or disable option?
+        # TODO(2-REC): hide or disable option?
         status = index.data(ProcessModel.StatusRole)
 
         # Start
@@ -203,7 +197,8 @@ class ProcessMonitorDialog(QtWidgets.QDialog):
                "Please specify the current task in the 'Process Monitor'.")
         detail = ("In the 'Process Monitor' window,"
                   " activate the timer for the current task.\n\n"
-                  "To activate a timer, determine the row associated to the task, and either:\n"
+                  "To activate a timer, determine the row associated"
+                  " to the task, and either:\n"
                   "- double-click on the row\n"
                   "Or:\n"
                   "- right-click on the row and select 'Start timer'")
@@ -214,7 +209,6 @@ class ProcessMonitorDialog(QtWidgets.QDialog):
             parent=self)
         dialog.setMinimumWidth(500)
         dialog.setDetailedText(detail)
-
 
         dialog.setWindowTitle("OpenPype - Select current task")
 
