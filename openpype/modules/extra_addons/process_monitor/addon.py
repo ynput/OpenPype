@@ -277,7 +277,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                        for cmd in process.info["cmdline"]]
 
             name = process.info["name"]
-            for application_name, project_application \
+            for _application_name, project_application \
                     in self._project_applications:
                 if project_application == cmdline[0]:
                     process_cmd = cmdline[0]
@@ -296,7 +296,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                 continue
 
             # TODO(2-REC): get rid of "name" stuff before?
-            name = application_name
+            name = _application_name
 
             # TODO(2-REC): could be done at start
             # Check if parent process is running
