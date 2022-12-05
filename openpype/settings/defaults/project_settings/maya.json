@@ -915,7 +915,7 @@
                 "current_context": [
                     {
                         "subset_name_filters": [
-                            "\".+[Mm]ain\""
+                            ".+[Mm]ain"
                         ],
                         "families": [
                             "model"
