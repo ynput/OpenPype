@@ -21,12 +21,13 @@ def renamed(original_name, renamed_name):
         cmds.rename(renamed_name, original_name)
 
 
-class ExtractUnrealSkeletalMesh(publish.Extractor):
+class ExtractUnrealSkeletalMeshFbx(publish.Extractor):
     """Extract Unreal Skeletal Mesh as FBX from Maya. """
 
     order = pyblish.api.ExtractorOrder - 0.1
-    label = "Extract Unreal Skeletal Mesh"
+    label = "Extract Unreal Skeletal Mesh - FBX"
     families = ["skeletalMesh"]
+    optional = True
 
     def process(self, instance):
         fbx_exporter = fbx.FBXExtractor(log=self.log)
