@@ -121,3 +121,8 @@ def patch(*args, **kwargs):
 def delete(*args, **kwargs):
     con = get_server_api_connection()
     return con.delete(*args, **kwargs)
+
+
+def get_addons_info():
+    con = get_server_api_connection()
+    return con.get_addons_info()
