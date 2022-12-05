@@ -502,6 +502,13 @@ class ServerAPIBase(object):
         server_schema = self.get_server_schema()
         return server_schema["components"]["schemas"]
 
+    def get_addons_info(self):
+        response = self.get("addons?details=1")
+        if response.status != 200:
+            raise Exception(response.text)
+
+        return response["addons"]
+
     def get_attributes_schema(self):
         if self._attributes_schema is None:
             result = self.get("attributes")
