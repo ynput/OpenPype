@@ -60,6 +60,8 @@ class CreateUnrealSkeletalMesh(plugin.Creator):
             self.data["includeParentHierarchy"] = False
             # Default to exporting world-space
             self.data["worldSpace"] = True
+            # Default to suspend refresh.
+            self.data["refresh"] = False
 
             # Add options for custom attributes
             self.data["attr"] = ""
