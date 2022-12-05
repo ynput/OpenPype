@@ -36,8 +36,10 @@ class ExtractLayout(publish.Extractor):
             # Find the container
             project_container = self.project_container
             container_list = cmds.ls(project_container)
-            assert len(container_list) == 1, \
-                "Please create instance with loaded asset!"
+            if len(container_list) == 0:
+                self.log.warning("Project container is not found!")
+                self.log.warning("The asset(s) may not be properly loaded after published") # noqa
+                continue
 
             grp_loaded_ass = instance.data.get("groupLoadedAssets", False)
             if grp_loaded_ass:
@@ -47,9 +49,10 @@ class ExtractLayout(publish.Extractor):
             else:
                 grp_name = asset.split(':')[0]
             containers = cmds.ls("{}*_CON".format(grp_name))
-            assert len(containers) > 0, \
-                    "Use all loaded contents without renaming" \
-                    "(and/or grouping if groupLoadedAssets disabled)" # noqa
+            if len(containers) == 0:
+                self.log.warning("{} isn't from the loader".format(asset))
+                self.log.warning("It may not be properly loaded after published") # noqa
+                continue
             container = containers[0]
 
             representation_id = cmds.getAttr(
