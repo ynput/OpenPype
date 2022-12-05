@@ -601,7 +601,7 @@ class PublishableClip:
                 `self.vertical_clip_match`, this will loop only once
                 until none hero clip will be matched with hero clip.
 
-                `tag_hierarchy_data` will be used only once for every
+                `tag_hierarchy_data` will be set only once for every
                 clip which is not hero clip.
                 """
                 _hero_data = deepcopy(hero_data)
