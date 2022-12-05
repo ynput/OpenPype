@@ -596,6 +596,14 @@ class PublishableClip:
         if not hero_track and self.vertical_sync:
             # driving layer is set as negative match
             for (_in, _out), hero_data in self.vertical_clip_match.items():
+                """
+                Since only one instance of hero clip is expected in
+                `self.vertical_clip_match`, this will loop only once
+                until none hero clip will be matched with hero clip.
+
+                `tag_hierarchy_data` will be used only once for every
+                clip which is not hero clip.
+                """
                 _hero_data = deepcopy(hero_data)
                 _hero_data.update({"heroTrack": False})
                 if _in <= self.clip_in and _out >= self.clip_out:
@@ -609,6 +617,7 @@ class PublishableClip:
                         _hero_data["subset"] = self.subset
                     # assing data to return hierarchy data to tag
                     tag_hierarchy_data = _hero_data
+                    break
 
         # add data to return data dict
         self.marker_data.update(tag_hierarchy_data)
