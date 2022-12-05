@@ -19,7 +19,7 @@ import time
 
 from openpype.lib import Logger
 
-#TODO: Test with Python2
+# TODO(2-REC): Test with Python2
 import psutil
 
 
@@ -34,7 +34,7 @@ from openpype.modules import (
 from openpype.settings import get_anatomy_settings, get_system_settings
 
 
-#TODO: Add settings (?)
+# TODO(2-REC): Add settings
 # Settings definition of this addon using `JsonFilesSettingsDef`
 # - JsonFilesSettingsDef is prepared settings definition using json files
 #   to define settings and store default values
@@ -111,26 +111,23 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
         self._process_widget.open()
 
     def request_start_timer(self, pid):
-        #self.log.warning("request_start_timer: {}".format(pid))
-
         if pid is None:
             self._timers_manager_module.close_message()
             self.stop_timers()
             return
 
-        #TODO: Can happen? Do what in this case?
+        # TODO(2-REC): Can happen? Do what in this case?
         if not pid in self._running_processes:
             self.log.error((
                 "Process ID '{}' not found in running processes!"
             ).format(pid))
             return
 
-        #self.log.warning("CURRENT PID: {}".format(self._current_pid))
         if self._current_pid != pid:
             if self._timers_manager_module.is_running:
                 self.timer_stopped()
 
-                #TODO(2-REC): need timeout? (avoid if possible)
+                # TODO(2-REC): Avoid sleep if not needed
                 time.sleep(1)
 
             '''
@@ -159,10 +156,8 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
         click_group.add_command(cli_main)
 
     def start_timer(self, data):
-        #self.log.info("addon - start_timer - data: {}".format(data))
-
         project_name = data["project_name"]
-        #TODO: Avoid repeating process is same project as last time
+        # TODO(2-REC): Avoid repeating process is same project as last time
         # => Keep track of project name, and don't call if same project
         self._project_applications = self._get_applications(project_name)
         self.log.info((
@@ -172,18 +167,14 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
         self._add_running_process(data)
 
     def stop_timer(self):
-        #self.log.info("stop_timer")
-
-        #self._current_pid = None
+        # self._current_pid = None
 
         self._process_widget.signal_update_table.emit(self._running_processes,
                                                       None)
 
         # check if other running processes
-
-        #self.log.warning("stop_timer - running processes '{}'".format(self._running_processes))
-        #TODO: kill waiting threads? (NOT HERE!)
-        #self.stop_waiting_thread(pid)
+        # TODO(2-REC): kill waiting threads? (NOT HERE!)
+        # self.stop_waiting_thread(pid)
 
     def _get_applications(self, project_name):
         project_anatomy_settings = get_anatomy_settings(project_name)
@@ -210,7 +201,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
         platform_executables = []
         for application_name in application_variants:
             if application_name not in system_applications:
-                #TODO: Error?
+                # TODO(2-REC): Error?
                 self.log.warning((
                     "Application '{}' not found in system settings!"
                 ).format(application_name))
@@ -226,13 +217,14 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                         system_applications[application_name]["label"],
                         variant
                     )
-                    #TODO(2-REC): Find other way to determine executable (e.g.: Unreal)
+                    # TODO(2-REC): Find other way to determine executable
                     if not variants[variant].get("executables", False):
                         self.log.warning((
                             "No executable defined for '{}' variant '{}'"
                         ).format(application_name, variant))
                         continue
-                    for executable in variants[variant]["executables"].get(current_platform):
+                    executables = variants[variant]["executables"]
+                    for executable in executables.get(current_platform):
                         if not executable:
                             self.log.warning((
                                 "Executable not defined for '{}'"
@@ -245,42 +237,32 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                             [name, executable.replace("\\", "/")]
                         )
 
-        '''
-        self.log.debug((
-            "Platform executables: {}"
-        ).format(platform_executables))
-        '''
         return platform_executables
 
     def register_timers_manager(self, timer_manager_module):
         self._timers_manager_module = timer_manager_module
 
     def timer_started(self, data):
-        #self.log.debug("timer_started - data: {}".format(data))
         if self._timers_manager_module is not None:
             self._timers_manager_module.timer_started(self.id, data)
 
     def timer_stopped(self):
-        #self.log.info("timer_stopped")
         if self._timers_manager_module is not None:
             self._timers_manager_module.timer_stopped(self.id)
 
-        #TODO: needed? (should remove from other locations in code)
+        # TODO(2-REC): needed? (should remove from other locations in code)
         self._current_pid = None
 
     def _add_running_process(self, data):
-        #self.log.warning("_add_running_process")
-
-        # TODO: should also check "username" (e.g. if background task started by server)
+        # TODO(2-REC): Keep "name"? Add "username"?
         process_parameters = [
-            "name", #TODO: remove?
+            "name",
             "environ",
             "cmdline"
         ]
 
-        #self.log.info("_add_running_process - current pid: {}".format(self._current_pid))
-        #TODO: keep current if none found?
-        #self._current_pid = None
+        # TODO(2-REC): keep current if none found?
+        # self._current_pid = None
 
         new_pids = []
         for process in psutil.process_iter(process_parameters):
@@ -289,7 +271,6 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
             if pid == 0:
                 continue
 
-            #self.log.info("cmdline : {}".format(process.info["cmdline"]))
             if not process.info["cmdline"]:
                 continue
             cmdline = [cmd.replace("\\", "/")
@@ -305,29 +286,26 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
 
                 elif project_application in cmdline[1:]:
                     process_cmd = cmdline[1:].index(project_application)
-                    #TODO: REMOVE! (temp windows hack)
+                    # TODO(2-REC): REMOVE! (temp windows hack)
                     name = project_application.split("\\")[-1].split("/")[-1]
-                    #name = ".".join(name.split(".")[:-1])
+                    # name = ".".join(name.split(".")[:-1])
                     self.log.info("Found subprocess: {}".format(name))
                     break
 
             else:
                 continue
-            #self.log.debug("PID: {}".format(pid))
 
-            ####
-            #TODO: get rid of 'name' stuff before?
+            # TODO(2-REC): get rid of "name" stuff before?
             name = application_name
-            ####
 
-            #TODO: could be done at start
+            # TODO(2-REC): could be done at start
             # Check if parent process is running
             ppid = process.ppid()
             if ppid in self._running_processes:
                 self.log.warning("ppid '{}' running => ignore".format(ppid))
                 continue
 
-            #TODO: ok with "openpype"?
+            # TODO(2-REC): ok with "openpype"?
             # => Not OK if started in CLI or via "run_tray" script
             parent = process.parent()
             if not parent or "openpype" not in parent.name():
@@ -356,7 +334,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                     self.log.debug("Process '{}' already running".format(pid))
                     continue
 
-                #TODO: can happen?
+                # TODO(2-REC): can happen?
                 # Process running but with different context => Kill thread
                 self.log.warning((
                     "Process '{}' running but with different context"
@@ -364,7 +342,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                 ).format(pid))
                 self.stop_waiting_thread(pid)
             """
-            #?
+            # ?
             else:
                 self._current_pid = pid
             """
@@ -381,11 +359,10 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
             self._current_pid = pid
             new_pids.append(pid)
 
-        #TODO: Can it be an issue? (if not => remove 'new_pids' as useless)
+        # TODO(2-REC): Can it be an issue? (if not => remove "new_pids")
         if len(new_pids) > 1:
             self.log.warning("More than 1 new pid: {}".format(new_pids))
 
-        #self.log.debug("Current PID: {}".format(self._current_pid))
         self._process_widget.signal_update_table.emit(self._running_processes,
                                                       self._current_pid)
 
@@ -414,14 +391,14 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
         if self._timers_manager_module is not None:
             timer_running = self._timers_manager_module.is_running
 
-        #TODO: useless variable, same as 'proc' (?)
+        # TODO(2-REC): useless variable, same as 'proc' (?)
         terminated_process = None
-        #TODO: warning if not found?
+        # TODO(2-REC): warning if not found?
         if proc.pid in self._running_processes:
             terminated_process = self._running_processes.pop(proc.pid)
 
             process_parameters = [
-                #"name",
+                # "name",
                 "cmdline"
             ]
             for process in psutil.process_iter(process_parameters):
@@ -429,11 +406,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                 if pid == 0:
                     continue
 
-                #self.log.debug("name : {}".format(process.info["name"]))
-
-
                 ppid = process.ppid()
-                #self.log.debug("ppid : {}".format(ppid))
                 if ppid != proc.pid:
                     continue
 
@@ -447,7 +420,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                            for cmd in process.info["cmdline"]]
 
                 process_cmd = terminated_process["cmdline"]
-                #TODO: OK? (or should only check 'cmdline[0]'?
+                # TODO(2-REC): OK? (or should only check 'cmdline[0]'?
                 if process_cmd not in cmdline:
                     continue
 
@@ -473,14 +446,14 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                 }
 
                 # No change for running timer
-                #TODO: Could be a problem if application not closed by user
+                # TODO(2-REC): Problem if application not closed by user (?)
                 # => Timer activated in background without user knowing
                 if self._current_pid != pid:
                     self.timer_stopped()
 
-                    #if not self._timers_manager_module._idle_stopped:
+                    # if not self._timers_manager_module._idle_stopped:
                     if timer_running:
-                        #TODO(2-REC): need timeout? (avoid if possible)
+                        # TODO(2-REC): Avoid sleep if not needed
                         time.sleep(1)
                         self.start_process_timer(pid)
 
@@ -492,7 +465,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
 
         self._timers_manager_module.close_message()
 
-        #TODO: Issue when closing OpenPype before the running process.
+        # TODO(2-REC): Issue when closing OpenPype before the running process.
         # Problem: Ftrack action server has stopped => timer not stopped.
         # Solution: Stop timers when closing Ftrack (?)
         if not self._running_processes:
@@ -519,11 +492,11 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                     else:
                         self._current_pid = None
                         self.timer_stopped()
-                        #self._current_pid = pid
+                        # self._current_pid = pid
 
-                        #if not self._timers_manager_module._idle_stopped:
+                        # if not self._timers_manager_module._idle_stopped:
                         if timer_running:
-                            #TODO(2-REC): need timeout? (avoid if possible)
+                            # TODO(2-REC): Avoid sleep if not needed
                             time.sleep(1)
                             '''
                             self._current_pid = pid
@@ -560,7 +533,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                             self.timer_stopped()
 
                             if timer_running:
-                                #TODO(2-REC): need timeout? (avoid if possible)
+                                # TODO(2-REC): Avoid sleep if not needed
                                 time.sleep(1)
                                 '''
                                 self._current_pid = pid
@@ -569,8 +542,8 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                                 self.start_process_timer(pid)
 
                     else:
-                        #?
-                        #self.timer_stopped()
+                        # ?
+                        # self.timer_stopped()
                         self.stop_timers()
 
                         self._process_widget.signal_select_task.emit()
@@ -579,8 +552,6 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                                                       self._current_pid)
 
     def start_process_timer(self, pid):
-        #self.log.info("start_process_timer: {}".format(pid))
-
         if pid not in self._running_processes:
             self.log.warning("Process ID '{}' not found!".format(pid))
             return
@@ -601,10 +572,9 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
         self.log.info("Killing waiting thread for pid '{}'".format(pid))
 
         running_process = self._running_processes.pop(pid)
-        #self.log.debug("running_process: {}".format(running_process))
 
         wait_thread = running_process["thread"]
-        # TODO: remove try/except?
+        # TODO(2-REC): remove try/except?
         try:
             if wait_thread.is_alive():
                 wait_thread.stop()
@@ -635,7 +605,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
         return True
 
 
-#TODO: rewrite+rename
+# TODO(2-REC): rewrite+rename
 class StoppableThread(threading.Thread):
     def __init__(self, process, on_terminate):
         super(StoppableThread, self).__init__()
@@ -674,7 +644,7 @@ class StoppableThread(threading.Thread):
             self.log.warning('Exception raise failure')
 
 
-#TODO: want cli?
+# TODO(2-REC): want cli?
 @click.group(ProcessMonitor.name, help="Process Monitor dynamic cli commands.")
 def cli_main():
     pass
