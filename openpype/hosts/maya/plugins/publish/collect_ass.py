@@ -1,3 +1,5 @@
+import re
+
 from maya import cmds
 
 import pyblish.api
@@ -26,5 +28,11 @@ class CollectAssData(pyblish.api.InstancePlugin):
                 assert len(members) == 1, "You have multiple proxy meshes, please only use one"
                 instance.data['proxy'] = members
                 self.log.debug('proxy members: {}'.format(members))
+
+        # Indicate to user that it'll be a single frame.
+        sequence = instance.data.get("exportSequence", False)
+        if not sequence:
+            group = re.compile(r" \[.*\]")
+            instance.data["label"] = group.sub("", instance.data["label"])
 
         self.log.debug("data: {}".format(instance.data))
