@@ -12,6 +12,7 @@ from openpype.lib import Logger
 import psutil
 
 
+from openpype.lib import ApplicationManager
 from openpype.modules import (
     JsonFilesSettingsDef,
     OpenPypeAddOn,
@@ -67,6 +68,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
         self._running_processes = {}
         self._current_pid = None
 
+        self._app_manager = ApplicationManager()
         self._project_applications = []
 
     def tray_init(self):
@@ -171,60 +173,26 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
             "attributes",
             {}
         ).get("applications", [])
-        self.log.debug((
-            "Project '{}' applications: {}"
-        ).format(project_name, project_applications))
 
-        application_variants = {}
-        for project_application in project_applications:
-            app_name, app_variant = project_application.split("/")
-            if app_name not in application_variants:
-                application_variants[app_name] = [app_variant]
-            elif app_variant not in application_variants[app_name]:
-                application_variants[app_name].append(app_variant)
-
-        system_settings = get_system_settings()
-        system_applications = system_settings.get("applications", {})
-
-        current_platform = platform.system().lower()
+        self._app_manager.refresh()
+        applications = self._app_manager.applications
         platform_executables = []
-        for application_name in application_variants:
-            if application_name not in system_applications:
-                # TODO(2-REC): Error?
+        for app_variant in project_applications:
+            # TODO(2-REC): Can happen?
+            if app_variant not in applications:
                 self.log.warning((
-                    "Application '{}' not found in system settings!"
-                ).format(application_name))
+                    "Application variant '{}' not found in applications list!"
+                ).format(app_variant))
                 continue
 
-            variants = system_applications[application_name]["variants"]
-            self.log.debug((
-                "System '{}' variants: {}"
-            ).format(application_name, list(variants.keys())))
-            for variant in variants:
-                if variant in application_variants[application_name]:
-                    name = "{} {}".format(
-                        system_applications[application_name]["label"],
-                        variant
-                    )
-                    # TODO(2-REC): Find other way to determine executable
-                    if not variants[variant].get("executables", False):
-                        self.log.warning((
-                            "No executable defined for '{}' variant '{}'"
-                        ).format(application_name, variant))
-                        continue
-                    executables = variants[variant]["executables"]
-                    for executable in executables.get(current_platform):
-                        if not executable:
-                            self.log.warning((
-                                "Executable not defined for '{}'"
-                                " variant '{}' on '{}'"
-                            ).format(application_name,
-                                     variant,
-                                     platform.system()))
-                            continue
-                        platform_executables.append(
-                            [name, executable.replace("\\", "/")]
-                        )
+            application = applications[app_variant]
+            name = "{} {}".format(application.group.label, application.label)
+
+            for executable in application.executables:
+                # TODO(2-REC): replace '\'?
+                platform_executables.append(
+                    [name, str(executable).replace("\\", "/")]
+                )
 
         return platform_executables
 
