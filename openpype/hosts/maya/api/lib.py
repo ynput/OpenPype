@@ -127,14 +127,14 @@ def get_main_window():
 
 
 @contextlib.contextmanager
-def suspended_refresh():
+def suspended_refresh(suspend=True):
     """Suspend viewport refreshes"""
-
+    original_state = cmds.refresh(query=True, suspend=True)
     try:
-        cmds.refresh(suspend=True)
+        cmds.refresh(suspend=suspend)
         yield
     finally:
-        cmds.refresh(suspend=False)
+        cmds.refresh(suspend=original_state)
 
 
 @contextlib.contextmanager
