@@ -62,7 +62,10 @@ class CollectInstanceCommentDef(
         ]
 
 
-class CollectComment(pyblish.api.ContextPlugin):
+class CollectComment(
+    pyblish.api.ContextPlugin,
+    OpenPypePyblishPluginMixin
+):
     """Collect comment per each instance.
 
     Plugin makes sure each instance to publish has set "comment" in data so any
