@@ -35,11 +35,25 @@ class CollectInstanceCommentDef(
     label = "Comment per instance"
     targets = ["local"]
     # Disable plugin by default
-    families = ["*"]
-    enabled = True
+    families = []
+    enabled = False
 
     def process(self, instance):
         pass
+
+    @classmethod
+    def apply_settings(cls, project_setting, _):
+        plugin_settings = project_setting["global"]["publish"].get(
+            "collect_comment_per_instance"
+        )
+        if not plugin_settings:
+            return
+
+        if plugin_settings.get("enabled") is not None:
+            cls.enabled = plugin_settings["enabled"]
+
+        if plugin_settings.get("families") is not None:
+            cls.families = plugin_settings["families"]
 
     @classmethod
     def get_attribute_defs(cls):
