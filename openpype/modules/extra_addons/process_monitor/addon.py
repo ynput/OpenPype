@@ -15,6 +15,7 @@ import click
 import threading
 import ctypes
 import platform
+import time
 
 from openpype.lib import Logger
 
@@ -129,8 +130,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
             if self._timers_manager_module.is_running:
                 self.timer_stopped()
 
-                #TODO: needed?
-                import time
+                #TODO(2-REC): need timeout? (avoid if possible)
                 time.sleep(1)
 
             '''
@@ -481,7 +481,6 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                     #if not self._timers_manager_module._idle_stopped:
                     if timer_running:
                         #TODO(2-REC): need timeout? (avoid if possible)
-                        import time
                         time.sleep(1)
                         self.start_process_timer(pid)
 
@@ -525,7 +524,6 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
                         #if not self._timers_manager_module._idle_stopped:
                         if timer_running:
                             #TODO(2-REC): need timeout? (avoid if possible)
-                            import time
                             time.sleep(1)
                             '''
                             self._current_pid = pid
@@ -563,7 +561,6 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
 
                             if timer_running:
                                 #TODO(2-REC): need timeout? (avoid if possible)
-                                import time
                                 time.sleep(1)
                                 '''
                                 self._current_pid = pid
