@@ -1,9 +1,12 @@
+# -*- coding: utf-8 -*-
 import pyblish.api
 
 import openpype.hosts.houdini.api.usd as hou_usdlib
-
+from openpype.pipeline import PublishValidationError
 
 from pxr import UsdShade, UsdRender, UsdLux
+
+import hou
 
 
 def fullname(o):
@@ -37,7 +40,7 @@ class ValidateUsdModel(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        rop = instance[0]
+        rop = hou.node(instance.get("instance_node"))
         lop_path = hou_usdlib.get_usd_rop_loppath(rop)
         stage = lop_path.stage(apply_viewport_overrides=False)
 
@@ -55,7 +58,8 @@ class ValidateUsdModel(pyblish.api.InstancePlugin):
 
         if invalid:
             prim_paths = sorted([str(prim.GetPath()) for prim in invalid])
-            raise RuntimeError("Found invalid primitives: %s" % prim_paths)
+            raise PublishValidationError(
+                "Found invalid primitives: {}".format(prim_paths))
 
 
 class ValidateUsdShade(ValidateUsdModel):

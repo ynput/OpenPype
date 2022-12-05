@@ -4,13 +4,13 @@ import shutil
 from copy import deepcopy
 from xml.etree import ElementTree as ET
 
+import qargparse
 from Qt import QtCore, QtWidgets
 
-import openpype.api as openpype
-import qargparse
 from openpype import style
 from openpype.lib import Logger
 from openpype.pipeline import LegacyCreator, LoaderPlugin
+from openpype.settings import get_current_project_settings
 
 from . import constants
 from . import lib as flib
@@ -306,7 +306,7 @@ class Creator(LegacyCreator):
 
     def __init__(self, *args, **kwargs):
         super(Creator, self).__init__(*args, **kwargs)
-        self.presets = openpype.get_current_project_settings()[
+        self.presets = get_current_project_settings()[
             "flame"]["create"].get(self.__class__.__name__, {})
 
         # adding basic current context flame objects
@@ -689,6 +689,54 @@ class ClipLoader(LoaderPlugin):
             help="Also set handles to clip as In/Out marks"
         )
     ]
+
+    _mapping = None
+
+    def get_colorspace(self, context):
+        """Get colorspace name
+
+        Look either to version data or representation data.
+
+        Args:
+            context (dict): version context data
+
+        Returns:
+            str: colorspace name or None
+        """
+        version = context['version']
+        version_data = version.get("data", {})
+        colorspace = version_data.get(
+            "colorspace", None
+        )
+
+        if (
+            not colorspace
+            or colorspace == "Unknown"
+        ):
+            colorspace = context["representation"]["data"].get(
+                "colorspace", None)
+
+        return colorspace
+
+    @classmethod
+    def get_native_colorspace(cls, input_colorspace):
+        """Return native colorspace name.
+
+        Args:
+            input_colorspace (str | None): colorspace name
+
+        Returns:
+            str: native colorspace name defined in mapping or None
+        """
+        if not cls._mapping:
+            settings = get_current_project_settings()["flame"]
+            mapping = settings["imageio"]["profilesMapping"]["inputs"]
+            cls._mapping = {
+                input["ocioName"]: input["flameName"]
+                for input in mapping
+            }
+
+        return cls._mapping.get(input_colorspace)
 
 
 class OpenClipSolver(flib.MediaInfoFile):

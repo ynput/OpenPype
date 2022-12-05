@@ -1,6 +1,8 @@
 import os
+import sys
 import copy
 import logging
+import traceback
 import collections
 import inspect
 from uuid import uuid4
@@ -22,9 +24,16 @@ from .creator_plugins import (
     Creator,
     AutoCreator,
     discover_creator_plugins,
+    discover_convertor_plugins,
+    CreatorError,
 )
 
 UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
+
+
+class UnavailableSharedData(Exception):
+    """Shared data are not available at the moment when are accessed."""
+    pass
 
 
 class ImmutableKeyError(TypeError):
@@ -62,6 +71,112 @@ class HostMissRequiredMethod(Exception):
         super(HostMissRequiredMethod, self).__init__(msg)
 
 
+class ConvertorsOperationFailed(Exception):
+    def __init__(self, msg, failed_info):
+        super(ConvertorsOperationFailed, self).__init__(msg)
+        self.failed_info = failed_info
+
+
+class ConvertorsFindFailed(ConvertorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Failed to find incompatible subsets"
+        super(ConvertorsFindFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+class ConvertorsConversionFailed(ConvertorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Failed to convert incompatible subsets"
+        super(ConvertorsConversionFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+def prepare_failed_convertor_operation_info(identifier, exc_info):
+    exc_type, exc_value, exc_traceback = exc_info
+    formatted_traceback = "".join(traceback.format_exception(
+        exc_type, exc_value, exc_traceback
+    ))
+
+    return {
+        "convertor_identifier": identifier,
+        "message": str(exc_value),
+        "traceback": formatted_traceback
+    }
+
+
+class CreatorsOperationFailed(Exception):
+    """Raised when a creator process crashes in 'CreateContext'.
+
+    The exception contains information about the creator and error. The data
+    are prepared using 'prepare_failed_creator_operation_info' and can be
+    serialized using json.
+
+    Usage is for UI purposes which may not have access to exceptions directly
+    and would not have ability to catch exceptions 'per creator'.
+
+    Args:
+        msg (str): General error message.
+        failed_info (list[dict[str, Any]]): List of failed creators with
+            exception message and optionally formatted traceback.
+    """
+
+    def __init__(self, msg, failed_info):
+        super(CreatorsOperationFailed, self).__init__(msg)
+        self.failed_info = failed_info
+
+
+class CreatorsCollectionFailed(CreatorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Failed to collect instances"
+        super(CreatorsCollectionFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+class CreatorsSaveFailed(CreatorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Failed update instance changes"
+        super(CreatorsSaveFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+class CreatorsRemoveFailed(CreatorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Failed to remove instances"
+        super(CreatorsRemoveFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+class CreatorsCreateFailed(CreatorsOperationFailed):
+    def __init__(self, failed_info):
+        msg = "Faled to create instances"
+        super(CreatorsCreateFailed, self).__init__(
+            msg, failed_info
+        )
+
+
+def prepare_failed_creator_operation_info(
+    identifier, label, exc_info, add_traceback=True
+):
+    formatted_traceback = None
+    exc_type, exc_value, exc_traceback = exc_info
+    if add_traceback:
+        formatted_traceback = "".join(traceback.format_exception(
+            exc_type, exc_value, exc_traceback
+        ))
+
+    return {
+        "creator_identifier": identifier,
+        "creator_label": label,
+        "message": str(exc_value),
+        "traceback": formatted_traceback
+    }
+
+
 class InstanceMember:
     """Representation of instance member.
 
@@ -84,7 +199,7 @@ class InstanceMember:
         })
 
 
-class AttributeValues:
+class AttributeValues(object):
     """Container which keep values of Attribute definitions.
 
     Goal is to have one object which hold values of attribute definitions for
@@ -166,7 +281,10 @@ class AttributeValues:
         return self._data.pop(key, default)
 
     def reset_values(self):
-        self._data = []
+        self._data = {}
+
+    def mark_as_stored(self):
+        self._origin_data = copy.deepcopy(self._data)
 
     @property
     def attr_defs(self):
@@ -196,6 +314,16 @@ class AttributeValues:
 
     def changes(self):
         return self.calculate_changes(self._data, self._origin_data)
+
+    def apply_changes(self, changes):
+        for key, item in changes.items():
+            old_value, new_value = item
+            if new_value is None:
+                if key in self:
+                    self.pop(key)
+
+            elif self.get(key) != new_value:
+                self[key] = new_value
 
 
 class CreatorAttributeValues(AttributeValues):
@@ -303,6 +431,9 @@ class PublishAttributes:
         for name in self._plugin_names_order:
             yield name
 
+    def mark_as_stored(self):
+        self._origin_data = copy.deepcopy(self._data)
+
     def data_to_store(self):
         """Convert attribute values to "data to store"."""
 
@@ -326,6 +457,21 @@ class PublishAttributes:
             if key not in self._data:
                 changes[key] = (value, None)
         return changes
+
+    def apply_changes(self, changes):
+        for key, item in changes.items():
+            if isinstance(item, dict):
+                self._data[key].apply_changes(item)
+                continue
+
+            old_value, new_value = item
+            if new_value is not None:
+                raise ValueError(
+                    "Unexpected type \"{}\" expected None".format(
+                        str(type(new_value))
+                    )
+                )
+            self.pop(key)
 
     def set_publish_plugins(self, attr_plugins):
         """Set publish plugins attribute definitions."""
@@ -438,6 +584,7 @@ class CreatedInstance:
             if key in data:
                 data.pop(key)
 
+        self._data["variant"] = self._data.get("variant") or ""
         # Stored creator specific attribute values
         # {key: value}
         creator_values = copy.deepcopy(orig_creator_attributes)
@@ -646,6 +793,25 @@ class CreatedInstance:
                 changes[key] = (old_value, None)
         return changes
 
+    def mark_as_stored(self):
+        """Should be called when instance data are stored.
+
+        Origin data are replaced by current data so changes are cleared.
+        """
+
+        orig_keys = set(self._orig_data.keys())
+        for key, value in self._data.items():
+            orig_keys.discard(key)
+            if key in ("creator_attributes", "publish_attributes"):
+                continue
+            self._orig_data[key] = copy.deepcopy(value)
+
+        for key in orig_keys:
+            self._orig_data.pop(key)
+
+        self.creator_attributes.mark_as_stored()
+        self.publish_attributes.mark_as_stored()
+
     @property
     def creator_attributes(self):
         return self._data["creator_attributes"]
@@ -659,6 +825,18 @@ class CreatedInstance:
         return self._data["publish_attributes"]
 
     def data_to_store(self):
+        """Collect data that contain json parsable types.
+
+        It is possible to recreate the instance using these data.
+
+        Todo:
+            We probably don't need OrderedDict. When data are loaded they
+                are not ordered anymore.
+
+        Returns:
+            OrderedDict: Ordered dictionary with instance data.
+        """
+
         output = collections.OrderedDict()
         for key, value in self._data.items():
             if key in ("creator_attributes", "publish_attributes"):
@@ -692,6 +870,128 @@ class CreatedInstance:
         for member in members:
             if member not in self._members:
                 self._members.append(member)
+
+    def serialize_for_remote(self):
+        return {
+            "data": self.data_to_store(),
+            "orig_data": copy.deepcopy(self._orig_data)
+        }
+
+    @classmethod
+    def deserialize_on_remote(cls, serialized_data, creator_items):
+        """Convert instance data to CreatedInstance.
+
+        This is fake instance in remote process e.g. in UI process. The creator
+        is not a full creator and should not be used for calling methods when
+        instance is created from this method (matters on implementation).
+
+        Args:
+            serialized_data (Dict[str, Any]): Serialized data for remote
+                recreating. Should contain 'data' and 'orig_data'.
+            creator_items (Dict[str, Any]): Mapping of creator identifier and
+                objects that behave like a creator for most of attribute
+                access.
+        """
+
+        instance_data = copy.deepcopy(serialized_data["data"])
+        creator_identifier = instance_data["creator_identifier"]
+        creator_item = creator_items[creator_identifier]
+
+        family = instance_data.get("family", None)
+        if family is None:
+            family = creator_item.family
+        subset_name = instance_data.get("subset", None)
+
+        obj = cls(
+            family, subset_name, instance_data, creator_item, new=False
+        )
+        obj._orig_data = serialized_data["orig_data"]
+
+        return obj
+
+    def remote_changes(self):
+        """Prepare serializable changes on remote side.
+
+        Returns:
+            Dict[str, Any]: Prepared changes that can be send to client side.
+        """
+
+        return {
+            "changes": self.changes(),
+            "asset_is_valid": self._asset_is_valid,
+            "task_is_valid": self._task_is_valid,
+        }
+
+    def update_from_remote(self, remote_changes):
+        """Apply changes from remote side on client side.
+
+        Args:
+            remote_changes (Dict[str, Any]): Changes created on remote side.
+        """
+
+        self._asset_is_valid = remote_changes["asset_is_valid"]
+        self._task_is_valid = remote_changes["task_is_valid"]
+
+        changes = remote_changes["changes"]
+        creator_attributes = changes.pop("creator_attributes", None) or {}
+        publish_attributes = changes.pop("publish_attributes", None) or {}
+        if changes:
+            self.apply_changes(changes)
+
+        if creator_attributes:
+            self.creator_attributes.apply_changes(creator_attributes)
+
+        if publish_attributes:
+            self.publish_attributes.apply_changes(publish_attributes)
+
+    def apply_changes(self, changes):
+        """Apply changes created via 'changes'.
+
+        Args:
+            Dict[str, Tuple[Any, Any]]: Instance changes to apply. Same values
+                are kept untouched.
+        """
+
+        for key, item in changes.items():
+            old_value, new_value = item
+            if new_value is None:
+                if key in self:
+                    self.pop(key)
+            else:
+                current_value = self.get(key)
+                if current_value != new_value:
+                    self[key] = new_value
+
+
+class ConvertorItem(object):
+    """Item representing convertor plugin.
+
+    Args:
+        identifier (str): Identifier of convertor.
+        label (str): Label which will be shown in UI.
+    """
+
+    def __init__(self, identifier, label):
+        self._id = str(uuid4())
+        self.identifier = identifier
+        self.label = label
+
+    @property
+    def id(self):
+        return self._id
+
+    def to_data(self):
+        return {
+            "id": self.id,
+            "identifier": self.identifier,
+            "label": self.label
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        obj = cls(data["identifier"], data["label"])
+        obj._id = data["id"]
+        return obj
 
 
 class CreateContext:
@@ -759,6 +1059,9 @@ class CreateContext:
         # Manual creators
         self.manual_creators = {}
 
+        self.convertors_plugins = {}
+        self.convertor_items_by_id = {}
+
         self.publish_discover_result = None
         self.publish_plugins_mismatch_targets = []
         self.publish_plugins = []
@@ -772,6 +1075,11 @@ class CreateContext:
         self._bulk_counter = 0
         self._bulk_instances_to_process = []
 
+        # Shared data across creators during collection phase
+        self._collection_shared_data = None
+
+        self.thumbnail_paths_by_instance_id = {}
+
         # Trigger reset if was enabled
         if reset:
             self.reset(discover_publish_plugins)
@@ -779,6 +1087,10 @@ class CreateContext:
     @property
     def instances(self):
         return self._instances_by_id.values()
+
+    @property
+    def instances_by_id(self):
+        return self._instances_by_id
 
     @property
     def publish_attributes(self):
@@ -823,13 +1135,55 @@ class CreateContext:
 
         All changes will be lost if were not saved explicitely.
         """
+
+        self.reset_preparation()
+
         self.reset_avalon_context()
         self.reset_plugins(discover_publish_plugins)
         self.reset_context_data()
 
         with self.bulk_instances_collection():
             self.reset_instances()
+            self.find_convertor_items()
             self.execute_autocreators()
+
+        self.reset_finalization()
+
+    def refresh_thumbnails(self):
+        """Cleanup thumbnail paths.
+
+        Remove all thumbnail filepaths that are empty or lead to files which
+        does not exists or of instances that are not available anymore.
+        """
+
+        invalid = set()
+        for instance_id, path in self.thumbnail_paths_by_instance_id.items():
+            instance_available = True
+            if instance_id is not None:
+                instance_available = instance_id in self._instances_by_id
+
+            if (
+                not instance_available
+                or not path
+                or not os.path.exists(path)
+            ):
+                invalid.add(instance_id)
+
+        for instance_id in invalid:
+            self.thumbnail_paths_by_instance_id.pop(instance_id)
+
+    def reset_preparation(self):
+        """Prepare attributes that must be prepared/cleaned before reset."""
+
+        # Give ability to store shared data for collection phase
+        self._collection_shared_data = {}
+
+    def reset_finalization(self):
+        """Cleanup of attributes after reset."""
+
+        # Stop access to collection shared data
+        self._collection_shared_data = None
+        self.refresh_thumbnails()
 
     def reset_avalon_context(self):
         """Give ability to reset avalon context.
@@ -869,6 +1223,12 @@ class CreateContext:
         Reloads creators from preregistered paths and can load publish plugins
         if it's enabled on context.
         """
+
+        self._reset_publish_plugins(discover_publish_plugins)
+        self._reset_creator_plugins()
+        self._reset_convertor_plugins()
+
+    def _reset_publish_plugins(self, discover_publish_plugins):
         import pyblish.logic
 
         from openpype.pipeline import OpenPypePyblishPluginMixin
@@ -910,6 +1270,7 @@ class CreateContext:
         self.publish_plugins = plugins_by_targets
         self.plugins_with_defs = plugins_with_defs
 
+    def _reset_creator_plugins(self):
         # Prepare settings
         system_settings = get_system_settings()
         project_settings = get_project_settings(self.project_name)
@@ -939,7 +1300,8 @@ class CreateContext:
                 and creator_class.host_name != self.host_name
             ):
                 self.log.info((
-                    "Creator's host name is not supported for current host {}"
+                    "Creator's host name \"{}\""
+                    " is not supported for current host \"{}\""
                 ).format(creator_class.host_name, self.host_name))
                 continue
 
@@ -959,6 +1321,27 @@ class CreateContext:
         self.manual_creators = manual_creators
 
         self.creators = creators
+
+    def _reset_convertor_plugins(self):
+        convertors_plugins = {}
+        for convertor_class in discover_convertor_plugins():
+            if inspect.isabstract(convertor_class):
+                self.log.info(
+                    "Skipping abstract Creator {}".format(str(convertor_class))
+                )
+                continue
+
+            convertor_identifier = convertor_class.identifier
+            if convertor_identifier in convertors_plugins:
+                self.log.warning((
+                    "Duplicated Converter identifier. "
+                    "Using first and skipping following"
+                ))
+                continue
+
+            convertors_plugins[convertor_identifier] = convertor_class(self)
+
+        self.convertors_plugins = convertors_plugins
 
     def reset_context_data(self):
         """Reload context data using host implementation.
@@ -1028,8 +1411,74 @@ class CreateContext:
         with self.bulk_instances_collection():
             self._bulk_instances_to_process.append(instance)
 
+    def create(self, identifier, *args, **kwargs):
+        """Wrapper for creators to trigger created.
+
+        Different types of creators may expect different arguments thus the
+        hints for args are blind.
+
+        Args:
+            identifier (str): Creator's identifier.
+            *args (Tuple[Any]): Arguments for create method.
+            **kwargs (Dict[Any, Any]): Keyword argument for create method.
+        """
+
+        error_message = "Failed to run Creator with identifier \"{}\". {}"
+        creator = self.creators.get(identifier)
+        label = getattr(creator, "label", None)
+        failed = False
+        add_traceback = False
+        exc_info = None
+        try:
+            # Fake CreatorError (Could be maybe specific exception?)
+            if creator is None:
+                raise CreatorError(
+                    "Creator {} was not found".format(identifier)
+                )
+
+            creator.create(*args, **kwargs)
+
+        except CreatorError:
+            failed = True
+            exc_info = sys.exc_info()
+            self.log.warning(error_message.format(identifier, exc_info[1]))
+
+        except:
+            failed = True
+            add_traceback = True
+            exc_info = sys.exc_info()
+            self.log.warning(
+                error_message.format(identifier, ""),
+                exc_info=True
+            )
+
+        if failed:
+            raise CreatorsCreateFailed([
+                prepare_failed_creator_operation_info(
+                    identifier, label, exc_info, add_traceback
+                )
+            ])
+
     def creator_removed_instance(self, instance):
+        """When creator removes instance context should be acknowledged.
+
+        If creator removes instance conext should know about it to avoid
+        possible issues in the session.
+
+        Args:
+            instance (CreatedInstance): Object of instance which was removed
+                from scene metadata.
+        """
+
         self._instances_by_id.pop(instance.id, None)
+
+    def add_convertor_item(self, convertor_identifier, label):
+        self.convertor_items_by_id[convertor_identifier] = ConvertorItem(
+            convertor_identifier, label
+        )
+
+    def remove_convertor_item(self, convertor_identifier):
+        self.convertor_items_by_id.pop(convertor_identifier, None)
 
     @contextmanager
     def bulk_instances_collection(self):
@@ -1063,24 +1512,112 @@ class CreateContext:
         self._instances_by_id = {}
 
         # Collect instances
+        error_message = "Collection of instances for creator {} failed. {}"
+        failed_info = []
         for creator in self.creators.values():
-            creator.collect_instances()
+            label = creator.label
+            identifier = creator.identifier
+            failed = False
+            add_traceback = False
+            exc_info = None
+            try:
+                creator.collect_instances()
+
+            except CreatorError:
+                failed = True
+                exc_info = sys.exc_info()
+                self.log.warning(error_message.format(identifier, exc_info[1]))
+
+            except:
+                failed = True
+                add_traceback = True
+                exc_info = sys.exc_info()
+                self.log.warning(
+                    error_message.format(identifier, ""),
+                    exc_info=True
+                )
+
+            if failed:
+                failed_info.append(
+                    prepare_failed_creator_operation_info(
+                        identifier, label, exc_info, add_traceback
+                    )
+                )
+
+        if failed_info:
+            raise CreatorsCollectionFailed(failed_info)
+
+    def find_convertor_items(self):
+        """Go through convertor plugins to look for items to convert.
+
+        Raises:
+            ConvertorsFindFailed: When one or more convertors fails during
+                finding.
+        """
+
+        self.convertor_items_by_id = {}
+
+        failed_info = []
+        for convertor in self.convertors_plugins.values():
+            try:
+                convertor.find_instances()
+
+            except:
+                failed_info.append(
+                    prepare_failed_convertor_operation_info(
+                        convertor.identifier, sys.exc_info()
+                    )
+                )
+                self.log.warning(
+                    "Failed to find instances of convertor \"{}\"".format(
+                        convertor.identifier
+                    ),
+                    exc_info=True
+                )
+
+        if failed_info:
+            raise ConvertorsFindFailed(failed_info)
 
     def execute_autocreators(self):
         """Execute discovered AutoCreator plugins.
 
         Reset instances if any autocreator executed properly.
         """
+
+        error_message = "Failed to run AutoCreator with identifier \"{}\". {}"
+        failed_info = []
         for identifier, creator in self.autocreators.items():
+            label = creator.label
+            failed = False
+            add_traceback = False
             try:
                 creator.create()
 
-            except Exception:
-                # TODO raise report exception if any crashed
-                msg = (
-                    "Failed to run AutoCreator with identifier \"{}\" ({})."
-                ).format(identifier, inspect.getfile(creator.__class__))
-                self.log.warning(msg, exc_info=True)
+            except CreatorError:
+                failed = True
+                exc_info = sys.exc_info()
+                self.log.warning(error_message.format(identifier, exc_info[1]))
+
+            # Use bare except because some hosts raise their exceptions that
+            #   do not inherit from python's `BaseException`
+            except:
+                failed = True
+                add_traceback = True
+                exc_info = sys.exc_info()
+                self.log.warning(
+                    error_message.format(identifier, ""),
+                    exc_info=True
+                )
+
+            if failed:
+                failed_info.append(
+                    prepare_failed_creator_operation_info(
+                        identifier, label, exc_info, add_traceback
+                    )
+                )
+
+        if failed_info:
+            raise CreatorsCreateFailed(failed_info)
 
     def validate_instances_context(self, instances=None):
         """Validate 'asset' and 'task' instance context."""
@@ -1157,16 +1694,47 @@ class CreateContext:
             identifier = instance.creator_identifier
             instances_by_identifier[identifier].append(instance)
 
-        for identifier, cretor_instances in instances_by_identifier.items():
+        error_message = "Instances update of creator \"{}\" failed. {}"
+        failed_info = []
+        for identifier, creator_instances in instances_by_identifier.items():
             update_list = []
-            for instance in cretor_instances:
+            for instance in creator_instances:
                 instance_changes = instance.changes()
                 if instance_changes:
                     update_list.append(UpdateData(instance, instance_changes))
 
             creator = self.creators[identifier]
-            if update_list:
+            if not update_list:
+                continue
+
+            label = creator.label
+            failed = False
+            add_traceback = False
+            exc_info = None
+            try:
                 creator.update_instances(update_list)
+
+            except CreatorError:
+                failed = True
+                exc_info = sys.exc_info()
+                self.log.warning(error_message.format(identifier, exc_info[1]))
+
+            except:
+                failed = True
+                add_traceback = True
+                exc_info = sys.exc_info()
+                self.log.warning(
+                    error_message.format(identifier, ""), exc_info=True)
+
+            if failed:
+                failed_info.append(
+                    prepare_failed_creator_operation_info(
+                        identifier, label, exc_info, add_traceback
+                    )
+                )
+
+        if failed_info:
+            raise CreatorsSaveFailed(failed_info)
 
     def remove_instances(self, instances):
         """Remove instances from context.
@@ -1175,14 +1743,48 @@ class CreateContext:
             instances(list<CreatedInstance>): Instances that should be removed
                 from context.
         """
+
         instances_by_identifier = collections.defaultdict(list)
         for instance in instances:
             identifier = instance.creator_identifier
             instances_by_identifier[identifier].append(instance)
 
+        error_message = "Instances removement of creator \"{}\" failed. {}"
+        failed_info = []
         for identifier, creator_instances in instances_by_identifier.items():
             creator = self.creators.get(identifier)
-            creator.remove_instances(creator_instances)
+            label = creator.label
+            failed = False
+            add_traceback = False
+            exc_info = None
+            try:
+                creator.remove_instances(creator_instances)
+
+            except CreatorError:
+                failed = True
+                exc_info = sys.exc_info()
+                self.log.warning(
+                    error_message.format(identifier, exc_info[1])
+                )
+
+            except:
+                failed = True
+                add_traceback = True
+                exc_info = sys.exc_info()
+                self.log.warning(
+                    error_message.format(identifier, ""),
+                    exc_info=True
+                )
+
+            if failed:
+                failed_info.append(
+                    prepare_failed_creator_operation_info(
+                        identifier, label, exc_info, add_traceback
+                    )
+                )
+
+        if failed_info:
+            raise CreatorsRemoveFailed(failed_info)
 
     def _get_publish_plugins_with_attr_for_family(self, family):
         """Publish plugin attributes for passed family.
@@ -1214,3 +1816,68 @@ class CreateContext:
             if not plugin.__instanceEnabled__:
                 plugins.append(plugin)
         return plugins
+
+    @property
+    def collection_shared_data(self):
+        """Access to shared data that can be used during creator's collection.
+
+        Retruns:
+            Dict[str, Any]: Shared data.
+
+        Raises:
+            UnavailableSharedData: When called out of collection phase.
+        """
+
+        if self._collection_shared_data is None:
+            raise UnavailableSharedData(
+                "Accessed Collection shared data out of collection phase"
+            )
+        return self._collection_shared_data
+
+    def run_convertor(self, convertor_identifier):
+        """Run convertor plugin by it's idenfitifier.
+
+        Conversion is skipped if convertor is not available.
+
+        Args:
+            convertor_identifier (str): Identifier of convertor.
+        """
+
+        convertor = self.convertors_plugins.get(convertor_identifier)
+        if convertor is not None:
+            convertor.convert()
+
+    def run_convertors(self, convertor_identifiers):
+        """Run convertor plugins by idenfitifiers.
+
+        Conversion is skipped if convertor is not available. It is recommended
+        to trigger reset after conversion to reload instances.
+
+        Args:
+            convertor_identifiers (Iterator[str]): Identifiers of convertors
+                to run.
+
+        Raises:
+            ConvertorsConversionFailed: When one or more convertors fails.
+        """
+
+        failed_info = []
+        for convertor_identifier in convertor_identifiers:
+            try:
+                self.run_convertor(convertor_identifier)
+
+            except:
+                failed_info.append(
+                    prepare_failed_convertor_operation_info(
+                        convertor_identifier, sys.exc_info()
+                    )
+                )
+                self.log.warning(
+                    "Failed to convert instances of convertor \"{}\"".format(
+                        convertor_identifier
+                    ),
+                    exc_info=True
+                )
+
+        if failed_info:
+            raise ConvertorsConversionFailed(failed_info)

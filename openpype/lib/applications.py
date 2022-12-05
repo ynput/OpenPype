@@ -1403,6 +1403,7 @@ def get_app_environments_for_context(
 
         "env": env
     })
+    data["env"].update(anatomy.root_environments())
 
     prepare_app_environments(data, env_group, modules_manager)
     prepare_context_environments(data, env_group, modules_manager)

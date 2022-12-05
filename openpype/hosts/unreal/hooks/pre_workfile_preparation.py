@@ -8,8 +8,8 @@ from openpype.lib import (
     PreLaunchHook,
     ApplicationLaunchFailed,
     ApplicationNotFound,
-    get_workfile_template_key
 )
+from openpype.pipeline.workfile import get_workfile_template_key
 import openpype.hosts.unreal.lib as unreal_lib
 
 

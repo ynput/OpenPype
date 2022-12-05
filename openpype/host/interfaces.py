@@ -252,7 +252,7 @@ class IWorkfileHost:
             Remove when all usages are replaced.
         """
 
-        self.save_workfile()
+        self.save_workfile(dst_path)
 
     def open_file(self, filepath):
         """Deprecated variant of 'open_workfile'.
@@ -312,6 +312,8 @@ class IPublishHost:
         required = [
             "get_context_data",
             "update_context_data",
+            "get_context_title",
+            "get_current_context",
         ]
         missing = []
         for name in required:

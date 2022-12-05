@@ -141,10 +141,10 @@ class TasksModel(QtGui.QStandardItemModel):
         return super(TasksModel, self).headerData(section, orientation, role)
 
 
-class CreateDialogTasksWidget(TasksWidget):
+class CreateWidgetTasksWidget(TasksWidget):
     def __init__(self, controller, parent):
         self._controller = controller
-        super(CreateDialogTasksWidget, self).__init__(None, parent)
+        super(CreateWidgetTasksWidget, self).__init__(None, parent)
 
         self._enabled = None
 
@@ -164,7 +164,7 @@ class CreateDialogTasksWidget(TasksWidget):
         self.task_changed.emit()
 
     def select_task_name(self, task_name):
-        super(CreateDialogTasksWidget, self).select_task_name(task_name)
+        super(CreateWidgetTasksWidget, self).select_task_name(task_name)
         if not self._enabled:
             current = self.get_selected_task_name()
             if current:

@@ -73,7 +73,7 @@ class ImageLoader(load.LoaderPlugin):
 
         # Imprint it manually
         data = {
-            "schema": "avalon-core:container-2.0",
+            "schema": "openpype:container-2.0",
             "id": AVALON_CONTAINER_ID,
             "name": node_name,
             "namespace": namespace,

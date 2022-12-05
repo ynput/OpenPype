@@ -11,6 +11,11 @@
             "label": "Generate level sequences when loading layouts"
         },
         {
+            "type": "boolean",
+            "key": "delete_unmatched_assets",
+            "label": "Delete assets that are not matched"
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "project_setup",
