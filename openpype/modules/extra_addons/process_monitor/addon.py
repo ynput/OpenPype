@@ -30,7 +30,7 @@ from openpype.modules import (
     ITrayAction
 )
 
-from openpype.api import get_anatomy_settings, get_system_settings
+from openpype.settings import get_anatomy_settings, get_system_settings
 
 
 #TODO: Add settings (?)
