@@ -167,6 +167,9 @@ def set_use_file_compression():
 def on_new():
     set_start_end_frames()
     set_use_file_compression()
+    bpy.types.WindowManager.is_workfile_out_of_date = bpy.props.BoolProperty(
+        name="Is Workfile Out Of Date",
+    )
 
     project = os.environ.get("AVALON_PROJECT")
     settings = get_project_settings(project)
@@ -181,6 +184,10 @@ def on_new():
 def on_open():
     set_start_end_frames()
     set_use_file_compression()
+    if is_work_file_out_of_date():
+        bpy.context.window_manager.is_workfile_out_of_date = True
+        bpy.ops.wm.workfile_out_of_date("INVOKE_DEFAULT")
+
 
     project = os.environ.get("AVALON_PROJECT")
     settings = get_project_settings(project)

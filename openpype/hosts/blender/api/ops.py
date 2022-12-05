@@ -22,6 +22,10 @@ from openpype import style
 from openpype.client.entities import (
     get_asset_by_name,
     get_assets,
+    get_subset_by_id,
+    get_version_by_id,
+    match_subset_id,
+    get_representation_by_task,
 )
 from openpype.hosts.blender.api.lib import add_datablocks_to_container
 from openpype.hosts.blender.api.utils import (
@@ -45,6 +49,17 @@ from openpype.tools.utils import host_tools
 from openpype.hosts.blender.scripts import build_workfile
 from openpype.tools.utils.lib import qt_app_context
 from .workio import OpenFileCacher, save_file, work_root
+from openpype.pipeline import legacy_io, Anatomy
+from openpype.tools.utils import host_tools
+from openpype.modules.sync_server.sync_server import (
+    get_last_published_workfile_path,
+    download_last_published_workfile,
+)
+from openpype.client.entities import (
+    get_last_version_by_subset_id,
+    get_asset_by_name,
+)
+from .workio import OpenFileCacher
 
 PREVIEW_COLLECTIONS: Dict = dict()
 
@@ -1089,6 +1104,133 @@ class BuildWorkFile(bpy.types.Operator):
 
     def invoke(self, context, event):
         return bpy.context.window_manager.invoke_props_dialog(self, width=150)
+class DownloadLastWorkfile(bpy.types.Operator):
+    """Downloads Last Workfile."""
+
+    bl_idname = "wm.download_last_workfile"
+    bl_label = "Download Latest Workfile"
+
+    @classmethod
+    def poll(cls, context):
+        """Returns if this operator is available or not."""
+        return context.window_manager.is_workfile_out_of_date
+
+    def execute(self, context):
+        """Executes this operator."""
+        session = legacy_io.Session
+        project_name = session.get("AVALON_PROJECT")
+        task_name = session.get("AVALON_TASK")
+        asset_name = session.get("AVALON_ASSET")
+        anatomy = Anatomy(project_name)
+        asset_doc = get_asset_by_name(
+            project_name,
+            session.get("AVALON_ASSET"),
+        )
+
+        # Get subset id
+        subset_id = match_subset_id(
+            project_name, task_name, "workfile", asset_doc
+        )
+        if subset_id is None:
+            print(
+                f"Not any matched subset for task '{task_name}'"
+                f" of '{asset_name}'"
+            )
+            return {"CANCELLED"}
+
+        # Get workfile representation
+        last_version_doc = get_last_version_by_subset_id(
+            project_name, subset_id, fields=["_id", "name"]
+        )
+        if not last_version_doc:
+            print("Subset does not have any version")
+            return {"CANCELLED"}
+
+        workfile_representation = get_representation_by_task(
+            project_name,
+            task_name,
+            last_version_doc,
+        )
+        if not workfile_representation:
+            print(
+                "No published workfile for task "
+                f"'{task_name}' and host blender"
+            )
+            return {"CANCELLED"}
+
+        bpy.ops.wm.open_mainfile(
+            filepath=download_last_published_workfile(
+                "blender",
+                project_name,
+                asset_name,
+                task_name,
+                get_last_published_workfile_path(
+                    "blender",
+                    project_name,
+                    task_name,
+                    workfile_representation,
+                    anatomy=anatomy,
+                ),
+                workfile_representation,
+                subset_id,
+                last_version_doc,
+                anatomy=anatomy,
+                asset_doc=asset_doc,
+            )
+        )
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return self.execute(context)
+
+
+class DrawWorkFileOutOfDateWarning(bpy.types.Operator):
+    """Displays a warning message about the workfile being out of date.
+    Either the user chooses to willingly proceed with their out of date
+    workfile, or blender will be closed after clicking on `OK`."""
+
+    bl_idname = "wm.workfile_out_of_date"
+    bl_label = "WARNING: Workfile is out of date"
+
+    action_enum: bpy.props.EnumProperty(
+        name="Action Enum",
+        items=(
+            ("DL", "Download last workfile", "Download last workfile"),
+            ("QUIT", "Quit blender", "Quit blender"),
+            ("PROC", "Proceed anyway", "Proceed anyway AT YOUR OWN RISK"),
+        ),
+    )
+
+    def execute(self, context):
+        """Executes this operator."""
+        if self.action_enum == "DL":
+            bpy.ops.wm.download_last_workfile("EXEC_DEFAULT")
+        elif self.action_enum == "QUIT":
+            bpy.ops.wm.quit_blender()
+        elif self.action_enum != "PROC":
+            print("Undefined enum value error")
+            return {"CANCELLED"}
+        return {"FINISHED"}
+
+    def cancel(self, context):
+        """Runs when this operator is cancelled."""
+        bpy.ops.wm.workfile_out_of_date("INVOKE_DEFAULT")
+
+    def invoke(self, context, event):
+        """Invokes this operator."""
+        return context.window_manager.invoke_props_dialog(self)
+
+    def draw(self, context):
+        """Draws UI."""
+        col = self.layout.column()
+
+        # Display alert
+        row = col.row()
+        row.alert = True
+        row.label(text="Your workfile is out of date.")
+
+        # Display enum
+        col.prop(self, "action_enum", expand=True)
 
 
 class TOPBAR_MT_avalon(bpy.types.Menu):
@@ -1133,12 +1275,19 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         #                'Set Resolution'?
         layout.separator()
         layout.operator(BuildWorkFile.bl_idname, text="Build First Workfile")
+        layout.operator(DownloadLastWorkfile.bl_idname, text="Update Workfile")
 
 
 def draw_avalon_menu(self, context):
     """Draw the Avalon menu in the top bar."""
 
-    self.layout.menu(TOPBAR_MT_avalon.bl_idname)
+    self.layout.menu(
+        TOPBAR_MT_avalon.bl_idname,
+        icon="ERROR"
+        if bpy.context.window_manager.is_workfile_out_of_date
+        else "NONE",
+    )
+
 
 
 class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
@@ -1392,6 +1541,8 @@ classes = [
     LaunchLibrary,
     LaunchWorkFiles,
     BuildWorkFile,
+    DownloadLastWorkfile,
+    DrawWorkFileOutOfDateWarning,
     TOPBAR_MT_avalon,
     SCENE_OT_MakeContainerPublishable,
     SCENE_OT_ExposeContainerContent,
