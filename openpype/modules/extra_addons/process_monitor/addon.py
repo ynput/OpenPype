@@ -286,7 +286,7 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
 
                 elif project_application in cmdline[1:]:
                     process_cmd = cmdline[1:].index(project_application)
-                    # TODO(2-REC): REMOVE! (temp windows hack)
+                    # TODO(2-REC): rewrite/remove
                     name = project_application.split("\\")[-1].split("/")[-1]
                     # name = ".".join(name.split(".")[:-1])
                     self.log.info("Found subprocess: {}".format(name))
@@ -310,13 +310,6 @@ class ProcessMonitor(OpenPypeAddOn, IPluginPaths, ITrayAction):
             parent = process.parent()
             if not parent or "openpype" not in parent.name():
                 continue
-
-            '''
-            self.log.info("PID: {}".format(pid))
-            self.log.info((
-                "_running_processes: {}"
-            ).format(self._running_processes))
-            '''
 
             # Set current PID if matching context (can have more than 1 match)
             environ = process.info["environ"]
@@ -623,7 +616,7 @@ class StoppableThread(threading.Thread):
         except Exception as e:
             self.log.error("ERROR: {}".format(str(e)))
         finally:
-            self.log.warning("thread ended")
+            self.log.debug("thread ended")
 
     def get_id(self):
         # returns id of the respective thread
@@ -641,7 +634,7 @@ class StoppableThread(threading.Thread):
         )
         if res > 1:
             ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
-            self.log.warning('Exception raise failure')
+            self.log.warning("Exception raise failure")
 
 
 # TODO(2-REC): want cli?
