@@ -3,7 +3,6 @@ import click
 
 import threading
 import ctypes
-import platform
 import time
 
 from openpype.lib import Logger
@@ -21,7 +20,7 @@ from openpype.modules import (
     ITrayAction
 )
 
-from openpype.settings import get_anatomy_settings, get_system_settings
+from openpype.settings import get_anatomy_settings
 
 
 # TODO(2-REC): Add settings
