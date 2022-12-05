@@ -48,3 +48,19 @@ class CreateUnrealSkeletalMesh(plugin.Creator):
                     cmds.sets(node, forceElement=joints_set)
                 else:
                     cmds.sets(node, forceElement=geometry_set)
+
+            # Add animation data
+            self.data.update(lib.collect_animation_data())
+
+            # Only renderable visible shapes
+            self.data["renderableOnly"] = False
+            # only nodes that are visible
+            self.data["visibleOnly"] = False
+            # Include parent groups
+            self.data["includeParentHierarchy"] = False
+            # Default to exporting world-space
+            self.data["worldSpace"] = True
+
+            # Add options for custom attributes
+            self.data["attr"] = ""
+            self.data["attrPrefix"] = ""
