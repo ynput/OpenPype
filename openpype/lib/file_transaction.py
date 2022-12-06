@@ -91,18 +91,17 @@ class FileTransaction(object):
 
     def process(self):
         # Backup any existing files
-        for dst, (src, opts) in self._transfers.items():
-            if dst == src:
+        for dst, (src, _) in self._transfers.items():
+            if dst == src or not os.path.exists(dst):
                 continue
 
-            if os.path.exists(dst):
-                # Backup original file
-                # todo: add timestamp or uuid to ensure unique
-                backup = dst + ".bak"
-                self._backup_to_original[backup] = dst
-                self.log.debug(
-                    "Backup existing file: {} -> {}".format(dst, backup))
-                os.rename(dst, backup)
+            # Backup original file
+            # todo: add timestamp or uuid to ensure unique
+            backup = dst + ".bak"
+            self._backup_to_original[backup] = dst
+            self.log.debug(
+                "Backup existing file: {} -> {}".format(dst, backup))
+            os.rename(dst, backup)
 
         # Copy the files to transfer
         for dst, (src, opts) in self._transfers.items():
