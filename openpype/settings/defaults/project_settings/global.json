@@ -24,6 +24,10 @@
             ],
             "skip_hosts_headless_publish": []
         },
+        "collect_comment_per_instance": {
+            "enabled": false,
+            "families": []
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
@@ -288,6 +292,17 @@
                     "task_types": [],
                     "tasks": [],
                     "template_name": "maya2unreal"
+                },
+                {
+                    "families": [
+                        "online"
+                    ],
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template_name": "online"
                 }
             ]
         },

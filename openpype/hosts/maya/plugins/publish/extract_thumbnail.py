@@ -117,6 +117,10 @@ class ExtractThumbnail(publish.Extractor):
         else:
             preset["viewport_options"] = {"imagePlane": image_plane}
 
+        # Disable Pan/Zoom.
+        pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
+        cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), False)
+
         with lib.maintained_time():
             # Force viewer to False in call to capture because we have our own
             # viewer opening call to allow a signal to trigger between
@@ -136,6 +140,7 @@ class ExtractThumbnail(publish.Extractor):
 
         _, thumbnail = os.path.split(playblast)
 
+        cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
 
         self.log.info("file list  {}".format(thumbnail))
 

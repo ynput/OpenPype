@@ -178,7 +178,7 @@ class DropDataFrame(QtWidgets.QFrame):
         paths = self._get_all_paths(in_paths)
         collectionable_paths = []
         non_collectionable_paths = []
-        for path in in_paths:
+        for path in paths:
             ext = os.path.splitext(path)[1]
             if ext in self.image_extensions or ext in self.sequence_types:
                 collectionable_paths.append(path)

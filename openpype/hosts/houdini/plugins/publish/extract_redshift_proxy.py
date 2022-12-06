@@ -5,6 +5,8 @@ import pyblish.api
 from openpype.pipeline import publish
 from openpype.hosts.houdini.api.lib import render_rop
 
+import hou
+
 
 class ExtractRedshiftProxy(publish.Extractor):
 
@@ -15,7 +17,7 @@ class ExtractRedshiftProxy(publish.Extractor):
 
     def process(self, instance):
 
-        ropnode = instance[0]
+        ropnode = hou.node(instance.get("instance_node"))
 
         # Get the filename from the filename parameter
         # `.evalParm(parameter)` will make sure all tokens are resolved
