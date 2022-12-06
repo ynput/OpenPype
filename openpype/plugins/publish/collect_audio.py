@@ -121,7 +121,7 @@ class CollectAudio(pyblish.api.ContextPlugin):
         asset_docs = get_assets(
             project_name,
             asset_names=asset_names,
-            fields=["_id"]
+            fields=["_id", "name"]
         )
 
         asset_id_by_name = {}
