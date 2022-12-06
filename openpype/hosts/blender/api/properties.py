@@ -9,6 +9,10 @@ class OpenpypeInstanceDatablockRef(PropertyGroup):
     name: bpy.props.StringProperty(name="OpenPype Instance name")
     datapath: bpy.props.StringProperty(name="OpenPype Instance name")
 
+    # = Custom properties =
+    # "outliner_entity" Union[bpy.types.Collection, bpy.types.Object]:
+    #       Entity in outliner if outliner datablock
+
 
 class OpenpypeInstance(PropertyGroup):
     name: bpy.props.StringProperty(name="OpenPype Instance name")
