@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """3dsmax specific Avalon/Pyblish plugin definitions."""
-import sys
 from pymxs import runtime as rt
 import six
 from abc import ABCMeta
@@ -25,12 +24,12 @@ class MaxCreatorBase(object):
             shared_data["max_cached_subsets"] = {}
             cached_instances = lsattr("id", "pyblish.avalon.instance")
             for i in cached_instances:
-                creator_id = i.get("creator_identifier")
+                creator_id = rt.getUserProp(i, "creator_identifier")
                 if creator_id not in shared_data["max_cached_subsets"]:
-                    shared_data["houdini_cached_subsets"][creator_id] = [i]
+                    shared_data["max_cached_subsets"][creator_id] = [i.name]
                 else:
                     shared_data[
-                        "houdini_cached_subsets"][creator_id].append(i)  # noqa
+                        "max_cached_subsets"][creator_id].append(i.name)  # noqa
         return shared_data
 
     @staticmethod
@@ -61,8 +60,12 @@ class MaxCreator(Creator, MaxCreatorBase):
             instance_data,
             self
         )
+        for node in self.selected_nodes:
+            node.Parent = instance_node
+
         self._add_instance_to_context(instance)
         imprint(instance_node.name, instance.data_to_store())
+
         return instance
 
     def collect_instances(self):
@@ -70,7 +73,7 @@ class MaxCreator(Creator, MaxCreatorBase):
         for instance in self.collection_shared_data[
                 "max_cached_subsets"].get(self.identifier, []):
             created_instance = CreatedInstance.from_existing(
-                read(instance), self
+                read(rt.getNodeByName(instance)), self
             )
             self._add_instance_to_context(created_instance)
 
@@ -98,7 +101,7 @@ class MaxCreator(Creator, MaxCreatorBase):
             instance_node = rt.getNodeByName(
                 instance.data.get("instance_node"))
             if instance_node:
-                rt.delete(instance_node)
+                rt.delete(rt.getNodeByName(instance_node))
 
             self._remove_instance_from_context(instance)
 

@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """Pipeline tools for OpenPype Houdini integration."""
 import os
-import sys
 import logging
-import contextlib
 
 import json
 
@@ -101,12 +99,12 @@ attributes "OpenPypeContext"
     (
         context type: #string
     )
-    
+
     rollout params "OpenPype Parameters"
     (
         editText editTextContext "Context" type: #string
     )
-)       
+)
         """)
 
         attr = rt.execute(create_attr_script)
@@ -149,6 +147,3 @@ def ls() -> list:
 
     for container in sorted(containers, key=lambda name: container.name):
         yield lib.read(container)
-
-
-
