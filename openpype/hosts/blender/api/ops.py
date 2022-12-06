@@ -390,7 +390,7 @@ class WM_OT_DownloadLastWorkfile(bpy.types.Operator):
                 {"WARNING"}, "Sync server module is disabled or unavailable."
             )
             return {"CANCELLED"}
-        
+
         last_workfile_path = download_last_workfile()
         if last_workfile_path:
             bpy.ops.wm.open_mainfile(filepath=last_workfile_path)
@@ -498,7 +498,9 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         layout.operator(LaunchWorkFiles.bl_idname, text="Work Files...")
         # TODO (jasper): maybe add 'Reload Pipeline', 'Reset Frame Range' and
         #                'Reset Resolution'?
-        layout.operator(WM_OT_DownloadLastWorkfile.bl_idname, text="Update Workfile")
+        layout.operator(
+            WM_OT_DownloadLastWorkfile.bl_idname, text="Update Workfile"
+        )
 
 
 def draw_avalon_menu(self, context):

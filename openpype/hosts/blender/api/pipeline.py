@@ -12,7 +12,6 @@ from . import ops
 
 import pyblish.api
 
-from openpype.client import get_asset_by_name
 from openpype.client.entities import (
     get_last_version_by_subset_name,
     get_asset_by_name,
@@ -340,7 +339,7 @@ def is_work_file_out_of_date() -> bool:
         datetime.fromtimestamp(Path(current_file()).stat().st_mtime)
     )
 
-    return last_published_time > workfile_time    
+    return last_published_time > workfile_time
 
 
 def add_to_avalon_container(container: bpy.types.Collection):
