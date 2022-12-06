@@ -1,7 +1,7 @@
 import pyblish.api
 import bpy
 
-from openpype.hosts.blender.utility_scripts.is_workfile_out_of_date import (
+from openpype.hosts.blender.api.pipeline import (
     is_work_file_out_of_date,
 )
 

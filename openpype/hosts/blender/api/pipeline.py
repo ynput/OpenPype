@@ -1,7 +1,9 @@
 import os
 import sys
 import traceback
-from typing import Callable, Dict, List, Optional
+from pathlib import Path
+from datetime import datetime
+from typing import Callable, Dict, Iterator, List, Optional
 
 import bpy
 from openpype.hosts.blender.api import utils
@@ -13,6 +15,10 @@ import pyblish.api
 
 from openpype.client import get_asset_by_name
 from openpype.settings import get_project_settings
+from openpype.client.entities import (
+    get_last_version_by_subset_name,
+    get_asset_by_name,
+)
 from openpype.pipeline import (
     legacy_io,
     register_loader_plugin_path,
@@ -26,9 +32,11 @@ from openpype.lib import (
     register_event_callback,
     emit_event
 )
+from openpype.lib.dateutils import get_timestamp
 import openpype.hosts.blender
 from openpype.settings import get_project_settings
 
+from .workio import current_file
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.blender.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
@@ -184,7 +192,7 @@ def on_new():
 def on_open():
     set_start_end_frames()
     set_use_file_compression()
-    if is_work_file_out_of_date():
+    if not is_work_file_out_of_date():
         bpy.context.window_manager.is_workfile_out_of_date = True
         bpy.ops.wm.workfile_out_of_date("INVOKE_DEFAULT")
 
@@ -275,6 +283,72 @@ def _register_events():
     register_event_callback("taskChanged", _on_task_changed)
     log.info("Installed event callback for 'taskChanged'...")
 
+
+def _discover_gui() -> Optional[Callable]:
+    """Return the most desirable of the currently registered GUIs"""
+
+    # Prefer last registered
+    guis = reversed(pyblish.api.registered_guis())
+
+    for gui in guis:
+        try:
+            gui = __import__(gui).show
+        except (ImportError, AttributeError):
+            continue
+        else:
+            return gui
+
+    return None
+
+
+def is_work_file_out_of_date() -> bool:
+    """Check if the current workfile is out of date.
+    This is based on last modification date, so if a user modifies an out of
+    date workfile, this will return `False`. Also, in case of partial publish,
+    this will return `True`.
+
+    Returns:
+        bool: True if the current workfile is out of date.
+    """
+
+    session = legacy_io.Session
+
+    # Getting date and time of the latest published workfile
+    last_published_time = get_last_version_by_subset_name(
+        legacy_io.active_project(),
+        f"workfile{session.get('AVALON_TASK')}",
+        asset_name=session.get("AVALON_ASSET"),
+    )["data"]["time"]
+
+    # Getting date and time of the latest locally installed workfile
+    # Time is converted to use the same format as for `last_publishd_time`
+    workfile_time = get_timestamp(
+        datetime.fromtimestamp(Path(current_file()).stat().st_mtime)
+    )
+
+    return last_published_time > workfile_time    
+
+
+def add_to_avalon_container(container: bpy.types.Collection):
+    """Add the container to the Avalon container."""
+
+    avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
+    if not avalon_container:
+        avalon_container = bpy.data.collections.new(name=AVALON_CONTAINERS)
+
+        # Link the container to the scene so it's easily visible to the artist
+        # and can be managed easily. Otherwise it's only found in "Blender
+        # File" view and it will be removed by Blenders garbage collection,
+        # unless you set a 'fake user'.
+        bpy.context.scene.collection.children.link(avalon_container)
+
+    avalon_container.children.link(container)
+
+    # Disable Avalon containers for the view layers.
+    for view_layer in bpy.context.scene.view_layers:
+        for child in view_layer.layer_collection.children:
+            if child.collection == avalon_container:
+                child.exclude = True
 
 
 def metadata_update(node: bpy.types.bpy_struct_meta_idprop, data: Dict):
