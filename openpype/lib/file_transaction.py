@@ -84,9 +84,11 @@ class FileTransaction(object):
         self._transfers[dst] = (src, opts)
 
     def process(self):
-
         # Backup any existing files
-        for dst in self._transfers.keys():
+        for dst, (src, opts) in self._transfers.items():
+            if not os.path.isdir(src) and dst == src:
+                continue
+
             if os.path.exists(dst):
                 # Backup original file
                 # todo: add timestamp or uuid to ensure unique
@@ -98,6 +100,12 @@ class FileTransaction(object):
 
         # Copy the files to transfer
         for dst, (src, opts) in self._transfers.items():
+            if not os.path.isdir(src) and dst == src:
+                self.log.debug(
+                    "Source and destionation are same files {} -> {}".format(
+                        src, dst))
+                continue
+
             self._create_folder_for_file(dst)
 
             if opts["mode"] == self.MODE_COPY:
