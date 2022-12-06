@@ -11,6 +11,7 @@ from openpype.pipeline import (
     publish,
 )
 from openpype.hosts.blender.api import plugin, get_compress_setting
+from openpype.settings.lib import get_project_settings
 
 
 class ExtractBlend(publish.Extractor):
@@ -28,6 +29,14 @@ class ExtractBlend(publish.Extractor):
         stagingdir = self.staging_dir(instance)
         filename = f"{instance.name}.blend"
         filepath = Path(stagingdir, filename)
+
+        # If paths management, make paths absolute before saving
+        project_name = instance.data["projectEntity"]["name"]
+        project_settings = get_project_settings(project_name)
+        host_name = instance.context.data["hostName"]
+        host_settings = project_settings.get(host_name)
+        if host_settings.get("general", {}).get("use_paths_management"):
+            bpy.ops.file.make_paths_absolute()
 
         # Perform extraction
         self.log.info("Performing extraction..")
