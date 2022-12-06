@@ -73,6 +73,7 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
             "Adding thumbnail representation: {}".format(new_repre)
         )
         instance.data["representations"].append(new_repre)
+        instance.data["thumbnailPath"] = dst_filepath
 
     def _create_thumbnail(self, context, thumbnail_source):
         if not thumbnail_source:

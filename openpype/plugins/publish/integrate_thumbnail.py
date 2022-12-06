@@ -103,12 +103,7 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
         )
 
     def _get_thumbnail_from_instance(self, instance):
-        # 1. Look for thumbnail path on instance in 'thumbnailPath'
-        thumbnail_path = instance.data.get("thumbnailPath")
-        if thumbnail_path and os.path.exists(thumbnail_path):
-            return thumbnail_path
-
-        # 2. Look for thumbnail in published representations
+        # 1. Look for thumbnail in published representations
         published_repres = instance.data.get("published_representations")
         path = self._get_thumbnail_path_from_published(published_repres)
         if path and os.path.exists(path):
@@ -119,34 +114,14 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
                 "Could not find published thumbnail path {}".format(path)
             )
 
-        # 3. Look for thumbnail in "not published" representations
-        repres = instance.data.get("representations")
-        if not repres:
-            return None
+        # 2. Look for thumbnail in "not published" representations
+        thumbnail_path = self._get_thumbnail_path_from_unpublished(instance)
+        if thumbnail_path and os.path.exists(thumbnail_path):
+            return thumbnail_path
 
-        thumbnail_repre = next(
-            (
-                repre
-                for repre in repres
-                if repre["name"] == "thumbnail"
-            ),
-            None
-        )
-        if not thumbnail_repre:
-            return None
-
-        staging_dir = thumbnail_repre.get("stagingDir")
-        if not staging_dir:
-            staging_dir = instance.data.get("stagingDir")
-
-        filename = thumbnail_repre.get("files")
-        if not staging_dir or not filename:
-            return None
-
-        if isinstance(filename, (list, tuple, set)):
-            filename = filename[0]
-        thumbnail_path = os.path.join(staging_dir, filename)
-        if os.path.exists(thumbnail_path):
+        # 3. Look for thumbnail path on instance in 'thumbnailPath'
+        thumbnail_path = instance.data.get("thumbnailPath")
+        if thumbnail_path and os.path.exists(thumbnail_path):
             return thumbnail_path
         return None
 
@@ -228,6 +203,38 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
             )
             return None
         return os.path.normpath(path)
+
+    def _get_thumbnail_path_from_unpublished(self, instance):
+        repres = instance.data.get("representations")
+        if not repres:
+            return None
+
+        thumbnail_repre = next(
+            (
+                repre
+                for repre in repres
+                if repre["name"] == "thumbnail"
+            ),
+            None
+        )
+        if not thumbnail_repre:
+            return None
+
+        staging_dir = thumbnail_repre.get("stagingDir")
+        if not staging_dir:
+            staging_dir = instance.data.get("stagingDir")
+
+        filename = thumbnail_repre.get("files")
+        if not staging_dir or not filename:
+            return None
+
+        if isinstance(filename, (list, tuple, set)):
+            filename = filename[0]
+
+        thumbnail_path = os.path.join(staging_dir, filename)
+        if os.path.exists(thumbnail_path):
+            return thumbnail_path
+        return None
 
     def _integrate_thumbnails(
         self,
