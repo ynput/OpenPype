@@ -1,9 +1,13 @@
 """Python 3 only implementation."""
 import os
 import asyncio
+import shutil
 import threading
 import concurrent.futures
 from concurrent.futures._base import CancelledError
+from openpype.pipeline.anatomy import Anatomy
+
+from openpype.settings.lib import get_project_settings
 
 from .providers import lib
 from openpype.lib import Logger
@@ -137,6 +141,32 @@ async def download(module, project_name, file, representation, provider_name,
 
     module.handle_alternate_site(project_name, representation, local_site,
                                  file["_id"], file_id)
+
+    # Restore hero version in any case
+    project_settings = get_project_settings(project_name)
+    hero_enabled = project_settings["global"]["publish"][
+        "IntegrateHeroVersion"
+    ]["enabled"]
+    if hero_enabled:
+        anatomy = Anatomy(project_name)
+        hero_file_path = anatomy.format(representation["context"][0])["hero"][
+            "path"
+        ]
+        hero_dirname = os.path.dirname(hero_file_path)
+        
+        # Ensure clean hero directory
+        if os.path.exists(hero_dirname):
+            shutil.rmtree(hero_dirname)
+        os.makedirs(hero_dirname)
+
+        module.log.debug(
+            "Creating hero version of {} at {}".format(
+                local_file_path, hero_file_path
+            )
+        )
+
+        # Copy file in any case
+        shutil.copy(local_file_path, hero_file_path)
 
     return file_id
 
