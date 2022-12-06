@@ -126,14 +126,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                   "harmony": [r".*"],  # for everything from AE
                   "celaction": [r".*"]}
 
-    enviro_job_filter = [
+    environ_job_filter = [
         "OPENPYPE_METADATA_FILE",
         "OPENPYPE_PUBLISH_JOB",
         "OPENPYPE_RENDER_JOB",
         "OPENPYPE_LOG_NO_COLORS"
     ]
 
-    enviro_keys = [
+    environ_keys = [
         "FTRACK_API_USER",
         "FTRACK_API_KEY",
         "FTRACK_SERVER",
@@ -232,7 +232,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
         metadata_path, roothless_metadata_path = \
-                self._create_metadata_path(instance)
+            self._create_metadata_path(instance)
 
         environment = {
             "AVALON_PROJECT": legacy_io.Session["AVALON_PROJECT"],
@@ -244,14 +244,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "OPENPYPE_RENDER_JOB": "0"
         }
 
-        # add environments from self.enviro_keys
-        for env_key in self.enviro_keys:
+        # add environments from self.environ_keys
+        for env_key in self.environ_keys:
             if os.getenv(env_key):
                 environment[env_key] = os.environ[env_key]
 
-        # pass environment keys from self.enviro_job_filter
+        # pass environment keys from self.environ_job_filter
         job_environ = job["Props"].get("Env", {})
-        for env_j_key in self.enviro_job_filter:
+        for env_j_key in self.environ_job_filter:
             if job_environ.get(env_j_key):
                 environment[env_j_key] = job_environ[env_j_key]
 
