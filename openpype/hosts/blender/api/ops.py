@@ -1118,7 +1118,7 @@ class WM_OT_DownloadLastWorkfile(bpy.types.Operator):
                 {"WARNING"}, "Sync server module is disabled or unavailable."
             )
             return {"CANCELLED"}
-        
+
         last_workfile_path = download_last_workfile()
         if last_workfile_path:
             bpy.ops.wm.open_mainfile(filepath=last_workfile_path)
@@ -1225,7 +1225,9 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         #                'Set Resolution'?
         layout.separator()
         layout.operator(BuildWorkFile.bl_idname, text="Build First Workfile")
-        layout.operator(WM_OT_DownloadLastWorkfile.bl_idname, text="Update Workfile")
+        layout.operator(
+            WM_OT_DownloadLastWorkfile.bl_idname, text="Update Workfile"
+        )
 
 
 def draw_avalon_menu(self, context):
