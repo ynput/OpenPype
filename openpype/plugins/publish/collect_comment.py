@@ -121,4 +121,3 @@ class CollectComment(
         if comment:
             return comment.strip()
         return ""
-
