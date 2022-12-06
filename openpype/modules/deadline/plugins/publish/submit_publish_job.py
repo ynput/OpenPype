@@ -126,22 +126,19 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                   "harmony": [r".*"],  # for everything from AE
                   "celaction": [r".*"]}
 
-    enviro_filter = [
+    enviro_job_filter = [
+        "OPENPYPE_METADATA_FILE",
+        "OPENPYPE_PUBLISH_JOB",
+        "OPENPYPE_RENDER_JOB",
+        "OPENPYPE_LOG_NO_COLORS"
+    ]
+
+    enviro_keys = [
         "FTRACK_API_USER",
         "FTRACK_API_KEY",
         "FTRACK_SERVER",
-        "OPENPYPE_METADATA_FILE",
-        "AVALON_PROJECT",
-        "AVALON_ASSET",
-        "AVALON_TASK",
         "AVALON_APP_NAME",
-        "OPENPYPE_PUBLISH_JOB"
-
-        "OPENPYPE_LOG_NO_COLORS",
         "OPENPYPE_USERNAME",
-        "OPENPYPE_RENDER_JOB",
-        "OPENPYPE_PUBLISH_JOB",
-        "OPENPYPE_MONGO",
         "OPENPYPE_VERSION"
     ]
 
@@ -223,29 +220,41 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         instance_version = instance.data.get("version")  # take this if exists
         if instance_version != 1:
             override_version = instance_version
-        output_dir = self._get_publish_folder(instance.context.data['anatomy'],
-                                              deepcopy(
-                                                instance.data["anatomyData"]),
-                                              instance.data.get("asset"),
-                                              instances[0]["subset"],
-                                              'render',
-                                              override_version)
+        output_dir = self._get_publish_folder(
+            instance.context.data['anatomy'],
+            deepcopy(instance.data["anatomyData"]),
+            instance.data.get("asset"),
+            instances[0]["subset"],
+            'render',
+            override_version
+        )
 
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
         metadata_path, roothless_metadata_path = \
-            self._create_metadata_path(instance)
+                self._create_metadata_path(instance)
 
-        environment = job["Props"].get("Env", {})
-        environment["AVALON_PROJECT"] = legacy_io.Session["AVALON_PROJECT"]
-        environment["AVALON_ASSET"] = legacy_io.Session["AVALON_ASSET"]
-        environment["AVALON_TASK"] = legacy_io.Session["AVALON_TASK"]
-        environment["AVALON_APP_NAME"] = os.environ.get("AVALON_APP_NAME")
-        environment["OPENPYPE_VERSION"] = os.environ.get("OPENPYPE_VERSION")
-        environment["OPENPYPE_LOG_NO_COLORS"] = "1"
-        environment["OPENPYPE_USERNAME"] = instance.context.data["user"]
-        environment["OPENPYPE_PUBLISH_JOB"] = "1"
-        environment["OPENPYPE_RENDER_JOB"] = "0"
+        environment = {
+            "AVALON_PROJECT": legacy_io.Session["AVALON_PROJECT"],
+            "AVALON_ASSET": legacy_io.Session["AVALON_ASSET"],
+            "AVALON_TASK": legacy_io.Session["AVALON_TASK"],
+            "OPENPYPE_LOG_NO_COLORS": "1",
+            "OPENPYPE_USERNAME": instance.context.data["user"],
+            "OPENPYPE_PUBLISH_JOB": "1",
+            "OPENPYPE_RENDER_JOB": "0"
+        }
+
+        # add environments from self.enviro_keys
+        for env_key in self.enviro_keys:
+            if os.getenv(env_key):
+                environment[env_key] = os.environ[env_key]
+
+        # pass environment keys from self.enviro_job_filter
+        job_environ = job["Props"].get("Env", {})
+        for env_j_key in self.enviro_job_filter:
+            if job_environ.get(env_j_key):
+                environment[env_j_key] = job_environ[env_j_key]
+
         # Add mongo url if it's enabled
         if instance.context.data.get("deadlinePassMongoUrl"):
             mongo_url = os.environ.get("OPENPYPE_MONGO")
@@ -309,19 +318,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if instance.data.get("suspend_publish"):
             payload["JobInfo"]["InitialStatus"] = "Suspended"
 
-        index = 0
-        for key in environment:
-            if key.upper() in self.enviro_filter:
-                payload["JobInfo"].update(
-                    {
-                        "EnvironmentKeyValue%d"
-                        % index: "{key}={value}".format(
-                            key=key, value=environment[key]
-                        )
-                    }
-                )
-                index += 1
-
+        for index, (key_, value_) in enumerate(environment.items()):
+            payload["JobInfo"].update(
+                {
+                    "EnvironmentKeyValue%d"
+                    % index: "{key}={value}".format(
+                        key=key_, value=value_
+                    )
+                }
+            )
         # remove secondary pool
         payload["JobInfo"].pop("SecondaryPool", None)
 
