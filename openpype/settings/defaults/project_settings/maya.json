@@ -171,7 +171,22 @@
             "enabled": true,
             "defaults": [
                 "Main"
-            ]
+            ],
+            "exportSequence": false,
+            "expandProcedurals": false,
+            "motionBlur": true,
+            "motionBlurKeys": 2,
+            "motionBlurLength": 0.5,
+            "maskOptions": false,
+            "maskCamera": false,
+            "maskLight": false,
+            "maskShape": false,
+            "maskShader": false,
+            "maskOverride": false,
+            "maskDriver": false,
+            "maskFilter": false,
+            "maskColor_manager": false,
+            "maskOperator": false
         },
         "CreateAssembly": {
             "enabled": true,
