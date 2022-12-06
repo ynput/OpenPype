@@ -3436,28 +3436,3 @@ def iter_visible_nodes_in_range(nodes, start, end):
         # If no more nodes to process break the frame iterations..
         if not node_dependencies:
             break
-
-
-@contextlib.contextmanager
-def selection(*nodes):
-    """Execute something with a specific Maya selection.
-
-    Example:
-    .. code-block:: python
-
-        cmds.select('side')
-        print(cmds.ls(sl=True))
-        # ['side']
-
-        with selection('top', 'lambert1'):
-            print(cmds.ls)
-            # ['top', 'lambert1']
-
-        print(cmds.ls(sl=True))
-        # ['side']
-
-    """
-    current = cmds.ls(sl=True)
-    cmds.select(*nodes, noExpand=True)
-    yield
-    cmds.select(current, noExpand=True)
