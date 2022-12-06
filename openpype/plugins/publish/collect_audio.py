@@ -7,7 +7,7 @@ from openpype.client import (
     get_last_versions,
     get_representations,
 )
-from openpype.pipeline import get_representation_path_with_anatomy
+from openpype.pipeline.load import get_representation_path_with_anatomy
 
 
 class CollectAudio(pyblish.api.ContextPlugin):
