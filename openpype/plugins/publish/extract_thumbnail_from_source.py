@@ -76,7 +76,7 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
 
     def _create_thumbnail(self, context, thumbnail_source):
         if not thumbnail_source:
-            self.log.debug("Thumbnail source not filled. Skipping.")
+            self.log.debug("Thumbnail source on context not filled. Skipping.")
             return
 
         if not os.path.exists(thumbnail_source):
