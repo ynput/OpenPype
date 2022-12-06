@@ -92,7 +92,7 @@ class FileTransaction(object):
     def process(self):
         # Backup any existing files
         for dst, (src, opts) in self._transfers.items():
-            if not os.path.isdir(src) and dst == src:
+            if dst == src:
                 continue
 
             if os.path.exists(dst):
@@ -106,7 +106,7 @@ class FileTransaction(object):
 
         # Copy the files to transfer
         for dst, (src, opts) in self._transfers.items():
-            if not os.path.isdir(src) and dst == src:
+            if dst == src:
                 self.log.debug(
                     "Source and destionation are same files {} -> {}".format(
                         src, dst))
