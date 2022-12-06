@@ -153,7 +153,7 @@ async def download(module, project_name, file, representation, provider_name,
             "path"
         ]
         hero_dirname = os.path.dirname(hero_file_path)
-        
+
         # Ensure clean hero directory
         if os.path.exists(hero_dirname):
             shutil.rmtree(hero_dirname)
