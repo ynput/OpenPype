@@ -6,11 +6,7 @@ from openpype.hosts.blender.api.properties import OpenpypeInstance
 from openpype.pipeline import (
     publish,
 )
-from openpype.pipeline.constants import AVALON_CONTAINER_ID
 from openpype.hosts.blender.api import plugin, get_compress_setting
-from openpype.hosts.blender.api.pipeline import (
-    metadata_update,
-)
 
 
 class ExtractBlend(publish.Extractor):
