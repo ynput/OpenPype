@@ -777,6 +777,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "handleEnd": handle_end,
             "frameStartHandle": start - handle_start,
             "frameEndHandle": end + handle_end,
+            "comment": instance.data["comment"],
             "fps": fps,
             "source": source,
             "extendFrames": data.get("extendFrames"),

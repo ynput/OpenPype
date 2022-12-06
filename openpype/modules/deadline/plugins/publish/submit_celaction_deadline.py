@@ -38,7 +38,7 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
         assert deadline_url, "Requires Deadline Webservice URL"
 
         self.deadline_url = "{}/api/jobs".format(deadline_url)
-        self._comment = context.data.get("comment", "")
+        self._comment = instance.data["comment"]
         self._deadline_user = context.data.get(
             "deadlineUser", getpass.getuser())
         self._frame_start = int(instance.data["frameStart"])
