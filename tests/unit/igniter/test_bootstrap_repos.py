@@ -33,11 +33,11 @@ def test_openpype_version(printer):
     assert str(v2) == "1.2.3-x"
     assert v1 > v2
 
-    v3 = OpenPypeVersion(1, 2, 3, staging=True)
-    assert str(v3) == "1.2.3+staging"
+    v3 = OpenPypeVersion(1, 2, 3)
+    assert str(v3) == "1.2.3"
 
-    v4 = OpenPypeVersion(1, 2, 3, staging="True", prerelease="rc.1")
-    assert str(v4) == "1.2.3-rc.1+staging"
+    v4 = OpenPypeVersion(1, 2, 3, prerelease="rc.1")
+    assert str(v4) == "1.2.3-rc.1"
     assert v3 > v4
     assert v1 > v4
     assert v4 < OpenPypeVersion(1, 2, 3, prerelease="rc.1")
@@ -73,7 +73,7 @@ def test_openpype_version(printer):
         OpenPypeVersion(4, 8, 10),
         OpenPypeVersion(4, 8, 20),
         OpenPypeVersion(4, 8, 9),
-        OpenPypeVersion(1, 2, 3, staging=True),
+        OpenPypeVersion(1, 2, 3),
         OpenPypeVersion(1, 2, 3, build="foo")
     ]
     res = sorted(sort_versions)
@@ -104,27 +104,26 @@ def test_openpype_version(printer):
     with pytest.raises(ValueError):
         _ = OpenPypeVersion(version="booobaa")
 
-    v11 = OpenPypeVersion(version="4.6.7-foo+staging")
+    v11 = OpenPypeVersion(version="4.6.7-foo")
     assert v11.major == 4
     assert v11.minor == 6
     assert v11.patch == 7
-    assert v11.staging is True
     assert v11.prerelease == "foo"
 
 
 def test_get_main_version():
-    ver = OpenPypeVersion(1, 2, 3, staging=True, prerelease="foo")
+    ver = OpenPypeVersion(1, 2, 3, prerelease="foo")
     assert ver.get_main_version() == "1.2.3"
 
 
 def test_get_version_path_from_list():
     versions = [
         OpenPypeVersion(1, 2, 3, path=Path('/foo/bar')),
-        OpenPypeVersion(3, 4, 5, staging=True, path=Path("/bar/baz")),
+        OpenPypeVersion(3, 4, 5, path=Path("/bar/baz")),
         OpenPypeVersion(6, 7, 8, prerelease="x", path=Path("boo/goo"))
     ]
     path = BootstrapRepos.get_version_path_from_list(
-        "3.4.5+staging", versions)
+        "3.4.5", versions)
 
     assert path == Path("/bar/baz")
 
@@ -362,12 +361,15 @@ def test_find_openpype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
     result = fix_bootstrap.find_openpype(include_zips=True)
     # we should have results as file were created
     assert result is not None, "no OpenPype version found"
-    # latest item in `result` should be latest version found.
+    # latest item in `result` should be the latest version found.
+    # this will be `7.2.10-foo+staging` even with *staging* in since we've
+    # dropped the logic to handle staging separately and in alphabetical
+    # sorting it is after `strange`.
     expected_path = Path(
         d_path / "{}{}{}".format(
-            test_versions_2[3].prefix,
-            test_versions_2[3].version,
-            test_versions_2[3].suffix
+            test_versions_2[4].prefix,
+            test_versions_2[4].version,
+            test_versions_2[4].suffix
         )
     )
     assert result, "nothing found"
