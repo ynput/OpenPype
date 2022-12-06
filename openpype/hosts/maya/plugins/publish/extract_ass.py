@@ -1,11 +1,10 @@
 import os
-import contextlib
 
 from maya import cmds
 import arnold
 
 from openpype.pipeline import publish
-from openpype.hosts.maya.api.lib import maintained_selection
+from openpype.hosts.maya.api.lib import maintained_selection, attribute_values
 
 
 class ExtractAssStandin(publish.Extractor):
@@ -25,6 +24,40 @@ class ExtractAssStandin(publish.Extractor):
         filenames = list()
         file_path = os.path.join(staging_dir, filename)
 
+        # Mask
+        mask = arnold.AI_NODE_ALL
+
+        node_types = {
+            "options": arnold.AI_NODE_OPTIONS,
+            "camera": arnold.AI_NODE_CAMERA,
+            "light": arnold.AI_NODE_LIGHT,
+            "shape": arnold.AI_NODE_SHAPE,
+            "shader": arnold.AI_NODE_SHADER,
+            "override": arnold.AI_NODE_OVERRIDE,
+            "driver": arnold.AI_NODE_DRIVER,
+            "filter": arnold.AI_NODE_FILTER,
+            "color_manager": arnold.AI_NODE_COLOR_MANAGER,
+            "operator": arnold.AI_NODE_OPERATOR
+        }
+
+        for key in node_types.keys():
+            if instance.data.get("mask" + key.title()):
+                mask = mask ^ node_types[key]
+
+        # Motion blur
+        values = {
+            "defaultArnoldRenderOptions.motion_blur_enable": instance.data.get(
+                "motionBlur", True
+            ),
+            "defaultArnoldRenderOptions.motion_steps": instance.data.get(
+                "motionBlurKeys", 2
+            ),
+            "defaultArnoldRenderOptions.motion_frames": instance.data.get(
+                "motionBlurLength", 0.5
+            )
+        }
+
+        # Write out .ass file
         kwargs = {
             "filename": file_path,
             "selected": True,
@@ -34,17 +67,11 @@ class ExtractAssStandin(publish.Extractor):
             "boundingBox": True,
             "expandProcedurals": instance.data.get("expandProcedurals", False),
             "camera": instance.data["camera"],
-            "mask": self.get_ass_export_mask(instance)
+            "mask": mask
         }
 
-        # Motion blur
-        motion_blur = instance.data.get("motionBlur", True)
-        motion_blur_keys = instance.data.get("motionBlurKeys", 2)
-        motion_blur_length = instance.data.get("motionBlurLength", 0.5)
-
-        # Write out .ass file
         self.log.info("Writing: '%s'" % file_path)
-        with self.motion_blur_ctx(motion_blur, motion_blur_keys, motion_blur_length):
+        with attribute_values(values):
             with maintained_selection():
                 self.log.info(
                     "Writing: {}".format(instance.data["setMembers"])
@@ -96,52 +123,3 @@ class ExtractAssStandin(publish.Extractor):
 
         self.log.info("Extracted instance '%s' to: %s"
                       % (instance.name, staging_dir))
-
-    #This should be separated out as library function that takes some
-    #attributes to modify with values. The function then resets to original
-    #values.
-    @contextlib.contextmanager
-    def motion_blur_ctx(self, force, keys, length):
-        if not force:
-            yield
-            return
-
-        cmb = cmds.getAttr("defaultArnoldRenderOptions.motion_blur_enable")
-        ckeys = cmds.getAttr("defaultArnoldRenderOptions.motion_steps")
-        clen = cmds.getAttr("defaultArnoldRenderOptions.motion_frames")
-
-        cmds.setAttr("defaultArnoldRenderOptions.motion_blur_enable", 1)
-        if keys > 0:
-            cmds.setAttr("defaultArnoldRenderOptions.motion_steps", keys)
-        if length >= 0:
-            cmds.setAttr("defaultArnoldRenderOptions.motion_frames", length)
-
-        try:
-            yield
-        finally:
-            cmds.setAttr("defaultArnoldRenderOptions.motion_blur_enable", cmb)
-            cmds.setAttr("defaultArnoldRenderOptions.motion_steps", ckeys)
-            cmds.setAttr("defaultArnoldRenderOptions.motion_frames", clen)
-
-    #This should be refactored to lib. probably just need the node_types directionary
-    def get_ass_export_mask(self, instance):
-        mask = arnold.AI_NODE_ALL
-
-        node_types = {
-            "options": arnold.AI_NODE_OPTIONS,
-            "camera": arnold.AI_NODE_CAMERA,
-            "light": arnold.AI_NODE_LIGHT,
-            "shape": arnold.AI_NODE_SHAPE,
-            "shader": arnold.AI_NODE_SHADER,
-            "override": arnold.AI_NODE_OVERRIDE,
-            "driver": arnold.AI_NODE_DRIVER,
-            "filter": arnold.AI_NODE_FILTER,
-            "color_manager": arnold.AI_NODE_COLOR_MANAGER,
-            "operator": arnold.AI_NODE_OPERATOR
-        }
-
-        for key in node_types.keys():
-            if instance.data.get("mask" + key.title()):
-                mask = mask ^ node_types[key]
-
-        return mask
