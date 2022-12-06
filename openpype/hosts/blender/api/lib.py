@@ -7,6 +7,13 @@ from typing import Dict, List, Union
 import bpy
 import addon_utils
 from openpype.lib import Logger
+from openpype.pipeline import legacy_io, Anatomy
+from openpype.client.entities import (
+    match_subset_id,
+    get_representation_by_task,
+    get_last_version_by_subset_id,
+    get_asset_by_name,
+)
 
 from . import pipeline
 
@@ -315,3 +322,76 @@ def maintained_time():
         yield
     finally:
         bpy.context.scene.frame_current = current_time
+
+
+def download_last_workfile() -> str:
+    """Download last workfile and return its path.
+
+    Returns:
+        str: Path to last workfile.
+    """
+    from openpype.modules.sync_server.sync_server import (
+        get_last_published_workfile_path,
+        download_last_published_workfile,
+    )
+
+    session = legacy_io.Session
+    project_name = session.get("AVALON_PROJECT")
+    task_name = session.get("AVALON_TASK")
+    asset_name = session.get("AVALON_ASSET")
+    anatomy = Anatomy(project_name)
+    asset_doc = get_asset_by_name(
+        project_name,
+        session.get("AVALON_ASSET"),
+    )
+
+    # Get subset id
+    subset_id = match_subset_id(
+        project_name, task_name, "workfile", asset_doc
+    )
+    if subset_id is None:
+        print(
+            f"Not any matched subset for task '{task_name}'"
+            f" of '{asset_name}'"
+        )
+        return
+
+    # Get workfile representation
+    last_version_doc = get_last_version_by_subset_id(
+        project_name, subset_id, fields=["_id", "name"]
+    )
+    if not last_version_doc:
+        print("Subset does not have any version")
+        return
+
+    workfile_representation = get_representation_by_task(
+        project_name,
+        task_name,
+        last_version_doc,
+    )
+    if not workfile_representation:
+        print(
+            "No published workfile for task "
+            f"'{task_name}' and host blender"
+        )
+        return
+
+    # Download last published workfile and return its path
+    return download_last_published_workfile(
+        "blender",
+        project_name,
+        asset_name,
+        task_name,
+        get_last_published_workfile_path(
+            "blender",
+            project_name,
+            task_name,
+            workfile_representation,
+            anatomy=anatomy,
+        ),
+        workfile_representation,
+        subset_id,
+        last_version_doc,
+        anatomy=anatomy,
+        asset_doc=asset_doc,
+    )

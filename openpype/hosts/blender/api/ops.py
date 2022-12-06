@@ -23,14 +23,8 @@ from openpype.client.entities import (
 )
 from openpype.pipeline import legacy_io, Anatomy
 from openpype.tools.utils import host_tools
-from openpype.modules.sync_server.sync_server import (
-    get_last_published_workfile_path,
-    download_last_published_workfile,
-)
-from openpype.client.entities import (
-    get_last_version_by_subset_id,
-    get_asset_by_name,
-)
+from openpype.modules.base import ModulesManager
+from .lib import download_last_workfile
 from .workio import OpenFileCacher
 from . import pipeline
 
@@ -376,7 +370,7 @@ class SetResolution(bpy.types.Operator):
         pipeline.set_resolution(data)
         return {"FINISHED"}
 
-class DownloadLastWorkfile(bpy.types.Operator):
+class WM_OT_DownloadLastWorkfile(bpy.types.Operator):
     """Download Last Workfile."""
 
     bl_idname = "wm.download_last_workfile"
@@ -389,75 +383,28 @@ class DownloadLastWorkfile(bpy.types.Operator):
 
     def execute(self, context):
         """Execute this operator."""
-        session = legacy_io.Session
-        project_name = session.get("AVALON_PROJECT")
-        task_name = session.get("AVALON_TASK")
-        asset_name = session.get("AVALON_ASSET")
-        anatomy = Anatomy(project_name)
-        asset_doc = get_asset_by_name(
-            project_name,
-            session.get("AVALON_ASSET"),
-        )
-
-        # Get subset id
-        subset_id = match_subset_id(
-            project_name, task_name, "workfile", asset_doc
-        )
-        if subset_id is None:
-            print(
-                f"Not any matched subset for task '{task_name}'"
-                f" of '{asset_name}'"
+        # Get sync server module
+        sync_server = ModulesManager().modules_by_name.get("sync_server")
+        if not sync_server or not sync_server.enabled:
+            self.report(
+                {"WARNING"}, "Sync server module is disabled or unavailable."
             )
             return {"CANCELLED"}
-
-        # Get workfile representation
-        last_version_doc = get_last_version_by_subset_id(
-            project_name, subset_id, fields=["_id", "name"]
-        )
-        if not last_version_doc:
-            print("Subset does not have any version")
+        
+        last_workfile_path = download_last_workfile()
+        if last_workfile_path:
+            bpy.ops.wm.open_mainfile(filepath=last_workfile_path)
+            return {"FINISHED"}
+        else:
+            self.report({"ERROR"}, "Failed to download last workfile.")
             return {"CANCELLED"}
-
-        workfile_representation = get_representation_by_task(
-            project_name,
-            task_name,
-            last_version_doc,
-        )
-        if not workfile_representation:
-            print(
-                "No published workfile for task "
-                f"'{task_name}' and host blender"
-            )
-            return {"CANCELLED"}
-
-        bpy.ops.wm.open_mainfile(
-            filepath=download_last_published_workfile(
-                "blender",
-                project_name,
-                asset_name,
-                task_name,
-                get_last_published_workfile_path(
-                    "blender",
-                    project_name,
-                    task_name,
-                    workfile_representation,
-                    anatomy=anatomy,
-                ),
-                workfile_representation,
-                subset_id,
-                last_version_doc,
-                anatomy=anatomy,
-                asset_doc=asset_doc,
-            )
-        )
-        return {"FINISHED"}
 
     def invoke(self, context, event):
         """Invoke this operator."""
         return self.execute(context)
 
 
-class DrawWorkFileOutOfDateWarning(bpy.types.Operator):
+class WM_OT_DrawWorkFileOutOfDateWarning(bpy.types.Operator):
     """Display a warning message about the workfile being out of date.
     Either the user chooses to willingly proceed with their out of date
     workfile, or blender will be closed after clicking on `OK`."""
@@ -468,20 +415,22 @@ class DrawWorkFileOutOfDateWarning(bpy.types.Operator):
     action_enum: bpy.props.EnumProperty(
         name="Action Enum",
         items=(
-            ("DL", "Download last workfile", "Download last workfile"),
+            ("DOWNLOAD", "Download last workfile", "Download last workfile"),
             ("QUIT", "Quit blender", "Quit blender"),
-            ("PROC", "Proceed anyway", "Proceed anyway AT YOUR OWN RISK"),
+            ("PROCEED", "Proceed anyway", "Proceed anyway AT YOUR OWN RISK"),
         ),
     )
 
     def execute(self, context):
         """Execute this operator."""
-        if self.action_enum == "DL":
+        if self.action_enum == "DOWNLOAD":
             bpy.ops.wm.download_last_workfile("EXEC_DEFAULT")
         elif self.action_enum == "QUIT":
             bpy.ops.wm.quit_blender()
-        elif self.action_enum != "PROC":
-            print("Undefined enum value error")
+        elif self.action_enum != "PROCEED":
+            self.report(
+                {"ERROR"}, "Undefined enum value error"
+            )
             return {"CANCELLED"}
         return {"FINISHED"}
 
@@ -549,7 +498,7 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         layout.operator(LaunchWorkFiles.bl_idname, text="Work Files...")
         # TODO (jasper): maybe add 'Reload Pipeline', 'Reset Frame Range' and
         #                'Reset Resolution'?
-        layout.operator(DownloadLastWorkfile.bl_idname, text="Update Workfile")
+        layout.operator(WM_OT_DownloadLastWorkfile.bl_idname, text="Update Workfile")
 
 
 def draw_avalon_menu(self, context):
@@ -573,8 +522,8 @@ classes = [
     LaunchWorkFiles,
     SetFrameRange,
     SetResolution,
-    DownloadLastWorkfile,
-    DrawWorkFileOutOfDateWarning,
+    WM_OT_DownloadLastWorkfile,
+    WM_OT_DrawWorkFileOutOfDateWarning,
     TOPBAR_MT_avalon,
 ]
 
