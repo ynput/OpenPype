@@ -519,9 +519,7 @@ def get_subset_families(project_name, subset_ids=None):
     return set()
 
 
-def match_subset_id(
-    project_name: str, task_name: str, family: str, asset_doc: dict
-) -> str:
+def match_subset_id(project_name, task_name, family, asset_doc):
     """Match subset ID for given project, task and family.
 
     Args:
@@ -1080,9 +1078,7 @@ def get_representation_by_name(
     return conn.find_one(query_filter, _prepare_fields(fields))
 
 
-def get_representation_by_task(
-    project_name: str, task_name: str, version_doc: dict
-) -> str:
+def get_representation_by_task(project_name, task_name, version_doc):
     """Return representation for given project and task, and version.
 
     Args:
