@@ -18,4 +18,5 @@ class CreatePointCache(plugin.MaxCreator):
             instance_data,
             pre_create_data)  # type: CreatedInstance
 
-        instance_node = rt.getNodeByName(instance.get("instance_node"))
+        # for additional work on the node:
+        # instance_node = rt.getNodeByName(instance.get("instance_node"))

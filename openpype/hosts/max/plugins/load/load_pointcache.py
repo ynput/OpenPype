@@ -6,8 +6,7 @@ Because of limited api, alembics can be only loaded, but not easily updated.
 """
 import os
 from openpype.pipeline import (
-    load,
-    get_representation_path,
+    load
 )
 
 
