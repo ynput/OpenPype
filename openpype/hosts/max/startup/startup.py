@@ -4,4 +4,3 @@ from openpype.pipeline import install_host
 
 host = MaxHost()
 install_host(host)
-

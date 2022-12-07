@@ -4,7 +4,7 @@ import os
 import pyblish.api
 
 from pymxs import runtime as rt
-from openpype.pipeline import legacy_io, KnownPublishError
+from openpype.pipeline import legacy_io
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):

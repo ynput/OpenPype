@@ -6,7 +6,7 @@ from .pipeline import (
 )
 
 
-from .lib import(
+from .lib import (
     maintained_selection,
     lsattr,
     get_all_children

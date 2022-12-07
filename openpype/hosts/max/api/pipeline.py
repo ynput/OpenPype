@@ -15,11 +15,7 @@ from openpype.pipeline import (
 from openpype.hosts.max.api.menu import OpenPypeMenu
 from openpype.hosts.max.api import lib
 from openpype.hosts.max import MAX_HOST_DIR
-from openpype.pipeline.load import any_outdated_containers
-from openpype.lib import (
-    register_event_callback,
-    emit_event,
-)
+
 from pymxs import runtime as rt  # noqa
 
 log = logging.getLogger("openpype.hosts.max")
