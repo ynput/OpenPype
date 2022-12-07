@@ -16,7 +16,10 @@ from openpype.client import (
     get_representations,
     get_representation_by_id,
 )
-from openpype.client.entities import get_hero_version_by_subset_id, get_representation_parents
+from openpype.client.entities import (
+    get_hero_version_by_subset_id,
+    get_representation_parents,
+)
 from openpype.modules import OpenPypeModule, ITrayModule
 from openpype.settings import (
     get_project_settings,
@@ -1815,7 +1818,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             representation_ids.extend(
                 [repre["_id"] for repre in representations]
             )
-        
+
         query = {"_id": {"$in": representation_ids}}
 
         self.connection.database[project_name].update_many(
