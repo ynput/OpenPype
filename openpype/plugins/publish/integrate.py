@@ -769,7 +769,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             "time": context.data["time"],
             "author": context.data["user"],
             "source": source,
-            "comment": context.data.get("comment"),
+            "comment": instance.data["comment"],
             "machine": context.data.get("machine"),
             "fps": instance.data.get("fps", context.data.get("fps"))
         }
