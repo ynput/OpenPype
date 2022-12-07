@@ -159,13 +159,16 @@ class RenderSettings(object):
 
         redshift_aovs = redshift_render_presets["aov_list"]
         for rs_aov in redshift_aovs:
-            rs_renderlayer = rs_aov.replace(" ", "")
-            rs_layername = "rsAov_{}".format(rs_renderlayer)
+            if " " in rs_aov:
+                rs_renderlayer = rs_aov.replace(" ", "")
+                rs_layername = "rsAov_{}".format(rs_renderlayer)
+            else:
+                rs_layername = "rsAov_{}".format(rs_aov)
             if rs_layername in all_rs_aovs:
                 continue
             cmds.rsCreateAov(type=rs_aov)
         # update the AOV list
-        mel.eval("redshiftUpdateActiveAovList;")
+        mel.eval("redshiftUpdateActiveAovList")
 
         additional_options = redshift_render_presets["additional_options"]
         ext = redshift_render_presets["image_format"]
@@ -205,7 +208,8 @@ class RenderSettings(object):
         for renderlayer in vray_aovs:
             renderElement = "vrayAddRenderElement {}".format(renderlayer)
             RE_name = mel.eval(renderElement)
-            if RE_name.endswith("1"):       # if there is more than one same render element
+            # if there is more than one same render element
+            if RE_name.endswith("1"):
                 cmds.delete(RE_name)
         # Set aov separator
         # First we need to explicitly set the UI items in Render Settings
