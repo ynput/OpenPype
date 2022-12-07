@@ -54,8 +54,8 @@
             "path": "{@folder}/{@file}"
         },
         "source": {
-            "folder": "{originalBasename}<.{@frame}><_{udim}>.{ext}",
-            "file": "{originalDirname}",
+            "folder": "{root[work]}/{originalDirname}",
+            "file": "{originalBasename}<.{@frame}><_{udim}>.{ext}",
             "path": "{@folder}/{@file}"
         },
         "__dynamic_keys_labels__": {
