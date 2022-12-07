@@ -16,6 +16,7 @@ from openpype.client import (
     get_representations,
     get_representation_by_id,
 )
+from openpype.client.entities import get_hero_version_by_subset_id, get_representation_parents
 from openpype.modules import OpenPypeModule, ITrayModule
 from openpype.settings import (
     get_project_settings,
@@ -1792,11 +1793,32 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
             Used for refactoring ugly reset_provider_for_file
         """
-        query = {
-            "_id": ObjectId(representation_id)
-        }
+        representation_ids = [ObjectId(representation_id)]
 
-        self.connection.database[project_name].update_one(
+        # Add hero version
+        representation = get_representation_by_id(
+            project_name, representation_id
+        )
+        representation_parents = get_representation_parents(
+            project_name, representation
+        )
+        hero_version = get_hero_version_by_subset_id(
+            project_name, representation_parents[1]["_id"], fields=["_id"]
+        )
+        if hero_version:
+            representations = get_representations(
+                project_name,
+                version_ids=[hero_version["_id"]],
+                fields=["_id"],
+                context_filters={"ext": [representation["context"]["ext"]]},
+            )
+            representation_ids.extend(
+                [repre["_id"] for repre in representations]
+            )
+        
+        query = {"_id": {"$in": representation_ids}}
+
+        self.connection.database[project_name].update_many(
             query,
             update,
             upsert=True,
