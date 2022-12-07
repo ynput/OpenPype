@@ -1106,17 +1106,21 @@ class RootItem(FormatObject):
         result = False
         output = str(path)
 
-        root_paths = list(self.cleaned_data.values())
         mod_path = self.clean_path(path)
-        for root_path in root_paths:
+        for root_os, root_path in self.cleaned_data.items():
             # Skip empty paths
             if not root_path:
                 continue
 
-            if mod_path.startswith(root_path):
+            _mod_path = mod_path  # reset to original cleaned value
+            if root_os == "windows":
+                root_path = root_path.lower()
+                _mod_path = _mod_path.lower()
+
+            if _mod_path.startswith(root_path):
                 result = True
                 replacement = "{" + self.full_key() + "}"
-                output = replacement + mod_path[len(root_path):]
+                output = replacement + _mod_path[len(root_path):]
                 break
 
         return (result, output)
@@ -1206,6 +1210,7 @@ class Roots:
         Raises:
             ValueError: When roots are not entered and can't be loaded.
         """
+        print("!roots::{}".format(roots))
         if roots is None:
             log.debug(
                 "Looking for matching root in path \"{}\".".format(path)
@@ -1216,10 +1221,12 @@ class Roots:
             raise ValueError("Roots are not set. Can't find path.")
 
         if isinstance(roots, RootItem):
+            print("here")
             return roots.find_root_template_from_path(path)
 
         for root_name, _root in roots.items():
-            success, result = self.find_root_template_from_path(path, _root)
+            print("root::{}".format(_root))
+            success, result = self.find_root_template_from_path(path.lower(), _root)
             if success:
                 log.info("Found match in root \"{}\".".format(root_name))
                 return success, result
