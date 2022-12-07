@@ -584,7 +584,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         original_directory = (
             instance.data.get("originalDirname") or instance_stagingdir)
         _rootless = self.get_rootless_path(anatomy, original_directory)
-        without_root = _rootless[_rootless.rfind('}')+2:]
+        relative_path_start = _rootless.rfind('}') + 2
+        without_root = _rootless[relative_path_start:]
         template_data["originalDirname"] = without_root
 
         is_sequence_representation = isinstance(files, (list, tuple))
@@ -923,8 +924,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         path = self.get_rootless_path(anatomy, file_path)
         if not path:
             raise KnownPublishError((
-                    "Destination path {} ".format(file_path) +
-                    "must be in project dir"
+                "Destination path {} ".format(file_path) +
+                "must be in project dir"
             ))
 
     def _are_paths_same(self, src, dst):
