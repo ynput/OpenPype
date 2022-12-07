@@ -129,7 +129,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "mvUsd",
                 "mvUsdComposition",
                 "mvUsdOverride",
-                "simpleUnrealTexture"
+                "simpleUnrealTexture",
+                "online"
                 ]
 
     default_template_name = "publish"
@@ -418,6 +419,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         subset_group = instance.data.get("subsetGroup")
         if subset_group:
             data["subsetGroup"] = subset_group
+        elif existing_subset_doc:
+            # Preserve previous subset group if new version does not set it
+            if "subsetGroup" in existing_subset_doc.get("data", {}):
+                subset_group = existing_subset_doc["data"]["subsetGroup"]
+                data["subsetGroup"] = subset_group
 
         subset_id = None
         if existing_subset_doc:
@@ -763,7 +769,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             "time": context.data["time"],
             "author": context.data["user"],
             "source": source,
-            "comment": context.data.get("comment"),
+            "comment": instance.data["comment"],
             "machine": context.data.get("machine"),
             "fps": instance.data.get("fps", context.data.get("fps"))
         }

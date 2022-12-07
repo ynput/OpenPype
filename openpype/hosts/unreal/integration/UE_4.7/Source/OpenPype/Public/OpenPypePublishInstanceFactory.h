@@ -14,6 +14,6 @@ class OPENPYPE_API UOpenPypePublishInstanceFactory : public UFactory
 
 public:
 	UOpenPypePublishInstanceFactory(const FObjectInitializer& ObjectInitializer);
-	virtual UObject* FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn) override;
+	virtual UObject* FactoryCreateNew(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn) override;
 	virtual bool ShouldShowInNewMenu() const override;
 };

@@ -1,10 +1,10 @@
 import unreal
 
 from openpype.hosts.unreal.api import pipeline
-from openpype.hosts.unreal.api.plugin import Creator
+from openpype.pipeline import LegacyCreator
 
 
-class CreateRender(Creator):
+class CreateRender(LegacyCreator):
     """Create instance for sequence for rendering"""
 
     name = "unrealRender"

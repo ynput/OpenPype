@@ -1,6 +1,7 @@
 import os
 import pyblish.api
-import openpype.api as pype
+
+from openpype.lib import get_version_from_path
 
 
 class CollectSceneVersion(pyblish.api.ContextPlugin):
@@ -46,7 +47,7 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
         if '<shell>' in filename:
             return
 
-        version = pype.get_version_from_path(filename)
+        version = get_version_from_path(filename)
         assert version, "Cannot determine version"
 
         rootVersion = int(version)

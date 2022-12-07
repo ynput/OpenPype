@@ -298,7 +298,7 @@ class ExtractSlateFrame(publish.Extractor):
 
     def add_comment_slate_node(self, instance, node):
 
-        comment = instance.context.data.get("comment")
+        comment = instance.data["comment"]
         intent = instance.context.data.get("intent")
         if not isinstance(intent, dict):
             intent = {

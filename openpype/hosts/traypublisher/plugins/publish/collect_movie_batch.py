@@ -35,12 +35,13 @@ class CollectMovieBatch(
             "stagingDir": os.path.dirname(file_url),
             "tags": []
         }
+        instance.data["representations"].append(repre)
 
         if creator_attributes["add_review_family"]:
             repre["tags"].append("review")
             instance.data["families"].append("review")
-
-        instance.data["representations"].append(repre)
+            if not instance.data.get("thumbnailSource"):
+                instance.data["thumbnailSource"] = file_url
 
         instance.data["source"] = file_url
 

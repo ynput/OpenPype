@@ -18,15 +18,15 @@ class CollectSlackFamilies(pyblish.api.InstancePlugin):
     profiles = None
 
     def process(self, instance):
-        task_name = legacy_io.Session.get("AVALON_TASK")
+        task_data = instance.data["anatomyData"].get("task", {})
         family = self.main_family_from_instance(instance)
         key_values = {
             "families": family,
-            "tasks": task_name,
+            "tasks": task_data.get("name"),
+            "task_types": task_data.get("type"),
             "hosts": instance.data["anatomyData"]["app"],
             "subsets": instance.data["subset"]
         }
-
         profile = filter_profiles(self.profiles, key_values,
                                   logger=self.log)
 

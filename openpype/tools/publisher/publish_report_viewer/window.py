@@ -1,11 +1,12 @@
 import os
 import json
 import six
+import uuid
+
 import appdirs
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype import style
-from openpype.lib import JSONSettingRegistry
 from openpype.resources import get_openpype_icon_filepath
 from openpype.tools import resources
 from openpype.tools.utils import (
@@ -23,38 +24,198 @@ else:
     from report_items import PublishReport
 
 
-FILEPATH_ROLE = QtCore.Qt.UserRole + 1
-MODIFIED_ROLE = QtCore.Qt.UserRole + 2
+ITEM_ID_ROLE = QtCore.Qt.UserRole + 1
 
 
-class PublisherReportRegistry(JSONSettingRegistry):
-    """Class handling storing publish report tool.
+def get_reports_dir():
+    """Root directory where publish reports are stored for next session.
 
-    Attributes:
-        vendor (str): Name used for path construction.
-        product (str): Additional name used for path construction.
-
+    Returns:
+        str: Path to directory where reports are stored.
     """
 
+    report_dir = os.path.join(
+        appdirs.user_data_dir("openpype", "pypeclub"),
+        "publish_report_viewer"
+    )
+    if not os.path.exists(report_dir):
+        os.makedirs(report_dir)
+    return report_dir
+
+
+class PublishReportItem:
+    """Report item representing one file in report directory."""
+
+    def __init__(self, content):
+        item_id = content.get("id")
+        changed = False
+        if not item_id:
+            item_id = str(uuid.uuid4())
+            changed = True
+            content["id"] = item_id
+
+        if not content.get("report_version"):
+            changed = True
+            content["report_version"] = "0.0.1"
+
+        report_path = os.path.join(get_reports_dir(), item_id)
+        file_modified = None
+        if os.path.exists(report_path):
+            file_modified = os.path.getmtime(report_path)
+        self.content = content
+        self.report_path = report_path
+        self.file_modified = file_modified
+        self._loaded_label = content.get("label")
+        self._changed = changed
+        self.publish_report = PublishReport(content)
+
+    @property
+    def version(self):
+        return self.content["report_version"]
+
+    @property
+    def id(self):
+        return self.content["id"]
+
+    def get_label(self):
+        return self.content.get("label") or "Unfilled label"
+
+    def set_label(self, label):
+        if not label:
+            self.content.pop("label", None)
+        self.content["label"] = label
+
+    label = property(get_label, set_label)
+
+    def save(self):
+        save = False
+        if (
+            self._changed
+            or self._loaded_label != self.label
+            or not os.path.exists(self.report_path)
+            or self.file_modified != os.path.getmtime(self.report_path)
+        ):
+            save = True
+
+        if not save:
+            return
+
+        with open(self.report_path, "w") as stream:
+            json.dump(self.content, stream)
+
+        self._loaded_label = self.content.get("label")
+        self._changed = False
+        self.file_modified = os.path.getmtime(self.report_path)
+
+    @classmethod
+    def from_filepath(cls, filepath):
+        if not os.path.exists(filepath):
+            return None
+
+        try:
+            with open(filepath, "r") as stream:
+                content = json.load(stream)
+
+            return cls(content)
+        except Exception:
+            return None
+
+    def remove_file(self):
+        if os.path.exists(self.report_path):
+            os.remove(self.report_path)
+
+    def update_file_content(self):
+        if not os.path.exists(self.report_path):
+            return
+
+        file_modified = os.path.getmtime(self.report_path)
+        if file_modified == self.file_modified:
+            return
+
+        with open(self.report_path, "r") as stream:
+            content = json.load(self.content, stream)
+
+        item_id = content.get("id")
+        version = content.get("report_version")
+        if not item_id:
+            item_id = str(uuid.uuid4())
+            content["id"] = item_id
+
+        if not version:
+            version = "0.0.1"
+            content["report_version"] = version
+
+        self.content = content
+        self.file_modified = file_modified
+
+
+class PublisherReportHandler:
+    """Class handling storing publish report tool."""
+
     def __init__(self):
-        self.vendor = "pypeclub"
-        self.product = "openpype"
-        name = "publish_report_viewer"
-        path = appdirs.user_data_dir(self.product, self.vendor)
-        super(PublisherReportRegistry, self).__init__(name, path)
+        self._reports = None
+        self._reports_by_id = {}
+
+    def reset(self):
+        self._reports = None
+        self._reports_by_id = {}
+
+    def list_reports(self):
+        if self._reports is not None:
+            return self._reports
+
+        reports = []
+        reports_by_id = {}
+        report_dir = get_reports_dir()
+        for filename in os.listdir(report_dir):
+            ext = os.path.splitext(filename)[-1]
+            if ext == ".json":
+                continue
+            filepath = os.path.join(report_dir, filename)
+            item = PublishReportItem.from_filepath(filepath)
+            reports.append(item)
+            reports_by_id[item.id] = item
+
+        self._reports = reports
+        self._reports_by_id = reports_by_id
+        return reports
+
+    def remove_report_items(self, item_id):
+        item = self._reports_by_id.get(item_id)
+        if item:
+            try:
+                item.remove_file()
+                self._reports_by_id.get(item_id)
+            except Exception:
+                pass
 
 
-class LoadedFilesMopdel(QtGui.QStandardItemModel):
+class LoadedFilesModel(QtGui.QStandardItemModel):
     def __init__(self, *args, **kwargs):
-        super(LoadedFilesMopdel, self).__init__(*args, **kwargs)
-        self.setColumnCount(2)
-        self._items_by_filepath = {}
-        self._reports_by_filepath = {}
+        super(LoadedFilesModel, self).__init__(*args, **kwargs)
 
-        self._registry = PublisherReportRegistry()
+        self._items_by_id = {}
+        self._report_items_by_id = {}
+
+        self._handler = PublisherReportHandler()
 
         self._loading_registry = False
-        self._load_registry()
+
+    def refresh(self):
+        self._handler.reset()
+        self._items_by_id = {}
+        self._report_items_by_id = {}
+
+        new_items = []
+        for report_item in self._handler.list_reports():
+            item = self._create_item(report_item)
+            self._report_items_by_id[report_item.id] = report_item
+            self._items_by_id[report_item.id] = item
+            new_items.append(item)
+
+        if new_items:
+            root_item = self.invisibleRootItem()
+            root_item.appendRows(new_items)
 
     def headerData(self, section, orientation, role):
         if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
@@ -63,22 +224,7 @@ class LoadedFilesMopdel(QtGui.QStandardItemModel):
             if section == 1:
                 return "Modified"
             return ""
-        super(LoadedFilesMopdel, self).headerData(section, orientation, role)
-
-    def _load_registry(self):
-        self._loading_registry = True
-        try:
-            filepaths = self._registry.get_item("filepaths")
-            self.add_filepaths(filepaths)
-        except ValueError:
-            pass
-        self._loading_registry = False
-
-    def _store_registry(self):
-        if self._loading_registry:
-            return
-        filepaths = list(self._items_by_filepath.keys())
-        self._registry.set_item("filepaths", filepaths)
+        super(LoadedFilesModel, self).headerData(section, orientation, role)
 
     def data(self, index, role=None):
         if role is None:
@@ -88,17 +234,28 @@ class LoadedFilesMopdel(QtGui.QStandardItemModel):
         if col != 0:
             index = self.index(index.row(), 0, index.parent())
 
-        if role == QtCore.Qt.ToolTipRole:
-            if col == 0:
-                role = FILEPATH_ROLE
-            elif col == 1:
-                return "File modified"
+        return super(LoadedFilesModel, self).data(index, role)
+
+    def setData(self, index, value, role):
+        if role == QtCore.Qt.EditRole:
+            item_id = index.data(ITEM_ID_ROLE)
+            report_item = self._report_items_by_id.get(item_id)
+            if report_item is not None:
+                report_item.label = value
+                report_item.save()
+                value = report_item.label
+
+        return super(LoadedFilesModel, self).setData(index, value, role)
+
+    def _create_item(self, report_item):
+        if report_item.id in self._items_by_id:
             return None
 
-        elif role == QtCore.Qt.DisplayRole:
-            if col == 1:
-                role = MODIFIED_ROLE
-        return super(LoadedFilesMopdel, self).data(index, role)
+        item = QtGui.QStandardItem(report_item.label)
+        item.setColumnCount(self.columnCount())
+        item.setData(report_item.id, ITEM_ID_ROLE)
+
+        return item
 
     def add_filepaths(self, filepaths):
         if not filepaths:
@@ -110,9 +267,6 @@ class LoadedFilesMopdel(QtGui.QStandardItemModel):
         filtered_paths = []
         for filepath in filepaths:
             normalized_path = os.path.normpath(filepath)
-            if normalized_path in self._items_by_filepath:
-                continue
-
             if (
                 os.path.exists(normalized_path)
                 and normalized_path not in filtered_paths
@@ -127,54 +281,46 @@ class LoadedFilesMopdel(QtGui.QStandardItemModel):
             try:
                 with open(normalized_path, "r") as stream:
                     data = json.load(stream)
-                report = PublishReport(data)
+                report_item = PublishReportItem(data)
             except Exception:
                 # TODO handle errors
                 continue
 
-            modified = os.path.getmtime(normalized_path)
-            item = QtGui.QStandardItem(os.path.basename(normalized_path))
-            item.setColumnCount(self.columnCount())
-            item.setData(normalized_path, FILEPATH_ROLE)
-            item.setData(modified, MODIFIED_ROLE)
+            label = data.get("label")
+            if not label:
+                report_item.label = (
+                    os.path.splitext(os.path.basename(filepath))[0]
+                )
+
+            item = self._create_item(report_item)
+            if item is None:
+                continue
+
             new_items.append(item)
-            self._items_by_filepath[normalized_path] = item
-            self._reports_by_filepath[normalized_path] = report
+            report_item.save()
+            self._items_by_id[report_item.id] = item
+            self._report_items_by_id[report_item.id] = report_item
 
-        if not new_items:
+        if new_items:
+            root_item = self.invisibleRootItem()
+            root_item.appendRows(new_items)
+
+    def remove_item_by_id(self, item_id):
+        report_item = self._report_items_by_id.get(item_id)
+        if not report_item:
             return
+
+        self._handler.remove_report_items(item_id)
+        item = self._items_by_id.get(item_id)
 
         parent = self.invisibleRootItem()
-        parent.appendRows(new_items)
+        parent.removeRow(item.row())
 
-        self._store_registry()
-
-    def remove_filepaths(self, filepaths):
-        if not filepaths:
-            return
-
-        if isinstance(filepaths, six.string_types):
-            filepaths = [filepaths]
-
-        filtered_paths = []
-        for filepath in filepaths:
-            normalized_path = os.path.normpath(filepath)
-            if normalized_path in self._items_by_filepath:
-                filtered_paths.append(normalized_path)
-
-        if not filtered_paths:
-            return
-
-        parent = self.invisibleRootItem()
-        for filepath in filtered_paths:
-            self._reports_by_filepath.pop(normalized_path)
-            item = self._items_by_filepath.pop(filepath)
-            parent.removeRow(item.row())
-
-        self._store_registry()
-
-    def get_report_by_filepath(self, filepath):
-        return self._reports_by_filepath.get(filepath)
+    def get_report_by_id(self, item_id):
+        report_item = self._report_items_by_id.get(item_id)
+        if report_item:
+            return report_item.publish_report
+        return None
 
 
 class LoadedFilesView(QtWidgets.QTreeView):
@@ -182,11 +328,13 @@ class LoadedFilesView(QtWidgets.QTreeView):
 
     def __init__(self, *args, **kwargs):
         super(LoadedFilesView, self).__init__(*args, **kwargs)
-        self.setEditTriggers(self.NoEditTriggers)
+        self.setEditTriggers(
+            self.EditKeyPressed | self.SelectedClicked | self.DoubleClicked
+        )
         self.setIndentation(0)
         self.setAlternatingRowColors(True)
 
-        model = LoadedFilesMopdel()
+        model = LoadedFilesModel()
         self.setModel(model)
 
         time_delegate = PrettyTimeDelegate()
@@ -219,6 +367,7 @@ class LoadedFilesView(QtWidgets.QTreeView):
     def _on_rows_inserted(self):
         header = self.header()
         header.resizeSections(header.ResizeToContents)
+        self._update_remove_btn()
 
     def resizeEvent(self, event):
         super(LoadedFilesView, self).resizeEvent(event)
@@ -226,9 +375,10 @@ class LoadedFilesView(QtWidgets.QTreeView):
 
     def showEvent(self, event):
         super(LoadedFilesView, self).showEvent(event)
-        self._update_remove_btn()
+        self._model.refresh()
         header = self.header()
         header.resizeSections(header.ResizeToContents)
+        self._update_remove_btn()
 
     def _on_selection_change(self):
         self.selection_changed.emit()
@@ -237,14 +387,14 @@ class LoadedFilesView(QtWidgets.QTreeView):
         self._model.add_filepaths(filepaths)
         self._fill_selection()
 
-    def remove_filepaths(self, filepaths):
-        self._model.remove_filepaths(filepaths)
+    def remove_item_by_id(self, item_id):
+        self._model.remove_item_by_id(item_id)
         self._fill_selection()
 
     def _on_remove_clicked(self):
         index = self.currentIndex()
-        filepath = index.data(FILEPATH_ROLE)
-        self.remove_filepaths(filepath)
+        item_id = index.data(ITEM_ID_ROLE)
+        self.remove_item_by_id(item_id)
 
     def _fill_selection(self):
         index = self.currentIndex()
@@ -257,8 +407,8 @@ class LoadedFilesView(QtWidgets.QTreeView):
 
     def get_current_report(self):
         index = self.currentIndex()
-        filepath = index.data(FILEPATH_ROLE)
-        return self._model.get_report_by_filepath(filepath)
+        item_id = index.data(ITEM_ID_ROLE)
+        return self._model.get_report_by_id(item_id)
 
 
 class LoadedFilesWidget(QtWidgets.QWidget):
