@@ -150,12 +150,22 @@ class RenderSettings(object):
         redshift_render_presets = render_settings["redshift_renderer"]
 
         remove_aovs = render_settings["remove_aovs"]
+        all_rs_aovs = cmds.ls(type='RedshiftAOV')
         if remove_aovs:
-            aovs = cmds.ls(type='RedshiftAOV')
-            for aov in aovs:
+            for aov in all_rs_aovs:
                 enabled = cmds.getAttr("{}.enabled".format(aov))
                 if enabled:
                     cmds.delete(aov)
+
+        redshift_aovs = redshift_render_presets["aov_list"]
+        for rs_aov in redshift_aovs:
+            rs_renderlayer = rs_aov.replace(" ", "")
+            rs_layername = "rsAov_{}".format(rs_renderlayer)
+            if rs_layername in all_rs_aovs:
+                continue
+            cmds.rsCreateAov(type=rs_aov)
+        # update the AOV list
+        mel.eval("redshiftUpdateActiveAovList;")
 
         additional_options = redshift_render_presets["additional_options"]
         ext = redshift_render_presets["image_format"]
@@ -177,19 +187,26 @@ class RenderSettings(object):
         vray_render_presets = render_settings["vray_renderer"]
         # vrayRenderElement
         remove_aovs = render_settings["remove_aovs"]
+        all_vray_aovs = cmds.ls(type='VRayRenderElement')
+        lightSelect_aovs = cmds.ls(type='VRayRenderElementSet')
         if remove_aovs:
-            aovs = cmds.ls(type='VRayRenderElement')
-            for aov in aovs:
+            for aov in all_vray_aovs:
                 # remove all aovs except LightSelect
                 enabled = cmds.getAttr("{}.enabled".format(aov))
                 if enabled:
                     cmds.delete(aov)
             # remove LightSelect
-            lightSelect_aovs = cmds.ls(type='VRayRenderElementSet')
             for light_aovs in lightSelect_aovs:
                 light_enabled = cmds.getAttr("{}.enabled".format(light_aovs))
                 if light_enabled:
                     cmds.delete(lightSelect_aovs)
+
+        vray_aovs = vray_render_presets["aov_list"]
+        for renderlayer in vray_aovs:
+            renderElement = "vrayAddRenderElement {}".format(renderlayer)
+            RE_name = mel.eval(renderElement)
+            if RE_name.endswith("1"):       # if there is more than one same render element
+                cmds.delete(RE_name)
         # Set aov separator
         # First we need to explicitly set the UI items in Render Settings
         # because that is also what V-Ray updates to when that Render Settings
