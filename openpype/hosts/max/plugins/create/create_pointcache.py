@@ -11,9 +11,9 @@ class CreatePointCache(plugin.MaxCreator):
     icon = "gear"
 
     def create(self, subset_name, instance_data, pre_create_data):
-        from pymxs import runtime as rt
+        # from pymxs import runtime as rt
 
-        instance = super(CreatePointCache, self).create(
+        _ = super(CreatePointCache, self).create(
             subset_name,
             instance_data,
             pre_create_data)  # type: CreatedInstance
