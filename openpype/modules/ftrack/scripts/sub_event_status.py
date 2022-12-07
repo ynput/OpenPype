@@ -7,6 +7,8 @@ import signal
 import socket
 import datetime
 
+import appdirs
+
 import ftrack_api
 from openpype_modules.ftrack.ftrack_server.ftrack_server import FtrackServer
 from openpype_modules.ftrack.ftrack_server.lib import (
@@ -253,6 +255,15 @@ class StatusFactory:
                 )
             })
 
+        items.append({
+            "type": "label",
+            "value": (
+                "Local versions dir: {}<br/>Version repository path: {}"
+            ).format(
+                appdirs.user_data_dir("openpype", "pypeclub"),
+                os.environ.get("OPENPYPE_PATH")
+            )
+        })
         items.append({"type": "label", "value": "---"})
 
         return items

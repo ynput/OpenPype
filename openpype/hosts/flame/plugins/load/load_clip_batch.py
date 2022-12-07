@@ -1,3 +1,4 @@
+from copy import deepcopy
 import os
 import flame
 from pprint import pformat
@@ -22,7 +23,7 @@ class LoadClipBatch(opfapi.ClipLoader):
 
     # settings
     reel_name = "OP_LoadedReel"
-    clip_name_template = "{asset}_{subset}<_{output}>"
+    clip_name_template = "{batch}_{asset}_{subset}<_{output}>"
 
     def load(self, context, name, namespace, options):
 
@@ -34,19 +35,22 @@ class LoadClipBatch(opfapi.ClipLoader):
         version = context['version']
         version_data = version.get("data", {})
         version_name = version.get("name", None)
-        colorspace = version_data.get("colorspace", None)
+        colorspace = self.get_colorspace(context)
 
         # in case output is not in context replace key to representation
         if not context["representation"]["context"].get("output"):
             self.clip_name_template.replace("output", "representation")
 
-        clip_name = StringTemplate(self.clip_name_template).format(
-            context["representation"]["context"])
+        formating_data = deepcopy(context["representation"]["context"])
+        formating_data["batch"] = self.batch.name.get_value()
 
-        # TODO: settings in imageio
+        clip_name = StringTemplate(self.clip_name_template).format(
+            formating_data)
+
         # convert colorspace with ocio to flame mapping
         # in imageio flame section
-        colorspace = colorspace
+        colorspace = self.get_native_colorspace(colorspace)
+        self.log.info("Loading with colorspace: `{}`".format(colorspace))
 
         # create workfile path
         workfile_dir = options.get("workdir") or os.environ["AVALON_WORKDIR"]
@@ -56,6 +60,7 @@ class LoadClipBatch(opfapi.ClipLoader):
         openclip_path = os.path.join(
             openclip_dir, clip_name + ".clip"
         )
+
         if not os.path.exists(openclip_dir):
             os.makedirs(openclip_dir)
 
