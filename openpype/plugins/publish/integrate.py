@@ -554,17 +554,13 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         # optionals
         # retrieve additional anatomy data from representation if exists
-        if not instance.data.get("originalDirname"):
-            instance.data["originalDirname"] = stagingdir
-
         for key, anatomy_key in {
             # Representation Key: Anatomy data key
             "resolutionWidth": "resolution_width",
             "resolutionHeight": "resolution_height",
             "fps": "fps",
             "outputName": "output",
-            "originalBasename": "originalBasename",
-            "originalDirname": "originalDirname"
+            "originalBasename": "originalBasename"
         }.items():
             # Allow to take value from representation
             # if not found also consider instance.data
@@ -581,6 +577,14 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         template = os.path.normpath(publish_template_category["path"])
 
         is_udim = bool(repre.get("udim"))
+
+        # store as originalDirname only original value without project root
+        # if instance collected originalDirname it should be used for all repre
+        # useful to storing transient items, eg. thumbnails, from temp to final
+        original_directory = instance.data.get("originalDirname") or stagingdir
+        _rootless = self.get_rootless_path(anatomy, original_directory)
+        without_root = _rootless[_rootless.rfind('}')+2:]
+        template_data["originalDirname"] = without_root
 
         is_sequence_representation = isinstance(files, (list, tuple))
         if is_sequence_representation:
@@ -685,8 +689,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 raise KnownPublishError(
                     "This is a bug. Representation file name is full path"
                 )
-            if not template_data.get("originalBasename"):
-                template_data["originalBasename"] = fname
+            template_data["originalBasename"] = fname
             # Manage anatomy template data
             template_data.pop("frame", None)
             if is_udim:
@@ -917,8 +920,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         Raises
             (KnownPublishError)
         """
-        found, _ = anatomy.find_root_template_from_path(file_path)
-        if not found:
+        path = self.get_rootless_path(anatomy, file_path)
+        if not path:
             raise KnownPublishError((
                     "Destination path {} ".format(file_path) +
                     "must be in project dir"
