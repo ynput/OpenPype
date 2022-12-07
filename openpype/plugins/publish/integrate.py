@@ -581,7 +581,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # store as originalDirname only original value without project root
         # if instance collected originalDirname it should be used for all repre
         # useful to storing transient items, eg. thumbnails, from temp to final
-        original_directory = instance.data.get("originalDirname") or stagingdir
+        original_directory = (
+            instance.data.get("originalDirname") or instance_stagingdir)
         _rootless = self.get_rootless_path(anatomy, original_directory)
         without_root = _rootless[_rootless.rfind('}')+2:]
         template_data["originalDirname"] = without_root
@@ -694,7 +695,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             template_data.pop("frame", None)
             if is_udim:
                 template_data["udim"] = repre["udim"][0]
-
             # Construct destination filepath from template
             anatomy_filled = anatomy.format(template_data)
             template_filled = anatomy_filled[template_name]["path"]
