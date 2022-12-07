@@ -293,11 +293,10 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 instance)
 
             for src, dst in prepared["transfers"]:
-                if self._are_paths_same(src, dst):
-                    continue
+                self._validate_path_in_project_roots(anatomy.all_root_paths(),
+                                                     dst)
 
-                if not self._is_path_in_project_roots(anatomy.all_root_paths(),
-                                                      dst):
+                if self._are_paths_same(src, dst):
                     continue
 
                 # todo: add support for hardlink transfers
@@ -317,10 +316,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         ]
         for files_type, copy_mode in zip(*file_copy_modes):  # unpack
             for src, dst in instance.data.get(files_type, []):
+                self._validate_path_in_project_roots(anatomy.all_root_paths(),
+                                                     dst)
                 if self._are_paths_same(src, dst):
-                    continue
-                if not self._is_path_in_project_roots(anatomy.all_root_paths(),
-                                                      dst):
                     continue
                 file_transactions.add(src, dst, mode=copy_mode)
                 resource_destinations.add(os.path.abspath(dst))
@@ -910,7 +908,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             "sites": sites
         }
 
-    def _is_path_in_project_roots(self, roots, file_path):
+    def _validate_path_in_project_roots(self, roots, file_path):
         """Checks if 'file_path' starts with any of the roots.
 
         Used to check that published path belongs to project, eg. we are not
@@ -918,17 +916,17 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         Args:
             roots (list of RootItem): {ROOT_NAME: ROOT_PATH}
             file_path (str)
-        Returns:
-            (bool)
+        Raises
+            (KnownPublishError)
         """
         file_path = str(file_path).replace("\\", "/").lower()
         for root_item in roots:
             if file_path.startswith(root_item.lower()):
                 return True
-        self.log.warning(
-            "Destination '{}' is not in project folder. Skipping"
-            .format(file_path))
-        return False
+        raise KnownPublishError((
+                "Destination path {} ".format(file_path) +
+                "must be in project dir"
+        ))
 
     def _are_paths_same(self, src, dst):
         src = str(src).replace("\\", "/").lower()
