@@ -293,8 +293,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 instance)
 
             for src, dst in prepared["transfers"]:
-                self._validate_path_in_project_roots(anatomy.all_root_paths(),
-                                                     dst)
+                self._validate_path_in_project_roots(anatomy, dst)
 
                 if self._are_paths_same(src, dst):
                     continue
@@ -316,8 +315,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         ]
         for files_type, copy_mode in file_copy_modes:
             for src, dst in instance.data.get(files_type, []):
-                self._validate_path_in_project_roots(anatomy.all_root_paths(),
-                                                     dst)
+                self._validate_path_in_project_roots(anatomy, dst)
                 if self._are_paths_same(src, dst):
                     continue
                 file_transactions.add(src, dst, mode=copy_mode)
@@ -908,25 +906,23 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             "sites": sites
         }
 
-    def _validate_path_in_project_roots(self, roots, file_path):
+    def _validate_path_in_project_roots(self, anatomy, file_path):
         """Checks if 'file_path' starts with any of the roots.
 
         Used to check that published path belongs to project, eg. we are not
         trying to publish to local only folder.
         Args:
-            roots (list of RootItem): {ROOT_NAME: ROOT_PATH}
+            anatomy (Anatomy)
             file_path (str)
         Raises
             (KnownPublishError)
         """
-        file_path = str(file_path).replace("\\", "/").lower()
-        for root_item in roots:
-            if file_path.startswith(root_item.lower()):
-                return True
-        raise KnownPublishError((
-                "Destination path {} ".format(file_path) +
-                "must be in project dir"
-        ))
+        found, _ = anatomy.find_root_template_from_path(file_path)
+        if not found:
+            raise KnownPublishError((
+                    "Destination path {} ".format(file_path) +
+                    "must be in project dir"
+            ))
 
     def _are_paths_same(self, src, dst):
         src = str(src).replace("\\", "/").lower()
