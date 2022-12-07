@@ -314,7 +314,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             ("transfers", FileTransaction.MODE_COPY),
             ("hardlinks", FileTransaction.MODE_HARDLINK)
         ]
-        for files_type, copy_mode in zip(*file_copy_modes):  # unpack
+        for files_type, copy_mode in file_copy_modes:
             for src, dst in instance.data.get(files_type, []):
                 self._validate_path_in_project_roots(anatomy.all_root_paths(),
                                                      dst)
