@@ -1,3 +1,5 @@
+import os
+
 from maya import cmds
 
 import pyblish.api
@@ -62,7 +64,11 @@ class CollectRenderLayerAOVS(pyblish.api.InstancePlugin):
                 continue
 
             pass_name = self.get_pass_name(renderer, element)
-            render_pass = "%s.%s" % (instance.data["subset"], pass_name)
+            render_pass = "render{}{}_{}".format(
+                os.environ["AVALON_TASK"].title(),
+                instance.data["subset"].title(),
+                pass_name
+            )
 
             result.append(render_pass)
 
