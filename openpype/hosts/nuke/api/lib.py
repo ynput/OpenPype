@@ -2961,7 +2961,7 @@ def get_viewer_config_from_string(input_string):
         viewer = split[1]
         display = split[0]
     elif "(" in viewer:
-        pattern = r"([\w\d\s]+).*[(](.*)[)]"
+        pattern = r"([\w\d\s\.\-]+).*[(](.*)[)]"
         result = re.findall(pattern, viewer)
         try:
             result = result.pop()

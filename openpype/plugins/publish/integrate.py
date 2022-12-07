@@ -297,7 +297,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
                 if self._are_paths_same(src, dst):
                     continue
-
                 # todo: add support for hardlink transfers
                 file_transactions.add(src, dst)
 
