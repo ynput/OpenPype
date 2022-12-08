@@ -60,7 +60,7 @@ class UAssetLoader(plugin.Loader):
             Path(unreal.Paths.project_content_dir()).as_posix(),
             1)
 
-        shutil.copy(self.fname, destination_path)
+        shutil.copy(self.fname, f"{destination_path}/{name}.uasset")
 
         # Create Asset Container
         unreal_pipeline.create_container(
@@ -89,3 +89,57 @@ class UAssetLoader(plugin.Loader):
             unreal.EditorAssetLibrary.save_asset(a)
 
         return asset_content
+
+    def update(self, container, representation):
+        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+
+        asset_dir = container["namespace"]
+        name = representation["context"]["subset"]
+
+        destination_path = asset_dir.replace(
+            "/Game",
+            Path(unreal.Paths.project_content_dir()).as_posix(),
+            1)
+
+        asset_content = unreal.EditorAssetLibrary.list_assets(
+            asset_dir, recursive=False, include_folder=True
+        )
+
+        for asset in asset_content:
+            obj = ar.get_asset_by_object_path(asset).get_asset()
+            if not obj.get_class().get_name() == 'AssetContainer':
+                unreal.EditorAssetLibrary.delete_asset(asset)
+
+        update_filepath = get_representation_path(representation)
+
+        shutil.copy(update_filepath, f"{destination_path}/{name}.uasset")
+
+        container_path = "{}/{}".format(container["namespace"],
+                                        container["objectName"])
+        # update metadata
+        unreal_pipeline.imprint(
+            container_path,
+            {
+                "representation": str(representation["_id"]),
+                "parent": str(representation["parent"])
+            })
+
+        asset_content = unreal.EditorAssetLibrary.list_assets(
+            asset_dir, recursive=True, include_folder=True
+        )
+
+        for a in asset_content:
+            unreal.EditorAssetLibrary.save_asset(a)
+
+    def remove(self, container):
+        path = container["namespace"]
+        parent_path = Path(path).parent.as_posix()
+
+        unreal.EditorAssetLibrary.delete_directory(path)
+
+        asset_content = unreal.EditorAssetLibrary.list_assets(
+            parent_path, recursive=False
+        )
+
+        if len(asset_content) == 0:
+            unreal.EditorAssetLibrary.delete_directory(parent_path)
