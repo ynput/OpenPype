@@ -8,6 +8,14 @@ from .mongodb import (
 )
 from .anatomy import Anatomy
 
+from .colorspace import (
+    get_colorspace_from_path,
+    get_project_config,
+    get_project_file_rules,
+    validate_colorspace_in_config,
+    validate_config_from_path
+)
+
 from .create import (
     BaseCreator,
     Creator,
@@ -100,6 +108,13 @@ __all__ = (
 
     # --- Anatomy ---
     "Anatomy",
+
+    # --- Colorspace ---
+    "get_colorspace_from_path",
+    "get_project_config",
+    "get_project_file_rules",
+    "validate_colorspace_in_config",
+    "validate_config_from_path",
 
     # --- Create ---
     "BaseCreator",
