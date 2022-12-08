@@ -63,6 +63,27 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "collect_comment_per_instance",
+            "label": "Collect comment per instance",
+            "checkbox_key": "enabled",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "key": "families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "checkbox_key": "enabled",
             "key": "ValidateEditorialAssetName",
             "label": "Validate Editorial Asset Name",
