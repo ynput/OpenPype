@@ -41,15 +41,26 @@ def get_colorspace_from_path(
 
     # validate matching colorspace with config
     if validate and config_path:
-        try:
-            config = ocio.Config().CreateFromFile(config_path)
-        except ocio.Exception:
-            raise ocio.ExceptionMissingFile(
-                "Missing ocio config file at: {}".format(config_path))
-        if not config.getColorSpace(colorspace_name):
-            raise ocio.Exception(
-                "Missing colorspace '{}' in config file '{}'".format(
-                    colorspace_name, config_path))
+        config_obj = validate_config_from_path(config_path)
+        validate_colorspace_in_config(config_obj, colorspace_name)
+
+
+def validate_colorspace_in_config(config_obj, colorspace_name):
+    if not config_obj.getColorSpace(colorspace_name):
+        raise ocio.Exception(
+            "Missing colorspace '{}' in config file '{}'".format(
+                colorspace_name, config_obj.getWorkingDir())
+        )
+
+
+def validate_config_from_path(config_path):
+    try:
+        config_obj = ocio.Config().CreateFromFile(config_path)
+    except ocio.Exception:
+        raise ocio.ExceptionMissingFile(
+            "Missing ocio config file at: {}".format(config_path))
+
+    return config_obj
 
 
 def get_project_config(project_name, host):
