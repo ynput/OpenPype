@@ -6,6 +6,7 @@ from tests.lib.testing_classes import (
     HostFixtures,
     PublishTest,
     DeadlinePublishTest
+
 )
 
 
@@ -49,3 +50,4 @@ class AELocalPublishTestClass(AEHostFixtures, PublishTest):
 
 class AEDeadlinePublishTestClass(AEHostFixtures, DeadlinePublishTest):
     """Testing class for Deadline publishes."""
+
