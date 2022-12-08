@@ -107,9 +107,6 @@ class RestApiResponse(object):
         self.content = content
         self.headers = headers or {}
 
-    def __getattr__(self, attr):
-        return getattr(self._response, attr)
-
     @property
     def content_type(self):
         return self.headers.get("Content-Type")
