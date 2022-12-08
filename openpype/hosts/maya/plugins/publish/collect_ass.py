@@ -1,5 +1,3 @@
-import re
-
 from maya import cmds
 from openpype.pipeline.publish import KnownPublishError
 
@@ -32,9 +30,6 @@ class CollectAssData(pyblish.api.InstancePlugin):
                     raise KnownPublishError(msg)
                 instance.data['proxy'] = members
                 self.log.debug('proxy members: {}'.format(members))
-
-        group = re.compile(r" \[.*\]")
-        instance.data["label"] = group.sub("", instance.data["label"])
 
         # Use camera in object set if present else default to render globals
         # camera.
