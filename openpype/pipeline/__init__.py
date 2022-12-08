@@ -9,11 +9,11 @@ from .mongodb import (
 from .anatomy import Anatomy
 
 from .colorspace import (
-    get_colorspace_from_path,
-    get_project_config,
-    get_project_file_rules,
-    validate_colorspace_in_config,
-    validate_config_from_path
+    get_imagio_colorspace_from_filepath,
+    get_imageio_config,
+    get_imageio_file_rules,
+    validate_imageio_colorspace_in_config,
+    validate_imageio_config_from_path
 )
 
 from .create import (
@@ -110,11 +110,11 @@ __all__ = (
     "Anatomy",
 
     # --- Colorspace ---
-    "get_colorspace_from_path",
-    "get_project_config",
-    "get_project_file_rules",
-    "validate_colorspace_in_config",
-    "validate_config_from_path",
+    "get_imagio_colorspace_from_filepath",
+    "get_imageio_config",
+    "get_imageio_file_rules",
+    "validate_imageio_colorspace_in_config",
+    "validate_imageio_config_from_path",
 
     # --- Create ---
     "BaseCreator",

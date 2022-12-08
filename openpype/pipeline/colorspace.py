@@ -9,14 +9,14 @@ log = Logger.get_logger(__name__)
 IMAGEIO_SETTINGS = {}
 
 
-def get_colorspace_from_path(
+def get_imagio_colorspace_from_filepath(
     path, host=None, project_name=None, validate=True
 ):
     project_name = project_name or legacy_io.Session["AVALON_PROJECT"],
     host = host or legacy_io.Session["AVALON_APP"]
 
-    config_path = get_project_config(project_name, host)
-    file_rules = get_project_file_rules(project_name, host)
+    config_path = get_imageio_config(project_name, host)
+    file_rules = get_imageio_file_rules(project_name, host)
 
     # match file rule from path
     colorspace_name = None
@@ -41,11 +41,11 @@ def get_colorspace_from_path(
 
     # validate matching colorspace with config
     if validate and config_path:
-        config_obj = validate_config_from_path(config_path)
-        validate_colorspace_in_config(config_obj, colorspace_name)
+        config_obj = validate_imageio_config_from_path(config_path)
+        validate_imageio_colorspace_in_config(config_obj, colorspace_name)
 
 
-def validate_colorspace_in_config(config_obj, colorspace_name):
+def validate_imageio_colorspace_in_config(config_obj, colorspace_name):
     if not config_obj.getColorSpace(colorspace_name):
         raise ocio.Exception(
             "Missing colorspace '{}' in config file '{}'".format(
@@ -53,7 +53,7 @@ def validate_colorspace_in_config(config_obj, colorspace_name):
         )
 
 
-def validate_config_from_path(config_path):
+def validate_imageio_config_from_path(config_path):
     try:
         config_obj = ocio.Config().CreateFromFile(config_path)
     except ocio.Exception:
@@ -63,7 +63,7 @@ def validate_config_from_path(config_path):
     return config_obj
 
 
-def get_project_config(project_name, host):
+def get_imageio_config(project_name, host):
     current_platform = platform.system().lower()
 
     imageio_global, imageio_host = _get_imageio_settings(project_name, host)
@@ -82,7 +82,7 @@ def get_project_config(project_name, host):
     return config_path
 
 
-def get_project_file_rules(project_name, host):
+def get_imageio_file_rules(project_name, host):
 
     imageio_global, imageio_host = _get_imageio_settings(project_name, host)
 
