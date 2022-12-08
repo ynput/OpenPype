@@ -301,7 +301,7 @@ def _discover_gui() -> Optional[Callable]:
     return None
 
 
-def is_work_file_out_of_date() -> bool:
+def check_workfile_up_to_date() -> bool:
     """Check if the current workfile is out of date.
     This is based on last modification date, so if a user modifies an out of
     date workfile, this will return `False`. Also, in case of partial publish,
