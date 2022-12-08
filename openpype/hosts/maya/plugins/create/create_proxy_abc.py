@@ -27,8 +27,6 @@ class CreateProxyAlembic(plugin.Creator):
         # Default to exporting world-space
         self.data["worldSpace"] = True
 
-        # remove the bbBox after publish
-        self.data["removeBoundingBoxAfterPublish"] = False
         # name suffix for the bounding box
         self.data["nameSuffix"] = "_BBox"
 

@@ -83,11 +83,9 @@ class ExtractProxyAlembic(publish.Extractor):
         instance.context.data["cleanupFullPaths"].append(path)
 
         self.log.info("Extracted {} to {}".format(instance, dirname))
-
-        remove_bb = instance.data.get("removeBoundingBoxAfterPublish")
-        if remove_bb:
-            bbox_master = cmds.ls("bbox_grp")
-            cmds.delete(bbox_master)
+        # remove the bounding box
+        bbox_master = cmds.ls("bbox_grp")
+        cmds.delete(bbox_master)
 
     def create_proxy_geometry(self, instance, name_suffix, start, end):
         nodes = instance[:]
@@ -103,38 +101,9 @@ class ExtractProxyAlembic(publish.Extractor):
                         bakeAnimation=True,
                         startTime=start,
                         endTime=end)
-        # select the top group
-        self.top_hierarchy_selection()
         # create master group for bounding
         # boxes as the main root
         master_group = cmds.group(name="bbox_grp")
         bbox_sel = cmds.ls(master_group, long=True)
         self.log.debug("proxy_root: {}".format(bbox_sel))
         return bbox_sel
-
-    # find the top group of the bounding box transform
-    def top_hierarchy_selection(self):
-        targets = cmds.ls(sl=True, long=True)
-        top_grp_list = []
-        for target in targets:
-            top_parent = None
-            stop = False
-
-            while not stop:
-                top_grp = cmds.listRelatives(top_parent or target,
-                                             parent=True,
-                                             path=True)
-                if top_grp is None:
-                    # the loop would be stopped
-                    # after top group found
-                    stop = True
-                else:
-                    top_parent = top_grp[0]
-
-            if top_grp:
-                self.log.debug('{} is the top group'.format(top_parent))
-                if top_parent in top_grp_list:
-                    continue
-                top_grp_list.append(top_parent)
-
-        return cmds.select(top_grp_list)
