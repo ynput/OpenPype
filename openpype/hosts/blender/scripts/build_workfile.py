@@ -16,8 +16,6 @@ from openpype.pipeline import (
     loaders_from_representation,
 )
 from openpype.pipeline.create import get_legacy_creator_by_name
-from openpype.hosts.blender.api.plugin import deselect_all
-from openpype.hosts.blender.api.ops import _process_app_events
 
 
 def load_subset(
@@ -36,11 +34,7 @@ def load_subset(
         The return of the `load_container()` function.
     """
 
-    asset = get_asset_by_name(
-        project_name,
-        asset_name,
-        fields=["_id"]
-    )
+    asset = get_asset_by_name(project_name, asset_name, fields=["_id"])
     if not asset:
         return
 
@@ -67,7 +61,7 @@ def load_subset(
             version_ids=[last_version["_id"]],
             context_filters={"ext": [ext]},
         ),
-        None
+        None,
     )
     if not representation:
         return
@@ -81,8 +75,7 @@ def load_subset(
 
 
 def create_instance(creator_name, instance_name, **options):
-    """Create openpype publishable instance.
-    """
+    """Create openpype publishable instance."""
     legacy_create(
         get_legacy_creator_by_name(creator_name),
         name=instance_name,
@@ -92,8 +85,7 @@ def create_instance(creator_name, instance_name, **options):
 
 
 def load_casting(project_name, shot_name):
-    """Load casting from shot_name using kitsu api.
-    """
+    """Load casting from shot_name using kitsu api."""
 
     modules_manager = ModulesManager()
     kitsu_module = modules_manager.modules_by_name.get("kitsu")
@@ -112,7 +104,11 @@ def load_casting(project_name, shot_name):
 
     for actor in casting:
         for _ in range(actor["nb_occurences"]):
-            load_subset(project_name, actor["asset_name"], "rigMain", "Link")
+            if actor["asset_type_name"] == "Environment":
+                subset_name = "setdressMain"
+            else:
+                subset_name = "rigMain"
+            load_subset(project_name, actor["asset_name"], subset_name, "Link")
 
     gazu.log_out()
 
@@ -169,20 +165,18 @@ def build_layout(project_name, asset_name):
         load_casting(project_name, asset_name)
     except RuntimeError:
         pass
-    _process_app_events()
 
     # Try using camera from loaded casting for the creation of
     # the instance camera collection.
-    deselect_all()
+    bpy.ops.object.select_all(action="DESELECT")
     for obj in bpy.context.scene.objects:
         if obj.type == "CAMERA":
             obj.select_set(True)
             break
     create_instance("CreateCamera", "cameraMain", useSelection=True)
-    _process_app_events()
 
     # Select camera from cameraMain instance to link with the review.
-    deselect_all()
+    bpy.ops.object.select_all(action="DESELECT")
     for obj in bpy.context.scene.objects:
         if obj.type == "CAMERA":
             obj.select_set(True)
@@ -190,7 +184,8 @@ def build_layout(project_name, asset_name):
     create_instance("CreateReview", "reviewMain", useSelection=True)
 
     # load the board mov as image background linked into the camera.
-    load_subset(project_name, asset_name, "BoardReview", "Background", "mov")
+    # TODO when fixed
+    # load_subset(project_name, asset_name, "BoardReview", "Background", "mov")
 
 
 def build_anim(project_name, asset_name):
@@ -205,7 +200,7 @@ def build_anim(project_name, asset_name):
     load_subset(project_name, asset_name, "cameraMain", "Link")
 
     # Select camera from cameraMain instance to link with the review.
-    deselect_all()
+    bpy.ops.object.select_all(action="DESELECT")
     for obj in bpy.context.scene.objects:
         if obj.type == "CAMERA":
             obj.select_set(True)
@@ -229,8 +224,7 @@ def build_render(project_name, asset_name):
 
 
 def build_workfile():
-    """build first workfile Main function.
-    """
+    """build first workfile Main function."""
     project_name = legacy_io.Session["AVALON_PROJECT"]
     asset_name = legacy_io.Session.get("AVALON_ASSET")
     task_name = legacy_io.Session.get("AVALON_TASK").lower()
@@ -261,4 +255,3 @@ def build_workfile():
 
 if __name__ == "__main__":
     build_workfile()
-    _process_app_events()
