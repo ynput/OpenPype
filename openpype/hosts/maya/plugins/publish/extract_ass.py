@@ -16,9 +16,6 @@ class ExtractAssStandin(publish.Extractor):
     asciiAss = False
 
     def process(self, instance):
-
-        sequence = instance.data.get("exportSequence", False)
-
         staging_dir = self.staging_dir(instance)
         filename = "{}.ass".format(instance.name)
         filenames = []
@@ -60,6 +57,9 @@ class ExtractAssStandin(publish.Extractor):
         # Write out .ass file
         kwargs = {
             "filename": file_path,
+            "startFrame": instance.data.get("frameStartHandle", 1),
+            "endFrame": instance.data.get("frameEndHandle", 1),
+            "frameStep": instance.data.get("step", 1),
             "selected": True,
             "asciiAss": self.asciiAss,
             "shadowLinks": True,
@@ -78,14 +78,9 @@ class ExtractAssStandin(publish.Extractor):
                 )
                 cmds.select(instance.data["setMembers"], noExpand=True)
 
-                self.log.info("Extracting ass sequence")
-
-                # Collect the start and end including handles
-                kwargs.update({
-                    "start": instance.data.get("frameStartHandle", 1),
-                    "end": instance.data.get("frameEndHandle", 1),
-                    "step": instance.data.get("step", 0)
-                })
+                self.log.info(
+                    "Extracting ass sequence with: {}".format(kwargs)
+                )
 
                 exported_files = cmds.arnoldExportAss(**kwargs)
 
@@ -102,7 +97,7 @@ class ExtractAssStandin(publish.Extractor):
             'ext': 'ass',
             'files': filenames if len(filenames) > 1 else filenames[0],
             "stagingDir": staging_dir,
-            'frameStart': kwargs["start"]
+            'frameStart': kwargs["startFrame"]
         }
 
         instance.data["representations"].append(representation)
