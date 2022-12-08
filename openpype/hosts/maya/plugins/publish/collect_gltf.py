@@ -13,5 +13,5 @@ class CollectGLTF(pyblish.api.InstancePlugin):
         if not instance.data.get("families"):
             instance.data["families"] = []
 
-        if "fbx" not in instance.data["families"]:
+        if "gltf" not in instance.data["families"]:
             instance.data["families"].append("gltf")
