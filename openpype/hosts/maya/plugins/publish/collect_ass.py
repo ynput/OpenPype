@@ -1,6 +1,7 @@
 import re
 
 from maya import cmds
+from openpype.pipeline.publish import KnownPublishError
 
 import pyblish.api
 
@@ -26,16 +27,14 @@ class CollectAssData(pyblish.api.InstancePlugin):
                 instance.data['setMembers'] = members
                 self.log.debug('content members: {}'.format(members))
             elif objset.startswith("proxy_SET"):
-                msg = "You have multiple proxy meshes, please only use one"
-                assert len(members) == 1, msg
+                if len(members) != 1:
+                    msg = "You have multiple proxy meshes, please only use one"
+                    raise KnownPublishError(msg)
                 instance.data['proxy'] = members
                 self.log.debug('proxy members: {}'.format(members))
 
-        # Indicate to user that it'll be a single frame.
-        sequence = instance.data.get("exportSequence", False)
-        if not sequence:
-            group = re.compile(r" \[.*\]")
-            instance.data["label"] = group.sub("", instance.data["label"])
+        group = re.compile(r" \[.*\]")
+        instance.data["label"] = group.sub("", instance.data["label"])
 
         # Use camera in object set if present else default to render globals
         # camera.

@@ -172,7 +172,6 @@
             "defaults": [
                 "Main"
             ],
-            "exportSequence": false,
             "expandProcedurals": false,
             "motionBlur": true,
             "motionBlurKeys": 2,

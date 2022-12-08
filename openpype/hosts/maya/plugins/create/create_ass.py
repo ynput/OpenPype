@@ -13,7 +13,6 @@ class CreateAss(plugin.Creator):
     label = "Arnold Scene Source"
     family = "ass"
     icon = "cube"
-    exportSequence = False
     expandProcedurals = False
     motionBlur = True
     motionBlurKeys = 2
@@ -35,7 +34,6 @@ class CreateAss(plugin.Creator):
         # Add animation data
         self.data.update(lib.collect_animation_data())
 
-        self.data["exportSequence"] = self.exportSequence
         self.data["expandProcedurals"] = self.expandProcedurals
         self.data["motionBlur"] = self.motionBlur
         self.data["motionBlurKeys"] = self.motionBlurKeys
@@ -56,7 +54,7 @@ class CreateAss(plugin.Creator):
     def process(self):
         instance = super(CreateAss, self).process()
 
-        nodes = list()
+        nodes = []
 
         if (self.options or {}).get("useSelection"):
             nodes = cmds.ls(selection=True)
