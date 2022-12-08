@@ -23,7 +23,8 @@ import unreal  # noqa
 logger = logging.getLogger("openpype.hosts.unreal")
 OPENPYPE_CONTAINERS = "OpenPypeContainers"
 UNREAL_VERSION = semver.VersionInfo(
-            *os.getenv("OPENPYPE_UNREAL_VERSION").split("."))
+    *os.getenv("OPENPYPE_UNREAL_VERSION").split(".")
+)
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.unreal.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
@@ -43,7 +44,6 @@ class UnrealHost(HostBase, ILoadHost):
     name = "unreal"
 
     def install(self):
-        version = UNREAL_VERSION
         install()
 
     def get_containers(self):
