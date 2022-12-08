@@ -1236,7 +1236,7 @@ def draw_avalon_menu(self, context):
     self.layout.menu(
         TOPBAR_MT_avalon.bl_idname,
         icon="ERROR"
-        if bpy.context.window_manager.is_workfile_out_of_date
+        if context.window_manager.is_workfile_out_of_date
         else "NONE",
     )
 
