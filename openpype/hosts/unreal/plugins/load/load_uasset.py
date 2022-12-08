@@ -40,8 +40,6 @@ class UAssetLoader(plugin.Loader):
 
         # Create directory for asset and OpenPype container
         root = "/Game/OpenPype/Assets"
-        if options and options.get("asset_dir"):
-            root = options["asset_dir"]
         asset = context.get('asset').get('name')
         suffix = "_CON"
         if asset:
@@ -57,14 +55,16 @@ class UAssetLoader(plugin.Loader):
 
         unreal.EditorAssetLibrary.make_directory(asset_dir)
 
-        # Create Asset Container
-        container = unreal_pipeline.create_container(
-            container=container_name, path=asset_dir)
-
-        container_path = unreal.SystemLibrary.get_system_path(container)
-        destination_path = Path(container_path).parent.as_posix()
+        destination_path = asset_dir.replace(
+            "/Game",
+            Path(unreal.Paths.project_content_dir()).as_posix(),
+            1)
 
         shutil.copy(self.fname, destination_path)
+
+        # Create Asset Container
+        unreal_pipeline.create_container(
+            container=container_name, path=asset_dir)
 
         data = {
             "schema": "openpype:container-2.0",
