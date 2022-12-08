@@ -1,5 +1,6 @@
 import re
 import platform
+import PyOpenColorIO as ocio
 from openpype.settings import get_project_settings
 from openpype.pipeline import legacy_io
 from openpype.lib.log import Logger
@@ -9,7 +10,7 @@ IMAGEIO_SETTINGS = {}
 
 
 def get_colorspace_from_path(
-    path, host=None, project_name=None
+    path, host=None, project_name=None, validate=True
 ):
     project_name = project_name or legacy_io.Session["AVALON_PROJECT"],
     host = host or legacy_io.Session["AVALON_APP"]
@@ -39,6 +40,16 @@ def get_colorspace_from_path(
         return None
 
     # validate matching colorspace with config
+    if validate and config_path:
+        try:
+            config = ocio.Config().CreateFromFile(config_path)
+        except ocio.Exception:
+            raise ocio.ExceptionMissingFile(
+                "Missing ocio config file at: {}".format(config_path))
+        if not config.getColorSpace(colorspace_name):
+            raise ocio.Exception(
+                "Missing colorspace '{}' in config file '{}'".format(
+                    colorspace_name, config_path))
 
 
 def get_project_config(project_name, host):
