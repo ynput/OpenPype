@@ -100,12 +100,10 @@ class ExtractAssStandin(publish.Extractor):
         representation = {
             'name': 'ass',
             'ext': 'ass',
-            'files': filenames,
-            "stagingDir": staging_dir
+            'files': filenames if len(filenames) > 1 else filenames[0],
+            "stagingDir": staging_dir,
+            'frameStart': kwargs["start"]
         }
-
-        if sequence:
-            representation['frameStart'] = kwargs["start"]
 
         instance.data["representations"].append(representation)
 

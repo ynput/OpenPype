@@ -220,11 +220,6 @@
                 },
                 {
                     "type": "boolean",
-                    "key": "exportSequence",
-                    "label": "Export Sequence"
-                },
-                {
-                    "type": "boolean",
                     "key": "expandProcedurals",
                     "label": "Expand Procedurals"
                 },
