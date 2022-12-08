@@ -250,6 +250,9 @@
         "CollectFbxCamera": {
             "enabled": false
         },
+        "CollectGLTF": {
+            "enabled": false
+        },
         "ValidateInstanceInContext": {
             "enabled": true,
             "optional": true,

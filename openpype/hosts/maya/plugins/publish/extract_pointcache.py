@@ -86,13 +86,15 @@ class ExtractAlembic(publish.Extractor):
                                                      start=start,
                                                      end=end))
 
-        with suspended_refresh():
+        with suspended_refresh(suspend=instance.data.get("refresh", False)):
             with maintained_selection():
                 cmds.select(nodes, noExpand=True)
-                extract_alembic(file=path,
-                                startFrame=start,
-                                endFrame=end,
-                                **options)
+                extract_alembic(
+                    file=path,
+                    startFrame=start,
+                    endFrame=end,
+                    **options
+                )
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

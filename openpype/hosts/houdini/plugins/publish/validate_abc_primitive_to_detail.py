@@ -1,8 +1,8 @@
+# -*- coding: utf-8 -*-
 import pyblish.api
 
 from collections import defaultdict
-
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
@@ -16,7 +16,7 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
 
     """
 
-    order = ValidateContentsOrder + 0.1
+    order = pyblish.api.ValidatorOrder + 0.1
     families = ["pointcache"]
     hosts = ["houdini"]
     label = "Validate Primitive to Detail (Abc)"
@@ -24,18 +24,26 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
-                "Primitives found with inconsistent primitive "
-                "to detail attributes. See log."
+            raise PublishValidationError(
+                ("Primitives found with inconsistent primitive "
+                 "to detail attributes. See log."),
+                title=self.label
             )
 
     @classmethod
     def get_invalid(cls, instance):
+        import hou  # noqa
+        output_node = instance.data.get("output_node")
+        rop_node = hou.node(instance.data["instance_node"])
+        if output_node is None:
+            cls.log.error(
+                "SOP Output node in '%s' does not exist. "
+                "Ensure a valid SOP output path is set." % rop_node.path()
+            )
 
-        output = instance.data["output_node"]
+            return [rop_node.path()]
 
-        rop = instance[0]
-        pattern = rop.parm("prim_to_detail_pattern").eval().strip()
+        pattern = rop_node.parm("prim_to_detail_pattern").eval().strip()
         if not pattern:
             cls.log.debug(
                 "Alembic ROP has no 'Primitive to Detail' pattern. "
@@ -43,7 +51,7 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
             )
             return
 
-        build_from_path = rop.parm("build_from_path").eval()
+        build_from_path = rop_node.parm("build_from_path").eval()
         if not build_from_path:
             cls.log.debug(
                 "Alembic ROP has 'Build from Path' disabled. "
@@ -51,14 +59,14 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
             )
             return
 
-        path_attr = rop.parm("path_attrib").eval()
+        path_attr = rop_node.parm("path_attrib").eval()
         if not path_attr:
             cls.log.error(
                 "The Alembic ROP node has no Path Attribute"
                 "value set, but 'Build Hierarchy from Attribute'"
                 "is enabled."
             )
-            return [rop.path()]
+            return [rop_node.path()]
 
         # Let's assume each attribute is explicitly named for now and has no
         # wildcards for Primitive to Detail. This simplifies the check.
@@ -67,7 +75,7 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
 
         # Check if the primitive attribute exists
         frame = instance.data.get("frameStart", 0)
-        geo = output.geometryAtFrame(frame)
+        geo = output_node.geometryAtFrame(frame)
 
         # If there are no primitives on the start frame then it might be
         # something that is emitted over time. As such we can't actually
@@ -86,7 +94,7 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
                 "Geometry Primitives are missing "
                 "path attribute: `%s`" % path_attr
             )
-            return [output.path()]
+            return [output_node.path()]
 
         # Ensure at least a single string value is present
         if not attrib.strings():
@@ -94,7 +102,7 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
                 "Primitive path attribute has no "
                 "string values: %s" % path_attr
             )
-            return [output.path()]
+            return [output_node.path()]
 
         paths = None
         for attr in pattern.split(" "):
@@ -130,4 +138,4 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
                         "Path has multiple values: %s (path: %s)"
                         % (list(values), path)
                     )
-                    return [output.path()]
+                    return [output_node.path()]

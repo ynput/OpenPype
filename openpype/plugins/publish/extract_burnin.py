@@ -468,7 +468,7 @@ class ExtractBurnin(publish.Extractor):
 
         burnin_data.update({
             "version": int(version),
-            "comment": context.data.get("comment") or ""
+            "comment": instance.data["comment"]
         })
 
         intent_label = context.data.get("intent") or ""
