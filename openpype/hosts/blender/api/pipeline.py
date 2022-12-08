@@ -187,6 +187,9 @@ def on_new():
     bpy.types.WindowManager.is_workfile_out_of_date = bpy.props.BoolProperty(
         name="Is Workfile Out Of Date",
     )
+    bpy.types.WindowManager.last_publish_time = bpy.props.StringProperty(
+        name="Last Publish time",
+    )
 
     unit_scale_settings = settings.get("unit_scale_settings")
     unit_scale_enabled = unit_scale_settings.get("enabled")
@@ -209,7 +212,7 @@ def on_open():
     if set_frames_startup:
         set_frame_range(data)
 
-    if not is_work_file_out_of_date():
+    if not check_workfile_up_to_date():
         bpy.context.window_manager.is_workfile_out_of_date = True
         bpy.ops.wm.workfile_out_of_date("INVOKE_DEFAULT")
 
@@ -331,7 +334,13 @@ def check_workfile_up_to_date() -> bool:
         legacy_io.active_project(),
         f"workfile{session.get('AVALON_TASK')}",
         asset_name=session.get("AVALON_ASSET"),
-    )["data"]["time"]
+    )
+
+    if last_published_time:
+        last_published_time = last_published_time["data"]["time"]
+        bpy.context.window_manager.last_publish_time = last_published_time
+    else:
+        return True
 
     # Getting date and time of the latest locally installed workfile
     # Time is converted to use the same format as for `last_published_time`
@@ -339,7 +348,7 @@ def check_workfile_up_to_date() -> bool:
         datetime.fromtimestamp(Path(current_file()).stat().st_mtime)
     )
 
-    return last_published_time > workfile_time
+    return last_published_time <= workfile_time
 
 
 def add_to_avalon_container(container: bpy.types.Collection):

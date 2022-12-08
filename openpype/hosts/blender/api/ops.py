@@ -412,7 +412,7 @@ class WM_OT_DrawWorkFileOutOfDateWarning(bpy.types.Operator):
     bl_idname = "wm.workfile_out_of_date"
     bl_label = "WARNING: Workfile is out of date"
 
-    action_enum: bpy.props.EnumProperty(
+    action: bpy.props.EnumProperty(
         name="Action Enum",
         items=(
             ("DOWNLOAD", "Download last workfile", "Download last workfile"),
@@ -423,11 +423,11 @@ class WM_OT_DrawWorkFileOutOfDateWarning(bpy.types.Operator):
 
     def execute(self, context):
         """Execute this operator."""
-        if self.action_enum == "DOWNLOAD":
+        if self.action == "DOWNLOAD":
             bpy.ops.wm.download_last_workfile("EXEC_DEFAULT")
-        elif self.action_enum == "QUIT":
+        elif self.action == "QUIT":
             bpy.ops.wm.quit_blender()
-        elif self.action_enum != "PROCEED":
+        elif self.action != "PROCEED":
             self.report(
                 {"ERROR"}, "Undefined enum value error"
             )
@@ -452,7 +452,7 @@ class WM_OT_DrawWorkFileOutOfDateWarning(bpy.types.Operator):
         row.label(text="Your workfile is out of date.")
 
         # Display enum
-        col.prop(self, "action_enum", expand=True)
+        col.prop(self, "action", expand=True)
 
 
 class TOPBAR_MT_avalon(bpy.types.Menu):
