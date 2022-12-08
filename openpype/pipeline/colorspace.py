@@ -1,4 +1,5 @@
 import re
+import os
 import platform
 import PyOpenColorIO as ocio
 from openpype.settings import get_project_settings
@@ -6,13 +7,12 @@ from openpype.pipeline import legacy_io
 from openpype.lib.log import Logger
 
 log = Logger.get_logger(__name__)
-IMAGEIO_SETTINGS = {}
 
 
 def get_imagio_colorspace_from_filepath(
     path, host=None, project_name=None, validate=True
 ):
-    project_name = project_name or legacy_io.Session["AVALON_PROJECT"],
+    project_name = project_name or legacy_io.Session["AVALON_PROJECT"]
     host = host or legacy_io.Session["AVALON_APP"]
 
     config_path = get_imageio_config(project_name, host)
@@ -43,6 +43,8 @@ def get_imagio_colorspace_from_filepath(
     if validate and config_path:
         config_obj = validate_imageio_config_from_path(config_path)
         validate_imageio_colorspace_in_config(config_obj, colorspace_name)
+
+    return colorspace_name
 
 
 def validate_imageio_colorspace_in_config(config_obj, colorspace_name):
@@ -79,7 +81,9 @@ def get_imageio_config(project_name, host):
     if config_host["enabled"]:
         config_path = config_host["filepath"][current_platform]
 
-    return config_path
+    # format the path for potential env vars
+    config_path = config_path.format(**os.environ)
+    return os.path.normpath(config_path)
 
 
 def get_imageio_file_rules(project_name, host):
@@ -102,10 +106,6 @@ def get_imageio_file_rules(project_name, host):
 
 def _get_imageio_settings(project_name, host):
 
-    # look if settings are cached
-    if IMAGEIO_SETTINGS.get(project_name):
-        return IMAGEIO_SETTINGS[project_name]
-
     # get project settings
     project_settings = get_project_settings(project_name)
 
@@ -113,10 +113,4 @@ def _get_imageio_settings(project_name, host):
     imageio_global = project_settings["global"]["imageio"]
     imageio_host = project_settings[host]["imageio"]
 
-    # cach settings
-    IMAGEIO_SETTINGS[project_name] = [
-        imageio_global, imageio_host
-    ]
-
-    # returning: imageio_global, imageio_host
-    return IMAGEIO_SETTINGS[project_name]
+    return imageio_global, imageio_host
