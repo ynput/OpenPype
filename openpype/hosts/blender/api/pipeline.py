@@ -325,7 +325,6 @@ def check_workfile_up_to_date() -> bool:
 
     if last_published_time:
         last_published_time = last_published_time["data"]["time"]
-        bpy.context.window_manager.last_publish_time = last_published_time
     else:
         return True
 
@@ -335,7 +334,11 @@ def check_workfile_up_to_date() -> bool:
         datetime.fromtimestamp(Path(current_file()).stat().st_mtime)
     )
 
-    return last_published_time <= workfile_time
+    if last_published_time <= workfile_time:
+        bpy.context.window_manager.last_publish_time = last_published_time
+        return True
+    else:
+        return False
 
 
 def add_to_avalon_container(container: bpy.types.Collection):
