@@ -555,7 +555,7 @@ def get_representation_path_with_anatomy(repre_doc, anatomy):
     """
 
     try:
-        template = repre_doc["data"]["template"].replace("\\", "/")
+        template = repre_doc["data"]["template"]
 
     except KeyError:
         raise InvalidRepresentationContext((
