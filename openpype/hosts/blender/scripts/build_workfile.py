@@ -97,9 +97,9 @@ def load_casting(project_name, shot_name):
     gazu.client.set_host(os.environ["KITSU_SERVER"])
     gazu.log_in(os.environ["KITSU_LOGIN"], os.environ["KITSU_PWD"])
 
-    shot_data = get_asset_by_name(project_name, shot_name, fields=["data"])
+    shot_data = get_asset_by_name(project_name, shot_name, fields=["data"])["data"]
 
-    shot = gazu.shot.get_shot(shot_data["data"]["zou"]["id"])
+    shot = gazu.shot.get_shot(shot_data["zou"]["id"])
     casting = gazu.casting.get_shot_casting(shot)
 
     for actor in casting:
