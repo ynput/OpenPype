@@ -334,7 +334,7 @@ def check_workfile_up_to_date() -> bool:
     )["data"]["time"]
 
     # Getting date and time of the latest locally installed workfile
-    # Time is converted to use the same format as for `last_publishd_time`
+    # Time is converted to use the same format as for `last_published_time`
     workfile_time = get_timestamp(
         datetime.fromtimestamp(Path(current_file()).stat().st_mtime)
     )
