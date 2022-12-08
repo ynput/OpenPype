@@ -97,16 +97,15 @@ class ExtractProxyAlembic(publish.Extractor):
                                                  end=end))
 
         inst_selection = cmds.ls(nodes, long=True)
-        bbox = cmds.geomToBBox(inst_selection,
-                               nameSuffix=name_suffix,
-                               keepOriginal=True,
-                               single=False,
-                               bakeAnimation=True,
-                               startTime=start,
-                               endTime=end)
-        #TODO: fix the scale or disparenting for the group
-        # bbox_sel = cmds.listRelatives(bbox, parent=True)
-        # cmds.ls(bbox_sel, long=True)
+        cmds.geomToBBox(inst_selection,
+                        nameSuffix=name_suffix,
+                        keepOriginal=True,
+                        single=False,
+                        bakeAnimation=True,
+                        startTime=start,
+                        endTime=end)
+        # create master group for bounding
+        # boxes as the main root
         master_group = cmds.group(name="bbox_grp")
         bbox_sel = cmds.ls(master_group, long=True)
         self.log.debug("proxy_root: {}".format(bbox_sel))
