@@ -204,7 +204,7 @@ class CreateRender(plugin.Creator):
         self.server_aliases = list(self.deadline_servers.keys())
         self.data["deadlineServers"] = self.server_aliases
         self.data["suspendPublishJob"] = False
-        self.data["review"] = True
+        self.data["review"] = False
         self.data["extendFrames"] = False
         self.data["overrideExistingFrame"] = True
         # self.data["useLegacyRenderLayers"] = True
@@ -213,18 +213,18 @@ class CreateRender(plugin.Creator):
         self.data["framesPerTask"] = 1
         self.data["whitelist"] = False
         self.data["machineList"] = ""
-        self.data["useMayaBatch"] = False
+        self.data["useMayaBatch"] = True
         self.data["tileRendering"] = False
         self.data["tilesX"] = 2
         self.data["tilesY"] = 2
-        self.data["convertToScanline"] = False
-        self.data["useReferencedAovs"] = False
-        self.data["renderSetupIncludeLights"] = (
-            self._project_settings.get(
-                "maya", {}).get(
-                "RenderSettings", {}).get(
-                "enable_all_lights", False)
-            )
+        #self.data["convertToScanline"] = False
+        #self.data["useReferencedAovs"] = False
+        #self.data["renderSetupIncludeLights"] = (
+        #    self._project_settings.get(
+        #        "maya", {}).get(
+        #        "RenderSettings", {}).get(
+        #        "enable_all_lights", False)
+        #    )
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
 

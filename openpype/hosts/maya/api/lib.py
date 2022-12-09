@@ -1735,7 +1735,8 @@ def apply_shaders(relationships, shadernodes, nodes):
             filtered_nodes.extend(nodes_by_id[m_uuid])
 
         id_shading_engines = shading_engines_by_id[shader_uuid]
-        if not id_shading_engines:
+        if not id_shading_engines and\
+        not shader_uuid == "None":  # H: support default shader
             log.error("No shader found with cbId "
                       "'{}'".format(shader_uuid))
             continue

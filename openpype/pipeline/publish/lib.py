@@ -9,6 +9,7 @@ import xml.etree.ElementTree
 import six
 import pyblish.plugin
 import pyblish.api
+import pyblish.util
 
 from openpype.lib import Logger, filter_profiles
 from openpype.settings import (
