@@ -554,6 +554,17 @@
                             "type": "text",
                             "key": "clip_name_template",
                             "label": "Clip name template"
+                        },
+                        {
+                            "type": "text",
+                            "key": "layer_rename_template",
+                            "label": "Layer name template"
+                        },
+                        {
+                            "type": "list",
+                            "key": "layer_rename_patterns",
+                            "label": "Layer rename patters",
+                            "object_type": "text"
                         }
                     ]
                 }

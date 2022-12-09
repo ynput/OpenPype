@@ -142,7 +142,11 @@
                 "exr16fpdwaa"
             ],
             "reel_name": "OP_LoadedReel",
-            "clip_name_template": "{batch}_{asset}_{subset}<_{output}>"
+            "clip_name_template": "{batch}_{asset}_{subset}<_{output}>",
+            "layer_rename_template": "{asset}_{subset}<_{output}>",
+            "layer_rename_patterns": [
+                "rgba"
+            ]
         }
     }
 }
