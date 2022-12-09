@@ -15,10 +15,13 @@ import pyblish.api
 
 from openpype.client import get_asset_by_name
 from openpype.settings import get_project_settings
+from openpype.lib.dateutils import get_timestamp
+from openpype.client import get_asset_by_name
 from openpype.client.entities import (
     get_last_version_by_subset_name,
     get_asset_by_name,
 )
+from openpype.settings import get_project_settings
 from openpype.pipeline import (
     legacy_io,
     register_loader_plugin_path,
@@ -178,8 +181,10 @@ def on_new():
     bpy.types.WindowManager.is_workfile_out_of_date = bpy.props.BoolProperty(
         name="Is Workfile Out Of Date",
     )
-    bpy.types.WindowManager.last_publish_time = bpy.props.StringProperty(
-        name="Last Publish time",
+    bpy.types.WindowManager.current_workfile_last_publish_time = (
+        bpy.props.StringProperty(
+            name="Last Publish Time",
+        )
     )
 
     project = os.environ.get("AVALON_PROJECT")
@@ -311,22 +316,30 @@ def check_workfile_up_to_date() -> bool:
     this will return `True`.
 
     Returns:
-        bool: True if the current workfile is out of date.
+        bool: True if the current workfile is up to date.
     """
 
     session = legacy_io.Session
 
     # Getting date and time of the latest published workfile
-    last_published_time = get_last_version_by_subset_name(
+    last_published_version = get_last_version_by_subset_name(
         legacy_io.active_project(),
         f"workfile{session.get('AVALON_TASK')}",
         asset_name=session.get("AVALON_ASSET"),
     )
 
-    if last_published_time:
-        last_published_time = last_published_time["data"]["time"]
+    # Check if version exists
+    if last_published_version:
+        last_published_time = last_published_version["data"]["time"]
     else:
         return True
+
+    window_manager = bpy.context.window_manager
+    if window_manager.current_workfile_last_publish_time:
+        return (
+            last_published_time
+            <= window_manager.current_workfile_last_publish_time
+        )
 
     # Getting date and time of the latest locally installed workfile
     # Time is converted to use the same format as for `last_published_time`
@@ -335,10 +348,11 @@ def check_workfile_up_to_date() -> bool:
     )
 
     if last_published_time <= workfile_time:
-        bpy.context.window_manager.last_publish_time = last_published_time
+        window_manager.current_workfile_last_publish_time = (
+            last_published_version
+        )
         return True
-    else:
-        return False
+    return False
 
 
 def add_to_avalon_container(container: bpy.types.Collection):
