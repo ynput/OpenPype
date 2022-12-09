@@ -242,6 +242,10 @@ if "--debug" in sys.argv:
     sys.argv.remove("--debug")
     os.environ["OPENPYPE_DEBUG"] = "1"
 
+if "--automatic-tests" in sys.argv:
+    sys.argv.remove("--automatic-tests")
+    os.environ["IS_TEST"] = "1"
+
 if "--use-staging" in sys.argv:
     sys.argv.remove("--use-staging")
     os.environ["OPENPYPE_USE_STAGING"] = "1"
@@ -986,6 +990,14 @@ def boot():
     # name of Pype database
     os.environ["OPENPYPE_DATABASE_NAME"] = \
         os.environ.get("OPENPYPE_DATABASE_NAME") or "openpype"
+
+    if os.environ.get("IS_TEST") == "1":
+        # change source DBs to predefined ones set for automatic testing
+        if "_tests" not in os.environ["OPENPYPE_DATABASE_NAME"]:
+            os.environ["OPENPYPE_DATABASE_NAME"] += "_tests"
+        avalon_db = os.environ.get("AVALON_DB") or "avalon"
+        if "_tests" not in avalon_db:
+            os.environ["AVALON_DB"] = avalon_db + "_tests"
 
     global_settings = get_openpype_global_settings(openpype_mongo)
 

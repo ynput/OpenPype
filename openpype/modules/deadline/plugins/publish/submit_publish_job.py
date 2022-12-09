@@ -18,6 +18,7 @@ from openpype.pipeline import (
     get_representation_path,
     legacy_io,
 )
+from openpype.tests.lib import is_in_tests
 from openpype.pipeline.farm.patterning import match_aov_pattern
 
 
@@ -142,7 +143,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "OPENPYPE_RENDER_JOB",
         "OPENPYPE_PUBLISH_JOB",
         "OPENPYPE_MONGO",
-        "OPENPYPE_VERSION"
+        "OPENPYPE_VERSION",
+
+        "IS_TEST"
     ]
 
     # custom deadline attributes
@@ -212,6 +215,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         more universal code. Muster post job is sent directly by Muster
         submitter, so this type of code isn't necessary for it.
 
+        Returns:
+            (str): deadline_publish_job_id
         """
         data = instance.data.copy()
         subset = data["subset"]
@@ -241,10 +246,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         environment["AVALON_ASSET"] = legacy_io.Session["AVALON_ASSET"]
         environment["AVALON_TASK"] = legacy_io.Session["AVALON_TASK"]
         environment["AVALON_APP_NAME"] = os.environ.get("AVALON_APP_NAME")
+        environment["OPENPYPE_VERSION"] = os.environ.get("OPENPYPE_VERSION")
         environment["OPENPYPE_LOG_NO_COLORS"] = "1"
         environment["OPENPYPE_USERNAME"] = instance.context.data["user"]
         environment["OPENPYPE_PUBLISH_JOB"] = "1"
         environment["OPENPYPE_RENDER_JOB"] = "0"
+        environment["IS_TEST"] = is_in_tests()
         # Add mongo url if it's enabled
         if instance.context.data.get("deadlinePassMongoUrl"):
             mongo_url = os.environ.get("OPENPYPE_MONGO")
@@ -260,6 +267,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "--targets", "deadline",
             "--targets", "farm"
         ]
+
+        if is_in_tests():
+            args.append("--automatic-tests")
 
         # Generate the payload for Deadline submission
         payload = {
@@ -330,6 +340,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         response = requests.post(url, json=payload, timeout=10)
         if not response.ok:
             raise Exception(response.text)
+
+        deadline_publish_job_id = response.json()["_id"]
+
+        return deadline_publish_job_id
 
     def _copy_extend_frames(self, instance, representation):
         """Copy existing frames from latest version.
@@ -776,6 +790,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "handleEnd": handle_end,
             "frameStartHandle": start - handle_start,
             "frameEndHandle": end + handle_end,
+            "comment": instance.data["comment"],
             "fps": fps,
             "source": source,
             "extendFrames": data.get("extendFrames"),
@@ -991,7 +1006,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 self.deadline_url = instance.data.get("deadlineUrl")
             assert self.deadline_url, "Requires Deadline Webservice URL"
 
-            self._submit_deadline_post_job(instance, render_job, instances)
+            deadline_publish_job_id = \
+                self._submit_deadline_post_job(instance, render_job, instances)
 
         # publish job file
         publish_job = {
@@ -1008,6 +1024,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "session": legacy_io.Session.copy(),
             "instances": instances
         }
+
+        if deadline_publish_job_id:
+            publish_job["deadline_publish_job_id"] = deadline_publish_job_id
 
         # add audio to metadata file if available
         audio_file = context.data.get("audioFile")
