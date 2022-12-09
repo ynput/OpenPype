@@ -149,6 +149,14 @@
                 "Main"
             ]
         },
+        "CreateProxyAlembic": {
+            "enabled": true,
+            "write_color_sets": false,
+            "write_face_sets": false,
+            "defaults": [
+                "Main"
+            ]
+        },
         "CreateMultiverseUsd": {
             "enabled": true,
             "defaults": [
@@ -586,6 +594,12 @@
             "optional": false,
             "active": true
         },
+        "ExtractProxyAlembic": {
+            "enabled": true,
+            "families": [
+                "proxyAbc"
+            ]
+        },
         "ExtractAlembic": {
             "enabled": true,
             "families": [
@@ -949,7 +963,8 @@
                         "subset_name_filters": [],
                         "families": [
                             "animation",
-                            "pointcache"
+                            "pointcache",
+                            "proxyAbc"
                         ],
                         "repre_names": [
                             "abc"
