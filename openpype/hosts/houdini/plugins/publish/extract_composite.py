@@ -1,9 +1,10 @@
 import os
-
 import pyblish.api
 
 from openpype.pipeline import publish
-from openpype.hosts.houdini.api.lib import render_rop
+from openpype.hosts.houdini.api.lib import render_rop, splitext
+
+import hou
 
 
 class ExtractComposite(publish.Extractor):
@@ -15,7 +16,7 @@ class ExtractComposite(publish.Extractor):
 
     def process(self, instance):
 
-        ropnode = instance[0]
+        ropnode = hou.node(instance.data["instance_node"])
 
         # Get the filename from the copoutput parameter
         # `.evalParm(parameter)` will make sure all tokens are resolved
@@ -28,8 +29,24 @@ class ExtractComposite(publish.Extractor):
 
         render_rop(ropnode)
 
-        if "files" not in instance.data:
-            instance.data["files"] = []
+        output = instance.data["frames"]
+        _, ext = splitext(output[0], [])
+        ext = ext.lstrip(".")
 
-        frames = instance.data["frames"]
-        instance.data["files"].append(frames)
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
+
+        representation = {
+            "name": ext,
+            "ext": ext,
+            "files": output,
+            "stagingDir": staging_dir,
+            "frameStart": instance.data["frameStart"],
+            "frameEnd": instance.data["frameEnd"],
+        }
+
+        from pprint import pformat
+
+        self.log.info(pformat(representation))
+
+        instance.data["representations"].append(representation)

@@ -45,7 +45,7 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
         host_name = context.data["hostName"]
         app_name = context.data["appName"]
         app_label = context.data["appLabel"]
-        comment = (context.data.get("comment") or "").strip()
+        comment = instance.data["comment"]
         if not comment:
             self.log.info("Comment is not set.")
         else:

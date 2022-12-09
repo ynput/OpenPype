@@ -230,7 +230,98 @@
                 }
             ]
         },
-
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateAss",
+            "label": "Create Ass",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                },
+                {
+                    "type": "boolean",
+                    "key": "expandProcedurals",
+                    "label": "Expand Procedurals"
+                },
+                {
+                    "type": "boolean",
+                    "key": "motionBlur",
+                    "label": "Motion Blur"
+                },
+                {
+                    "type": "number",
+                    "key": "motionBlurKeys",
+                    "label": "Motion Blur Keys",
+                    "minimum": 0
+                },
+                {
+                    "type": "number",
+                    "key": "motionBlurLength",
+                    "label": "Motion Blur Length",
+                    "decimal": 3
+                },
+                {
+                    "type": "boolean",
+                    "key": "maskOptions",
+                    "label": "Mask Options"
+                },
+                {
+                    "type": "boolean",
+                    "key": "maskCamera",
+                    "label": "Mask Camera"
+                },
+                {
+                    "type": "boolean",
+                    "key": "maskLight",
+                    "label": "Mask Light"
+                },
+                {
+                    "type": "boolean",
+                    "key": "maskShape",
+                    "label": "Mask Shape"
+                },
+                {
+                    "type": "boolean",
+                    "key": "maskShader",
+                    "label": "Mask Shader"
+                },
+                {
+                    "type": "boolean",
+                    "key": "maskOverride",
+                    "label": "Mask Override"
+                },
+                {
+                    "type": "boolean",
+                    "key": "maskDriver",
+                    "label": "Mask Driver"
+                },
+                {
+                    "type": "boolean",
+                    "key": "maskFilter",
+                    "label": "Mask Filter"
+                },
+                {
+                    "type": "boolean",
+                    "key": "maskColor_manager",
+                    "label": "Mask Color Manager"
+                },
+                {
+                    "type": "boolean",
+                    "key": "maskOperator",
+                    "label": "Mask Operator"
+                }
+            ]
+        },
         {
             "type": "schema_template",
             "name": "template_create_plugin",

@@ -51,6 +51,7 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 "source",
                 "assembly",
                 "fbx",
+                "gltf",
                 "textures",
                 "action",
                 "background",

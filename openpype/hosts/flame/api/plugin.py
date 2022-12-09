@@ -4,13 +4,13 @@ import shutil
 from copy import deepcopy
 from xml.etree import ElementTree as ET
 
+import qargparse
 from Qt import QtCore, QtWidgets
 
-import qargparse
 from openpype import style
-from openpype.settings import get_current_project_settings
 from openpype.lib import Logger
 from openpype.pipeline import LegacyCreator, LoaderPlugin
+from openpype.settings import get_current_project_settings
 
 from . import constants
 from . import lib as flib
@@ -596,18 +596,28 @@ class PublishableClip:
         if not hero_track and self.vertical_sync:
             # driving layer is set as negative match
             for (_in, _out), hero_data in self.vertical_clip_match.items():
-                hero_data.update({"heroTrack": False})
-                if _in == self.clip_in and _out == self.clip_out:
+                """
+                Since only one instance of hero clip is expected in
+                `self.vertical_clip_match`, this will loop only once
+                until none hero clip will be matched with hero clip.
+
+                `tag_hierarchy_data` will be set only once for every
+                clip which is not hero clip.
+                """
+                _hero_data = deepcopy(hero_data)
+                _hero_data.update({"heroTrack": False})
+                if _in <= self.clip_in and _out >= self.clip_out:
                     data_subset = hero_data["subset"]
                     # add track index in case duplicity of names in hero data
                     if self.subset in data_subset:
-                        hero_data["subset"] = self.subset + str(
+                        _hero_data["subset"] = self.subset + str(
                             self.track_index)
                     # in case track name and subset name is the same then add
                     if self.subset_name == self.track_name:
-                        hero_data["subset"] = self.subset
+                        _hero_data["subset"] = self.subset
                     # assing data to return hierarchy data to tag
-                    tag_hierarchy_data = hero_data
+                    tag_hierarchy_data = _hero_data
+                    break
 
         # add data to return data dict
         self.marker_data.update(tag_hierarchy_data)
@@ -689,6 +699,54 @@ class ClipLoader(LoaderPlugin):
             help="Also set handles to clip as In/Out marks"
         )
     ]
+
+    _mapping = None
+
+    def get_colorspace(self, context):
+        """Get colorspace name
+
+        Look either to version data or representation data.
+
+        Args:
+            context (dict): version context data
+
+        Returns:
+            str: colorspace name or None
+        """
+        version = context['version']
+        version_data = version.get("data", {})
+        colorspace = version_data.get(
+            "colorspace", None
+        )
+
+        if (
+            not colorspace
+            or colorspace == "Unknown"
+        ):
+            colorspace = context["representation"]["data"].get(
+                "colorspace", None)
+
+        return colorspace
+
+    @classmethod
+    def get_native_colorspace(cls, input_colorspace):
+        """Return native colorspace name.
+
+        Args:
+            input_colorspace (str | None): colorspace name
+
+        Returns:
+            str: native colorspace name defined in mapping or None
+        """
+        if not cls._mapping:
+            settings = get_current_project_settings()["flame"]
+            mapping = settings["imageio"]["profilesMapping"]["inputs"]
+            cls._mapping = {
+                input["ocioName"]: input["flameName"]
+                for input in mapping
+            }
+
+        return cls._mapping.get(input_colorspace)
 
 
 class OpenClipSolver(flib.MediaInfoFile):

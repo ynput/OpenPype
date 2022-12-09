@@ -112,6 +112,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "image",
                 "assembly",
                 "fbx",
+                "gltf",
                 "textures",
                 "action",
                 "harmony.template",
@@ -130,7 +131,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "mvUsd",
                 "mvUsdComposition",
                 "mvUsdOverride",
-                "simpleUnrealTexture"
+                "simpleUnrealTexture",
+                "online"
                 ]
 
     default_template_name = "publish"
@@ -769,7 +771,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             "time": context.data["time"],
             "author": context.data["user"],
             "source": source,
-            "comment": context.data.get("comment"),
+            "comment": instance.data["comment"],
             "machine": context.data.get("machine"),
             "fps": instance.data.get("fps", context.data.get("fps"))
         }
