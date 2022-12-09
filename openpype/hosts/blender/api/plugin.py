@@ -1012,9 +1012,10 @@ class AssetLoader(LoaderPlugin):
         "actions",
     ]
 
-    load_type = "LINK"
+    load_type = None
 
-    bl_types = frozenset()
+    # Default is outliner datablocks because it is the most common use case
+    bl_types = BL_OUTLINER_TYPES
 
     def _get_container_from_collections(
         self,
@@ -1333,8 +1334,13 @@ class AssetLoader(LoaderPlugin):
             load_func = self._append_blend
         elif self.load_type == "INSTANCE":
             load_func = self._instance_blend
-        else:  # For LINK at least of default behaviour
+        elif self.load_type == "LINK":
             load_func = self._link_blend
+        else:
+            raise ValueError(
+                "'load_type' attribute must be set by implemented loader to:"
+                "APPEND, INSTANCE or LINK."
+            )
 
         container, datablocks = load_func(libpath, group_name)
 
