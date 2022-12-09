@@ -25,6 +25,13 @@ class LoadClipBatch(opfapi.ClipLoader):
     reel_name = "OP_LoadedReel"
     clip_name_template = "{batch}_{asset}_{subset}<_{output}>"
 
+    """ Anatomy keys from version context data and dynamically added:
+        - {layer} - original layer name token
+        - {originalBasename} - original clip name taken from file
+    """
+    layer_rename_template = "{asset}_{subset}<_{output}>"
+    layer_rename_patterns = []
+
     def load(self, context, name, namespace, options):
 
         # get flame objects
@@ -40,6 +47,7 @@ class LoadClipBatch(opfapi.ClipLoader):
         # in case output is not in context replace key to representation
         if not context["representation"]["context"].get("output"):
             self.clip_name_template.replace("output", "representation")
+            self.layer_rename_template.replace("output", "representation")
 
         formating_data = deepcopy(context["representation"]["context"])
         formating_data["batch"] = self.batch.name.get_value()
@@ -69,6 +77,9 @@ class LoadClipBatch(opfapi.ClipLoader):
             "path": self.fname.replace("\\", "/"),
             "colorspace": colorspace,
             "version": "v{:0>3}".format(version_name),
+            "layer_rename_template": self.layer_rename_template,
+            "layer_rename_patterns": self.layer_rename_patterns,
+            "context_data": formating_data
         }
         self.log.debug(pformat(
             loading_context
