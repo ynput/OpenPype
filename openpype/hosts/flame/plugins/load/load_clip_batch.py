@@ -26,7 +26,8 @@ class LoadClipBatch(opfapi.ClipLoader):
     clip_name_template = "{batch}_{asset}_{subset}<_{output}>"
 
     """ Anatomy keys from version context data and dynamically added:
-        - {layer} - original layer name token
+        - {layerName} - original layer name token
+        - {layerUID} - original layer UID token
         - {originalBasename} - original clip name taken from file
     """
     layer_rename_template = "{asset}_{subset}<_{output}>"

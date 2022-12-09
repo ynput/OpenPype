@@ -858,6 +858,7 @@ class OpenClipSolver(flib.MediaInfoFile):
                 return xml_track
 
     def _rename_track_name(self, xml_track_data):
+        layer_uid = xml_track_data.get("uid")
         name_obj = xml_track_data.find("name")
         layer_name = name_obj.text
 
@@ -871,7 +872,8 @@ class OpenClipSolver(flib.MediaInfoFile):
             return
 
         formating_data = self._update_formating_data(
-            layer=layer_name
+            layerName=layer_name,
+            layerUID=layer_uid
         )
         name_obj.text = StringTemplate(
             self.layer_rename_template
