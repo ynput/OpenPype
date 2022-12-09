@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Loader for Static Mesh alembics."""
+"""Load Skeletal Mesh alembics."""
 import os
 
 from openpype.pipeline import (
@@ -11,20 +11,24 @@ from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 import unreal  # noqa
 
 
-class StaticMeshAlembicLoader(plugin.Loader):
-    """Load Unreal StaticMesh from Alembic"""
+class SkeletalMeshAlembicLoader(plugin.Loader):
+    """Load Unreal SkeletalMesh from Alembic"""
 
-    families = ["model"]
-    label = "Import Alembic Static Mesh"
+    families = ["pointcache", "skeletalMesh"]
+    label = "Import Alembic Skeletal Mesh"
     representations = ["abc"]
     icon = "cube"
     color = "orange"
 
-    @staticmethod
-    def get_task(filename, asset_dir, asset_name, replace, default_conversion):
+    def get_task(self, filename, asset_dir, asset_name, replace):
         task = unreal.AssetImportTask()
         options = unreal.AbcImportSettings()
         sm_settings = unreal.AbcStaticMeshSettings()
+        conversion_settings = unreal.AbcConversionSettings(
+            preset=unreal.AbcConversionPreset.CUSTOM,
+            flip_u=False, flip_v=False,
+            rotation=[0.0, 0.0, 0.0],
+            scale=[1.0, 1.0, 1.0])
 
         task.set_editor_property('filename', filename)
         task.set_editor_property('destination_path', asset_dir)
@@ -36,24 +40,15 @@ class StaticMeshAlembicLoader(plugin.Loader):
         # set import options here
         # Unreal 4.24 ignores the settings. It works with Unreal 4.26
         options.set_editor_property(
-            'import_type', unreal.AlembicImportType.STATIC_MESH)
-
-        sm_settings.set_editor_property('merge_meshes', True)
-
-        if not default_conversion:
-            conversion_settings = unreal.AbcConversionSettings(
-                preset=unreal.AbcConversionPreset.CUSTOM,
-                flip_u=False, flip_v=False,
-                rotation=[0.0, 0.0, 0.0],
-                scale=[1.0, 1.0, 1.0])
-            options.conversion_settings = conversion_settings
+            'import_type', unreal.AlembicImportType.SKELETAL)
 
         options.static_mesh_settings = sm_settings
+        options.conversion_settings = conversion_settings
         task.options = options
 
         return task
 
-    def load(self, context, name, namespace, options):
+    def load(self, context, name, namespace, data):
         """Load and containerise representation into Content Browser.
 
         This is two step process. First, import FBX to temporary path and
@@ -73,9 +68,9 @@ class StaticMeshAlembicLoader(plugin.Loader):
 
         Returns:
             list(str): list of container content
-
         """
-        # Create directory for asset and OpenPype container
+
+        # Create directory for asset and openpype container
         root = "/Game/OpenPype/Assets"
         asset = context.get('asset').get('name')
         suffix = "_CON"
@@ -84,10 +79,6 @@ class StaticMeshAlembicLoader(plugin.Loader):
         else:
             asset_name = "{}".format(name)
         version = context.get('version').get('name')
-
-        default_conversion = False
-        if options.get("default_conversion"):
-            default_conversion = options.get("default_conversion")
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
@@ -98,8 +89,7 @@ class StaticMeshAlembicLoader(plugin.Loader):
         if not unreal.EditorAssetLibrary.does_directory_exist(asset_dir):
             unreal.EditorAssetLibrary.make_directory(asset_dir)
 
-            task = self.get_task(
-                self.fname, asset_dir, asset_name, False, default_conversion)
+            task = self.get_task(self.fname, asset_dir, asset_name, False)
 
             unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
 
@@ -140,7 +130,6 @@ class StaticMeshAlembicLoader(plugin.Loader):
 
         # do import fbx and replace existing data
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
-
         container_path = "{}/{}".format(container["namespace"],
                                         container["objectName"])
         # update metadata
