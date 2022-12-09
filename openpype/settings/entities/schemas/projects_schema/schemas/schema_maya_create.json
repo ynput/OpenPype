@@ -248,10 +248,6 @@
                     "label": "Create Multiverse USD Override"
                 },
                 {
-                    "key": "CreateAss",
-                    "label": "Create Ass"
-                },
-                {
                     "key": "CreateAssembly",
                     "label": "Create Assembly"
                 },
