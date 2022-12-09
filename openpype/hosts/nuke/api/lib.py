@@ -611,7 +611,7 @@ def get_created_node_imageio_setting_legacy(nodeclass, creator, subset):
 
         if (
             onode["subsets"]
-            and not any(re.search(s, subset.lower()) for s in onode["subsets"])
+            and not any(re.search(s.lower(), subset.lower()) for s in onode["subsets"])
         ):
             continue
 
@@ -704,7 +704,7 @@ def get_imageio_node_override_setting(
 
         if (
             onode["subsets"]
-            and not any(re.search(s, subset.lower()) for s in onode["subsets"])
+            and not any(re.search(s.lower(), subset.lower()) for s in onode["subsets"])
         ):
             continue
 
