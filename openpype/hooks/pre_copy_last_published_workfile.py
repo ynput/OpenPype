@@ -1,7 +1,7 @@
 import os
 from openpype.client.entities import (
     get_last_version_by_subset_id,
-    match_subset_id,
+    get_matching_subset_id,
     get_representation_by_task,
 )
 
@@ -100,7 +100,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         anatomy = self.data.get("anatomy")
 
         # Get subset ID
-        subset_id = match_subset_id(
+        subset_id = get_matching_subset_id(
             project_name, task_name, "workfile", asset_doc
         )
         if subset_id is None:
