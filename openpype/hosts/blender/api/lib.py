@@ -1,3 +1,4 @@
+from itertools import chain
 import os
 import re
 import traceback
@@ -86,37 +87,49 @@ def ls() -> Iterator:
     called containers.
     """
     # Ensure containers
-    scene_collections = list(bpy.context.scene.collection.children)
-    for collection in scene_collections:
-        if len(collection.children):
-            scene_collections.extend(collection.children)
-
+    scene_collections = bpy.context.scene.collection.children_recursive
     openpype_containers = bpy.context.scene.openpype_containers
     collections = lsattr("id", AVALON_CONTAINER_ID)
-    for collection in collections:
+    children_to_skip = set(
+        chain.from_iterable(
+            [
+                op_container["outliner_entity"].children_recursive
+                for op_container in openpype_containers
+                if isinstance(
+                    op_container.get("outliner_entity"), bpy.types.Collection
+                )
+            ]
+        )
+    )
+
+    # Create containers from outliner datablocks (e.g collection duplication)
+    for collection in [
+        e for e in collections if not openpype_containers.get(e.name)
+    ]:
         if (
-            collection in scene_collections
-            and not collection.override_library
-            and not openpype_containers.get(collection.name)
+            collection in children_to_skip
+            or collection not in scene_collections
         ):
-            container = create_container(
-                collection.name, [collection, *collection.children_recursive]
-            )
+            continue
 
-            # Transfer container metadata and keep original outliner entity
-            container[pipeline.AVALON_PROPERTY] = collection.get(
-                pipeline.AVALON_PROPERTY
-            )
-            container["outliner_entity"] = collection
+        # Skip all collections of container
+        children_to_skip.update(collection.children_recursive)
+        if type(collection) is bpy.types.Collection:
+            datablocks = [collection, *collection.children_recursive]
+        elif type(collection) is bpy.types.Object:  # Instanced collection
+            datablocks = [collection, collection.instance_collection]
 
-    # TODO does it work for object containers? may not be necessary
-    # for obj in [o for o in bpy.context.scene.objects if o.get(pipeline.AVALON_PROPERTY, {}).get("id") == AVALON_CONTAINER_ID
-    # and o.is_instancer and o.instance_collection in collections and not openpype_containers.get(o.name)]:
-    #     container = create_container(obj.name, [obj, *obj.instance_collection])
-    #     container["outliner_entity"] = obj
+        # Create container
+        container = create_container(collection.name, datablocks)
 
-    # Parse containers
-    for container in openpype_containers:
+        # Transfer container metadata and keep original outliner entity
+        container[pipeline.AVALON_PROPERTY] = collection.get(
+            pipeline.AVALON_PROPERTY
+        )
+        container["outliner_entity"] = collection
+
+    # Clear containers when data has been deleted from the outliner
+    for container in reversed(openpype_containers):
         # In case outliner entity removed, remove container
         if "outliner_entity" in container.keys() and not container.get(
             "outliner_entity"
@@ -125,7 +138,8 @@ def ls() -> Iterator:
                 openpype_containers.find(container.name)
             )
 
-        yield parse_container(container)
+    # Parse containers
+    return [parse_container(container) for container in openpype_containers]
     
 
 def load_scripts(paths):
