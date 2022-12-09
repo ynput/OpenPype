@@ -519,7 +519,7 @@ def get_subset_families(project_name, subset_ids=None):
     return set()
 
 
-def match_subset_id(project_name, task_name, family, asset_doc):
+def get_matching_subset_id(project_name, task_name, family, asset_doc):
     """Match subset ID for given project, task and family.
 
     Args:
@@ -1095,7 +1095,8 @@ def get_representation_by_task(project_name, task_name, version_doc):
             for representation in get_representations(
                 project_name, version_ids=[version_doc["_id"]]
             )
-            if representation["context"]["task"]["name"] == task_name
+            if representation["context"].get("task", {}).get("name")
+            == task_name
         ),
         None,
     )
