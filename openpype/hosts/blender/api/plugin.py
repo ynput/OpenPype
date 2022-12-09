@@ -763,7 +763,7 @@ class Creator(LegacyCreator):
     """Base class for Creator plug-ins."""
     defaults = ['Main']
     color_tag = "NONE"
-    bl_types = frozenset()
+    bl_types = BL_OUTLINER_TYPES
 
     @staticmethod
     def _filter_outliner_datablocks(
@@ -860,7 +860,8 @@ class Creator(LegacyCreator):
 
         return container_collection
 
-    def _process(
+    @exec_process
+    def process(
         self, datablocks: List[bpy.types.ID] = None
     ) -> OpenpypeInstance:
         """Create openpype publishable instance from datablocks.
@@ -934,12 +935,6 @@ class Creator(LegacyCreator):
             instance_datablock.datapath = BL_TYPE_DATAPATH.get(type(d))
 
         return op_instance
-
-    def process(self) -> MainThreadItem:
-        """Run the creator on Blender main thread."""
-        mti = MainThreadItem(self._process)
-        execute_in_main_thread(mti)
-        return mti
 
     def _remove_instance(self, instance_name: str) -> bool:
         """Remove a created instance from a Blender scene.

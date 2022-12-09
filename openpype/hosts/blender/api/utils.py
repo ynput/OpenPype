@@ -21,7 +21,7 @@ BL_TYPE_ICON = {
     bpy.types.Armature: "ARMATURE_DATA",
 }
 # Types which can be handled through the outliner
-BL_OUTLINER_TYPES = {bpy.types.Collection, bpy.types.Object}
+BL_OUTLINER_TYPES = frozenset((bpy.types.Collection, bpy.types.Object))
 
 
 def get_children_recursive(
