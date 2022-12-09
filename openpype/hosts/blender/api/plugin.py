@@ -4,14 +4,15 @@ from pprint import pformat
 from inspect import getmembers
 from pathlib import Path
 from contextlib import contextmanager, ExitStack
-from typing import Dict, List, Optional, Set, Tuple, Union, Iterator
+import threading
+from typing import Callable, Dict, List, Optional, Set, Tuple, Union, Iterator
 from bson.objectid import ObjectId
 
 import bpy
 from mathutils import Matrix
 
 from openpype.api import Logger
-from openpype.hosts.blender.api.properties import OpenpypeInstance
+from openpype.hosts.blender.api.properties import OpenpypeContainer, OpenpypeInstance
 from openpype.hosts.blender.api.utils import (
     BL_OUTLINER_TYPES,
     BL_TYPE_DATAPATH,
@@ -33,6 +34,7 @@ from .ops import (
     execute_in_main_thread
 )
 from .lib import (
+    create_container,
     imprint,
     get_selection
 )
@@ -114,81 +116,25 @@ def context_override(
 
 
 def remove_container(
-    container: Union[bpy.types.Collection, bpy.types.Object],
-    content_only: Optional[bool] = False
+    container: Union[bpy.types.Collection, bpy.types.Object]
 ):
-    """Remove the container with all this objects and child collections.
+    """Remove the container with all its datablocks.
 
     Arguments:
         container: The collection or empty container to be removed.
-        content_only: Remove all the container content but keep the container
-            collection or empty. Default to False.
 
     Note:
         This rename all removed elements with .removed suffix to prevent
         naming conflict with created object before calling orphans_purge.
     """
-    objects_to_remove = set()
-    collections_to_remove = set()
-    data_to_remove = set()
-    materials_to_remove = set()
+    for d_ref in container.datablocks:
+        datapath = eval(d_ref.datapath)
+        datapath.remove(datapath.get(d_ref.name))
 
-    if isinstance(container, bpy.types.Collection):
-        # Append all objects in container collection to be removed.
-        for obj in set(container.all_objects):
-            objects_to_remove.add(obj)
-            # Append original object if exists.
-            if obj.original:
-                objects_to_remove.add(obj.original)
-        # Append all child collections in container to be removed.
-        for child in set(get_children_recursive(container)):
-            collections_to_remove.add(child)
-        # Append the container collection if content_only is False.
-        if not content_only:
-            collections_to_remove.add(container)
-    else:
-        # Append all child objects in container object.
-        for obj in set(get_children_recursive(container)):
-            objects_to_remove.add(obj)
-        # Append the container object if content_only is False.
-        if not content_only:
-            objects_to_remove.add(container)
-
-    # Remove objects
-    for obj in objects_to_remove:
-        # Append object data if exists.
-        if obj.data:
-            data_to_remove.add(obj.data)
-        obj.name = f"{obj.name}.removed"
-        bpy.data.objects.remove(obj)
-    # Remove collections
-    for collection in collections_to_remove:
-        collection.name = f"{collection.name}.removed"
-        bpy.data.collections.remove(collection)
-    # Remove data
-    for data in data_to_remove:
-        if data.users == 0:
-            data.name = f"{data.name}.removed"
-            # Append materials if data is mesh.
-            if isinstance(data, bpy.types.Mesh):
-                for mtl in data.materials:
-                    if mtl:
-                        materials_to_remove.add(mtl)
-            # Remove data from this data collection type.
-            for data_collection in (
-                bpy.data.meshes,
-                bpy.data.curves,
-                bpy.data.lights,
-                bpy.data.cameras,
-                bpy.data.armatures,
-            ):
-                if data in data_collection.values():
-                    data_collection.remove(data)
-    # Remove materials
-    for mtl in materials_to_remove:
-        if mtl.users == 0:
-            mtl.name = f"{mtl.name}.removed"
-            bpy.data.materials.remove(mtl)
+    # Delete container
+    openpype_containers = bpy.context.scene.openpype_containers
+    openpype_containers.remove(openpype_containers.find(container.name))
+    return
 
 
 def is_container(entity, family: Optional[str] = None) -> bool:
@@ -436,6 +382,23 @@ def make_local(obj, data_local=True):
         if data_local:
             obj.data.make_local()
     return obj
+
+def exec_process(process_func: Callable):
+    """Make sure the given process function is executed in main thread.
+    
+    OP GUI is not run in Blender's thread to avoid disruptions.
+
+    Args:
+        func (Callable): Process function to execute.
+    """
+    def wrapper_exec_process(*args, **kwargs):
+        if threading.current_thread() is not threading.main_thread():
+            mti = MainThreadItem(process_func, *args, **kwargs)
+            execute_in_main_thread(mti)
+            return mti
+        else:
+            return process_func(*args, **kwargs)
+    return wrapper_exec_process
 
 
 class ContainerMaintainer(ExitStack):
@@ -1049,8 +1012,15 @@ class AssetLoader(LoaderPlugin):
         "actions",
     ]
 
+    load_type = "LINK"
+
+    bl_types = frozenset()
+
     def _get_container_from_collections(
-        self, collections: List, famillies: Optional[List] = None
+        self,
+        collections: List,
+        instance_name: str,
+        famillies: Optional[List] = None,
     ) -> Optional[bpy.types.Collection]:
         """Get valid container from loaded collections."""
         for collection in collections:
@@ -1058,30 +1028,25 @@ class AssetLoader(LoaderPlugin):
             if (
                 metadata
                 and (not famillies or metadata.get("family") in famillies)
+                # case collection renamed with .###
+                and collection.name.startswith(instance_name)
             ):
                 return collection
 
-    def _get_asset_group_container(
+    def _get_scene_container(
         self, container: dict
-    ) -> Optional[Union[bpy.types.Object, bpy.types.Collection]]:
-        """Get asset group from container dict."""
-        object_name = container["objectName"]
-        family = container.get("family")
+    ) -> Optional[OpenpypeContainer]:
+        """Get container from current scene.
 
-        scene = bpy.context.scene
-        asset_group = scene.objects.get(object_name)
-        if asset_group and is_container(asset_group, family):
-            return asset_group
+        Args:
+            container (dict): Dict with container information.
 
-        for collection in get_children_recursive(scene.collection):
-            if collection.name == object_name:
-                asset_group = collection
-                break
-        else:
-            asset_group = bpy.data.collections.get(object_name)
-
-        if asset_group and is_container(asset_group, family):
-            return asset_group
+        Returns:
+            Optional[OpenpypeContainer]: Scene container. Can be None.
+        """
+        return bpy.context.scene.openpype_containers.get(
+            container["objectName"]
+        )
 
     def _rename_with_namespace(
         self,
@@ -1125,25 +1090,72 @@ class AssetLoader(LoaderPlugin):
             for child in set(get_children_recursive(asset_group)):
                 child.name = f"{namespace}:{child.name}"
 
-    def _load_library_collection(
-        self, libpath: str, link: Optional[bool] = True
-    ) -> bpy.types.Collection:
-        """Load library from libpath and return the valid collection."""
-        # Load collections from libpath library.
+    def _load_library_datablocks(self, libpath: str, container_name:str, link: Optional[bool] = True, do_override: Optional[bool] = False)->Tuple[OpenpypeContainer, List[bpy.types.ID]]:
+        """Load datablocks from blend file library.
+
+        Args:
+            libpath (str): Path of library.
+            container_name (str): Name of container to be loaded.
+            link (bool, optional): Only link datablocks (not made local). Defaults to True.
+            do_override (bool, optional): Apply library override to linked datablocks. Defaults to False.
+
+        Returns:
+            Tuple[List[bpy.types.ID], OpenpypeContainer]: (Created scene container, Loaded datablocks)
+        """
+        # Load datablocks from libpath library.
+        loaded_data_collections = set()
         with bpy.data.libraries.load(
             libpath, link=link, relative=False
         ) as (data_from, data_to):
-            data_to.collections = data_from.collections
+            for bl_type in self.bl_types:
+                datapath = BL_TYPE_DATAPATH.get(bl_type)
+                data_collection_name = datapath[datapath.rfind(".") + 1:]
+                setattr(data_to, data_collection_name, [name for name in getattr(data_from, data_collection_name)])
+                
+                # Keep imported datablocks names
+                loaded_data_collections.add(data_collection_name)
 
-        # Get the right asset container from imported collections.
-        container = self._get_container_from_collections(
-            data_to.collections, self.families
-        )
-        assert container, "No asset container found"
 
-        return container
+        # Convert datablocks names to datablocks references
+        datablocks = set()
+        for collection_name in loaded_data_collections:
+            datablocks.update(getattr(data_to, collection_name))
+        
+        if self.bl_types & BL_OUTLINER_TYPES:
+            # Get the right asset container from imported collections.
+            container_collection = self._get_container_from_collections(
+                data_to.collections, container_name, self.families
+            )
 
-    def _load_fbx(self, libpath, asset_group):
+            # Ensure container collection
+            if container_collection:
+                if do_override:
+                    # Create override for the library collection and this elements
+                    container_collection = container_collection.override_hierarchy_create(
+                        bpy.context.scene, bpy.context.view_layer
+                        # NOTE After BL3.4: do_fully_editable=True
+                    )
+                    # Ensure user override NOTE: will be unecessary after BL3.4
+                    container_collection.override_library.is_system_override = False
+            else:
+                # Create collection container TODO is it necessary ? Keep it only if no collection in library
+                container_collection = bpy.data.collections.new(container_name)
+                if hasattr(container_collection, "color_tag"):
+                    container_collection.color_tag = self.color_tag
+                get_main_collection().children.link(container_collection)
+            
+            # Substitute name in case renamed with .###
+            container_name = container_collection.name  
+        else:
+            container_collection = None
+
+        # Create container
+        container = create_container(container_name, datablocks)
+        container["outliner_entity"] = container_collection
+
+        return container, datablocks
+
+    def _load_fbx(self, libpath, container_name):
         """Load fbx process."""
 
         current_objects = set(bpy.data.objects)
@@ -1156,102 +1168,157 @@ class AssetLoader(LoaderPlugin):
             for collection in obj.users_collection:
                 collection.objects.unlink(obj)
 
-        link_to_collection(objects, asset_group)
+        container_collection = bpy.data.collections.get(container_name)
+        link_to_collection(objects, container_collection)
 
         orphans_purge()
         deselect_all()
 
-    def _link_blend(self, libpath, asset_group):
-        """Link blend process."""
-        # Load collections from libpath library.
-        library_collection = self._load_library_collection(libpath)
+    def _link_blend(
+        self, libpath: str, container_name: str, override=True
+    ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
+        """Link blend process.
 
-        # Create override for the library collection and this elements.
-        if hasattr(library_collection, "override_hierarchy_create"):
-            override = library_collection.override_hierarchy_create(
-                bpy.context.scene, bpy.context.view_layer
-            )
-        else:
+        Args:
+            libpath (str): Path of library to link.
+            container_name (str): Name of container to link.
+            override (bool, optional): Apply library override to linked datablocks. Defaults to True.
+
+        Returns:
+            Tuple[List[bpy.types.ID], OpenpypeContainer]: (Created scene container, Linked datablocks)
+        """
+        # Load collections from libpath library.
+        container, all_datablocks = self._load_library_datablocks(
+            libpath, container_name, do_override=override
+        )
+
+        container_collection = container.get("outliner_entity")
+        if container_collection:
             # If override_hierarchy_create method is not implemented for older
             # Blender versions we need the following steps.
-            link_to_collection(
-                library_collection, bpy.context.scene.collection
-            )
-            override = library_collection.override_create(
-                remap_local_usages=True
-            )
+            if not hasattr(container_collection, "override_hierarchy_create"):
+                link_to_collection(
+                    container_collection, bpy.context.scene.collection
+                )
+                container_collection = container_collection.override_create(
+                    remap_local_usages=True
+                )
 
-            for child in get_children_recursive(override):
-                child.override_create(remap_local_usages=True)
+                for child in get_children_recursive(container_collection):
+                    child.override_create(remap_local_usages=True)
 
-            for obj in set(override.all_objects):
-                obj.override_create(remap_local_usages=True)
+                for obj in set(container_collection.all_objects):
+                    obj.override_create(remap_local_usages=True)
 
-            # force remap to fix modifers, constaints and drivers targets.
-            for obj in set(override.all_objects):
-                obj.override_library.reference.user_remap(obj.id_data)
+                # force remap to fix modifers, constaints and drivers targets.
+                for obj in set(container_collection.all_objects):
+                    obj.override_library.reference.user_remap(obj.id_data)
 
-        # Since Blender 3.2 property is_system_override need to be False
-        # for editable override library.
-        for obj in set(override.all_objects):
-            if hasattr(obj.override_library, "is_system_override"):
-                obj.override_library.is_system_override = False
-        for child in get_children_recursive(override):
-            if hasattr(child.override_library, "is_system_override"):
-                child.override_library.is_system_override = False
+            # Since Blender 3.2 property is_system_override need to be False
+            # for editable override library.
+            for obj in set(container_collection.all_objects):
+                if hasattr(obj.override_library, "is_system_override"):
+                    obj.override_library.is_system_override = False
+            for child in get_children_recursive(container_collection):
+                if hasattr(child.override_library, "is_system_override"):
+                    child.override_library.is_system_override = False
 
-        # Move objects and child collections from override to asset_group.
-        link_to_collection(override.objects, asset_group)
-        link_to_collection(override.children, asset_group)
+        return container, all_datablocks
 
-        # Clear and purge useless datablocks.
-        bpy.data.collections.remove(override)
-        orphans_purge()
+    def _append_blend(
+        self, libpath: str, container_name: str
+    ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
+        """Append blend process.
 
-        # Clear selection.
-        deselect_all()
+        Args:
+            libpath (str): Path of library to append.
+            container_name (str): Name of container to append.
 
-    def _append_blend(self, libpath, asset_group):
-        """Append blend process."""
+        Returns:
+            Tuple[List[bpy.types.ID], OpenpypeContainer]: (Created scene container, Appended datablocks)
+        """
         # Load collections from libpath library.
-        library_collection = self._load_library_collection(libpath, link=False)
+        container, all_datablocks = self._load_library_datablocks(
+            libpath, container_name, link=False
+        )
 
-        # Move objects and child collections from override to asset_group.
-        link_to_collection(library_collection.objects, asset_group)
-        link_to_collection(library_collection.children, asset_group)
+        # Link loaded collection to scene
+        container_collection = container.get("outliner_entity")
+        if container_collection:
+            link_to_collection(container_collection, get_main_collection())
 
-        # Clear and purge useless datablocks.
-        bpy.data.collections.remove(library_collection)
-        orphans_purge()
+        return container, all_datablocks
 
-        # Clear selection.
-        deselect_all()
+    def _instance_blend(
+        self, libpath: str, container_name: str
+    ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
+        """Instance blend process.
+
+        An instance is basically a linked collection
+        instanced by an object in the outliner.
+
+        Args:
+            libpath (str): Path of library to instance.
+            container_name (str): Name of container to instance.
+
+        Returns:
+            Tuple[List[bpy.types.ID], OpenpypeContainer]: 
+                (Created scene container, Linked datablocks)
+        """
+
+        container, all_datablocks = self._link_blend(
+            libpath, container_name, override=False
+        )
+
+        # Create empty object
+        instance_object = bpy.data.objects.new(
+            container.name, object_data=None
+        )
+        get_main_collection().objects.link(instance_object)
+
+        # Instance collection to object
+        instance_object.instance_collection = container.get("outliner_entity")
+        instance_object.instance_type = "COLLECTION"
+
+        # Keep instance object as datablock
+        instance_ref = container.datablocks.add()
+        instance_ref.name = instance_object.name
+        instance_ref.datapath = BL_TYPE_DATAPATH.get(type(instance_object))
+
+        return container, all_datablocks
 
     def _apply_options(self, asset_group, options):
         """Must be implemented by a sub-class"""
         pass
 
-    def _process(*args, **kwargs):
+    def _load_process(*args, **kwargs):
         """Must be implemented by a sub-class"""
         raise NotImplementedError("Must be implemented by a sub-class")
 
-    def process_asset(
+    @exec_process
+    def load(
         self,
         context: dict,
-        name: str,
+        name: Optional[str] = None,
         namespace: Optional[str] = None,
-        options: Optional[Dict] = None
-    ) -> bpy.types.Collection:
-        """
+        options: Optional[Dict] = None,
+    ) -> Optional[bpy.types.Collection]:
+        """Load asset via database.
+
         Arguments:
+            context: Full parenthood of representation to load
             name: Use pre-defined name
             namespace: Use pre-defined namespace
-            context: Full parenthood of representation to load
             options: Additional settings dictionary
         """
+        assert Path(self.fname).exists(), f"{self.fname} doesn't exist."
         libpath = self.fname
+
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
+        unique_number = get_unique_number(asset, subset)
+        namespace = namespace or f"{asset}_{unique_number}"
+        name = name or subset
 
         if legacy_io.Session.get("AVALON_ASSET") == asset:
             group_name = asset_name(asset, subset)
@@ -1261,65 +1328,38 @@ class AssetLoader(LoaderPlugin):
             group_name = asset_name(asset, subset, unique_number)
             namespace = namespace or f"{asset}_{unique_number}"
 
-        asset_group = bpy.data.collections.new(group_name)
-        if hasattr(asset_group, "color_tag"):
-            asset_group.color_tag = self.color_tag
-        get_main_collection().children.link(asset_group)
+        # Pick load function and execute
+        if self.load_type == "APPEND":
+            load_func = self._append_blend
+        elif self.load_type == "INSTANCE":
+            load_func = self._instance_blend
+        else:  # For LINK at least of default behaviour
+            load_func = self._link_blend
 
-        self._process(libpath, asset_group)
+        container, datablocks = load_func(libpath, group_name)
 
-        if namespace:
-            self._rename_with_namespace(asset_group, namespace)
+        # Stop if no container
+        if not container:
+            return container, datablocks
 
-        self._update_metadata(asset_group, context, namespace, libpath)
+        # Rename outliner container with namespace if any
+        container_outliner_entity = container.get("outliner_entity")
+        if namespace and container_outliner_entity:
+            self._rename_with_namespace(container_outliner_entity, namespace)
 
+        # Update container metadata
+        if not container.get(AVALON_PROPERTY):
+            self._update_metadata(container, context, namespace, libpath)
+
+        # Apply options
         if options is not None:
-            self._apply_options(asset_group, options)
+            self._apply_options(container, options)
 
-        self[:] = list(asset_group.all_objects)
-        return asset_group
+        # Clear and purge useless datablocks.
+        orphans_purge()
 
-    def load(
-        self,
-        context: dict,
-        name: Optional[str] = None,
-        namespace: Optional[str] = None,
-        options: Optional[Dict] = None
-    ) -> MainThreadItem:
-        """Run the loader on Blender main thread"""
-        mti = MainThreadItem(self._load, context, name, namespace, options)
-        execute_in_main_thread(mti)
-        return mti
-
-    def _load(
-        self,
-        context: dict,
-        name: Optional[str] = None,
-        namespace: Optional[str] = None,
-        options: Optional[Dict] = None
-    ) -> Optional[bpy.types.Collection]:
-        """Load asset via database
-
-        Arguments:
-            context: Full parenthood of representation to load
-            name: Use pre-defined name
-            namespace: Use pre-defined namespace
-            options: Additional settings dictionary
-        """
-        assert Path(self.fname).exists(), f"{self.fname} doesn't exist."
-
-        asset = context["asset"]["name"]
-        subset = context["subset"]["name"]
-        unique_number = get_unique_number(asset, subset)
-        namespace = namespace or f"{asset}_{unique_number}"
-        name = name or subset
-
-        return self.process_asset(
-            context=context,
-            name=name,
-            namespace=namespace,
-            options=options,
-        )
+        self[:] = list(datablocks)
+        return container, datablocks
 
     def _is_updated(self, asset_group, libpath):
         """Check data before update. Return True if already updated."""
@@ -1457,9 +1497,9 @@ class AssetLoader(LoaderPlugin):
         # Update the asset group with maintained contexts.
         with self.update_maintainer(asset_group, self.maintained_parameters):
 
-            remove_container(asset_group, content_only=True)
+            remove_container(asset_group)
 
-            self._process(libpath, asset_group)
+            self._load_process(libpath, asset_group.name)
 
             # If asset had namespace, all this object will be renamed with
             # namespace as prefix.
@@ -1480,16 +1520,16 @@ class AssetLoader(LoaderPlugin):
 
     def _update_metadata(
         self,
-        asset_group: Union[bpy.types.Collection, bpy.types.Object],
+        container: bpy.types.ID,
         context: dict,
         namespace: str,
         libpath: str
     ):
-        """Update the asset group metadata with the given arguments and some
+        """Update the container metadata with the given arguments and some
         default values.
         """
         metadata_update(
-            asset_group,
+            container,
             {
                 "schema": "openpype:container-2.0",
                 "id": AVALON_CONTAINER_ID,
@@ -1501,7 +1541,7 @@ class AssetLoader(LoaderPlugin):
                 "asset_name": context["asset"]["name"],
                 "parent": str(context["representation"]["parent"]),
                 "family": context["representation"]["context"]["family"],
-                "objectName": asset_group.name
+                "objectName": container.name
             }
         )
 
@@ -1510,7 +1550,7 @@ class AssetLoader(LoaderPlugin):
     ) -> Tuple[Union[bpy.types.Collection, bpy.types.Object]]:
         """Update the loaded asset"""
         object_name = container["objectName"]
-        asset_group = self._get_asset_group_container(container)
+        asset_group = self._get_scene_container(container)
         libpath = get_representation_path(representation)
 
         self.log.info(
@@ -1538,7 +1578,7 @@ class AssetLoader(LoaderPlugin):
             asset_group.name = group_name
             metadata_update(asset_group, {"namespace": namespace})
 
-        asset_group = self._update_process(libpath, asset_group)
+        asset_group = self._update_process(libpath, asset_group.name)
 
         # update metadata
         metadata_update(
@@ -1585,18 +1625,9 @@ class AssetLoader(LoaderPlugin):
         mti = MainThreadItem(self.exec_switch, container, representation)
         execute_in_main_thread(mti)
         return mti
-
-    def exec_remove(self, container: Dict) -> bool:
-        """Remove the existing container from Blender scene"""
-        return self._remove_container(container)
-
-    def remove(self, container: Dict) -> MainThreadItem:
-        """Run the remove on Blender main thread"""
-        mti = MainThreadItem(self.exec_remove, container)
-        execute_in_main_thread(mti)
-        return mti
-
-    def _remove_container(self, container: Dict) -> bool:
+        
+    @exec_process
+    def remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
 
         Arguments:
@@ -1605,12 +1636,12 @@ class AssetLoader(LoaderPlugin):
         Returns:
             Whether the container was deleted.
         """
-        asset_group = self._get_asset_group_container(container)
+        scene_container = self._get_scene_container(container)
 
-        if not asset_group:
+        if not scene_container:
             return False
 
-        remove_container(asset_group)
+        remove_container(scene_container)
         orphans_purge()
 
         return True
