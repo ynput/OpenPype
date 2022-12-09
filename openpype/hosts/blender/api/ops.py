@@ -540,7 +540,7 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
             self.subset_name, self.asset_name, {"variant": self.variant_name}
         )
         datapath = eval(self.datapath)
-        plugin._process(
+        plugin.process(
             bpy.context.selected_objects
             if self.use_selection
             else [datapath.get(self.datablock_name)]
