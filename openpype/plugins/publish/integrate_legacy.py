@@ -76,6 +76,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.00001
     families = ["workfile",
                 "pointcache",
+                "proxyAbc",
                 "camera",
                 "animation",
                 "model",
@@ -106,6 +107,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "image",
                 "assembly",
                 "fbx",
+                "gltf",
                 "textures",
                 "action",
                 "harmony.template",
