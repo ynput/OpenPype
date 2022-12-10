@@ -273,7 +273,12 @@ class ReferenceLoader(Loader):
             if alembic_nodes:
                 for attr, data in alembic_data.items():
                     node_attr = "{}.{}".format(alembic_nodes[0], attr)
-                    if data["input"]:
+
+                    # Prevent warning about connecting to the time attribute
+                    # cause Maya connects to this attribute by default.
+                    if attr == "time":
+                        continue
+                    elif data["input"]:
                         cmds.connectAttr(
                             data["input"], node_attr, force=True
                         )
