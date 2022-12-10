@@ -226,11 +226,8 @@ class ReferenceLoader(Loader):
             if alembic_nodes:
                 for attr in alembic_attrs:
                     node_attr = "{}.{}".format(alembic_nodes[0], attr)
-                    inputs = cmds.listConnections(
-                        node_attr, plugs=True, destination=False
-                    )
                     data = {
-                        "input": None if inputs is None else inputs[0],
+                        "input": lib.get_attribute_input(node_attr),
                         "value": cmds.getAttr(node_attr)
                     }
 
@@ -271,23 +268,18 @@ class ReferenceLoader(Loader):
                 "{}:*".format(namespace), type="AlembicNode"
             )
             if alembic_nodes:
+                alembic_node = alembic_nodes[0]  # assume single AlembicNode
                 for attr, data in alembic_data.items():
-                    node_attr = "{}.{}".format(alembic_nodes[0], attr)
-
-                    # Prevent warning about connecting to the time attribute
-                    # cause Maya connects to this attribute by default.
-                    if attr == "time":
-                        continue
-                    elif data["input"]:
-                        cmds.connectAttr(
-                            data["input"], node_attr, force=True
-                        )
+                    node_attr = "{}.{}".format(alembic_node, attr)
+                    input = lib.get_attribute_input(node_attr)
+                    if data["input"]:
+                        if data["input"] != input:
+                            cmds.connectAttr(
+                                data["input"], node_attr, force=True
+                            )
                     else:
-                        inputs = cmds.listConnections(
-                            node_attr, plugs=True, destination=False
-                        )
-                        if inputs:
-                            cmds.disconnectAttr(inputs[0], node_attr)
+                        if input:
+                            cmds.disconnectAttr(input, node_attr)
                         cmds.setAttr(node_attr, data["value"])
 
         # Fix PLN-40 for older containers created with Avalon that had the
