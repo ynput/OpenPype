@@ -35,6 +35,26 @@ class ExtractBurnin(publish.Extractor):
     label = "Extract burnins"
     order = pyblish.api.ExtractorOrder + 0.03
 
+    families = ["review", "burnin"]
+    hosts = [
+        "nuke",
+        "maya",
+        "shell",
+        "hiero",
+        "premiere",
+        "traypublisher",
+        "standalonepublisher",
+        "harmony",
+        "fusion",
+        "aftereffects",
+        "tvpaint",
+        "webpublisher",
+        "aftereffects",
+        "photoshop",
+        "flame"
+        # "resolve"
+    ]
+
     optional = True
 
     positions = [
@@ -123,9 +143,8 @@ class ExtractBurnin(publish.Extractor):
         return filtered_repres
 
     def main_process(self, instance):
-        host_name = instance.data["anatomyData"]["app"]
-        families = list(set(instance.data["family"]).union(
-            set(instance.data["families"])))
+        host_name = instance.context.data["hostName"]
+        family = instance.data["family"]
         task_data = instance.data["anatomyData"].get("task", {})
         task_name = task_data.get("name")
         task_type = task_data.get("type")
@@ -133,7 +152,7 @@ class ExtractBurnin(publish.Extractor):
 
         filtering_criteria = {
             "hosts": host_name,
-            "families": families,
+            "families": family,
             "task_names": task_name,
             "task_types": task_type,
             "subset": subset
@@ -144,8 +163,9 @@ class ExtractBurnin(publish.Extractor):
         if not profile:
             self.log.info((
                 "Skipped instance. None of profiles in presets are for"
-                " Host: \"{}\" | Families: \"{}\" | Task \"{}\" | Task type \"{}\" | Subset \"{}\" "
-            ).format(host_name, families, task_name, task_type, subset))
+                " Host: \"{}\" | Families: \"{}\" | Task \"{}\""
+                " | Task type \"{}\" | Subset \"{}\" "
+            ).format(host_name, family, task_name, task_type, subset))
             return
 
         self.log.debug("profile: {}".format(profile))
@@ -155,8 +175,9 @@ class ExtractBurnin(publish.Extractor):
         if not burnin_defs:
             self.log.info((
                 "Skipped instance. Burnin definitions are not set for profile"
-                " Host: \"{}\" | Families: \"{}\" | Task \"{}\" | Profile \"{}\""
-            ).format(host_name, families, task_name, profile))
+                " Host: \"{}\" | Families: \"{}\" | Task \"{}\""
+                " | Profile \"{}\""
+            ).format(host_name, family, task_name, profile))
             return
 
         burnin_options = self._get_burnin_options()
