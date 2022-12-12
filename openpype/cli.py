@@ -31,8 +31,7 @@ def main(ctx):
     """
 
     if ctx.invoked_subcommand is None:
-        # Default command for headless openpype is 'interactive' command
-        #   otherwise 'tray' is used.
+        # Print help if headless mode is used
         if os.environ.get("OPENPYPE_HEADLESS_MODE") == "1":
             print(ctx.get_help())
             sys.exit(0)
