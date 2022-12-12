@@ -90,7 +90,7 @@ def maketx(source, destination, args, logger):
 
     maketx_path = get_oiio_tools_path("maketx")
 
-    if not os.path.exists(maketx_path):
+    if not maketx_path:
         print(
             "OIIO tool not found in {}".format(maketx_path))
         raise AssertionError("OIIO tool not found")

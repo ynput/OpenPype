@@ -27,7 +27,12 @@ class HieroAddon(OpenPypeModule, IHostAddon):
                 new_hiero_paths.append(norm_path)
 
         env["HIERO_PLUGIN_PATH"] = os.pathsep.join(new_hiero_paths)
+        # Remove auto screen scale factor for Qt
+        # - let Hiero decide it's value
         env.pop("QT_AUTO_SCREEN_SCALE_FACTOR", None)
+        # Remove tkinter library paths if are set
+        env.pop("TK_LIBRARY", None)
+        env.pop("TCL_LIBRARY", None)
 
         # Add vendor to PYTHONPATH
         python_path = env["PYTHONPATH"]

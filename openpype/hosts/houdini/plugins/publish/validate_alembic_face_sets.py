@@ -1,7 +1,6 @@
+# -*- coding: utf-8 -*-
 import pyblish.api
-
-from openpype.pipeline.publish import ValidateContentsOrder
-
+import hou
 
 class ValidateAlembicROPFaceSets(pyblish.api.InstancePlugin):
     """Validate Face Sets are disabled for extraction to pointcache.
@@ -18,14 +17,14 @@ class ValidateAlembicROPFaceSets(pyblish.api.InstancePlugin):
 
     """
 
-    order = ValidateContentsOrder + 0.1
+    order = pyblish.api.ValidatorOrder + 0.1
     families = ["pointcache"]
     hosts = ["houdini"]
     label = "Validate Alembic ROP Face Sets"
 
     def process(self, instance):
 
-        rop = instance[0]
+        rop = hou.node(instance.data["instance_node"])
         facesets = rop.parm("facesets").eval()
 
         # 0 = No Face Sets
