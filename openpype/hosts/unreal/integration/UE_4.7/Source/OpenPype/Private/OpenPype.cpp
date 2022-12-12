@@ -101,11 +101,6 @@ void FOpenPypeModule::RegisterSettings()
 	// TODO: After the movement of the plugin from the game to editor, it might be necessary to move this!
 	ISettingsContainerPtr SettingsContainer = SettingsModule.GetContainer("Project");
 
-	SettingsContainer->DescribeCategory("OpenPypeSettings",
-	                                    LOCTEXT("RuntimeWDCategoryName", "OpenPypeSettings"),
-	                                    LOCTEXT("RuntimeWDCategoryDescription",
-	                                            "Configuration for the Open pype module"));
-
 	UOpenPypeSettings* Settings = GetMutableDefault<UOpenPypeSettings>();
 
 	// Register the settings
