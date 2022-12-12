@@ -1,5 +1,17 @@
 {
     "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            }
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        },
         "project": {
             "colourPolicy": "ACES 1.1",
             "frameDepth": "16-bit fp",

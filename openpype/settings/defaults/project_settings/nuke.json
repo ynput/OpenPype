@@ -10,6 +10,18 @@
     },
     "imageio": {
         "enabled": false,
+        "ocio_config": {
+            "enabled": false,
+            "filepath": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            }
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        },
         "viewer": {
             "viewerProcess": "sRGB"
         },

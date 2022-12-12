@@ -1,4 +1,18 @@
 {
+    "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            }
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        }
+    },
     "level_sequences_for_layouts": false,
     "delete_unmatched_assets": false,
     "project_setup": {
