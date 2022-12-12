@@ -70,6 +70,13 @@ class IPluginPaths(OpenPypeInterface):
             host_name (str): For which host are the plugins meant.
         """
 
+        if hasattr(self, "get_creator_plugin_paths"):
+            # TODO remove in 3.16
+            self.log.warning((
+                "DEPRECATION WARNING: Using method 'get_creator_plugin_paths'"
+                " which was renamed to 'get_create_plugin_paths'."
+            ))
+            return self.get_creator_plugin_paths(host_name)
         return self._get_plugin_paths_by_type("create")
 
     def get_load_plugin_paths(self, host_name):
