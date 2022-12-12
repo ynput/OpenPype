@@ -295,8 +295,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 instance)
 
             for src, dst in prepared["transfers"]:
-                self._validate_path_in_project_roots(anatomy, dst)
-
                 # todo: add support for hardlink transfers
                 file_transactions.add(src, dst)
 
@@ -576,13 +574,21 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         is_udim = bool(repre.get("udim"))
 
-        # store as originalDirname only original value without project root
-        # if instance collected originalDirname it should be used for all repre
-        # useful to storing transient items, eg. thumbnails, from temp to final
-        original_directory = (
-            instance.data.get("originalDirname") or instance_stagingdir)
-        if original_directory:
+        # handle publish in place
+        if "originalDirname" in template:
+            # store as originalDirname only original value without project root
+            # if instance collected originalDirname is present, it should be
+            # used for all represe
+            # from temp to final
+            original_directory = (
+                instance.data.get("originalDirname") or instance_stagingdir)
+
             _rootless = self.get_rootless_path(anatomy, original_directory)
+            if _rootless == original_directory:
+                raise KnownPublishError((
+                        "Destination path '{}' ".format(original_directory) +
+                        "must be in project dir"
+                ))
             relative_path_start = _rootless.rfind('}') + 2
             without_root = _rootless[relative_path_start:]
             template_data["originalDirname"] = without_root
@@ -923,6 +929,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         path = self.get_rootless_path(anatomy, file_path)
         if not path:
             raise KnownPublishError((
-                "Destination path {} ".format(file_path) +
+                "Destination path '{}' ".format(file_path) +
                 "must be in project dir"
             ))
