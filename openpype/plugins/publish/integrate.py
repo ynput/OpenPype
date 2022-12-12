@@ -581,10 +581,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # useful to storing transient items, eg. thumbnails, from temp to final
         original_directory = (
             instance.data.get("originalDirname") or instance_stagingdir)
-        _rootless = self.get_rootless_path(anatomy, original_directory)
-        relative_path_start = _rootless.rfind('}') + 2
-        without_root = _rootless[relative_path_start:]
-        template_data["originalDirname"] = without_root
+        if original_directory:
+            _rootless = self.get_rootless_path(anatomy, original_directory)
+            relative_path_start = _rootless.rfind('}') + 2
+            without_root = _rootless[relative_path_start:]
+            template_data["originalDirname"] = without_root
 
         is_sequence_representation = isinstance(files, (list, tuple))
         if is_sequence_representation:
