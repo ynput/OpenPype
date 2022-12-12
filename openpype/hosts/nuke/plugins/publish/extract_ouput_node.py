@@ -21,11 +21,12 @@ class CreateOutputNode(pyblish.api.ContextPlugin):
                 inst.data.get("transientData", {}).get("node")
                 for inst in context
                 if inst.data.get("transientData", {}).get("node")
+                if inst.data.get(
+                    "transientData", {}).get("node").Class() != "Root"
             ]
 
             if active_node:
-                self.log.info(active_node)
-                active_node = active_node[0]
+                active_node = active_node.pop()
                 self.log.info(active_node)
                 active_node['selected'].setValue(True)
 
