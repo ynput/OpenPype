@@ -317,9 +317,8 @@
                   "defaults": "0",
                   "enum_items": [
                     {"0":  "None"},
-                    {"1":  "Photon Map"},
-                    {"2":  "Irradiance Cache"},
-                    {"3":  "Brute Force"}
+                    {"3":  "Irradiance Cache"},
+                    {"4":  "Brute Force"}
                   ]
               },
               {
@@ -330,9 +329,8 @@
                   "defaults": "0",
                   "enum_items": [
                     {"0":  "None"},
-                    {"1":  "Photon Map"},
-                    {"2":  "Irradiance Cache"},
-                    {"3":  "Brute Force"}
+                    {"2": "Irradiance Point Cloud"},
+                    {"4":  "Brute Force"}
                   ]
               },
               {

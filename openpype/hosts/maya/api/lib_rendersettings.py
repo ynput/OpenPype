@@ -95,6 +95,7 @@ class RenderSettings(object):
 
         if renderer == "redshift":
             self._set_redshift_settings(width, height)
+            mel.eval("redshiftUpdateActiveAovList")
 
     def _set_arnold_settings(self, width, height):
         """Sets settings for Arnold."""
@@ -158,7 +159,10 @@ class RenderSettings(object):
                     cmds.delete(aov)
 
         redshift_aovs = redshift_render_presets["aov_list"]
+        # list all the aovs
+        all_rs_aovs = cmds.ls(type='RedshiftAOV')
         for rs_aov in redshift_aovs:
+            rs_layername = rs_aov
             if " " in rs_aov:
                 rs_renderlayer = rs_aov.replace(" ", "")
                 rs_layername = "rsAov_{}".format(rs_renderlayer)
@@ -169,6 +173,23 @@ class RenderSettings(object):
             cmds.rsCreateAov(type=rs_aov)
         # update the AOV list
         mel.eval("redshiftUpdateActiveAovList")
+
+        rs_p_engine = redshift_render_presets["primary_gi_engine"]
+        rs_s_engine = redshift_render_presets["secondary_gi_engine"]
+
+        if int(rs_p_engine) or int(rs_s_engine) != 0:
+            cmds.setAttr("redshiftOptions.GIEnabled", 1)
+            if int(rs_p_engine) == 0:
+                # reset the primary GI Engine as default
+                cmds.setAttr("redshiftOptions.primaryGIEngine", 4)
+            if int(rs_s_engine) == 0:
+                # reset the secondary GI Engine as default
+                cmds.setAttr("redshiftOptions.secondaryGIEngine", 2)
+        else:
+            cmds.setAttr("redshiftOptions.GIEnabled", 0)
+
+        cmds.setAttr("redshiftOptions.primaryGIEngine", int(rs_p_engine))
+        cmds.setAttr("redshiftOptions.secondaryGIEngine", int(rs_s_engine))
 
         additional_options = redshift_render_presets["additional_options"]
         ext = redshift_render_presets["image_format"]
