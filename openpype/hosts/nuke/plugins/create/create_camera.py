@@ -26,6 +26,10 @@ class CreateCamera(NukeCreator):
     ):
         with maintained_selection():
             if self.selected_nodes:
+                node = self.selected_nodes[0]
+                if node.Class() != "Camera3":
+                    raise NukeCreatorError(
+                        "Creator error: Select only camera node type")
                 created_node = self.selected_nodes[0]
             else:
                 created_node = nuke.createNode("Camera2")
@@ -57,8 +61,10 @@ class CreateCamera(NukeCreator):
         if pre_create_data.get("use_selection"):
             self.selected_nodes = nuke.selectedNodes()
             if self.selected_nodes == []:
-                raise NukeCreatorError("Creator error: No active selection")
+                raise NukeCreatorError(
+                    "Creator error: No active selection")
             elif len(self.selected_nodes) > 1:
-                NukeCreatorError("Creator error: Select only one camera node")
+                raise NukeCreatorError(
+                    "Creator error: Select only one camera node")
         else:
             self.selected_nodes = []

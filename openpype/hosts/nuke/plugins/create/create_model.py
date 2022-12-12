@@ -27,7 +27,11 @@ class CreateModel(NukeCreator):
     ):
         with maintained_selection():
             if self.selected_nodes:
-                created_node = self.selected_nodes[0]
+                node = self.selected_nodes[0]
+                if node.Class() != "Scene":
+                    raise NukeCreatorError(
+                        "Creator error: Select only 'Scene' node type")
+                created_node = node
             else:
                 created_node = nuke.createNode("Scene")
 
