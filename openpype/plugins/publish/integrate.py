@@ -297,9 +297,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             for src, dst in prepared["transfers"]:
                 self._validate_path_in_project_roots(anatomy, dst)
 
-                if self._are_paths_same(src, dst):
-                    continue
-
                 # todo: add support for hardlink transfers
                 file_transactions.add(src, dst)
 
@@ -318,8 +315,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         for files_type, copy_mode in file_copy_modes:
             for src, dst in instance.data.get(files_type, []):
                 self._validate_path_in_project_roots(anatomy, dst)
-                if self._are_paths_same(src, dst):
-                    continue
+
                 file_transactions.add(src, dst, mode=copy_mode)
                 resource_destinations.add(os.path.abspath(dst))
 
@@ -929,14 +925,3 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "Destination path {} ".format(file_path) +
                 "must be in project dir"
             ))
-
-    def _are_paths_same(self, src, dst):
-        src = str(src).replace("\\", "/").lower()
-        dst = str(dst).replace("\\", "/").lower()
-
-        same = src == dst
-        if same:
-            self.log.info(
-                "Source '{}' same as destination '{}'. Skipping."
-                .format(src, dst))
-        return same
