@@ -343,6 +343,7 @@ def add_shortcuts_from_presets():
 
     if nuke_presets.get("menu"):
         menu_label_mapping = {
+            "create": "Create...",
             "manage": "Manage...",
             "load": "Load...",
             "build_workfile": "Build Workfile",
