@@ -128,13 +128,18 @@ def get_main_window():
 
 @contextlib.contextmanager
 def suspended_refresh(suspend=True):
-    """Suspend viewport refreshes"""
-    original_state = cmds.refresh(query=True, suspend=True)
+    """Suspend viewport refreshes
+
+    cmds.ogs(pause=True) is a toggle so we cant pass False.
+    """
+    original_state = cmds.ogs(query=True, pause=True)
     try:
-        cmds.refresh(suspend=suspend)
+        if suspend and not original_state:
+            cmds.ogs(pause=True)
         yield
     finally:
-        cmds.refresh(suspend=original_state)
+        if suspend and not original_state:
+            cmds.ogs(pause=True)
 
 
 @contextlib.contextmanager

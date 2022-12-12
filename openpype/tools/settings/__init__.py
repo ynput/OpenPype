@@ -24,7 +24,9 @@ def main(user_role=None):
             user_role, ", ".join(allowed_roles)
         ))
 
-    app = QtWidgets.QApplication(sys.argv)
+    app = QtWidgets.QApplication.instance()
+    if not app:
+        app = QtWidgets.QApplication(sys.argv)
     app.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
 
     widget = MainWidget(user_role)

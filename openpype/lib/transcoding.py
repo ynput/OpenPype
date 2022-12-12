@@ -77,26 +77,38 @@ def get_transcode_temp_directory():
     )
 
 
-def get_oiio_info_for_input(filepath, logger=None):
+def get_oiio_info_for_input(filepath, logger=None, subimages=False):
     """Call oiiotool to get information about input and return stdout.
 
     Stdout should contain xml format string.
     """
     args = [
-        get_oiio_tools_path(), "--info", "-v", "-i:infoformat=xml", filepath
+        get_oiio_tools_path(),
+        "--info",
+        "-v"
     ]
+    if subimages:
+        args.append("-a")
+
+    args.extend(["-i:infoformat=xml", filepath])
+
     output = run_subprocess(args, logger=logger)
     output = output.replace("\r\n", "\n")
 
     xml_started = False
+    subimages_lines = []
     lines = []
     for line in output.split("\n"):
         if not xml_started:
             if not line.startswith("<"):
                 continue
             xml_started = True
+
         if xml_started:
             lines.append(line)
+            if line == "</ImageSpec>":
+                subimages_lines.append(lines)
+                lines = []
 
     if not xml_started:
         raise ValueError(
@@ -105,12 +117,19 @@ def get_oiio_info_for_input(filepath, logger=None):
             )
         )
 
-    xml_text = "\n".join(lines)
-    return parse_oiio_xml_output(xml_text, logger=logger)
+    output = []
+    for subimage_lines in subimages_lines:
+        xml_text = "\n".join(subimage_lines)
+        output.append(parse_oiio_xml_output(xml_text, logger=logger))
+
+    if subimages:
+        return output
+    return output[0]
 
 
 class RationalToInt:
     """Rational value stored as division of 2 integers using string."""
+
     def __init__(self, string_value):
         parts = string_value.split("/")
         top = float(parts[0])
@@ -157,16 +176,16 @@ def convert_value_by_type_name(value_type, value, logger=None):
     if value_type == "int":
         return int(value)
 
-    if value_type == "float":
+    if value_type in ("float", "double"):
         return float(value)
 
     # Vectors will probably have more types
-    if value_type in ("vec2f", "float2"):
+    if value_type in ("vec2f", "float2", "float2d"):
         return [float(item) for item in value.split(",")]
 
     # Matrix should be always have square size of element 3x3, 4x4
     # - are returned as list of lists
-    if value_type == "matrix":
+    if value_type in ("matrix", "matrixd"):
         output = []
         current_index = -1
         parts = value.split(",")
@@ -198,7 +217,7 @@ def convert_value_by_type_name(value_type, value, logger=None):
     if value_type == "rational2i":
         return RationalToInt(value)
 
-    if value_type == "vector":
+    if value_type in ("vector", "vectord"):
         parts = [part.strip() for part in value.split(",")]
         output = []
         for part in parts:
@@ -380,6 +399,10 @@ def should_convert_for_ffmpeg(src_filepath):
     if not input_info:
         return None
 
+    subimages = input_info.get("subimages")
+    if subimages is not None and subimages > 1:
+        return True
+
     # Check compression
     compression = input_info["attribs"].get("compression")
     if compression in ("dwaa", "dwab"):
@@ -453,7 +476,7 @@ def convert_for_ffmpeg(
     if input_frame_start is not None and input_frame_end is not None:
         is_sequence = int(input_frame_end) != int(input_frame_start)
 
-    input_info = get_oiio_info_for_input(first_input_path)
+    input_info = get_oiio_info_for_input(first_input_path, logger=logger)
 
     # Change compression only if source compression is "dwaa" or "dwab"
     #   - they're not supported in ffmpeg
@@ -488,13 +511,21 @@ def convert_for_ffmpeg(
         input_channels.append(alpha)
     input_channels_str = ",".join(input_channels)
 
-    oiio_cmd.extend([
+    subimages = input_info.get("subimages")
+    input_arg = "-i"
+    if subimages is None or subimages == 1:
         # Tell oiiotool which channels should be loaded
         # - other channels are not loaded to memory so helps to avoid memory
         #       leak issues
-        "-i:ch={}".format(input_channels_str), first_input_path,
+        # - this option is crashing if used on multipart/subimages exrs
+        input_arg += ":ch={}".format(input_channels_str)
+
+    oiio_cmd.extend([
+        input_arg, first_input_path,
         # Tell oiiotool which channels should be put to top stack (and output)
-        "--ch", channels_arg
+        "--ch", channels_arg,
+        # Use first subimage
+        "--subimage", "0"
     ])
 
     # Add frame definitions to arguments
@@ -588,7 +619,7 @@ def convert_input_paths_for_ffmpeg(
             " \".exr\" extension. Got \"{}\"."
         ).format(ext))
 
-    input_info = get_oiio_info_for_input(first_input_path)
+    input_info = get_oiio_info_for_input(first_input_path, logger=logger)
 
     # Change compression only if source compression is "dwaa" or "dwab"
     #   - they're not supported in ffmpeg
@@ -606,11 +637,21 @@ def convert_input_paths_for_ffmpeg(
 
     red, green, blue, alpha = review_channels
     input_channels = [red, green, blue]
+    # TODO find subimage inder where rgba is available for multipart exrs
     channels_arg = "R={},G={},B={}".format(red, green, blue)
     if alpha is not None:
         channels_arg += ",A={}".format(alpha)
         input_channels.append(alpha)
     input_channels_str = ",".join(input_channels)
+
+    subimages = input_info.get("subimages")
+    input_arg = "-i"
+    if subimages is None or subimages == 1:
+        # Tell oiiotool which channels should be loaded
+        # - other channels are not loaded to memory so helps to avoid memory
+        #       leak issues
+        # - this option is crashing if used on multipart exrs
+        input_arg += ":ch={}".format(input_channels_str)
 
     for input_path in input_paths:
         # Prepare subprocess arguments
@@ -625,13 +666,12 @@ def convert_input_paths_for_ffmpeg(
             oiio_cmd.extend(["--compression", compression])
 
         oiio_cmd.extend([
-            # Tell oiiotool which channels should be loaded
-            # - other channels are not loaded to memory so helps to
-            #       avoid memory leak issues
-            "-i:ch={}".format(input_channels_str), input_path,
+            input_arg, input_path,
             # Tell oiiotool which channels should be put to top stack
             #   (and output)
-            "--ch", channels_arg
+            "--ch", channels_arg,
+            # Use first subimage
+            "--subimage", "0"
         ])
 
         for attr_name, attr_value in input_info["attribs"].items():
