@@ -79,11 +79,11 @@ def fullmatch(regex, string, flags=0):
     return None
 
 
-def validate_value_by_regexes(values, in_list):
+def validate_value_by_regexes(value, in_list):
     """Validates in any regex from list match entered value.
 
     Args:
-        values (str|list): String where regexes is checked.
+        value (str): String where regexes is checked.
         in_list (list): List with regexes.
 
     Returns:
@@ -102,21 +102,17 @@ def validate_value_by_regexes(values, in_list):
 
     # If value is not set and in list has specific values then resolve value
     #   as not matching.
-    if not values:
+    if not value:
         return -1
-
-    if isinstance(values, str):
-        values = [values]
 
     regexes = compile_list_of_regexes(in_list)
     for regex in regexes:
-        for value in values:
-            if hasattr(regex, "fullmatch"):
-                result = regex.fullmatch(value)
-            else:
-                result = fullmatch(regex, value)
-            if result:
-                return 1
+        if hasattr(regex, "fullmatch"):
+            result = regex.fullmatch(value)
+        else:
+            result = fullmatch(regex, value)
+        if result:
+            return 1
     return -1
 
 
@@ -140,8 +136,7 @@ def filter_profiles(profiles_data, key_values, keys_order=None, logger=None):
 
     Args:
         profiles_data (list): Profile definitions as dictionaries.
-        key_values (dict): Mapping of Key <-> Value|[Value].
-            Key is checked if is
+        key_values (dict): Mapping of Key <-> Value. Key is checked if is
             available in profile and if Value is matching it's values.
         keys_order (list, tuple): Order of keys from `key_values` which matters
             only when multiple profiles have same score.
@@ -186,12 +181,12 @@ def filter_profiles(profiles_data, key_values, keys_order=None, logger=None):
         profile_scores = []
 
         for key in keys_order:
-            values = key_values[key]
-            match = validate_value_by_regexes(values, profile.get(key))
+            value = key_values[key]
+            match = validate_value_by_regexes(value, profile.get(key))
             if match == -1:
                 profile_value = profile.get(key) or []
                 logger.debug(
-                    "\"{}\" not found in \"{}\": {}".format(values, key,
+                    "\"{}\" not found in \"{}\": {}".format(value, key,
                                                             profile_value)
                 )
                 profile_points = -1
