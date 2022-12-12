@@ -7,18 +7,18 @@ class CollectGizmo(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.CollectorOrder + 0.22
-    label = "Collect Gizmo (Group)"
+    label = "Collect Gizmo (group)"
     hosts = ["nuke"]
     families = ["gizmo"]
 
     def process(self, instance):
-        grpn = instance.data["transientData"]["node"]
+
+        gizmo_node = instance.data["transientData"]["node"]
 
         # add family to familiess
         instance.data["families"].insert(0, instance.data["family"])
         # make label nicer
-        instance.data["label"] = "{0} ({1} nodes)".format(
-            grpn.name(), len(instance) - 1)
+        instance.data["label"] = gizmo_node.name()
 
         # Get frame range
         handle_start = instance.context.data["handleStart"]

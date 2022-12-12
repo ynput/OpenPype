@@ -39,7 +39,7 @@ class ValidateGizmo(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     optional = True
     families = ["gizmo"]
-    label = "Validate Gizmo (Group)"
+    label = "Validate Gizmo (group)"
     hosts = ["nuke"]
     actions = [OpenFailedGroupNode]
 
