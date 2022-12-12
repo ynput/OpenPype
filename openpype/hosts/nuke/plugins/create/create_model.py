@@ -64,6 +64,6 @@ class CreateModel(NukeCreator):
             if self.selected_nodes == []:
                 raise NukeCreatorError("Creator error: No active selection")
             elif len(self.selected_nodes) > 1:
-                NukeCreatorError("Creator error: Select only one camera node")
+                NukeCreatorError("Creator error: Select only one 'Scene' node")
         else:
             self.selected_nodes = []
