@@ -59,6 +59,7 @@
         "default_render_image_folder": "renders/maya",
         "enable_all_lights": true,
         "aov_separator": "underscore",
+        "remove_aovs": false,
         "reset_current_frame": false,
         "arnold_renderer": {
             "image_prefix": "<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>",
