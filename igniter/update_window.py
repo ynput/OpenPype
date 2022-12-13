@@ -47,7 +47,6 @@ class UpdateWindow(QtWidgets.QDialog):
 
         self._update_thread = None
 
-        self.resize(QtCore.QSize(self._width, self._height))
         self._init_ui()
 
         # Set stylesheet
@@ -78,6 +77,16 @@ class UpdateWindow(QtWidgets.QDialog):
         main.addSpacing(15)
 
         self._progress_bar = progress_bar
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        current_size = self.size()
+        new_size = QtCore.QSize(
+            max(current_size.width(), self._width),
+            max(current_size.height(), self._height)
+        )
+        if current_size != new_size:
+            self.resize(new_size)
 
     def _run_update(self):
         """Start install process.
