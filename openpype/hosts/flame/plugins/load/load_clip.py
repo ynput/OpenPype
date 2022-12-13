@@ -49,8 +49,10 @@ class LoadClip(opfapi.ClipLoader):
 
         # in case output is not in context replace key to representation
         if not context["representation"]["context"].get("output"):
-            self.clip_name_template.replace("output", "representation")
-            self.layer_rename_template.replace("output", "representation")
+            self.clip_name_template = self.clip_name_template.replace(
+                "output", "representation")
+            self.layer_rename_template = self.layer_rename_template.replace(
+                "output", "representation")
 
         formating_data = deepcopy(context["representation"]["context"])
         clip_name = StringTemplate(self.clip_name_template).format(
