@@ -127,10 +127,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                   "celaction": [r".*"]}
 
     environ_job_filter = [
-        "OPENPYPE_METADATA_FILE",
-        "OPENPYPE_PUBLISH_JOB",
-        "OPENPYPE_RENDER_JOB",
-        "OPENPYPE_LOG_NO_COLORS"
+        "OPENPYPE_METADATA_FILE"
     ]
 
     environ_keys = [
@@ -238,10 +235,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "AVALON_PROJECT": legacy_io.Session["AVALON_PROJECT"],
             "AVALON_ASSET": legacy_io.Session["AVALON_ASSET"],
             "AVALON_TASK": legacy_io.Session["AVALON_TASK"],
-            "OPENPYPE_LOG_NO_COLORS": "1",
             "OPENPYPE_USERNAME": instance.context.data["user"],
             "OPENPYPE_PUBLISH_JOB": "1",
-            "OPENPYPE_RENDER_JOB": "0"
+            "OPENPYPE_RENDER_JOB": "0",
+            "OPENPYPE_REMOTE_JOB": "0",
+            "OPENPYPE_LOG_NO_COLORS": "1"
         }
 
         # add environments from self.environ_keys
