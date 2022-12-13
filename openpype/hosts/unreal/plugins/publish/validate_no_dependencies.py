@@ -25,7 +25,7 @@ class ValidateNoDependencies(pyblish.api.InstancePlugin):
             dependencies = ar.get_dependencies(
                 asset.package_name,
                 unreal.AssetRegistryDependencyOptions(
-                    include_soft_package_references=True,
+                    include_soft_package_references=False,
                     include_hard_package_references=True,
                     include_searchable_names=False,
                     include_soft_management_references=False,
