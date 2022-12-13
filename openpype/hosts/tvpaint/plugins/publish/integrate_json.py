@@ -19,8 +19,8 @@ class IntegrateJson(pyblish.api.InstancePlugin):
             "* Processing instance \"{}\"".format(instance.data["label"])
         )
 
-        if not instance.data.get('json_output_dir'):
-            return
+        self.log.debug("RENDER LAYER: {}".format(instance.data.get('renderlayer')))
+        self.log.debug("CONTEXT LAYERS DATA: {}".format(instance.context.data.get('layersData')))
 
         for repre in instance.data.get("representations"):
             if repre['name'] != 'png' or 'review' in repre['tags']:
