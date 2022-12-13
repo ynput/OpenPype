@@ -119,7 +119,11 @@
             ],
             "reel_group_name": "OpenPype_Reels",
             "reel_name": "Loaded",
-            "clip_name_template": "{asset}_{subset}<_{output}>"
+            "clip_name_template": "{asset}_{subset}<_{output}>",
+            "layer_rename_template": "{asset}_{subset}<_{output}>",
+            "layer_rename_patterns": [
+                "rgba"
+            ]
         },
         "LoadClipBatch": {
             "enabled": true,

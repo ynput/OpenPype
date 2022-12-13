@@ -1,3 +1,4 @@
+from copy import deepcopy
 import os
 import flame
 from pprint import pformat
@@ -25,6 +26,14 @@ class LoadClip(opfapi.ClipLoader):
     reel_name = "Loaded"
     clip_name_template = "{asset}_{subset}<_{output}>"
 
+    """ Anatomy keys from version context data and dynamically added:
+        - {layerName} - original layer name token
+        - {layerUID} - original layer UID token
+        - {originalBasename} - original clip name taken from file
+    """
+    layer_rename_template = "{asset}_{subset}<_{output}>"
+    layer_rename_patterns = []
+
     def load(self, context, name, namespace, options):
 
         # get flame objects
@@ -38,8 +47,14 @@ class LoadClip(opfapi.ClipLoader):
         version_name = version.get("name", None)
         colorspace = self.get_colorspace(context)
 
+        # in case output is not in context replace key to representation
+        if not context["representation"]["context"].get("output"):
+            self.clip_name_template.replace("output", "representation")
+            self.layer_rename_template.replace("output", "representation")
+
+        formating_data = deepcopy(context["representation"]["context"])
         clip_name = StringTemplate(self.clip_name_template).format(
-            context["representation"]["context"])
+            formating_data)
 
         # convert colorspace with ocio to flame mapping
         # in imageio flame section
@@ -62,6 +77,9 @@ class LoadClip(opfapi.ClipLoader):
             "path": self.fname.replace("\\", "/"),
             "colorspace": colorspace,
             "version": "v{:0>3}".format(version_name),
+            "layer_rename_template": self.layer_rename_template,
+            "layer_rename_patterns": self.layer_rename_patterns,
+            "context_data": formating_data
         }
         self.log.debug(pformat(
             loading_context
