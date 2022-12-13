@@ -30,8 +30,8 @@ void UAssetContainer::OnAssetAdded(const FAssetData& AssetData)
 
 	// get asset path and class
 	FString assetPath = AssetData.GetFullName();
-	FString assetFName = AssetData.AssetClass.ToString();
-	
+	FString assetFName = AssetData.AssetClassPath.ToString();
+	UE_LOG(LogTemp, Log, TEXT("asset name %s"), *assetFName);
 	// split path
 	assetPath.ParseIntoArray(split, TEXT(" "), true);
 
@@ -60,7 +60,7 @@ void UAssetContainer::OnAssetRemoved(const FAssetData& AssetData)
 
 	// get asset path and class
 	FString assetPath = AssetData.GetFullName();
-	FString assetFName = AssetData.AssetClass.ToString();
+	FString assetFName = AssetData.AssetClassPath.ToString();
 
 	// split path
 	assetPath.ParseIntoArray(split, TEXT(" "), true);
@@ -93,7 +93,7 @@ void UAssetContainer::OnAssetRenamed(const FAssetData& AssetData, const FString&
 
 	// get asset path and class
 	FString assetPath = AssetData.GetFullName();
-	FString assetFName = AssetData.AssetClass.ToString();
+	FString assetFName = AssetData.AssetClassPath.ToString();
 
 	// split path
 	assetPath.ParseIntoArray(split, TEXT(" "), true);

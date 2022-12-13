@@ -4,7 +4,7 @@
 #include "AssetRegistryModule.h"
 #include "AssetToolsModule.h"
 #include "Framework/Notifications/NotificationManager.h"
-#include "SNotificationList.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 //Moves all the invalid pointers to the end to prepare them for the shrinking
 #define REMOVE_INVALID_ENTRIES(VAR) VAR.CompactStable(); \
@@ -47,7 +47,7 @@ void UOpenPypePublishInstance::OnAssetCreated(const FAssetData& InAssetData)
 	if (!IsValid(Asset))
 	{
 		UE_LOG(LogAssetData, Warning, TEXT("Asset \"%s\" is not valid! Skipping the addition."),
-		       *InAssetData.ObjectPath.ToString());
+		       *InAssetData.GetObjectPathString());
 		return;
 	}
 
