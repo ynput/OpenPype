@@ -362,7 +362,7 @@ def check_workfile_up_to_date() -> bool:
 
     if last_published_time <= workfile_time:
         window_manager.current_workfile_last_publish_time = (
-            last_published_version
+            last_published_version["data"]["time"]
         )
         return True
     return False
