@@ -33,7 +33,8 @@ class ValidateNoDependencies(pyblish.api.InstancePlugin):
                 ))
             if dependencies:
                 for dep in dependencies:
-                    all_dependencies.append(str(dep))
+                    if str(dep).startswith("/Game/"):
+                        all_dependencies.append(str(dep))
 
         if all_dependencies:
             raise RuntimeError(
