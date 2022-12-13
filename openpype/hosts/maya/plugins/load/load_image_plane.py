@@ -23,8 +23,8 @@ class CameraWindow(QtWidgets.QDialog):
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
 
         self.camera = None
-        self.static_image_plane = False
-        self.show_in_all_views = False
+        # self.static_image_plane = False
+        # self.show_in_all_views = False
 
         self.widgets = {
             "label": QtWidgets.QLabel("Select camera for image plane."),
@@ -45,8 +45,8 @@ class CameraWindow(QtWidgets.QDialog):
         for camera in cameras:
             self.widgets["list"].addItem(camera)
 
-        self.widgets["staticImagePlane"].setText("Make Image Plane Static")
-        self.widgets["showInAllViews"].setText("Show Image Plane in All Views")
+        # self.widgets["staticImagePlane"].setText("Make Image Plane Static")
+        # self.widgets["showInAllViews"].setText("Show Image Plane in All Views")
 
         # Build buttons.
         layout = QtWidgets.QHBoxLayout(self.widgets["buttons"])
@@ -57,13 +57,13 @@ class CameraWindow(QtWidgets.QDialog):
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(self.widgets["label"])
         layout.addWidget(self.widgets["list"])
-        layout.addWidget(self.widgets["staticImagePlane"])
-        layout.addWidget(self.widgets["showInAllViews"])
+        # layout.addWidget(self.widgets["staticImagePlane"])
+        # layout.addWidget(self.widgets["showInAllViews"])
         layout.addWidget(self.widgets["buttons"])
         layout.addWidget(self.widgets["warning"])
 
         self.widgets["okButton"].pressed.connect(self.on_ok_pressed)
-        self.widgets["cancelButton"].pressed.connect(self.on_cancel_pressed)
+        self.widgets["cancelButton"].clicked.connect(self.on_cancel_pressed)
         self.widgets["list"].itemPressed.connect(self.on_list_itemPressed)
 
     def on_list_itemPressed(self, item):
@@ -73,8 +73,8 @@ class CameraWindow(QtWidgets.QDialog):
         if self.camera is None:
             self.widgets["warning"].setVisible(True)
             return
-        self.show_in_all_views = self.widgets["showInAllViews"].isChecked()
-        self.static_image_plane = self.widgets["staticImagePlane"].isChecked()
+        # self.show_in_all_views = self.widgets["showInAllViews"].isChecked()
+        # self.static_image_plane = self.widgets["staticImagePlane"].isChecked()
 
         self.close()
 
@@ -106,12 +106,12 @@ class ImagePlaneLoader(load.LoaderPlugin):
 
         # Get camera from user selection.
         camera = None
-        is_static_image_plane = None
-        is_in_all_views = None
+        # is_static_image_plane = None
+        # is_in_all_views = None
         if data:
             camera = pm.PyNode(data.get("camera"))
-            is_static_image_plane = data.get("static_image_plane")
-            is_in_all_views = data.get("in_all_views")
+            # is_static_image_plane = data.get("static_image_plane")
+            # is_in_all_views = data.get("in_all_views")
 
         if not camera:
             cameras = pm.ls(type="camera")
@@ -121,8 +121,8 @@ class ImagePlaneLoader(load.LoaderPlugin):
             window.exec_()
             camera = camera_names[window.camera]
 
-            is_static_image_plane = window.static_image_plane
-            is_in_all_views = window.show_in_all_views
+            # is_static_image_plane = window.static_image_plane
+            # is_in_all_views = window.show_in_all_views
 
         if camera == "create_camera":
             camera = pm.createNode("camera")
@@ -139,18 +139,20 @@ class ImagePlaneLoader(load.LoaderPlugin):
         # Create image plane
         image_plane_transform, image_plane_shape = pm.imagePlane(
             fileName=context["representation"]["data"]["path"],
-            camera=camera, showInAllViews=is_in_all_views
-        )
+            camera=camera)
         image_plane_shape.depth.set(image_plane_depth)
 
-        if is_static_image_plane:
-            image_plane_shape.detach()
-            image_plane_transform.setRotation(camera.getRotation())
+        # if is_static_image_plane:
+            # image_plane_shape.detach()
+            # image_plane_transform.setRotation(camera.getRotation())
 
         start_frame = pm.playbackOptions(q=True, min=True)
         end_frame = pm.playbackOptions(q=True, max=True)
 
-        image_plane_shape.frameOffset.set(1 - start_frame)
+        if int(start_frame) > 0:
+            image_plane_shape.frameOffset.set(int(start_frame)- 1)
+        else:
+            image_plane_shape.frameOffset.set(int(start_frame))
         image_plane_shape.frameIn.set(start_frame)
         image_plane_shape.frameOut.set(end_frame)
         image_plane_shape.frameCache.set(end_frame)
@@ -180,9 +182,13 @@ class ImagePlaneLoader(load.LoaderPlugin):
                 QtWidgets.QMessageBox.Cancel
             )
             if reply == QtWidgets.QMessageBox.Ok:
-                pm.delete(
-                    image_plane_shape.listConnections(type="expression")[0]
-                )
+                expressions = image_plane_shape.frameExtension.inputs(type="expression")
+                if expressions:
+                    pm.delete(expressions)
+
+                if not image_plane_shape.frameExtension.isFreeToChange():
+                    raise RuntimeError("Can't set frame extension for {}".format(image_plane_shape))
+
                 image_plane_shape.frameExtension.set(start_frame)
 
         new_nodes.extend(
@@ -233,7 +239,10 @@ class ImagePlaneLoader(load.LoaderPlugin):
         )
         start_frame = asset["data"]["frameStart"]
         end_frame = asset["data"]["frameEnd"]
-        image_plane_shape.frameOffset.set(1 - start_frame)
+        if int(start_frame) > 0:
+            image_plane_shape.frameOffset.set(int(start_frame)- 1)
+        else:
+            image_plane_shape.frameOffset.set(int(start_frame))
         image_plane_shape.frameIn.set(start_frame)
         image_plane_shape.frameOut.set(end_frame)
         image_plane_shape.frameCache.set(end_frame)
