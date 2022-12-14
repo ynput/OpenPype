@@ -179,7 +179,7 @@ class ImagePlaneLoader(load.LoaderPlugin):
                     pm.delete(expressions)
 
                 if not image_plane_shape.frameExtension.isFreeToChange():
-                    raise RuntimeError("Can't set frame extension for {}".format(image_plane_shape))
+                    raise RuntimeError("Can't set frame extension for {}".format(image_plane_shape)) # noqa
 
                 image_plane_shape.frameExtension.set(start_frame)
 
