@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtGui, QtCore
+from qtpy import QtWidgets, QtGui, QtCore
 
 PREFIX_ROLE = QtCore.Qt.UserRole + 1
 LAST_SEGMENT_ROLE = QtCore.Qt.UserRole + 2
