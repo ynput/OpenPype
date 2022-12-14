@@ -6,7 +6,6 @@ from typing import Dict, List, Optional
 
 import bpy
 
-from openpype import lib
 from openpype.pipeline import (
     legacy_create,
     get_representation_path,
@@ -415,13 +414,14 @@ class BlendLayoutLoader(plugin.AssetLoader):
             str(representation.get("_id")), actions, anim_instances
         )
 
-        for o in anim_instances.keys():
+        # Link the new objects to the animation collection
+        for inst in anim_instances.keys():
             try:
-                obj = bpy.data.objects[o]
-                bpy.data.collections[anim_instances[o]].objects.link(obj)
+                obj = bpy.data.objects[inst]
+                bpy.data.collections[anim_instances[inst]].objects.link(obj)
             except KeyError:
-                self.log.info(f"Object {o} does not exist anymore.")
-                coll = bpy.data.collections.get(anim_instances[o])
+                self.log.info(f"Object {inst} does not exist anymore.")
+                coll = bpy.data.collections.get(anim_instances[inst])
                 if (coll):
                     bpy.data.collections.remove(coll)
 
