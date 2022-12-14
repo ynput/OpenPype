@@ -134,7 +134,7 @@ class ImagePlaneLoader(load.LoaderPlugin):
         end_frame = pm.playbackOptions(q=True, max=True)
 
         if int(start_frame) > 0:
-            image_plane_shape.frameOffset.set(int(start_frame)-1)
+            image_plane_shape.frameOffset.set(int(start_frame) - 1)
         else:
             image_plane_shape.frameOffset.set(int(start_frame))
         image_plane_shape.frameIn.set(start_frame)
@@ -166,7 +166,7 @@ class ImagePlaneLoader(load.LoaderPlugin):
                 QtWidgets.QMessageBox.Cancel
             )
             if reply == QtWidgets.QMessageBox.Ok:
-                expressions = image_plane_shape.frameExtension.inputs(type="expression")
+                expressions = image_plane_shape.frameExtension.inputs(type="expression") # noqa
                 if expressions:
                     pm.delete(expressions)
 
@@ -224,7 +224,7 @@ class ImagePlaneLoader(load.LoaderPlugin):
         start_frame = asset["data"]["frameStart"]
         end_frame = asset["data"]["frameEnd"]
         if int(start_frame) > 0:
-            image_plane_shape.frameOffset.set(int(start_frame)-1)
+            image_plane_shape.frameOffset.set(int(start_frame) - 1)
         else:
             image_plane_shape.frameOffset.set(int(start_frame))
         image_plane_shape.frameIn.set(start_frame)
