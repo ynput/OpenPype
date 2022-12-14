@@ -102,8 +102,6 @@ class ImagePlaneLoader(load.LoaderPlugin):
         # is_in_all_views = None
         if data:
             camera = pm.PyNode(data.get("camera"))
-            # is_static_image_plane = data.get("static_image_plane")
-            # is_in_all_views = data.get("in_all_views")
 
         if not camera:
             cameras = pm.ls(type="camera")
@@ -112,9 +110,6 @@ class ImagePlaneLoader(load.LoaderPlugin):
             window = CameraWindow(camera_names.keys())
             window.exec_()
             camera = camera_names[window.camera]
-
-            # is_static_image_plane = window.static_image_plane
-            # is_in_all_views = window.show_in_all_views
 
         if camera == "create_camera":
             camera = pm.createNode("camera")
@@ -134,15 +129,12 @@ class ImagePlaneLoader(load.LoaderPlugin):
             camera=camera)
         image_plane_shape.depth.set(image_plane_depth)
 
-        # if is_static_image_plane:
-            # image_plane_shape.detach()
-            # image_plane_transform.setRotation(camera.getRotation())
 
         start_frame = pm.playbackOptions(q=True, min=True)
         end_frame = pm.playbackOptions(q=True, max=True)
 
         if int(start_frame) > 0:
-            image_plane_shape.frameOffset.set(int(start_frame)- 1)
+            image_plane_shape.frameOffset.set(int(start_frame)-1)
         else:
             image_plane_shape.frameOffset.set(int(start_frame))
         image_plane_shape.frameIn.set(start_frame)
@@ -232,7 +224,7 @@ class ImagePlaneLoader(load.LoaderPlugin):
         start_frame = asset["data"]["frameStart"]
         end_frame = asset["data"]["frameEnd"]
         if int(start_frame) > 0:
-            image_plane_shape.frameOffset.set(int(start_frame)- 1)
+            image_plane_shape.frameOffset.set(int(start_frame)-1)
         else:
             image_plane_shape.frameOffset.set(int(start_frame))
         image_plane_shape.frameIn.set(start_frame)
