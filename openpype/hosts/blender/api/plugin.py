@@ -48,7 +48,7 @@ VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
 log = Logger.get_logger(__name__)
 
 
-def asset_name(
+def build_op_name(
     asset: str, subset: str, namespace: Optional[str] = None
 ) -> str:
     """Return a consistent name for an asset."""
@@ -906,7 +906,7 @@ class Creator(LegacyCreator):
         # Get info from data and create name value.
         asset = self.data["asset"]
         subset = self.data["subset"]
-        name = asset_name(asset, subset)
+        name = build_op_name(asset, subset)
 
         # Use selected objects if useSelection is True
         if (self.options or {}).get("useSelection"):
@@ -1051,15 +1051,7 @@ class AssetLoader(LoaderPlugin):
         Returns:
             Optional[bpy.types.Collection]: Container collection.
         """
-        for collection in collections:
-            metadata = collection.get(AVALON_PROPERTY)
-            if (
-                metadata
-                and (not famillies or metadata.get("family") in famillies)
-                and metadata.get("asset_name") in container_name
-                and metadata.get("name") in container_name
-            ):
-                return collection
+        return next((col for col in collections if col.name == container_name), None)
 
     def _get_scene_container(
         self, container: dict
@@ -1172,9 +1164,7 @@ class AssetLoader(LoaderPlugin):
 
         if self.bl_types & BL_OUTLINER_TYPES:
             # Get the right asset container from imported collections.
-            container_collection = self._get_container_collection_from_collections(
-                data_to.collections, container_name, self.families
-            )
+            container_collection = next((col for col in data_to.collections if col.name == container_name), None)
 
             # Ensure container collection
             if container_collection:
@@ -1212,6 +1202,10 @@ class AssetLoader(LoaderPlugin):
         if container:
             # Add datablocks to container
             add_datablocks_to_container(datablocks, container)
+
+            # Rename container
+            if container.name != container_name:
+                container.name = container_name
         else:
             # Create container if none providen
             container = create_container(container_name, datablocks)
@@ -1242,13 +1236,15 @@ class AssetLoader(LoaderPlugin):
         deselect_all()
 
     def _link_blend(
-        self, libpath: str, container_name: str, override=True
+        self, libpath: str, container_name: str, container: OpenpypeContainer = None, override=True
     ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
         """Link blend process.
 
         Args:
             libpath (str): Path of library to link.
             container_name (str): Name of container to link.
+            container (OpenpypeContainer): Load into existing container.
+                Defaults to None.
             override (bool, optional): Apply library override to linked datablocks. Defaults to True.
 
         Returns:
@@ -1256,7 +1252,7 @@ class AssetLoader(LoaderPlugin):
         """
         # Load collections from libpath library.
         container, all_datablocks = self._load_library_datablocks(
-            libpath, container_name, do_override=override
+            libpath, container_name, container=container, do_override=override
         )
 
         container_collection = container.get("outliner_entity")
@@ -1284,20 +1280,22 @@ class AssetLoader(LoaderPlugin):
         return container, all_datablocks
 
     def _append_blend(
-        self, libpath: str, container_name: str
+        self, libpath: str, container_name: str, container: OpenpypeContainer = None
     ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
         """Append blend process.
 
         Args:
             libpath (str): Path of library to append.
             container_name (str): Name of container to append.
+            container (OpenpypeContainer): Load into existing container.
+                Defaults to None.
 
         Returns:
             Tuple[List[bpy.types.ID], OpenpypeContainer]: (Created scene container, Appended datablocks)
         """
         # Load collections from libpath library.
         container, all_datablocks = self._load_library_datablocks(
-            libpath, container_name, link=False
+            libpath, container_name, container=container, link=False
         )
 
         # Link loaded collection to scene
@@ -1308,7 +1306,7 @@ class AssetLoader(LoaderPlugin):
         return container, all_datablocks
 
     def _instance_blend(
-        self, libpath: str, container_name: str
+        self, libpath: str, container_name: str, container: OpenpypeContainer = None
     ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
         """Instance blend process.
 
@@ -1318,6 +1316,8 @@ class AssetLoader(LoaderPlugin):
         Args:
             libpath (str): Path of library to instance.
             container_name (str): Name of container to instance.
+            container (OpenpypeContainer): Load into existing container.
+                Defaults to None.
 
         Returns:
             Tuple[List[bpy.types.ID], OpenpypeContainer]: 
@@ -1325,7 +1325,7 @@ class AssetLoader(LoaderPlugin):
         """
 
         container, all_datablocks = self._link_blend(
-            libpath, container_name, override=False
+            libpath, container_name, container=container, override=False
         )
 
         # Create empty object
@@ -1353,6 +1353,27 @@ class AssetLoader(LoaderPlugin):
         """Must be implemented by a sub-class"""
         raise NotImplementedError("Must be implemented by a sub-class")
 
+    def get_load_function(self) -> Callable:
+        """Get appropriate function regarding the load type of the loader.
+
+        Raises:
+            ValueError: load_type has not a correct value. Must be APPEND, INSTANCE or LINK.
+
+        Returns:
+            Callable: Load function
+        """
+        if self.load_type == "APPEND":
+            return self._append_blend
+        elif self.load_type == "INSTANCE":
+            return self._instance_blend
+        elif self.load_type == "LINK":
+            return self._link_blend
+        else:
+            raise ValueError(
+                "'load_type' attribute must be set by implemented loader to:"
+                "APPEND, INSTANCE or LINK."
+            )
+
     @exec_process
     def load(
         self,
@@ -1374,30 +1395,22 @@ class AssetLoader(LoaderPlugin):
 
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        unique_number = get_unique_number(asset, subset)
+        unique_number = get_unique_number(
+            asset, subset
+        )  # TODO drop unique number to rely on blender's system
         namespace = namespace or f"{asset}_{unique_number}"
         name = name or subset
 
         if legacy_io.Session.get("AVALON_ASSET") == asset:
-            group_name = asset_name(asset, subset)
+            group_name = build_op_name(asset, subset)
             namespace = ""
         else:
             unique_number = get_unique_number(asset, subset)
-            group_name = asset_name(asset, subset, unique_number)
+            group_name = build_op_name(asset, subset, unique_number)
             namespace = namespace or f"{asset}_{unique_number}"
 
         # Pick load function and execute
-        if self.load_type == "APPEND":
-            load_func = self._append_blend
-        elif self.load_type == "INSTANCE":
-            load_func = self._instance_blend
-        elif self.load_type == "LINK":
-            load_func = self._link_blend
-        else:
-            raise ValueError(
-                "'load_type' attribute must be set by implemented loader to:"
-                "APPEND, INSTANCE or LINK."
-            )
+        load_func = self.get_load_function()
 
         # TODO refactor `name` passing to be able to override default
         container, datablocks = load_func(libpath, group_name)
@@ -1420,14 +1433,14 @@ class AssetLoader(LoaderPlugin):
                     "id": AVALON_CONTAINER_ID,
                     "name": context["subset"]["name"],
                     "namespace": namespace or "",
-                    "loader": str(self.__class__.__name__),
+                    "loader": self.__class__.__name__,
                     "representation": str(context["representation"]["_id"]),
                     "libpath": libpath,
                     "asset_name": context["asset"]["name"],
                     "parent": str(context["representation"]["parent"]),
                     "family": context["representation"]["context"]["family"],
-                    "objectName": container.name
-                }
+                    "objectName": container.name,
+                },
             )
 
         # Apply options
@@ -1440,127 +1453,26 @@ class AssetLoader(LoaderPlugin):
         self[:] = list(datablocks)
         return container, datablocks
 
-    def _is_updated(self, asset_group, libpath):
-        """Check data before update. Return True if already updated."""
-
-        assert Path(libpath).is_file(), (
-            f"The library file doesn't exist: {libpath}"
-        )
-        assert Path(libpath).suffix.lower() in VALID_EXTENSIONS, (
-            f"Unsupported library file: {libpath}"
-        )
-
-        asset_metadata = asset_group.get(AVALON_PROPERTY, {})
-
-        if asset_metadata.get("loader") != str(self.__class__.__name__):
-            return False
-
-        group_libpath = asset_metadata.get("libpath", "")
-
-        normalized_group_libpath = (
-            Path(bpy.path.abspath(group_libpath)).resolve()
-        )
-        normalized_libpath = (
-            Path(bpy.path.abspath(libpath)).resolve()
-        )
-        self.log.debug(
-            f"normalized_group_libpath:\n  {normalized_group_libpath}\n"
-            f"normalized_libpath:\n  {normalized_libpath}"
-        )
-        return normalized_group_libpath == normalized_libpath
-
-    def _update_namespace(
-        self, asset_group: Union[bpy.types.Collection, bpy.types.Object]
-    ):
-        """Update namespace from asset group name."""
-        # Clear default blender numbering.
-        split_name = asset_group.name.replace(".", "_").split("_")
-        asset_number = next(
-            (int(spl) for spl in split_name if spl.isdigit()), 0
-        )
-        split_name = [spl for spl in split_name if not spl.isdigit()]
-        # Get asset and subset name from splited asset group name.
-        if len(split_name) > 1:
-            asset = "_".join(split_name[:-1])
-            subset = split_name[-1]
-        else:
-            asset = split_name[0]
-            subset = "Unknown"
-        # Generate unique numbered namespace and asset group name.
-        unique_number = get_unique_number(asset, subset, asset_number)
-        namespace = f"{asset}_{unique_number}"
-        asset_group_name = asset_name(asset, subset, unique_number)
-        # update asset group name and metadate
-        asset_group.name = asset_group_name
-        asset_group[AVALON_PROPERTY]["namespace"] = namespace
-        asset_group[AVALON_PROPERTY]["objectName"] = asset_group_name
-
-    def _update_instancer(
-        self, asset_group: bpy.types.Object
-    ) -> Union[bpy.types.Collection, bpy.types.Object]:
-        """Update instancer depending the context to match with the loader
-        asset process.
-
-        Arguments:
-            asset_group: the instancer object.
-
-        Returns:
-            The updated object instancer or converted collection.
-        """
-        # Get instance collection and this metadata
-        instance_collection = asset_group.instance_collection
-        instance_metadata = instance_collection[AVALON_PROPERTY].to_dict()
-        # Get current session task name and asset name
-        session_asset_name = legacy_io.Session.get("AVALON_ASSET")
-
-        # If instance collection is a model container and current session task
-        # is not a downstream task of model task, we juste need to update the
-        # instancer metadata and namespace because model loader can manage
-        # instancers.
-        if (
-            is_container(instance_collection, "model")
-            and session_asset_name != instance_metadata.get("asset_name")
-        ):
-            asset_group[AVALON_PROPERTY] = instance_metadata
-            self._update_namespace(asset_group)
-
-        # else if instance collection is container we need to convert instancer
-        # object to a valid linked collection.
-        elif is_container(instance_collection):
-            # Keep collection name
-            collection_name = asset_group.name
-
-            # Deleting instancer.
-            parent_collection = get_parent_collection(asset_group)
-            asset_group.name = f"{asset_group.name}.removed"
-            bpy.data.objects.remove(asset_group)
-            # Creating collection for asset group.
-            asset_group = bpy.data.collections.new(collection_name)
-            if hasattr(asset_group, "color_tag"):
-                asset_group.color_tag = self.color_tag
-            asset_group[AVALON_PROPERTY] = instance_metadata
-            asset_group[AVALON_PROPERTY]["libpath"] = ""  # force update
-            # Link the asset group collection.
-            parent_collection = parent_collection or get_main_collection()
-            parent_collection.children.link(asset_group)
-            # Update namespace if needed.
-            if session_asset_name != instance_metadata.get("asset_name"):
-                self._update_namespace(asset_group)
-
-        return asset_group
-
     @exec_process
     def update(
         self, container_metadata: Dict, representation: Dict
-    ) -> Tuple[Union[bpy.types.Collection, bpy.types.Object]]:
-        """Update the loaded asset"""
+    ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
+        """Update container with representation.
+
+        Args:
+            container_metadata (Dict): Data of container to switch.
+            representation (Dict): Representation doc to replace container with.
+
+        Returns:
+            Tuple[OpenpypeContainer, List[bpy.types.ID]]: (Container, Datablocks)
+        """
         object_name = container_metadata["objectName"]
         container = self._get_scene_container(container_metadata)
         assert container, f"The asset is not loaded: {object_name}"
 
         new_libpath = Path(get_representation_path(representation))
         assert (
-            new_libpath
+            new_libpath.exists()
         ), f"No library file found for representation: {representation}"
 
         self.log.info(
@@ -1569,16 +1481,49 @@ class AssetLoader(LoaderPlugin):
             pformat(representation, indent=2),
         )
 
+        # Process container replacement
+        container, datablocks = self.replace_container(container, new_libpath)
+
+        # update metadata
+        metadata_update(
+            container,
+            {
+                "libpath": new_libpath.as_posix(),
+                "namespace": container.name,
+                "representation": str(representation["_id"]),
+            },
+        )
+        return container, datablocks
+
+    def replace_container(
+        self, container: OpenpypeContainer, new_libpath: Path, new_name=""
+    ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
+        """Replace container with datablocks from given libpath.
+
+        Args:
+            container (OpenpypeContainer): Container to replace datablocks of.
+            new_libpath (Path): Library path to load datablocks from.
+            new_name (str): Rename container if specified. Defaults to "".
+
+        Returns:
+            Tuple[OpenpypeContainer, List[bpy.types.ID]]: (Container, List of loaded datablocks)
+        """
+        # Rename if specified
+        new_name = new_name or container.name
+
+        load_func = self.get_load_function()
+
         # Update the asset group with maintained contexts.
         with self.update_maintainer(container, self.maintained_parameters):
             # Pick load function and execute
             if self.load_type == "APPEND":
-                container_name = container.name
                 remove_container(container)
-                container, datablocks = self._append_blend(
-                    new_libpath.as_posix(), container_name
+                container, datablocks = load_func(
+                    new_libpath.as_posix(), new_name
                 )
             elif self.load_type in ["INSTANCE", "LINK"]:
+                # In case several containers share same library
+                # create new library and load datablocks from it
                 if any(
                     [
                         c
@@ -1587,24 +1532,24 @@ class AssetLoader(LoaderPlugin):
                     ]
                 ):
                     remove_container_datablocks(container)
-                    container, datablocks = self._load_library_datablocks(
-                        new_libpath.as_posix(),
-                        container.name,
-                        container=container,
-                        do_override=True,
+                    container, datablocks = load_func(
+                        new_libpath.as_posix(), new_name, container=container
                     )
                 else:
+                    # Find if target library exists: already linked to file
+                    existing_library = bpy.data.libraries.get(new_libpath.name)
+
                     # Relink library
                     container.library.filepath = new_libpath.as_posix()
                     container.library.reload()
                     container.library.name = new_libpath.name
 
+                    # Substitute library to keep reference
+                    # if purged because duplicate references
+                    if existing_library:
+                        container.library = existing_library
+
                     datablocks = container["datablocks"]
-            else:
-                raise ValueError(
-                    "'load_type' attribute must be set by implemented loader to:"
-                    "APPEND, INSTANCE or LINK."
-                )
 
             # If asset had namespace, all this object will be renamed with
             # namespace as prefix.
@@ -1621,41 +1566,77 @@ class AssetLoader(LoaderPlugin):
             if getattr(obj.override_library, "operations_update", None):
                 obj.override_library.operations_update()
 
+        return container, datablocks
+
+    @exec_process
+    def switch(
+        self, container_metadata: Dict, representation: Dict
+    ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
+        """Switch container with representation.
+
+        Args:
+            container_metadata (Dict): Data of container to switch.
+            representation (Dict): Representation doc to replace container with.
+
+        Returns:
+            Tuple[OpenpypeContainer, List[bpy.types.ID]]: (Container, List of loaded datablocks)
+        """
+        object_name = container_metadata["objectName"]
+        container = self._get_scene_container(container_metadata)
+        assert container, f"The asset is not loaded: {object_name}"
+
+        new_libpath = Path(get_representation_path(representation))
+        assert (
+            new_libpath
+        ), f"No library file found for representation: {representation}"
+
+        self.log.info(
+            "Container: %s\nRepresentation: %s",
+            pformat(container, indent=2),
+            pformat(representation, indent=2),
+        )
+
+        # Build container name
+        asset_name = representation["context"]["asset"]
+        subset_name = representation["context"]["subset"]
+        container_name = build_op_name(asset_name, subset_name)
+
+        # Replace container if same loader than original container
+        # and force full reload if instance
+        if (
+            self.__class__.__name__ == container_metadata["loader"]
+            and self.load_type != "INSTANCE"
+        ):
+            container, datablocks = self.replace_container(
+                container, new_libpath, new_name=container_name
+            )
+        else:
+            # Keep the container but fully remove and load datablocks
+            remove_container_datablocks(container)
+            load_func = self.get_load_function()
+            container, datablocks = load_func(
+                new_libpath.as_posix(), container_name, container=container
+            )
+
         # update metadata
         metadata_update(
             container,
             {
-                "libpath": new_libpath.as_posix(),
-                "namespace": container.name,
+                "name": subset_name,
+                "namespace": container.get(AVALON_PROPERTY, {}).get(
+                    "namespace", ""
+                ),
+                "loader": self.__class__.__name__,
                 "representation": str(representation["_id"]),
+                "libpath": new_libpath.as_posix(),
+                "asset_name": asset_name,
+                "parent": str(representation["parent"]),
+                "family": representation["context"]["family"],
+                "objectName": container.name,
             },
         )
+
         return container, datablocks
-
-    def exec_switch(
-        self, container: Dict, representation: Dict
-    ) -> Tuple[str, Union[bpy.types.Collection, bpy.types.Object]]:
-        """Switch the asset using update"""
-        if (
-            container["loader"] == str(self.__class__.__name__)
-            or (container["family"] == representation["context"]["family"]
-                and container["loader"] != "InstanceModelLoader")
-            or (container["asset_name"] == representation["context"]["asset"]
-                and container["family"] in ("model", "rig"))
-        ):
-            asset_group = self.exec_update(container, representation)
-
-            # Update namespace if needed
-
-            return asset_group
-        else:
-            raise NotImplementedError("Not implemented yet")
-
-    def switch(self, container: Dict, representation: Dict) -> MainThreadItem:
-        """Run the switch on Blender main thread"""
-        mti = MainThreadItem(self.exec_switch, container, representation)
-        execute_in_main_thread(mti)
-        return mti
         
     @exec_process
     def remove(self, container: Dict) -> bool:
