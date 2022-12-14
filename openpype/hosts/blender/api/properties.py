@@ -17,7 +17,8 @@ class OpenpypeInstanceDatablockRef(PropertyGroup):
 class OpenpypeInstance(PropertyGroup):
     name: bpy.props.StringProperty(name="OpenPype Instance name")
     datablocks: bpy.props.CollectionProperty(
-        name="OpenPype Instance Datablocks references", type=OpenpypeInstanceDatablockRef
+        name="OpenPype Instance Datablocks references",
+        type=OpenpypeInstanceDatablockRef,
     )
     datablock_active_index: bpy.props.IntProperty(
         name="Datablock Active Index"
@@ -30,7 +31,11 @@ class OpenpypeInstance(PropertyGroup):
 class OpenpypeContainer(PropertyGroup):
     name: bpy.props.StringProperty(name="OpenPype Container name")
     datablocks: bpy.props.CollectionProperty(
-        name="OpenPype Container Datablocks references", type=OpenpypeInstanceDatablockRef
+        name="OpenPype Container Datablocks references",
+        type=OpenpypeInstanceDatablockRef,
+    )
+    library: bpy.props.PointerProperty(
+        name="OpenPype Container source library", type=bpy.types.Library
     )
 
 
@@ -55,7 +60,7 @@ def register():
         name="OpenPype Instance Active Index", options={"HIDDEN"}
     )
     bpy.types.Collection.is_openpype_instance = bpy.props.BoolProperty()
-    
+
     bpy.types.Scene.openpype_containers = bpy.props.CollectionProperty(
         name="OpenPype Containers", type=OpenpypeContainer, options={"HIDDEN"}
     )
@@ -68,5 +73,5 @@ def unregister():
     del bpy.types.Scene.openpype_instances
     del bpy.types.Scene.openpype_instance_active_index
     del bpy.types.Collection.is_openpype_instance
-    
+
     del bpy.types.Scene.openpype_containers
