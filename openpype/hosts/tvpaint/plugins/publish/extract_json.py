@@ -17,25 +17,6 @@ class ExtractJson(pyblish.api.InstancePlugin):
     families = ["renderPass"]
 
     def process(self, instance):
-        self.log.debug("INSTANCE KEYS: {}".format(instance.data.keys()))
-        self.log.debug("CONTEXT KEYS: {}".format(instance.context.data.keys()))
-        self.log.debug("CUSTOM DATA: {}".format(instance.data.get('customData')))
-        self.log.debug("LAYER NAMES: {}".format(instance.data.get('layer_names')))
-        self.log.debug("RENDER LAYER: {}".format(instance.data.get('renderlayer')))
-        self.log.debug("CONTEXT LAYERS DATA: {}".format(instance.context.data.get('layersData')))
-        self.log.debug("CONTEXT LAYERS NAME: {}".format(instance.context.data.get('layersByName')))
-
-        layer_name = instance.data.get('layer_names')
-        render_layer = instance.data.get('renderlayer')
-        custom_data = instance.data.get('customData')
-
-        if custom_data.get(render_layer):
-            custom_data[render_layer].extend(layer_name)
-        else:
-            custom_data[render_layer] = layer_name
-
-        self.log.debug("CUSTOM DATA: {}".format(instance.data['customData']))
-
         # Save to staging dir
         output_dir = instance.data.get("stagingDir")
         if not output_dir:

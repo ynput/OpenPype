@@ -19,23 +19,23 @@ class IntegrateJson(pyblish.api.InstancePlugin):
             "* Processing instance \"{}\"".format(instance.data["label"])
         )
 
-        self.log.debug("RENDER LAYER: {}".format(instance.data.get('renderlayer')))
-        self.log.debug("CONTEXT LAYERS DATA: {}".format(instance.context.data.get('layersData')))
-
         for repre in instance.data.get("representations"):
             if repre['name'] != 'png' or 'review' in repre['tags']:
                 continue
 
-            if "renderLayer" in instance.data.get('families'):
+            if "renderLayer" in instance.data.get('families') and\
+                    'custom_published_path' not in instance.context.data.keys():
                 instance.context.data['custom_published_path'] = repre['published_path']
                 continue
 
-            layer_name = instance.data.get('layer_names')[0]
+            layer_name = instance.data.get('layer_names')
+            if not layer_name:
+                continue
 
             published_layer_data = self._update_with_published_file(
                 instance.context.data['tvpaint_layers_data'],
                 repre['published_path'],
-                layer_name
+                layer_name[0]
             )
 
             json_repre = self._get_json_repre(instance.data)
@@ -61,6 +61,10 @@ class IntegrateJson(pyblish.api.InstancePlugin):
 
             repre['published_path'] = new_json_publish_path
             self.log.debug("New representation: {}".format(repre))
+            os.remove(json_publish_path)
+            self.log.debug(
+                "{} has been removed successfully.".format(json_publish_path)
+            )
 
     def _update_with_published_file(self, layer_data, publish_path, layer_name):
         """Update published file path in the json file extracted.
