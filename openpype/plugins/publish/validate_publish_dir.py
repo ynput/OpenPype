@@ -35,10 +35,10 @@ class ValidatePublishDir(pyblish.api.InstancePlugin):
 
         original_dirname = instance.data.get("originalDirname")
         if not original_dirname:
-            raise KnownPublishError("Instance meant for in place publishing."
-                                    " Its 'originalDirname' must be collected."
-                                    " Contact OP developer to modify collector"
-            )
+            raise KnownPublishError(
+                "Instance meant for in place publishing."
+                " Its 'originalDirname' must be collected."
+                " Contact OP developer to modify collector.")
 
         anatomy = instance.context.data["anatomy"]
 

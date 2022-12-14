@@ -9,7 +9,6 @@ Provides:
 """
 
 import os
-import copy
 
 import pyblish.api
 
