@@ -1,5 +1,5 @@
 from uuid import uuid4
-from Qt import QtWidgets
+from qtpy import QtWidgets
 
 from .widgets import (
     ExpandingWidget,

@@ -29,8 +29,14 @@ def main(ctx):
 
     It wraps different commands together.
     """
+
     if ctx.invoked_subcommand is None:
-        ctx.invoke(tray)
+        # Print help if headless mode is used
+        if os.environ.get("OPENPYPE_HEADLESS_MODE") == "1":
+            print(ctx.get_help())
+            sys.exit(0)
+        else:
+            ctx.invoke(tray)
 
 
 @main.command()
