@@ -6,6 +6,7 @@ from typing import Dict, List, Optional
 
 import bpy
 
+from openpype import lib
 from openpype.pipeline import (
     legacy_create,
     get_representation_path,
@@ -63,10 +64,12 @@ class BlendLayoutLoader(plugin.AssetLoader):
         # If it is the last object to use that library, remove it
         if count == 1:
             library = bpy.data.libraries.get(bpy.path.basename(libpath))
-            bpy.data.libraries.remove(library)
+            if library:
+                bpy.data.libraries.remove(library)
 
     def _process(
-        self, libpath, asset_group, group_name, asset, representation, actions
+        self, libpath, asset_group, group_name, asset, representation,
+        actions, anim_instances
     ):
         with bpy.data.libraries.load(
             libpath, link=True, relative=False
@@ -140,12 +143,12 @@ class BlendLayoutLoader(plugin.AssetLoader):
             elif local_obj.type == 'ARMATURE':
                 plugin.prepare_data(local_obj.data)
 
-                if action is not None:
+                if action:
                     if local_obj.animation_data is None:
                         local_obj.animation_data_create()
                     local_obj.animation_data.action = action
                 elif (local_obj.animation_data and
-                      local_obj.animation_data.action is not None):
+                      local_obj.animation_data.action):
                     plugin.prepare_data(
                         local_obj.animation_data.action)
 
@@ -157,19 +160,26 @@ class BlendLayoutLoader(plugin.AssetLoader):
                                 t.id = local_obj
 
             elif local_obj.type == 'EMPTY':
-                creator_plugin = get_legacy_creator_by_name("CreateAnimation")
-                if not creator_plugin:
-                    raise ValueError("Creator plugin \"CreateAnimation\" was "
-                                     "not found.")
+                if (not anim_instances or
+                        (anim_instances and
+                            local_obj.name not in anim_instances.keys())):
+                    avalon = local_obj.get(AVALON_PROPERTY)
+                    if avalon and avalon.get('family') == 'rig':
+                        creator_plugin = get_legacy_creator_by_name(
+                            "CreateAnimation")
+                        if not creator_plugin:
+                            raise ValueError(
+                                "Creator plugin \"CreateAnimation\" was "
+                                "not found.")
 
-                legacy_create(
-                    creator_plugin,
-                    name=local_obj.name.split(':')[-1] + "_animation",
-                    asset=asset,
-                    options={"useSelection": False,
-                             "asset_group": local_obj},
-                    data={"dependencies": representation}
-                )
+                        legacy_create(
+                            creator_plugin,
+                            name=local_obj.name.split(':')[-1] + "_animation",
+                            asset=asset,
+                            options={"useSelection": False,
+                                    "asset_group": local_obj},
+                            data={"dependencies": representation}
+                        )
 
             if not local_obj.get(AVALON_PROPERTY):
                 local_obj[AVALON_PROPERTY] = dict()
@@ -272,7 +282,8 @@ class BlendLayoutLoader(plugin.AssetLoader):
         avalon_container.objects.link(asset_group)
 
         objects = self._process(
-            libpath, asset_group, group_name, asset, representation, None)
+            libpath, asset_group, group_name, asset, representation,
+            None, None)
 
         for child in asset_group.children:
             if child.get(AVALON_PROPERTY):
@@ -352,10 +363,20 @@ class BlendLayoutLoader(plugin.AssetLoader):
             return
 
         actions = {}
+        anim_instances = {}
 
         for obj in asset_group.children:
             obj_meta = obj.get(AVALON_PROPERTY)
             if obj_meta.get('family') == 'rig':
+                # Get animation instance
+                collections = list(obj.users_collection)
+                for c in collections:
+                    avalon = c.get(AVALON_PROPERTY)
+                    if avalon and avalon.get('family') == 'animation':
+                        anim_instances[obj.name] = c.name
+                        break
+
+                # Get armature's action
                 rig = None
                 for child in obj.children:
                     if child.type == 'ARMATURE':
@@ -384,9 +405,25 @@ class BlendLayoutLoader(plugin.AssetLoader):
         # If it is the last object to use that library, remove it
         if count == 1:
             library = bpy.data.libraries.get(bpy.path.basename(group_libpath))
-            bpy.data.libraries.remove(library)
+            if library:
+                bpy.data.libraries.remove(library)
 
-        self._process(str(libpath), asset_group, object_name, actions)
+        asset = container.get("asset_name").split("_")[0]
+
+        self._process(
+            str(libpath), asset_group, object_name, asset,
+            str(representation.get("_id")), actions, anim_instances
+        )
+
+        for o in anim_instances.keys():
+            try:
+                obj = bpy.data.objects[o]
+                bpy.data.collections[anim_instances[o]].objects.link(obj)
+            except KeyError:
+                self.log.info(f"Object {o} does not exist anymore.")
+                coll = bpy.data.collections.get(anim_instances[o])
+                if (coll):
+                    bpy.data.collections.remove(coll)
 
         avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
         for child in asset_group.children:
