@@ -106,19 +106,3 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
 
         self.log.debug("publishDir: \"{}\"".format(publish_folder))
         self.log.debug("resourcesDir: \"{}\"".format(resources_folder))
-
-        # parse folder name and file name for online and source templates
-        # currentFile comes from hosts workfiles
-        # source comes from Publisher
-        current_file = instance.data.get("currentFile")
-        source = instance.data.get("source")
-        source_file = current_file or source
-        if source_file and os.path.exists(source_file):
-            self.log.debug("Parsing paths for {}".format(source_file))
-            if not instance.data.get("originalBasename"):
-                instance.data["originalBasename"] = \
-                    os.path.basename(source_file)
-
-            if not instance.data.get("originalDirname"):
-                instance.data["originalDirname"] = \
-                    os.path.dirname(source_file)
