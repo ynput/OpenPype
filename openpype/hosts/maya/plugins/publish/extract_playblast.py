@@ -23,7 +23,6 @@ class ExtractPlayblast(publish.Extractor):
     families = ["review"]
     optional = True
     capture_preset = {}
-    displayLights = ["default", "all", "selected", "active", "none"]
 
     def process(self, instance):
         self.log.info("Extracting capture..")
@@ -101,7 +100,7 @@ class ExtractPlayblast(publish.Extractor):
 
         # Show lighting mode.
         index = instance.data.get("displayLights", 0)
-        preset["viewport_options"]["displayLights"] = self.displayLights[index]
+        preset["viewport_options"]["displayLights"] = lib.DISPLAY_LIGHTS[index]
 
         # Override transparency if requested.
         transparency = instance.data.get("transparency", 0)
