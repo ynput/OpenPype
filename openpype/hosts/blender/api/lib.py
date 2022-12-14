@@ -18,6 +18,19 @@ from . import pipeline
 
 log = Logger.get_logger(__name__)
 
+def add_datablocks_to_container(datablocks: List[bpy.types.ID], container: OpenpypeContainer):
+    """Add datablocks reference to container.
+
+    Args:
+        datablocks (List[bpy.types.ID]): List of datablocks to add.
+        container (OpenpypeContainer): Container to add datablocks to.
+    """
+    for d in datablocks:
+        d_ref = container.datablocks.add()
+        d_ref.name = d.name
+        d_ref.datapath = BL_TYPE_DATAPATH.get(type(d))
+
+
 def create_container(
     name: str, datablocks: List[bpy.types.ID]
 ) -> OpenpypeContainer:
@@ -32,10 +45,8 @@ def create_container(
     """
     container = bpy.context.scene.openpype_containers.add()
     container.name = name
-    for d in datablocks:
-        d_ref = container.datablocks.add()
-        d_ref.name = d.name
-        d_ref.datapath = BL_TYPE_DATAPATH.get(type(d))
+    
+    add_datablocks_to_container(datablocks, container)
 
     return container
 
@@ -54,7 +65,6 @@ def parse_container(
         The container schema data for this container node.
 
     """
-
     data = read(container)
 
     # NOTE (kaamaurice): experimental for the internal Asset browser.
