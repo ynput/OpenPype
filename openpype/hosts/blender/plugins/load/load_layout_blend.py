@@ -176,7 +176,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
                             name=local_obj.name.split(':')[-1] + "_animation",
                             asset=asset,
                             options={"useSelection": False,
-                                    "asset_group": local_obj},
+                                     "asset_group": local_obj},
                             data={"dependencies": representation}
                         )
 
