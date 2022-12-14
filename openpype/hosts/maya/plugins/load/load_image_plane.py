@@ -23,8 +23,6 @@ class CameraWindow(QtWidgets.QDialog):
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
 
         self.camera = None
-        # self.static_image_plane = False
-        # self.show_in_all_views = False
 
         self.widgets = {
             "label": QtWidgets.QLabel("Select camera for image plane."),
@@ -45,8 +43,6 @@ class CameraWindow(QtWidgets.QDialog):
         for camera in cameras:
             self.widgets["list"].addItem(camera)
 
-        # self.widgets["staticImagePlane"].setText("Make Image Plane Static")
-        # self.widgets["showInAllViews"].setText("Show Image Plane in All Views")
 
         # Build buttons.
         layout = QtWidgets.QHBoxLayout(self.widgets["buttons"])
@@ -57,8 +53,6 @@ class CameraWindow(QtWidgets.QDialog):
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(self.widgets["label"])
         layout.addWidget(self.widgets["list"])
-        # layout.addWidget(self.widgets["staticImagePlane"])
-        # layout.addWidget(self.widgets["showInAllViews"])
         layout.addWidget(self.widgets["buttons"])
         layout.addWidget(self.widgets["warning"])
 
@@ -73,8 +67,6 @@ class CameraWindow(QtWidgets.QDialog):
         if self.camera is None:
             self.widgets["warning"].setVisible(True)
             return
-        # self.show_in_all_views = self.widgets["showInAllViews"].isChecked()
-        # self.static_image_plane = self.widgets["staticImagePlane"].isChecked()
 
         self.close()
 
