@@ -105,6 +105,10 @@ class ExtractThumbnail(publish.Extractor):
         pm.currentTime(refreshFrameInt - 1, edit=True)
         pm.currentTime(refreshFrameInt, edit=True)
 
+        # Show lighting mode.
+        display_lights = instance.data["displayLights"]
+        preset["viewport_options"]["displayLights"] = display_lights
+
         # Isolate view is requested by having objects in the set besides a
         # camera.
         if preset.pop("isolate_view", False) and instance.data.get("isolate"):
