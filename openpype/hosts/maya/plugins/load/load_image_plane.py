@@ -166,13 +166,17 @@ class ImagePlaneLoader(load.LoaderPlugin):
                 QtWidgets.QMessageBox.Cancel
             )
             if reply == QtWidgets.QMessageBox.Ok:
-                expressions = image_plane_shape.frameExtension.inputs(type="expression") # noqa
+                # find the input and output of frame extension
+                expressions = image_plane_shape.frameExtension.inputs()
+                frame_ext_output = image_plane_shape.frameExtension.outputs()
                 if expressions:
-                    pm.delete(expressions)
+                    # the "time1" node is non-deletable attr
+                    # in Maya, use disconnectAttr instead
+                    pm.disconnectAttr(expressions, frame_ext_output)
 
                 if not image_plane_shape.frameExtension.isFreeToChange():
                     raise RuntimeError("Can't set frame extension for {}".format(image_plane_shape)) # noqa
-
+                # get the node of time instead and set the time for it.
                 image_plane_shape.frameExtension.set(start_frame)
 
         new_nodes.extend(
