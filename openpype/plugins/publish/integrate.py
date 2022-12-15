@@ -696,7 +696,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 raise KnownPublishError(
                     "This is a bug. Representation file name is full path"
                 )
-            template_data["originalBasename"] = fname
+            template_data["originalBasename"], _ = os.path.splitext(fname)
             # Manage anatomy template data
             template_data.pop("frame", None)
             if is_udim:
