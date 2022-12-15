@@ -149,6 +149,14 @@
                 "Main"
             ]
         },
+        "CreateProxyAlembic": {
+            "enabled": true,
+            "write_color_sets": false,
+            "write_face_sets": false,
+            "defaults": [
+                "Main"
+            ]
+        },
         "CreateMultiverseUsd": {
             "enabled": true,
             "defaults": [
@@ -171,7 +179,21 @@
             "enabled": true,
             "defaults": [
                 "Main"
-            ]
+            ],
+            "expandProcedurals": false,
+            "motionBlur": true,
+            "motionBlurKeys": 2,
+            "motionBlurLength": 0.5,
+            "maskOptions": false,
+            "maskCamera": false,
+            "maskLight": false,
+            "maskShape": false,
+            "maskShader": false,
+            "maskOverride": false,
+            "maskDriver": false,
+            "maskFilter": false,
+            "maskColor_manager": false,
+            "maskOperator": false
         },
         "CreateAssembly": {
             "enabled": true,
@@ -248,6 +270,9 @@
             "sync_workfile_version": false
         },
         "CollectFbxCamera": {
+            "enabled": false
+        },
+        "CollectGLTF": {
             "enabled": false
         },
         "ValidateInstanceInContext": {
@@ -568,6 +593,12 @@
             "enabled": true,
             "optional": false,
             "active": true
+        },
+        "ExtractProxyAlembic": {
+            "enabled": true,
+            "families": [
+                "proxyAbc"
+            ]
         },
         "ExtractAlembic": {
             "enabled": true,
@@ -915,7 +946,7 @@
                 "current_context": [
                     {
                         "subset_name_filters": [
-                            "\".+[Mm]ain\""
+                            ".+[Mm]ain"
                         ],
                         "families": [
                             "model"
@@ -932,7 +963,8 @@
                         "subset_name_filters": [],
                         "families": [
                             "animation",
-                            "pointcache"
+                            "pointcache",
+                            "proxyAbc"
                         ],
                         "repre_names": [
                             "abc"
