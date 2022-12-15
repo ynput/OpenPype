@@ -141,6 +141,6 @@ class CollectReview(pyblish.api.InstancePlugin):
                     }
                 )
 
-        # Convert enum attribute to string.
+        # Convert enum attribute index to string.
         index = instance.data.get("displayLights", 0)
         instance.data["displayLights"] = lib.DISPLAY_LIGHTS[index]
