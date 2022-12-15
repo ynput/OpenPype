@@ -48,7 +48,13 @@ class BlendLayoutLoader(plugin.AssetLoader):
                 bpy.data.objects.remove(obj)
 
     def _remove_asset_and_library(self, asset_group):
+        if not asset_group.get(AVALON_PROPERTY):
+            return
+
         libpath = asset_group.get(AVALON_PROPERTY).get('libpath')
+
+        if not libpath:
+            return
 
         # Check how many assets use the same library
         count = 0
