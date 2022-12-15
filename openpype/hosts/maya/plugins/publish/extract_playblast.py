@@ -119,6 +119,10 @@ class ExtractPlayblast(publish.Extractor):
         else:
             preset["viewport_options"] = {"imagePlane": image_plane}
 
+        # Disable Pan/Zoom.
+        pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
+        cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), False)
+
         with lib.maintained_time():
             filename = preset.get("filename", "%TEMP%")
 
@@ -138,6 +142,8 @@ class ExtractPlayblast(publish.Extractor):
                 cmds.setFocus(panel)
 
             path = capture.capture(log=self.log, **preset)
+
+        cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
 
         self.log.debug("playblast path  {}".format(path))
 

@@ -109,6 +109,11 @@ class ExtractThumbnail(publish.Extractor):
         display_lights = instance.data["displayLights"]
         preset["viewport_options"]["displayLights"] = display_lights
 
+        # Override transparency if requested.
+        transparency = instance.data.get("transparency", 0)
+        if transparency != 0:
+            preset["viewport2_options"]["transparencyAlgorithm"] = transparency
+
         # Isolate view is requested by having objects in the set besides a
         # camera.
         if preset.pop("isolate_view", False) and instance.data.get("isolate"):
@@ -120,6 +125,10 @@ class ExtractThumbnail(publish.Extractor):
             preset["viewport_options"]["imagePlane"] = image_plane
         else:
             preset["viewport_options"] = {"imagePlane": image_plane}
+
+        # Disable Pan/Zoom.
+        pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
+        cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), False)
 
         with lib.maintained_time():
             # Force viewer to False in call to capture because we have our own
@@ -140,6 +149,7 @@ class ExtractThumbnail(publish.Extractor):
 
         _, thumbnail = os.path.split(playblast)
 
+        cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
 
         self.log.info("file list  {}".format(thumbnail))
 

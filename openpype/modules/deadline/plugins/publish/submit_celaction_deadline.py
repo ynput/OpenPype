@@ -2,16 +2,14 @@ import os
 import re
 import json
 import getpass
-
 import requests
 import pyblish.api
 
 
-class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
+class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
     """Submit CelAction2D scene to Deadline
 
-    Renders are submitted to a Deadline Web Service as
-    supplied via settings key "DEADLINE_REST_URL".
+    Renders are submitted to a Deadline Web Service.
 
     """
 
@@ -26,27 +24,21 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
     deadline_pool_secondary = ""
     deadline_group = ""
     deadline_chunk_size = 1
-
-    enviro_filter = [
-        "FTRACK_API_USER",
-        "FTRACK_API_KEY",
-        "FTRACK_SERVER"
-    ]
+    deadline_job_delay = "00:00:08:00"
 
     def process(self, instance):
         instance.data["toBeRenderedOn"] = "deadline"
         context = instance.context
 
-        deadline_url = (
-            context.data["system_settings"]
-            ["modules"]
-            ["deadline"]
-            ["DEADLINE_REST_URL"]
-        )
-        assert deadline_url, "Requires DEADLINE_REST_URL"
+        # get default deadline webservice url from deadline module
+        deadline_url = instance.context.data["defaultDeadline"]
+        # if custom one is set in instance, use that
+        if instance.data.get("deadlineUrl"):
+            deadline_url = instance.data.get("deadlineUrl")
+        assert deadline_url, "Requires Deadline Webservice URL"
 
         self.deadline_url = "{}/api/jobs".format(deadline_url)
-        self._comment = context.data.get("comment", "")
+        self._comment = instance.data["comment"]
         self._deadline_user = context.data.get(
             "deadlineUser", getpass.getuser())
         self._frame_start = int(instance.data["frameStart"])
@@ -82,6 +74,26 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
         render_dir = os.path.normpath(os.path.dirname(render_path))
         render_path = os.path.normpath(render_path)
         script_name = os.path.basename(script_path)
+
+        for item in instance.context:
+            if "workfile" in item.data["family"]:
+                msg = "Workfile (scene) must be published along"
+                assert item.data["publish"] is True, msg
+
+                template_data = item.data.get("anatomyData")
+                rep = item.data.get("representations")[0].get("name")
+                template_data["representation"] = rep
+                template_data["ext"] = rep
+                template_data["comment"] = None
+                anatomy_filled = instance.context.data["anatomy"].format(
+                    template_data)
+                template_filled = anatomy_filled["publish"]["path"]
+                script_path = os.path.normpath(template_filled)
+
+                self.log.info(
+                    "Using published scene for render {}".format(script_path)
+                )
+
         jobname = "%s - %s" % (script_name, instance.name)
 
         output_filename_0 = self.preview_fname(render_path)
@@ -98,7 +110,7 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
             chunk_size = self.deadline_chunk_size
 
         # search for %02d pattern in name, and padding number
-        search_results = re.search(r"(.%0)(\d)(d)[._]", render_path).groups()
+        search_results = re.search(r"(%0)(\d)(d)[._]", render_path).groups()
         split_patern = "".join(search_results)
         padding_number = int(search_results[1])
 
@@ -145,10 +157,11 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
                 # frames from Deadline Monitor
                 "OutputFilename0": output_filename_0.replace("\\", "/"),
 
-                # # Asset dependency to wait for at least the scene file to sync.
+                # # Asset dependency to wait for at least
+                # the scene file to sync.
                 # "AssetDependency0": script_path
                 "ScheduledType": "Once",
-                "JobDelay": "00:00:08:00"
+                "JobDelay": self.deadline_job_delay
             },
             "PluginInfo": {
                 # Input
@@ -173,19 +186,6 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
         plugin = payload["JobInfo"]["Plugin"]
         self.log.info("using render plugin : {}".format(plugin))
 
-        i = 0
-        for key, values in dict(os.environ).items():
-            if key.upper() in self.enviro_filter:
-                payload["JobInfo"].update(
-                    {
-                        "EnvironmentKeyValue%d"
-                        % i: "{key}={value}".format(
-                            key=key, value=values
-                        )
-                    }
-                )
-                i += 1
-
         self.log.info("Submitting..")
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
@@ -193,10 +193,15 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
         self.expected_files(instance, render_path)
         self.log.debug("__ expectedFiles: `{}`".format(
             instance.data["expectedFiles"]))
+
         response = requests.post(self.deadline_url, json=payload)
 
         if not response.ok:
-            raise Exception(response.text)
+            self.log.error(
+                "Submission failed! [{}] {}".format(
+                    response.status_code, response.content))
+            self.log.debug(payload)
+            raise SystemExit(response.text)
 
         return response
 
@@ -234,32 +239,29 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
             split_path = path.split(split_patern)
             hashes = "#" * int(search_results[1])
             return "".join([split_path[0], hashes, split_path[-1]])
-        if "#" in path:
-            self.log.debug("_ path: `{}`".format(path))
-            return path
-        else:
-            return path
 
-    def expected_files(self,
-                       instance,
-                       path):
+        self.log.debug("_ path: `{}`".format(path))
+        return path
+
+    def expected_files(self, instance, filepath):
         """ Create expected files in instance data
         """
         if not instance.data.get("expectedFiles"):
-            instance.data["expectedFiles"] = list()
+            instance.data["expectedFiles"] = []
 
-        dir = os.path.dirname(path)
-        file = os.path.basename(path)
+        dirpath = os.path.dirname(filepath)
+        filename = os.path.basename(filepath)
 
-        if "#" in file:
-            pparts = file.split("#")
+        if "#" in filename:
+            pparts = filename.split("#")
             padding = "%0{}d".format(len(pparts) - 1)
-            file = pparts[0] + padding + pparts[-1]
+            filename = pparts[0] + padding + pparts[-1]
 
-        if "%" not in file:
-            instance.data["expectedFiles"].append(path)
+        if "%" not in filename:
+            instance.data["expectedFiles"].append(filepath)
             return
 
         for i in range(self._frame_start, (self._frame_end + 1)):
             instance.data["expectedFiles"].append(
-                os.path.join(dir, (file % i)).replace("\\", "/"))
+                os.path.join(dirpath, (filename % i)).replace("\\", "/")
+            )

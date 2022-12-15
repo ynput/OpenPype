@@ -129,14 +129,19 @@ def get_main_window():
 
 
 @contextlib.contextmanager
-def suspended_refresh():
-    """Suspend viewport refreshes"""
+def suspended_refresh(suspend=True):
+    """Suspend viewport refreshes
 
+    cmds.ogs(pause=True) is a toggle so we cant pass False.
+    """
+    original_state = cmds.ogs(query=True, pause=True)
     try:
-        cmds.refresh(suspend=True)
+        if suspend and not original_state:
+            cmds.ogs(pause=True)
         yield
     finally:
-        cmds.refresh(suspend=False)
+        if suspend and not original_state:
+            cmds.ogs(pause=True)
 
 
 @contextlib.contextmanager
@@ -3438,3 +3443,8 @@ def iter_visible_nodes_in_range(nodes, start, end):
         # If no more nodes to process break the frame iterations..
         if not node_dependencies:
             break
+
+
+def get_attribute_input(attr):
+    connections = cmds.listConnections(attr, plugs=True, destination=False)
+    return connections[0] if connections else None

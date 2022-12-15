@@ -2,107 +2,150 @@
 
 #include "OpenPypePublishInstance.h"
 #include "AssetRegistryModule.h"
+#include "NotificationManager.h"
+#include "SNotificationList.h"
 
+//Moves all the invalid pointers to the end to prepare them for the shrinking
+#define REMOVE_INVALID_ENTRIES(VAR) VAR.CompactStable(); \
+									VAR.Shrink();
 
 UOpenPypePublishInstance::UOpenPypePublishInstance(const FObjectInitializer& ObjectInitializer)
-	: UObject(ObjectInitializer)
+	: UPrimaryDataAsset(ObjectInitializer)
 {
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-	FString path = UOpenPypePublishInstance::GetPathName();
+	const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<
+		FAssetRegistryModule>("AssetRegistry");
+
+	const FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>(
+		"PropertyEditor");
+
+	FString Left, Right;
+	GetPathName().Split("/" + GetName(), &Left, &Right);
+
 	FARFilter Filter;
-	Filter.PackagePaths.Add(FName(*path));
+	Filter.PackagePaths.Emplace(FName(Left));
 
-	AssetRegistryModule.Get().OnAssetAdded().AddUObject(this, &UOpenPypePublishInstance::OnAssetAdded);
+	TArray<FAssetData> FoundAssets;
+	AssetRegistryModule.GetRegistry().GetAssets(Filter, FoundAssets);
+
+	for (const FAssetData& AssetData : FoundAssets)
+		OnAssetCreated(AssetData);
+
+	REMOVE_INVALID_ENTRIES(AssetDataInternal)
+	REMOVE_INVALID_ENTRIES(AssetDataExternal)
+
+	AssetRegistryModule.Get().OnAssetAdded().AddUObject(this, &UOpenPypePublishInstance::OnAssetCreated);
 	AssetRegistryModule.Get().OnAssetRemoved().AddUObject(this, &UOpenPypePublishInstance::OnAssetRemoved);
-	AssetRegistryModule.Get().OnAssetRenamed().AddUObject(this, &UOpenPypePublishInstance::OnAssetRenamed);
+	AssetRegistryModule.Get().OnAssetUpdated().AddUObject(this, &UOpenPypePublishInstance::OnAssetUpdated);
 }
 
-void UOpenPypePublishInstance::OnAssetAdded(const FAssetData& AssetData)
+void UOpenPypePublishInstance::OnAssetCreated(const FAssetData& InAssetData)
 {
 	TArray<FString> split;
 
-	// get directory of current container
-	FString selfFullPath = UOpenPypePublishInstance::GetPathName();
-	FString selfDir = FPackageName::GetLongPackagePath(*selfFullPath);
+	UObject* Asset = InAssetData.GetAsset();
 
-	// get asset path and class
-	FString assetPath = AssetData.GetFullName();
-	FString assetFName = AssetData.AssetClass.ToString();
-
-	// split path
-	assetPath.ParseIntoArray(split, TEXT(" "), true);
-
-	FString assetDir = FPackageName::GetLongPackagePath(*split[1]);
-
-	// take interest only in paths starting with path of current container
-	if (assetDir.StartsWith(*selfDir))
+	if (!IsValid(Asset))
 	{
-		// exclude self
-		if (assetFName != "OpenPypePublishInstance")
+		UE_LOG(LogAssetData, Warning, TEXT("Asset \"%s\" is not valid! Skipping the addition."),
+		       *InAssetData.ObjectPath.ToString());
+		return;
+	}
+
+	const bool result = IsUnderSameDir(Asset) && Cast<UOpenPypePublishInstance>(Asset) == nullptr;
+
+	if (result)
+	{
+		if (AssetDataInternal.Emplace(Asset).IsValidId())
 		{
-			assets.Add(assetPath);
-			UE_LOG(LogTemp, Log, TEXT("%s: asset added to %s"), *selfFullPath, *selfDir);
+			UE_LOG(LogTemp, Log, TEXT("Added an Asset to PublishInstance - Publish Instance: %s, Asset %s"),
+				*this->GetName(), *Asset->GetName());
 		}
 	}
 }
 
-void UOpenPypePublishInstance::OnAssetRemoved(const FAssetData& AssetData)
+void UOpenPypePublishInstance::OnAssetRemoved(const FAssetData& InAssetData)
 {
-	TArray<FString> split;
-
-	// get directory of current container
-	FString selfFullPath = UOpenPypePublishInstance::GetPathName();
-	FString selfDir = FPackageName::GetLongPackagePath(*selfFullPath);
-
-	// get asset path and class
-	FString assetPath = AssetData.GetFullName();
-	FString assetFName = AssetData.AssetClass.ToString();
-
-	// split path
-	assetPath.ParseIntoArray(split, TEXT(" "), true);
-
-	FString assetDir = FPackageName::GetLongPackagePath(*split[1]);
-
-	// take interest only in paths starting with path of current container
-	FString path = UOpenPypePublishInstance::GetPathName();
-	FString lpp = FPackageName::GetLongPackagePath(*path);
-
-	if (assetDir.StartsWith(*selfDir))
+	if (Cast<UOpenPypePublishInstance>(InAssetData.GetAsset()) == nullptr)
 	{
-		// exclude self
-		if (assetFName != "OpenPypePublishInstance")
+		if (AssetDataInternal.Contains(nullptr))
 		{
-			// UE_LOG(LogTemp, Warning, TEXT("%s: asset removed"), *lpp);
-			assets.Remove(assetPath);
+			AssetDataInternal.Remove(nullptr);
+			REMOVE_INVALID_ENTRIES(AssetDataInternal)
+		}
+		else
+		{
+			AssetDataExternal.Remove(nullptr);
+			REMOVE_INVALID_ENTRIES(AssetDataExternal)
 		}
 	}
 }
 
-void UOpenPypePublishInstance::OnAssetRenamed(const FAssetData& AssetData, const FString& str)
+void UOpenPypePublishInstance::OnAssetUpdated(const FAssetData& InAssetData)
 {
-	TArray<FString> split;
+	REMOVE_INVALID_ENTRIES(AssetDataInternal);
+	REMOVE_INVALID_ENTRIES(AssetDataExternal);
+}
 
-	// get directory of current container
-	FString selfFullPath = UOpenPypePublishInstance::GetPathName();
-	FString selfDir = FPackageName::GetLongPackagePath(*selfFullPath);
+bool UOpenPypePublishInstance::IsUnderSameDir(const UObject* InAsset) const
+{
+	FString ThisLeft, ThisRight;
+	this->GetPathName().Split(this->GetName(), &ThisLeft, &ThisRight);
 
-	// get asset path and class
-	FString assetPath = AssetData.GetFullName();
-	FString assetFName = AssetData.AssetClass.ToString();
+	return InAsset->GetPathName().StartsWith(ThisLeft);
+}
 
-	// split path
-	assetPath.ParseIntoArray(split, TEXT(" "), true);
+#ifdef WITH_EDITOR
 
-	FString assetDir = FPackageName::GetLongPackagePath(*split[1]);
-	if (assetDir.StartsWith(*selfDir))
+void UOpenPypePublishInstance::SendNotification(const FString& Text) const
+{
+	FNotificationInfo Info{FText::FromString(Text)};
+
+	Info.bFireAndForget = true;
+	Info.bUseLargeFont = false;
+	Info.bUseThrobber = false;
+	Info.bUseSuccessFailIcons = false;
+	Info.ExpireDuration = 4.f;
+	Info.FadeOutDuration = 2.f;
+
+	FSlateNotificationManager::Get().AddNotification(Info);
+
+	UE_LOG(LogAssetData, Warning,
+	       TEXT(
+		       "Removed duplicated asset from the AssetsDataExternal in Container \"%s\", Asset is already included in the AssetDataInternal!"
+	       ), *GetName()
+	)
+}
+
+
+void UOpenPypePublishInstance::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	if (PropertyChangedEvent.ChangeType == EPropertyChangeType::ValueSet &&
+		PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(
+			UOpenPypePublishInstance, AssetDataExternal))
 	{
-		// exclude self
-		if (assetFName != "AssetContainer")
+		// Check for duplicated assets
+		for (const auto& Asset : AssetDataInternal)
 		{
+			if (AssetDataExternal.Contains(Asset))
+			{
+				AssetDataExternal.Remove(Asset);
+				return SendNotification(
+					"You are not allowed to add assets into AssetDataExternal which are already included in AssetDataInternal!");
+			}
+		}
 
-			assets.Remove(str);
-			assets.Add(assetPath);
-			// UE_LOG(LogTemp, Warning, TEXT("%s: asset renamed %s"), *lpp, *str);
+		// Check if no UOpenPypePublishInstance type assets are included
+		for (const auto& Asset : AssetDataExternal)
+		{
+			if (Cast<UOpenPypePublishInstance>(Asset.Get()) != nullptr)
+			{
+				AssetDataExternal.Remove(Asset);
+				return SendNotification("You are not allowed to add publish instances!");
+			}
 		}
 	}
 }
+
+#endif
