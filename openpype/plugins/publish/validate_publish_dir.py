@@ -1,7 +1,7 @@
 import pyblish.api
 from openpype.pipeline.publish import ValidateContentsOrder
 from openpype.pipeline.publish import (
-    KnownPublishError,
+    PublishXmlValidationError,
     get_publish_template_name,
 )
 
@@ -35,20 +35,25 @@ class ValidatePublishDir(pyblish.api.InstancePlugin):
 
         original_dirname = instance.data.get("originalDirname")
         if not original_dirname:
-            raise KnownPublishError(
+            raise PublishXmlValidationError(
+                self,
                 "Instance meant for in place publishing."
                 " Its 'originalDirname' must be collected."
-                " Contact OP developer to modify collector.")
+                " Contact OP developer to modify collector."
+            )
 
         anatomy = instance.context.data["anatomy"]
 
         success, _ = anatomy.find_root_template_from_path(original_dirname)
-        self.log.info(_)
+
+        formatting_data = {
+            "original_dirname": original_dirname,
+        }
+        msg = "Path '{}' not in project folder.".format(original_dirname) + \
+              " Please publish from inside of project folder."
         if not success:
-            raise PublishValidationError(
-                "Path '{}' not in project folder.".format(original_dirname) +
-                " Please publish from inside of project folder."
-            )
+            raise PublishXmlValidationError(self, msg, key="not_in_dir",
+                                            formatting_data=formatting_data)
 
     def _get_template_name_from_instance(self, instance):
         project_name = instance.context.data["projectName"]
