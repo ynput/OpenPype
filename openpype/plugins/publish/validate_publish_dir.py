@@ -45,7 +45,7 @@ class ValidatePublishDir(pyblish.api.InstancePlugin):
         success, _ = anatomy.find_root_template_from_path(original_dirname)
         self.log.info(_)
         if not success:
-            raise KnownPublishError(
+            raise PublishValidationError(
                 "Path '{}' not in project folder.".format(original_dirname) +
                 " Please publish from inside of project folder."
             )
