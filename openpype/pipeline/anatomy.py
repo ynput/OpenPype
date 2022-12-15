@@ -24,6 +24,7 @@ from openpype.lib.path_templates import (
     FormatObject,
 )
 from openpype.lib.log import Logger
+from openpype.lib import get_local_site_id
 
 log = Logger.get_logger(__name__)
 
@@ -59,6 +60,10 @@ class BaseAnatomy(object):
     def __init__(self, project_doc, local_settings, site_name):
         project_name = project_doc["name"]
         self.project_name = project_name
+
+        if site_name not in ["studio", get_local_site_id()]:
+            raise RuntimeError("Anatomy could be created only for default "
+                               "local sites")
 
         self._site_name = site_name
 
