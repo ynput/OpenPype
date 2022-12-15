@@ -72,7 +72,7 @@ class SFTPHandler(AbstractProvider):
         Returns:
             (boolean)
         """
-        return self.presets["enabled"] and self.conn is not None
+        return self.self.presets.get("enabled") and self.conn is not None
 
     @classmethod
     def get_system_settings_schema(cls):
