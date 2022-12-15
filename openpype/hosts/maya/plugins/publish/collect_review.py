@@ -5,6 +5,7 @@ import pyblish.api
 
 from openpype.client import get_subset_by_name
 from openpype.pipeline import legacy_io
+from openpype.hosts.maya.api import lib
 
 
 class CollectReview(pyblish.api.InstancePlugin):
@@ -139,3 +140,7 @@ class CollectReview(pyblish.api.InstancePlugin):
                         "filename": node.filename.get()
                     }
                 )
+
+        # Convert enum attribute to string.
+        index = instance.data.get("displayLights", 0)
+        instance.data["displayLights"] = lib.DISPLAY_LIGHTS[index]

@@ -99,8 +99,8 @@ class ExtractPlayblast(publish.Extractor):
         pm.currentTime(refreshFrameInt, edit=True)
 
         # Show lighting mode.
-        index = instance.data.get("displayLights", 0)
-        preset["viewport_options"]["displayLights"] = lib.DISPLAY_LIGHTS[index]
+        display_lights = instance.data["displayLights"]
+        preset["viewport_options"]["displayLights"] = display_lights
 
         # Override transparency if requested.
         transparency = instance.data.get("transparency", 0)
