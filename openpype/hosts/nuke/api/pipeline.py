@@ -78,7 +78,7 @@ if os.getenv("PYBLISH_GUI", None):
 
 
 class NukeHost(
-    HostBase, IWorkfileHost, ILoadHost, INewPublisher
+    HostBase, IWorkfileHost, ILoadHost, IPublishHost
 ):
     name = "nuke"
 
