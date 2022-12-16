@@ -3,20 +3,19 @@ import bpy
 from openpype.hosts.blender.api import plugin
 
 
-class ImportBlendLoader(plugin.AssetLoader):
-    """Import action for Blender (unmanaged)
+class AppendBlendLoader(plugin.AssetLoader):
+    """Append workfile in Blender (unmanaged)
 
     Warning:
         The loaded content will be unmanaged and is *not* visible in the
         scene inventory. It's purely intended to merge content into your scene
         so you could also use it as a new base.
-
     """
 
     representations = ["blend"]
     families = ["*"]
 
-    label = "Import"
+    label = "Append Workfile"
     order = 10
     icon = "arrow-circle-down"
     color = "#775555"
