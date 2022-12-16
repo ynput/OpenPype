@@ -48,23 +48,30 @@ def get_children_recursive(
 
 
 def get_parent_collection(
-    collection: bpy.types.Collection,
+    entity: Union[bpy.types.Collection, bpy.types.Object],
 ) -> Optional[bpy.types.Collection]:
-    """Get the parent of the input collection.
+    """Get the parent of the input outliner entity (collection or object).
 
     Args:
-        collection (bpy.types.Collection): Collection to get parent of.
+        entity (Union[bpy.types.Collection, bpy.types.Object]):
+            Collection to get parent of.
 
     Returns:
-        Optional[bpy.types.Collection]: Parent of collection
+        Optional[bpy.types.Collection]: Parent of entity
     """
     scene_collection = bpy.context.scene.collection
-    if collection.name in scene_collection.children:
-        return
-
-    for col in scene_collection.children_recursive:
-        if collection.name in col.children:
-            return col
+    if entity.name in scene_collection.children:
+        return scene_collection
+    # Entity is a Collection.
+    elif isinstance(entity, bpy.types.Collection):
+        for col in scene_collection.children_recursive:
+            if entity.name in col.children:
+                return col
+    # Entity is an Object.
+    elif isinstance(entity, bpy.types.Object):
+        for col in scene_collection.children_recursive:
+            if entity.name in col.objects:
+                return col
 
 
 def link_to_collection(

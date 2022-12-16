@@ -20,6 +20,7 @@ from openpype.hosts.blender.api.utils import (
     get_children_recursive,
     get_parent_collection,
     link_to_collection,
+    unlink_from_collection,
 )
 from openpype.pipeline import (
     legacy_io,
@@ -945,12 +946,8 @@ class Creator(LegacyCreator):
 
         # Add datablocks to openpype instance
         for d in datablocks:
-            # Rename datablock with instance name as prefix
-            if not d.name.startswith(name):
-                d.name = f"{name}.{d.name}"
-
             # Skip if already existing
-            if d in {d_ref.datablock for d_ref in op_instance.datablocks}:
+            if op_instance.datablocks.get(d.name):
                 continue
 
             instance_datablock = op_instance.datablocks.add()
@@ -1107,7 +1104,7 @@ class AssetLoader(LoaderPlugin):
 
         container_collection = container.outliner_entity
         if isinstance(container_collection, bpy.types.Collection):
-            for child in set(get_children_recursive(container_collection)):
+            for child in container_collection.children_recursive:
                 child.name = f"{namespace}:{child.name}"
 
     def _load_library_datablocks(
@@ -1195,7 +1192,7 @@ class AssetLoader(LoaderPlugin):
                 container_collection = bpy.data.collections.new(container_name)
                 if hasattr(container_collection, "color_tag"):
                     container_collection.color_tag = self.color_tag
-                get_main_collection().children.link(container_collection)
+                bpy.context.scene.collection.children.link(container_collection)
 
             # Substitute name in case renamed with .###
             container_name = container_collection.name
@@ -1304,7 +1301,7 @@ class AssetLoader(LoaderPlugin):
         # Link loaded collection to scene
         container_collection = container.outliner_entity
         if container_collection:
-            link_to_collection(container_collection, get_main_collection())
+            link_to_collection(container_collection, bpy.context.scene.collection)
 
         return container, all_datablocks
 
@@ -1340,7 +1337,7 @@ class AssetLoader(LoaderPlugin):
         instance_object = bpy.data.objects.new(
             instance_object_name, object_data=None
         )
-        get_main_collection().objects.link(instance_object)
+        bpy.context.scene.collection.objects.link(instance_object)
 
         # Instance collection to object
         instance_object.instance_collection = container.outliner_entity
@@ -1395,7 +1392,7 @@ class AssetLoader(LoaderPlugin):
 
         Arguments:
             context: Full parenthood of representation to load
-            name: Use pre-defined name
+            name: Subset name
             namespace: Use pre-defined namespace
             options: Additional settings dictionary
         """
@@ -1403,26 +1400,11 @@ class AssetLoader(LoaderPlugin):
         libpath = self.fname
 
         asset = context["asset"]["name"]
-        subset = context["subset"]["name"]
-        unique_number = get_unique_number(
-            asset, subset
-        )  # TODO drop unique number to rely on blender's system
-        namespace = namespace or f"{asset}_{unique_number}"
-        name = name or subset
-
-        if legacy_io.Session.get("AVALON_ASSET") == asset:
-            group_name = build_op_basename(asset, subset)
-            namespace = ""
-        else:
-            unique_number = get_unique_number(asset, subset)
-            group_name = build_op_basename(asset, subset, unique_number)
-            namespace = namespace or f"{asset}_{unique_number}"
+        container_basename = build_op_basename(asset, name)
 
         # Pick load function and execute
         load_func = self.get_load_function()
-
-        # TODO refactor `name` passing to be able to override default
-        container, datablocks = load_func(libpath, group_name)
+        container, datablocks = load_func(libpath, container_basename)
 
         # Stop if no container
         if not container:
@@ -1430,7 +1412,7 @@ class AssetLoader(LoaderPlugin):
 
         # Rename outliner container with namespace if any
         if namespace and container.outliner_entity:
-            self._rename_with_namespace(container.outliner_entity, namespace)
+            self._rename_with_namespace(container, namespace)
 
         # Ensure container metadata
         if not container.get(AVALON_PROPERTY):
@@ -1567,12 +1549,26 @@ class AssetLoader(LoaderPlugin):
             else:
                 # Default behaviour to wipe and reload everything
                 # but keeping same container
+                parent_collection = get_parent_collection(
+                    container.outliner_entity
+                )
                 remove_container_datablocks(container)
                 container, datablocks = load_func(
                     new_libpath.as_posix(),
                     new_container_name,
                     container=container,
                 )
+
+                # Restore parent collection if existing
+                if parent_collection:
+                    unlink_from_collection(
+                        container.outliner_entity,
+                        bpy.context.scene.collection
+                    )
+                    link_to_collection(
+                        container.outliner_entity,
+                        parent_collection
+                    )
 
             # If asset had namespace, all this object will be renamed with
             # namespace as prefix.
