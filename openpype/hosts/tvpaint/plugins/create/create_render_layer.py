@@ -207,8 +207,8 @@ class CreateRenderlayer(plugin.Creator):
         )
 
     def _ask_user_subset_override(self, instance):
-        from Qt import QtCore
-        from Qt.QtWidgets import QMessageBox
+        from qtpy import QtCore
+        from qtpy.QtWidgets import QMessageBox
 
         title = "Subset \"{}\" already exist".format(instance["subset"])
         text = (

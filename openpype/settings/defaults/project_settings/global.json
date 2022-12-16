@@ -24,6 +24,10 @@
             ],
             "skip_hosts_headless_publish": []
         },
+        "collect_comment_per_instance": {
+            "enabled": false,
+            "families": []
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
@@ -205,6 +209,9 @@
                 {
                     "families": [],
                     "hosts": [],
+                    "task_types": [],
+                    "task_names": [],
+                    "subsets": [],
                     "burnins": {
                         "burnin": {
                             "TOP_LEFT": "{yy}-{mm}-{dd}",

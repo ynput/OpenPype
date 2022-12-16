@@ -1,6 +1,6 @@
 import platform
 import copy
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 from openpype.tools.settings.settings import ProjectListWidget
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.settings.constants import (

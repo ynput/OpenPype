@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 import pyblish.api
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline import PublishValidationError
 
+import hou
 
 class ValidateBypassed(pyblish.api.InstancePlugin):
     """Validate all primitives build hierarchy from attribute when enabled.
@@ -11,7 +13,7 @@ class ValidateBypassed(pyblish.api.InstancePlugin):
 
     """
 
-    order = ValidateContentsOrder - 0.1
+    order = pyblish.api.ValidatorOrder - 0.1
     families = ["*"]
     hosts = ["houdini"]
     label = "Validate ROP Bypass"
@@ -26,14 +28,15 @@ class ValidateBypassed(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
         if invalid:
             rop = invalid[0]
-            raise RuntimeError(
-                "ROP node %s is set to bypass, publishing cannot continue.."
-                % rop.path()
+            raise PublishValidationError(
+                ("ROP node {} is set to bypass, publishing cannot "
+                 "continue.".format(rop.path())),
+                title=self.label
             )
 
     @classmethod
     def get_invalid(cls, instance):
 
-        rop = instance[0]
+        rop = hou.node(instance.get("instance_node"))
         if hasattr(rop, "isBypassed") and rop.isBypassed():
             return [rop]
