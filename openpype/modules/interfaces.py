@@ -222,7 +222,7 @@ class ITrayAction(ITrayModule):
         pass
 
     def tray_menu(self, tray_menu):
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
 
         if self.admin_action:
             menu = self.admin_submenu(tray_menu)
@@ -247,7 +247,7 @@ class ITrayAction(ITrayModule):
     @staticmethod
     def admin_submenu(tray_menu):
         if ITrayAction._admin_submenu is None:
-            from Qt import QtWidgets
+            from qtpy import QtWidgets
 
             admin_submenu = QtWidgets.QMenu("Admin", tray_menu)
             admin_submenu.menuAction().setVisible(False)
@@ -279,7 +279,7 @@ class ITrayService(ITrayModule):
     @staticmethod
     def services_submenu(tray_menu):
         if ITrayService._services_submenu is None:
-            from Qt import QtWidgets
+            from qtpy import QtWidgets
 
             services_submenu = QtWidgets.QMenu("Services", tray_menu)
             services_submenu.menuAction().setVisible(False)
@@ -294,7 +294,7 @@ class ITrayService(ITrayModule):
 
     @staticmethod
     def _load_service_icons():
-        from Qt import QtGui
+        from qtpy import QtGui
 
         ITrayService._failed_icon = QtGui.QIcon(
             resources.get_resource("icons", "circle_red.png")
@@ -325,7 +325,7 @@ class ITrayService(ITrayModule):
         return ITrayService._failed_icon
 
     def tray_menu(self, tray_menu):
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
 
         action = QtWidgets.QAction(
             self.label,
