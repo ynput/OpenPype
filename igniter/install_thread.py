@@ -35,7 +35,7 @@ class InstallThread(QtCore.QThread):
         self._mongo = None
         self._result = None
 
-        super().__init__(self, parent)
+        super().__init__(parent)
 
     def result(self):
         """Result of finished installation."""
