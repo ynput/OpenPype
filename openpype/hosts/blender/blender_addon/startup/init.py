@@ -93,8 +93,7 @@ def loader_attribution_handler(_):
 
 @persistent
 def instances_purge_handler(_):
-    """Purge instances for which all datablocks have been removed."""
-    # Remove if empty instance
+    """Remove instances for which all datablocks have been removed."""
     for op_instance in bpy.context.scene.openpype_instances:
         if not any({d_ref.datablock for d_ref in op_instance.datablocks}):
             bpy.context.scene.openpype_instances.remove(
