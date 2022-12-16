@@ -22,7 +22,6 @@ from openpype.pipeline import (
 )
 from openpype.modules import ModulesManager
 from openpype.tools.utils.lib import (
-    get_progress_for_repre,
     iter_model_rows,
     format_version
 )
@@ -382,8 +381,9 @@ class SceneInventoryView(QtWidgets.QTreeView):
             if not repre_doc:
                 continue
 
-            progress = get_progress_for_repre(
-                repre_doc,
+            progress = self.sync_server.get_progress_for_repre(
+                project_name,
+                repre_id,
                 active_site,
                 remote_site
             )
