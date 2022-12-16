@@ -964,7 +964,8 @@ class Creator(LegacyCreator):
         # Remove fake user to datablocks
         op_instance = openpype_instances[op_instance_index]
         for d_ref in op_instance.datablock_refs:
-            d_ref.datablock.use_fake_user = d_ref.keep_fake_user
+            if d_ref.datablock:
+                d_ref.datablock.use_fake_user = d_ref.keep_fake_user
 
         # Remove openpype instance
         openpype_instances.remove(op_instance_index)
