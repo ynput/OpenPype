@@ -507,8 +507,8 @@ def get_representations_parents(project_name, representations):
     con = get_server_api_connection()
     parents = con.get_representations_parents(project_name, repre_ids)
     folder_ids = set()
-    for parents in parents.values():
-        folder_ids.add(parents[2]["id"])
+    for parent in parents.values():
+        folder_ids.add(parent[2]["id"])
 
     tasks_by_folder_id = {}
 
