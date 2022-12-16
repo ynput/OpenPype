@@ -5,13 +5,15 @@ from collections.abc import Iterable
 import bpy
 
 # Match Blender type to a datapath to look into. Needed for native UI creator.
-BL_TYPE_DATAPATH = {  # NOTE Order is important for some hierarchy based processes!
-    bpy.types.Collection: "collections",  # NOTE Must be always first
-    bpy.types.Object: "objects",
-    bpy.types.Camera: "cameras",
-    bpy.types.Action: "actions",
-    bpy.types.Armature: "armatures",
-}
+BL_TYPE_DATAPATH = (
+    {  # NOTE Order is important for some hierarchy based processes!
+        bpy.types.Collection: "collections",  # NOTE Must be always first
+        bpy.types.Object: "objects",
+        bpy.types.Camera: "cameras",
+        bpy.types.Action: "actions",
+        bpy.types.Armature: "armatures",
+    }
+)
 # Match Blender type to an ICON for display
 BL_TYPE_ICON = {
     bpy.types.Collection: "OUTLINER_COLLECTION",
@@ -48,14 +50,21 @@ def get_children_recursive(
 def get_parent_collection(
     collection: bpy.types.Collection,
 ) -> Optional[bpy.types.Collection]:
-    """Get the parent of the input collection."""
-    check_list = [bpy.context.scene.collection]
-    for c in check_list:
-        if collection.name in c.children.keys():
-            return c
-        check_list.extend(c.children)
+    """Get the parent of the input collection.
 
-    return None
+    Args:
+        collection (bpy.types.Collection): Collection to get parent of.
+
+    Returns:
+        Optional[bpy.types.Collection]: Parent of collection
+    """
+    scene_collection = bpy.context.scene.collection
+    if collection.name in scene_collection.children:
+        return
+
+    for col in scene_collection.children_recursive:
+        if collection.name in col.children:
+            return col
 
 
 def link_to_collection(
@@ -93,3 +102,29 @@ def link_to_collection(
         not in set(get_children_recursive(collection))
     ):
         collection.objects.link(entity)
+
+
+def unlink_from_collection(
+    entity: Union[bpy.types.Collection, bpy.types.Object, Iterator],
+    collection: bpy.types.Collection,
+):
+    """Unlink an entity from a collection.
+
+    Note:
+        Recursive function if entity is iterable.
+
+    Args:
+        entity (Union[bpy.types.Collection, bpy.types.Object, Iterator]): The collection, object or list of valid entities who need to be
+            parenting with the given collection.
+        collection (bpy.types.Collection): The collection to remove parenting.
+    """
+    # Entity is Iterable, execute function recursively.
+    if isinstance(entity, Iterable):
+        for i in entity:
+            unlink_from_collection(i, collection)
+    # Entity is a Collection.
+    elif isinstance(entity, bpy.types.Collection) and entity is not collection:
+        collection.children.unlink(entity)
+    # Entity is an Object.
+    elif isinstance(entity, bpy.types.Object):
+        collection.objects.unlink(entity)
