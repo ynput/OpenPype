@@ -133,10 +133,7 @@ class ImagePlaneLoader(load.LoaderPlugin):
         start_frame = pm.playbackOptions(q=True, min=True)
         end_frame = pm.playbackOptions(q=True, max=True)
 
-        if int(start_frame) > 0:
-            image_plane_shape.frameOffset.set(int(start_frame) - 1)
-        else:
-            image_plane_shape.frameOffset.set(int(start_frame))
+        image_plane_shape.frameOffset.set(0)
         image_plane_shape.frameIn.set(start_frame)
         image_plane_shape.frameOut.set(end_frame)
         image_plane_shape.frameCache.set(end_frame)
@@ -227,10 +224,8 @@ class ImagePlaneLoader(load.LoaderPlugin):
         )
         start_frame = asset["data"]["frameStart"]
         end_frame = asset["data"]["frameEnd"]
-        if int(start_frame) > 0:
-            image_plane_shape.frameOffset.set(int(start_frame) - 1)
-        else:
-            image_plane_shape.frameOffset.set(int(start_frame))
+
+        image_plane_shape.frameOffset.set(0)
         image_plane_shape.frameIn.set(start_frame)
         image_plane_shape.frameOut.set(end_frame)
         image_plane_shape.frameCache.set(end_frame)
