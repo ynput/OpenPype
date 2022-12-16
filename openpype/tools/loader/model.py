@@ -1060,6 +1060,7 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
         self.active_provider = active_provider
         self.remote_site = remote_site
         self.remote_provider = remote_provider
+        self.project_name = project_name
 
         self.doc_fetched.connect(self._on_doc_fetched)
 
@@ -1173,9 +1174,9 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
                     repre_groups_items[doc["name"]] = 0
                     group = group_item
 
-            progress = lib.get_progress_for_repre(
-                doc, self.active_site, self.remote_site
-            )
+            progress = self.sync_server.get_progress_for_repre(
+                self.project_name, doc["_id"],
+                self.active_site, self.remote_site)
 
             active_site_icon = self._icons.get(self.active_provider)
             remote_site_icon = self._icons.get(self.remote_provider)
@@ -1233,12 +1234,13 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
         if not project_name:
             return
 
+        self.project_name = project_name
         repre_docs = []
         if self._version_ids:
             # Simple find here for now, expected to receive lower number of
             # representations and logic could be in Python
             repre_docs = list(get_representations(
-                project_name,
+                self.project_name,
                 version_ids=self._version_ids,
                 fields=self.repre_projection.keys()
             ))
