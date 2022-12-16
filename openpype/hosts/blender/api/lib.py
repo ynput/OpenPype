@@ -25,7 +25,7 @@ def add_datablocks_to_container(datablocks: List[bpy.types.ID], container: Openp
         container (OpenpypeContainer): Container to add datablocks to.
     """
     for d in datablocks:
-        d_ref = container.datablocks.add()
+        d_ref = container.datablock_refs.add()
         d_ref.datablock = d
 
 
@@ -118,7 +118,7 @@ def ls() -> Iterator:
     children_to_skip = set(
         d_ref.datablock
         for d_ref in chain.from_iterable(
-            [op_container.datablocks for op_container in openpype_containers]
+            [op_container.datablock_refs for op_container in openpype_containers]
         )
     )
     for entity in outliner_entities:
@@ -158,7 +158,7 @@ def ls() -> Iterator:
     # Clear containers when data has been deleted from the outliner
     for container in reversed(openpype_containers):
         # In case all datablocks removed, remove container
-        if not any({d_ref.datablock for d_ref in container.datablocks}):
+        if not any({d_ref.datablock for d_ref in container.datablock_refs}):
             openpype_containers.remove(
                 openpype_containers.find(container.name)
             )

@@ -87,7 +87,7 @@ class ObjectSelectPanel(bpy.types.Panel):
         props.instance_name = active_openpype_instance.name
         props.creator_name = active_openpype_instance["creator_name"]
         props.datapath = BL_TYPE_DATAPATH.get(
-            type(active_openpype_instance.datablocks[0].datablock)
+            type(active_openpype_instance.datablock_refs[0].datablock)
         )
 
         props = col.operator(
@@ -95,7 +95,7 @@ class ObjectSelectPanel(bpy.types.Panel):
         )
         props.instance_name = active_openpype_instance.name
         props.creator_name = active_openpype_instance["creator_name"]
-        props.datablock_name = active_openpype_instance.datablocks[
+        props.datablock_name = active_openpype_instance.datablock_refs[
             active_openpype_instance.datablock_active_index
         ].name
 

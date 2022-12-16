@@ -408,7 +408,7 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
     """Create OpenPype instance"""
 
     bl_idname = "scene.create_openpype_instance"
-    bl_label = "Create OpenPype Instance"  # TODO
+    bl_label = "Create OpenPype Instance"
     bl_options = {"REGISTER", "UNDO"}
 
     creator_name: EnumProperty(
@@ -670,12 +670,12 @@ class SCENE_OT_RemoveFromOpenpypeInstance(
         op_instance = openpype_instances.get(self.instance_name)
 
         # Remove from datablocks and restore original fake user state
-        d_ref_index = op_instance.datablocks.find(self.datablock_name)
-        d_ref = op_instance.datablocks[d_ref_index]
+        d_ref_index = op_instance.datablock_refs.find(self.datablock_name)
+        d_ref = op_instance.datablock_refs[d_ref_index]
         d_ref.datablock.use_fake_user = d_ref.keep_fake_user
-        op_instance.datablocks.remove(d_ref_index)
+        op_instance.datablock_refs.remove(d_ref_index)
 
-        if len(op_instance.datablocks) == 0:
+        if len(op_instance.datablock_refs) == 0:
             # Get creator class and remove instance
             Creator = get_legacy_creator_by_name(self.creator_name)
             avalon_prop = op_instance["avalon"]
