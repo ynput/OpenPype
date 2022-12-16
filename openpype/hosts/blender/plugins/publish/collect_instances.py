@@ -37,8 +37,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
         """Collect instances from the current Blender scene."""
-        instances = set()
-
         # Create instance from outliner datablocks
         for c in [
             collection
@@ -51,19 +49,21 @@ class CollectInstances(pyblish.api.ContextPlugin):
             op_instance[AVALON_PROPERTY] = c.get(AVALON_PROPERTY, {})
 
             # Reference collection datablock
-            d_ref = op_instance.datablocks.add()
+            d_ref = op_instance.datablock_refs.add()
             d_ref.datablock = c
 
-        # PropertyGroups instances
-        if hasattr(bpy.context.scene, "openpype_instances"):
-            instances.update(bpy.context.scene.openpype_instances)
-
-        for op_instance in instances:
+        for op_instance in bpy.context.scene.openpype_instances:
             # Remove if empty instance
-            if not any({d_ref.datablock for d_ref in op_instance.datablocks}):
+            if not any(
+                {d_ref.datablock for d_ref in op_instance.datablock_refs}
+            ):
                 bpy.context.scene.openpype_instances.remove(
                     bpy.context.scene.openpype_instances.find(op_instance.name)
                 )
+                continue
+
+            # Skip if disabled from publish
+            if not op_instance.publish:
                 continue
 
             members = set()
@@ -82,7 +82,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 members.update(
                     {
                         datablock_ref.datablock
-                        for datablock_ref in op_instance.datablocks
+                        for datablock_ref in op_instance.datablock_refs
                     }
                 )
 

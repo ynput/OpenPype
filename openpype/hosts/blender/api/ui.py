@@ -15,14 +15,20 @@ class SCENE_UL_OpenpypeInstances(UIList):
         _active_propname,
         _index,
     ):
-        item
-        layout.alignment = "CENTER"
-
         row = layout.row(align=True)
+
+        # Draw name
         row.label(text=item.name)
 
+        # Icons for accepted types
         for type_icon in item.get("icons", []):
             row.label(icon=type_icon)
+
+        row.separator()
+
+        # Publishable switch
+        if hasattr(item, "publish"):
+            row.prop(item, "publish", text="")
 
 
 class ObjectSelectPanel(bpy.types.Panel):
@@ -74,7 +80,7 @@ class ObjectSelectPanel(bpy.types.Panel):
             "SCENE_UL_OpenpypeInstances",
             "",
             active_openpype_instance,
-            "datablocks",
+            "datablock_refs",
             active_openpype_instance,
             "datablock_active_index",
         )

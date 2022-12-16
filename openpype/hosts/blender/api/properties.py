@@ -29,6 +29,12 @@ def set_datablock_name(self, value: str):
 
 
 class OpenpypeDatablockRef(PropertyGroup):
+    """A datablock reference is a direct link to a datblock.
+
+    To access the actual datablock, use `d_ref.datablock`.
+    Its name is exactly the same as the datablock's, even though it changes.
+    """
+
     name: bpy.props.StringProperty(
         name="OpenPype Instance name",
         get=get_datablock_name,
@@ -45,12 +51,13 @@ class OpenpypeDatablockRef(PropertyGroup):
 
 class OpenpypeInstance(PropertyGroup):
     """An instance references datablocks to be published.
-    
+
     The list is exhaustive unless it relates to outliner datablocks,
     such as objects or collections. In this case it references only the first
     entity of the hierarchy (collection or object with all children) to allow
     the user to handle the instance contents with the outliner.
     """
+
     name: bpy.props.StringProperty(name="OpenPype Instance name")
     datablock_refs: bpy.props.CollectionProperty(
         name="OpenPype Instance Datablocks references",
@@ -58,6 +65,11 @@ class OpenpypeInstance(PropertyGroup):
     )
     datablock_active_index: bpy.props.IntProperty(
         name="Datablock Active Index"
+    )
+    publish: bpy.props.BoolProperty(
+        name="Publish",
+        description="Is instance selected for publish",
+        default=True,
     )
 
     # = Custom properties =
@@ -89,7 +101,12 @@ def set_container_name(self, value: str):
 
 
 class OpenpypeContainer(PropertyGroup):
-    """A container references all the loaded datablocks."""
+    """A container references all the loaded datablocks.
+
+    In case the container references an outliner entity (collection or object)
+    its name is constantly the same as this entity, even though it may change.
+    """
+
     name: bpy.props.StringProperty(
         name="OpenPype Container name",
         get=get_container_name,
