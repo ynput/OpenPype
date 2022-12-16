@@ -925,6 +925,10 @@ class Creator(LegacyCreator):
             instance_datablock = op_instance.datablocks.add()
             instance_datablock.datablock = d
 
+            # Make datablock with fake user
+            instance_datablock.keep_fake_user = d.use_fake_user
+            d.use_fake_user = True
+
         return op_instance
 
     def _remove_instance(self, instance_name: str) -> bool:
@@ -957,11 +961,10 @@ class Creator(LegacyCreator):
                 bpy.data.collections.get(instance_name)
             )
 
-        # Rename datablocks associated to instance
+        # Remove fake user to datablocks
         op_instance = openpype_instances[op_instance_index]
         for d_ref in op_instance.datablocks:
-            # Remove instance name prefix from datablock
-            d_ref.datablock.name = d_ref.name.replace(f"{op_instance.name}.", "")
+            d_ref.datablock.use_fake_user = d_ref.keep_fake_user
 
         # Remove openpype instance
         openpype_instances.remove(op_instance_index)

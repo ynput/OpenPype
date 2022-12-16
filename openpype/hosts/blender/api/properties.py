@@ -37,6 +37,10 @@ class OpenpypeDatablockRef(PropertyGroup):
     datablock: bpy.props.PointerProperty(
         name="Datablock reference", type=bpy.types.ID
     )
+    keep_fake_user: bpy.props.BoolProperty(
+        name="Keep fake user",
+        description="In case it was fake user before being put into instance",
+    )
 
 
 class OpenpypeInstance(PropertyGroup):
