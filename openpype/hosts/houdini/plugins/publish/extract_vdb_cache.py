@@ -17,7 +17,7 @@ class ExtractVDBCache(publish.Extractor):
 
     def process(self, instance):
 
-        ropnode = hou.node(instance.get("instance_node"))
+        ropnode = hou.node(instance.data["instance_node"])
 
         # Get the filename from the filename parameter
         # `.evalParm(parameter)` will make sure all tokens are resolved
