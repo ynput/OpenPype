@@ -49,7 +49,7 @@ if __name__ == "__main__":
     containerized_datablocks = set()
     for datapath in args.datapaths:
         for datablock_name in args.datablocks:
-            datablock = eval(datapath).get(datablock_name)
+            datablock = getattr(bpy.data, datapath).get(datablock_name)
             if not datablock or datablock in containerized_datablocks:
                 continue
 
