@@ -65,15 +65,22 @@ class ImportBlendLoader(plugin.AssetLoader):
         unique_number = get_unique_number(asset, subset)
         group_name = plugin.asset_name(asset, subset, unique_number)
 
+        # We need to preserve the original names of the scenes, otherwise,
+        # if there are duplicate names in the current workfile, the imported
+        # scenes will be renamed by Blender to avoid conflicts.
+        original_scene_names = []
+
         with bpy.data.libraries.load(self.fname) as (data_from, data_to):
             for attr in dir(data_to):
+                if attr == "scenes":
+                    for scene in data_from.scenes:
+                        original_scene_names.append(scene)
                 setattr(data_to, attr, getattr(data_from, attr))
 
         current_scene = bpy.context.scene
 
-        for scene in data_to.scenes:
-            # scene.name = group_name
-            collection = bpy.data.collections.new(name=group_name)
+        for scene, s_name in zip(data_to.scenes, original_scene_names):
+            collection = bpy.data.collections.new(f"{group_name}_{s_name}")
             for obj in scene.objects:
                 collection.objects.link(obj)
             current_scene.collection.children.link(collection)
