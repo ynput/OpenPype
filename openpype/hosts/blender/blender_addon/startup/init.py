@@ -36,7 +36,11 @@ def get_loader_name(loaders: List[LoaderPlugin], load_type: str) -> str:
 
 
 @persistent
-def load_handler(scene):
+def loader_attribution_handler(_):
+    """Handler to attribute loader name to containers loaded outside of OP.
+
+    For example if you link a container using Blender's file tools.
+    """
     # Get all types
     all_types = [
         getattr(bpy.data, datablock)
@@ -45,14 +49,14 @@ def load_handler(scene):
     ]
     all_instanced_collections = {
         obj.instance_collection
-        for obj in scene.objects
+        for obj in bpy.context.scene.objects
         if obj.is_instancer and obj.instance_collection.library
     }
     for bl_type in all_types:
         # Filter type for only collections (and not functions)
         if isinstance(bl_type, bpy.types.bpy_prop_collection) and len(bl_type):
             for datablock in bl_type:
-                avalon_data = datablock.get(AVALON_PROPERTY, {})
+                avalon_data = datablock.get(AVALON_PROPERTY)
                 if (
                     not avalon_data
                     or avalon_data.get("id") == AVALON_INSTANCE_ID
@@ -87,8 +91,21 @@ def load_handler(scene):
                         )
 
 
+@persistent
+def instances_purge_handler(_):
+    """Purge instances for which all datablocks have been removed."""
+    # Remove if empty instance
+    for op_instance in bpy.context.scene.openpype_instances:
+        if not any({d_ref.datablock for d_ref in op_instance.datablocks}):
+            bpy.context.scene.openpype_instances.remove(
+                bpy.context.scene.openpype_instances.find(op_instance.name)
+            )
+            continue
+
+
 def register():
-    bpy.app.handlers.depsgraph_update_pre.append(load_handler)
+    bpy.app.handlers.save_pre.append(loader_attribution_handler)
+    bpy.app.handlers.save_pre.append(instances_purge_handler)
 
     install_host(api)
 

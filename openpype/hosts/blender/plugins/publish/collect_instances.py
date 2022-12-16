@@ -39,25 +39,34 @@ class CollectInstances(pyblish.api.ContextPlugin):
         """Collect instances from the current Blender scene."""
         instances = set()
 
+        # Create instance from outliner datablocks
+        for c in [
+            collection
+            for collection in self.get_collections()
+            if collection.name
+            and not bpy.context.scene.openpype_instances.get(collection.name)
+        ]:
+            op_instance = bpy.context.scene.openpype_instances.add()
+            op_instance.name = c.name
+            op_instance[AVALON_PROPERTY] = c.get(AVALON_PROPERTY, {})
+
+            # Reference collection datablock
+            d_ref = op_instance.datablocks.add()
+            d_ref.datablock = c
+
         # PropertyGroups instances
         if hasattr(bpy.context.scene, "openpype_instances"):
             instances.update(bpy.context.scene.openpype_instances)
 
-        # Collections instances
-        instances.update(
-            {
-                collection
-                for collection in self.get_collections()
-                if collection.name
-                not in {
-                    inst.name for inst in bpy.context.scene.openpype_instances
-                }
-            }
-        )
-
         for op_instance in instances:
-            members = set()
+            # Remove if empty instance
+            if not any({d_ref.datablock for d_ref in op_instance.datablocks}):
+                bpy.context.scene.openpype_instances.remove(
+                    bpy.context.scene.openpype_instances.find(op_instance.name)
+                )
+                continue
 
+            members = set()
             avalon_prop = op_instance[AVALON_PROPERTY]
             instance = context.create_instance(
                 name=op_instance.name,
@@ -72,7 +81,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if hasattr(op_instance, "datablocks"):
                 members.update(
                     {
-                        eval(datablock_ref.datapath).get(datablock_ref.name)
+                        datablock_ref.datablock
                         for datablock_ref in op_instance.datablocks
                     }
                 )
