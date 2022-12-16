@@ -13,6 +13,7 @@ from typing import Dict, List, Optional, Union
 from qtpy import QtWidgets, QtCore
 
 import bpy
+from bpy.app.handlers import persistent
 from bpy.props import EnumProperty
 import bpy.utils.previews
 
@@ -345,34 +346,43 @@ def _update_entries_preset(self, context):
     the length of the items list reduces.
     - Update variant name to the first item.
     """
-    # TODO optimize
-    creator_plugin = get_legacy_creator_by_name(self.creator_name)
+    creator_params = context.scene["openpype_creators"][self.creator_name]
 
     # Set default datapath and datablock
-    self.datapath = BL_TYPE_DATAPATH.get(tuple(creator_plugin.bl_types)[0])
+    self.datapath = creator_params["bl_types"][0][0]
     self.datablock_name = ""
 
     # Change names
     # Check if Creator plugin has set defaults
-    if creator_plugin.defaults and isinstance(
-        creator_plugin.defaults, (list, tuple, set)
+    if creator_params["defaults"] and isinstance(
+        creator_params["defaults"], (list, tuple, set)
     ):
-        self.variant_default = creator_plugin.defaults[0]
+        self.variant_default = creator_params["defaults"][0]
 
-    self.compatible_with_outliner = bool(creator_plugin.bl_types & BL_OUTLINER_TYPES)
+    # Check if compatible with the outliner
+    self.compatible_with_outliner = bool(
+        {
+            getattr(bpy.types, type_name)
+            for _, type_name in creator_params["bl_types"]
+        }
+        & BL_OUTLINER_TYPES
+    )
     if self.compatible_with_outliner:
         self.use_selection = bool(context.selected_objects)
     else:
         self.use_selection = False
 
 
-def _update_subset_name(self: bpy.types.Operator, _context: bpy.types.Context):
+def _update_subset_name(self: bpy.types.Operator, context: bpy.types.Context):
     """Update subset name by getting the family name from the creator plugin.
 
     Args:
         self (bpy.types.Operator): Current running operator
-        _context (bpy.types.Context): Current context
+        context (bpy.types.Context): Current context
     """
+    if not self.asset_name:
+        return
+
     project_name = legacy_io.active_project()
     asset_doc = get_asset_by_name(
         project_name, self.asset_name, fields=["_id"]
@@ -380,11 +390,11 @@ def _update_subset_name(self: bpy.types.Operator, _context: bpy.types.Context):
     task_name = legacy_io.Session["AVALON_TASK"]
 
     # Get creator plugin
-    creator_plugin = get_legacy_creator_by_name(self.creator_name)
+    creator_plugin = context.scene["openpype_creators"][self.creator_name]
 
     # Build subset name and set it
     self.subset_name = get_subset_name(
-        creator_plugin.family,
+        creator_plugin["family"],
         self.variant_name,
         task_name,
         asset_doc,
@@ -404,23 +414,20 @@ def _update_variant_name(
     self.variant_name = self.variant_default
 
 
-class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
-    """Create OpenPype instance"""
-
-    bl_idname = "scene.create_openpype_instance"
-    bl_label = "Create OpenPype Instance"
-    bl_options = {"REGISTER", "UNDO"}
+class ManageOpenpypeInstance:
+    """Properties to manage an OpenPype instance."""
 
     creator_name: EnumProperty(
         name="Creator",
         # Items from all creator plugins, referenced by their class name, label is displayed in UI
         # creator class name is used later to get the creator plugin
-        items=lambda _, __: (
-            (p.__name__, p.label, "")
-            for p in discover_legacy_creator_plugins()
+        items=lambda _, context: (
+            (name, params.get("label"), "")
+            for name, params in context.scene["openpype_creators"].items()
         ),
         update=_update_entries_preset,
     )
+    instance_name: bpy.props.StringProperty(name="Instance Name")
 
     all_assets: bpy.props.CollectionProperty(
         name="Asset Name",
@@ -435,39 +442,53 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
     variant_default: EnumProperty(
         name="Variant Defaults",
         # Items are defaults from current creator plugin
-        items=lambda self, _: [
+        items=lambda self, context: [
             (default, default, "")
-            for default in get_legacy_creator_by_name(
-                self.creator_name
-            ).defaults
+            for default in context.scene["openpype_creators"][self.creator_name][
+                "defaults"
+            ]
         ],
         update=_update_variant_name,
     )
 
     subset_name: bpy.props.StringProperty(name="Subset Name")
-    compatible_with_outliner: bpy.props.BoolProperty(name="Compatible with outliner")
+    compatible_with_outliner: bpy.props.BoolProperty(
+        name="Compatible with outliner"
+    )
     use_selection: bpy.props.BoolProperty(name="Use selection")
     datapath: EnumProperty(
         name="Data type",
         # Build datapath items by getting the creator by its name
         # Matching the appropriate datapath using the bl_types field which lists all relevant data types
-        items=lambda self, _: [
-            (BL_TYPE_DATAPATH.get(bl_type), bl_type.__name__, "")
-            for bl_type in get_legacy_creator_by_name(
+        items=lambda self, context: [
+            (datapath, name, "")
+            for datapath, name in context.scene["openpype_creators"][
                 self.creator_name
-            ).bl_types
+            ]["bl_types"]
         ],
     )
     datablock_name: bpy.props.StringProperty(name="Datablock Name")
 
-    def __init__(self) -> None:
+
+class SCENE_OT_CreateOpenpypeInstance(
+    ManageOpenpypeInstance, bpy.types.Operator
+):
+    """Create OpenPype instance"""
+
+    bl_idname = "scene.create_openpype_instance"
+    bl_label = "Create OpenPype Instance"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def __init__(self):
+        super().__init__()
+
         # Set assets list
         self.all_assets.clear()
         for asset_doc in get_assets(legacy_io.active_project()):
             self.all_assets.add().name = asset_doc["name"]
 
         self.asset_name = legacy_io.Session["AVALON_ASSET"]
-
+        
         # Setup all data
         _update_entries_preset(self, bpy.context)
 
@@ -475,7 +496,7 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
         wm = context.window_manager
         return wm.invoke_props_dialog(self)
 
-    def draw(self, _context):
+    def draw(self, context):
         layout = self.layout
 
         layout.prop(self, "creator_name")
@@ -502,8 +523,7 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
         if not self.use_selection:
             row = layout.row(align=True)
 
-            # TODO not optimized
-            creator_plugin = get_legacy_creator_by_name(self.creator_name)
+            creator_plugin = context.scene["openpype_creators"][self.creator_name]
 
             # Search data into list
             row.prop_search(
@@ -513,7 +533,7 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
             )
 
             # Pick list if several possibilities match
-            if len(creator_plugin.bl_types) > 1:
+            if len(creator_plugin["bl_types"]) > 1:
                 row.prop(self, "datapath", text="", icon_only=True)
 
     def execute(self, _context):
@@ -540,21 +560,6 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
         )
 
         return {"FINISHED"}
-
-
-class ManageOpenpypeInstance:
-    """Properties to manage an OpenPype instance once created."""
-
-    creator_name: EnumProperty(
-        name="Creator",
-        # Items from all creator plugins, referenced by their class name, label is displayed in UI
-        # creator class name is used later to get the creator plugin
-        items=lambda _, __: (
-            (p.__name__, p.label, "")
-            for p in discover_legacy_creator_plugins()
-        ),
-    )
-    instance_name: bpy.props.StringProperty(name="Instance Name")
 
 
 class SCENE_OT_RemoveOpenpypeInstance(
@@ -604,25 +609,14 @@ class SCENE_OT_AddToOpenpypeInstance(
     bl_label = "Add to OpenPype Instance"
     bl_options = {"REGISTER", "UNDO"}
 
-    datapath: EnumProperty(
-        name="Data type",
-        # Build datapath items by getting the creator by its name
-        # Matching the appropriate datapath using the bl_types field which lists all relevant data types
-        items=lambda self, _: [
-            (BL_TYPE_DATAPATH.get(bl_type), bl_type.__name__, "")
-            for bl_type in get_legacy_creator_by_name(
-                self.creator_name
-            ).bl_types
-        ],
-    )
-    datablock_name: bpy.props.StringProperty(name="Datablock Name")
-
     # Used to determine either the datatype enum must be displayed or not
     bl_types_count = bpy.props.IntProperty()
 
     def __init__(self):
+        super().__init__()
+
         self.bl_types_count = len(
-            get_legacy_creator_by_name(self.creator_name).bl_types
+            bpy.context.scene["openpype_creators"][self.creator_name]["bl_types"]
         )
 
     def invoke(self, context, _event):
@@ -663,6 +657,11 @@ class SCENE_OT_AddToOpenpypeInstance(
         datapath = getattr(bpy.data, self.datapath)
         plugin.process([datapath.get(self.datablock_name)])
 
+        # Set active index to newly created
+        op_instance.datablock_active_index = (
+            len(op_instance.datablock_refs) - 1
+        )
+
         return {"FINISHED"}
 
 
@@ -674,8 +673,6 @@ class SCENE_OT_RemoveFromOpenpypeInstance(
     bl_idname = "scene.remove_from_openpype_instance"
     bl_label = "Remove from OpenPype Instance"
     bl_options = {"REGISTER", "UNDO"}
-
-    datablock_name: bpy.props.StringProperty(name="Datablock Name")
 
     def execute(self, context):
         openpype_instances = context.scene.openpype_instances
@@ -830,6 +827,22 @@ def draw_op_collection_menu(self, context):
     op.container_name = context.collection.name
 
 
+@persistent
+def discover_creators_handler(_):
+    """Store creators parameters in scene for optimization."""
+    plugins = discover_legacy_creator_plugins()
+    bpy.context.scene["openpype_creators"] = {}
+    for creator in plugins:
+        bpy.context.scene["openpype_creators"][creator.__name__] = {
+            "label": creator.label,
+            "defaults": creator.defaults,
+            "family": creator.family,
+            "bl_types": [
+                (BL_TYPE_DATAPATH.get(t), t.__name__) for t in creator.bl_types
+            ],
+        }
+
+
 classes = [
     LaunchCreator,
     LaunchLoader,
@@ -861,6 +874,9 @@ def register():
     # Add make_container_publishable to collection and outliner menus
     bpy.types.OUTLINER_MT_collection.append(draw_op_collection_menu)
     bpy.types.OUTLINER_MT_context_menu.append(draw_op_collection_menu)
+
+    # Hack to store creators with parameters for optimization purpose
+    bpy.app.handlers.load_post.append(discover_creators_handler)
 
 
 def unregister():
