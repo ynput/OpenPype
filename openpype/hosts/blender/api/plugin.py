@@ -1071,7 +1071,7 @@ class AssetLoader(LoaderPlugin):
 
     def _load_library_datablocks(
         self,
-        libpath: str,
+        libpath: Path,
         container_name: str,
         container: OpenpypeContainer = None,
         link: Optional[bool] = True,
@@ -1080,7 +1080,7 @@ class AssetLoader(LoaderPlugin):
         """Load datablocks from blend file library.
 
         Args:
-            libpath (str): Path of library.
+            libpath (Path): Path of library.
             container_name (str): Name of container to be loaded.
             container (OpenpypeContainer): Load into existing container.
                 Defaults to None.
@@ -1095,7 +1095,7 @@ class AssetLoader(LoaderPlugin):
         """
         # Load datablocks from libpath library.
         loaded_data_collections = set()
-        with bpy.data.libraries.load(libpath, link=link, relative=False) as (
+        with bpy.data.libraries.load(libpath.as_posix(), link=link, relative=False) as (
             data_from,
             data_to,
         ):
@@ -1173,7 +1173,7 @@ class AssetLoader(LoaderPlugin):
             container = create_container(container_name, datablocks)
 
         # Set data to container
-        container.library = bpy.data.libraries.get(Path(libpath).name)
+        container.library = bpy.data.libraries.get(libpath.name)
         container.outliner_entity = container_collection
 
         return container, datablocks
@@ -1198,12 +1198,12 @@ class AssetLoader(LoaderPlugin):
         deselect_all()
 
     def _link_blend(
-        self, libpath: str, container_name: str, container: OpenpypeContainer = None, override=True
+        self, libpath: Path, container_name: str, container: OpenpypeContainer = None, override=True
     ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
         """Link blend process.
 
         Args:
-            libpath (str): Path of library to link.
+            libpath (Path): Path of library to link.
             container_name (str): Name of container to link.
             container (OpenpypeContainer): Load into existing container.
                 Defaults to None.
@@ -1242,12 +1242,12 @@ class AssetLoader(LoaderPlugin):
         return container, all_datablocks
 
     def _append_blend(
-        self, libpath: str, container_name: str, container: OpenpypeContainer = None
+        self, libpath: Path, container_name: str, container: OpenpypeContainer = None
     ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
         """Append blend process.
 
         Args:
-            libpath (str): Path of library to append.
+            libpath (Path): Path of library to append.
             container_name (str): Name of container to append.
             container (OpenpypeContainer): Load into existing container.
                 Defaults to None.
@@ -1268,7 +1268,7 @@ class AssetLoader(LoaderPlugin):
         return container, all_datablocks
 
     def _instance_blend(
-        self, libpath: str, container_name: str, container: OpenpypeContainer = None
+        self, libpath: Path, container_name: str, container: OpenpypeContainer = None
     ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
         """Instance blend process.
 
@@ -1276,7 +1276,7 @@ class AssetLoader(LoaderPlugin):
         instanced by an object in the outliner.
 
         Args:
-            libpath (str): Path of library to instance.
+            libpath (Path): Path of library to instance.
             container_name (str): Name of container to instance.
             container (OpenpypeContainer): Load into existing container.
                 Defaults to None.
@@ -1359,7 +1359,7 @@ class AssetLoader(LoaderPlugin):
             options: Additional settings dictionary
         """
         assert Path(self.fname).exists(), f"{self.fname} doesn't exist."
-        libpath = self.fname
+        libpath = Path(self.fname)
 
         asset = context["asset"]["name"]
         container_basename = build_op_basename(asset, name)
@@ -1387,7 +1387,7 @@ class AssetLoader(LoaderPlugin):
                     "namespace": namespace or "",
                     "loader": self.__class__.__name__,
                     "representation": str(context["representation"]["_id"]),
-                    "libpath": libpath,
+                    "libpath": libpath.as_posix(),
                     "asset_name": context["asset"]["name"],
                     "parent": str(context["representation"]["parent"]),
                     "family": context["representation"]["context"]["family"],
