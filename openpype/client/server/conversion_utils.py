@@ -629,6 +629,8 @@ def convert_v4_representation_to_v3(representation):
         context = representation["context"]
         if isinstance(context, six.string_types):
             context = json.loads(context)
+        if not context.get("asset"):  # TODO probably clean up
+            context["asset"] = context.get("folder")
         output["context"] = context
 
     if "files" in representation:
