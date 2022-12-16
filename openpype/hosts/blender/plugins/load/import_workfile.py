@@ -1,18 +1,37 @@
-from pathlib import Path
-
 import bpy
 
 from openpype.hosts.blender.api import plugin
 
 
-def get_unique_number(asset, subset):
-    count = 1
-    name = f"{asset}_{count:0>2}_{subset}"
-    collection_names = [coll.name for coll in bpy.data.collections]
-    while name in collection_names:
-        count += 1
-        name = f"{asset}_{count:0>2}_{subset}"
-    return f"{count:0>2}"
+def append_workfile(context, fname, do_import):
+    asset = context['asset']['name']
+    subset = context['subset']['name']
+
+    group_name = plugin.asset_name(asset, subset)
+
+    # We need to preserve the original names of the scenes, otherwise,
+    # if there are duplicate names in the current workfile, the imported
+    # scenes will be renamed by Blender to avoid conflicts.
+    original_scene_names = []
+
+    with bpy.data.libraries.load(fname) as (data_from, data_to):
+        for attr in dir(data_to):
+            if attr == "scenes":
+                for scene in data_from.scenes:
+                    original_scene_names.append(scene)
+            setattr(data_to, attr, getattr(data_from, attr))
+
+    current_scene = bpy.context.scene
+
+    for scene, s_name in zip(data_to.scenes, original_scene_names):
+        scene.name = f"{group_name}_{s_name}"
+        if do_import:
+            collection = bpy.data.collections.new(f"{group_name}_{s_name}")
+            for obj in scene.objects:
+                collection.objects.link(obj)
+            current_scene.collection.children.link(collection)
+            for coll in scene.collection.children:
+                collection.children.link(coll)
 
 
 class AppendBlendLoader(plugin.AssetLoader):
@@ -33,9 +52,7 @@ class AppendBlendLoader(plugin.AssetLoader):
     color = "#775555"
 
     def load(self, context, name=None, namespace=None, data=None):
-        with bpy.data.libraries.load(self.fname) as (data_from, data_to):
-            for attr in dir(data_to):
-                setattr(data_to, attr, getattr(data_from, attr))
+        append_workfile(context, self.fname, False)
 
         # We do not containerize imported content, it remains unmanaged
         return
@@ -59,33 +76,7 @@ class ImportBlendLoader(plugin.AssetLoader):
     color = "#775555"
 
     def load(self, context, name=None, namespace=None, data=None):
-        asset = context['asset']['name']
-        subset = context['subset']['name']
-
-        unique_number = get_unique_number(asset, subset)
-        group_name = plugin.asset_name(asset, subset, unique_number)
-
-        # We need to preserve the original names of the scenes, otherwise,
-        # if there are duplicate names in the current workfile, the imported
-        # scenes will be renamed by Blender to avoid conflicts.
-        original_scene_names = []
-
-        with bpy.data.libraries.load(self.fname) as (data_from, data_to):
-            for attr in dir(data_to):
-                if attr == "scenes":
-                    for scene in data_from.scenes:
-                        original_scene_names.append(scene)
-                setattr(data_to, attr, getattr(data_from, attr))
-
-        current_scene = bpy.context.scene
-
-        for scene, s_name in zip(data_to.scenes, original_scene_names):
-            collection = bpy.data.collections.new(f"{group_name}_{s_name}")
-            for obj in scene.objects:
-                collection.objects.link(obj)
-            current_scene.collection.children.link(collection)
-            for coll in scene.collection.children:
-                collection.children.link(coll)
+        append_workfile(context, self.fname, True)
 
         # We do not containerize imported content, it remains unmanaged
         return
