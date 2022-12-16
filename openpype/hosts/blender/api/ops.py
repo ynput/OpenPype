@@ -669,9 +669,11 @@ class SCENE_OT_RemoveFromOpenpypeInstance(
         openpype_instances = context.scene.openpype_instances
         op_instance = openpype_instances.get(self.instance_name)
 
-        # Remove from datablocks
-        for d in op_instance.datablocks:
-            op_instance.datablocks.remove(op_instance.datablocks.find(d.name))
+        # Remove from datablocks and restore original fake user state
+        d_ref_index = op_instance.datablocks.find(self.datablock_name)
+        d_ref = op_instance.datablocks[d_ref_index]
+        d_ref.datablock.use_fake_user = d_ref.keep_fake_user
+        op_instance.datablocks.remove(d_ref_index)
 
         if len(op_instance.datablocks) == 0:
             # Get creator class and remove instance
