@@ -1,4 +1,4 @@
-from Qt import QtGui, QtWidgets
+from qtpy import QtGui, QtWidgets
 
 from openpype.pipeline import InventoryAction
 from openpype import style

@@ -1,5 +1,5 @@
 import collections
-from Qt import QtCore, QtGui
+from qtpy import QtCore, QtGui
 from openpype.lib import Logger
 
 

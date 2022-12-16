@@ -1,7 +1,7 @@
 import logging
 import collections
 
-from Qt import QtCore, QtGui
+from qtpy import QtCore, QtGui
 import qtawesome
 
 from openpype.client import get_assets

@@ -6,7 +6,11 @@ public class OpenPype : ModuleRules
 {
 	public OpenPype(ReadOnlyTargetRules Target) : base(Target)
 	{
+	    DefaultBuildSettings = BuildSettingsVersion.V2;
+	    bLegacyPublicIncludePaths = false;
+	    ShadowVariableWarningLevel = WarningLevel.Error;
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_0;
 		
 		PublicIncludePaths.AddRange(
 			new string[] {
