@@ -150,6 +150,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
                 engine_path=Path(engine_path)
             )
 
+        self.launch_context.env["OPENPYPE_UNREAL_VERSION"] = engine_version
         # Append project file to launch arguments
         self.launch_context.launch_args.append(
             f"\"{project_file.as_posix()}\"")

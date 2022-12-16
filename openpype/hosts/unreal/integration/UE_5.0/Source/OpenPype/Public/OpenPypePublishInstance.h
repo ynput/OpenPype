@@ -1,6 +1,5 @@
 #pragma once
 
-#include "EditorTutorial.h"
 #include "Engine.h"
 #include "OpenPypePublishInstance.generated.h"
 

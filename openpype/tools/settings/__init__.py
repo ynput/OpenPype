@@ -1,5 +1,5 @@
 import sys
-from Qt import QtWidgets, QtGui
+from qtpy import QtWidgets, QtGui
 
 from openpype import style
 from .lib import (
