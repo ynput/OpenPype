@@ -94,14 +94,7 @@ def ls() -> Iterator:
     disk, it lists assets already loaded in Blender; once loaded they are
     called containers.
     """
-    # Ensure containers
     openpype_containers = bpy.context.scene.openpype_containers
-    children_to_skip = set(
-        d_ref.datablock
-        for d_ref in chain.from_iterable(
-            [op_container.datablocks for op_container in openpype_containers]
-        )
-    )
 
     # Create containers from outliner datablocks (e.g collection duplication)
     scene_collection = bpy.context.scene.collection
@@ -121,6 +114,12 @@ def ls() -> Iterator:
             == AVALON_CONTAINER_ID
             and not openpype_containers.get(o.name)
         ]
+    )
+    children_to_skip = set(
+        d_ref.datablock
+        for d_ref in chain.from_iterable(
+            [op_container.datablocks for op_container in openpype_containers]
+        )
     )
     for entity in outliner_entities:
         if entity in children_to_skip:
