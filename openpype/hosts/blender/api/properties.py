@@ -11,7 +11,7 @@ def get_datablock_name(self) -> str:
     Returns:
         str: Name
     """
-    if self.datablock and self.datablock.name != self["name"]:
+    if self.datablock and self.datablock.name != self.get("name"):
         self["name"] = self.datablock.name
 
     return self["name"]
@@ -59,7 +59,7 @@ def get_container_name(self) -> str:
     Returns:
         str: Name
     """
-    if self.outliner_entity and self.outliner_entity.name != self["name"]:
+    if self.outliner_entity and self.outliner_entity.name != self.get("name"):
         self["name"] = self.outliner_entity.name
 
     return self["name"]
