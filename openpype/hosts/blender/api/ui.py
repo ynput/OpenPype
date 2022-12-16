@@ -1,5 +1,6 @@
 import bpy
 from bpy.types import UIList
+from openpype.hosts.blender.api.utils import BL_TYPE_DATAPATH
 
 
 class SCENE_UL_OpenpypeInstances(UIList):
@@ -85,7 +86,9 @@ class ObjectSelectPanel(bpy.types.Panel):
         )
         props.instance_name = active_openpype_instance.name
         props.creator_name = active_openpype_instance["creator_name"]
-        props.datapath = active_openpype_instance.datablocks[0].datapath
+        props.datapath = BL_TYPE_DATAPATH.get(
+            type(active_openpype_instance.datablocks[0].datablock)
+        )
 
         props = col.operator(
             "scene.remove_from_openpype_instance", icon="REMOVE", text=""

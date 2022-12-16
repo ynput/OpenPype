@@ -266,34 +266,6 @@ def get_container_objects(
     ]
 
 
-def get_main_collection() -> bpy.types.Collection:
-    """Get the main collection from scene.
-    - the scene root collection if has no children.
-    - or the first avalon instance collection child of root collection,
-        but no family 'camera', 'action' and 'pointcache'.
-
-    Returns:
-        The main collection.
-    """
-    _invalid_family = ("camera", "action", "pointcache")
-
-    main_collection = bpy.context.scene.collection
-
-    instance_collections = [
-        child
-        for child in main_collection.children
-        if (
-            child.get(AVALON_PROPERTY)
-            and child[AVALON_PROPERTY].get("id") == AVALON_INSTANCE_ID
-            and child[AVALON_PROPERTY].get("family") not in _invalid_family
-        )
-    ]
-    if len(instance_collections) == 1:
-        main_collection = instance_collections[0]
-
-    return main_collection
-
-
 def get_collections_by_objects(
     objects: List[bpy.types.Object],
     collections: Optional[List[bpy.types.Collection]] = None

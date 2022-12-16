@@ -22,9 +22,6 @@ from openpype.hosts.blender.api.lib import ls
 from openpype.hosts.blender.api.utils import (
     BL_OUTLINER_TYPES,
     BL_TYPE_DATAPATH,
-    BL_TYPE_ICON,
-    get_parent_collection,
-    link_to_collection,
 )
 from openpype.pipeline import legacy_io
 from openpype.pipeline.constants import AVALON_INSTANCE_ID
@@ -341,7 +338,7 @@ class LaunchLibrary(LaunchQtApp):
         self._window.refresh()
 
 
-def _update_entries_preset(self, _context):
+def _update_entries_preset(self, context):
     """Update some entries with a preset.
 
     - Set `datapath`'s value to the first item of the list to avoid `None` values when
@@ -362,7 +359,10 @@ def _update_entries_preset(self, _context):
     ):
         self.variant_default = creator_plugin.defaults[0]
 
-    if not creator_plugin.bl_types & BL_OUTLINER_TYPES:
+    self.compatible_with_outliner = bool(creator_plugin.bl_types & BL_OUTLINER_TYPES)
+    if self.compatible_with_outliner:
+        self.use_selection = bool(context.selected_objects)
+    else:
         self.use_selection = False
 
 
@@ -445,6 +445,7 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
     )
 
     subset_name: bpy.props.StringProperty(name="Subset Name")
+    compatible_with_outliner: bpy.props.BoolProperty(name="Compatible with outliner")
     use_selection: bpy.props.BoolProperty(name="Use selection")
     datapath: EnumProperty(
         name="Data type",
@@ -468,12 +469,7 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
         self.asset_name = legacy_io.Session["AVALON_ASSET"]
 
         # Setup all data
-        _update_entries_preset(self, None)
-
-        # Determine use_selection
-        creator_plugin = get_legacy_creator_by_name(self.creator_name)
-        if creator_plugin.bl_types & BL_OUTLINER_TYPES:
-            self.use_selection = bool(bpy.context.selected_objects)
+        _update_entries_preset(self, bpy.context)
 
     def invoke(self, context, _event):
         wm = context.window_manager
@@ -496,7 +492,7 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
         sublayout.prop(self, "subset_name")
 
         # Use selection only if relevant to outliner data
-        if "collection" in self.datapath:
+        if self.compatible_with_outliner:
             sublayout = layout.row()
             # Enabled only if objects selected
             sublayout.enabled = bool(bpy.context.selected_objects)
@@ -510,11 +506,8 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
             creator_plugin = get_legacy_creator_by_name(self.creator_name)
 
             # Search data into list
-            data_path, search_field = self.datapath.rsplit(
-                ".", 1
-            )  # Split data path from search field
             row.prop_search(
-                self, "datablock_name", eval(data_path), search_field, text=""
+                self, "datablock_name", bpy.data, self.datapath, text=""
             ) if self.datapath else layout.label(
                 text=f"Not supported family: {self.creator_name}"
             )
@@ -539,7 +532,7 @@ class SCENE_OT_CreateOpenpypeInstance(bpy.types.Operator):
         plugin = Creator(
             self.subset_name, self.asset_name, {"variant": self.variant_name}
         )
-        datapath = eval(self.datapath)
+        datapath = getattr(bpy.data, self.datapath)
         plugin.process(
             bpy.context.selected_objects
             if self.use_selection
@@ -631,11 +624,8 @@ class SCENE_OT_AddToOpenpypeInstance(
         row = layout.row(align=True)
 
         # Search data into list
-        data_path, search_field = self.datapath.rsplit(
-            ".", 1
-        )  # Split data path from search field
         row.prop_search(
-            self, "datablock_name", eval(data_path), search_field, text=""
+            self, "datablock_name", bpy.data, self.datapath, text=""
         )
 
         # Pick list if several possibilities match
@@ -658,8 +648,8 @@ class SCENE_OT_AddToOpenpypeInstance(
             avalon_prop["asset"],
             {"variant": op_instance.name},
         )
-        datapath = eval(self.datapath)
-        plugin._process([datapath.get(self.datablock_name)])
+        datapath = getattr(bpy.data, self.datapath)
+        plugin.process([datapath.get(self.datablock_name)])
 
         return {"FINISHED"}
 
@@ -681,10 +671,6 @@ class SCENE_OT_RemoveFromOpenpypeInstance(
 
         # Remove from datablocks
         for d in op_instance.datablocks:
-            # Rename datablock to remove prefix
-            datablock = eval(d.datapath).get(d.name)
-            datablock.name = d.name.replace(f"{op_instance.name}.", "")
-
             op_instance.datablocks.remove(op_instance.datablocks.find(d.name))
 
         if len(op_instance.datablocks) == 0:
