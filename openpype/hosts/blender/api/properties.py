@@ -44,8 +44,15 @@ class OpenpypeDatablockRef(PropertyGroup):
 
 
 class OpenpypeInstance(PropertyGroup):
+    """An instance references datablocks to be published.
+    
+    The list is exhaustive unless it relates to outliner datablocks,
+    such as objects or collections. In this case it references only the first
+    entity of the hierarchy (collection or object with all children) to allow
+    the user to handle the instance contents with the outliner.
+    """
     name: bpy.props.StringProperty(name="OpenPype Instance name")
-    datablocks: bpy.props.CollectionProperty(
+    datablock_refs: bpy.props.CollectionProperty(
         name="OpenPype Instance Datablocks references",
         type=OpenpypeDatablockRef,
     )
@@ -82,12 +89,13 @@ def set_container_name(self, value: str):
 
 
 class OpenpypeContainer(PropertyGroup):
+    """A container references all the loaded datablocks."""
     name: bpy.props.StringProperty(
         name="OpenPype Container name",
         get=get_container_name,
         set=set_container_name,
     )
-    datablocks: bpy.props.CollectionProperty(
+    datablock_refs: bpy.props.CollectionProperty(
         name="OpenPype Container Datablocks references",
         type=OpenpypeDatablockRef,
     )

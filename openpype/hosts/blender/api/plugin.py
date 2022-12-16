@@ -127,13 +127,13 @@ def remove_container_datablocks(container: OpenpypeContainer):
     Args:
         container (OpenpypeContainer): Container to remove datablocks of.
     """
-    for d_ref in container.datablocks:
+    for d_ref in container.datablock_refs:
         if d_ref.datablock:
             datapath = getattr(bpy.data, BL_TYPE_DATAPATH.get(type(d_ref.datablock)))
             d_ref.datablock.use_fake_user = False
             datapath.remove(d_ref.datablock)
 
-    container.datablocks.clear()
+    container.datablock_refs.clear()
 
 
 def remove_container(
@@ -260,7 +260,7 @@ def get_container_objects(
     """
     return [
         d_ref.datablock
-        for d_ref in container.datablocks
+        for d_ref in container.datablock_refs
         if type(d_ref.datablock) is bpy.types.Object
         and d_ref.datablock != container.outliner_entity
     ]
@@ -919,10 +919,10 @@ class Creator(LegacyCreator):
         # Add datablocks to openpype instance
         for d in datablocks:
             # Skip if already existing
-            if op_instance.datablocks.get(d.name):
+            if op_instance.datablock_refs.get(d.name):
                 continue
 
-            instance_datablock = op_instance.datablocks.add()
+            instance_datablock = op_instance.datablock_refs.add()
             instance_datablock.datablock = d
 
             # Make datablock with fake user
@@ -963,7 +963,7 @@ class Creator(LegacyCreator):
 
         # Remove fake user to datablocks
         op_instance = openpype_instances[op_instance_index]
-        for d_ref in op_instance.datablocks:
+        for d_ref in op_instance.datablock_refs:
             d_ref.datablock.use_fake_user = d_ref.keep_fake_user
 
         # Remove openpype instance
@@ -1320,8 +1320,8 @@ class AssetLoader(LoaderPlugin):
         container.outliner_entity = instance_object
 
         # Keep instance object as only datablock
-        container.datablocks.clear()
-        instance_ref = container.datablocks.add()
+        container.datablock_refs.clear()
+        instance_ref = container.datablock_refs.add()
         instance_ref.datablock = instance_object
 
         return container, all_datablocks
