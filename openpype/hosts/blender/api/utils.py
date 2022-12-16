@@ -6,11 +6,11 @@ import bpy
 
 # Match Blender type to a datapath to look into. Needed for native UI creator.
 BL_TYPE_DATAPATH = {  # NOTE Order is important for some hierarchy based processes!
-    bpy.types.Collection: "bpy.data.collections",  # NOTE Must be always first
-    bpy.types.Object: "bpy.data.objects",
-    bpy.types.Camera: "bpy.data.cameras",
-    bpy.types.Action: "bpy.data.actions",
-    bpy.types.Armature: "bpy.data.armatures",
+    bpy.types.Collection: "collections",  # NOTE Must be always first
+    bpy.types.Object: "objects",
+    bpy.types.Camera: "cameras",
+    bpy.types.Action: "actions",
+    bpy.types.Armature: "armatures",
 }
 # Match Blender type to an ICON for display
 BL_TYPE_ICON = {
