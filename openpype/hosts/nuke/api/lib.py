@@ -10,7 +10,7 @@ from collections import OrderedDict
 import clique
 
 import nuke
-from Qt import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from openpype.client import (
     get_project,
@@ -81,7 +81,6 @@ class Context:
 def get_main_window():
     """Acquire Nuke's main window"""
     if Context.main_window is None:
-        from Qt import QtWidgets
 
         top_widgets = QtWidgets.QApplication.topLevelWidgets()
         name = "Foundry::UI::DockMainWindow"
