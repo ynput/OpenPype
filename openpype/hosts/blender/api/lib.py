@@ -9,7 +9,6 @@ from typing import Dict, Iterator, List, Union
 import bpy
 import addon_utils
 from openpype.hosts.blender.api.properties import OpenpypeContainer
-from openpype.hosts.blender.api.utils import BL_TYPE_DATAPATH
 from openpype.lib import Logger
 from openpype.pipeline import schema
 from openpype.pipeline.constants import AVALON_CONTAINER_ID
@@ -27,8 +26,7 @@ def add_datablocks_to_container(datablocks: List[bpy.types.ID], container: Openp
     """
     for d in datablocks:
         d_ref = container.datablocks.add()
-        d_ref.name = d.name
-        d_ref.datapath = BL_TYPE_DATAPATH.get(type(d))
+        d_ref.datablock = d
 
 
 def create_container(
@@ -97,53 +95,71 @@ def ls() -> Iterator:
     called containers.
     """
     # Ensure containers
-    scene_collections = bpy.context.scene.collection.children_recursive
     openpype_containers = bpy.context.scene.openpype_containers
-    collections = lsattr("id", AVALON_CONTAINER_ID)
     children_to_skip = set(
-        chain.from_iterable(
-            [
-                op_container["outliner_entity"].children_recursive
-                for op_container in openpype_containers
-                if isinstance(
-                    op_container.get("outliner_entity"), bpy.types.Collection
-                )
-            ]
+        d_ref.datablock
+        for d_ref in chain.from_iterable(
+            [op_container.datablocks for op_container in openpype_containers]
         )
     )
 
     # Create containers from outliner datablocks (e.g collection duplication)
-    for collection in [
-        e for e in collections if not openpype_containers.get(e.name)
-    ]:
-        if (
-            collection in children_to_skip
-            or collection not in scene_collections
-        ):
+    scene_collection = bpy.context.scene.collection
+    outliner_entities = [  # Collections
+        c
+        for c in scene_collection.children_recursive
+        if c.get(pipeline.AVALON_PROPERTY, {}).get("id") == AVALON_CONTAINER_ID
+        and not openpype_containers.get(c.name)
+    ]
+    outliner_entities.extend(  # Objects
+        [
+            o
+            for o in scene_collection.all_objects
+            if (o.instance_collection or o)
+            .get(pipeline.AVALON_PROPERTY, {})
+            .get("id")
+            == AVALON_CONTAINER_ID
+            and not openpype_containers.get(o.name)
+        ]
+    )
+    for entity in outliner_entities:
+        if entity in children_to_skip:
             continue
 
-        # Skip all collections of container
-        children_to_skip.update(collection.children_recursive)
-        if type(collection) is bpy.types.Collection:
-            datablocks = [collection, *collection.children_recursive]
-        elif type(collection) is bpy.types.Object:  # Instanced collection
-            datablocks = [collection, collection.instance_collection]
+        # Skip all children of container
+        children_to_skip.update(entity.children_recursive)
+
+        # Find datablocks depending on type
+        if type(entity) is bpy.types.Collection:
+            datablocks = [
+                entity,
+                *entity.children_recursive,
+                *entity.all_objects,
+            ]
+        elif type(entity) is bpy.types.Object:
+            datablocks = [
+                entity,
+                entity.instance_collection,
+                *entity.children_recursive,
+            ]
 
         # Create container
-        container = create_container(collection.name, datablocks)
+        container = create_container(entity.name, datablocks)
 
         # Transfer container metadata and keep original outliner entity
-        container[pipeline.AVALON_PROPERTY] = collection.get(
-            pipeline.AVALON_PROPERTY
-        )
-        container["outliner_entity"] = collection
+        metadata = (
+            entity.instance_collection
+            if hasattr(entity, "instance_collection")
+            and entity.instance_collection
+            else entity
+        ).get(pipeline.AVALON_PROPERTY)
+        container[pipeline.AVALON_PROPERTY] = metadata
+        container.outliner_entity = entity
 
     # Clear containers when data has been deleted from the outliner
     for container in reversed(openpype_containers):
-        # In case outliner entity removed, remove container
-        if "outliner_entity" in container.keys() and not container.get(
-            "outliner_entity"
-        ):
+        # In case all datablocks removed, remove container
+        if not any({d_ref.datablock for d_ref in container.datablocks}):
             openpype_containers.remove(
                 openpype_containers.find(container.name)
             )
@@ -314,7 +330,7 @@ def imprint(node: bpy.types.bpy_struct_meta_idprop, data: Dict):
     pipeline.metadata_update(node, imprint_data)
 
 
-def lsattr(attr: str,
+def lsattr(attr: str,  # TODO might be useless now
            value: Union[str, int, bool, List, Dict, None] = None) -> List:
     r"""Return nodes matching `attr` and `value`
 
@@ -336,7 +352,7 @@ def lsattr(attr: str,
     return lsattrs({attr: value})
 
 
-def lsattrs(attrs: Dict) -> List:
+def lsattrs(attrs: Dict) -> List:  # TODO might be useless now
     r"""Return nodes with the given attribute(s).
 
     Arguments:
