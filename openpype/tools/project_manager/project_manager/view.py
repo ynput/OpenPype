@@ -1,7 +1,7 @@
 import collections
 from queue import Queue
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.client import get_project
 from .delegates import (

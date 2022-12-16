@@ -1,6 +1,6 @@
 import re
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from openpype.client import (
     get_asset_by_name,

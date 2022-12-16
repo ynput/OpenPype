@@ -6,7 +6,7 @@ import ctypes
 import platform
 import logging
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype import style
 from openpype.pipeline import install_host
