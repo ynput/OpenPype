@@ -48,7 +48,7 @@ VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
 log = Logger.get_logger(__name__)
 
 
-def build_op_name(
+def build_op_basename(
     asset: str, subset: str, namespace: Optional[str] = None
 ) -> str:
     """Return a consistent name for an asset."""
@@ -127,11 +127,10 @@ def remove_container_datablocks(container: OpenpypeContainer):
         container (OpenpypeContainer): Container to remove datablocks of.
     """
     for d_ref in container.datablocks:
-        datapath = eval(d_ref.datapath)
-        datablock = datapath.get(d_ref.name)
-        if datablock:
-            datablock.use_fake_user = False
-            datapath.remove(datablock)
+        if d_ref.datablock:
+            datapath = getattr(bpy.data, BL_TYPE_DATAPATH.get(type(d_ref.datablock)))
+            d_ref.datablock.use_fake_user = False
+            datapath.remove(d_ref.datablock)
 
     container.datablocks.clear()
 
@@ -259,9 +258,10 @@ def get_container_objects(
         All the child objects of the container.
     """
     return [
-        getattr(bpy.data, c.datapath).get(c.name)
-        for c in container.datablocks
-        if type(c) is bpy.types.Object
+        d_ref.datablock
+        for d_ref in container.datablocks
+        if type(d_ref.datablock) is bpy.types.Object
+        and d_ref.datablock != container.outliner_entity
     ]
 
 
@@ -906,7 +906,7 @@ class Creator(LegacyCreator):
         # Get info from data and create name value.
         asset = self.data["asset"]
         subset = self.data["subset"]
-        name = build_op_name(asset, subset)
+        name = build_op_basename(asset, subset)
 
         # Use selected objects if useSelection is True
         if (self.options or {}).get("useSelection"):
@@ -950,12 +950,11 @@ class Creator(LegacyCreator):
                 d.name = f"{name}.{d.name}"
 
             # Skip if already existing
-            if op_instance.datablocks.get(d.name):
+            if d in {d_ref.datablock for d_ref in op_instance.datablocks}:
                 continue
 
             instance_datablock = op_instance.datablocks.add()
-            instance_datablock.name = d.name
-            instance_datablock.datapath = BL_TYPE_DATAPATH.get(type(d))
+            instance_datablock.datablock = d
 
         return op_instance
 
@@ -991,10 +990,9 @@ class Creator(LegacyCreator):
 
         # Rename datablocks associated to instance
         op_instance = openpype_instances[op_instance_index]
-        for d in op_instance.datablocks:
+        for d_ref in op_instance.datablocks:
             # Remove instance name prefix from datablock
-            datablock = eval(d.datapath).get(d.name)
-            datablock.name = d.name.replace(f"{op_instance.name}.", "")
+            d_ref.datablock.name = d_ref.name.replace(f"{op_instance.name}.", "")
 
         # Remove openpype instance
         openpype_instances.remove(op_instance_index)
@@ -1107,7 +1105,7 @@ class AssetLoader(LoaderPlugin):
         for material in materials:
             material.name = f"{namespace}:{material.name}"
 
-        container_collection = container.get("outliner_entity")
+        container_collection = container.outliner_entity
         if isinstance(container_collection, bpy.types.Collection):
             for child in set(get_children_recursive(container_collection)):
                 child.name = f"{namespace}:{child.name}"
@@ -1143,8 +1141,7 @@ class AssetLoader(LoaderPlugin):
             data_to,
         ):
             for bl_type in self.bl_types:
-                datapath = BL_TYPE_DATAPATH.get(bl_type)
-                data_collection_name = datapath[datapath.rfind(".") + 1 :]
+                data_collection_name = BL_TYPE_DATAPATH.get(bl_type)
                 setattr(
                     data_to,
                     data_collection_name,
@@ -1164,7 +1161,14 @@ class AssetLoader(LoaderPlugin):
 
         if self.bl_types & BL_OUTLINER_TYPES:
             # Get the right asset container from imported collections.
-            container_collection = next((col for col in data_to.collections if col.name == container_name), None)
+            container_collection = next(
+                (
+                    col
+                    for col in data_to.collections
+                    if col.name.startswith(container_name)
+                ),
+                None,
+            )
 
             # Ensure container collection
             if container_collection:
@@ -1186,7 +1190,6 @@ class AssetLoader(LoaderPlugin):
                     for d in datablocks:
                         if hasattr(d.override_library, "is_system_override"):
                             d.override_library.is_system_override = False
-
             else:
                 # Create collection container TODO is it necessary ? Keep it only if no collection in library
                 container_collection = bpy.data.collections.new(container_name)
@@ -1212,7 +1215,7 @@ class AssetLoader(LoaderPlugin):
 
         # Set data to container
         container.library = bpy.data.libraries.get(Path(libpath).name)
-        container["outliner_entity"] = container_collection
+        container.outliner_entity = container_collection
 
         return container, datablocks
 
@@ -1255,7 +1258,7 @@ class AssetLoader(LoaderPlugin):
             libpath, container_name, container=container, do_override=override
         )
 
-        container_collection = container.get("outliner_entity")
+        container_collection = container.outliner_entity
         if container_collection:
             # If override_hierarchy_create method is not implemented for older
             # Blender versions we need the following steps.
@@ -1299,7 +1302,7 @@ class AssetLoader(LoaderPlugin):
         )
 
         # Link loaded collection to scene
-        container_collection = container.get("outliner_entity")
+        container_collection = container.outliner_entity
         if container_collection:
             link_to_collection(container_collection, get_main_collection())
 
@@ -1323,25 +1326,31 @@ class AssetLoader(LoaderPlugin):
             Tuple[List[bpy.types.ID], OpenpypeContainer]: 
                 (Created scene container, Linked datablocks)
         """
-
         container, all_datablocks = self._link_blend(
             libpath, container_name, container=container, override=False
         )
 
+        # Avoid duplicates between instance and collection
+        if bpy.data.collections.get(container.name):
+            instance_object_name = f"{container.name}.001"
+        else:
+            instance_object_name = container.name
+
         # Create empty object
         instance_object = bpy.data.objects.new(
-            container.name, object_data=None
+            instance_object_name, object_data=None
         )
         get_main_collection().objects.link(instance_object)
 
         # Instance collection to object
-        instance_object.instance_collection = container.get("outliner_entity")
+        instance_object.instance_collection = container.outliner_entity
         instance_object.instance_type = "COLLECTION"
+        container.outliner_entity = instance_object
 
-        # Keep instance object as datablock
+        # Keep instance object as only datablock
+        container.datablocks.clear()
         instance_ref = container.datablocks.add()
-        instance_ref.name = instance_object.name
-        instance_ref.datapath = BL_TYPE_DATAPATH.get(type(instance_object))
+        instance_ref.datablock = instance_object
 
         return container, all_datablocks
 
@@ -1402,11 +1411,11 @@ class AssetLoader(LoaderPlugin):
         name = name or subset
 
         if legacy_io.Session.get("AVALON_ASSET") == asset:
-            group_name = build_op_name(asset, subset)
+            group_name = build_op_basename(asset, subset)
             namespace = ""
         else:
             unique_number = get_unique_number(asset, subset)
-            group_name = build_op_name(asset, subset, unique_number)
+            group_name = build_op_basename(asset, subset, unique_number)
             namespace = namespace or f"{asset}_{unique_number}"
 
         # Pick load function and execute
@@ -1420,9 +1429,8 @@ class AssetLoader(LoaderPlugin):
             return container, datablocks
 
         # Rename outliner container with namespace if any
-        container_outliner_entity = container.get("outliner_entity")
-        if namespace and container_outliner_entity:
-            self._rename_with_namespace(container_outliner_entity, namespace)
+        if namespace and container.outliner_entity:
+            self._rename_with_namespace(container.outliner_entity, namespace)
 
         # Ensure container metadata
         if not container.get(AVALON_PROPERTY):
@@ -1482,7 +1490,12 @@ class AssetLoader(LoaderPlugin):
         )
 
         # Process container replacement
-        container, datablocks = self.replace_container(container, new_libpath)
+        container_basename = build_op_basename(
+            container_metadata["asset_name"], container_metadata["name"]
+        )
+        container, datablocks = self.replace_container(
+            container, new_libpath, container_basename
+        )
 
         # update metadata
         metadata_update(
@@ -1496,64 +1509,74 @@ class AssetLoader(LoaderPlugin):
         return container, datablocks
 
     def replace_container(
-        self, container: OpenpypeContainer, new_libpath: Path, new_name=""
+        self,
+        container: OpenpypeContainer,
+        new_libpath: Path,
+        new_container_name: str,
     ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
         """Replace container with datablocks from given libpath.
 
         Args:
             container (OpenpypeContainer): Container to replace datablocks of.
             new_libpath (Path): Library path to load datablocks from.
-            new_name (str): Rename container if specified. Defaults to "".
+            new_container_name (str): Name of new container to load.
 
         Returns:
             Tuple[OpenpypeContainer, List[bpy.types.ID]]: (Container, List of loaded datablocks)
         """
-        # Rename if specified
-        new_name = new_name or container.name
-
         load_func = self.get_load_function()
 
         # Update the asset group with maintained contexts.
         with self.update_maintainer(container, self.maintained_parameters):
-            # Pick load function and execute
-            if self.load_type == "APPEND":
-                remove_container(container)
+            container_metadata = container.get(AVALON_PROPERTY, {})
+
+            # Check is same loader than the previous load
+            same_loader = self.__class__.__name__ == container_metadata.get(
+                "loader"
+            )
+
+            # In case several containers share same library
+            library_multireferenced = any(
+                [
+                    c
+                    for c in bpy.context.scene.openpype_containers
+                    if c != container and c.library is container.library
+                ]
+            )
+
+            # In special configuration, optimization by changing the library
+            if (
+                same_loader
+                and self.load_type in ["INSTANCE", "LINK"]
+                and not library_multireferenced
+            ):
+                # Find if target library exists: already linked to file
+                existing_library = bpy.data.libraries.get(new_libpath.name)
+
+                # Relink library
+                container.library.filepath = new_libpath.as_posix()
+                container.library.reload()
+                container.library.name = new_libpath.name
+
+                # Substitute library to keep reference
+                # if purged because duplicate references
+                if existing_library:
+                    container.library = existing_library
+
+                datablocks = container["datablocks"]
+            else:
+                # Default behaviour to wipe and reload everything
+                # but keeping same container
+                remove_container_datablocks(container)
                 container, datablocks = load_func(
-                    new_libpath.as_posix(), new_name
+                    new_libpath.as_posix(),
+                    new_container_name,
+                    container=container,
                 )
-            elif self.load_type in ["INSTANCE", "LINK"]:
-                # In case several containers share same library
-                # create new library and load datablocks from it
-                if any(
-                    [
-                        c
-                        for c in bpy.context.scene.openpype_containers
-                        if c != container and c.library is container.library
-                    ]
-                ):
-                    remove_container_datablocks(container)
-                    container, datablocks = load_func(
-                        new_libpath.as_posix(), new_name, container=container
-                    )
-                else:
-                    # Find if target library exists: already linked to file
-                    existing_library = bpy.data.libraries.get(new_libpath.name)
-
-                    # Relink library
-                    container.library.filepath = new_libpath.as_posix()
-                    container.library.reload()
-                    container.library.name = new_libpath.name
-
-                    # Substitute library to keep reference
-                    # if purged because duplicate references
-                    if existing_library:
-                        container.library = existing_library
-
-                    datablocks = container["datablocks"]
 
             # If asset had namespace, all this object will be renamed with
             # namespace as prefix.
-            namespace = container.get(AVALON_PROPERTY, {}).get("namespace")
+            namespace = container_metadata.get("namespace")
             if namespace:
                 self._rename_with_namespace(container, namespace)
 
@@ -1587,7 +1610,7 @@ class AssetLoader(LoaderPlugin):
 
         new_libpath = Path(get_representation_path(representation))
         assert (
-            new_libpath
+            new_libpath.exists()
         ), f"No library file found for representation: {representation}"
 
         self.log.info(
@@ -1596,27 +1619,15 @@ class AssetLoader(LoaderPlugin):
             pformat(representation, indent=2),
         )
 
-        # Build container name
+        # Build container base name
         asset_name = representation["context"]["asset"]
         subset_name = representation["context"]["subset"]
-        container_name = build_op_name(asset_name, subset_name)
+        container_basename = build_op_basename(asset_name, subset_name)
 
-        # Replace container if same loader than original container
-        # and force full reload if instance
-        if (
-            self.__class__.__name__ == container_metadata["loader"]
-            and self.load_type != "INSTANCE"
-        ):
-            container, datablocks = self.replace_container(
-                container, new_libpath, new_name=container_name
-            )
-        else:
-            # Keep the container but fully remove and load datablocks
-            remove_container_datablocks(container)
-            load_func = self.get_load_function()
-            container, datablocks = load_func(
-                new_libpath.as_posix(), container_name, container=container
-            )
+        # Replace container
+        container, datablocks = self.replace_container(
+            container, new_libpath, container_basename
+        )
 
         # update metadata
         metadata_update(
