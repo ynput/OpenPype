@@ -155,7 +155,7 @@ class DropEmpty(QtWidgets.QWidget):
             extensions_label = " or ".join(allowed_items)
         else:
             last_item = allowed_items.pop(-1)
-            new_last_item = " or ".join(last_item, allowed_items.pop(-1))
+            new_last_item = " or ".join([last_item, allowed_items.pop(-1)])
             allowed_items.append(new_last_item)
             extensions_label = ", ".join(allowed_items)
 

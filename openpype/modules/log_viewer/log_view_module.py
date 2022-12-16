@@ -22,7 +22,7 @@ class LogViewModule(OpenPypeModule, ITrayModule):
 
     # Definition of Tray menu
     def tray_menu(self, tray_menu):
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
         # Menu for Tray App
         menu = QtWidgets.QMenu('Logging', tray_menu)
 

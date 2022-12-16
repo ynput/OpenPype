@@ -7,7 +7,7 @@ import contextlib
 
 import hou  # noqa
 
-from openpype.host import HostBase, IWorkfileHost, ILoadHost, INewPublisher
+from openpype.host import HostBase, IWorkfileHost, ILoadHost, IPublishHost
 
 import pyblish.api
 
@@ -40,7 +40,7 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
-class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, INewPublisher):
+class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     name = "houdini"
 
     def __init__(self):

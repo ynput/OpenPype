@@ -1,6 +1,6 @@
 import getpass
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 from openpype.lib import is_admin_password_required
 from openpype.widgets import PasswordDialog
 from openpype.tools.utils import PlaceholderLineEdit
