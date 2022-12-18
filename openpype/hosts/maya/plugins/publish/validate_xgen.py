@@ -4,19 +4,18 @@ import pyblish.api
 
 
 class ValidateXgen(pyblish.api.InstancePlugin):
-    """Ensure Xgen objectset only contains collections."""
+    """Validate Xgen data."""
 
-    label = "Xgen"
+    label = "Validate Xgen"
     order = pyblish.api.ValidatorOrder
     host = ["maya"]
     families = ["xgen"]
 
     def process(self, instance):
+        # Validate only xgen collections are in objectset.
         nodes = (
-            cmds.ls(instance, type="xgmPalette", long=True) +
-            cmds.ls(instance, type="transform", long=True) +
-            cmds.ls(instance, type="xgmDescription", long=True) +
-            cmds.ls(instance, type="xgmSubdPatch", long=True)
+            instance.data["xgenNodes"] +
+            cmds.ls(instance, type="transform", long=True)
         )
         remainder_nodes = []
         for node in instance:
