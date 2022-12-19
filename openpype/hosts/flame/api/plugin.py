@@ -8,7 +8,7 @@ import qargparse
 from Qt import QtCore, QtWidgets
 
 from openpype import style
-from openpype.lib import Logger
+from openpype.lib import Logger, StringTemplate
 from openpype.pipeline import LegacyCreator, LoaderPlugin
 from openpype.settings import get_current_project_settings
 
@@ -775,6 +775,11 @@ class OpenClipSolver(flib.MediaInfoFile):
         self.feed_colorspace = feed_data.get("colorspace")
         self.log.debug("feed_version_name: {}".format(self.feed_version_name))
 
+        # layer rename variables
+        self.layer_rename_template = feed_data["layer_rename_template"]
+        self.layer_rename_patterns = feed_data["layer_rename_patterns"]
+        self.context_data = feed_data["context_data"]
+
         # derivate other feed variables
         self.feed_basename = os.path.basename(feed_path)
         self.feed_dir = os.path.dirname(feed_path)
@@ -813,9 +818,11 @@ class OpenClipSolver(flib.MediaInfoFile):
 
     def _create_new_open_clip(self):
         self.log.info("Building new openClip")
-        self.log.debug(">> self.clip_data: {}".format(self.clip_data))
 
         for tmp_xml_track in self.clip_data.iter("track"):
+            # solve track (layer) name
+            self._rename_track_name(tmp_xml_track)
+
             tmp_xml_feeds = tmp_xml_track.find('feeds')
             tmp_xml_feeds.set('currentVersion', self.feed_version_name)
 
@@ -850,6 +857,48 @@ class OpenClipSolver(flib.MediaInfoFile):
             if uid == track_uid:
                 return xml_track
 
+    def _rename_track_name(self, xml_track_data):
+        layer_uid = xml_track_data.get("uid")
+        name_obj = xml_track_data.find("name")
+        layer_name = name_obj.text
+
+        if (
+            self.layer_rename_patterns
+            and not any(
+                re.search(lp_.lower(), layer_name.lower())
+                for lp_ in self.layer_rename_patterns
+            )
+        ):
+            return
+
+        formating_data = self._update_formating_data(
+            layerName=layer_name,
+            layerUID=layer_uid
+        )
+        name_obj.text = StringTemplate(
+            self.layer_rename_template
+        ).format(formating_data)
+
+    def _update_formating_data(self, **kwargs):
+        """ Updating formating data for layer rename
+
+        Attributes:
+            key=value (optional): will be included to formating data
+                                  as {key: value}
+        Returns:
+            dict: anatomy context data for formating
+        """
+        self.log.debug(">> self.clip_data: {}".format(self.clip_data))
+        clip_name_obj = self.clip_data.find("name")
+        data = {
+            "originalBasename": clip_name_obj.text
+        }
+        # include version context data
+        data.update(self.context_data)
+        # include input kwargs data
+        data.update(kwargs)
+        return data
+
     def _update_open_clip(self):
         self.log.info("Updating openClip ..")
 
@@ -857,11 +906,12 @@ class OpenClipSolver(flib.MediaInfoFile):
         out_xml = out_xml.getroot()
 
         self.log.debug(">> out_xml: {}".format(out_xml))
-        self.log.debug(">> self.clip_data: {}".format(self.clip_data))
-
         # loop tmp tracks
         updated_any = False
         for tmp_xml_track in self.clip_data.iter("track"):
+            # solve track (layer) name
+            self._rename_track_name(tmp_xml_track)
+
             # get tmp track uid
             tmp_track_uid = tmp_xml_track.get("uid")
             self.log.debug(">> tmp_track_uid: {}".format(tmp_track_uid))
