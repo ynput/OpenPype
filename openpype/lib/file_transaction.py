@@ -191,4 +191,4 @@ class FileTransaction(object):
         if os.path.exists(src) and os.path.exists(dst):
             return os.path.samefile(src, dst)
 
-        return False
+        return src == dst
