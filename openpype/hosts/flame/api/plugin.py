@@ -5,7 +5,7 @@ from copy import deepcopy
 from xml.etree import ElementTree as ET
 
 import qargparse
-from Qt import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from openpype import style
 from openpype.lib import Logger, StringTemplate
