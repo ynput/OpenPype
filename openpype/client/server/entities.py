@@ -505,15 +505,16 @@ def get_representations_parents(project_name, representations):
         for repre in representations
     }
     con = get_server_api_connection()
-    parents = con.get_representations_parents(project_name, repre_ids)
+    parents_by_repre_id = con.get_representations_parents(project_name,
+                                                          repre_ids)
     folder_ids = set()
-    for parent in parents.values():
-        folder_ids.add(parent[2]["id"])
+    for parents in parents_by_repre_id .values():
+        folder_ids.add(parents[2]["id"])
 
     tasks_by_folder_id = {}
 
     new_parents = {}
-    for repre_id, parents in parents.items():
+    for repre_id, parents in parents_by_repre_id .items():
         version, subset, folder, project = parents
         folder_tasks = tasks_by_folder_id.get(folder["id"]) or {}
         folder["tasks"] = folder_tasks
