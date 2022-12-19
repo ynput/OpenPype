@@ -53,10 +53,13 @@ class CollectInstances(pyblish.api.ContextPlugin):
             d_ref.datablock = c
 
         for op_instance in bpy.context.scene.openpype_instances:
+            datablocks = {
+                datablock_ref.datablock
+                for datablock_ref in op_instance.datablock_refs
+            }
+
             # Remove if empty instance
-            if not any(
-                {d_ref.datablock for d_ref in op_instance.datablock_refs}
-            ):
+            if not any(datablocks):
                 bpy.context.scene.openpype_instances.remove(
                     bpy.context.scene.openpype_instances.find(op_instance.name)
                 )
@@ -78,13 +81,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             )
 
             # Process datablocks
-            if hasattr(op_instance, "datablocks"):
-                members.update(
-                    {
-                        datablock_ref.datablock
-                        for datablock_ref in op_instance.datablock_refs
-                    }
-                )
+            members.update(datablocks)
 
             # If outliner data
             instance_collection = bpy.data.collections.get(op_instance.name)
@@ -101,7 +98,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             # Add instance holder as first item
             members = list(members)
-            members.insert(0, op_instance)
 
             instance[:] = members
             self.log.debug(json.dumps(instance.data, indent=4))
