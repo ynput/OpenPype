@@ -11,7 +11,7 @@ from openpype.host import (
     HostBase,
     IWorkfileHost,
     ILoadHost,
-    INewPublisher
+    IPublishHost
 )
 from openpype.settings import get_current_project_settings
 from openpype.lib import register_event_callback, Logger
