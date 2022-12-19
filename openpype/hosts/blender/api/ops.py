@@ -466,6 +466,12 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
 
         layout = self.layout
 
+        # Display workfile out of date warning
+        if context.window_manager.is_workfile_out_of_date:
+            row = layout.row()
+            row.label(text="Your workfile is out of date!", icon="ERROR")
+            layout.separator()
+
         pcoll = PREVIEW_COLLECTIONS.get("avalon")
         if pcoll:
             pyblish_menu_icon = pcoll["pyblish_menu_icon"]
