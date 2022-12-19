@@ -758,7 +758,7 @@ class ContainerMaintainer(ExitStack):
 class Creator(LegacyCreator):
     """Base class for Creator plug-ins."""
     defaults = ['Main']
-    color_tag = "NONE"
+    color_tag = "COLOR_07"
     bl_types = BL_OUTLINER_TYPES
 
     @staticmethod
@@ -1006,6 +1006,8 @@ class AssetLoader(LoaderPlugin):
     # Default is outliner datablocks because it is the most common use case
     bl_types = BL_OUTLINER_TYPES
 
+    color_tag = "COLOR_08"
+
     def _get_container_collection_from_collections(
         self,
         collections: List,
@@ -1169,6 +1171,9 @@ class AssetLoader(LoaderPlugin):
                 if hasattr(container_collection, "color_tag"):
                     container_collection.color_tag = self.color_tag
                 bpy.context.scene.collection.children.link(container_collection)
+            
+            # Set color
+            container_collection.color_tag = self.color_tag
 
             # Substitute name in case renamed with .###
             container_name = container_collection.name
