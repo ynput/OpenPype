@@ -11,5 +11,3 @@ class CreateSetdress(plugin.Creator):
     label = "Set Dress"
     family = "setdress"
     icon = "cubes"
-    color_tag = "COLOR_06"
-    bl_types = frozenset({bpy.types.Collection, bpy.types.Object})

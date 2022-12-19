@@ -1,9 +1,10 @@
 """Create a camera asset."""
 
+from typing import List
 import bpy
 
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.lib import get_selection
+from openpype.hosts.blender.api.properties import OpenpypeInstance
 
 
 class CreateCamera(plugin.Creator):
@@ -13,30 +14,26 @@ class CreateCamera(plugin.Creator):
     label = "Camera"
     family = "camera"
     icon = "video-camera"
-    color_tag = "COLOR_05"
-    bl_types = frozenset({bpy.types.Camera})
 
-    def _link_to_container_collection(self, container):
-        cameras = [obj for obj in get_selection() if obj.type == "CAMERA"]
-        plugin.link_to_collection(cameras, container)
-
-    def _process(self):
-        # Get Instance Container
-        container = super()._process()
-
+    @plugin.exec_process
+    def process(
+        self, datablocks: List[bpy.types.ID] = None
+    ) -> OpenpypeInstance:
         # Create instance object
         asset = self.data["asset"]
         subset = self.data["subset"]
-        name = plugin.asset_name(asset, subset)
+        instance_name = plugin.build_op_basename(asset, subset)
 
-        for obj in container.all_objects:
-            if obj.type == "CAMERA":
-                obj.name = name
-                obj.data.name = name
+        # Rename existing camera or create one
+        for obj in datablocks:
+            if obj and obj.type == "CAMERA":
+                obj.name = instance_name
+                obj.data.name = instance_name
                 break
         else:
-            camera = bpy.data.cameras.new(name)
-            camera_obj = bpy.data.objects.new(name, camera)
-            container.objects.link(camera_obj)
+            camera = bpy.data.cameras.new(instance_name)
+            camera_obj = bpy.data.objects.new(instance_name, camera)
+            datablocks.append(camera_obj)
 
-        return container
+        # Create Instance
+        return super().process(datablocks)

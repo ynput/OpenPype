@@ -14,7 +14,7 @@ class ExtractBlend(publish.Extractor):
 
     label = "Extract Blend"
     hosts = ["blender"]
-    families = ["model", "camera", "rig", "action", "layout", "setdress"]
+    families = ["model", "camera", "rig", "layout", "setdress"]
     optional = True
 
     pack_images = True
