@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import hiero
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 import qargparse
 
 from openpype.settings import get_current_project_settings
