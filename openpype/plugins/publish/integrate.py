@@ -243,7 +243,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         return filtered_repres
 
     def register(self, instance, file_transactions, filtered_repres):
-        project_name = instance.context["projectName"]
+        project_name = instance.context.data["projectName"]
 
         instance_stagingdir = instance.data.get("stagingDir")
         if not instance_stagingdir:
