@@ -14,7 +14,6 @@ class LinkModelLoader(plugin.AssetLoader):
     label = "Link Model"
     icon = "link"
     color = "orange"
-    color_tag = "COLOR_04"
     order = 0
 
     load_type = "LINK"
@@ -29,7 +28,6 @@ class AppendModelLoader(plugin.AssetLoader):
     label = "Append Model"
     icon = "paperclip"
     color = "orange"
-    color_tag = "COLOR_04"
     order = 1
 
     load_type = "APPEND"
@@ -44,7 +42,6 @@ class InstanceModelLoader(plugin.AssetLoader):
     label = "Instantiate Collection"
     icon = "archive"
     color = "orange"
-    color_tag = "COLOR_04"
     order = 2
 
     load_type = "INSTANCE"
