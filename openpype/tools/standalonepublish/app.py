@@ -4,7 +4,7 @@ import ctypes
 import signal
 
 from bson.objectid import ObjectId
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.client import get_asset_by_id
 

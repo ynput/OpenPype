@@ -242,7 +242,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "OPENPYPE_PUBLISH_JOB": "1",
             "OPENPYPE_RENDER_JOB": "0",
             "OPENPYPE_REMOTE_JOB": "0",
-            "OPENPYPE_LOG_NO_COLORS": "1"
+            "OPENPYPE_LOG_NO_COLORS": "1",
+            "IS_TEST": str(int(is_in_tests()))
         }
 
         # add environments from self.environ_keys

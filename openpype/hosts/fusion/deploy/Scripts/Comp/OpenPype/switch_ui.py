@@ -3,7 +3,7 @@ import sys
 import glob
 import logging
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 import qtawesome as qta
 

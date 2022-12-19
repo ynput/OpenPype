@@ -8,7 +8,7 @@ from wsrpc_aiohttp import (
     WebSocketAsync
 )
 
-from Qt import QtCore
+from qtpy import QtCore
 
 from openpype.lib import Logger
 from openpype.pipeline import legacy_io

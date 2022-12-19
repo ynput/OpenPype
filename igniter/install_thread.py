@@ -4,7 +4,7 @@ import os
 import sys
 from pathlib import Path
 
-from Qt.QtCore import QThread, Signal, QObject  # noqa
+from qtpy import QtCore
 
 from .bootstrap_repos import (
     BootstrapRepos,
@@ -17,7 +17,7 @@ from .bootstrap_repos import (
 from .tools import validate_mongo_connection
 
 
-class InstallThread(QThread):
+class InstallThread(QtCore.QThread):
     """Install Worker thread.
 
     This class takes care of finding OpenPype version on user entered path
@@ -28,14 +28,14 @@ class InstallThread(QThread):
     user data dir.
 
     """
-    progress = Signal(int)
-    message = Signal((str, bool))
+    progress = QtCore.Signal(int)
+    message = QtCore.Signal((str, bool))
 
     def __init__(self, parent=None,):
         self._mongo = None
         self._result = None
 
-        QThread.__init__(self, parent)
+        super().__init__(parent)
 
     def result(self):
         """Result of finished installation."""
