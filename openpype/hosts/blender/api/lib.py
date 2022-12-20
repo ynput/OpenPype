@@ -9,7 +9,7 @@ import addon_utils
 from openpype.lib import Logger
 from openpype.pipeline import legacy_io, Anatomy
 from openpype.client.entities import (
-    match_subset_id,
+    get_matching_subset_id,
     get_representation_by_task,
     get_last_version_by_subset_id,
     get_asset_by_name,
@@ -346,7 +346,7 @@ def download_last_workfile() -> str:
     )
 
     # Get subset id
-    subset_id = match_subset_id(
+    subset_id = get_matching_subset_id(
         project_name, task_name, "workfile", asset_doc
     )
     if subset_id is None:
