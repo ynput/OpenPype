@@ -108,10 +108,10 @@ class ImagePlaneLoader(load.LoaderPlugin):
             camera_names["Create new camera."] = "create_camera"
             window = CameraWindow(camera_names.keys())
             window.exec_()
-            try:
-                camera = camera_names[window.camera]
-            except KeyError:
-                pass
+            # Skip if no camera was selected (Dialog was closed)
+            if window.camera not in camera_names:
+                return
+            camera = camera_names[window.camera]
 
         if camera == "create_camera":
             camera = pm.createNode("camera")
