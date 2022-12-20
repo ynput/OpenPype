@@ -433,7 +433,7 @@ def download_last_published_workfile(
             if match:
                 last_local_workfile_version = int(match.group(1))
                 break
-    
+
     # Set workfile data workfile version
     # Either last published version or last local version, whichever is higher
     workfile_data["version"] = (
