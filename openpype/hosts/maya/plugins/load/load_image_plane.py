@@ -71,9 +71,8 @@ class CameraWindow(QtWidgets.QDialog):
         self.close()
 
     def on_cancel_pressed(self):
-        if self.camera or self.camera is None:
-            self.close()
-            return
+        self.camera = None
+        self.close()
 
 class ImagePlaneLoader(load.LoaderPlugin):
     """Specific loader of plate for image planes on selected camera."""
@@ -109,7 +108,10 @@ class ImagePlaneLoader(load.LoaderPlugin):
             camera_names["Create new camera."] = "create_camera"
             window = CameraWindow(camera_names.keys())
             window.exec_()
-            camera = camera_names[window.camera]
+            try:
+                camera = camera_names[window.camera]
+            except KeyError:
+                pass
 
         if camera == "create_camera":
             camera = pm.createNode("camera")
