@@ -57,7 +57,7 @@ class CameraWindow(QtWidgets.QDialog):
         layout.addWidget(self.widgets["warning"])
 
         self.widgets["okButton"].pressed.connect(self.on_ok_pressed)
-        self.widgets["cancelButton"].clicked.connect(self.on_cancel_pressed)
+        self.widgets["cancelButton"].pressed.connect(self.on_cancel_pressed)
         self.widgets["list"].itemPressed.connect(self.on_list_itemPressed)
 
     def on_list_itemPressed(self, item):
@@ -71,8 +71,6 @@ class CameraWindow(QtWidgets.QDialog):
         self.close()
 
     def on_cancel_pressed(self):
-        if self.camera:
-            return
         self.close()
 
 
