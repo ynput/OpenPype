@@ -32,13 +32,10 @@ class ExtractXgenCache(publish.Extractor):
         templates = instance.context.data["anatomy"].templates["publish"]
         xgen_filename = StringTemplate(templates["file"]).format(template_data)
         name = instance.data["xgenPalette"].replace(":", "__").replace("|", "")
-        value = xgen_filename.replace(".xgen", "__" + name + ".xgen")
-        attribute_data = {
-            "{}.xgFileName".format(instance.data["xgenPalette"]): xgen_filename
-        }
+        xgen_filename = xgen_filename.replace(".xgen", "__" + name + ".xgen")
 
         # Export xgen palette files.
-        xgen_path = os.path.join(staging_dir, value).replace("\\", "/")
+        xgen_path = os.path.join(staging_dir, xgen_filename).replace("\\", "/")
         xgenm.exportPalette(
             instance.data["xgenPalette"].replace("|", ""), xgen_path
         )
@@ -47,7 +44,7 @@ class ExtractXgenCache(publish.Extractor):
         representation = {
             "name": name,
             "ext": "xgen",
-            "files": value,
+            "files": xgen_filename,
             "stagingDir": staging_dir,
         }
         instance.data["representations"].append(representation)
@@ -82,6 +79,10 @@ class ExtractXgenCache(publish.Extractor):
         with maintained_selection():
             cmds.select(duplicate_nodes)
             collection = xgenm.importPalette(xgen_path, [])
+
+        attribute_data = {
+            "{}.xgFileName".format(collection): xgen_filename
+        }
 
         # Export Maya file.
         type = "mayaAscii" if self.scene_type == "ma" else "mayaBinary"

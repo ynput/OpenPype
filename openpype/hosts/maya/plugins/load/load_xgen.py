@@ -2,11 +2,15 @@ import os
 import shutil
 
 import maya.cmds as cmds
-import pymel.core as pm
+import xgenm
 
 import openpype.hosts.maya.api.plugin
-from openpype.hosts.maya.api.lib import maintained_selection
+from openpype.hosts.maya.api.lib import (
+    maintained_selection, get_container_members
+)
 from openpype.hosts.maya.api import current_file
+from openpype.hosts.maya.api.plugin import get_reference_node
+from openpype.pipeline import get_representation_path
 
 
 class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
@@ -19,13 +23,10 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     icon = "code-fork"
     color = "orange"
 
-    def process_reference(self, context, name, namespace, options):
-        maya_filepath = self.prepare_root_value(
-            self.fname, context["project"]["name"]
-        )
+    def setup_xgen_palette_file(self, maya_filepath, namespace, name):
+        # Setup xgen palette file.
         project_path = os.path.dirname(current_file())
 
-        # Setup xgen palette file.
         # Copy the xgen palette file from published version.
         _, maya_extension = os.path.splitext(maya_filepath)
         source = maya_filepath.replace(maya_extension, ".xgen")
@@ -34,9 +35,10 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             "{basename}__{namespace}__{name}.xgen".format(
                 basename=os.path.splitext(os.path.basename(current_file()))[0],
                 namespace=namespace,
-                name=context["representation"]["data"]["xgenName"]
+                name=name
             )
-        )
+        ).replace("\\", "/")
+        self.log.info("Copying {} to {}".format(source, destination))
         shutil.copy(source, destination)
 
         # Modify xgDataPath and xgProjectPath to have current workspace first
@@ -66,6 +68,18 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         with open(destination, "w") as f:
             f.write("\n".join(lines))
 
+        return destination
+
+    def process_reference(self, context, name, namespace, options):
+        maya_filepath = self.prepare_root_value(
+            self.fname, context["project"]["name"]
+        )
+
+        name = context["representation"]["data"]["xgenName"]
+        xgen_file = self.setup_xgen_palette_file(
+            maya_filepath, namespace, name
+        )
+
         # Reference xgen. Xgen does not like being referenced in under a group.
         new_nodes = []
 
@@ -78,6 +92,13 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 returnNewNodes=True
             )
 
+            xgen_palette = cmds.ls(nodes, type="xgmPalette", long=True)[0]
+            cmds.setAttr(
+                "{}.xgFileName".format(xgen_palette),
+                os.path.basename(xgen_file),
+                type="string"
+            )
+
             shapes = cmds.ls(nodes, shapes=True, long=True)
 
             new_nodes = (list(set(nodes) - set(shapes)))
@@ -87,4 +108,26 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         return new_nodes
 
     def update(self, container, representation):
-        pass
+        super().update(container, representation)
+
+        # Get reference node from container members
+        node = container["objectName"]
+        members = get_container_members(node)
+        reference_node = get_reference_node(members, self.log)
+        namespace = cmds.referenceQuery(reference_node, namespace=True)[1:]
+
+        xgen_file = self.setup_xgen_palette_file(
+            get_representation_path(representation),
+            namespace,
+            representation["data"]["xgenName"]
+        )
+
+        xgen_palette = cmds.ls(members, type="xgmPalette", long=True)[0]
+        cmds.setAttr(
+            "{}.xgFileName".format(xgen_palette),
+            os.path.basename(xgen_file),
+            type="string"
+        )
+
+        # Reload reference to update the xgen.
+        cmds.file(loadReference=reference_node, force=True)
