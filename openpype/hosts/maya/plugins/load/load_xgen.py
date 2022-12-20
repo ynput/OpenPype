@@ -79,6 +79,22 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         xgen_file = self.setup_xgen_palette_file(
             maya_filepath, namespace, name
         )
+        xgd_file = xgen_file.replace(".xgen", ".xgd")
+
+        # Create a placeholder xgen delta file.
+        #change author and date
+        xgd_template = """
+# XGen Delta File
+#
+# Version:  C:/Program Files/Autodesk/Maya2022/plug-ins/xgen/
+# Author:   tokejepsen
+# Date:     Tue Dec 20 09:03:29 2022
+
+FileVersion 18
+
+"""
+        with open(xgd_file, "w") as f:
+            f.write(xgd_template)
 
         # Reference xgen. Xgen does not like being referenced in under a group.
         new_nodes = []
@@ -94,10 +110,16 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
             xgen_palette = cmds.ls(nodes, type="xgmPalette", long=True)[0]
             cmds.setAttr(
-                "{}.xgFileName".format(xgen_palette),
+                "{}.xgBaseFile".format(xgen_palette),
                 os.path.basename(xgen_file),
                 type="string"
             )
+            cmds.setAttr(
+                "{}.xgFileName".format(xgen_palette),
+                os.path.basename(xgd_file),
+                type="string"
+            )
+            cmds.setAttr("{}.xgExportAsDelta".format(xgen_palette), True)
 
             shapes = cmds.ls(nodes, shapes=True, long=True)
 
@@ -108,11 +130,9 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         return new_nodes
 
     def update(self, container, representation):
-        super().update(container, representation)
-
         # Get reference node from container members
-        node = container["objectName"]
-        members = get_container_members(node)
+        container_node = container["objectName"]
+        members = get_container_members(container_node)
         reference_node = get_reference_node(members, self.log)
         namespace = cmds.referenceQuery(reference_node, namespace=True)[1:]
 
@@ -121,13 +141,35 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             namespace,
             representation["data"]["xgenName"]
         )
+        xgd_file = xgen_file.replace(".xgen", ".xgd")
 
         xgen_palette = cmds.ls(members, type="xgmPalette", long=True)[0]
+
         cmds.setAttr(
             "{}.xgFileName".format(xgen_palette),
             os.path.basename(xgen_file),
             type="string"
         )
+        cmds.setAttr(
+            "{}.xgBaseFile".format(xgen_palette),
+            "",
+            type="string"
+        )
+        cmds.setAttr("{}.xgExportAsDelta".format(xgen_palette), False)
 
-        # Reload reference to update the xgen.
-        cmds.file(loadReference=reference_node, force=True)
+        super().update(container, representation)
+
+        # Apply xgen delta.
+        xgenm.applyDelta(xgen_palette.replace("|", ""), xgd_file)
+
+        cmds.setAttr(
+            "{}.xgBaseFile".format(xgen_palette),
+            os.path.basename(xgen_file),
+            type="string"
+        )
+        cmds.setAttr(
+            "{}.xgFileName".format(xgen_palette),
+            os.path.basename(xgd_file),
+            type="string"
+        )
+        cmds.setAttr("{}.xgExportAsDelta".format(xgen_palette), True)
