@@ -12,11 +12,9 @@ class LinkSetdressLoader(plugin.AssetLoader):
     label = "Link SetDress"
     icon = "link"
     color = "orange"
-    color_tag = "COLOR_06"
     order = 0
 
-    def _process(self, libpath, asset_group):
-        self._link_blend(libpath, asset_group)
+    load_type = "LINK"
 
 
 class AppendSetdressLoader(plugin.AssetLoader):
@@ -28,8 +26,6 @@ class AppendSetdressLoader(plugin.AssetLoader):
     label = "Append SetDress"
     icon = "paperclip"
     color = "orange"
-    color_tag = "COLOR_06"
     order = 1
 
-    def _process(self, libpath, asset_group):
-        self._append_blend(libpath, asset_group)
+    load_type = "APPEND"
