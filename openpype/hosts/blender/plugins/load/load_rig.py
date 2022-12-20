@@ -1,8 +1,10 @@
 """Load a rig asset in Blender."""
 
 from pathlib import Path
+from typing import List, Tuple
 
 import bpy
+from openpype.hosts.blender.api.properties import OpenpypeContainer
 
 from openpype.pipeline import legacy_io, legacy_create
 from openpype.pipeline.create import get_legacy_creator_by_name
@@ -14,39 +16,6 @@ class RigLoader(plugin.AssetLoader):
     """Load rigs from a .blend file."""
 
     color = "orange"
-    color_tag = "COLOR_03"
-
-    def _assign_actions(self, asset_group):
-        """Assign new action for all objects from linked rig."""
-
-        task = legacy_io.Session.get("AVALON_TASK")
-        asset = legacy_io.Session.get("AVALON_ASSET")
-        namespace = asset_group.get(AVALON_PROPERTY, {}).get("namespace", "")
-        armatures = [
-            obj
-            for obj in asset_group.all_objects
-            if obj.type == "ARMATURE"
-        ]
-
-        # If rig contain only one armature.
-        if len(armatures) == 1:
-            armature = armatures[0]
-            if armature.animation_data is None:
-                armature.animation_data_create()
-                armature.animation_data.action = bpy.data.actions.new(
-                    f"{asset}_{task}:{namespace}_action"
-                )
-        # If rig contain multiple armatures, we generate actions for
-        # each armature.
-        elif armatures:
-            for armature in armatures:
-                if armature.animation_data is None:
-                    armature.animation_data_create()
-                    action_name = armature.name.replace(":", "_")
-                    armature.animation_data.action = bpy.data.actions.new(
-                        f"{asset}_{task}:{namespace}_{action_name}_action"
-                    )
-        plugin.orphans_purge()
 
     def _apply_options(self, asset_group, options):
         """Apply load options fro asset_group."""
@@ -70,10 +39,10 @@ class RigLoader(plugin.AssetLoader):
                 name=f"{namespace}_animation",
                 asset=context["asset"]["name"],
                 options={"useSelection": False, "asset_group": asset_group},
-                data={"dependencies": representation}
+                data={"dependencies": representation},
             )
 
-        anim_file = options.get('animation_file')
+        anim_file = options.get("animation_file")
         if isinstance(anim_file, str) and Path(anim_file).is_file():
 
             bpy.ops.import_scene.fbx(filepath=anim_file, anim_offset=0.0)
@@ -81,14 +50,14 @@ class RigLoader(plugin.AssetLoader):
 
             armature = None
             for obj in asset_group.all_objects:
-                if obj.type == 'ARMATURE':
+                if obj.type == "ARMATURE":
                     armature = obj
 
             if not armature:
                 raise Exception(f"Armature not found for {asset_group.name}")
 
             for obj in imported:
-                if obj.type == 'ARMATURE':
+                if obj.type == "ARMATURE":
                     if not armature.animation_data:
                         armature.animation_data_create()
                     armature.animation_data.action = obj.animation_data.action
@@ -99,15 +68,15 @@ class RigLoader(plugin.AssetLoader):
             for obj in imported:
                 bpy.data.objects.remove(obj)
 
-        action = options.get('action')
+        action = options.get("action")
         if isinstance(action, bpy.types.Action):
             for obj in asset_group.all_objects:
-                if obj.type == 'ARMATURE':
+                if obj.type == "ARMATURE":
                     if not armature.animation_data:
                         armature.animation_data_create()
                     armature.animation_data.action = action
 
-        parent = options.get('parent')
+        parent = options.get("parent")
         if isinstance(parent, bpy.types.Collection):
             # clear collection parenting
             for collection in bpy.data.collections:
@@ -116,14 +85,31 @@ class RigLoader(plugin.AssetLoader):
             # reparenting with the option value
             plugin.link_to_collection(asset_group, parent)
 
-    def process_asset(self, *args, **kwargs) -> bpy.types.Collection:
-        """Asset loading Process"""
-        asset_group = super().process_asset(*args, **kwargs)
+    plugin.exec_process
 
-        # Ensure loaded rig has action.
-        self._assign_actions(asset_group)
+    def load(self, *args, **kwargs):
+        """Override `load` to ensure one action for every loaded rig."""
+        container, datablocks = super().load(*args, **kwargs)
 
-        return asset_group
+        # Ensure loaded rig has action
+        asset = legacy_io.Session.get("AVALON_ASSET")
+        for armature in [
+            obj
+            for obj in container.outliner_entity.all_objects
+            if obj.type == "ARMATURE"
+        ]:
+            if armature.animation_data is None:
+                armature.animation_data_create()
+
+                action_name = armature.name.replace(":", "_")
+                armature.animation_data.action = bpy.data.actions.new(
+                    f"{asset}_{action_name}"
+                )
+
+        # Clear orphan data
+        plugin.orphans_purge()
+
+        return container, datablocks
 
 
 class LinkRigLoader(RigLoader):
@@ -136,9 +122,7 @@ class LinkRigLoader(RigLoader):
     icon = "link"
     order = 0
 
-    def _process(self, libpath, asset_group):
-        # Load blend from from libpath library.
-        self._link_blend(libpath, asset_group)
+    load_type = "LINK"
 
 
 class AppendRigLoader(RigLoader):
@@ -151,6 +135,4 @@ class AppendRigLoader(RigLoader):
     icon = "paperclip"
     order = 1
 
-    def _process(self, libpath, asset_group):
-        # Load blend from from libpath library.
-        self._append_blend(libpath, asset_group)
+    load_type = "APPEND"
