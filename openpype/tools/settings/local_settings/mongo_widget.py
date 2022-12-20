@@ -2,7 +2,7 @@ import os
 import sys
 import traceback
 
-from Qt import QtWidgets
+from qtpy import QtWidgets
 from pymongo.errors import ServerSelectionTimeoutError
 
 from openpype.lib import change_openpype_mongo_url

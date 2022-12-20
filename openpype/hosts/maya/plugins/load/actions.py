@@ -14,6 +14,7 @@ class SetFrameRangeLoader(load.LoaderPlugin):
 
     families = ["animation",
                 "camera",
+                "proxyAbc",
                 "pointcache"]
     representations = ["abc"]
 
@@ -48,6 +49,7 @@ class SetFrameRangeWithHandlesLoader(load.LoaderPlugin):
 
     families = ["animation",
                 "camera",
+                "proxyAbc",
                 "pointcache"]
     representations = ["abc"]
 

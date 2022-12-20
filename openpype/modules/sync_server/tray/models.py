@@ -3,8 +3,7 @@ import attr
 from bson.objectid import ObjectId
 import datetime
 
-from Qt import QtCore
-from Qt.QtCore import Qt
+from qtpy import QtCore
 import qtawesome
 
 from openpype.tools.utils.delegates import pretty_timestamp
@@ -79,16 +78,16 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
     def columnCount(self, _index=None):
         return len(self._header)
 
-    def headerData(self, section, orientation, role=Qt.DisplayRole):
+    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
         if section >= len(self.COLUMN_LABELS):
             return
 
-        if role == Qt.DisplayRole:
-            if orientation == Qt.Horizontal:
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
                 return self.COLUMN_LABELS[section][1]
 
         if role == HEADER_NAME_ROLE:
-            if orientation == Qt.Horizontal:
+            if orientation == QtCore.Qt.Horizontal:
                 return self.COLUMN_LABELS[section][0]  # return name
 
     def data(self, index, role):
@@ -123,7 +122,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
             return item.status == lib.STATUS[2] and \
                 item.remote_progress < 1
 
-        if role in (Qt.DisplayRole, Qt.EditRole):
+        if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
             # because of ImageDelegate
             if header_value in ['remote_site', 'local_site']:
                 return ""
@@ -146,7 +145,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         if role == STATUS_ROLE:
             return item.status
 
-        if role == Qt.UserRole:
+        if role == QtCore.Qt.UserRole:
             return item._id
 
     @property
@@ -409,7 +408,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         """
         for i in range(self.rowCount(None)):
             index = self.index(i, 0)
-            value = self.data(index, Qt.UserRole)
+            value = self.data(index, QtCore.Qt.UserRole)
             if value == id:
                 return index
         return None
@@ -917,7 +916,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         if not self.can_edit:
             return
 
-        repre_id = self.data(index, Qt.UserRole)
+        repre_id = self.data(index, QtCore.Qt.UserRole)
 
         representation = get_representation_by_id(self.project, repre_id)
         if representation:
@@ -1353,7 +1352,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         if not self.can_edit:
             return
 
-        file_id = self.data(index, Qt.UserRole)
+        file_id = self.data(index, QtCore.Qt.UserRole)
 
         updated_file = None
         representation = get_representation_by_id(self.project, self._id)

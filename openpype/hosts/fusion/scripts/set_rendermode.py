@@ -1,4 +1,4 @@
-from Qt import QtWidgets
+from qtpy import QtWidgets
 import qtawesome
 from openpype.hosts.fusion.api import get_current_comp
 

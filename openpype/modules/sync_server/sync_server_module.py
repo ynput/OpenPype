@@ -1244,7 +1244,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if not self.enabled:
             return
 
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
         """Add menu or action to Tray(or parent)'s menu"""
         action = QtWidgets.QAction(self.label, parent_menu)
         action.triggered.connect(self.show_widget)

@@ -44,6 +44,10 @@
             ],
             "skip_hosts_headless_publish": []
         },
+        "collect_comment_per_instance": {
+            "enabled": false,
+            "families": []
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
@@ -225,6 +229,9 @@
                 {
                     "families": [],
                     "hosts": [],
+                    "task_types": [],
+                    "task_names": [],
+                    "subsets": [],
                     "burnins": {
                         "burnin": {
                             "TOP_LEFT": "{yy}-{mm}-{dd}",
@@ -435,15 +442,13 @@
                     "template": "{family}{Task}"
                 },
                 {
-                    "families": [
-                        "renderLocal"
-                    ],
+                    "families": ["render"],
                     "hosts": [
                         "aftereffects"
                     ],
                     "task_types": [],
                     "tasks": [],
-                    "template": "render{Task}{Variant}"
+                    "template": "{family}{Task}{Composition}{Variant}"
                 },
                 {
                     "families": [

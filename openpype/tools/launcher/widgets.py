@@ -1,7 +1,7 @@
 import copy
 import time
 import collections
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
 from openpype.tools.flickcharm import FlickCharm
