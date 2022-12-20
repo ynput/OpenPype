@@ -328,7 +328,7 @@ class NiceCheckbox(QtWidgets.QFrame):
                 offset_ratio
             )
 
-        margins_ratio = self._checker_margins_divider
+        margins_ratio = float(self._checker_margins_divider)
         if margins_ratio > 0:
             size_without_margins = int(
                 (float(frame_rect.height()) / margins_ratio)
@@ -351,9 +351,9 @@ class NiceCheckbox(QtWidgets.QFrame):
         )
 
         if checkbox_rect.width() > checkbox_rect.height():
-            radius = floor(checkbox_rect.height() / 2)
+            radius = floor(checkbox_rect.height() * 0.5)
         else:
-            radius = floor(checkbox_rect.width() / 2)
+            radius = floor(checkbox_rect.width() * 0.5)
 
         painter.setPen(QtCore.Qt.transparent)
         painter.setBrush(bg_color)
@@ -369,7 +369,7 @@ class NiceCheckbox(QtWidgets.QFrame):
         if self._current_step == 0:
             x_offset = 0
         else:
-            x_offset = (area_width / self._steps) * self._current_step
+            x_offset = (float(area_width) / self._steps) * self._current_step
 
         pos_x = checkbox_rect.x() + x_offset + margin_size_c
         pos_y = checkbox_rect.y() + margin_size_c
