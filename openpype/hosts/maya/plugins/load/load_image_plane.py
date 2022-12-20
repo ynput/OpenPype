@@ -71,8 +71,10 @@ class CameraWindow(QtWidgets.QDialog):
         self.close()
 
     def on_cancel_pressed(self):
-        self.close()
+        if self.camera is None:
+            return
 
+        self.close()
 
 class ImagePlaneLoader(load.LoaderPlugin):
     """Specific loader of plate for image planes on selected camera."""
