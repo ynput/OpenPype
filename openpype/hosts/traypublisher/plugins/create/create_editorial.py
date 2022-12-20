@@ -239,35 +239,38 @@ or updating already created. Publishing will create OTIO file.
         sequence_path_data = pre_create_data["sequence_filepath_data"]
         media_path_data = pre_create_data["media_filepaths_data"]
 
-        sequence_path = self._get_path_from_file_data(sequence_path_data)
+        sequence_paths = self._get_path_from_file_data(
+            sequence_path_data, multi=True)
         media_path = self._get_path_from_file_data(media_path_data)
 
-        # get otio timeline
-        otio_timeline = self._create_otio_timeline(
-            sequence_path, fps)
+        for index, seq_path in enumerate(sequence_paths):
+            # get otio timeline
+            otio_timeline = self._create_otio_timeline(
+                seq_path, fps)
 
-        # Create all clip instances
-        clip_instance_properties.update({
-            "fps": fps,
-            "parent_asset_name": asset_name,
-            "variant": instance_data["variant"]
-        })
+            # Create all clip instances
+            clip_instance_properties.update({
+                "fps": fps,
+                "parent_asset_name": asset_name,
+                "variant": instance_data["variant"]
+            })
 
-        # create clip instances
-        self._get_clip_instances(
-            otio_timeline,
-            media_path,
-            clip_instance_properties,
-            family_presets=allowed_family_presets
+            # create clip instances
+            self._get_clip_instances(
+                otio_timeline,
+                media_path,
+                clip_instance_properties,
+                family_presets=allowed_family_presets
 
-        )
+            )
 
-        # create otio editorial instance
-        self._create_otio_instance(
-            subset_name, instance_data,
-            sequence_path, media_path,
-            otio_timeline
-        )
+            # create otio editorial instance
+            self._create_otio_instance(
+                subset_name + str(index),
+                instance_data,
+                seq_path, media_path,
+                otio_timeline
+            )
 
     def _create_otio_instance(
         self,
@@ -320,11 +323,12 @@ or updating already created. Publishing will create OTIO file.
         self.log.info(f"kwargs: {kwargs}")
         return otio.adapters.read_from_file(sequence_path, **kwargs)
 
-    def _get_path_from_file_data(self, file_path_data):
+    def _get_path_from_file_data(self, file_path_data, multi=False):
         """Converting creator path data to single path string
 
         Args:
             file_path_data (FileDefItem): creator path data inputs
+            multi (bool): switch to multiple files mode
 
         Raises:
             FileExistsError: in case nothing had been set
@@ -332,16 +336,23 @@ or updating already created. Publishing will create OTIO file.
         Returns:
             str: path string
         """
-        # TODO: just temporarly solving only one media file
-        if isinstance(file_path_data, list):
-            file_path_data = file_path_data.pop()
+        return_path_list = []
 
-        if len(file_path_data["filenames"]) == 0:
+        self.log.debug(f"type: {type(file_path_data)}")
+        self.log.debug(f"file_path_data: {file_path_data}")
+
+        if isinstance(file_path_data, list):
+            return_path_list = [
+                os.path.join(f["directory"], f["filenames"][0])
+                for f in file_path_data
+            ]
+        self.log.debug(f"return_path_list: {return_path_list}")
+
+        if not return_path_list:
             raise FileExistsError(
                 f"File path was not added: {file_path_data}")
 
-        return os.path.join(
-            file_path_data["directory"], file_path_data["filenames"][0])
+        return return_path_list if multi else return_path_list[0]
 
     def _get_clip_instances(
         self,
@@ -833,7 +844,7 @@ or updating already created. Publishing will create OTIO file.
                     ".fcpxml"
                 ],
                 allow_sequences=False,
-                single_item=True,
+                single_item=False,
                 label="Sequence file",
             ),
             FileDef(
