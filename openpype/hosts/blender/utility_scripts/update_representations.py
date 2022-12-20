@@ -81,11 +81,14 @@ if __name__ == "__main__":
             )
 
             # Keep children and objects to avoid containerizing hierarchy
-            if type(datablock) is bpy.types.Collection:
+            if isinstance(datablock, bpy.types.Collection):
                 containerized_datablocks.update(
                     [datablock],
                     datablock.children_recursive,
                     datablock.all_objects,
                 )
+
+                # Change color
+                datablock.color_tag = "COLOR_08"
 
     bpy.ops.wm.save_mainfile()
