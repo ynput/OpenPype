@@ -72,6 +72,8 @@ class CameraWindow(QtWidgets.QDialog):
 
     def on_cancel_pressed(self):
         self.camera = None
+        if self.camera:
+            return
         self.close()
 
 
