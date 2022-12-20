@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """Progress window to show when OpenPype is updating/installing locally."""
 import os
+
+from qtpy import QtCore, QtGui, QtWidgets
+
 from .update_thread import UpdateThread
-from Qt import QtCore, QtGui, QtWidgets  # noqa
 from .bootstrap_repos import OpenPypeVersion
 from .nice_progress_bar import NiceProgressBar
 from .tools import load_stylesheet

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Load Skeletal Mesh alembics."""
+"""Load Alembic Animation."""
 import os
 
 from openpype.pipeline import (
@@ -11,11 +11,11 @@ from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 import unreal  # noqa
 
 
-class SkeletalMeshAlembicLoader(plugin.Loader):
+class AnimationAlembicLoader(plugin.Loader):
     """Load Unreal SkeletalMesh from Alembic"""
 
-    families = ["pointcache"]
-    label = "Import Alembic Skeletal Mesh"
+    families = ["animation"]
+    label = "Import Alembic Animation"
     representations = ["abc"]
     icon = "cube"
     color = "orange"
@@ -28,7 +28,7 @@ class SkeletalMeshAlembicLoader(plugin.Loader):
             preset=unreal.AbcConversionPreset.CUSTOM,
             flip_u=False, flip_v=False,
             rotation=[0.0, 0.0, 0.0],
-            scale=[1.0, 1.0, 1.0])
+            scale=[1.0, 1.0, -1.0])
 
         task.set_editor_property('filename', filename)
         task.set_editor_property('destination_path', asset_dir)
@@ -37,8 +37,6 @@ class SkeletalMeshAlembicLoader(plugin.Loader):
         task.set_editor_property('automated', True)
         task.set_editor_property('save', True)
 
-        # set import options here
-        # Unreal 4.24 ignores the settings. It works with Unreal 4.26
         options.set_editor_property(
             'import_type', unreal.AlembicImportType.SKELETAL)
 
@@ -91,7 +89,8 @@ class SkeletalMeshAlembicLoader(plugin.Loader):
 
             task = self.get_task(self.fname, asset_dir, asset_name, False)
 
-            unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
+            asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+            asset_tools.import_asset_tasks([task])
 
             # Create Asset Container
             unreal_pipeline.create_container(
@@ -129,9 +128,11 @@ class SkeletalMeshAlembicLoader(plugin.Loader):
         task = self.get_task(source_path, destination_path, name, True)
 
         # do import fbx and replace existing data
-        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
-        container_path = "{}/{}".format(container["namespace"],
-                                        container["objectName"])
+        asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+        asset_tools.import_asset_tasks([task])
+
+        container_path = f"{container['namespace']}/{container['objectName']}"
+
         # update metadata
         unreal_pipeline.imprint(
             container_path,
