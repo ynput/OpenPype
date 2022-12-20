@@ -1,5 +1,5 @@
 import html
-from Qt import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 import qtawesome
 from .models import LogModel, LogsFilterProxy
 

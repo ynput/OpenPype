@@ -1,7 +1,7 @@
 import os
 import json
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype import style
 from openpype.pipeline import AvalonMongoDB
