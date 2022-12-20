@@ -1134,6 +1134,13 @@ class AssetLoader(LoaderPlugin):
         for collection_name in loaded_data_collections:
             datablocks.update(getattr(data_to, collection_name))
 
+            # Remove fake user from loaded datablocks
+            datacol = getattr(bpy.data, collection_name)
+            seq = [
+                False if d in datablocks else d.use_fake_user for d in datacol
+            ]
+            datacol.foreach_set("use_fake_user", seq)
+
         if self.bl_types & BL_OUTLINER_TYPES:
             # Get the right asset container from imported collections.
             container_collection = next(
@@ -1368,14 +1375,18 @@ class AssetLoader(LoaderPlugin):
         name: Optional[str] = None,
         namespace: Optional[str] = None,
         options: Optional[Dict] = None,
-    ) -> Optional[bpy.types.Collection]:
+    ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
         """Load asset via database.
 
-        Arguments:
+        Args:
             context: Full parenthood of representation to load
             name: Subset name
             namespace: Use pre-defined namespace
             options: Additional settings dictionary
+
+        Returns:
+            Tuple[OpenpypeContainer, List[bpy.types.ID]]:
+                (Container, Datablocks)
         """
         assert Path(self.fname).exists(), f"{self.fname} doesn't exist."
         libpath = Path(self.fname)
@@ -1435,7 +1446,8 @@ class AssetLoader(LoaderPlugin):
             representation (Dict): Representation doc to replace container with.
 
         Returns:
-            Tuple[OpenpypeContainer, List[bpy.types.ID]]: (Container, Datablocks)
+            Tuple[OpenpypeContainer, List[bpy.types.ID]]:
+                (Container, Datablocks)
         """
         object_name = container_metadata["objectName"]
         container = self._get_scene_container(container_metadata)
@@ -1535,7 +1547,7 @@ class AssetLoader(LoaderPlugin):
                 )
                 remove_container_datablocks(container)
                 container, datablocks = load_func(
-                    new_libpath.as_posix(),
+                    new_libpath,
                     new_container_name,
                     container=container,
                 )
