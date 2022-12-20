@@ -6,7 +6,7 @@ import xgenm
 
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api.lib import (
-    maintained_selection, get_container_members
+    maintained_selection, get_container_members, attribute_values
 )
 from openpype.hosts.maya.api import current_file
 from openpype.hosts.maya.api.plugin import get_reference_node
@@ -145,31 +145,14 @@ FileVersion 18
 
         xgen_palette = cmds.ls(members, type="xgmPalette", long=True)[0]
 
-        cmds.setAttr(
-            "{}.xgFileName".format(xgen_palette),
-            os.path.basename(xgen_file),
-            type="string"
-        )
-        cmds.setAttr(
-            "{}.xgBaseFile".format(xgen_palette),
-            "",
-            type="string"
-        )
-        cmds.setAttr("{}.xgExportAsDelta".format(xgen_palette), False)
+        attribute_data = {
+            "{}.xgFileName".format(xgen_palette): os.path.basename(xgen_file),
+            "{}.xgBaseFile".format(xgen_palette): "",
+            "{}.xgExportAsDelta".format(xgen_palette): False
+        }
 
-        super().update(container, representation)
+        with attribute_values(attribute_data):
+            super().update(container, representation)
 
-        # Apply xgen delta.
-        xgenm.applyDelta(xgen_palette.replace("|", ""), xgd_file)
-
-        cmds.setAttr(
-            "{}.xgBaseFile".format(xgen_palette),
-            os.path.basename(xgen_file),
-            type="string"
-        )
-        cmds.setAttr(
-            "{}.xgFileName".format(xgen_palette),
-            os.path.basename(xgd_file),
-            type="string"
-        )
-        cmds.setAttr("{}.xgExportAsDelta".format(xgen_palette), True)
+            # Apply xgen delta.
+            xgenm.applyDelta(xgen_palette.replace("|", ""), xgd_file)
