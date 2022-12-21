@@ -264,8 +264,8 @@ class SubsetWidget(QtWidgets.QWidget):
 
         group_checkbox.stateChanged.connect(self.set_grouping)
 
-        subset_filter.textChanged.connect(proxy.setFilterRegExp)
-        subset_filter.textChanged.connect(view.expandAll)
+        subset_filter.textChanged.connect(self._subset_changed)
+
         model.refreshed.connect(self.refreshed)
 
         self.proxy = proxy
@@ -292,6 +292,13 @@ class SubsetWidget(QtWidgets.QWidget):
         with tools_lib.preserve_selection(tree_view=self.view,
                                           current_index=False):
             self.model.set_grouping(state)
+
+    def _subset_changed(self, text):
+        if hasattr(self.proxy, "setFilterRegularExpression"):
+            self.proxy.setFilterRegularExpression(text)
+        else:
+            self.proxy.setFilterRegExp(text)
+        self.view.expandAll()
 
     def set_loading_state(self, loading, empty):
         view = self.view

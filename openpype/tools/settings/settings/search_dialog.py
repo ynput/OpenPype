@@ -106,7 +106,10 @@ class SearchEntitiesDialog(QtWidgets.QDialog):
 
     def _on_filter_timer(self):
         text = self._filter_edit.text()
-        self._proxy.setFilterRegExp(text)
+        if hasattr(self._proxy, "setFilterRegularExpression"):
+            self._proxy.setFilterRegularExpression(text)
+        else:
+            self._proxy.setFilterRegExp(text)
 
         # WARNING This expanding and resizing is relatively slow.
         self._view.expandAll()
