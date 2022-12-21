@@ -7,7 +7,7 @@ import re
 import logging
 
 from collections import OrderedDict as odict
-from Qt import QtCore, QtWidgets, QtGui
+from qtpy import QtCore, QtWidgets, QtGui
 import qtawesome
 
 __version__ = "0.5.2"
