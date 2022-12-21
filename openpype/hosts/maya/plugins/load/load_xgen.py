@@ -81,27 +81,6 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         )
         xgd_file = xgen_file.replace(".xgen", ".xgd")
 
-        # Create a placeholder xgen delta file. This create an expression
-        # attribute of float. If we did not add any changes to the delta file,
-        # then Xgen deletes the xgd file on save to clean up (?). This gives
-        # errors when launching the workfile again due to trying to find the
-        # xgd file.
-        #change author, date and version path
-        xgd_template = """
-# XGen Delta File
-#
-# Version:  C:/Program Files/Autodesk/Maya2022/plug-ins/xgen/
-# Author:   tokejepsen
-# Date:     Tue Dec 20 09:03:29 2022
-
-FileVersion 18
-
-Palette    custom_float_ignore    0
-
-"""
-        with open(xgd_file, "w") as f:
-            f.write(xgd_template)
-
         # Reference xgen. Xgen does not like being referenced in under a group.
         new_nodes = []
 
@@ -126,6 +105,14 @@ Palette    custom_float_ignore    0
                 type="string"
             )
             cmds.setAttr("{}.xgExportAsDelta".format(xgen_palette), True)
+
+            # This create an expression attribute of float. If we did not add
+            # any changes to collection, then Xgen does not create an xgd file
+            # on save. This gives errors when launching the workfile again due
+            # to trying to find the xgd file.
+            xgenm.addCustomAttr(
+                "custom_float_ignore", xgen_palette.replace("|", "")
+            )
 
             shapes = cmds.ls(nodes, shapes=True, long=True)
 
