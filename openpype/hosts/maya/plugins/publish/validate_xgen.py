@@ -29,6 +29,13 @@ class ValidateXgen(pyblish.api.InstancePlugin):
         msg = "Invalid nodes in the objectset:\n{}".format(remainder_nodes)
         assert not remainder_nodes, msg
 
+        # Only one collection per instance.
+        palette_amount = len(instance.data["xgenPalettes"])
+        msg = "Only one collection per instance allow. Found {}:\n{}".format(
+            palette_amount, instance.data["xgenPalettes"]
+        )
+        assert palette_amount == 1, msg
+
         # Cant have deactive modifiers in collection cause Xgen will try and
         # look for them when loading.
         palette = instance.data["xgenPalette"].replace("|", "")
