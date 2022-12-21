@@ -3,7 +3,7 @@
 import json
 from collections import defaultdict
 
-from Qt import QtWidgets
+from qtpy import QtWidgets
 
 from openpype.client import get_representation_by_name
 from openpype.pipeline import (
