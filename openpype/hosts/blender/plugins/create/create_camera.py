@@ -15,7 +15,6 @@ class CreateCamera(plugin.Creator):
     family = "camera"
     icon = "video-camera"
 
-    @plugin.exec_process
     def process(
         self, datablocks: List[bpy.types.ID] = None
     ) -> OpenpypeInstance:
@@ -25,6 +24,7 @@ class CreateCamera(plugin.Creator):
         instance_name = plugin.build_op_basename(asset, subset)
 
         # Rename existing camera or create one
+        datablocks = datablocks or []
         for obj in datablocks:
             if obj and obj.type == "CAMERA":
                 obj.name = instance_name
