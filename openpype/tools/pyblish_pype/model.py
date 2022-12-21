@@ -29,7 +29,7 @@ import pyblish
 
 from . import settings, util
 from .awesome import tags as awesome
-from Qt import QtCore, QtGui
+from qtpy import QtCore, QtGui
 import qtawesome
 from six import text_type
 from .constants import PluginStates, InstanceStates, GroupStates, Roles

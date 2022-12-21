@@ -1,4 +1,4 @@
-from Qt import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 from . import model
 from .constants import Roles, EXPANDER_WIDTH
 # Imported when used
