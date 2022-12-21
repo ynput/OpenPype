@@ -88,6 +88,7 @@ class LayoutLoader(plugin.AssetLoader):
         self, armature_object: bpy.types.Object
     ) -> OpenpypeInstance:
         """Create animation instance with given armature object as datablock.
+        TODO this is a build first workfile feature, not a loader one.
 
         Args:
             rig_object (bpy.types.Object): Armature object.
@@ -129,7 +130,7 @@ class LayoutLoader(plugin.AssetLoader):
             and d.datablock.animation_data.action
         }:
             # Get loaded action from linked action.
-            loaded_action = obj.animation_data.action
+            loaded_action = obj.datablock.animation_data.action
             loaded_action.use_fake_user = True
 
             # Get local action name with namespace from linked action.
@@ -144,7 +145,7 @@ class LayoutLoader(plugin.AssetLoader):
             local_action.name = local_name
 
             # Assign local action.
-            obj.animation_data.action = local_action
+            obj.datablock.animation_data.action = local_action
 
         # Purge data
         plugin.orphans_purge()
@@ -154,12 +155,13 @@ class LayoutLoader(plugin.AssetLoader):
         """Override `load` to create one animation instance by loaded rig."""
         container, datablocks = super().load(*args, **kwargs)
 
+        return container, datablocks
+
+        # Kept for later reference in build workfile
         for d in datablocks:
             if isinstance(d, bpy.types.Object) and d.type == "ARMATURE":
                 instance = self._create_animation_instance(d)
                 instance.name = f"{instance.name}:{d.name}"
-
-        return container, datablocks
 
     @plugin.exec_process
     def update(self, *args, **kwargs):

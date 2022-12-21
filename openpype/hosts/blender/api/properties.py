@@ -150,10 +150,16 @@ def register():
         name="OpenPype Containers", type=OpenpypeContainer, options={"HIDDEN"}
     )
 
+    bpy.types.Object.original_action = bpy.props.PointerProperty(
+        name="Original action kept", type=bpy.types.Action
+    )
+
 
 def unregister():
     """Unregister the properties."""
     factory_unregister()
+
+    del bpy.types.Object.original_action
 
     del bpy.types.Scene.openpype_instances
     del bpy.types.Scene.openpype_instance_active_index
