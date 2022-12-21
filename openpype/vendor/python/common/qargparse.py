@@ -570,7 +570,7 @@ class InfoList(QArgument):
         model = QtCore.QStringListModel(self["default"])
         widget = QtWidgets.QListView()
         widget.setModel(model)
-        widget.setEditTriggers(widget.NoEditTriggers)
+        widget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         self._read = lambda: model.stringList()
         self._write = lambda value: model.setStringList(value)
@@ -640,8 +640,8 @@ class Choice(QArgument):
         model = QtCore.QStringListModel()
         widget = QtWidgets.QListView()
         widget.setModel(model)
-        widget.setEditTriggers(widget.NoEditTriggers)
-        widget.setSelectionMode(widget.SingleSelection)
+        widget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        widget.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         smodel = widget.selectionModel()
         smodel.selectionChanged.connect(on_changed)
 

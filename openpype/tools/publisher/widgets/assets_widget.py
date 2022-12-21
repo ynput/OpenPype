@@ -193,7 +193,7 @@ class AssetsDialog(QtWidgets.QDialog):
         asset_view.setModel(proxy_model)
         asset_view.setHeaderHidden(True)
         asset_view.setFrameShape(QtWidgets.QFrame.NoFrame)
-        asset_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
+        asset_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         asset_view.setAlternatingRowColors(True)
         asset_view.setSelectionBehavior(QtWidgets.QTreeView.SelectRows)
         asset_view.setAllColumnsShowFocus(True)

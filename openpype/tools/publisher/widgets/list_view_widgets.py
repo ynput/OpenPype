@@ -86,9 +86,9 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
 
         painter.save()
         painter.setRenderHints(
-            painter.Antialiasing
-            | painter.SmoothPixmapTransform
-            | painter.TextAntialiasing
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
+            | QtGui.QPainter.TextAntialiasing
         )
 
         # Draw backgrounds

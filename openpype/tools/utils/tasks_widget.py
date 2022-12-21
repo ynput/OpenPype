@@ -180,7 +180,7 @@ class TasksWidget(QtWidgets.QWidget):
         tasks_view = DeselectableTreeView(self)
         tasks_view.setIndentation(0)
         tasks_view.setSortingEnabled(True)
-        tasks_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
+        tasks_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         header_view = tasks_view.header()
         header_view.setSortIndicator(0, QtCore.Qt.AscendingOrder)

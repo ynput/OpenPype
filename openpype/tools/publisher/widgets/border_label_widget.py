@@ -29,8 +29,8 @@ class _VLineWidget(QtWidgets.QWidget):
             pos_x = self.width()
         painter = QtGui.QPainter(self)
         painter.setRenderHints(
-            painter.Antialiasing
-            | painter.SmoothPixmapTransform
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
         )
         if self._color:
             pen = QtGui.QPen(self._color)
@@ -73,8 +73,8 @@ class _HBottomLineWidget(QtWidgets.QWidget):
         )
         painter = QtGui.QPainter(self)
         painter.setRenderHints(
-            painter.Antialiasing
-            | painter.SmoothPixmapTransform
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
         )
         if self._color:
             pen = QtGui.QPen(self._color)
@@ -131,8 +131,8 @@ class _HTopCornerLineWidget(QtWidgets.QWidget):
 
         painter = QtGui.QPainter(self)
         painter.setRenderHints(
-            painter.Antialiasing
-            | painter.SmoothPixmapTransform
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
         )
         if self._color:
             pen = QtGui.QPen(self._color)

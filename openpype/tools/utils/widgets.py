@@ -283,11 +283,14 @@ class PixmapButtonPainter(QtWidgets.QWidget):
             painter.end()
             return
 
-        painter.setRenderHints(
-            painter.Antialiasing
-            | painter.SmoothPixmapTransform
-            | painter.HighQualityAntialiasing
+        render_hints = (
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
         )
+        if hasattr(QtGui.QPainter, "HighQualityAntialiasing"):
+            render_hints |= QtGui.QPainter.HighQualityAntialiasing
+
+        painter.setRenderHints(render_hints)
         if self._cached_pixmap is None:
             self._cache_pixmap()
 

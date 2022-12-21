@@ -143,9 +143,9 @@ class PublishIconBtn(IconButton):
         icon = QtGui.QIcon()
         image = QtGui.QImage(pixmap_path)
         enabled_pixmap = self.paint_image_with_color(image, enabled_color)
-        icon.addPixmap(enabled_pixmap, icon.Normal)
+        icon.addPixmap(enabled_pixmap, QtGui.QIcon.Normal)
         disabled_pixmap = self.paint_image_with_color(image, disabled_color)
-        icon.addPixmap(disabled_pixmap, icon.Disabled)
+        icon.addPixmap(disabled_pixmap, QtGui.QIcon.Disabled)
         return icon
 
     @staticmethod
@@ -1779,11 +1779,11 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
             return
         self._increasing = increasing
         if increasing:
-            self._change_anim.setDirection(self._change_anim.Forward)
+            self._change_anim.setDirection(QtCore.QAbstractAnimation.Forward)
         else:
-            self._change_anim.setDirection(self._change_anim.Backward)
+            self._change_anim.setDirection(QtCore.QAbstractAnimation.Backward)
 
-        if self._change_anim.state() != self._change_anim.Running:
+        if self._change_anim.state() != QtCore.QAbstractAnimation.Running:
             self._change_anim.start()
 
     def set_visible(self, visible):
@@ -1857,8 +1857,8 @@ class CreateNextPageOverlay(QtWidgets.QWidget):
 
         painter.setClipRect(event.rect())
         painter.setRenderHints(
-            painter.Antialiasing
-            | painter.SmoothPixmapTransform
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
         )
 
         painter.setPen(QtCore.Qt.NoPen)
