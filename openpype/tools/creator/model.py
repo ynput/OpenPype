@@ -1,5 +1,5 @@
 import uuid
-from Qt import QtGui, QtCore
+from qtpy import QtGui, QtCore
 
 from openpype.pipeline import discover_legacy_creator_plugins
 
