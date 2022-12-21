@@ -55,23 +55,25 @@ class ExtractXgenCache(publish.Extractor):
             transform_name = connections["transform"].split(".")[0]
 
             # Duplicate_transform subd patch geometry.
-            duplicate_transform = pc.duplicate(transform_name)[0]
-            pc.parent(duplicate_transform, world=True)
-            duplicate_transform.name(stripNamespace=True)
-            duplicate_shape = pc.listRelatives(
-                duplicate_transform, shapes=True
+            duplicate_transform = cmds.duplicate(transform_name)[0]
+            duplicate_shape = cmds.listRelatives(
+                duplicate_transform, 
+                shapes=True, 
+                fullPath=True
             )[0]
 
-            pc.connectAttr(
+            cmds.connectAttr(
                 "{}.matrix".format(duplicate_transform),
                 "{}.transform".format(node),
                 force=True
             )
-            pc.connectAttr(
+            cmds.connectAttr(
                 "{}.worldMesh".format(duplicate_shape),
                 "{}.geometry".format(node),
                 force=True
             )
+
+            duplicate_transform = cmds.parent(duplicate_transform, world=True)[0]
 
             duplicate_nodes.append(duplicate_transform)
 
