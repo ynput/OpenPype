@@ -1,4 +1,7 @@
+import json
+
 import maya.cmds as cmds
+import xgenm
 
 import pyblish.api
 
@@ -25,3 +28,27 @@ class ValidateXgen(pyblish.api.InstancePlugin):
 
         msg = "Invalid nodes in the objectset:\n{}".format(remainder_nodes)
         assert not remainder_nodes, msg
+
+        # Cant have deactive modifiers in collection cause Xgen will try and
+        # look for them when loading.
+        palette = instance.data["xgenPalette"].replace("|", "")
+        deactive_modifiers = {}
+        for description in instance.data["xgmDescriptions"]:
+            description = description.split("|")[-2]
+            modifier_names = xgenm.fxModules(palette, description)
+            for name in modifier_names:
+                attr = xgenm.getAttr("active", palette, description, name)
+                # Attribute value are lowercase strings of false/true.
+                if attr == "false":
+                    try:
+                        deactive_modifiers[description].append(name)
+                    except KeyError:
+                        deactive_modifiers[description] = [name]
+
+        msg = (
+            "There are deactive modifiers on the collection. "
+            "Please delete these:\n{}".format(
+                json.dumps(deactive_modifiers, indent=4, sort_keys=True)
+            )
+        )
+        assert not deactive_modifiers, msg
