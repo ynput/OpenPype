@@ -16,7 +16,7 @@ class ValidateXgen(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         # Validate only xgen collections are in objectset.
-        nodes = (
+        nodes = set(
             instance.data["xgenNodes"] +
             cmds.ls(instance, type="transform", long=True)
         )
