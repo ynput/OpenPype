@@ -3,7 +3,9 @@ import qtpy
 
 initialized = False
 resources = None
-if qtpy.API == "pyside2":
+if qtpy.API == "pyside6":
+    from . import pyside6_resources as resources
+elif qtpy.API == "pyside2":
     from . import pyside2_resources as resources
 elif qtpy.API == "pyqt5":
     from . import pyqt5_resources as resources
