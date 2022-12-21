@@ -2,7 +2,6 @@ import os
 import copy
 
 from maya import cmds
-import pymel.core as pc
 import xgenm
 
 from openpype.pipeline import publish
@@ -57,8 +56,8 @@ class ExtractXgenCache(publish.Extractor):
             # Duplicate_transform subd patch geometry.
             duplicate_transform = cmds.duplicate(transform_name)[0]
             duplicate_shape = cmds.listRelatives(
-                duplicate_transform, 
-                shapes=True, 
+                duplicate_transform,
+                shapes=True,
                 fullPath=True
             )[0]
 
@@ -73,7 +72,9 @@ class ExtractXgenCache(publish.Extractor):
                 force=True
             )
 
-            duplicate_transform = cmds.parent(duplicate_transform, world=True)[0]
+            duplicate_transform = cmds.parent(
+                duplicate_transform, world=True
+            )[0]
 
             duplicate_nodes.append(duplicate_transform)
 
