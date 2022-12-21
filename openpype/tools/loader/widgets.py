@@ -5,7 +5,7 @@ import pprint
 import traceback
 import collections
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.client import (
     get_subset_families,
