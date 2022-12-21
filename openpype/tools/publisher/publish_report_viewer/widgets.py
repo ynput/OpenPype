@@ -1,5 +1,5 @@
 from math import ceil
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.widgets.nice_checkbox import NiceCheckbox
 

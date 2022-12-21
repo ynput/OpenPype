@@ -1,5 +1,5 @@
 import collections
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 from .constants import (
     ITEM_IS_GROUP_ROLE,
     ITEM_ERRORED_ROLE,

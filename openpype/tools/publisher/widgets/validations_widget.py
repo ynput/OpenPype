@@ -4,7 +4,7 @@ try:
 except Exception:
     commonmark = None
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.tools.utils import BaseClickableFrame, ClickableFrame
 from .widgets import (

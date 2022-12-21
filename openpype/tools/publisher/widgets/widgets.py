@@ -6,7 +6,7 @@ import functools
 import uuid
 import shutil
 import collections
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
 from openpype.lib.attribute_definitions import UnknownDef

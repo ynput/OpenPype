@@ -1,6 +1,6 @@
 import collections
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.tools.utils import (
     PlaceholderLineEdit,

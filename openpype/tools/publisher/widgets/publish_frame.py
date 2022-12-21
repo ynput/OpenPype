@@ -2,7 +2,7 @@ import os
 import json
 import time
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from .widgets import (
     StopBtn,

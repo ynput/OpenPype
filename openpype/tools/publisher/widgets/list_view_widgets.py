@@ -24,7 +24,7 @@ selection can be enabled disabled using checkbox or keyboard key presses:
 """
 import collections
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.style import get_objected_colors
 from openpype.widgets.nice_checkbox import NiceCheckbox

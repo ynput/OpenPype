@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.style import get_objected_colors
 from openpype.lib import (
