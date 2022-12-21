@@ -93,6 +93,7 @@ class RigLoader(plugin.AssetLoader):
 
         # Ensure loaded rig has action
         asset = legacy_io.Session.get("AVALON_ASSET")
+        task = legacy_io.Session.get("AVALON_TASK")
         for armature in [
             obj
             for obj in container.outliner_entity.all_objects
@@ -103,7 +104,7 @@ class RigLoader(plugin.AssetLoader):
 
                 action_name = armature.name.replace(":", "_")
                 armature.animation_data.action = bpy.data.actions.new(
-                    f"{asset}_{action_name}"
+                    f"{asset}_{task}:{action_name}"
                 )
 
         # Clear orphan data
