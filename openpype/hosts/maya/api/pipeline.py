@@ -563,7 +563,7 @@ def on_save():
 def on_open():
     """On scene open let's assume the containers have changed."""
 
-    from Qt import QtWidgets
+    from qtpy import QtWidgets
     from openpype.widgets import popup
 
     cmds.evalDeferred(
