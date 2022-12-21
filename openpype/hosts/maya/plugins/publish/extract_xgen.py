@@ -131,9 +131,7 @@ class ExtractXgenCache(publish.Extractor):
         for root, _, files in os.walk(xgen_dir):
             for file in files:
                 source = os.path.join(root, file)
-                destination = source.replace(
-                    xgen_dir, instance.data["resourcesDir"]
-                )
+                destination = os.path.join(instance.data["resourcesDir"], file)
                 transfers.append((source, destination))
 
         instance.data["transfers"] = transfers
