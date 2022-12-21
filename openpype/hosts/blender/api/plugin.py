@@ -1538,7 +1538,9 @@ class AssetLoader(LoaderPlugin):
                 if existing_library:
                     container.library = existing_library
 
-                datablocks = container["datablocks"]
+                datablocks = [
+                    d_ref.datablock for d_ref in container.datablock_refs
+                ]
             else:
                 # Default behaviour to wipe and reload everything
                 # but keeping same container
