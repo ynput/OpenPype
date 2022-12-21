@@ -79,11 +79,15 @@ def paint_image_with_color(image, color):
     pixmap.fill(QtCore.Qt.transparent)
 
     painter = QtGui.QPainter(pixmap)
-    painter.setRenderHints(
-        painter.Antialiasing
-        | painter.SmoothPixmapTransform
-        | painter.HighQualityAntialiasing
+    render_hints = (
+        QtGui.QPainter.Antialiasing
+        | QtGui.QPainter.SmoothPixmapTransform
     )
+    # Deprecated since 5.14
+    if hasattr(QtGui.QPainter, "HighQualityAntialiasing"):
+        render_hints |= QtGui.QPainter.HighQualityAntialiasing
+    painter.setRenderHints(render_hints)
+
     painter.setClipRegion(alpha_region)
     painter.setPen(QtCore.Qt.NoPen)
     painter.setBrush(color)
@@ -329,7 +333,10 @@ def preserve_selection(tree_view, column=0, role=None, current_index=True):
         role = QtCore.Qt.DisplayRole
     model = tree_view.model()
     selection_model = tree_view.selectionModel()
-    flags = selection_model.Select | selection_model.Rows
+    flags = (
+        QtCore.QItemSelectionModel.Select
+        | QtCore.QItemSelectionModel.Rows
+    )
 
     if current_index:
         current_index_value = tree_view.currentIndex().data(role)

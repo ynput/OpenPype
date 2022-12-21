@@ -412,7 +412,8 @@ class AssetsField(BaseClickableFrame):
             icon_btn
         ):
             size_policy = widget.sizePolicy()
-            size_policy.setVerticalPolicy(size_policy.MinimumExpanding)
+            size_policy.setVerticalPolicy(
+                QtWidgets.QSizePolicy.MinimumExpanding)
             widget.setSizePolicy(size_policy)
         name_input.clicked.connect(self._mouse_release_callback)
         icon_btn.clicked.connect(self._mouse_release_callback)
@@ -595,7 +596,8 @@ class TasksCombobox(QtWidgets.QComboBox):
 
         # Make sure combobox is extended horizontally
         size_policy = self.sizePolicy()
-        size_policy.setHorizontalPolicy(size_policy.MinimumExpanding)
+        size_policy.setHorizontalPolicy(
+            QtWidgets.QSizePolicy.MinimumExpanding)
         self.setSizePolicy(size_policy)
 
     def set_invalid_empty_task(self, invalid=True):

@@ -1031,17 +1031,20 @@ class InstanceListView(AbstractInstanceView):
 
         selection_model.setCurrentIndex(
             first_index,
-            selection_model.ClearAndSelect | selection_model.Rows
+            QtCore.QItemSelectionModel.ClearAndSelect
+            | QtCore.QItemSelectionModel.Rows
         )
 
         for index in select_indexes:
             proxy_index = proxy_model.mapFromSource(index)
             selection_model.select(
                 proxy_index,
-                selection_model.Select | selection_model.Rows
+                QtCore.QItemSelectionModel.Select
+                | QtCore.QItemSelectionModel.Rows
             )
 
         selection_model.setCurrentIndex(
             last_index,
-            selection_model.Select | selection_model.Rows
+            QtCore.QItemSelectionModel.Select
+            | QtCore.QItemSelectionModel.Rows
         )

@@ -60,7 +60,7 @@ class AssetsView(TreeViewSpinner, DeselectableTreeView):
         self._flick_charm_activated = True
         self._before_flick_scroll_mode = self.verticalScrollMode()
         self._flick_charm.activateOn(self)
-        self.setVerticalScrollMode(self.ScrollPerPixel)
+        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
 
     def deactivate_flick_charm(self):
         if not self._flick_charm_activated:
@@ -623,7 +623,8 @@ class AssetsWidget(QtWidgets.QWidget):
             filter_input,
         ):
             size_policy = widget.sizePolicy()
-            size_policy.setVerticalPolicy(size_policy.MinimumExpanding)
+            size_policy.setVerticalPolicy(
+                QtWidgets.QSizePolicy.MinimumExpanding)
             widget.setSizePolicy(size_policy)
 
         # Layout
@@ -778,7 +779,10 @@ class AssetsWidget(QtWidgets.QWidget):
         selection_model = self._view.selectionModel()
         selection_model.clearSelection()
 
-        mode = selection_model.Select | selection_model.Rows
+        mode = (
+            QtCore.QItemSelectionModel.Select
+            | QtCore.QItemSelectionModel.Rows
+        )
         for index in valid_indexes:
             self._view.expand(self._proxy.parent(index))
             selection_model.select(index, mode)

@@ -80,7 +80,7 @@ class PluginLoadReportWidget(QtWidgets.QWidget):
         view.setTextElideMode(QtCore.Qt.ElideLeft)
         view.setHeaderHidden(True)
         view.setAlternatingRowColors(True)
-        view.setVerticalScrollMode(view.ScrollPerPixel)
+        view.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
 
         model = PluginLoadReportModel()
         view.setModel(model)
