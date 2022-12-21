@@ -3,13 +3,7 @@ from datetime import datetime
 import logging
 import numbers
 
-import Qt
-from Qt import QtWidgets, QtGui, QtCore
-
-if Qt.__binding__ == "PySide":
-    from PySide.QtGui import QStyleOptionViewItemV4
-elif Qt.__binding__ == "PyQt4":
-    from PyQt4.QtGui import QStyleOptionViewItemV4
+from qtpy import QtWidgets, QtGui, QtCore
 
 from openpype.client import (
     get_versions,

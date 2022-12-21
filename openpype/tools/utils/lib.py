@@ -4,7 +4,7 @@ import contextlib
 import collections
 import traceback
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
 from openpype.client import (

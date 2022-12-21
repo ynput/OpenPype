@@ -1,8 +1,8 @@
 import time
 import collections
 
-import Qt
-from Qt import QtWidgets, QtCore, QtGui
+import qtpy
+from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
 from openpype.client import (
@@ -26,9 +26,9 @@ from .lib import (
     get_asset_icon
 )
 
-if Qt.__binding__ == "PySide":
+if qtpy.API == "pyside":
     from PySide.QtGui import QStyleOptionViewItemV4
-elif Qt.__binding__ == "PyQt4":
+elif qtpy.API == "pyqt4":
     from PyQt4.QtGui import QStyleOptionViewItemV4
 
 ASSET_ID_ROLE = QtCore.Qt.UserRole + 1

@@ -1,6 +1,6 @@
 import logging
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 import qargparse
 import qtawesome
 

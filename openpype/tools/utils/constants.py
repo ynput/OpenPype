@@ -1,4 +1,4 @@
-from Qt import QtCore
+from qtpy import QtCore
 
 
 DEFAULT_PROJECT_LABEL = "< Default >"
