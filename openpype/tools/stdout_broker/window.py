@@ -1,7 +1,7 @@
 import re
 import collections
 
-from Qt import QtWidgets
+from qtpy import QtWidgets
 
 from openpype import style
 

@@ -6,10 +6,10 @@ import importlib
 
 
 try:
-    from Qt import QtWidgets  # noqa: F401
-    from Qt import __binding__
-    print(f"Qt binding: {__binding__}")
-    mod = importlib.import_module(__binding__)
+    from qtpy import API_NAME
+
+    print(f"Qt binding: {API_NAME}")
+    mod = importlib.import_module(API_NAME)
     print(f"Qt path: {mod.__file__}")
     print("Qt library found, nothing to do..")
 

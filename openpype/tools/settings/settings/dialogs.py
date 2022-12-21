@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from openpype.tools.utils.delegates import pretty_date
 

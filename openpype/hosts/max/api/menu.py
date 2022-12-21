@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """3dsmax menu definition of OpenPype."""
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 from pymxs import runtime as rt
 
 from openpype.tools.utils import host_tools
