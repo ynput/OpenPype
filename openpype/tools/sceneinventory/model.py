@@ -3,7 +3,7 @@ import logging
 
 from collections import defaultdict
 
-from Qt import QtCore, QtGui
+from qtpy import QtCore, QtGui
 import qtawesome
 
 from openpype.host import ILoadHost

@@ -2,7 +2,7 @@ import collections
 import logging
 from functools import partial
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 import qtawesome
 from bson.objectid import ObjectId
 
