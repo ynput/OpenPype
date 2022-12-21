@@ -92,18 +92,20 @@ class ObjectSelectPanel(bpy.types.Panel):
         )
         props.instance_name = active_openpype_instance.name
         props.creator_name = active_openpype_instance["creator_name"]
-        props.datapath = BL_TYPE_DATAPATH.get(
-            type(active_openpype_instance.datablock_refs[0].datablock)
-        )
+        if active_openpype_instance.datablock_refs:
+            props.datapath = BL_TYPE_DATAPATH.get(
+                type(active_openpype_instance.datablock_refs[0].datablock)
+            )
 
         props = col.operator(
             "scene.remove_from_openpype_instance", icon="REMOVE", text=""
         )
         props.instance_name = active_openpype_instance.name
         props.creator_name = active_openpype_instance["creator_name"]
-        props.datablock_name = active_openpype_instance.datablock_refs[
-            active_openpype_instance.datablock_active_index
-        ].name
+        if active_openpype_instance.datablock_refs:
+            props.datablock_name = active_openpype_instance.datablock_refs[
+                active_openpype_instance.datablock_active_index
+            ].name
 
 
 classes = (ObjectSelectPanel, SCENE_UL_OpenpypeInstances)
