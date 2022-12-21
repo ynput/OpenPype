@@ -1,10 +1,13 @@
 """Load a layout in Blender."""
 from contextlib import contextmanager
-from typing import Dict, Tuple, Union
 
 import bpy
 
-from openpype.pipeline import legacy_io, legacy_create, AVALON_INSTANCE_ID
+from openpype.hosts.blender.api.properties import (
+    OpenpypeContainer,
+    OpenpypeInstance,
+)
+from openpype.pipeline import legacy_io, AVALON_INSTANCE_ID
 from openpype.pipeline.create import get_legacy_creator_by_name
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
@@ -68,7 +71,6 @@ class LayoutLoader(plugin.AssetLoader):
     """Link layout from a .blend file."""
 
     color = "orange"
-    color_tag = "COLOR_02"
 
     update_maintainer = LayoutMaintainer
     maintained_parameters = [
@@ -81,149 +83,99 @@ class LayoutLoader(plugin.AssetLoader):
         "actions",
         "animation_instances",
     ]
-    animation_instance_mode = "global"
-    animation_instance_link = "collection"
 
-    def _get_rig_assets(self, asset_group):
-        return [
-            child
-            for child in plugin.get_children_recursive(asset_group)
-            if plugin.is_container(child, family="rig")
-        ]
+    def _create_animation_instance(
+        self, armature_object: bpy.types.Object
+    ) -> OpenpypeInstance:
+        """Create animation instance with given armature object as datablock.
 
-    def _get_armatures(self, rig_assets):
-        for rig_asset in rig_assets:
-            for obj in rig_asset.all_objects:
-                if obj.type == "ARMATURE":
-                    yield obj
+        Args:
+            rig_object (bpy.types.Object): Armature object.
 
-    def _get_animation_collection(self, subset):
-        for collection in plugin.get_children_recursive(
-            bpy.context.scene.collection
-        ):
-            if (
-                collection.get(AVALON_PROPERTY)
-                and collection[AVALON_PROPERTY]["id"] == AVALON_INSTANCE_ID
-                and collection[AVALON_PROPERTY]["family"] == "animation"
-                and collection[AVALON_PROPERTY]["subset"] == subset
-            ):
-                return collection
+        Raises:
+            ValueError: Creator plugin 'CreateAnimation' doesn't exist
 
-    def _create_animation_collection(self, name, rig_assets, dependency):
-        creator_plugin = get_legacy_creator_by_name("CreateAnimation")
-        if not creator_plugin:
+        Returns:
+            OpenpypeInstance: Created instance
+        """
+        Creator = get_legacy_creator_by_name("CreateAnimation")
+        if not Creator:
             raise ValueError('Creator plugin "CreateAnimation" was not found.')
 
-        if self.animation_instance_link == "armature":
-            members = set(self._get_armatures(rig_assets))
-        else:
-            members = set(rig_assets)
-
-        legacy_create(
-            creator_plugin,
-            name=name,
-            asset=legacy_io.Session.get("AVALON_ASSET"),
-            options={"useSelection": False, "members": members},
-            data={"dependencies": dependency},
+        asset_name = legacy_io.Session.get("AVALON_ASSET")
+        plugin = Creator(
+            "animationMain",
+            asset_name,
+            {"variant": "Main"},
         )
+        return plugin.process([armature_object])
 
-    def _make_local_actions(self, asset_group):
-        """Make local for all actions from objects."""
+    def _make_local_actions(self, container: OpenpypeContainer):
+        """Make local for all actions from objects.
 
+        Actions are duplicated to keep the original action from layout.
+
+        Args:
+            container (OpenpypeContainer): Loaded container
+        """
         task = legacy_io.Session.get("AVALON_TASK")
         asset = legacy_io.Session.get("AVALON_ASSET")
 
-        local_actions = {}
+        for obj in {
+            d
+            for d in container.datablock_refs
+            if isinstance(d.datablock, bpy.types.Object)
+            and d.datablock.animation_data
+            and d.datablock.animation_data.action
+        }:
+            # Get loaded action from linked action.
+            loaded_action = obj.animation_data.action
+            loaded_action.use_fake_user = True
 
-        for obj in asset_group.all_objects:
-            if not obj.animation_data or not obj.animation_data.action:
-                continue
-
-            # Get local action from linked action.
-            linked_action = obj.animation_data.action
-            local_action = local_actions.get(linked_action)
-
-            # Make action local if needed.
-            if not local_action:
-                # Get local action name with namespace from linked action.
-                action_name = linked_action.name.split(":")[-1]
-                local_name = f"{asset}_{task}:{action_name}"
-                # Make local action, rename and upadate local_actions dict.
-                if linked_action.library:
-                    local_action = linked_action.make_local()
-                else:
-                    local_action = linked_action.copy()
-                local_action.name = local_name
-                local_actions[linked_action] = local_action
+            # Get local action name with namespace from linked action.
+            # TODO uniformize name building with load rig
+            action_name = loaded_action.name.split(":")[-1]
+            local_name = f"{asset}_{task}:{action_name}"
+            # Make local action, rename and upadate local_actions dict.
+            if loaded_action.library:
+                local_action = loaded_action.make_local()
+            else:
+                local_action = loaded_action.copy()
+            local_action.name = local_name
 
             # Assign local action.
             obj.animation_data.action = local_action
 
-    def process_asset(self, *args, **kwargs) -> bpy.types.Collection:
-        """Asset loading Process"""
-        asset_group = super().process_asset(*args, **kwargs)
+        # Purge data
+        plugin.orphans_purge()
 
-        # Create animation collection subset for loaded rig assets.
-        if legacy_io.Session.get("AVALON_TASK") == "Animation":
+    @plugin.exec_process
+    def load(self, *args, **kwargs):
+        """Override `load` to create one animation instance by loaded rig."""
+        container, datablocks = super().load(*args, **kwargs)
 
-            dependency = asset_group[AVALON_PROPERTY]["representation"]
-            rig_assets = self._get_rig_assets(asset_group)
+        for d in datablocks:
+            if isinstance(d, bpy.types.Object) and d.type == "ARMATURE":
+                instance = self._create_animation_instance(d)
+                instance.name = f"{instance.name}:{d.name}"
 
-            if self.animation_instance_mode == "global":
-                self._create_animation_collection(
-                    "animationMain", rig_assets, dependency
+        return container, datablocks
+
+    @plugin.exec_process
+    def update(self, *args, **kwargs):
+        """Override `update` to reassign changed objects to instances'."""
+        container, datablocks = super().update(*args, **kwargs)
+
+        # Reassign changed objects by matching the name
+        for instance in bpy.context.scene.openpype_instances:
+            for d_ref in instance.datablock_refs:
+                matched_obj = bpy.context.scene.collection.all_objects.get(
+                    d_ref.name
                 )
+                if matched_obj:
+                    d_ref.datablock = matched_obj
 
-            elif self.animation_instance_mode == "rig":
-                for rig_asset in rig_assets:
-                    namespace = rig_asset[AVALON_PROPERTY].get("namespace")
-                    self._create_animation_collection(
-                        namespace or rig_asset.name, [rig_asset], dependency
-                    )
-
-        return asset_group
-
-    def exec_update(
-        self, container: Dict, representation: Dict
-    ) -> Tuple[Union[bpy.types.Collection, bpy.types.Object]]:
-        """Update the loaded asset"""
-        asset_group = super().exec_update(container, representation)
-
-        # Add new loaded rig asset groups to animationMain collection.
-        if legacy_io.Session.get("AVALON_TASK") == "Animation":
-
-            dependency = asset_group[AVALON_PROPERTY]["representation"]
-            rig_assets = self._get_rig_assets(asset_group)
-
-            if self.animation_instance_mode == "global":
-                animation_collection = self._get_animation_collection(
-                    "animationMain"
-                )
-                if animation_collection:
-                    plugin.link_to_collection(rig_assets, animation_collection)
-                else:
-                    self._create_animation_collection(
-                        "animationMain", rig_assets, dependency
-                    )
-
-            elif self.animation_instance_mode == "rig":
-                for rig_asset in rig_assets:
-                    namespace = rig_asset[AVALON_PROPERTY].get("namespace")
-                    animation_collection = self._get_animation_collection(
-                        namespace or rig_asset.name
-                    )
-                    if animation_collection:
-                        plugin.link_to_collection(
-                            rig_asset, animation_collection
-                        )
-                    else:
-                        self._create_animation_collection(
-                            namespace or rig_asset.name,
-                            [rig_asset],
-                            dependency,
-                        )
-
-        return asset_group
+        return container, datablocks
 
 
 class LinkLayoutLoader(LayoutLoader):
@@ -236,9 +188,17 @@ class LinkLayoutLoader(LayoutLoader):
     icon = "link"
     order = 0
 
-    def _process(self, libpath, asset_group):
-        self._link_blend(libpath, asset_group)
-        self._make_local_actions(asset_group)
+    load_type = "LINK"
+
+    @plugin.exec_process
+    def load(self, *args, **kwargs):
+        """Override `load` to make loaded actions local.
+
+        Original ones are kept for reference.
+        """
+        container, datablocks = super().load(*args, **kwargs)
+        self._make_local_actions(container)
+        return container, datablocks
 
 
 class AppendLayoutLoader(LayoutLoader):
@@ -251,6 +211,14 @@ class AppendLayoutLoader(LayoutLoader):
     icon = "paperclip"
     order = 2
 
-    def _process(self, libpath, asset_group):
-        self._append_blend(libpath, asset_group)
-        self._make_local_actions(asset_group)
+    load_type = "APPEND"
+
+    @plugin.exec_process
+    def load(self, *args, **kwargs):
+        """Override `load` to make loaded actions local.
+
+        Original ones are kept for reference.
+        """
+        container, datablocks = super().load(*args, **kwargs)
+        self._make_local_actions(container)
+        return container, datablocks
