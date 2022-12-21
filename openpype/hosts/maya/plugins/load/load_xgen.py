@@ -81,8 +81,12 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         )
         xgd_file = xgen_file.replace(".xgen", ".xgd")
 
-        # Create a placeholder xgen delta file.
-        #change author and date
+        # Create a placeholder xgen delta file. This create an expression
+        # attribute of float. If we did not add any changes to the delta file,
+        # then Xgen deletes the xgd file on save to clean up (?). This gives
+        # errors when launching the workfile again due to trying to find the
+        # xgd file.
+        #change author, date and version path
         xgd_template = """
 # XGen Delta File
 #
@@ -91,6 +95,8 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 # Date:     Tue Dec 20 09:03:29 2022
 
 FileVersion 18
+
+Palette    custom_float_ignore    0
 
 """
         with open(xgd_file, "w") as f:
@@ -130,7 +136,19 @@ FileVersion 18
         return new_nodes
 
     def update(self, container, representation):
-        # Get reference node from container members
+        """Workflow for updating Xgen.
+
+        - Copy and overwrite the workspace .xgen file.
+        - Set collection attributes to not include delta files.
+        - Update xgen maya file reference.
+        - Apply the delta file changes.
+        - Reset collection attributes to include delta files.
+
+        We have to do this workflow because when using referencing of the xgen
+        collection, Maya implicitly imports the Xgen data from the xgen file so
+        we dont have any control over added the delta file changes.
+        """
+
         container_node = container["objectName"]
         members = get_container_members(container_node)
         reference_node = get_reference_node(members, self.log)
@@ -150,9 +168,7 @@ FileVersion 18
             "{}.xgBaseFile".format(xgen_palette): "",
             "{}.xgExportAsDelta".format(xgen_palette): False
         }
-
         with attribute_values(attribute_data):
             super().update(container, representation)
 
-            # Apply xgen delta.
             xgenm.applyDelta(xgen_palette.replace("|", ""), xgd_file)
