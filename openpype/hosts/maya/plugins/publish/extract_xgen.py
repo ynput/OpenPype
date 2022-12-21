@@ -122,13 +122,11 @@ class ExtractXgenCache(publish.Extractor):
         cmds.delete(duplicate_nodes + [collection])
 
         # Setup transfers.
-        #needs to reduce resources to only what is used for the collections in
-        #the objectset
         xgen_dir = os.path.join(
             os.path.dirname(instance.context.data["currentFile"]), "xgen"
         )
         transfers = []
-        for root, dirs, files in os.walk(xgen_dir):
+        for root, _, files in os.walk(xgen_dir):
             for file in files:
                 source = os.path.join(root, file)
                 destination = source.replace(
