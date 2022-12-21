@@ -482,8 +482,13 @@ class FilterProxyModel(QtCore.QSortFilterProxyModel):
             return True
 
         # Filter by regex
-        if not self.filterRegExp().isEmpty():
-            pattern = re.escape(self.filterRegExp().pattern())
+        if hasattr(self, "filterRegularExpression"):
+            regex = self.filterRegularExpression()
+        else:
+            regex = self.filterRegExp()
+        pattern = regex.pattern()
+        if pattern:
+            pattern = re.escape(pattern)
 
             if not self._matches(row, parent, pattern):
                 return False

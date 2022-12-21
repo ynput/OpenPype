@@ -27,8 +27,13 @@ class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
         if not parent.isValid():
             return False
 
-        regex = self.filterRegExp()
-        if not regex.isEmpty() and regex.isValid():
+        if hasattr(self, "filterRegularExpression"):
+            regex = self.filterRegularExpression()
+        else:
+            regex = self.filterRegExp()
+
+        pattern = regex.pattern()
+        if pattern and regex.isValid():
             pattern = regex.pattern()
             compiled_regex = re.compile(pattern, re.IGNORECASE)
             source_model = self.sourceModel()

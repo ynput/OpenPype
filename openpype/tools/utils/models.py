@@ -203,8 +203,13 @@ class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
         the filter string but first checks if any children does.
     """
     def filterAcceptsRow(self, row, parent_index):
-        regex = self.filterRegExp()
-        if not regex.isEmpty():
+        if hasattr(self, "filterRegularExpression"):
+            regex = self.filterRegularExpression()
+        else:
+            regex = self.filterRegExp()
+
+        pattern = regex.pattern()
+        if pattern:
             model = self.sourceModel()
             source_index = model.index(
                 row, self.filterKeyColumn(), parent_index
