@@ -36,10 +36,10 @@ class ValidateXgen(pyblish.api.InstancePlugin):
         )
         assert palette_amount == 1, msg
 
-        # Cant have deactive modifiers in collection cause Xgen will try and
+        # Cant have inactive modifiers in collection cause Xgen will try and
         # look for them when loading.
         palette = instance.data["xgenPalette"].replace("|", "")
-        deactive_modifiers = {}
+        inactive_modifiers = {}
         for description in instance.data["xgmDescriptions"]:
             description = description.split("|")[-2]
             modifier_names = xgenm.fxModules(palette, description)
@@ -48,14 +48,14 @@ class ValidateXgen(pyblish.api.InstancePlugin):
                 # Attribute value are lowercase strings of false/true.
                 if attr == "false":
                     try:
-                        deactive_modifiers[description].append(name)
+                        inactive_modifiers[description].append(name)
                     except KeyError:
-                        deactive_modifiers[description] = [name]
+                        inactive_modifiers[description] = [name]
 
         msg = (
-            "There are deactive modifiers on the collection. "
+            "There are inactive modifiers on the collection. "
             "Please delete these:\n{}".format(
-                json.dumps(deactive_modifiers, indent=4, sort_keys=True)
+                json.dumps(inactive_modifiers, indent=4, sort_keys=True)
             )
         )
-        assert not deactive_modifiers, msg
+        assert not inactive_modifiers, msg
