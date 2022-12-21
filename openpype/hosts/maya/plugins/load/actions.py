@@ -153,7 +153,7 @@ class ImportMayaLoader(load.LoaderPlugin):
 
         """
 
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
 
         accept = QtWidgets.QMessageBox.Ok
         buttons = accept | QtWidgets.QMessageBox.Cancel

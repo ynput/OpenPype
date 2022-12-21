@@ -1,7 +1,7 @@
 import os
 import logging
 
-from Qt import QtWidgets, QtGui
+from qtpy import QtWidgets, QtGui
 
 import maya.utils
 import maya.cmds as cmds
