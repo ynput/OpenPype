@@ -25,9 +25,15 @@ log = Logger.get_logger(__name__)
 
 def center_window(window):
     """Move window to center of it's screen."""
-    desktop = QtWidgets.QApplication.desktop()
-    screen_idx = desktop.screenNumber(window)
-    screen_geo = desktop.screenGeometry(screen_idx)
+
+    if hasattr(QtWidgets.QApplication, "desktop"):
+        desktop = QtWidgets.QApplication.desktop()
+        screen_idx = desktop.screenNumber(window)
+        screen_geo = desktop.screenGeometry(screen_idx)
+    else:
+        screen = window.screen()
+        screen_geo = screen.geometry()
+
     geo = window.frameGeometry()
     geo.moveCenter(screen_geo.center())
     if geo.y() < screen_geo.y():
