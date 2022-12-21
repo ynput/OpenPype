@@ -3,7 +3,7 @@ import collections
 import uuid
 import json
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.lib import FileDefItem
 from openpype.tools.utils import (
