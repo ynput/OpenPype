@@ -150,7 +150,6 @@ class LayoutLoader(plugin.AssetLoader):
         # Purge data
         plugin.orphans_purge()
 
-    @plugin.exec_process
     def load(self, *args, **kwargs):
         """Override `load` to create one animation instance by loaded rig."""
         container, datablocks = super().load(*args, **kwargs)
@@ -163,7 +162,6 @@ class LayoutLoader(plugin.AssetLoader):
                 instance = self._create_animation_instance(d)
                 instance.name = f"{instance.name}:{d.name}"
 
-    @plugin.exec_process
     def update(self, *args, **kwargs):
         """Override `update` to reassign changed objects to instances'."""
         container, datablocks = super().update(*args, **kwargs)
@@ -192,7 +190,6 @@ class LinkLayoutLoader(LayoutLoader):
 
     load_type = "LINK"
 
-    @plugin.exec_process
     def load(self, *args, **kwargs):
         """Override `load` to make loaded actions local.
 
@@ -215,7 +212,6 @@ class AppendLayoutLoader(LayoutLoader):
 
     load_type = "APPEND"
 
-    @plugin.exec_process
     def load(self, *args, **kwargs):
         """Override `load` to make loaded actions local.
 

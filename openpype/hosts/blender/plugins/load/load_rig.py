@@ -85,8 +85,6 @@ class RigLoader(plugin.AssetLoader):
             # reparenting with the option value
             plugin.link_to_collection(asset_group, parent)
 
-    plugin.exec_process
-
     def load(self, *args, **kwargs):
         """Override `load` to ensure one action for every loaded rig."""
         container, datablocks = super().load(*args, **kwargs)
