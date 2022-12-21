@@ -136,7 +136,7 @@ class UnderlinesAssetDelegate(QtWidgets.QItemDelegate):
     def paint(self, painter, option, index):
         """Replicate painting of an item and draw color bars if needed."""
         # Qt4 compat
-        if Qt.__binding__ in ("PySide", "PyQt4"):
+        if qtpy.API in ("pyside", "pyqt4"):
             option = QStyleOptionViewItemV4(option)
 
         painter.save()
