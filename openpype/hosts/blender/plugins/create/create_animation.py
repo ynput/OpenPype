@@ -11,4 +11,4 @@ class CreateAnimation(plugin.Creator):
     label = "Animation"
     family = "animation"
     icon = "male"
-    bl_types = frozenset({bpy.types.Action})
+    bl_types = frozenset({bpy.types.Action, bpy.types.Object})
