@@ -113,16 +113,16 @@ build-backend = "poetry.core.masonry.api"
 # Poetry will support custom location (-t flag for pip)
 # https://pip.pypa.io/en/stable/cli/pip_install/#requirement-specifiers
 [openpype.qtbinding.windows]
-package = "PySide2"
-version = "5.15.2"
+package = "PySide6"
+version = "6.4.1"
 
 [openpype.qtbinding.darwin]
-package = "PySide2"
-version = "5.15.2"
+package = "PySide6"
+version = "6.4.1"
 
 [openpype.qtbinding.linux]
-package = "PySide2"
-version = "5.15.2"
+package = "PySide6"
+version = "6.4.1"
 
 # TODO: we will need to handle different linux flavours here and
 #       also different macos versions too.
