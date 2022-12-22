@@ -10,4 +10,3 @@ class CreateLook(plugin.Creator):
     label = "Render"
     family = "render"
     icon = "eye"
-    color_tag = "COLOR_08"
