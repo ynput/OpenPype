@@ -40,7 +40,7 @@ class NukeTemplateBuilder(AbstractTemplateBuilder):
 
         Args:
             path (str): A path to current template (usually given by
-            get_template_path implementation)
+            get_template_preset implementation)
 
         Returns:
             bool: Wether the template was succesfully imported or not
@@ -273,6 +273,15 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
 
         placeholder.data["nb_children"] += 1
         reset_selection()
+
+        # remove placeholders marked as delete
+        if (
+            placeholder.data.get("delete")
+            and not placeholder.data.get("keep_placeholder")
+        ):
+            self.log.debug("Deleting node: {}".format(placeholder_node.name()))
+            nuke.delete(placeholder_node)
+
         # go back to root group
         nuke.root().begin()
 
@@ -454,12 +463,12 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
         )
         for node in placeholder_node.dependent():
             for idx in range(node.inputs()):
-                if node.input(idx) == placeholder_node:
+                if node.input(idx) == placeholder_node and output_node:
                     node.setInput(idx, output_node)
 
         for node in placeholder_node.dependencies():
             for idx in range(placeholder_node.inputs()):
-                if placeholder_node.input(idx) == node:
+                if placeholder_node.input(idx) == node and input_node:
                     input_node.setInput(0, node)
 
     def _create_sib_copies(self, placeholder):

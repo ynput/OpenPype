@@ -28,7 +28,7 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
 
         Args:
             path (str): A path to current template (usually given by
-            get_template_path implementation)
+            get_template_preset implementation)
 
         Returns:
             bool: Wether the template was succesfully imported or not

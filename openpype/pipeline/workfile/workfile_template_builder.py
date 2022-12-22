@@ -401,7 +401,12 @@ class AbstractTemplateBuilder(object):
             key=lambda i: i.order
         ))
 
-    def build_template(self, template_path=None, level_limit=None):
+    def build_template(
+        self,
+        template_path=None,
+        level_limit=None,
+        keep_placeholders=None
+    ):
         """Main callback for building workfile from template path.
 
         Todo:
@@ -410,16 +415,22 @@ class AbstractTemplateBuilder(object):
 
         Args:
             template_path (str): Path to a template file with placeholders.
-                Template from settings 'get_template_path' used when not
+                Template from settings 'get_template_preset' used when not
                 passed.
             level_limit (int): Limit of populate loops. Related to
                 'populate_scene_placeholders' method.
         """
+        template_preset = self.get_template_preset()
 
         if template_path is None:
-            template_path = self.get_template_path()
+            template_path = template_preset["path"]
+
+        if keep_placeholders is None:
+            keep_placeholders = template_preset["placeholder_keep"]
+
         self.import_template(template_path)
-        self.populate_scene_placeholders(level_limit)
+        self.populate_scene_placeholders(
+            level_limit, keep_placeholders)
 
     def rebuild_template(self):
         """Go through existing placeholders in scene and update them.
@@ -489,7 +500,9 @@ class AbstractTemplateBuilder(object):
             plugin = plugins_by_identifier[identifier]
             plugin.prepare_placeholders(placeholders)
 
-    def populate_scene_placeholders(self, level_limit=None):
+    def populate_scene_placeholders(
+        self, level_limit=None, keep_placeholders=None
+    ):
         """Find placeholders in scene using plugins and process them.
 
         This should happen after 'import_template'.
@@ -541,6 +554,11 @@ class AbstractTemplateBuilder(object):
                         " is already in progress."
                     ))
                     continue
+
+                # add flag for keeping placeholders in scene
+                # after they are processed
+                placeholder.data["keep_placeholder"] = keep_placeholders
+
                 filtered_placeholders.append(placeholder)
 
             self._prepare_placeholders(filtered_placeholders)
@@ -599,8 +617,8 @@ class AbstractTemplateBuilder(object):
             ["profiles"]
         )
 
-    def get_template_path(self):
-        """Unified way how template path is received usign settings.
+    def get_template_preset(self):
+        """Unified way how template preset is received usign settings.
 
         Method is dependent on '_get_build_profiles' which should return filter
         profiles to resolve path to a template. Default implementation looks
@@ -637,6 +655,13 @@ class AbstractTemplateBuilder(object):
             ).format(task_name, task_type, host_name))
 
         path = profile["path"]
+
+        # switch to remove placeholders after they are used
+        placeholder_keep = profile.get("placeholder_keep")
+        # backward compatibility, since default is True
+        if placeholder_keep is not False:
+            placeholder_keep = True
+
         if not path:
             raise TemplateLoadFailed((
                 "Template path is not set.\n"
@@ -657,7 +682,10 @@ class AbstractTemplateBuilder(object):
 
         if path and os.path.exists(path):
             self.log.info("Found template at: '{}'".format(path))
-            return path
+            return {
+                "path": path,
+                "placeholder_keep": placeholder_keep
+            }
 
         solved_path = None
         while True:
@@ -683,7 +711,10 @@ class AbstractTemplateBuilder(object):
 
         self.log.info("Found template at: '{}'".format(solved_path))
 
-        return solved_path
+        return {
+            "path": solved_path,
+            "placeholder_keep": placeholder_keep
+        }
 
 
 @six.add_metaclass(ABCMeta)
