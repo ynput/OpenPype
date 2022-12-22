@@ -419,6 +419,9 @@ class AbstractTemplateBuilder(object):
                 passed.
             level_limit (int): Limit of populate loops. Related to
                 'populate_scene_placeholders' method.
+            keep_placeholders (bool): Add flag to placeholder data for
+                hosts to decide if they want to remove
+                placeholder after it is used.
         """
         template_preset = self.get_template_preset()
 
@@ -518,6 +521,9 @@ class AbstractTemplateBuilder(object):
 
         Args:
             level_limit (int): Level of loops that can happen. Default is 1000.
+            keep_placeholders (bool): Add flag to placeholder data for
+                hosts to decide if they want to remove
+                placeholder after it is used.
         """
 
         if not self.placeholder_plugins:
