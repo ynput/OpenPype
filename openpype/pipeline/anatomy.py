@@ -63,7 +63,7 @@ class BaseAnatomy(object):
 
         if site_name not in ["studio", "local", get_local_site_id()]:
             raise RuntimeError("Anatomy could be created only for default "
-                               "local sites")
+                               "local sites not for {}".format(site_name))
 
         self._site_name = site_name
 
