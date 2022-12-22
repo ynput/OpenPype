@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Object.h"
+#include "UObject/Object.h"
 #include "OpenPypeSettings.generated.h"
 
 #define OPENPYPE_SETTINGS_FILEPATH IPluginManager::Get().FindPlugin("OpenPype")->GetBaseDir() / TEXT("Config") / TEXT("DefaultOpenPypeSettings.ini")
