@@ -1,4 +1,5 @@
 """Create a lookdev asset."""
+import bpy
 
 from openpype.hosts.blender.api import plugin
 
@@ -10,4 +11,5 @@ class CreateLook(plugin.Creator):
     label = "Lookdev"
     family = "look"
     icon = "paint-brush"
-    color_tag = "COLOR_07"
+
+    bl_types = frozenset({bpy.types.Material, bpy.types.Object})

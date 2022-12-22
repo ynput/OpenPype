@@ -6,14 +6,13 @@ import bpy
 
 import openpype.api
 from openpype.pipeline import legacy_io
-from openpype.hosts.blender.api import get_compress_setting
+from openpype.hosts.blender.plugins.publish.extract_blend import ExtractBlend
 
 
-class ExtractBlendLook(openpype.api.Extractor):
+class ExtractBlendLook(ExtractBlend):
     """Extract a blend file with materials and meshes."""
 
     label = "Extract Look"
-    hosts = ["blender"]
     families = ["look"]
     optional = True
 
@@ -35,94 +34,58 @@ class ExtractBlendLook(openpype.api.Extractor):
         return images
 
     def process(self, instance):
-        # Define extract output file path
+        """Override `process` to keep users of materials.
 
-        stagingdir = self.staging_dir(instance)
-        filename = f"{instance.name}.mat.blend"
-        filepath = os.path.join(stagingdir, filename)
-
-        # Perform extraction
+        Users are reassigned when loading materials.
+        """
         self.log.info("Performing extraction...")
 
-        data_blocks = set()
-        objects = set()
-        collection = instance[-1]
-
-        for obj in instance:
-            # Store objects to pack images from their materials.
-            if isinstance(obj, bpy.types.Object) and obj.type == "MESH":
-                objects.add(obj)
-                data_blocks.add(obj)
-
         # Get all objects materials.
-        materials = set()
-        materials_assignment = dict()
-        materials_indexes = dict()
-        for obj in objects:
+        all_materials = set()
+        for obj in {
+            o
+            for o in instance
+            if isinstance(o, bpy.types.Object) and o.type == "MESH"
+        }:
             if len(obj.material_slots):
-                obj_materials = list()
+                obj_materials = set()
                 for mtl_slot in obj.material_slots:
                     material = mtl_slot.material
                     if material:
-                        materials.add(material)
-                        data_blocks.add(material)
-                    obj_materials.append(material)
+                        # Keep users' names of material
+                        material_users = set(material.get("users", set()))
+                        material["users"] = list(material_users | {obj.name})
 
-                materials_assignment[obj.name] = obj_materials
+                        all_materials.add(material)
+                        obj_materials.add(material)
 
-                # Get polygons material indexes for objects.
-                if len(obj_materials) > 1:
-                    materials_indexes[obj.name] = [
-                        face.material_index for face in obj.data.polygons
-                    ]
-
-        data_blocks.update({*bpy.data.textures, *bpy.data.node_groups})
-
-        # Store materials assignment and indexes informations.
-        collection["materials_assignment"] = materials_assignment
-        collection["materials_indexes"] = materials_indexes
+                        # Keep polygons material indexes for objects.
+                        if len(obj_materials) > 1:
+                            material["indexes"] = material.get("indexes", [])
+                            material["indexes"] = {
+                                obj.name: [
+                                    face.material_index
+                                    for face in obj.data.polygons
+                                ]
+                            }
 
         # Get images and process resources
-        images = self._get_images_from_materials(materials)
+        images = self._get_images_from_materials(all_materials)
         transfers, hashes, remapped = self._process_resources(instance, images)
 
-        data_blocks.add(collection)
-
-        bpy.data.libraries.write(
-            filepath,
-            data_blocks,
-            path_remap="ABSOLUTE",
-            fake_user=True,
-            compress=get_compress_setting(),
-        )
+        super().process(instance)
 
         # Restore remapped path
         for image, sourcepath in remapped:
             image.filepath = sourcepath.as_posix()
-
-        collection.pop("materials_assignment")
-        collection.pop("materials_indexes")
-
-        instance.data.setdefault("representations", [])
-
-        representation = {
-            "name": "blend",
-            "ext": "blend",
-            "files": filename,
-            "stagingDir": stagingdir,
-        }
-        instance.data["representations"].append(representation)
 
         # Set up the resources transfers/links for the integrator
         instance.data.setdefault("transfers", [])
         instance.data["transfers"].extend(transfers)
 
         # Source hash for the textures
+        instance.data.setdefault("sourceHashes", [])
         instance.data["sourceHashes"] = hashes
-
-        self.log.info(
-            f"Extracted instance '{instance.name}' to: {representation}"
-        )
 
     def _process_resources(
         self, instance: dict, images: set
