@@ -52,7 +52,8 @@ class ConvertGLSLShader(publish.Extractor):
                     albedo = cmds.listConnections(shader + ".TEX_color_map")[0]
                     dif_output = albedo + ".outColor"
 
-                    orm_packed = cmds.listConnections(shader + ".TEX_ao_mapX")[0]
+                    orm_packed = cmds.listConnections(shader +
+                                                      ".TEX_ao_mapX")[0]
                     ao_output = orm_packed + ".outColorR"
                     rough_output = orm_packed + ".outColorG"
                     metallic_output = orm_packed + ".outColorB"
