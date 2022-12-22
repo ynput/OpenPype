@@ -2,8 +2,8 @@
 
 #include "OpenPypeSettings.h"
 
-#include "IPluginManager.h"
-#include "UObjectGlobals.h"
+#include "Interfaces/IPluginManager.h"
+#include "UObject/UObjectGlobals.h"
 
 /**
  * Mainly is used for initializing default values if the DefaultOpenPypeSettings.ini file does not exist in the saved config
