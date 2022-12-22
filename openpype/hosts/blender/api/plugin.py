@@ -1173,10 +1173,8 @@ class AssetLoader(LoaderPlugin):
                         if hasattr(d.override_library, "is_system_override"):
                             d.override_library.is_system_override = False
             else:
-                # Create collection container TODO is it necessary ? Keep it only if no collection in library
+                # Create collection container
                 container_collection = bpy.data.collections.new(container_name)
-                if hasattr(container_collection, "color_tag"):
-                    container_collection.color_tag = self.color_tag
                 bpy.context.scene.collection.children.link(container_collection)
             
             # Set color
@@ -1364,7 +1362,7 @@ class AssetLoader(LoaderPlugin):
             return self._link_blend
         else:
             raise ValueError(
-                "'load_type' attribute must be set by implemented loader to:"
+                "'load_type' attribute must be set by loader subclass to:"
                 "APPEND, INSTANCE or LINK."
             )
 
