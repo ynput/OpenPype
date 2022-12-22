@@ -4,7 +4,10 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
 #include "Framework/Notifications/NotificationManager.h"
+#include "OpenPypeLib.h"
+#include "OpenPypeSettings.h"
 #include "Widgets/Notifications/SNotificationList.h"
+
 
 //Moves all the invalid pointers to the end to prepare them for the shrinking
 #define REMOVE_INVALID_ENTRIES(VAR) VAR.CompactStable(); \
@@ -16,8 +19,11 @@ UOpenPypePublishInstance::UOpenPypePublishInstance(const FObjectInitializer& Obj
 	const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<
 		FAssetRegistryModule>("AssetRegistry");
 
+	const FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>(
+		"PropertyEditor");
+
 	FString Left, Right;
-	GetPathName().Split(GetName(), &Left, &Right);
+	GetPathName().Split("/" + GetName(), &Left, &Right);
 
 	FARFilter Filter;
 	Filter.PackagePaths.Emplace(FName(Left));
@@ -34,15 +40,17 @@ UOpenPypePublishInstance::UOpenPypePublishInstance(const FObjectInitializer& Obj
 	AssetRegistryModule.Get().OnAssetAdded().AddUObject(this, &UOpenPypePublishInstance::OnAssetCreated);
 	AssetRegistryModule.Get().OnAssetRemoved().AddUObject(this, &UOpenPypePublishInstance::OnAssetRemoved);
 	AssetRegistryModule.Get().OnAssetUpdated().AddUObject(this, &UOpenPypePublishInstance::OnAssetUpdated);
-	
-	
+
+#ifdef WITH_EDITOR
+	ColorOpenPypeDirs();
+#endif
 }
 
 void UOpenPypePublishInstance::OnAssetCreated(const FAssetData& InAssetData)
 {
 	TArray<FString> split;
 
-	const TObjectPtr<UObject> Asset = InAssetData.GetAsset();
+	UObject* Asset = InAssetData.GetAsset();
 
 	if (!IsValid(Asset))
 	{
@@ -58,7 +66,7 @@ void UOpenPypePublishInstance::OnAssetCreated(const FAssetData& InAssetData)
 		if (AssetDataInternal.Emplace(Asset).IsValidId())
 		{
 			UE_LOG(LogTemp, Log, TEXT("Added an Asset to PublishInstance - Publish Instance: %s, Asset %s"),
-				*this->GetName(), *Asset->GetName());
+			       *this->GetName(), *Asset->GetName());
 		}
 	}
 }
@@ -86,7 +94,7 @@ void UOpenPypePublishInstance::OnAssetUpdated(const FAssetData& InAssetData)
 	REMOVE_INVALID_ENTRIES(AssetDataExternal);
 }
 
-bool UOpenPypePublishInstance::IsUnderSameDir(const TObjectPtr<UObject>& InAsset) const
+bool UOpenPypePublishInstance::IsUnderSameDir(const UObject* InAsset) const
 {
 	FString ThisLeft, ThisRight;
 	this->GetPathName().Split(this->GetName(), &ThisLeft, &ThisRight);
@@ -95,6 +103,48 @@ bool UOpenPypePublishInstance::IsUnderSameDir(const TObjectPtr<UObject>& InAsset
 }
 
 #ifdef WITH_EDITOR
+
+void UOpenPypePublishInstance::ColorOpenPypeDirs()
+{
+	FString PathName = this->GetPathName();
+
+	//Check whether the path contains the defined OpenPype folder
+	if (!PathName.Contains(TEXT("OpenPype"))) return;
+
+	//Get the base path for open pype
+	FString PathLeft, PathRight;
+	PathName.Split(FString("OpenPype"), &PathLeft, &PathRight);
+
+	if (PathLeft.IsEmpty() || PathRight.IsEmpty())
+	{
+		UE_LOG(LogAssetData, Error, TEXT("Failed to retrieve the base OpenPype directory!"))
+		return;
+	}
+
+	PathName.RemoveFromEnd(PathRight, ESearchCase::CaseSensitive);
+
+	//Get the current settings
+	const UOpenPypeSettings* Settings = GetMutableDefault<UOpenPypeSettings>();
+
+	//Color the base folder
+	UOpenPypeLib::SetFolderColor(PathName, Settings->GetFolderFColor(), false);
+
+	//Get Sub paths, iterate through them and color them according to the folder color in UOpenPypeSettings
+	const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(
+		"AssetRegistry");
+
+	TArray<FString> PathList;
+
+	AssetRegistryModule.Get().GetSubPaths(PathName, PathList, true);
+
+	if (PathList.Num() > 0)
+	{
+		for (const FString& Path : PathList)
+		{
+			UOpenPypeLib::SetFolderColor(Path, Settings->GetFolderFColor(), false);
+		}
+	}
+}
 
 void UOpenPypePublishInstance::SendNotification(const FString& Text) const
 {
@@ -125,16 +175,15 @@ void UOpenPypePublishInstance::PostEditChangeProperty(FPropertyChangedEvent& Pro
 		PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(
 			UOpenPypePublishInstance, AssetDataExternal))
 	{
-
 		// Check for duplicated assets
 		for (const auto& Asset : AssetDataInternal)
 		{
 			if (AssetDataExternal.Contains(Asset))
 			{
 				AssetDataExternal.Remove(Asset);
-				return SendNotification("You are not allowed to add assets into AssetDataExternal which are already included in AssetDataInternal!");
+				return SendNotification(
+					"You are not allowed to add assets into AssetDataExternal which are already included in AssetDataInternal!");
 			}
-			
 		}
 
 		// Check if no UOpenPypePublishInstance type assets are included
