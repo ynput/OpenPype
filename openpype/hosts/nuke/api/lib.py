@@ -2865,10 +2865,11 @@ def get_group_io_nodes(nodes):
                 break
 
         if input_node is None:
-            raise ValueError("No Input found")
+            log.warning("No Input found")
 
         if output_node is None:
-            raise ValueError("No Output found")
+            log.warning("No Output found")
+
     return input_node, output_node
 
 
