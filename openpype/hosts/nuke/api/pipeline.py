@@ -217,10 +217,6 @@ def _install_menu():
         "Build Workfile from template",
         lambda: build_workfile_template()
     )
-    menu_template.addCommand(
-        "Update Workfile",
-        lambda: update_workfile_template()
-    )
     menu_template.addSeparator()
     menu_template.addCommand(
         "Create Place Holder",
