@@ -29,7 +29,8 @@ class ConvertGLSLShader(publish.Extractor):
             glsl = cmds.createNode('GLSLShader')
             glsl_shadingGrp = cmds.sets(name=glsl + "SG", empty=True,
                                         renderable=True, noSurfaceShader=True)
-            cmds.connectAttr(glsl + ".outColor", glsl_shadingGrp + ".surfaceShader")
+            cmds.connectAttr(glsl + ".outColor",
+                             glsl_shadingGrp + ".surfaceShader")
 
             # load the maya2gltf shader
             maya_dir = os.getenv("MAYA_APP_DIR")
@@ -37,15 +38,15 @@ class ConvertGLSLShader(publish.Extractor):
             cmds.setAttr(glsl + ".shader", ogsfx, typ="string")
 
             # list the materials used for the assets
-            shading_grp = cmds.listConnections(
-                          mesh, destination=True,
-                          type="shadingEngine")
+            shading_grp = cmds.listConnections(mesh,
+                                               destination=True,
+                                               type="shadingEngine")
 
             # get the materials related to the selected assets
             for material in shading_grp:
-                main_shader = cmds.listConnections(
-                              material, destination=True,
-                              type="StingrayPBS")
+                main_shader = cmds.listConnections(material,
+                                                   destination=True,
+                                                   type="StingrayPBS")
                 for shader in main_shader:
                     # get the file textures related to the PBS Shader
                     albedo = cmds.listConnections(shader + ".TEX_color_map")[0]

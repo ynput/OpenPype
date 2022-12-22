@@ -44,13 +44,12 @@ class ValidateGLTFTexturesNames(pyblish.api.InstancePlugin):
                                "{0}".format(invalid))
         invalid = self.get_texture_node_invalid(instance)
         if invalid:
-            raise RuntimeError("Related texture file " \
+            raise RuntimeError("Related texture file "
                                "nodes not connected")
         invalid = self.get_texture_name_invalid(instance)
         if invalid:
             raise RuntimeError("Invalid texture name(s) found: "
                                "{0}".format(invalid))
-
 
     def get_texture_name_invalid(self, instance):
 
@@ -61,9 +60,9 @@ class ValidateGLTFTexturesNames(pyblish.api.InstancePlugin):
         # get the file textures related to the PBS Shader
         # validate the names of the textures
         for material in shading_grp:
-            main_shader = cmds.listConnections(
-                          material, destination=True,
-                          type="StingrayPBS")
+            main_shader = cmds.listConnections(material,
+                                               destination=True,
+                                               type="StingrayPBS")
             for shader in main_shader:
                 albedo = cmds.listConnections(shader + ".TEX_color_map")[0]
                 dif_path = cmds.getAttr(albedo + ".fileTextureName")
@@ -90,9 +89,9 @@ class ValidateGLTFTexturesNames(pyblish.api.InstancePlugin):
         invalid = set()
         shading_grp = self.shader_selection(instance)
         for material in shading_grp:
-            main_shader = cmds.listConnections(
-                          material, destination=True,
-                          type="StingrayPBS")
+            main_shader = cmds.listConnections(material,
+                                               destination=True,
+                                               type="StingrayPBS")
             for shader in main_shader:
                 # diffuse texture file node
                 albedo = cmds.listConnections(shader + ".TEX_color_map")
@@ -118,8 +117,8 @@ class ValidateGLTFTexturesNames(pyblish.api.InstancePlugin):
     def shader_selection(self, instance):
         shapes = cmds.ls(instance, type="mesh", long=True)
         for shape in shapes:
-            shading_grp = cmds.listConnections(
-                          shape, destination=True,
-                          type="shadingEngine")
+            shading_grp = cmds.listConnections(shape,
+                                               destination=True,
+                                               type="shadingEngine")
 
             return shading_grp
