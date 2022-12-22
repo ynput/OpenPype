@@ -62,8 +62,8 @@ class ValidateGLTFTexturesNames(pyblish.api.InstancePlugin):
         # validate the names of the textures
         for material in shading_grp:
             main_shader = cmds.listConnections(
-            material, destination=True, type="StingrayPBS"
-        )
+                          material, destination=True,
+                          type="StingrayPBS")
             for shader in main_shader:
                 albedo = cmds.listConnections(shader + ".TEX_color_map")[0]
                 dif_path = cmds.getAttr(albedo + ".fileTextureName")
@@ -91,8 +91,8 @@ class ValidateGLTFTexturesNames(pyblish.api.InstancePlugin):
         shading_grp = self.shader_selection(instance)
         for material in shading_grp:
             main_shader = cmds.listConnections(
-            material, destination=True, type="StingrayPBS"
-        )
+                          material, destination=True,
+                          type="StingrayPBS")
             for shader in main_shader:
                 # diffuse texture file node
                 albedo = cmds.listConnections(shader + ".TEX_color_map")
@@ -119,7 +119,7 @@ class ValidateGLTFTexturesNames(pyblish.api.InstancePlugin):
         shapes = cmds.ls(instance, type="mesh", long=True)
         for shape in shapes:
             shading_grp = cmds.listConnections(
-            shape, destination=True, type="shadingEngine"
-         )
+                          shape, destination=True,
+                          type="shadingEngine")
 
             return shading_grp
