@@ -94,10 +94,14 @@ def loader_attribution_handler(_):
 @persistent
 def instances_purge_handler(_):
     """Remove instances for which all datablocks have been removed."""
-    for op_instance in bpy.context.scene.openpype_instances:
+    scene = bpy.context.scene
+    if not hasattr(scene, "openpype_instances"):
+        return
+    
+    for op_instance in scene.openpype_instances:
         if not any({d_ref.datablock for d_ref in op_instance.datablock_refs}):
-            bpy.context.scene.openpype_instances.remove(
-                bpy.context.scene.openpype_instances.find(op_instance.name)
+            scene.openpype_instances.remove(
+                scene.openpype_instances.find(op_instance.name)
             )
             continue
 
