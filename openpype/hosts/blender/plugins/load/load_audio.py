@@ -45,7 +45,7 @@ class AudioLoader(plugin.AssetLoader):
 
         bpy.data.sounds.remove(bpy.data.sounds[audio])
 
-    def _process(self, libpath, asset_group):
+    def _load_process(self, libpath, container_name):  # TODO
         # Blender needs the Sequence Editor in the current window, to be able
         # to load the audio. We take one of the areas in the window, save its
         # type, and switch to the Sequence Editor. After loading the audio,

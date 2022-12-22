@@ -36,7 +36,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
             if loader.__name__ == name:
                 return loader
 
-    def _process(self, libpath, asset_group):
+    def _load_process(self, libpath, container_name):  # TODO
         plugin.deselect_all()
 
         with open(libpath, "r") as fp:

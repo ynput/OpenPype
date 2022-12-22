@@ -22,12 +22,12 @@ class FbxModelLoader(plugin.AssetLoader):
 
     scale_length = 0
 
-    def _process(self, libpath, asset_group):
+    def _load_process(self, libpath, container_name):  # TODO
 
         kept_scale_length = bpy.context.scene.unit_settings.scale_length
         if self.scale_length > 0:
             bpy.context.scene.unit_settings.scale_length = self.scale_length
 
-        self._load_fbx(libpath, asset_group)
-
         bpy.context.scene.unit_settings.scale_length = kept_scale_length
+        
+        return self._load_fbx(libpath, container_name)

@@ -18,5 +18,5 @@ class FbxCameraLoader(plugin.AssetLoader):
     color_tag = "COLOR_05"
     order = 4
 
-    def _process(self, libpath, asset_group):
-        self._load_fbx(libpath, asset_group)
+    def _load_process(self, libpath, container_name):  # TODO
+        return self._load_fbx(libpath, container_name)
