@@ -25,6 +25,7 @@ BL_TYPE_DATAPATH = (  # TODO rename DATACOL
         bpy.types.Action: "actions",
         bpy.types.Armature: "armatures",
         bpy.types.Material: "materials",
+        bpy.types.GeometryNodeTree: "node_groups",
     }
 )
 # Match Blender type to an ICON for display
@@ -35,6 +36,7 @@ BL_TYPE_ICON = {
     bpy.types.Action: "ACTION",
     bpy.types.Armature: "ARMATURE_DATA",
     bpy.types.Material: "MATERIAL_DATA",
+    bpy.types.GeometryNodeTree: "NODETREE",
 }
 # Types which can be handled through the outliner
 BL_OUTLINER_TYPES = frozenset((bpy.types.Collection, bpy.types.Object))

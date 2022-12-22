@@ -1,4 +1,5 @@
 """Create a blender nodegroup asset."""
+import bpy
 
 from openpype.hosts.blender.api import plugin
 
@@ -10,4 +11,5 @@ class CreateBlenderNodegroup(plugin.Creator):
     label = "Blender Nodegroup"
     family = "blender.nodegroup"
     icon = "microchip"
-    color_tag = "COLOR_06"
+
+    bl_types = frozenset({bpy.types.GeometryNodeTree, bpy.types.Object})
