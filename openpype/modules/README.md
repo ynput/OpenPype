@@ -1,4 +1,4 @@
-# OpenPype modules/addons
+# OpenPype modules/addons AAA
 OpenPype modules should contain separated logic of specific kind of implementation, such as Ftrack connection and its usage code, Deadline farm rendering or may contain only special plugins. Addons work the same way currently, there is no difference between module and addon functionality.
 
 ## Modules concept
