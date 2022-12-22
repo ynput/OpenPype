@@ -8,7 +8,7 @@ exists under selected asset.
 from pathlib import Path
 
 # from openpype.client import get_subset_by_name, get_asset_by_name
-from openpype.lib.attribute_definitions import FileDef, BoolDef, UILabelDef
+from openpype.lib.attribute_definitions import FileDef, BoolDef
 from openpype.pipeline import (
     CreatedInstance,
     CreatorError
@@ -24,7 +24,8 @@ class OnlineCreator(TrayPublishCreator):
     label = "Online"
     family = "online"
     description = "Publish file retaining its original file name"
-    extensions = [".mov", ".mp4", ".mxf", ".m4v", ".mpg", ".exr", ".dpx", ".tif", ".png", ".jpg"]
+    extensions = [".mov", ".mp4", ".mxf", ".m4v", ".mpg", ".exr",
+                  ".dpx", ".tif", ".png", ".jpg"]
 
     def __init__(self, *args, **kwargs):
         super(OnlineCreator, self).__init__(*args, **kwargs)
@@ -58,7 +59,7 @@ class OnlineCreator(TrayPublishCreator):
         """
         asset = get_asset_by_name(
             self.project_name, instance_data["asset"], fields=["_id"])
-        
+
         if get_subset_by_name(
                 self.project_name, origin_basename, asset["_id"],
                 fields=["_id"]):
