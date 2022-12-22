@@ -31,6 +31,7 @@ BL_TYPE_DATAPATH = (  # TODO rename DATACOL
         bpy.types.Armature: "armatures",
         bpy.types.Material: "materials",
         **{t: "node_groups" for t in NODETREE_TYPES},
+        bpy.types.ParticleSettings: "particles",
         bpy.types.World: "worlds",
     }
 )
@@ -43,6 +44,7 @@ BL_TYPE_ICON = {
     bpy.types.Armature: "ARMATURE_DATA",
     bpy.types.Material: "MATERIAL_DATA",
     **{t: "NODETREE" for t in NODETREE_TYPES},
+    bpy.types.ParticleSettings: "PARTICLES",
     bpy.types.World: "WORLD_DATA",
 }
 
