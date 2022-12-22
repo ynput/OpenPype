@@ -349,6 +349,11 @@
             "optional": false,
             "active": true
         },
+        "ValidateGLTFTexturesNames": {
+            "enabled": true,
+            "optional": false,
+            "active": true
+        },
         "ValidateRenderImageRule": {
             "enabled": true,
             "optional": false,
