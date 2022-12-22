@@ -23,7 +23,7 @@ class CacheModelLoader(plugin.AssetLoader):
     color_tag = "COLOR_04"
     order = 4
 
-    def _process(self, libpath, asset_group):
+    def _load_process(self, libpath, container_name):  # TODO
 
         current_objects = set(bpy.data.objects)
 
