@@ -25,7 +25,6 @@ class GafferSetFrameRangeLoader(load.LoaderPlugin):
 
         from openpype.hosts.gaffer.api import get_root
 
-        script = get_root()
         version = context['version']
         version_data = version.get("data", {})
 
@@ -37,8 +36,9 @@ class GafferSetFrameRangeLoader(load.LoaderPlugin):
                   "end frame data is missing..")
             return
 
-        script["frameRange"]["start"].setvalue(start)
-        script["frameRange"]["end"].setvalue(end)
+        script = get_root()
+        script["frameRange"]["start"].setValue(start)
+        script["frameRange"]["end"].setValue(end)
 
 
 class GafferSetFrameRangeWithHandlesLoader(load.LoaderPlugin):
@@ -77,5 +77,6 @@ class GafferSetFrameRangeWithHandlesLoader(load.LoaderPlugin):
         start -= handles
         end += handles
 
-        script["frameRange"]["start"].setvalue(start)
-        script["frameRange"]["end"].setvalue(end)
+        script = get_root()
+        script["frameRange"]["start"].setValue(start)
+        script["frameRange"]["end"].setValue(end)
