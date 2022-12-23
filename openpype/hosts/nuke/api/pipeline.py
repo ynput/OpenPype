@@ -35,6 +35,7 @@ from .lib import (
 )
 from .workfile_template_builder import (
     NukePlaceholderLoadPlugin,
+    NukePlaceholderCreatePlugin,
     build_workfile_template,
     update_workfile_template,
     create_placeholder,
@@ -139,7 +140,8 @@ def _show_workfiles():
 
 def get_workfile_build_placeholder_plugins():
     return [
-        NukePlaceholderLoadPlugin
+        NukePlaceholderLoadPlugin,
+        NukePlaceholderCreatePlugin
     ]
 
 

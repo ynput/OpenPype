@@ -42,7 +42,10 @@ from openpype.pipeline.load import (
     get_contexts_for_repre_docs,
     load_with_repre_context,
 )
-from openpype.pipeline.create import get_legacy_creator_by_name
+from openpype.pipeline.create import (
+    get_legacy_creator_by_name,
+    discover_legacy_creator_plugins
+)
 
 
 class TemplateNotFound(Exception):
@@ -235,7 +238,7 @@ class AbstractTemplateBuilder(object):
 
     def get_creators_by_name(self):
         if self._creators_by_name is None:
-            self._creators_by_name = get_legacy_creator_by_name()
+            self._creators_by_name = discover_legacy_creator_plugins()
         return self._creators_by_name
 
     def get_shared_data(self, key):
@@ -1463,6 +1466,165 @@ class PlaceholderLoadMixin(object):
         pass
 
 
+class PlaceholderCreateMixin(object):
+    """Mixin prepared for creating placeholder plugins.
+
+    Implementation prepares options for placeholders with
+    'get_create_plugin_options'.
+
+    For placeholder population is implemented 'populate_create_placeholder'.
+
+    PlaceholderItem can have implemented methods:
+    - 'create_failed' - called when creating of an instance failed
+    - 'create_succeed' - called when creating of an instance succeeded
+    """
+
+    def get_create_plugin_options(self, options=None):
+        """Unified attribute definitions for create placeholder.
+
+        Common function for placeholder plugins used for creating of
+        publishable instances. Use it with 'get_placeholder_options'.
+
+        Args:
+            plugin (PlaceholderPlugin): Plugin used for creating of
+                publish instances.
+            options (Dict[str, Any]): Already available options which are used
+                as defaults for attributes.
+
+        Returns:
+            List[AbtractAttrDef]: Attribute definitions common for create
+                plugins.
+        """
+
+        creators_by_name = self.builder.get_creators_by_name()
+        creator_items = [
+            (creator_name, creator.label or creator_name)
+            for creator_name, creator in creators_by_name.items()
+        ]
+
+        creator_items = list(sorted(creator_items, key=lambda i: i[1]))
+        options = options or {}
+        return [
+            attribute_definitions.UISeparatorDef(),
+            attribute_definitions.UILabelDef("Main attributes"),
+            attribute_definitions.UISeparatorDef(),
+
+            attribute_definitions.EnumDef(
+                "creator",
+                label="Creator",
+                default=options.get("creator"),
+                items=creator_items,
+                tooltip=(
+                    "Creator"
+                    "\nDefines what OpenPype creator will be used to"
+                    " create publishable instance."
+                    "\nUseable creator depends on current host's creator list."
+                    "\nField is case sensitive."
+                )
+            ),
+            attribute_definitions.TextDef(
+                "create_variant",
+                label="Variant",
+                default=options.get("create_variant"),
+                placeholder='Main',
+                tooltip=(
+                    "Creator"
+                    "\nDefines variant name which will be use for "
+                    "\ncompiling of subset name."
+                )
+            ),
+            attribute_definitions.UISeparatorDef(),
+            attribute_definitions.NumberDef(
+                "order",
+                label="Order",
+                default=options.get("order") or 0,
+                decimals=0,
+                minimum=0,
+                maximum=999,
+                tooltip=(
+                    "Order"
+                    "\nOrder defines creating instance priority (0 to 999)"
+                    "\nPriority rule is : \"lowest is first to load\"."
+                )
+            )
+        ]
+
+    def populate_create_placeholder(self, placeholder):
+        """Create placeholder is going to create matching publishabe instance.
+
+        Args:
+            placeholder (PlaceholderItem): Placeholder item with information
+                about requested publishable instance.
+        """
+        creator_name = placeholder.data["creator"]
+        create_variant = placeholder.data["create_variant"]
+
+        creator_plugin = get_legacy_creator_by_name(creator_name)
+
+        # create subset name
+        project_name = legacy_io.Session["AVALON_PROJECT"]
+        task_name = legacy_io.Session["AVALON_TASK"]
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+
+        # get asset id
+        asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
+        assert asset_doc, "No current asset found in Session"
+        asset_id = asset_doc['_id']
+
+        subset_name = creator_plugin.get_subset_name(
+            create_variant,
+            task_name,
+            asset_id,
+            project_name
+        )
+
+        creator_data = {
+            "creator_name": creator_name,
+            "create_variant": create_variant,
+            "subset_name": subset_name,
+            "creator_plugin": creator_plugin
+        }
+
+        # compile subset name from variant
+        try:
+            creator_instance = creator_plugin(
+                subset_name,
+                asset_name
+            ).process()
+
+        except Exception:
+            failed = True
+            self.create_failed(placeholder, creator_data)
+
+        else:
+            failed = False
+            self.create_succeed(placeholder, creator_instance)
+
+        self.cleanup_placeholder(placeholder, failed)
+
+    def create_failed(self, placeholder, creator_data):
+        if hasattr(placeholder, "create_failed"):
+            placeholder.create_failed(creator_data)
+
+    def create_succeed(self, placeholder, creator_instance):
+        if hasattr(placeholder, "create_succeed"):
+            placeholder.create_succeed(creator_instance)
+
+    def cleanup_placeholder(self, placeholder, failed):
+        """Cleanup placeholder after load of single representation.
+
+        Can be called multiple times during placeholder item populating and is
+        called even if loading failed.
+
+        Args:
+            placeholder (PlaceholderItem): Item which was just used to load
+                representation.
+            failed (bool): Loading of representation failed.
+        """
+
+        pass
+
+
 class LoadPlaceholderItem(PlaceholderItem):
     """PlaceholderItem for plugin which is loading representations.
 
@@ -1486,3 +1648,28 @@ class LoadPlaceholderItem(PlaceholderItem):
 
     def load_failed(self, representation):
         self._failed_representations.append(representation)
+
+
+class CreatePlaceholderItem(PlaceholderItem):
+    """PlaceholderItem for plugin which is creating publish instance.
+
+    Connected to 'PlaceholderCreateMixin'.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(CreatePlaceholderItem, self).__init__(*args, **kwargs)
+        self._failed_created_publish_instances = []
+
+    def get_errors(self):
+        if not self._failed_representations:
+            return []
+        message = (
+            "Failed to create {} instance using Creator {}"
+        ).format(
+            len(self._failed_created_publish_instances),
+            self.data["creator"]
+        )
+        return [message]
+
+    def create_failed(self, creator_data):
+        self._failed_created_publish_instances.append(creator_data)
