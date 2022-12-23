@@ -76,8 +76,7 @@ class NukePlaceholderPlugin(PlaceholderPlugin):
 
                     node_knobs = node.knobs()
                     if (
-                        "builder_type" not in node_knobs
-                        or "is_placeholder" not in node_knobs
+                        "is_placeholder" not in node_knobs
                         or not node.knob("is_placeholder").value()
                     ):
                         continue
@@ -756,16 +755,9 @@ class NukePlaceholderCreatePlugin(
 
         created_nodes = placeholder.data["last_created"]
         created_nodes_set = set(created_nodes)
-        data = {"repre_id": str(placeholder.data["last_repre_id"])}
 
         for node in created_nodes:
             node_knobs = node.knobs()
-            if "builder_type" not in node_knobs:
-                # save the id of representation for all imported nodes
-                imprint(node, data)
-                node.knob("repre_id").setVisible(False)
-                refresh_node(node)
-                continue
 
             if (
                 "is_placeholder" not in node_knobs
