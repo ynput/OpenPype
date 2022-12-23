@@ -116,7 +116,7 @@ RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
 
 def get_main_window():
     """Acquire Maya's main window"""
-    from Qt import QtWidgets
+    from qtpy import QtWidgets
 
     if self._parent is None:
         self._parent = {
@@ -3018,7 +3018,7 @@ def update_content_on_context_change():
 
 
 def show_message(title, msg):
-    from Qt import QtWidgets
+    from qtpy import QtWidgets
     from openpype.widgets import message_window
 
     # Find maya main window
