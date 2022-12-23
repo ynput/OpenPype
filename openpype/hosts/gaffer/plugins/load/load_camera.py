@@ -32,12 +32,14 @@ class GafferLoadAlembicCamera(load.LoaderPlugin):
 
         # Due to an open issue to be implemented for Alembic we need to
         # manually assign the camera into Gaffer's '__cameras' set.
-        # todo: implement this without wildcard but with actual name
-        #create_set = GafferScene.Set()
-        #script.addChild(create_set)
-        #create_set["name"].setValue("__cameras")
-        #create_set["paths"].setValue(IECore.StringVectorData(["*"]))
-        #create_set["in"].setInput(node["out"])
+        # todo: implement name updating + correct deleting on remove, etc.
+        camera_name = "/" + str(node["out"].childNames("/")[0])
+        create_set = GafferScene.Set()
+        script.addChild(create_set)
+        create_set["name"].setValue("__cameras")
+        create_set["paths"].setValue(IECore.StringVectorData([camera_name]))
+        create_set["in"].setInput(node["out"])
+        create_set.setName("{}_set".format(name))
 
         imprint_container(node,
                           name=name,
