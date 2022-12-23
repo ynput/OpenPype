@@ -163,17 +163,21 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
 
     def _get_review_path(self, instance):
         """Returns abs url for review if present in instance repres"""
-        published_path = None
+        review_path = None
         for repre in instance.data.get("representations", []):
             tags = repre.get('tags', [])
             if (repre.get("review")
                     or "review" in tags
                     or "burnin" in tags):
-                if os.path.exists(repre["published_path"]):
-                    published_path = repre["published_path"]
+                repre_review_path = (
+                    repre.get("published_path") or
+                    os.path.join(repre["stagingDir"], repre["files"])
+                )
+                if os.path.exists(repre_review_path):
+                    review_path = repre_review_path
                 if "burnin" in tags:  # burnin has precedence if exists
                     break
-        return published_path
+        return review_path
 
     def _python2_call(self, token, channel, message, publish_files):
         from slackclient import SlackClient
