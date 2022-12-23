@@ -984,7 +984,7 @@ class PlaceholderItem(object):
 
     def __init__(self, scene_identifier, data, plugin):
         self._log = None
-        self._scene_identifier = scene_identifier
+        self.name = scene_identifier
         self._data = data
         self._plugin = plugin
 
@@ -1062,7 +1062,7 @@ class PlaceholderItem(object):
 
     @property
     def scene_identifier(self):
-        return self._scene_identifier
+        return self.name
 
     @property
     def finished(self):
