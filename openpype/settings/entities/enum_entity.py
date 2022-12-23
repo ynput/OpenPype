@@ -167,6 +167,7 @@ class HostsEnumEntity(BaseEnumEntity):
         "resolve",
         "tvpaint",
         "unreal",
+        "gaffer",
         "standalonepublisher",
         "traypublisher",
         "webpublisher"

@@ -91,6 +91,10 @@
     },
     {
       "type": "schema",
+      "name": "schema_gaffer"
+    },
+    {
+      "type": "schema",
       "name": "schema_djv"
     },
     {
