@@ -29,11 +29,12 @@ class IntegrateJson(pyblish.api.InstancePlugin):
                 continue
 
             layer_name = instance.data.get('layer_names')
+
             if not layer_name:
                 continue
 
             published_layer_data = self._update_with_published_file(
-                instance.context.data['tvpaint_layers_data'],
+                instance.context.data.get('tvpaint_layers_data'),
                 repre['published_path'],
                 layer_name[0]
             )
@@ -41,16 +42,26 @@ class IntegrateJson(pyblish.api.InstancePlugin):
             json_repre = self._get_json_repre(instance.data)
             json_publish_path = json_repre['published_path']
             new_json_publish_path = self._set_new_json_publish_path(
-                instance.context.data['custom_published_path'],
+                instance.context.data.get('custom_published_path'),
             )
+            instance_layers = instance.context.data.get('instance_layers')
 
             with open(json_publish_path, "r+") as publish_json, \
                     open(new_json_publish_path, "w") as new_publish_json:
                 published_data = json.load(publish_json)
-
-                published_data['project']['clip']['layers'].append(
+                published_data['project']['clip']['layers'].extend(
                     published_layer_data
                 )
+
+                for index, layer in enumerate(published_data['project']['clip']['layers']):
+                    if layer['name'] not in instance_layers:
+                        published_data['project']['clip']['layers'].pop(index)
+                        self.log.debug(
+                            "The layer {} was successfully removed from published data".format(
+                                layer['name']
+                            )
+                        )
+
                 new_publish_json.seek(0)
                 json.dump(published_data, new_publish_json, indent=4)
                 new_publish_json.truncate()
@@ -62,9 +73,6 @@ class IntegrateJson(pyblish.api.InstancePlugin):
             repre['published_path'] = new_json_publish_path
             self.log.debug("New representation: {}".format(repre))
             os.remove(json_publish_path)
-            self.log.debug(
-                "{} has been removed successfully.".format(json_publish_path)
-            )
 
     def _update_with_published_file(self, layer_data, publish_path, layer_name):
         """Update published file path in the json file extracted.
