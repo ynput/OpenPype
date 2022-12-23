@@ -10,13 +10,15 @@ log = Logger.get_logger(__name__)
 
 
 def get_imagio_colorspace_from_filepath(
-    path, host=None, project_name=None, validate=True
+    path, host=None, project_name=None, validate=True,
+    config_path=None, file_rules=None
 ):
-    project_name = project_name or legacy_io.Session["AVALON_PROJECT"]
-    host = host or legacy_io.Session["AVALON_APP"]
+    if not any([config_path, file_rules]):
+        project_name = project_name or legacy_io.Session["AVALON_PROJECT"]
+        host = host or legacy_io.Session["AVALON_APP"]
 
-    config_path = get_imageio_config(project_name, host)
-    file_rules = get_imageio_file_rules(project_name, host)
+        config_path = get_imageio_config(project_name, host)
+        file_rules = get_imageio_file_rules(project_name, host)
 
     # match file rule from path
     colorspace_name = None
