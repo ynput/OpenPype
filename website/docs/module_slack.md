@@ -94,6 +94,12 @@ Few keys also have Capitalized and UPPERCASE format. Values will be modified acc
 Here you can find review {review_filepath}
 ```
 
+##### Dynamic message for artists
+If artists uses host with implemented Publisher (new UI for publishing, implemented in Tray Publisher, Adobe products etc), it is possible for
+them to add additional message (notification for specific users for example, artists must provide proper user id with '@').
+Additional message will be sent only if at least one profile, eg. one target channel is configured.
+All available template keys (see higher) could be used here as a placeholder too.
+
 #### Message retention
 Currently no purging of old messages is implemented in Openpype. Admins of Slack should set their own retention of messages and files per channel.
 (see https://slack.com/help/articles/203457187-Customize-message-and-file-retention-policies)

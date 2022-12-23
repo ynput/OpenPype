@@ -31,11 +31,14 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         review_path = self._get_review_path(instance)
 
         publish_files = set()
+        message = ''
+        additional_message = instance.data.get("slack_additional_message")
+        if additional_message:
+            message = "{} \n".format(additional_message)
         for message_profile in instance.data["slack_channel_message_profiles"]:
-            message = self._get_filled_message(message_profile["message"],
-                                               instance,
-                                               review_path)
-            self.log.debug("message:: {}".format(message))
+            message += self._get_filled_message(message_profile["message"],
+                                                instance,
+                                                review_path)
             if not message:
                 return
 
