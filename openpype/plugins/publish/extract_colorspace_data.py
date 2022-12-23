@@ -1,9 +1,10 @@
-import os
+from pprint import pformat
 import pyblish.api
 from openpype.pipeline import publish
 from openpype.pipeline import (
     get_imagio_colorspace_from_filepath
 )
+
 
 class ExtractColorspaceData(publish.Extractor):
     """ Inject Colorspace data to available representations.
@@ -27,14 +28,17 @@ class ExtractColorspaceData(publish.Extractor):
         - rootify config path so it can be single path for usecases
           where windows submit to farm and farm on linux do
           oiio conversions.
-        - where to put the data so they are integrated to db representation
     """
     label = "Extract Colorspace data"
     order = pyblish.api.ExtractorOrder + 0.49
 
     allowed_ext = [
-        "mov", "exr", "dpx", "mp4", "jpg", "jpeg", "tiff", "tif"
+        "cin", "dpx", "avi", "dv", "gif", "flv", "mkv", "mov", "mpg", "mpeg",
+        "mp4", "m4v", "mxf", "iff", "z", "ifl", "jpeg", "jpg", "jfif", "lut",
+        "1dl", "exr", "pic", "png", "ppm", "pnm", "pgm", "pbm", "rla", "rpf",
+        "sgi", "rgba", "rgb", "bw", "tga", "tiff", "tif", "img"
     ]
+
     def process(self, instance):
         representations = instance.data.get("representations")
         if not representations:
@@ -51,7 +55,7 @@ class ExtractColorspaceData(publish.Extractor):
         for representation in representations:
             # check extension
             ext = representation["ext"]
-            if ext not in self.allowed_ext:
+            if ext.lower() not in self.allowed_ext:
                 continue
 
             # get one filename
@@ -59,16 +63,27 @@ class ExtractColorspaceData(publish.Extractor):
             if isinstance(filename, list):
                 filename = filename.pop()
 
+            # get matching colorspace from rules
             colorspace = get_imagio_colorspace_from_filepath(
                 filename, config_path=config_path, file_rules=file_rules
             )
 
+            # infuse data to representation
             if colorspace:
-                representation["data"] = {
+                colorspace_data = {
                     "colorspaceData": {
                         "colorspace": colorspace,
                         "configPath": config_path
                     }
                 }
+                # look if data key exists
+                if not representation.get("data"):
+                    representation["data"] = {}
+
+                # update data key
+                representation["data"].update(colorspace_data)
+                self.log.debug("__ colorspace_data: `{}`".format(
+                    pformat(colorspace_data)))
+
         self.log.info("Config path is : `{}`".format(
             config_path))
