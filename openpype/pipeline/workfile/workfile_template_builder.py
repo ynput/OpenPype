@@ -238,7 +238,14 @@ class AbstractTemplateBuilder(object):
 
     def get_creators_by_name(self):
         if self._creators_by_name is None:
-            self._creators_by_name = discover_legacy_creator_plugins()
+            self._creators_by_name = {}
+            for creator in discover_legacy_creator_plugins():
+                creator_name = creator.__name__
+                if creator_name in self._creators_by_name:
+                    raise KeyError(
+                        "Duplicated creator name {} !".format(creator_name)
+                    )
+                self._creators_by_name[creator_name] = creator
         return self._creators_by_name
 
     def get_shared_data(self, key):
@@ -1497,6 +1504,8 @@ class PlaceholderCreateMixin(object):
         """
 
         creators_by_name = self.builder.get_creators_by_name()
+        print(creators_by_name)
+
         creator_items = [
             (creator_name, creator.label or creator_name)
             for creator_name, creator in creators_by_name.items()
