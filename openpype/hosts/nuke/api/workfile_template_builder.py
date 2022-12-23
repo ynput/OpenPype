@@ -588,7 +588,7 @@ class NukePlaceholderCreatePlugin(
                 continue
 
             placeholder_data = self._parse_placeholder_node_data(node)
-            # TODO do data validations and maybe updgrades if are invalid
+
             output.append(
                 CreatePlaceholderItem(node_name, placeholder_data, self)
             )
