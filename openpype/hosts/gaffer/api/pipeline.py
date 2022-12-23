@@ -110,7 +110,7 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             "schema", "id", "name", "namespace", "representation", "loader"
         ]
 
-        for node in script:
+        for node in script.children(Gaffer.Node):
             if "user" not in node:
                 # No user attributes
                 continue
