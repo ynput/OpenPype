@@ -574,6 +574,9 @@ class NukePlaceholderCreatePlugin(
         placeholder_data["delete"] = False
         return placeholder_data
 
+    def _before_instance_create(self, placeholder):
+        placeholder.data["nodes_init"] = nuke.allNodes()
+
     def collect_placeholders(self):
         output = []
         scene_placeholders = self._collect_scene_placeholders()
