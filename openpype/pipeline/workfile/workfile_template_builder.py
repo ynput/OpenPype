@@ -1594,6 +1594,8 @@ class PlaceholderCreateMixin(object):
             "creator_plugin": creator_plugin
         }
 
+        self._before_instance_create(placeholder)
+
         # compile subset name from variant
         try:
             creator_instance = creator_plugin(
@@ -1630,6 +1632,11 @@ class PlaceholderCreateMixin(object):
                 representation.
             failed (bool): Loading of representation failed.
         """
+
+        pass
+
+    def _before_instance_create(self, placeholder):
+        """Can be overriden. Is called before instance is created."""
 
         pass
 
