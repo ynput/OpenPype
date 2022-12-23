@@ -43,6 +43,13 @@ class ExtractJson(pyblish.api.InstancePlugin):
             tvpaint_data = json.load(tvpaint_json)
 
         instance.context.data['tvpaint_layers_data'] = tvpaint_data['project']['clip']['layers']  # noqa
+        instance_layer = [layer['name'] for layer in instance.data.get('layers')]
+
+        if instance.context.data.get('instance_layers'):
+            instance.context.data['instance_layers'].extend(instance_layer)
+        else:
+            instance.context.data['instance_layers'] = instance_layer
+
         tvpaint_data['project']['clip']['layers'] = []
         op_json_filename = 'openpype.json'
         op_json_path = os.path.join(output_dir, op_json_filename)
