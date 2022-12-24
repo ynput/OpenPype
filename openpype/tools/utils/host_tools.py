@@ -59,6 +59,11 @@ class HostToolsHelper:
             workfiles_window = Window(parent=parent)
             self._workfiles_tool = workfiles_window
 
+            def destroy():
+                self._workfiles_tool = None
+
+            workfiles_window.destroyed.connect(destroy)
+
         return self._workfiles_tool
 
     def show_workfiles(
@@ -80,6 +85,11 @@ class HostToolsHelper:
 
             loader_window = LoaderWindow(parent=parent or self._parent)
             self._loader_tool = loader_window
+
+            def destroy():
+                self._loader_tool = None
+
+            loader_window.destroyed.connect(destroy)
 
         return self._loader_tool
 
@@ -110,6 +120,11 @@ class HostToolsHelper:
             creator_window = CreatorWindow(parent=parent or self._parent)
             self._creator_tool = creator_window
 
+            def destroy():
+                self._creator_tool = None
+
+            creator_window.destroyed.connect(destroy)
+
         return self._creator_tool
 
     def show_creator(self, parent=None):
@@ -132,6 +147,11 @@ class HostToolsHelper:
                 parent=parent or self._parent
             )
             self._subset_manager_tool = subset_manager_window
+
+            def destroy():
+                self._subset_manager_tool = None
+
+            subset_manager_window.destroyed.connect(destroy)
 
         return self._subset_manager_tool
 
@@ -158,6 +178,11 @@ class HostToolsHelper:
             )
             self._scene_inventory_tool = scene_inventory_window
 
+            def destroy():
+                self._scene_inventory_tool = None
+
+            scene_inventory_window.destroyed.connect(destroy)
+
         return self._scene_inventory_tool
 
     def show_scene_inventory(self, parent=None):
@@ -181,6 +206,11 @@ class HostToolsHelper:
                 parent=parent or self._parent
             )
             self._library_loader_tool = library_window
+
+            def destroy():
+                self._library_loader_tool = None
+
+            library_window.destroyed.connect(destroy)
 
         return self._library_loader_tool
 
@@ -226,6 +256,12 @@ class HostToolsHelper:
 
             mayalookassigner_window = MayaLookAssignerWindow(parent)
             self._look_assigner_tool = mayalookassigner_window
+
+            def destroy():
+                self._look_assigner_tool = None
+
+            mayalookassigner_window.destroyed.connect(destroy)
+
         return self._look_assigner_tool
 
     def show_look_assigner(self, parent=None):
@@ -282,6 +318,11 @@ class HostToolsHelper:
                 controller=controller, parent=parent or self._parent
             )
             self._publisher_tool = publisher_window
+
+            def destroy():
+                self._publisher_tool = None
+
+            publisher_window.destroyed.connect(destroy)
 
         return self._publisher_tool
 
