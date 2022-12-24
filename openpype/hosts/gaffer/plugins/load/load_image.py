@@ -64,5 +64,3 @@ class GafferLoadImage(load.LoaderPlugin):
         prefix, padding, suffix = fname.rsplit(".", 2)
         fname = ".".join([prefix, "#" * len(padding), suffix])
         return os.path.join(root, fname).replace("\\", "/")
-
-

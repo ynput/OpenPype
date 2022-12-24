@@ -10,6 +10,9 @@ from openpype.hosts.gaffer.api import GafferHost, set_root
 
 import GafferUI
 
+# Make sure linter ignores undefined `application`, Gaffer startup provides it
+application = application # noqa
+
 
 def _install_openpype_menu():
     from openpype.tools.utils import host_tools
@@ -20,20 +23,36 @@ def _install_openpype_menu():
         set_root(script_window.scriptNode())     # todo: avoid hack
         return script_window._qtWidget()
 
-    definition.append("/OpenPype/Load...",
-                {"command": lambda menu: host_tools.show_loader(parent=get_main_window(menu), use_context=True)})
-    definition.append("/OpenPype/Publish...",
-                {"command": lambda menu: host_tools.show_publisher(parent=get_main_window(menu))})
-    definition.append("/OpenPype/Manage...",
-                {"command": lambda menu: host_tools.show_scene_inventory(parent=get_main_window(menu))})
-    definition.append("/OpenPype/Library...",
-                {"command": lambda menu: host_tools.show_library_loader(parent=get_main_window(menu))})
+    definition.append(
+        "/OpenPype/Load...",
+        {"command": lambda menu: host_tools.show_loader(
+            parent=get_main_window(menu),
+            use_context=True)}
+    )
+    definition.append(
+        "/OpenPype/Publish...",
+        {"command": lambda menu: host_tools.show_publisher(
+            parent=get_main_window(menu))}
+    )
+    definition.append(
+        "/OpenPype/Manage...",
+        {"command": lambda menu: host_tools.show_scene_inventory(
+            parent=get_main_window(menu))}
+    )
+    definition.append(
+        "/OpenPype/Library...",
+        {"command": lambda menu: host_tools.show_library_loader(
+            parent=get_main_window(menu))}
+    )
 
     # Divider
     definition.append("/OpenPype/WorkFilesDivider", {"divider": True})
 
-    definition.append("/OpenPype/Work Files...",
-                {"command": lambda menu: host_tools.show_workfiles(parent=get_main_window(menu))})
+    definition.append(
+        "/OpenPype/Work Files...",
+        {"command": lambda menu: host_tools.show_workfiles(
+            parent=get_main_window(menu))}
+    )
 
 
 def _install_openpype():

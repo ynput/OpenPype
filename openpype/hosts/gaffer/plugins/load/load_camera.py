@@ -33,6 +33,7 @@ class GafferLoadAlembicCamera(load.LoaderPlugin):
         # Due to an open issue to be implemented for Alembic we need to
         # manually assign the camera into Gaffer's '__cameras' set.
         # todo: implement name updating + correct deleting on remove, etc.
+        # todo: add camera in box so it's visually a single node
         camera_name = "/" + str(node["out"].childNames("/")[0])
         create_set = GafferScene.Set()
         script.addChild(create_set)
