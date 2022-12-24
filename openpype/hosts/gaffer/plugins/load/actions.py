@@ -24,6 +24,7 @@ class GafferSetFrameRangeLoader(load.LoaderPlugin):
     def load(self, context, name, namespace, data):
 
         from openpype.hosts.gaffer.api import get_root
+        import GafferUI
 
         version = context['version']
         version_data = version.get("data", {})
@@ -37,8 +38,11 @@ class GafferSetFrameRangeLoader(load.LoaderPlugin):
             return
 
         script = get_root()
-        script["frameRange"]["start"].setValue(start)
-        script["frameRange"]["end"].setValue(end)
+        script["frameRange"]["start"].setValue(int(start))
+        script["frameRange"]["end"].setValue(int(end))
+
+        playback = GafferUI.Playback.acquire(script.context())
+        playback.setFrameRange(int(start), int(end))
 
 
 class GafferSetFrameRangeWithHandlesLoader(load.LoaderPlugin):
@@ -60,6 +64,7 @@ class GafferSetFrameRangeWithHandlesLoader(load.LoaderPlugin):
     def load(self, context, name, namespace, data):
 
         from openpype.hosts.gaffer.api import get_root
+        import GafferUI
 
         version = context['version']
         version_data = version.get("data", {})
@@ -78,5 +83,8 @@ class GafferSetFrameRangeWithHandlesLoader(load.LoaderPlugin):
         end += handles
 
         script = get_root()
-        script["frameRange"]["start"].setValue(start)
-        script["frameRange"]["end"].setValue(end)
+        script["frameRange"]["start"].setValue(int(start))
+        script["frameRange"]["end"].setValue(int(end))
+
+        playback = GafferUI.Playback.acquire(script.context())
+        playback.setFrameRange(int(start), int(end))
