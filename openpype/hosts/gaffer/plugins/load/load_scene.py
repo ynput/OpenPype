@@ -3,6 +3,7 @@ from openpype.pipeline import (
     get_representation_path,
 )
 from openpype.hosts.gaffer.api import get_root, imprint_container
+from openpype.hosts.gaffer.api.lib import set_node_color
 
 import GafferScene
 
@@ -27,6 +28,10 @@ class GafferLoadScene(load.LoaderPlugin):
         path = self.fname.replace("\\", "/")
         node["fileName"].setValue(path)
         script.addChild(node)
+
+        # Colorize based on family
+        # TODO: Use settings instead
+        set_node_color(node, (0.369, 0.82, 0.118))
 
         imprint_container(node,
                           name=name,

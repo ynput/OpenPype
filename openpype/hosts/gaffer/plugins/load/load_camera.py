@@ -3,6 +3,7 @@ from openpype.pipeline import (
     get_representation_path,
 )
 from openpype.hosts.gaffer.api import get_root, imprint_container
+from openpype.hosts.gaffer.api.lib import set_node_color
 
 import GafferScene
 import IECore
@@ -41,6 +42,10 @@ class GafferLoadAlembicCamera(load.LoaderPlugin):
         create_set["paths"].setValue(IECore.StringVectorData([camera_name]))
         create_set["in"].setInput(node["out"])
         create_set.setName("{}_set".format(name))
+
+        # Colorize based on family
+        # TODO: Use settings instead
+        set_node_color(node, (0.533, 0.447, 0.957))
 
         imprint_container(node,
                           name=name,
