@@ -76,6 +76,8 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         if not dst_path:
             dst_path = self.get_current_workfile()
 
+        dst_path = dst_path.replace("\\", "/")
+
         script = get_root()
         script.serialiseToFile(dst_path)
         script["fileName"].setValue(dst_path)
