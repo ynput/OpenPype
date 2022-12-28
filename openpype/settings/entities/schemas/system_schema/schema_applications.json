@@ -59,6 +59,10 @@
     },
     {
       "type": "schema",
+      "name": "schema_natron"
+    },
+    {
+      "type": "schema",
       "name": "schema_houdini"
     },
     {

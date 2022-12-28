@@ -162,6 +162,7 @@ class HostsEnumEntity(BaseEnumEntity):
         "hiero",
         "houdini",
         "maya",
+        "natron",
         "nuke",
         "photoshop",
         "resolve",

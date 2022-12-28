@@ -932,6 +932,33 @@
             }
         }
     },
+    "natron": {
+        "enabled": true,
+        "label": "Natron",
+        "icon": "{}/app_icons/natron.png",
+        "host_name": "natron",
+        "environment": {},
+        "variants": {
+            "2-5-0": {
+                "executables": {
+                    "windows": [
+                        "C:\\Natron-2.5.0-Windows-x86_64\\bin\\Natron.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "2-5-0": "2.5.0"
+            }
+        }
+    },
     "houdini": {
         "enabled": true,
         "label": "Houdini",
