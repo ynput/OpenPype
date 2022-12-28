@@ -35,7 +35,6 @@ def openpype_show_workfiles():
 
 
 def _install_openpype_menu():
-    from openpype.tools.utils import host_tools
 
     add_menu = NatronGui.natron.addMenuCommand
 
@@ -45,11 +44,8 @@ def _install_openpype_menu():
     add_menu("OpenPype/Manage...", "openpype_show_scene_inventory()")
     add_menu("OpenPype/Library...", "openpype_show_library_loader()")
     # todo: how to add a divider?
-    #add_menu("OpenPype/---", "")
+    # add_menu("OpenPype/---", "")
     add_menu("OpenPype/Work Files...", "openpype_show_workfiles()")
-
-    def get_main_window(app):
-        raise NotImplementedError("TODO")
 
 
 _install_openpype_menu()
