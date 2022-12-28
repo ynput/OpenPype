@@ -3,8 +3,9 @@ from openpype.pipeline import (
     get_representation_path,
 )
 from openpype.hosts.gaffer.api import get_root, imprint_container
-from openpype.hosts.gaffer.api.lib import set_node_color
+from openpype.hosts.gaffer.api.lib import set_node_color, arrange, make_box
 
+import Gaffer
 import GafferScene
 import IECore
 
@@ -24,30 +25,43 @@ class GafferLoadAlembicCamera(load.LoaderPlugin):
         # Create the Loader with the filename path set
         script = get_root()
 
-        node = GafferScene.SceneReader()
-        node.setName(name)
-
-        path = self.fname.replace("\\", "/")
-        node["fileName"].setValue(path)
-        script.addChild(node)
-
         # Due to an open issue to be implemented for Alembic we need to
-        # manually assign the camera into Gaffer's '__cameras' set.
-        # todo: implement name updating + correct deleting on remove, etc.
-        # todo: add camera in box so it's visually a single node
-        camera_name = "/" + str(node["out"].childNames("/")[0])
-        create_set = GafferScene.Set()
-        script.addChild(create_set)
+        # manually assign the camera into Gaffer's '__cameras' set. So for
+        # now we encapsulate what's needed in a Box node to resolve that.
+        # See: https://github.com/GafferHQ/gaffer/issues/3954
+        box = make_box(name, add_input=False)
+        reader = GafferScene.SceneReader()
+        box.addChild(reader)
+
+        create_set = GafferScene.Set("{}_set".format(name))
+        box.addChild(create_set)
         create_set["name"].setValue("__cameras")
-        create_set["paths"].setValue(IECore.StringVectorData([camera_name]))
-        create_set["in"].setInput(node["out"])
-        create_set.setName("{}_set".format(name))
+        create_set["in"].setInput(reader["out"])
+
+        path_filter = GafferScene.PathFilter("all")
+        box.addChild(path_filter)
+        path_filter["paths"].setValue(IECore.StringVectorData(["*"]))
+        create_set["filter"].setInput(path_filter["out"])
+
+        box["BoxOut"]["in"].setInput(create_set["out"])
+
+        script.addChild(box)
+
+        # Promote the reader's filename directly to the box
+        Gaffer.PlugAlgo.promote(reader["fileName"])
+
+        # Set the filename
+        path = self.fname.replace("\\", "/")
+        box["fileName"].setValue(path)
+
+        # Layout the nodes within the box
+        arrange(box.children(Gaffer.Node))
 
         # Colorize based on family
         # TODO: Use settings instead
-        set_node_color(node, (0.533, 0.447, 0.957))
+        set_node_color(box, (0.533, 0.447, 0.957))
 
-        imprint_container(node,
+        imprint_container(box,
                           name=name,
                           namespace=namespace,
                           context=context,
