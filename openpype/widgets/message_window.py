@@ -113,7 +113,8 @@ class ScrollMessageBox(QtWidgets.QDialog):
             message_len = max(message_len, len(message))
 
         # guess size of scrollable area
-        max_width = QtWidgets.QApplication.desktop().availableGeometry().width()
+        desktop = QtWidgets.QApplication.desktop()
+        max_width = desktop.availableGeometry().width()
         scroll_widget.setMinimumWidth(
             min(max_width, message_len * 6)
         )
