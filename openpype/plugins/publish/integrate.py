@@ -529,6 +529,13 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         template_data["representation"] = repre["name"]
         template_data["ext"] = repre["ext"]
 
+        # add template data for colorspaceData
+        if repre.get("colorspaceData"):
+            colorspace = repre["colorspaceData"]["colorspace"]
+            # replace spaces with underscores
+            colorspace = colorspace.replace(" ", "_")
+            template_data["colorspace"] = colorspace
+
         # optionals
         # retrieve additional anatomy data from representation if exists
         for key, anatomy_key in {
@@ -726,6 +733,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         #       and the actual representation entity for the database
         data = repre.get("data", {})
         data.update({"path": published_path, "template": template})
+
+        # add colorspace data if any exists on represenation
+        if repre.get("colorspaceData"):
+            data["colorspaceData"] = repre["colorspaceData"]
+
         repre_doc = new_representation_doc(
             repre["name"], version["_id"], repre_context, data, repre_id
         )
