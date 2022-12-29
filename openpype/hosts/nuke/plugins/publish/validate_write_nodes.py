@@ -77,14 +77,31 @@ class ValidateNukeWriteNode(
         if write_node is None:
             return
 
-        correct_data = get_write_node_template_attr(write_group_node)
+        check_knobs = get_write_node_template_attr(write_group_node)
 
         check = []
         self.log.debug("__ write_node: {}".format(
             write_node
         ))
+        self.log.debug("__ check_knobs: {}".format(
+            check_knobs
+        ))
 
-        for key, value in correct_data.items():
+        for knob_data in check_knobs:
+            if (
+                "type" not in knob_data
+                or knob_data["type"] == "__legacy__"
+            ):
+                PublishXmlValidationError(
+                    self, (
+                        "Please update data in settings 'project_settings"
+                        "/nuke/imageio/nodes/requiredNodes'"
+                    ),
+                    key="legacy"
+                )
+
+            key = knob_data["name"]
+            value = knob_data["value"]
             node_value = write_node[key].value()
 
             # fix type differences
