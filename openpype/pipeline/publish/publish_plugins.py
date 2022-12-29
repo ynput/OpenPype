@@ -1,6 +1,6 @@
 import inspect
 from abc import ABCMeta
-
+from pprint import pformat
 import pyblish.api
 from pyblish.plugin import MetaPlugin, ExplicitMetaPlugin
 
@@ -14,7 +14,9 @@ from .lib import (
 )
 
 from ..colorspace import (
-    get_imagio_colorspace_from_filepath
+    get_imagio_colorspace_from_filepath,
+    get_imageio_config,
+    get_imageio_file_rules
 )
 
 
@@ -302,20 +304,36 @@ class ExtractorColormanaged(Extractor):
         "sgi", "rgba", "rgb", "bw", "tga", "tiff", "tif", "img"
     ]
 
-    def set_representation_colorspace(self, context, representation):
+    def get_colorspace_settings(self, context):
+        project_name = context.data["projectName"]
+        host_name = context.data["hostName"]
+        anatomy_data = context.data["anatomyData"]
+        project_settings = context.data["project_settings"]
 
-        from pprint import pformat
+        config_data = get_imageio_config(
+            project_name, host_name, anatomy_data,
+            project_settings=project_settings
+        )
+        file_rules = get_imageio_file_rules(
+            project_name, host_name,
+            project_settings=project_settings
+        )
+        return config_data, file_rules
 
-        config_path = context.data.get("colorspace_config_path")
-        if not config_path:
+    def set_representation_colorspace(
+        self, representation,
+        project_settings,
+        config_data,
+        file_rules
+    ):
+
+        if not config_data:
             # warn in case no colorspace path was defined
             self.log.warning("No colorspace management was defined")
             return
 
-        file_rules = context.data["colorspace_file_rules"]
-
         self.log.info("Config path is : `{}`".format(
-            config_path))
+            config_data))
 
         # check extension
         ext = representation["ext"]
@@ -333,8 +351,10 @@ class ExtractorColormanaged(Extractor):
 
         # get matching colorspace from rules
         colorspace = get_imagio_colorspace_from_filepath(
-            filename, config_path=config_path["path"],
-            file_rules=file_rules
+            filename,
+            config_data=config_data,
+            file_rules=file_rules,
+            project_settings=project_settings
         )
         self.log.debug("__ colorspace: `{}`".format(
             colorspace))
@@ -342,17 +362,12 @@ class ExtractorColormanaged(Extractor):
         # infuse data to representation
         if colorspace:
             colorspace_data = {
-                "colorspaceData": {
-                    "colorspace": colorspace,
-                    "configPath": config_path
-                }
+                "colorspace": colorspace,
+                "configPath": config_data
             }
-            # look if data key exists
-            if not representation.get("data"):
-                representation["data"] = {}
 
             # update data key
-            representation["data"].update(colorspace_data)
+            representation["colorspaceData"] = colorspace_data
 
             self.log.debug("__ colorspace_data: `{}`".format(
                 pformat(colorspace_data)))

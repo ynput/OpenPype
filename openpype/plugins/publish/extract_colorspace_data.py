@@ -15,13 +15,11 @@ class ExtractColorspaceData(publish.ExtractorColormanaged):
         and adding it to representation
 
     Output data:
-        representation[data] = {
-            "colorspaceData": {
-                "colorspace": "linear",
-                "configPath": {
-                    "path": "/abs/path/to/config.ocio",
-                    "template": "{project[root]}/path/to/config.ocio"
-                }
+        representation[colorspaceData] = {
+            "colorspace": "linear",
+            "configPath": {
+                "path": "/abs/path/to/config.ocio",
+                "template": "{project[root]}/path/to/config.ocio"
             }
         }
     """
@@ -37,11 +35,16 @@ class ExtractColorspaceData(publish.ExtractorColormanaged):
 
         # get colorspace settings
         context = instance.context
+        config_data, file_rules = self.get_colorspace_settings(context)
 
         # loop representations
         for representation in representations:
-            if representation.get("data", {}).get("colorspaceData"):
+            # skip if colorspaceData is already at representation
+            if representation.get("colorspaceData"):
                 continue
 
             self.set_representation_colorspace(
-                context, representation)
+                representation,
+                config_data,
+                file_rules
+            )

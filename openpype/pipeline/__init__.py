@@ -8,14 +8,6 @@ from .mongodb import (
 )
 from .anatomy import Anatomy
 
-from .colorspace import (
-    get_imagio_colorspace_from_filepath,
-    get_imageio_config,
-    get_imageio_file_rules,
-    validate_imageio_colorspace_in_config,
-    validate_imageio_config_from_path
-)
-
 from .create import (
     BaseCreator,
     Creator,
@@ -108,13 +100,6 @@ __all__ = (
 
     # --- Anatomy ---
     "Anatomy",
-
-    # --- Colorspace ---
-    "get_imagio_colorspace_from_filepath",
-    "get_imageio_config",
-    "get_imageio_file_rules",
-    "validate_imageio_colorspace_in_config",
-    "validate_imageio_config_from_path",
 
     # --- Create ---
     "BaseCreator",
