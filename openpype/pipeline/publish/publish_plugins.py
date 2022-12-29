@@ -321,10 +321,8 @@ class ExtractorColormanaged(Extractor):
         return config_data, file_rules
 
     def set_representation_colorspace(
-        self, representation,
-        project_settings,
-        config_data,
-        file_rules
+        self, representation, context,
+        config_data, file_rules
     ):
 
         if not config_data:
@@ -332,14 +330,18 @@ class ExtractorColormanaged(Extractor):
             self.log.warning("No colorspace management was defined")
             return
 
-        self.log.info("Config path is : `{}`".format(
+        self.log.info("Config data is : `{}`".format(
             config_data))
 
-        # check extension
         ext = representation["ext"]
+        # check extension
         self.log.debug("__ ext: `{}`".format(ext))
         if ext.lower() not in self.allowed_ext:
             return
+
+        project_name = context.data["projectName"]
+        host_name = context.data["hostName"]
+        project_settings = context.data["project_settings"]
 
         # get one filename
         filename = representation["files"]
@@ -351,7 +353,7 @@ class ExtractorColormanaged(Extractor):
 
         # get matching colorspace from rules
         colorspace = get_imagio_colorspace_from_filepath(
-            filename,
+            filename, host_name, project_name,
             config_data=config_data,
             file_rules=file_rules,
             project_settings=project_settings

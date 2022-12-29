@@ -97,9 +97,8 @@ class NukeRenderLocal(publish.ExtractorColormanaged):
 
         # inject colorspace data
         self.set_representation_colorspace(
-            repre,
-            config_data,
-            file_rules
+            repre, instance.context,
+            config_data, file_rules
         )
 
         instance.data["representations"].append(repre)

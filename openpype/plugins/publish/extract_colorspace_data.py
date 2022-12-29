@@ -44,7 +44,6 @@ class ExtractColorspaceData(publish.ExtractorColormanaged):
                 continue
 
             self.set_representation_colorspace(
-                representation,
-                config_data,
-                file_rules
+                representation, context,
+                config_data, file_rules
             )
