@@ -3,7 +3,9 @@ import os
 import platform
 import PyOpenColorIO as ocio
 from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
+from openpype.lib import StringTemplate
+from openpype.pipeline import legacy_io, Anatomy
+from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.lib.log import Logger
 
 log = Logger.get_logger(__name__)
@@ -43,7 +45,7 @@ def get_imagio_colorspace_from_filepath(
 
     # validate matching colorspace with config
     if validate and config_path:
-        config_obj = validate_imageio_config_from_path(config_path)
+        config_obj = validate_imageio_config_from_path(config_path["path"])
         validate_imageio_colorspace_in_config(config_obj, colorspace_name)
 
     return colorspace_name
@@ -67,9 +69,18 @@ def validate_imageio_config_from_path(config_path):
     return config_obj
 
 
-def get_imageio_config(project_name, host):
+def get_imageio_config(project_name, host, anatomy_formating_data=None):
     current_platform = platform.system().lower()
+    project_name = legacy_io.Session["AVALON_PROJECT"]
 
+    # get anatomy data for formating path template
+    anatomy_data = anatomy_formating_data or get_template_data_with_names(
+        project_name
+    )
+    # add project roots to anatomy data
+    anatomy_data["root"] = Anatomy(project_name).roots
+
+    # get colorspace settings
     imageio_global, imageio_host = _get_imageio_settings(project_name, host)
 
     # get config path from either global or host
@@ -83,9 +94,21 @@ def get_imageio_config(project_name, host):
     if config_host["enabled"]:
         config_path = config_host["filepath"][current_platform]
 
+    if not config_path:
+        return
+
     # format the path for potential env vars
-    config_path = config_path.format(**os.environ)
-    return os.path.normpath(config_path)
+    formated_path = config_path.format(**os.environ)
+
+    # format path for anatomy keys
+    formated_path = StringTemplate(formated_path).format(
+        anatomy_data)
+
+    abs_path = os.path.abspath(formated_path)
+    return {
+        "path": os.path.normpath(abs_path),
+        "template": config_path
+    }
 
 
 def get_imageio_file_rules(project_name, host):

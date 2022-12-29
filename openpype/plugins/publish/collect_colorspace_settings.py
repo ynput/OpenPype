@@ -14,8 +14,9 @@ class CollectColorspaceSettings(api.ContextPlugin):
     def process(self, context):
         project_name = context.data["projectName"]
         host = context.data["hostName"]
+        anatomy_data = context.data["anatomyData"]
 
         context.data["colorspace_config_path"] = get_imageio_config(
-            project_name, host)
+            project_name, host, anatomy_data)
         context.data["colorspace_file_rules"] = get_imageio_file_rules(
             project_name, host)

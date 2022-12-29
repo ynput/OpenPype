@@ -13,6 +13,10 @@ from .lib import (
     get_instance_staging_dir,
 )
 
+from ..colorspace import (
+    get_imagio_colorspace_from_filepath
+)
+
 
 class AbstractMetaInstancePlugin(ABCMeta, MetaPlugin):
     pass
@@ -280,3 +284,75 @@ class Extractor(pyblish.api.InstancePlugin):
         """
 
         return get_instance_staging_dir(instance)
+
+
+class ExtractorColormanaged(Extractor):
+    """Extractor Colormanaged class.
+
+    Class implements a "set_representation_colorspace" function, which is used
+    for injecting colorspace data to representation data for farther
+    integration into db document.
+
+    """
+
+    allowed_ext = [
+        "cin", "dpx", "avi", "dv", "gif", "flv", "mkv", "mov", "mpg", "mpeg",
+        "mp4", "m4v", "mxf", "iff", "z", "ifl", "jpeg", "jpg", "jfif", "lut",
+        "1dl", "exr", "pic", "png", "ppm", "pnm", "pgm", "pbm", "rla", "rpf",
+        "sgi", "rgba", "rgb", "bw", "tga", "tiff", "tif", "img"
+    ]
+
+    def set_representation_colorspace(self, context, representation):
+
+        from pprint import pformat
+
+        config_path = context.data.get("colorspace_config_path")
+        if not config_path:
+            # warn in case no colorspace path was defined
+            self.log.warning("No colorspace management was defined")
+            return
+
+        file_rules = context.data["colorspace_file_rules"]
+
+        self.log.info("Config path is : `{}`".format(
+            config_path))
+
+        # check extension
+        ext = representation["ext"]
+        self.log.debug("__ ext: `{}`".format(ext))
+        if ext.lower() not in self.allowed_ext:
+            return
+
+        # get one filename
+        filename = representation["files"]
+        if isinstance(filename, list):
+            filename = filename.pop()
+
+        self.log.debug("__ filename: `{}`".format(
+            filename))
+
+        # get matching colorspace from rules
+        colorspace = get_imagio_colorspace_from_filepath(
+            filename, config_path=config_path["path"],
+            file_rules=file_rules
+        )
+        self.log.debug("__ colorspace: `{}`".format(
+            colorspace))
+
+        # infuse data to representation
+        if colorspace:
+            colorspace_data = {
+                "colorspaceData": {
+                    "colorspace": colorspace,
+                    "configPath": config_path
+                }
+            }
+            # look if data key exists
+            if not representation.get("data"):
+                representation["data"] = {}
+
+            # update data key
+            representation["data"].update(colorspace_data)
+
+            self.log.debug("__ colorspace_data: `{}`".format(
+                pformat(colorspace_data)))
