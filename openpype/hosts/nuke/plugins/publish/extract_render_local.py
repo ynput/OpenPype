@@ -71,6 +71,7 @@ class NukeRenderLocal(publish.ExtractorColormanaged):
         )
 
         ext = node["file_type"].value()
+        colorspace = node["colorspace"].value()
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -98,7 +99,8 @@ class NukeRenderLocal(publish.ExtractorColormanaged):
         # inject colorspace data
         self.set_representation_colorspace(
             repre, instance.context,
-            config_data, file_rules
+            config_data, file_rules,
+            colorspace=colorspace
         )
 
         instance.data["representations"].append(repre)
