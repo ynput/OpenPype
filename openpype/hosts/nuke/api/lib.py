@@ -2371,8 +2371,8 @@ def get_write_node_template_attr(node):
     ''' Gets all defined data from presets
 
     '''
-    # TODO: remove this backward compatibility for old settings
-    # TASK: add identifiers to settings and rename settings key
+
+    # TODO: add identifiers to settings and rename settings key
     plugin_names_mapping = {
         "create_write_image": "CreateWriteImage",
         "create_write_prerender": "CreateWritePrerender",
@@ -2381,24 +2381,13 @@ def get_write_node_template_attr(node):
     # get avalon data from node
     node_data = get_node_data(node, INSTANCE_DATA_KNOB)
     identifier = node_data["creator_identifier"]
-    # get template data
-    nuke_imageio_writes = get_imageio_node_setting(
+
+    # return template data
+    return get_imageio_node_setting(
         node_class="Write",
         plugin_name=plugin_names_mapping[identifier],
         subset=node_data["subset"]
     )
-
-    # collecting solved data
-    return_data = OrderedDict()
-
-    for knob in nuke_imageio_writes["knobs"]:
-        knob_type = knob["type"]
-        knob_value = knob["value"]
-        new_knob_value = convert_knob_value_to_correct_type(
-            knob_type, knob_value)
-        return_data[knob["name"]] = new_knob_value
-
-    return return_data
 
 
 def get_dependent_nodes(nodes):
