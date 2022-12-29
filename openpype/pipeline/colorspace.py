@@ -12,7 +12,7 @@ log = Logger.get_logger(__name__)
 
 
 def get_imagio_colorspace_from_filepath(
-    path, host, project_name,
+    path, host_name, project_name,
     config_data=None, file_rules=None,
     project_settings=None,
     validate=True
@@ -22,9 +22,9 @@ def get_imagio_colorspace_from_filepath(
             project_name
         )
         config_data = get_imageio_config(
-            project_name, host, project_settings)
+            project_name, host_name, project_settings)
         file_rules = get_imageio_file_rules(
-            project_name, host, project_settings)
+            project_name, host_name, project_settings)
 
     # match file rule from path
     colorspace_name = None
@@ -101,7 +101,7 @@ def get_imageio_config(
     imageio_global, imageio_host = _get_imageio_settings(
         project_settings, host_name)
 
-    # get config path from either global or host
+    # get config path from either global or host_name
     config_global = imageio_global["ocio_config"]
     config_host = imageio_host["ocio_config"]
 
@@ -136,7 +136,7 @@ def get_imageio_file_rules(project_name, host_name, project_settings=None):
     imageio_global, imageio_host = _get_imageio_settings(
         project_settings, host_name)
 
-    # get file rules from global and host
+    # get file rules from global and host_name
     frules_global = imageio_global["file_rules"]
     frules_host = imageio_host["file_rules"]
 
@@ -152,7 +152,7 @@ def get_imageio_file_rules(project_name, host_name, project_settings=None):
 
 def _get_imageio_settings(project_settings, host_name):
 
-    # get image io from global and host
+    # get image io from global and host_name
     imageio_global = project_settings["global"]["imageio"]
     imageio_host = project_settings[host_name]["imageio"]
 
