@@ -1,3 +1,4 @@
+from copy import deepcopy
 import re
 import os
 import platform
@@ -5,7 +6,6 @@ import PyOpenColorIO as ocio
 from openpype.settings import get_project_settings
 from openpype.lib import StringTemplate
 from openpype.pipeline import Anatomy
-from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.lib.log import Logger
 
 log = Logger.get_logger(__name__)
@@ -83,17 +83,18 @@ def get_ocio_config(config_path):
 def get_imageio_config(
     project_name, host_name,
     project_settings=None,
-    anatomy_formating_data=None,
+    anatomy_data=None,
     anatomy=None
 ):
     project_settings = project_settings or get_project_settings(project_name)
     anatomy = anatomy or Anatomy(project_name)
     current_platform = platform.system().lower()
 
-    # get anatomy data for formating path template
-    anatomy_data = anatomy_formating_data or get_template_data_with_names(
-        project_name
-    )
+    if not anatomy_data:
+        from openpype.pipeline.context_tools import (
+            get_template_data_from_session)
+        anatomy_data = get_template_data_from_session()
+
     # add project roots to anatomy data
     anatomy_data["root"] = anatomy.roots
 
@@ -115,12 +116,14 @@ def get_imageio_config(
     if not config_path:
         return
 
+    formating_data = deepcopy(anatomy_data)
+
     # format the path for potential env vars
-    formated_path = config_path.format(**os.environ)
+    formating_data.update(dict(**os.environ))
 
     # format path for anatomy keys
-    formated_path = StringTemplate(formated_path).format(
-        anatomy_data)
+    formated_path = StringTemplate(config_path).format(
+        formating_data)
 
     abs_path = os.path.abspath(formated_path)
     return {

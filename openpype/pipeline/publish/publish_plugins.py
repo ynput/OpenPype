@@ -308,21 +308,23 @@ class ExtractorColormanaged(Extractor):
         project_name = context.data["projectName"]
         host_name = context.data["hostName"]
         anatomy_data = context.data["anatomyData"]
-        project_settings = context.data["project_settings"]
+        project_settings_ = context.data["project_settings"]
 
         config_data = get_imageio_config(
-            project_name, host_name, anatomy_data,
-            project_settings=project_settings
+            project_name, host_name,
+            project_settings=project_settings_,
+            anatomy_data=anatomy_data
         )
         file_rules = get_imageio_file_rules(
             project_name, host_name,
-            project_settings=project_settings
+            project_settings=project_settings_
         )
         return config_data, file_rules
 
     def set_representation_colorspace(
         self, representation, context,
-        config_data, file_rules
+        config_data, file_rules,
+        colorspace=None
     ):
 
         if not config_data:
@@ -352,7 +354,7 @@ class ExtractorColormanaged(Extractor):
             filename))
 
         # get matching colorspace from rules
-        colorspace = get_imagio_colorspace_from_filepath(
+        colorspace = colorspace or get_imagio_colorspace_from_filepath(
             filename, host_name, project_name,
             config_data=config_data,
             file_rules=file_rules,
