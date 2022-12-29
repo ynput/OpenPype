@@ -33,7 +33,7 @@ class GafferLoadAlembicCamera(load.LoaderPlugin):
         reader = GafferScene.SceneReader()
         box.addChild(reader)
 
-        create_set = GafferScene.Set("{}_set".format(name))
+        create_set = GafferScene.Set("cameras_set")
         box.addChild(create_set)
         create_set["name"].setValue("__cameras")
         create_set["in"].setInput(reader["out"])
