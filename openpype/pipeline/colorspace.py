@@ -162,6 +162,30 @@ def get_ocio_config_colorspaces(config_path):
         return json.loads(return_json_data)
 
 
+def get_ocio_config_views(config_path):
+    with _make_temp_json_file() as tmp_json_path:
+        # Prepare subprocess arguments
+        args = [
+            "run", get_ocio_config_script_path(),
+            "config", "get_views",
+            "--in_path", config_path,
+            "--out_path", tmp_json_path
+
+        ]
+        log.info("Executing: {}".format(" ".join(args)))
+
+        process_kwargs = {
+            "logger": log,
+            "env": {}
+        }
+
+        run_openpype_process(*args, **process_kwargs)
+
+        # return all colorspaces
+        return_json_data = open(tmp_json_path).read()
+        return json.loads(return_json_data)
+
+
 def get_imageio_config(
     project_name, host_name,
     project_settings=None,
