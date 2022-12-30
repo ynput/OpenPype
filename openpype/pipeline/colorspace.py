@@ -9,10 +9,10 @@ from openpype import PACKAGE_DIR
 from openpype.settings import get_project_settings
 from openpype.lib import (
     StringTemplate,
-    run_openpype_process
+    run_openpype_process,
+    Logger
 )
 from openpype.pipeline import Anatomy
-from openpype.lib.log import Logger
 
 log = Logger.get_logger(__name__)
 
