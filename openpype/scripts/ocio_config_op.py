@@ -5,6 +5,11 @@ import PyOpenColorIO as ocio
 
 
 @click.group()
+def main():
+    pass
+
+
+@main.group()
 def config():
     pass
 
@@ -42,11 +47,5 @@ def get_colorspace(in_path, out_path):
     print(f"Data are saved to '{json_path}'")
 
 
-@click.group()
-def cli():
-    pass
-
-
 if __name__ == '__main__':
-    cli.add_command(config)
-    cli()
+    main()
