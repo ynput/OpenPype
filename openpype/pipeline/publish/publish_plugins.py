@@ -14,7 +14,7 @@ from .lib import (
 )
 
 from ..colorspace import (
-    get_imagio_colorspace_from_filepath,
+    get_imageio_colorspace_from_filepath,
     get_imageio_config,
     get_imageio_file_rules
 )
@@ -354,7 +354,7 @@ class ExtractorColormanaged(Extractor):
             filename))
 
         # get matching colorspace from rules
-        colorspace = colorspace or get_imagio_colorspace_from_filepath(
+        colorspace = colorspace or get_imageio_colorspace_from_filepath(
             filename, host_name, project_name,
             config_data=config_data,
             file_rules=file_rules,

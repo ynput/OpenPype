@@ -11,7 +11,7 @@ from openpype.lib.log import Logger
 log = Logger.get_logger(__name__)
 
 
-def get_imagio_colorspace_from_filepath(
+def get_imageio_colorspace_from_filepath(
     path, host_name, project_name,
     config_data=None, file_rules=None,
     project_settings=None,
