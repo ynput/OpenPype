@@ -615,6 +615,10 @@
                             "label": "ValidateNodeNoGhosting"
                         },
                         {
+                            "key": "ValidatePathForPlugin",
+                            "label": "Non-existent Paths in Non-Maya Nodes"
+                        },
+                        {
                             "key": "ValidateShapeDefaultNames",
                             "label": "ValidateShapeDefaultNames"
                         },

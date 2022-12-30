@@ -555,6 +555,11 @@
             "optional": false,
             "active": true
         },
+        "ValidatePathForPlugin": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateShapeDefaultNames": {
             "enabled": false,
             "optional": true,
