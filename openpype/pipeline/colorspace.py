@@ -97,6 +97,37 @@ def get_imageio_colorspace_from_filepath(
     return colorspace_name
 
 
+def parse_colorspace_from_filepath(
+    path, host_name, project_name,
+    config_data=None,
+    project_settings=None
+):
+    if not config_data:
+        project_settings = project_settings or get_project_settings(
+            project_name
+        )
+        config_data = get_imageio_config(
+            project_name, host_name, project_settings)
+
+    config_path = config_data["path"]
+
+    # match file rule from path
+    colorspace_name = None
+    colorspaces = get_ocio_config_colorspaces(config_path)
+    for colorspace_key in colorspaces:
+        if colorspace_key.replace(" ", "_") in path:
+            colorspace_name = colorspace_key
+            break
+
+    if not colorspace_name:
+        log.info("No matching colorspace in config '{}' for path: '{}'".format(
+            config_path, path
+        ))
+        return None
+
+    return colorspace_name
+
+
 def validate_imageio_colorspace_in_config(config_path, colorspace_name):
     colorspaces = get_ocio_config_colorspaces(config_path)
     if colorspace_name not in colorspaces:
