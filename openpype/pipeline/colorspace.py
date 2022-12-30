@@ -18,7 +18,7 @@ log = Logger.get_logger(__name__)
 
 
 @contextlib.contextmanager
-def make_temp_file():
+def _make_temp_json_file():
     try:
         # Store dumped json to temporary file
         temporary_json_file = tempfile.NamedTemporaryFile(
@@ -139,7 +139,7 @@ def validate_imageio_colorspace_in_config(config_path, colorspace_name):
 
 
 def get_ocio_config_colorspaces(config_path):
-    with make_temp_file() as tmp_json_path:
+    with _make_temp_json_file() as tmp_json_path:
         # Prepare subprocess arguments
         args = [
             "run", get_ocio_config_script_path(),
