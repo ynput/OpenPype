@@ -480,7 +480,7 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
 name = "gazu"
-version = "0.8.30"
+version = "0.8.34"
 description = "Gazu is a client for Zou, the API to store the data of your CG production."
 category = "main"
 optional = false
@@ -489,7 +489,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 [package.dependencies]
 deprecated = "1.2.13"
 python-socketio = {version = "4.6.1", extras = ["client"], markers = "python_version >= \"3.5\""}
-requests = ">=2.25.1,<=2.27.1"
+requests = ">=2.25.1,<=2.28.1"
 
 [package.extras]
 dev = ["wheel"]
@@ -2207,7 +2207,7 @@ future = [
     {file = "future-0.18.2.tar.gz", hash = "sha256:b1bead90b70cf6ec3f0710ae53a525360fa360d306a86583adc6bf83a4db537d"},
 ]
 gazu = [
-    {file = "gazu-0.8.30-py2.py3-none-any.whl", hash = "sha256:d692927a11314151bc33e7d67edee634053f70a3b09e4500dfc6626bfea18753"},
+    {file = "gazu-0.8.34-py2.py3-none-any.whl", hash = "sha256:a78a8c5e61108aeaab6185646af78b0402dbdb29097e8ba5882bd55410f38c4b"},
 ]
 gitdb = [
     {file = "gitdb-4.0.9-py3-none-any.whl", hash = "sha256:8033ad4e853066ba6ca92050b9df2f89301b8fc8bf7e9324d412a63f8bf1a8fd"},
