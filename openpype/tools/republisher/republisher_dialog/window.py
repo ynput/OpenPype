@@ -2,193 +2,16 @@ import collections
 
 from qtpy import QtWidgets, QtGui, QtCore
 
-from openpype.client import get_projects, get_assets
-from openpype.lib.events import EventSystem
+from openpype.style import load_stylesheet
 
+from .control import RepublisherDialogController
 
 PROJECT_NAME_ROLE = QtCore.Qt.UserRole + 1
 ASSET_NAME_ROLE = QtCore.Qt.UserRole + 2
 ASSET_ICON_ROLE = QtCore.Qt.UserRole + 3
 ASSET_ID_ROLE = QtCore.Qt.UserRole + 4
-
-
-class AssetItem:
-    def __init__(self, entity_id, name, icon, parent_id):
-        self.id = entity_id
-        self.name = name
-        self.icon = icon
-        self.parent_id = parent_id
-
-    @classmethod
-    def from_doc(cls, asset_doc):
-        parent_id = asset_doc["data"].get("visualParent")
-        if parent_id is not None:
-            parent_id = str(parent_id)
-        return cls(
-            str(asset_doc["_id"]),
-            asset_doc["name"],
-            asset_doc["data"].get("icon"),
-            parent_id
-        )
-
-
-
-class EntitiesModel:
-    def __init__(self, event_system):
-        self._event_system = event_system
-        self._projects = None
-        self._assets_by_project = {}
-        self._tasks_by_asset_id = collections.defaultdict(dict)
-
-    def has_cached_projects(self):
-        return self._projects is None
-
-    def has_cached_assets(self, project_name):
-        if not project_name:
-            return True
-        return project_name in self._assets_by_project
-
-    def has_cached_tasks(self, project_name):
-        if not project_name:
-            return True
-        return project_name in self._assets_by_project
-
-    def get_projects(self):
-        if self._projects is not None:
-            return list(self._projects)
-
-        self.refresh_projects()
-
-    def get_assets(self, project_name):
-        if project_name in self._assets_by_project:
-            return dict(self._assets_by_project[project_name])
-        self.refresh_assets(project_name)
-        return []
-
-    def get_tasks(self, project_name, asset_id):
-        output = []
-        if not project_name or not asset_id:
-            return output
-
-        if project_name not in self._assets_by_project:
-            self.refresh_assets(project_name)
-            return output
-
-        asset_docs = self._assets_by_project[project_name]
-        asset_doc = asset_docs.get(asset_id)
-        if not asset_doc:
-            return output
-
-        for task, _task_info in asset_doc["data"]["tasks"].items():
-            output.append(task)
-        return output
-
-    def refresh_projects(self):
-        self._projects = None
-        self._event_system.emit(
-            "projects.refresh.started", {}, "entities.model"
-        )
-        self._projects = [project["name"] for project in get_projects()]
-        self._event_system.emit(
-            "projects.refresh.finished", {}, "entities.model"
-        )
-
-    def refresh_assets(self, project_name):
-        self._event_system.emit(
-            "assets.refresh.started",
-            {"project_name": project_name},
-            "entities.model"
-        )
-        asset_docs = []
-        if project_name:
-            asset_docs = get_assets(project_name)
-        asset_items_by_id = {}
-        for asset_doc in asset_docs:
-            asset_item = AssetItem.from_doc(asset_doc)
-            asset_items_by_id[asset_item.id] = asset_item
-        self._assets_by_project[project_name] = asset_items_by_id
-        self._event_system.emit(
-            "assets.refresh.finished",
-            {"project_name": project_name},
-            "entities.model"
-        )
-
-
-class SelectionModel:
-    def __init__(self, event_system):
-        self._event_system = event_system
-
-        self.project_name = None
-        self.asset_id = None
-        self.task_name = None
-
-    def select_project(self, project_name):
-        if self.project_name == project_name:
-            return
-
-        self.project_name = project_name
-        self.asset_id = None
-        self.task_name = None
-        self._event_system.emit(
-            "project.changed",
-            {"project_name": project_name},
-            "selection.model"
-        )
-
-    def select_asset(self, asset_id):
-        if self.asset_id == asset_id:
-            return
-        self.asset_id = asset_id
-        self.task_name = None
-        self._event_system.emit(
-            "asset.changed",
-            {
-                "project_name": self.project_name,
-                "asset_id": asset_id
-            },
-            "selection.model"
-        )
-
-    def select_task(self, task_name):
-        if self.task_name == task_name:
-            return
-        self.task_name = task_name
-        self._event_system.emit(
-            "task.changed",
-            {
-                "project_name": self.project_name,
-                "asset_id": self.asset_id,
-                "task_name": task_name
-            },
-            "selection.model"
-        )
-
-
-class RepublisherDialogController:
-    def __init__(self):
-        event_system = EventSystem()
-        entities_model = EntitiesModel(event_system)
-        selection_model = SelectionModel(event_system)
-
-        self._event_system = event_system
-        self._entities_model = entities_model
-        self._selection_model = selection_model
-
-        self.dst_project_name = None
-        self.dst_asset_id = None
-        self.dst_task_name = None
-
-    @property
-    def event_system(self):
-        return self._event_system
-
-    @property
-    def model(self):
-        return self._entities_model
-
-    @property
-    def selection_model(self):
-        return self._selection_model
+TASK_NAME_ROLE = QtCore.Qt.UserRole + 5
+TASK_TYPE_ROLE = QtCore.Qt.UserRole + 6
 
 
 class ProjectsModel(QtGui.QStandardItemModel):
@@ -197,7 +20,7 @@ class ProjectsModel(QtGui.QStandardItemModel):
     select_project_text = "< Select Project >"
 
     def __init__(self, controller):
-        super().__init__()
+        super(ProjectsModel, self).__init__()
         self._controller = controller
 
         self.event_system.add_callback(
@@ -249,20 +72,39 @@ class ProjectsModel(QtGui.QStandardItemModel):
             root_item.appendRows(new_items)
 
 
+class ProjectProxyModel(QtCore.QSortFilterProxyModel):
+    def __init__(self):
+        super(ProjectProxyModel, self).__init__()
+        self._filter_empty_projects = False
+
+    def set_filter_empty_project(self, filter_empty_projects):
+        if filter_empty_projects == self._filter_empty_projects:
+            return
+        self._filter_empty_projects = filter_empty_projects
+        self.invalidate()
+
+    def filterAcceptsRow(self, row, parent):
+        if not self._filter_empty_projects:
+            return True
+        model = self.sourceModel()
+        source_index = model.index(row, self.filterKeyColumn(), parent)
+        if model.data(source_index, PROJECT_NAME_ROLE) is None:
+            return False
+        return True
+
+
 class AssetsModel(QtGui.QStandardItemModel):
     empty_text = "< Empty >"
 
     def __init__(self, controller):
-        super().__init__()
+        super(AssetsModel, self).__init__()
         self._controller = controller
 
-        items = {}
-
         placeholder_item = QtGui.QStandardItem(self.empty_text)
+        placeholder_item.setFlags(QtCore.Qt.ItemIsEnabled)
 
         root_item = self.invisibleRootItem()
         root_item.appendRows([placeholder_item])
-        items[None] = placeholder_item
 
         self.event_system.add_callback(
             "project.changed", self._on_project_change
@@ -274,9 +116,10 @@ class AssetsModel(QtGui.QStandardItemModel):
             "assets.refresh.finished", self._on_refresh_finish
         )
 
-        self._items = {}
+        self._items = {None: placeholder_item}
 
         self._placeholder_item = placeholder_item
+        self._last_project = None
 
     @property
     def event_system(self):
@@ -302,6 +145,11 @@ class AssetsModel(QtGui.QStandardItemModel):
         self._items[None] = self._placeholder_item
 
     def _on_project_change(self, event):
+        project_name = event["project_name"]
+        if project_name == self._last_project:
+            return
+
+        self._last_project = project_name
         self._clear()
 
     def _on_refresh_start(self, event):
@@ -310,10 +158,10 @@ class AssetsModel(QtGui.QStandardItemModel):
     def _on_refresh_finish(self, event):
         event_project_name = event["project_name"]
         project_name = self._controller.selection_model.project_name
-        print("finished", event_project_name, project_name)
         if event_project_name != project_name:
             return
 
+        self._last_project = event["project_name"]
         if project_name is None:
             if None not in self._items:
                 self._clear()
@@ -334,7 +182,6 @@ class AssetsModel(QtGui.QStandardItemModel):
             root_item.takeRow(self._placeholder_item.row())
 
         items_to_remove = set(self._items) - set(asset_items_by_id.keys())
-
         hierarchy_queue = collections.deque()
         hierarchy_queue.append((None, root_item))
         while hierarchy_queue:
@@ -344,6 +191,10 @@ class AssetsModel(QtGui.QStandardItemModel):
                 item = self._items.get(asset_item.id)
                 if item is None:
                     item = QtGui.QStandardItem()
+                    item.setFlags(
+                        QtCore.Qt.ItemIsSelectable
+                        | QtCore.Qt.ItemIsEnabled
+                    )
                     new_items.append(item)
                     self._items[asset_item.id] = item
 
@@ -353,6 +204,8 @@ class AssetsModel(QtGui.QStandardItemModel):
                 item.setData(asset_item.name, QtCore.Qt.DisplayRole)
                 item.setData(asset_item.id, ASSET_ID_ROLE)
                 item.setData(asset_item.icon, ASSET_ICON_ROLE)
+
+                hierarchy_queue.append((asset_item.id, item))
 
             if new_items:
                 parent_item.appendRows(new_items)
@@ -366,46 +219,246 @@ class AssetsModel(QtGui.QStandardItemModel):
                 parent.removeRow(item.row())
 
 
+class TasksModel(QtGui.QStandardItemModel):
+    empty_text = "< Empty >"
+
+    def __init__(self, controller):
+        super(TasksModel, self).__init__()
+        self._controller = controller
+
+        placeholder_item = QtGui.QStandardItem(self.empty_text)
+        placeholder_item.setFlags(QtCore.Qt.ItemIsEnabled)
+
+        root_item = self.invisibleRootItem()
+        root_item.appendRows([placeholder_item])
+
+        self.event_system.add_callback(
+            "project.changed", self._on_project_change
+        )
+        self.event_system.add_callback(
+            "assets.refresh.finished", self._on_asset_refresh_finish
+        )
+        self.event_system.add_callback(
+            "asset.changed", self._on_asset_change
+        )
+
+        self._items = {None: placeholder_item}
+
+        self._placeholder_item = placeholder_item
+        self._last_project = None
+
+    @property
+    def event_system(self):
+        return self._controller.event_system
+
+    def _clear(self):
+        placeholder_in = False
+        root_item = self.invisibleRootItem()
+        for row in reversed(range(root_item.rowCount())):
+            item = root_item.child(row)
+            task_name = item.data(TASK_NAME_ROLE)
+            if task_name is None:
+                placeholder_in = True
+                continue
+            root_item.removeRow(item.row())
+
+        for key in tuple(self._items.keys()):
+            if key is not None:
+                self._items.pop(key)
+
+        if not placeholder_in:
+            root_item.appendRows([self._placeholder_item])
+        self._items[None] = self._placeholder_item
+
+    def _on_project_change(self, event):
+        project_name = event["project_name"]
+        if project_name == self._last_project:
+            return
+
+        self._last_project = project_name
+        self._clear()
+
+    def _on_asset_refresh_finish(self, event):
+        self._refresh(event["project_name"])
+
+    def _on_asset_change(self, event):
+        self._refresh(event["project_name"])
+
+    def _refresh(self, new_project_name):
+        project_name = self._controller.selection_model.project_name
+        if new_project_name != project_name:
+            return
+
+        self._last_project = project_name
+        if project_name is None:
+            if None not in self._items:
+                self._clear()
+            return
+
+        asset_id = self._controller.selection_model.asset_id
+        task_items = self._controller.model.get_tasks(
+            project_name, asset_id
+        )
+        if not task_items:
+            self._clear()
+            return
+
+        root_item = self.invisibleRootItem()
+        if None in self._items:
+            self._items.pop(None)
+            root_item.takeRow(self._placeholder_item.row())
+
+        new_items = []
+        task_names = set()
+        for task_item in task_items:
+            task_name = task_item.name
+            item = self._items.get(task_name)
+            if item is None:
+                item = QtGui.QStandardItem()
+                item.setFlags(
+                    QtCore.Qt.ItemIsSelectable
+                    | QtCore.Qt.ItemIsEnabled
+                )
+                new_items.append(item)
+                self._items[task_name] = item
+
+            item.setData(task_name, QtCore.Qt.DisplayRole)
+            item.setData(task_name, TASK_NAME_ROLE)
+            item.setData(task_item.task_type, TASK_TYPE_ROLE)
+
+        if new_items:
+            root_item.appendRows(new_items)
+
+        items_to_remove = set(self._items) - task_names
+        for item_id in items_to_remove:
+            item = self._items.pop(item_id, None)
+            if item is None:
+                continue
+            parent = item.parent()
+            if parent is not None:
+                parent.removeRow(item.row())
+
+
 class RepublisherDialogWindow(QtWidgets.QWidget):
     def __init__(self, controller=None):
-        super().__init__()
+        super(RepublisherDialogWindow, self).__init__()
         if controller is None:
             controller = RepublisherDialogController()
         self._controller = controller
 
-        left_widget = QtWidgets.QWidget(self)
+        main_splitter = QtWidgets.QSplitter(self)
+
+        left_widget = QtWidgets.QWidget(main_splitter)
 
         project_combobox = QtWidgets.QComboBox(left_widget)
         project_model = ProjectsModel(controller)
+        project_proxy = ProjectProxyModel()
+        project_proxy.setSourceModel(project_model)
         project_delegate = QtWidgets.QStyledItemDelegate()
         project_combobox.setItemDelegate(project_delegate)
-        project_combobox.setModel(project_model)
+        project_combobox.setModel(project_proxy)
 
-        asset_view = QtWidgets.QTreeView(self)
+        asset_view = QtWidgets.QTreeView(left_widget)
+        asset_view.setHeaderHidden(True)
         asset_model = AssetsModel(controller)
         asset_view.setModel(asset_model)
 
         left_layout = QtWidgets.QVBoxLayout(left_widget)
+        left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.addWidget(project_combobox, 0)
         left_layout.addWidget(asset_view, 1)
 
+        right_widget = QtWidgets.QWidget(main_splitter)
+
+        task_view = QtWidgets.QListView(right_widget)
+        task_proxy = QtCore.QSortFilterProxyModel()
+        task_model = TasksModel(controller)
+        task_proxy.setSourceModel(task_model)
+        task_view.setModel(task_proxy)
+
+        right_layout = QtWidgets.QVBoxLayout(right_widget)
+        right_layout.setContentsMargins(0, 0, 0, 0)
+        right_layout.addWidget(task_view, 1)
+
+        main_splitter.addWidget(left_widget)
+        main_splitter.addWidget(right_widget)
+
+        btns_widget = QtWidgets.QWidget(self)
+        close_btn = QtWidgets.QPushButton("Close", btns_widget)
+        select_btn = QtWidgets.QPushButton("Select", btns_widget)
+
+        btns_layout = QtWidgets.QHBoxLayout(btns_widget)
+        btns_layout.setContentsMargins(0, 0, 0, 0)
+        btns_layout.addStretch(1)
+        btns_layout.addWidget(close_btn, 0)
+        btns_layout.addWidget(select_btn, 0)
+
         main_layout = QtWidgets.QHBoxLayout(self)
-        main_layout.addWidget(left_widget)
+        main_layout.addWidget(main_splitter, 1)
+        main_layout.addWidget(btns_widget, 0)
+
+        project_combobox.currentIndexChanged.connect(self._on_project_change)
+        asset_view.selectionModel().selectionChanged.connect(
+            self._on_asset_change
+        )
+        task_view.selectionModel().selectionChanged.connect(
+            self._on_task_change
+        )
+        select_btn.clicked.connect(self._on_select_click)
+        close_btn.clicked.connect(self._on_close_click)
 
         self._project_combobox = project_combobox
         self._project_model = project_model
+        self._project_proxy = project_proxy
         self._project_delegate = project_delegate
 
         self._asset_view = asset_view
         self._asset_model = asset_model
 
+        self._task_view = task_view
+
         self._first_show = True
 
     def showEvent(self, event):
-        super().showEvent(event)
+        super(RepublisherDialogWindow, self).showEvent(event)
         if self._first_show:
             self._first_show = False
             self._controller.model.refresh_projects()
+            self.setStyleSheet(load_stylesheet())
+
+    def _on_project_change(self):
+        idx = self._project_combobox.currentIndex()
+        if idx < 0:
+            self._project_proxy.set_filter_empty_project(False)
+            return
+
+        project_name = self._project_combobox.itemData(idx, PROJECT_NAME_ROLE)
+        self._project_proxy.set_filter_empty_project(project_name is not None)
+        self._controller.selection_model.select_project(project_name)
+
+    def _on_asset_change(self):
+        indexes = self._asset_view.selectedIndexes()
+        index = next(iter(indexes), None)
+        asset_id = None
+        if index is not None:
+            model = self._asset_view.model()
+            asset_id = model.data(index, ASSET_ID_ROLE)
+        self._controller.selection_model.select_asset(asset_id)
+
+    def _on_task_change(self):
+        indexes = self._task_view.selectedIndexes()
+        index = next(iter(indexes), None)
+        task_name = None
+        if index is not None:
+            model = self._task_view.model()
+            task_name = model.data(index, TASK_NAME_ROLE)
+        self._controller.selection_model.select_task(task_name)
+
+    def _on_close_click(self):
+        self.close()
+
+    def _on_select_click(self):
+        self._controller.submit()
 
 
 def main():
