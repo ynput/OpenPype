@@ -1,14 +1,56 @@
 from copy import deepcopy
 import re
 import os
+import json
 import platform
-import PyOpenColorIO as ocio
+import contextlib
+import tempfile
+from openpype import PACKAGE_DIR
 from openpype.settings import get_project_settings
-from openpype.lib import StringTemplate
+from openpype.lib import (
+    StringTemplate,
+    run_openpype_process
+)
 from openpype.pipeline import Anatomy
 from openpype.lib.log import Logger
 
 log = Logger.get_logger(__name__)
+
+
+@contextlib.contextmanager
+def make_temp_file():
+    try:
+        # Store dumped json to temporary file
+        temporary_json_file = tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False
+        )
+        temporary_json_file.close()
+        temporary_json_filepath = temporary_json_file.name.replace(
+            "\\", "/"
+        )
+
+        yield temporary_json_filepath
+
+    except IOError as _error:
+        raise IOError(
+            "Not able to create temp json file: {}".format(
+                _error
+            )
+        )
+
+    finally:
+        # Remove the temporary json
+        os.remove(temporary_json_filepath)
+
+
+def get_ocio_config_script_path():
+    return os.path.normpath(
+        os.path.join(
+            PACKAGE_DIR,
+            "scripts",
+            "ocio_config_op.py"
+        )
+    )
 
 
 def get_imageio_colorspace_from_filepath(
@@ -49,8 +91,6 @@ def get_imageio_colorspace_from_filepath(
 
     # validate matching colorspace with config
     if validate and config_data:
-        validate_imageio_config_from_path(
-            config_data["path"])
         validate_imageio_colorspace_in_config(
             config_data["path"], colorspace_name)
 
@@ -58,26 +98,36 @@ def get_imageio_colorspace_from_filepath(
 
 
 def validate_imageio_colorspace_in_config(config_path, colorspace_name):
-    config_obj = get_ocio_config(config_path)
-    if not config_obj.getColorSpace(colorspace_name):
-        raise ocio.Exception(
+    colorspaces = get_ocio_config_colorspaces(config_path)
+    if colorspace_name not in colorspaces:
+        raise KeyError(
             "Missing colorspace '{}' in config file '{}'".format(
-                colorspace_name, config_obj.getWorkingDir())
+                colorspace_name, config_path)
         )
 
 
-def validate_imageio_config_from_path(config_path):
-    try:
-        config_obj = get_ocio_config(config_path)
-    except ocio.Exception:
-        raise ocio.ExceptionMissingFile(
-            "Missing ocio config file at: {}".format(config_path))
+def get_ocio_config_colorspaces(config_path):
+    with make_temp_file() as tmp_json_path:
+        # Prepare subprocess arguments
+        args = [
+            "run", get_ocio_config_script_path(),
+            "config", "get_colorspace",
+            "--in_path", config_path,
+            "--out_path", tmp_json_path
 
-    return config_obj
+        ]
+        log.info("Executing: {}".format(" ".join(args)))
 
+        process_kwargs = {
+            "logger": log,
+            "env": {}
+        }
 
-def get_ocio_config(config_path):
-    return ocio.Config().CreateFromFile(config_path)
+        run_openpype_process(*args, **process_kwargs)
+
+        # return all colorspaces
+        return_json_data = open(tmp_json_path).read()
+        return json.loads(return_json_data)
 
 
 def get_imageio_config(
