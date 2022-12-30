@@ -104,6 +104,7 @@ def validate_imageio_colorspace_in_config(config_path, colorspace_name):
             "Missing colorspace '{}' in config file '{}'".format(
                 colorspace_name, config_path)
         )
+    return True
 
 
 def get_ocio_config_colorspaces(config_path):
