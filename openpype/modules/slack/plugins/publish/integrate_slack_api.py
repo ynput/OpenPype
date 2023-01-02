@@ -1,4 +1,5 @@
 import os
+import re
 import six
 import pyblish.api
 import copy
@@ -132,14 +133,14 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                     fill_key = "task[{}]".format(key)
                     fill_pairs.append((fill_key, value))
 
-        self.log.debug("fill_pairs ::{}".format(fill_pairs))
         multiple_case_variants = prepare_template_data(fill_pairs)
         fill_data.update(multiple_case_variants)
-
-        message = None
+        message = ''
         try:
-            message = message_templ.format(**fill_data)
+            message = self._escape_missing_keys(message_templ, fill_data).\
+                format(**fill_data)
         except Exception:
+            # shouldn't happen
             self.log.warning(
                 "Some keys are missing in {}".format(message_templ),
                 exc_info=True)
@@ -162,17 +163,21 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
 
     def _get_review_path(self, instance):
         """Returns abs url for review if present in instance repres"""
-        published_path = None
+        review_path = None
         for repre in instance.data.get("representations", []):
             tags = repre.get('tags', [])
             if (repre.get("review")
                     or "review" in tags
                     or "burnin" in tags):
-                if os.path.exists(repre["published_path"]):
-                    published_path = repre["published_path"]
+                repre_review_path = (
+                    repre.get("published_path") or
+                    os.path.join(repre["stagingDir"], repre["files"])
+                )
+                if os.path.exists(repre_review_path):
+                    review_path = repre_review_path
                 if "burnin" in tags:  # burnin has precedence if exists
                     break
-        return published_path
+        return review_path
 
     def _python2_call(self, token, channel, message, publish_files):
         from slackclient import SlackClient
@@ -263,3 +268,22 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             msg = " - application must added to channel '{}'.".format(channel)
             error_str += msg + " Ask Slack admin."
         return error_str
+
+    def _escape_missing_keys(self, message, fill_data):
+        """Double escapes placeholder which are missing in 'fill_data'"""
+        placeholder_keys = re.findall("\{([^}]+)\}", message)
+
+        fill_keys = []
+        for key, value in fill_data.items():
+            fill_keys.append(key)
+            if isinstance(value, dict):
+                for child_key in value.keys():
+                    fill_keys.append("{}[{}]".format(key, child_key))
+
+        not_matched = set(placeholder_keys) - set(fill_keys)
+
+        for not_matched_item in not_matched:
+            message = message.replace("{}".format(not_matched_item),
+                                      "{{{}}}".format(not_matched_item))
+
+        return message
