@@ -82,7 +82,7 @@ cmds.file(current_name, open=True, force=True)
 print(">>> Processing references")
 all_reference = cmds.file(q=True, reference=True) or []
 for ref in all_reference:
-    if cmds.referenceQuery(ref, f=True, il=True):
+    if cmds.referenceQuery(ref, il=True):
         cmds.file(ref, importReference=True)
 
         nested_ref = cmds.file(q=True, reference=True)
