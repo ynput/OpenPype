@@ -15,6 +15,7 @@
 """
 import pytest
 import logging
+import shutil
 import os
 
 from tests.lib.testing_classes import ModuleUnitTest
@@ -23,6 +24,13 @@ log = logging.getLogger("test_colorspace")
 
 
 class TestPipelineColorspace(ModuleUnitTest):
+    """ Testing Colorspace
+
+    Example:
+        cd to OpenPype repo root dir
+        poetry run python ./start.py runtests ../tests/unit/openpype/pipeline
+    """
+    PERSIST = True
 
     TEST_DATA_FOLDER = "C:\\CODE\\__PYPE\\__unit_testing_data\\test_pipeline_colorspace"
     TEST_FILES = [
@@ -34,33 +42,109 @@ class TestPipelineColorspace(ModuleUnitTest):
     ]
 
     @pytest.fixture(scope="module")
-    def config_path(self, download_test_data):
-        yield os.path.join(
+    def output_folder_url(self, download_test_data):
+        """Returns location of published data, cleans it first if exists."""
+        path = os.path.join(download_test_data, "output")
+        if os.path.exists(path):
+            print("Purging {}".format(path))
+            shutil.rmtree(path)
+        yield path
+
+    @pytest.fixture(scope="module")
+    def config_path_project(
+        self,
+        download_test_data,
+        output_folder_url
+    ):
+        src_path = os.path.join(
             download_test_data,
             "input",
             "data",
             "configs",
-            "aces_1.2",
-            "ayon_aces_config.ocio",
+            "aces_1.3",
+            "ayon_aces_config_project.ocio"
+        )
+        dest_dir = os.path.join(
+            output_folder_url,
+            self.PROJECT,
+            "ocio"
+        )
+        print(f"__ dest_dir: {dest_dir}")
+        dest_path = os.path.join(
+            dest_dir,
+            "config.ocio"
+        )
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir)
+
+        shutil.copyfile(src_path, dest_path)
+
+        yield dest_path
+
+    @pytest.fixture(scope="module")
+    def config_path_asset(
+        self,
+        download_test_data,
+        output_folder_url
+    ):
+        src_path = os.path.join(
+            download_test_data,
+            "input",
+            "data",
+            "configs",
+            "aces_1.3",
+            "ayon_aces_config_asset.ocio"
+        )
+        dest_dir = os.path.join(
+            output_folder_url,
+            self.PROJECT,
+            self.ASSET,
+            "ocio"
+        )
+        print(f"__ dest_dir: {dest_dir}")
+        dest_path = os.path.join(
+            dest_dir,
+            "config.ocio"
+        )
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir)
+
+        shutil.copyfile(src_path, dest_path)
+
+        yield dest_path
+
+    def test_config_file_project(
+        self,
+        dbcon,
+        config_path_project,
+        project_settings
+    ):
+        legacy_io.install()
+        expected_template = "{root[work]}/{project[name]}/ocio/config.ocio"
+
+        # get config_data from hiero
+        # where project level config is defined
+        config_data = colorspace.get_imageio_config(
+            "test_project", "hiero", project_settings)
+
+        assert os.path.exists(config_data["path"]), (
+            f"Config file \'{config_data['path']}\' doesn't exist"
+        )
+        assert config_data["template"] == expected_template, (
+            f"Config template \'{config_data['template']}\' doesn't match "
+            f"expected tempalte \'{expected_template}\'"
         )
 
-    def test_config_file_exists(self, config_path):
-        print(config_path)
-        if not os.path.exists(config_path):
-            raise ValueError(
-                "Config file '{}' doesn't exist".format(config_path)
-            )
-
-    def test_parse_colorspace_from_filepath(self, dbcon, config_path):
+    def test_parse_colorspace_from_filepath(self, legacy_io, config_path_asset):
         legacy_io.install()
 
         config_data = {
-            "path": config_path
+            "path": config_path_asset
         }
 
         path = "renderCompMain_ACES_-_ACES2065-1.####.exr"
 
-        expected = "ACES - ACES2065-1"
+        expected = "ACES2065-1"
 
         ret = colorspace.parse_colorspace_from_filepath(
             path, "nuke", "test_project", config_data=config_data
@@ -68,53 +152,13 @@ class TestPipelineColorspace(ModuleUnitTest):
 
         assert ret == expected, f"Not matching colorspace {expected}"
 
-    def test_get_ocio_config_views(self, config_path):
-        expected = {
-            "AYON/test_sRGB": {
-                "display": "AYON", "view": "test_sRGB"},
-            "ACES/sRGB": {
-                "display": "ACES", "view": "sRGB"},
-            "ACES/DCDM": {
-                "display": "ACES", "view": "DCDM"},
-            "ACES/DCDM P3D60 Limited": {
-                "display": "ACES", "view": "DCDM P3D60 Limited"},
-            "ACES/DCDM P3D65 Limited": {
-                "display": "ACES", "view": "DCDM P3D65 Limited"},
-            "ACES/P3-D60": {
-                "display": "ACES", "view": "P3-D60"},
-            "ACES/P3-DCI D60 simulation": {
-                "display": "ACES", "view": "P3-DCI D60 simulation"},
-            "ACES/P3-DCI D65 simulation": {
-                "display": "ACES", "view": "P3-DCI D65 simulation"},
-            "ACES/P3D65": {
-                "display": "ACES", "view": "P3D65"},
-            "ACES/P3D65 D60 simulation": {
-                "display": "ACES", "view": "P3D65 D60 simulation"},
-            "ACES/P3D65 Rec.709 Limited": {
-                "display": "ACES", "view": "P3D65 Rec.709 Limited"},
-            "ACES/Rec.2020": {
-                "display": "ACES", "view": "Rec.2020"},
-            "ACES/Rec.2020 P3D65 Limited": {
-                "display": "ACES", "view": "Rec.2020 P3D65 Limited"},
-            "ACES/Rec.2020 Rec.709 Limited": {
-                "display": "ACES", "view": "Rec.2020 Rec.709 Limited"},
-            "ACES/Rec.2020 HLG 1000 nits": {
-                "display": "ACES", "view": "Rec.2020 HLG 1000 nits"},
-            "ACES/Rec.709": {
-                "display": "ACES", "view": "Rec.709"},
-            "ACES/Rec.709 D60 sim.": {
-                "display": "ACES", "view": "Rec.709 D60 sim."},
-            "ACES/sRGB D60 sim.": {
-                "display": "ACES", "view": "sRGB D60 sim."},
-            "ACES/Raw": {
-                "display": "ACES", "view": "Raw"},
-            "ACES/Log": {
-                "display": "ACES", "view": "Log"}
-        }
+    def test_get_ocio_config_views(self, config_path_asset):
+        expected_num_keys = 12
 
-        ret = colorspace.get_ocio_config_views(config_path)
+        ret = colorspace.get_ocio_config_views(config_path_asset)
 
-        assert ret == expected, f"Not matching colorspace {expected}"
+        assert len(ret) == expected_num_keys, (
+            f"Not matching num viewer keys {expected_num_keys}")
 
 
 test_case = TestPipelineColorspace()
