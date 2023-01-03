@@ -67,6 +67,7 @@ class ModuleUnitTest(BaseTest):
             yield test_data_folder
         else:
             tmpdir = tempfile.mkdtemp()
+            print("Temporary folder created:: {}".format(tmpdir))
             for test_file in self.TEST_FILES:
                 file_id, file_name, md5 = test_file
 
@@ -78,7 +79,6 @@ class ModuleUnitTest(BaseTest):
 
                 if ext.lstrip('.') in RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS:  # noqa: E501
                     RemoteFileHandler.unzip(os.path.join(tmpdir, file_name))
-                print("Temporary folder created:: {}".format(tmpdir))
                 yield tmpdir
 
                 persist = (persist or self.PERSIST or
