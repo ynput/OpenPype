@@ -331,7 +331,9 @@ class SlackPython3Operations(AbstractSlackOperations):
                         "Rate limit hit, sleeping for {}".format(retry_after))
                     time.sleep(int(retry_after))
                 else:
-                    raise e
+                    self.log.warning("Cannot pull user info, "
+                                     "mentions won't work", exc_info=True)
+                    return [], []
 
         return users, groups
 
@@ -395,7 +397,9 @@ class SlackPython2Operations(AbstractSlackOperations):
                         "Rate limit hit, sleeping for {}".format(retry_after))
                     time.sleep(int(retry_after))
                 else:
-                    raise e
+                    self.log.warning("Cannot pull user info, "
+                                     "mentions won't work", exc_info=True)
+                    return [], []
 
         return users, groups
 
