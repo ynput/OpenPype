@@ -187,10 +187,13 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
     def _get_user_id(self, users, user_name):
         """Returns internal slack id for user name"""
         user_id = None
+        user_name_lower = user_name.lower()
         for user in users:
             if (not user.get("deleted") and
-                    (user_name.lower() == user["name"].lower() or
-                     user_name.lower() == user["real_name"])):
+                    (user_name_lower == user["name"].lower() or
+                     # bots dont have display_name
+                     user_name_lower == user.get("display_name", '').lower() or
+                     user_name_lower == user.get("real_name", '').lower())):
                 user_id = user["id"]
                 break
         return user_id
@@ -208,8 +211,9 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
 
     def _translate_users(self, message, users, groups):
         matches = re.findall("(?<!<)@[a-z0-9\._-]+", message)
-        # names with spaces must be in quotes
-        matches.extend(re.findall("(?<!<)['\"]@[^'\"]+", message))
+        in_quotes = re.findall("(?<!<)(['\"])(@[^'\"]+)", message)
+        for item in in_quotes:
+            matches.append(item[1])
         if not matches:
             return message
 
