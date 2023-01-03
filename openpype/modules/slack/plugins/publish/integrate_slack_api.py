@@ -3,6 +3,9 @@ import six
 import pyblish.api
 import copy
 from datetime import datetime
+import re
+from abc import ABCMeta, abstractmethod
+import time
 
 from openpype.client import OpenPypeMongoConnection
 from openpype.lib.plugin_tools import prepare_template_data
@@ -33,6 +36,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         publish_files = set()
         message = ''
         additional_message = instance.data.get("slack_additional_message")
+        token = instance.data["slack_token"]
         if additional_message:
             message = "{} \n".format(additional_message)
         for message_profile in instance.data["slack_channel_message_profiles"]:
@@ -52,18 +56,16 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             project = instance.context.data["anatomyData"]["project"]["code"]
             for channel in message_profile["channels"]:
                 if six.PY2:
-                    msg_id, file_ids = \
-                        self._python2_call(instance.data["slack_token"],
-                                           channel,
-                                           message,
-                                           publish_files)
+                    client = SlackPython2Operations(token, self.log)
                 else:
-                    msg_id, file_ids = \
-                        self._python3_call(instance.data["slack_token"],
-                                           channel,
-                                           message,
-                                           publish_files)
+                    client = SlackPython3Operations(token, self.log)
 
+                users, groups = client.get_users_and_groups()
+                message = self._translate_users(message, users, groups)
+
+                msg_id, file_ids = client.send_message(channel,
+                                                       message,
+                                                       publish_files)
                 if not msg_id:
                     return
 
@@ -177,15 +179,211 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                     break
         return published_path
 
-    def _python2_call(self, token, channel, message, publish_files):
-        from slackclient import SlackClient
+    def _get_user_id(self, users, user_name):
+        """Returns internal slack id for user name"""
+        user_id = None
+        for user in users:
+            if (not user.get("deleted") and
+                    (user_name.lower() == user["name"].lower() or
+                     user_name.lower() == user["real_name"])):
+                user_id = user["id"]
+                break
+        return user_id
+
+    def _get_group_id(self, groups, group_name):
+        """Returns internal group id for string name"""
+        group_id = None
+        for group in groups:
+            if (not group.get("date_delete") and
+                    (group_name.lower() == group["name"].lower() or
+                     group_name.lower() == group["handle"])):
+                group_id = group["id"]
+                break
+        return group_id
+
+    def _translate_users(self, message, users, groups):
+        matches = re.findall("(?<!<)@[a-z0-9\._-]+", message)
+        # names with spaces must be in quotes
+        matches.extend(re.findall("(?<!<)['\"]@[^'\"]+", message))
+        if not matches:
+            return message
+
+        for orig_user in matches:
+            user_name = orig_user.replace("@", '')
+            slack_id = self._get_user_id(users, user_name)
+            mention = None
+            if slack_id:
+                mention = "<@{}>".format(slack_id)
+            else:
+                slack_id = self._get_group_id(groups, user_name)
+                if slack_id:
+                    mention = "<!subteam^{}>".format(slack_id)
+            if mention:
+                message = message.replace(orig_user, mention)
+
+        return message
+
+
+@six.add_metaclass(ABCMeta)
+class AbstractSlackOperations:
+
+    @abstractmethod
+    def _get_users_list(self):
+        """Return response with user list, different methods Python 2 vs 3"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def _get_usergroups_list(self):
+        """Return response with user list, different methods Python 2 vs 3"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_users_and_groups(self):
+        """Return users and groups, different retry in Python 2 vs 3"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def send_message(self, channel, message, publish_files):
+        """Sends message to channel, different methods in Python 2 vs 3"""
+        pass
+
+    def _get_users(self):
+        """Parse users.list response into list of users (dicts)"""
+        first = True
+        next_page = None
+        users = []
+        while first or next_page:
+            response = self._get_users_list()
+            first = False
+            next_page = response.get("response_metadata").get("next_cursor")
+            for user in response.get("members"):
+                users.append(user)
+
+        return users
+
+    def _get_groups(self):
+        """Parses usergroups.list response into list of groups (dicts)"""
+        response = self._get_usergroups_list()
+        groups = []
+        for group in response.get("usergroups"):
+            groups.append(group)
+        return groups
+
+    def _enrich_error(self, error_str, channel):
+        """Enhance known errors with more helpful notations."""
+        if 'not_in_channel' in error_str:
+            # there is no file.write.public scope, app must be explicitly in
+            # the channel
+            msg = " - application must added to channel '{}'.".format(channel)
+            error_str += msg + " Ask Slack admin."
+        return error_str
+
+
+class SlackPython3Operations(AbstractSlackOperations):
+
+    def __init__(self, token, log):
+        from slack_sdk import WebClient
+
+        self.client = WebClient(token=token)
+        self.log = log
+
+    def _get_users_list(self):
+        return self.client.users_list()
+
+    def _get_usergroups_list(self):
+        return self.client.usergroups_list()
+
+    def get_users_and_groups(self):
+        from slack_sdk.errors import SlackApiError
+        while True:
+            try:
+                users = self._get_users()
+                groups = self._get_groups()
+                break
+            except SlackApiError as e:
+                retry_after = e.response.headers.get("Retry-After")
+                if retry_after:
+                    print(
+                        "Rate limit hit, sleeping for {}".format(retry_after))
+                    time.sleep(int(retry_after))
+                else:
+                    raise e
+
+        return users, groups
+
+    def send_message(self, channel, message, publish_files):
+        from slack_sdk.errors import SlackApiError
         try:
-            client = SlackClient(token)
+            attachment_str = "\n\n Attachment links: \n"
+            file_ids = []
+            for published_file in publish_files:
+                response = self.client.files_upload(
+                    file=published_file,
+                    filename=os.path.basename(published_file))
+                attachment_str += "\n<{}|{}>".format(
+                    response["file"]["permalink"],
+                    os.path.basename(published_file))
+                file_ids.append(response["file"]["id"])
+
+            if publish_files:
+                message += attachment_str
+
+            message = self.translate_users(message)
+
+            response = self.client.chat_postMessage(
+                channel=channel,
+                text=message
+            )
+            return response.data["ts"], file_ids
+        except SlackApiError as e:
+            # # You will get a SlackApiError if "ok" is False
+            error_str = self._enrich_error(str(e.response["error"]), channel)
+            self.log.warning("Error happened {}".format(error_str))
+        except Exception as e:
+            error_str = self._enrich_error(str(e), channel)
+            self.log.warning("Not SlackAPI error", exc_info=True)
+
+        return None, []
+
+
+class SlackPython2Operations(AbstractSlackOperations):
+
+    def __init__(self, token, log):
+        from slackclient import SlackClient
+
+        self.client = SlackClient(token=token)
+        self.log = log
+
+    def _get_users_list(self):
+        return self.client.api_call("users.list")
+
+    def _get_usergroups_list(self):
+        return self.client.api_call("usergroups.list")
+
+    def get_users_and_groups(self):
+        while True:
+            try:
+                users = self._get_users()
+                groups = self._get_groups()
+                break
+            except Exception as e:
+                retry_after = e.response.headers.get("Retry-After")
+                if retry_after:
+                    print(
+                        "Rate limit hit, sleeping for {}".format(retry_after))
+                    time.sleep(int(retry_after))
+                else:
+                    raise e
+
+        return users, groups
+
+    def send_message(self, channel, message, publish_files):
+        try:
             attachment_str = "\n\n Attachment links: \n"
             file_ids = []
             for p_file in publish_files:
                 with open(p_file, 'rb') as pf:
-                    response = client.api_call(
+                    response = self.client.api_call(
                         "files.upload",
                         file=pf,
                         channel=channel,
@@ -206,7 +404,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             if publish_files:
                 message += attachment_str
 
-            response = client.api_call(
+            response = self.client.api_call(
                 "chat.postMessage",
                 channel=channel,
                 text=message
@@ -223,46 +421,3 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             self.log.warning("Error happened: {}".format(error_str))
 
         return None, []
-
-    def _python3_call(self, token, channel, message, publish_files):
-        from slack_sdk import WebClient
-        from slack_sdk.errors import SlackApiError
-        try:
-            client = WebClient(token=token)
-            attachment_str = "\n\n Attachment links: \n"
-            file_ids = []
-            for published_file in publish_files:
-                response = client.files_upload(
-                    file=published_file,
-                    filename=os.path.basename(published_file))
-                attachment_str += "\n<{}|{}>".format(
-                    response["file"]["permalink"],
-                    os.path.basename(published_file))
-                file_ids.append(response["file"]["id"])
-
-            if publish_files:
-                message += attachment_str
-
-            response = client.chat_postMessage(
-                channel=channel,
-                text=message
-            )
-            return response.data["ts"], file_ids
-        except SlackApiError as e:
-            # You will get a SlackApiError if "ok" is False
-            error_str = self._enrich_error(str(e.response["error"]), channel)
-            self.log.warning("Error happened {}".format(error_str))
-        except Exception as e:
-            error_str = self._enrich_error(str(e), channel)
-            self.log.warning("Not SlackAPI error", exc_info=True)
-
-        return None, []
-
-    def _enrich_error(self, error_str, channel):
-        """Enhance known errors with more helpful notations."""
-        if 'not_in_channel' in error_str:
-            # there is no file.write.public scope, app must be explicitly in
-            # the channel
-            msg = " - application must added to channel '{}'.".format(channel)
-            error_str += msg + " Ask Slack admin."
-        return error_str
