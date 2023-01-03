@@ -14,6 +14,7 @@ import re
 from tests.lib.db_handler import DBHandler
 from common.openpype_common.distribution.file_handler import RemoteFileHandler
 from openpype.modules import ModulesManager
+from openpype.settings import get_project_settings
 
 
 class BaseTest:
@@ -28,6 +29,7 @@ class ModuleUnitTest(BaseTest):
 
         Implemented fixtures:
             monkeypatch_session - fixture for env vars with session scope
+            project_settings - fixture for project settings with session scope
             download_test_data - tmp folder with extracted data from GDrive
             env_var - sets env vars from input file
             db_setup - prepares avalon AND openpype DBs for testing from
@@ -58,6 +60,12 @@ class ModuleUnitTest(BaseTest):
         m = MonkeyPatch()
         yield m
         m.undo()
+
+    @pytest.fixture(scope='module')
+    def project_settings(self):
+        yield get_project_settings(
+            self.PROJECT
+        )
 
     @pytest.fixture(scope="module")
     def download_test_data(self, test_data_folder, persist, request):
@@ -159,7 +167,9 @@ class ModuleUnitTest(BaseTest):
         """
         from openpype.pipeline import AvalonMongoDB
         dbcon = AvalonMongoDB()
-        dbcon.Session["AVALON_PROJECT"] = self.TEST_PROJECT_NAME
+        dbcon.Session["AVALON_PROJECT"] = self.PROJECT
+        dbcon.Session["AVALON_ASSET"] = self.ASSET
+        dbcon.Session["AVALON_TASK"] = self.TASK
         yield dbcon
 
     @pytest.fixture(scope="module")
