@@ -228,6 +228,25 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
 
         return message
 
+    def _escape_missing_keys(self, message, fill_data):
+        """Double escapes placeholder which are missing in 'fill_data'"""
+        placeholder_keys = re.findall("\{([^}]+)\}", message)
+
+        fill_keys = []
+        for key, value in fill_data.items():
+            fill_keys.append(key)
+            if isinstance(value, dict):
+                for child_key in value.keys():
+                    fill_keys.append("{}[{}]".format(key, child_key))
+
+        not_matched = set(placeholder_keys) - set(fill_keys)
+
+        for not_matched_item in not_matched:
+            message = message.replace("{}".format(not_matched_item),
+                                      "{{{}}}".format(not_matched_item))
+
+        return message
+
 
 @six.add_metaclass(ABCMeta)
 class AbstractSlackOperations:
@@ -282,25 +301,6 @@ class AbstractSlackOperations:
             msg = " - application must added to channel '{}'.".format(channel)
             error_str += msg + " Ask Slack admin."
         return error_str
-
-    def _escape_missing_keys(self, message, fill_data):
-        """Double escapes placeholder which are missing in 'fill_data'"""
-        placeholder_keys = re.findall("\{([^}]+)\}", message)
-
-        fill_keys = []
-        for key, value in fill_data.items():
-            fill_keys.append(key)
-            if isinstance(value, dict):
-                for child_key in value.keys():
-                    fill_keys.append("{}[{}]".format(key, child_key))
-
-        not_matched = set(placeholder_keys) - set(fill_keys)
-
-        for not_matched_item in not_matched:
-            message = message.replace("{}".format(not_matched_item),
-                                      "{{{}}}".format(not_matched_item))
-
-        return message
 
 
 class SlackPython3Operations(AbstractSlackOperations):
