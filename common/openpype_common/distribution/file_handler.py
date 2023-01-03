@@ -252,6 +252,11 @@ class RemoteFileHandler:
             if key.startswith('download_warning'):
                 return value
 
+        # handle antivirus warning for big zips
+        found = re.search("(confirm=)([^&.+])", response.text)
+        if found:
+            return found.groups()[1]
+
         return None
 
     @staticmethod
