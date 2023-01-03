@@ -32,10 +32,10 @@ class TestPipelineColorspace(ModuleUnitTest):
     """
     # PERSIST = True
 
-    TEST_DATA_FOLDER = "C:\\CODE\\__PYPE\\__unit_testing_data\\test_pipeline_colorspace"
+    # TEST_DATA_FOLDER = "C:\\CODE\\__PYPE\\__unit_testing_data\\test_pipeline_colorspace"
     TEST_FILES = [
         (
-            "1JSrzYoglUzAGbJEfAOa91AeyB6fvGBOK",
+            "1uhWvVdJBUSetpPVG8OzSjYXH4voIpf_G",
             "test_pipeline_colorspace.zip",
             ""
         )
@@ -43,7 +43,7 @@ class TestPipelineColorspace(ModuleUnitTest):
 
     @pytest.fixture(scope="module")
     def legacy_io(self, dbcon):
-        legacy_io.install()
+        legacy_io.Session = dbcon.Session
         yield legacy_io.Session
 
     @pytest.fixture(scope="module")
@@ -142,30 +142,64 @@ class TestPipelineColorspace(ModuleUnitTest):
     def test_parse_colorspace_from_filepath(
         self,
         legacy_io,
-        config_path_asset
+        config_path_asset,
+        project_settings
     ):
-
-        config_data = {
-            "path": config_path_asset
-        }
-
-        path = "renderCompMain_ACES_-_ACES2065-1.####.exr"
-
-        expected = "ACES2065-1"
-
-        ret = colorspace.parse_colorspace_from_filepath(
-            path, "nuke", "test_project", config_data=config_data
+        path_1 = "renderCompMain_ACES2065-1.####.exr"
+        expected_1 = "ACES2065-1"
+        ret_1 = colorspace.parse_colorspace_from_filepath(
+            path_1, "nuke", "test_project", project_settings=project_settings
         )
+        assert ret_1 == expected_1, f"Not matching colorspace {expected_1}"
 
-        assert ret == expected, f"Not matching colorspace {expected}"
+        path_2 = "renderCompMain_BMDFilm_WideGamut_Gen5.mov"
+        expected_2 = "BMDFilm WideGamut Gen5"
+        ret_2 = colorspace.parse_colorspace_from_filepath(
+            path_2, "nuke", "test_project", project_settings=project_settings
+        )
+        assert ret_2 == expected_2, f"Not matching colorspace {expected_2}"
 
-    def test_get_ocio_config_views(self, config_path_asset):
+    def test_get_ocio_config_views_asset(self, config_path_asset):
         expected_num_keys = 12
 
         ret = colorspace.get_ocio_config_views(config_path_asset)
 
         assert len(ret) == expected_num_keys, (
             f"Not matching num viewer keys {expected_num_keys}")
+
+    def test_get_ocio_config_views_project(self, config_path_project):
+        expected_num_keys = 3
+
+        ret = colorspace.get_ocio_config_views(config_path_project)
+
+        assert len(ret) == expected_num_keys, (
+            f"Not matching num viewer keys {expected_num_keys}")
+
+    def test_file_rules(self, project_settings):
+        expected_nuke = {
+            "comp_review": {
+                "pattern": "renderCompMain.baking_h264",
+                "colorspace": "Output - Rec.709",
+                "ext": "mp4"
+            }
+        }
+        expected_hiero = {
+            "comp_review": {
+                "pattern": "renderCompMain_h264burninburnin",
+                "colorspace": "Output - sRGB",
+                "ext": "mp4"
+            }
+        }
+
+        nuke_file_rules = colorspace.get_imageio_file_rules(
+            "test_project", "nuke", project_settings=project_settings)
+        assert expected_nuke == nuke_file_rules, (
+            f"Not matching file rules {expected_nuke}")
+
+        hiero_file_rules = colorspace.get_imageio_file_rules(
+            "test_project", "hiero", project_settings=project_settings)
+        assert expected_hiero == hiero_file_rules, (
+            f"Not matching file rules {expected_hiero}")
 
 
 test_case = TestPipelineColorspace()
