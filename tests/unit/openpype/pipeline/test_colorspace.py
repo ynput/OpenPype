@@ -30,7 +30,7 @@ class TestPipelineColorspace(ModuleUnitTest):
         cd to OpenPype repo root dir
         poetry run python ./start.py runtests ../tests/unit/openpype/pipeline
     """
-    PERSIST = True
+    # PERSIST = True
 
     TEST_DATA_FOLDER = "C:\\CODE\\__PYPE\\__unit_testing_data\\test_pipeline_colorspace"
     TEST_FILES = [
@@ -40,6 +40,11 @@ class TestPipelineColorspace(ModuleUnitTest):
             ""
         )
     ]
+
+    @pytest.fixture(scope="module")
+    def legacy_io(self, dbcon):
+        legacy_io.install()
+        yield legacy_io.Session
 
     @pytest.fixture(scope="module")
     def output_folder_url(self, download_test_data):
@@ -115,11 +120,10 @@ class TestPipelineColorspace(ModuleUnitTest):
 
     def test_config_file_project(
         self,
-        dbcon,
+        legacy_io,
         config_path_project,
         project_settings
     ):
-        legacy_io.install()
         expected_template = "{root[work]}/{project[name]}/ocio/config.ocio"
 
         # get config_data from hiero
@@ -135,8 +139,11 @@ class TestPipelineColorspace(ModuleUnitTest):
             f"expected tempalte \'{expected_template}\'"
         )
 
-    def test_parse_colorspace_from_filepath(self, legacy_io, config_path_asset):
-        legacy_io.install()
+    def test_parse_colorspace_from_filepath(
+        self,
+        legacy_io,
+        config_path_asset
+    ):
 
         config_data = {
             "path": config_path_asset
