@@ -100,6 +100,10 @@ them to add additional message (notification for specific users for example, art
 Additional message will be sent only if at least one profile, eg. one target channel is configured.
 All available template keys (see higher) could be used here as a placeholder too.
 
+#### User or group notifications
+Message template or dynamic data could contain user or group notification, it must be in format @artist.name, '@John Doe' or "@admin group" for display name containing space.
+If value prefixed with @ is not resolved and Slack user is not found, message will contain same value (not translated by Slack into link and proper mention.)
+
 #### Message retention
 Currently no purging of old messages is implemented in Openpype. Admins of Slack should set their own retention of messages and files per channel.
 (see https://slack.com/help/articles/203457187-Customize-message-and-file-retention-policies)
