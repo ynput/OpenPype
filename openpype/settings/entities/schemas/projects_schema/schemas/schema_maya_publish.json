@@ -314,6 +314,16 @@
             ]
         },
         {
+            "type": "dict-modifiable",
+            "collapsible": true,
+            "key": "ValidatePathForPlugin",
+            "label": "Non-existent Paths in Non-Maya Nodes",
+            "use_label_wrap": true,
+            "object_type": {
+                "type": "text"
+            }
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "ValidateRenderSettings",
@@ -613,10 +623,6 @@
                         {
                             "key": "ValidateNodeNoGhosting",
                             "label": "ValidateNodeNoGhosting"
-                        },
-                        {
-                            "key": "ValidatePathForPlugin",
-                            "label": "Non-existent Paths in Non-Maya Nodes"
                         },
                         {
                             "key": "ValidateShapeDefaultNames",

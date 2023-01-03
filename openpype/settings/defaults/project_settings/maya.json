@@ -13,7 +13,9 @@
         },
         "colorManagementPreference": {
             "configFilePath": {
-                "windows": [],
+                "windows": [
+                    "C:\\Users\\Kayla\\Downloads\\OpenColorIO-Configs-master\\OpenColorIO-Configs-master\\aces_1.2"
+                ],
                 "darwin": [],
                 "linux": []
             },
@@ -158,24 +160,6 @@
                 "Main"
             ]
         },
-        "CreateMultiverseUsd": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateMultiverseUsdComp": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateMultiverseUsdOver": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
         "CreateAss": {
             "enabled": true,
             "defaults": [
@@ -195,6 +179,24 @@
             "maskFilter": false,
             "maskColor_manager": false,
             "maskOperator": false
+        },
+        "CreateMultiverseUsd": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateMultiverseUsdComp": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateMultiverseUsdOver": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
         },
         "CreateAssembly": {
             "enabled": true,
@@ -337,6 +339,13 @@
             "families": [
                 "rig"
             ]
+        },
+        "ValidatePathForPlugin": {
+            "AlembicNode": "abc_File",
+            "VRayProxy": "fileName",
+            "RenderManArchive": "filename",
+            "pgYetiMaya": "cacheFileName",
+            "aiStandIn" : "dso"
         },
         "ValidateRenderSettings": {
             "arnold_render_attributes": [],
@@ -553,11 +562,6 @@
         "ValidateNodeNoGhosting": {
             "enabled": false,
             "optional": false,
-            "active": true
-        },
-        "ValidatePathForPlugin": {
-            "enabled": true,
-            "optional": true,
             "active": true
         },
         "ValidateShapeDefaultNames": {

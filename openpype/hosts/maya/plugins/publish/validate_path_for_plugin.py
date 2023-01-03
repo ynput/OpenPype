@@ -17,51 +17,29 @@ class ValidatePathForPlugin(pyblish.api.InstancePlugin):
     hosts = ['maya']
     families = ["workfile"]
     label = "Non-existent Paths in Non-Maya Nodes"
+    optional = True
 
     def get_invalid(self, instance):
         invalid = list()
-        # check alembic node
-        abc_node = cmds.ls(type="AlembicNode")
-        if abc_node:
-            for abc in abc_node:
-                abc_fname = cmds.getAttr(abc + ".abc_File")
-                if abc_fname and not os.path.exists(abc_fname):
-                    invalid.append(abc)
-        # check renderman node
-        rman_archive = cmds.ls(type="RenderManArchive")
-        if rman_archive:
-            for rib in rman_archive:
-                rib_fname = cmds.getAttr(rib + ".filename")
-                if rman_archive and not os.path.exists(rib_fname):
-                    invalid.append(rib)
-        # check Yeti node
-        yeti_node = cmds.ls(type="pgYetiMaya")
-        if yeti_node:
-            for yeti in yeti_node:
-                yeti_fname = cmds.getAttr(yeti + ".cacheFileName")
-                if yeti_fname and not os.path.exists(yeti_fname):
-                    invalid.append(yeti)
-        # check arnold_standin node
-        arnold_standin = cmds.ls(type="aiStandIn")
-        if arnold_standin:
-            for standin in arnold_standin:
-                standin_fname = cmds.getAttr(standin + ".dso")
-                if standin_fname and not os.path.exists(standin_fname):
-                    invalid.append(standin)
-        # check vray proxy node
-        vray_proxy = cmds.ls(type="VRayProxy")
-        if vray_proxy:
-            for vray in vray_proxy:
-                vray_fname = cmds.getAttr(vray + ".fileName")
-                if vray_fname and not os.path.exists(vray_fname):
-                    invalid.append(vray)
-        # check redshift proxy node
-        redshift_proxy = cmds.ls(type="RedshiftProxyMesh")
-        if redshift_proxy:
-            for redshift in redshift_proxy:
-                red_fname = cmds.getAttr(redshift + ".fileName")
-                if red_fname and not os.path.exists(red_fname):
-                    invalid.append(redshift)
+
+        # get the project setting
+        validate_path = (
+            instance.context.data["project_settings"]["maya"]["publish"]
+        )
+        file_attr = validate_path["ValidatePathForPlugin"]
+        if file_attr:
+            # get the nodes and file attributes
+            for node, attr in file_attr.items():
+                # check the related nodes
+                targets = cmds.ls(type=node)
+                path_attr = ".{0}".format(attr)
+
+                if targets:
+                    for target in targets:
+                        # get the filepath
+                        filepath = cmds.getAttr(target + path_attr)
+                        if filepath and not os.path.exists(filepath):
+                            invalid.append(target)
 
         return invalid
 
