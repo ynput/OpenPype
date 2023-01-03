@@ -42,7 +42,7 @@ def get_colorspace_data(config_path):
     config_path = Path(config_path)
 
     if not config_path.is_file():
-        raise IOError("Input path should be `config.ocio` file")
+        raise IOError(f"Input path `{config_path}` should be `config.ocio` file")
 
     config = ocio.Config().CreateFromFile(str(config_path))
 
