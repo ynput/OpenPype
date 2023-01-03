@@ -352,8 +352,6 @@ class SlackPython3Operations(AbstractSlackOperations):
             if publish_files:
                 message += attachment_str
 
-            message = self.translate_users(message)
-
             response = self.client.chat_postMessage(
                 channel=channel,
                 text=message
