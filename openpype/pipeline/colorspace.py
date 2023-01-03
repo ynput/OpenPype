@@ -1,6 +1,7 @@
 from copy import deepcopy
 import re
 import os
+import sys
 import json
 import platform
 import contextlib
@@ -139,51 +140,67 @@ def validate_imageio_colorspace_in_config(config_path, colorspace_name):
 
 
 def get_ocio_config_colorspaces(config_path):
-    with _make_temp_json_file() as tmp_json_path:
-        # Prepare subprocess arguments
-        args = [
-            "run", get_ocio_config_script_path(),
-            "config", "get_colorspace",
-            "--in_path", config_path,
-            "--out_path", tmp_json_path
+    if sys.version_info[0] == 2:
+        with _make_temp_json_file() as tmp_json_path:
+            return get_colorspace_data_subprocess(
+                config_path, tmp_json_path
+            )
+    from ..scripts.ocio_config_op import get_colorspace_data
+    return get_colorspace_data(config_path)
 
-        ]
-        log.info("Executing: {}".format(" ".join(args)))
 
-        process_kwargs = {
-            "logger": log,
-            "env": {}
-        }
+def get_colorspace_data_subprocess(config_path, tmp_json_path):
+    # Prepare subprocess arguments
+    args = [
+        "run", get_ocio_config_script_path(),
+        "config", "get_colorspace",
+        "--in_path", config_path,
+        "--out_path", tmp_json_path
 
-        run_openpype_process(*args, **process_kwargs)
+    ]
+    log.info("Executing: {}".format(" ".join(args)))
 
-        # return all colorspaces
-        return_json_data = open(tmp_json_path).read()
-        return json.loads(return_json_data)
+    process_kwargs = {
+        "logger": log,
+        "env": {}
+    }
+
+    run_openpype_process(*args, **process_kwargs)
+
+    # return all colorspaces
+    return_json_data = open(tmp_json_path).read()
+    return json.loads(return_json_data)
 
 
 def get_ocio_config_views(config_path):
-    with _make_temp_json_file() as tmp_json_path:
-        # Prepare subprocess arguments
-        args = [
-            "run", get_ocio_config_script_path(),
-            "config", "get_views",
-            "--in_path", config_path,
-            "--out_path", tmp_json_path
+    if sys.version_info[0] == 2:
+        with _make_temp_json_file() as tmp_json_path:
+            return get_views_data_subprocess(config_path, tmp_json_path)
+    from ..scripts.ocio_config_op import get_views_data
+    return get_views_data(config_path)
 
-        ]
-        log.info("Executing: {}".format(" ".join(args)))
 
-        process_kwargs = {
-            "logger": log,
-            "env": {}
-        }
+def get_views_data_subprocess(config_path, tmp_json_path):
+    # Prepare subprocess arguments
+    args = [
+        "run", get_ocio_config_script_path(),
+        "config", "get_views",
+        "--in_path", config_path,
+        "--out_path", tmp_json_path
 
-        run_openpype_process(*args, **process_kwargs)
+    ]
+    log.info("Executing: {}".format(" ".join(args)))
 
-        # return all colorspaces
-        return_json_data = open(tmp_json_path).read()
-        return json.loads(return_json_data)
+    process_kwargs = {
+        "logger": log,
+        "env": {}
+    }
+
+    run_openpype_process(*args, **process_kwargs)
+
+    # return all colorspaces
+    return_json_data = open(tmp_json_path).read()
+    return json.loads(return_json_data)
 
 
 def get_imageio_config(

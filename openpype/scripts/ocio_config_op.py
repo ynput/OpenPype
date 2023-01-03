@@ -28,22 +28,28 @@ def config():
               help="path where to write output json file",
               type=click.Path())
 def get_colorspace(in_path, out_path):
-    config_path = Path(in_path)
     json_path = Path(out_path)
-    if not config_path.is_file():
-        raise IOError("Input path should be `config.ocio` file")
 
-    config = ocio.Config().CreateFromFile(str(config_path))
-
-    out_data = {
-        c.getName(): c.getFamily()
-        for c in config.getColorSpaces()
-    }
+    out_data = get_colorspace_data(in_path)
 
     with open(json_path, "w") as f:
         json.dump(out_data, f)
 
     print(f"Colorspace data are saved to '{json_path}'")
+
+
+def get_colorspace_data(config_path):
+    config_path = Path(config_path)
+
+    if not config_path.is_file():
+        raise IOError("Input path should be `config.ocio` file")
+
+    config = ocio.Config().CreateFromFile(str(config_path))
+
+    return {
+        c.getName(): c.getFamily()
+        for c in config.getColorSpaces()
+    }
 
 
 @config.command(
@@ -60,23 +66,30 @@ def get_colorspace(in_path, out_path):
               help="path where to write output json file",
               type=click.Path())
 def get_views(in_path, out_path):
-    config_path = Path(in_path)
     json_path = Path(out_path)
-    if not config_path.is_file():
-        raise IOError("Input path should be `config.ocio` file")
 
-    config = ocio.Config().CreateFromFile(str(config_path))
-
-    out_data = {
-        "{}/{}".format(d, v): {"display": d, "view": v}
-        for d in config.getDisplays()
-        for v in config.getViews(d)
-    }
+    out_data = get_views_data(in_path)
 
     with open(json_path, "w") as f:
         json.dump(out_data, f)
 
     print(f"Viewer data are saved to '{json_path}'")
+
+
+def get_views_data(config_path):
+
+    config_path = Path(config_path)
+
+    if not config_path.is_file():
+        raise IOError("Input path should be `config.ocio` file")
+
+    config = ocio.Config().CreateFromFile(str(config_path))
+
+    return {
+        "{}/{}".format(d, v): {"display": d, "view": v}
+        for d in config.getDisplays()
+        for v in config.getViews(d)
+    }
 
 
 if __name__ == '__main__':
