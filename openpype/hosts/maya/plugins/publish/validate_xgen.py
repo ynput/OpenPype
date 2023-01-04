@@ -4,6 +4,7 @@ import maya.cmds as cmds
 import xgenm
 
 import pyblish.api
+from openpype.pipeline.publish import KnownPublishError
 
 
 class ValidateXgen(pyblish.api.InstancePlugin):
@@ -21,11 +22,11 @@ class ValidateXgen(pyblish.api.InstancePlugin):
             cmds.ls(instance, type="transform", long=True)
         )
         invalid_nodes = [node for node in instance if node not in valid_nodes]
-            
+
         if invalid_nodes:
             raise KnownPublishError(
-                "Only the collection is used when publishing. Found these invalid"
-                " nodes in the objectset:\n{}".format(invalid_nodes)
+                "Only the collection is used when publishing. Found these "
+                "invalid nodes in the objectset:\n{}".format(invalid_nodes)
             )
 
         # Only one collection per instance.
