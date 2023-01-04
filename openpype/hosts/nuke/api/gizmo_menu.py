@@ -58,7 +58,7 @@ class GizmoMenu():
                         item["title"],
                         command=str(item["command"]),
                         icon=item.get("icon"),
-                        shortcut=item.get("hotkey")
+                        shortcut=item.get("shortcut")
                     )
 
                 # add separator
