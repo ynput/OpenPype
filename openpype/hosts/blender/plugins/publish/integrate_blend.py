@@ -71,7 +71,7 @@ class IntegrateBlenderAsset(IntegrateAsset):
                         "--datablocks",
                         *[i.name for i in instance],
                         "--datapaths",
-                        *[BL_TYPE_DATAPATH.get(type(d)) for d in instance[1:]],
+                        *[BL_TYPE_DATAPATH.get(type(d)) for d in instance],
                         "--id",
                         str(representation["_id"]),
                     ]
