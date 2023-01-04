@@ -264,9 +264,14 @@ or updating already created. Publishing will create OTIO file.
 
             )
 
+            # alter subset name if multiple files
+            subset_name_edit = subset_name
+            if len(sequence_paths) > 1:
+                subset_name_edit = subset_name + str(index)
+
             # create otio editorial instance
             self._create_otio_instance(
-                subset_name + str(index),
+                subset_name_edit,
                 instance_data,
                 seq_path, media_path,
                 otio_timeline
