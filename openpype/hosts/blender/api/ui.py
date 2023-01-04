@@ -49,15 +49,6 @@ class ObjectSelectPanel(bpy.types.Panel):
         row = layout.row(align=True)
         ob = context.scene
 
-        # Add/Remove buttons
-        col = row.column(align=True)
-        col.operator("scene.create_openpype_instance", icon="ADD", text="")
-        col.operator(
-            "scene.remove_openpype_instance", icon="REMOVE", text=""
-        ).instance_name = context.scene.openpype_instances[
-            context.scene.openpype_instance_active_index
-        ].name
-
         # List of OpenPype instances
         row.template_list(
             "SCENE_UL_OpenpypeInstances",
@@ -68,6 +59,15 @@ class ObjectSelectPanel(bpy.types.Panel):
             "openpype_instance_active_index",
             rows=3,
         )
+
+        # Add/Remove buttons
+        col = row.column(align=True)
+        col.operator("scene.create_openpype_instance", icon="ADD", text="")
+        col.operator(
+            "scene.remove_openpype_instance", icon="REMOVE", text=""
+        ).instance_name = context.scene.openpype_instances[
+            context.scene.openpype_instance_active_index
+        ].name
 
         row.separator()
 
