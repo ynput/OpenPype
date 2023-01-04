@@ -1504,7 +1504,6 @@ class PlaceholderCreateMixin(object):
         """
 
         creators_by_name = self.builder.get_creators_by_name()
-        print(creators_by_name)
 
         creator_items = [
             (creator_name, creator.label or creator_name)
