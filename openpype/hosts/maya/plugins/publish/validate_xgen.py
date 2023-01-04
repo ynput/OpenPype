@@ -16,21 +16,17 @@ class ValidateXgen(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         # Validate only xgen collections are in objectset.
-        nodes = set(
+        valid_nodes = set(
             instance.data["xgenNodes"] +
             cmds.ls(instance, type="transform", long=True)
         )
-        remainder_nodes = []
-        for node in instance:
-            if node in nodes:
-                continue
-            remainder_nodes.append(node)
-
-        msg = (
-            "Only the collection is used when publishing. Found these invalid"
-            " nodes in the objectset:\n{}".format(remainder_nodes)
-        )
-        assert not remainder_nodes, msg
+        invalid_nodes = [node for node in instance if node not in valid_nodes]
+            
+        if invalid_nodes:
+            raise KnownPublishError(
+                "Only the collection is used when publishing. Found these invalid"
+                " nodes in the objectset:\n{}".format(invalid_nodes)
+            )
 
         # Only one collection per instance.
         palette_amount = len(instance.data["xgenPalettes"])
