@@ -397,15 +397,9 @@ class SlackPython2Operations(AbstractSlackOperations):
                 groups = self._get_groups()
                 break
             except Exception as e:
-                retry_after = e.response.headers.get("Retry-After")
-                if retry_after:
-                    print(
-                        "Rate limit hit, sleeping for {}".format(retry_after))
-                    time.sleep(int(retry_after))
-                else:
-                    self.log.warning("Cannot pull user info, "
-                                     "mentions won't work", exc_info=True)
-                    return [], []
+                self.log.warning("Cannot pull user info, "
+                                 "mentions won't work", exc_info=True)
+                return [], []
 
         return users, groups
 
