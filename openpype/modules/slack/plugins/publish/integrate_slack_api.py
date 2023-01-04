@@ -191,8 +191,10 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             if (not user.get("deleted") and
                     (user_name_lower == user["name"].lower() or
                      # bots dont have display_name
-                     user_name_lower == user.get("display_name", '').lower() or
-                     user_name_lower == user.get("real_name", '').lower())):
+                     user_name_lower == user["profile"].get("display_name",
+                                                            '').lower() or
+                     user_name_lower == user["profile"].get("real_name",
+                                                            '').lower())):
                 user_id = user["id"]
                 break
         return user_id
@@ -210,7 +212,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
 
     def _translate_users(self, message, users, groups):
         """Replace all occurences of @mentions with proper <@name> format."""
-        matches = re.findall(r"(?<!<)@[a-z0-9\._-]+", message)
+        matches = re.findall(r"(?<!<)@[^ ]+", message)
         in_quotes = re.findall(r"(?<!<)(['\"])(@[^'\"]+)", message)
         for item in in_quotes:
             matches.append(item[1])
