@@ -1,4 +1,3 @@
-import enlighten
 import os
 import re
 import urllib
@@ -264,15 +263,9 @@ class RemoteFileHandler:
         response_gen, destination,
     ):
         with open(destination, "wb") as f:
-            pbar = enlighten.Counter(
-                total=None, desc="Save content", units="%", color="green")
-            progress = 0
             for chunk in response_gen:
                 if chunk:  # filter out keep-alive new chunks
                     f.write(chunk)
-                    progress += len(chunk)
-
-                pbar.close()
 
     @staticmethod
     def _quota_exceeded(first_chunk):
