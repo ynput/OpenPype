@@ -5,10 +5,8 @@ import bpy
 
 from openpype.hosts.blender.api.properties import (
     OpenpypeContainer,
-    OpenpypeInstance,
 )
 from openpype.pipeline import legacy_io, AVALON_INSTANCE_ID
-from openpype.pipeline.create import get_legacy_creator_by_name
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
@@ -84,33 +82,6 @@ class LayoutLoader(plugin.AssetLoader):
         "animation_instances",
     ]
 
-    def _create_animation_instance(
-        self, armature_object: bpy.types.Object
-    ) -> OpenpypeInstance:
-        """Create animation instance with given armature object as datablock.
-        TODO this is a build first workfile feature, not a loader one.
-
-        Args:
-            rig_object (bpy.types.Object): Armature object.
-
-        Raises:
-            ValueError: Creator plugin 'CreateAnimation' doesn't exist
-
-        Returns:
-            OpenpypeInstance: Created instance
-        """
-        Creator = get_legacy_creator_by_name("CreateAnimation")
-        if not Creator:
-            raise ValueError('Creator plugin "CreateAnimation" was not found.')
-
-        asset_name = legacy_io.Session.get("AVALON_ASSET")
-        plugin = Creator(
-            "animationMain",
-            asset_name,
-            {"variant": "Main"},
-        )
-        return plugin.process([armature_object])
-
     def _make_local_actions(self, container: OpenpypeContainer):
         """Make local for all actions from objects.
 
@@ -155,12 +126,6 @@ class LayoutLoader(plugin.AssetLoader):
         container, datablocks = super().load(*args, **kwargs)
 
         return container, datablocks
-
-        # Kept for later reference in build workfile
-        for d in datablocks:
-            if isinstance(d, bpy.types.Object) and d.type == "ARMATURE":
-                instance = self._create_animation_instance(d)
-                instance.name = f"{instance.name}:{d.name}"
 
     def update(self, *args, **kwargs):
         """Override `update` to reassign changed objects to instances'."""
