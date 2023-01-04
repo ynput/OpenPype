@@ -18,6 +18,7 @@ class IncrementWorkfileVersion(pyblish.api.ContextPlugin):
         "setdress",
         "look",
         "blender.nodegroup",
+        "blender.world",
     ]
 
     def process(self, context):
