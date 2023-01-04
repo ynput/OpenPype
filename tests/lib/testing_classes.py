@@ -96,6 +96,15 @@ class ModuleUnitTest(BaseTest):
                     shutil.rmtree(tmpdir)
 
     @pytest.fixture(scope="module")
+    def output_folder_url(self, download_test_data):
+        """Returns location of published data, cleans it first if exists."""
+        path = os.path.join(download_test_data, "output")
+        if os.path.exists(path):
+            print("Purging {}".format(path))
+            shutil.rmtree(path)
+        yield path
+
+    @pytest.fixture(scope="module")
     def env_var(self, monkeypatch_session, download_test_data):
         """Sets temporary env vars from json file."""
         env_url = os.path.join(download_test_data, "input",
@@ -248,15 +257,6 @@ class PublishTest(ModuleUnitTest):
             app_variant = variant.name
 
         yield "{}/{}".format(self.APP_GROUP, app_variant)
-
-    @pytest.fixture(scope="module")
-    def output_folder_url(self, download_test_data):
-        """Returns location of published data, cleans it first if exists."""
-        path = os.path.join(download_test_data, "output")
-        if os.path.exists(path):
-            print("Purging {}".format(path))
-            shutil.rmtree(path)
-        yield path
 
     @pytest.fixture(scope="module")
     def app_args(self, download_test_data):
