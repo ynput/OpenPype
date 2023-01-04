@@ -20,6 +20,8 @@ log = Logger.get_logger(__name__)
 
 @contextlib.contextmanager
 def _make_temp_json_file():
+    """Wrapping function for json temp file
+    """
     try:
         # Store dumped json to temporary file
         temporary_json_file = tempfile.NamedTemporaryFile(
@@ -45,6 +47,11 @@ def _make_temp_json_file():
 
 
 def get_ocio_config_script_path():
+    """Get path to ocio wrapper script
+
+    Returns:
+        str: path string
+    """
     return os.path.normpath(
         os.path.join(
             PACKAGE_DIR,
@@ -60,6 +67,25 @@ def get_imageio_colorspace_from_filepath(
     project_settings=None,
     validate=True
 ):
+    """Get colorspace name from filepath
+
+    ImageIO Settings file rules are tested for matching rule.
+
+    Args:
+        path (str): path string, file rule pattern is tested on it
+        host_name (str): host name
+        project_name (str): project name
+        config_data (dict, optional): config path and tempate in dict.
+                                      Defaults to None.
+        file_rules (dict, optional): file rule data from settings.
+                                     Defaults to None.
+        project_settings (dict, optional): project settings. Defaults to None.
+        validate (bool, optional): should resulting colorspace be validated
+                                   with config file? Defaults to True.
+
+    Returns:
+        str: name of colorspace
+    """
     if not any([config_data, file_rules]):
         project_settings = project_settings or get_project_settings(
             project_name
@@ -103,6 +129,22 @@ def parse_colorspace_from_filepath(
     config_data=None,
     project_settings=None
 ):
+    """Parse colorspace name from filepath
+
+    An input path can have colorspace name used as part of name
+    or as folder name.
+
+    Args:
+        path (str): path string
+        host_name (str): host name
+        project_name (str): project name
+        config_data (dict, optional): config path and tempate in dict.
+                                      Defaults to None.
+        project_settings (dict, optional): project settings. Defaults to None.
+
+    Returns:
+        str: name of colorspace
+    """
     if not config_data:
         project_settings = project_settings or get_project_settings(
             project_name
@@ -116,7 +158,12 @@ def parse_colorspace_from_filepath(
     colorspace_name = None
     colorspaces = get_ocio_config_colorspaces(config_path)
     for colorspace_key in colorspaces:
+        # check underscored variant of colorspace name
+        # since we are reformating it in integrate.py
         if colorspace_key.replace(" ", "_") in path:
+            colorspace_name = colorspace_key
+            break
+        if colorspace_key in path:
             colorspace_name = colorspace_key
             break
 
@@ -130,6 +177,18 @@ def parse_colorspace_from_filepath(
 
 
 def validate_imageio_colorspace_in_config(config_path, colorspace_name):
+    """Validator making sure colorspace name is used in config.ocio
+
+    Args:
+        config_path (str): path leading to config.ocio file
+        colorspace_name (str): tested colorspace name
+
+    Raises:
+        KeyError: missing colorspace name
+
+    Returns:
+        bool: True if exists
+    """
     colorspaces = get_ocio_config_colorspaces(config_path)
     if colorspace_name not in colorspaces:
         raise KeyError(
@@ -140,67 +199,109 @@ def validate_imageio_colorspace_in_config(config_path, colorspace_name):
 
 
 def get_ocio_config_colorspaces(config_path):
+    """Get all colorspace data
+
+    Wrapper function for aggregating all names and its families.
+    Families can be used for building menu and submenus in gui.
+
+    Args:
+        config_path (str): path leading to config.ocio file
+
+    Returns:
+        dict: colorspace and family in couple
+    """
     if sys.version_info[0] == 2:
-        with _make_temp_json_file() as tmp_json_path:
-            return get_colorspace_data_subprocess(
-                config_path, tmp_json_path
-            )
+        return get_colorspace_data_subprocess(config_path)
+
     from ..scripts.ocio_wrapper import get_colorspace_data
     return get_colorspace_data(config_path)
 
 
-def get_colorspace_data_subprocess(config_path, tmp_json_path):
-    # Prepare subprocess arguments
-    args = [
-        "run", get_ocio_config_script_path(),
-        "config", "get_colorspace",
-        "--in_path", config_path,
-        "--out_path", tmp_json_path
+def get_colorspace_data_subprocess(config_path):
+    """Get colorspace data via subprocess
 
-    ]
-    log.info("Executing: {}".format(" ".join(args)))
+    Wrapper for Python 2 hosts.
 
-    process_kwargs = {
-        "logger": log,
-        "env": {}
-    }
+    Args:
+        config_path (str): path leading to config.ocio file
 
-    run_openpype_process(*args, **process_kwargs)
+    Returns:
+        dict: colorspace and family in couple
+    """
+    with _make_temp_json_file() as tmp_json_path:
+        # Prepare subprocess arguments
+        args = [
+            "run", get_ocio_config_script_path(),
+            "config", "get_colorspace",
+            "--in_path", config_path,
+            "--out_path", tmp_json_path
 
-    # return all colorspaces
-    return_json_data = open(tmp_json_path).read()
-    return json.loads(return_json_data)
+        ]
+        log.info("Executing: {}".format(" ".join(args)))
+
+        process_kwargs = {
+            "logger": log,
+            "env": {}
+        }
+
+        run_openpype_process(*args, **process_kwargs)
+
+        # return all colorspaces
+        return_json_data = open(tmp_json_path).read()
+        return json.loads(return_json_data)
 
 
 def get_ocio_config_views(config_path):
+    """Get all viewer data
+
+    Wrapper function for aggregating all display and related viwers.
+    Key can be used for building gui menu with submenus.
+
+    Args:
+        config_path (str): path leading to config.ocio file
+
+    Returns:
+        dict: `display/viewer` and viewer data
+    """
     if sys.version_info[0] == 2:
-        with _make_temp_json_file() as tmp_json_path:
-            return get_views_data_subprocess(config_path, tmp_json_path)
+        return get_views_data_subprocess(config_path)
+
     from ..scripts.ocio_wrapper import get_views_data
     return get_views_data(config_path)
 
 
-def get_views_data_subprocess(config_path, tmp_json_path):
-    # Prepare subprocess arguments
-    args = [
-        "run", get_ocio_config_script_path(),
-        "config", "get_views",
-        "--in_path", config_path,
-        "--out_path", tmp_json_path
+def get_views_data_subprocess(config_path):
+    """Get viewers data via subprocess
 
-    ]
-    log.info("Executing: {}".format(" ".join(args)))
+    Wrapper for Python 2 hosts.
 
-    process_kwargs = {
-        "logger": log,
-        "env": {}
-    }
+    Args:
+        config_path (str): path leading to config.ocio file
 
-    run_openpype_process(*args, **process_kwargs)
+    Returns:
+        dict: `display/viewer` and viewer data
+    """
+    with _make_temp_json_file() as tmp_json_path:
+        # Prepare subprocess arguments
+        args = [
+            "run", get_ocio_config_script_path(),
+            "config", "get_views",
+            "--in_path", config_path,
+            "--out_path", tmp_json_path
 
-    # return all colorspaces
-    return_json_data = open(tmp_json_path).read()
-    return json.loads(return_json_data)
+        ]
+        log.info("Executing: {}".format(" ".join(args)))
+
+        process_kwargs = {
+            "logger": log,
+            "env": {}
+        }
+
+        run_openpype_process(*args, **process_kwargs)
+
+        # return all colorspaces
+        return_json_data = open(tmp_json_path).read()
+        return json.loads(return_json_data)
 
 
 def get_imageio_config(
@@ -209,6 +310,24 @@ def get_imageio_config(
     anatomy_data=None,
     anatomy=None
 ):
+    """Returns config data from settings
+
+    Config path is formated in `path` key
+    and original settings input is saved into `template` key.
+
+    Args:
+        project_name (str): project name
+        host_name (str): host name
+        project_settings (dict, optional): project settings.
+                                           Defaults to None.
+        anatomy_data (dict, optional): anatomy formating data.
+                                       Defaults to None.
+        anatomy (lib.Anatomy, optional): Anatomy object.
+                                         Defaults to None.
+
+    Returns:
+        dict or bool: config path data or None
+    """
     project_settings = project_settings or get_project_settings(project_name)
     anatomy = anatomy or Anatomy(project_name)
     current_platform = platform.system().lower()
@@ -256,7 +375,17 @@ def get_imageio_config(
 
 
 def get_imageio_file_rules(project_name, host_name, project_settings=None):
+    """Get ImageIO File rules from project settings
 
+    Args:
+        project_name (str): project name
+        host_name (str): host name
+        project_settings (dict, optional): project settings.
+                                           Defaults to None.
+
+    Returns:
+        dict: file rules data
+    """
     project_settings = project_settings or get_project_settings(project_name)
 
     imageio_global, imageio_host = _get_imageio_settings(
@@ -277,7 +406,16 @@ def get_imageio_file_rules(project_name, host_name, project_settings=None):
 
 
 def _get_imageio_settings(project_settings, host_name):
+    """Get ImageIO settings for global and host
 
+    Args:
+        project_settings (dict): project settings.
+                                           Defaults to None.
+        host_name (str): host name
+
+    Returns:
+        tuple[dict, dict]: image io settings for global and host
+    """
     # get image io from global and host_name
     imageio_global = project_settings["global"]["imageio"]
     imageio_host = project_settings[host_name]["imageio"]
