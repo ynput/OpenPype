@@ -124,15 +124,26 @@ class ExtractXgenCache(publish.Extractor):
 
         cmds.delete(duplicate_nodes + [collection])
 
-        # Setup transfers.
-        xgen_dir = os.path.join(
-            os.path.dirname(instance.context.data["currentFile"]), "xgen"
+        # Collect all files under palette root as resources.
+        data_path = xgenm.getAttr(
+            "xgDataPath", instance.data["xgenPalette"].replace("|", "")
+        ).split(os.pathsep)[0]
+        data_path = data_path.replace(
+            "${PROJECT}",
+            xgenm.getAttr(
+                "xgProjectPath", instance.data["xgenPalette"].replace("|", "")
+            )
         )
         transfers = []
-        for root, _, files in os.walk(xgen_dir):
+        for root, _, files in os.walk(data_path):
             for file in files:
-                source = os.path.join(root, file)
-                destination = os.path.join(instance.data["resourcesDir"], file)
-                transfers.append((source, destination))
+                source = os.path.join(root, file).replace("\\", "/")
+                destination = os.path.join(
+                    instance.data["resourcesDir"],
+                    "collections",
+                    os.path.basename(data_path),
+                    source.replace(data_path, "")[1:]
+                )
+                transfers.append((source, destination.replace("\\", "/")))
 
         instance.data["transfers"] = transfers
