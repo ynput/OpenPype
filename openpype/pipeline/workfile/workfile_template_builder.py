@@ -675,7 +675,7 @@ class AbstractTemplateBuilder(object):
         # switch to remove placeholders after they are used
         placeholder_keep = profile.get("placeholder_keep")
         # backward compatibility, since default is True
-        if placeholder_keep is not False:
+        if placeholder_keep is None:
             placeholder_keep = True
 
         if not path:
