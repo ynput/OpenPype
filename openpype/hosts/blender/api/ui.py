@@ -1,6 +1,6 @@
 import bpy
 from bpy.types import UIList
-from openpype.hosts.blender.api.utils import BL_TYPE_DATAPATH
+from openpype.hosts.blender.api.utils import BL_TYPE_DATAPATH, BL_TYPE_ICON
 
 
 class SCENE_UL_OpenpypeInstances(UIList):
@@ -21,8 +21,14 @@ class SCENE_UL_OpenpypeInstances(UIList):
         if hasattr(item, "publish"):
             row.prop(item, "publish", text="")
 
-        # Draw name
-        row.label(text=item.name)
+        # Draw name with icon
+        # TODO is it the smartest way to get the icon?
+        row.label(
+            text=item.name,
+            icon=BL_TYPE_ICON.get(type(item.datablock), "NONE")
+            if hasattr(item, "datablock")
+            else "NONE",
+        )
 
         # Icons for accepted types
         for type_icon in item.get("icons", []):
