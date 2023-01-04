@@ -443,9 +443,9 @@ class SyncServerThread(threading.Thread):
         local_site_config = sync_config.get('sites')[local_site]
         remote_site_config = sync_config.get('sites')[remote_site]
         if not all([_site_is_working(self.module, project_name, local_site,
-                                    local_site_config),
+                                     local_site_config),
                     _site_is_working(self.module, project_name, remote_site,
-                                    remote_site_config)]):
+                                     remote_site_config)]):
             self.log.debug(
                 "Some of the sites {} - {} is not working properly".format(
                     local_site, remote_site
