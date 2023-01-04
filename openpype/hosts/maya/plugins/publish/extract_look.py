@@ -370,7 +370,6 @@ class ExtractLook(publish.Extractor):
             # if OCIO color management enabled
             # it wont take the condition of the files_metadata
 
-            # TODO: if do_maketx: linearize=False
             ocio_maya = cmds.colorManagementPrefs(q=True,
                                                   cmConfigFileEnabled=True,
                                                   cmEnabled=True)
@@ -430,7 +429,6 @@ class ExtractLook(publish.Extractor):
             color_space_attr = resource["node"] + ".colorSpace"
             try:
                 color_space = cmds.getAttr(color_space_attr)
-                self.log.info("current colorspace: {0}".format(color_space))
             except ValueError:
                 # node doesn't have color space attribute
                 color_space = "Raw"
