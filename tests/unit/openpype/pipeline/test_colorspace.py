@@ -61,7 +61,6 @@ class TestPipelineColorspace(ModuleUnitTest):
             self.PROJECT,
             "ocio"
         )
-        print(f"__ dest_dir: {dest_dir}")
         dest_path = os.path.join(
             dest_dir,
             "config.ocio"
@@ -93,7 +92,6 @@ class TestPipelineColorspace(ModuleUnitTest):
             self.ASSET,
             "ocio"
         )
-        print(f"__ dest_dir: {dest_dir}")
         dest_path = os.path.join(
             dest_dir,
             "config.ocio"
