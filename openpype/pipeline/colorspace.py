@@ -49,7 +49,7 @@ def get_ocio_config_script_path():
         os.path.join(
             PACKAGE_DIR,
             "scripts",
-            "ocio_config_op.py"
+            "ocio_wrapper.py"
         )
     )
 
@@ -145,7 +145,7 @@ def get_ocio_config_colorspaces(config_path):
             return get_colorspace_data_subprocess(
                 config_path, tmp_json_path
             )
-    from ..scripts.ocio_config_op import get_colorspace_data
+    from ..scripts.ocio_wrapper import get_colorspace_data
     return get_colorspace_data(config_path)
 
 
@@ -176,7 +176,7 @@ def get_ocio_config_views(config_path):
     if sys.version_info[0] == 2:
         with _make_temp_json_file() as tmp_json_path:
             return get_views_data_subprocess(config_path, tmp_json_path)
-    from ..scripts.ocio_config_op import get_views_data
+    from ..scripts.ocio_wrapper import get_views_data
     return get_views_data(config_path)
 
 
