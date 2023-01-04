@@ -169,7 +169,7 @@ def resolve_paths(module, file_path, project_name,
     return local_file_path, remote_file_path
 
 
-def site_is_working(module, project_name, site_name):
+def _site_is_working(module, project_name, site_name, site_config):
     """
         Confirm that 'site_name' is configured correctly for 'project_name'.
 
@@ -179,54 +179,17 @@ def site_is_working(module, project_name, site_name):
             module (SyncServerModule)
             project_name(string):
             site_name(string):
+            site_config (dict): configuration for site from Settings
         Returns
             (bool)
     """
-    if _get_configured_sites(module, project_name).get(site_name):
-        return True
-    return False
+    provider = module.get_provider_for_site(site=site_name)
+    handler = lib.factory.get_provider(provider,
+                                       project_name,
+                                       site_name,
+                                       presets=site_config)
 
-
-def _get_configured_sites(module, project_name):
-    """
-        Loops through settings and looks for configured sites and checks
-        its handlers for particular 'project_name'.
-
-        Args:
-            project_setting(dict): dictionary from Settings
-            only_project_name(string, optional): only interested in
-                particular project
-        Returns:
-            (dict of dict)
-            {'ProjectA': {'studio':True, 'gdrive':False}}
-    """
-    settings = module.get_sync_project_setting(project_name)
-    return _get_configured_sites_from_setting(module, project_name, settings)
-
-
-def _get_configured_sites_from_setting(module, project_name, project_setting):
-    if not project_setting.get("enabled"):
-        return {}
-
-    initiated_handlers = {}
-    configured_sites = {}
-    all_sites = module._get_default_site_configs()
-    all_sites.update(project_setting.get("sites"))
-    for site_name, config in all_sites.items():
-        provider = module.get_provider_for_site(site=site_name)
-        handler = initiated_handlers.get((provider, site_name))
-        if not handler:
-            handler = lib.factory.get_provider(provider,
-                                               project_name,
-                                               site_name,
-                                               presets=config)
-            initiated_handlers[(provider, site_name)] = \
-                handler
-
-        if handler.is_active():
-            configured_sites[site_name] = True
-
-    return configured_sites
+    return handler.is_active()
 
 
 class SyncServerThread(threading.Thread):
@@ -288,7 +251,8 @@ class SyncServerThread(threading.Thread):
                 for project_name in enabled_projects:
                     preset = self.module.sync_project_settings[project_name]
 
-                    local_site, remote_site = self._working_sites(project_name)
+                    local_site, remote_site = self._working_sites(project_name,
+                                                                  preset)
                     if not all([local_site, remote_site]):
                         continue
 
@@ -464,7 +428,7 @@ class SyncServerThread(threading.Thread):
             self.timer.cancel()
             self.timer = None
 
-    def _working_sites(self, project_name):
+    def _working_sites(self, project_name, sync_config):
         if self.module.is_project_paused(project_name):
             self.log.debug("Both sites same, skipping")
             return None, None
@@ -476,9 +440,12 @@ class SyncServerThread(threading.Thread):
                 local_site, remote_site))
             return None, None
 
-        configured_sites = _get_configured_sites(self.module, project_name)
-        if not all([local_site in configured_sites,
-                    remote_site in configured_sites]):
+        local_site_config = sync_config.get('sites')[local_site]
+        remote_site_config = sync_config.get('sites')[remote_site]
+        if not all([_site_is_working(self.module, project_name, local_site,
+                                    local_site_config),
+                    _site_is_working(self.module, project_name, remote_site,
+                                    remote_site_config)]):
             self.log.debug(
                 "Some of the sites {} - {} is not working properly".format(
                     local_site, remote_site
