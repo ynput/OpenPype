@@ -18,7 +18,7 @@ import shutil
 import os
 
 from tests.lib.testing_classes import ModuleUnitTest
-from openpype.pipeline import colorspace
+from openpype.pipeline import colorspace, legacy_io
 
 
 class TestPipelineColorspace(ModuleUnitTest):
@@ -36,6 +36,11 @@ class TestPipelineColorspace(ModuleUnitTest):
             ""
         )
     ]
+
+    @pytest.fixture(scope="module")
+    def legacy_io(self, dbcon):
+        legacy_io.Session = dbcon.Session
+        yield legacy_io.Session
 
     @pytest.fixture(scope="module")
     def config_path_project(
