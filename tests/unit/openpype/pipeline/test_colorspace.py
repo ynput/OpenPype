@@ -14,13 +14,11 @@
         removes temporary databases (?)
 """
 import pytest
-import logging
 import shutil
 import os
 
 from tests.lib.testing_classes import ModuleUnitTest
-from openpype.pipeline import colorspace, legacy_io
-log = logging.getLogger("test_colorspace")
+from openpype.pipeline import colorspace
 
 
 class TestPipelineColorspace(ModuleUnitTest):
@@ -30,9 +28,7 @@ class TestPipelineColorspace(ModuleUnitTest):
         cd to OpenPype repo root dir
         poetry run python ./start.py runtests ../tests/unit/openpype/pipeline
     """
-    # PERSIST = True
 
-    # TEST_DATA_FOLDER = "C:\\CODE\\__PYPE\\__unit_testing_data\\test_pipeline_colorspace"
     TEST_FILES = [
         (
             "1uhWvVdJBUSetpPVG8OzSjYXH4voIpf_G",
@@ -40,20 +36,6 @@ class TestPipelineColorspace(ModuleUnitTest):
             ""
         )
     ]
-
-    @pytest.fixture(scope="module")
-    def legacy_io(self, dbcon):
-        legacy_io.Session = dbcon.Session
-        yield legacy_io.Session
-
-    @pytest.fixture(scope="module")
-    def output_folder_url(self, download_test_data):
-        """Returns location of published data, cleans it first if exists."""
-        path = os.path.join(download_test_data, "output")
-        if os.path.exists(path):
-            print("Purging {}".format(path))
-            shutil.rmtree(path)
-        yield path
 
     @pytest.fixture(scope="module")
     def config_path_project(
