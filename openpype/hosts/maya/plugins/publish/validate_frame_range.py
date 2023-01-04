@@ -92,10 +92,31 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
         """
         Repair instance container to match asset data.
         """
-        cmds.setAttr(
-            "{}.frameStart".format(instance.data["name"]),
-            instance.context.data.get("frameStartHandle"))
 
-        cmds.setAttr(
-            "{}.frameEnd".format(instance.data["name"]),
-            instance.context.data.get("frameEndHandle"))
+        node = instance.data["name"]
+        context = instance.context
+
+        frame_start_handle = int(context.data.get("frameStartHandle"))
+        frame_end_handle = int(context.data.get("frameEndHandle"))
+        handle_start = int(context.data.get("handleStart"))
+        handle_end = int(context.data.get("handleEnd"))
+        frame_start = int(context.data.get("frameStart"))
+        frame_end = int(context.data.get("frameEnd"))
+
+        # Start
+        if cmds.attributeQuery("handleStart", node=node, exists=True):
+            cmds.setAttr("{}.handleStart".format(node), handle_start)
+            cmds.setAttr("{}.frameStart".format(node), frame_start)
+        else:
+            # Include start handle in frame start if no separate handleStart
+            # attribute exists on the node
+            cmds.setAttr("{}.frameStart".format(node), frame_start_handle)
+
+        # End
+        if cmds.attributeQuery("handleEnd", node=node, exists=True):
+            cmds.setAttr("{}.handleEnd".format(node), handle_end)
+            cmds.setAttr("{}.frameEnd".format(node), frame_end)
+        else:
+            # Include end handle in frame end if no separate handleEnd
+            # attribute exists on the node
+            cmds.setAttr("{}.frameEnd".format(node), frame_end_handle)
