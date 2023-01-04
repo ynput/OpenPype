@@ -25,7 +25,6 @@ class AnimationLoader(plugin.AssetLoader):
 
         # Try to assign linked actions by parsing their name
         for action in datablocks:
-            # armature_name = action.get("armature", "")
             users = action.get("users", {})
             for user_name in users:
                 obj = bpy.context.scene.objects.get(user_name)
