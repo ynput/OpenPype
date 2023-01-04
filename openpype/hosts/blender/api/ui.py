@@ -17,6 +17,10 @@ class SCENE_UL_OpenpypeInstances(UIList):
     ):
         row = layout.row(align=True)
 
+        # Publishable switch
+        if hasattr(item, "publish"):
+            row.prop(item, "publish", text="")
+
         # Draw name
         row.label(text=item.name)
 
@@ -25,10 +29,6 @@ class SCENE_UL_OpenpypeInstances(UIList):
             row.label(icon=type_icon)
 
         row.separator()
-
-        # Publishable switch
-        if hasattr(item, "publish"):
-            row.prop(item, "publish", text="")
 
 
 class ObjectSelectPanel(bpy.types.Panel):
@@ -66,6 +66,7 @@ class ObjectSelectPanel(bpy.types.Panel):
             "openpype_instances",
             ob,
             "openpype_instance_active_index",
+            rows=3,
         )
 
         row.separator()
@@ -83,6 +84,7 @@ class ObjectSelectPanel(bpy.types.Panel):
             "datablock_refs",
             active_openpype_instance,
             "datablock_active_index",
+            rows=3,
         )
 
         # Add/Remove datablock to instance
