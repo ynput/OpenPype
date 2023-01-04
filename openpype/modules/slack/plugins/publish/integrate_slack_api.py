@@ -4,7 +4,6 @@ import six
 import pyblish.api
 import copy
 from datetime import datetime
-import re
 from abc import ABCMeta, abstractmethod
 import time
 
@@ -210,8 +209,9 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         return group_id
 
     def _translate_users(self, message, users, groups):
-        matches = re.findall("(?<!<)@[a-z0-9\._-]+", message)
-        in_quotes = re.findall("(?<!<)(['\"])(@[^'\"]+)", message)
+        """Replace all occurences of @mentions with proper <@name> format."""
+        matches = re.findall(r"(?<!<)@[a-z0-9\._-]+", message)
+        in_quotes = re.findall(r"(?<!<)(['\"])(@[^'\"]+)", message)
         for item in in_quotes:
             matches.append(item[1])
         if not matches:
@@ -234,7 +234,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
 
     def _escape_missing_keys(self, message, fill_data):
         """Double escapes placeholder which are missing in 'fill_data'"""
-        placeholder_keys = re.findall("\{([^}]+)\}", message)
+        placeholder_keys = re.findall(r"\{([^}]+)\}", message)
 
         fill_keys = []
         for key, value in fill_data.items():
