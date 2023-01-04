@@ -1368,13 +1368,19 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         """
         sync_sett = self.sync_system_settings
         project_enabled = True
+        project_settings = None
         if project_name:
             project_enabled = project_name in self.get_enabled_projects()
+            project_settings = self.get_sync_project_setting(project_name)
         sync_enabled = sync_sett["enabled"] and project_enabled
 
         system_sites = {}
         if sync_enabled:
             for site, detail in sync_sett.get("sites", {}).items():
+                if project_settings:
+                    site_settings = project_settings["sites"].get(site)
+                    if site_settings:
+                        detail.update(site_settings)
                 system_sites[site] = detail
 
         system_sites.update(self._get_default_site_configs(sync_enabled,
@@ -1396,14 +1402,22 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                                                 exclude_locals=True)
         roots = {}
         for root, config in anatomy_sett["roots"].items():
-            roots[root] = config[platform.system().lower()]
+            roots[root] = config
         studio_config = {
+            'enabled': True,
             'provider': 'local_drive',
             "root": roots
         }
         all_sites = {self.DEFAULT_SITE: studio_config}
         if sync_enabled:
-            all_sites[get_local_site_id()] = {'provider': 'local_drive'}
+            all_sites[get_local_site_id()] = {'enabled': True,
+                                              'provider': 'local_drive',
+                                              "root": roots}
+            # duplicate values for normalized local name
+            all_sites["local"] = {
+                'enabled': True,
+                'provider': 'local_drive',
+                "root": roots}
         return all_sites
 
     def get_provider_for_site(self, project_name=None, site=None):
