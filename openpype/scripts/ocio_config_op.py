@@ -86,7 +86,7 @@ def get_views_data(config_path):
     config = ocio.Config().CreateFromFile(str(config_path))
 
     return {
-        "{}/{}".format(d, v): {"display": d, "view": v}
+        f"{d}/{v}": {"display": d, "view": v}
         for d in config.getDisplays()
         for v in config.getViews(d)
     }

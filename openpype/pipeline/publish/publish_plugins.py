@@ -13,7 +13,7 @@ from .lib import (
     get_instance_staging_dir,
 )
 
-from ..colorspace import (
+from openpype.pipeline.colorspace import (
     get_imageio_colorspace_from_filepath,
     get_imageio_config,
     get_imageio_file_rules

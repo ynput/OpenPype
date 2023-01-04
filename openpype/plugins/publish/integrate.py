@@ -533,6 +533,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         if repre.get("colorspaceData"):
             colorspace = repre["colorspaceData"]["colorspace"]
             # replace spaces with underscores
+            # pipeline.colorspace.parse_colorspace_from_filepath
+            # is checking it with underscores too
             colorspace = colorspace.replace(" ", "_")
             template_data["colorspace"] = colorspace
 
