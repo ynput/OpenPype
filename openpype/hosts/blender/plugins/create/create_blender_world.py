@@ -8,7 +8,7 @@ class CreateWorld(plugin.Creator):
     """Create a Blender World instance."""
 
     name = "worldMain"
-    label = "World"
+    label = "Blender World"
     family = "blender.world"
     icon = "earth"
 
