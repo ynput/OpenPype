@@ -1,6 +1,6 @@
 import re
 
-from Qt import QtWidgets
+from qtpy import QtWidgets
 from openpype.pipeline import create
 from openpype.hosts.photoshop import api as photoshop
 

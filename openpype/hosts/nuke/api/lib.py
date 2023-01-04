@@ -10,7 +10,7 @@ from collections import OrderedDict
 import clique
 
 import nuke
-from Qt import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from openpype.client import (
     get_project,
@@ -81,7 +81,6 @@ class Context:
 def get_main_window():
     """Acquire Nuke's main window"""
     if Context.main_window is None:
-        from Qt import QtWidgets
 
         top_widgets = QtWidgets.QApplication.topLevelWidgets()
         name = "Foundry::UI::DockMainWindow"
@@ -611,7 +610,10 @@ def get_created_node_imageio_setting_legacy(nodeclass, creator, subset):
 
         if (
             onode["subsets"]
-            and not any(re.search(s, subset) for s in onode["subsets"])
+            and not any(
+                re.search(s.lower(), subset.lower())
+                for s in onode["subsets"]
+            )
         ):
             continue
 
@@ -694,7 +696,8 @@ def get_imageio_node_override_setting(
     # find matching override node
     override_imageio_node = None
     for onode in override_nodes:
-        log.info(onode)
+        log.debug("__ onode: {}".format(onode))
+        log.debug("__ subset: {}".format(subset))
         if node_class not in onode["nukeNodeClass"]:
             continue
 
@@ -703,7 +706,10 @@ def get_imageio_node_override_setting(
 
         if (
             onode["subsets"]
-            and not any(re.search(s, subset) for s in onode["subsets"])
+            and not any(
+                re.search(s.lower(), subset.lower())
+                for s in onode["subsets"]
+            )
         ):
             continue
 

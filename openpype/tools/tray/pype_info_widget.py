@@ -2,7 +2,7 @@ import os
 import json
 import collections
 
-from Qt import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 from openpype import style
 from openpype import resources

@@ -6,7 +6,7 @@ import sys
 import logging
 
 import pyblish.api
-from Qt import QtCore
+from qtpy import QtCore
 
 from openpype.lib import (
     Logger,

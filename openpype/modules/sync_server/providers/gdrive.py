@@ -74,7 +74,7 @@ class GDriveHandler(AbstractProvider):
             )
             return
 
-        if not self.presets["enabled"]:
+        if not self.presets.get("enabled"):
             self.log.debug(
                 "Sync Server: Site {} not enabled for {}.".format(
                     site_name, project_name
