@@ -96,54 +96,41 @@ def ls() -> Iterator:
     """
     openpype_containers = bpy.context.scene.openpype_containers
 
-    # Create containers from outliner datablocks (e.g collection duplication)
-    scene_collection = bpy.context.scene.collection
-    outliner_entities = [  # Collections
-        c
-        for c in scene_collection.children_recursive
-        if c.get(pipeline.AVALON_PROPERTY, {}).get("id") == AVALON_CONTAINER_ID
-        and not openpype_containers.get(c.name)
-    ]
-    outliner_entities.extend(  # Objects
-        [
-            o
-            for o in scene_collection.all_objects
-            if (o.instance_collection or o)
-            .get(pipeline.AVALON_PROPERTY, {})
-            .get("id")
-            == AVALON_CONTAINER_ID
-            and not openpype_containers.get(o.name)
-        ]
-    )
+    # Create containers from container datablocks
+    # (e.g collection duplication or linked by hand)
+    container_datablocks = lsattr("id", AVALON_CONTAINER_ID)
     children_to_skip = set(
         d_ref.datablock
         for d_ref in chain.from_iterable(
             [op_container.datablock_refs for op_container in openpype_containers]
         )
     )
-    for entity in outliner_entities:
+    for entity in container_datablocks:
         if entity in children_to_skip:
             continue
 
         # Skip all children of container
-        children_to_skip.update(entity.children_recursive)
+        if hasattr(entity, "children_recursive"):
+            children_to_skip.update(entity.children_recursive)
 
         # Find datablocks depending on type
         if type(entity) is bpy.types.Collection:
-            datablocks = [
+            container_datablocks = [
                 entity,
                 *entity.children_recursive,
                 *entity.all_objects,
             ]
         elif type(entity) is bpy.types.Object:
-            datablocks = [
+            container_datablocks = [
                 entity,
                 entity.instance_collection,
                 *entity.children_recursive,
             ]
+        else:
+            container_datablocks = [entity]
 
         # Create container
-        container = create_container(entity.name, datablocks)
+        container = create_container(entity.name, container_datablocks)
 
         # Transfer container metadata and keep original outliner entity
         metadata = (
