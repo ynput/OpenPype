@@ -199,12 +199,31 @@ def build_anim(project_name, asset_name):
     load_subset(project_name, asset_name, "layoutMain", "Append")
     load_subset(project_name, asset_name, "cameraMain", "Link")
 
-    # Select camera from cameraMain instance to link with the review.
+    # Get animation instance creator
+    Creator = get_legacy_creator_by_name("CreateAnimation")
+    if not Creator:
+        raise ValueError('Creator plugin "CreateAnimation" was not found.')
+
+    # TODO shouldn't touch the selection
     bpy.ops.object.select_all(action="DESELECT")
     for obj in bpy.context.scene.objects:
+        # Select camera from cameraMain instance to link with the review.
+        # TODO shouldn't touch the selection
         if obj.type == "CAMERA":
             obj.select_set(True)
             break
+        elif obj.type == "ARMATURE":
+            # Create animation instance
+            variant_name = obj.name.capitalize()
+            plugin = Creator(
+                f"animation{variant_name}",
+                asset_name,
+                {"variant": variant_name},
+            )
+            plugin.process([obj])
+            # instance = plugin.process([obj])
+            # instance.name = f"{instance.name}:{obj.name}"
+    
     create_instance("CreateReview", "reviewMain", useSelection=True)
 
 
