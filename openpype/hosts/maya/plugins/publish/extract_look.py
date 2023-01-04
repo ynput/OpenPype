@@ -367,10 +367,19 @@ class ExtractLook(publish.Extractor):
         for filepath in files_metadata:
 
             linearize = False
-            if do_maketx and files_metadata[filepath]["color_space"].lower() == "srgb":  # noqa: E501
-                linearize = True
-                # set its file node to 'raw' as tx will be linearized
-                files_metadata[filepath]["color_space"] = "Raw"
+            # if OCIO color management enabled
+            # it wont take the condition of the files_metadata
+
+            # TODO: if do_maketx: linearize=False
+            ocio_maya = cmds.colorManagementPrefs(q=True,
+                                                  cmConfigFileEnabled=True,
+                                                  cmEnabled=True)
+
+            if do_maketx and not ocio_maya:
+                if files_metadata[filepath]["color_space"].lower() == "srgb":  # noqa: E501
+                    linearize = True
+                    # set its file node to 'raw' as tx will be linearized
+                    files_metadata[filepath]["color_space"] = "Raw"
 
             # if do_maketx:
             #     color_space = "Raw"
@@ -421,6 +430,7 @@ class ExtractLook(publish.Extractor):
             color_space_attr = resource["node"] + ".colorSpace"
             try:
                 color_space = cmds.getAttr(color_space_attr)
+                self.log.info("current colorspace: {0}".format(color_space))
             except ValueError:
                 # node doesn't have color space attribute
                 color_space = "Raw"
