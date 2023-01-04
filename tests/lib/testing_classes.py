@@ -160,7 +160,7 @@ class ModuleUnitTest(BaseTest):
             db_handler.teardown(self.TEST_OPENPYPE_NAME)
 
     @pytest.fixture(scope="module")
-    def dbcon(self, db_setup):
+    def dbcon(self, db_setup, output_folder_url):
         """Provide test database connection.
 
             Database prepared from dumps with 'db_setup' fixture.
@@ -170,6 +170,17 @@ class ModuleUnitTest(BaseTest):
         dbcon.Session["AVALON_PROJECT"] = self.PROJECT
         dbcon.Session["AVALON_ASSET"] = self.ASSET
         dbcon.Session["AVALON_TASK"] = self.TASK
+
+        # set project root to temp folder
+        platform_str = platform.system().lower()
+        root_key = "config.roots.work.{}".format(platform_str)
+        dbcon.update_one(
+            {"type": "project"},
+            {"$set":
+                {
+                    root_key: output_folder_url
+                }}
+        )
         yield dbcon
 
     @pytest.fixture(scope="module")
@@ -277,17 +288,6 @@ class PublishTest(ModuleUnitTest):
     def launched_app(self, dbcon, download_test_data, last_workfile_path,
                      startup_scripts, app_args, app_name, output_folder_url):
         """Launch host app"""
-        # set publishing folders
-        platform_str = platform.system().lower()
-        root_key = "config.roots.work.{}".format(platform_str)
-        dbcon.update_one(
-            {"type": "project"},
-            {"$set":
-                {
-                    root_key: output_folder_url
-                }}
-        )
-
         # set schema - for integrate_new
         from openpype import PACKAGE_DIR
         # Path to OpenPype's schema
