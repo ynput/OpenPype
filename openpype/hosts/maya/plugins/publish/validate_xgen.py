@@ -26,7 +26,10 @@ class ValidateXgen(pyblish.api.InstancePlugin):
                 continue
             remainder_nodes.append(node)
 
-        msg = "Invalid nodes in the objectset:\n{}".format(remainder_nodes)
+        msg = (
+            "Only the collection is used when publishing. Found these invalid"
+            " nodes in the objectset:\n{}".format(remainder_nodes)
+        )
         assert not remainder_nodes, msg
 
         # Only one collection per instance.
