@@ -3,7 +3,7 @@
 from openpype.hosts.blender.api import plugin
 
 
-class CreateLook(plugin.Creator):
+class CreateRender(plugin.Creator):
     """Create Render instance"""
 
     name = "RenderMain"
