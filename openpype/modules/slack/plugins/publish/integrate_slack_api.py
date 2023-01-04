@@ -396,7 +396,7 @@ class SlackPython2Operations(AbstractSlackOperations):
                 users = self._get_users()
                 groups = self._get_groups()
                 break
-            except Exception as e:
+            except Exception:
                 self.log.warning("Cannot pull user info, "
                                  "mentions won't work", exc_info=True)
                 return [], []
