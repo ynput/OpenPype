@@ -5,6 +5,11 @@ from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
 )
+from openpype.hosts.maya.api.lib_rendersetup import (
+    get_attr_overrides,
+    get_attr_in_layer,
+)
+from maya.app.renderSetup.model.override import AbsOverride
 
 
 class ValidateFrameRange(pyblish.api.InstancePlugin):
@@ -93,6 +98,11 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
         Repair instance container to match asset data.
         """
 
+        if "renderlayer" in instance.data.get("families"):
+            # Special behavior for renderlayers
+            cls.repair_renderlayer(instance)
+            return
+
         node = instance.data["name"]
         context = instance.context
 
@@ -120,3 +130,53 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
             # Include end handle in frame end if no separate handleEnd
             # attribute exists on the node
             cmds.setAttr("{}.frameEnd".format(node), frame_end_handle)
+
+    @classmethod
+    def repair_renderlayer(cls, instance):
+        """Apply frame range in render settings"""
+
+        layer = instance.data["setMembers"]
+        context = instance.context
+
+        start_attr = "defaultRenderGlobals.startFrame"
+        end_attr = "defaultRenderGlobals.endFrame"
+
+        frame_start_handle = int(context.data.get("frameStartHandle"))
+        frame_end_handle = int(context.data.get("frameEndHandle"))
+
+        cls._set_attr_in_layer(start_attr, layer, frame_start_handle)
+        cls._set_attr_in_layer(end_attr, layer, frame_end_handle)
+
+    @classmethod
+    def _set_attr_in_layer(cls, node_attr, layer, value):
+
+        if get_attr_in_layer(node_attr, layer=layer) == value:
+            # Already ok. This can happen if you have multiple renderlayers
+            # validated and there are no frame range overrides. The first
+            # layer's repair would have fixed the global value already
+            return
+
+        overrides = list(get_attr_overrides(node_attr, layer=layer))
+        if overrides:
+            # We set the last absolute override if it is an absolute override
+            # otherwise we'll add an Absolute override
+            last_override = overrides[-1][1]
+            if not isinstance(last_override, AbsOverride):
+                collection = last_override.parent()
+                node, attr = node_attr.split(".", 1)
+                last_override = collection.createAbsoluteOverride(node, attr)
+
+            cls.log.debug("Setting {attr} absolute override in "
+                          "layer '{layer}': {value}".format(layer=layer,
+                                                            attr=node_attr,
+                                                            value=value))
+            cmds.setAttr(last_override.name() + ".attrValue", value)
+
+        else:
+            # Set the attribute directly
+            # (Note that this will set the global attribute)
+            cls.log.debug("Setting global {attr}: {value}".format(
+                attr=node_attr,
+                value=value
+            ))
+            cmds.setAttr(node_attr, value)
