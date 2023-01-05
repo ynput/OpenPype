@@ -5,7 +5,7 @@ from collections.abc import Iterable
 import bpy
 
 # Match Blender type to a datapath to look into. Needed for native UI creator.
-BL_TYPE_DATAPATH = (
+BL_TYPE_DATAPATH = (  # TODO rename DATACOL
     {  # NOTE Order is important for some hierarchy based processes!
         bpy.types.Collection: "collections",  # NOTE Must be always first
         bpy.types.Object: "objects",
