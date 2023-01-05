@@ -65,10 +65,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 )
                 continue
 
-            # Skip if disabled from publish
-            if not op_instance.publish:
-                continue
-
+            # Create pyblish instance
             members = set()
             avalon_prop = op_instance[AVALON_PROPERTY]
             instance = context.create_instance(
@@ -79,6 +76,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 asset=avalon_prop["asset"],
                 task=avalon_prop["task"],
             )
+
+            # Match publish checkbox
+            instance.data["publish"] = op_instance.publish
 
             # Process datablocks
             members.update(datablocks)
