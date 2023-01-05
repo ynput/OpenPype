@@ -43,10 +43,6 @@ class SCENE_UL_OpenpypeInstances(UIList):
         # Draw name with icon
         row.label(text=item.name)
 
-        # Icons for accepted types
-        for type_icon in item.get("icons", []):
-            row.label(icon=type_icon)
-
 
 class SCENE_UL_OpenpypeDatablocks(UIList):
     def draw_item(
@@ -103,11 +99,20 @@ class SCENE_PT_OpenpypeInstancesManager(bpy.types.Panel):
         # Add/Remove buttons
         col = row.column(align=True)
         col.operator("scene.create_openpype_instance", icon="ADD", text="")
+        active_instance = context.scene.openpype_instances[
+            context.scene.openpype_instance_active_index
+        ]
         col.operator(
             "scene.remove_openpype_instance", icon="REMOVE", text=""
-        ).instance_name = context.scene.openpype_instances[
-            context.scene.openpype_instance_active_index
-        ].name
+        ).instance_name = active_instance.name
+
+        # Icons for accepted types
+        row = layout.row(align=True)
+        subcol = row.column(align=True)
+        subcol.label(text="Supported types for instance:")
+        subrow = subcol.row(align=True)
+        for type_icon in active_instance.get("icons", []):
+            subrow.label(icon=type_icon)
 
 
 class SCENE_PT_OpenpypeDatablocksManager(bpy.types.Panel):
