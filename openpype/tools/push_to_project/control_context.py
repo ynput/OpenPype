@@ -1,5 +1,7 @@
 import re
+import time
 import collections
+import threading
 
 from openpype.client import (
     get_projects,
@@ -15,6 +17,12 @@ from openpype.lib.events import EventSystem
 from openpype.pipeline.create import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
     get_subset_name_template,
+)
+
+from .control_integrate import (
+    ProjectPushItem,
+    ProjectPushItemProcess,
+    ProjectPushItemStatus,
 )
 
 
@@ -382,6 +390,7 @@ class PushToContextController:
         event_system.add_callback("new_asset_name.changed", self._invalidate)
 
         self._submission_enabled = False
+        self._process_thread = None
 
         self.set_source(project_name, version_id)
 
@@ -620,12 +629,44 @@ class PushToContextController:
             return asset_item.name
         return None
 
-    def submit(self):
+    def submit(self, wait=True):
         if not self.submission_enabled:
             return
-        project_name = self.selection_model.project_name
-        asset_id = self.selection_model.asset_id
-        task_name = self.selection_model.task_name
-        self.dst_project_name = project_name
-        self.dst_asset_id = asset_id
-        self.dst_task_name = task_name
+
+        if self._process_thread is not None:
+            return
+
+        self._event_system.emit("submit.started", {}, "controller")
+        thread = threading.Thread(target=self._submit_callback)
+        thread.start()
+        if wait:
+            while thread.is_alive():
+                time.sleep(0.1)
+            thread.join()
+            self._event_system.emit("submit.finished", {}, "controller")
+            return
+        self._process_thread = thread
+
+    def wait_for_process_thread(self):
+        if self._process_thread is None:
+            return
+        self._process_thread.join()
+        self._process_thread = None
+
+    def _submit_callback(self):
+        item = ProjectPushItem(
+            self.src_project_name,
+            self.src_version_id,
+            self.selection_model.project_name,
+            self.selection_model.asset_id,
+            self.selection_model.task_name,
+            self.user_values.variant,
+            comment=self.user_values.comment,
+            new_asset_name=self.user_values.new_asset_name,
+            dst_version=1
+        )
+
+        status_item = ProjectPushItemStatus(event_system=self._event_system)
+        process_item = ProjectPushItemProcess(item, status_item)
+        process_item.process()
+        self._event_system.emit("submit.finished", {}, "controller")
