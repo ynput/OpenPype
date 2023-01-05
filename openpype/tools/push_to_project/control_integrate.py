@@ -123,63 +123,149 @@ class ProjectPushItem:
         return "<{} - {}>".format(self.__class__.__name__, self.id)
 
 
+class StatusMessage:
+    def __init__(self, message, level):
+        self.message = message
+        self.level = level
+
+    def __str__(self):
+        return "{}: {}".format(self.level.upper(), self.message)
+
+    def __repr__(self):
+        return "<{} - {}> {}".format(
+            self.__class__.__name__, self.level.upper, self.message
+        )
+
+
 class ProjectPushItemStatus:
     def __init__(
-        self, failed=False, finished=False, error=None, messages=None
+        self,
+        failed=False,
+        finished=False,
+        fail_reason=None,
+        messages=None
     ):
         if messages is None:
             messages = []
         self._failed = failed
         self._finished = finished
-        self._error = error
-        self._progress_messages = messages
-        self._last_message = None
-
-    def get_failed(self):
-        return self._failed
-
-    def set_failed(self, failed):
-        if failed == self._failed:
-            return
-        self._failed = failed
+        self._fail_reason = fail_reason
+        self._messages = messages
 
     def get_finished(self):
+        """Processing of push to project finished.
+
+        Returns:
+            bool: Finished.
+        """
+
         return self._finished
 
-    def set_finished(self, finished):
-        if finished == self._finished:
+    def set_finished(self, finished=True):
+        """Mark status as finished.
+
+        Args:
+            finished (bool): Processing finished (failed or not).
+        """
+
+        if finished != self._finished:
+            self._finished = finished
+
+    def get_failed(self):
+        """Processing failed.
+
+        Returns:
+            bool: Processing failed.
+        """
+
+        return self._failed
+
+    def set_failed(self, failed, fail_reason=UNKNOWN):
+        """Set status as failed.
+
+        Attribute 'fail_reason' can change automatically based on passed value.
+        Reason is unset if 'failed' is 'False' and is set do default reason if
+        is set to 'True' and reason is not set.
+
+        Args:
+            failed (bool): Push to project failed.
+            fail_reason (str): Reason why failed.
+        """
+
+        self._failed = failed
+        if fail_reason is not UNKNOWN and self._fail_reason != fail_reason:
+            self.set_fail_reason(fail_reason)
+
+        if failed and self._fail_reason is None:
+            self.set_fail_reason("Failed without specified reason")
+
+        elif not failed and self._fail_reason:
+            self.set_fail_reason(None)
+
+    def get_fail_reason(self):
+        """Reason why push to process failed.
+
+        Returns:
+            Union[str, None]: Reason why push failed or None.
+        """
+
+        return self._fail_reason
+
+    def set_fail_reason(self, reason):
+        """Mark process status as failed.
+
+        Status is also set to failed if 'reason' is not None.
+
+        Args:
+            reason (str): Reason why push to project failed.
+        """
+
+        if self._fail_reason == reason:
             return
-        self._finished = finished
+        self._fail_reason = reason
+        if reason and not self._failed:
+            self.set_failed(True)
 
-    def get_error(self):
-        return self._error
+        if reason:
+            print(f"Integration failed: {reason}")
 
-    def set_error(self, error, failed=None):
-        if error == self._error:
-            return
-        self._error = error
-        if failed is None:
-            failed = error is not None
-
-        if failed:
-            self.failed = failed
-
-    failed = property(get_failed, set_failed)
     finished = property(get_finished, set_finished)
-    error = property(get_error, set_error)
+    failed = property(get_failed, set_failed)
+    fail_reason = property(get_fail_reason, set_fail_reason)
 
-    def add_progress_message(self, message):
-        self._progress_messages.append(message)
-        self._last_message = message
-        print(message)
+    # Loggin helpers
+    # TODO better logging
+    def add_message(self, message, level):
+        message_obj = StatusMessage(message, level)
+        self._messages.append(message_obj)
+        print(message_obj)
+        return message_obj
 
-    @property
-    def last_message(self):
-        return self._last_message
+    def debug(self, message):
+        return self.add_message(message, "debug")
+
+    def info(self, message):
+        return self.add_message(message, "info")
+
+    def warning(self, message):
+        return self.add_message(message, "warning")
+
+    def error(self, message):
+        return self.add_message(message, "error")
+
+    def critical(self, message):
+        return self.add_message(message, "critical")
 
 
 class ProjectPushRepreItem:
     """Representation item.
+
+    Representation item based on representation document and project roots.
+
+    Representation document may have reference to:
+    - source files: Files defined with publish template
+    - resource files: Files that should be in publish directory
+        but filenames are not template based.
 
     Args:
         repre_doc (Dict[str, Ant]): Representation document.
@@ -211,6 +297,15 @@ class ProjectPushRepreItem:
 
     @property
     def frame(self):
+        """First frame of representation files.
+
+        This value will be in representation document context if is sequence.
+
+        Returns:
+            Union[int, None]: First frame in representation files based on
+                source files or None if frame is not part of filename.
+        """
+
         if self._frame is UNKNOWN:
             frame = None
             for src_file in self.src_files:
@@ -263,6 +358,13 @@ class ProjectPushRepreItem:
         src_files = []
         resource_files = []
         template = self._repre_doc["data"]["template"]
+        # Remove padding from 'udim' and 'frame' formatting keys
+        # - "{frame:0>4}" -> "{frame}"
+        for key in ("udim", "frame"):
+            sub_part = "{" + key + "[^}]*}"
+            replacement = "{{{}}}".format(key)
+            template = re.sub(sub_part, replacement, template)
+
         repre_context = self._repre_doc["context"]
         fill_repre_context = copy.deepcopy(repre_context)
         if "frame" in fill_repre_context:
@@ -347,12 +449,13 @@ class ProjectPushItemProcess:
     """
     Args:
         item (ProjectPushItem): Item which is being processed.
+        item_status (ProjectPushItemStatus): Object to store status.
     """
 
     # TODO where to get host?!!!
     host_name = "republisher"
 
-    def __init__(self, item):
+    def __init__(self, item, item_status=None):
         self._item = item
 
         self._src_project_doc = None
@@ -376,9 +479,15 @@ class ProjectPushItemProcess:
         self._project_settings = None
         self._template_name = None
 
-        self._status = ProjectPushItemStatus()
+        if item_status is None:
+            item_status = ProjectPushItemStatus()
+        self._status = item_status
         self._operations = OperationsSession()
         self._file_transaction = FileTransaction()
+
+    @property
+    def status(self):
+        return self._status
 
     @property
     def src_project_doc(self):
@@ -454,40 +563,38 @@ class ProjectPushItemProcess:
 
         project_doc = get_project(src_project_name)
         if not project_doc:
-            self._status.error = (
+            self._status.set_fail_reason(
                 f"Source project \"{src_project_name}\" was not found"
             )
-            raise PushToProjectError(self._status.error)
+            raise PushToProjectError(self._status.fail_reason)
 
-        self._status.add_progress_message(
-            f"Project '{src_project_name}' found"
-        )
+        self._status.debug(f"Project '{src_project_name}' found")
 
         version_doc = get_version_by_id(src_project_name, src_version_id)
         if not version_doc:
-            self._status.error = (
+            self._status.set_fail_reason((
                 f"Source version with id \"{src_version_id}\""
                 f" was not found in project \"{src_project_name}\""
-            )
-            raise PushToProjectError(self._status.error)
+            ))
+            raise PushToProjectError(self._status.fail_reason)
 
         subset_id = version_doc["parent"]
         subset_doc = get_subset_by_id(src_project_name, subset_id)
         if not subset_doc:
-            self._status.error = (
+            self._status.set_fail_reason((
                 f"Could find subset with id \"{subset_id}\""
                 f" in project \"{src_project_name}\""
-            )
-            raise PushToProjectError(self._status.error)
+            ))
+            raise PushToProjectError(self._status.fail_reason)
 
         asset_id = subset_doc["parent"]
         asset_doc = get_asset_by_id(src_project_name, asset_id)
         if not asset_doc:
-            self._status.error = (
+            self._status.set_fail_reason((
                 f"Could find asset with id \"{asset_id}\""
                 f" in project \"{src_project_name}\""
-            )
-            raise PushToProjectError(self._status.error)
+            ))
+            raise PushToProjectError(self._status.fail_reason)
 
         anatomy = Anatomy(src_project_name)
 
@@ -499,10 +606,16 @@ class ProjectPushItemProcess:
             ProjectPushRepreItem(repre_doc, anatomy.roots)
             for repre_doc in repre_docs
         ]
-        self._status.add_progress_message((
+        self._status.debug((
             f"Found {len(repre_items)} representations on"
             f" version {src_version_id} in project '{src_project_name}'"
         ))
+        if not repre_items:
+            self._status.set_fail_reason(
+                "Source version does not have representations"
+                f" (Version id: {src_version_id})"
+            )
+            raise PushToProjectError(self._status.fail_reason)
 
         self._src_anatomy = anatomy
         self._src_project_doc = project_doc
@@ -517,12 +630,12 @@ class ProjectPushItemProcess:
         # Validate project existence
         dst_project_doc = get_project(dst_project_name)
         if not dst_project_doc:
-            self._status.error = (
+            self._status.set_fail_reason(
                 f"Destination project '{dst_project_name}' was not found"
             )
-            raise PushToProjectError(self._status.error)
+            raise PushToProjectError(self._status.fail_reason)
 
-        self._status.add_progress_message(
+        self._status.debug(
             f"Destination project '{dst_project_name}' found"
         )
         self._project_doc = dst_project_doc
@@ -556,10 +669,10 @@ class ProjectPushItemProcess:
         for other_asset_doc in other_asset_docs:
             other_name = other_asset_doc["name"]
             if other_name.lower() == asset_name_low:
-                self._status.add_progress_message(
+                self._status.debug((
                     f"Found already existing asset with name \"{other_name}\""
                     f" which match requested name \"{asset_name}\""
-                )
+                ))
                 return other_asset_doc
 
         data_keys = (
@@ -597,7 +710,7 @@ class ProjectPushItemProcess:
             asset_doc["type"],
             asset_doc
         )
-        self._status.add_progress_message(
+        self._status.info(
             f"Creating new asset with name \"{asset_name}\""
         )
         self._created_asset_doc = asset_doc
@@ -609,10 +722,10 @@ class ProjectPushItemProcess:
         dst_task_name = self._item.dst_task_name
         new_asset_name = self._item.new_asset_name
         if not dst_asset_id and not new_asset_name:
-            self._status.error = (
+            self._status.set_fail_reason(
                 "Push item does not have defined destination asset"
             )
-            raise PushToProjectError(self._status.error)
+            raise PushToProjectError(self._status.fail_reason)
 
         # Get asset document
         parent_asset_doc = None
@@ -621,11 +734,11 @@ class ProjectPushItemProcess:
                 self._item.dst_project_name, self._item.dst_asset_id
             )
             if not parent_asset_doc:
-                self._status.error = (
+                self._status.set_fail_reason(
                     f"Could find asset with id \"{dst_asset_id}\""
                     f" in project \"{dst_project_name}\""
                 )
-                raise PushToProjectError(self._status.error)
+                raise PushToProjectError(self._status.fail_reason)
 
         if not new_asset_name:
             asset_doc = parent_asset_doc
@@ -647,12 +760,12 @@ class ProjectPushItemProcess:
         asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
         task_info = asset_tasks.get(dst_task_name)
         if not task_info:
-            self._status.error = (
+            self._status.set_fail_reason(
                 f"Could find task with name \"{dst_task_name}\""
                 f" on asset \"{asset_path}\""
                 f" in project \"{dst_project_name}\""
             )
-            raise PushToProjectError(self._status.error)
+            raise PushToProjectError(self._status.fail_reason)
 
         # Create copy of task info to avoid changing data in asset document
         task_info = copy.deepcopy(task_info)
@@ -671,12 +784,12 @@ class ProjectPushItemProcess:
             family = families[0]
 
         if not family:
-            self._status.error = (
+            self._status.set_fail_reason(
                 "Couldn't figure out family from source subset"
             )
-            raise PushToProjectError(self._status.error)
+            raise PushToProjectError(self._status.fail_reason)
 
-        self._status.add_progress_message(
+        self._status.debug(
             f"Publishing family is '{family}' (Based on source subset)"
         )
         self._family = family
@@ -690,7 +803,7 @@ class ProjectPushItemProcess:
             self.task_info.get("type"),
             project_settings=self.project_settings
         )
-        self._status.add_progress_message(
+        self._status.debug(
             f"Using template '{template_name}' for integration"
         )
         self._template_name = template_name
@@ -708,8 +821,8 @@ class ProjectPushItemProcess:
             host_name=self.host_name,
             project_settings=self.project_settings
         )
-        self._status.add_progress_message(
-            f"Push will be integrating to subet with name '{subset_name}'"
+        self._status.info(
+            f"Push will be integrating to subset with name '{subset_name}'"
         )
         self._subset_name = subset_name
 
@@ -733,20 +846,7 @@ class ProjectPushItemProcess:
         self._subset_doc = subset_doc
 
     def make_sure_version_exists(self):
-        """Make sure version document exits in database.
-
-        Args:
-            item_process (ProjectPushItemProcess): Item handling process.
-            project_name (str): Name of project where version should live.
-            version (Union[int, None]): Number of version. Latest is used when
-                'None' is passed.
-            operations (OperationsSession): Session which handler creation and
-                update of entities.
-
-        Returns:
-            Tuple[Dict[str, Any], bool]: New version document and boolean if version
-                already existed in database.
-        """
+        """Make sure version document exits in database."""
 
         project_name = self._item.dst_project_name
         version = self._item.dst_version
@@ -851,16 +951,19 @@ class ProjectPushItemProcess:
         file_template = StringTemplate(
             anatomy.templates[template_name]["file"]
         )
+        self._status.info("Preparing files to transfer")
         processed_repre_items = self._prepare_file_transactions(
             anatomy, template_name, formatting_data, file_template
         )
         self._file_transaction.process()
+        self._status.info("Preparing database changes")
         self._prepare_database_operations(
             version_id,
             processed_repre_items,
             path_template,
             existing_repres_by_low_name
         )
+        self._status.info("Finalization")
         self._operations.commit()
         self._file_transaction.finalize()
 
@@ -1005,15 +1108,33 @@ class ProjectPushItemProcess:
             )
 
     def process(self):
-        item_process.fill_source_variables()
-        item_process.fill_destination_project()
-        item_process.fill_or_create_destination_asset()
-        item_process.determine_family()
-        item_process.determine_publish_template_name()
-        item_process.determine_subset_name()
-        item_process.make_sure_subset_exists()
-        item_process.make_sure_version_exists()
-        item_process.integrate_representations()
+        try:
+            self._status.info("Process started")
+            self.fill_source_variables()
+            self._status.info("Source entities were found")
+            self.fill_destination_project()
+            self._status.info("Destination project was found")
+            self.fill_or_create_destination_asset()
+            self._status.info("Destination asset was determined")
+            self.determine_family()
+            self.determine_publish_template_name()
+            self.determine_subset_name()
+            self.make_sure_subset_exists()
+            self.make_sure_version_exists()
+            self._status.info("Prerequirements were prepared")
+            self.integrate_representations()
+            self._status.info("Integration finished")
+
+        except PushToProjectError:
+            pass
+
+        except Exception as exc:
+            self._status.set_fail_reason(
+                "Unhandled error happened: {}".format(str(exc))
+            )
+
+        finally:
+            self._status.set_finished()
 
 
 def main():
