@@ -106,6 +106,16 @@ class SCENE_PT_OpenpypeInstancesManager(bpy.types.Panel):
             "scene.remove_openpype_instance", icon="REMOVE", text=""
         ).instance_name = active_instance.name
 
+        col.separator()
+
+        # Move buttons
+        col.operator(
+            "scene.move_openpype_instance", icon="TRIA_UP", text=""
+        ).direction = "UP"
+        col.operator(
+            "scene.move_openpype_instance", icon="TRIA_DOWN", text=""
+        ).direction = "DOWN"
+
         # Draw full name
         col = layout.column(align=True)
         col.prop(active_instance, "name", text="Full name", emboss=False)
@@ -115,7 +125,7 @@ class SCENE_PT_OpenpypeInstancesManager(bpy.types.Panel):
         subrow.label(text="Supported types:")
         for type_icon in active_instance.get("icons", []):
             subrow.label(icon=type_icon)
-        subrow.label()
+        subrow.label()  # UI trick
 
 
 class SCENE_PT_OpenpypeDatablocksManager(bpy.types.Panel):
@@ -170,6 +180,16 @@ class SCENE_PT_OpenpypeDatablocksManager(bpy.types.Panel):
             props.datablock_name = active_openpype_instance.datablock_refs[
                 active_openpype_instance.datablock_active_index
             ].name
+
+        col.separator()
+
+        # Move buttons
+        col.operator(
+            "scene.move_openpype_instance_datablock", icon="TRIA_UP", text=""
+        ).direction = "UP"
+        col.operator(
+            "scene.move_openpype_instance_datablock", icon="TRIA_DOWN", text=""
+        ).direction = "DOWN"
 
 
 classes = (

@@ -694,6 +694,97 @@ class SCENE_OT_RemoveFromOpenpypeInstance(
 
         return {"FINISHED"}
 
+class SCENE_OT_MoveOpenpypeInstance(bpy.types.Operator):
+    bl_idname = "scene.move_openpype_instance"
+    bl_label = "Move Openpype Instance"
+    bl_options = {"UNDO", "INTERNAL"}
+    bl_description = "Change index of active openpype instance"
+
+    direction: bpy.props.EnumProperty(
+        items=(
+            ("UP", "Up", ""),
+            ("DOWN", "Down", ""),
+        )
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return len(context.scene.openpype_instances) > 0
+
+    def execute(self, context):
+        op_instances = context.scene.openpype_instances
+        idx = context.scene.openpype_instance_active_index
+
+        # down
+        if self.direction == "DOWN":
+            if idx < len(op_instances) - 1:
+                op_instances.move(idx, idx + 1)
+                context.scene.openpype_instance_active_index += 1
+
+                self.report({"INFO"}, "Instance moved down")
+            else:
+                self.report({"INFO"}, "Unable to move in this direction")
+
+        # up
+        elif self.direction == "UP":
+            if idx >= 1:
+                op_instances.move(idx, idx - 1)
+                context.scene.openpype_instance_active_index -= 1
+
+                self.report({"INFO"}, "Instance moved up")
+            else:
+                self.report({"INFO"}, "Unable to move in this direction")
+
+        return {"FINISHED"}
+
+
+class SCENE_OT_MoveOpenpypeInstanceDatablock(bpy.types.Operator):
+    bl_idname = "scene.move_openpype_instance_datablock"
+    bl_label = "Move Openpype Instance Datablock"
+    bl_description = "Change index of active openpype instance datablock"
+
+    direction: bpy.props.EnumProperty(
+        items=(
+            ("UP", "Up", ""),
+            ("DOWN", "Down", ""),
+        )
+    )
+
+    @classmethod
+    def poll(cls, context):
+        active_instance = context.scene.openpype_instances[
+            context.scene.openpype_instance_active_index
+        ]
+        return len(active_instance.datablock_refs) > 0
+
+    def execute(self, context):
+        active_instance = context.scene.openpype_instances[
+            context.scene.openpype_instance_active_index
+        ]
+        idx = context.scene.openpype_instance_active_index
+
+        # down
+        if self.direction == "DOWN":
+            if idx < len(active_instance.datablock_refs) - 1:
+                active_instance.datablock_refs.move(idx, idx + 1)
+                active_instance.datablock_active_index -= 1
+
+                self.report({"INFO"}, "Instance Datablock moved down")
+            else:
+                self.report({"INFO"}, "Unable to move in this direction")
+
+        # up
+        elif self.direction == "UP":
+            if idx >= 1:
+                active_instance.datablock_refs.move(idx, idx - 1)
+                active_instance.datablock_active_index -= 1
+
+                self.report({"INFO"}, "Instance Datablock moved up")
+            else:
+                self.report({"INFO"}, "Unable to move in this direction")
+
+        return {"FINISHED"}
+
 
 class LaunchWorkFiles(LaunchQtApp):
     """Launch Avalon Work Files."""
@@ -856,6 +947,8 @@ classes = [
     SCENE_OT_RemoveOpenpypeInstance,
     SCENE_OT_AddToOpenpypeInstance,
     SCENE_OT_RemoveFromOpenpypeInstance,
+    SCENE_OT_MoveOpenpypeInstance,
+    SCENE_OT_MoveOpenpypeInstanceDatablock,
 ]
 
 
