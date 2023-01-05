@@ -9,6 +9,7 @@ from typing import Dict, Iterator, List, Union
 import bpy
 import addon_utils
 from openpype.hosts.blender.api.properties import OpenpypeContainer
+from openpype.hosts.blender.api.utils import BL_OUTLINER_TYPES
 from openpype.lib import Logger
 from openpype.pipeline import schema
 from openpype.pipeline.constants import AVALON_CONTAINER_ID
@@ -95,23 +96,40 @@ def ls() -> Iterator:
     called containers.
     """
     openpype_containers = bpy.context.scene.openpype_containers
+    scene_collection = bpy.context.scene.collection
+
+    # Prepare datablocks to skip for containers auto creation
+    # Datablocks already in containers are ignored
+    datablocks_to_skip = {
+        d_ref.datablock
+        for d_ref in chain.from_iterable(
+            [
+                op_container.datablock_refs
+                for op_container in openpype_containers
+            ]
+        )
+    }
 
     # Create containers from container datablocks
     # (e.g collection duplication or linked by hand)
-    container_datablocks = lsattr("id", AVALON_CONTAINER_ID)
-    children_to_skip = set(
-        d_ref.datablock
-        for d_ref in chain.from_iterable(
-            [op_container.datablock_refs for op_container in openpype_containers]
+    # For outliner datablocks, they must be in current scene
+    container_datablocks = [
+        datablock
+        for datablock in lsattr("id", AVALON_CONTAINER_ID)
+        if not (
+            isinstance(datablock, tuple(BL_OUTLINER_TYPES))
+            and datablock
+            not in set(scene_collection.all_objects)
+            | set(scene_collection.children_recursive)
         )
-    )
+    ]
     for entity in container_datablocks:
-        if entity in children_to_skip:
+        if entity in datablocks_to_skip:
             continue
 
         # Skip all children of container
         if hasattr(entity, "children_recursive"):
-            children_to_skip.update(entity.children_recursive)
+            datablocks_to_skip.update(entity.children_recursive)
 
         # Find datablocks depending on type
         if type(entity) is bpy.types.Collection:
