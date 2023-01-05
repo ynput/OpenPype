@@ -148,6 +148,10 @@ QPushButton::menu-indicator  {
     padding-right: 5px;
 }
 
+QPushButton[state="error"] {
+    background: {color:publisher:error};
+}
+
 QToolButton {
     border: 0px solid transparent;
     background: {color:bg-buttons};
