@@ -1119,7 +1119,13 @@ class WM_OT_DownloadLastWorkfile(bpy.types.Operator):
             )
             return {"CANCELLED"}
 
-        last_workfile_path = download_last_workfile()
+        session = legacy_io.Session
+        project_name = session.get("AVALON_PROJECT")
+        task_name = session.get("AVALON_TASK")
+        asset_name = session.get("AVALON_ASSET")
+        anatomy = Anatomy(project_name)
+        last_workfile_representation = get_last_workfile_representation(project_name, asset_name, task_name)
+        last_workfile_path = download_last_published_workfile(...)
         if last_workfile_path:
             bpy.ops.wm.open_mainfile(filepath=last_workfile_path)
             return {"FINISHED"}
