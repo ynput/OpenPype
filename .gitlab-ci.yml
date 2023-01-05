@@ -72,7 +72,6 @@ workflow:
     - Copy-Item -Force -Recurse .\build\exe.win-amd64-3.7 $env:OP_VERSION_PATH\windows
     # Build exe
     - .\tools\build_win_installer.ps1
-    - dir .\build
 
 build-centos-on-tags:
   extends: .build-centos
