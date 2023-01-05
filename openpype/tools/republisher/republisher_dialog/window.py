@@ -1,23 +1,31 @@
+import re
 import collections
 
 from qtpy import QtWidgets, QtGui, QtCore
 
-from openpype.style import load_stylesheet
+from openpype.style import load_stylesheet, get_app_icon_path
+from openpype.tools.utils import (
+    PlaceholderLineEdit,
+    SeparatorWidget,
+    get_asset_icon_by_name,
+    set_style_property,
+)
 
-from .control import RepublisherDialogController
+from .control import PushToContextController
 
 PROJECT_NAME_ROLE = QtCore.Qt.UserRole + 1
 ASSET_NAME_ROLE = QtCore.Qt.UserRole + 2
-ASSET_ICON_ROLE = QtCore.Qt.UserRole + 3
-ASSET_ID_ROLE = QtCore.Qt.UserRole + 4
-TASK_NAME_ROLE = QtCore.Qt.UserRole + 5
-TASK_TYPE_ROLE = QtCore.Qt.UserRole + 6
+ASSET_ID_ROLE = QtCore.Qt.UserRole + 3
+TASK_NAME_ROLE = QtCore.Qt.UserRole + 4
+TASK_TYPE_ROLE = QtCore.Qt.UserRole + 5
 
 
 class ProjectsModel(QtGui.QStandardItemModel):
     empty_text = "< Empty >"
     refreshing_text = "< Refreshing >"
     select_project_text = "< Select Project >"
+
+    refreshed = QtCore.Signal()
 
     def __init__(self, controller):
         super(ProjectsModel, self).__init__()
@@ -59,7 +67,7 @@ class ProjectsModel(QtGui.QStandardItemModel):
             if project_name is None:
                 continue
             item = self._items.pop(project_name)
-            root_item.removeRow(item.row())
+            root_item.takeRow(item.row())
 
         for project_name in project_names:
             if project_name in self._items:
@@ -70,6 +78,7 @@ class ProjectsModel(QtGui.QStandardItemModel):
 
         if new_items:
             root_item.appendRows(new_items)
+        self.refreshed.emit()
 
 
 class ProjectProxyModel(QtCore.QSortFilterProxyModel):
@@ -94,6 +103,7 @@ class ProjectProxyModel(QtCore.QSortFilterProxyModel):
 
 
 class AssetsModel(QtGui.QStandardItemModel):
+    items_changed = QtCore.Signal()
     empty_text = "< Empty >"
 
     def __init__(self, controller):
@@ -151,6 +161,7 @@ class AssetsModel(QtGui.QStandardItemModel):
 
         self._last_project = project_name
         self._clear()
+        self.items_changed.emit()
 
     def _on_refresh_start(self, event):
         pass
@@ -165,11 +176,13 @@ class AssetsModel(QtGui.QStandardItemModel):
         if project_name is None:
             if None not in self._items:
                 self._clear()
+                self.items_changed.emit()
             return
 
         asset_items_by_id = self._controller.model.get_assets(project_name)
         if not asset_items_by_id:
             self._clear()
+            self.items_changed.emit()
             return
 
         assets_by_parent_id = collections.defaultdict(list)
@@ -201,9 +214,12 @@ class AssetsModel(QtGui.QStandardItemModel):
                 elif item.parent() is not parent_item:
                     new_items.append(item)
 
+                icon = get_asset_icon_by_name(
+                    asset_item.icon_name, asset_item.icon_color
+                )
                 item.setData(asset_item.name, QtCore.Qt.DisplayRole)
+                item.setData(icon, QtCore.Qt.DecorationRole)
                 item.setData(asset_item.id, ASSET_ID_ROLE)
-                item.setData(asset_item.icon, ASSET_ICON_ROLE)
 
                 hierarchy_queue.append((asset_item.id, item))
 
@@ -216,10 +232,13 @@ class AssetsModel(QtGui.QStandardItemModel):
                 continue
             parent = item.parent()
             if parent is not None:
-                parent.removeRow(item.row())
+                parent.takeRow(item.row())
+
+        self.items_changed.emit()
 
 
 class TasksModel(QtGui.QStandardItemModel):
+    items_changed = QtCore.Signal()
     empty_text = "< Empty >"
 
     def __init__(self, controller):
@@ -277,6 +296,7 @@ class TasksModel(QtGui.QStandardItemModel):
 
         self._last_project = project_name
         self._clear()
+        self.items_changed.emit()
 
     def _on_asset_refresh_finish(self, event):
         self._refresh(event["project_name"])
@@ -293,6 +313,7 @@ class TasksModel(QtGui.QStandardItemModel):
         if project_name is None:
             if None not in self._items:
                 self._clear()
+                self.items_changed.emit()
             return
 
         asset_id = self._controller.selection_model.asset_id
@@ -301,6 +322,7 @@ class TasksModel(QtGui.QStandardItemModel):
         )
         if not task_items:
             self._clear()
+            self.items_changed.emit()
             return
 
         root_item = self.invisibleRootItem()
@@ -338,74 +360,153 @@ class TasksModel(QtGui.QStandardItemModel):
             if parent is not None:
                 parent.removeRow(item.row())
 
+        self.items_changed.emit()
 
-class RepublisherDialogWindow(QtWidgets.QWidget):
+
+class PushToContextSelectWindow(QtWidgets.QWidget):
     def __init__(self, controller=None):
-        super(RepublisherDialogWindow, self).__init__()
+        super(PushToContextSelectWindow, self).__init__()
         if controller is None:
-            controller = RepublisherDialogController()
+            controller = PushToContextController()
         self._controller = controller
 
-        main_splitter = QtWidgets.QSplitter(self)
+        self.setWindowTitle("Push to project (select context)")
+        self.setWindowIcon(QtGui.QIcon(get_app_icon_path()))
 
-        left_widget = QtWidgets.QWidget(main_splitter)
+        header_widget = QtWidgets.QWidget(self)
 
-        project_combobox = QtWidgets.QComboBox(left_widget)
+        header_label = QtWidgets.QLabel(controller.src_label, header_widget)
+
+        header_layout = QtWidgets.QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.addWidget(header_label)
+
+        main_splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal, self)
+
+        context_widget = QtWidgets.QWidget(main_splitter)
+
+        project_combobox = QtWidgets.QComboBox(context_widget)
         project_model = ProjectsModel(controller)
         project_proxy = ProjectProxyModel()
         project_proxy.setSourceModel(project_model)
+        project_proxy.setDynamicSortFilter(True)
         project_delegate = QtWidgets.QStyledItemDelegate()
         project_combobox.setItemDelegate(project_delegate)
         project_combobox.setModel(project_proxy)
 
-        asset_view = QtWidgets.QTreeView(left_widget)
+        asset_task_splitter = QtWidgets.QSplitter(
+            QtCore.Qt.Vertical, context_widget
+        )
+
+        asset_view = QtWidgets.QTreeView(asset_task_splitter)
         asset_view.setHeaderHidden(True)
         asset_model = AssetsModel(controller)
-        asset_view.setModel(asset_model)
+        asset_proxy = QtCore.QSortFilterProxyModel()
+        asset_proxy.setSourceModel(asset_model)
+        asset_proxy.setDynamicSortFilter(True)
+        asset_view.setModel(asset_proxy)
 
-        left_layout = QtWidgets.QVBoxLayout(left_widget)
-        left_layout.setContentsMargins(0, 0, 0, 0)
-        left_layout.addWidget(project_combobox, 0)
-        left_layout.addWidget(asset_view, 1)
-
-        right_widget = QtWidgets.QWidget(main_splitter)
-
-        task_view = QtWidgets.QListView(right_widget)
+        task_view = QtWidgets.QListView(asset_task_splitter)
         task_proxy = QtCore.QSortFilterProxyModel()
         task_model = TasksModel(controller)
         task_proxy.setSourceModel(task_model)
+        task_proxy.setDynamicSortFilter(True)
         task_view.setModel(task_proxy)
 
-        right_layout = QtWidgets.QVBoxLayout(right_widget)
-        right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.addWidget(task_view, 1)
+        asset_task_splitter.addWidget(asset_view)
+        asset_task_splitter.addWidget(task_view)
 
-        main_splitter.addWidget(left_widget)
-        main_splitter.addWidget(right_widget)
+        context_layout = QtWidgets.QVBoxLayout(context_widget)
+        context_layout.setContentsMargins(0, 0, 0, 0)
+        context_layout.addWidget(project_combobox, 0)
+        context_layout.addWidget(asset_task_splitter, 1)
 
+        # --- Inputs widget ---
+        inputs_widget = QtWidgets.QWidget(main_splitter)
+
+        asset_name_input = PlaceholderLineEdit(inputs_widget)
+        asset_name_input.setPlaceholderText("< Name of new asset >")
+        asset_name_input.setObjectName("ValidatedLineEdit")
+
+        variant_input = PlaceholderLineEdit(inputs_widget)
+        variant_input.setPlaceholderText("< Variant >")
+        variant_input.setObjectName("ValidatedLineEdit")
+
+        comment_input = PlaceholderLineEdit(inputs_widget)
+        comment_input.setPlaceholderText("< Publish comment >")
+
+        inputs_layout = QtWidgets.QFormLayout(inputs_widget)
+        inputs_layout.setContentsMargins(0, 0, 0, 0)
+        inputs_layout.addRow("New asset name", asset_name_input)
+        inputs_layout.addRow("Variant", variant_input)
+        inputs_layout.addRow("Comment", comment_input)
+
+        main_splitter.addWidget(context_widget)
+        main_splitter.addWidget(inputs_widget)
+
+        # --- Buttons widget ---
         btns_widget = QtWidgets.QWidget(self)
-        close_btn = QtWidgets.QPushButton("Close", btns_widget)
-        select_btn = QtWidgets.QPushButton("Select", btns_widget)
+        cancel_btn = QtWidgets.QPushButton("Cancel", btns_widget)
+        publish_btn = QtWidgets.QPushButton("Publish", btns_widget)
 
         btns_layout = QtWidgets.QHBoxLayout(btns_widget)
         btns_layout.setContentsMargins(0, 0, 0, 0)
         btns_layout.addStretch(1)
-        btns_layout.addWidget(close_btn, 0)
-        btns_layout.addWidget(select_btn, 0)
+        btns_layout.addWidget(cancel_btn, 0)
+        btns_layout.addWidget(publish_btn, 0)
 
-        main_layout = QtWidgets.QHBoxLayout(self)
+        sep_1 = SeparatorWidget(parent=self)
+        sep_2 = SeparatorWidget(parent=self)
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.addWidget(header_widget, 0)
+        main_layout.addWidget(sep_1, 0)
         main_layout.addWidget(main_splitter, 1)
+        main_layout.addWidget(sep_2, 0)
         main_layout.addWidget(btns_widget, 0)
 
+        show_timer = QtCore.QTimer()
+        show_timer.setInterval(1)
+
+        user_input_changed_timer = QtCore.QTimer()
+        user_input_changed_timer.setInterval(200)
+        user_input_changed_timer.setSingleShot(True)
+
+        show_timer.timeout.connect(self._on_show_timer)
+        user_input_changed_timer.timeout.connect(self._on_user_input_timer)
+        asset_name_input.textChanged.connect(self._on_new_asset_change)
+        variant_input.textChanged.connect(self._on_variant_change)
+        comment_input.textChanged.connect(self._on_comment_change)
+        project_model.refreshed.connect(self._on_projects_refresh)
         project_combobox.currentIndexChanged.connect(self._on_project_change)
         asset_view.selectionModel().selectionChanged.connect(
             self._on_asset_change
         )
+        asset_model.items_changed.connect(self._on_asset_model_change)
         task_view.selectionModel().selectionChanged.connect(
             self._on_task_change
         )
-        select_btn.clicked.connect(self._on_select_click)
-        close_btn.clicked.connect(self._on_close_click)
+        task_model.items_changed.connect(self._on_task_model_change)
+        publish_btn.clicked.connect(self._on_select_click)
+        cancel_btn.clicked.connect(self._on_close_click)
+
+        controller.event_system.add_callback(
+            "new_asset_name.changed", self._on_controller_new_asset_change
+        )
+        controller.event_system.add_callback(
+            "variant.changed", self._on_controller_variant_change
+        )
+        controller.event_system.add_callback(
+            "comment.changed", self._on_controller_comment_change
+        )
+        controller.event_system.add_callback(
+            "submission.enabled.changed", self._on_submission_change
+        )
+        controller.event_system.add_callback(
+            "source.changed", self._on_controller_source_change
+        )
+
+        self._header_label = header_label
+        self._main_splitter = main_splitter
 
         self._project_combobox = project_combobox
         self._project_model = project_model
@@ -414,17 +515,153 @@ class RepublisherDialogWindow(QtWidgets.QWidget):
 
         self._asset_view = asset_view
         self._asset_model = asset_model
+        self._asset_proxy_model = asset_proxy
 
         self._task_view = task_view
+        self._task_proxy_model = task_proxy
 
+        self._variant_input = variant_input
+        self._asset_name_input = asset_name_input
+        self._comment_input = comment_input
+
+        self._publish_btn = publish_btn
+
+        self._user_input_changed_timer = user_input_changed_timer
+        # Store current value on input text change
+        #   The value is unset when is passed to controller
+        # The goal is to have controll over changes happened during user change
+        #   in UI and controller auto-changes
+        self._variant_input_text = None
+        self._new_asset_name_input_text = None
+        self._comment_input_text = None
+        self._show_timer = show_timer
+        self._show_counter = 2
         self._first_show = True
 
+        publish_btn.setEnabled(False)
+
+        if controller.user_values.new_asset_name:
+            asset_name_input.setText(controller.user_values.new_asset_name)
+        if controller.user_values.variant:
+            variant_input.setText(controller.user_values.variant)
+        self._invalidate_variant()
+        self._invalidate_new_asset_name()
+
+    @property
+    def controller(self):
+        return self._controller
+
     def showEvent(self, event):
-        super(RepublisherDialogWindow, self).showEvent(event)
+        super(PushToContextSelectWindow, self).showEvent(event)
         if self._first_show:
             self._first_show = False
-            self._controller.model.refresh_projects()
             self.setStyleSheet(load_stylesheet())
+            self._invalidate_variant()
+            self._show_timer.start()
+
+    def _on_show_timer(self):
+        if self._show_counter == 0:
+            self._show_timer.stop()
+            return
+
+        self._show_counter -= 1
+        if self._show_counter == 1:
+            width = 740
+            height = 640
+            inputs_width = 360
+            self.resize(width, height)
+            self._main_splitter.setSizes([width - inputs_width, inputs_width])
+
+        if self._show_counter > 0:
+            return
+
+        self._controller.model.refresh_projects()
+
+    def _on_new_asset_change(self, text):
+        self._new_asset_name_input_text = text
+        self._user_input_changed_timer.start()
+
+    def _on_variant_change(self, text):
+        self._variant_input_text = text
+        self._user_input_changed_timer.start()
+
+    def _on_comment_change(self, text):
+        self._comment_input_text = text
+        self._user_input_changed_timer.start()
+
+    def _on_user_input_timer(self):
+        asset_name = self._new_asset_name_input_text
+        if asset_name is not None:
+            self._new_asset_name_input_text = None
+            self._controller.user_values.set_new_asset(asset_name)
+
+        variant = self._variant_input_text
+        if variant is not None:
+            self._variant_input_text = None
+            self._controller.user_values.set_variant(variant)
+
+        comment = self._comment_input_text
+        if comment is not None:
+            self._comment_input_text = None
+            self._controller.user_values.set_comment(comment)
+
+    def _on_controller_new_asset_change(self, event):
+        asset_name = event["changes"]["new_asset_name"]["new"]
+        if (
+            self._new_asset_name_input_text is None
+            and asset_name != self._asset_name_input.text()
+        ):
+            self._asset_name_input.setText(asset_name)
+
+        self._invalidate_new_asset_name()
+
+    def _on_controller_variant_change(self, event):
+        is_valid_changes = event["changes"]["is_valid"]
+        variant = event["changes"]["variant"]["new"]
+        if (
+            self._variant_input_text is None
+            and variant != self._variant_input.text()
+        ):
+            self._variant_input.setText(variant)
+
+        if is_valid_changes["old"] != is_valid_changes["new"]:
+            self._invalidate_variant()
+
+    def _on_controller_comment_change(self, event):
+        comment = event["comment"]
+        if (
+            self._comment_input_text is None
+            and comment != self._comment_input.text()
+        ):
+            self._comment_input.setText(comment)
+
+    def _on_controller_source_change(self):
+        self._header_label.setText(self._controller.src_label)
+
+    def _invalidate_new_asset_name(self):
+        asset_name = self._controller.user_values.new_asset_name
+        self._task_view.setVisible(not asset_name)
+
+        valid = None
+        if asset_name:
+            valid = self._controller.user_values.is_new_asset_name_valid
+
+        state = ""
+        if valid is True:
+            state = "valid"
+        elif valid is False:
+            state = "invalid"
+        set_style_property(self._asset_name_input, "state", state)
+
+    def _invalidate_variant(self):
+        valid = self._controller.user_values.is_variant_valid
+        state = "invalid"
+        if valid is True:
+            state = "valid"
+        set_style_property(self._variant_input, "state", state)
+
+    def _on_projects_refresh(self):
+        self._project_proxy.sort(0, QtCore.Qt.AscendingOrder)
 
     def _on_project_change(self):
         idx = self._project_combobox.currentIndex()
@@ -445,6 +682,12 @@ class RepublisherDialogWindow(QtWidgets.QWidget):
             asset_id = model.data(index, ASSET_ID_ROLE)
         self._controller.selection_model.select_asset(asset_id)
 
+    def _on_asset_model_change(self):
+        self._asset_proxy_model.sort(0, QtCore.Qt.AscendingOrder)
+
+    def _on_task_model_change(self):
+        self._task_proxy_model.sort(0, QtCore.Qt.AscendingOrder)
+
     def _on_task_change(self):
         indexes = self._task_view.selectedIndexes()
         index = next(iter(indexes), None)
@@ -453,6 +696,9 @@ class RepublisherDialogWindow(QtWidgets.QWidget):
             model = self._task_view.model()
             task_name = model.data(index, TASK_NAME_ROLE)
         self._controller.selection_model.select_task(task_name)
+
+    def _on_submission_change(self, event):
+        self._publish_btn.setEnabled(event["enabled"])
 
     def _on_close_click(self):
         self.close()
@@ -464,14 +710,29 @@ class RepublisherDialogWindow(QtWidgets.QWidget):
 def main():
     app = QtWidgets.QApplication.instance()
     if not app:
+        # 'AA_EnableHighDpiScaling' must be set before app instance creation
+        high_dpi_scale_attr = getattr(
+            QtCore.Qt, "AA_EnableHighDpiScaling", None
+        )
+        if high_dpi_scale_attr is not None:
+            QtWidgets.QApplication.setAttribute(high_dpi_scale_attr)
+
         app = QtWidgets.QApplication([])
+
+    for attr_name in (
+        "AA_UseHighDpiPixmaps",
+    ):
+        attr = getattr(QtCore.Qt, attr_name, None)
+        if attr is not None:
+            app.setAttribute(attr)
 
     # TODO find way how to get these
     project_name = None
-    representation_id = None
+    version_id = None
 
     # Show window dialog
-    window = RepublisherDialogWindow()
+    window = PushToContextSelectWindow()
+    window.controller.set_source(project_name, version_id)
     window.show()
 
     app.exec_()
