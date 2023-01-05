@@ -41,27 +41,38 @@ class SCENE_UL_OpenpypeInstances(UIList):
             row.prop(item, "publish", text="")
 
         # Draw name with icon
-        # TODO is it the smartest way to get the icon?
-        icon = (
-            BL_TYPE_ICON.get(type(item.datablock), "NONE")
-            if hasattr(item, "datablock")
-            else "NONE"
-        )
-        if hasattr(item, "datablock") and not check_type_validity_for_creator(
-            item.datablock, _data["creator_name"]
-        ):
-            icon = "ERROR"
-        row.label(text=item.name, icon=icon)
+        row.label(text=item.name)
 
         # Icons for accepted types
         for type_icon in item.get("icons", []):
             row.label(icon=type_icon)
 
-        row.separator()
+
+class SCENE_UL_OpenpypeDatablocks(UIList):
+    def draw_item(
+        self,
+        _context,
+        layout,
+        _data,
+        item,
+        icon,
+        _active_data_,
+        _active_propname,
+        _index,
+    ):
+        row = layout.row(align=True)
+
+        # Draw name with icon
+        # TODO is it the smartest way to get the icon?
+        icon = BL_TYPE_ICON.get(type(item.datablock), "QUESTION")
+        if not check_type_validity_for_creator(
+            item.datablock, _data["creator_name"]
+        ):
+            icon = "ERROR"
+        row.label(text=item.name, icon=icon)
 
 
-class ObjectSelectPanel(bpy.types.Panel):
-    bl_idname = "OBJECT_PT_select"
+class SCENE_PT_OpenpypeInstancesManager(bpy.types.Panel):
     bl_label = "OpenPype Instances Manager"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
@@ -98,7 +109,17 @@ class ObjectSelectPanel(bpy.types.Panel):
             context.scene.openpype_instance_active_index
         ].name
 
-        row.separator()
+
+class SCENE_PT_OpenpypeDatablocksManager(bpy.types.Panel):
+    bl_label = "OpenPype Instances Manager"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "scene"
+    bl_parent_id = "SCENE_PT_OpenpypeInstancesManager"
+
+    def draw(self, context):
+        layout = self.layout
+        row = layout.row(align=True)
 
         # List of datablocks embeded in instance
         active_openpype_instance = context.scene.openpype_instances[
@@ -107,7 +128,7 @@ class ObjectSelectPanel(bpy.types.Panel):
 
         # List of datablocks for active instance
         row.template_list(
-            "SCENE_UL_OpenpypeInstances",
+            "SCENE_UL_OpenpypeDatablocks",
             "",
             active_openpype_instance,
             "datablock_refs",
@@ -143,6 +164,11 @@ class ObjectSelectPanel(bpy.types.Panel):
             ].name
 
 
-classes = (ObjectSelectPanel, SCENE_UL_OpenpypeInstances)
+classes = (
+    SCENE_PT_OpenpypeInstancesManager,
+    SCENE_PT_OpenpypeDatablocksManager,
+    SCENE_UL_OpenpypeInstances,
+    SCENE_UL_OpenpypeDatablocks,
+)
 
 register, unregister = bpy.utils.register_classes_factory(classes)
