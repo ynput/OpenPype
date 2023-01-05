@@ -853,40 +853,44 @@ class ThumbnailWidget(QtWidgets.QLabel):
             QtCore.Qt.SmoothTransformation
         )
 
-    def set_thumbnail(self, src_type, doc_ids):
-        if not doc_ids:
+    def set_thumbnail(self, doc_id=None,thumbnail_ent=None):
+        if not doc_id and not thumbnail_ent:
             self.set_pixmap()
             return
-
-        src_id = doc_ids[0]
-
-        project_name = self.dbcon.active_project()
-        thumbnail_id = get_thumbnail_id_from_source(
-            project_name,
-            src_type,
-            src_id,
+        if isinstance(doc_id, (list, tuple)):
+            if len(doc_id) < 1:
+                self.set_pixmap()
+                return
+            doc_id = doc_id[0]
+        doc = self.dbcon.find_one(
+            {"_id": doc_id},
+            {"data.thumbnail_id"}
         )
-        if thumbnail_id == self.current_thumb_id:
+        thumbnail_id = None
+        if doc:
+            thumbnail_id = doc.get("data", {}).get("thumbnail_id")
+        if thumbnail_id == self.current_thumb_id and self.current_thumb_id is not None:
             if self.current_thumbnail is None:
                 self.set_pixmap()
             return
-
         self.current_thumb_id = thumbnail_id
-        if not thumbnail_id:
+        if not thumbnail_id and not thumbnail_ent:
             self.set_pixmap()
             return
 
+        project_name = self.dbcon.active_project()
         thumbnail_ent = get_thumbnail(project_name, thumbnail_id)
         if not thumbnail_ent:
-            return
-
+            thumbnail_ent = self.dbcon.find_one(
+                {"type": "thumbnail", "_id": thumbnail_id})
+            if not thumbnail_ent:
+                return
         thumbnail_bin = get_thumbnail_binary(
             thumbnail_ent, "thumbnail", self.dbcon
         )
         if not thumbnail_bin:
             self.set_pixmap()
             return
-
         thumbnail = QtGui.QPixmap()
         thumbnail.loadFromData(thumbnail_bin)
 

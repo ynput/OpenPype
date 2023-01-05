@@ -85,6 +85,7 @@ def evaluate_filepath_new(
 
 def create_read_node(ndata, comp_start):
     read = nuke.createNode('Read', 'file "' + ndata['filepath'] + '"')
+    read.addKnob(nuke.Text_Knob('warn', 'Read from Temporary Render, Please publish and load after checking' ))
     read.knob('colorspace').setValue(int(ndata['colorspace']))
     read.knob('raw').setValue(ndata['rawdata'])
     read.knob('first').setValue(int(ndata['firstframe']))

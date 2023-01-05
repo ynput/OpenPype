@@ -14,6 +14,7 @@ class SaveCurrentScene(pyblish.api.ContextPlugin):
     order = pyblish.api.ExtractorOrder - 0.49
     hosts = ["maya"]
     families = ["renderlayer", "workfile"]
+    optional = True
 
     def process(self, context):
         import maya.cmds as cmds

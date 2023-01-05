@@ -37,7 +37,6 @@ class ExtractBurnin(publish.Extractor):
 
     families = ["review", "burnin"]
     hosts = [
-        "nuke",
         "maya",
         "shell",
         "hiero",

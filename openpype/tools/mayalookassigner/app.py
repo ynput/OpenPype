@@ -76,9 +76,12 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
             "Remove Unused Looks", looks_widget
         )
 
+        assign_btn = QtWidgets.QPushButton('Assign Look')
+
         looks_layout = QtWidgets.QVBoxLayout(looks_widget)
         looks_layout.addWidget(look_outliner)
         looks_layout.addWidget(assign_selected)
+        looks_layout.addWidget(assign_btn)
         looks_layout.addWidget(remove_unused_btn)
 
         main_splitter.addWidget(asset_outliner)
@@ -120,6 +123,7 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
 
         look_outliner.menu_apply_action.connect(self.on_process_selected)
         remove_unused_btn.clicked.connect(remove_unused_looks)
+        assign_btn.clicked.connect(self.on_process_selected)
 
         # Open widgets
         self.asset_outliner = asset_outliner

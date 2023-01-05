@@ -53,6 +53,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["renderlayer"]
     actions = [RepairAction]
+    optional = True
 
     ImagePrefixes = {
         'mentalray': 'defaultRenderGlobals.imageFilePrefix',
@@ -64,10 +65,10 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     }
 
     ImagePrefixTokens = {
-        'mentalray': '<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa: E501
+        'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa: E501
         'arnold': '<Scene>/<RenderLayer>/<RenderLayer>{aov_separator}<RenderPass>',  # noqa: E501
         'redshift': '<Scene>/<RenderLayer>/<RenderLayer>',
-        'vray': '<Scene>/<Layer>/<Layer>',
+        'vray': 'maya/<Scene>/<Layer>/<Layer>',
         'renderman': '<layer>{aov_separator}<aov>.<f4>.<ext>',
         'mayahardware2': '<Scene>/<RenderLayer>/<RenderLayer>',
     }
@@ -90,8 +91,9 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     R_SCENE_TOKEN = re.compile(r'%s|<scene>', re.IGNORECASE)
 
     DEFAULT_PADDING = 4
-    VRAY_PREFIX = "<Scene>/<Layer>/<Layer>"
-    DEFAULT_PREFIX = "<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>"
+    VRAY_PREFIX = "maya/<Scene>/<Layer>/<Layer>"
+    DEFAULT_PREFIX = "<Scene>/<RenderLayer>/<RenderLayer>.<RenderPass>"
+
 
     def process(self, instance):
 
@@ -122,6 +124,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         prefix = prefix.replace(
             "{aov_separator}", instance.data.get("aovSeparator", "_"))
+
+        required_prefix = "<scene>"
 
         default_prefix = cls.ImagePrefixTokens[renderer]
 

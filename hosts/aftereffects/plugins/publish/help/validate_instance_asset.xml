@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Subset context</title>
+<description>
+## Invalid subset context
+
+Context of the given subset doesn't match your current scene.
+
+### How to repair?
+
+You can fix this with "repair" button on the right.
+</description>
+<detail>
+### __Detailed Info__ (optional)
+
+This might happen if you are reuse old workfile and open it in different context.
+(Eg. you created subset "renderCompositingDefault" from asset "Robot' in "your_project_Robot_compositing.aep", now you opened this workfile in a context "Sloth" but existing subset for "Robot" asset stayed in the workfile.)
+</detail>
+</error>
+</root>

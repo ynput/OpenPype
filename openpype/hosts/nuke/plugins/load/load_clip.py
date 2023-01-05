@@ -40,6 +40,7 @@ class LoadClip(plugin.NukeLoader):
     ]
     representations = [
         "exr",
+	"png",
         "dpx",
         "mov",
         "review",

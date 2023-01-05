@@ -17,7 +17,7 @@ class ValidateOutputResolution(pyblish.api.InstancePlugin):
     optional = True
     families = ["render", "render.local", "render.farm"]
     label = "Write Resolution"
-    hosts = ["nuke"]
+    hosts = []
     actions = [RepairAction]
 
     missing_msg = "Missing Reformat node in render group node"

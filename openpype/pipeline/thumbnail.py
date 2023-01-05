@@ -21,7 +21,7 @@ def get_thumbnail_binary(thumbnail_entity, thumbnail_type, dbcon=None):
     resolvers = sorted(resolvers, key=lambda cls: cls.priority)
     if dbcon is None:
         dbcon = legacy_io
-
+    print(resolvers)
     for Resolver in resolvers:
         available_types = Resolver.thumbnail_types
         if (
@@ -71,6 +71,33 @@ class ThumbnailResolver(object):
 
     def process(self, thumbnail_entity, thumbnail_type):
         pass
+
+class PathThumbnail(object):
+    priority = 100
+    thumbnail_types = ["*"]
+
+    def __init__(self, dbcon):
+        self._log = None
+        self.dbcon = dbcon
+
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = logging.getLogger(self.__class__.__name__)
+        return self._log
+
+    def process(self, thumbnail_entity, thumbnail_type):
+        self.log.debug("MY RESOLVER WORKS ?")
+        print("fuuuuu")
+        filepath = thumbnail_entity['data'].get('path')
+        if not os.path.exists(filepath):
+            self.log.warning("File does not exist \"{0}\"".format(filepath))
+            return
+
+        with open(filepath, "rb") as _file:
+            content = _file.read()
+        return content
+
 
 
 class TemplateResolver(ThumbnailResolver):
@@ -146,3 +173,4 @@ def register_thumbnail_resolver_path(path):
 
 register_thumbnail_resolver(TemplateResolver)
 register_thumbnail_resolver(BinaryThumbnail)
+register_thumbnail_resolver(PathThumbnail)

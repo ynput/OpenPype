@@ -91,7 +91,8 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
         looks = instance.data["lookData"]["relationships"]
         invalid = []
         for name, data in looks.items():
-            if not data["uuid"]:
+            if not data["uuid"] and\
+            not name == "initialShadingGroup":
                 cls.log.error("Look '{}' has no UUID".format(name))
                 invalid.append(name)
 
