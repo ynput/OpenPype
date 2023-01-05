@@ -1416,6 +1416,13 @@ CreateNextPageOverlay {
 }
 
 /* Globally used names */
+#ValidatedLineEdit[state="valid"], #ValidatedLineEdit[state="valid"]:focus, #ValidatedLineEdit[state="valid"]:hover {
+    border-color: {color:publisher:success};
+}
+#ValidatedLineEdit[state="invalid"], #ValidatedLineEdit[state="invalid"]:focus, #ValidatedLineEdit[state="invalid"]:hover {
+    border-color: {color:publisher:error};
+}
+
 #Separator {
     background: {color:bg-menu-separator};
 }
