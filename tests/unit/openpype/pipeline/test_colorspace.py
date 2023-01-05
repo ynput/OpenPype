@@ -31,7 +31,7 @@ class TestPipelineColorspace(TestPipeline):
 
     TEST_FILES = [
         (
-            "1uhWvVdJBUSetpPVG8OzSjYXH4voIpf_G",
+            "1kJ1ZYcf7V7jS8IW2routSYQoGUfUWj4F",
             "test_pipeline_colorspace.zip",
             ""
         )
@@ -159,14 +159,14 @@ class TestPipelineColorspace(TestPipeline):
         expected_nuke = {
             "comp_review": {
                 "pattern": "renderCompMain.baking_h264",
-                "colorspace": "Output - Rec.709",
+                "colorspace": "Camera Rec.709",
                 "ext": "mp4"
             }
         }
         expected_hiero = {
             "comp_review": {
                 "pattern": "renderCompMain_h264burninburnin",
-                "colorspace": "Output - sRGB",
+                "colorspace": "sRGB - Texture",
                 "ext": "mp4"
             }
         }

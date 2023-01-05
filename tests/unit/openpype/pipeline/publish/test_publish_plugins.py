@@ -34,7 +34,7 @@ class TestPipelinePublishPlugins(TestPipeline):
     # files are the same as those used in `test_pipeline_colorspace`
     TEST_FILES = [
         (
-            "1uhWvVdJBUSetpPVG8OzSjYXH4voIpf_G",
+            "1kJ1ZYcf7V7jS8IW2routSYQoGUfUWj4F",
             "test_pipeline_colorspace.zip",
             ""
         )
