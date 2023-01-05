@@ -11,7 +11,7 @@ from openpype.tools.utils import (
     set_style_property,
 )
 
-from .control import PushToContextController
+from .control_context import PushToContextController
 
 PROJECT_NAME_ROLE = QtCore.Qt.UserRole + 1
 ASSET_NAME_ROLE = QtCore.Qt.UserRole + 2
