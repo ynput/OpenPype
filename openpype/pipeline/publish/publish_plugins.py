@@ -367,7 +367,7 @@ class ExtractorColormanaged(Extractor):
         if colorspace:
             colorspace_data = {
                 "colorspace": colorspace,
-                "configPath": config_data
+                "configData": config_data
             }
 
             # update data key

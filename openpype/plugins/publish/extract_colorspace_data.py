@@ -17,7 +17,7 @@ class ExtractColorspaceData(publish.ExtractorColormanaged):
     Output data:
         representation[colorspaceData] = {
             "colorspace": "linear",
-            "configPath": {
+            "configData": {
                 "path": "/abs/path/to/config.ocio",
                 "template": "{project[root]}/path/to/config.ocio"
             }
