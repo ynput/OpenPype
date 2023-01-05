@@ -1135,28 +1135,3 @@ class ProjectPushItemProcess:
 
         finally:
             self._status.set_finished()
-
-
-def main():
-    # NOTE For development purposes
-    project_name = ""
-    version_id = ""
-    dst_project_name = ""
-    dst_asset_id = ""
-    dst_task_name = ""
-    version = None
-    variant = ""
-    comment = ""
-
-    item = ProjectPushItem(
-        project_name,
-        version_id,
-        dst_project_name,
-        dst_asset_id,
-        dst_task_name,
-        variant,
-        version,
-        dst_version=1
-    )
-    item_process = ProjectPushItemProcess(item)
-    item_process.process()

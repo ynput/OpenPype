@@ -705,38 +705,3 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
 
     def _on_select_click(self):
         self._controller.submit()
-
-
-def main():
-    app = QtWidgets.QApplication.instance()
-    if not app:
-        # 'AA_EnableHighDpiScaling' must be set before app instance creation
-        high_dpi_scale_attr = getattr(
-            QtCore.Qt, "AA_EnableHighDpiScaling", None
-        )
-        if high_dpi_scale_attr is not None:
-            QtWidgets.QApplication.setAttribute(high_dpi_scale_attr)
-
-        app = QtWidgets.QApplication([])
-
-    for attr_name in (
-        "AA_UseHighDpiPixmaps",
-    ):
-        attr = getattr(QtCore.Qt, attr_name, None)
-        if attr is not None:
-            app.setAttribute(attr)
-
-    # TODO find way how to get these
-    project_name = None
-    version_id = None
-
-    # Show window dialog
-    window = PushToContextSelectWindow()
-    window.controller.set_source(project_name, version_id)
-    window.show()
-
-    app.exec_()
-
-
-if __name__ == "__main__":
-    main()
