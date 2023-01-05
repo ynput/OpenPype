@@ -127,6 +127,9 @@ class EntitiesModel:
             project_names = []
             project_docs_by_name = {}
             for project_doc in get_projects():
+                library_project = project_doc["data"].get("library_project")
+                if not library_project:
+                    continue
                 project_name = project_doc["name"]
                 project_names.append(project_name)
                 project_docs_by_name[project_name] = project_doc
