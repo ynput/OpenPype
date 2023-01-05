@@ -1,5 +1,27 @@
 {
-    "mel_workspace": "workspace -fr \"shaders\" \"renderData/shaders\";\nworkspace -fr \"images\" \"renders\";\nworkspace -fr \"particles\" \"particles\";\nworkspace -fr \"mayaAscii\" \"\";\nworkspace -fr \"mayaBinary\" \"\";\nworkspace -fr \"scene\" \"\";\nworkspace -fr \"alembicCache\" \"cache/alembic\";\nworkspace -fr \"renderData\" \"renderData\";\nworkspace -fr \"sourceImages\" \"sourceimages\";\nworkspace -fr \"fileCache\" \"cache/nCache\";\n",
+    "imageio": {
+        "colorManagementPreference_v2": {
+            "enabled": true,
+            "configFilePath": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "renderSpace": "ACEScg",
+            "displayName": "sRGB",
+            "viewName": "ACES 1.0 SDR-video"
+        },
+        "colorManagementPreference": {
+            "configFilePath": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "renderSpace": "scene-linear Rec 709/sRGB",
+            "viewTransform": "sRGB gamma"
+        }
+    },
+    "mel_workspace": "workspace -fr \"shaders\" \"renderData/shaders\";\nworkspace -fr \"images\" \"renders/maya\";\nworkspace -fr \"particles\" \"particles\";\nworkspace -fr \"mayaAscii\" \"\";\nworkspace -fr \"mayaBinary\" \"\";\nworkspace -fr \"scene\" \"\";\nworkspace -fr \"alembicCache\" \"cache/alembic\";\nworkspace -fr \"renderData\" \"renderData\";\nworkspace -fr \"sourceImages\" \"sourceimages\";\nworkspace -fr \"fileCache\" \"cache/nCache\";\n",
     "ext_mapping": {
         "model": "ma",
         "mayaAscii": "ma",
@@ -34,12 +56,13 @@
     },
     "RenderSettings": {
         "apply_render_settings": true,
-        "default_render_image_folder": "renders",
-        "enable_all_lights": false,
+        "default_render_image_folder": "renders/maya",
+        "enable_all_lights": true,
         "aov_separator": "underscore",
+        "remove_aovs": false,
         "reset_current_frame": false,
         "arnold_renderer": {
-            "image_prefix": "maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>",
+            "image_prefix": "<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>",
             "image_format": "exr",
             "multilayer_exr": true,
             "tiled": true,
@@ -47,14 +70,14 @@
             "additional_options": []
         },
         "vray_renderer": {
-            "image_prefix": "maya/<scene>/<Layer>/<Layer>",
+            "image_prefix": "<scene>/<Layer>/<Layer>",
             "engine": "1",
             "image_format": "exr",
             "aov_list": [],
             "additional_options": []
         },
         "redshift_renderer": {
-            "image_prefix": "maya/<Scene>/<RenderLayer>/<RenderLayer>",
+            "image_prefix": "<Scene>/<RenderLayer>/<RenderLayer>",
             "primary_gi_engine": "0",
             "secondary_gi_engine": "0",
             "image_format": "exr",
@@ -104,13 +127,33 @@
         "CreateAnimation": {
             "enabled": true,
             "write_color_sets": false,
+            "write_face_sets": false,
             "defaults": [
                 "Main"
+            ]
+        },
+        "CreateModel": {
+            "enabled": true,
+            "write_color_sets": false,
+            "write_face_sets": false,
+            "defaults": [
+                "Main",
+                "Proxy",
+                "Sculpt"
             ]
         },
         "CreatePointCache": {
             "enabled": true,
             "write_color_sets": false,
+            "write_face_sets": false,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateProxyAlembic": {
+            "enabled": true,
+            "write_color_sets": false,
+            "write_face_sets": false,
             "defaults": [
                 "Main"
             ]
@@ -137,7 +180,21 @@
             "enabled": true,
             "defaults": [
                 "Main"
-            ]
+            ],
+            "expandProcedurals": false,
+            "motionBlur": true,
+            "motionBlurKeys": 2,
+            "motionBlurLength": 0.5,
+            "maskOptions": false,
+            "maskCamera": false,
+            "maskLight": false,
+            "maskShape": false,
+            "maskShader": false,
+            "maskOverride": false,
+            "maskDriver": false,
+            "maskFilter": false,
+            "maskColor_manager": false,
+            "maskOperator": false
         },
         "CreateAssembly": {
             "enabled": true,
@@ -161,14 +218,6 @@
             "enabled": true,
             "defaults": [
                 "Main"
-            ]
-        },
-        "CreateModel": {
-            "enabled": true,
-            "defaults": [
-                "Main",
-                "Proxy",
-                "Sculpt"
             ]
         },
         "CreateRenderSetup": {
@@ -222,6 +271,9 @@
             "sync_workfile_version": false
         },
         "CollectFbxCamera": {
+            "enabled": false
+        },
+        "CollectGLTF": {
             "enabled": false
         },
         "ValidateInstanceInContext": {
@@ -543,6 +595,12 @@
             "optional": false,
             "active": true
         },
+        "ExtractProxyAlembic": {
+            "enabled": true,
+            "families": [
+                "proxyAbc"
+            ]
+        },
         "ExtractAlembic": {
             "enabled": true,
             "families": [
@@ -550,6 +608,10 @@
                 "model",
                 "vrayproxy"
             ]
+        },
+        "ExtractObj": {
+            "enabled": false,
+            "optional": true
         },
         "ValidateRigContents": {
             "enabled": false,
@@ -885,7 +947,7 @@
                 "current_context": [
                     {
                         "subset_name_filters": [
-                            "\".+[Mm]ain\""
+                            ".+[Mm]ain"
                         ],
                         "families": [
                             "model"
@@ -902,7 +964,8 @@
                         "subset_name_filters": [],
                         "families": [
                             "animation",
-                            "pointcache"
+                            "pointcache",
+                            "proxyAbc"
                         ],
                         "repre_names": [
                             "abc"

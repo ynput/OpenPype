@@ -15,6 +15,7 @@ class ExtractLayout(publish.Extractor):
     label = "Extract Layout"
     hosts = ["maya"]
     families = ["layout"]
+    project_container = "AVALON_CONTAINERS"
     optional = True
 
     def process(self, instance):
@@ -33,15 +34,29 @@ class ExtractLayout(publish.Extractor):
 
         for asset in cmds.sets(str(instance), query=True):
             # Find the container
-            grp_name = asset.split(':')[0]
-            containers = cmds.ls(f"{grp_name}*_CON")
+            project_container = self.project_container
+            container_list = cmds.ls(project_container)
+            if len(container_list) == 0:
+                self.log.warning("Project container is not found!")
+                self.log.warning("The asset(s) may not be properly loaded after published") # noqa
+                continue
 
-            assert len(containers) == 1, \
-                f"More than one container found for {asset}"
-
+            grp_loaded_ass = instance.data.get("groupLoadedAssets", False)
+            if grp_loaded_ass:
+                asset_list = cmds.listRelatives(asset, children=True)
+                for asset in asset_list:
+                    grp_name = asset.split(':')[0]
+            else:
+                grp_name = asset.split(':')[0]
+            containers = cmds.ls("{}*_CON".format(grp_name))
+            if len(containers) == 0:
+                self.log.warning("{} isn't from the loader".format(asset))
+                self.log.warning("It may not be properly loaded after published") # noqa
+                continue
             container = containers[0]
 
-            representation_id = cmds.getAttr(f"{container}.representation")
+            representation_id = cmds.getAttr(
+                "{}.representation".format(container))
 
             representation = get_representation_by_id(
                 project_name,
@@ -56,7 +71,8 @@ class ExtractLayout(publish.Extractor):
 
             json_element = {
                 "family": family,
-                "instance_name": cmds.getAttr(f"{container}.name"),
+                "instance_name": cmds.getAttr(
+                    "{}.namespace".format(container)),
                 "representation": str(representation_id),
                 "version": str(version_id)
             }

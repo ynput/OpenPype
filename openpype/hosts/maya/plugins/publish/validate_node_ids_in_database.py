@@ -1,6 +1,5 @@
 import pyblish.api
 
-import openpype.api
 from openpype.client import get_assets
 from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import ValidatePipelineOrder

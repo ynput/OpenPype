@@ -8,9 +8,10 @@ import tempfile
 import shutil
 import glob
 import platform
+import re
 
 from tests.lib.db_handler import DBHandler
-from tests.lib.file_handler import RemoteFileHandler
+from common.openpype_common.distribution.file_handler import RemoteFileHandler
 
 
 class BaseTest:
@@ -36,9 +37,9 @@ class ModuleUnitTest(BaseTest):
     PERSIST = False  # True to not purge temporary folder nor test DB
 
     TEST_OPENPYPE_MONGO = "mongodb://localhost:27017"
-    TEST_DB_NAME = "test_db"
+    TEST_DB_NAME = "avalon_tests"
     TEST_PROJECT_NAME = "test_project"
-    TEST_OPENPYPE_NAME = "test_openpype"
+    TEST_OPENPYPE_NAME = "openpype_tests"
 
     TEST_FILES = []
 
@@ -57,7 +58,7 @@ class ModuleUnitTest(BaseTest):
         m.undo()
 
     @pytest.fixture(scope="module")
-    def download_test_data(self, test_data_folder, persist=False):
+    def download_test_data(self, test_data_folder, persist, request):
         test_data_folder = test_data_folder or self.TEST_DATA_FOLDER
         if test_data_folder:
             print("Using existing folder {}".format(test_data_folder))
@@ -78,7 +79,8 @@ class ModuleUnitTest(BaseTest):
                 print("Temporary folder created:: {}".format(tmpdir))
                 yield tmpdir
 
-                persist = persist or self.PERSIST
+                persist = (persist or self.PERSIST or
+                           self.is_test_failed(request))
                 if not persist:
                     print("Removing {}".format(tmpdir))
                     shutil.rmtree(tmpdir)
@@ -125,7 +127,8 @@ class ModuleUnitTest(BaseTest):
         monkeypatch_session.setenv("TEST_SOURCE_FOLDER", download_test_data)
 
     @pytest.fixture(scope="module")
-    def db_setup(self, download_test_data, env_var, monkeypatch_session):
+    def db_setup(self, download_test_data, env_var, monkeypatch_session,
+                 request):
         """Restore prepared MongoDB dumps into selected DB."""
         backup_dir = os.path.join(download_test_data, "input", "dumps")
 
@@ -135,13 +138,14 @@ class ModuleUnitTest(BaseTest):
                                    overwrite=True,
                                    db_name_out=self.TEST_DB_NAME)
 
-        db_handler.setup_from_dump("openpype", backup_dir,
+        db_handler.setup_from_dump(self.TEST_OPENPYPE_NAME, backup_dir,
                                    overwrite=True,
                                    db_name_out=self.TEST_OPENPYPE_NAME)
 
         yield db_handler
 
-        if not self.PERSIST:
+        persist = self.PERSIST or self.is_test_failed(request)
+        if not persist:
             db_handler.teardown(self.TEST_DB_NAME)
             db_handler.teardown(self.TEST_OPENPYPE_NAME)
 
@@ -166,6 +170,13 @@ class ModuleUnitTest(BaseTest):
         mongo_client = OpenPypeMongoConnection.get_mongo_client()
         yield mongo_client[self.TEST_OPENPYPE_NAME]["settings"]
 
+    def is_test_failed(self, request):
+        # if request.node doesn't have rep_call, something failed
+        try:
+            return request.node.rep_call.failed
+        except AttributeError:
+            return True
+
 
 class PublishTest(ModuleUnitTest):
     """Test class for publishing in hosts.
@@ -188,7 +199,7 @@ class PublishTest(ModuleUnitTest):
             TODO: implement test on file size, file content
     """
 
-    APP = ""
+    APP_GROUP = ""
 
     TIMEOUT = 120  # publish timeout
 
@@ -210,10 +221,10 @@ class PublishTest(ModuleUnitTest):
         if not app_variant:
             variant = (
                 application_manager.find_latest_available_variant_for_group(
-                    self.APP))
+                    self.APP_GROUP))
             app_variant = variant.name
 
-        yield "{}/{}".format(self.APP, app_variant)
+        yield "{}/{}".format(self.APP_GROUP, app_variant)
 
     @pytest.fixture(scope="module")
     def output_folder_url(self, download_test_data):
@@ -310,7 +321,8 @@ class PublishTest(ModuleUnitTest):
         yield True
 
     def test_folder_structure_same(self, dbcon, publish_finished,
-                                   download_test_data, output_folder_url):
+                                   download_test_data, output_folder_url,
+                                   skip_compare_folders):
         """Check if expected and published subfolders contain same files.
 
             Compares only presence, not size nor content!
@@ -328,12 +340,33 @@ class PublishTest(ModuleUnitTest):
                        glob.glob(expected_dir_base + "\\**", recursive=True)
                        if f != expected_dir_base and os.path.exists(f))
 
-        not_matched = expected.symmetric_difference(published)
-        assert not not_matched, "Missing {} files".format(
-            "\n".join(sorted(not_matched)))
+        filtered_published = self._filter_files(published,
+                                                skip_compare_folders)
+
+        # filter out temp files also in expected
+        # could be polluted by accident by copying 'output' to zip file
+        filtered_expected = self._filter_files(expected, skip_compare_folders)
+
+        not_mtched = filtered_expected.symmetric_difference(filtered_published)
+        if not_mtched:
+            raise AssertionError("Missing {} files".format(
+                "\n".join(sorted(not_mtched))))
+
+    def _filter_files(self, source_files, skip_compare_folders):
+        """Filter list of files according to regex pattern."""
+        filtered = set()
+        for file_path in source_files:
+            if skip_compare_folders:
+                if not any([re.search(val, file_path)
+                            for val in skip_compare_folders]):
+                    filtered.add(file_path)
+            else:
+                filtered.add(file_path)
+
+        return filtered
 
 
-class HostFixtures(PublishTest):
+class HostFixtures():
     """Host specific fixtures. Should be implemented once per host."""
     @pytest.fixture(scope="module")
     def last_workfile_path(self, download_test_data, output_folder_url):
@@ -343,4 +376,9 @@ class HostFixtures(PublishTest):
     @pytest.fixture(scope="module")
     def startup_scripts(self, monkeypatch_session, download_test_data):
         """"Adds init scripts (like userSetup) to expected location"""
+        raise NotImplementedError
+
+    @pytest.fixture(scope="module")
+    def skip_compare_folders(self):
+        """Use list of regexs to filter out published folders from comparing"""
         raise NotImplementedError

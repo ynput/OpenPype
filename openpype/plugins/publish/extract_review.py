@@ -3,25 +3,26 @@ import re
 import copy
 import json
 import shutil
-
 from abc import ABCMeta, abstractmethod
+
 import six
-
 import clique
-
+import speedcopy
 import pyblish.api
-import openpype.api
+
 from openpype.lib import (
     get_ffmpeg_tool_path,
-    get_ffprobe_streams,
 
     path_to_subprocess_arg,
-
+    run_subprocess,
+)
+from openpype.lib.transcoding import (
+    IMAGE_EXTENSIONS,
+    get_ffprobe_streams,
     should_convert_for_ffmpeg,
     convert_input_paths_for_ffmpeg,
-    get_transcode_temp_directory
+    get_transcode_temp_directory,
 )
-import speedcopy
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -128,6 +129,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         for repre in instance.data["representations"]:
             repre_name = str(repre.get("name"))
             tags = repre.get("tags") or []
+            custom_tags = repre.get("custom_tags")
             if "review" not in tags:
                 self.log.debug((
                     "Repre: {} - Didn't found \"review\" in tags. Skipping"
@@ -158,17 +160,40 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 )
                 continue
 
-            # Filter output definition by representation tags (optional)
-            outputs = self.filter_outputs_by_tags(profile_outputs, tags)
+            # Filter output definition by representation's
+            # custom tags (optional)
+            outputs = self.filter_outputs_by_custom_tags(
+                profile_outputs, custom_tags)
             if not outputs:
                 self.log.info((
                     "Skipped representation. All output definitions from"
                     " selected profile does not match to representation's"
-                    " tags. \"{}\""
+                    " custom tags. \"{}\""
                 ).format(str(tags)))
                 continue
+
             outputs_per_representations.append((repre, outputs))
         return outputs_per_representations
+
+    def _single_frame_filter(self, input_filepaths, output_defs):
+        single_frame_image = False
+        if len(input_filepaths) == 1:
+            ext = os.path.splitext(input_filepaths[0])[-1]
+            single_frame_image = ext.lower() in IMAGE_EXTENSIONS
+
+        filtered_defs = []
+        for output_def in output_defs:
+            output_filters = output_def.get("filter") or {}
+            frame_filter = output_filters.get("single_frame_filter")
+            if (
+                (not single_frame_image and frame_filter == "single_frame")
+                or (single_frame_image and frame_filter == "multi_frame")
+            ):
+                continue
+
+            filtered_defs.append(output_def)
+
+        return filtered_defs
 
     @staticmethod
     def get_instance_label(instance):
@@ -190,7 +215,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         outputs_per_repres = self._get_outputs_per_representations(
             instance, profile_outputs
         )
-        for repre, outpu_defs in outputs_per_repres:
+        for repre, output_defs in outputs_per_repres:
             # Check if input should be preconverted before processing
             # Store original staging dir (it's value may change)
             src_repre_staging_dir = repre["stagingDir"]
@@ -210,6 +235,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     input_filepaths.append(filepath)
                     if first_input_path is None:
                         first_input_path = filepath
+
+            filtered_output_defs = self._single_frame_filter(
+                input_filepaths, output_defs
+            )
+            if not filtered_output_defs:
+                self.log.debug((
+                    "Repre: {} - All output definitions were filtered"
+                    " out by single frame filter. Skipping"
+                ).format(repre["name"]))
+                continue
 
             # Skip if file is not set
             if first_input_path is None:
@@ -244,7 +279,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             try:
                 self._render_output_definitions(
-                    instance, repre, src_repre_staging_dir, outpu_defs
+                    instance,
+                    repre,
+                    src_repre_staging_dir,
+                    filtered_output_defs
                 )
 
             finally:
@@ -258,10 +296,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         shutil.rmtree(new_staging_dir)
 
     def _render_output_definitions(
-        self, instance, repre, src_repre_staging_dir, outpu_defs
+        self, instance, repre, src_repre_staging_dir, output_defs
     ):
         fill_data = copy.deepcopy(instance.data["anatomyData"])
-        for _output_def in outpu_defs:
+        for _output_def in output_defs:
             output_def = copy.deepcopy(_output_def)
             # Make sure output definition has "tags" key
             if "tags" not in output_def:
@@ -350,9 +388,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             # run subprocess
             self.log.debug("Executing: {}".format(subprcs_cmd))
 
-            openpype.api.run_subprocess(
-                subprcs_cmd, shell=True, logger=self.log
-            )
+            run_subprocess(subprcs_cmd, shell=True, logger=self.log)
 
             # delete files added to fill gaps
             if files_to_clean:
@@ -465,7 +501,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 first_sequence_frame += handle_start
 
             ext = os.path.splitext(repre["files"][0])[1].replace(".", "")
-            if ext in self.alpha_exts:
+            if ext.lower() in self.alpha_exts:
                 input_allow_bg = True
 
         return {
@@ -562,8 +598,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
         if temp_data["input_is_sequence"]:
             # Set start frame of input sequence (just frame in filename)
             # - definition of input filepath
+            # - add handle start if output should be without handles
+            start_number = temp_data["first_sequence_frame"]
+            if temp_data["without_handles"] and temp_data["handles_are_set"]:
+                start_number += temp_data["handle_start"]
             ffmpeg_input_args.extend([
-                "-start_number", str(temp_data["first_sequence_frame"])
+                "-start_number", str(start_number)
             ])
 
             # TODO add fps mapping `{fps: fraction}` ?
@@ -573,49 +613,50 @@ class ExtractReview(pyblish.api.InstancePlugin):
             #     "23.976": "24000/1001"
             # }
             # Add framerate to input when input is sequence
-            ffmpeg_input_args.append(
-                "-framerate {}".format(temp_data["fps"])
-            )
+            ffmpeg_input_args.extend([
+                "-framerate", str(temp_data["fps"])
+            ])
+            # Add duration of an input sequence if output is video
+            if not temp_data["output_is_sequence"]:
+                ffmpeg_input_args.extend([
+                    "-to", "{:0.10f}".format(duration_seconds)
+                ])
 
         if temp_data["output_is_sequence"]:
             # Set start frame of output sequence (just frame in filename)
             # - this is definition of an output
-            ffmpeg_output_args.append(
-                "-start_number {}".format(temp_data["output_frame_start"])
-            )
+            ffmpeg_output_args.extend([
+                "-start_number", str(temp_data["output_frame_start"])
+            ])
 
         # Change output's duration and start point if should not contain
         # handles
-        start_sec = 0
         if temp_data["without_handles"] and temp_data["handles_are_set"]:
-            # Set start time without handles
-            # - check if handle_start is bigger than 0 to avoid zero division
-            if temp_data["handle_start"] > 0:
-                start_sec = float(temp_data["handle_start"]) / temp_data["fps"]
-                ffmpeg_input_args.append("-ss {:0.10f}".format(start_sec))
+            # Set output duration in seconds
+            ffmpeg_output_args.extend([
+                "-t", "{:0.10}".format(duration_seconds)
+            ])
 
-            # Set output duration inn seconds
-            ffmpeg_output_args.append("-t {:0.10}".format(duration_seconds))
+            # Add -ss (start offset in seconds) if input is not sequence
+            if not temp_data["input_is_sequence"]:
+                start_sec = float(temp_data["handle_start"]) / temp_data["fps"]
+                # Set start time without handles
+                # - Skip if start sec is 0.0
+                if start_sec > 0.0:
+                    ffmpeg_input_args.extend([
+                        "-ss", "{:0.10f}".format(start_sec)
+                    ])
 
         # Set frame range of output when input or output is sequence
         elif temp_data["output_is_sequence"]:
-            ffmpeg_output_args.append("-frames:v {}".format(output_frames_len))
-
-        # Add duration of an input sequence if output is video
-        if (
-            temp_data["input_is_sequence"]
-            and not temp_data["output_is_sequence"]
-        ):
-            ffmpeg_input_args.append("-to {:0.10f}".format(
-                duration_seconds + start_sec
-            ))
+            ffmpeg_output_args.extend([
+                "-frames:v", str(output_frames_len)
+            ])
 
         # Add video/image input path
-        ffmpeg_input_args.append(
-            "-i {}".format(
-                path_to_subprocess_arg(temp_data["full_input_path"])
-            )
-        )
+        ffmpeg_input_args.extend([
+            "-i", path_to_subprocess_arg(temp_data["full_input_path"])
+        ])
 
         # Add audio arguments if there are any. Skipped when output are images.
         if not temp_data["output_ext_is_image"] and temp_data["with_audio"]:
@@ -897,6 +938,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # TODO Define if extension should have dot or not
         if output_ext.startswith("."):
             output_ext = output_ext[1:]
+
+        output_ext = output_ext.lower()
 
         # Store extension to representation
         new_repre["ext"] = output_ext
@@ -1664,6 +1707,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         Args:
             profile (dict): Profile from presets matching current context.
             families (list): All families of current instance.
+            subset_name (str): name of subset
 
         Returns:
             list: Containg all output definitions matching entered families.
@@ -1711,39 +1755,50 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         return filtered_outputs
 
-    def filter_outputs_by_tags(self, outputs, tags):
-        """Filter output definitions by entered representation tags.
+    def filter_outputs_by_custom_tags(self, outputs, custom_tags):
+        """Filter output definitions by entered representation custom_tags.
 
-        Output definitions without tags filter are marked as valid.
+        Output definitions without custom_tags filter are marked as invalid,
+        only in case representation is having any custom_tags defined.
 
         Args:
             outputs (list): Contain list of output definitions from presets.
-            tags (list): Tags of processed representation.
+            custom_tags (list): Custom Tags of processed representation.
 
         Returns:
             list: Containg all output definitions matching entered tags.
         """
-        filtered_outputs = []
-        repre_tags_low = [tag.lower() for tag in tags]
-        for output_def in outputs:
-            valid = True
-            output_filters = output_def.get("filter")
-            if output_filters:
-                # Check tag filters
-                tag_filters = output_filters.get("tags")
-                if tag_filters:
-                    tag_filters_low = [tag.lower() for tag in tag_filters]
-                    valid = False
-                    for tag in repre_tags_low:
-                        if tag in tag_filters_low:
-                            valid = True
-                            break
 
-                    if not valid:
-                        continue
+        filtered_outputs = []
+        repre_c_tags_low = [tag.lower() for tag in (custom_tags or [])]
+        for output_def in outputs:
+            tag_filters = output_def.get("filter", {}).get("custom_tags")
+
+            if not custom_tags and not tag_filters:
+                # Definition is valid if both tags are empty
+                valid = True
+
+            elif not custom_tags or not tag_filters:
+                # Invalid if one is empty
+                valid = False
+
+            else:
+                # Check if output definition tags are in representation tags
+                valid = False
+                # lower all filter tags
+                tag_filters_low = [tag.lower() for tag in tag_filters]
+                # check if any repre tag is not in filter tags
+                for tag in repre_c_tags_low:
+                    if tag in tag_filters_low:
+                        valid = True
+                        break
 
             if valid:
                 filtered_outputs.append(output_def)
+
+        self.log.debug("__ filtered_outputs: {}".format(
+            [_o["filename_suffix"] for _o in filtered_outputs]
+        ))
 
         return filtered_outputs
 

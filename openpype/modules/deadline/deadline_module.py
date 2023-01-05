@@ -4,8 +4,7 @@ import six
 import sys
 
 from openpype.lib import requests_get, Logger
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import IPluginPaths
+from openpype.modules import OpenPypeModule, IPluginPaths
 
 
 class DeadlineWebserviceError(Exception):

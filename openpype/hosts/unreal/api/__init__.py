@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 """Unreal Editor OpenPype host API."""
 
-from .plugin import (
-    Loader,
-    Creator
-)
+from .plugin import Loader
+
 from .pipeline import (
     install,
     uninstall,
@@ -25,7 +23,6 @@ from .pipeline import (
 __all__ = [
     "install",
     "uninstall",
-    "Creator",
     "Loader",
     "ls",
     "publish",

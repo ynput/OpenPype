@@ -5,7 +5,6 @@ import sys
 from collections import deque
 
 import pyblish.api
-import openpype.api
 
 from openpype.client import (
     get_asset_by_name,
@@ -16,6 +15,7 @@ from openpype.client import (
 from openpype.pipeline import (
     get_representation_path,
     legacy_io,
+    publish,
 )
 import openpype.hosts.houdini.api.usd as hou_usdlib
 from openpype.hosts.houdini.api.lib import render_rop
@@ -160,7 +160,7 @@ def parm_values(overrides):
                 parm.set(value)
 
 
-class ExtractUSDLayered(openpype.api.Extractor):
+class ExtractUSDLayered(publish.Extractor):
 
     order = pyblish.api.ExtractorOrder
     label = "Extract Layered USD"
@@ -187,7 +187,7 @@ class ExtractUSDLayered(openpype.api.Extractor):
 
         # Main ROP node, either a USD Rop or ROP network with
         # multiple USD ROPs
-        node = instance[0]
+        node = hou.node(instance.data["instance_node"])
 
         # Collect any output dependencies that have not been processed yet
         # during extraction of other instances

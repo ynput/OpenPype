@@ -7,6 +7,7 @@ import os
 
 import pyblish.api
 from openpype.host import IWorkfileHost, ILoadHost
+from openpype.lib import Logger
 from openpype.pipeline import (
     registered_host,
     legacy_io,
@@ -23,6 +24,7 @@ class HostToolsHelper:
 
     Class may also contain tools that are available only for one or few hosts.
     """
+
     def __init__(self, parent=None):
         self._log = None
         # Global parent for all tools (may and may not be set)
@@ -42,8 +44,6 @@ class HostToolsHelper:
     @property
     def log(self):
         if self._log is None:
-            from openpype.api import Logger
-
             self._log = Logger.get_logger(self.__class__.__name__)
         return self._log
 
@@ -269,30 +269,28 @@ class HostToolsHelper:
             dialog.activateWindow()
             dialog.showNormal()
 
-    def get_publisher_tool(self, parent):
+    def get_publisher_tool(self, parent=None, controller=None):
         """Create, cache and return publisher window."""
 
         if self._publisher_tool is None:
-            from openpype.tools.publisher import PublisherWindow
+            from openpype.tools.publisher.window import PublisherWindow
 
             host = registered_host()
             ILoadHost.validate_load_methods(host)
 
             publisher_window = PublisherWindow(
-                parent=parent or self._parent
+                controller=controller, parent=parent or self._parent
             )
             self._publisher_tool = publisher_window
 
         return self._publisher_tool
 
-    def show_publisher_tool(self, parent=None):
+    def show_publisher_tool(self, parent=None, controller=None, tab=None):
         with qt_app_context():
-            dialog = self.get_publisher_tool(parent)
-
-            dialog.show()
-            dialog.raise_()
-            dialog.activateWindow()
-            dialog.showNormal()
+            window = self.get_publisher_tool(parent, controller)
+            if tab:
+                window.set_current_tab(tab)
+            window.make_sure_is_visible()
 
     def get_tool_by_name(self, tool_name, parent=None, *args, **kwargs):
         """Show tool by it's name.
@@ -446,8 +444,8 @@ def show_publish(parent=None):
     _SingletonPoint.show_tool_by_name("publish", parent)
 
 
-def show_publisher(parent=None):
-    _SingletonPoint.show_tool_by_name("publisher", parent)
+def show_publisher(parent=None, **kwargs):
+    _SingletonPoint.show_tool_by_name("publisher", parent, **kwargs)
 
 
 def show_experimental_tools_dialog(parent=None):

@@ -3,7 +3,7 @@ import tempfile
 from pprint import pformat
 
 import pyblish.api
-from Qt.QtGui import QPixmap
+from qtpy.QtGui import QPixmap
 
 import hiero.ui
 

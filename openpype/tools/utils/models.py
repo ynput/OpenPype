@@ -348,6 +348,8 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
     def __init__(self, *args, **kwargs):
         super(ProjectSortFilterProxy, self).__init__(*args, **kwargs)
         self._filter_enabled = True
+        # Disable case sensitivity
+        self.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
     def lessThan(self, left_index, right_index):
         if left_index.data(PROJECT_NAME_ROLE) is None:
@@ -369,10 +371,14 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
 
     def filterAcceptsRow(self, source_row, source_parent):
         index = self.sourceModel().index(source_row, 0, source_parent)
+        string_pattern = self.filterRegularExpression().pattern()
         if self._filter_enabled:
             result = self._custom_index_filter(index)
             if result is not None:
-                return result
+                project_name = index.data(PROJECT_NAME_ROLE)
+                if project_name is None:
+                    return result
+                return string_pattern.lower() in project_name.lower()
 
         return super(ProjectSortFilterProxy, self).filterAcceptsRow(
             source_row, source_parent

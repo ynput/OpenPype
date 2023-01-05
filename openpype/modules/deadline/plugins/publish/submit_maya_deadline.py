@@ -183,7 +183,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         # Adding file dependencies.
         if self.asset_dependencies:
             dependencies = instance.context.data["fileDependencies"]
-            dependencies.append(context.data["currentFile"])
             for dependency in dependencies:
                 job_info.AssetDependency += dependency
 
@@ -294,7 +293,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         # Add export job as dependency --------------------------------------
         if export_job:
             job_info, _ = payload
-            job_info.JobDependency = export_job
+            job_info.JobDependencies = export_job
 
         if instance.data.get("tileRendering"):
             # Prepare tiles data
@@ -431,7 +430,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
             frame_assembly_job_info.ExtraInfo[0] = file_hash
             frame_assembly_job_info.ExtraInfo[1] = file
-            frame_assembly_job_info.JobDependency = tile_job_id
+            frame_assembly_job_info.JobDependencies = tile_job_id
 
             # write assembly job config files
             now = datetime.now()

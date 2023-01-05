@@ -5,6 +5,7 @@ from .utils import (
     InvalidRepresentationContext,
 
     get_repres_contexts,
+    get_contexts_for_repre_docs,
     get_subset_contexts,
     get_representation_context,
 
@@ -54,6 +55,7 @@ __all__ = (
     "InvalidRepresentationContext",
 
     "get_repres_contexts",
+    "get_contexts_for_repre_docs",
     "get_subset_contexts",
     "get_representation_context",
 

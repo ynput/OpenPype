@@ -29,8 +29,14 @@ def main(ctx):
 
     It wraps different commands together.
     """
+
     if ctx.invoked_subcommand is None:
-        ctx.invoke(tray)
+        # Print help if headless mode is used
+        if os.environ.get("OPENPYPE_HEADLESS_MODE") == "1":
+            print(ctx.get_help())
+            sys.exit(0)
+        else:
+            ctx.invoke(tray)
 
 
 @main.command()
@@ -275,6 +281,13 @@ def launch(app, project, asset, task,
 @main.command(context_settings={"ignore_unknown_options": True})
 def projectmanager():
     PypeCommands().launch_project_manager()
+
+
+@main.command(context_settings={"ignore_unknown_options": True})
+def publish_report_viewer():
+    from openpype.tools.publisher.publish_report_viewer import main
+
+    sys.exit(main())
 
 
 @main.command()

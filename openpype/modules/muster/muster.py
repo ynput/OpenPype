@@ -2,8 +2,7 @@ import os
 import json
 import appdirs
 import requests
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import ITrayModule
+from openpype.modules import OpenPypeModule, ITrayModule
 
 
 class MusterModule(OpenPypeModule, ITrayModule):
@@ -54,7 +53,7 @@ class MusterModule(OpenPypeModule, ITrayModule):
     # Definition of Tray menu
     def tray_menu(self, parent):
         """Add **change credentials** option to tray menu."""
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
 
         # Menu for Tray App
         menu = QtWidgets.QMenu('Muster', parent)

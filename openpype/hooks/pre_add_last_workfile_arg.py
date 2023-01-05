@@ -19,6 +19,7 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
         "hiero",
         "houdini",
         "nukestudio",
+        "fusion",
         "blender",
         "photoshop",
         "tvpaint",

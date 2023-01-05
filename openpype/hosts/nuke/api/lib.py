@@ -10,7 +10,7 @@ from collections import OrderedDict
 import clique
 
 import nuke
-from Qt import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from openpype.client import (
     get_project,
@@ -81,7 +81,6 @@ class Context:
 def get_main_window():
     """Acquire Nuke's main window"""
     if Context.main_window is None:
-        from Qt import QtWidgets
 
         top_widgets = QtWidgets.QApplication.topLevelWidgets()
         name = "Foundry::UI::DockMainWindow"
@@ -563,7 +562,15 @@ def get_node_path(path, padding=4):
 
 
 def get_nuke_imageio_settings():
-    return get_anatomy_settings(Context.project_name)["imageio"]["nuke"]
+    project_imageio = get_project_settings(
+        Context.project_name)["nuke"]["imageio"]
+
+    # backward compatibility for project started before 3.10
+    # those are still having `__legacy__` knob types
+    if not project_imageio["enabled"]:
+        return get_anatomy_settings(Context.project_name)["imageio"]["nuke"]
+
+    return get_project_settings(Context.project_name)["nuke"]["imageio"]
 
 
 def get_created_node_imageio_setting_legacy(nodeclass, creator, subset):
@@ -603,7 +610,10 @@ def get_created_node_imageio_setting_legacy(nodeclass, creator, subset):
 
         if (
             onode["subsets"]
-            and not any(re.search(s, subset) for s in onode["subsets"])
+            and not any(
+                re.search(s.lower(), subset.lower())
+                for s in onode["subsets"]
+            )
         ):
             continue
 
@@ -686,7 +696,8 @@ def get_imageio_node_override_setting(
     # find matching override node
     override_imageio_node = None
     for onode in override_nodes:
-        log.info(onode)
+        log.debug("__ onode: {}".format(onode))
+        log.debug("__ subset: {}".format(subset))
         if node_class not in onode["nukeNodeClass"]:
             continue
 
@@ -695,7 +706,10 @@ def get_imageio_node_override_setting(
 
         if (
             onode["subsets"]
-            and not any(re.search(s, subset) for s in onode["subsets"])
+            and not any(
+                re.search(s.lower(), subset.lower())
+                for s in onode["subsets"]
+            )
         ):
             continue
 
@@ -2922,3 +2936,47 @@ def get_nodes_by_names(names):
         nuke.toNode(name)
         for name in names
     ]
+
+
+def get_viewer_config_from_string(input_string):
+    """Convert string to display and viewer string
+
+    Args:
+        input_string (str): string with viewer
+
+    Raises:
+        IndexError: if more then one slash in input string
+        IndexError: if missing closing bracket
+
+    Returns:
+        tuple[str]: display, viewer
+    """
+    display = None
+    viewer = input_string
+    # check if () or / or \ in name
+    if "/" in viewer:
+        split = viewer.split("/")
+
+        # rise if more then one column
+        if len(split) > 2:
+            raise IndexError((
+                "Viewer Input string is not correct. "
+                "more then two `/` slashes! {}"
+            ).format(input_string))
+
+        viewer = split[1]
+        display = split[0]
+    elif "(" in viewer:
+        pattern = r"([\w\d\s\.\-]+).*[(](.*)[)]"
+        result = re.findall(pattern, viewer)
+        try:
+            result = result.pop()
+            display = str(result[1]).rstrip()
+            viewer = str(result[0]).rstrip()
+        except IndexError:
+            raise IndexError((
+                "Viewer Input string is not correct. "
+                "Missing bracket! {}"
+            ).format(input_string))
+
+    return (display, viewer)

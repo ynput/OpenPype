@@ -1,7 +1,7 @@
 import os
 from maya import cmds
 
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 from openpype.pipeline import legacy_io
 from openpype.pipeline.create import (
     legacy_create,
@@ -16,6 +16,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
     families = ["model",
                 "pointcache",
+                "proxyAbc",
                 "animation",
                 "mayaAscii",
                 "mayaScene",
