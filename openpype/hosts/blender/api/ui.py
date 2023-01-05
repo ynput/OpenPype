@@ -40,8 +40,8 @@ class SCENE_UL_OpenpypeInstances(UIList):
         if hasattr(item, "publish"):
             row.prop(item, "publish", text="")
 
-        # Draw name with icon
-        row.label(text=item.name)
+        # Draw name
+        row.label(text=item["avalon"]["subset"])
 
 
 class SCENE_UL_OpenpypeDatablocks(UIList):
@@ -106,13 +106,16 @@ class SCENE_PT_OpenpypeInstancesManager(bpy.types.Panel):
             "scene.remove_openpype_instance", icon="REMOVE", text=""
         ).instance_name = active_instance.name
 
+        # Draw full name
+        col = layout.column(align=True)
+        col.prop(active_instance, "name", text="Full name", emboss=False)
+
         # Icons for accepted types
-        row = layout.row(align=True)
-        subcol = row.column(align=True)
-        subcol.label(text="Supported types for instance:")
-        subrow = subcol.row(align=True)
+        subrow = col.row(align=True)
+        subrow.label(text="Supported types:")
         for type_icon in active_instance.get("icons", []):
             subrow.label(icon=type_icon)
+        subrow.label()
 
 
 class SCENE_PT_OpenpypeDatablocksManager(bpy.types.Panel):
