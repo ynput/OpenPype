@@ -3,6 +3,25 @@ from bpy.types import UIList
 from openpype.hosts.blender.api.utils import BL_TYPE_DATAPATH, BL_TYPE_ICON
 
 
+def check_type_validity_for_creator(
+    datablock: bpy.types.ID, creator_name: str
+) -> bool:
+    """Check type is valid for creator name.
+
+    Args:
+        datablock (bpy.types.ID): Datablock to test type ok.
+        creator_name (str): Creator name
+
+    Returns:
+        bool: Is datablock type valid for creator
+    """
+    creator = bpy.context.scene["openpype_creators"].get(creator_name, {})
+
+    return BL_TYPE_DATAPATH.get(type(datablock)) in {
+        t[0] for t in creator["bl_types"]
+    }
+
+
 class SCENE_UL_OpenpypeInstances(UIList):
     def draw_item(
         self,
@@ -23,12 +42,16 @@ class SCENE_UL_OpenpypeInstances(UIList):
 
         # Draw name with icon
         # TODO is it the smartest way to get the icon?
-        row.label(
-            text=item.name,
-            icon=BL_TYPE_ICON.get(type(item.datablock), "NONE")
+        icon = (
+            BL_TYPE_ICON.get(type(item.datablock), "NONE")
             if hasattr(item, "datablock")
-            else "NONE",
+            else "NONE"
         )
+        if hasattr(item, "datablock") and not check_type_validity_for_creator(
+            item.datablock, _data["creator_name"]
+        ):
+            icon = "ERROR"
+        row.label(text=item.name, icon=icon)
 
         # Icons for accepted types
         for type_icon in item.get("icons", []):
@@ -101,9 +124,13 @@ class ObjectSelectPanel(bpy.types.Panel):
         props.instance_name = active_openpype_instance.name
         props.creator_name = active_openpype_instance["creator_name"]
         if active_openpype_instance.datablock_refs:
-            props.datapath = BL_TYPE_DATAPATH.get(
-                type(active_openpype_instance.datablock_refs[0].datablock)
-            )
+            if check_type_validity_for_creator(
+                active_openpype_instance.datablock_refs[0].datablock,
+                active_openpype_instance["creator_name"],
+            ):
+                props.datapath = BL_TYPE_DATAPATH.get(
+                    type(active_openpype_instance.datablock_refs[0].datablock)
+                )
 
         props = col.operator(
             "scene.remove_from_openpype_instance", icon="REMOVE", text=""
