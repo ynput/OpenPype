@@ -105,17 +105,13 @@ print("*** Done")
         # can't use TemporaryNamedFile as that can't be opened in another
         # process until handles are closed by context manager.
         with tempfile.TemporaryDirectory() as tmp_dir_name:
-            tmp_file_name = os.path.join(tmp_dir_name, "import_ref.py")
-            tmp = open(tmp_file_name, "w+t")
-            subprocess_args = [
-                mayapy_exe,
-                tmp_file_name
-            ]
-            self.log.info("Using temp file: {}".format(tmp.name))
-            try:
+            tmp_script_path = os.path.join(tmp_dir_name, "import_ref.py")
+            self.log.info("Using script file: {}".format(tmp_script_path))
+            with open(tmp_script_path, "wt") as tmp:
                 tmp.write(script)
-                tmp.close()
-                run_subprocess(subprocess_args)
+
+            try:
+                run_subprocess([mayapy_exe, tmp_script_path])
             except Exception:
                 self.log.error("Import reference failed", exc_info=True)
                 raise
