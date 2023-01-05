@@ -4,6 +4,8 @@ import copy
 import socket
 import itertools
 import datetime
+import sys
+import traceback
 
 from bson.objectid import ObjectId
 
@@ -143,7 +145,8 @@ class ProjectPushItemStatus:
         failed=False,
         finished=False,
         fail_reason=None,
-        messages=None
+        messages=None,
+        event_system=None
     ):
         if messages is None:
             messages = []
@@ -151,6 +154,13 @@ class ProjectPushItemStatus:
         self._finished = finished
         self._fail_reason = fail_reason
         self._messages = messages
+        self._event_system = event_system
+
+    def emit_event(self, topic, data=None):
+        if self._event_system is None:
+            return
+
+        self._event_system.emit(topic, data or {}, "push.status")
 
     def get_finished(self):
         """Processing of push to project finished.
@@ -170,6 +180,7 @@ class ProjectPushItemStatus:
 
         if finished != self._finished:
             self._finished = finished
+            self.emit_event("push.finished.changed", {"finished": finished})
 
     def get_failed(self):
         """Processing failed.
@@ -192,7 +203,10 @@ class ProjectPushItemStatus:
             fail_reason (str): Reason why failed.
         """
 
-        self._failed = failed
+        if self._failed != failed:
+            self._failed = failed
+            self.emit_event("push.failed.changed", {"failed": failed})
+
         if fail_reason is not UNKNOWN and self._fail_reason != fail_reason:
             self.set_fail_reason(fail_reason)
 
@@ -223,6 +237,7 @@ class ProjectPushItemStatus:
         if self._fail_reason == reason:
             return
         self._fail_reason = reason
+        self.emit_event("push.fail_reason.changed", {"fail_reason": reason})
         if reason and not self._failed:
             self.set_failed(True)
 
@@ -238,6 +253,10 @@ class ProjectPushItemStatus:
     def add_message(self, message, level):
         message_obj = StatusMessage(message, level)
         self._messages.append(message_obj)
+        self.emit_event(
+            "push.message.added",
+            {"message": message, "level": level}
+        )
         print(message_obj)
         return message_obj
 
@@ -664,16 +683,26 @@ class ProjectPushItemProcess:
 
         asset_name_low = asset_name.lower()
         other_asset_docs = get_assets(
-            project_doc["name"], parent_ids=[parent_id], fields=["name"]
+            project_doc["name"], fields=["_id", "name", "data.visualParent"]
         )
         for other_asset_doc in other_asset_docs:
             other_name = other_asset_doc["name"]
-            if other_name.lower() == asset_name_low:
-                self._status.debug((
-                    f"Found already existing asset with name \"{other_name}\""
-                    f" which match requested name \"{asset_name}\""
+            other_parent_id = other_asset_doc["data"].get("visualParent")
+            if other_name.lower() != asset_name_low:
+                continue
+
+            if other_parent_id != parent_id:
+                self._status.set_fail_reason((
+                    f"Asset with name \"{other_name}\" already"
+                    " exists in different hierarchy."
                 ))
-                return other_asset_doc
+                raise PushToProjectError(self._status.fail_reason)
+
+            self._status.debug((
+                f"Found already existing asset with name \"{other_name}\""
+                f" which match requested name \"{asset_name}\""
+            ))
+            return get_asset_by_id(project_doc["name"], other_asset_doc["_id"])
 
         data_keys = (
             "clipIn",
@@ -1129,8 +1158,12 @@ class ProjectPushItemProcess:
             pass
 
         except Exception as exc:
+            _exc, _value, _tb = sys.exc_info()
             self._status.set_fail_reason(
-                "Unhandled error happened: {}".format(str(exc))
+                "Unhandled error happened: {}\n{}".format(
+                    str(exc),
+                    "".join(traceback.format_exception(_exc, _value, _tb))
+                )
             )
 
         finally:

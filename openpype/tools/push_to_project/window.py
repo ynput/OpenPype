@@ -373,7 +373,9 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         self.setWindowTitle("Push to project (select context)")
         self.setWindowIcon(QtGui.QIcon(get_app_icon_path()))
 
-        header_widget = QtWidgets.QWidget(self)
+        main_context_widget = QtWidgets.QWidget(self)
+
+        header_widget = QtWidgets.QWidget(main_context_widget)
 
         header_label = QtWidgets.QLabel(controller.src_label, header_widget)
 
@@ -381,7 +383,9 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.addWidget(header_label)
 
-        main_splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal, self)
+        main_splitter = QtWidgets.QSplitter(
+            QtCore.Qt.Horizontal, main_context_widget
+        )
 
         context_widget = QtWidgets.QWidget(main_splitter)
 
@@ -455,22 +459,57 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         btns_layout.addWidget(cancel_btn, 0)
         btns_layout.addWidget(publish_btn, 0)
 
-        sep_1 = SeparatorWidget(parent=self)
-        sep_2 = SeparatorWidget(parent=self)
-        main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.addWidget(header_widget, 0)
-        main_layout.addWidget(sep_1, 0)
-        main_layout.addWidget(main_splitter, 1)
-        main_layout.addWidget(sep_2, 0)
-        main_layout.addWidget(btns_widget, 0)
+        sep_1 = SeparatorWidget(parent=main_context_widget)
+        sep_2 = SeparatorWidget(parent=main_context_widget)
+        main_context_layout = QtWidgets.QVBoxLayout(main_context_widget)
+        main_context_layout.addWidget(header_widget, 0)
+        main_context_layout.addWidget(sep_1, 0)
+        main_context_layout.addWidget(main_splitter, 1)
+        main_context_layout.addWidget(sep_2, 0)
+        main_context_layout.addWidget(btns_widget, 0)
+
+        # NOTE This was added in hurry
+        # - should be reorganized and changed styles
+        overlay_widget = QtWidgets.QFrame(self)
+        overlay_widget.setObjectName("OverlayFrame")
+
+        overlay_label = QtWidgets.QLabel(overlay_widget)
+        overlay_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        overlay_btns_widget = QtWidgets.QWidget(overlay_widget)
+        overlay_btns_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        # Add try again button (requires changes in controller)
+        overlay_close_btn = QtWidgets.QPushButton("Close", overlay_btns_widget)
+
+        overlay_btns_layout = QtWidgets.QHBoxLayout(overlay_btns_widget)
+        overlay_btns_layout.addStretch(1)
+        overlay_btns_layout.addWidget(overlay_close_btn, 0)
+        overlay_btns_layout.addStretch(1)
+
+        overlay_layout = QtWidgets.QVBoxLayout(overlay_widget)
+        overlay_layout.addWidget(overlay_label, 0)
+        overlay_layout.addWidget(overlay_btns_widget, 0)
+        overlay_layout.setAlignment(QtCore.Qt.AlignCenter)
+
+        main_layout = QtWidgets.QStackedLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(main_context_widget)
+        main_layout.addWidget(overlay_widget)
+        main_layout.setStackingMode(QtWidgets.QStackedLayout.StackAll)
+        main_layout.setCurrentWidget(main_context_widget)
 
         show_timer = QtCore.QTimer()
         show_timer.setInterval(1)
+
+        main_thread_timer = QtCore.QTimer()
+        main_thread_timer.setInterval(10)
 
         user_input_changed_timer = QtCore.QTimer()
         user_input_changed_timer.setInterval(200)
         user_input_changed_timer.setSingleShot(True)
 
+        main_thread_timer.timeout.connect(self._on_main_thread_timer)
         show_timer.timeout.connect(self._on_show_timer)
         user_input_changed_timer.timeout.connect(self._on_user_input_timer)
         asset_name_input.textChanged.connect(self._on_new_asset_change)
@@ -488,6 +527,7 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         task_model.items_changed.connect(self._on_task_model_change)
         publish_btn.clicked.connect(self._on_select_click)
         cancel_btn.clicked.connect(self._on_close_click)
+        overlay_close_btn.clicked.connect(self._on_close_click)
 
         controller.event_system.add_callback(
             "new_asset_name.changed", self._on_controller_new_asset_change
@@ -504,6 +544,25 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         controller.event_system.add_callback(
             "source.changed", self._on_controller_source_change
         )
+        controller.event_system.add_callback(
+            "submit.started", self._on_controller_submit_start
+        )
+        controller.event_system.add_callback(
+            "submit.finished", self._on_controller_submit_end
+        )
+        controller.event_system.add_callback(
+            "push.failed.changed", self._on_push_failed
+        )
+        controller.event_system.add_callback(
+            "push.fail_reason.changed", self._on_push_failed_reason
+        )
+        controller.event_system.add_callback(
+            "push.message.added", self._on_push_message
+        )
+
+        self._main_layout = main_layout
+
+        self._main_context_widget = main_context_widget
 
         self._header_label = header_label
         self._main_splitter = main_splitter
@@ -526,6 +585,10 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
 
         self._publish_btn = publish_btn
 
+        self._overlay_widget = overlay_widget
+        self._overlay_close_btn = overlay_close_btn
+        self._overlay_label = overlay_label
+
         self._user_input_changed_timer = user_input_changed_timer
         # Store current value on input text change
         #   The value is unset when is passed to controller
@@ -538,7 +601,15 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         self._show_counter = 2
         self._first_show = True
 
+        self._main_thread_timer = main_thread_timer
+        self._main_thread_timer_can_stop = True
+        self._submit_messages = []
+        self._last_submit_message = None
+        self._push_fail_reason = "Unknown"
+        self._push_failed = False
+
         publish_btn.setEnabled(False)
+        overlay_close_btn.setVisible(False)
 
         if controller.user_values.new_asset_name:
             asset_name_input.setText(controller.user_values.new_asset_name)
@@ -704,4 +775,42 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         self.close()
 
     def _on_select_click(self):
-        self._controller.submit()
+        self._controller.submit(wait=False)
+
+    def _on_main_thread_timer(self):
+        if self._last_submit_message:
+            self._overlay_label.setText(self._last_submit_message)
+            self._last_submit_message = None
+
+        if self._main_thread_timer_can_stop:
+            self._main_thread_timer.stop()
+            self._overlay_close_btn.setVisible(True)
+
+        if self._push_failed:
+            self._overlay_label.setText(
+                "Push Failed\n{}".format(self._push_fail_reason)
+            )
+            set_style_property(
+                self._overlay_close_btn,
+                "state",
+                "error"
+            )
+
+    def _on_controller_submit_start(self):
+        self._main_thread_timer_can_stop = False
+        self._main_thread_timer.start()
+        self._main_layout.setCurrentWidget(self._overlay_widget)
+        self._overlay_label.setText("Submittion started")
+
+    def _on_controller_submit_end(self):
+        self._main_thread_timer_can_stop = True
+
+    def _on_push_message(self, event):
+        self._submit_messages.append(event["message"])
+        self._last_submit_message = event["message"]
+
+    def _on_push_failed_reason(self, event):
+        self._push_fail_reason = event["fail_reason"]
+
+    def _on_push_failed(self, event):
+        self._push_failed = event["failed"]
