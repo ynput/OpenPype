@@ -119,7 +119,7 @@ class GDriveHandler(AbstractProvider):
         Returns:
             (boolean)
         """
-        return self.presets["enabled"] and self.service is not None
+        return self.presets.get("enabled") and self.service is not None
 
     @classmethod
     def get_system_settings_schema(cls):
