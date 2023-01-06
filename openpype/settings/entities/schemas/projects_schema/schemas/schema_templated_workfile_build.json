@@ -30,7 +30,7 @@
                         "multipath": false
                     },
                     {
-                        "key": "placeholder_keep",
+                        "key": "keep_placeholder",
                         "label": "Keep placeholders",
                         "type": "boolean",
                         "default": true

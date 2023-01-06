@@ -43,7 +43,6 @@ from openpype.pipeline.load import (
     load_with_repre_context,
 )
 from openpype.pipeline.create import (
-    get_legacy_creator_by_name,
     discover_legacy_creator_plugins
 )
 
@@ -439,7 +438,7 @@ class AbstractTemplateBuilder(object):
             template_path = template_preset["path"]
 
         if keep_placeholders is None:
-            keep_placeholders = template_preset["placeholder_keep"]
+            keep_placeholders = template_preset["keep_placeholder"]
 
         self.import_template(template_path)
         self.populate_scene_placeholders(
@@ -673,10 +672,10 @@ class AbstractTemplateBuilder(object):
         path = profile["path"]
 
         # switch to remove placeholders after they are used
-        placeholder_keep = profile.get("placeholder_keep")
+        keep_placeholder = profile.get("keep_placeholder")
         # backward compatibility, since default is True
-        if placeholder_keep is None:
-            placeholder_keep = True
+        if keep_placeholder is None:
+            keep_placeholder = True
 
         if not path:
             raise TemplateLoadFailed((
@@ -707,7 +706,7 @@ class AbstractTemplateBuilder(object):
             self.log.info("Found template at: '{}'".format(path))
             return {
                 "path": path,
-                "placeholder_keep": placeholder_keep
+                "keep_placeholder": keep_placeholder
             }
 
         solved_path = None
@@ -736,7 +735,7 @@ class AbstractTemplateBuilder(object):
 
         return {
             "path": solved_path,
-            "placeholder_keep": placeholder_keep
+            "keep_placeholder": keep_placeholder
         }
 
 
@@ -991,7 +990,7 @@ class PlaceholderItem(object):
 
     def __init__(self, scene_identifier, data, plugin):
         self._log = None
-        self.name = scene_identifier
+        self._scene_identifier = scene_identifier
         self._data = data
         self._plugin = plugin
 
@@ -1056,7 +1055,13 @@ class PlaceholderItem(object):
         return self._log
 
     def __repr__(self):
-        return "< {} {} >".format(self.__class__.__name__, self.name)
+        name = None
+        if hasattr("name", self):
+            name = self.name
+        if hasattr("_scene_identifier ", self):
+            name = self._scene_identifier
+
+        return "< {} {} >".format(self.__class__.__name__, name)
 
     @property
     def order(self):
@@ -1069,7 +1074,7 @@ class PlaceholderItem(object):
 
     @property
     def scene_identifier(self):
-        return self.name
+        return self._scene_identifier
 
     @property
     def finished(self):
