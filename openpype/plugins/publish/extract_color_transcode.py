@@ -1,3 +1,4 @@
+import os
 import pyblish.api
 
 from openpype.pipeline import publish
@@ -41,13 +42,6 @@ class ExtractColorTranscode(publish.Extractor):
             self.log.warning("OIIO not supported, no transcoding possible.")
             return
 
-        colorspace_data = instance.data.get("colorspaceData")
-        if not colorspace_data:
-            # TODO get_colorspace ??
-            self.log.warning("Instance has not colorspace data, skipping")
-            return
-        source_color_space = colorspace_data["colorspace"]
-
         host_name = instance.context.data["hostName"]
         family = instance.data["family"]
         task_data = instance.data["anatomyData"].get("task", {})
@@ -82,18 +76,32 @@ class ExtractColorTranscode(publish.Extractor):
         repres = instance.data.get("representations") or []
         for idx, repre in enumerate(repres):
             self.log.debug("repre ({}): `{}`".format(idx + 1, repre["name"]))
-            if not self.repre_is_valid(repre):
+            # if not self.repre_is_valid(repre):
+            #     continue
+
+            colorspace_data = repre.get("colorspaceData")
+            if not colorspace_data:
+                # TODO get_colorspace ??
+                self.log.warning("Repre has not colorspace data, skipping")
+                continue
+            source_color_space = colorspace_data["colorspace"]
+            config_path = colorspace_data.get("configData", {}).get("path")
+            if not os.path.exists(config_path):
+                self.log.warning("Config file doesn't exist, skipping")
                 continue
 
             new_staging_dir = get_transcode_temp_directory()
+            original_staging_dir = repre["stagingDir"]
             repre["stagingDir"] = new_staging_dir
-            files_to_remove = repre["files"]
-            if not isinstance(files_to_remove, list):
-                files_to_remove = [files_to_remove]
-            instance.context.data["cleanupFullPaths"].extend(files_to_remove)
+            files_to_convert = repre["files"]
+            if not isinstance(files_to_convert, list):
+                files_to_convert = [files_to_convert]
+            files_to_convert = [os.path.join(original_staging_dir, path)
+                                for path in files_to_convert]
+            instance.context.data["cleanupFullPaths"].extend(files_to_convert)
 
             convert_colorspace_for_input_paths(
-                repre["files"],
+                files_to_convert,
                 new_staging_dir,
                 source_color_space,
                 target_colorspace,
