@@ -179,6 +179,14 @@ if ($LASTEXITCODE -ne 0) {
     Set-Location -Path $current_dir
     Exit-WithCode 1
 }
+Write-Color -Text ">>> ", "Installing pre-commit hooks ..." -Color Green, White
+& "$env:POETRY_HOME\bin\poetry" run pre-commit install
+if ($LASTEXITCODE -ne 0) {
+    Write-Color -Text "!!! ", "Installation of pre-commit hooks failed." -Color Red, Yellow
+    Set-Location -Path $current_dir
+    Exit-WithCode 1
+}
+
 $endTime = [int][double]::Parse((Get-Date -UFormat %s))
 Set-Location -Path $current_dir
 try
