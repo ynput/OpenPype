@@ -44,11 +44,11 @@ class ExtractBlend(publish.Extractor):
         # Pack used images in the blend files.
         packed_images = set()
         # TODO setting
-        if self.pack_images:
-            for image in used_images:
-                if not image.packed_file and image.source != "GENERATED":
-                    packed_images.add((image, image.is_dirty))
-                    image.pack()
+        # if self.pack_images:
+        #     for image in used_images:
+        #         if not image.packed_file and image.source != "GENERATED":
+        #             packed_images.add((image, image.is_dirty))
+        #             image.pack()
 
         self._write_data(filepath, data_blocks)
 
