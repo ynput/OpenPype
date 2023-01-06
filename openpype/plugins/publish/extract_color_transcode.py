@@ -18,6 +18,17 @@ from openpype.lib.profiles_filtering import filter_profiles
 class ExtractColorTranscode(publish.Extractor):
     """
     Extractor to convert colors from one colorspace to different.
+
+    Expects "colorspaceData" on representation. This dictionary is collected
+    previously and denotes that representation files should be converted.
+    This dict contains source colorspace information, collected by hosts.
+
+    Target colorspace is selected by profiles in the Settings, based on:
+    - families
+    - host
+    - task types
+    - task names
+    - subset names
     """
 
     label = "Transcode color spaces"
