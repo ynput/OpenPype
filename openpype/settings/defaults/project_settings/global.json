@@ -70,6 +70,10 @@
                 "output": []
             }
         },
+        "ExtractColorTranscode": {
+            "enabled": true,
+            "profiles": []
+        },
         "ExtractReview": {
             "enabled": true,
             "profiles": [
@@ -442,7 +446,9 @@
                     "template": "{family}{Task}"
                 },
                 {
-                    "families": ["render"],
+                    "families": [
+                        "render"
+                    ],
                     "hosts": [
                         "aftereffects"
                     ],
