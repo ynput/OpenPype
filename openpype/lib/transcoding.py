@@ -1037,3 +1037,56 @@ def convert_ffprobe_fps_to_float(value):
     if divisor == 0.0:
         return 0.0
     return dividend / divisor
+
+
+def convert_colorspace_for_input_paths(
+    input_paths,
+    output_dir,
+    source_color_space,
+    target_color_space,
+    logger=None
+):
+    """Convert source files from one color space to another.
+
+    Filenames of input files are kept so make sure that output directory
+    is not the same directory as input files have.
+    - This way it can handle gaps and can keep input filenames without handling
+        frame template
+
+    Args:
+        input_paths (str): Paths that should be converted. It is expected that
+            contains single file or image sequence of samy type.
+        output_dir (str): Path to directory where output will be rendered.
+            Must not be same as input's directory.
+        source_color_space (str): ocio valid color space of source files
+        target_color_space (str): ocio valid target color space
+        logger (logging.Logger): Logger used for logging.
+
+    """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
+    input_arg = "-i"
+    oiio_cmd = [
+        get_oiio_tools_path(),
+
+        # Don't add any additional attributes
+        "--nosoftwareattrib",
+        "--colorconvert", source_color_space, target_color_space
+    ]
+    for input_path in input_paths:
+        # Prepare subprocess arguments
+
+        oiio_cmd.extend([
+            input_arg, input_path,
+        ])
+
+        # Add last argument - path to output
+        base_filename = os.path.basename(input_path)
+        output_path = os.path.join(output_dir, base_filename)
+        oiio_cmd.extend([
+            "-o", output_path
+        ])
+
+        logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
+        run_subprocess(oiio_cmd, logger=logger)
