@@ -1,7 +1,6 @@
 import os
 import copy
 import clique
-
 import pyblish.api
 
 from openpype.pipeline import publish
