@@ -72,6 +72,7 @@ class ExtractColorTranscode(publish.Extractor):
         target_colorspace = profile["output_colorspace"]
         if not target_colorspace:
             raise RuntimeError("Target colorspace must be set")
+        custom_tags = profile["custom_tags"]
 
         repres = instance.data.get("representations") or []
         for idx, repre in enumerate(repres):
@@ -108,6 +109,11 @@ class ExtractColorTranscode(publish.Extractor):
                 target_colorspace,
                 self.log
             )
+
+            if custom_tags:
+                if not repre.get("custom_tags"):
+                    repre["custom_tags"] = []
+                repre["custom_tags"].extend(custom_tags)
 
     def repre_is_valid(self, repre):
         """Validation if representation should be processed.
