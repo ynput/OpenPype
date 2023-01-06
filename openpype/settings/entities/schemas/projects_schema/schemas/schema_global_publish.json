@@ -201,10 +201,14 @@
             "type": "dict",
             "collapsible": true,
             "key": "ExtractColorTranscode",
-            "label": "ExtractColorTranscode",
+            "label": "ExtractColorTranscode (ImageIO)",
             "checkbox_key": "enabled",
             "is_group": true,
             "children": [
+                {
+                    "type": "label",
+                    "label": "Configure output format(s) and color spaces for matching representations. Empty 'Output extension' denotes keeping source extension."
+                },
                 {
                     "type": "boolean",
                     "key": "enabled",
