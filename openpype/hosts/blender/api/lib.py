@@ -132,13 +132,13 @@ def ls() -> Iterator:
             datablocks_to_skip.update(entity.children_recursive)
 
         # Find datablocks depending on type
-        if type(entity) is bpy.types.Collection:
+        if isinstance(entity, bpy.types.Collection):
             container_datablocks = [
                 entity,
                 *entity.children_recursive,
                 *entity.all_objects,
             ]
-        elif type(entity) is bpy.types.Object:
+        elif isinstance(entity, bpy.types.Object):
             container_datablocks = [
                 entity,
                 entity.instance_collection,
@@ -158,7 +158,9 @@ def ls() -> Iterator:
             else entity
         ).get(pipeline.AVALON_PROPERTY)
         container[pipeline.AVALON_PROPERTY] = metadata
-        container.outliner_entity = entity
+        container.library = entity.library
+        if isinstance(entity, tuple(BL_OUTLINER_TYPES)):
+            container.outliner_entity = entity
 
     # Clear containers when data has been deleted from the outliner
     for container in reversed(openpype_containers):
