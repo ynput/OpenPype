@@ -112,7 +112,7 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             return None
 
         filepath = substance_painter.project.file_path()
-        if filepath.endswith(".spt"):
+        if filepath and filepath.endswith(".spt"):
             # When currently in a Substance Painter template assume our
             # scene isn't saved. This can be the case directly after doing
             # "New project", the path will then be the template used. This
