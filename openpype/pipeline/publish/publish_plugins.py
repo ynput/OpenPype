@@ -256,12 +256,12 @@ class RepairContextAction(pyblish.api.Action):
         if not hasattr(plugin, "repair"):
             raise RuntimeError("Plug-in does not have repair method.")
 
-        # Get the errored instances
+        # Get the failed instances
         self.log.info("Finding failed instances..")
-        errored_plugins = get_errored_plugins_from_context(context)
+        failed_plugins = get_errored_plugins_from_context(context)
 
         # Apply pyblish.logic to get the instances for the plug-in
-        if plugin in errored_plugins:
+        if plugin in failed_plugins:
             self.log.info("Attempting fix ...")
             plugin.repair(context)
 
@@ -289,7 +289,7 @@ class Extractor(pyblish.api.InstancePlugin):
 
 
 class ExtractorColormanaged(Extractor):
-    """Extractor Colormanaged class.
+    """Extractor base for color managed image data.
 
     Class implements a "set_representation_colorspace" function, which is used
     for injecting colorspace data to representation data for farther
@@ -304,7 +304,8 @@ class ExtractorColormanaged(Extractor):
         "sgi", "rgba", "rgb", "bw", "tga", "tiff", "tif", "img"
     ]
 
-    def get_colorspace_settings(self, context):
+    @staticmethod
+    def get_colorspace_settings(context):
         project_name = context.data["projectName"]
         host_name = context.data["hostName"]
         anatomy_data = context.data["anatomyData"]

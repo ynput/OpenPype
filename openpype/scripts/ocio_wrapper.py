@@ -1,12 +1,12 @@
 """OpenColorIO Wrapper.
 
-Only to be interpreted by Python 3. It is runned in subprocess in case
+Only to be interpreted by Python 3. It is run in subprocess in case
 Python 2 hosts needs to use it. Or it is used as modul for Python 3
 processing.
 
 Providing functionality:
 - get_colorspace - console command - python 2
-                 - returning all available colorspaces
+                 - returning all available color spaces
                    found in input config path.
 - get_colorspace_data - python 3 - module function
                       - returning all available colorspaces
@@ -54,7 +54,7 @@ def config():
               help="path where to write output json file",
               type=click.Path())
 def get_colorspace(in_path, out_path):
-    """Agregate all colorspace to file.
+    """Aggregate all colorspace to file.
 
     Python 2 wrapped console command
 
@@ -83,7 +83,7 @@ def get_colorspace_data(config_path):
         config_path (str): path string leading to config.ocio
 
     Raises:
-        IOError: Input config does not exists.
+        IOError: Input config does not exist.
 
     Returns:
         dict: aggregated available colorspaces
@@ -116,7 +116,7 @@ def get_colorspace_data(config_path):
               help="path where to write output json file",
               type=click.Path())
 def get_views(in_path, out_path):
-    """Agregate all viewers to file.
+    """Aggregate all viewers to file.
 
     Python 2 wrapped console command
 
@@ -145,7 +145,7 @@ def get_views_data(config_path):
         config_path (str): path string leading to config.ocio
 
     Raises:
-        IOError: Input config does not exists.
+        IOError: Input config does not exist.
 
     Returns:
         dict: aggregated available viewers

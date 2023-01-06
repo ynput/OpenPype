@@ -736,7 +736,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         data = repre.get("data", {})
         data.update({"path": published_path, "template": template})
 
-        # add colorspace data if any exists on represenation
+        # add colorspace data if any exists on representation
         if repre.get("colorspaceData"):
             data["colorspaceData"] = repre["colorspaceData"]
 
