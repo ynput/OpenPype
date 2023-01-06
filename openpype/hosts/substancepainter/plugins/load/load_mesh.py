@@ -2,10 +2,25 @@ from openpype.pipeline import (
     load,
     get_representation_path,
 )
-from openpype.pipeline import legacy_io
+from openpype.hosts.substancepainter.api.pipeline import imprint_container
 
 import substance_painter.project
 import qargparse
+
+
+def set_container(key, container):
+    metadata = substance_painter.project.Metadata("OpenPype")
+    containers = metadata.get("containers") or {}
+    containers[key] = container
+    metadata.set("containers", containers)
+
+
+def remove_container(key):
+    metadata = substance_painter.project.Metadata("OpenPype")
+    containers = metadata.get("containers")
+    if containers:
+        containers.pop(key, None)
+        metadata.set("containers", containers)
 
 
 class SubstanceLoadProjectMesh(load.LoaderPlugin):
@@ -33,6 +48,8 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
         )
     ]
 
+    container_key = "ProjectMesh"
+
     def load(self, context, name, namespace, data):
 
         if not substance_painter.project.is_open():
@@ -49,25 +66,34 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
                 mesh_file_path=self.fname,
                 settings=settings
             )
-            return
 
-        # Reload the mesh
-        settings = substance_painter.project.MeshReloadingSettings(
-            import_cameras=data.get("import_cameras", True),
-            preserve_strokes=data.get("preserve_strokes", True)
-        )
+        else:
+            # Reload the mesh
+            settings = substance_painter.project.MeshReloadingSettings(
+                import_cameras=data.get("import_cameras", True),
+                preserve_strokes=data.get("preserve_strokes", True)
+            )
 
-        def on_mesh_reload(status: substance_painter.project.ReloadMeshStatus):
-            if status == substance_painter.project.ReloadMeshStatus.SUCCESS:
-                print("Reload succeeded")
-            else:
-                raise RuntimeError("Reload of mesh failed")
+            def on_mesh_reload(status: substance_painter.project.ReloadMeshStatus):  # noqa
+                if status == substance_painter.project.ReloadMeshStatus.SUCCESS:  # noqa
+                    print("Reload succeeded")
+                else:
+                    raise RuntimeError("Reload of mesh failed")
 
-        path = self.fname
-        substance_painter.project.reload_mesh(path, settings, on_mesh_reload)
+            path = self.fname
+            substance_painter.project.reload_mesh(path,
+                                                  settings,
+                                                  on_mesh_reload)
 
-        # TODO: Register with the project so host.get_containers() can return
-        #       the loaded content in manager
+        # Store container
+        container = {}
+        imprint_container(container,
+                          name=self.container_key,
+                          namespace=self.container_key,
+                          context=context,
+                          loader=self)
+        container["options"] = data
+        set_container(self.container_key, container)
 
     def switch(self, container, representation):
         self.update(container, representation)
@@ -78,9 +104,10 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
 
         # Reload the mesh
         # TODO: Re-use settings from first load?
+        container_options = container.get("options", {})
         settings = substance_painter.project.MeshReloadingSettings(
-            import_cameras=True,
-            preserve_strokes=True
+            import_cameras=container_options.get("import_cameras", True),
+            preserve_strokes=container_options.get("preserve_strokes", True)
         )
 
         def on_mesh_reload(status: substance_painter.project.ReloadMeshStatus):
@@ -91,8 +118,14 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
 
         substance_painter.project.reload_mesh(path, settings, on_mesh_reload)
 
+        # Update container representation
+        container["representation"] = str(representation["_id"])
+        set_container(self.container_key, container)
+
     def remove(self, container):
 
         # Remove OpenPype related settings about what model was loaded
         # or close the project?
-        pass
+        # TODO: This is likely best 'hidden' away to the user because
+        #       this will leave the project's mesh unmanaged.
+        remove_container(self.container_key)

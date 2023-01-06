@@ -123,7 +123,16 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         return filepath
 
     def get_containers(self):
-        return []
+
+        if not substance_painter.project.is_open():
+            return
+
+        metadata = substance_painter.project.Metadata("OpenPype")
+        containers = metadata.get("containers")
+        if containers:
+            for key, container in containers.items():
+                container["objectName"] = key
+                yield container
 
     @staticmethod
     def create_context_node():
@@ -232,3 +241,37 @@ def on_open():
                               "your Substance scene.")
             dialog.on_clicked.connect(_on_show_inventory)
             dialog.show()
+
+
+def imprint_container(container,
+                      name,
+                      namespace,
+                      context,
+                      loader):
+    """Imprint a loaded container with metadata.
+
+    Containerisation enables a tracking of version, author and origin
+    for loaded assets.
+
+    Arguments:
+        container (dict): The (substance metadata) dictionary to imprint into.
+        name (str): Name of resulting assembly
+        namespace (str): Namespace under which to host container
+        context (dict): Asset information
+        loader (load.LoaderPlugin): loader instance used to produce container.
+
+    Returns:
+        None
+
+    """
+
+    data = [
+        ("schema", "openpype:container-2.0"),
+        ("id", AVALON_CONTAINER_ID),
+        ("name", str(name)),
+        ("namespace", str(namespace) if namespace else None),
+        ("loader", str(loader.__class__.__name__)),
+        ("representation", str(context["representation"]["_id"])),
+    ]
+    for key, value in data:
+        container[key] = value
