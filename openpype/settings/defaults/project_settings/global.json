@@ -68,6 +68,10 @@
                 "output": []
             }
         },
+        "ExtractColorTranscode": {
+            "enabled": true,
+            "profiles": []
+        },
         "ExtractReview": {
             "enabled": true,
             "profiles": [
