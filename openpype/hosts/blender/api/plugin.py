@@ -1540,15 +1540,39 @@ class AssetLoader(LoaderPlugin):
             else:
                 # Default behaviour to wipe and reload everything
                 # but keeping same container
-                parent_collection = get_parent_collection(
-                    container.outliner_entity
-                )
-                remove_container_datablocks(container)
+                if container.outliner_entity:
+                    parent_collection = get_parent_collection(
+                        container.outliner_entity
+                    )
+                else:
+                    parent_collection = None
+
+                # Keep current datablocks
+                old_datablocks = {
+                    d_ref.datablock for d_ref in container.datablock_refs
+                }
+
+                # Load new into same container
                 container, datablocks = load_func(
                     new_libpath,
                     new_container_name,
                     container=container,
                 )
+
+                # Old datablocks remap and deletion
+                for datablock in old_datablocks:
+                    new_datablock = container.datablock_refs.get(
+                        datablock.name
+                    )
+                    if new_datablock:
+                        datablock.user_remap(new_datablock)
+
+                    if datablock not in datablocks:
+                        datacol = getattr(
+                            bpy.data, BL_TYPE_DATAPATH.get(type(datablock))
+                        )
+                        datablock.use_fake_user = False
+                        datacol.remove(datablock)
 
                 # Restore parent collection if existing
                 if parent_collection:
