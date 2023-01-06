@@ -67,6 +67,8 @@ from openpype.tools.utils.constants import (
     REMOTE_AVAILABILITY_ROLE
 )
 
+CHECKED_INT = getattr(QtCore.Qt.Checked, "value", 2)
+
 
 class OverlayFrame(QtWidgets.QFrame):
     def __init__(self, label, parent):
@@ -1066,7 +1068,9 @@ class FamilyListView(QtWidgets.QListView):
         checked_families = []
         for row in range(model.rowCount()):
             index = model.index(row, 0)
-            if index.data(QtCore.Qt.CheckStateRole) == QtCore.Qt.Checked:
+            if index.data(QtCore.Qt.CheckStateRole) in (
+                QtCore.Qt.Checked, CHECKED_INT
+            ):
                 family = index.data(QtCore.Qt.DisplayRole)
                 checked_families.append(family)
 
