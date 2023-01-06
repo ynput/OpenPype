@@ -20,9 +20,6 @@ class SubstanceAddon(OpenPypeModule, IHostAddon):
 
         env["SUBSTANCE_PAINTER_PLUGINS_PATH"] = plugin_path
 
-        # Fix UI scale issue
-        env.pop("QT_AUTO_SCREEN_SCALE_FACTOR", None)
-
     def get_launch_hook_paths(self, app):
         if app.host_name != self.host_name:
             return []
