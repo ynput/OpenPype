@@ -26,6 +26,7 @@ from openpype_modules.ftrack import (
 )
 from openpype_modules.ftrack.lib import credentials
 from openpype_modules.ftrack.ftrack_server import socket_thread
+from openpype_modules.ftrack.ftrack_server.lib import get_host_ip
 
 
 class MongoPermissionsError(Exception):
@@ -245,11 +246,13 @@ def main_loop(ftrack_url):
     )
 
     host_name = socket.gethostname()
+    host_ip = get_host_ip()
+
     main_info = [
         ["created_at", datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S")],
         ["Username", getpass.getuser()],
         ["Host Name", host_name],
-        ["Host IP", socket.gethostbyname(host_name)],
+        ["Host IP", host_ip or "N/A"],
         ["OpenPype executable", get_openpype_execute_args()[-1]],
         ["OpenPype version", get_openpype_version() or "N/A"],
         ["OpenPype build version", get_build_version() or "N/A"]
