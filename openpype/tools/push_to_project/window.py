@@ -1,4 +1,3 @@
-import re
 import collections
 
 from qtpy import QtWidgets, QtGui, QtCore

@@ -409,7 +409,10 @@ class ProjectPushRepreItem:
             filepath_template = file_info["path"].replace("\\", "/")
             filepath = filepath_template.format(root=self._roots)
             dirpath, basename = os.path.split(filepath_template)
-            if dirpath != src_dirpath or not src_basename_regex.match(basename):
+            if (
+                dirpath != src_dirpath
+                or not src_basename_regex.match(basename)
+            ):
                 relative_dir = dirpath.replace(src_dirpath, "")
                 if relative_dir:
                     relative_path = "/".join([relative_dir, basename])
