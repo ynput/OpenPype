@@ -1517,7 +1517,7 @@ class PlaceholderCreateMixin(object):
             for creator_name, creator in creators_by_name.items()
         ]
 
-        creator_items = list(sorted(creator_items, key=lambda i: i[1]))
+        creator_items.sort(key=lambda i: i[1])
         options = options or {}
         return [
             attribute_definitions.UISeparatorDef(),
