@@ -1,44 +1,36 @@
 import os
+from pathlib import Path
+from typing import Set
 import bpy
+from openpype.hosts.blender.plugins.publish import extract_blend
 
-from openpype.pipeline import publish
 from openpype.hosts.blender.api import get_compress_setting
 
 
-class ExtractWorkfile(publish.Extractor):
+class ExtractWorkfile(extract_blend.ExtractBlend):
     """Extract the scene as workfile blend file."""
 
     label = "Extract workfile"
     hosts = ["blender"]
     families = ["workfile"]
 
-    def process(self, instance):
-        # Define extract output file path
+    def _write_data(self, filepath: Path, *args):
+        """Override to save mainfile with all data.
 
-        stagingdir = self.staging_dir(instance)
-        filename = f"{instance.name}.blend"
-        filepath = os.path.join(stagingdir, filename)
-
-        # Perform extraction
-        self.log.info("Performing extraction..")
-
+        Args:
+            filepath (Path): Path to save mainfile to.
+        """
         bpy.ops.wm.save_as_mainfile(
-            filepath=filepath,
+            filepath=filepath.as_posix(),
             compress=get_compress_setting(),
             relative_remap=False,
             copy=True,
         )
 
-        # Create representation dict
-        representation = {
-            "name": "blend",
-            "ext": "blend",
-            "files": filename,
-            "stagingDir": stagingdir,
-        }
-        instance.data.setdefault("representations", [])
-        instance.data["representations"].append(representation)
+    def _get_used_images(self, *args) -> Set[bpy.types.Image]:
+        """Override to return all images.
 
-        self.log.info(
-            f"Extracted instance '{instance.name}' to: {representation}"
-        )
+        Returns:
+            Set[bpy.types.Image]: All images in blend file
+        """
+        return bpy.data.images
