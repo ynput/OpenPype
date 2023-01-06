@@ -247,23 +247,43 @@
                                 "object_type": "text"
                             },
                             {
+                                "type": "boolean",
+                                "key": "delete_original",
+                                "label": "Delete Original Representation"
+                            },
+                            {
                                 "type": "splitter"
                             },
                             {
-                                "key": "ext",
-                                "label": "Output extension",
-                                "type": "text"
-                            },
-                            {
-                                "key": "output_colorspace",
-                                "label": "Output colorspace",
-                                "type": "text"
-                            },
-                            {
-                                "key": "custom_tags",
-                                "label": "Custom Tags",
-                                "type": "list",
-                                "object_type": "text"
+                                "key": "outputs",
+                                "label": "Output Definitions",
+                                "type": "dict-modifiable",
+                                "highlight_content": true,
+                                "object_type": {
+                                    "type": "dict",
+                                    "children": [
+                                        {
+                                            "key": "output_extension",
+                                            "label": "Output extension",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "output_colorspace",
+                                            "label": "Output colorspace",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "type": "schema",
+                                            "name": "schema_representation_tags"
+                                        },
+                                        {
+                                            "key": "custom_tags",
+                                            "label": "Custom Tags",
+                                            "type": "list",
+                                            "object_type": "text"
+                                        }
+                                    ]
+                                }
                             }
                         ]
                     }
