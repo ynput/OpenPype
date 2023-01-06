@@ -9,6 +9,7 @@ from openpype.tools.utils import (
     get_asset_icon_by_name,
     set_style_property,
 )
+from openpype.tools.utils.views import DeselectableTreeView
 
 from .control_context import PushToContextController
 
@@ -401,7 +402,7 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
             QtCore.Qt.Vertical, context_widget
         )
 
-        asset_view = QtWidgets.QTreeView(asset_task_splitter)
+        asset_view = DeselectableTreeView(asset_task_splitter)
         asset_view.setHeaderHidden(True)
         asset_model = AssetsModel(controller)
         asset_proxy = QtCore.QSortFilterProxyModel()
