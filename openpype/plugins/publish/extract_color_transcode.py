@@ -20,7 +20,7 @@ class ExtractColorTranscode(publish.Extractor):
     """
 
     label = "Transcode color spaces"
-    order = pyblish.api.ExtractorOrder + 0.01
+    order = pyblish.api.ExtractorOrder + 0.019
 
     optional = True
 
