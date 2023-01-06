@@ -691,7 +691,14 @@ class AbstractTemplateBuilder(object):
             key: value
             for key, value in os.environ.items()
         }
+
         fill_data["root"] = anatomy.roots
+        fill_data["project"] = {
+            "name": project_name,
+            "code": anatomy["attributes"]["code"]
+        }
+
+
         result = StringTemplate.format_template(path, fill_data)
         if result.solved:
             path = result.normalized()
