@@ -145,6 +145,7 @@ class ProjectPushItemStatus:
         failed=False,
         finished=False,
         fail_reason=None,
+        formatted_traceback=None,
         messages=None,
         event_system=None
     ):
@@ -153,6 +154,7 @@ class ProjectPushItemStatus:
         self._failed = failed
         self._finished = finished
         self._fail_reason = fail_reason
+        self._traceback = formatted_traceback
         self._messages = messages
         self._event_system = event_system
 
@@ -182,16 +184,9 @@ class ProjectPushItemStatus:
             self._finished = finished
             self.emit_event("push.finished.changed", {"finished": finished})
 
-    def get_failed(self):
-        """Processing failed.
+    finished = property(get_finished, set_finished)
 
-        Returns:
-            bool: Processing failed.
-        """
-
-        return self._failed
-
-    def set_failed(self, failed, fail_reason=UNKNOWN):
+    def set_failed(self, fail_reason, exc_info=None):
         """Set status as failed.
 
         Attribute 'fail_reason' can change automatically based on passed value.
@@ -203,20 +198,48 @@ class ProjectPushItemStatus:
             fail_reason (str): Reason why failed.
         """
 
-        if self._failed != failed:
-            self._failed = failed
-            self.emit_event("push.failed.changed", {"failed": failed})
+        failed = True
+        if not fail_reason and not exc_info:
+            failed = False
 
-        if fail_reason is not UNKNOWN and self._fail_reason != fail_reason:
-            self.set_fail_reason(fail_reason)
+        full_traceback = None
+        if exc_info is not None:
+            full_traceback = "".join(traceback.format_exception(*exc_info))
+            if not fail_reason:
+                fail_reason = "Failed without specified reason"
 
-        if failed and self._fail_reason is None:
-            self.set_fail_reason("Failed without specified reason")
+        if (
+            self._failed == failed
+            and self._traceback == full_traceback
+            and self._fail_reason == fail_reason
+        ):
+            return
 
-        elif not failed and self._fail_reason:
-            self.set_fail_reason(None)
+        self._failed = failed
+        self._fail_reason = fail_reason or None
+        self._traceback = full_traceback
 
-    def get_fail_reason(self):
+        self.emit_event(
+            "push.failed.changed",
+            {
+                "failed": failed,
+                "reason": fail_reason,
+                "traceback": full_traceback
+            }
+        )
+
+    @property
+    def failed(self):
+        """Processing failed.
+
+        Returns:
+            bool: Processing failed.
+        """
+
+        return self._failed
+
+    @property
+    def fail_reason(self):
         """Reason why push to process failed.
 
         Returns:
@@ -225,28 +248,17 @@ class ProjectPushItemStatus:
 
         return self._fail_reason
 
-    def set_fail_reason(self, reason):
-        """Mark process status as failed.
+    @property
+    def traceback(self):
+        """Traceback of failed process.
 
-        Status is also set to failed if 'reason' is not None.
+        Traceback is available only if unhandled exception happened.
 
-        Args:
-            reason (str): Reason why push to project failed.
+        Returns:
+            Union[str, None]: Formatted traceback.
         """
 
-        if self._fail_reason == reason:
-            return
-        self._fail_reason = reason
-        self.emit_event("push.fail_reason.changed", {"fail_reason": reason})
-        if reason and not self._failed:
-            self.set_failed(True)
-
-        if reason:
-            print(f"Integration failed: {reason}")
-
-    finished = property(get_finished, set_finished)
-    failed = property(get_failed, set_failed)
-    fail_reason = property(get_fail_reason, set_fail_reason)
+        return self._traceback
 
     # Loggin helpers
     # TODO better logging
@@ -585,7 +597,7 @@ class ProjectPushItemProcess:
 
         project_doc = get_project(src_project_name)
         if not project_doc:
-            self._status.set_fail_reason(
+            self._status.set_failed(
                 f"Source project \"{src_project_name}\" was not found"
             )
             raise PushToProjectError(self._status.fail_reason)
@@ -594,7 +606,7 @@ class ProjectPushItemProcess:
 
         version_doc = get_version_by_id(src_project_name, src_version_id)
         if not version_doc:
-            self._status.set_fail_reason((
+            self._status.set_failed((
                 f"Source version with id \"{src_version_id}\""
                 f" was not found in project \"{src_project_name}\""
             ))
@@ -603,7 +615,7 @@ class ProjectPushItemProcess:
         subset_id = version_doc["parent"]
         subset_doc = get_subset_by_id(src_project_name, subset_id)
         if not subset_doc:
-            self._status.set_fail_reason((
+            self._status.set_failed((
                 f"Could find subset with id \"{subset_id}\""
                 f" in project \"{src_project_name}\""
             ))
@@ -612,7 +624,7 @@ class ProjectPushItemProcess:
         asset_id = subset_doc["parent"]
         asset_doc = get_asset_by_id(src_project_name, asset_id)
         if not asset_doc:
-            self._status.set_fail_reason((
+            self._status.set_failed((
                 f"Could find asset with id \"{asset_id}\""
                 f" in project \"{src_project_name}\""
             ))
@@ -633,7 +645,7 @@ class ProjectPushItemProcess:
             f" version {src_version_id} in project '{src_project_name}'"
         ))
         if not repre_items:
-            self._status.set_fail_reason(
+            self._status.set_failed(
                 "Source version does not have representations"
                 f" (Version id: {src_version_id})"
             )
@@ -652,7 +664,7 @@ class ProjectPushItemProcess:
         # Validate project existence
         dst_project_doc = get_project(dst_project_name)
         if not dst_project_doc:
-            self._status.set_fail_reason(
+            self._status.set_failed(
                 f"Destination project '{dst_project_name}' was not found"
             )
             raise PushToProjectError(self._status.fail_reason)
@@ -695,7 +707,7 @@ class ProjectPushItemProcess:
                 continue
 
             if other_parent_id != parent_id:
-                self._status.set_fail_reason((
+                self._status.set_failed((
                     f"Asset with name \"{other_name}\" already"
                     " exists in different hierarchy."
                 ))
@@ -754,7 +766,7 @@ class ProjectPushItemProcess:
         dst_task_name = self._item.dst_task_name
         new_asset_name = self._item.new_asset_name
         if not dst_asset_id and not new_asset_name:
-            self._status.set_fail_reason(
+            self._status.set_failed(
                 "Push item does not have defined destination asset"
             )
             raise PushToProjectError(self._status.fail_reason)
@@ -766,7 +778,7 @@ class ProjectPushItemProcess:
                 self._item.dst_project_name, self._item.dst_asset_id
             )
             if not parent_asset_doc:
-                self._status.set_fail_reason(
+                self._status.set_failed(
                     f"Could find asset with id \"{dst_asset_id}\""
                     f" in project \"{dst_project_name}\""
                 )
@@ -792,7 +804,7 @@ class ProjectPushItemProcess:
         asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
         task_info = asset_tasks.get(dst_task_name)
         if not task_info:
-            self._status.set_fail_reason(
+            self._status.set_failed(
                 f"Could find task with name \"{dst_task_name}\""
                 f" on asset \"{asset_path}\""
                 f" in project \"{dst_project_name}\""
@@ -816,7 +828,7 @@ class ProjectPushItemProcess:
             family = families[0]
 
         if not family:
-            self._status.set_fail_reason(
+            self._status.set_failed(
                 "Couldn't figure out family from source subset"
             )
             raise PushToProjectError(self._status.fail_reason)
@@ -1157,16 +1169,15 @@ class ProjectPushItemProcess:
             self.integrate_representations()
             self._status.info("Integration finished")
 
-        except PushToProjectError:
-            pass
+        except PushToProjectError as exc:
+            if not self._status.failed:
+                self._status.set_failed(str(exc))
 
         except Exception as exc:
             _exc, _value, _tb = sys.exc_info()
-            self._status.set_fail_reason(
-                "Unhandled error happened: {}\n{}".format(
-                    str(exc),
-                    "".join(traceback.format_exception(_exc, _value, _tb))
-                )
+            self._status.set_failed(
+                "Unhandled error happened: {}".format(str(exc)),
+                (_exc, _value, _tb)
             )
 
         finally:

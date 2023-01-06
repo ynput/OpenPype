@@ -480,10 +480,16 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         overlay_btns_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         # Add try again button (requires changes in controller)
-        overlay_close_btn = QtWidgets.QPushButton("Close", overlay_btns_widget)
+        overlay_try_btn = QtWidgets.QPushButton(
+            "Try again", overlay_btns_widget
+        )
+        overlay_close_btn = QtWidgets.QPushButton(
+            "Close", overlay_btns_widget
+        )
 
         overlay_btns_layout = QtWidgets.QHBoxLayout(overlay_btns_widget)
         overlay_btns_layout.addStretch(1)
+        overlay_btns_layout.addWidget(overlay_try_btn, 0)
         overlay_btns_layout.addWidget(overlay_close_btn, 0)
         overlay_btns_layout.addStretch(1)
 
@@ -528,6 +534,7 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         publish_btn.clicked.connect(self._on_select_click)
         cancel_btn.clicked.connect(self._on_close_click)
         overlay_close_btn.clicked.connect(self._on_close_click)
+        overlay_try_btn.clicked.connect(self._on_try_again_click)
 
         controller.event_system.add_callback(
             "new_asset_name.changed", self._on_controller_new_asset_change
@@ -549,12 +556,6 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         )
         controller.event_system.add_callback(
             "submit.finished", self._on_controller_submit_end
-        )
-        controller.event_system.add_callback(
-            "push.failed.changed", self._on_push_failed
-        )
-        controller.event_system.add_callback(
-            "push.fail_reason.changed", self._on_push_failed_reason
         )
         controller.event_system.add_callback(
             "push.message.added", self._on_push_message
@@ -587,6 +588,7 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
 
         self._overlay_widget = overlay_widget
         self._overlay_close_btn = overlay_close_btn
+        self._overlay_try_btn = overlay_try_btn
         self._overlay_label = overlay_label
 
         self._user_input_changed_timer = user_input_changed_timer
@@ -603,13 +605,12 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
 
         self._main_thread_timer = main_thread_timer
         self._main_thread_timer_can_stop = True
-        self._submit_messages = []
         self._last_submit_message = None
-        self._push_fail_reason = "Unknown"
-        self._push_failed = False
+        self._process_item = None
 
         publish_btn.setEnabled(False)
         overlay_close_btn.setVisible(False)
+        overlay_try_btn.setVisible(False)
 
         if controller.user_values.new_asset_name:
             asset_name_input.setText(controller.user_values.new_asset_name)
@@ -775,26 +776,42 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         self.close()
 
     def _on_select_click(self):
-        self._controller.submit(wait=False)
+        self._process_item = self._controller.submit(wait=False)
+
+    def _on_try_again_click(self):
+        self._process_item = None
+        self._last_submit_message = None
+
+        self._overlay_close_btn.setVisible(False)
+        self._overlay_try_btn.setVisible(False)
+        self._main_layout.setCurrentWidget(self._main_context_widget)
 
     def _on_main_thread_timer(self):
         if self._last_submit_message:
             self._overlay_label.setText(self._last_submit_message)
             self._last_submit_message = None
 
+        process_status = self._process_item.status
+        push_failed = process_status.failed
+        fail_traceback = process_status.traceback
         if self._main_thread_timer_can_stop:
             self._main_thread_timer.stop()
             self._overlay_close_btn.setVisible(True)
+            if push_failed and not fail_traceback:
+                self._overlay_try_btn.setVisible(True)
 
-        if self._push_failed:
-            self._overlay_label.setText(
-                "Push Failed\n{}".format(self._push_fail_reason)
-            )
-            set_style_property(
-                self._overlay_close_btn,
-                "state",
-                "error"
-            )
+        if push_failed:
+            message = "Push Failed:\n{}".format(process_status.fail_reason)
+            if fail_traceback:
+                message += "\n{}".format(fail_traceback)
+            self._overlay_label.setText(message)
+            set_style_property(self._overlay_close_btn, "state", "error")
+
+        if self._main_thread_timer_can_stop:
+            # Join thread in controller
+            self._controller.wait_for_process_thread()
+            # Reset process item to None
+            self._process_item = None
 
     def _on_controller_submit_start(self):
         self._main_thread_timer_can_stop = False
@@ -806,11 +823,4 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         self._main_thread_timer_can_stop = True
 
     def _on_push_message(self, event):
-        self._submit_messages.append(event["message"])
         self._last_submit_message = event["message"]
-
-    def _on_push_failed_reason(self, event):
-        self._push_fail_reason = event["fail_reason"]
-
-    def _on_push_failed(self, event):
-        self._push_failed = event["failed"]

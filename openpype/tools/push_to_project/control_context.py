@@ -391,6 +391,7 @@ class PushToContextController:
 
         self._submission_enabled = False
         self._process_thread = None
+        self._process_item = None
 
         self.set_source(project_name, version_id)
 
@@ -636,24 +637,6 @@ class PushToContextController:
         if self._process_thread is not None:
             return
 
-        self._event_system.emit("submit.started", {}, "controller")
-        thread = threading.Thread(target=self._submit_callback)
-        thread.start()
-        if wait:
-            while thread.is_alive():
-                time.sleep(0.1)
-            thread.join()
-            self._event_system.emit("submit.finished", {}, "controller")
-            return
-        self._process_thread = thread
-
-    def wait_for_process_thread(self):
-        if self._process_thread is None:
-            return
-        self._process_thread.join()
-        self._process_thread = None
-
-    def _submit_callback(self):
         item = ProjectPushItem(
             self.src_project_name,
             self.src_version_id,
@@ -668,5 +651,29 @@ class PushToContextController:
 
         status_item = ProjectPushItemStatus(event_system=self._event_system)
         process_item = ProjectPushItemProcess(item, status_item)
+        self._process_item = process_item
+        self._event_system.emit("submit.started", {}, "controller")
+        if wait:
+            self._submit_callback()
+            self._process_item = None
+            return process_item
+
+        thread = threading.Thread(target=self._submit_callback)
+        self._process_thread = thread
+        thread.start()
+        return process_item
+
+    def wait_for_process_thread(self):
+        if self._process_thread is None:
+            return
+        self._process_thread.join()
+        self._process_thread = None
+
+    def _submit_callback(self):
+        process_item = self._process_item
+        if process_item is None:
+            return
         process_item.process()
         self._event_system.emit("submit.finished", {}, "controller")
+        if process_item is self._process_item:
+            self._process_item = None
