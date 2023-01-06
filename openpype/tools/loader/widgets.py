@@ -53,7 +53,6 @@ from openpype.tools.utils.constants import (
     REMOTE_PROVIDER_ROLE,
     LOCAL_AVAILABILITY_ROLE,
     REMOTE_AVAILABILITY_ROLE,
-    CHECKED_INT,
 )
 from openpype.tools.assetlinks.widgets import SimpleLinkView
 
