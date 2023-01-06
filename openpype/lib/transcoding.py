@@ -1050,6 +1050,7 @@ def convert_ffprobe_fps_to_float(value):
 def convert_colorspace_for_input_paths(
     input_paths,
     output_dir,
+    config_path,
     source_color_space,
     target_color_space,
     logger=None
@@ -1066,6 +1067,7 @@ def convert_colorspace_for_input_paths(
             contains single file or image sequence of samy type.
         output_dir (str): Path to directory where output will be rendered.
             Must not be same as input's directory.
+        config_path (str): path to OCIO config file
         source_color_space (str): ocio valid color space of source files
         target_color_space (str): ocio valid target color space
         logger (logging.Logger): Logger used for logging.
@@ -1080,6 +1082,7 @@ def convert_colorspace_for_input_paths(
 
         # Don't add any additional attributes
         "--nosoftwareattrib",
+        "--colorconfig", config_path,
         "--colorconvert", source_color_space, target_color_space
     ]
     for input_path in input_paths:

@@ -103,6 +103,7 @@ class ExtractColorTranscode(publish.Extractor):
             convert_colorspace_for_input_paths(
                 files_to_convert,
                 new_staging_dir,
+                config_path,
                 source_color_space,
                 target_colorspace,
                 self.log
