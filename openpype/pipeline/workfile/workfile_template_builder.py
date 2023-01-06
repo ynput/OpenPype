@@ -1574,7 +1574,7 @@ class PlaceholderCreateMixin(object):
         creator_name = placeholder.data["creator"]
         create_variant = placeholder.data["create_variant"]
 
-        creator_plugin = get_legacy_creator_by_name(creator_name)
+        creator_plugin = self.builder.get_creators_by_name()[creator_name]
 
         # create subset name
         project_name = legacy_io.Session["AVALON_PROJECT"]
