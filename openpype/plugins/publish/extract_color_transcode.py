@@ -47,11 +47,11 @@ class ExtractColorTranscode(publish.Extractor):
 
     def process(self, instance):
         if not self.profiles:
-            self.log.warning("No profiles present for create burnin")
+            self.log.debug("No profiles present for color transcode")
             return
 
         if "representations" not in instance.data:
-            self.log.warning("No representations, skipping.")
+            self.log.debug("No representations, skipping.")
             return
 
         if not is_oiio_supported():
@@ -177,19 +177,19 @@ class ExtractColorTranscode(publish.Extractor):
         """
 
         if repre.get("ext") not in self.supported_exts:
-            self.log.warning((
+            self.log.debug((
                     "Representation \"{}\" of unsupported extension. Skipped."
             ).format(repre["name"]))
             return False
 
         if not repre.get("files"):
-            self.log.warning((
+            self.log.debug((
                 "Representation \"{}\" have empty files. Skipped."
             ).format(repre["name"]))
             return False
 
         if not repre.get("colorspaceData"):
-            self.log.warning("Repre has not colorspace data, skipping")
+            self.log.debug("Repre has no colorspace data. Skipped.")
             return False
 
         return True
