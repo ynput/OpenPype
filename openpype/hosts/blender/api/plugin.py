@@ -28,7 +28,6 @@ from openpype.pipeline import (
     LoaderPlugin,
     get_representation_path,
     AVALON_CONTAINER_ID,
-    AVALON_INSTANCE_ID,
 )
 from .ops import (
     MainThreadItem,
@@ -41,7 +40,6 @@ from .lib import (
     get_selection
 )
 from .pipeline import metadata_update, AVALON_PROPERTY
-from openpype.hosts.blender.api import lib
 
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
