@@ -6,6 +6,11 @@
     "is_file": true,
     "children": [
         {
+            "type": "boolean",
+            "key": "open_workfile_post_initialization",
+            "label": "Open Workfile Post Initialization"
+        },
+        {
             "key": "imageio",
             "type": "dict",
             "label": "Color Management (ImageIO)",

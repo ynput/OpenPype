@@ -1,4 +1,5 @@
 {
+    "open_workfile_post_initialization": false,
     "imageio": {
         "colorManagementPreference_v2": {
             "enabled": true,
