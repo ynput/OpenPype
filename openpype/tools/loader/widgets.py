@@ -35,6 +35,7 @@ from openpype.tools.utils import (
     ErrorMessageBox,
     lib as tools_lib
 )
+from openpype.tools.utils.lib import checkstate_int_to_enum
 from openpype.tools.utils.delegates import (
     VersionDelegate,
     PrettyTimeDelegate
@@ -46,6 +47,13 @@ from openpype.tools.utils.widgets import (
 from openpype.tools.utils.views import (
     TreeViewSpinner,
     DeselectableTreeView
+)
+from openpype.tools.utils.constants import (
+    LOCAL_PROVIDER_ROLE,
+    REMOTE_PROVIDER_ROLE,
+    LOCAL_AVAILABILITY_ROLE,
+    REMOTE_AVAILABILITY_ROLE,
+    CHECKED_INT,
 )
 from openpype.tools.assetlinks.widgets import SimpleLinkView
 
@@ -59,15 +67,6 @@ from .model import (
 )
 from . import lib
 from .delegates import LoadedInSceneDelegate
-
-from openpype.tools.utils.constants import (
-    LOCAL_PROVIDER_ROLE,
-    REMOTE_PROVIDER_ROLE,
-    LOCAL_AVAILABILITY_ROLE,
-    REMOTE_AVAILABILITY_ROLE
-)
-
-CHECKED_INT = getattr(QtCore.Qt.Checked, "value", 2)
 
 
 class OverlayFrame(QtWidgets.QFrame):
@@ -1068,9 +1067,10 @@ class FamilyListView(QtWidgets.QListView):
         checked_families = []
         for row in range(model.rowCount()):
             index = model.index(row, 0)
-            if index.data(QtCore.Qt.CheckStateRole) in (
-                QtCore.Qt.Checked, CHECKED_INT
-            ):
+            checked = checkstate_int_to_enum(
+                index.data(QtCore.Qt.CheckStateRole)
+            )
+            if checked == QtCore.Qt.Checked:
                 family = index.data(QtCore.Qt.DisplayRole)
                 checked_families.append(family)
 
@@ -1104,13 +1104,15 @@ class FamilyListView(QtWidgets.QListView):
         self.blockSignals(True)
 
         for index in indexes:
-            index_state = index.data(QtCore.Qt.CheckStateRole)
+            index_state = checkstate_int_to_enum(
+                index.data(QtCore.Qt.CheckStateRole)
+            )
             if index_state == state:
                 continue
 
             new_state = state
             if new_state is None:
-                if index_state == QtCore.Qt.Checked:
+                if index_state in QtCore.Qt.Checked:
                     new_state = QtCore.Qt.Unchecked
                 else:
                     new_state = QtCore.Qt.Checked

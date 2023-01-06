@@ -28,7 +28,7 @@ from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.style import get_objected_colors
 from openpype.widgets.nice_checkbox import NiceCheckbox
-from openpype.tools.utils.lib import html_escape
+from openpype.tools.utils.lib import html_escape, checkstate_int_to_enum
 from .widgets import AbstractInstanceView
 from ..constants import (
     INSTANCE_ID_ROLE,
@@ -272,6 +272,7 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
             state(QtCore.Qt.CheckState): Checkstate of checkbox. Have 3
                 variants Unchecked, Checked and PartiallyChecked.
         """
+
         if self.checkstate() == state:
             return
         self._ignore_state_change = True
@@ -279,7 +280,8 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
         self._ignore_state_change = False
 
     def checkstate(self):
-        """CUrrent checkstate of "active" checkbox."""
+        """Current checkstate of "active" checkbox."""
+
         return self.toggle_checkbox.checkState()
 
     def _on_checkbox_change(self, state):
@@ -887,6 +889,7 @@ class InstanceListView(AbstractInstanceView):
         self._instance_view.setExpanded(proxy_index, expanded)
 
     def _on_group_toggle_request(self, group_name, state):
+        state = checkstate_int_to_enum(state)
         if state == QtCore.Qt.PartiallyChecked:
             return
 

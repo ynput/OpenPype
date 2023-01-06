@@ -20,7 +20,31 @@ from openpype.lib import filter_profiles, Logger
 from openpype.settings import get_project_settings
 from openpype.pipeline import registered_host
 
+from .constants import CHECKED_INT, UNCHECKED_INT
+
 log = Logger.get_logger(__name__)
+
+
+def checkstate_int_to_enum(state):
+    if not isinstance(state, int):
+        return state
+    if state == CHECKED_INT:
+        return QtCore.Qt.Checked
+
+    if state == UNCHECKED_INT:
+        return QtCore.Qt.Unchecked
+    return QtCore.Qt.PartiallyChecked
+
+
+def checkstate_enum_to_int(state):
+    if isinstance(state, int):
+        return state
+    if state == QtCore.Qt.Checked:
+        return 0
+    if state == QtCore.Qt.PartiallyChecked:
+        return 1
+    return 2
+
 
 
 def center_window(window):
