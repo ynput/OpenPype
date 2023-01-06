@@ -40,12 +40,6 @@ def get_host_ip():
     except Exception:
         pass
 
-    try:
-        import ipaddress
-        return socket.gethostbyname(str(ipaddress.ip_address(8888)))
-
-    except Exception:
-        pass
     return None
 
 
