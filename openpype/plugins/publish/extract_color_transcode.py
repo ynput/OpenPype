@@ -36,6 +36,9 @@ class ExtractColorTranscode(publish.Extractor):
 
     optional = True
 
+    # Supported extensions
+    supported_exts = ["exr", "jpg", "jpeg", "png", "dpx"]
+
     # Configurable by Settings
     profiles = None
     options = None
@@ -88,13 +91,7 @@ class ExtractColorTranscode(publish.Extractor):
         repres = instance.data.get("representations") or []
         for idx, repre in enumerate(repres):
             self.log.debug("repre ({}): `{}`".format(idx + 1, repre["name"]))
-            # if not self.repre_is_valid(repre):
-            #     continue
-
-            colorspace_data = repre.get("colorspaceData")
-            if not colorspace_data:
-                # TODO get_colorspace ??
-                self.log.warning("Repre has not colorspace data, skipping")
+            if not self._repre_is_valid(repre):
                 continue
             source_color_space = colorspace_data["colorspace"]
             config_path = colorspace_data.get("configData", {}).get("path")
@@ -136,9 +133,9 @@ class ExtractColorTranscode(publish.Extractor):
             bool: False if can't be processed else True.
         """
 
-        if "review" not in (repre.get("tags") or []):
-            self.log.info((
-                "Representation \"{}\" don't have \"review\" tag. Skipped."
+        if repre.get("ext") not in self.supported_exts:
+            self.log.warning((
+                    "Representation \"{}\" of unsupported extension. Skipped."
             ).format(repre["name"]))
             return False
 
