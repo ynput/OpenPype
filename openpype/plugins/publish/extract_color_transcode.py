@@ -90,8 +90,13 @@ class ExtractColorTranscode(publish.Extractor):
                 files_to_delete = copy.deepcopy(files_to_convert)
 
                 output_extension = output_def["output_extension"]
-                files_to_convert = self._rename_output_files(files_to_convert,
-                                                             output_extension)
+                output_extension = output_extension.replace('.', '')
+                if output_extension:
+                    new_repre["name"] = output_extension
+                    new_repre["ext"] = output_extension
+
+                    files_to_convert = self._rename_output_files(
+                        files_to_convert, output_extension)
 
                 files_to_convert = [os.path.join(original_staging_dir, path)
                                     for path in files_to_convert]
@@ -127,15 +132,13 @@ class ExtractColorTranscode(publish.Extractor):
 
     def _rename_output_files(self, files_to_convert, output_extension):
         """Change extension of converted files."""
-        if output_extension:
-            output_extension = output_extension.replace('.', '')
-            renamed_files = []
-            for file_name in files_to_convert:
-                file_name, _ = os.path.splitext(file_name)
-                new_file_name = '{}.{}'.format(file_name,
-                                               output_extension)
-                renamed_files.append(new_file_name)
-            files_to_convert = renamed_files
+        renamed_files = []
+        for file_name in files_to_convert:
+            file_name, _ = os.path.splitext(file_name)
+            new_file_name = '{}.{}'.format(file_name,
+                                           output_extension)
+            renamed_files.append(new_file_name)
+        files_to_convert = renamed_files
         return files_to_convert
 
     def _get_profile(self, instance):
