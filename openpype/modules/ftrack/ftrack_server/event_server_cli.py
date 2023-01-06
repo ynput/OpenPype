@@ -26,6 +26,7 @@ from openpype_modules.ftrack import (
 )
 from openpype_modules.ftrack.lib import credentials
 from openpype_modules.ftrack.ftrack_server import socket_thread
+from openpype_modules.ftrack.ftrack_server.lib import get_host_ip
 
 
 class MongoPermissionsError(Exception):
@@ -167,22 +168,6 @@ def legacy_server(ftrack_url):
             subproc_last_failed = _subproc_last_failed
 
         time.sleep(1)
-
-
-def get_host_ip():
-    host_name = socket.gethostname()
-    try:
-        return socket.gethostbyname(host_name)
-    except Exception:
-        pass
-
-    try:
-        import ipaddress
-        return socket.gethostbyname(str(ipaddress.ip_address(8888)))
-
-    except Exception:
-        pass
-    return None
 
 
 def main_loop(ftrack_url):
