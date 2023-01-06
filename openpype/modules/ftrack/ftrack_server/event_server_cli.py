@@ -169,6 +169,22 @@ def legacy_server(ftrack_url):
         time.sleep(1)
 
 
+def get_host_ip():
+    host_name = socket.gethostname()
+    try:
+        return socket.gethostbyname(host_name)
+    except Exception:
+        pass
+
+    try:
+        import ipaddress
+        return socket.gethostbyname(str(ipaddress.ip_address(8888)))
+
+    except Exception:
+        pass
+    return None
+
+
 def main_loop(ftrack_url):
     """ This is main loop of event handling.
 
@@ -245,11 +261,13 @@ def main_loop(ftrack_url):
     )
 
     host_name = socket.gethostname()
+    host_ip = get_host_ip()
+
     main_info = [
         ["created_at", datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S")],
         ["Username", getpass.getuser()],
         ["Host Name", host_name],
-        ["Host IP", socket.gethostbyname(host_name)],
+        ["Host IP", host_ip or "N/A"],
         ["OpenPype executable", get_openpype_execute_args()[-1]],
         ["OpenPype version", get_openpype_version() or "N/A"],
         ["OpenPype build version", get_build_version() or "N/A"]
