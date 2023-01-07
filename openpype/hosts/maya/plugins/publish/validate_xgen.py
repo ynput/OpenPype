@@ -16,29 +16,27 @@ class ValidateXgen(pyblish.api.InstancePlugin):
     families = ["xgen"]
 
     def process(self, instance):
-        # Validate only xgen collections are in objectset.
-        valid_nodes = set(
-            instance.data["xgenNodes"] +
-            cmds.ls(instance, type="transform", long=True)
-        )
-        invalid_nodes = [node for node in instance if node not in valid_nodes]
+        set_members = instance.data.get("setMembers")
 
-        if invalid_nodes:
+        # Only 1 collection/node per instance.
+        if len(set_members) != 1:
             raise KnownPublishError(
-                "Only the collection is used when publishing. Found these "
-                "invalid nodes in the objectset:\n{}".format(invalid_nodes)
+                "Only one collection per instance is allowed."
+                " Found:\n{}".format(set_members)
             )
 
-        # Only one collection per instance.
-        palette_amount = len(instance.data["xgenPalettes"])
-        msg = "Only one collection per instance allow. Found {}:\n{}".format(
-            palette_amount, instance.data["xgenPalettes"]
-        )
-        assert palette_amount == 1, msg
+        # Only xgen palette node is allowed.
+        node_type = cmds.nodeType(set_members[0])
+        if node_type != "xgmPalette":
+            raise KnownPublishError(
+                "Only node of type \"xgmPalette\" are allowed. Referred to as"
+                " \"collection\" in the Maya UI."
+                " Node type found: {}".format(node_type)
+            )
 
         # Cant have inactive modifiers in collection cause Xgen will try and
         # look for them when loading.
-        palette = instance.data["xgenPalette"].replace("|", "")
+        palette = instance.data["xgmPalette"].replace("|", "")
         inactive_modifiers = {}
         for description in instance.data["xgmDescriptions"]:
             description = description.split("|")[-2]
