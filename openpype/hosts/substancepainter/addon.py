@@ -20,6 +20,9 @@ class SubstanceAddon(OpenPypeModule, IHostAddon):
 
         env["SUBSTANCE_PAINTER_PLUGINS_PATH"] = plugin_path
 
+        # Log in Substance Painter doesn't support custom terminal colors
+        env["OPENPYPE_LOG_NO_COLORS"] = "Yes"
+
     def get_launch_hook_paths(self, app):
         if app.host_name != self.host_name:
             return []
