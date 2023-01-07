@@ -61,6 +61,12 @@ class ExtractXgenCache(publish.Extractor):
                 fullPath=True
             )[0]
 
+            # Discard the children.
+            shapes = cmds.listRelatives(duplicate_transform, shapes=True)
+            children = cmds.listRelatives(duplicate_transform, children=True)
+            cmds.delete(set(children) - set(shapes))
+
+            # Connect attributes.
             cmds.connectAttr(
                 "{}.matrix".format(duplicate_transform),
                 "{}.transform".format(node),
@@ -97,7 +103,7 @@ class ExtractXgenCache(publish.Extractor):
                     force=True,
                     type=type,
                     exportSelected=True,
-                    preserveReferences=True,
+                    preserveReferences=False,
                     constructionHistory=True,
                     shader=True,
                     constraints=True,
