@@ -2,7 +2,7 @@
     "deadline_servers": [],
     "publish": {
         "CollectDefaultDeadlineServer": {
-            "pass_mongo_url": false
+            "pass_mongo_url": true
         },
         "CollectDeadlinePools": {
             "primary_pool": "",
