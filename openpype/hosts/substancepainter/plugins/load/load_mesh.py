@@ -2,25 +2,14 @@ from openpype.pipeline import (
     load,
     get_representation_path,
 )
-from openpype.hosts.substancepainter.api.pipeline import imprint_container
+from openpype.hosts.substancepainter.api.pipeline import (
+    imprint_container,
+    set_container_metadata,
+    remove_container_metadata
+)
 
 import substance_painter.project
 import qargparse
-
-
-def set_container(key, container):
-    metadata = substance_painter.project.Metadata("OpenPype")
-    containers = metadata.get("containers") or {}
-    containers[key] = container
-    metadata.set("containers", containers)
-
-
-def remove_container(key):
-    metadata = substance_painter.project.Metadata("OpenPype")
-    containers = metadata.get("containers")
-    if containers:
-        containers.pop(key, None)
-        metadata.set("containers", containers)
 
 
 class SubstanceLoadProjectMesh(load.LoaderPlugin):
@@ -48,9 +37,11 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
         )
     ]
 
-    container_key = "ProjectMesh"
-
     def load(self, context, name, namespace, data):
+
+        # Get user inputs
+        import_cameras = data.get("import_cameras", True)
+        preserve_strokes = data.get("preserve_strokes", True)
 
         if not substance_painter.project.is_open():
             # Allow to 'initialize' a new project
@@ -59,7 +50,7 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
             #       visually similar to still allow artist decisions)
             settings = substance_painter.project.Settings(
                 default_texture_resolution=4096,
-                import_cameras=data.get("import_cameras", True),
+                import_cameras=import_cameras,
             )
 
             substance_painter.project.create(
@@ -70,8 +61,8 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
         else:
             # Reload the mesh
             settings = substance_painter.project.MeshReloadingSettings(
-                import_cameras=data.get("import_cameras", True),
-                preserve_strokes=data.get("preserve_strokes", True)
+                import_cameras=import_cameras,
+                preserve_strokes=preserve_strokes
             )
 
             def on_mesh_reload(status: substance_painter.project.ReloadMeshStatus):  # noqa
@@ -87,13 +78,21 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
 
         # Store container
         container = {}
+        project_mesh_object_name = "_ProjectMesh_"
         imprint_container(container,
-                          name=self.container_key,
-                          namespace=self.container_key,
+                          name=project_mesh_object_name,
+                          namespace=project_mesh_object_name,
                           context=context,
                           loader=self)
-        container["options"] = data
-        set_container(self.container_key, container)
+
+        # We want store some options for updating to keep consistent behavior
+        # from the user's original choice. We don't store 'preserve_strokes'
+        # as we always preserve strokes on updates.
+        container["options"] = {
+            "import_cameras": import_cameras,
+        }
+
+        set_container_metadata(project_mesh_object_name, container)
 
     def switch(self, container, representation):
         self.update(container, representation)
@@ -107,7 +106,7 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
         container_options = container.get("options", {})
         settings = substance_painter.project.MeshReloadingSettings(
             import_cameras=container_options.get("import_cameras", True),
-            preserve_strokes=container_options.get("preserve_strokes", True)
+            preserve_strokes=True
         )
 
         def on_mesh_reload(status: substance_painter.project.ReloadMeshStatus):
@@ -119,8 +118,9 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
         substance_painter.project.reload_mesh(path, settings, on_mesh_reload)
 
         # Update container representation
-        container["representation"] = str(representation["_id"])
-        set_container(self.container_key, container)
+        object_name = container["objectName"]
+        update_data = {"representation": str(representation["_id"])}
+        set_container_metadata(object_name, update_data, update=True)
 
     def remove(self, container):
 
@@ -128,4 +128,4 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
         # or close the project?
         # TODO: This is likely best 'hidden' away to the user because
         #       this will leave the project's mesh unmanaged.
-        remove_container(self.container_key)
+        remove_container_metadata(container["objectName"])

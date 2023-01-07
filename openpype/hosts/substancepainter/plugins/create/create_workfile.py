@@ -5,20 +5,10 @@ from openpype.pipeline import CreatedInstance, AutoCreator
 from openpype.pipeline import legacy_io
 from openpype.client import get_asset_by_name
 
-import substance_painter.project
-
-
-def set_workfile_data(data, update=False):
-    if update:
-        data = get_workfile_data().update(data)
-    metadata = substance_painter.project.Metadata("OpenPype")
-    metadata.set("workfile", data)
-
-
-def get_workfile_data():
-    metadata = substance_painter.project.Metadata("OpenPype")
-    return metadata.get("workfile") or {}
-
+from openpype.hosts.substancepainter.api.pipeline import (
+    set_project_metadata,
+    get_project_metadata
+)
 
 class CreateWorkfile(AutoCreator):
     """Workfile auto-creator."""
@@ -71,17 +61,20 @@ class CreateWorkfile(AutoCreator):
             current_instance["task"] = task_name
             current_instance["subset"] = subset_name
 
-        set_workfile_data(current_instance.data_to_store())
+        set_project_metadata("workfile", current_instance.data_to_store())
 
     def collect_instances(self):
-        workfile = get_workfile_data()
+        workfile = get_project_metadata("workfile")
         if not workfile:
             return
         self.create_instance_in_context_from_existing(workfile)
 
     def update_instances(self, update_list):
         for instance, _changes in update_list:
-            set_workfile_data(instance.data_to_store(), update=True)
+            # Update project's workfile metadata
+            data = get_project_metadata("workfile") or {}
+            data.update(instance.data_to_store())
+            set_project_metadata("workfile", data)
 
     # Helper methods (this might get moved into Creator class)
     def create_instance_in_context(self, subset_name, data):

@@ -36,6 +36,10 @@ LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
+
+OPENPYPE_METADATA_KEY = "OpenPype"
+OPENPYPE_METADATA_CONTAINERS_KEY = "containers"  # child key
+
 self = sys.modules[__name__]
 self.menu = None
 self.callbacks = []
@@ -127,8 +131,8 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         if not substance_painter.project.is_open():
             return
 
-        metadata = substance_painter.project.Metadata("OpenPype")
-        containers = metadata.get("containers")
+        metadata = substance_painter.project.Metadata(OPENPYPE_METADATA_KEY)
+        containers = metadata.get(OPENPYPE_METADATA_CONTAINERS_KEY)
         if containers:
             for key, container in containers.items():
                 container["objectName"] = key
@@ -275,3 +279,49 @@ def imprint_container(container,
     ]
     for key, value in data:
         container[key] = value
+
+
+def set_project_metadata(key, data):
+    """Set a key in project's OpenPype metadata."""
+    metadata = substance_painter.project.Metadata(OPENPYPE_METADATA_KEY)
+    metadata.set(key, data)
+
+
+def get_project_metadata(key):
+    """Get a key from project's OpenPype metadata."""
+    metadata = substance_painter.project.Metadata(OPENPYPE_METADATA_KEY)
+    return metadata.get(key)
+
+
+def set_container_metadata(object_name, container_data, update=False):
+    """Helper method to directly set the data for a specific container
+
+    Args:
+        object_name (str): The unique object name identifier for the container
+        container_data (dict): The data for the container.
+            Note 'objectName' data is derived from `object_name` and key in
+            `container_data` will be ignored.
+        update (bool): Whether to only update the dict data.
+
+    """
+    # The objectName is derived from the key in the metadata so won't be stored
+    # in the metadata in the container's data.
+    container_data.pop("objectName", None)
+
+    metadata = substance_painter.project.Metadata(OPENPYPE_METADATA_KEY)
+    containers = metadata.get(OPENPYPE_METADATA_CONTAINERS_KEY) or {}
+    if update:
+        existing_data = containers.setdefault(object_name, {})
+        existing_data.update(container_data)  # mutable dict, in-place update
+    else:
+        containers[object_name] = container_data
+    metadata.set("containers", containers)
+
+
+def remove_container_metadata(object_name):
+    """Helper method to remove the data for a specific container"""
+    metadata = substance_painter.project.Metadata(OPENPYPE_METADATA_KEY)
+    containers = metadata.get(OPENPYPE_METADATA_CONTAINERS_KEY)
+    if containers:
+        containers.pop(object_name, None)
+        metadata.set("containers", containers)
