@@ -10,6 +10,7 @@ from openpype.hosts.substancepainter.api.pipeline import (
     get_project_metadata
 )
 
+
 class CreateWorkfile(AutoCreator):
     """Workfile auto-creator."""
     identifier = "io.openpype.creators.substancepainter.workfile"
