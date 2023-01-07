@@ -30,13 +30,13 @@ class ExtractXgenCache(publish.Extractor):
         template_data.update({"ext": "xgen"})
         templates = instance.context.data["anatomy"].templates["publish"]
         xgen_filename = StringTemplate(templates["file"]).format(template_data)
-        name = instance.data["xgenPalette"].replace(":", "__").replace("|", "")
+        name = instance.data["xgmPalette"].replace(":", "__").replace("|", "")
         xgen_filename = xgen_filename.replace(".xgen", "__" + name + ".xgen")
 
         # Export xgen palette files.
         xgen_path = os.path.join(staging_dir, xgen_filename).replace("\\", "/")
         xgenm.exportPalette(
-            instance.data["xgenPalette"].replace("|", ""), xgen_path
+            instance.data["xgmPalette"].replace("|", ""), xgen_path
         )
         self.log.info("Extracted to {}".format(xgen_path))
 
@@ -132,12 +132,12 @@ class ExtractXgenCache(publish.Extractor):
 
         # Collect all files under palette root as resources.
         data_path = xgenm.getAttr(
-            "xgDataPath", instance.data["xgenPalette"].replace("|", "")
+            "xgDataPath", instance.data["xgmPalette"].replace("|", "")
         ).split(os.pathsep)[0]
         data_path = data_path.replace(
             "${PROJECT}",
             xgenm.getAttr(
-                "xgProjectPath", instance.data["xgenPalette"].replace("|", "")
+                "xgProjectPath", instance.data["xgmPalette"].replace("|", "")
             )
         )
         transfers = []

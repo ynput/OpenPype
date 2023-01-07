@@ -13,20 +13,20 @@ class CollectXgen(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         data = {
-            "xgenPalettes": cmds.ls(instance, type="xgmPalette", long=True),
+            "xgmPalettes": cmds.ls(instance, type="xgmPalette", long=True),
             "xgmDescriptions": cmds.ls(
                 instance, type="xgmDescription", long=True
             ),
             "xgmSubdPatches": cmds.ls(instance, type="xgmSubdPatch", long=True)
         }
         data["xgenNodes"] = (
-            data["xgenPalettes"] +
+            data["xgmPalettes"] +
             data["xgmDescriptions"] +
             data["xgmSubdPatches"]
         )
 
-        if data["xgenPalettes"]:
-            data["xgenPalette"] = data["xgenPalettes"][0]
+        if data["xgmPalettes"]:
+            data["xgmPalette"] = data["xgmPalettes"][0]
 
         data["xgenConnections"] = {}
         for node in data["xgmSubdPatches"]:
