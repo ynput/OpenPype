@@ -52,7 +52,7 @@ class ConnectGeometry(InventoryAction):
             self.display_warning(message)
             return
 
-        source_container = source_containers[0]
+        source_object = source_containers[0]["objectName"]
 
         # Collect matching geometry transforms based cbId attribute.
         target_containers = []
@@ -62,7 +62,7 @@ class ConnectGeometry(InventoryAction):
 
             target_containers.extend(containers)
 
-        source_data = self.get_container_data(source_container["objectName"])
+        source_data = self.get_container_data(source_object)
         matches = []
         node_types = []
         for target_container in target_containers:
@@ -80,7 +80,7 @@ class ConnectGeometry(InventoryAction):
             self.display_warning("No matching geometries found.")
             return
 
-        message = "Linking geometries:\n\n"
+        message = "Connecting geometries:\n\n"
         for match in matches:
             message += "{} > {}\n".format(match[0], match[1])
 
