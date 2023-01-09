@@ -6,7 +6,6 @@ import bpy
 import pyblish.api
 from openpype.pipeline import AVALON_CONTAINER_ID, AVALON_INSTANCE_ID
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
-from openpype.hosts.blender.api.plugin import get_children_recursive
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -93,18 +92,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Process datablocks
             members.update(datablocks)
 
-            # If outliner data
-            instance_collection = bpy.data.collections.get(op_instance.name)
-            if instance_collection:
-                # collect all objects recursively
-                objects = list(instance_collection.all_objects)
-                for obj in objects:
-                    objects.extend(list(obj.children))
-                    members.add(obj)
-                # append the collections to members and update intances list
-                members.update(
-                    set(get_children_recursive(instance_collection))
-                )
+            # TODO if no outliner data collect all linked to containerize
 
             # Add instance holder as first item
             members = list(members)
