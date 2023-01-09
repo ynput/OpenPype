@@ -4,6 +4,8 @@ import shutil
 import maya.cmds as cmds
 import xgenm
 
+from Qt import QtWidgets
+
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api.lib import (
     maintained_selection, get_container_members, attribute_values
@@ -71,6 +73,15 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         return destination
 
     def process_reference(self, context, name, namespace, options):
+        # Validate workfile has a path.
+        if current_file() is None:
+            QtWidgets.QMessageBox.warning(
+                None,
+                "",
+                "Current workfile has not been saved."
+            )
+            return
+
         maya_filepath = self.prepare_root_value(
             self.fname, context["project"]["name"]
         )
