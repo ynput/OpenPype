@@ -101,7 +101,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         self, instance, project_name, template_key, hero_template
     ):
         anatomy = instance.context.data["anatomy"]
-        published_repres = instance.data["published_representations"]
+        published_repres = dict(instance.data["published_representations"])
         hero_publish_dir = self.get_publish_dir(instance, template_key)
 
         src_version_entity = instance.data.get("versionEntity")
@@ -437,6 +437,17 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     repre.pop("_id", None)
                     op_session.create_entity(project_name, "representation",
                                              repre)
+
+                # Keep representation
+                instance.data.setdefault("hero_representations", {})
+                instance.data["hero_representations"].update(
+                    {
+                        repre["_id"]: {
+                            "_id": repre["_id"],
+                            "representation": repre,
+                        }
+                    }
+                )
 
             self.path_checks = []
 
