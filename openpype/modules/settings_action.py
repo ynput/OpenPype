@@ -1,5 +1,4 @@
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import ITrayAction
+from openpype.modules import OpenPypeModule, ITrayAction
 
 
 class SettingsAction(OpenPypeModule, ITrayAction):
@@ -22,6 +21,11 @@ class SettingsAction(OpenPypeModule, ITrayAction):
     def tray_init(self):
         """Initialization in tray implementation of ITrayAction."""
         self.create_settings_window()
+
+    def tray_exit(self):
+        # Close settings UI to remove settings lock
+        if self.settings_window:
+            self.settings_window.close()
 
     def on_action_trigger(self):
         """Implementation for action trigger of ITrayAction."""

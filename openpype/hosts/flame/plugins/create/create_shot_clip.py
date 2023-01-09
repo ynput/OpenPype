@@ -23,10 +23,11 @@ class CreateShotClip(opfapi.Creator):
                 # nested dictionary (only one level allowed
                 # for sections and dict)
                 for _k, _v in v["value"].items():
-                    if presets.get(_k):
+                    if presets.get(_k) is not None:
                         gui_inputs[k][
                             "value"][_k]["value"] = presets[_k]
-            if presets.get(k):
+
+            if presets.get(k) is not None:
                 gui_inputs[k]["value"] = presets[k]
 
         # open widget for plugins inputs
@@ -276,6 +277,22 @@ class CreateShotClip(opfapi.Creator):
                         "target": "tag",
                         "toolTip": "By default handles are excluded",  # noqa
                         "order": 3
+                    },
+                    "retimedHandles": {
+                        "value": True,
+                        "type": "QCheckBox",
+                        "label": "Retimed handles",
+                        "target": "tag",
+                        "toolTip": "By default handles are retimed.",  # noqa
+                        "order": 4
+                    },
+                    "retimedFramerange": {
+                        "value": True,
+                        "type": "QCheckBox",
+                        "label": "Retimed framerange",
+                        "target": "tag",
+                        "toolTip": "By default framerange is retimed.",  # noqa
+                        "order": 5
                     }
                 }
             }

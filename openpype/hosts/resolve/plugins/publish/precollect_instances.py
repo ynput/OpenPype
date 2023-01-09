@@ -1,8 +1,14 @@
-import pyblish
-from openpype.hosts import resolve
-
-# # developer reload modules
 from pprint import pformat
+
+import pyblish
+
+from openpype.hosts.resolve.api.lib import (
+    get_current_timeline_items,
+    get_timeline_item_pype_tag,
+    publish_clip_color,
+    get_publish_attribute,
+    get_otio_clip_instance_data,
+)
 
 
 class PrecollectInstances(pyblish.api.ContextPlugin):
@@ -14,8 +20,8 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
         otio_timeline = context.data["otioTimeline"]
-        selected_timeline_items = resolve.get_current_timeline_items(
-            filter=True, selecting_color=resolve.publish_clip_color)
+        selected_timeline_items = get_current_timeline_items(
+            filter=True, selecting_color=publish_clip_color)
 
         self.log.info(
             "Processing enabled track items: {}".format(
@@ -27,7 +33,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             timeline_item = timeline_item_data["clip"]["item"]
 
             # get pype tag data
-            tag_data = resolve.get_timeline_item_pype_tag(timeline_item)
+            tag_data = get_timeline_item_pype_tag(timeline_item)
             self.log.debug(f"__ tag_data: {pformat(tag_data)}")
 
             if not tag_data:
@@ -67,7 +73,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 "asset": asset,
                 "item": timeline_item,
                 "families": families,
-                "publish": resolve.get_publish_attribute(timeline_item),
+                "publish": get_publish_attribute(timeline_item),
                 "fps": context.data["fps"],
                 "handleStart": handle_start,
                 "handleEnd": handle_end,
@@ -75,7 +81,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             })
 
             # otio clip data
-            otio_data = resolve.get_otio_clip_instance_data(
+            otio_data = get_otio_clip_instance_data(
                 otio_timeline, timeline_item_data) or {}
             data.update(otio_data)
 
@@ -134,7 +140,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             "asset": asset,
             "family": family,
             "families": [],
-            "publish": resolve.get_publish_attribute(timeline_item)
+            "publish": get_publish_attribute(timeline_item)
         })
 
         context.create_instance(**data)

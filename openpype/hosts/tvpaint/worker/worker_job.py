@@ -9,7 +9,7 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
 
-from openpype.api import PypeLogger
+from openpype.lib import Logger
 from openpype.modules import ModulesManager
 
 
@@ -328,7 +328,7 @@ class TVPaintCommands:
     def log(self):
         """Access to logger object."""
         if self._log is None:
-            self._log = PypeLogger.get_logger(self.__class__.__name__)
+            self._log = Logger.get_logger(self.__class__.__name__)
         return self._log
 
     @property

@@ -9,26 +9,18 @@ import requests
 from maya import cmds
 from maya.app.renderSetup.model import renderSetup
 
-from openpype.api import (
+from openpype.settings import (
     get_system_settings,
     get_project_settings,
 )
+from openpype.lib import requests_get
+from openpype.modules import ModulesManager
+from openpype.pipeline import legacy_io
 from openpype.hosts.maya.api import (
     lib,
     lib_rendersettings,
     plugin
 )
-from openpype.lib import requests_get
-from openpype.api import (
-    get_system_settings,
-    get_project_settings)
-from openpype.modules import ModulesManager
-from openpype.pipeline import legacy_io
-from openpype.pipeline import (
-    CreatorError,
-    legacy_io,
-)
-from openpype.pipeline.context_tools import get_current_project_asset
 
 
 class CreateRender(plugin.Creator):
@@ -71,7 +63,6 @@ class CreateRender(plugin.Creator):
     label = "Render"
     family = "rendering"
     icon = "eye"
-
     _token = None
     _user = None
     _password = None
@@ -81,15 +72,19 @@ class CreateRender(plugin.Creator):
     def __init__(self, *args, **kwargs):
         """Constructor."""
         super(CreateRender, self).__init__(*args, **kwargs)
-        deadline_settings = get_system_settings()["modules"]["deadline"]
-        if not deadline_settings["enabled"]:
-            self.deadline_servers = {}
-            return
+
+        # Defaults
         self._project_settings = get_project_settings(
             legacy_io.Session["AVALON_PROJECT"])
         if self._project_settings["maya"]["RenderSettings"]["apply_render_settings"]: # noqa
             lib_rendersettings.RenderSettings().set_default_renderer_settings()
+
+        # Deadline-only
         manager = ModulesManager()
+        deadline_settings = get_system_settings()["modules"]["deadline"]
+        if not deadline_settings["enabled"]:
+            self.deadline_servers = {}
+            return
         self.deadline_module = manager.modules_by_name["deadline"]
         try:
             default_servers = deadline_settings["deadline_urls"]
@@ -202,8 +197,6 @@ class CreateRender(plugin.Creator):
         pool_names = []
         default_priority = 50
 
-        self.server_aliases = list(self.deadline_servers.keys())
-        self.data["deadlineServers"] = self.server_aliases
         self.data["suspendPublishJob"] = False
         self.data["review"] = True
         self.data["extendFrames"] = False
@@ -220,6 +213,12 @@ class CreateRender(plugin.Creator):
         self.data["tilesY"] = 2
         self.data["convertToScanline"] = False
         self.data["useReferencedAovs"] = False
+        self.data["renderSetupIncludeLights"] = (
+            self._project_settings.get(
+                "maya", {}).get(
+                "RenderSettings", {}).get(
+                "enable_all_lights", False)
+            )
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
 
@@ -236,6 +235,9 @@ class CreateRender(plugin.Creator):
             raise RuntimeError("Both Deadline and Muster are enabled")
 
         if deadline_enabled:
+            self.server_aliases = list(self.deadline_servers.keys())
+            self.data["deadlineServers"] = self.server_aliases
+
             try:
                 deadline_url = self.deadline_servers["default"]
             except KeyError:
@@ -257,6 +259,19 @@ class CreateRender(plugin.Creator):
                                                default_priority)
             self.data["tile_priority"] = tile_priority
 
+            pool_setting = (self._project_settings["deadline"]
+                                                  ["publish"]
+                                                  ["CollectDeadlinePools"])
+            primary_pool = pool_setting["primary_pool"]
+            self.data["primaryPool"] = self._set_default_pool(pool_names,
+                                                              primary_pool)
+            # We add a string "-" to allow the user to not
+            # set any secondary pools
+            pool_names = ["-"] + pool_names
+            secondary_pool = pool_setting["secondary_pool"]
+            self.data["secondaryPool"] = self._set_default_pool(pool_names,
+                                                                secondary_pool)
+
         if muster_enabled:
             self.log.info(">>> Loading Muster credentials ...")
             self._load_credentials()
@@ -276,18 +291,6 @@ class CreateRender(plugin.Creator):
                 self.log.info("  - pool: {}".format(pool["name"]))
                 pool_names.append(pool["name"])
 
-        pool_setting = (self._project_settings["deadline"]
-                                              ["publish"]
-                                              ["CollectDeadlinePools"])
-        primary_pool = pool_setting["primary_pool"]
-        self.data["primaryPool"] = self._set_default_pool(pool_names,
-                                                          primary_pool)
-        # We add a string "-" to allow the user to not
-        # set any secondary pools
-        pool_names = ["-"] + pool_names
-        secondary_pool = pool_setting["secondary_pool"]
-        self.data["secondaryPool"] = self._set_default_pool(pool_names,
-                                                            secondary_pool)
         self.options = {"useSelection": False}  # Force no content
 
     def _set_default_pool(self, pool_names, pool_value):

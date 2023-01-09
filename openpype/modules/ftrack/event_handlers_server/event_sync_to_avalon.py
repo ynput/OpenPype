@@ -18,6 +18,7 @@ from openpype.client import (
     get_archived_assets,
     get_asset_ids_with_subsets
 )
+from openpype.client.operations import CURRENT_ASSET_DOC_SCHEMA
 from openpype.pipeline import AvalonMongoDB, schema
 
 from openpype_modules.ftrack.lib import (
@@ -35,7 +36,6 @@ from openpype_modules.ftrack.lib.avalon_sync import (
     convert_to_fps,
     InvalidFpsValue
 )
-from openpype.lib import CURRENT_DOC_SCHEMAS
 
 
 class SyncToAvalonEvent(BaseEvent):
@@ -697,13 +697,22 @@ class SyncToAvalonEvent(BaseEvent):
                 continue
 
             auto_sync = changes[CUST_ATTR_AUTO_SYNC]["new"]
-            if auto_sync == "1":
+            turned_on = auto_sync == "1"
+            ft_project = self.cur_project
+            username = self._get_username(session, event)
+            message = (
+                "Auto sync was turned {} for project \"{}\" by \"{}\"."
+            ).format(
+                "on" if turned_on else "off",
+                ft_project["full_name"],
+                username
+            )
+            if turned_on:
+                message += " Triggering syncToAvalon action."
+            self.log.debug(message)
+
+            if turned_on:
                 # Trigger sync to avalon action if auto sync was turned on
-                ft_project = self.cur_project
-                self.log.debug((
-                    "Auto sync was turned on for project <{}>."
-                    " Triggering syncToAvalon action."
-                ).format(ft_project["full_name"]))
                 selection = [{
                     "entityId": ft_project["id"],
                     "entityType": "show"
@@ -850,6 +859,26 @@ class SyncToAvalonEvent(BaseEvent):
 
         self.report()
         return True
+
+    def _get_username(self, session, event):
+        username = "Unknown"
+        event_source = event.get("source")
+        if not event_source:
+            return username
+        user_info = event_source.get("user")
+        if not user_info:
+            return username
+        user_id = user_info.get("id")
+        if not user_id:
+            return username
+
+        user_entity = session.query(
+            "User where id is {}".format(user_id)
+        ).first()
+        if user_entity:
+            username = user_entity["username"] or username
+        return username
+
 
     def process_removed(self):
         """
@@ -1207,7 +1236,7 @@ class SyncToAvalonEvent(BaseEvent):
             "_id": mongo_id,
             "name": name,
             "type": "asset",
-            "schema": CURRENT_DOC_SCHEMAS["asset"],
+            "schema": CURRENT_ASSET_DOC_SCHEMA,
             "parent": proj["_id"],
             "data": {
                 "ftrackId": ftrack_ent["id"],

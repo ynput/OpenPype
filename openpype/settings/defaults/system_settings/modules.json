@@ -26,13 +26,14 @@
             "linux": []
         },
         "intent": {
+            "allow_empty_intent": true,
+            "empty_intent_label": "",
             "items": {
-                "-": "-",
                 "wip": "WIP",
                 "final": "Final",
                 "test": "Test"
             },
-            "default": "-"
+            "default": ""
         },
         "custom_attributes": {
             "show": {
@@ -134,6 +135,13 @@
     "kitsu": {
         "enabled": false,
         "server": ""
+    },
+    "shotgrid": {
+        "enabled": false,
+        "leecher_manager_url": "http://127.0.0.1:3000",
+        "leecher_backend_url": "http://127.0.0.1:8090",
+        "filter_projects_by_login": true,
+        "shotgrid_settings": {}
     },
     "timers_manager": {
         "enabled": true,

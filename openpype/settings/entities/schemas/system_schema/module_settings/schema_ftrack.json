@@ -50,8 +50,15 @@
             "is_group": true,
             "children": [
                 {
-                    "type": "label",
-                    "label": "Intent"
+                    "type": "boolean",
+                    "key": "allow_empty_intent",
+                    "label": "Allow empty intent"
+                },
+                {
+                    "type": "text",
+                    "key": "empty_intent_label",
+                    "label": "Empty item label",
+                    "placeholder": "< Not set >"
                 },
                 {
                     "type": "dict-modifiable",
@@ -64,7 +71,8 @@
                 {
                     "key": "default",
                     "type": "text",
-                    "label": "Default Intent"
+                    "label": "Default Intent",
+                    "placeholder": "< First available >"
                 },
                 {
                     "type": "separator"

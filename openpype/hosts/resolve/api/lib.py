@@ -4,13 +4,13 @@ import re
 import os
 import contextlib
 from opentimelineio import opentime
+
+from openpype.lib import Logger
 from openpype.pipeline.editorial import is_overlapping_otio_ranges
 
 from ..otio import davinci_export as otio_export
 
-from openpype.api import Logger
-
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 self = sys.modules[__name__]
 self.project_manager = None

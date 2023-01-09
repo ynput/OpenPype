@@ -3,7 +3,7 @@
 import json
 from collections import defaultdict
 
-from Qt import QtWidgets
+from qtpy import QtWidgets
 
 from openpype.client import get_representation_by_name
 from openpype.pipeline import (
@@ -33,7 +33,7 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
         with lib.maintained_selection():
             file_url = self.prepare_root_value(self.fname,
-                                               context["project"]["code"])
+                                               context["project"]["name"])
             nodes = cmds.file(file_url,
                               namespace=namespace,
                               reference=True,

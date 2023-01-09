@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Collect current workfile from Harmony."""
-import pyblish.api
 import os
+import pyblish.api
 
-from openpype.lib import get_subset_name_with_asset_doc
+from openpype.pipeline.create import get_subset_name
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -17,13 +17,14 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         """Plugin entry point."""
         family = "workfile"
         basename = os.path.basename(context.data["currentFile"])
-        subset = get_subset_name_with_asset_doc(
+        subset = get_subset_name(
             family,
             "",
             context.data["anatomyData"]["task"]["name"],
             context.data["assetEntity"],
             context.data["anatomyData"]["project"]["name"],
-            host_name=context.data["hostName"]
+            host_name=context.data["hostName"],
+            project_settings=context.data["project_settings"]
         )
 
         # Create instance

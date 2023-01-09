@@ -5,11 +5,11 @@ import logging
 
 from Qt import QtWidgets, QtCore
 
-from openpype.lib import get_last_workfile_with_version
 from openpype.pipeline import (
     registered_host,
     legacy_io,
 )
+from openpype.pipeline.workfile import get_last_workfile_with_version
 from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.tools.utils import PlaceholderLineEdit
 

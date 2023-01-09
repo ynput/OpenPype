@@ -1,13 +1,13 @@
 import re
 
-from openpype.lib import (
-    get_background_layers,
-    get_unique_layer_name
-)
 from openpype.pipeline import get_representation_path
 from openpype.hosts.aftereffects.api import (
     AfterEffectsLoader,
     containerise
+)
+from openpype.hosts.aftereffects.api.lib import (
+    get_background_layers,
+    get_unique_layer_name,
 )
 
 

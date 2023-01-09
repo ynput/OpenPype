@@ -294,10 +294,21 @@
         }
     },
     "BatchMovieCreator": {
-        "default_variants": ["Main"],
-        "default_tasks": ["Compositing"],
+        "default_variants": [
+            "Main"
+        ],
+        "default_tasks": [
+            "Compositing"
+        ],
         "extensions": [
             ".mov"
         ]
+    },
+    "publish": {
+        "ValidateFrameRange": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        }
     }
 }

@@ -1,8 +1,8 @@
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.aftereffects.api import get_stub
 
 
-class RemovePublishHighlight(openpype.api.Extractor):
+class RemovePublishHighlight(publish.Extractor):
     """Clean utf characters which are not working in DL
 
         Published compositions are marked with unicode icon which causes
@@ -10,7 +10,7 @@ class RemovePublishHighlight(openpype.api.Extractor):
         rendering, add it later back to avoid confusion.
     """
 
-    order = openpype.api.Extractor.order - 0.49  # just before save
+    order = publish.Extractor.order - 0.49  # just before save
     label = "Clean render comp"
     hosts = ["aftereffects"]
     families = ["render.farm"]

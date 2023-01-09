@@ -1,12 +1,11 @@
-
 import pyblish.api
-import openpype.api
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateSetdressRoot(pyblish.api.InstancePlugin):
     """Validate if set dress top root node is published."""
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     label = "SetDress Root"
     hosts = ["maya"]
     families = ["setdress"]

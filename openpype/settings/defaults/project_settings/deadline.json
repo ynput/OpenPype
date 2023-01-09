@@ -2,7 +2,7 @@
     "deadline_servers": [],
     "publish": {
         "CollectDefaultDeadlineServer": {
-            "pass_mongo_url": false
+            "pass_mongo_url": true
         },
         "CollectDeadlinePools": {
             "primary_pool": "",
@@ -69,6 +69,16 @@
             "group": "",
             "department": "",
             "multiprocess": true
+        },
+        "CelactionSubmitDeadline": {
+            "enabled": true,
+            "deadline_department": "",
+            "deadline_priority": 50,
+            "deadline_pool": "",
+            "deadline_pool_secondary": "",
+            "deadline_group": "",
+            "deadline_chunk_size": 10,
+            "deadline_job_delay": "00:00:00:00"
         },
         "ProcessSubmittedJobOnFarm": {
             "enabled": true,

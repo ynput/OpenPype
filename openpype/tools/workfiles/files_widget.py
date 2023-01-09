@@ -8,22 +8,29 @@ from Qt import QtWidgets, QtCore
 
 from openpype.host import IWorkfileHost
 from openpype.client import get_asset_by_id
+from openpype.pipeline.workfile.lock_workfile import (
+    is_workfile_locked,
+    is_workfile_lock_enabled,
+    is_workfile_locked_for_current_process
+)
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.delegates import PrettyTimeDelegate
-from openpype.lib import (
-    emit_event,
-    get_workfile_template_key,
-    create_workdir_extra_folders,
-)
-from openpype.lib.avalon_context import (
-    update_current_task,
-    compute_session_changes
-)
+from openpype.lib import emit_event
+from openpype.tools.workfiles.lock_dialog import WorkfileLockDialog
 from openpype.pipeline import (
     registered_host,
     legacy_io,
     Anatomy,
 )
+from openpype.pipeline.context_tools import (
+    compute_session_changes,
+    change_current_context
+)
+from openpype.pipeline.workfile import (
+    get_workfile_template_key,
+    create_workdir_extra_folders,
+)
+
 from .model import (
     WorkAreaFilesModel,
     PublishFilesModel,
@@ -407,8 +414,8 @@ class FilesWidget(QtWidgets.QWidget):
         )
         changes = compute_session_changes(
             session,
-            asset=self._get_asset_doc(),
-            task=self._task_name,
+            self._get_asset_doc(),
+            self._task_name,
             template_key=self.template_key
         )
         session.update(changes)
@@ -421,8 +428,8 @@ class FilesWidget(QtWidgets.QWidget):
         session = legacy_io.Session.copy()
         changes = compute_session_changes(
             session,
-            asset=self._get_asset_doc(),
-            task=self._task_name,
+            self._get_asset_doc(),
+            self._task_name,
             template_key=self.template_key
         )
         if not changes:
@@ -430,9 +437,9 @@ class FilesWidget(QtWidgets.QWidget):
             # to avoid any unwanted Task Changed callbacks to be triggered.
             return
 
-        update_current_task(
-            asset=self._get_asset_doc(),
-            task=self._task_name,
+        change_current_context(
+            self._get_asset_doc(),
+            self._task_name,
             template_key=self.template_key
         )
 
@@ -451,8 +458,19 @@ class FilesWidget(QtWidgets.QWidget):
             "host_name": self.host_name
         }
 
+    def _is_workfile_locked(self, filepath):
+        if not is_workfile_lock_enabled(self.host_name, self.project_name):
+            return False
+        if not is_workfile_locked(filepath):
+            return False
+        return not is_workfile_locked_for_current_process(filepath)
+
     def open_file(self, filepath):
         host = self.host
+        if self._is_workfile_locked(filepath):
+            # add lockfile dialog
+            WorkfileLockDialog(filepath)
+
         if isinstance(host, IWorkfileHost):
             has_unsaved_changes = host.workfile_has_unsaved_changes()
         else:
@@ -560,7 +578,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         src = self._get_selected_filepath()
         dst = os.path.join(self._workfiles_root, work_file)
-        shutil.copy(src, dst)
+        shutil.copyfile(src, dst)
 
         self.workfile_created.emit(dst)
 
@@ -657,7 +675,7 @@ class FilesWidget(QtWidgets.QWidget):
             else:
                 self.host.save_file(filepath)
         else:
-            shutil.copy(src_path, filepath)
+            shutil.copyfile(src_path, filepath)
             if isinstance(self.host, IWorkfileHost):
                 self.host.open_workfile(filepath)
             else:

@@ -5,8 +5,8 @@ import socket
 import threading
 import traceback
 import subprocess
-from openpype.api import Logger
-from openpype.lib import get_openpype_execute_args
+
+from openpype.lib import get_openpype_execute_args, Logger
 
 
 class SocketThread(threading.Thread):
@@ -16,7 +16,7 @@ class SocketThread(threading.Thread):
 
     def __init__(self, name, port, filepath, additional_args=[]):
         super(SocketThread, self).__init__()
-        self.log = Logger().get_logger(self.__class__.__name__)
+        self.log = Logger.get_logger(self.__class__.__name__)
         self.setName(name)
         self.name = name
         self.port = port

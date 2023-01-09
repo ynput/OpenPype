@@ -2,6 +2,7 @@ import os
 import sys
 import contextlib
 import collections
+import traceback
 
 from Qt import QtWidgets, QtCore, QtGui
 import qtawesome
@@ -15,11 +16,8 @@ from openpype.style import (
     get_objected_colors,
 )
 from openpype.resources import get_image_path
-from openpype.lib import filter_profiles
-from openpype.api import (
-    get_project_settings,
-    Logger
-)
+from openpype.lib import filter_profiles, Logger
+from openpype.settings import get_project_settings
 from openpype.pipeline import registered_host
 
 log = Logger.get_logger(__name__)
@@ -81,6 +79,11 @@ def paint_image_with_color(image, color):
     pixmap.fill(QtCore.Qt.transparent)
 
     painter = QtGui.QPainter(pixmap)
+    painter.setRenderHints(
+        painter.Antialiasing
+        | painter.SmoothPixmapTransform
+        | painter.HighQualityAntialiasing
+    )
     painter.setClipRegion(alpha_region)
     painter.setPen(QtCore.Qt.NoPen)
     painter.setBrush(color)
@@ -443,10 +446,6 @@ class FamilyConfigCache:
         if profiles:
             # Make sure connection is installed
             # - accessing attribute which does not have auto-install
-            self.dbcon.install()
-            database = getattr(self.dbcon, "database", None)
-            if database is None:
-                database = self.dbcon._database
             asset_doc = get_asset_by_name(
                 project_name, asset_name, fields=["data.tasks"]
             ) or {}
@@ -647,7 +646,11 @@ class DynamicQThread(QtCore.QThread):
 def create_qthread(func, *args, **kwargs):
     class Thread(QtCore.QThread):
         def run(self):
-            func(*args, **kwargs)
+            try:
+                func(*args, **kwargs)
+            except BaseException:
+                traceback.print_exception(*sys.exc_info())
+                raise
     return Thread()
 
 
@@ -821,8 +824,6 @@ def get_warning_pixmap(color=None):
     src_image_path = get_image_path("warning.png")
     src_image = QtGui.QImage(src_image_path)
     if color is None:
-        colors = get_objected_colors()
-        color_value = colors["delete-btn-bg"]
-        color = color_value.get_qcolor()
+        color = get_objected_colors("delete-btn-bg").get_qcolor()
 
     return paint_image_with_color(src_image, color)

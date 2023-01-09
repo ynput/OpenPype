@@ -5,12 +5,16 @@ import json
 import pickle
 import clique
 import tempfile
+import traceback
 import itertools
 import contextlib
 import xml.etree.cElementTree as cET
-from copy import deepcopy
+from copy import deepcopy, copy
 from xml.etree import ElementTree as ET
 from pprint import pformat
+
+from openpype.lib import Logger, run_subprocess
+
 from .constants import (
     MARKER_COLOR,
     MARKER_DURATION,
@@ -19,9 +23,7 @@ from .constants import (
     MARKER_PUBLISH_DEFAULT
 )
 
-import openpype.api as openpype
-
-log = openpype.Logger.get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 FRAME_PATTERN = re.compile(r"[\._](\d+)[\.]")
 
@@ -266,7 +268,7 @@ def get_current_sequence(selection):
 def rescan_hooks():
     import flame
     try:
-        flame.execute_shortcut('Rescan Python Hooks')
+        flame.execute_shortcut("Rescan Python Hooks")
     except Exception:
         pass
 
@@ -765,11 +767,11 @@ class MediaInfoFile(object):
     _drop_mode = None
     _file_pattern = None
 
-    def __init__(self, path, **kwargs):
+    def __init__(self, path, logger=None):
 
         # replace log if any
-        if kwargs.get("logger"):
-            self.log = kwargs["logger"]
+        if logger:
+            self.log = logger
 
         # test if `dl_get_media_info` paht exists
         self._validate_media_script_path()
@@ -1015,7 +1017,7 @@ class MediaInfoFile(object):
 
         try:
             # execute creation of clip xml template data
-            openpype.run_subprocess(cmd_args)
+            run_subprocess(cmd_args)
         except TypeError as error:
             raise TypeError(
                 "Error creating `{}` due: {}".format(fpath, error))
@@ -1082,21 +1084,21 @@ class MediaInfoFile(object):
             xml_data (ET.Element): clip data
         """
         try:
-            for out_track in xml_data.iter('track'):
-                for out_feed in out_track.iter('feed'):
+            for out_track in xml_data.iter("track"):
+                for out_feed in out_track.iter("feed"):
                     # start frame
                     out_feed_nb_ticks_obj = out_feed.find(
-                        'startTimecode/nbTicks')
+                        "startTimecode/nbTicks")
                     self.start_frame = out_feed_nb_ticks_obj.text
 
                     # fps
                     out_feed_fps_obj = out_feed.find(
-                        'startTimecode/rate')
+                        "startTimecode/rate")
                     self.fps = out_feed_fps_obj.text
 
                     # drop frame mode
                     out_feed_drop_mode_obj = out_feed.find(
-                        'startTimecode/dropMode')
+                        "startTimecode/dropMode")
                     self.drop_mode = out_feed_drop_mode_obj.text
                     break
         except Exception as msg:
@@ -1118,8 +1120,153 @@ class MediaInfoFile(object):
             tree = cET.ElementTree(xml_element_data)
             tree.write(
                 fpath, xml_declaration=True,
-                method='xml', encoding='UTF-8'
+                method="xml", encoding="UTF-8"
             )
         except IOError as error:
             raise IOError(
                 "Not able to write data to file: {}".format(error))
+
+
+class TimeEffectMetadata(object):
+    log = log
+    _data = {}
+    _retime_modes = {
+        0: "speed",
+        1: "timewarp",
+        2: "duration"
+    }
+
+    def __init__(self, segment, logger=None):
+        if logger:
+            self.log = logger
+
+        self._data = self._get_metadata(segment)
+
+    @property
+    def data(self):
+        """ Returns timewarp effect data
+
+        Returns:
+            dict: retime data
+        """
+        return self._data
+
+    def _get_metadata(self, segment):
+        effects = segment.effects or []
+        for effect in effects:
+            if effect.type == "Timewarp":
+                with maintained_temp_file_path(".timewarp_node") as tmp_path:
+                    self.log.info("Temp File: {}".format(tmp_path))
+                    effect.save_setup(tmp_path)
+                    return self._get_attributes_from_xml(tmp_path)
+
+        return {}
+
+    def _get_attributes_from_xml(self, tmp_path):
+        with open(tmp_path, "r") as tw_setup_file:
+            tw_setup_string = tw_setup_file.read()
+            tw_setup_file.close()
+
+        tw_setup_xml = ET.fromstring(tw_setup_string)
+        tw_setup = self._dictify(tw_setup_xml)
+        # pprint(tw_setup)
+        try:
+            tw_setup_state = tw_setup["Setup"]["State"][0]
+            mode = int(
+                tw_setup_state["TW_RetimerMode"][0]["_text"]
+            )
+            r_data = {
+                "type": self._retime_modes[mode],
+                "effectStart": int(
+                    tw_setup["Setup"]["Base"][0]["Range"][0]["Start"]),
+                "effectEnd": int(
+                    tw_setup["Setup"]["Base"][0]["Range"][0]["End"])
+            }
+
+            if mode == 0:  # speed
+                r_data[self._retime_modes[mode]] = float(
+                    tw_setup_state["TW_Speed"]
+                    [0]["Channel"][0]["Value"][0]["_text"]
+                ) / 100
+            elif mode == 1:  # timewarp
+                print("timing")
+                r_data[self._retime_modes[mode]] = self._get_anim_keys(
+                    tw_setup_state["TW_Timing"]
+                )
+            elif mode == 2:  # duration
+                r_data[self._retime_modes[mode]] = {
+                    "start": {
+                        "source": int(
+                            tw_setup_state["TW_DurationTiming"][0]["Channel"]
+                            [0]["KFrames"][0]["Key"][0]["Value"][0]["_text"]
+                        ),
+                        "timeline": int(
+                            tw_setup_state["TW_DurationTiming"][0]["Channel"]
+                            [0]["KFrames"][0]["Key"][0]["Frame"][0]["_text"]
+                        )
+                    },
+                    "end": {
+                        "source": int(
+                            tw_setup_state["TW_DurationTiming"][0]["Channel"]
+                            [0]["KFrames"][0]["Key"][1]["Value"][0]["_text"]
+                        ),
+                        "timeline": int(
+                            tw_setup_state["TW_DurationTiming"][0]["Channel"]
+                            [0]["KFrames"][0]["Key"][1]["Frame"][0]["_text"]
+                        )
+                    }
+                }
+        except Exception:
+            lines = traceback.format_exception(*sys.exc_info())
+            self.log.error("\n".join(lines))
+            return
+
+        return r_data
+
+    def _get_anim_keys(self, setup_cat, index=None):
+        return_data = {
+            "extrapolation": (
+                setup_cat[0]["Channel"][0]["Extrap"][0]["_text"]
+            ),
+            "animKeys": []
+        }
+        for key in setup_cat[0]["Channel"][0]["KFrames"][0]["Key"]:
+            if index and int(key["Index"]) != index:
+                continue
+            key_data = {
+                "source": float(key["Value"][0]["_text"]),
+                "timeline": float(key["Frame"][0]["_text"]),
+                "index": int(key["Index"]),
+                "curveMode": key["CurveMode"][0]["_text"],
+                "curveOrder": key["CurveOrder"][0]["_text"]
+            }
+            if key.get("TangentMode"):
+                key_data["tangentMode"] = key["TangentMode"][0]["_text"]
+
+            return_data["animKeys"].append(key_data)
+
+        return return_data
+
+    def _dictify(self, xml_, root=True):
+        """ Convert xml object to dictionary
+
+        Args:
+            xml_ (xml.etree.ElementTree.Element): xml data
+            root (bool, optional): is root available. Defaults to True.
+
+        Returns:
+            dict: dictionarized xml
+        """
+
+        if root:
+            return {xml_.tag: self._dictify(xml_, False)}
+
+        d = copy(xml_.attrib)
+        if xml_.text:
+            d["_text"] = xml_.text
+
+        for x in xml_.findall("./*"):
+            if x.tag not in d:
+                d[x.tag] = []
+            d[x.tag].append(self._dictify(x, False))
+        return d

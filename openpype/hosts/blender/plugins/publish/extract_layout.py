@@ -6,12 +6,12 @@ import bpy_extras
 import bpy_extras.anim_utils
 
 from openpype.client import get_representation_by_name
+from openpype.pipeline import publish
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
-import openpype.api
 
 
-class ExtractLayout(openpype.api.Extractor):
+class ExtractLayout(publish.Extractor):
     """Extract a layout."""
 
     label = "Extract Layout"
@@ -180,7 +180,7 @@ class ExtractLayout(openpype.api.Extractor):
                 "rotation": {
                     "x": asset.rotation_euler.x,
                     "y": asset.rotation_euler.y,
-                    "z": asset.rotation_euler.z,
+                    "z": asset.rotation_euler.z
                 },
                 "scale": {
                     "x": asset.scale.x,
@@ -188,6 +188,18 @@ class ExtractLayout(openpype.api.Extractor):
                     "z": asset.scale.z
                 }
             }
+
+            json_element["transform_matrix"] = []
+
+            for row in list(asset.matrix_world.transposed()):
+                json_element["transform_matrix"].append(list(row))
+
+            json_element["basis"] = [
+                [1, 0, 0, 0],
+                [0, -1, 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1]
+            ]
 
             # Extract the animation as well
             if family == "rig":

@@ -12,12 +12,10 @@ from openpype.client import (
     get_assets,
 )
 from openpype.settings import get_project_settings, get_system_settings
-from openpype.lib import (
-    get_workfile_template_key,
-    StringTemplate,
-)
+from openpype.lib import StringTemplate
 from openpype.pipeline import Anatomy
 from openpype.pipeline.template_data import get_template_data
+from openpype.pipeline.workfile import get_workfile_template_key
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 from openpype_modules.ftrack.lib.avalon_sync import create_chunks
 
@@ -299,7 +297,10 @@ class FillWorkfileAttributeAction(BaseAction):
 
                 task_type = workfile_data["task"]["type"]
                 template_key = get_workfile_template_key(
-                    task_type, host_name, project_settings=project_settings
+                    task_type,
+                    host_name,
+                    project_name,
+                    project_settings=project_settings
                 )
                 if template_key in templates_by_key:
                     template = templates_by_key[template_key]

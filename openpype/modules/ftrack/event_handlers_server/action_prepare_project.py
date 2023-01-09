@@ -1,10 +1,8 @@
 import json
 import copy
 
-from openpype.client import get_project
-from openpype.api import ProjectSettings
-from openpype.lib import create_project
-from openpype.settings import SaveWarningExc
+from openpype.client import get_project, create_project
+from openpype.settings import ProjectSettings, SaveWarningExc
 
 from openpype_modules.ftrack.lib import (
     ServerAction,

@@ -1,27 +1,28 @@
 """Should be used only inside of hosts."""
 import os
-import json
-import re
 import copy
 import platform
 import logging
-import collections
 import functools
 import warnings
+
+import six
 
 from openpype.client import (
     get_project,
     get_assets,
     get_asset_by_name,
-    get_subsets,
-    get_last_versions,
     get_last_version_by_subset_name,
-    get_representations,
     get_workfile_info,
 )
-from openpype.settings import get_project_settings
+from openpype.client.operations import (
+    CURRENT_ASSET_DOC_SCHEMA,
+    CURRENT_PROJECT_SCHEMA,
+    CURRENT_PROJECT_CONFIG_SCHEMA,
+    PROJECT_NAME_ALLOWED_SYMBOLS,
+    PROJECT_NAME_REGEX,
+)
 from .profiles_filtering import filter_profiles
-from .events import emit_event
 from .path_templates import StringTemplate
 
 legacy_io = None
@@ -29,15 +30,13 @@ legacy_io = None
 log = logging.getLogger("AvalonContext")
 
 
+# Backwards compatibility - should not be used anymore
+#   - Will be removed in OP 3.16.*
 CURRENT_DOC_SCHEMAS = {
-    "project": "openpype:project-3.0",
-    "asset": "openpype:asset-3.0",
-    "config": "openpype:config-2.0"
+    "project": CURRENT_PROJECT_SCHEMA,
+    "asset": CURRENT_ASSET_DOC_SCHEMA,
+    "config": CURRENT_PROJECT_CONFIG_SCHEMA
 }
-PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
-PROJECT_NAME_REGEX = re.compile(
-    "^[{}]+$".format(PROJECT_NAME_ALLOWED_SYMBOLS)
-)
 
 
 class AvalonContextDeprecatedWarning(DeprecationWarning):
@@ -85,6 +84,7 @@ def deprecated(new_destination):
     return _decorator(func)
 
 
+@deprecated("openpype.client.operations.create_project")
 def create_project(
     project_name, project_code, library_project=False, dbcon=None
 ):
@@ -108,59 +108,14 @@ def create_project(
 
     Returns:
         dict: Created project document.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
-    from openpype.settings import ProjectSettings, SaveWarningExc
-    from openpype.pipeline import AvalonMongoDB
-    from openpype.pipeline.schema import validate
+    from openpype.client.operations import create_project
 
-    if get_project(project_name, fields=["name"]):
-        raise ValueError("Project with name \"{}\" already exists".format(
-            project_name
-        ))
-
-    if dbcon is None:
-        dbcon = AvalonMongoDB()
-
-    if not PROJECT_NAME_REGEX.match(project_name):
-        raise ValueError((
-            "Project name \"{}\" contain invalid characters"
-        ).format(project_name))
-
-    database = dbcon.database
-    project_doc = {
-        "type": "project",
-        "name": project_name,
-        "data": {
-            "code": project_code,
-            "library_project": library_project
-        },
-        "schema": CURRENT_DOC_SCHEMAS["project"]
-    }
-    # Insert document with basic data
-    database[project_name].insert_one(project_doc)
-    # Load ProjectSettings for the project and save it to store all attributes
-    #   and Anatomy
-    try:
-        project_settings_entity = ProjectSettings(project_name)
-        project_settings_entity.save()
-    except SaveWarningExc as exc:
-        print(str(exc))
-    except Exception:
-        database[project_name].delete_one({"type": "project"})
-        raise
-
-    project_doc = get_project(project_name)
-
-    try:
-        # Validate created project document
-        validate(project_doc)
-    except Exception:
-        # Remove project if is not valid
-        database[project_name].delete_one({"type": "project"})
-        raise
-
-    return project_doc
+    return create_project(project_name, project_code, library_project)
 
 
 def with_pipeline_io(func):
@@ -184,7 +139,7 @@ def is_latest(representation):
         bool: Whether the representation is of latest version.
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.context_tools import is_representation_from_latest
@@ -197,7 +152,7 @@ def any_outdated():
     """Return whether the current scene has any outdated content.
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.load import any_outdated_containers
@@ -218,7 +173,7 @@ def get_asset(asset_name=None):
         (MongoDB document)
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.context_tools import get_current_project_asset
@@ -230,13 +185,14 @@ def get_asset(asset_name=None):
 def get_system_general_anatomy_data(system_settings=None):
     """
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
     from openpype.pipeline.template_data import get_general_template_data
 
     return get_general_template_data(system_settings)
 
 
+@deprecated("openpype.client.get_linked_asset_ids")
 def get_linked_asset_ids(asset_doc):
     """Return linked asset ids for `asset_doc` from DB
 
@@ -245,26 +201,20 @@ def get_linked_asset_ids(asset_doc):
 
     Returns:
         (list): MongoDB ids of input links.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
-    output = []
-    if not asset_doc:
-        return output
 
-    input_links = asset_doc["data"].get("inputLinks") or []
-    if input_links:
-        for item in input_links:
-            # Backwards compatibility for "_id" key which was replaced with
-            #   "id"
-            if "_id" in item:
-                link_id = item["_id"]
-            else:
-                link_id = item["id"]
-            output.append(link_id)
+    from openpype.client import get_linked_asset_ids
+    from openpype.pipeline import legacy_io
 
-    return output
+    project_name = legacy_io.active_project()
+
+    return get_linked_asset_ids(project_name, asset_doc=asset_doc)
 
 
-@with_pipeline_io
+@deprecated("openpype.client.get_linked_assets")
 def get_linked_assets(asset_doc):
     """Return linked assets for `asset_doc` from DB
 
@@ -273,14 +223,17 @@ def get_linked_assets(asset_doc):
 
     Returns:
         (list) Asset documents of input links for passed asset doc.
+
+    Deprecated:
+        Function will be removed after release version 3.15.*
     """
 
-    link_ids = get_linked_asset_ids(asset_doc)
-    if not link_ids:
-        return []
+    from openpype.pipeline import legacy_io
+    from openpype.client import get_linked_assets
 
     project_name = legacy_io.active_project()
-    return list(get_assets(project_name, link_ids))
+
+    return get_linked_assets(project_name, asset_doc=asset_doc)
 
 
 @deprecated("openpype.client.get_last_version_by_subset_name")
@@ -302,7 +255,7 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
         dict: Last version document for entered.
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     if not project_name:
@@ -321,6 +274,8 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     )
 
 
+@deprecated(
+    "openpype.pipeline.workfile.get_workfile_template_key_from_context")
 def get_workfile_template_key_from_context(
     asset_name, task_name, host_name, project_name=None,
     dbcon=None, project_settings=None
@@ -348,28 +303,30 @@ def get_workfile_template_key_from_context(
     Raises:
         ValueError: When both 'dbcon' and 'project_name' were not
             passed.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
+
+    from openpype.pipeline.workfile import (
+        get_workfile_template_key_from_context
+    )
+
     if not project_name:
         if not dbcon:
             raise ValueError((
                 "`get_workfile_template_key_from_context` requires to pass"
                 " one of 'dbcon' or 'project_name' arguments."
             ))
-
         project_name = dbcon.active_project()
 
-    asset_doc = get_asset_by_name(
-        project_name, asset_name, fields=["data.tasks"]
-    )
-    asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
-    task_info = asset_tasks.get(task_name) or {}
-    task_type = task_info.get("type")
-
-    return get_workfile_template_key(
-        task_type, host_name, project_name, project_settings
+    return get_workfile_template_key_from_context(
+        asset_name, task_name, host_name, project_name, project_settings
     )
 
 
+@deprecated(
+    "openpype.pipeline.workfile.get_workfile_template_key")
 def get_workfile_template_key(
     task_type, host_name, project_name=None, project_settings=None
 ):
@@ -392,41 +349,16 @@ def get_workfile_template_key(
     Raises:
         ValueError: When both 'project_name' and 'project_settings' were not
             passed.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
-    default = "work"
-    if not task_type or not host_name:
-        return default
 
-    if not project_settings:
-        if not project_name:
-            raise ValueError((
-                "`get_workfile_template_key` requires to pass"
-                " one of 'project_name' or 'project_settings' arguments."
-            ))
-        project_settings = get_project_settings(project_name)
+    from openpype.pipeline.workfile import get_workfile_template_key
 
-    try:
-        profiles = (
-            project_settings
-            ["global"]
-            ["tools"]
-            ["Workfiles"]
-            ["workfile_template_profiles"]
-        )
-    except Exception:
-        profiles = []
-
-    if not profiles:
-        return default
-
-    profile_filter = {
-        "task_types": task_type,
-        "hosts": host_name
-    }
-    profile = filter_profiles(profiles, profile_filter)
-    if profile:
-        return profile["workfile_template"] or default
-    return default
+    return get_workfile_template_key(
+        task_type, host_name, project_name, project_settings
+    )
 
 
 @deprecated("openpype.pipeline.template_data.get_template_data")
@@ -444,7 +376,7 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
         dict: Data prepared for filling workdir template.
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.template_data import get_template_data
@@ -454,6 +386,7 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
     )
 
 
+@deprecated("openpype.pipeline.workfile.get_workdir_with_workdir_data")
 def get_workdir_with_workdir_data(
     workdir_data, anatomy=None, project_name=None, template_key=None
 ):
@@ -479,32 +412,28 @@ def get_workdir_with_workdir_data(
 
     Raises:
         ValueError: When both `anatomy` and `project_name` are set to None.
+
+    Deprecated:
+        Function will be removed after release version 3.15.*
     """
+
     if not anatomy and not project_name:
         raise ValueError((
             "Missing required arguments one of `project_name` or `anatomy`"
             " must be entered."
         ))
 
-    if not anatomy:
-        from openpype.pipeline import Anatomy
-        anatomy = Anatomy(project_name)
+    if not project_name:
+        project_name = anatomy.project_name
 
-    if not template_key:
-        template_key = get_workfile_template_key(
-            workdir_data["task"]["type"],
-            workdir_data["app"],
-            project_name=workdir_data["project"]["name"]
-        )
+    from openpype.pipeline.workfile import get_workdir_with_workdir_data
 
-    anatomy_filled = anatomy.format(workdir_data)
-    # Output is TemplateResult object which contain useful data
-    output = anatomy_filled[template_key]["folder"]
-    if output:
-        return output.normalized()
-    return output
+    return get_workdir_with_workdir_data(
+        workdir_data, project_name, anatomy, template_key
+    )
 
 
+@deprecated("openpype.pipeline.workfile.get_workdir_with_workdir_data")
 def get_workdir(
     project_doc,
     asset_doc,
@@ -531,20 +460,20 @@ def get_workdir(
 
     Returns:
         TemplateResult: Workdir path.
+
+    Deprecated:
+        Function will be removed after release version 3.15.*
     """
 
-    from openpype.pipeline import Anatomy
-    from openpype.pipeline.template_data import get_template_data
-
-    if not anatomy:
-        anatomy = Anatomy(project_doc["name"])
-
-    workdir_data = get_template_data(
-        project_doc, asset_doc, task_name, host_name
-    )
+    from openpype.pipeline.workfile import get_workdir
     # Output is TemplateResult object which contain useful data
-    return get_workdir_with_workdir_data(
-        workdir_data, anatomy, template_key=template_key
+    return get_workdir(
+        project_doc,
+        asset_doc,
+        task_name,
+        host_name,
+        anatomy,
+        template_key
     )
 
 
@@ -560,14 +489,15 @@ def template_data_from_session(session=None):
         dict: All available data from session.
 
     Deprecated:
-        Function will be removed after release version 3.14.*
+        Function will be removed after release version 3.15.*
     """
 
     from openpype.pipeline.context_tools import get_template_data_from_session
+
     return get_template_data_from_session(session)
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.context_tools.compute_session_changes")
 def compute_session_changes(
     session, task=None, asset=None, app=None, template_key=None
 ):
@@ -588,81 +518,49 @@ def compute_session_changes(
 
     Returns:
         dict: The required changes in the Session dictionary.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
-    changes = dict()
+    from openpype.pipeline import legacy_io
+    from openpype.pipeline.context_tools import compute_session_changes
 
-    # If no changes, return directly
-    if not any([task, asset, app]):
-        return changes
+    if isinstance(asset, six.string_types):
+        project_name = legacy_io.active_project()
+        asset = get_asset_by_name(project_name, asset)
 
-    # Get asset document and asset
-    asset_document = None
-    asset_tasks = None
-    if isinstance(asset, dict):
-        # Assume asset database document
-        asset_document = asset
-        asset_tasks = asset_document.get("data", {}).get("tasks")
-        asset = asset["name"]
-
-    if not asset_document or not asset_tasks:
-        # Assume asset name
-        project_name = session["AVALON_PROJECT"]
-        asset_document = get_asset_by_name(
-            project_name, asset, fields=["data.tasks"]
-        )
-        assert asset_document, "Asset must exist"
-
-    # Detect any changes compared session
-    mapping = {
-        "AVALON_ASSET": asset,
-        "AVALON_TASK": task,
-        "AVALON_APP": app,
-    }
-    changes = {
-        key: value
-        for key, value in mapping.items()
-        if value and value != session.get(key)
-    }
-    if not changes:
-        return changes
-
-    # Compute work directory (with the temporary changed session so far)
-    _session = session.copy()
-    _session.update(changes)
-
-    changes["AVALON_WORKDIR"] = get_workdir_from_session(_session)
-
-    return changes
+    return compute_session_changes(
+        session,
+        asset,
+        task,
+        template_key
+    )
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.context_tools.get_workdir_from_session")
 def get_workdir_from_session(session=None, template_key=None):
-    from openpype.pipeline import Anatomy
-    from openpype.pipeline.context_tools import get_template_data_from_session
+    """Calculate workdir path based on session data.
 
-    if session is None:
-        session = legacy_io.Session
-    project_name = session["AVALON_PROJECT"]
-    host_name = session["AVALON_APP"]
-    anatomy = Anatomy(project_name)
-    template_data = get_template_data_from_session(session)
-    anatomy_filled = anatomy.format(template_data)
+    Args:
+        session (Union[None, Dict[str, str]]): Session to use. If not passed
+            current context session is used (from legacy_io).
+        template_key (Union[str, None]): Precalculate template key to define
+            workfile template name in Anatomy.
 
-    if not template_key:
-        task_type = template_data["task"]["type"]
-        template_key = get_workfile_template_key(
-            task_type,
-            host_name,
-            project_name=project_name
-        )
-    path = anatomy_filled[template_key]["folder"]
-    if path:
-        path = os.path.normpath(path)
-    return path
+    Returns:
+        str: Workdir path.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
+    """
+
+    from openpype.pipeline.context_tools import get_workdir_from_session
+
+    return get_workdir_from_session(session, template_key)
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.context_tools.change_current_context")
 def update_current_task(task=None, asset=None, app=None, template_key=None):
     """Update active Session to a new task work area.
 
@@ -675,38 +573,21 @@ def update_current_task(task=None, asset=None, app=None, template_key=None):
 
     Returns:
         dict: The changed key, values in the current Session.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
-    changes = compute_session_changes(
-        legacy_io.Session,
-        task=task,
-        asset=asset,
-        app=app,
-        template_key=template_key
-    )
+    from openpype.pipeline import legacy_io
+    from openpype.pipeline.context_tools import change_current_context
 
-    # Update the Session and environments. Pop from environments all keys with
-    # value set to None.
-    for key, value in changes.items():
-        legacy_io.Session[key] = value
-        if value is None:
-            os.environ.pop(key, None)
-        else:
-            os.environ[key] = value
+    project_name = legacy_io.active_project()
+    if isinstance(asset, six.string_types):
+        asset = get_asset_by_name(project_name, asset)
 
-    data = changes.copy()
-    # Convert env keys to human readable keys
-    data["project_name"] = legacy_io.Session["AVALON_PROJECT"]
-    data["asset_name"] = legacy_io.Session["AVALON_ASSET"]
-    data["task_name"] = legacy_io.Session["AVALON_TASK"]
-
-    # Emit session change
-    emit_event("taskChanged", data)
-
-    return changes
+    return change_current_context(asset, task, template_key)
 
 
-@with_pipeline_io
 @deprecated("openpype.client.get_workfile_info")
 def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
     """Return workfile document for entered context.
@@ -723,17 +604,21 @@ def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
 
     Returns:
         dict: Workfile document or None.
+
+    Deprecated:
+        Function will be removed after release version 3.15.*
     """
 
     # Use legacy_io if dbcon is not entered
     if not dbcon:
+        from openpype.pipeline import legacy_io
         dbcon = legacy_io
 
     project_name = dbcon.active_project()
     return get_workfile_info(project_name, asset_id, task_name, filename)
 
 
-@with_pipeline_io
+@deprecated
 def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     """Creates or replace workfile document in mongo.
 
@@ -754,6 +639,7 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
 
     # Use legacy_io if dbcon is not entered
     if not dbcon:
+        from openpype.pipeline import legacy_io
         dbcon = legacy_io
 
     # Filter of workfile document
@@ -800,7 +686,7 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     )
 
 
-@with_pipeline_io
+@deprecated
 def save_workfile_data_to_doc(workfile_doc, data, dbcon=None):
     if not workfile_doc:
         # TODO add log message
@@ -811,6 +697,7 @@ def save_workfile_data_to_doc(workfile_doc, data, dbcon=None):
 
     # Use legacy_io if dbcon is not entered
     if not dbcon:
+        from openpype.pipeline import legacy_io
         dbcon = legacy_io
 
     # Convert data to mongo modification keys/values
@@ -828,664 +715,19 @@ def save_workfile_data_to_doc(workfile_doc, data, dbcon=None):
     )
 
 
-class BuildWorkfile:
-    """Wrapper for build workfile process.
+@deprecated("openpype.pipeline.workfile.BuildWorkfile")
+def BuildWorkfile():
+    """Build workfile class was moved to workfile pipeline.
 
-    Load representations for current context by build presets. Build presets
-    are host related, since each host has it's loaders.
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
+    from openpype.pipeline.workfile import BuildWorkfile
 
-    log = logging.getLogger("BuildWorkfile")
+    return BuildWorkfile()
 
-    @staticmethod
-    def map_subsets_by_family(subsets):
-        subsets_by_family = collections.defaultdict(list)
-        for subset in subsets:
-            family = subset["data"].get("family")
-            if not family:
-                families = subset["data"].get("families")
-                if not families:
-                    continue
-                family = families[0]
 
-            subsets_by_family[family].append(subset)
-        return subsets_by_family
-
-    def process(self):
-        """Main method of this wrapper.
-
-        Building of workfile is triggered and is possible to implement
-        post processing of loaded containers if necessary.
-        """
-        containers = self.build_workfile()
-
-        return containers
-
-    @with_pipeline_io
-    def build_workfile(self):
-        """Prepares and load containers into workfile.
-
-        Loads latest versions of current and linked assets to workfile by logic
-        stored in Workfile profiles from presets. Profiles are set by host,
-        filtered by current task name and used by families.
-
-        Each family can specify representation names and loaders for
-        representations and first available and successful loaded
-        representation is returned as container.
-
-        At the end you'll get list of loaded containers per each asset.
-
-        loaded_containers [{
-            "asset_entity": <AssetEntity1>,
-            "containers": [<Container1>, <Container2>, ...]
-        }, {
-            "asset_entity": <AssetEntity2>,
-            "containers": [<Container3>, ...]
-        }, {
-            ...
-        }]
-        """
-        from openpype.pipeline import discover_loader_plugins
-
-        # Get current asset name and entity
-        project_name = legacy_io.active_project()
-        current_asset_name = legacy_io.Session["AVALON_ASSET"]
-        current_asset_entity = get_asset_by_name(
-            project_name, current_asset_name
-        )
-        # Skip if asset was not found
-        if not current_asset_entity:
-            print("Asset entity with name `{}` was not found".format(
-                current_asset_name
-            ))
-            return
-
-        # Prepare available loaders
-        loaders_by_name = {}
-        for loader in discover_loader_plugins():
-            loader_name = loader.__name__
-            if loader_name in loaders_by_name:
-                raise KeyError(
-                    "Duplicated loader name {0}!".format(loader_name)
-                )
-            loaders_by_name[loader_name] = loader
-
-        # Skip if there are any loaders
-        if not loaders_by_name:
-            self.log.warning("There are no registered loaders.")
-            return
-
-        # Get current task name
-        current_task_name = legacy_io.Session["AVALON_TASK"]
-
-        # Load workfile presets for task
-        self.build_presets = self.get_build_presets(
-            current_task_name, current_asset_entity
-        )
-
-        # Skip if there are any presets for task
-        if not self.build_presets:
-            self.log.warning(
-                "Current task `{}` does not have any loading preset.".format(
-                    current_task_name
-                )
-            )
-            return
-
-        # Get presets for loading current asset
-        current_context_profiles = self.build_presets.get("current_context")
-        # Get presets for loading linked assets
-        link_context_profiles = self.build_presets.get("linked_assets")
-        # Skip if both are missing
-        if not current_context_profiles and not link_context_profiles:
-            self.log.warning(
-                "Current task `{}` has empty loading preset.".format(
-                    current_task_name
-                )
-            )
-            return
-
-        elif not current_context_profiles:
-            self.log.warning((
-                "Current task `{}` doesn't have any loading"
-                " preset for it's context."
-            ).format(current_task_name))
-
-        elif not link_context_profiles:
-            self.log.warning((
-                "Current task `{}` doesn't have any"
-                "loading preset for it's linked assets."
-            ).format(current_task_name))
-
-        # Prepare assets to process by workfile presets
-        assets = []
-        current_asset_id = None
-        if current_context_profiles:
-            # Add current asset entity if preset has current context set
-            assets.append(current_asset_entity)
-            current_asset_id = current_asset_entity["_id"]
-
-        if link_context_profiles:
-            # Find and append linked assets if preset has set linked mapping
-            link_assets = get_linked_assets(current_asset_entity)
-            if link_assets:
-                assets.extend(link_assets)
-
-        # Skip if there are no assets. This can happen if only linked mapping
-        # is set and there are no links for his asset.
-        if not assets:
-            self.log.warning(
-                "Asset does not have linked assets. Nothing to process."
-            )
-            return
-
-        # Prepare entities from database for assets
-        prepared_entities = self._collect_last_version_repres(assets)
-
-        # Load containers by prepared entities and presets
-        loaded_containers = []
-        # - Current asset containers
-        if current_asset_id and current_asset_id in prepared_entities:
-            current_context_data = prepared_entities.pop(current_asset_id)
-            loaded_data = self.load_containers_by_asset_data(
-                current_context_data, current_context_profiles, loaders_by_name
-            )
-            if loaded_data:
-                loaded_containers.append(loaded_data)
-
-        # - Linked assets container
-        for linked_asset_data in prepared_entities.values():
-            loaded_data = self.load_containers_by_asset_data(
-                linked_asset_data, link_context_profiles, loaders_by_name
-            )
-            if loaded_data:
-                loaded_containers.append(loaded_data)
-
-        # Return list of loaded containers
-        return loaded_containers
-
-    @with_pipeline_io
-    def get_build_presets(self, task_name, asset_doc):
-        """ Returns presets to build workfile for task name.
-
-        Presets are loaded for current project set in
-        io.Session["AVALON_PROJECT"], filtered by registered host
-        and entered task name.
-
-        Args:
-            task_name (str): Task name used for filtering build presets.
-
-        Returns:
-            (dict): preset per entered task name
-        """
-        host_name = os.environ["AVALON_APP"]
-        project_settings = get_project_settings(
-            legacy_io.Session["AVALON_PROJECT"]
-        )
-
-        host_settings = project_settings.get(host_name) or {}
-        # Get presets for host
-        wb_settings = host_settings.get("workfile_builder")
-        if not wb_settings:
-            # backward compatibility
-            wb_settings = host_settings.get("workfile_build") or {}
-
-        builder_profiles = wb_settings.get("profiles")
-        if not builder_profiles:
-            return None
-
-        task_type = (
-            asset_doc
-            .get("data", {})
-            .get("tasks", {})
-            .get(task_name, {})
-            .get("type")
-        )
-        filter_data = {
-            "task_types": task_type,
-            "tasks": task_name
-        }
-        return filter_profiles(builder_profiles, filter_data)
-
-    def _filter_build_profiles(self, build_profiles, loaders_by_name):
-        """ Filter build profiles by loaders and prepare process data.
-
-        Valid profile must have "loaders", "families" and "repre_names" keys
-        with valid values.
-        - "loaders" expects list of strings representing possible loaders.
-        - "families" expects list of strings for filtering
-                     by main subset family.
-        - "repre_names" expects list of strings for filtering by
-                        representation name.
-
-        Lowered "families" and "repre_names" are prepared for each profile with
-        all required keys.
-
-        Args:
-            build_profiles (dict): Profiles for building workfile.
-            loaders_by_name (dict): Available loaders per name.
-
-        Returns:
-            (list): Filtered and prepared profiles.
-        """
-        valid_profiles = []
-        for profile in build_profiles:
-            # Check loaders
-            profile_loaders = profile.get("loaders")
-            if not profile_loaders:
-                self.log.warning((
-                    "Build profile has missing loaders configuration: {0}"
-                ).format(json.dumps(profile, indent=4)))
-                continue
-
-            # Check if any loader is available
-            loaders_match = False
-            for loader_name in profile_loaders:
-                if loader_name in loaders_by_name:
-                    loaders_match = True
-                    break
-
-            if not loaders_match:
-                self.log.warning((
-                    "All loaders from Build profile are not available: {0}"
-                ).format(json.dumps(profile, indent=4)))
-                continue
-
-            # Check families
-            profile_families = profile.get("families")
-            if not profile_families:
-                self.log.warning((
-                    "Build profile is missing families configuration: {0}"
-                ).format(json.dumps(profile, indent=4)))
-                continue
-
-            # Check representation names
-            profile_repre_names = profile.get("repre_names")
-            if not profile_repre_names:
-                self.log.warning((
-                    "Build profile is missing"
-                    " representation names filtering: {0}"
-                ).format(json.dumps(profile, indent=4)))
-                continue
-
-            # Prepare lowered families and representation names
-            profile["families_lowered"] = [
-                fam.lower() for fam in profile_families
-            ]
-            profile["repre_names_lowered"] = [
-                name.lower() for name in profile_repre_names
-            ]
-
-            valid_profiles.append(profile)
-
-        return valid_profiles
-
-    def _prepare_profile_for_subsets(self, subsets, profiles):
-        """Select profile for each subset by it's data.
-
-        Profiles are filtered for each subset individually.
-        Profile is filtered by subset's family, optionally by name regex and
-        representation names set in profile.
-        It is possible to not find matching profile for subset, in that case
-        subset is skipped and it is possible that none of subsets have
-        matching profile.
-
-        Args:
-            subsets (list): Subset documents.
-            profiles (dict): Build profiles.
-
-        Returns:
-            (dict) Profile by subset's id.
-        """
-        # Prepare subsets
-        subsets_by_family = self.map_subsets_by_family(subsets)
-
-        profiles_per_subset_id = {}
-        for family, subsets in subsets_by_family.items():
-            family_low = family.lower()
-            for profile in profiles:
-                # Skip profile if does not contain family
-                if family_low not in profile["families_lowered"]:
-                    continue
-
-                # Precompile name filters as regexes
-                profile_regexes = profile.get("subset_name_filters")
-                if profile_regexes:
-                    _profile_regexes = []
-                    for regex in profile_regexes:
-                        _profile_regexes.append(re.compile(regex))
-                    profile_regexes = _profile_regexes
-
-                # TODO prepare regex compilation
-                for subset in subsets:
-                    # Verify regex filtering (optional)
-                    if profile_regexes:
-                        valid = False
-                        for pattern in profile_regexes:
-                            if re.match(pattern, subset["name"]):
-                                valid = True
-                                break
-
-                        if not valid:
-                            continue
-
-                    profiles_per_subset_id[subset["_id"]] = profile
-
-                # break profiles loop on finding the first matching profile
-                break
-        return profiles_per_subset_id
-
-    def load_containers_by_asset_data(
-        self, asset_entity_data, build_profiles, loaders_by_name
-    ):
-        """Load containers for entered asset entity by Build profiles.
-
-        Args:
-            asset_entity_data (dict): Prepared data with subsets, last version
-                and representations for specific asset.
-            build_profiles (dict): Build profiles.
-            loaders_by_name (dict): Available loaders per name.
-
-        Returns:
-            (dict) Output contains asset document and loaded containers.
-        """
-
-        # Make sure all data are not empty
-        if not asset_entity_data or not build_profiles or not loaders_by_name:
-            return
-
-        asset_entity = asset_entity_data["asset_entity"]
-
-        valid_profiles = self._filter_build_profiles(
-            build_profiles, loaders_by_name
-        )
-        if not valid_profiles:
-            self.log.warning(
-                "There are not valid Workfile profiles. Skipping process."
-            )
-            return
-
-        self.log.debug("Valid Workfile profiles: {}".format(valid_profiles))
-
-        subsets_by_id = {}
-        version_by_subset_id = {}
-        repres_by_version_id = {}
-        for subset_id, in_data in asset_entity_data["subsets"].items():
-            subset_entity = in_data["subset_entity"]
-            subsets_by_id[subset_entity["_id"]] = subset_entity
-
-            version_data = in_data["version"]
-            version_entity = version_data["version_entity"]
-            version_by_subset_id[subset_id] = version_entity
-            repres_by_version_id[version_entity["_id"]] = (
-                version_data["repres"]
-            )
-
-        if not subsets_by_id:
-            self.log.warning("There are not subsets for asset {0}".format(
-                asset_entity["name"]
-            ))
-            return
-
-        profiles_per_subset_id = self._prepare_profile_for_subsets(
-            subsets_by_id.values(), valid_profiles
-        )
-        if not profiles_per_subset_id:
-            self.log.warning("There are not valid subsets.")
-            return
-
-        valid_repres_by_subset_id = collections.defaultdict(list)
-        for subset_id, profile in profiles_per_subset_id.items():
-            profile_repre_names = profile["repre_names_lowered"]
-
-            version_entity = version_by_subset_id[subset_id]
-            version_id = version_entity["_id"]
-            repres = repres_by_version_id[version_id]
-            for repre in repres:
-                repre_name_low = repre["name"].lower()
-                if repre_name_low in profile_repre_names:
-                    valid_repres_by_subset_id[subset_id].append(repre)
-
-        # DEBUG message
-        msg = "Valid representations for Asset: `{}`".format(
-            asset_entity["name"]
-        )
-        for subset_id, repres in valid_repres_by_subset_id.items():
-            subset = subsets_by_id[subset_id]
-            msg += "\n# Subset Name/ID: `{}`/{}".format(
-                subset["name"], subset_id
-            )
-            for repre in repres:
-                msg += "\n## Repre name: `{}`".format(repre["name"])
-
-        self.log.debug(msg)
-
-        containers = self._load_containers(
-            valid_repres_by_subset_id, subsets_by_id,
-            profiles_per_subset_id, loaders_by_name
-        )
-
-        return {
-            "asset_entity": asset_entity,
-            "containers": containers
-        }
-
-    @with_pipeline_io
-    def _load_containers(
-        self, repres_by_subset_id, subsets_by_id,
-        profiles_per_subset_id, loaders_by_name
-    ):
-        """Real load by collected data happens here.
-
-        Loading of representations per subset happens here. Each subset can
-        loads one representation. Loading is tried in specific order.
-        Representations are tried to load by names defined in configuration.
-        If subset has representation matching representation name each loader
-        is tried to load it until any is successful. If none of them was
-        successful then next representation name is tried.
-        Subset process loop ends when any representation is loaded or
-        all matching representations were already tried.
-
-        Args:
-            repres_by_subset_id (dict): Available representations mapped
-                by their parent (subset) id.
-            subsets_by_id (dict): Subset documents mapped by their id.
-            profiles_per_subset_id (dict): Build profiles mapped by subset id.
-            loaders_by_name (dict): Available loaders per name.
-
-        Returns:
-            (list) Objects of loaded containers.
-        """
-        from openpype.pipeline import (
-            IncompatibleLoaderError,
-            load_container,
-        )
-
-        loaded_containers = []
-
-        # Get subset id order from build presets.
-        build_presets = self.build_presets.get("current_context", [])
-        build_presets += self.build_presets.get("linked_assets", [])
-        subset_ids_ordered = []
-        for preset in build_presets:
-            for preset_family in preset["families"]:
-                for id, subset in subsets_by_id.items():
-                    if preset_family not in subset["data"].get("families", []):
-                        continue
-
-                    subset_ids_ordered.append(id)
-
-        # Order representations from subsets.
-        print("repres_by_subset_id", repres_by_subset_id)
-        representations_ordered = []
-        representations = []
-        for id in subset_ids_ordered:
-            for subset_id, repres in repres_by_subset_id.items():
-                if repres in representations:
-                    continue
-
-                if id == subset_id:
-                    representations_ordered.append((subset_id, repres))
-                    representations.append(repres)
-
-        print("representations", representations)
-
-        # Load ordered representations.
-        for subset_id, repres in representations_ordered:
-            subset_name = subsets_by_id[subset_id]["name"]
-
-            profile = profiles_per_subset_id[subset_id]
-            loaders_last_idx = len(profile["loaders"]) - 1
-            repre_names_last_idx = len(profile["repre_names_lowered"]) - 1
-
-            repre_by_low_name = {
-                repre["name"].lower(): repre for repre in repres
-            }
-
-            is_loaded = False
-            for repre_name_idx, profile_repre_name in enumerate(
-                profile["repre_names_lowered"]
-            ):
-                # Break iteration if representation was already loaded
-                if is_loaded:
-                    break
-
-                repre = repre_by_low_name.get(profile_repre_name)
-                if not repre:
-                    continue
-
-                for loader_idx, loader_name in enumerate(profile["loaders"]):
-                    if is_loaded:
-                        break
-
-                    loader = loaders_by_name.get(loader_name)
-                    if not loader:
-                        continue
-                    try:
-                        container = load_container(
-                            loader,
-                            repre["_id"],
-                            name=subset_name
-                        )
-                        loaded_containers.append(container)
-                        is_loaded = True
-
-                    except Exception as exc:
-                        if exc == IncompatibleLoaderError:
-                            self.log.info((
-                                "Loader `{}` is not compatible with"
-                                " representation `{}`"
-                            ).format(loader_name, repre["name"]))
-
-                        else:
-                            self.log.error(
-                                "Unexpected error happened during loading",
-                                exc_info=True
-                            )
-
-                        msg = "Loading failed."
-                        if loader_idx < loaders_last_idx:
-                            msg += " Trying next loader."
-                        elif repre_name_idx < repre_names_last_idx:
-                            msg += (
-                                " Loading of subset `{}` was not successful."
-                            ).format(subset_name)
-                        else:
-                            msg += " Trying next representation."
-                        self.log.info(msg)
-
-        return loaded_containers
-
-    @with_pipeline_io
-    def _collect_last_version_repres(self, asset_docs):
-        """Collect subsets, versions and representations for asset_entities.
-
-        Args:
-            asset_entities (list): Asset entities for which want to find data
-
-        Returns:
-            (dict): collected entities
-
-        Example output:
-        ```
-        {
-            {Asset ID}: {
-                "asset_entity": <AssetEntity>,
-                "subsets": {
-                    {Subset ID}: {
-                        "subset_entity": <SubsetEntity>,
-                        "version": {
-                            "version_entity": <VersionEntity>,
-                            "repres": [
-                                <RepreEntity1>, <RepreEntity2>, ...
-                            ]
-                        }
-                    },
-                    ...
-                }
-            },
-            ...
-        }
-        output[asset_id]["subsets"][subset_id]["version"]["repres"]
-        ```
-        """
-
-        output = {}
-        if not asset_docs:
-            return output
-
-        asset_docs_by_ids = {asset["_id"]: asset for asset in asset_docs}
-
-        project_name = legacy_io.active_project()
-        subsets = list(get_subsets(
-            project_name, asset_ids=asset_docs_by_ids.keys()
-        ))
-        subset_entity_by_ids = {subset["_id"]: subset for subset in subsets}
-
-        last_version_by_subset_id = get_last_versions(
-            project_name, subset_entity_by_ids.keys()
-        )
-        last_version_docs_by_id = {
-            version["_id"]: version
-            for version in last_version_by_subset_id.values()
-        }
-        repre_docs = get_representations(
-            project_name, version_ids=last_version_docs_by_id.keys()
-        )
-
-        for repre_doc in repre_docs:
-            version_id = repre_doc["parent"]
-            version_doc = last_version_docs_by_id[version_id]
-
-            subset_id = version_doc["parent"]
-            subset_doc = subset_entity_by_ids[subset_id]
-
-            asset_id = subset_doc["parent"]
-            asset_doc = asset_docs_by_ids[asset_id]
-
-            if asset_id not in output:
-                output[asset_id] = {
-                    "asset_entity": asset_doc,
-                    "subsets": {}
-                }
-
-            if subset_id not in output[asset_id]["subsets"]:
-                output[asset_id]["subsets"][subset_id] = {
-                    "subset_entity": subset_doc,
-                    "version": {
-                        "version_entity": version_doc,
-                        "repres": []
-                    }
-                }
-
-            output[asset_id]["subsets"][subset_id]["version"]["repres"].append(
-                repre_doc
-            )
-
-        return output
-
-
-@with_pipeline_io
+@deprecated("openpype.pipeline.create.get_legacy_creator_by_name")
 def get_creator_by_name(creator_name, case_sensitive=False):
     """Find creator plugin by name.
 
@@ -1496,32 +738,27 @@ def get_creator_by_name(creator_name, case_sensitive=False):
 
     Returns:
         Creator: Return first matching plugin or `None`.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
-    from openpype.pipeline import discover_legacy_creator_plugins
+    from openpype.pipeline.create import get_legacy_creator_by_name
 
-    # Lower input creator name if is not case sensitive
-    if not case_sensitive:
-        creator_name = creator_name.lower()
-
-    for creator_plugin in discover_legacy_creator_plugins():
-        _creator_name = creator_plugin.__name__
-
-        # Lower creator plugin name if is not case sensitive
-        if not case_sensitive:
-            _creator_name = _creator_name.lower()
-
-        if _creator_name == creator_name:
-            return creator_plugin
-    return None
+    return get_legacy_creator_by_name(creator_name, case_sensitive)
 
 
-@with_pipeline_io
+@deprecated
 def change_timer_to_current_context():
     """Called after context change to change timers.
 
-    TODO:
-    - use TimersManager's static method instead of reimplementing it here
+    Deprecated:
+        This method is specific for TimersManager module so please use the
+        functionality from there. Function will be removed after release
+        version 3.15.*
     """
+
+    from openpype.pipeline import legacy_io
+
     webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
     if not webserver_url:
         log.warning("Couldn't find webserver url")
@@ -1609,6 +846,8 @@ def _get_task_context_data_for_anatomy(
     return data
 
 
+@deprecated(
+    "openpype.pipeline.workfile.get_custom_workfile_template_by_context")
 def get_custom_workfile_template_by_context(
     template_profiles, project_doc, asset_doc, task_name, anatomy=None
 ):
@@ -1630,6 +869,9 @@ def get_custom_workfile_template_by_context(
     Returns:
         str: Path to template or None if none of profiles match current
             context. (Existence of formatted path is not validated.)
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
     if anatomy is None:
@@ -1662,6 +904,9 @@ def get_custom_workfile_template_by_context(
     return None
 
 
+@deprecated(
+    "openpype.pipeline.workfile.get_custom_workfile_template_by_string_context"
+)
 def get_custom_workfile_template_by_string_context(
     template_profiles, project_name, asset_name, task_name,
     dbcon=None, anatomy=None
@@ -1685,6 +930,9 @@ def get_custom_workfile_template_by_string_context(
     Returns:
         str: Path to template or None if none of profiles match current
             context. (Existence of formatted path is not validated.)
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
 
     project_name = None
@@ -1706,7 +954,7 @@ def get_custom_workfile_template_by_string_context(
     )
 
 
-@with_pipeline_io
+@deprecated("openpype.pipeline.context_tools.get_custom_workfile_template")
 def get_custom_workfile_template(template_profiles):
     """Filter and fill workfile template profiles by current context.
 
@@ -1719,7 +967,12 @@ def get_custom_workfile_template(template_profiles):
     Returns:
         str: Path to template or None if none of profiles match current
             context. (Existence of formatted path is not validated.)
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
+
+    from openpype.pipeline import legacy_io
 
     return get_custom_workfile_template_by_string_context(
         template_profiles,
@@ -1730,6 +983,7 @@ def get_custom_workfile_template(template_profiles):
     )
 
 
+@deprecated("openpype.pipeline.workfile.get_last_workfile_with_version")
 def get_last_workfile_with_version(
     workdir, file_template, fill_data, extensions
 ):
@@ -1744,79 +998,19 @@ def get_last_workfile_with_version(
     Returns:
         tuple: Last workfile<str> with version<int> if there is any otherwise
             returns (None, None).
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
-    if not os.path.exists(workdir):
-        return None, None
 
-    # Fast match on extension
-    filenames = [
-        filename
-        for filename in os.listdir(workdir)
-        if os.path.splitext(filename)[1] in extensions
-    ]
+    from openpype.pipeline.workfile import get_last_workfile_with_version
 
-    # Build template without optionals, version to digits only regex
-    # and comment to any definable value.
-    _ext = []
-    for ext in extensions:
-        if not ext.startswith("."):
-            ext = "." + ext
-        # Escape dot for regex
-        ext = "\\" + ext
-        _ext.append(ext)
-    ext_expression = "(?:" + "|".join(_ext) + ")"
-
-    # Replace `.{ext}` with `{ext}` so we are sure there is not dot at the end
-    file_template = re.sub(r"\.?{ext}", ext_expression, file_template)
-    # Replace optional keys with optional content regex
-    file_template = re.sub(r"<.*?>", r".*?", file_template)
-    # Replace `{version}` with group regex
-    file_template = re.sub(r"{version.*?}", r"([0-9]+)", file_template)
-    file_template = re.sub(r"{comment.*?}", r".+?", file_template)
-    file_template = StringTemplate.format_strict_template(
-        file_template, fill_data
+    return get_last_workfile_with_version(
+        workdir, file_template, fill_data, extensions
     )
 
-    # Match with ignore case on Windows due to the Windows
-    # OS not being case-sensitive. This avoids later running
-    # into the error that the file did exist if it existed
-    # with a different upper/lower-case.
-    kwargs = {}
-    if platform.system().lower() == "windows":
-        kwargs["flags"] = re.IGNORECASE
 
-    # Get highest version among existing matching files
-    version = None
-    output_filenames = []
-    for filename in sorted(filenames):
-        match = re.match(file_template, filename, **kwargs)
-        if not match:
-            continue
-
-        file_version = int(match.group(1))
-        if version is None or file_version > version:
-            output_filenames[:] = []
-            version = file_version
-
-        if file_version == version:
-            output_filenames.append(filename)
-
-    output_filename = None
-    if output_filenames:
-        if len(output_filenames) == 1:
-            output_filename = output_filenames[0]
-        else:
-            last_time = None
-            for _output_filename in output_filenames:
-                full_path = os.path.join(workdir, _output_filename)
-                mod_time = os.path.getmtime(full_path)
-                if last_time is None or last_time < mod_time:
-                    output_filename = _output_filename
-                    last_time = mod_time
-
-    return output_filename, version
-
-
+@deprecated("openpype.pipeline.workfile.get_last_workfile")
 def get_last_workfile(
     workdir, file_template, fill_data, extensions, full_path=False
 ):
@@ -1833,28 +1027,22 @@ def get_last_workfile(
 
     Returns:
         str: Last or first workfile as filename of full path to filename.
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
-    filename, version = get_last_workfile_with_version(
-        workdir, file_template, fill_data, extensions
+
+    from openpype.pipeline.workfile import get_last_workfile
+
+    return get_last_workfile(
+        workdir, file_template, fill_data, extensions, full_path
     )
-    if filename is None:
-        data = copy.deepcopy(fill_data)
-        data["version"] = 1
-        data.pop("comment", None)
-        if not data.get("ext"):
-            data["ext"] = extensions[0]
-        data["ext"] = data["ext"].replace('.', '')
-        filename = StringTemplate.format_strict_template(file_template, data)
-
-    if full_path:
-        return os.path.normpath(os.path.join(workdir, filename))
-
-    return filename
 
 
-@with_pipeline_io
-def get_linked_ids_for_representations(project_name, repre_ids, dbcon=None,
-                                       link_type=None, max_depth=0):
+@deprecated("openpype.client.get_linked_representation_id")
+def get_linked_ids_for_representations(
+    project_name, repre_ids, dbcon=None, link_type=None, max_depth=0
+):
     """Returns list of linked ids of particular type (if provided).
 
     Goes from representations to version, back to representations
@@ -1865,104 +1053,25 @@ def get_linked_ids_for_representations(project_name, repre_ids, dbcon=None,
             with Session.
         link_type (str): ['reference', '..]
         max_depth (int): limit how many levels of recursion
+
     Returns:
         (list) of ObjectId - linked representations
+
+    Deprecated:
+        Function will be removed after release version 3.16.*
     """
-    # Create new dbcon if not passed and use passed project name
-    if not dbcon:
-        from openpype.pipeline import AvalonMongoDB
-        dbcon = AvalonMongoDB()
-        dbcon.Session["AVALON_PROJECT"] = project_name
-    # Validate that passed dbcon has same project
-    elif dbcon.Session["AVALON_PROJECT"] != project_name:
-        raise ValueError("Passed connection does not have right project")
+
+    from openpype.client import get_linked_representation_id
 
     if not isinstance(repre_ids, list):
         repre_ids = [repre_ids]
 
-    version_ids = dbcon.distinct("parent", {
-        "_id": {"$in": repre_ids},
-        "type": "representation"
-    })
-
-    match = {
-        "_id": {"$in": version_ids},
-        "type": "version"
-    }
-
-    graph_lookup = {
-        "from": project_name,
-        "startWith": "$data.inputLinks.id",
-        "connectFromField": "data.inputLinks.id",
-        "connectToField": "_id",
-        "as": "outputs_recursive",
-        "depthField": "depth"
-    }
-    if max_depth != 0:
-        # We offset by -1 since 0 basically means no recursion
-        # but the recursion only happens after the initial lookup
-        # for outputs.
-        graph_lookup["maxDepth"] = max_depth - 1
-
-    pipeline_ = [
-        # Match
-        {"$match": match},
-        # Recursive graph lookup for inputs
-        {"$graphLookup": graph_lookup}
-    ]
-
-    result = dbcon.aggregate(pipeline_)
-    referenced_version_ids = _process_referenced_pipeline_result(result,
-                                                                 link_type)
-
-    ref_ids = dbcon.distinct(
-        "_id",
-        filter={
-            "parent": {"$in": list(referenced_version_ids)},
-            "type": "representation"
-        }
-    )
-
-    return list(ref_ids)
-
-
-def _process_referenced_pipeline_result(result, link_type):
-    """Filters result from pipeline for particular link_type.
-
-    Pipeline cannot use link_type directly in a query.
-    Returns:
-        (list)
-    """
-    referenced_version_ids = set()
-    correctly_linked_ids = set()
-    for item in result:
-        input_links = item["data"].get("inputLinks", [])
-        correctly_linked_ids = _filter_input_links(input_links,
-                                                   link_type,
-                                                   correctly_linked_ids)
-
-        # outputs_recursive in random order, sort by depth
-        outputs_recursive = sorted(item.get("outputs_recursive", []),
-                                   key=lambda d: d["depth"])
-
-        for output in outputs_recursive:
-            if output["_id"] not in correctly_linked_ids:  # leaf
-                continue
-
-            correctly_linked_ids = _filter_input_links(
-                output["data"].get("inputLinks", []),
-                link_type,
-                correctly_linked_ids)
-
-            referenced_version_ids.add(output["_id"])
-
-    return referenced_version_ids
-
-
-def _filter_input_links(input_links, link_type, correctly_linked_ids):
-    for input_link in input_links:
-        if not link_type or input_link["type"] == link_type:
-            correctly_linked_ids.add(input_link.get("id") or
-                                     input_link.get("_id"))  # legacy
-
-    return correctly_linked_ids
+    output = []
+    for repre_id in repre_ids:
+        output.extend(get_linked_representation_id(
+            project_name,
+            repre_id=repre_id,
+            link_type=link_type,
+            max_depth=max_depth
+        ))
+    return output

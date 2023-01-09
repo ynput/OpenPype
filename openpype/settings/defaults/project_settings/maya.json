@@ -1,4 +1,27 @@
 {
+    "imageio": {
+        "colorManagementPreference_v2": {
+            "enabled": true,
+            "configFilePath": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "renderSpace": "ACEScg",
+            "displayName": "sRGB",
+            "viewName": "ACES 1.0 SDR-video"
+        },
+        "colorManagementPreference": {
+            "configFilePath": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "renderSpace": "scene-linear Rec 709/sRGB",
+            "viewTransform": "sRGB gamma"
+        }
+    },
+    "mel_workspace": "workspace -fr \"shaders\" \"renderData/shaders\";\nworkspace -fr \"images\" \"renders/maya\";\nworkspace -fr \"particles\" \"particles\";\nworkspace -fr \"mayaAscii\" \"\";\nworkspace -fr \"mayaBinary\" \"\";\nworkspace -fr \"scene\" \"\";\nworkspace -fr \"alembicCache\" \"cache/alembic\";\nworkspace -fr \"renderData\" \"renderData\";\nworkspace -fr \"sourceImages\" \"sourceimages\";\nworkspace -fr \"fileCache\" \"cache/nCache\";\n",
     "ext_mapping": {
         "model": "ma",
         "mayaAscii": "ma",
@@ -33,33 +56,35 @@
     },
     "RenderSettings": {
         "apply_render_settings": true,
-        "default_render_image_folder": "",
+        "default_render_image_folder": "renders/maya",
+        "enable_all_lights": true,
         "aov_separator": "underscore",
+        "remove_aovs": false,
         "reset_current_frame": false,
         "arnold_renderer": {
-            "image_prefix": "maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>",
+            "image_prefix": "<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>",
             "image_format": "exr",
             "multilayer_exr": true,
             "tiled": true,
             "aov_list": [],
-            "additional_options": {}
+            "additional_options": []
         },
         "vray_renderer": {
-            "image_prefix": "maya/<scene>/<Layer>/<Layer>",
+            "image_prefix": "<scene>/<Layer>/<Layer>",
             "engine": "1",
-            "image_format": "png",
+            "image_format": "exr",
             "aov_list": [],
-            "additional_options": {}
+            "additional_options": []
         },
         "redshift_renderer": {
-            "image_prefix": "maya/<Scene>/<RenderLayer>/<RenderLayer>",
+            "image_prefix": "<Scene>/<RenderLayer>/<RenderLayer>",
             "primary_gi_engine": "0",
             "secondary_gi_engine": "0",
-            "image_format": "iff",
+            "image_format": "exr",
             "multilayer_exr": true,
             "force_combine": true,
             "aov_list": [],
-            "additional_options": {}
+            "additional_options": []
         }
     },
     "create": {
@@ -99,6 +124,40 @@
             "enabled": true,
             "publish_mip_map": true
         },
+        "CreateAnimation": {
+            "enabled": true,
+            "write_color_sets": false,
+            "write_face_sets": false,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateModel": {
+            "enabled": true,
+            "write_color_sets": false,
+            "write_face_sets": false,
+            "defaults": [
+                "Main",
+                "Proxy",
+                "Sculpt"
+            ]
+        },
+        "CreatePointCache": {
+            "enabled": true,
+            "write_color_sets": false,
+            "write_face_sets": false,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateProxyAlembic": {
+            "enabled": true,
+            "write_color_sets": false,
+            "write_face_sets": false,
+            "defaults": [
+                "Main"
+            ]
+        },
         "CreateMultiverseUsd": {
             "enabled": true,
             "defaults": [
@@ -117,19 +176,25 @@
                 "Main"
             ]
         },
-        "CreateAnimation": {
-            "enabled": true,
-            "write_color_sets": false,
-            "defaults": [
-                "Main"
-            ]
-          
-        },
         "CreateAss": {
             "enabled": true,
             "defaults": [
                 "Main"
-            ]
+            ],
+            "expandProcedurals": false,
+            "motionBlur": true,
+            "motionBlurKeys": 2,
+            "motionBlurLength": 0.5,
+            "maskOptions": false,
+            "maskCamera": false,
+            "maskLight": false,
+            "maskShape": false,
+            "maskShader": false,
+            "maskOverride": false,
+            "maskDriver": false,
+            "maskFilter": false,
+            "maskColor_manager": false,
+            "maskOperator": false
         },
         "CreateAssembly": {
             "enabled": true,
@@ -151,21 +216,6 @@
         },
         "CreateMayaScene": {
             "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateModel": {
-            "enabled": true,
-            "defaults": [
-                "Main",
-                "Proxy",
-                "Sculpt"
-            ]
-        },
-        "CreatePointCache": {
-            "enabled": true,
-            "write_color_sets": false,
             "defaults": [
                 "Main"
             ]
@@ -221,6 +271,9 @@
             "sync_workfile_version": false
         },
         "CollectFbxCamera": {
+            "enabled": false
+        },
+        "CollectGLTF": {
             "enabled": false
         },
         "ValidateInstanceInContext": {
@@ -542,6 +595,12 @@
             "optional": false,
             "active": true
         },
+        "ExtractProxyAlembic": {
+            "enabled": true,
+            "families": [
+                "proxyAbc"
+            ]
+        },
         "ExtractAlembic": {
             "enabled": true,
             "families": [
@@ -549,6 +608,10 @@
                 "model",
                 "vrayproxy"
             ]
+        },
+        "ExtractObj": {
+            "enabled": false,
+            "optional": true
         },
         "ValidateRigContents": {
             "enabled": false,
@@ -677,25 +740,20 @@
                     "isolate_view": true,
                     "off_screen": true
                 },
-                "PanZoom": {
-                    "pan_zoom": true
-                },
                 "Renderer": {
                     "rendererName": "vp2Renderer"
                 },
                 "Resolution": {
                     "width": 1920,
-                    "height": 1080,
-                    "percent": 1.0,
-                    "mode": "Custom"
+                    "height": 1080
                 },
                 "Viewport Options": {
                     "override_viewport_options": true,
                     "displayLights": "default",
+                    "displayTextures": true,
                     "textureMaxResolution": 1024,
                     "renderDepthOfField": true,
                     "shadows": true,
-                    "textures": true,
                     "twoSidedLighting": true,
                     "lineAAEnable": true,
                     "multiSample": 8,
@@ -718,7 +776,6 @@
                     "motionBlurShutterOpenFraction": 0.2,
                     "cameras": false,
                     "clipGhosts": false,
-                    "controlVertices": false,
                     "deformers": false,
                     "dimensions": false,
                     "dynamicConstraints": false,
@@ -730,8 +787,7 @@
                     "grid": false,
                     "hairSystems": true,
                     "handles": false,
-                    "hud": false,
-                    "hulls": false,
+                    "headsUpDisplay": false,
                     "ikHandles": false,
                     "imagePlane": true,
                     "joints": false,
@@ -742,7 +798,9 @@
                     "nCloths": false,
                     "nParticles": false,
                     "nRigids": false,
+                    "controlVertices": false,
                     "nurbsCurves": false,
+                    "hulls": false,
                     "nurbsSurfaces": false,
                     "particleInstancers": false,
                     "pivots": false,
@@ -750,7 +808,8 @@
                     "pluginShapes": false,
                     "polymeshes": true,
                     "strokes": false,
-                    "subdivSurfaces": false
+                    "subdivSurfaces": false,
+                    "textures": false
                 },
                 "Camera Options": {
                     "displayGateMask": false,
@@ -888,7 +947,7 @@
                 "current_context": [
                     {
                         "subset_name_filters": [
-                            "\".+[Mm]ain\""
+                            ".+[Mm]ain"
                         ],
                         "families": [
                             "model"
@@ -905,7 +964,8 @@
                         "subset_name_filters": [],
                         "families": [
                             "animation",
-                            "pointcache"
+                            "pointcache",
+                            "proxyAbc"
                         ],
                         "repre_names": [
                             "abc"
@@ -967,6 +1027,9 @@
                 ]
             }
         ]
+    },
+    "templated_workfile_build": {
+        "profiles": []
     },
     "filters": {
         "preset 1": {

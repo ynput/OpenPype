@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 import pyblish.api
-import openpype.api
+from openpype.pipeline.publish import ValidatePipelineOrder
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
 
@@ -12,7 +12,7 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
     Here we ensure that what has been added to the instance is unique
     """
 
-    order = openpype.api.ValidatePipelineOrder
+    order = ValidatePipelineOrder
     label = 'Non Duplicate Instance Members (ID)'
     hosts = ['maya']
     families = ["model",

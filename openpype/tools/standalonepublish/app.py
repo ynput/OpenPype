@@ -4,7 +4,7 @@ import ctypes
 import signal
 
 from bson.objectid import ObjectId
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.client import get_asset_by_id
 
@@ -13,7 +13,7 @@ from .widgets import (
 )
 from .widgets.constants import HOST_NAME
 from openpype import style
-from openpype.api import resources
+from openpype import resources
 from openpype.pipeline import AvalonMongoDB
 from openpype.modules import ModulesManager
 
@@ -236,7 +236,7 @@ def main():
     signal.signal(signal.SIGTERM, signal_handler)
 
     modules_manager = ModulesManager()
-    module = modules_manager.modules_by_name["standalonepublish_tool"]
+    module = modules_manager.modules_by_name["standalonepublisher"]
 
     window = Window(module.publish_paths)
     window.show()

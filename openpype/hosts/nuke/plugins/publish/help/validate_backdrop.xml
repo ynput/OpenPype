@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <error id="multiple_outputs">
+        <title>Found multiple outputs</title>
+        <description>
+## Invalid output amount
+
+Backdrop is having more than one outgoing connections.
+
+### How to repair?
+
+1. Use button `Center node in node graph` and navigate to the backdrop.
+2. Reorganize nodes the way only one outgoing connection is present.
+3. Hit reload button on the publisher.
+        </description>
+        <detail>
+### How could this happen?
+
+More than one node, which are found above the backdrop, are linked downstream or more output connections from a node also linked downstream.
+        </detail>
+    </error>
+    <error id="no_nodes">
+        <title>Empty backdrop</title>
+        <description>
+## Invalid empty backdrop
+
+Backdrop is empty and no nodes are found above it.
+
+### How to repair?
+
+1. Use button `Center node in node graph` and navigate to the backdrop.
+2. Add any node above it or delete it.
+3. Hit reload button on the publisher.
+        </description>
+    </error>
+</root>

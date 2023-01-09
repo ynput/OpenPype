@@ -1,16 +1,18 @@
+# -*- coding: utf-8 -*-
 import re
 
 import pyblish.api
 
 from openpype.client import get_subset_by_name
-import openpype.api
 from openpype.pipeline import legacy_io
+from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateUSDShadeModelExists(pyblish.api.InstancePlugin):
     """Validate the Instance has no current cooking errors."""
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["houdini"]
     families = ["usdShade"]
     label = "USD Shade model exists"
@@ -32,7 +34,8 @@ class ValidateUSDShadeModelExists(pyblish.api.InstancePlugin):
             project_name, model_subset, asset_doc["_id"], fields=["_id"]
         )
         if not subset_doc:
-            raise RuntimeError(
-                "USD Model subset not found: "
-                "%s (%s)" % (model_subset, asset_name)
+            raise PublishValidationError(
+                ("USD Model subset not found: "
+                 "{} ({})").format(model_subset, asset_name),
+                title=self.label
             )

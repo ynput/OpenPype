@@ -11,7 +11,11 @@ from openpype.client import (
     get_versions,
     get_representations
 )
-from openpype.lib import StringTemplate, TemplateUnsolved
+from openpype.lib import (
+    StringTemplate,
+    TemplateUnsolved,
+    format_file_size,
+)
 from openpype.pipeline import AvalonMongoDB, Anatomy
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 
@@ -133,13 +137,6 @@ class DeleteOldVersions(BaseAction):
             "items": items,
             "title": self.inteface_title
         }
-
-    def sizeof_fmt(self, num, suffix='B'):
-        for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
-            if abs(num) < 1024.0:
-                return "%3.1f%s%s" % (num, unit, suffix)
-            num /= 1024.0
-        return "%.1f%s%s" % (num, 'Yi', suffix)
 
     def launch(self, session, entities, event):
         values = event["data"].get("values")
@@ -359,7 +356,7 @@ class DeleteOldVersions(BaseAction):
                     dir_paths, file_paths_by_dir, delete=False
                 )
 
-            msg = "Total size of files: " + self.sizeof_fmt(size)
+            msg = "Total size of files: {}".format(format_file_size(size))
 
             self.log.warning(msg)
 
@@ -430,7 +427,7 @@ class DeleteOldVersions(BaseAction):
                 "message": msg
             }
 
-        msg = "Total size of files deleted: " + self.sizeof_fmt(size)
+        msg = "Total size of files deleted: {}".format(format_file_size(size))
 
         self.log.warning(msg)
 

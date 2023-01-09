@@ -4,10 +4,12 @@
 It provides Deadline JobInfo data class.
 
 """
+import json.decoder
 import os
 from abc import abstractmethod
 import platform
 import getpass
+from functools import partial
 from collections import OrderedDict
 
 import six
@@ -15,7 +17,12 @@ import attr
 import requests
 
 import pyblish.api
-from openpype.pipeline.publish import AbstractMetaInstancePlugin
+from openpype.pipeline.publish import (
+    AbstractMetaInstancePlugin,
+    KnownPublishError
+)
+
+JSONDecodeError = getattr(json.decoder, "JSONDecodeError", ValueError)
 
 
 def requests_post(*args, **kwargs):
@@ -58,6 +65,96 @@ def requests_get(*args, **kwargs):
     # add 10sec timeout before bailing out
     kwargs['timeout'] = 10
     return requests.get(*args, **kwargs)
+
+
+class DeadlineKeyValueVar(dict):
+    """
+
+    Serializes dictionary key values as "{key}={value}" like Deadline uses
+    for EnvironmentKeyValue.
+
+    As an example:
+        EnvironmentKeyValue0="A_KEY=VALUE_A"
+        EnvironmentKeyValue1="OTHER_KEY=VALUE_B"
+
+    The keys are serialized in alphabetical order (sorted).
+
+    Example:
+        >>> var = DeadlineKeyValueVar("EnvironmentKeyValue")
+        >>> var["my_var"] = "hello"
+        >>> var["my_other_var"] = "hello2"
+        >>> var.serialize()
+
+
+    """
+    def __init__(self, key):
+        super(DeadlineKeyValueVar, self).__init__()
+        self.__key = key
+
+    def serialize(self):
+        key = self.__key
+
+        # Allow custom location for index in serialized string
+        if "{}" not in key:
+            key = key + "{}"
+
+        return {
+            key.format(index): "{}={}".format(var_key, var_value)
+            for index, (var_key, var_value) in enumerate(sorted(self.items()))
+        }
+
+
+class DeadlineIndexedVar(dict):
+    """
+
+    Allows to set and query values by integer indices:
+        Query: var[1] or var.get(1)
+        Set: var[1] = "my_value"
+        Append: var += "value"
+
+    Note: Iterating the instance is not guarantueed to be the order of the
+          indices. To do so iterate with `sorted()`
+
+    """
+    def __init__(self, key):
+        super(DeadlineIndexedVar, self).__init__()
+        self.__key = key
+
+    def serialize(self):
+        key = self.__key
+
+        # Allow custom location for index in serialized string
+        if "{}" not in key:
+            key = key + "{}"
+
+        return {
+            key.format(index): value for index, value in sorted(self.items())
+        }
+
+    def next_available_index(self):
+        # Add as first unused entry
+        i = 0
+        while i in self.keys():
+            i += 1
+        return i
+
+    def update(self, data):
+        # Force the integer key check
+        for key, value in data.items():
+            self.__setitem__(key, value)
+
+    def __iadd__(self, other):
+        index = self.next_available_index()
+        self[index] = other
+        return self
+
+    def __setitem__(self, key, value):
+        if not isinstance(key, int):
+            raise TypeError("Key must be an integer: {}".format(key))
+
+        if key < 0:
+            raise ValueError("Negative index can't be set: {}".format(key))
+        dict.__setitem__(self, key, value)
 
 
 @attr.s
@@ -212,24 +309,8 @@ class DeadlineJobInfo(object):
 
     # Environment
     # ----------------------------------------------
-    _environmentKeyValue = attr.ib(factory=list)
-
-    @property
-    def EnvironmentKeyValue(self):  # noqa: N802
-        """Return all environment key values formatted for Deadline.
-
-        Returns:
-            dict: as `{'EnvironmentKeyValue0', 'key=value'}`
-
-        """
-        out = {}
-        for index, v in enumerate(self._environmentKeyValue):
-            out["EnvironmentKeyValue{}".format(index)] = v
-        return out
-
-    @EnvironmentKeyValue.setter
-    def EnvironmentKeyValue(self, val):  # noqa: N802
-        self._environmentKeyValue.append(val)
+    EnvironmentKeyValue = attr.ib(factory=partial(DeadlineKeyValueVar,
+                                                  "EnvironmentKeyValue"))
 
     IncludeEnvironment = attr.ib(default=None)  # Default: false
     UseJobEnvironmentOnly = attr.ib(default=None)  # Default: false
@@ -237,121 +318,29 @@ class DeadlineJobInfo(object):
 
     # Job Extra Info
     # ----------------------------------------------
-    _extraInfos = attr.ib(factory=list)
-    _extraInfoKeyValues = attr.ib(factory=list)
-
-    @property
-    def ExtraInfo(self):  # noqa: N802
-        """Return all ExtraInfo values formatted for Deadline.
-
-        Returns:
-            dict: as `{'ExtraInfo0': 'value'}`
-
-        """
-        out = {}
-        for index, v in enumerate(self._extraInfos):
-            out["ExtraInfo{}".format(index)] = v
-        return out
-
-    @ExtraInfo.setter
-    def ExtraInfo(self, val):  # noqa: N802
-        self._extraInfos.append(val)
-
-    @property
-    def ExtraInfoKeyValue(self):  # noqa: N802
-        """Return all ExtraInfoKeyValue values formatted for Deadline.
-
-        Returns:
-            dict: as {'ExtraInfoKeyValue0': 'key=value'}`
-
-        """
-        out = {}
-        for index, v in enumerate(self._extraInfoKeyValues):
-            out["ExtraInfoKeyValue{}".format(index)] = v
-        return out
-
-    @ExtraInfoKeyValue.setter
-    def ExtraInfoKeyValue(self, val):  # noqa: N802
-        self._extraInfoKeyValues.append(val)
+    ExtraInfo = attr.ib(factory=partial(DeadlineIndexedVar, "ExtraInfo"))
+    ExtraInfoKeyValue = attr.ib(factory=partial(DeadlineKeyValueVar,
+                                                "ExtraInfoKeyValue"))
 
     # Task Extra Info Names
     # ----------------------------------------------
     OverrideTaskExtraInfoNames = attr.ib(default=None)  # Default: false
-    _taskExtraInfos = attr.ib(factory=list)
-
-    @property
-    def TaskExtraInfoName(self):  # noqa: N802
-        """Return all TaskExtraInfoName values formatted for Deadline.
-
-        Returns:
-            dict: as `{'TaskExtraInfoName0': 'value'}`
-
-        """
-        out = {}
-        for index, v in enumerate(self._taskExtraInfos):
-            out["TaskExtraInfoName{}".format(index)] = v
-        return out
-
-    @TaskExtraInfoName.setter
-    def TaskExtraInfoName(self, val):  # noqa: N802
-        self._taskExtraInfos.append(val)
+    TaskExtraInfoName = attr.ib(factory=partial(DeadlineIndexedVar,
+                                                "TaskExtraInfoName"))
 
     # Output
     # ----------------------------------------------
-    _outputFilename = attr.ib(factory=list)
-    _outputFilenameTile = attr.ib(factory=list)
-    _outputDirectory = attr.ib(factory=list)
+    OutputFilename = attr.ib(factory=partial(DeadlineIndexedVar,
+                                             "OutputFilename"))
+    OutputFilenameTile = attr.ib(factory=partial(DeadlineIndexedVar,
+                                                 "OutputFilename{}Tile"))
+    OutputDirectory = attr.ib(factory=partial(DeadlineIndexedVar,
+                                              "OutputDirectory"))
 
-    @property
-    def OutputFilename(self):  # noqa: N802
-        """Return all OutputFilename values formatted for Deadline.
-
-        Returns:
-            dict: as `{'OutputFilename0': 'filename'}`
-
-        """
-        out = {}
-        for index, v in enumerate(self._outputFilename):
-            out["OutputFilename{}".format(index)] = v
-        return out
-
-    @OutputFilename.setter
-    def OutputFilename(self, val):  # noqa: N802
-        self._outputFilename.append(val)
-
-    @property
-    def OutputFilenameTile(self):  # noqa: N802
-        """Return all OutputFilename#Tile values formatted for Deadline.
-
-        Returns:
-            dict: as `{'OutputFilenme#Tile': 'tile'}`
-
-        """
-        out = {}
-        for index, v in enumerate(self._outputFilenameTile):
-            out["OutputFilename{}Tile".format(index)] = v
-        return out
-
-    @OutputFilenameTile.setter
-    def OutputFilenameTile(self, val):  # noqa: N802
-        self._outputFilenameTile.append(val)
-
-    @property
-    def OutputDirectory(self):  # noqa: N802
-        """Return all OutputDirectory values formatted for Deadline.
-
-        Returns:
-            dict: as `{'OutputDirectory0': 'dir'}`
-
-        """
-        out = {}
-        for index, v in enumerate(self._outputDirectory):
-            out["OutputDirectory{}".format(index)] = v
-        return out
-
-    @OutputDirectory.setter
-    def OutputDirectory(self, val):  # noqa: N802
-        self._outputDirectory.append(val)
+    # Asset Dependency
+    # ----------------------------------------------
+    AssetDependency = attr.ib(factory=partial(DeadlineIndexedVar,
+                                              "AssetDependency"))
 
     # Tile Job
     # ----------------------------------------------
@@ -375,7 +364,7 @@ class DeadlineJobInfo(object):
 
         """
         def filter_data(a, v):
-            if a.name.startswith("_"):
+            if isinstance(v, (DeadlineIndexedVar, DeadlineKeyValueVar)):
                 return False
             if v is None:
                 return False
@@ -383,14 +372,26 @@ class DeadlineJobInfo(object):
 
         serialized = attr.asdict(
             self, dict_factory=OrderedDict, filter=filter_data)
-        serialized.update(self.EnvironmentKeyValue)
-        serialized.update(self.ExtraInfo)
-        serialized.update(self.ExtraInfoKeyValue)
-        serialized.update(self.TaskExtraInfoName)
-        serialized.update(self.OutputFilename)
-        serialized.update(self.OutputFilenameTile)
-        serialized.update(self.OutputDirectory)
+
+        # Custom serialize these attributes
+        for attribute in [
+            self.EnvironmentKeyValue,
+            self.ExtraInfo,
+            self.ExtraInfoKeyValue,
+            self.TaskExtraInfoName,
+            self.OutputFilename,
+            self.OutputFilenameTile,
+            self.OutputDirectory,
+            self.AssetDependency
+        ]:
+            serialized.update(attribute.serialize())
+
         return serialized
+
+    def update(self, data):
+        """Update instance with data dict"""
+        for key, value in data.items():
+            setattr(self, key, value)
 
 
 @six.add_metaclass(AbstractMetaInstancePlugin)
@@ -515,68 +516,72 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
             published.
 
         """
-        anatomy = self._instance.context.data['anatomy']
-        file_path = None
-        for i in self._instance.context:
-            if "workfile" in i.data["families"] \
-                    or i.data["family"] == "workfile":
-                # test if there is instance of workfile waiting
-                # to be published.
-                assert i.data["publish"] is True, (
-                    "Workfile (scene) must be published along")
-                # determine published path from Anatomy.
-                template_data = i.data.get("anatomyData")
-                rep = i.data.get("representations")[0].get("ext")
-                template_data["representation"] = rep
-                template_data["ext"] = rep
-                template_data["comment"] = None
-                anatomy_filled = anatomy.format(template_data)
-                template_filled = anatomy_filled["publish"]["path"]
-                file_path = os.path.normpath(template_filled)
 
-                self.log.info("Using published scene for render {}".format(
-                    file_path))
+        instance = self._instance
+        workfile_instance = self._get_workfile_instance(instance.context)
+        if workfile_instance is None:
+            return
 
-                if not os.path.exists(file_path):
-                    self.log.error("published scene does not exist!")
-                    raise
+        # determine published path from Anatomy.
+        template_data = workfile_instance.data.get("anatomyData")
+        rep = workfile_instance.data.get("representations")[0]
+        template_data["representation"] = rep.get("name")
+        template_data["ext"] = rep.get("ext")
+        template_data["comment"] = None
 
-                if not replace_in_path:
-                    return file_path
+        anatomy = instance.context.data['anatomy']
+        anatomy_filled = anatomy.format(template_data)
+        template_filled = anatomy_filled["publish"]["path"]
+        file_path = os.path.normpath(template_filled)
 
-                # now we need to switch scene in expected files
-                # because <scene> token will now point to published
-                # scene file and that might differ from current one
-                new_scene = os.path.splitext(
-                    os.path.basename(file_path))[0]
-                orig_scene = os.path.splitext(
-                    os.path.basename(
-                        self._instance.context.data["currentFile"]))[0]
-                exp = self._instance.data.get("expectedFiles")
+        self.log.info("Using published scene for render {}".format(file_path))
 
-                if isinstance(exp[0], dict):
-                    # we have aovs and we need to iterate over them
-                    new_exp = {}
-                    for aov, files in exp[0].items():
-                        replaced_files = []
-                        for f in files:
-                            replaced_files.append(
-                                str(f).replace(orig_scene, new_scene)
-                            )
-                        new_exp[aov] = replaced_files
-                    # [] might be too much here, TODO
-                    self._instance.data["expectedFiles"] = [new_exp]
-                else:
-                    new_exp = []
-                    for f in exp:
-                        new_exp.append(
-                            str(f).replace(orig_scene, new_scene)
-                        )
-                    self._instance.data["expectedFiles"] = new_exp
+        if not os.path.exists(file_path):
+            self.log.error("published scene does not exist!")
+            raise
 
-                self.log.info("Scene name was switched {} -> {}".format(
-                    orig_scene, new_scene
-                ))
+        if not replace_in_path:
+            return file_path
+
+        # now we need to switch scene in expected files
+        # because <scene> token will now point to published
+        # scene file and that might differ from current one
+        def _clean_name(path):
+            return os.path.splitext(os.path.basename(path))[0]
+
+        new_scene = _clean_name(file_path)
+        orig_scene = _clean_name(instance.context.data["currentFile"])
+        expected_files = instance.data.get("expectedFiles")
+
+        if isinstance(expected_files[0], dict):
+            # we have aovs and we need to iterate over them
+            new_exp = {}
+            for aov, files in expected_files[0].items():
+                replaced_files = []
+                for f in files:
+                    replaced_files.append(
+                        str(f).replace(orig_scene, new_scene)
+                    )
+                new_exp[aov] = replaced_files
+            # [] might be too much here, TODO
+            instance.data["expectedFiles"] = [new_exp]
+        else:
+            new_exp = []
+            for f in expected_files:
+                new_exp.append(
+                    str(f).replace(orig_scene, new_scene)
+                )
+            instance.data["expectedFiles"] = new_exp
+
+        metadata_folder = instance.data.get("publishRenderMetadataFolder")
+        if metadata_folder:
+            metadata_folder = metadata_folder.replace(orig_scene,
+                                                      new_scene)
+            instance.data["publishRenderMetadataFolder"] = metadata_folder
+
+        self.log.info("Scene name was switched {} -> {}".format(
+            orig_scene, new_scene
+        ))
 
         return file_path
 
@@ -615,7 +620,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
             str: resulting Deadline job id.
 
         Throws:
-            RuntimeError: if submission fails.
+            KnownPublishError: if submission fails.
 
         """
         url = "{}/api/jobs".format(self._deadline_url)
@@ -625,10 +630,36 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
             self.log.error(response.status_code)
             self.log.error(response.content)
             self.log.debug(payload)
-            raise RuntimeError(response.text)
+            raise KnownPublishError(response.text)
 
-        result = response.json()
+        try:
+            result = response.json()
+        except JSONDecodeError:
+            msg = "Broken response {}. ".format(response)
+            msg += "Try restarting the Deadline Webservice."
+            self.log.warning(msg, exc_info=True)
+            raise KnownPublishError("Broken response from DL")
+
         # for submit publish job
         self._instance.data["deadlineSubmissionJob"] = result
 
         return result["_id"]
+
+    @staticmethod
+    def _get_workfile_instance(context):
+        """Find workfile instance in context"""
+        for i in context:
+
+            is_workfile = (
+                "workfile" in i.data.get("families", []) or
+                i.data["family"] == "workfile"
+            )
+            if not is_workfile:
+                continue
+
+            # test if there is instance of workfile waiting
+            # to be published.
+            assert i.data["publish"] is True, (
+                "Workfile (scene) must be published along")
+
+            return i

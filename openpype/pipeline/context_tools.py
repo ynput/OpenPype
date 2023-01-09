@@ -5,6 +5,7 @@ import json
 import types
 import logging
 import platform
+import uuid
 
 import pyblish.api
 from pyblish.lib import MessageHandler
@@ -16,22 +17,28 @@ from openpype.client import (
     get_asset_by_name,
     version_is_latest,
 )
+from openpype.lib.events import emit_event
 from openpype.modules import load_modules, ModulesManager
 from openpype.settings import get_project_settings
-from openpype.lib import filter_pyblish_plugins
 
+from .publish.lib import filter_pyblish_plugins
 from .anatomy import Anatomy
 from .template_data import get_template_data_with_names
+from .workfile import (
+    get_workfile_template_key,
+    get_custom_workfile_template_by_string_context,
+)
 from . import (
     legacy_io,
     register_loader_plugin_path,
-    register_inventory_action,
+    register_inventory_action_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
 )
 
 
 _is_installed = False
+_process_id = None
 _registered_root = {"_": ""}
 _registered_host = {"_": None}
 # Keep modules manager (and it's modules) in memory
@@ -151,17 +158,24 @@ def install_openpype_plugins(project_name=None, host_name=None):
     pyblish.api.register_discovery_filter(filter_pyblish_plugins)
     register_loader_plugin_path(LOAD_PATH)
 
-    modules_manager = _get_modules_manager()
-    publish_plugin_dirs = modules_manager.collect_plugin_paths()["publish"]
-    for path in publish_plugin_dirs:
-        pyblish.api.register_plugin_path(path)
-
     if host_name is None:
         host_name = os.environ.get("AVALON_APP")
 
-    creator_paths = modules_manager.collect_creator_plugin_paths(host_name)
-    for creator_path in creator_paths:
-        register_creator_plugin_path(creator_path)
+    modules_manager = _get_modules_manager()
+    publish_plugin_dirs = modules_manager.collect_publish_plugin_paths(
+        host_name)
+    for path in publish_plugin_dirs:
+        pyblish.api.register_plugin_path(path)
+
+    create_plugin_paths = modules_manager.collect_create_plugin_paths(
+        host_name)
+    for path in create_plugin_paths:
+        register_creator_plugin_path(path)
+
+    load_plugin_paths = modules_manager.collect_load_plugin_paths(
+        host_name)
+    for path in load_plugin_paths:
+        register_loader_plugin_path(path)
 
     if project_name is None:
         project_name = os.environ.get("AVALON_PROJECT")
@@ -192,7 +206,7 @@ def install_openpype_plugins(project_name=None, host_name=None):
             pyblish.api.register_plugin_path(path)
             register_loader_plugin_path(path)
             register_creator_plugin_path(path)
-            register_inventory_action(path)
+            register_inventory_action_path(path)
 
 
 def uninstall_host():
@@ -377,3 +391,182 @@ def get_template_data_from_session(session=None, system_settings=None):
     return get_template_data_with_names(
         project_name, asset_name, task_name, host_name, system_settings
     )
+
+
+def get_workdir_from_session(session=None, template_key=None):
+    """Template data for template fill from session keys.
+
+    Args:
+        session (Union[Dict[str, str], None]): The Session to use. If not
+            provided use the currently active global Session.
+        template_key (str): Prepared template key from which workdir is
+            calculated.
+
+    Returns:
+        str: Workdir path.
+    """
+
+    if session is None:
+        session = legacy_io.Session
+    project_name = session["AVALON_PROJECT"]
+    host_name = session["AVALON_APP"]
+    anatomy = Anatomy(project_name)
+    template_data = get_template_data_from_session(session)
+    anatomy_filled = anatomy.format(template_data)
+
+    if not template_key:
+        task_type = template_data["task"]["type"]
+        template_key = get_workfile_template_key(
+            task_type,
+            host_name,
+            project_name=project_name
+        )
+    path = anatomy_filled[template_key]["folder"]
+    if path:
+        path = os.path.normpath(path)
+    return path
+
+
+def get_custom_workfile_template_from_session(
+    session=None, project_settings=None
+):
+    """Filter and fill workfile template profiles by current context.
+
+    Current context is defined by `legacy_io.Session`. That's why this
+    function should be used only inside host where context is set and stable.
+
+    Args:
+        session (Union[None, Dict[str, str]]): Session from which are taken
+            data.
+        project_settings(Dict[str, Any]): Template profiles from settings.
+
+    Returns:
+        str: Path to template or None if none of profiles match current
+            context. (Existence of formatted path is not validated.)
+    """
+
+    if session is None:
+        session = legacy_io.Session
+
+    return get_custom_workfile_template_by_string_context(
+        session["AVALON_PROJECT"],
+        session["AVALON_ASSET"],
+        session["AVALON_TASK"],
+        session["AVALON_APP"],
+        project_settings=project_settings
+    )
+
+
+def compute_session_changes(
+    session, asset_doc, task_name, template_key=None
+):
+    """Compute the changes for a session object on task under asset.
+
+    Function does not change the session object, only returns changes.
+
+    Args:
+        session (Dict[str, str]): The initial session to compute changes to.
+            This is required for computing the full Work Directory, as that
+            also depends on the values that haven't changed.
+        asset_doc (Dict[str, Any]): Asset document to switch to.
+        task_name (str): Name of task to switch to.
+        template_key (Union[str, None]): Prepare workfile template key in
+            anatomy templates.
+
+    Returns:
+        Dict[str, str]: Changes in the Session dictionary.
+    """
+
+    changes = {}
+
+    # Get asset document and asset
+    if not asset_doc:
+        task_name = None
+        asset_name = None
+    else:
+        asset_name = asset_doc["name"]
+
+    # Detect any changes compared session
+    mapping = {
+        "AVALON_ASSET": asset_name,
+        "AVALON_TASK": task_name,
+    }
+    changes = {
+        key: value
+        for key, value in mapping.items()
+        if value != session.get(key)
+    }
+    if not changes:
+        return changes
+
+    # Compute work directory (with the temporary changed session so far)
+    changed_session = session.copy()
+    changed_session.update(changes)
+
+    workdir = None
+    if asset_doc:
+        workdir = get_workdir_from_session(
+            changed_session, template_key
+        )
+
+    changes["AVALON_WORKDIR"] = workdir
+
+    return changes
+
+
+def change_current_context(asset_doc, task_name, template_key=None):
+    """Update active Session to a new task work area.
+
+    This updates the live Session to a different task under asset.
+
+    Args:
+        asset_doc (Dict[str, Any]): The asset document to set.
+        task_name (str): The task to set under asset.
+        template_key (Union[str, None]): Prepared template key to be used for
+            workfile template in Anatomy.
+
+    Returns:
+        Dict[str, str]: The changed key, values in the current Session.
+    """
+
+    changes = compute_session_changes(
+        legacy_io.Session,
+        asset_doc,
+        task_name,
+        template_key=template_key
+    )
+
+    # Update the Session and environments. Pop from environments all keys with
+    # value set to None.
+    for key, value in changes.items():
+        legacy_io.Session[key] = value
+        if value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = value
+
+    data = changes.copy()
+    # Convert env keys to human readable keys
+    data["project_name"] = legacy_io.Session["AVALON_PROJECT"]
+    data["asset_name"] = legacy_io.Session["AVALON_ASSET"]
+    data["task_name"] = legacy_io.Session["AVALON_TASK"]
+
+    # Emit session change
+    emit_event("taskChanged", data)
+
+    return changes
+
+
+def get_process_id():
+    """Fake process id created on demand using uuid.
+
+    Can be used to create process specific folders in temp directory.
+
+    Returns:
+        str: Process id.
+    """
+
+    global _process_id
+    if _process_id is None:
+        _process_id = str(uuid.uuid4())
+    return _process_id

@@ -114,6 +114,13 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 instance.data["deadlineSubmissionJob"] = resp.json()
                 instance.data["publishJobState"] = "Suspended"
 
+                # add to list of job Id
+                if not instance.data.get("bakingSubmissionJobs"):
+                    instance.data["bakingSubmissionJobs"] = []
+
+                instance.data["bakingSubmissionJobs"].append(
+                    resp.json()["_id"])
+
         # redefinition of families
         if "render.farm" in families:
             instance.data['family'] = 'write'
@@ -253,7 +260,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             "PYBLISHPLUGINPATH",
             "NUKE_PATH",
             "TOOL_ENV",
-            "FOUNDRY_LICENSE"
+            "FOUNDRY_LICENSE",
+            "OPENPYPE_VERSION"
         ]
         # Add mongo url if it's enabled
         if instance.context.data.get("deadlinePassMongoUrl"):

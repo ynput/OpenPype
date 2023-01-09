@@ -1,6 +1,7 @@
-import nuke
 import pyblish
-from openpype.hosts.nuke.api.lib import maintained_selection
+from openpype.pipeline import PublishXmlValidationError
+from openpype.hosts.nuke.api import maintained_selection
+import nuke
 
 
 class OpenFailedGroupNode(pyblish.api.Action):
@@ -8,7 +9,7 @@ class OpenFailedGroupNode(pyblish.api.Action):
     Centering failed instance node in node grap
     """
 
-    label = "Open Gizmo in Node Graph"
+    label = "Open Group"
     icon = "wrench"
     on = "failed"
 
@@ -48,11 +49,23 @@ class ValidateGizmo(pyblish.api.InstancePlugin):
 
         with grpn:
             connections_out = nuke.allNodes('Output')
-            msg_multiple_outputs = "Only one outcoming connection from "
-            "\"{}\" is allowed".format(instance.data["name"])
-            assert len(connections_out) <= 1, msg_multiple_outputs
+            msg_multiple_outputs = (
+                "Only one outcoming connection from "
+                "\"{}\" is allowed").format(instance.data["name"])
+
+            if len(connections_out) > 1:
+                raise PublishXmlValidationError(
+                    self, msg_multiple_outputs, "multiple_outputs",
+                    {"node_name": grpn["name"].value()}
+                )
 
             connections_in = nuke.allNodes('Input')
-            msg_missing_inputs = "At least one Input node has to be used in: "
-            "\"{}\"".format(instance.data["name"])
-            assert len(connections_in) >= 1, msg_missing_inputs
+            msg_missing_inputs = (
+                "At least one Input node has to be inside Group: "
+                "\"{}\"").format(instance.data["name"])
+
+            if len(connections_in) == 0:
+                raise PublishXmlValidationError(
+                    self, msg_missing_inputs, "no_inputs",
+                    {"node_name": grpn["name"].value()}
+                )

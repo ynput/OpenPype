@@ -9,7 +9,7 @@ from openpype.pipeline import (
     register_creator_plugin_path,
     legacy_io,
 )
-from openpype.host import HostBase, INewPublisher
+from openpype.host import HostBase, IPublishHost
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(
@@ -19,7 +19,7 @@ PUBLISH_PATH = os.path.join(ROOT_DIR, "plugins", "publish")
 CREATE_PATH = os.path.join(ROOT_DIR, "plugins", "create")
 
 
-class TrayPublisherHost(HostBase, INewPublisher):
+class TrayPublisherHost(HostBase, IPublishHost):
     name = "traypublisher"
 
     def install(self):

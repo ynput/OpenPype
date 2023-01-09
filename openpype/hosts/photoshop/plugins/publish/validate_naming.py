@@ -1,10 +1,13 @@
 import re
 
 import pyblish.api
-import openpype.api
-from openpype.pipeline import PublishXmlValidationError
+
 from openpype.hosts.photoshop import api as photoshop
 from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishXmlValidationError,
+)
 
 
 class ValidateNamingRepair(pyblish.api.Action):
@@ -72,7 +75,7 @@ class ValidateNaming(pyblish.api.InstancePlugin):
 
     label = "Validate Naming"
     hosts = ["photoshop"]
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     families = ["image"]
     actions = [ValidateNamingRepair]
 

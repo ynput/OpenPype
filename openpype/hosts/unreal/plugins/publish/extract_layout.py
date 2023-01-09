@@ -3,18 +3,15 @@ import os
 import json
 import math
 
-from bson.objectid import ObjectId
-
 import unreal
 from unreal import EditorLevelLibrary as ell
 from unreal import EditorAssetLibrary as eal
 
 from openpype.client import get_representation_by_name
-import openpype.api
-from openpype.pipeline import legacy_io
+from openpype.pipeline import legacy_io, publish
 
 
-class ExtractLayout(openpype.api.Extractor):
+class ExtractLayout(publish.Extractor):
     """Extract a layout."""
 
     label = "Extract Layout"

@@ -1,7 +1,17 @@
+import inspect
 from abc import ABCMeta
+
+import pyblish.api
 from pyblish.plugin import MetaPlugin, ExplicitMetaPlugin
+
 from openpype.lib import BoolDef
-from .lib import load_help_content_from_plugin
+
+from .lib import (
+    load_help_content_from_plugin,
+    get_errored_instances_from_context,
+    get_errored_plugins_from_context,
+    get_instance_staging_dir,
+)
 
 
 class AbstractMetaInstancePlugin(ABCMeta, MetaPlugin):
@@ -123,6 +133,25 @@ class OpenPypePyblishPluginMixin:
                 )
         return attribute_values
 
+    @staticmethod
+    def get_attr_values_from_data_for_plugin(plugin, data):
+        """Get attribute values for attribute definitions from data.
+
+        Args:
+            plugin (Union[publish.api.Plugin, Type[publish.api.Plugin]]): The
+                plugin for which attributes are extracted.
+            data(dict): Data from instance or context.
+        """
+
+        if not inspect.isclass(plugin):
+            plugin = plugin.__class__
+
+        return (
+            data
+            .get("publish_attributes", {})
+            .get(plugin.__name__, {})
+        )
+
     def get_attr_values_from_data(self, data):
         """Get attribute values for attribute definitions from data.
 
@@ -130,11 +159,7 @@ class OpenPypePyblishPluginMixin:
             data(dict): Data from instance or context.
         """
 
-        return (
-            data
-            .get("publish_attributes", {})
-            .get(self.__class__.__name__, {})
-        )
+        return self.get_attr_values_from_data_for_plugin(self.__class__, data)
 
 
 class OptionalPyblishPluginMixin(OpenPypePyblishPluginMixin):
@@ -184,3 +209,74 @@ class OptionalPyblishPluginMixin(OpenPypePyblishPluginMixin):
         if active is None:
             active = getattr(self, "active", True)
         return active
+
+
+class RepairAction(pyblish.api.Action):
+    """Repairs the action
+
+    To process the repairing this requires a static `repair(instance)` method
+    is available on the plugin.
+    """
+
+    label = "Repair"
+    on = "failed"  # This action is only available on a failed plug-in
+    icon = "wrench"  # Icon from Awesome Icon
+
+    def process(self, context, plugin):
+        if not hasattr(plugin, "repair"):
+            raise RuntimeError("Plug-in does not have repair method.")
+
+        # Get the errored instances
+        self.log.info("Finding failed instances..")
+        errored_instances = get_errored_instances_from_context(context)
+
+        # Apply pyblish.logic to get the instances for the plug-in
+        instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
+        for instance in instances:
+            plugin.repair(instance)
+
+
+class RepairContextAction(pyblish.api.Action):
+    """Repairs the action
+
+    To process the repairing this requires a static `repair(instance)` method
+    is available on the plugin.
+    """
+
+    label = "Repair"
+    on = "failed"  # This action is only available on a failed plug-in
+
+    def process(self, context, plugin):
+        if not hasattr(plugin, "repair"):
+            raise RuntimeError("Plug-in does not have repair method.")
+
+        # Get the errored instances
+        self.log.info("Finding failed instances..")
+        errored_plugins = get_errored_plugins_from_context(context)
+
+        # Apply pyblish.logic to get the instances for the plug-in
+        if plugin in errored_plugins:
+            self.log.info("Attempting fix ...")
+            plugin.repair(context)
+
+
+class Extractor(pyblish.api.InstancePlugin):
+    """Extractor base class.
+
+    The extractor base class implements a "staging_dir" function used to
+    generate a temporary directory for an instance to extract to.
+
+    This temporary directory is generated through `tempfile.mkdtemp()`
+
+    """
+
+    order = 2.0
+
+    def staging_dir(self, instance):
+        """Provide a temporary directory in which to store extracted files
+
+        Upon calling this method the staging directory is stored inside
+        the instance.data['stagingDir']
+        """
+
+        return get_instance_staging_dir(instance)

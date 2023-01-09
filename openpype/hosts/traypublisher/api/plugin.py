@@ -1,10 +1,12 @@
 from openpype.lib.attribute_definitions import FileDef
+from openpype.lib.transcoding import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
 from openpype.pipeline.create import (
     Creator,
     HiddenCreator,
-    CreatedInstance
+    CreatedInstance,
+    cache_and_get_instances,
+    PRE_CREATE_THUMBNAIL_KEY,
 )
-
 from .pipeline import (
     list_instances,
     update_instances,
@@ -12,40 +14,20 @@ from .pipeline import (
     HostContext,
 )
 
-IMAGE_EXTENSIONS = [
-    ".ani", ".anim", ".apng", ".art", ".bmp", ".bpg", ".bsave", ".cal",
-    ".cin", ".cpc", ".cpt", ".dds", ".dpx", ".ecw", ".exr", ".fits",
-    ".flic", ".flif", ".fpx", ".gif", ".hdri", ".hevc", ".icer",
-    ".icns", ".ico", ".cur", ".ics", ".ilbm", ".jbig", ".jbig2",
-    ".jng", ".jpeg", ".jpeg-ls", ".jpeg", ".2000", ".jpg", ".xr",
-    ".jpeg", ".xt", ".jpeg-hdr", ".kra", ".mng", ".miff", ".nrrd",
-    ".ora", ".pam", ".pbm", ".pgm", ".ppm", ".pnm", ".pcx", ".pgf",
-    ".pictor", ".png", ".psb", ".psp", ".qtvr", ".ras",
-    ".rgbe", ".logluv", ".tiff", ".sgi", ".tga", ".tiff", ".tiff/ep",
-    ".tiff/it", ".ufo", ".ufp", ".wbmp", ".webp", ".xbm", ".xcf",
-    ".xpm", ".xwd"
-]
-VIDEO_EXTENSIONS = [
-    ".3g2", ".3gp", ".amv", ".asf", ".avi", ".drc", ".f4a", ".f4b",
-    ".f4p", ".f4v", ".flv", ".gif", ".gifv", ".m2v", ".m4p", ".m4v",
-    ".mkv", ".mng", ".mov", ".mp2", ".mp4", ".mpe", ".mpeg", ".mpg",
-    ".mpv", ".mxf", ".nsv", ".ogg", ".ogv", ".qt", ".rm", ".rmvb",
-    ".roq", ".svi", ".vob", ".webm", ".wmv", ".yuv"
-]
-REVIEW_EXTENSIONS = IMAGE_EXTENSIONS + VIDEO_EXTENSIONS
+REVIEW_EXTENSIONS = set(IMAGE_EXTENSIONS) | set(VIDEO_EXTENSIONS)
+SHARED_DATA_KEY = "openpype.traypublisher.instances"
 
 
 class HiddenTrayPublishCreator(HiddenCreator):
     host_name = "traypublisher"
 
     def collect_instances(self):
-        for instance_data in list_instances():
-            creator_id = instance_data.get("creator_identifier")
-            if creator_id == self.identifier:
-                instance = CreatedInstance.from_existing(
-                    instance_data, self
-                )
-                self._add_instance_to_context(instance)
+        instances_by_identifier = cache_and_get_instances(
+            self, SHARED_DATA_KEY, list_instances
+        )
+        for instance_data in instances_by_identifier[self.identifier]:
+            instance = CreatedInstance.from_existing(instance_data, self)
+            self._add_instance_to_context(instance)
 
     def update_instances(self, update_list):
         update_instances(update_list)
@@ -76,13 +58,12 @@ class TrayPublishCreator(Creator):
     host_name = "traypublisher"
 
     def collect_instances(self):
-        for instance_data in list_instances():
-            creator_id = instance_data.get("creator_identifier")
-            if creator_id == self.identifier:
-                instance = CreatedInstance.from_existing(
-                    instance_data, self
-                )
-                self._add_instance_to_context(instance)
+        instances_by_identifier = cache_and_get_instances(
+            self, SHARED_DATA_KEY, list_instances
+        )
+        for instance_data in instances_by_identifier[self.identifier]:
+            instance = CreatedInstance.from_existing(instance_data, self)
+            self._add_instance_to_context(instance)
 
     def update_instances(self, update_list):
         update_instances(update_list)
@@ -104,23 +85,31 @@ class TrayPublishCreator(Creator):
 
         # Host implementation of storing metadata about instance
         HostContext.add_instance(new_instance.data_to_store())
+        new_instance.mark_as_stored()
+
         # Add instance to current context
         self._add_instance_to_context(new_instance)
 
 
 class SettingsCreator(TrayPublishCreator):
     create_allow_context_change = True
+    create_allow_thumbnail = True
 
     extensions = []
 
     def create(self, subset_name, data, pre_create_data):
         # Pass precreate data to creator attributes
+        thumbnail_path = pre_create_data.pop(PRE_CREATE_THUMBNAIL_KEY, None)
+
         data["creator_attributes"] = pre_create_data
         data["settings_creator"] = True
         # Create new instance
         new_instance = CreatedInstance(self.family, subset_name, data, self)
 
         self._store_new_instance(new_instance)
+
+        if thumbnail_path:
+            self.set_instance_thumbnail_path(new_instance.id, thumbnail_path)
 
     def get_instance_attr_defs(self):
         return [

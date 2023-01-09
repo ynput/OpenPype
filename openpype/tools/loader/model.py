@@ -17,6 +17,7 @@ from openpype.client import (
     get_representations
 )
 from openpype.pipeline import (
+    registered_host,
     HeroVersionType,
     schema,
 )
@@ -24,6 +25,7 @@ from openpype.pipeline import (
 from openpype.style import get_default_entity_icon_color
 from openpype.tools.utils.models import TreeModel, Item
 from openpype.tools.utils import lib
+from openpype.host import ILoadHost
 
 from openpype.modules import ModulesManager
 from openpype.tools.utils.constants import (
@@ -136,6 +138,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         "duration",
         "handles",
         "step",
+        "loaded_in_scene",
         "repre_info"
     ]
 
@@ -150,6 +153,7 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         "duration": "Duration",
         "handles": "Handles",
         "step": "Step",
+        "loaded_in_scene": "In scene",
         "repre_info": "Availability"
     }
 
@@ -231,8 +235,14 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         self._doc_fetching_stop = False
         self._doc_payload = {}
 
-        self.doc_fetched.connect(self._on_doc_fetched)
+        self._host = registered_host()
+        self._loaded_representation_ids = set()
 
+        # Refresh loaded scene containers only every 3 seconds at most
+        self._host_loaded_refresh_timeout = 3
+        self._host_loaded_refresh_time = 0
+
+        self.doc_fetched.connect(self._on_doc_fetched)
         self.refresh()
 
     def get_item_by_id(self, item_id):
@@ -272,15 +282,17 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
                 # update availability on active site when version changes
                 if self.sync_server.enabled and version_doc:
-                    query = self._repre_per_version_pipeline(
-                        [version_doc["_id"]],
-                        self.active_site,
-                        self.remote_site
+                    repres_info = list(
+                        self.sync_server.get_repre_info_for_versions(
+                            project_name,
+                            [version_doc["_id"]],
+                            self.active_site,
+                            self.remote_site
+                        )
                     )
-                    docs = list(self.dbcon.aggregate(query))
-                    if docs:
-                        repre = docs.pop()
-                        version_doc["data"].update(self._get_repre_dict(repre))
+                    if repres_info:
+                        version_doc["data"].update(
+                            self._get_repre_dict(repres_info[0]))
 
             self.set_version(index, version_doc)
 
@@ -472,29 +484,56 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
 
             last_versions_by_subset_id[subset_id] = hero_version
 
-        repre_info = {}
+        # Check loaded subsets
+        loaded_subset_ids = set()
+        ids = self._loaded_representation_ids
+        if ids:
+            if self._doc_fetching_stop:
+                return
+
+            # Get subset ids from loaded representations in workfile
+            # todo: optimize with aggregation query to distinct subset id
+            representations = get_representations(project_name,
+                                                  representation_ids=ids,
+                                                  fields=["parent"])
+            version_ids = set(repre["parent"] for repre in representations)
+            versions = get_versions(project_name,
+                                    version_ids=version_ids,
+                                    fields=["parent"])
+            loaded_subset_ids = set(version["parent"] for version in versions)
+
+        if self._doc_fetching_stop:
+            return
+
+        repre_info_by_version_id = {}
         if self.sync_server.enabled:
-            version_ids = set()
+            versions_by_id = {}
             for _subset_id, doc in last_versions_by_subset_id.items():
-                version_ids.add(doc["_id"])
+                versions_by_id[doc["_id"]] = doc
 
-            query = self._repre_per_version_pipeline(
-                list(version_ids), self.active_site, self.remote_site
+            repres_info = self.sync_server.get_repre_info_for_versions(
+                project_name,
+                list(versions_by_id.keys()),
+                self.active_site,
+                self.remote_site
             )
-
-            for doc in self.dbcon.aggregate(query):
+            for repre_info in repres_info:
                 if self._doc_fetching_stop:
                     return
+
+                version_id = repre_info["_id"]
+                doc = versions_by_id[version_id]
                 doc["active_provider"] = self.active_provider
                 doc["remote_provider"] = self.remote_provider
-                repre_info[doc["_id"]] = doc
+                repre_info_by_version_id[version_id] = repre_info
 
         self._doc_payload = {
             "asset_docs_by_id": asset_docs_by_id,
             "subset_docs_by_id": subset_docs_by_id,
             "subset_families": subset_families,
             "last_versions_by_subset_id": last_versions_by_subset_id,
-            "repre_info_by_version_id": repre_info
+            "repre_info_by_version_id": repre_info_by_version_id,
+            "subsets_loaded_by_id": loaded_subset_ids
         }
 
         self.doc_fetched.emit()
@@ -526,6 +565,20 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             self.doc_fetched.emit()
             return
 
+        # Collect scene container representations to compare loaded state
+        # This runs in the main thread because it involves the host DCC
+        if self._host:
+            time_since_refresh = time.time() - self._host_loaded_refresh_time
+            if time_since_refresh > self._host_loaded_refresh_timeout:
+                if isinstance(self._host, ILoadHost):
+                    containers = self._host.get_containers()
+                else:
+                    containers = self._host.ls()
+
+                repre_ids = {con.get("representation") for con in containers}
+                self._loaded_representation_ids = repre_ids
+                self._host_loaded_refresh_time = time.time()
+
         self.fetch_subset_and_version()
 
     def _on_doc_fetched(self):
@@ -547,6 +600,10 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             "repre_info_by_version_id"
         )
 
+        subsets_loaded_by_id = self._doc_payload.get(
+            "subsets_loaded_by_id"
+        )
+
         if (
             asset_docs_by_id is None
             or subset_docs_by_id is None
@@ -561,7 +618,8 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             asset_docs_by_id,
             subset_docs_by_id,
             last_versions_by_subset_id,
-            repre_info_by_version_id
+            repre_info_by_version_id,
+            subsets_loaded_by_id
         )
         self.endResetModel()
         self.refreshed.emit(True)
@@ -589,8 +647,12 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
         return merge_group
 
     def _fill_subset_items(
-        self, asset_docs_by_id, subset_docs_by_id, last_versions_by_subset_id,
-        repre_info_by_version_id
+        self,
+        asset_docs_by_id,
+        subset_docs_by_id,
+        last_versions_by_subset_id,
+        repre_info_by_version_id,
+        subsets_loaded_by_id
     ):
         _groups_tuple = self.groups_config.split_subsets_for_groups(
             subset_docs_by_id.values(), self._grouping
@@ -614,6 +676,35 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
                 "index": self.index(group_item.row(), 0)
             }
 
+        def _add_subset_item(subset_doc, parent_item, parent_index):
+            last_version = last_versions_by_subset_id.get(
+                subset_doc["_id"]
+            )
+            # do not show subset without version
+            if not last_version:
+                return
+
+            data = copy.deepcopy(subset_doc)
+            data["subset"] = subset_doc["name"]
+
+            asset_id = subset_doc["parent"]
+            data["asset"] = asset_docs_by_id[asset_id]["name"]
+
+            data["last_version"] = last_version
+            data["loaded_in_scene"] = subset_doc["_id"] in subsets_loaded_by_id
+
+            # Sync server data
+            data.update(
+                self._get_last_repre_info(repre_info_by_version_id,
+                                          last_version["_id"]))
+
+            item = Item()
+            item.update(data)
+            self.add_child(item, parent_item)
+
+            index = self.index(item.row(), 0, parent_index)
+            self.set_version(index, last_version)
+
         subset_counter = 0
         for group_name, subset_docs_by_name in subset_docs_by_group.items():
             parent_item = group_item_by_name[group_name]["item"]
@@ -636,31 +727,9 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
                     _parent_index = parent_index
 
                 for subset_doc in subset_docs:
-                    asset_id = subset_doc["parent"]
-
-                    data = copy.deepcopy(subset_doc)
-                    data["subset"] = subset_name
-                    data["asset"] = asset_docs_by_id[asset_id]["name"]
-
-                    last_version = last_versions_by_subset_id.get(
-                        subset_doc["_id"]
-                    )
-                    data["last_version"] = last_version
-
-                    # do not show subset without version
-                    if not last_version:
-                        continue
-
-                    data.update(
-                        self._get_last_repre_info(repre_info_by_version_id,
-                                                  last_version["_id"]))
-
-                    item = Item()
-                    item.update(data)
-                    self.add_child(item, _parent_item)
-
-                    index = self.index(item.row(), 0, _parent_index)
-                    self.set_version(index, last_version)
+                    _add_subset_item(subset_doc,
+                                     parent_item=_parent_item,
+                                     parent_index=_parent_index)
 
         for subset_name in sorted(subset_docs_without_group.keys()):
             subset_docs = subset_docs_without_group[subset_name]
@@ -675,31 +744,9 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
                 subset_counter += 1
 
             for subset_doc in subset_docs:
-                asset_id = subset_doc["parent"]
-
-                data = copy.deepcopy(subset_doc)
-                data["subset"] = subset_name
-                data["asset"] = asset_docs_by_id[asset_id]["name"]
-
-                last_version = last_versions_by_subset_id.get(
-                    subset_doc["_id"]
-                )
-                data["last_version"] = last_version
-
-                # do not show subset without version
-                if not last_version:
-                    continue
-
-                data.update(
-                    self._get_last_repre_info(repre_info_by_version_id,
-                                              last_version["_id"]))
-
-                item = Item()
-                item.update(data)
-                self.add_child(item, parent_item)
-
-                index = self.index(item.row(), 0, parent_index)
-                self.set_version(index, last_version)
+                _add_subset_item(subset_doc,
+                                 parent_item=parent_item,
+                                 parent_index=parent_index)
 
     def data(self, index, role):
         if not index.isValid():
@@ -826,83 +873,6 @@ class SubsetsModel(TreeModel, BaseRepresentationModel):
             data["repre_info_remote"] = repres_str
 
         return data
-
-    def _repre_per_version_pipeline(self, version_ids,
-                                    active_site, remote_site):
-        query = [
-            {"$match": {"parent": {"$in": version_ids},
-                        "type": "representation",
-                        "files.sites.name": {"$exists": 1}}},
-            {"$unwind": "$files"},
-            {'$addFields': {
-                'order_local': {
-                    '$filter': {
-                        'input': '$files.sites', 'as': 'p',
-                        'cond': {'$eq': ['$$p.name', active_site]}
-                    }
-                }
-            }},
-            {'$addFields': {
-                'order_remote': {
-                    '$filter': {
-                        'input': '$files.sites', 'as': 'p',
-                        'cond': {'$eq': ['$$p.name', remote_site]}
-                    }
-                }
-            }},
-            {'$addFields': {
-                'progress_local': {"$arrayElemAt": [{
-                    '$cond': [
-                        {'$size': "$order_local.progress"},
-                        "$order_local.progress",
-                        # if exists created_dt count is as available
-                        {'$cond': [
-                            {'$size': "$order_local.created_dt"},
-                            [1],
-                            [0]
-                        ]}
-                    ]},
-                    0
-                ]}
-            }},
-            {'$addFields': {
-                'progress_remote': {"$arrayElemAt": [{
-                    '$cond': [
-                        {'$size': "$order_remote.progress"},
-                        "$order_remote.progress",
-                        # if exists created_dt count is as available
-                        {'$cond': [
-                            {'$size': "$order_remote.created_dt"},
-                            [1],
-                            [0]
-                        ]}
-                    ]},
-                    0
-                ]}
-            }},
-            {'$group': {  # first group by repre
-                '_id': '$_id',
-                'parent': {'$first': '$parent'},
-                'avail_ratio_local': {
-                    '$first': {
-                        '$divide': [{'$sum': "$progress_local"}, {'$sum': 1}]
-                    }
-                },
-                'avail_ratio_remote': {
-                    '$first': {
-                        '$divide': [{'$sum': "$progress_remote"}, {'$sum': 1}]
-                    }
-                }
-            }},
-            {'$group': {  # second group by parent, eg version_id
-                '_id': '$parent',
-                'repre_count': {'$sum': 1},  # total representations
-                # fully available representation for site
-                'avail_repre_local': {'$sum': "$avail_ratio_local"},
-                'avail_repre_remote': {'$sum': "$avail_ratio_remote"},
-            }},
-        ]
-        return query
 
 
 class GroupMemberFilterProxyModel(QtCore.QSortFilterProxyModel):

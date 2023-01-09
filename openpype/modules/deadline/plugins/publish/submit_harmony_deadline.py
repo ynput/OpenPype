@@ -274,7 +274,8 @@ class HarmonySubmitDeadline(
             "AVALON_TASK",
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
-            "OPENPYPE_LOG_NO_COLORS"
+            "OPENPYPE_LOG_NO_COLORS",
+            "OPENPYPE_VERSION"
         ]
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):
@@ -283,14 +284,12 @@ class HarmonySubmitDeadline(
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
         for key in keys:
-            val = environment.get(key)
-            if val:
-                job_info.EnvironmentKeyValue = "{key}={value}".format(
-                    key=key,
-                    value=val)
+            value = environment.get(key)
+            if value:
+                job_info.EnvironmentKeyValue[key] = value
 
         # to recognize job from PYPE for turning Event On/Off
-        job_info.EnvironmentKeyValue = "OPENPYPE_RENDER_JOB=1"
+        job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
 
         return job_info
 

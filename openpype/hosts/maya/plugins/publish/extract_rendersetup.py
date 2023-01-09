@@ -1,10 +1,11 @@
-import json
 import os
-import openpype.api
+import json
+
 import maya.app.renderSetup.model.renderSetup as renderSetup
+from openpype.pipeline import publish
 
 
-class ExtractRenderSetup(openpype.api.Extractor):
+class ExtractRenderSetup(publish.Extractor):
     """
     Produce renderSetup template file
 

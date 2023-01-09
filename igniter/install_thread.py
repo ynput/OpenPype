@@ -62,7 +62,7 @@ class InstallThread(QThread):
             progress_callback=self.set_progress, message=self.message)
         local_version = OpenPypeVersion.get_installed_version_str()
 
-        # if user did entered nothing, we install OpenPype from local version.
+        # if user did enter nothing, we install OpenPype from local version.
         # zip content of `repos`, copy it to user data dir and append
         # version to it.
         if not self._path:
@@ -93,6 +93,23 @@ class InstallThread(QThread):
             detected = bs.find_openpype(include_zips=True)
 
             if detected:
+                if not OpenPypeVersion.get_installed_version().is_compatible(
+                        detected[-1]):
+                    self.message.emit((
+                        f"Latest detected version {detected[-1]} "
+                        "is not compatible with the currently running "
+                        f"{local_version}"
+                    ), True)
+                    self.message.emit((
+                        "Filtering detected versions to compatible ones..."
+                    ), False)
+
+                    detected = [
+                        version for version in detected
+                        if version.is_compatible(
+                            OpenPypeVersion.get_installed_version())
+                    ]
+
                 if OpenPypeVersion(
                         version=local_version, path=Path()) < detected[-1]:
                     self.message.emit((

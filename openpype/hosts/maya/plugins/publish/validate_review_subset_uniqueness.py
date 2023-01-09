@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 import collections
 import pyblish.api
-import openpype.api
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishXmlValidationError,
+)
 
 
 class ValidateReviewSubsetUniqueness(pyblish.api.ContextPlugin):
     """Validates that review subset has unique name."""
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["maya"]
     families = ["review"]
     label = "Validate Review Subset Unique"
