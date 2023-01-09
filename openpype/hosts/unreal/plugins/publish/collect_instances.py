@@ -26,8 +26,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
         class_name = ["/Script/OpenPype",
-                      "AssetContainer"] if UNREAL_VERSION.major == 5 and \
-                                           UNREAL_VERSION.minor > 0 else "OpenPypePublishInstance"  # noqa
+                      "OpenPypePublishInstance"] if UNREAL_VERSION.major == 5 and \
+                                                    UNREAL_VERSION.minor > 0 else "OpenPypePublishInstance"  # noqa
         instance_containers = ar.get_assets_by_class(class_name, True)
 
         for container_data in instance_containers:
