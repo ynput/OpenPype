@@ -14,7 +14,6 @@ from openpype.pipeline import (
     CreatorError
 )
 from openpype.hosts.traypublisher.api.plugin import TrayPublishCreator
-from typing import Union
 
 
 class OnlineCreator(TrayPublishCreator):
