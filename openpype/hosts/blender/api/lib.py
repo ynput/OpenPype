@@ -10,6 +10,7 @@ import bpy
 import addon_utils
 from openpype.hosts.blender.api.properties import OpenpypeContainer
 from openpype.hosts.blender.api.utils import BL_OUTLINER_TYPES
+from openpype.hosts.blender.blender_addon.startup.init import loader_attribution_handler
 from openpype.lib import Logger
 from openpype.pipeline import schema
 from openpype.pipeline.constants import AVALON_CONTAINER_ID
@@ -110,6 +111,9 @@ def ls() -> Iterator:
         )
     }
 
+    # Update loader type of containerized datablocks
+    loader_attribution_handler()
+
     # Create containers from container datablocks
     # (e.g collection duplication or linked by hand)
     # For outliner datablocks, they must be in current scene
@@ -161,6 +165,7 @@ def ls() -> Iterator:
         container.library = entity.library
         if isinstance(entity, tuple(BL_OUTLINER_TYPES)):
             container.outliner_entity = entity
+        # TODO Current
 
     # Clear containers when data has been deleted from the outliner
     for container in reversed(openpype_containers):

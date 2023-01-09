@@ -36,7 +36,7 @@ def get_loader_name(loaders: List[LoaderPlugin], load_type: str) -> str:
 
 
 @persistent
-def loader_attribution_handler(_):
+def loader_attribution_handler(*args):
     """Handler to attribute loader name to containers loaded outside of OP.
 
     For example if you link a container using Blender's file tools.
@@ -52,6 +52,7 @@ def loader_attribution_handler(_):
         for obj in bpy.context.scene.objects
         if obj.is_instancer and obj.instance_collection.library
     }
+    all_loaders = discover_loader_plugins()
     for bl_type in all_types:
         # Filter type for only collections (and not functions)
         if isinstance(bl_type, bpy.types.bpy_prop_collection) and len(bl_type):
@@ -64,7 +65,6 @@ def loader_attribution_handler(_):
                     continue
 
                 # Get available loaders
-                all_loaders = discover_loader_plugins()
                 context = {
                     "subset": {"schema": AVALON_CONTAINER_ID},
                     "version": {"data": {"families": [avalon_data["family"]]}},
