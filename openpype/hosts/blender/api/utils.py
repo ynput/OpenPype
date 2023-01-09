@@ -1,8 +1,18 @@
 """Shared functionalities for Blender files data manipulation."""
-from typing import Optional, Union, Iterator
+from typing import List, Optional, Set, Union, Iterator
 from collections.abc import Iterable
 
 import bpy
+from openpype.pipeline.constants import AVALON_CONTAINER_ID, AVALON_INSTANCE_ID
+from openpype.pipeline.load.plugins import (
+    LoaderPlugin,
+    discover_loader_plugins,
+)
+from openpype.pipeline.load.utils import loaders_from_repre_context
+
+
+# Key for metadata dict
+AVALON_PROPERTY = "avalon"
 
 # Match Blender type to a datapath to look into. Needed for native UI creator.
 BL_TYPE_DATAPATH = (  # TODO rename DATACOL
@@ -74,6 +84,19 @@ def get_parent_collection(
                 return col
 
 
+def get_instanced_collections() -> Set[bpy.types.Collection]:
+    """Get all instanced collections from context scene.
+
+    Returns:
+        Set[bpy.types.Collection]: Instanced collections in current scene.
+    """
+    return {
+        obj.instance_collection
+        for obj in bpy.context.scene.objects
+        if obj.is_instancer and obj.instance_collection.library
+    }
+
+
 def link_to_collection(
     entity: Union[bpy.types.Collection, bpy.types.Object, Iterator],
     collection: bpy.types.Collection,
@@ -135,3 +158,70 @@ def unlink_from_collection(
     # Entity is an Object.
     elif isinstance(entity, bpy.types.Object):
         collection.objects.unlink(entity)
+
+
+def get_loader_name(loaders: List[LoaderPlugin], load_type: str) -> str:
+    """Get loader name from list by requested load type.
+
+    Args:
+        loaders (List[LoaderPlugin]): List of available loaders
+        load_type (str): Load type to get loader of
+
+    Returns:
+        str: Loader name
+    """
+    return next(
+        (l.__name__ for l in loaders if l.__name__.startswith(load_type)),
+        None,
+    )
+
+
+def assign_loader_to_datablocks(datablocks: List[bpy.types.ID]):
+    """Assign loader name to container datablocks loaded outside of OP.
+
+    For example if you link a container using Blender's file tools.
+
+    Args:
+        datablocks (List[bpy.types.ID]): Datablocks to assign loader to.
+    """
+    datablocks_to_skip = set()
+    all_loaders = discover_loader_plugins()
+    all_instanced_collections = get_instanced_collections()
+    for datablock in datablocks:
+        if datablock in datablocks_to_skip:
+            continue
+
+        # Get avalon data
+        avalon_data = datablock.get(AVALON_PROPERTY)
+        if not avalon_data or avalon_data.get("id") == AVALON_INSTANCE_ID:
+            continue
+
+        # Skip all children of container
+        if hasattr(datablock, "children_recursive"):
+            datablocks_to_skip.update(datablock.children_recursive)
+        if hasattr(datablock, "all_objects"):
+            datablocks_to_skip.update(datablock.all_objects)
+
+        # Get available loaders
+        context = {
+            "subset": {"schema": AVALON_CONTAINER_ID},
+            "version": {"data": {"families": [avalon_data["family"]]}},
+            "representation": {"name": "blend"},
+        }
+        loaders = loaders_from_repre_context(all_loaders, context)
+
+        if datablock.library:
+            # Instance loader, an instance in OP is necessarily a link
+            if datablock in all_instanced_collections:
+                datablock[AVALON_PROPERTY]["loader"] = get_loader_name(
+                    loaders, "Instance"
+                )
+            # Link loader
+            else:
+                datablock[AVALON_PROPERTY]["loader"] = get_loader_name(
+                    loaders, "Link"
+                )
+        else:  # Append loader
+            datablock[AVALON_PROPERTY]["loader"] = get_loader_name(
+                loaders, "Append"
+            )

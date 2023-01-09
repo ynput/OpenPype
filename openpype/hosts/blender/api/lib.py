@@ -9,8 +9,7 @@ from typing import Dict, Iterator, List, Union
 import bpy
 import addon_utils
 from openpype.hosts.blender.api.properties import OpenpypeContainer
-from openpype.hosts.blender.api.utils import BL_OUTLINER_TYPES
-from openpype.hosts.blender.blender_addon.startup.init import loader_attribution_handler
+from openpype.hosts.blender.api.utils import BL_OUTLINER_TYPES, assign_loader_to_datablocks, get_instanced_collections
 from openpype.lib import Logger
 from openpype.pipeline import schema
 from openpype.pipeline.constants import AVALON_CONTAINER_ID
@@ -111,12 +110,10 @@ def ls() -> Iterator:
         )
     }
 
-    # Update loader type of containerized datablocks
-    loader_attribution_handler()
-
-    # Create containers from container datablocks
+    # Get container datablocks not already correctly created
     # (e.g collection duplication or linked by hand)
     # For outliner datablocks, they must be in current scene
+    all_instanced_collections = get_instanced_collections()
     container_datablocks = [
         datablock
         for datablock in lsattr("id", AVALON_CONTAINER_ID)
@@ -125,15 +122,28 @@ def ls() -> Iterator:
             and datablock
             not in set(scene_collection.all_objects)
             | set(scene_collection.children_recursive)
+            | all_instanced_collections
         )
     ]
+
+    # Add children and objects of outliner entities to skip
+    datablocks_to_skip.update(
+        chain.from_iterable(
+            list(d.children_recursive) + list(d.all_objects)
+            if hasattr(d, "all_objects")
+            else d.children_recursive
+            for d in container_datablocks
+            if isinstance(d, tuple(BL_OUTLINER_TYPES))
+        )
+    )
+
+    # Update loader type of containerized datablocks
+    assign_loader_to_datablocks(container_datablocks)
+
+    # Create containers from container datablocks
     for entity in container_datablocks:
         if entity in datablocks_to_skip:
             continue
-
-        # Skip all children of container
-        if hasattr(entity, "children_recursive"):
-            datablocks_to_skip.update(entity.children_recursive)
 
         # Find datablocks depending on type
         if isinstance(entity, bpy.types.Collection):
