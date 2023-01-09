@@ -42,6 +42,9 @@ class IntegrateBlenderAsset(pyblish.api.InstancePlugin):
             representation = representation["representation"]
             published_path = representation.get("data", {}).get("path")
 
+            # Set main commands
+            main_commands = [bpy.app.binary_path, published_path, "-b", "-P"]
+
             # If not workfile, it is a blend and there is a published file
             if representation.get("name") == "blend" and published_path:
                 if use_path_management:
@@ -52,10 +55,7 @@ class IntegrateBlenderAsset(pyblish.api.InstancePlugin):
                     # Run in subprocess
                     Popen(
                         [
-                            bpy.app.binary_path,
-                            published_path,
-                            "-b",
-                            "-P",
+                            *main_commands,
                             make_paths_relative.__file__,
                         ]
                     ).wait()
@@ -67,10 +67,7 @@ class IntegrateBlenderAsset(pyblish.api.InstancePlugin):
                 # Run in subprocess
                 Popen(
                     [
-                        bpy.app.binary_path,
-                        published_path,
-                        "-b",
-                        "-P",
+                        *main_commands,
                         update_representations.__file__,
                         "--",
                         instance.data["subset"],
