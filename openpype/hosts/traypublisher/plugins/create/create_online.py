@@ -27,10 +27,6 @@ class OnlineCreator(TrayPublishCreator):
     extensions = [".mov", ".mp4", ".mxf", ".m4v", ".mpg", ".exr",
                   ".dpx", ".tif", ".png", ".jpg"]
 
-    def __init__(self, *args, **kwargs):
-        super(OnlineCreator, self).__init__(*args, **kwargs)
-        self._original_path: Union[str, None] = None
-
     def get_detail_description(self):
         return """# Create file retaining its original file name.
 
