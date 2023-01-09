@@ -35,7 +35,7 @@ CLIP_ATTR_DEFS = [
         "fps",
         items=[
             {"value": "from_selection", "label": "From selection"},
-            {"value": 23.997, "label" : "23.976"},
+            {"value": 23.997, "label": "23.976"},
             {"value": 24, "label": "24"},
             {"value": 25, "label": "25"},
             {"value": 29.97, "label": "29.97"},
