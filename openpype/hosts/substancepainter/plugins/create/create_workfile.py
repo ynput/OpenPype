@@ -10,6 +10,8 @@ from openpype.hosts.substancepainter.api.pipeline import (
     get_project_metadata
 )
 
+import substance_painter.project
+
 
 class CreateWorkfile(AutoCreator):
     """Workfile auto-creator."""
@@ -21,6 +23,9 @@ class CreateWorkfile(AutoCreator):
     default_variant = "Main"
 
     def create(self):
+
+        if not substance_painter.project.is_open():
+            return
 
         variant = self.default_variant
         project_name = self.project_name
