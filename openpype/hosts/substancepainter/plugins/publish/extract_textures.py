@@ -55,7 +55,7 @@ class ExtractTextures(publish.Extractor):
             )
 
         files = []
-        for stack, maps in result.textures.items():
+        for _stack, maps in result.textures.items():
             for texture_map in maps:
                 self.log.info(f"Exported texture: {texture_map}")
                 files.append(texture_map)
