@@ -144,10 +144,6 @@
                 {
                     "key": "ValidateShadingEngine",
                     "label": "Validate Look Shading Engine Naming"
-                },
-                {
-                    "key": "ValidateMayaColorSpace",
-                    "label": "ValidateMayaColorSpace"
                 }
             ]
         },
