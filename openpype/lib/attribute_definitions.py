@@ -498,8 +498,18 @@ class EnumDef(AbtractAttrDef):
                     item["value"]
                     if "label" not in item:
                         item["label"] = str(item["value"])
-                elif isinstance(item, (list, tuple)) and len(item) == 2:
-                    value, label  = item
+                elif isinstance(item, (list, tuple)):
+                    if len(item) == 2:
+                        value, label = item
+                    elif len(item) == 1:
+                        value = item[0]
+                        label = str(value)
+                    else:
+                        raise ValueError((
+                            "Invalid items count {}."
+                            " Expected 1 or 2. Value: {}"
+                        ).format(len(item), str(item)))
+
                     item = {"label": label, "value": value}
                 else:
                     item = {"label": str(item), "value": item}
