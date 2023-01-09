@@ -528,10 +528,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
 
         # determine published path from Anatomy.
         template_data = workfile_instance.data.get("anatomyData")
-        if self.import_reference:
-            rep = workfile_instance.data["representations"][1]
-        else:
-            rep = workfile_instance.data["representations"][0]
+        rep = workfile_instance.data["representations"][0]
         template_data["representation"] = rep.get("name")
         template_data["ext"] = rep.get("ext")
         template_data["comment"] = None
