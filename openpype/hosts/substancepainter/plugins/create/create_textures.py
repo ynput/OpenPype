@@ -48,7 +48,20 @@ def get_export_presets():
     export_templates = dict(sorted(preset_resources.items(),
                                    key=lambda x: x[1]))
 
-    return export_templates
+    # Add default built-ins at the start
+    # TODO: find the built-ins automatically; scraped with https://gist.github.com/BigRoy/97150c7c6f0a0c916418207b9a2bc8f1  # noqa
+    result = {
+        "export-preset-generator://viewport2d": "2D View",  # noqa
+        "export-preset-generator://doc-channel-normal-no-alpha": "Document channels + Normal + AO (No Alpha)",  # noqa
+        "export-preset-generator://doc-channel-normal-with-alpha": "Document channels + Normal + AO (With Alpha)",  # noqa
+        "export-preset-generator://sketchfab": "Sketchfab",  # noqa
+        "export-preset-generator://adobe-standard-material": "Substance 3D Stager",  # noqa
+        "export-preset-generator://usd": "USD PBR Metal Roughness",  # noqa
+        "export-preset-generator://gltf": "glTF PBR Metal Roughness",  # noqa
+        "export-preset-generator://gltf-displacement": "glTF PBR Metal Roughness + Displacement texture (experimental)"  # noqa
+    }
+    result.update(export_templates)
+    return result
 
 
 class CreateTextures(Creator):
