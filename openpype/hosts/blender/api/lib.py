@@ -285,6 +285,7 @@ def maintained_selection():
             # context.
             log.exception("Failed to set active object.")
 
+
 @contextlib.contextmanager
 def maintained_time():
     """Maintain current frame during context."""

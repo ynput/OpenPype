@@ -23,7 +23,6 @@ class ExtractPlayblast(openpype.api.Extractor):
     optional = True
     order = pyblish.api.ExtractorOrder + 0.01
 
-
     def process(self, instance):
         self.log.info("Extracting capture..")
 
