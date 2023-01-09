@@ -1,19 +1,23 @@
 from subprocess import Popen
 
 import bpy
+import pyblish
 
 from openpype.hosts.blender.api.utils import BL_TYPE_DATAPATH
 from openpype.hosts.blender.utility_scripts import (
     make_paths_relative,
     update_representations,
 )
-from openpype.plugins.publish.integrate import IntegrateAsset
+from openpype.plugins.publish.integrate_hero_version import (
+    IntegrateHeroVersion,
+)
 from openpype.settings.lib import get_project_settings
 
 
-class IntegrateBlenderAsset(IntegrateAsset):
+class IntegrateBlenderAsset(pyblish.api.InstancePlugin):
     label = "Integrate Blender Asset"
     hosts = ["blender"]
+    order = IntegrateHeroVersion.order + 0.01
 
     def process(self, instance):
         # Check enabled in settings
@@ -30,7 +34,9 @@ class IntegrateBlenderAsset(IntegrateAsset):
             "use_paths_management"
         )
 
+        # Get published and hero representations
         representations = instance.data.get("published_representations")
+        representations.update(instance.data.get("hero_representations", {}))
 
         for representation in representations.values():
             representation = representation["representation"]
