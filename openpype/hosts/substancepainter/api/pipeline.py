@@ -289,6 +289,9 @@ def set_project_metadata(key, data):
 
 def get_project_metadata(key):
     """Get a key from project's OpenPype metadata."""
+    if not substance_painter.project.is_open():
+        return
+
     metadata = substance_painter.project.Metadata(OPENPYPE_METADATA_KEY)
     return metadata.get(key)
 
