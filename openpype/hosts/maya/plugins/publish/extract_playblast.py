@@ -100,7 +100,8 @@ class ExtractPlayblast(publish.Extractor):
 
         # Show lighting mode.
         display_lights = instance.data["displayLights"]
-        preset["viewport_options"]["displayLights"] = display_lights
+        if display_lights != "project_settings":
+            preset["viewport_options"]["displayLights"] = display_lights
 
         # Override transparency if requested.
         transparency = instance.data.get("transparency", 0)

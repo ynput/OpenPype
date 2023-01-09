@@ -113,7 +113,9 @@ FLOAT_FPS = {23.98, 23.976, 29.97, 47.952, 59.94}
 
 RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
 
-DISPLAY_LIGHTS = ["default", "all", "selected", "active", "none"]
+DISPLAY_LIGHTS = [
+    "project_settings", "default", "all", "selected", "active", "none"
+]
 
 
 def get_main_window():
