@@ -488,8 +488,8 @@ class EnumDef(AbtractAttrDef):
 
         output = []
         if isinstance(items, dict):
-            for key, value in items.items():
-                output.append({"label": key, "value": value})
+            for value, label in items.items():
+                output.append({"label": label, "value": value})
 
         elif isinstance(items, (tuple, list, set)):
             for item in items:
