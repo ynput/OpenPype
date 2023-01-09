@@ -71,9 +71,8 @@ class CreateWorkfile(AutoCreator):
 
     def collect_instances(self):
         workfile = get_project_metadata("workfile")
-        if not workfile:
-            return
-        self.create_instance_in_context_from_existing(workfile)
+        if workfile:
+            self.create_instance_in_context_from_existing(workfile)
 
     def update_instances(self, update_list):
         for instance, _changes in update_list:
