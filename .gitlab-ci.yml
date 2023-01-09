@@ -4,6 +4,7 @@ stages:
   - deploy
   - staging
   - production
+  - release
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
@@ -51,7 +52,7 @@ workflow:
   tags: [shell, windows]
   artifacts:
     paths:
-      - .\build\OpenPype-*-install.exe
+      - .\build\OpenPype-{$OP_VERSION}-install.exe
   script:
     - echo "Build then copy to $env:OP_VERSION_PATH"
     # Add python 3.7.9 from softprod
@@ -145,9 +146,23 @@ deploy-deadline:
     - echo "Deadline plugins $OP_PROD_PATH/linux/openpype/modules/deadline/repository/custom to deadline directory $DEADLINE_CUSTOM"
     - cp -a $OP_PROD_PATH/linux/openpype/modules/deadline/repository/custom $DEADLINE_CUSTOM
 
-deploy-ftrack:
-  stage: build
-  tags: [shell, centos]
-  script:
-    - docker info
+# deploy-ftrack:
+#   stage: build
+#   tags: [shell, centos]
+#   script:
+#     - docker info
 
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs:
+    - job: build-windows-on-tags
+      artifacts: true
+  release:
+    name: $CI_COMMIT_SHORT_SHA
+    description: 'Created CICD'
+    tag_name: '$CI_COMMIT_SHORT_SHA'
+    assets:
+      links:
+        - name: 'Windows executable'
+          url: 'https://gitlab.fixstudio.com/quad/openpype/OpenPype/-/jobs/${GE_JOB_ID}/artifacts/file/build\OpenPype-{$OP_VERSION}-install.exe'
