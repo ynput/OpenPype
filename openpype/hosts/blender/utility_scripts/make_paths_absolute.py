@@ -47,4 +47,5 @@ if __name__ == "__main__":
     else:
         bpy.ops.file.make_paths_absolute()
 
-    bpy.ops.wm.save_mainfile()
+    if bpy.data.filepath:
+        bpy.ops.wm.save_mainfile()
