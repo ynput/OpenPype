@@ -8,7 +8,6 @@ from openpype.pipeline import publish
 
 
 class NukeRenderLocal(publish.ExtractorColormanaged):
-    # TODO: rewrite docstring to nuke
     """Render the current Nuke composition locally.
 
     Extract the result of savers by starting a comp render
