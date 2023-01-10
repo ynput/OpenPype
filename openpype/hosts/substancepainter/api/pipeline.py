@@ -34,13 +34,8 @@ LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
-
 OPENPYPE_METADATA_KEY = "OpenPype"
 OPENPYPE_METADATA_CONTAINERS_KEY = "containers"  # child key
-
-self = sys.modules[__name__]
-self.menu = None
-self.callbacks = []
 
 
 class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
@@ -49,6 +44,8 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def __init__(self):
         super(SubstanceHost, self).__init__()
         self._has_been_setup = False
+        self.menu = None
+        self.callbacks = []
 
     def install(self):
         pyblish.api.register_host("substancepainter")
@@ -59,20 +56,20 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         log.info("Installing callbacks ... ")
         # register_event_callback("init", on_init)
-        _register_callbacks()
+        self._register_callbacks()
         # register_event_callback("before.save", before_save)
         # register_event_callback("save", on_save)
         register_event_callback("open", on_open)
         # register_event_callback("new", on_new)
 
         log.info("Installing menu ... ")
-        _install_menu()
+        self._install_menu()
 
         self._has_been_setup = True
 
     def uninstall(self):
-        _uninstall_menu()
-        _deregister_callbacks()
+        self._uninstall_menu()
+        self._deregister_callbacks()
 
     def has_unsaved_changes(self):
 
@@ -146,74 +143,71 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def get_context_data(self):
         pass
 
+    def _install_menu(self):
+        from PySide2 import QtWidgets
+        from openpype.tools.utils import host_tools
 
-def _install_menu():
-    from PySide2 import QtWidgets
-    from openpype.tools.utils import host_tools
+        parent = substance_painter.ui.get_main_window()
 
-    parent = substance_painter.ui.get_main_window()
+        menu = QtWidgets.QMenu("OpenPype")
 
-    menu = QtWidgets.QMenu("OpenPype")
+        action = menu.addAction("Load...")
+        action.triggered.connect(
+            lambda: host_tools.show_loader(parent=parent, use_context=True)
+        )
 
-    action = menu.addAction("Load...")
-    action.triggered.connect(
-        lambda: host_tools.show_loader(parent=parent, use_context=True)
-    )
+        action = menu.addAction("Publish...")
+        action.triggered.connect(
+            lambda: host_tools.show_publisher(parent=parent)
+        )
 
-    action = menu.addAction("Publish...")
-    action.triggered.connect(
-        lambda: host_tools.show_publisher(parent=parent)
-    )
+        action = menu.addAction("Manage...")
+        action.triggered.connect(
+            lambda: host_tools.show_scene_inventory(parent=parent)
+        )
 
-    action = menu.addAction("Manage...")
-    action.triggered.connect(
-        lambda: host_tools.show_scene_inventory(parent=parent)
-    )
+        action = menu.addAction("Library...")
+        action.triggered.connect(
+            lambda: host_tools.show_library_loader(parent=parent)
+        )
 
-    action = menu.addAction("Library...")
-    action.triggered.connect(
-        lambda: host_tools.show_library_loader(parent=parent)
-    )
+        menu.addSeparator()
+        action = menu.addAction("Work Files...")
+        action.triggered.connect(
+            lambda: host_tools.show_workfiles(parent=parent)
+        )
 
-    menu.addSeparator()
-    action = menu.addAction("Work Files...")
-    action.triggered.connect(
-        lambda: host_tools.show_workfiles(parent=parent)
-    )
+        substance_painter.ui.add_menu(menu)
 
-    substance_painter.ui.add_menu(menu)
+        def on_menu_destroyed():
+            self.menu = None
 
-    def on_menu_destroyed():
-        self.menu = None
+        menu.destroyed.connect(on_menu_destroyed)
 
-    menu.destroyed.connect(on_menu_destroyed)
+        self.menu = menu
 
-    self.menu = menu
+    def _uninstall_menu(self):
+        if self.menu:
+            self.menu.destroy()
+            self.menu = None
 
+    def _register_callbacks(self):
+        # Prepare emit event callbacks
+        open_callback = partial(emit_event, "open")
 
-def _uninstall_menu():
-    if self.menu:
-        self.menu.destroy()
-        self.menu = None
-
-
-def _register_callbacks():
-    # Prepare emit event callbacks
-    open_callback = partial(emit_event, "open")
-
-    # Connect to the Substance Painter events
-    dispatcher = substance_painter.event.DISPATCHER
-    for event, callback in [
-        (substance_painter.event.ProjectOpened, open_callback)
-    ]:
-        dispatcher.connect(event, callback)
-        # Keep a reference so we can deregister if needed
-        self.callbacks.append((event, callback))
+        # Connect to the Substance Painter events
+        dispatcher = substance_painter.event.DISPATCHER
+        for event, callback in [
+            (substance_painter.event.ProjectOpened, open_callback)
+        ]:
+            dispatcher.connect(event, callback)
+            # Keep a reference so we can deregister if needed
+            self.callbacks.append((event, callback))
 
 
-def _deregister_callbacks():
-    for event, callback in self.callbacks:
-        substance_painter.event.DISPATCHER.disconnect(event, callback)
+    def _deregister_callbacks(self):
+        for event, callback in self.callbacks:
+            substance_painter.event.DISPATCHER.disconnect(event, callback)
 
 
 def on_open():
