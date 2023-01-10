@@ -8,10 +8,8 @@ UCLASS(Blueprintable)
 class OPENPYPE_API UOpenPypePublishInstance : public UPrimaryDataAsset
 {
 	GENERATED_UCLASS_BODY()
-	
+
 public:
-	
-	/**
 	/**
 	 *	Retrieves all the assets which are monitored by the Publish Instance (Monitors assets in the directory which is
 	 *	placed in)
@@ -58,8 +56,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	TSet<UObject*> GetAllAssets() const
 	{
-		const TSet<TSoftObjectPtr<UObject>>& IteratedSet = bAddExternalAssets ? AssetDataInternal.Union(AssetDataExternal) : AssetDataInternal;
-		
+		const TSet<TSoftObjectPtr<UObject>>& IteratedSet = bAddExternalAssets
+			                                                   ? AssetDataInternal.Union(AssetDataExternal)
+			                                                   : AssetDataInternal;
+
 		//Create a new TSet only with raw pointers.
 		TSet<UObject*> ResultSet;
 
@@ -69,12 +69,10 @@ public:
 		return ResultSet;
 	}
 
-
 private:
-
 	UPROPERTY(VisibleAnywhere, Category="Assets")
 	TSet<TSoftObjectPtr<UObject>> AssetDataInternal;
-	
+
 	/**
 	 * This property allows exposing the array to include other assets from any other directory than what it's currently
 	 * monitoring. NOTE: that these assets have to be added manually! They are not automatically registered or added!
@@ -93,11 +91,11 @@ private:
 	bool IsUnderSameDir(const UObject* InAsset) const;
 
 #ifdef WITH_EDITOR
+
+	void ColorOpenPypeDirs();
 	
 	void SendNotification(const FString& Text) const;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
 #endif
-	
 };
-

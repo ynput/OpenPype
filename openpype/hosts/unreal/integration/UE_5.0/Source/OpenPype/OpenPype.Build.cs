@@ -48,6 +48,7 @@ public class OpenPype : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"AssetTools"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

@@ -174,9 +174,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
                     if "handles" in data:
                         data["handleStart"] = data["handles"]
                         data["handleEnd"] = data["handles"]
-                    else:
-                        data["handleStart"] = 0
-                        data["handleEnd"] = 0
 
                     data["frameStartHandle"] = data["frameStart"] - data["handleStart"]  # noqa: E501
                     data["frameEndHandle"] = data["frameEnd"] + data["handleEnd"]  # noqa: E501
