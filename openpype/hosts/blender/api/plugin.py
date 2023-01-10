@@ -4,6 +4,7 @@ from pprint import pformat
 from inspect import getmembers
 from pathlib import Path
 from contextlib import contextmanager, ExitStack
+from string import digits
 import threading
 from typing import Callable, Dict, List, Optional, Set, Tuple, Union, Iterator
 from bson.objectid import ObjectId
@@ -1090,7 +1091,7 @@ class AssetLoader(LoaderPlugin):
         container: OpenpypeContainer = None,
         link: Optional[bool] = True,
         do_override: Optional[bool] = False,
-    ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
+    ) -> Tuple[OpenpypeContainer, Set[bpy.types.ID]]:
         """Load datablocks from blend file library.
 
         Args:
@@ -1104,7 +1105,7 @@ class AssetLoader(LoaderPlugin):
                 linked datablocks. Defaults to False.
 
         Returns:
-            Tuple[OpenpypeContainer, List[bpy.types.ID]]: 
+            Tuple[OpenpypeContainer, Set[bpy.types.ID]]: 
                 (Created scene container, Loaded datablocks)
         """
         # Load datablocks from libpath library.
@@ -1552,6 +1553,9 @@ class AssetLoader(LoaderPlugin):
                     d_ref.datablock for d_ref in container.datablock_refs
                 }
 
+                # Clear container datablocks
+                container.datablock_refs.clear()
+
                 # Load new into same container
                 container, datablocks = load_func(
                     new_libpath,
@@ -1560,19 +1564,24 @@ class AssetLoader(LoaderPlugin):
                 )
 
                 # Old datablocks remap and deletion
-                for datablock in old_datablocks:
-                    new_datablock = container.datablock_refs.get(
-                        datablock.name
+                for old_datablock in old_datablocks:
+                    # Find matching new datablock by name without .###
+                    new_datablock = next(
+                        (d for d in datablocks if d.name.rstrip(f".{digits}")),
+                        None,
                     )
-                    if new_datablock:
-                        datablock.user_remap(new_datablock)
 
-                    if datablock not in datablocks:
+                    # Replace old by new datablock
+                    if new_datablock:
+                        old_datablock.user_remap(new_datablock)
+
+                    # Delete old datablocks if not used
+                    if old_datablock not in datablocks:
                         datacol = getattr(
-                            bpy.data, BL_TYPE_DATAPATH.get(type(datablock))
+                            bpy.data, BL_TYPE_DATAPATH.get(type(old_datablock))
                         )
-                        datablock.use_fake_user = False
-                        datacol.remove(datablock)
+                        old_datablock.use_fake_user = False
+                        datacol.remove(old_datablock)
 
                 # Restore parent collection if existing
                 if parent_collection:
