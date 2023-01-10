@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Pipeline tools for OpenPype Gaffer integration."""
 import os
-import sys
 import logging
 from functools import partial
 
