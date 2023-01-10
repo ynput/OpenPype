@@ -402,7 +402,7 @@ class SlateCreator:
     ):
         """
         renders any image using a subprocess command. args is a list of strings
-        returns the completed supprocess
+        returns the completed subprocess
         """
         
         name = os.path.basename(input.replace("\\", "/"))
@@ -429,7 +429,7 @@ class SlateCreator:
 
         return res
 
-    def get_timecode_oiio(self, input, env={}):
+    def get_timecode_oiio(self, input, env={}, tc_frame=1001):
         """
         Find timecode using oiio, currently working only on
         images with timecode support, not videos.
@@ -451,7 +451,7 @@ class SlateCreator:
         )
 
         lines = res.stdout.decode("utf-8").replace(" ", "").splitlines()
-        tc = "01:00:00:00"
+        tc = self.frames_to_timecode(int(tc_frame), self.data["fps"])
         
         self.log.debug("{0}: Starting timecode set at: {1}".format(name, tc))
         
@@ -533,7 +533,7 @@ class ExtractSlateGlobal(publish.Extractor):
     """
 
     label = "Extract Slate Global"
-    order = pyblish.api.ExtractorOrder + 0.011
+    order = pyblish.api.ExtractorOrder + 0.0305
     families = ["slate"]
     hosts = [
         "nuke",
@@ -556,6 +556,8 @@ class ExtractSlateGlobal(publish.Extractor):
     _slate_data_name = "slateGlobal"
 
     def process(self, instance):
+
+        self.log.debug(dir(instance))
 
         if self._slate_data_name not in instance.data:
             self.log.warning("Slate Global workflow is not active, \
@@ -587,6 +589,15 @@ class ExtractSlateGlobal(publish.Extractor):
             env=slate_data["slate_env"]
         )
 
+        # loop through repres for thumbnail
+        thumbnail_path = ""
+        for repre in instance.data["representations"]:
+            if repre["name"] == "thumbnail":
+                thumbnail_path = os.path.join(
+                    repre["stagingDir"],
+                    repre["files"]
+                )
+
         # loop through repres
         for repre in instance.data["representations"]:
             if repre["name"] in repre_ignore_list:
@@ -609,9 +620,8 @@ class ExtractSlateGlobal(publish.Extractor):
                 )
             )
 
-            filename, specname, ext = check_file.split(".")
-            timecode = slate.get_timecode_oiio(file_path)
-            resolution = slate.get_resolution_ffprobe(file_path)
+            filename = check_file.split(".")[0]
+            ext = check_file.split(".")[-1]
 
             # if sequence render out a slate before first frame
             # else sequence find matching tags and transfer
@@ -636,6 +646,9 @@ class ExtractSlateGlobal(publish.Extractor):
                     for profile in slate_data["slate_profiles"]:
                         if tag in profile["families"]:
                             repre_match = tag
+            
+            timecode = slate.get_timecode_oiio(file_path, tc_frame=frame_start)
+            resolution = slate.get_resolution_ffprobe(file_path)
 
             for profile in slate_data["slate_profiles"]:
                 if repre_match in profile["families"]:
@@ -666,7 +679,7 @@ class ExtractSlateGlobal(publish.Extractor):
                 "resolution_height": int(resolution["height"]),
                 "stagingDir": repre["stagingDir"],
                 "slate_file": output_name,
-                "thumbnail": instance.data["thumbnail"],
+                "thumbnail": thumbnail_path,
                 "timecode": timecode
             }
             slate.data.update(slate_repre_data)
@@ -681,7 +694,7 @@ class ExtractSlateGlobal(publish.Extractor):
 
             # render slate
             temp_slate = slate.render_slate(
-                slate_specifier="_{}".format(repre["name"])
+                slate_path="{}_slate.png".format(repre["name"])
             )
 
             slate_final_path = os.path.normpath(
@@ -698,7 +711,6 @@ class ExtractSlateGlobal(publish.Extractor):
                 in_args=slate.data["oiio_args"]["input"],
                 out_args=slate.data["oiio_args"]["output"]
             )
-            os.remove(temp_slate[0])
 
             # update repres and instance
             if isSequence:
@@ -710,16 +722,15 @@ class ExtractSlateGlobal(publish.Extractor):
                         repre["name"]
                     )
                 )
+            if "slateFrames" not in instance.data:
+                instance.data["slateFrames"] = {
+                    "*": temp_slate[0]
+                }
             else:
-                if "slateFrames" not in instance.data:
-                    instance.data["slateFrames"] = {
-                        "*": slate_final_path
-                    }
-                else:
-                    instance.data["slateFrames"].update({
-                        output_name: slate_final_path
-                    })
-
-                self.log.debug("SlateFrames: {}".format(
-                    instance.data["slateFrames"]
-                ))
+                instance.data["slateFrames"].update({
+                    output_name: temp_slate[0]
+                })
+            instance.data["slateFrame"] = temp_slate[0]
+            self.log.debug("SlateFrames: {}".format(
+                instance.data["slateFrames"]
+            ))
