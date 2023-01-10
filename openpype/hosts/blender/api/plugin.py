@@ -1567,7 +1567,12 @@ class AssetLoader(LoaderPlugin):
                 for old_datablock in old_datablocks:
                     # Find matching new datablock by name without .###
                     new_datablock = next(
-                        (d for d in datablocks if d.name.rstrip(f".{digits}")),
+                        (
+                            d
+                            for d in datablocks
+                            if old_datablock.name.rstrip(f".{digits}")
+                            == d.name.rstrip(f".{digits}")
+                        ),
                         None,
                     )
 
