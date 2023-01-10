@@ -28,7 +28,7 @@ class LoadBackdropNodes(load.LoaderPlugin):
     representations = ["nk"]
     families = ["workfile", "nukenodes"]
 
-    label = "Iport Nuke Nodes"
+    label = "Import Nuke Nodes"
     order = 0
     icon = "eye"
     color = "white"

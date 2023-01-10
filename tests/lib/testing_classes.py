@@ -8,10 +8,12 @@ import tempfile
 import shutil
 import glob
 import platform
+import requests
 import re
 
 from tests.lib.db_handler import DBHandler
 from common.openpype_common.distribution.file_handler import RemoteFileHandler
+from openpype.modules import ModulesManager
 
 
 class BaseTest:
@@ -364,6 +366,69 @@ class PublishTest(ModuleUnitTest):
                 filtered.add(file_path)
 
         return filtered
+
+
+class DeadlinePublishTest(PublishTest):
+    @pytest.fixture(scope="module")
+    def publish_finished(self, dbcon, launched_app, download_test_data,
+                         timeout):
+        """Dummy fixture waiting for publish to finish"""
+        import time
+        time_start = time.time()
+        timeout = timeout or self.TIMEOUT
+        timeout = float(timeout)
+        while launched_app.poll() is None:
+            time.sleep(0.5)
+            if time.time() - time_start > timeout:
+                launched_app.terminate()
+                raise ValueError("Timeout reached")
+
+        metadata_json = glob.glob(os.path.join(download_test_data,
+                                               "output",
+                                               "**/*_metadata.json"),
+                                  recursive=True)
+        if not metadata_json:
+            raise RuntimeError("No metadata file found. No job id.")
+
+        if len(metadata_json) > 1:
+            # depends on creation order of published jobs
+            metadata_json.sort(key=os.path.getmtime, reverse=True)
+
+        with open(metadata_json[0]) as fp:
+            job_info = json.load(fp)
+
+        deadline_job_id = job_info["deadline_publish_job_id"]
+
+        manager = ModulesManager()
+        deadline_module = manager.modules_by_name["deadline"]
+        deadline_url = deadline_module.deadline_urls["default"]
+
+        if not deadline_url:
+            raise ValueError("Must have default deadline url.")
+
+        url = "{}/api/jobs?JobId={}".format(deadline_url, deadline_job_id)
+        valid_date_finished = None
+
+        time_start = time.time()
+        while not valid_date_finished:
+            time.sleep(0.5)
+            if time.time() - time_start > timeout:
+                raise ValueError("Timeout for DL finish reached")
+
+            response = requests.get(url, timeout=10)
+            if not response.ok:
+                msg = "Couldn't connect to {}".format(deadline_url)
+                raise RuntimeError(msg)
+
+            if not response.json():
+                raise ValueError("Couldn't find {}".format(deadline_job_id))
+
+            # '0001-...' returned until job is finished
+            valid_date_finished = response.json()[0]["DateComp"][:4] != "0001"
+
+        # some clean exit test possible?
+        print("Publish finished")
+        yield True
 
 
 class HostFixtures():
