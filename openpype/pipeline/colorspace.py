@@ -75,7 +75,7 @@ def get_imageio_colorspace_from_filepath(
         path (str): path string, file rule pattern is tested on it
         host_name (str): host name
         project_name (str): project name
-        config_data (dict, optional): config path and tempate in dict.
+        config_data (dict, optional): config path and template in dict.
                                       Defaults to None.
         file_rules (dict, optional): file rule data from settings.
                                      Defaults to None.
@@ -138,7 +138,7 @@ def parse_colorspace_from_filepath(
         path (str): path string
         host_name (str): host name
         project_name (str): project name
-        config_data (dict, optional): config path and tempate in dict.
+        config_data (dict, optional): config path and template in dict.
                                       Defaults to None.
         project_settings (dict, optional): project settings. Defaults to None.
 
@@ -254,7 +254,7 @@ def get_colorspace_data_subprocess(config_path):
 def get_ocio_config_views(config_path):
     """Get all viewer data
 
-    Wrapper function for aggregating all display and related viwers.
+    Wrapper function for aggregating all display and related viewers.
     Key can be used for building gui menu with submenus.
 
     Args:
@@ -312,7 +312,7 @@ def get_imageio_config(
 ):
     """Returns config data from settings
 
-    Config path is formated in `path` key
+    Config path is formatted in `path` key
     and original settings input is saved into `template` key.
 
     Args:
@@ -320,7 +320,7 @@ def get_imageio_config(
         host_name (str): host name
         project_settings (dict, optional): project settings.
                                            Defaults to None.
-        anatomy_data (dict, optional): anatomy formating data.
+        anatomy_data (dict, optional): anatomy formatting data.
                                        Defaults to None.
         anatomy (lib.Anatomy, optional): Anatomy object.
                                          Defaults to None.
@@ -358,16 +358,16 @@ def get_imageio_config(
     if not config_path:
         return
 
-    formating_data = deepcopy(anatomy_data)
+    formatting_data = deepcopy(anatomy_data)
 
     # format the path for potential env vars
-    formating_data.update(dict(**os.environ))
+    formatting_data.update(dict(**os.environ))
 
     # format path for anatomy keys
-    formated_path = StringTemplate(config_path).format(
-        formating_data)
+    formatted_path = StringTemplate(config_path).format(
+        formatting_data)
 
-    abs_path = os.path.abspath(formated_path)
+    abs_path = os.path.abspath(formatted_path)
     return {
         "path": os.path.normpath(abs_path),
         "template": config_path

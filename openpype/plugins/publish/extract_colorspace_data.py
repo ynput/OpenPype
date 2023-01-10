@@ -7,7 +7,7 @@ class ExtractColorspaceData(publish.ExtractorColormanaged):
 
     Input data:
     - context.data[colorspace_config_path]:
-        for anatomy formating of possible template tokkens in config path
+        for anatomy formatting of possible template tokens in config path
     - context.data[colorspace_config_path]:
         for resolving project and host related config.ocio
     - context.data[colorspace_file_rules]:
