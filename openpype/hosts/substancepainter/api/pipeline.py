@@ -204,7 +204,6 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             # Keep a reference so we can deregister if needed
             self.callbacks.append((event, callback))
 
-
     def _deregister_callbacks(self):
         for event, callback in self.callbacks:
             substance_painter.event.DISPATCHER.disconnect(event, callback)
