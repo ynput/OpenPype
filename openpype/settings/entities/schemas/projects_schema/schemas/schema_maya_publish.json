@@ -314,14 +314,39 @@
             ]
         },
         {
-            "type": "dict-modifiable",
+            "type": "dict",
             "collapsible": true,
+            "checkbox_key": "enabled",
             "key": "ValidatePathForPlugin",
             "label": "Non-existent Paths in Non-Maya Nodes",
-            "use_label_wrap": true,
-            "object_type": {
-                "type": "text"
-            }
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "dict-modifiable",
+                    "collapsible": true,
+                    "key": "attribute",
+                    "label": "File Attribute",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "text"
+                    }
+                }
+            ]
         },
         {
             "type": "dict",

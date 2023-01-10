@@ -1,4 +1,5 @@
 import os
+import re
 
 from maya import cmds
 
@@ -17,7 +18,6 @@ class ValidatePathForPlugin(pyblish.api.InstancePlugin):
     hosts = ['maya']
     families = ["workfile"]
     label = "Non-existent Paths in Non-Maya Nodes"
-    optional = True
 
     def get_invalid(self, instance):
         invalid = list()
@@ -26,20 +26,21 @@ class ValidatePathForPlugin(pyblish.api.InstancePlugin):
         validate_path = (
             instance.context.data["project_settings"]["maya"]["publish"]
         )
-        file_attr = validate_path["ValidatePathForPlugin"]
+        file_attr = validate_path["ValidatePathForPlugin"]["attribute"]
         if file_attr:
             # get the nodes and file attributes
             for node, attr in file_attr.items():
                 # check the related nodes
                 targets = cmds.ls(type=node)
-                path_attr = ".{0}".format(attr)
 
-                if targets:
-                    for target in targets:
-                        # get the filepath
-                        filepath = cmds.getAttr(target + path_attr)
-                        if filepath and not os.path.exists(filepath):
-                            invalid.append(target)
+                for target in targets:
+                    # get the filepath
+                    file_attr = "{}.{}".format(target, attr)
+                    filepath = cmds.getAttr(file_attr)
+
+                    if filepath and not os.path.exists(filepath):
+                        self.log.error("File {0} not exists".format(filepath)) # noqa
+                        invalid.append(target)
 
         return invalid
 

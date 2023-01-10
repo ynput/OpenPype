@@ -13,9 +13,7 @@
         },
         "colorManagementPreference": {
             "configFilePath": {
-                "windows": [
-                    "C:\\Users\\Kayla\\Downloads\\OpenColorIO-Configs-master\\OpenColorIO-Configs-master\\aces_1.2"
-                ],
+                "windows": [],
                 "darwin": [],
                 "linux": []
             },
@@ -341,6 +339,10 @@
             ]
         },
         "ValidatePathForPlugin": {
+            "enabled": true,
+            "optional": false,
+            "active": true,
+            "attribute": {
             "AlembicNode": "abc_File",
             "VRayProxy": "fileName",
             "RenderManArchive": "filename",
@@ -383,7 +385,16 @@
             "VRayScene": "FilePath",
             "VRayScene": "parameterOverrideFilePath",
             "VRayMtlMDL": "filename",
-            "VRaySimbiont": "file"
+            "VRaySimbiont": "file",
+            "dlOpenVDBShape": "filename",
+            "pgYetiMayaShape": "cfn",
+            "pgYetiMayaShape": "ofn",
+            "pgYetiMayaShape": "labf",
+            "pgYetiMayaShape": "trf",
+            "pgYetiMayaShape": "liveABCFilename",
+            "gpuCache": "cacheFileName"
+        }
+
         },
         "ValidateRenderSettings": {
             "arnold_render_attributes": [],
