@@ -153,8 +153,8 @@ class CreateTextures(Creator):
                       decimals=0,
                       default=16,
                       label="Dilation Distance"),
-            UILabelDef("Note: Dilation Distance is only used with "
-                       "'Dilation + <xxx>' padding options"),
+            UILabelDef("*only used with "
+                       "'Dilation + <x>' padding"),
         ]
 
     def get_pre_create_attr_defs(self):
