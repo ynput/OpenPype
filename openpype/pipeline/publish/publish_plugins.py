@@ -1,6 +1,6 @@
 import inspect
 from abc import ABCMeta
-
+from pprint import pformat
 import pyblish.api
 from pyblish.plugin import MetaPlugin, ExplicitMetaPlugin
 
@@ -11,6 +11,12 @@ from .lib import (
     get_errored_instances_from_context,
     get_errored_plugins_from_context,
     get_instance_staging_dir,
+)
+
+from openpype.pipeline.colorspace import (
+    get_imageio_colorspace_from_filepath,
+    get_imageio_config,
+    get_imageio_file_rules
 )
 
 
@@ -250,12 +256,12 @@ class RepairContextAction(pyblish.api.Action):
         if not hasattr(plugin, "repair"):
             raise RuntimeError("Plug-in does not have repair method.")
 
-        # Get the errored instances
+        # Get the failed instances
         self.log.info("Finding failed instances..")
-        errored_plugins = get_errored_plugins_from_context(context)
+        failed_plugins = get_errored_plugins_from_context(context)
 
         # Apply pyblish.logic to get the instances for the plug-in
-        if plugin in errored_plugins:
+        if plugin in failed_plugins:
             self.log.info("Attempting fix ...")
             plugin.repair(context)
 
@@ -280,3 +286,93 @@ class Extractor(pyblish.api.InstancePlugin):
         """
 
         return get_instance_staging_dir(instance)
+
+
+class ExtractorColormanaged(Extractor):
+    """Extractor base for color managed image data.
+
+    Class implements a "set_representation_colorspace" function, which is used
+    for injecting colorspace data to representation data for farther
+    integration into db document.
+
+    """
+
+    allowed_ext = [
+        "cin", "dpx", "avi", "dv", "gif", "flv", "mkv", "mov", "mpg", "mpeg",
+        "mp4", "m4v", "mxf", "iff", "z", "ifl", "jpeg", "jpg", "jfif", "lut",
+        "1dl", "exr", "pic", "png", "ppm", "pnm", "pgm", "pbm", "rla", "rpf",
+        "sgi", "rgba", "rgb", "bw", "tga", "tiff", "tif", "img"
+    ]
+
+    @staticmethod
+    def get_colorspace_settings(context):
+        project_name = context.data["projectName"]
+        host_name = context.data["hostName"]
+        anatomy_data = context.data["anatomyData"]
+        project_settings_ = context.data["project_settings"]
+
+        config_data = get_imageio_config(
+            project_name, host_name,
+            project_settings=project_settings_,
+            anatomy_data=anatomy_data
+        )
+        file_rules = get_imageio_file_rules(
+            project_name, host_name,
+            project_settings=project_settings_
+        )
+        return config_data, file_rules
+
+    def set_representation_colorspace(
+        self, representation, context,
+        config_data, file_rules,
+        colorspace=None
+    ):
+
+        if not config_data:
+            # warn in case no colorspace path was defined
+            self.log.warning("No colorspace management was defined")
+            return
+
+        self.log.info("Config data is : `{}`".format(
+            config_data))
+
+        ext = representation["ext"]
+        # check extension
+        self.log.debug("__ ext: `{}`".format(ext))
+        if ext.lower() not in self.allowed_ext:
+            return
+
+        project_name = context.data["projectName"]
+        host_name = context.data["hostName"]
+        project_settings = context.data["project_settings"]
+
+        # get one filename
+        filename = representation["files"]
+        if isinstance(filename, list):
+            filename = filename.pop()
+
+        self.log.debug("__ filename: `{}`".format(
+            filename))
+
+        # get matching colorspace from rules
+        colorspace = colorspace or get_imageio_colorspace_from_filepath(
+            filename, host_name, project_name,
+            config_data=config_data,
+            file_rules=file_rules,
+            project_settings=project_settings
+        )
+        self.log.debug("__ colorspace: `{}`".format(
+            colorspace))
+
+        # infuse data to representation
+        if colorspace:
+            colorspace_data = {
+                "colorspace": colorspace,
+                "configData": config_data
+            }
+
+            # update data key
+            representation["colorspaceData"] = colorspace_data
+
+            self.log.debug("__ colorspace_data: `{}`".format(
+                pformat(colorspace_data)))

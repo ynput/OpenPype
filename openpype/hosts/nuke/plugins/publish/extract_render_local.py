@@ -7,8 +7,7 @@ import nuke
 from openpype.pipeline import publish
 
 
-class NukeRenderLocal(publish.Extractor):
-    # TODO: rewrite docstring to nuke
+class NukeRenderLocal(publish.ExtractorColormanaged):
     """Render the current Nuke composition locally.
 
     Extract the result of savers by starting a comp render
@@ -22,6 +21,10 @@ class NukeRenderLocal(publish.Extractor):
     families = ["render.local", "prerender.local", "still.local"]
 
     def process(self, instance):
+        # get colorspace settings data
+        config_data, file_rules = self.get_colorspace_settings(
+            instance.context)
+
         families = instance.data["families"]
 
         node = None
@@ -67,6 +70,7 @@ class NukeRenderLocal(publish.Extractor):
         )
 
         ext = node["file_type"].value()
+        colorspace = node["colorspace"].value()
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -90,6 +94,14 @@ class NukeRenderLocal(publish.Extractor):
                 'files': filenames,
                 "stagingDir": out_dir
             }
+
+        # inject colorspace data
+        self.set_representation_colorspace(
+            repre, instance.context,
+            config_data, file_rules,
+            colorspace=colorspace
+        )
+
         instance.data["representations"].append(repre)
 
         self.log.info("Extracted instance '{0}' to: {1}".format(
