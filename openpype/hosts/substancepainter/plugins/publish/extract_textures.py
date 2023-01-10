@@ -14,12 +14,15 @@ class ExtractTextures(publish.Extractor):
 
         staging_dir = self.staging_dir(instance)
 
-        # See: https://substance3d.adobe.com/documentation/ptpy/api/substance_painter/export  # noqa
         creator_attrs = instance.data["creator_attributes"]
+        preset_url = creator_attrs["exportPresetUrl"]
+        self.log.debug(f"Exporting using preset: {preset_url}")
+
+        # See: https://substance3d.adobe.com/documentation/ptpy/api/substance_painter/export  # noqa
         config = {
             "exportShaderParams": True,
             "exportPath": staging_dir,
-            "defaultExportPreset": creator_attrs["exportPresetUrl"],
+            "defaultExportPreset": preset_url,
 
             # Custom overrides to the exporter
             "exportParameters": [
