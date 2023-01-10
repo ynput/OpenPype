@@ -210,7 +210,6 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
 def on_open():
     log.info("Running callback on open..")
-    print("Run")
 
     if any_outdated_containers():
         from openpype.widgets import popup
