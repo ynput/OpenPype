@@ -1,7 +1,7 @@
 """OpenColorIO Wrapper.
 
 Only to be interpreted by Python 3. It is run in subprocess in case
-Python 2 hosts needs to use it. Or it is used as modul for Python 3
+Python 2 hosts needs to use it. Or it is used as module for Python 3
 processing.
 
 Providing functionality:
