@@ -1575,14 +1575,6 @@ class AssetLoader(LoaderPlugin):
                     if new_datablock:
                         old_datablock.user_remap(new_datablock)
 
-                    # Delete old datablocks if not used
-                    if old_datablock not in datablocks:
-                        datacol = getattr(
-                            bpy.data, BL_TYPE_DATAPATH.get(type(old_datablock))
-                        )
-                        old_datablock.use_fake_user = False
-                        datacol.remove(old_datablock)
-
                 # Restore parent collection if existing
                 if parent_collection:
                     unlink_from_collection(
