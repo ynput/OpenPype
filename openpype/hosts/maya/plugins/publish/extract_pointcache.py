@@ -86,7 +86,8 @@ class ExtractAlembic(publish.Extractor):
                                                      start=start,
                                                      end=end))
 
-        with suspended_refresh(suspend=instance.data.get("refresh", False)):
+        suspend = not instance.data.get("refresh", False)
+        with suspended_refresh(suspend=suspend):
             with maintained_selection():
                 cmds.select(nodes, noExpand=True)
                 extract_alembic(

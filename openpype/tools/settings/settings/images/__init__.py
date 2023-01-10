@@ -1,5 +1,5 @@
 import os
-from Qt import QtGui
+from qtpy import QtGui
 
 
 def get_image_path(image_filename):

@@ -3,6 +3,8 @@
 #include "OpenPypePublishInstance.h"
 #include "AssetRegistryModule.h"
 #include "NotificationManager.h"
+#include "OpenPypeLib.h"
+#include "OpenPypeSettings.h"
 #include "SNotificationList.h"
 
 //Moves all the invalid pointers to the end to prepare them for the shrinking
@@ -36,6 +38,11 @@ UOpenPypePublishInstance::UOpenPypePublishInstance(const FObjectInitializer& Obj
 	AssetRegistryModule.Get().OnAssetAdded().AddUObject(this, &UOpenPypePublishInstance::OnAssetCreated);
 	AssetRegistryModule.Get().OnAssetRemoved().AddUObject(this, &UOpenPypePublishInstance::OnAssetRemoved);
 	AssetRegistryModule.Get().OnAssetUpdated().AddUObject(this, &UOpenPypePublishInstance::OnAssetUpdated);
+
+#ifdef WITH_EDITOR
+	ColorOpenPypeDirs();
+#endif
+	
 }
 
 void UOpenPypePublishInstance::OnAssetCreated(const FAssetData& InAssetData)
@@ -58,7 +65,7 @@ void UOpenPypePublishInstance::OnAssetCreated(const FAssetData& InAssetData)
 		if (AssetDataInternal.Emplace(Asset).IsValidId())
 		{
 			UE_LOG(LogTemp, Log, TEXT("Added an Asset to PublishInstance - Publish Instance: %s, Asset %s"),
-				*this->GetName(), *Asset->GetName());
+			       *this->GetName(), *Asset->GetName());
 		}
 	}
 }
@@ -95,6 +102,48 @@ bool UOpenPypePublishInstance::IsUnderSameDir(const UObject* InAsset) const
 }
 
 #ifdef WITH_EDITOR
+
+void UOpenPypePublishInstance::ColorOpenPypeDirs()
+{
+	FString PathName = this->GetPathName();
+
+	//Check whether the path contains the defined OpenPype folder
+	if (!PathName.Contains(TEXT("OpenPype"))) return;
+
+	//Get the base path for open pype
+	FString PathLeft, PathRight;
+	PathName.Split(FString("OpenPype"), &PathLeft, &PathRight);
+
+	if (PathLeft.IsEmpty() || PathRight.IsEmpty())
+	{
+		UE_LOG(LogAssetData, Error, TEXT("Failed to retrieve the base OpenPype directory!"))
+		return;
+	}
+
+	PathName.RemoveFromEnd(PathRight, ESearchCase::CaseSensitive);
+
+	//Get the current settings
+	const UOpenPypeSettings* Settings = GetMutableDefault<UOpenPypeSettings>();
+
+	//Color the base folder
+	UOpenPypeLib::SetFolderColor(PathName, Settings->GetFolderFColor(), false);
+
+	//Get Sub paths, iterate through them and color them according to the folder color in UOpenPypeSettings
+	const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(
+		"AssetRegistry");
+
+	TArray<FString> PathList;
+
+	AssetRegistryModule.Get().GetSubPaths(PathName, PathList, true);
+
+	if (PathList.Num() > 0)
+	{
+		for (const FString& Path : PathList)
+		{
+			UOpenPypeLib::SetFolderColor(Path, Settings->GetFolderFColor(), false);
+		}
+	}
+}
 
 void UOpenPypePublishInstance::SendNotification(const FString& Text) const
 {

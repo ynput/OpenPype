@@ -608,7 +608,7 @@ def discover_legacy_creator_plugins():
             plugin.apply_settings(project_settings, system_settings)
         except Exception:
             log.warning(
-                "Failed to apply settings to loader {}".format(
+                "Failed to apply settings to creator {}".format(
                     plugin.__name__
                 ),
                 exc_info=True

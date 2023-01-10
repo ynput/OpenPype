@@ -4,7 +4,7 @@ import json
 import clique
 import subprocess
 import openpype.lib
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 from . import DropEmpty, ComponentsList, ComponentItem
 
 
