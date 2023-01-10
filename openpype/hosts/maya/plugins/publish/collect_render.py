@@ -42,7 +42,6 @@ Provides:
 import re
 import os
 import platform
-import json
 
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
