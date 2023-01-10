@@ -1,9 +1,13 @@
+from itertools import chain
 import json
 from typing import Generator
 
 import bpy
 
 import pyblish.api
+from openpype.hosts.blender.api.utils import (
+    BL_TYPE_DATAPATH,
+)
 from openpype.pipeline import AVALON_CONTAINER_ID, AVALON_INSTANCE_ID
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
@@ -92,7 +96,22 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Process datablocks
             members.update(datablocks)
 
-            # TODO if no outliner data collect all linked to containerize
+            # Add datablocks used by the main datablocks
+            non_outliner_datacols = set(
+                chain.from_iterable(
+                    getattr(bpy.data, t)
+                    for t in BL_TYPE_DATAPATH.values()
+                )
+            )
+            members.update(
+                {
+                    d
+                    for d, users in bpy.data.user_map(
+                        subset=non_outliner_datacols
+                    ).items()
+                    if users & datablocks
+                }
+            )
 
             # Add instance holder as first item
             members = list(members)

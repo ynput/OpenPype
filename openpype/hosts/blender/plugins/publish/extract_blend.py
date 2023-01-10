@@ -4,6 +4,7 @@ from typing import List, Set, Tuple
 
 import bpy
 import openpype.api
+from openpype.hosts.blender.api.utils import BL_OUTLINER_TYPES
 
 from openpype.pipeline import (
     legacy_io,
@@ -34,6 +35,15 @@ class ExtractBlend(publish.Extractor):
         plugin.deselect_all()
 
         data_blocks = set(instance)
+
+        # Substitute objects by their collections to avoid data duplication
+        collections = set(plugin.get_collections_by_objects(data_blocks))
+        if collections:
+            data_blocks = collections | {
+                d
+                for d in data_blocks
+                if isinstance(d, tuple(BL_OUTLINER_TYPES))
+            }
 
         # Get images used by datablocks and process resources
         used_images = self._get_used_images(data_blocks)
