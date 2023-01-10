@@ -8,9 +8,7 @@ from functools import partial
 # Substance 3D Painter modules
 import substance_painter.ui
 import substance_painter.event
-import substance_painter.export
 import substance_painter.project
-import substance_painter.textureset
 
 from openpype.host import HostBase, IWorkfileHost, ILoadHost, IPublishHost
 
