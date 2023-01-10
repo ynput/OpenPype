@@ -123,6 +123,7 @@ class CreateTextures(Creator):
                         None: "Based on output template",
                         # TODO: implement extensions
                     },
+                    default=None,
                     label="File type"),
             EnumDef("exportSize",
                     items={
@@ -136,6 +137,7 @@ class CreateTextures(Creator):
                         11: "2048",
                         12: "4096"
                     },
+                    default=None,
                     label="Size"),
 
             EnumDef("exportPadding",
@@ -146,6 +148,7 @@ class CreateTextures(Creator):
                         "color": "Dilation + default background color",
                         "diffusion": "Dilation + diffusion"
                     },
+                    default="infinite",
                     label="Padding"),
             NumberDef("exportDilationDistance",
                       minimum=0,
