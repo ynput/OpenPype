@@ -24,6 +24,7 @@ from openpype.pipeline import (
     schema
 )
 from openpype.pipeline.publish import get_publish_template_name
+from openpype.plugins.publish.integrate import IntegrateAsset
 
 
 class IntegrateHeroVersion(pyblish.api.InstancePlugin):
@@ -35,14 +36,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
     active = True
 
     # Families are modified using settings
-    families = [
-        "model",
-        "rig",
-        "setdress",
-        "look",
-        "pointcache",
-        "animation"
-    ]
+    families = IntegrateAsset.families
 
     # Can specify representation names that will be ignored (lower case)
     ignored_representation_names = []
