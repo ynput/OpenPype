@@ -145,7 +145,7 @@ class ExtractBlend(publish.Extractor):
         for image in {
             img
             for img in images
-            if img.source in {"FILE", "SEQUENCE", "MOVIE"}
+            if img.source in {"FILE", "SEQUENCE", "MOVIE"} and not img.packed_file
         }:
             # Check image is not internal
             if not image.filepath:
