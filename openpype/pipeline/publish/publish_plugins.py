@@ -291,7 +291,9 @@ class Extractor(pyblish.api.InstancePlugin):
 class ExtractorColormanaged(Extractor):
     """Extractor base for color managed image data.
 
-    Class implements a "set_representation_colorspace" function, which is used
+    Each pixel data representation exctractors should be using this class
+    as parent. Class implements "get_colorspace_settings" and
+    "set_representation_colorspace" function, which is used
     for injecting colorspace data to representation data for farther
     integration into db document.
 
@@ -306,6 +308,14 @@ class ExtractorColormanaged(Extractor):
 
     @staticmethod
     def get_colorspace_settings(context):
+        """Retuns solved settings for the host context.
+
+        Args:
+            context (publish.Context): publishing context
+
+        Returns:
+            tuple | bool: config, file rules or None
+        """
         project_name = context.data["projectName"]
         host_name = context.data["hostName"]
         anatomy_data = context.data["anatomyData"]
@@ -327,7 +337,30 @@ class ExtractorColormanaged(Extractor):
         config_data, file_rules,
         colorspace=None
     ):
+        """Sets colorspace data to representation.
 
+        Args:
+            representation (dict): publishing representation
+            context (publish.Context): publishing context
+            config_data (dict): host resolved config data
+            file_rules (dict): host resolved file rules data
+            colorspace (str, optional): colorspace name. Defaults to None.
+
+        Example:
+            ```
+            {
+                # for other publish plugins and loaders
+                "colorspace": "linear",
+                "configData": {
+                    # for future references in case need
+                    "path": "/abs/path/to/config.ocio",
+                    # for other plugins within remote publish cases
+                    "template": "{project[root]}/path/to/config.ocio"
+                }
+            }
+            ```
+
+        """
         if not config_data:
             # warn in case no colorspace path was defined
             self.log.warning("No colorspace management was defined")
