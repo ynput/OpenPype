@@ -13,6 +13,25 @@ Project settings can have project specific values. Each new project is using stu
 Projects always use default project values unless they have [project override](../admin_settings#project-overrides) (orage colour). Any changes in default project may affect all existing projects.
 :::
 
+## Color Management (ImageIO)
+
+:::info Default OCIO config
+OpenPype is distributing own ocio configs. Those can be found in `{openpype install dir}/{version}/vendor/bin/ocioconfig/OpenColorIOConfigs`. Windows example: `C:\Program Files (x86)\OpenPype\3.14.0\vendor\bin\ocioconfig\OpenColorIOConfigs`
+:::
+
+### Using OCIO config
+Each path input is supporting [anatomy template key formating](../admin_settings_project_anatomy#available-template-keys) and also environment variables. Default distributed value is set to `{OPENPYPE_ROOT}/vendor/bin/ocioconfig/OpenColorIOConfigs/aces_1.2/config.ocio`. If any of host config is enabled and set to any path, global config path is overriden.
+
+Config path can be defined to particular shot target with following path input `{root[work]}/{project[name]}/{hierarchy}/{asset}/config/aces.ocio`
+
+### Using File rules
+File rules are inspired by OCIO v2 configuration ([more info here](https://opencolorio.readthedocs.io/en/latest/guides/authoring/rules.html)). Since each rule is having unique name it can be overidden by host activated File rules (example: `project_settings/nuke/imageio/file_rules/rules`). Pattern input is using REGEX expression syntax (try [regexr.com](https://regexr.com/)). Matching rules procedure's intention is to be used during publishing or loading of representation. Since the publishing procedure is run before integrator formates publish template path, make sure the pattern is working or any work render path.
+
+:::warning Colorspace name input
+Colorspace name value is string input and no validation is run after saving of changes. We recommand to open a config.ocio file and search exact colorspace names for validation.
+:::
+
+
 ## Profile filters
 
 Many of the settings are using a concept of **Profile filters**
