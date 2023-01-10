@@ -95,20 +95,14 @@ class NukeCreator(NewCreator):
         node.addKnob(info_knob)
 
     def check_existing_subset(self, subset_name, instance_data):
-        """Check if existing subset name versions already exists."""
-        # Get all subsets of the current asset
-        project_name = legacy_io.active_project()
-        asset_doc = get_asset_by_name(
-            project_name, instance_data["asset"], fields=["_id"]
-        )
-        subset_docs = get_subsets(
-            project_name, asset_ids=[asset_doc["_id"]], fields=["name"]
-        )
-        existing_subset_names_low = {
-            subset_doc["name"].lower()
-            for subset_doc in subset_docs
-        }
-        return subset_name.lower() in existing_subset_names_low
+        """Check if existing subset name already exists."""
+        exists = False
+        for node in nuke.allNodes(recurseGroups=True):
+            node_data = get_node_data(node, INSTANCE_DATA_KNOB)
+            if subset_name in node_data.get("subset"):
+                exists = True
+
+        return exists
 
     def create_instance_node(
         self,
@@ -161,7 +155,6 @@ class NukeCreator(NewCreator):
         else:
             self.selected_nodes = []
 
-
     def create(self, subset_name, instance_data, pre_create_data):
 
         # make sure selected nodes are added
@@ -174,7 +167,6 @@ class NukeCreator(NewCreator):
                  "definition.").format(subset_name))
 
         try:
-
             instance_node = self.create_instance_node(
                 subset_name,
                 node_type=instance_data.pop("node_type", None)
