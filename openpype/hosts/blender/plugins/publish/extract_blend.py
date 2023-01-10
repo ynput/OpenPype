@@ -90,7 +90,7 @@ class ExtractBlend(publish.Extractor):
 
         # Restore remapped path
         for image, sourcepath in remapped:
-            image.filepath = sourcepath.as_posix()
+            image.filepath = str(sourcepath)
 
         # Set up the resources transfers/links for the integrator
         instance.data.setdefault("transfers", [])
@@ -155,23 +155,26 @@ class ExtractBlend(publish.Extractor):
         for image in {
             img
             for img in images
-            if img.source in {"FILE", "SEQUENCE", "MOVIE"} and not img.packed_file
+            if img.source in {"FILE", "SEQUENCE", "MOVIE"}
+            and not img.packed_file
         }:
             # Check image is not internal
             if not image.filepath:
                 continue
 
             # Get source and destination paths
-            sourcepath = Path(bpy.path.abspath(image.filepath))
-            destination = Path(instance.data["resourcesDir"], sourcepath.name)
+            sourcepath = image.filepath  # Don't every modify source_image
+            destination = Path(
+                instance.data["resourcesDir"], Path(sourcepath).name
+            )
 
-            transfers.append((sourcepath.as_posix(), destination.as_posix()))
+            transfers.append((sourcepath, destination.as_posix()))
             self.log.info(f"file will be copied {sourcepath} -> {destination}")
 
             # Store the hashes from hash to destination to include in the
             # database
             # NOTE Keep source hash system in case HARDLINK system works again
-            texture_hash = openpype.api.source_hash(sourcepath.as_posix())
+            texture_hash = openpype.api.source_hash(sourcepath)
             hashes[texture_hash] = destination.as_posix()
 
             # Remap source image to resources directory

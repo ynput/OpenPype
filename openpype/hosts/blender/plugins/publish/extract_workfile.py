@@ -1,6 +1,7 @@
-import os
 from pathlib import Path
 from typing import Set
+
+import pyblish
 import bpy
 from openpype.hosts.blender.plugins.publish import extract_blend
 
@@ -13,6 +14,9 @@ class ExtractWorkfile(extract_blend.ExtractBlend):
     label = "Extract workfile"
     hosts = ["blender"]
     families = ["workfile"]
+    
+    # Run first
+    order = pyblish.api.ExtractorOrder - 0.1
 
     def _write_data(self, filepath: Path, *args):
         """Override to save mainfile with all data.
