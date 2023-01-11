@@ -30,6 +30,7 @@ class LoaderPlugin(list):
     representations = list()
     order = 0
     is_multiple_contexts_compatible = False
+    enabled = True
 
     options = []
 
@@ -73,11 +74,10 @@ class LoaderPlugin(list):
         print(">>> We have preset for {}".format(plugin_name))
         for option, value in plugin_settings.items():
             if option == "enabled" and value is False:
-                setattr(cls, "active", False)
                 print("  - is disabled by preset")
             else:
-                setattr(cls, option, value)
                 print("  - setting `{}`: `{}`".format(option, value))
+            setattr(cls, option, value)
 
     @classmethod
     def get_representations(cls):
