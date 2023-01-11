@@ -74,7 +74,11 @@ class IntegrateBlenderAsset(pyblish.api.InstancePlugin):
                         "--datablocks",
                         *[i.name for i in instance],
                         "--datapaths",
-                        *[BL_TYPE_DATAPATH.get(type(d)) for d in instance],
+                        *{
+                            BL_TYPE_DATAPATH.get(type(d))
+                            for d in instance
+                            if BL_TYPE_DATAPATH.get(type(d)) is not None
+                        },
                         "--id",
                         str(representation["_id"]),
                     ]
