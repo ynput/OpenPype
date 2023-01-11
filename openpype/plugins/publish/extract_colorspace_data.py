@@ -35,7 +35,6 @@ class ExtractColorspaceData(publish.ExtractorColormanaged):
 
         # get colorspace settings
         context = instance.context
-        config_data, file_rules = self.get_colorspace_settings(context)
 
         # loop representations
         for representation in representations:
@@ -44,6 +43,5 @@ class ExtractColorspaceData(publish.ExtractorColormanaged):
                 continue
 
             self.set_representation_colorspace(
-                representation, context,
-                config_data, file_rules
+                representation, context
             )

@@ -317,6 +317,9 @@ class ExtractorColormanaged(Extractor):
         Returns:
             tuple | bool: config, file rules or None
         """
+        if "imageioSettings" in context.data:
+            return context.data["imageioSettings"]
+
         project_name = context.data["projectName"]
         host_name = context.data["hostName"]
         anatomy_data = context.data["anatomyData"]
@@ -331,12 +334,16 @@ class ExtractorColormanaged(Extractor):
             project_name, host_name,
             project_settings=project_settings_
         )
+
+        # caching settings for future instance processing
+        context.data["imageioSettings"] = (config_data, file_rules)
+
         return config_data, file_rules
 
     def set_representation_colorspace(
         self, representation, context,
-        config_data, file_rules,
-        colorspace=None
+        colorspace=None,
+        colorspace_settings=None
     ):
         """Sets colorspace data to representation.
 
@@ -346,6 +353,9 @@ class ExtractorColormanaged(Extractor):
             config_data (dict): host resolved config data
             file_rules (dict): host resolved file rules data
             colorspace (str, optional): colorspace name. Defaults to None.
+            colorspace_settings (tuple[dict, dict], optional):
+                Settings for config_data and file_rules.
+                Defaults to None.
 
         Example:
             ```
@@ -362,6 +372,12 @@ class ExtractorColormanaged(Extractor):
             ```
 
         """
+        if colorspace_settings is None:
+            colorspace_settings = self.get_colorspace_settings(context)
+
+        # unpack colorspace settings
+        config_data, file_rules = colorspace_settings
+
         if not config_data:
             # warn in case no colorspace path was defined
             self.log.warning("No colorspace management was defined")

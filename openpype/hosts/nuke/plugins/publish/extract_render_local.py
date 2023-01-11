@@ -21,10 +21,6 @@ class NukeRenderLocal(publish.ExtractorColormanaged):
     families = ["render.local", "prerender.local", "still.local"]
 
     def process(self, instance):
-        # get colorspace settings data
-        config_data, file_rules = self.get_colorspace_settings(
-            instance.context)
-
         families = instance.data["families"]
 
         node = None
@@ -98,7 +94,6 @@ class NukeRenderLocal(publish.ExtractorColormanaged):
         # inject colorspace data
         self.set_representation_colorspace(
             repre, instance.context,
-            config_data, file_rules,
             colorspace=colorspace
         )
 
