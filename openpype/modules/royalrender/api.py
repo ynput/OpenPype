@@ -15,36 +15,10 @@ class Api:
     RR_SUBMIT_CONSOLE = 1
     RR_SUBMIT_API = 2
 
-    def __init__(self, project=None):
+    def __init__(self, rr_path=None):
         self.log = Logger.get_logger("RoyalRender")
-        self._initialize_rr(project)
-
-    def _initialize_rr(self, project=None):
-        # type: (str) -> None
-        """Initialize RR Path.
-
-        Args:
-            project (str, Optional): Project name to set RR api in
-                context.
-
-        """
-        if project:
-            project_settings = get_project_settings(project)
-            rr_path = (
-                project_settings
-                ["royalrender"]
-                ["rr_paths"]
-            )
-        else:
-            rr_path = (
-                self._settings
-                ["modules"]
-                ["royalrender"]
-                ["rr_path"]
-                ["default"]
-            )
-        os.environ["RR_ROOT"] = rr_path
         self._rr_path = rr_path
+        os.environ["RR_ROOT"] = rr_path
 
     def _get_rr_bin_path(self, rr_root=None):
         # type: (str) -> str
