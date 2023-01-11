@@ -20,19 +20,25 @@ OpenPype distributes its own OCIO configs. Those can be found in `{openpype inst
 :::
 
 ### Using OCIO config
-Each OCIO config path input supports formatting using environment variables and [anatomy template keys](../admin_settings_project_anatomy#available-template-keys). The default global OCIO config path is `{OPENPYPE_ROOT}/vendor/bin/ocioconfig/OpenColorIOConfigs/aces_1.2/config.ocio`. 
+Global config path is set by default to OpenPype distributed configs. At the moment there are only two - **aces_1.2** and **nuke-default**. Since this path input is not platform specific it is required to use at least an environment variable do platform specific config root directory. Order of paths matter so first path found and existing first served.
 
-If the project settings for a particular host has its own OCIO config **enabled** and set to any path it overrides the global OCIO config for that host.
+Each OCIO config path input supports formatting using environment variables and [anatomy template keys](../admin_settings_project_anatomy#available-template-keys). The default global OCIO config path is `{OPENPYPE_ROOT}/vendor/bin/ocioconfig/OpenColorIOConfigs/aces_1.2/config.ocio`.
+
+If the project settings for a particular host has its own OCIO config **enabled** and set to at least one path and the path exists, it overrides the global OCIO config for that host.
 
 **For example**
 
 Project global OCIO config: `project_settings/global/imageio/ocio_config`
 Project nuke-specific OCIO config: `project_settings/nuke/imageio/ocio_config`
 
-Config path can be defined to particular shot target with following path input `{root[work]}/{project[name]}/{hierarchy}/{asset}/config/aces.ocio`
+Config path can be defined to particular shot target with following path inputs:
+1. `{root[work]}/{project[name]}/{hierarchy}/{asset}/config/aces.ocio`
+2. `{root[work]}/{project[name]}/{hierarchy}/config/aces.ocio`
+
+Procedure of resolving path (from above example) will look first into path 1st and if the path is not existing then it will try 2nd and if even that is not existing then it will fall back to global default.
 
 ### Using File rules
-File rules are inspired by [OCIO v2 configuration]((https://opencolorio.readthedocs.io/en/latest/guides/authoring/rules.html)). Each rule has a unique name which can be overridden by host-specific _File rules_ (example: `project_settings/nuke/imageio/file_rules/rules`). 
+File rules are inspired by [OCIO v2 configuration]((https://opencolorio.readthedocs.io/en/latest/guides/authoring/rules.html)). Each rule has a unique name which can be overridden by host-specific _File rules_ (example: `project_settings/nuke/imageio/file_rules/rules`).
 
 The _input pattern_ matching uses REGEX expression syntax (try [regexr.com](https://regexr.com/)). Matching rules procedure's intention is to be used during publishing or loading of representation. Since the publishing procedure is run before integrator formate publish template path, make sure the pattern is working or any work render path.
 
