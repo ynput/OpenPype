@@ -5,19 +5,19 @@ import pyblish.api
 class CollectRRPathFromInstance(pyblish.api.InstancePlugin):
     """Collect RR Path from instance."""
 
-    order = pyblish.api.CollectorOrder + 0.01
-    label = "Royal Render Path from the Instance"
+    order = pyblish.api.CollectorOrder
+    label = "Collect Royal Render path name from the Instance"
     families = ["rendering"]
 
     def process(self, instance):
-        instance.data["rrPath"] = self._collect_rr_path(instance)
+        instance.data["rrPathName"] = self._collect_rr_path_name(instance)
         self.log.info(
-            "Using {} for submission.".format(instance.data["rrPath"]))
+            "Using '{}' for submission.".format(instance.data["rrPathName"]))
 
     @staticmethod
-    def _collect_rr_path(render_instance):
+    def _collect_rr_path_name(render_instance):
         # type: (pyblish.api.Instance) -> str
-        """Get Royal Render path from render instance."""
+        """Get Royal Render pat name from render instance."""
         rr_settings = (
             render_instance.context.data
             ["system_settings"]
@@ -42,8 +42,6 @@ class CollectRRPathFromInstance(pyblish.api.InstancePlugin):
             # Handle situation were we had only one url for royal render.
             return render_instance.context.data["defaultRRPath"]
 
-        return rr_servers[
-            list(rr_servers.keys())[
+        return list(rr_servers.keys())[
                 int(render_instance.data.get("rrPaths"))
             ]
-        ]

@@ -80,31 +80,58 @@ class CreateRender(plugin.Creator):
         if self._project_settings["maya"]["RenderSettings"]["apply_render_settings"]: # noqa
             lib_rendersettings.RenderSettings().set_default_renderer_settings()
 
-        # Deadline-only
+        # Handling farms
         manager = ModulesManager()
         deadline_settings = get_system_settings()["modules"]["deadline"]
-        if not deadline_settings["enabled"]:
-            self.deadline_servers = {}
+        rr_settings = get_system_settings()["modules"]["royalrender"]
+
+        self.deadline_servers = {}
+        self.rr_paths = {}
+
+        if deadline_settings["enabled"]:
+            self.deadline_module = manager.modules_by_name["deadline"]
+            try:
+                default_servers = deadline_settings["deadline_urls"]
+                project_servers = (
+                    self._project_settings["deadline"]["deadline_servers"]
+                )
+                self.deadline_servers = {
+                    k: default_servers[k]
+                    for k in project_servers
+                    if k in default_servers
+                }
+
+                if not self.deadline_servers:
+                    self.deadline_servers = default_servers
+
+            except AttributeError:
+                # Handle situation were we had only one url for deadline.
+                # get default deadline webservice url from deadline module
+                self.deadline_servers = self.deadline_module.deadline_urls
+
+        # RoyalRender only
+        if not rr_settings["enabled"]:
             return
-        self.deadline_module = manager.modules_by_name["deadline"]
+
+        self.rr_module = manager.modules_by_name["royalrender"]
         try:
-            default_servers = deadline_settings["deadline_urls"]
-            project_servers = (
-                self._project_settings["deadline"]["deadline_servers"]
+            default_paths = rr_settings["rr_paths"]
+            project_paths = (
+                self._project_settings["royalrender"]["rr_paths"]
             )
-            self.deadline_servers = {
-                k: default_servers[k]
-                for k in project_servers
-                if k in default_servers
+            self.rr_paths = {
+                k: default_paths[k]
+                for k in project_paths
+                if k in default_paths
             }
 
-            if not self.deadline_servers:
-                self.deadline_servers = default_servers
+            if not self.rr_paths:
+                self.rr_paths = default_paths
 
         except AttributeError:
-            # Handle situation were we had only one url for deadline.
-            # get default deadline webservice url from deadline module
-            self.deadline_servers = self.deadline_module.deadline_urls
+            # Handle situation were we had only one path for royalrender.
+            # Get default royalrender root path from the rr module.
+            self.rr_paths = self.rr_module.rr_paths
 
     def process(self):
         """Entry point."""
@@ -138,6 +165,14 @@ class CreateRender(plugin.Creator):
                     attributeChange=[
                         "{}.deadlineServers".format(self.instance),
                         self._deadline_webservice_changed
+                    ])
+
+            # add RoyalRender root path selection list
+            if self.rr_paths:
+                cmds.scriptJob(
+                    attributeChange=[
+                        "{}.rrPaths".format(self.instance),
+                        self._rr_path_changed
                     ])
 
             cmds.setAttr("{}.machineList".format(self.instance), lock=True)
@@ -192,6 +227,18 @@ class CreateRender(plugin.Creator):
                      attributeType="enum",
                      enumName=":".join(sorted_pools))
 
+    @staticmethod
+    def _rr_path_changed():
+        """Unused callback to pull information from RR."""
+        """
+        _ = self.rr_paths[
+            self.server_aliases[
+                cmds.getAttr("{}.rrPaths".format(self.instance))
+            ]
+        ]
+        """
+        pass
+
     def _create_render_settings(self):
         """Create instance settings."""
         # get pools (slave machines of the render farm)
@@ -226,14 +273,20 @@ class CreateRender(plugin.Creator):
         system_settings = get_system_settings()["modules"]
 
         deadline_enabled = system_settings["deadline"]["enabled"]
+        royalrender_enabled = system_settings["royalrender"]["enabled"]
         muster_enabled = system_settings["muster"]["enabled"]
         muster_url = system_settings["muster"]["MUSTER_REST_URL"]
 
-        if deadline_enabled and muster_enabled:
+        if deadline_enabled and muster_enabled and royalrender_enabled:
             self.log.error(
-                "Both Deadline and Muster are enabled. " "Cannot support both."
+                ("Multiple render farm support (Deadline/RoyalRender/Muster) " 
+                 "is enabled. We support only one at time.")
             )
             raise RuntimeError("Both Deadline and Muster are enabled")
+
+        if royalrender_enabled:
+            self.server_aliases = list(self.rr_paths.keys())
+            self.data["rrPaths"] = self.server_aliases
 
         if deadline_enabled:
             self.server_aliases = list(self.deadline_servers.keys())

@@ -3,9 +3,10 @@
 import os
 import sys
 import tempfile
+import platform
 
 from maya.OpenMaya import MGlobal  # noqa
-from pyblish.api import InstancePlugin, IntegratorOrder
+from pyblish.api import InstancePlugin, IntegratorOrder, Context
 from openpype.hosts.maya.api.lib import get_attr_in_layer
 from openpype.pipeline.farm.tools import get_published_workfile_instance
 from openpype.pipeline.publish import KnownPublishError
@@ -16,6 +17,8 @@ from openpype.modules.royalrender.rr_job import RRJob, SubmitterParameter
 class MayaSubmitRoyalRender(InstancePlugin):
     label = "Submit to RoyalRender"
     order = IntegratorOrder + 0.1
+    families = ["renderlayer"]
+    targets = ["local"]
     use_published = True
 
     def __init__(self, *args, **kwargs):
@@ -102,7 +105,16 @@ class MayaSubmitRoyalRender(InstancePlugin):
         """Plugin entry point."""
         self._instance = instance
         context = instance.context
-        self.rr_api = rr_api(context.data["project"])
+        from pprint import pformat
+
+        self._rr_root = self._resolve_rr_path(context, instance.data.get("rrPathName"))  # noqa
+        self.log.debug(self._rr_root)
+        if not self._rr_root:
+            raise KnownPublishError(
+                ("Missing RoyalRender root. "
+                 "You need to configure RoyalRender module."))
+
+        self.rr_api = rr_api(self._rr_root)
 
         # get royalrender module
         """
@@ -114,11 +126,7 @@ class MayaSubmitRoyalRender(InstancePlugin):
             raise AssertionError("OpenPype RoyalRender module not found.")
         """
 
-        self._rrRoot = instance.data["rrPath"] or context.data["defaultRRPath"]  # noqa
-        if not self._rrRoot:
-            raise KnownPublishError(
-                ("Missing RoyalRender root. "
-                 "You need to configure RoyalRender module."))
+
         file_path = None
         if self.use_published:
             file_path = get_published_workfile_instance()
@@ -146,5 +154,34 @@ class MayaSubmitRoyalRender(InstancePlugin):
             f.write(submission.serialize())
 
         self.rr_api.submit_file(file=xml)
+
+    @staticmethod
+    def _resolve_rr_path(context, rr_path_name):
+        # type: (Context, str) -> str
+        rr_settings = (
+            context.data
+            ["system_settings"]
+            ["modules"]
+            ["royalrender"]
+        )
+        try:
+            default_servers = rr_settings["rr_paths"]
+            project_servers = (
+                context.data
+                ["project_settings"]
+                ["royalrender"]
+                ["rr_paths"]
+            )
+            rr_servers = {
+                k: default_servers[k]
+                for k in project_servers
+                if k in default_servers
+            }
+
+        except (AttributeError, KeyError):
+            # Handle situation were we had only one url for royal render.
+            return context.data["defaultRRPath"][platform.system().lower()]
+
+        return rr_servers[rr_path_name][platform.system().lower()]
 
 
