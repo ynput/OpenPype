@@ -37,7 +37,7 @@ File rules are inspired by [OCIO v2 configuration]((https://opencolorio.readthed
 The _input pattern_ matching uses REGEX expression syntax (try [regexr.com](https://regexr.com/)). Matching rules procedure's intention is to be used during publishing or loading of representation. Since the publishing procedure is run before integrator formate publish template path, make sure the pattern is working or any work render path.
 
 :::warning Colorspace name input
-Colorspace name value is string input and no validation is run after saving of changes. We recommand to open a config.ocio file and search exact colorspace names for validation.
+The **colorspace name** value is a raw string input and no validation is run after saving project settings. We recommend to open the specified `config.ocio` file and copy pasting the exact colorspace names.
 :::
 
 
