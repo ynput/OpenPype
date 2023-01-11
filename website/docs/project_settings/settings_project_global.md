@@ -20,7 +20,14 @@ OpenPype is distributing own ocio configs. Those can be found in `{openpype inst
 :::
 
 ### Using OCIO config
-Each path input is supporting [anatomy template key formating](../admin_settings_project_anatomy#available-template-keys) and also environment variables. Default distributed value is set to `{OPENPYPE_ROOT}/vendor/bin/ocioconfig/OpenColorIOConfigs/aces_1.2/config.ocio`. If any of host config is enabled and set to any path, global config path is overriden.
+Each OCIO config path input supports formatting using environment variables and [anatomy template keys](../admin_settings_project_anatomy#available-template-keys). The default global OCIO config path is `{OPENPYPE_ROOT}/vendor/bin/ocioconfig/OpenColorIOConfigs/aces_1.2/config.ocio`. 
+
+If the project settings for a particular host has its own OCIO config **enabled** and set to any path it overrides the global OCIO config for that host.
+
+**For example**
+
+Project global OCIO config: `project_settings/global/imageio/ocio_config`
+Project nuke-specific OCIO config: `project_settings/nuke/imageio/ocio_config`
 
 Config path can be defined to particular shot target with following path input `{root[work]}/{project[name]}/{hierarchy}/{asset}/config/aces.ocio`
 
