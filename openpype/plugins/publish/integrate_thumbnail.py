@@ -18,7 +18,7 @@ import collections
 import six
 import pyblish.api
 
-from openpype import OP4_TEST_ENABLED
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import get_versions
 from openpype.client.operations import OperationsSession, new_thumbnail_doc
 
@@ -39,7 +39,7 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
     ]
 
     def process(self, context):
-        if OP4_TEST_ENABLED:
+        if AYON_SERVER_ENABLED:
             self.log.info("V4 is enabled. Skipping v3 thumbnail integration")
             return
 

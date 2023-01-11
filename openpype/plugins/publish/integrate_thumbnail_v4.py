@@ -13,7 +13,7 @@ import collections
 
 import pyblish.api
 
-from openpype import OP4_TEST_ENABLED
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import get_versions
 from openpype.client.operations import OperationsSession
 
@@ -34,7 +34,7 @@ class IntegrateThumbnailsv4(pyblish.api.ContextPlugin):
     ]
 
     def process(self, context):
-        if not OP4_TEST_ENABLED:
+        if not AYON_SERVER_ENABLED:
             self.log.info("V4 is not enabled. Skipping")
             return
 
