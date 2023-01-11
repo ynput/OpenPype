@@ -96,3 +96,12 @@ def ask_to_login_ui(*args, **kwargs):
     from .ui import ask_to_login
 
     return ask_to_login(*args, **kwargs)
+
+
+def remove_url_cache(url):
+    store_token(url, None)
+
+
+def remove_token_cache(url, token):
+    if load_token(url) == token:
+        remove_url_cache(url)
