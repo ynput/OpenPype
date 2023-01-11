@@ -132,6 +132,11 @@
                         },
                         {
                             "type": "boolean",
+                            "key": "import_reference",
+                            "label": "Use Scene with Imported Reference"
+                        },
+                        {
+                            "type": "boolean",
                             "key": "asset_dependencies",
                             "label": "Use Asset dependencies"
                         },
