@@ -5,7 +5,7 @@ from ayon_api.utils import (
     is_token_valid,
     logout_from_server,
 )
-from .credentials import get_last_server, load_token, store_token
+from .credentials import get_last_server, load_token, remove_token_cache
 
 
 def logout(url, token):
@@ -16,11 +16,7 @@ def logout(url, token):
         token (str): Token which should be used to log out.
     """
 
-    current_token = load_token(url)
-    # Remove token from keyring
-    if current_token == token:
-        store_token(url, None)
-
+    remove_token_cache(url, token)
     logout_from_server(url, token)
 
 
