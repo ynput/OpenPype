@@ -6,6 +6,12 @@
   "is_file": true,
   "children": [
     {
+            "type": "rr_root-enum",
+            "key": "rr_paths",
+            "label": "Royal Render Roots",
+            "multiselect": true
+    },
+    {
       "type": "dict",
       "collapsible": true,
       "key": "publish",
