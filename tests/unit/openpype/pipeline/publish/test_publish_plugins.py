@@ -167,13 +167,13 @@ class TestPipelinePublishPlugins(TestPipeline):
         plugin = publish_plugins.ExtractorColormanaged()
         plugin.set_representation_colorspace(
             representation_nuke, context,
-            config_data_nuke, file_rules_nuke
+            colorspace_settings=(config_data_nuke, file_rules_nuke)
         )
         # load plugin function for testing
         plugin = publish_plugins.ExtractorColormanaged()
         plugin.set_representation_colorspace(
             representation_hiero, context,
-            config_data_hiero, file_rules_hiero
+            colorspace_settings=(config_data_hiero, file_rules_hiero)
         )
 
         colorspace_data_nuke = representation_nuke.get("colorspaceData")
