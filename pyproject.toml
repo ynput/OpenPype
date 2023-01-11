@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.14.2-nightly.2" # OpenPype
+version = "3.14.2" # OpenPype
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -72,13 +72,13 @@ dropbox = "^11.20.0"
 aiohttp-middlewares = "^2.0.0"
 
 [tool.poetry.dev-dependencies]
-flake8 = "^3.7"
-autopep8 = "^1.4"
+flake8 = "^6.0"
+autopep8 = "^2.0"
 coverage = "*"
 cx_freeze = "6.12.0"
 GitPython = "^3.1.17"
 jedi = "^0.13"
-Jinja2 = "^2.11"
+Jinja2 = "^3"
 markupsafe = "2.0.1"
 pycodestyle = "^2.5.0"
 pydocstyle = "^3.0.0"
@@ -86,14 +86,13 @@ pylint = "^2.4.4"
 pytest = "^6.1"
 pytest-cov = "*"
 pytest-print = "*"
-Sphinx = "5.0.1"
+Sphinx = "^6.1"
 sphinx-rtd-theme = "*"
-sphinxcontrib-websupport = "*"
-sphinx-qt-documentation = "*"
 recommonmark = "*"
 wheel = "*"
 enlighten = "*"  # cool terminal progress bars
 toml = "^0.10.2" # for parsing pyproject.toml
+pre-commit = "*"
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/pypeclub/openpype/issues"
