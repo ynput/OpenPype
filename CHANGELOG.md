@@ -1,5 +1,58 @@
 # Changelog
 
+## [3.14.10](https://github.com/ynput/OpenPype/tree/HEAD)
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.14.9...HEAD)
+
+**🆕 New features**
+
+- Global | Nuke: Creator placeholders in workfile template builder [\#4266](https://github.com/ynput/OpenPype/pull/4266)
+- Slack: Added dynamic message [\#4265](https://github.com/ynput/OpenPype/pull/4265)
+- Blender: Workfile Loader [\#4234](https://github.com/ynput/OpenPype/pull/4234)
+- Unreal: Publishing and Loading for UAssets [\#4198](https://github.com/ynput/OpenPype/pull/4198)
+- Publish: register publishes without copying them [\#4157](https://github.com/ynput/OpenPype/pull/4157)
+
+**🚀 Enhancements**
+
+- General: Added install method with docstring to HostBase [\#4298](https://github.com/ynput/OpenPype/pull/4298)
+- Traypublisher: simple editorial multiple edl [\#4248](https://github.com/ynput/OpenPype/pull/4248)
+- General: Extend 'IPluginPaths' to have more available methods [\#4214](https://github.com/ynput/OpenPype/pull/4214)
+- Refactorization of folder coloring [\#4211](https://github.com/ynput/OpenPype/pull/4211)
+- Flame - loading multilayer with controlled layer names [\#4204](https://github.com/ynput/OpenPype/pull/4204)
+
+**🐛 Bug fixes**
+
+- Unreal: fix missing `maintained_selection` call [\#4300](https://github.com/ynput/OpenPype/pull/4300)
+- Ftrack: Fix receive of host ip on MacOs [\#4288](https://github.com/ynput/OpenPype/pull/4288)
+- SiteSync: sftp connection failing when shouldnt be tested [\#4278](https://github.com/ynput/OpenPype/pull/4278)
+- Deadline: fix default value for passing mongo url [\#4275](https://github.com/ynput/OpenPype/pull/4275)
+- Scene Manager: Fix variable name [\#4268](https://github.com/ynput/OpenPype/pull/4268)
+- Slack: notification fails because of missing published path [\#4264](https://github.com/ynput/OpenPype/pull/4264)
+- hiero: creator gui with min max  [\#4257](https://github.com/ynput/OpenPype/pull/4257)
+- NiceCheckbox: Fix checker positioning in Python 2 [\#4253](https://github.com/ynput/OpenPype/pull/4253)
+- Publisher: Fix 'CreatorType' not equal for Python 2 DCCs [\#4249](https://github.com/ynput/OpenPype/pull/4249)
+- Deadline: fix dependencies [\#4242](https://github.com/ynput/OpenPype/pull/4242)
+- Houdini: hotfix instance data access [\#4236](https://github.com/ynput/OpenPype/pull/4236)
+- bugfix/image plane load error [\#4222](https://github.com/ynput/OpenPype/pull/4222)
+- Hiero: thumbnail from multilayer exr [\#4209](https://github.com/ynput/OpenPype/pull/4209)
+
+**🔀 Refactored code**
+
+- Resolve: Use qtpy in Resolve [\#4254](https://github.com/ynput/OpenPype/pull/4254)
+- Houdini: Use qtpy in Houdini [\#4252](https://github.com/ynput/OpenPype/pull/4252)
+- Max: Use qtpy in Max [\#4251](https://github.com/ynput/OpenPype/pull/4251)
+- Maya: Use qtpy in Maya [\#4250](https://github.com/ynput/OpenPype/pull/4250)
+- Hiero: Use qtpy in Hiero [\#4240](https://github.com/ynput/OpenPype/pull/4240)
+- Nuke: Use qtpy in Nuke [\#4239](https://github.com/ynput/OpenPype/pull/4239)
+- Flame: Use qtpy in flame [\#4238](https://github.com/ynput/OpenPype/pull/4238)
+- General: Legacy io not used in global plugins [\#4134](https://github.com/ynput/OpenPype/pull/4134)
+
+**Merged pull requests:**
+
+- Bump json5 from 1.0.1 to 1.0.2 in /website [\#4292](https://github.com/ynput/OpenPype/pull/4292)
+- Maya: Fix validate frame range repair + fix create render with deadline disabled [\#4279](https://github.com/ynput/OpenPype/pull/4279)
+
+
 ## [3.14.9](https://github.com/pypeclub/OpenPype/tree/3.14.9)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.14.8...3.14.9)
