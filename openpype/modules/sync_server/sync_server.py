@@ -253,7 +253,7 @@ class SyncServerThread(threading.Thread):
                     return_exceptions=True,
                 )
                 self.before_loop_cmds.clear()
-                
+
                 import time
                 start_time = time.time()
                 self.module.set_sync_project_settings()  # clean cache
@@ -445,7 +445,10 @@ class SyncServerThread(threading.Thread):
         Args:
             cmd (list): List of program followed by the arguments to execute
         """
-        self.log.debug("Added subprocess command to be executed before sync loop")
+        self.log.debug(
+            "Added subprocess command to be executed before sync loop: "
+            "{}".format(cmd)
+        )
         self.before_loop_cmds.append(cmd)
 
     def _working_sites(self, project_name, sync_config):
