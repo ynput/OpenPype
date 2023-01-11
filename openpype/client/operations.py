@@ -1,7 +1,7 @@
-from openpype import OP4_TEST_ENABLED
+from openpype import AYON_SERVER_ENABLED
 
 from .operations_base import REMOVED_VALUE
-if not OP4_TEST_ENABLED:
+if not AYON_SERVER_ENABLED:
     from .mongo.operations import *
     OperationsSession = MongoOperationsSession
 
