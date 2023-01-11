@@ -1,6 +1,6 @@
-from openpype import OP4_TEST_ENABLED
+from openpype import AYON_SERVER_ENABLED
 
-if not OP4_TEST_ENABLED:
+if not AYON_SERVER_ENABLED:
     from .mongo.entities import *
 else:
     from .server.entities import *

@@ -1,4 +1,4 @@
-from openpype import OP4_TEST_ENABLED
+from openpype import AYON_SERVER_ENABLED
 from openpype.modules import OpenPypeModule, ITrayAction
 
 
@@ -13,7 +13,7 @@ class ProjectManagerAction(OpenPypeModule, ITrayAction):
         if module_settings:
             enabled = module_settings.get("enabled", enabled)
 
-        if OP4_TEST_ENABLED:
+        if AYON_SERVER_ENABLED:
             enabled = False
         self.enabled = enabled
 

@@ -2,7 +2,7 @@ import os
 import copy
 import logging
 
-from openpype import OP4_TEST_ENABLED
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import get_project
 from . import legacy_io
 from .anatomy import Anatomy
@@ -134,7 +134,7 @@ class BinaryThumbnail(ThumbnailResolver):
 
 class ServerThumbnailResolver(ThumbnailResolver):
     def process(self, thumbnail_entity, thumbnail_type):
-        if not OP4_TEST_ENABLED:
+        if not AYON_SERVER_ENABLED:
             return None
         data = thumbnail_entity["data"]
         entity_type = data.get("entity_type")

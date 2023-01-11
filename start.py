@@ -133,12 +133,11 @@ else:
 vendor_python_path = os.path.join(OPENPYPE_ROOT, "vendor", "python")
 sys.path.insert(0, vendor_python_path)
 
-# OpenPype v4 related code
 # Add common package to sys path
 # - common contains common code for bootstraping and OpenPype processes
 sys.path.insert(0, os.path.join(OPENPYPE_ROOT, "common"))
-# V4 is enabled
-OP4_TEST_ENABLED = os.environ.get("OP4_TEST") == "1"
+# AYON is enabled
+AYON_SERVER_ENABLED = os.environ.get("USE_AYON_SERVER") == "1"
 
 import blessed  # noqa: E402
 import certifi  # noqa: E402
@@ -651,7 +650,7 @@ def _determine_mongodb() -> str:
 
 
 def _connect_to_v4_server():
-    if not OP4_TEST_ENABLED:
+    if not AYON_SERVER_ENABLED:
         return
 
     from openpype_common.connection.server import (
@@ -672,12 +671,12 @@ def _connect_to_v4_server():
     if os.environ.get("OPENPYPE_HEADLESS_MODE"):
         _print("!!! Cannot open v4 Login dialog in headless mode.")
         _print((
-            "!!! Please use `OPENPYPE_SERVER_URL` to specify server address"
-            " and 'OPENPYPE_TOKEN' to specify user's token."
+            "!!! Please use `AYON_SERVER_URL` to specify server address"
+            " and 'AYON_TOKEN' to specify user's token."
         ))
         sys.exit(1)
 
-    current_url = os.environ.get("OPENPYPE_SERVER_URL")
+    current_url = os.environ.get("AYON_SERVER_URL")
     url, token = ask_to_login_ui(current_url)
     if url is not None:
         add_server(url)
