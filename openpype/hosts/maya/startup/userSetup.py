@@ -1,8 +1,10 @@
 import os
+import shutil
 
 from openpype.settings import get_project_settings
 from openpype.pipeline import install_host
-from openpype.hosts.maya.api import MayaHost
+from openpype.hosts.maya.api import MayaHost, current_file
+from openpype.lib import register_event_callback
 
 from maya import cmds
 
@@ -20,6 +22,44 @@ if bool(int(os.environ.get(key, "0"))):
         " force=True)",
         lowestPriority=True
     )
+
+
+# Setup Xgen save callback.
+def xgen_on_save():
+    """Increments the xgen side car files .xgen and .xgd
+
+    Only works when incrementing to the same directory.
+    """
+
+    file_path = current_file()
+    current_dir = os.path.dirname(file_path)
+    basename = os.path.basename(file_path).split(".")[0]
+    attrs = ["xgFileName", "xgBaseFile"]
+    for palette in cmds.ls(type="xgmPalette"):
+        for attr in attrs:
+            source = os.path.join(
+                current_dir, cmds.getAttr(palette + "." + attr)
+            )
+            if not os.path.exists(source):
+                continue
+
+            destination_basename = "{}__{}{}".format(
+                basename,
+                palette.replace(":", "_"),
+                os.path.splitext(source)[1]
+            )
+            destination = os.path.join(current_dir, destination_basename)
+
+            if source == destination:
+                continue
+
+            shutil.copy(source, destination)
+            cmds.setAttr(
+                palette + "." + attr, destination_basename, type="string"
+            )
+
+
+register_event_callback("save", xgen_on_save)
 
 # Build a shelf.
 settings = get_project_settings(os.environ['AVALON_PROJECT'])
