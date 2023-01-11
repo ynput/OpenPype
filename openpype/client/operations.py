@@ -6,7 +6,7 @@ if not OP4_TEST_ENABLED:
     OperationsSession = MongoOperationsSession
 
 else:
-    from .server.server import (
+    from ayon_api.server import (
         PROJECT_NAME_ALLOWED_SYMBOLS,
         PROJECT_NAME_REGEX,
     )
