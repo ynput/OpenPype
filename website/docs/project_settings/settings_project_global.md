@@ -28,10 +28,9 @@ If the project settings for a particular host has its own OCIO config **enabled*
 
 **For example**
 
-Project global OCIO config: `project_settings/global/imageio/ocio_config`
 Project nuke-specific OCIO config: `project_settings/nuke/imageio/ocio_config`
 
-Config path can be defined to particular shot target with following path inputs:
+If config path is defined to particular shot target with following path inputs:
 1. `{root[work]}/{project[name]}/{hierarchy}/{asset}/config/aces.ocio`
 2. `{root[work]}/{project[name]}/{hierarchy}/config/aces.ocio`
 
