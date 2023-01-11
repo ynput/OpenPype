@@ -28,8 +28,8 @@
                     "name": "template_host_variant",
                     "template_data": [
                         {
-                            "app_variant_label": "Local",
-                            "app_variant": "local"
+                            "app_variant_label": "Current",
+                            "app_variant": "current"
                         }
                     ]
                 }

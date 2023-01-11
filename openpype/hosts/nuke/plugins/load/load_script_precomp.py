@@ -71,6 +71,9 @@ class LinkAsGroup(load.LoaderPlugin):
             "Precomp",
             "file {}".format(file))
 
+        # hide property panel
+        P.hideControlPanel()
+
         # Set colorspace defined in version data
         colorspace = context["version"]["data"].get("colorspace", None)
         self.log.info("colorspace: {}\n".format(colorspace))

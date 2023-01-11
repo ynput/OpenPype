@@ -21,9 +21,8 @@ class PreIntegrateThumbnails(pyblish.api.InstancePlugin):
 
     label = "Override Integrate Thumbnail Representations"
     order = pyblish.api.IntegratorOrder - 0.1
-    families = ["review"]
 
-    integrate_profiles = {}
+    integrate_profiles = []
 
     def process(self, instance):
         repres = instance.data.get("representations")

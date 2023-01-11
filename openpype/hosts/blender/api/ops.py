@@ -10,7 +10,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Dict, List, Optional, Union
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 import bpy
 import bpy.utils.previews

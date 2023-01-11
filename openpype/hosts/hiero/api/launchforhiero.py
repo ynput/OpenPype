@@ -1,7 +1,7 @@
 import logging
 
 from scriptsmenu import scriptsmenu
-from Qt import QtWidgets
+from qtpy import QtWidgets
 
 
 log = logging.getLogger(__name__)

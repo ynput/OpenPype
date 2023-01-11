@@ -7,7 +7,143 @@ import json
 import platform
 import uuid
 import re
-from Deadline.Scripting import RepositoryUtils, FileUtils, DirectoryUtils
+from Deadline.Scripting import (
+    RepositoryUtils,
+    FileUtils,
+    DirectoryUtils,
+    ProcessUtils,
+)
+
+VERSION_REGEX = re.compile(
+    r"(?P<major>0|[1-9]\d*)"
+    r"\.(?P<minor>0|[1-9]\d*)"
+    r"\.(?P<patch>0|[1-9]\d*)"
+    r"(?:-(?P<prerelease>[a-zA-Z\d\-.]*))?"
+    r"(?:\+(?P<buildmetadata>[a-zA-Z\d\-.]*))?"
+)
+
+
+class OpenPypeVersion:
+    """Fake semver version class for OpenPype version purposes.
+
+    The version
+    """
+    def __init__(self, major, minor, patch, prerelease, origin=None):
+        self.major = major
+        self.minor = minor
+        self.patch = patch
+        self.prerelease = prerelease
+
+        is_valid = True
+        if not major or not minor or not patch:
+            is_valid = False
+        self.is_valid = is_valid
+
+        if origin is None:
+            base = "{}.{}.{}".format(str(major), str(minor), str(patch))
+            if not prerelease:
+                origin = base
+            else:
+                origin = "{}-{}".format(base, str(prerelease))
+
+        self.origin = origin
+
+    @classmethod
+    def from_string(cls, version):
+        """Create an object of version from string.
+
+        Args:
+            version (str): Version as a string.
+
+        Returns:
+            Union[OpenPypeVersion, None]: Version object if input is nonempty
+                string otherwise None.
+        """
+
+        if not version:
+            return None
+        valid_parts = VERSION_REGEX.findall(version)
+        if len(valid_parts) != 1:
+            # Return invalid version with filled 'origin' attribute
+            return cls(None, None, None, None, origin=str(version))
+
+        # Unpack found version
+        major, minor, patch, pre, post = valid_parts[0]
+        prerelease = pre
+        # Post release is not important anymore and should be considered as
+        #   part of prerelease
+        # - comparison is implemented to find suitable build and builds should
+        #       never contain prerelease part so "not proper" parsing is
+        #       acceptable for this use case.
+        if post:
+            prerelease = "{}+{}".format(pre, post)
+
+        return cls(
+            int(major), int(minor), int(patch), prerelease, origin=version
+        )
+
+    def has_compatible_release(self, other):
+        """Version has compatible release as other version.
+
+        Both major and minor versions must be exactly the same. In that case
+        a build can be considered as release compatible with any version.
+
+        Args:
+            other (OpenPypeVersion): Other version.
+
+        Returns:
+            bool: Version is release compatible with other version.
+        """
+
+        if self.is_valid and other.is_valid:
+            return self.major == other.major and self.minor == other.minor
+        return False
+
+    def __bool__(self):
+        return self.is_valid
+
+    def __repr__(self):
+        return "<{} {}>".format(self.__class__.__name__, self.origin)
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return self.origin == other
+        return self.origin == other.origin
+
+    def __lt__(self, other):
+        if not isinstance(other, self.__class__):
+            return None
+
+        if not self.is_valid:
+            return True
+
+        if not other.is_valid:
+            return False
+
+        if self.origin == other.origin:
+            return None
+
+        same_major = self.major == other.major
+        if not same_major:
+            return self.major < other.major
+
+        same_minor = self.minor == other.minor
+        if not same_minor:
+            return self.minor < other.minor
+
+        same_patch = self.patch == other.patch
+        if not same_patch:
+            return self.patch < other.patch
+
+        if not self.prerelease:
+            return False
+
+        if not other.prerelease:
+            return True
+
+        pres = [self.prerelease, other.prerelease]
+        pres.sort()
+        return pres[0] == self.prerelease
 
 
 def get_openpype_version_from_path(path, build=True):
@@ -16,9 +152,9 @@ def get_openpype_version_from_path(path, build=True):
          build (bool, optional): Get only builds, not sources
 
     Returns:
-        str or None: version of OpenPype if found.
-
+        Union[OpenPypeVersion, None]: version of OpenPype if found.
     """
+
     # fix path for application bundle on macos
     if platform.system().lower() == "darwin":
         path = os.path.join(path, "Contents", "MacOS", "lib", "Python")
@@ -41,8 +177,10 @@ def get_openpype_version_from_path(path, build=True):
     with open(version_file, "r") as vf:
         exec(vf.read(), version)
 
-    version_match = re.search(r"(\d+\.\d+.\d+).*", version["__version__"])
-    return version_match[1]
+    version_str = version.get("__version__")
+    if version_str:
+        return OpenPypeVersion.from_string(version_str)
+    return None
 
 
 def get_openpype_executable():
@@ -54,6 +192,91 @@ def get_openpype_executable():
     return exe_list, dir_list
 
 
+def get_openpype_versions(dir_list):
+    print(">>> Getting OpenPype executable ...")
+    openpype_versions = []
+
+    install_dir = DirectoryUtils.SearchDirectoryList(dir_list)
+    if install_dir:
+        print("--- Looking for OpenPype at: {}".format(install_dir))
+        sub_dirs = [
+            f.path for f in os.scandir(install_dir)
+            if f.is_dir()
+        ]
+        for subdir in sub_dirs:
+            version = get_openpype_version_from_path(subdir)
+            if not version:
+                continue
+            print("  - found: {} - {}".format(version, subdir))
+            openpype_versions.append((version, subdir))
+    return openpype_versions
+
+
+def get_requested_openpype_executable(
+    exe, dir_list, requested_version
+):
+    requested_version_obj = OpenPypeVersion.from_string(requested_version)
+    if not requested_version_obj:
+        print((
+            ">>> Requested version does not match version regex \"{}\""
+        ).format(VERSION_REGEX))
+        return None
+
+    print((
+        ">>> Scanning for compatible requested version {}"
+    ).format(requested_version))
+    openpype_versions = get_openpype_versions(dir_list)
+    if not openpype_versions:
+        return None
+
+    # if looking for requested compatible version,
+    # add the implicitly specified to the list too.
+    if exe:
+        exe_dir = os.path.dirname(exe)
+        print("Looking for OpenPype at: {}".format(exe_dir))
+        version = get_openpype_version_from_path(exe_dir)
+        if version:
+            print("  - found: {} - {}".format(version, exe_dir))
+            openpype_versions.append((version, exe_dir))
+
+    matching_item = None
+    compatible_versions = []
+    for version_item in openpype_versions:
+        version, version_dir = version_item
+        if requested_version_obj.has_compatible_release(version):
+            compatible_versions.append(version_item)
+            if version == requested_version_obj:
+                # Store version item if version match exactly
+                # - break if is found matching version
+                matching_item = version_item
+                break
+
+    if not compatible_versions:
+        return None
+
+    compatible_versions.sort(key=lambda item: item[0])
+    if matching_item:
+        version, version_dir = matching_item
+        print((
+            "*** Found exact match build version {} in {}"
+        ).format(version_dir, version))
+
+    else:
+        version, version_dir = compatible_versions[-1]
+
+        print((
+            "*** Latest compatible version found is {} in {}"
+        ).format(version_dir, version))
+
+    # create list of executables for different platform and let
+    # Deadline decide.
+    exe_list = [
+        os.path.join(version_dir, "openpype_console.exe"),
+        os.path.join(version_dir, "openpype_console")
+    ]
+    return FileUtils.SearchFileList(";".join(exe_list))
+
+
 def inject_openpype_environment(deadlinePlugin):
     """ Pull env vars from OpenPype and push them to rendering process.
 
@@ -63,93 +286,29 @@ def inject_openpype_environment(deadlinePlugin):
 
     print(">>> Injecting OpenPype environments ...")
     try:
-        print(">>> Getting OpenPype executable ...")
         exe_list, dir_list = get_openpype_executable()
-        openpype_versions = []
-        # if the job requires specific OpenPype version,
-        # lets go over all available and find compatible build.
+        exe = FileUtils.SearchFileList(exe_list)
+
         requested_version = job.GetJobEnvironmentKeyValue("OPENPYPE_VERSION")
         if requested_version:
-            print((
-                ">>> Scanning for compatible requested version {}"
-            ).format(requested_version))
-            install_dir = DirectoryUtils.SearchDirectoryList(dir_list)
-            if install_dir:
-                print("--- Looking for OpenPype at: {}".format(install_dir))
-                sub_dirs = [
-                    f.path for f in os.scandir(install_dir)
-                    if f.is_dir()
-                ]
-                for subdir in sub_dirs:
-                    version = get_openpype_version_from_path(subdir)
-                    if not version:
-                        continue
-                    print("  - found: {} - {}".format(version, subdir))
-                    openpype_versions.append((version, subdir))
+            exe = get_requested_openpype_executable(
+                exe, dir_list, requested_version
+            )
+            if exe is None:
+                raise RuntimeError((
+                    "Cannot find compatible version available for version {}"
+                    " requested by the job. Please add it through plugin"
+                    " configuration in Deadline or install it to configured"
+                    " directory."
+                ).format(requested_version))
 
-        exe = FileUtils.SearchFileList(exe_list)
-        if openpype_versions:
-            # if looking for requested compatible version,
-            # add the implicitly specified to the list too.
-            print("Looking for OpenPype at: {}".format(os.path.dirname(exe)))
-            version = get_openpype_version_from_path(
-                os.path.dirname(exe))
-            if version:
-                print("  - found: {} - {}".format(
-                    version, os.path.dirname(exe)
-                ))
-                openpype_versions.append((version, os.path.dirname(exe)))
-
-        if requested_version:
-            # sort detected versions
-            if openpype_versions:
-                # use natural sorting
-                openpype_versions.sort(
-                    key=lambda ver: [
-                        int(t) if t.isdigit() else t.lower()
-                        for t in re.split(r"(\d+)", ver[0])
-                    ])
-                print((
-                    "*** Latest available version found is {}"
-                ).format(openpype_versions[-1][0]))
-            requested_major, requested_minor, _ = requested_version.split(".")[:3]  # noqa: E501
-            compatible_versions = []
-            for version in openpype_versions:
-                v = version[0].split(".")[:3]
-                if v[0] == requested_major and v[1] == requested_minor:
-                    compatible_versions.append(version)
-            if not compatible_versions:
-                raise RuntimeError(
-                    ("Cannot find compatible version available "
-                     "for version {} requested by the job. "
-                     "Please add it through plugin configuration "
-                     "in Deadline or install it to configured "
-                     "directory.").format(requested_version))
-            # sort compatible versions nad pick the last one
-            compatible_versions.sort(
-                key=lambda ver: [
-                    int(t) if t.isdigit() else t.lower()
-                    for t in re.split(r"(\d+)", ver[0])
-                ])
-            print((
-                "*** Latest compatible version found is {}"
-            ).format(compatible_versions[-1][0]))
-            # create list of executables for different platform and let
-            # Deadline decide.
-            exe_list = [
-                os.path.join(
-                    compatible_versions[-1][1], "openpype_console.exe"),
-                os.path.join(
-                    compatible_versions[-1][1], "openpype_console")
-            ]
-            exe = FileUtils.SearchFileList(";".join(exe_list))
-        if exe == "":
-            raise RuntimeError(
-                "OpenPype executable was not found " +
-                "in the semicolon separated list " +
-                "\"" + ";".join(exe_list) + "\". " +
-                "The path to the render executable can be configured " +
-                "from the Plugin Configuration in the Deadline Monitor.")
+        if not exe:
+            raise RuntimeError((
+                "OpenPype executable was not found in the semicolon "
+                "separated list \"{}\"."
+                "The path to the render executable can be configured"
+                " from the Plugin Configuration in the Deadline Monitor."
+            ).format(";".join(exe_list)))
 
         print("--- OpenPype executable: {}".format(exe))
 
@@ -162,51 +321,53 @@ def inject_openpype_environment(deadlinePlugin):
         print(">>> Temporary path: {}".format(export_url))
 
         args = [
-            exe,
             "--headless",
-            'extractenvironments',
+            "extractenvironments",
             export_url
         ]
 
-        add_args = {}
-        add_args['project'] = \
-            job.GetJobEnvironmentKeyValue('AVALON_PROJECT')
-        add_args['asset'] = job.GetJobEnvironmentKeyValue('AVALON_ASSET')
-        add_args['task'] = job.GetJobEnvironmentKeyValue('AVALON_TASK')
-        add_args['app'] = job.GetJobEnvironmentKeyValue('AVALON_APP_NAME')
-        add_args["envgroup"] = "farm"
+        add_kwargs = {
+            "project": job.GetJobEnvironmentKeyValue("AVALON_PROJECT"),
+            "asset": job.GetJobEnvironmentKeyValue("AVALON_ASSET"),
+            "task": job.GetJobEnvironmentKeyValue("AVALON_TASK"),
+            "app": job.GetJobEnvironmentKeyValue("AVALON_APP_NAME"),
+            "envgroup": "farm"
+        }
+        if all(add_kwargs.values()):
+            for key, value in add_kwargs.items():
+                args.extend(["--{}".format(key), value])
 
-        if all(add_args.values()):
-            for key, value in add_args.items():
-                args.append("--{}".format(key))
-                args.append(value)
         else:
-            msg = "Required env vars: AVALON_PROJECT, AVALON_ASSET, " + \
-                  "AVALON_TASK, AVALON_APP_NAME"
-            raise RuntimeError(msg)
+            raise RuntimeError((
+                "Missing required env vars: AVALON_PROJECT, AVALON_ASSET,"
+                " AVALON_TASK, AVALON_APP_NAME"
+            ))
 
         if not os.environ.get("OPENPYPE_MONGO"):
             print(">>> Missing OPENPYPE_MONGO env var, process won't work")
 
-        env = os.environ
-        env["OPENPYPE_HEADLESS_MODE"] = "1"
-        env["AVALON_TIMEOUT"] = "5000"
+        os.environ["AVALON_TIMEOUT"] = "5000"
 
-        print(">>> Executing: {}".format(" ".join(args)))
-        std_output = subprocess.check_output(args,
-                                             cwd=os.path.dirname(exe),
-                                             env=env)
-        print(">>> Process result {}".format(std_output))
+        args_str = subprocess.list2cmdline(args)
+        print(">>> Executing: {} {}".format(exe, args_str))
+        process = ProcessUtils.SpawnProcess(
+            exe, args_str, os.path.dirname(exe)
+        )
+        ProcessUtils.WaitForExit(process, -1)
+        if process.ExitCode != 0:
+            raise RuntimeError(
+                "Failed to run OpenPype process to extract environments."
+            )
 
         print(">>> Loading file ...")
         with open(export_url) as fp:
             contents = json.load(fp)
-            for key, value in contents.items():
-                deadlinePlugin.SetProcessEnvironmentVariable(key, value)
+
+        for key, value in contents.items():
+            deadlinePlugin.SetProcessEnvironmentVariable(key, value)
 
         script_url = job.GetJobPluginInfoKeyValue("ScriptFilename")
         if script_url:
-
             script_url = script_url.format(**contents).replace("\\", "/")
             print(">>> Setting script path {}".format(script_url))
             job.SetJobPluginInfoKeyValue("ScriptFilename", script_url)

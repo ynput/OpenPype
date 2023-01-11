@@ -24,7 +24,7 @@ class OpenPypeInterface:
 
     Child classes of OpenPypeInterface may be used as mixin in different
     OpenPype modules which means they have to have implemented methods defined
-    in the interface. By default interface does not have any abstract parts.
+    in the interface. By default, interface does not have any abstract parts.
     """
 
     pass
@@ -44,40 +44,78 @@ class IPluginPaths(OpenPypeInterface):
     def get_plugin_paths(self):
         pass
 
-    def get_creator_plugin_paths(self, host_name):
-        """Retreive creator plugin paths.
+    def _get_plugin_paths_by_type(self, plugin_type):
+        paths = self.get_plugin_paths()
+        if not paths or plugin_type not in paths:
+            return []
 
-        Give addons ability to add creator plugin paths based on host name.
+        paths = paths[plugin_type]
+        if not paths:
+            return []
 
-        NOTES:
-        - Default implementation uses 'get_plugin_paths' and always return
-            all creator plugins.
-        - Host name may help to organize plugins by host, but each creator
-            alsomay have host filtering.
+        if not isinstance(paths, (list, tuple, set)):
+            paths = [paths]
+        return paths
+
+    def get_create_plugin_paths(self, host_name):
+        """Receive create plugin paths.
+
+        Give addons ability to add create plugin paths based on host name.
+
+        Notes:
+            Default implementation uses 'get_plugin_paths' and always return
+                all create plugin paths.
 
         Args:
             host_name (str): For which host are the plugins meant.
         """
 
-        paths = self.get_plugin_paths()
-        if not paths or "create" not in paths:
-            return []
+        if hasattr(self, "get_creator_plugin_paths"):
+            # TODO remove in 3.16
+            self.log.warning((
+                "DEPRECATION WARNING: Using method 'get_creator_plugin_paths'"
+                " which was renamed to 'get_create_plugin_paths'."
+            ))
+            return self.get_creator_plugin_paths(host_name)
+        return self._get_plugin_paths_by_type("create")
 
-        create_paths = paths["create"]
-        if not create_paths:
-            return []
+    def get_load_plugin_paths(self, host_name):
+        """Receive load plugin paths.
 
-        if not isinstance(create_paths, (list, tuple, set)):
-            create_paths = [create_paths]
-        return create_paths
+        Give addons ability to add load plugin paths based on host name.
+
+        Notes:
+            Default implementation uses 'get_plugin_paths' and always return
+                all load plugin paths.
+
+        Args:
+            host_name (str): For which host are the plugins meant.
+        """
+
+        return self._get_plugin_paths_by_type("load")
+
+    def get_publish_plugin_paths(self, host_name):
+        """Receive publish plugin paths.
+
+        Give addons ability to add publish plugin paths based on host name.
+
+        Notes:
+           Default implementation uses 'get_plugin_paths' and always return
+               all publish plugin paths.
+
+        Args:
+           host_name (str): For which host are the plugins meant.
+        """
+
+        return self._get_plugin_paths_by_type("publish")
 
 
 class ILaunchHookPaths(OpenPypeInterface):
     """Module has launch hook paths to return.
 
-    Modules does not have to inherit from this interface (changed 8.11.2022).
-    Module just have to have implemented 'get_launch_hook_paths' to be able use
-    the advantage.
+    Modules don't have to inherit from this interface (changed 8.11.2022).
+    Module just have to have implemented 'get_launch_hook_paths' to be able to
+    use the advantage.
 
     Expected result is list of paths.
     ["path/to/launch_hooks_dir"]
@@ -222,7 +260,7 @@ class ITrayAction(ITrayModule):
         pass
 
     def tray_menu(self, tray_menu):
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
 
         if self.admin_action:
             menu = self.admin_submenu(tray_menu)
@@ -247,7 +285,7 @@ class ITrayAction(ITrayModule):
     @staticmethod
     def admin_submenu(tray_menu):
         if ITrayAction._admin_submenu is None:
-            from Qt import QtWidgets
+            from qtpy import QtWidgets
 
             admin_submenu = QtWidgets.QMenu("Admin", tray_menu)
             admin_submenu.menuAction().setVisible(False)
@@ -279,7 +317,7 @@ class ITrayService(ITrayModule):
     @staticmethod
     def services_submenu(tray_menu):
         if ITrayService._services_submenu is None:
-            from Qt import QtWidgets
+            from qtpy import QtWidgets
 
             services_submenu = QtWidgets.QMenu("Services", tray_menu)
             services_submenu.menuAction().setVisible(False)
@@ -294,7 +332,7 @@ class ITrayService(ITrayModule):
 
     @staticmethod
     def _load_service_icons():
-        from Qt import QtGui
+        from qtpy import QtGui
 
         ITrayService._failed_icon = QtGui.QIcon(
             resources.get_resource("icons", "circle_red.png")
@@ -325,7 +363,7 @@ class ITrayService(ITrayModule):
         return ITrayService._failed_icon
 
     def tray_menu(self, tray_menu):
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
 
         action = QtWidgets.QAction(
             self.label,

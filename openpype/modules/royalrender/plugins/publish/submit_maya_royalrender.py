@@ -7,7 +7,7 @@ import tempfile
 from maya.OpenMaya import MGlobal  # noqa
 from pyblish.api import InstancePlugin, IntegratorOrder
 from openpype.hosts.maya.api.lib import get_attr_in_layer
-from openpype.pipeline.farm.tools import get_published_workfile_instance
+from openpype.pipeline.publish.lib import get_published_workfile_instance
 from openpype.pipeline.publish import KnownPublishError
 from openpype.modules.royalrender.api import Api as rr_api
 from openpype.modules.royalrender.rr_job import RRJob, SubmitterParameter
