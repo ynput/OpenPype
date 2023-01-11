@@ -1,15 +1,13 @@
 import traceback
 from Qt import QtWidgets, QtCore, QtGui
 
+from ayon_api.exceptions import UrlError
+from ayon_api.utils import validate_url, login_to_server
+
 from openpype_common.resources import (
     get_resource_path,
     get_icon_path,
     load_stylesheet,
-)
-from openpype_common.connection.server import (
-    validate_url,
-    UrlError,
-    login,
 )
 
 from .widgets import (
@@ -36,7 +34,7 @@ class ServerLoginWindow(QtWidgets.QDialog):
         url_widget = QtWidgets.QWidget(self)
 
         url_input = PlaceholderLineEdit(url_widget)
-        url_input.setPlaceholderText("< https://openpype.server.com >")
+        url_input.setPlaceholderText("< https://ayon.server.com >")
 
         url_layout = QtWidgets.QFormLayout(url_widget)
         url_layout.setContentsMargins(0, 0, 0, 0)
@@ -266,7 +264,7 @@ class ServerLoginWindow(QtWidgets.QDialog):
         username = self._username_input.text()
         password = self._password_input.text()
         try:
-            token = login(url, username, password)
+            token = login_to_server(url, username, password)
         except BaseException:
             self._set_unexpected_error()
             return
