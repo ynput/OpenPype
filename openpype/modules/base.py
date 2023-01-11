@@ -16,7 +16,7 @@ from abc import ABCMeta, abstractmethod
 import six
 import appdirs
 
-from openpype import OP4_TEST_ENABLED
+from openpype import AYON_SERVER_ENABLED
 from openpype.settings import (
     get_system_settings,
     SYSTEM_SETTINGS_KEY,
@@ -413,7 +413,7 @@ def _load_modules():
     log = Logger.get_logger("ModulesLoader")
 
     ignore_addon_names = []
-    if OP4_TEST_ENABLED:
+    if AYON_SERVER_ENABLED:
         ignore_addon_names = _load_v4_addons(
             openpype_modules, modules_key, log
         )
