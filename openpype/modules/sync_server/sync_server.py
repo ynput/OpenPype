@@ -206,6 +206,7 @@ class SyncServerThread(threading.Thread):
         self.is_running = False
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=3)
         self.timer = None
+        self.before_loop_cmds = []
 
     def run(self):
         self.is_running = True
@@ -243,6 +244,16 @@ class SyncServerThread(threading.Thread):
         """
         while self.is_running and not self.module.is_paused():
             try:
+                # Gather subprocess commands to be run before loop
+                await asyncio.gather(
+                    *[
+                        asyncio.create_subprocess_exec(cmd)
+                        for cmd in self.before_loop_cmds
+                    ],
+                    return_exceptions=True,
+                )
+                self.before_loop_cmds.clear()
+                
                 import time
                 start_time = time.time()
                 self.module.set_sync_project_settings()  # clean cache
@@ -427,6 +438,15 @@ class SyncServerThread(threading.Thread):
         if self.timer:
             self.timer.cancel()
             self.timer = None
+
+    def add_before_loop_cmd(self, cmd):
+        """Add a subprocess command to be executed before the sync loop.
+        
+        Args:
+            cmd (list): List of program followed by the arguments to execute
+        """
+        self.log.debug("Added subprocess command to be executed before sync loop")
+        self.before_loop_cmds.append(cmd)
 
     def _working_sites(self, project_name, sync_config):
         if self.module.is_project_paused(project_name):

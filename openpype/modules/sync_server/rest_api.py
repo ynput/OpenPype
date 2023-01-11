@@ -29,9 +29,21 @@ class SyncServerModuleRestApi:
             self.prefix + "/reset_timer",
             self.reset_timer,
         )
+        self.server_manager.add_route(
+            "POST",
+            self.prefix + "/add_before_loop_cmd",
+            self.add_before_loop_cmd,
+        )
 
     async def reset_timer(self, _request):
         """Force timer to run immediately."""
         self.module.reset_timer()
+
+        return Response(status=200)
+
+    async def add_before_loop_cmd(self, request):
+        """Add a subprocess command to be run before sync loop."""
+        cmd = await request.json()
+        self.module.add_before_loop_cmd(cmd)
 
         return Response(status=200)

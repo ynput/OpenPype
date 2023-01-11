@@ -927,6 +927,23 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         else:
             self.sync_server_thread.reset_timer()
 
+    def add_before_loop_cmd(self, cmd):
+        """Add a subprocess command to be executed before the sync loop.
+
+        Useful to run a process on a representation before it's synched.
+
+        Args:
+            cmd (list): List of program followed by the arguments to execute
+        """
+
+        if not self.enabled:
+            return
+
+        if self.sync_server_thread is None:
+            self._add_before_loop_cmd_with_rest_api(cmd)
+        else:
+            self.sync_server_thread.add_before_loop_cmd(cmd)
+
     def is_representation_on_site(
         self, project_name, representation_id, site_name
     ):
@@ -951,7 +968,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         return on_site
 
     def _reset_timer_with_rest_api(self):
-        # POST to webserver sites to add to representations
+        """POST a reset timer instruction.
+        """
         webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
         if not webserver_url:
             self.log.warning("Couldn't find webserver url")
@@ -965,12 +983,38 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             import requests
         except Exception:
             self.log.warning(
-                "Couldn't add sites to representations "
+                "Couldn't reset timer "
                 "('requests' is not available)"
             )
             return
 
         requests.post(rest_api_url)
+
+    def _add_before_loop_cmd_with_rest_api(self, cmd):
+        """POST a subprocess command to be executed before the sync loop.
+
+        Args:
+            cmd (list): List of program followed by the arguments to execute
+        """
+        webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
+        if not webserver_url:
+            self.log.warning("Couldn't find webserver url")
+            return
+
+        rest_api_url = "{}/sync_server/add_before_loop_cmd".format(
+            webserver_url
+        )
+
+        try:
+            import requests
+        except Exception:
+            self.log.warning(
+                "Couldn't add sites to representations "
+                "('requests' is not available)"
+            )
+            return
+
+        requests.post(rest_api_url, json=cmd)
 
     def get_enabled_projects(self):
         """Returns list of projects which have SyncServer enabled."""
