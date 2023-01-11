@@ -338,6 +338,7 @@ def get_imageio_config(
 
     # add project roots to anatomy data
     anatomy_data["root"] = anatomy.roots
+    anatomy_data["platform"] = platform.system().lower()
 
     # get colorspace settings
     imageio_global, imageio_host = _get_imageio_settings(
