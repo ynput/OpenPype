@@ -1,8 +1,10 @@
 import collections
 
+from ayon_api import get_server_api_connection
+
 from openpype.client.mongo.operations import CURRENT_THUMBNAIL_SCHEMA
 
-from .server_api import get_server_api_connection
+from .openpype_comp import get_folders_with_tasks
 from .conversion_utils import (
     project_fields_v3_to_v4,
     convert_v4_project_to_v3,
@@ -37,7 +39,7 @@ def get_projects(active=True, inactive=False, library=None, fields=None):
 
     con = get_server_api_connection()
     fields = project_fields_v3_to_v4(fields, con)
-    for project in con.get_projects(active, library, fields):
+    for project in con.get_projects(active, library, fields=fields):
         yield convert_v4_project_to_v3(project)
 
 
@@ -205,7 +207,7 @@ def get_assets(
     )
 
     if fields is None or "tasks" in fields:
-        folders = con.get_folders_with_tasks(project_name, **kwargs)
+        folders = get_folders_with_tasks(con, project_name, **kwargs)
 
     else:
         folders = con.get_folders(project_name, **kwargs)
