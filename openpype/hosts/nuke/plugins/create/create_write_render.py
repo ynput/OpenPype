@@ -124,8 +124,11 @@ class CreateWriteRender(napi.NukeWriteCreator):
         # make sure subset name is unique
         if self.check_existing_subset(subset_name, instance_data):
             raise napi.NukeCreatorError(
-                ("subset {} is already published"
-                 "definition.").format(subset_name))
+                (
+                    "Subset '{}' is already created "
+                    "in nodes! Change variant name!"
+                ).format(subset_name)
+            )
 
         instance_node = self.create_instance_node(
             subset_name,

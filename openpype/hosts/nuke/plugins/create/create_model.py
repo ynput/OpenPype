@@ -47,8 +47,11 @@ class CreateModel(NukeCreator):
     def create(self, subset_name, instance_data, pre_create_data):
         if self.check_existing_subset(subset_name, instance_data):
             raise NukeCreatorError(
-                ("Subset name '{}' is already used. "
-                 "Please specify different Variant.").format(subset_name))
+                (
+                    "Subset '{}' is already created "
+                    "in nodes! Change variant name!"
+                ).format(subset_name)
+            )
 
         instance = super(CreateModel, self).create(
             subset_name,

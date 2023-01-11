@@ -8,11 +8,6 @@ import string
 from collections import OrderedDict, defaultdict
 from abc import abstractmethod
 
-from openpype.client import (
-    get_asset_by_name,
-    get_subsets,
-)
-
 from openpype.settings import get_current_project_settings
 from openpype.lib import (
     BoolDef,
@@ -98,10 +93,13 @@ class NukeCreator(NewCreator):
         """Check if existing subset name already exists."""
         exists = False
         for node in nuke.allNodes(recurseGroups=True):
+            # make sure testing node is having instance knob
+            if INSTANCE_DATA_KNOB not in node.knobs().keys():
+                continue
             node_data = get_node_data(node, INSTANCE_DATA_KNOB)
+            # test if subset name is matching
             if subset_name in node_data.get("subset"):
                 exists = True
-
         return exists
 
     def create_instance_node(
@@ -316,8 +314,8 @@ class NukeWriteCreator(NukeCreator):
         # make sure subset name is unique
         if self.check_existing_subset(subset_name, instance_data):
             raise NukeCreatorError(
-                ("subset {} is already published"
-                 "definition.").format(subset_name))
+                ("Subset '{}' is already created "
+                 "in nodes! Change variant name!").format(subset_name))
 
         instance_node = self.create_instance_node(
             subset_name,
