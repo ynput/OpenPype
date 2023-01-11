@@ -12,8 +12,19 @@
             "is_group": true,
             "children": [
                 {
-                    "type": "schema",
-                    "name": "schema_imageio_config"
+                    "key": "ocio_config",
+                    "type": "dict",
+                    "label": "OCIO config",
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "path",
+                            "key": "filepath",
+                            "label": "Config path",
+                            "multiplatform": false,
+                            "multipath": true
+                        }
+                    ]
                 },
                 {
                     "type": "schema",

@@ -2,11 +2,7 @@
     "imageio": {
         "ocio_config": {
             "enabled": false,
-            "filepath": {
-                "windows": "",
-                "darwin": "",
-                "linux": ""
-            }
+            "filepath": []
         },
         "file_rules": {
             "enabled": false,
@@ -170,24 +166,6 @@
                 "Main"
             ]
         },
-        "CreateMultiverseUsd": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateMultiverseUsdComp": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateMultiverseUsdOver": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
         "CreateAss": {
             "enabled": true,
             "defaults": [
@@ -207,6 +185,24 @@
             "maskFilter": false,
             "maskColor_manager": false,
             "maskOperator": false
+        },
+        "CreateMultiverseUsd": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateMultiverseUsdComp": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateMultiverseUsdOver": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
         },
         "CreateAssembly": {
             "enabled": true,

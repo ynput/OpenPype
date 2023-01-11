@@ -330,7 +330,6 @@ def get_imageio_config(
     """
     project_settings = project_settings or get_project_settings(project_name)
     anatomy = anatomy or Anatomy(project_name)
-    current_platform = platform.system().lower()
 
     if not anatomy_data:
         from openpype.pipeline.context_tools import (
@@ -344,34 +343,75 @@ def get_imageio_config(
     imageio_global, imageio_host = _get_imageio_settings(
         project_settings, host_name)
 
-    # get config path from either global or host_name
-    config_global = imageio_global["ocio_config"]
     config_host = imageio_host["ocio_config"]
 
-    # set config path
-    config_path = None
-    if config_global["enabled"]:
-        config_path = config_global["filepath"][current_platform]
     if config_host["enabled"]:
-        config_path = config_host["filepath"][current_platform]
+        print(config_host["filepath"])
+        config_data = _get_config_data(
+            config_host["filepath"], anatomy_data
+        )
+    else:
+        config_data = None
 
-    if not config_path:
-        return
+    if not config_data:
+        # get config path from either global or host_name
+        config_global = imageio_global["ocio_config"]
+        print(config_global["filepath"])
+        config_data = _get_config_data(
+            config_global["filepath"], anatomy_data
+        )
 
+    if not config_data:
+        raise FileExistsError(
+            "No OCIO config found in settings. It is "
+            "either missing or there is typo in path inputs"
+        )
+
+    return config_data
+
+
+def _get_config_data(path_list, anatomy_data):
+    """Path formating in interation
+
+    Args:
+        path_list (list[str]): list of abs paths
+        anatomy_data (dict): formating data
+
+    Returns:
+        dict: config data
+    """
+    # first try host config paths
+    for path_ in path_list:
+        formated_path = _format_path(path_, anatomy_data)
+        if not os.path.exists(formated_path):
+            continue
+
+        return {
+            "path": os.path.normpath(formated_path),
+            "template": path_
+        }
+
+
+def _format_path(tempate_path, anatomy_data):
+    """Single template path formating.
+
+    Args:
+        tempate_path (str): template string
+        anatomy_data (dict): formating data
+
+    Returns:
+        str: absolute formated path
+    """
     formatting_data = deepcopy(anatomy_data)
 
     # format the path for potential env vars
     formatting_data.update(dict(**os.environ))
 
     # format path for anatomy keys
-    formatted_path = StringTemplate(config_path).format(
+    formatted_path = StringTemplate(tempate_path).format(
         formatting_data)
 
-    abs_path = os.path.abspath(formatted_path)
-    return {
-        "path": os.path.normpath(abs_path),
-        "template": config_path
-    }
+    return os.path.abspath(formatted_path)
 
 
 def get_imageio_file_rules(project_name, host_name, project_settings=None):
