@@ -291,9 +291,10 @@ class Extractor(pyblish.api.InstancePlugin):
 class ExtractorColormanaged(Extractor):
     """Extractor base for color managed image data.
 
-    Each pixel data representation exctractors should be using this class
-    as parent. Class implements "get_colorspace_settings" and
-    "set_representation_colorspace" function, which is used
+    Each Extractor intended to export pixel data representation
+    should inherit from this class to allow color managed data.
+    Class implements "get_colorspace_settings" and
+    "set_representation_colorspace" functions used
     for injecting colorspace data to representation data for farther
     integration into db document.
 
