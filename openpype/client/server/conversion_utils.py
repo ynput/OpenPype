@@ -33,7 +33,7 @@ PROJECT_FIELDS_MAPPING_V3_V4 = {
 FOLDER_FIELDS_MAPPING_V3_V4 = {
     "_id": {"id"},
     "name": {"name"},
-    "label": {"name"},
+    "label": {"label"},
     "data": {
         "parentId", "parents", "active", "tasks", "thumbnailId"
     },
