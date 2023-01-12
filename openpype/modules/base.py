@@ -311,8 +311,8 @@ def _get_v4_addons_information():
     Returns:
         List[Dict[str, Any]]: List of addon information to use.
     """
-    from openpype.client.server.server_api import get_addons_info
-    return get_addons_info()
+    from common.openpype_common.distribution.addon_distribution import get_addons_info_as_dict  # noqa
+    return get_addons_info_as_dict()
 
 
 def _load_v4_addons(openpype_modules, modules_key, log):
