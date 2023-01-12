@@ -10,6 +10,7 @@ import substance_painter.event
 import substance_painter.project
 
 from openpype.host import HostBase, IWorkfileHost, ILoadHost, IPublishHost
+from openpype.settings import get_current_project_settings
 
 import pyblish.api
 
@@ -24,6 +25,8 @@ from openpype.lib import (
 )
 from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.substancepainter import SUBSTANCE_HOST_DIR
+
+from . import lib
 
 log = logging.getLogger("openpype.hosts.substance")
 
@@ -45,6 +48,7 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         self._has_been_setup = False
         self.menu = None
         self.callbacks = []
+        self.shelves = []
 
     def install(self):
         pyblish.api.register_host("substancepainter")
@@ -64,9 +68,13 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         log.info("Installing menu ... ")
         self._install_menu()
 
+        project_settings = get_current_project_settings()
+        self._install_shelves(project_settings)
+
         self._has_been_setup = True
 
     def uninstall(self):
+        self._uninstall_shelves()
         self._uninstall_menu()
         self._deregister_callbacks()
 
@@ -206,6 +214,26 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def _deregister_callbacks(self):
         for event, callback in self.callbacks:
             substance_painter.event.DISPATCHER.disconnect(event, callback)
+        self.callbacks.clear()
+
+    def _install_shelves(self, project_settings):
+
+        shelves = project_settings["substancepainter"].get("shelves", {})
+        for name, path in shelves.items():
+            # TODO: Allow formatting with anatomy for the paths
+            shelf_name = None
+            try:
+                shelf_name = lib.load_shelf(path, name=name)
+            except ValueError as exc:
+                print(f"Failed to load shelf -> {exc}")
+
+            if shelf_name:
+                self.shelves.append(shelf_name)
+
+    def _uninstall_shelves(self):
+        for shelf_name in self.shelves:
+            substance_painter.resource.Shelves.remove(shelf_name)
+        self.shelves.clear()
 
 
 def on_open():

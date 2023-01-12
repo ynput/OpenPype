@@ -1,0 +1,18 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "substancepainter",
+    "label": "Substance Painter",
+    "is_file": true,
+    "children": [
+        {
+            "type": "dict-modifiable",
+            "key": "shelves",
+            "label": "Shelves",
+            "use_label_wrap": true,
+            "object_type": {
+                "type": "text"
+            }
+        }
+    ]
+}
