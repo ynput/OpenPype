@@ -9,6 +9,7 @@ import shutil
 
 from .file_handler import RemoteFileHandler
 from .addon_info import AddonInfo, UrlType, DependencyItem
+from ayon_api import get_server_api_connection
 
 
 class UpdateState(Enum):
@@ -161,21 +162,28 @@ def get_addons_info(server_endpoint=None):
             parsed in AddonInfo objects
     """
     if not server_endpoint:
-        server_endpoint = "{}/{}".format(os.environ.get("OPENPYPE_SERVER_URL"),
-                                         ADDON_ENDPOINT)
-
-    response = requests.get(server_endpoint)
-    if not response.ok:
-        raise Exception(response.text)
+        addons_list = get_addons_info_as_dict()
+    else:
+        response = requests.get(server_endpoint)
+        if not response.ok:
+            raise Exception(response.text)
+        addons_list = response.json()["addons"]
 
     addons_info = []
-    addons_list = response.json()["addons"]
     for addon in addons_list:
         addon_info = AddonInfo.from_dict(addon)
         if addon_info:
             addons_info.append(AddonInfo.from_dict(addon))
     return addons_info
 
+
+def get_addons_info_as_dict():
+    con = get_server_api_connection()
+    response = con.get(ADDON_ENDPOINT)
+    if response.status != 200:
+        raise Exception(response.text)
+
+    return response["addons"]
 
 def get_dependency_info(server_endpoint=None):
     """Returns info about currently used dependency package.
