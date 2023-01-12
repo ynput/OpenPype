@@ -6,8 +6,9 @@ import appdirs
 
 
 def _get_servers_path():
-    dirpath = appdirs.user_data_dir("openpype", "pypeclub")
-    return os.path.join(dirpath, "used_servers.json")
+    return os.path.join(
+        appdirs.user_data_dir("ayon", "ynput"), "used_servers.json"
+    )
 
 
 def get_servers_info_data():
@@ -63,7 +64,7 @@ class TokenKeyring:
             keyring.set_keyring(Windows.WinVaultKeyring())
 
         self._url = url
-        self._keyring_key = "OpenPype/{}".format(url)
+        self._keyring_key = "AYON/{}".format(url)
 
     def get_value(self):
         import keyring
@@ -95,3 +96,12 @@ def ask_to_login_ui(*args, **kwargs):
     from .ui import ask_to_login
 
     return ask_to_login(*args, **kwargs)
+
+
+def remove_url_cache(url):
+    store_token(url, None)
+
+
+def remove_token_cache(url, token):
+    if load_token(url) == token:
+        remove_url_cache(url)

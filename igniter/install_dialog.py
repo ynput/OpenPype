@@ -5,9 +5,7 @@ import sys
 import re
 import collections
 
-from Qt import QtCore, QtGui, QtWidgets  # noqa
-from Qt.QtGui import QValidator  # noqa
-from Qt.QtCore import QTimer  # noqa
+from qtpy import QtCore, QtGui, QtWidgets
 
 from .install_thread import InstallThread
 from .tools import (

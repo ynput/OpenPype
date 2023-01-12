@@ -38,7 +38,7 @@ class IntegrateFtrackDescription(pyblish.api.InstancePlugin):
             self.log.info("There are any integrated AssetVersions")
             return
 
-        comment = (instance.context.data.get("comment") or "").strip()
+        comment = instance.data["comment"]
         if not comment:
             self.log.info("Comment is not set.")
         else:

@@ -1,9 +1,9 @@
+from pprint import pformat
 import pyblish.api
 from openpype.hosts.nuke.api import lib as pnlib
 import nuke
 
 
-@pyblish.api.log
 class CollectBackdrops(pyblish.api.InstancePlugin):
     """Collect Backdrop node instance and its content
     """
@@ -14,8 +14,9 @@ class CollectBackdrops(pyblish.api.InstancePlugin):
     families = ["nukenodes"]
 
     def process(self, instance):
+        self.log.debug(pformat(instance.data))
 
-        bckn = instance[0]
+        bckn = instance.data["transientData"]["node"]
 
         # define size of the backdrop
         left = bckn.xpos()
@@ -23,6 +24,7 @@ class CollectBackdrops(pyblish.api.InstancePlugin):
         right = left + bckn['bdwidth'].value()
         bottom = top + bckn['bdheight'].value()
 
+        instance.data["transientData"]["childNodes"] = []
         # iterate all nodes
         for node in nuke.allNodes():
 
@@ -37,17 +39,17 @@ class CollectBackdrops(pyblish.api.InstancePlugin):
                     and (node.ypos() + node.screenHeight() < bottom):
 
                 # add contained nodes to instance's node list
-                instance.append(node)
+                instance.data["transientData"]["childNodes"].append(node)
 
         # get all connections from outside of backdrop
-        nodes = instance[1:]
+        nodes = instance.data["transientData"]["childNodes"]
         connections_in, connections_out = pnlib.get_dependent_nodes(nodes)
-        instance.data["nodeConnectionsIn"] = connections_in
-        instance.data["nodeConnectionsOut"] = connections_out
+        instance.data["transientData"]["nodeConnectionsIn"] = connections_in
+        instance.data["transientData"]["nodeConnectionsOut"] = connections_out
 
         # make label nicer
         instance.data["label"] = "{0} ({1} nodes)".format(
-            bckn.name(), len(instance) - 1)
+            bckn.name(), len(instance.data["transientData"]["childNodes"]))
 
         instance.data["families"].append(instance.data["family"])
 
@@ -83,5 +85,4 @@ class CollectBackdrops(pyblish.api.InstancePlugin):
             "frameStart": first_frame,
             "frameEnd": last_frame
         })
-        self.log.info("Backdrop content collected: `{}`".format(instance[:]))
         self.log.info("Backdrop instance collected: `{}`".format(instance))

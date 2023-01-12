@@ -22,14 +22,22 @@ from .pype_commands import PypeCommands
 @click.option("--debug", is_flag=True, expose_value=False,
               help="Enable debug")
 @click.option("--verbose", expose_value=False,
-              help="Change OpenPype log level (debug - critical or 0-50)")
+              help=("Change OpenPype log level (debug - critical or 0-50)"))
+@click.option("--automatic-tests", is_flag=True, expose_value=False,
+              help=("Run in automatic tests mode"))
 def main(ctx):
     """Pype is main command serving as entry point to pipeline system.
 
     It wraps different commands together.
     """
+
     if ctx.invoked_subcommand is None:
-        ctx.invoke(tray)
+        # Print help if headless mode is used
+        if os.environ.get("OPENPYPE_HEADLESS_MODE") == "1":
+            print(ctx.get_help())
+            sys.exit(0)
+        else:
+            ctx.invoke(tray)
 
 
 @main.command()

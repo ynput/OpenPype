@@ -16,6 +16,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
     families = ["model",
                 "pointcache",
+                "proxyAbc",
                 "animation",
                 "mayaAscii",
                 "mayaScene",

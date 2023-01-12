@@ -187,7 +187,7 @@ class ExtractUSDLayered(publish.Extractor):
 
         # Main ROP node, either a USD Rop or ROP network with
         # multiple USD ROPs
-        node = instance[0]
+        node = hou.node(instance.data["instance_node"])
 
         # Collect any output dependencies that have not been processed yet
         # during extraction of other instances

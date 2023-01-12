@@ -5,6 +5,7 @@ import uuid
 import datetime
 
 from bson.objectid import ObjectId
+from ayon_api import get_server_api_connection
 
 from openpype.client.operations_base import (
     REMOVED_VALUE,
@@ -24,7 +25,6 @@ from openpype.client.mongo.operations import (
     CURRENT_PROJECT_SCHEMA,
 )
 
-from .server_api import get_server_api_connection
 from .conversion_utils import (
     convert_create_asset_to_v4,
     convert_create_task_to_v4,

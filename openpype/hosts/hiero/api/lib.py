@@ -15,7 +15,11 @@ import secrets
 import shutil
 import hiero
 
-from Qt import QtWidgets, QtCore, QtXml
+from qtpy import QtWidgets, QtCore
+try:
+    from PySide import QtXml
+except ImportError:
+    from PySide2 import QtXml
 
 from openpype.client import get_project
 from openpype.settings import get_project_settings

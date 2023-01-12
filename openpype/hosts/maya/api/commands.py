@@ -39,7 +39,7 @@ class ToolWindows:
 
 
 def edit_shader_definitions():
-    from Qt import QtWidgets
+    from qtpy import QtWidgets
     from openpype.hosts.maya.api.shader_definition_editor import (
         ShaderDefinitionsEditor
     )

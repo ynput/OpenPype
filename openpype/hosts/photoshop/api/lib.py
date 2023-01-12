@@ -3,12 +3,13 @@ import sys
 import contextlib
 import traceback
 
-from Qt import QtWidgets
+from qtpy import QtWidgets
 
 from openpype.lib import env_value_to_bool, Logger
 from openpype.modules import ModulesManager
 from openpype.pipeline import install_host
 from openpype.tools.utils import host_tools
+from openpype.tests.lib import is_in_tests
 
 from .launch_logic import ProcessLauncher, stub
 
@@ -42,7 +43,7 @@ def main(*subprocess_args):
             webpublisher_addon.headless_publish,
             log,
             "ClosePS",
-            os.environ.get("IS_TEST")
+            is_in_tests()
         )
     elif env_value_to_bool("AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH",
                            default=True):

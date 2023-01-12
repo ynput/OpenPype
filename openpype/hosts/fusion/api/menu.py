@@ -1,6 +1,6 @@
 import sys
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.tools.utils import host_tools
 from openpype.style import load_stylesheet

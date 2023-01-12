@@ -1,6 +1,7 @@
 import pyblish.api
 
 from openpype.hosts.houdini.api import lib
+import hou
 
 
 class ValidateFrameToken(pyblish.api.InstancePlugin):
@@ -36,8 +37,7 @@ class ValidateFrameToken(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        node = instance[0]
-
+        node = hou.node(instance.data["instance_node"])
         # Check trange parm, 0 means Render Current Frame
         frame_range = node.evalParm("trange")
         if frame_range == 0:

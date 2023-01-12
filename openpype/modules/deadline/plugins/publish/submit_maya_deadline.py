@@ -37,6 +37,7 @@ from openpype.hosts.maya.api.lib import get_attr_in_layer
 
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+from openpype.tests.lib import is_in_tests
 
 
 def _validate_deadline_bool_value(instance, attribute, value):
@@ -121,6 +122,9 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         src_filepath = context.data["currentFile"]
         src_filename = os.path.basename(src_filepath)
 
+        if is_in_tests():
+            src_filename += datetime.now().strftime("%d%m%Y%H%M%S")
+
         job_info.Name = "%s - %s" % (src_filename, instance.name)
         job_info.BatchName = src_filename
         job_info.Plugin = instance.data.get("mayaRenderPlugin", "MayaBatch")
@@ -161,7 +165,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "AVALON_TASK",
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
-            "OPENPYPE_VERSION"
+            "OPENPYPE_VERSION",
+            "IS_TEST"
         ]
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):
@@ -183,7 +188,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         # Adding file dependencies.
         if self.asset_dependencies:
             dependencies = instance.context.data["fileDependencies"]
-            dependencies.append(context.data["currentFile"])
             for dependency in dependencies:
                 job_info.AssetDependency += dependency
 
@@ -294,7 +298,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         # Add export job as dependency --------------------------------------
         if export_job:
             job_info, _ = payload
-            job_info.JobDependency = export_job
+            job_info.JobDependencies = export_job
 
         if instance.data.get("tileRendering"):
             # Prepare tiles data
@@ -431,7 +435,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
             frame_assembly_job_info.ExtraInfo[0] = file_hash
             frame_assembly_job_info.ExtraInfo[1] = file
-            frame_assembly_job_info.JobDependency = tile_job_id
+            frame_assembly_job_info.JobDependencies = tile_job_id
 
             # write assembly job config files
             now = datetime.now()

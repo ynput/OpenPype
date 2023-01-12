@@ -1,0 +1,39 @@
+{
+    "type": "dict",
+    "key": "3dsmax",
+    "label": "Autodesk 3ds Max",
+    "collapsible": true,
+    "checkbox_key": "enabled",
+    "children": [
+        {
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "type": "schema_template",
+            "name": "template_host_unchangables"
+        },
+        {
+            "key": "environment",
+            "label": "Environment",
+            "type": "raw-json"
+        },
+        {
+            "type": "dict-modifiable",
+            "key": "variants",
+            "collapsible_key": true,
+            "use_label_wrap": false,
+            "object_type": {
+                "type": "dict",
+                "collapsible": true,
+                "children": [
+                    {
+                        "type": "schema_template",
+                        "name": "template_host_variant_items"
+                    }
+                ]
+            }
+        }
+    ]
+}
