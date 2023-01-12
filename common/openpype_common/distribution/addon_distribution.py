@@ -212,11 +212,13 @@ def get_dependency_info(server_endpoint=None):
     for dependency in dependency_list:
         dependency["productionPackage"] = production_package_name
         dependency_package = DependencyItem.from_dict(dependency)
-        if dependency_package and dependency_package.name == production_package_name:
+        if (dependency_package and
+                dependency_package.name == production_package_name):
             return dependency_package
 
 
-def update_addon_state(addon_infos, destination_folder, factory, token, log=None):
+def update_addon_state(addon_infos, destination_folder, factory, token,
+                       log=None):
     """Loops through all 'addon_infos', compares local version, unzips.
 
     Loops through server provided list of dictionaries with information about
