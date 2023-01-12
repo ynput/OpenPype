@@ -686,7 +686,7 @@ def _check_and_update_addons():
     Raises:
         RuntimeError
     """
-    if not OP4_TEST_ENABLED:
+    if not AYON_SERVER_ENABLED:
         return
 
     from openpype_common.distribution.addon_distribution import (
@@ -705,10 +705,7 @@ def _check_and_update_addons():
 
     _print(f">>> Checking addons in {local_addon_folder} ...")
     token = load_token(os.environ.get("OPENPYPE_SERVER_URL"))
-    check_addons(server_endpoint,
-                 local_addon_folder,
-                 default_addon_downloader(),
-                 token)
+    check_addons(ADDON_ENDPOINT, local_addon_folder, default_addon_downloader(), token)
 
     if local_addon_folder not in sys.path:
         _print(f"Adding {local_addon_folder} to sys path.")
@@ -716,7 +713,7 @@ def _check_and_update_addons():
 
 
 def _check_and_update_dependency_package():
-    if not OP4_TEST_ENABLED:
+    if not AYON_SERVER_ENABLED:
         return
 
     from openpype_common.distribution.addon_distribution import (
@@ -738,10 +735,7 @@ def _check_and_update_dependency_package():
     )
 
     _print(f">>> Checking venvs in {local_dir} ...")
-    check_venv(server_endpoint,
-               local_dir,
-               default_addon_downloader(),
-               token)
+    check_venv(DEPENDENCIES_ENDPOINT, local_dir, default_addon_downloader(), token)
 
 
 def _get_local_dir(env_key, dir_name=None):
