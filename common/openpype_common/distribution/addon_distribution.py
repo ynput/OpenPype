@@ -128,8 +128,8 @@ class DependencyDownloader(AddonDownloader):
         filename = source["filename"]
         cls.log.debug(f"Downloading {filename} to {destination_dir}")
 
-        if not os.environ.get("OPENPYPE_SERVER_URL"):
-            raise RuntimeError(f"Must have OPENPYPE_SERVER_URL env var!")
+        if not os.environ.get("AYON_SERVER_URL"):
+            raise RuntimeError(f"Must have AYON_SERVER_URL env var!")
 
         file_name = os.path.basename(filename)
         _, ext = os.path.splitext(file_name)
