@@ -1233,13 +1233,12 @@ class RepresentationModel(TreeModel, BaseRepresentationModel):
         if not project_name:
             return
 
-        self.project_name = project_name
         repre_docs = []
         if self._version_ids:
             # Simple find here for now, expected to receive lower number of
             # representations and logic could be in Python
             repre_docs = list(get_representations(
-                self.project_name,
+                project_name,
                 version_ids=self._version_ids,
                 fields=self.repre_projection.keys()
             ))
