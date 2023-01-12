@@ -209,6 +209,9 @@
                 {
                     "families": [],
                     "hosts": [],
+                    "task_types": [],
+                    "task_names": [],
+                    "subsets": [],
                     "burnins": {
                         "burnin": {
                             "TOP_LEFT": "{yy}-{mm}-{dd}",

@@ -1,5 +1,4 @@
-import os
-from Qt import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 from openpype import resources, style
 
 

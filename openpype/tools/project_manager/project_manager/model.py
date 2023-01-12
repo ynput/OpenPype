@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from pymongo import UpdateOne, DeleteOne
 
-from Qt import QtCore, QtGui
+from qtpy import QtCore, QtGui
 
 from openpype.client import (
     get_projects,

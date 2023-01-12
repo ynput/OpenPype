@@ -5,7 +5,7 @@ Shader names are stored as simple text file over GridFS in mongodb.
 
 """
 import os
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 from openpype.client.mongo import OpenPypeMongoConnection
 from openpype import resources
 import gridfs
