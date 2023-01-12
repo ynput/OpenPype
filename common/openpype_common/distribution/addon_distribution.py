@@ -9,7 +9,7 @@ import shutil
 
 from .file_handler import RemoteFileHandler
 from .addon_info import AddonInfo, UrlType, DependencyItem
-from ayon_api import get_server_api_connection
+import ayon_api
 
 
 class UpdateState(Enum):
@@ -19,8 +19,9 @@ class UpdateState(Enum):
     FAILED = "failed"
 
 
-DEPENDENCIES_ENDPOINT = "api/dependencies"
-ADDON_ENDPOINT = "api/addons?details=1"
+DEPENDENCIES_ENDPOINT = "dependencies"
+ADDON_ENDPOINT = "addons?details=1"
+
 
 class AddonDownloader:
     log = logging.getLogger(__name__)
@@ -85,7 +86,6 @@ class AddonDownloader:
 
 
 class OSAddonDownloader(AddonDownloader):
-
     @classmethod
     def download(cls, source, destination_dir, data=None):
         # OS doesnt need to download, unzip directly
@@ -118,8 +118,9 @@ class HTTPAddonDownloader(AddonDownloader):
 class DependencyDownloader(AddonDownloader):
     """Downloads static resource file from v4 Server.
 
-    Expects filled env var OPENPYPE_SERVER_URL.
+    Expects filled env var AYON_SERVER_URL.
     """
+
     CHUNK_SIZE = 8192
 
     @classmethod
@@ -155,7 +156,7 @@ def get_addons_info(server_endpoint=None):
     """Returns list of addon information from Server
 
     Arg:
-        server_endpoint (str): SERVER_URL/api/addons?details=1
+        server_endpoint (str): addons?details=1
 
     Returns:
         List[AddonInfo]: List of metadata for addons sent from server,
@@ -164,10 +165,10 @@ def get_addons_info(server_endpoint=None):
     if not server_endpoint:
         addons_list = get_addons_info_as_dict()
     else:
-        response = requests.get(server_endpoint)
-        if not response.ok:
-            raise Exception(response.text)
-        addons_list = response.json()["addons"]
+        response = ayon_api.get(server_endpoint)
+        if response.status != 200:
+            raise Exception(response.content)
+        addons_list = response.data["addons"]
 
     addons_info = []
     for addon in addons_list:
@@ -178,12 +179,12 @@ def get_addons_info(server_endpoint=None):
 
 
 def get_addons_info_as_dict():
-    con = get_server_api_connection()
-    response = con.get(ADDON_ENDPOINT)
+    response = ayon_api.get(ADDON_ENDPOINT)
     if response.status != 200:
-        raise Exception(response.text)
+        raise Exception(response.content)
 
-    return response["addons"]
+    return response.data["addons"]
+
 
 def get_dependency_info(server_endpoint=None):
     """Returns info about currently used dependency package.
@@ -198,27 +199,24 @@ def get_dependency_info(server_endpoint=None):
         (DependencyItem) or None if no production_package_name found
     """
     if not server_endpoint:
-        server_endpoint = "{}/{}".format(os.environ.get("OPENPYPE_SERVER_URL"),
-                                         DEPENDENCIES_ENDPOINT)
+        server_endpoint = DEPENDENCIES_ENDPOINT
 
-    response = requests.get(server_endpoint)
-    if not response.ok:
-        raise Exception(response.text)
+    response = ayon_api.get(server_endpoint)
+    if response.status != 200:
+        raise Exception(response.content)
 
-    response_json = response.json()
-    dependency_list = response_json["packages"]
-    production_package_name = response_json["productionPackage"]
+    data = response.data
+    dependency_list = data["packages"]
+    production_package_name = data["productionPackage"]
 
     for dependency in dependency_list:
         dependency["productionPackage"] = production_package_name
         dependency_package = DependencyItem.from_dict(dependency)
-        if (dependency_package and
-                dependency_package.name == production_package_name):
+        if dependency_package and dependency_package.name == production_package_name:
             return dependency_package
 
 
-def update_addon_state(addon_infos, destination_folder, factory, token,
-                       log=None):
+def update_addon_state(addon_infos, destination_folder, factory, token, log=None):
     """Loops through all 'addon_infos', compares local version, unzips.
 
     Loops through server provided list of dictionaries with information about
