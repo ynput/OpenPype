@@ -102,7 +102,6 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
         path = get_representation_path(representation)
 
         # Reload the mesh
-        # TODO: Re-use settings from first load?
         container_options = container.get("options", {})
         settings = substance_painter.project.MeshReloadingSettings(
             import_cameras=container_options.get("import_cameras", True),
