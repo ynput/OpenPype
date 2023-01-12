@@ -707,14 +707,12 @@ def _check_and_update_addons():
         load_token
     )
 
-    server_endpoint = "{}/{}".format(os.environ.get("OPENPYPE_SERVER_URL"),
-                                     ADDON_ENDPOINT)
-
     local_addon_folder = _get_local_dir("OPENPYPE_ADDONS_DIR", "addons")
 
     _print(f">>> Checking addons in {local_addon_folder} ...")
     token = load_token(os.environ.get("OPENPYPE_SERVER_URL"))
-    check_addons(ADDON_ENDPOINT, local_addon_folder, default_addon_downloader(), token)
+    check_addons(ADDON_ENDPOINT, local_addon_folder,
+                 default_addon_downloader(), token)
 
     if local_addon_folder not in sys.path:
         _print(f"Adding {local_addon_folder} to sys path.")
@@ -734,9 +732,6 @@ def _check_and_update_dependency_package():
         load_token
     )
 
-    server_endpoint = "{}/{}".format(os.environ.get("OPENPYPE_SERVER_URL"),
-                                     DEPENDENCIES_ENDPOINT)
-
     token = load_token(os.environ.get("OPENPYPE_SERVER_URL"))
 
     local_dir = _get_local_dir(
@@ -744,7 +739,8 @@ def _check_and_update_dependency_package():
     )
 
     _print(f">>> Checking venvs in {local_dir} ...")
-    check_venv(DEPENDENCIES_ENDPOINT, local_dir, default_addon_downloader(), token)
+    check_venv(DEPENDENCIES_ENDPOINT, local_dir,
+               default_addon_downloader(), token)
 
 
 def _get_local_dir(env_key, dir_name=None):
