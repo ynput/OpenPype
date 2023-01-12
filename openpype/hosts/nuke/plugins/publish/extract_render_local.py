@@ -5,6 +5,11 @@ import clique
 import nuke
 
 from openpype.pipeline import publish
+from openpype.client import (
+    get_version_by_id,
+    get_last_version_by_subset_id,
+)
+
 
 
 class NukeRenderLocal(publish.Extractor):
@@ -35,42 +40,64 @@ class NukeRenderLocal(publish.Extractor):
 
         self.log.debug("instance collected: {}".format(instance.data))
 
-        first_frame = instance.data.get("frameStartHandle", None)
-
-        last_frame = instance.data.get("frameEndHandle", None)
         node_subset_name = instance.data.get("name", None)
+        frames_to_fix = instance.data.get("frames_to_fix")
+        frames_to_render = []
+        if not frames_to_fix:
+            first_frame = instance.data.get("frameStartHandle", None)
+            last_frame = instance.data.get("frameEndHandle", None)
+            frames_to_render.append((first_frame, last_frame))
+        else:
+            for frame_range in frames_to_fix.split(","):
+                if isinstance(frame_range, int):
+                    first_frame = frame_range
+                    last_frame = frame_range
+                elif '-' in frame_range:
+                    frames = frame_range.split('-')
+                    first_frame = int(frames[0])
+                    last_frame = int(frames[1])
+                else:
+                    raise ValueError("Wrong format of frames to fix {}"
+                                     .format(frames_to_fix))
+                frames_to_render.append((first_frame, last_frame))
 
-        self.log.info("Starting render")
-        self.log.info("Start frame: {}".format(first_frame))
-        self.log.info("End frame: {}".format(last_frame))
+        filenames = []
+        for first_frame, last_frame in frames_to_render:
 
-        node_file = node["file"]
-        # Collecte expected filepaths for each frame
-        # - for cases that output is still image is first created set of
-        #   paths which is then sorted and converted to list
-        expected_paths = list(sorted({
-            node_file.evaluate(frame)
-            for frame in range(first_frame, last_frame + 1)
-        }))
-        # Extract only filenames for representation
-        filenames = [
-            os.path.basename(filepath)
-            for filepath in expected_paths
-        ]
+            self.log.info("Starting render")
+            self.log.info("Start frame: {}".format(first_frame))
+            self.log.info("End frame: {}".format(last_frame))
 
-        # Ensure output directory exists.
-        out_dir = os.path.dirname(expected_paths[0])
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
+            node_file = node["file"]
+            # Collecte expected filepaths for each frame
+            # - for cases that output is still image is first created set of
+            #   paths which is then sorted and converted to list
+            expected_paths = list(sorted({
+                node_file.evaluate(frame)
+                for frame in range(first_frame, last_frame + 1)
+            }))
+            # Extract only filenames for representation
+            filenames.extend([
+                os.path.basename(filepath)
+                for filepath in expected_paths
+            ])
 
-        # Render frames
-        nuke.execute(
-            node_subset_name,
-            int(first_frame),
-            int(last_frame)
-        )
+            # Ensure output directory exists.
+            out_dir = os.path.dirname(expected_paths[0])
+            if not os.path.exists(out_dir):
+                os.makedirs(out_dir)
 
-        ext = node["file_type"].value()
+            # Render frames
+            nuke.execute(
+                node_subset_name,
+                int(first_frame),
+                int(last_frame)
+            )
+
+            ext = node["file_type"].value()
+
+        if frames_to_fix:
+            pass
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
