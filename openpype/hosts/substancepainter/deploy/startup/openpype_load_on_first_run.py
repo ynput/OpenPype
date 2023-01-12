@@ -20,7 +20,7 @@ def start_plugin():
         is_before_plugins_menu = PLUGINS_MENU is None
 
         settings = get_settings(OPENPYPE_PLUGIN_NAME)
-        if settings.value(LAUNCH_AT_START_KEY, None) is not None:
+        if settings.value(LAUNCH_AT_START_KEY, None) is None:
             print("Initializing OpenPype plug-in on first run...")
             if is_before_plugins_menu:
                 print("- running before 'painter_plugins_ui'")
