@@ -328,13 +328,6 @@ class GDriveHandler(AbstractProvider):
             last_tick = status = response = None
             status_val = 0
             while response is None:
-                if server.is_representation_paused(
-                    project_name,
-                    representation['_id'],
-                    site,
-                    check_parents=True
-                ):
-                    raise ValueError("Paused during process, please redo.")
                 if status:
                     status_val = float(status.progress())
                 if not last_tick or \
@@ -349,6 +342,13 @@ class GDriveHandler(AbstractProvider):
                                      site=site,
                                      progress=status_val
                                      )
+                if server.is_representation_paused(
+                    project_name,
+                    representation['_id'],
+                    site,
+                    check_parents=True
+                ):
+                    raise ValueError("Paused during process, please redo.")
                 status, response = request.next_chunk()
 
         except errors.HttpError as ex:
@@ -418,13 +418,6 @@ class GDriveHandler(AbstractProvider):
             last_tick = status = response = None
             status_val = 0
             while response is None:
-                if server.is_representation_paused(
-                    project_name,
-                    representation['_id'],
-                    site,
-                    check_parents=True
-                ):
-                    raise ValueError("Paused during process, please redo.")
                 if status:
                     status_val = float(status.progress())
                 if not last_tick or \
@@ -439,6 +432,13 @@ class GDriveHandler(AbstractProvider):
                                      site=site,
                                      progress=status_val
                                      )
+                if server.is_representation_paused(
+                    project_name,
+                    representation['_id'],
+                    site,
+                    check_parents=True
+                ):
+                    raise ValueError("Paused during process, please redo.")
                 status, response = downloader.next_chunk()
 
         return target_name
