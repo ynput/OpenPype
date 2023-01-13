@@ -1484,7 +1484,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                             "$elemMatch": {
                                 "name": {"$in": [remote_site]},
                                 "created_dt": {"$exists": False},
-                                "tries": {"$in": retries_arr}
+                                "tries": {"$in": retries_arr},
+                                "paused": {"$exists": False}
                             }
                         }
                     }]},
@@ -1494,7 +1495,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                             "$elemMatch": {
                                 "name": active_site,
                                 "created_dt": {"$exists": False},
-                                "tries": {"$in": retries_arr}
+                                "tries": {"$in": retries_arr},
+                                "paused": {"$exists": False}
                             }
                         }}, {
                         "files.sites": {
