@@ -120,7 +120,7 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
                 map_fnames = [os.path.basename(path) for path in map_output]
             else:
                 first_file = map_output
-                map_fnames = map_output
+                map_fnames = os.path.basename(map_output)
 
             ext = os.path.splitext(first_file)[1]
             assert ext.lstrip('.'), f"No extension: {ext}"
