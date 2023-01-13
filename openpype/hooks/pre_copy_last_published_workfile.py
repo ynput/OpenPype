@@ -1,8 +1,8 @@
 import os
 from openpype.client.entities import (
     get_last_version_by_subset_id,
-    get_matching_subset_id,
-    get_representation_by_task,
+    get_representations,
+    get_subsets,
 )
 
 from openpype.lib import PreLaunchHook
@@ -99,10 +99,38 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         asset_doc = self.data.get("asset_doc")
         anatomy = self.data.get("anatomy")
 
-        # Get subset ID
-        subset_id = get_matching_subset_id(
-            project_name, task_name, "workfile", asset_doc
-        )
+        # Get subsets of the correct family
+        filtered_subsets = [
+            subset
+            for subset in get_subsets(
+                project_name,
+                asset_ids=[asset_doc["_id"]],
+                fields=["_id", "name", "data.family", "data.families"],
+            )
+            if (
+                subset["data"].get("family") == "workfile"
+                # Legacy compatibility
+                or "workfile" in subset["data"].get("families", {})
+            )
+        ]
+        if not filtered_subsets:
+            self.log.debug(
+                "No any subset for asset '{}' with id '{}'.".format(
+                    asset_doc["name"], asset_doc["_id"]
+                )
+            )
+            return
+
+        # Match subset which has `task_name` in its name
+        subset_id = None
+        low_task_name = task_name.lower()
+        if len(filtered_subsets) > 1:
+            for subset in filtered_subsets:
+                if low_task_name in subset["name"].lower():
+                    subset_id = subset["_id"]
+        else:
+            subset_id = filtered_subsets[0]["_id"]
+
         if subset_id is None:
             self.log.debug(
                 "Not any matched subset for task '{}' of '{}'.".format(
@@ -119,10 +147,16 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             self.log.debug("Subset does not have any versions")
             return
 
-        workfile_representation = get_representation_by_task(
-            project_name,
-            task_name,
-            last_version_doc,
+        workfile_representation = next(
+            (
+                representation
+                for representation in get_representations(
+                    project_name, version_ids=[last_version_doc["_id"]]
+                )
+                if representation["context"].get("task", {}).get("name")
+                == task_name
+            ),
+            None,
         )
         if not workfile_representation:
             self.log.debug(
