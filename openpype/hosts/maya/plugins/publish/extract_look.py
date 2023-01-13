@@ -535,6 +535,9 @@ class ExtractLook(publish.Extractor):
                 self.log.info("tx: converting sRGB -> linear")
                 additional_args.extend(["--colorconvert", "sRGB", "linear"])
 
+            self.log.info("Using nuke-default ocio config instead of maya ocio config!") # noqa
+            self.log.info("The tx conversion is different from the maya tx conversion!") # noqa
+
             config_path = get_ocio_config_path("nuke-default")
             additional_args.extend(["--colorconfig", config_path])
             # Ensure folder exists
