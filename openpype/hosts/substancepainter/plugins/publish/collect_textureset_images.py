@@ -148,6 +148,9 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
                 'files': map_fnames,
             }]
 
+            # Group the textures together in the loader
+            image_instance.data["subsetGroup"] = instance.data["subset"]
+
             # Set up the representation for thumbnail generation
             # TODO: Simplify this once thumbnail extraction is refactored
             staging_dir = os.path.dirname(first_file)
