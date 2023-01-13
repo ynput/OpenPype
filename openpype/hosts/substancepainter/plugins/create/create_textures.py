@@ -1,74 +1,27 @@
 # -*- coding: utf-8 -*-
 """Creator plugin for creating textures."""
-import os
 
 from openpype.pipeline import CreatedInstance, Creator
-
-from openpype.hosts.substancepainter.api.pipeline import (
-    set_project_metadata,
-    get_project_metadata
-)
-
 from openpype.lib import (
     EnumDef,
     UILabelDef,
     NumberDef
 )
 
+from openpype.hosts.substancepainter.api.pipeline import (
+    set_project_metadata,
+    get_project_metadata
+)
+from openpype.hosts.substancepainter.api.lib import get_export_presets
+
 import substance_painter.project
-import substance_painter.resource
-
-
-def get_export_presets():
-    import substance_painter.resource
-
-    preset_resources = {}
-
-    # TODO: Find more optimal way to find all export templates
-    for shelf in substance_painter.resource.Shelves.all():
-        shelf_path = os.path.normpath(shelf.path())
-
-        presets_path = os.path.join(shelf_path, "export-presets")
-        if not os.path.exists(presets_path):
-            continue
-
-        for fname in os.listdir(presets_path):
-            if fname.endswith(".spexp"):
-                template_name = os.path.splitext(fname)[0]
-
-                resource = substance_painter.resource.ResourceID(
-                    context=shelf.name(),
-                    name=template_name
-                )
-                resource_url = resource.url()
-
-                preset_resources[resource_url] = template_name
-
-    # Sort by template name
-    export_templates = dict(sorted(preset_resources.items(),
-                                   key=lambda x: x[1]))
-
-    # Add default built-ins at the start
-    # TODO: find the built-ins automatically; scraped with https://gist.github.com/BigRoy/97150c7c6f0a0c916418207b9a2bc8f1  # noqa
-    result = {
-        "export-preset-generator://viewport2d": "2D View",  # noqa
-        "export-preset-generator://doc-channel-normal-no-alpha": "Document channels + Normal + AO (No Alpha)",  # noqa
-        "export-preset-generator://doc-channel-normal-with-alpha": "Document channels + Normal + AO (With Alpha)",  # noqa
-        "export-preset-generator://sketchfab": "Sketchfab",  # noqa
-        "export-preset-generator://adobe-standard-material": "Substance 3D Stager",  # noqa
-        "export-preset-generator://usd": "USD PBR Metal Roughness",  # noqa
-        "export-preset-generator://gltf": "glTF PBR Metal Roughness",  # noqa
-        "export-preset-generator://gltf-displacement": "glTF PBR Metal Roughness + Displacement texture (experimental)"  # noqa
-    }
-    result.update(export_templates)
-    return result
 
 
 class CreateTextures(Creator):
     """Create a texture set."""
-    identifier = "io.openpype.creators.substancepainter.textures"
+    identifier = "io.openpype.creators.substancepainter.textureset"
     label = "Textures"
-    family = "textures"
+    family = "textureSet"
     icon = "picture-o"
 
     default_variant = "Main"
@@ -79,19 +32,19 @@ class CreateTextures(Creator):
             return
 
         instance = self.create_instance_in_context(subset_name, instance_data)
-        set_project_metadata("textures", instance.data_to_store())
+        set_project_metadata("textureSet", instance.data_to_store())
 
     def collect_instances(self):
-        workfile = get_project_metadata("textures")
+        workfile = get_project_metadata("textureSet")
         if workfile:
             self.create_instance_in_context_from_existing(workfile)
 
     def update_instances(self, update_list):
         for instance, _changes in update_list:
             # Update project's metadata
-            data = get_project_metadata("textures") or {}
+            data = get_project_metadata("textureSet") or {}
             data.update(instance.data_to_store())
-            set_project_metadata("textures", data)
+            set_project_metadata("textureSet", data)
 
     def remove_instances(self, instances):
         for instance in instances:

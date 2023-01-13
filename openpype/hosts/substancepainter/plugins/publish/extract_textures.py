@@ -1,55 +1,28 @@
 from openpype.pipeline import KnownPublishError, publish
-
 import substance_painter.export
 
 
 class ExtractTextures(publish.Extractor):
-    """Extract Textures using an output template config"""
+    """Extract Textures using an output template config.
 
-    label = "Extract Texture Sets"
+    Note:
+        This Extractor assumes that `collect_textureset_images` has prepared
+        the relevant export config and has also collected the individual image
+        instances for publishing including its representation. That is why this
+        particular Extractor doesn't specify representations to integrate.
+
+    """
+    # TODO: More explicitly detect UDIM tiles
+    # TODO: Get color spaces
+    # TODO: Detect what source data channels end up in each file
+
+    label = "Extract Texture Set"
     hosts = ['substancepainter']
-    families = ["textures"]
+    families = ["textureSet"]
 
     def process(self, instance):
 
-        staging_dir = self.staging_dir(instance)
-
-        creator_attrs = instance.data["creator_attributes"]
-        preset_url = creator_attrs["exportPresetUrl"]
-        self.log.debug(f"Exporting using preset: {preset_url}")
-
-        # See: https://substance3d.adobe.com/documentation/ptpy/api/substance_painter/export  # noqa
-        config = {
-            "exportShaderParams": True,
-            "exportPath": staging_dir,
-            "defaultExportPreset": preset_url,
-
-            # Custom overrides to the exporter
-            "exportParameters": [
-                {
-                    "parameters": {
-                        "fileFormat": creator_attrs["exportFileFormat"],
-                        "sizeLog2": creator_attrs["exportSize"],
-                        "paddingAlgorithm": creator_attrs["exportPadding"],
-                        "dilationDistance": creator_attrs["exportDilationDistance"]  # noqa
-                    }
-                }
-            ]
-        }
-
-        # Create the list of Texture Sets to export.
-        config["exportList"] = []
-        for texture_set in substance_painter.textureset.all_texture_sets():
-            # stack = texture_set.get_stack()
-            config["exportList"].append({"rootPath": texture_set.name()})
-
-        # Consider None values optionals
-        for override in config["exportParameters"]:
-            parameters = override.get("parameters")
-            for key, value in dict(parameters).items():
-                if value is None:
-                    parameters.pop(key)
-
+        config = instance.data["exportConfig"]
         result = substance_painter.export.export_project_textures(config)
 
         if result.status != substance_painter.export.ExportStatus.Success:
@@ -57,18 +30,24 @@ class ExtractTextures(publish.Extractor):
                 "Failed to export texture set: {}".format(result.message)
             )
 
-        files = []
-        for _stack, maps in result.textures.items():
+        for (texture_set_name, stack_name), maps in result.textures.items():
+            # Log our texture outputs
+            self.log.info(f"Processing stack: {stack_name}")
             for texture_map in maps:
                 self.log.info(f"Exported texture: {texture_map}")
-                files.append(texture_map)
 
-        # TODO: add the representations so they integrate the way we'd want
-        """
-        instance.data['representations'] = [{
-            'name': ext.lstrip("."),
-            'ext': ext.lstrip("."),
-            'files': file,
-            "stagingDir": folder,
-        }]
-        """
+            # TODO: Confirm outputs match what we collected
+            # TODO: Confirm the files indeed exist
+            # TODO: make sure representations are registered
+
+        # Add a fake representation which won't be integrated so the
+        # Integrator leaves us alone - otherwise it would error
+        # TODO: Add `instance.data["integrate"] = False` support in Integrator?
+        instance.data["representations"] = [
+            {
+                "name": "_fake",
+                "ext": "_fake",
+                "delete": True,
+                "files": []
+            }
+        ]
