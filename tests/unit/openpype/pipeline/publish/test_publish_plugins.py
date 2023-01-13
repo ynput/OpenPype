@@ -16,11 +16,13 @@
 import os
 import pytest
 import shutil
+import logging
 
 from tests.unit.openpype.pipeline.lib import TestPipeline
 from openpype.pipeline.publish import publish_plugins
 from openpype.pipeline import colorspace
 
+log = logging.getLogger(__name__)
 
 class TestPipelinePublishPlugins(TestPipeline):
     """ Testing Pipeline pubish_plugins.py
@@ -34,11 +36,15 @@ class TestPipelinePublishPlugins(TestPipeline):
     # files are the same as those used in `test_pipeline_colorspace`
     TEST_FILES = [
         (
-            "1kJ1ZYcf7V7jS8IW2routSYQoGUfUWj4F",
+            "1d7t9_cVKeZRVF0ppCHiE5MJTTtTlJgBe",
             "test_pipeline_colorspace.zip",
             ""
         )
     ]
+    PROJECT = "test_project"
+    ASSET = "sh0010"
+    HIERARCHY = "shots/sq010"
+    TASK = "comp"
 
     @pytest.fixture(scope="module")
     def context(self, legacy_io, project_settings):
@@ -69,11 +75,11 @@ class TestPipelinePublishPlugins(TestPipeline):
         dest_dir = os.path.join(
             output_folder_url,
             self.PROJECT,
-            "ocio"
+            "config"
         )
         dest_path = os.path.join(
             dest_dir,
-            "config.ocio"
+            "aces.ocio"
         )
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
@@ -99,12 +105,13 @@ class TestPipelinePublishPlugins(TestPipeline):
         dest_dir = os.path.join(
             output_folder_url,
             self.PROJECT,
+            self.HIERARCHY,
             self.ASSET,
-            "ocio"
+            "config"
         )
         dest_path = os.path.join(
             dest_dir,
-            "config.ocio"
+            "aces.ocio"
         )
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
@@ -113,9 +120,9 @@ class TestPipelinePublishPlugins(TestPipeline):
 
         yield dest_path
 
-    def test_get_colorspace_settings(self, context):
+    def test_get_colorspace_settings(self, context, config_path_asset):
         expected_config_template = (
-            "{root[work]}/{project[name]}/{asset}/ocio/config.ocio")
+            "{root[work]}/{project[name]}/{hierarchy}/{asset}/config/aces.ocio")
         expected_file_rules = {
             "comp_review": {
                 "pattern": "renderCompMain.baking_h264",
@@ -126,6 +133,7 @@ class TestPipelinePublishPlugins(TestPipeline):
 
         # load plugin function for testing
         plugin = publish_plugins.ExtractorColormanaged()
+        plugin.log = log
         config_data, file_rules = plugin.get_colorspace_settings(context)
 
         assert config_data["template"] == expected_config_template, (
@@ -165,12 +173,14 @@ class TestPipelinePublishPlugins(TestPipeline):
 
         # load plugin function for testing
         plugin = publish_plugins.ExtractorColormanaged()
+        plugin.log = log
         plugin.set_representation_colorspace(
             representation_nuke, context,
             colorspace_settings=(config_data_nuke, file_rules_nuke)
         )
         # load plugin function for testing
         plugin = publish_plugins.ExtractorColormanaged()
+        plugin.log = log
         plugin.set_representation_colorspace(
             representation_hiero, context,
             colorspace_settings=(config_data_hiero, file_rules_hiero)

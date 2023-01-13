@@ -31,11 +31,15 @@ class TestPipelineColorspace(TestPipeline):
 
     TEST_FILES = [
         (
-            "1kJ1ZYcf7V7jS8IW2routSYQoGUfUWj4F",
+            "1d7t9_cVKeZRVF0ppCHiE5MJTTtTlJgBe",
             "test_pipeline_colorspace.zip",
             ""
         )
     ]
+
+    PROJECT = "test_project"
+    ASSET = "test_asset"
+    TASK = "test_task"
 
     @pytest.fixture(scope="module")
     def config_path_project(
@@ -54,11 +58,11 @@ class TestPipelineColorspace(TestPipeline):
         dest_dir = os.path.join(
             output_folder_url,
             self.PROJECT,
-            "ocio"
+            "config"
         )
         dest_path = os.path.join(
             dest_dir,
-            "config.ocio"
+            "aces.ocio"
         )
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
@@ -85,11 +89,11 @@ class TestPipelineColorspace(TestPipeline):
             output_folder_url,
             self.PROJECT,
             self.ASSET,
-            "ocio"
+            "config"
         )
         dest_path = os.path.join(
             dest_dir,
-            "config.ocio"
+            "aces.ocio"
         )
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
@@ -104,7 +108,7 @@ class TestPipelineColorspace(TestPipeline):
         config_path_project,
         project_settings
     ):
-        expected_template = "{root[work]}/{project[name]}/ocio/config.ocio"
+        expected_template = "{root[work]}/{project[name]}/config/aces.ocio"
 
         # get config_data from hiero
         # where project level config is defined
