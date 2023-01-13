@@ -639,9 +639,22 @@ class SCENE_OT_AddToOpenpypeInstance(
             row.prop(self, "datapath", text="", icon_only=True)
 
     def execute(self, context):
+        # Get datablock
+        datapath = getattr(bpy.data, self.datapath)
+        datablock = datapath.get(self.datablock_name)
+
         # Get openpype instance
         openpype_instances = context.scene.openpype_instances
         op_instance = openpype_instances.get(self.instance_name)
+
+        # Check datablock is not already in instance
+        if datablock in {
+            d_ref.datablock for d_ref in op_instance.datablock_refs
+        }:
+            self.report(
+                {"INFO"}, f"{datablock.name} already in {op_instance.name}."
+            )
+            return {"CANCELLED"}
 
         # Get creator class
         Creator = get_legacy_creator_by_name(self.creator_name)
@@ -655,7 +668,7 @@ class SCENE_OT_AddToOpenpypeInstance(
             {"variant": op_instance.name},
         )
         datapath = getattr(bpy.data, self.datapath)
-        plugin.process([datapath.get(self.datablock_name)])
+        plugin.process([datablock])
 
         # Set active index to newly created
         op_instance.datablock_active_index = (
