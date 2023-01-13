@@ -26,7 +26,7 @@ jobs:
         python-version: "3.7.9"
     - name: Install Venv
       run: |
-        .\tools\create_venv.ps1
+        .\tools\create_env.ps1
     - name: Install Libs
       run: |
         .\tools\fetch_thirdparty_libs.ps1
