@@ -508,18 +508,19 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             Returns:
                 (bool)
         """
-        representation = get_representation_by_id(project_name,
-                                                  representation_id,
-                                                  fields=["files.sites"])
-        if not representation:
-            return False
-
         # Check parents are paused
         if check_parents and (
             self.is_project_paused(project_name)
             or self.is_paused()
         ):
             return True
+
+        # Get representation
+        representation = get_representation_by_id(project_name,
+                                                  representation_id,
+                                                  fields=["files.sites"])
+        if not representation:
+            return False
 
         # Check if representation is paused
         for file_info in representation.get("files", []):
