@@ -515,8 +515,10 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             return False
 
         # Check parents are paused
-        if check_parents and (self.is_project_paused(project_name) or \
-                self.is_paused()):
+        if check_parents and (
+            self.is_project_paused(project_name)
+            or self.is_paused()
+        ):
             return True
 
         # Check if representation is paused
