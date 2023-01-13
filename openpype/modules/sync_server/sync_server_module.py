@@ -124,7 +124,6 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         self.action_show_widget = None
         self._paused = False
         self._paused_projects = set()
-        self._paused_representations = set()
         self._anatomies = {}
 
         self._connection = None
@@ -475,7 +474,6 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 site_name (string): 'gdrive', 'studio' etc.
         """
         self.log.info("Pausing SyncServer for {}".format(representation_id))
-        self._paused_representations.add(representation_id)
         self.reset_site_on_representation(project_name, representation_id,
                                           site_name=site_name, pause=True)
 
@@ -492,11 +490,6 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 site_name (string): 'gdrive', 'studio' etc.
         """
         self.log.info("Unpausing SyncServer for {}".format(representation_id))
-        try:
-            self._paused_representations.remove(representation_id)
-        except KeyError:
-            pass
-        # self.paused_representations is not persistent
         self.reset_site_on_representation(project_name, representation_id,
                                           site_name=site_name, pause=False)
 
