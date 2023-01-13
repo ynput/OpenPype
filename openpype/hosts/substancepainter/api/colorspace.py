@@ -135,10 +135,10 @@ def get_project_channel_data():
         config_map = config["exportPresets"][0]["maps"][0]
         config_map["channels"] = [
             {
-                  "destChannel": x,
-                  "srcChannel": x,
-                  "srcMapType": "documentMap",
-                  "srcMapName": channel
+                "destChannel": x,
+                "srcChannel": x,
+                "srcMapType": "documentMap",
+                "srcMapName": channel
             } for x in "RGB"
         ]
 
