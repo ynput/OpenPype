@@ -304,17 +304,15 @@ def load_modules(force=False):
 
 def _get_v4_addons_information():
     """Receive information about addons to use from server.
-
     Todos:
         Actually ask server for the information.
         Allow project name as optional argument to be able to query information
             about used addons for specific project.
-
     Returns:
         List[Dict[str, Any]]: List of addon information to use.
     """
-
-    return []
+    from common.openpype_common.distribution.addon_distribution import get_addons_info_as_dict  # noqa
+    return get_addons_info_as_dict()
 
 
 def _load_v4_addons(openpype_modules, modules_key, log):
@@ -335,6 +333,7 @@ def _load_v4_addons(openpype_modules, modules_key, log):
     """
 
     v3_addons_to_skip = []
+
     addons_info = _get_v4_addons_information()
     if not addons_info:
         return v3_addons_to_skip
@@ -350,7 +349,10 @@ def _load_v4_addons(openpype_modules, modules_key, log):
 
     for addon_info in addons_info:
         addon_name = addon_info["name"]
-        addon_version = addon_info["version"]
+        addon_version = addon_info.get("productionVersion")
+        if not addon_version:
+            continue
+
         folder_name = "{}_{}".format(addon_name, addon_version)
         addon_dir = os.path.join(addons_dir, folder_name)
         if not os.path.exists(addon_dir):

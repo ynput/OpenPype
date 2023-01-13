@@ -645,7 +645,7 @@ def _connect_to_v4_server():
     from openpype_common.connection.credentials import (
         ask_to_login_ui,
         add_server,
-        store_token,
+        store_token
     )
 
     load_environments()
@@ -671,6 +671,78 @@ def _connect_to_v4_server():
 
     _print("!!! Login was not successful.")
     sys.exit(0)
+
+
+def _check_and_update_addons():
+    """Gets addon info from v4, compares with local folder and updates it.
+
+    Raises:
+        RuntimeError
+    """
+    if not AYON_SERVER_ENABLED:
+        return
+
+    from openpype_common.distribution.addon_distribution import (
+        ADDON_ENDPOINT,
+        check_addons,
+        default_addon_downloader,
+    )
+    from openpype_common.connection.credentials import (
+        load_token
+    )
+
+    local_addon_folder = _get_local_dir("OPENPYPE_ADDONS_DIR", "addons")
+
+    _print(f">>> Checking addons in {local_addon_folder} ...")
+    token = load_token(os.environ.get("OPENPYPE_SERVER_URL"))
+    check_addons(ADDON_ENDPOINT, local_addon_folder,
+                 default_addon_downloader(), token)
+
+    if local_addon_folder not in sys.path:
+        _print(f"Adding {local_addon_folder} to sys path.")
+        sys.path.insert(0, local_addon_folder)
+
+
+def _check_and_update_dependency_package():
+    if not AYON_SERVER_ENABLED:
+        return
+
+    from openpype_common.distribution.addon_distribution import (
+        DEPENDENCIES_ENDPOINT,
+        check_venv,
+        default_addon_downloader,
+    )
+    from openpype_common.connection.credentials import (
+        load_token
+    )
+
+    token = load_token(os.environ.get("OPENPYPE_SERVER_URL"))
+
+    local_dir = _get_local_dir(
+        "OPENPYPE_DEPENDENCIES_DIR", "dependency_packages"
+    )
+
+    _print(f">>> Checking venvs in {local_dir} ...")
+    check_venv(DEPENDENCIES_ENDPOINT, local_dir,
+               default_addon_downloader(), token)
+
+
+def _get_local_dir(env_key, dir_name=None):
+    local_dir = os.environ.get(env_key)
+    if not local_dir:
+        import appdirs
+        local_dir = appdirs.user_data_dir("openpype", "pypeclub")
+        if not dir_name:
+            raise RuntimeError("Must fill dir_name if nothing else provided!")
+        local_dir = os.path.join(local_dir, dir_name)
+
+    if not os.path.isdir(local_dir):
+        try:
+            os.makedirs(local_dir)
+        except Exception:  # TODO fix exception
+            raise RuntimeError(f"Cannot create {local_dir}")
+
+    return local_dir
 
 
 def _initialize_environment(openpype_version: OpenPypeVersion) -> None:
@@ -1033,6 +1105,10 @@ def boot():
         sys.exit(1)
 
     _connect_to_v4_server()
+
+    _check_and_update_addons()
+
+    _check_and_update_dependency_package()
 
     os.environ["OPENPYPE_MONGO"] = openpype_mongo
     # name of Pype database

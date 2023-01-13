@@ -7,6 +7,9 @@
   and install all necessary packages from `poetry.lock` or `pyproject.toml`
   needed by OpenPype to be included during application freeze on Windows.
 
+  Script is also used to create new venv at -venv_path from provided
+  pyproject.toml inside this folder.
+  This will be used for v4 and dependencies tool.
 .EXAMPLE
 
 PS> .\create_env.ps1
@@ -14,9 +17,17 @@ PS> .\create_env.ps1
 .EXAMPLE
 
 Print verbose information from Poetry:
-PS> .\create_env.ps1 --verbose
+PS> .\create_env.ps1 -verbose
+
+.EXAMPLE
+Create new venv from provided toml
+PS> .\create_env.ps -venv_path c:/new_venv
 
 #>
+param (
+    [String] $venv_path,
+    [switch] $verbose
+)
 
 $arguments=$ARGS
 $poetry_verbosity=$null
@@ -68,7 +79,6 @@ function Install-Poetry() {
     }
 
     $env:POETRY_HOME="$openpype_root\.poetry"
-    # $env:POETRY_VERSION="1.1.15"
     (Invoke-WebRequest -Uri https://install.python-poetry.org/ -UseBasicParsing).Content | & $($python) -
 }
 
@@ -100,6 +110,7 @@ print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
       Set-Location -Path $current_dir
       Exit-WithCode 1
     }
+
     # We are supporting python 3.9 only
     if (([int]$matches[1] -lt 3) -or ([int]$matches[2] -lt 9)) {
       Write-Color -Text "FAILED ", "Version ", "[", $p ,"]",  "is old and unsupported" -Color Red, Yellow, Cyan, White, Cyan, Yellow
@@ -107,7 +118,7 @@ print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
       Exit-WithCode 1
     } elseif (([int]$matches[1] -eq 3) -and ([int]$matches[2] -gt 9)) {
         Write-Color -Text "WARNING Version ", "[",  $p, "]",  " is unsupported, use at your own risk." -Color Yellow, Cyan, White, Cyan, Yellow
-        Write-Color -Text "*** ", "OpenPype supports only Python 3.9" -Color Yellow, White
+        Write-Color -Text "*** ", "OpenPype supports only Python 3.7" -Color Yellow, White
     } else {
         Write-Color "OK ", "[",  $p, "]" -Color Green, Cyan, White, Cyan
     }
@@ -167,11 +178,24 @@ if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
     Write-Color -Text "OK" -Color Green
 }
 
-if (-not (Test-Path -PathType Leaf -Path "$($openpype_root)\poetry.lock")) {
+if ($venv_path -or
+    -not (Test-Path -PathType Leaf -Path "$($openpype_root)\poetry.lock")) {
     Write-Color -Text ">>> ", "Installing virtual environment and creating lock." -Color Green, Gray
 } else {
     Write-Color -Text ">>> ", "Installing virtual environment from lock." -Color Green, Gray
 }
+
+# set for regular process
+& "$env:POETRY_HOME\bin\poetry" config virtualenvs.create true
+
+if ($venv_path){
+   Write-Color -Text ">>> ", "Creating virtual environment at $($venv_path)." -Color Green, White
+   & "$env:POETRY_HOME\bin\poetry" run python -m venv $venv_path
+   $env:VIRTUAL_ENV = $venv_path
+   & "$env:POETRY_HOME\bin\poetry" config virtualenvs.create false
+   Set-Location -Path $venv_path
+}
+
 $startTime = [int][double]::Parse((Get-Date -UFormat %s))
 & "$env:POETRY_HOME\bin\poetry" install --no-root $poetry_verbosity --ansi
 if ($LASTEXITCODE -ne 0) {
