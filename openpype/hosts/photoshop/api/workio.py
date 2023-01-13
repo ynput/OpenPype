@@ -25,6 +25,8 @@ def has_unsaved_changes():
 
 def save_file(filepath):
     _, ext = os.path.splitext(filepath)
+    if ext not in file_extensions():
+        ext = '.psd'
     lib.stub().saveAs(filepath, ext[1:], True)
 
 
