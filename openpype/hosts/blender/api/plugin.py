@@ -348,7 +348,7 @@ def deselect_all():
 def orphans_purge():
     """Purge orphan datablocks and libraries."""
     # clear unused datablock
-    bpy.data.orphans_purge(do_recursive=True)
+    bpy.data.orphans_purge(do_recursive=False)
 
     # clear unused libraries
     for library in list(bpy.data.libraries):

@@ -11,7 +11,7 @@ from . import ops, properties, ui
 
 import pyblish.api
 
-from openpype.client import get_asset_by_name
+from openpype.client.entities import get_asset_by_name
 from openpype.settings import get_project_settings
 from openpype.pipeline import (
     legacy_io,
