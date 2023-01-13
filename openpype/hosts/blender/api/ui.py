@@ -135,6 +135,11 @@ class SCENE_PT_OpenpypeDatablocksManager(bpy.types.Panel):
     bl_context = "scene"
     bl_parent_id = "SCENE_PT_OpenpypeInstancesManager"
 
+    @classmethod
+    def poll(cls, context):
+        # Don't display if no datablock ref in instance
+        return len(context.scene.openpype_instances) > 0
+
     def draw(self, context):
         layout = self.layout
         row = layout.row(align=True)
