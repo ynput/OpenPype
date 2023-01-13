@@ -20,6 +20,9 @@ class ExtractTextures(publish.Extractor):
     hosts = ['substancepainter']
     families = ["textureSet"]
 
+    # Run before thumbnail extractors
+    order = publish.Extractor.order - 0.1
+
     def process(self, instance):
 
         config = instance.data["exportConfig"]

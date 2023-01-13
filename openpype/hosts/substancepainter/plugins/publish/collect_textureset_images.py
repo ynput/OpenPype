@@ -148,6 +148,12 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
                 'files': map_fnames,
             }]
 
+            # Set up the representation for thumbnail generation
+            # TODO: Simplify this once thumbnail extraction is refactored
+            staging_dir = os.path.dirname(first_file)
+            image_instance.data["representations"][0]["tags"] = ["review"]
+            image_instance.data["representations"][0]["stagingDir"] = staging_dir  # noqa
+
             instance.append(image_instance)
 
     def get_export_config(self, instance):
