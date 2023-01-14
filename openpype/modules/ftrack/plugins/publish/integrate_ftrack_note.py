@@ -129,8 +129,8 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
             if not note_text.solved:
                 self.log.warning((
                     "Note template require more keys then can be provided."
-                    "\nTemplate: {}\nData: {}"
-                ).format(template, format_data))
+                    "\nTemplate: {}\nMissing values for keys:{}\nData: {}"
+                ).format(template, note_text.missing_keys, format_data))
                 continue
 
             if not note_text:
