@@ -37,13 +37,17 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
                 self.create_image_instance(instance, template, outputs)
 
     def create_image_instance(self, instance, template, outputs):
+        f"""Create a new instance per image or UDIM sequence.
+        
+        The new instances will be of family `image`.
+        
+        """
 
         context = instance.context
         first_filepath = outputs[0]["filepath"]
         fnames = [os.path.basename(output["filepath"]) for output in outputs]
         ext = os.path.splitext(first_filepath)[1]
         assert ext.lstrip('.'), f"No extension: {ext}"
-
         map_identifier = strip_template(template)
 
         # Define the suffix we want to give this particular texture
@@ -51,6 +55,7 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
         suffix = f".{map_identifier}"
         image_subset = instance.data["subset"][len("textureSet"):]
         image_subset = "texture" + image_subset + suffix
+
         # Prepare representation
         representation = {
             'name': ext.lstrip("."),
@@ -84,6 +89,7 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
         image_instance.data["representations"][0]["tags"] = ["review"]
         image_instance.data["representations"][0]["stagingDir"] = staging_dir
 
+        # Store the instance in the original instance as a member
         instance.append(image_instance)
 
     def get_export_config(self, instance):
