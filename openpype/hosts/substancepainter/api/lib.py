@@ -241,9 +241,8 @@ def _templates_to_regex(templates,
         return os.path.splitext(os.path.basename(path))[0]
 
     if colorspaces and any(colorspaces):
-        colorspace_match = (
-                "(" + "|".join(re.escape(c) for c in colorspaces) + ")"
-        )
+        colorspace_match = "|".join(re.escape(c) for c in set(colorspaces))
+        colorspace_match = f"({colorspace_match})"
     else:
         # No colorspace support enabled
         colorspace_match = ""
