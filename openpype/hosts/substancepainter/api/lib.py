@@ -349,7 +349,7 @@ def strip_template(template, strip="._ "):
 
 
 def get_parsed_export_maps(config):
-    """
+    """Return Export Config's expected output textures with parsed data.
 
     This tries to parse the texture outputs using a Python API export config.
 
