@@ -1,63 +1,19 @@
 import os
 import copy
-import clique
 import pyblish.api
 
 from openpype.pipeline import publish
 
-import substance_painter.export
-from openpype.hosts.substancepainter.api.colorspace import (
-    get_project_channel_data,
+import substance_painter.textureset
+from openpype.hosts.substancepainter.api.lib import (
+    get_parsed_export_maps,
+    strip_template
 )
-
-
-def get_project_color_spaces():
-    """Return unique color space names used for exports.
-
-    This is based on the Color Management preferences of the project.
-
-    See also:
-        func:`get_project_channel_data`
-
-    """
-    return set(
-        data["colorSpace"] for data in get_project_channel_data().values()
-    )
-
-
-def _get_channel_name(path,
-                      texture_set_name,
-                      project_colorspaces):
-    """Return expected 'name' for the output image.
-
-    This will be used as a suffix to the separate image publish subsets.
-
-    """
-    # TODO: This will require improvement before being production ready.
-    # TODO(Question): Should we preserve the texture set name in the suffix
-    # TODO so that exports with multiple texture sets can work within a single
-    # TODO parent textureSet, like `texture{Variant}.{TextureSet}{Channel}`
-    name = os.path.basename(path)  # filename
-    name = os.path.splitext(name)[0]  # no extension
-    # Usually the channel identifier comes after $textureSet in
-    # the export preset. Unfortunately getting the export maps
-    # and channels explicitly is not trivial so for now we just
-    # assume this will generate a nice identifier for the end user
-    name = name.split(f"{texture_set_name}_", 1)[-1]
-
-    # TODO: We need more explicit ways to detect the color space part
-    for colorspace in project_colorspaces:
-        if name.endswith(f"_{colorspace}"):
-            name = name[:-len(f"_{colorspace}")]
-            break
-
-    return name
 
 
 class CollectTextureSet(pyblish.api.InstancePlugin):
     """Extract Textures using an output template config"""
-    # TODO: More explicitly detect UDIM tiles
-    # TODO: Get color spaces
+    # TODO: Production-test usage of color spaces
     # TODO: Detect what source data channels end up in each file
 
     label = "Collect Texture Set images"
@@ -68,96 +24,67 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         config = self.get_export_config(instance)
-        textures = substance_painter.export.list_project_textures(config)
 
         instance.data["exportConfig"] = config
-
-        colorspaces = get_project_color_spaces()
-
-        outputs = {}
-        for (texture_set_name, stack_name), maps in textures.items():
-
-            # Log our texture outputs
-            self.log.debug(f"Processing stack: {stack_name}")
-            for texture_map in maps:
-                self.log.debug(f"Expecting texture: {texture_map}")
-
-            # For now assume the UDIM textures end with .<UDIM>.<EXT> and
-            # when no trailing number is present before the extension then it's
-            # considered to *not* be a UDIM export.
-            collections, remainder = clique.assemble(
-                maps,
-                patterns=[clique.PATTERNS["frames"]],
-                minimum_items=True
-            )
-
-            outputs = {}
-            if collections:
-                # UDIM tile sequence
-                for collection in collections:
-                    name = _get_channel_name(collection.head,
-                                             texture_set_name=texture_set_name,
-                                             project_colorspaces=colorspaces)
-                    outputs[name] = collection
-                    self.log.info(f"UDIM Collection: {collection}")
-            else:
-                # Single file per channel without UDIM number
-                for path in remainder:
-                    name = _get_channel_name(path,
-                                             texture_set_name=texture_set_name,
-                                             project_colorspaces=colorspaces)
-                    outputs[name] = path
-                    self.log.info(f"Single file: {path}")
+        maps = get_parsed_export_maps(config)
 
         # Let's break the instance into multiple instances to integrate
         # a subset per generated texture or texture UDIM sequence
+        for (texture_set_name, stack_name), template_maps in maps.items():
+            self.log.info(f"Processing {texture_set_name}/{stack_name}")
+            for template, outputs in template_maps.items():
+                self.log.info(f"Processing {template}")
+                self.create_image_instance(instance, template, outputs)
+
+    def create_image_instance(self, instance, template, outputs):
+
         context = instance.context
-        for map_name, map_output in outputs.items():
+        first_filepath = outputs[0]["filepath"]
+        fnames = [os.path.basename(output["filepath"]) for output in outputs]
+        ext = os.path.splitext(first_filepath)[1]
+        assert ext.lstrip('.'), f"No extension: {ext}"
 
-            is_udim = isinstance(map_output, clique.Collection)
-            if is_udim:
-                first_file = list(map_output)[0]
-                map_fnames = [os.path.basename(path) for path in map_output]
-            else:
-                first_file = map_output
-                map_fnames = os.path.basename(map_output)
+        map_identifier = strip_template(template)
 
-            ext = os.path.splitext(first_file)[1]
-            assert ext.lstrip('.'), f"No extension: {ext}"
+        # Define the suffix we want to give this particular texture
+        # set and set up a remapped subset naming for it.
+        suffix = f".{map_identifier}"
+        image_subset = instance.data["subset"][len("textureSet"):]
+        image_subset = "texture" + image_subset + suffix
+        # Prepare representation
+        representation = {
+            'name': ext.lstrip("."),
+            'ext': ext.lstrip("."),
+            'files': fnames,
+        }
 
-            # Define the suffix we want to give this particular texture
-            # set and set up a remapped subset naming for it.
-            suffix = f".{map_name}"
-            image_subset = instance.data["subset"][len("textureSet"):]
-            image_subset = "texture" + image_subset + suffix
+        # Mark as UDIM explicitly if it has UDIM tiles.
+        if bool(outputs[0].get("udim")):
+            representation["udim"] = True
 
-            # TODO: Retrieve and store color space with the representation
+        # TODO: Store color space with the representation
 
-            # Clone the instance
-            image_instance = context.create_instance(instance.name)
-            image_instance[:] = instance[:]
-            image_instance.data.update(copy.deepcopy(instance.data))
-            image_instance.data["name"] = image_subset
-            image_instance.data["label"] = image_subset
-            image_instance.data["subset"] = image_subset
-            image_instance.data["family"] = "image"
-            image_instance.data["families"] = ["image", "textures"]
-            image_instance.data['representations'] = [{
-                'name': ext.lstrip("."),
-                'ext': ext.lstrip("."),
-                'files': map_fnames,
-            }]
+        # Clone the instance
+        image_instance = context.create_instance(instance.name)
+        image_instance[:] = instance[:]
+        image_instance.data.update(copy.deepcopy(instance.data))
+        image_instance.data["name"] = image_subset
+        image_instance.data["label"] = image_subset
+        image_instance.data["subset"] = image_subset
+        image_instance.data["family"] = "image"
+        image_instance.data["families"] = ["image", "textures"]
+        image_instance.data['representations'] = [representation]
 
-            # Group the textures together in the loader
-            image_instance.data["subsetGroup"] = instance.data["subset"]
+        # Group the textures together in the loader
+        image_instance.data["subsetGroup"] = instance.data["subset"]
 
-            # Set up the representation for thumbnail generation
-            # TODO: Simplify this once thumbnail extraction is refactored
-            staging_dir = os.path.dirname(first_file)
-            image_instance.data["representations"][0]["tags"] = ["review"]
-            image_instance.data["representations"][0]["stagingDir"] = staging_dir  # noqa
+        # Set up the representation for thumbnail generation
+        # TODO: Simplify this once thumbnail extraction is refactored
+        staging_dir = os.path.dirname(first_filepath)
+        image_instance.data["representations"][0]["tags"] = ["review"]
+        image_instance.data["representations"][0]["stagingDir"] = staging_dir
 
-            instance.append(image_instance)
+        instance.append(image_instance)
 
     def get_export_config(self, instance):
         """Return an export configuration dict for texture exports.

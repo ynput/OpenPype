@@ -12,9 +12,6 @@ class ExtractTextures(publish.Extractor):
         particular Extractor doesn't specify representations to integrate.
 
     """
-    # TODO: More explicitly detect UDIM tiles
-    # TODO: Get color spaces
-    # TODO: Detect what source data channels end up in each file
 
     label = "Extract Texture Set"
     hosts = ['substancepainter']

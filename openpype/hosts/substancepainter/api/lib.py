@@ -1,7 +1,9 @@
 import os
 import re
 import json
+from collections import defaultdict
 
+import substance_painter.project
 import substance_painter.resource
 import substance_painter.js
 
@@ -115,7 +117,7 @@ def get_channel_format(stack_path, channel):
             representation, false otherwise
         "bitDepth" (int): Bit per color channel (could be 8, 16 or 32 bpc)
 
-    Args:
+    Arguments:
         stack_path (list or str): Path to the stack, could be
             "Texture set name" or ["Texture set name", "Stack name"]
         channel (str): Identifier of the channel to export
@@ -140,6 +142,330 @@ def get_document_structure():
 
     """
     return substance_painter.js.evaluate("alg.mapexport.documentStructure()")
+
+
+def get_export_templates(config, format="png", strip_folder=True):
+    """Return export config outputs.
+
+    This use the Javascript API `alg.mapexport.getPathsExportDocumentMaps`
+    which returns a different output than using the Python equivalent
+    `substance_painter.export.list_project_textures(config)`.
+
+    The nice thing about the Javascript API version is that it returns the
+    output textures grouped by filename template.
+
+    A downside is that it doesn't return all the UDIM tiles but per template
+    always returns a single file.
+
+    Note:
+        The file format needs to be explicitly passed to the Javascript API
+        but upon exporting through the Python API the file format can be based
+        on the output preset. So it's likely the file extension will mismatch
+
+    Warning:
+        Even though the function appears to solely get the expected outputs
+        the Javascript API will actually create the config's texture output
+        folder if it does not exist yet. As such, a valid path must be set.
+
+    Example output:
+    {
+        "DefaultMaterial": {
+            "$textureSet_BaseColor(_$colorSpace)(.$udim)": "DefaultMaterial_BaseColor_ACES - ACEScg.1002.png",   # noqa
+            "$textureSet_Emissive(_$colorSpace)(.$udim)": "DefaultMaterial_Emissive_ACES - ACEScg.1002.png",     # noqa
+            "$textureSet_Height(_$colorSpace)(.$udim)": "DefaultMaterial_Height_Utility - Raw.1002.png",         # noqa
+            "$textureSet_Metallic(_$colorSpace)(.$udim)": "DefaultMaterial_Metallic_Utility - Raw.1002.png",     # noqa
+            "$textureSet_Normal(_$colorSpace)(.$udim)": "DefaultMaterial_Normal_Utility - Raw.1002.png",         # noqa
+            "$textureSet_Roughness(_$colorSpace)(.$udim)": "DefaultMaterial_Roughness_Utility - Raw.1002.png"    # noqa
+        }
+    }
+
+    Arguments:
+        config (dict) Export config
+        format (str, Optional): Output format to write to, defaults to 'png'
+        strip_folder (bool, Optional): Whether to strip the output folder
+            from the output filenames.
+
+    Returns:
+        dict: The expected output maps.
+
+    """
+    folder = config["exportPath"]
+    preset = config["defaultExportPreset"]
+    cmd = f'alg.mapexport.getPathsExportDocumentMaps("{preset}", "{folder}", "{format}")'  # noqa
+    result = substance_painter.js.evaluate(cmd)
+
+    if strip_folder:
+        for stack, maps in result.items():
+            for map_template, map_filepath in maps.items():
+                map_filename = map_filepath[len(folder):].lstrip("/")
+                maps[map_template] = map_filename
+
+    return result
+
+
+def _templates_to_regex(templates,
+                        texture_set,
+                        colorspaces,
+                        project,
+                        mesh):
+    """Return regex based on a Substance Painter expot filename template.
+
+    This converts Substance Painter export filename templates like
+    `$mesh_$textureSet_BaseColor(_$colorSpace)(.$udim)` into a regex
+    which can be used to query an output filename to help retrieve:
+
+        - Which template filename the file belongs to.
+        - Which color space the file is written with.
+        - Which udim tile it is exactly.
+
+    This is used by `get_parsed_export_maps` which tries to as explicitly
+    as possible match the filename pattern against the known possible outputs.
+    That's why Texture Set name, Color spaces, Project path and mesh path must
+    be provided. By doing so we get the best shot at correctly matching the
+    right template because otherwise $texture_set could basically be any string
+    and thus match even that of a color space or mesh.
+
+    Arguments:
+        templates (list): List of templates to convert to regex.
+        texture_set (str): The texture set to match against.
+        colorspaces (list): The colorspaces defined in the current project.
+        project (str): Filepath of current substance project.
+        mesh (str): Path to mesh file used in current project.
+
+    Returns:
+        dict: Template: Template regex pattern
+
+    """
+    def _filename_no_ext(path):
+        return os.path.splitext(os.path.basename(path))[0]
+
+    if colorspaces and any(colorspaces):
+        colorspace_match = (
+                "(" + "|".join(re.escape(c) for c in colorspaces) + ")"
+        )
+    else:
+        # No colorspace support enabled
+        colorspace_match = ""
+
+    # Key to regex valid search values
+    key_matches = {
+        "$project": re.escape(_filename_no_ext(project)),
+        "$mesh": re.escape(_filename_no_ext(mesh)),
+        "$textureSet": re.escape(texture_set),
+        "$colorSpace": colorspace_match,
+        "$udim": "([0-9]{4})"
+    }
+
+    # Turn the templates into regexes
+    regexes = {}
+    for template in templates:
+
+        # We need to tweak a temp
+        search_regex = re.escape(template)
+
+        # Let's assume that any ( and ) character in the file template was
+        # intended as an optional template key and do a simple `str.replace`
+        # Note: we are matching against re.escape(template) so will need to
+        #       search for the escaped brackets.
+        search_regex = search_regex.replace(re.escape("("), "(")
+        search_regex = search_regex.replace(re.escape(")"), ")?")
+
+        # Substitute each key into a named group
+        for key, key_expected_regex in key_matches.items():
+
+            # We want to use the template as a regex basis in the end so will
+            # escape the whole thing first. Note that thus we'll need to
+            # search for the escaped versions of the keys too.
+            escaped_key = re.escape(key)
+            key_label = key[1:]  # key without $ prefix
+
+            key_expected_grp_regex = f"(?P<{key_label}>{key_expected_regex})"
+            search_regex = search_regex.replace(escaped_key,
+                                                key_expected_grp_regex)
+
+        # The filename templates don't include the extension so we add it
+        # to be able to match the out filename beginning to end
+        ext_regex = "(?P<ext>\.[A-Za-z][A-Za-z0-9-]*)"
+        search_regex = rf"^{search_regex}{ext_regex}$"
+
+        regexes[template] = search_regex
+
+    return regexes
+
+
+def strip_template(template, strip="._ "):
+    """Return static characters in a substance painter filename template.
+
+    >>> strip_template("$textureSet_HELLO(.$udim)")
+    # HELLO
+    >>> strip_template("$mesh_$textureSet_HELLO_WORLD_$colorSpace(.$udim)")
+    # HELLO_WORLD
+    >>> strip_template("$textureSet_HELLO(.$udim)", strip=None)
+    # _HELLO
+    >>> strip_template("$mesh_$textureSet_$colorSpace(.$udim)", strip=None)
+    # _HELLO_
+    >>> strip_template("$textureSet_HELLO(.$udim)")
+    # _HELLO
+
+    Arguments:
+        template (str): Filename template to strip.
+        strip (str, optional): Characters to strip from beginning and end
+            of the static string in template. Defaults to: `._ `.
+
+    Returns:
+        str: The static string in filename template.
+
+    """
+    # Return only characters that were part of the template that were static.
+    # Remove all keys
+    keys = ["$project", "$mesh", "$textureSet", "$udim", "$colorSpace"]
+    stripped_template = template
+    for key in keys:
+        stripped_template = stripped_template.replace(key, "")
+
+    # Everything inside an optional bracket space is excluded since it's not
+    # static. We keep a counter to track whether we are currently iterating
+    # over parts of the template that are inside an 'optional' group or not.
+    counter = 0
+    result = ""
+    for char in stripped_template:
+        if char == "(":
+            counter += 1
+        elif char == ")":
+            counter -= 1
+            if counter < 0:
+                counter = 0
+        else:
+            if counter == 0:
+                result += char
+
+    if strip:
+        # Strip of any trailing start/end characters. Technically these are
+        # static but usually start and end separators like space or underscore
+        # aren't wanted.
+        result = result.strip(strip)
+
+    return result
+
+
+def get_parsed_export_maps(config):
+    """
+
+    This tries to parse the texture outputs using a Python API export config.
+
+    Parses template keys: $project, $mesh, $textureSet, $colorSpace, $udim
+
+    Example:
+    {("DefaultMaterial", ""): {
+        "$mesh_$textureSet_BaseColor(_$colorSpace)(.$udim)": [
+                {
+                    // OUTPUT DATA FOR FILE #1 OF THE TEMPLATE
+                },
+                {
+                    // OUTPUT DATA FOR FILE #2 OF THE TEMPLATE
+                },
+            ]
+        },
+    }}
+
+    File output data (all outputs are `str`).
+    1) Parsed tokens: These are parsed tokens from the template, they will
+        only exist if found in the filename template and output filename.
+
+        project: Workfile filename without extension
+        mesh: Filename of the loaded mesh without extension
+        textureSet: The texture set, e.g. "DefaultMaterial",
+        colorSpace: The color space, e.g. "ACES - ACEScg",
+        udim: The udim tile, e.g. "1001"
+
+        2) Template and file outputs
+
+        filepath: Full path to the resulting texture map, e.g.
+            "/path/to/mesh_DefaultMaterial_BaseColor_ACES - ACEScg.1002.png",
+        output: "mesh_DefaultMaterial_BaseColor_ACES - ACEScg.1002.png"
+            Note: if template had slashes (folders) then `output` will too.
+                  So `output` might include a folder.
+
+        channel: The stripped static characters of the filename template which
+            usually look like an identifier for that map, e.g. "BaseColor".
+            See `_stripped_template`
+
+    Returns:
+        dict: [texture_set, stack]: {template: [file1_data, file2_data]}
+
+    """
+    import substance_painter.export
+    from .colorspace import get_project_channel_data
+
+    outputs = substance_painter.export.list_project_textures(config)
+    templates = get_export_templates(config)
+
+    # Get all color spaces set for the current project
+    project_colorspaces = set(
+        data["colorSpace"] for data in get_project_channel_data().values()
+    )
+
+    # Get current project mesh path and project path to explicitly match
+    # the $mesh and $project tokens
+    project_mesh_path = substance_painter.project.last_imported_mesh_path()
+    project_path = substance_painter.project.file_path()
+
+    # Get the current export path to strip this of the beginning of filepath
+    # results, since filename templates don't have these we'll match without
+    # that part of the filename.
+    export_path = config["exportPath"]
+    export_path = export_path.replace("\\", "/")
+    if not export_path.endswith("/"):
+        export_path += "/"
+
+    # Parse the outputs
+    result = {}
+    for key, filepaths in outputs.items():
+        texture_set, stack = key
+
+        if stack:
+            stack_path = f"{texture_set}/{stack}"
+        else:
+            stack_path = texture_set
+
+        stack_templates = list(templates[stack_path].keys())
+
+        template_regex = _templates_to_regex(stack_templates,
+                                             texture_set=texture_set,
+                                             colorspaces=project_colorspaces,
+                                             mesh=project_mesh_path,
+                                             project=project_path)
+
+        # Let's precompile the regexes
+        for template, regex in template_regex.items():
+            template_regex[template] = re.compile(regex)
+
+        stack_results = defaultdict(list)
+        for filepath in sorted(filepaths):
+            # We strip explicitly using the full parent export path instead of
+            # using `os.path.basename` because export template is allowed to
+            # have subfolders in its template which we want to match against
+            assert filepath.startswith(export_path)
+            filename = filepath[len(export_path):]
+
+            for template, regex in template_regex.items():
+                match = regex.match(filename)
+                if match:
+                    parsed = match.groupdict(default={})
+
+                    # Include some special outputs for convenience
+                    parsed["filepath"] = filepath
+                    parsed["output"] = filename
+
+                    stack_results[template].append(parsed)
+                    break
+            else:
+                raise ValueError(f"Unable to match {filename} against any "
+                                 f"template in: {list(template_regex.keys())}")
+
+        result[key] = dict(stack_results)
+
+    return result
 
 
 def load_shelf(path, name=None):
