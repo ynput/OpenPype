@@ -37,10 +37,10 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
                 self.create_image_instance(instance, template, outputs)
 
     def create_image_instance(self, instance, template, outputs):
-        f"""Create a new instance per image or UDIM sequence.
-        
+        """Create a new instance per image or UDIM sequence.
+
         The new instances will be of family `image`.
-        
+
         """
 
         context = instance.context
