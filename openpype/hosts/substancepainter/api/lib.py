@@ -285,7 +285,7 @@ def _templates_to_regex(templates,
 
         # The filename templates don't include the extension so we add it
         # to be able to match the out filename beginning to end
-        ext_regex = "(?P<ext>\.[A-Za-z][A-Za-z0-9-]*)"
+        ext_regex = r"(?P<ext>\.[A-Za-z][A-Za-z0-9-]*)"
         search_regex = rf"^{search_regex}{ext_regex}$"
 
         regexes[template] = search_regex
