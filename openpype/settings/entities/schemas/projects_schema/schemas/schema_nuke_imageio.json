@@ -12,6 +12,14 @@
             "label": "Enabled"
         },
         {
+            "type": "schema",
+            "name": "schema_imageio_config"
+        },
+        {
+            "type": "schema",
+            "name": "schema_imageio_file_rules"
+        },
+        {
             "key": "viewer",
             "type": "dict",
             "label": "Viewer",
@@ -43,6 +51,10 @@
             "label": "Workfile",
             "collapsible": false,
             "children": [
+                {
+                    "type": "label",
+                    "label": "<b style='color:red'>'customOCIOConfigPath'</b> will be deprecated. <br>Please move values to : <i>project_settings/{app}/imageio/ocio_config/filepath</i>."
+                },
                 {
                     "type": "form",
                     "children": [
