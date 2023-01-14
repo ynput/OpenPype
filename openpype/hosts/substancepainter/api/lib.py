@@ -378,17 +378,13 @@ def get_parsed_export_maps(config):
         colorSpace: The color space, e.g. "ACES - ACEScg",
         udim: The udim tile, e.g. "1001"
 
-        2) Template and file outputs
+    2) Template output and filepath
 
         filepath: Full path to the resulting texture map, e.g.
             "/path/to/mesh_DefaultMaterial_BaseColor_ACES - ACEScg.1002.png",
         output: "mesh_DefaultMaterial_BaseColor_ACES - ACEScg.1002.png"
             Note: if template had slashes (folders) then `output` will too.
                   So `output` might include a folder.
-
-        channel: The stripped static characters of the filename template which
-            usually look like an identifier for that map, e.g. "BaseColor".
-            See `_stripped_template`
 
     Returns:
         dict: [texture_set, stack]: {template: [file1_data, file2_data]}
