@@ -195,8 +195,9 @@ def get_export_templates(config, format="png", strip_folder=True):
     result = substance_painter.js.evaluate(cmd)
 
     if strip_folder:
-        for stack, maps in result.items():
+        for _stack, maps in result.items():
             for map_template, map_filepath in maps.items():
+                assert map_filepath.startswith(folder)
                 map_filename = map_filepath[len(folder):].lstrip("/")
                 maps[map_template] = map_filename
 
