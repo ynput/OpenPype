@@ -1,7 +1,7 @@
 from openpype.lib import PreLaunchHook
 
 from openpype.pipeline.colorspace import get_imageio_config
-from openpype.pipeline.template_data import get_template_data_with_names
+from openpype.pipeline.template_data import get_template_data
 
 
 class PreLaunchHostSetOCIO(PreLaunchHook):
@@ -13,9 +13,9 @@ class PreLaunchHostSetOCIO(PreLaunchHook):
     def execute(self):
         """Hook entry method."""
 
-        anatomy_data = get_template_data_with_names(
-            project_name=self.data["project_doc"]["name"],
-            asset_name=self.data["asset_doc"]["name"],
+        anatomy_data = get_template_data(
+            project_doc=self.data["project_doc"],
+            asset_doc=self.data["asset_doc"],
             task_name=self.data["task_name"],
             host_name=self.host_name,
             system_settings=self.data["system_settings"]
