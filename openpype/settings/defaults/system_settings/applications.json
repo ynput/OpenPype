@@ -1315,7 +1315,7 @@
             }
         }
     },
-    "substance": {
+    "substancepainter": {
         "enabled": true,
         "label": "Substance Painter",
         "icon": "app_icons/substancepainter.png",

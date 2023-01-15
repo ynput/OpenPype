@@ -1,6 +1,6 @@
 {
     "type": "dict",
-    "key": "substance",
+    "key": "substancepainter",
     "label": "Substance Painter",
     "collapsible": true,
     "checkbox_key": "enabled",

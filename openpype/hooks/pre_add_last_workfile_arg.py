@@ -23,7 +23,7 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
         "blender",
         "photoshop",
         "tvpaint",
-        "substance",
+        "substancepainter",
         "aftereffects"
     ]
 
