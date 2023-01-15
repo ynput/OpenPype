@@ -189,7 +189,7 @@ def get_export_templates(config, format="png", strip_folder=True):
         dict: The expected output maps.
 
     """
-    folder = config["exportPath"]
+    folder = config["exportPath"].replace("\\", "/")
     preset = config["defaultExportPreset"]
     cmd = f'alg.mapexport.getPathsExportDocumentMaps("{preset}", "{folder}", "{format}")'  # noqa
     result = substance_painter.js.evaluate(cmd)
@@ -197,6 +197,7 @@ def get_export_templates(config, format="png", strip_folder=True):
     if strip_folder:
         for _stack, maps in result.items():
             for map_template, map_filepath in maps.items():
+                map_filepath = map_filepath.replace("\\", "/")
                 assert map_filepath.startswith(folder)
                 map_filename = map_filepath[len(folder):].lstrip("/")
                 maps[map_template] = map_filename
@@ -441,7 +442,10 @@ def get_parsed_export_maps(config):
             # We strip explicitly using the full parent export path instead of
             # using `os.path.basename` because export template is allowed to
             # have subfolders in its template which we want to match against
-            assert filepath.startswith(export_path)
+            filepath = filepath.replace("\\", "/")
+            assert filepath.startswith(export_path), (
+                f"Filepath {filepath} must start with folder {export_path}"
+            )
             filename = filepath[len(export_path):]
 
             for template, regex in template_regex.items():
