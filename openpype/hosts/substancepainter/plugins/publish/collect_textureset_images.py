@@ -60,7 +60,7 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
         representation = {
             'name': ext.lstrip("."),
             'ext': ext.lstrip("."),
-            'files': fnames,
+            'files': fnames if len(fnames) > 1 else fnames[0],
         }
 
         # Mark as UDIM explicitly if it has UDIM tiles.
