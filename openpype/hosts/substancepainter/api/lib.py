@@ -395,7 +395,7 @@ def get_parsed_export_maps(config):
     from .colorspace import get_project_channel_data
 
     outputs = substance_painter.export.list_project_textures(config)
-    templates = get_export_templates(config)
+    templates = get_export_templates(config, strip_folder=False)
 
     # Get all color spaces set for the current project
     project_colorspaces = set(
