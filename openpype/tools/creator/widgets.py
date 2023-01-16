@@ -8,6 +8,11 @@ import qtawesome
 from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 from openpype.tools.utils import ErrorMessageBox
 
+if hasattr(QtGui, "QRegularExpressionValidator"):
+    RegExpValidatorClass = QtGui.QRegularExpressionValidator
+else:
+    RegExpValidatorClass = QtGui.QRegExpValidator
+
 
 class CreateErrorMessageBox(ErrorMessageBox):
     def __init__(
@@ -82,7 +87,7 @@ class CreateErrorMessageBox(ErrorMessageBox):
             content_layout.addWidget(tb_widget)
 
 
-class SubsetNameValidator(QtGui.QRegExpValidator):
+class SubsetNameValidator(RegExpValidatorClass):
     invalid = QtCore.Signal(set)
     pattern = "^[{}]*$".format(SUBSET_NAME_ALLOWED_SYMBOLS)
 
