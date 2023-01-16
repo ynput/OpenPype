@@ -306,6 +306,22 @@ def debug_host():
     return host
 
 
+def get_current_host_name():
+    """Current host name.
+
+    Function is based on currently registered host integration or environment
+    variant 'AVALON_APP'.
+
+    Returns:
+        Union[str, None]: Name of host integration in current process or None.
+    """
+
+    host = registered_host()
+    if host is not None and hasattr(host, "name"):
+        return host.name
+    return os.environ.get("AVALON_APP")
+
+
 def get_global_context():
     return {
         "project_name": os.environ.get("AVALON_PROJECT"),
