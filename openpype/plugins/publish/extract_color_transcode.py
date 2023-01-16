@@ -138,8 +138,7 @@ class ExtractColorTranscode(publish.Extractor):
             new_file_name = '{}.{}'.format(file_name,
                                            output_extension)
             renamed_files.append(new_file_name)
-        files_to_convert = renamed_files
-        return files_to_convert
+        return renamed_files
 
     def _get_profile(self, instance):
         """Returns profile if and how repre should be color transcoded."""
