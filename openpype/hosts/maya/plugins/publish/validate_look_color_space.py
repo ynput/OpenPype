@@ -1,3 +1,4 @@
+import os
 from maya import cmds
 
 import pyblish.api
@@ -13,7 +14,7 @@ class ValidateMayaColorSpace(pyblish.api.InstancePlugin):
     order = ValidateContentsOrder
     families = ['look']
     hosts = ['maya']
-    label = 'Maya Color Space'
+    label = 'Color Management with maketx'
 
     def process(self, instance):
         ocio_maya = cmds.colorManagementPrefs(q=True,
@@ -22,4 +23,4 @@ class ValidateMayaColorSpace(pyblish.api.InstancePlugin):
         maketx = instance.data["maketx"]
 
         if ocio_maya and maketx:
-            raise Exception("Maya is color managed and maketx option is on. OpenPype doesn't support this combination yet.") # noqa
+            raise RuntimeError("Maya is color managed and maketx option is on. OpenPype doesn't support this combination yet.") # noqa
