@@ -109,5 +109,5 @@ class YourLoader(api.Loader):
 ```
 
 :::warning Loading
-Current loader's host will be using a different OCIO.config file than the original context **colorspaceData** have been published with. There is no way at the moment a DCC can use multiple ocio configs at one workfile.
+A custom OCIO config can be set per asset/shot and thus it can happen the current session you are loading into uses a different config than the original context's **colorspaceData** was published with. It's up the loader's implementation to take that into account and decide what to do if the colorspace differs and or might not exist.
 :::
