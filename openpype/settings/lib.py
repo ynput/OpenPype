@@ -517,8 +517,15 @@ def save_local_settings(data):
 
 
 @require_local_handler
-def get_local_settings():
+def _get_local_settings():
     return _LOCAL_SETTINGS_HANDLER.get_local_settings()
+
+
+def get_local_settings():
+    if not AYON_SERVER_ENABLED:
+        return _get_local_settings()
+    # TODO implement ayon implementation
+    return {}
 
 
 def load_openpype_default_settings():
@@ -1066,7 +1073,7 @@ def get_current_project_settings():
 
 
 @require_handler
-def get_global_settings():
+def _get_global_settings():
     default_settings = load_openpype_default_settings()
     default_values = default_settings["system_settings"]["general"]
     studio_values = _SETTINGS_HANDLER.get_global_settings()
@@ -1076,7 +1083,14 @@ def get_global_settings():
     }
 
 
-def get_general_environments():
+def get_global_settings():
+    if not AYON_SERVER_ENABLED:
+        return _get_global_settings()
+    default_settings = load_openpype_default_settings()
+    return default_settings["system_settings"]["general"]
+
+
+def _get_general_environments():
     """Get general environments.
 
     Function is implemented to be able load general environments without using
@@ -1103,6 +1117,13 @@ def get_general_environments():
                 environments[key] = value
 
     return environments
+
+
+def get_general_environments():
+    if not AYON_SERVER_ENABLED:
+        return _get_general_environments()
+    value = get_system_settings()
+    return value["general"]["environment"]
 
 
 def get_system_settings(*args, **kwargs):
