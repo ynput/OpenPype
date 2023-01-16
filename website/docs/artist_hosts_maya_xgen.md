@@ -64,7 +64,7 @@ When the loading is done, Xgen collection will be in the Xgen delta file workflo
 
 When there are changes to the Xgen version, the user will be notified when opening the workfile or publishing. Since the Xgen is referenced, it follows the standard Maya referencing system and overrides.
 
-For example publishing `xgenMain` version 1 with the attribute `renderer` set to `None`, then version 2 has `renderer` set to `Arnold Renderer`. When updating from version 1 to 2, the `renderer` attribute will be updated to `Arnold Renderer` unless there is an override.
+For example publishing `xgenMain` version 1 with the attribute `renderer` set to `None`, then version 2 has `renderer` set to `Arnold Renderer`. When updating from version 1 to 2, the `renderer` attribute will be updated to `Arnold Renderer` unless there is a local override.
 
 ### Connect Patches
 
