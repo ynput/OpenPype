@@ -12,7 +12,7 @@ Go to project settings > Maya > enable "Open Workfile Post Initialization";
 
 `project_settings/maya/open_workfile_post_initialization`
 
-This is due to two errors occurring when opening workfile contaiing referenced xgen nodes on launch of Maya;
+This is due to two errors occurring when opening workfile containing referenced xgen nodes on launch of Maya, specifically:
 
 - ``Critical``: Duplicate collection errors on launching workfile. This is because Maya first imports Xgen when referencing in external Maya files, then imports Xgen again when the reference edits are applied.
 ```
