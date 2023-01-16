@@ -39,6 +39,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         token = instance.data["slack_token"]
         if additional_message:
             message = "{} \n".format(additional_message)
+        users = groups = None
         for message_profile in instance.data["slack_channel_message_profiles"]:
             message += self._get_filled_message(message_profile["message"],
                                                 instance,
@@ -60,8 +61,10 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                 else:
                     client = SlackPython3Operations(token, self.log)
 
-                users, groups = client.get_users_and_groups()
-                message = self._translate_users(message, users, groups)
+                if "@" in message:
+                    if users is None:
+                        users, groups = client.get_users_and_groups()
+                    message = self._translate_users(message, users, groups)
 
                 msg_id, file_ids = client.send_message(channel,
                                                        message,
