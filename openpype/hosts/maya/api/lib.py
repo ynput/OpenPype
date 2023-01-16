@@ -116,7 +116,7 @@ RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
 
 def get_main_window():
     """Acquire Maya's main window"""
-    from Qt import QtWidgets
+    from qtpy import QtWidgets
 
     if self._parent is None:
         self._parent = {
@@ -127,14 +127,19 @@ def get_main_window():
 
 
 @contextlib.contextmanager
-def suspended_refresh():
-    """Suspend viewport refreshes"""
+def suspended_refresh(suspend=True):
+    """Suspend viewport refreshes
 
+    cmds.ogs(pause=True) is a toggle so we cant pass False.
+    """
+    original_state = cmds.ogs(query=True, pause=True)
     try:
-        cmds.refresh(suspend=True)
+        if suspend and not original_state:
+            cmds.ogs(pause=True)
         yield
     finally:
-        cmds.refresh(suspend=False)
+        if suspend and not original_state:
+            cmds.ogs(pause=True)
 
 
 @contextlib.contextmanager
@@ -1532,7 +1537,7 @@ def get_container_members(container):
         if ref.rsplit(":", 1)[-1].startswith("_UNKNOWN_REF_NODE_"):
             continue
 
-        reference_members = cmds.referenceQuery(ref, nodes=True)
+        reference_members = cmds.referenceQuery(ref, nodes=True, dagPath=True)
         reference_members = cmds.ls(reference_members,
                                     long=True,
                                     objectsOnly=True)
@@ -3013,7 +3018,7 @@ def update_content_on_context_change():
 
 
 def show_message(title, msg):
-    from Qt import QtWidgets
+    from qtpy import QtWidgets
     from openpype.widgets import message_window
 
     # Find maya main window
@@ -3436,3 +3441,8 @@ def iter_visible_nodes_in_range(nodes, start, end):
         # If no more nodes to process break the frame iterations..
         if not node_dependencies:
             break
+
+
+def get_attribute_input(attr):
+    connections = cmds.listConnections(attr, plugs=True, destination=False)
+    return connections[0] if connections else None

@@ -76,6 +76,18 @@ class HostBase(object):
 
         pass
 
+    def install(self):
+        """Install host specific functionality.
+
+        This is where should be added menu with tools, registered callbacks
+        and other host integration initialization.
+
+        It is called automatically when 'openpype.pipeline.install_host' is
+        triggered.
+        """
+
+        pass
+
     @property
     def log(self):
         if self._log is None:

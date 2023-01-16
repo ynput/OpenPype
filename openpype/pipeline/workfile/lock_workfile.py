@@ -1,9 +1,9 @@
 import os
 import json
-from uuid import uuid4
 from openpype.lib import Logger, filter_profiles
 from openpype.lib.pype_info import get_workstation_info
 from openpype.settings import get_project_settings
+from openpype.pipeline import get_process_id
 
 
 def _read_lock_file(lock_filepath):
@@ -37,7 +37,7 @@ def is_workfile_locked_for_current_process(filepath):
 
     lock_filepath = _get_lock_file(filepath)
     data = _read_lock_file(lock_filepath)
-    return data["process_id"] == _get_process_id()
+    return data["process_id"] == get_process_id()
 
 
 def delete_workfile_lock(filepath):
@@ -49,7 +49,7 @@ def delete_workfile_lock(filepath):
 def create_workfile_lock(filepath):
     lock_filepath = _get_lock_file(filepath)
     info = get_workstation_info()
-    info["process_id"] = _get_process_id()
+    info["process_id"] = get_process_id()
     with open(lock_filepath, "w") as stream:
         json.dump(info, stream)
 
@@ -57,14 +57,6 @@ def create_workfile_lock(filepath):
 def remove_workfile_lock(filepath):
     if is_workfile_locked_for_current_process(filepath):
         delete_workfile_lock(filepath)
-
-
-def _get_process_id():
-    process_id = os.environ.get("OPENPYPE_PROCESS_ID")
-    if not process_id:
-        process_id = str(uuid4())
-        os.environ["OPENPYPE_PROCESS_ID"] = process_id
-    return process_id
 
 
 def is_workfile_lock_enabled(host_name, project_name, project_setting=None):

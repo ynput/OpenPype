@@ -44,3 +44,6 @@ class CreateAnimation(plugin.Creator):
         # Default to not send to farm.
         self.data["farm"] = False
         self.data["priority"] = 50
+
+        # Default to write normals.
+        self.data["writeNormals"] = True

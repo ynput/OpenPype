@@ -1,48 +1,51 @@
+# -*- coding: utf-8 -*-
+"""Creator plugin for creating pointcache alembics."""
 from openpype.hosts.houdini.api import plugin
+from openpype.pipeline import CreatedInstance
 
 
-class CreatePointCache(plugin.Creator):
+class CreatePointCache(plugin.HoudiniCreator):
     """Alembic ROP to pointcache"""
-
-    name = "pointcache"
+    identifier = "io.openpype.creators.houdini.pointcache"
     label = "Point Cache"
     family = "pointcache"
     icon = "gears"
 
-    def __init__(self, *args, **kwargs):
-        super(CreatePointCache, self).__init__(*args, **kwargs)
+    def create(self, subset_name, instance_data, pre_create_data):
+        import hou
 
-        # Remove the active, we are checking the bypass flag of the nodes
-        self.data.pop("active", None)
+        instance_data.pop("active", None)
+        instance_data.update({"node_type": "alembic"})
 
-        self.data.update({"node_type": "alembic"})
+        instance = super(CreatePointCache, self).create(
+            subset_name,
+            instance_data,
+            pre_create_data)  # type: CreatedInstance
 
-    def _process(self, instance):
-        """Creator main entry point.
-
-        Args:
-            instance (hou.Node): Created Houdini instance.
-
-        """
+        instance_node = hou.node(instance.get("instance_node"))
         parms = {
-            "use_sop_path": True,  # Export single node from SOP Path
-            "build_from_path": True,  # Direct path of primitive in output
-            "path_attrib": "path",  # Pass path attribute for output
+            "use_sop_path": True,
+            "build_from_path": True,
+            "path_attrib": "path",
             "prim_to_detail_pattern": "cbId",
-            "format": 2,  # Set format to Ogawa
-            "facesets": 0,  # No face sets (by default exclude them)
-            "filename": "$HIP/pyblish/%s.abc" % self.name,
+            "format": 2,
+            "facesets": 0,
+            "filename": hou.text.expandString(
+                "$HIP/pyblish/{}.abc".format(subset_name))
         }
 
-        if self.nodes:
-            node = self.nodes[0]
-            parms.update({"sop_path": node.path()})
+        if self.selected_nodes:
+            parms["sop_path"] = self.selected_nodes[0].path()
 
-        instance.setParms(parms)
-        instance.parm("trange").set(1)
+            # try to find output node
+            for child in self.selected_nodes[0].children():
+                if child.type().name() == "output":
+                    parms["sop_path"] = child.path()
+                    break
+
+        instance_node.setParms(parms)
+        instance_node.parm("trange").set(1)
 
         # Lock any parameters in this list
         to_lock = ["prim_to_detail_pattern"]
-        for name in to_lock:
-            parm = instance.parm(name)
-            parm.lock(True)
+        self.lock_parameters(instance_node, to_lock)

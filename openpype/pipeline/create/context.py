@@ -199,7 +199,7 @@ class InstanceMember:
         })
 
 
-class AttributeValues:
+class AttributeValues(object):
     """Container which keep values of Attribute definitions.
 
     Goal is to have one object which hold values of attribute definitions for
@@ -584,6 +584,7 @@ class CreatedInstance:
             if key in data:
                 data.pop(key)
 
+        self._data["variant"] = self._data.get("variant") or ""
         # Stored creator specific attribute values
         # {key: value}
         creator_values = copy.deepcopy(orig_creator_attributes)
@@ -1077,6 +1078,8 @@ class CreateContext:
         # Shared data across creators during collection phase
         self._collection_shared_data = None
 
+        self.thumbnail_paths_by_instance_id = {}
+
         # Trigger reset if was enabled
         if reset:
             self.reset(discover_publish_plugins)
@@ -1146,6 +1149,29 @@ class CreateContext:
 
         self.reset_finalization()
 
+    def refresh_thumbnails(self):
+        """Cleanup thumbnail paths.
+
+        Remove all thumbnail filepaths that are empty or lead to files which
+        does not exists or of instances that are not available anymore.
+        """
+
+        invalid = set()
+        for instance_id, path in self.thumbnail_paths_by_instance_id.items():
+            instance_available = True
+            if instance_id is not None:
+                instance_available = instance_id in self._instances_by_id
+
+            if (
+                not instance_available
+                or not path
+                or not os.path.exists(path)
+            ):
+                invalid.add(instance_id)
+
+        for instance_id in invalid:
+            self.thumbnail_paths_by_instance_id.pop(instance_id)
+
     def reset_preparation(self):
         """Prepare attributes that must be prepared/cleaned before reset."""
 
@@ -1157,6 +1183,7 @@ class CreateContext:
 
         # Stop access to collection shared data
         self._collection_shared_data = None
+        self.refresh_thumbnails()
 
     def reset_avalon_context(self):
         """Give ability to reset avalon context.

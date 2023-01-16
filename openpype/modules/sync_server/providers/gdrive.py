@@ -74,7 +74,7 @@ class GDriveHandler(AbstractProvider):
             )
             return
 
-        if not self.presets["enabled"]:
+        if not self.presets.get("enabled"):
             self.log.debug(
                 "Sync Server: Site {} not enabled for {}.".format(
                     site_name, project_name
@@ -119,7 +119,7 @@ class GDriveHandler(AbstractProvider):
         Returns:
             (boolean)
         """
-        return self.presets["enabled"] and self.service is not None
+        return self.presets.get("enabled") and self.service is not None
 
     @classmethod
     def get_system_settings_schema(cls):

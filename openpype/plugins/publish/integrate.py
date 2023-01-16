@@ -25,7 +25,6 @@ from openpype.client import (
 )
 from openpype.lib import source_hash
 from openpype.lib.file_transaction import FileTransaction
-from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import (
     KnownPublishError,
     get_publish_template_name,
@@ -81,6 +80,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder
     families = ["workfile",
                 "pointcache",
+                "proxyAbc",
                 "camera",
                 "animation",
                 "model",
@@ -111,6 +111,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "image",
                 "assembly",
                 "fbx",
+                "gltf",
                 "textures",
                 "action",
                 "harmony.template",
@@ -129,7 +130,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "mvUsd",
                 "mvUsdComposition",
                 "mvUsdOverride",
-                "simpleUnrealTexture"
+                "simpleUnrealTexture",
+                "online",
+                "uasset"
                 ]
 
     default_template_name = "publish"
@@ -241,7 +244,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         return filtered_repres
 
     def register(self, instance, file_transactions, filtered_repres):
-        project_name = legacy_io.active_project()
+        project_name = instance.context.data["projectName"]
 
         instance_stagingdir = instance.data.get("stagingDir")
         if not instance_stagingdir:
@@ -266,6 +269,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             instance, op_session, subset, project_name
         )
         instance.data["versionEntity"] = version
+
+        anatomy = instance.context.data["anatomy"]
 
         # Get existing representations (if any)
         existing_repres_by_name = {
@@ -300,13 +305,17 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # .ma representation. Those destination paths are pre-defined, etc.
         # todo: should we move or simplify this logic?
         resource_destinations = set()
-        for src, dst in instance.data.get("transfers", []):
-            file_transactions.add(src, dst, mode=FileTransaction.MODE_COPY)
-            resource_destinations.add(os.path.abspath(dst))
 
-        for src, dst in instance.data.get("hardlinks", []):
-            file_transactions.add(src, dst, mode=FileTransaction.MODE_HARDLINK)
-            resource_destinations.add(os.path.abspath(dst))
+        file_copy_modes = [
+            ("transfers", FileTransaction.MODE_COPY),
+            ("hardlinks", FileTransaction.MODE_HARDLINK)
+        ]
+        for files_type, copy_mode in file_copy_modes:
+            for src, dst in instance.data.get(files_type, []):
+                self._validate_path_in_project_roots(anatomy, dst)
+
+                file_transactions.add(src, dst, mode=copy_mode)
+                resource_destinations.add(os.path.abspath(dst))
 
         # Bulk write to the database
         # We write the subset and version to the database before the File
@@ -339,7 +348,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # Compute the resource file infos once (files belonging to the
         # version instance instead of an individual representation) so
         # we can re-use those file infos per representation
-        anatomy = instance.context.data["anatomy"]
         resource_file_infos = self.get_files_info(resource_destinations,
                                                   sites=sites,
                                                   anatomy=anatomy)
@@ -526,6 +534,20 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         template_data["representation"] = repre["name"]
         template_data["ext"] = repre["ext"]
 
+        stagingdir = repre.get("stagingDir")
+        if not stagingdir:
+            # Fall back to instance staging dir if not explicitly
+            # set for representation in the instance
+            self.log.debug((
+                "Representation uses instance staging dir: {}"
+            ).format(instance_stagingdir))
+            stagingdir = instance_stagingdir
+
+        if not stagingdir:
+            raise KnownPublishError(
+                "No staging directory set for representation: {}".format(repre)
+            )
+
         # optionals
         # retrieve additional anatomy data from representation if exists
         for key, anatomy_key in {
@@ -545,26 +567,31 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             if value is not None:
                 template_data[anatomy_key] = value
 
-        stagingdir = repre.get("stagingDir")
-        if not stagingdir:
-            # Fall back to instance staging dir if not explicitly
-            # set for representation in the instance
-            self.log.debug((
-                "Representation uses instance staging dir: {}"
-            ).format(instance_stagingdir))
-            stagingdir = instance_stagingdir
-
-        if not stagingdir:
-            raise KnownPublishError(
-                "No staging directory set for representation: {}".format(repre)
-            )
-
         self.log.debug("Anatomy template name: {}".format(template_name))
         anatomy = instance.context.data["anatomy"]
         publish_template_category = anatomy.templates[template_name]
         template = os.path.normpath(publish_template_category["path"])
 
         is_udim = bool(repre.get("udim"))
+
+        # handle publish in place
+        if "originalDirname" in template:
+            # store as originalDirname only original value without project root
+            # if instance collected originalDirname is present, it should be
+            # used for all represe
+            # from temp to final
+            original_directory = (
+                instance.data.get("originalDirname") or instance_stagingdir)
+
+            _rootless = self.get_rootless_path(anatomy, original_directory)
+            if _rootless == original_directory:
+                raise KnownPublishError((
+                        "Destination path '{}' ".format(original_directory) +
+                        "must be in project dir"
+                ))
+            relative_path_start = _rootless.rfind('}') + 2
+            without_root = _rootless[relative_path_start:]
+            template_data["originalDirname"] = without_root
 
         is_sequence_representation = isinstance(files, (list, tuple))
         if is_sequence_representation:
@@ -584,6 +611,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 ))
 
             src_collection = src_collections[0]
+            template_data["originalBasename"] = src_collection.head[:-1]
             destination_indexes = list(src_collection.indexes)
             # Use last frame for minimum padding
             #   - that should cover both 'udim' and 'frame' minimum padding
@@ -668,12 +696,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 raise KnownPublishError(
                     "This is a bug. Representation file name is full path"
                 )
-
+            template_data["originalBasename"], _ = os.path.splitext(fname)
             # Manage anatomy template data
             template_data.pop("frame", None)
             if is_udim:
                 template_data["udim"] = repre["udim"][0]
-
             # Construct destination filepath from template
             anatomy_filled = anatomy.format(template_data)
             template_filled = anatomy_filled[template_name]["path"]
@@ -768,7 +795,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             "time": context.data["time"],
             "author": context.data["user"],
             "source": source,
-            "comment": context.data.get("comment"),
+            "comment": instance.data["comment"],
             "machine": context.data.get("machine"),
             "fps": instance.data.get("fps", context.data.get("fps"))
         }
@@ -802,11 +829,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         """Return anatomy template name to use for integration"""
 
         # Anatomy data is pre-filled by Collectors
-
-        project_name = legacy_io.active_project()
+        context = instance.context
+        project_name = context.data["projectName"]
 
         # Task can be optional in anatomy data
-        host_name = instance.context.data["hostName"]
+        host_name = context.data["hostName"]
         anatomy_data = instance.data["anatomyData"]
         family = anatomy_data["family"]
         task_info = anatomy_data.get("task") or {}
@@ -817,7 +844,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             family,
             task_name=task_info.get("name"),
             task_type=task_info.get("type"),
-            project_settings=instance.context.data["project_settings"],
+            project_settings=context.data["project_settings"],
             logger=self.log
         )
 
@@ -887,3 +914,21 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             "hash": source_hash(path),
             "sites": sites
         }
+
+    def _validate_path_in_project_roots(self, anatomy, file_path):
+        """Checks if 'file_path' starts with any of the roots.
+
+        Used to check that published path belongs to project, eg. we are not
+        trying to publish to local only folder.
+        Args:
+            anatomy (Anatomy)
+            file_path (str)
+        Raises
+            (KnownPublishError)
+        """
+        path = self.get_rootless_path(anatomy, file_path)
+        if not path:
+            raise KnownPublishError((
+                "Destination path '{}' ".format(file_path) +
+                "must be in project dir"
+            ))

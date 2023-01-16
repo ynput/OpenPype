@@ -536,6 +536,11 @@ class RenderProductsArnold(ARenderProducts):
 
         products = []
         aov_name = self._get_attr(aov, "name")
+        multipart = False
+        multilayer = bool(self._get_attr("defaultArnoldDriver.multipart"))
+        merge_AOVs = bool(self._get_attr("defaultArnoldDriver.mergeAOVs"))
+        if multilayer or merge_AOVs:
+            multipart = True
         ai_drivers = cmds.listConnections("{}.outputs".format(aov),
                                           source=True,
                                           destination=False,
@@ -589,6 +594,7 @@ class RenderProductsArnold(ARenderProducts):
                                             ext=ext,
                                             aov=aov_name,
                                             driver=ai_driver,
+                                            multipart=multipart,
                                             camera=camera)
                     products.append(product)
 
@@ -1016,7 +1022,11 @@ class RenderProductsRedshift(ARenderProducts):
         # due to some AOVs still being written into separate files,
         # like Cryptomatte.
         # AOVs are merged in multi-channel file
-        multipart = bool(self._get_attr("redshiftOptions.exrForceMultilayer"))
+        multipart = False
+        force_layer = bool(self._get_attr("redshiftOptions.exrForceMultilayer")) # noqa
+        exMultipart = bool(self._get_attr("redshiftOptions.exrMultipart"))
+        if exMultipart or force_layer:
+            multipart = True
 
         # Get Redshift Extension from image format
         image_format = self._get_attr("redshiftOptions.imageFormat")  # integer
@@ -1044,7 +1054,6 @@ class RenderProductsRedshift(ARenderProducts):
 
             # Any AOVs that still get processed, like Cryptomatte
             # by themselves are not multipart files.
-            aov_multipart = not multipart
 
             # Redshift skips rendering of masterlayer without AOV suffix
             # when a Beauty AOV is rendered. It overrides the main layer.
@@ -1075,7 +1084,7 @@ class RenderProductsRedshift(ARenderProducts):
                             productName=aov_light_group_name,
                             aov=aov_name,
                             ext=ext,
-                            multipart=aov_multipart,
+                            multipart=multipart,
                             camera=camera)
                         products.append(product)
 
@@ -1089,7 +1098,7 @@ class RenderProductsRedshift(ARenderProducts):
                 product = RenderProduct(productName=aov_name,
                                         aov=aov_name,
                                         ext=ext,
-                                        multipart=aov_multipart,
+                                        multipart=multipart,
                                         camera=camera)
                 products.append(product)
 
@@ -1100,7 +1109,7 @@ class RenderProductsRedshift(ARenderProducts):
         if light_groups_enabled:
             return products
 
-        beauty_name = "Beauty_other" if has_beauty_aov else ""
+        beauty_name = "BeautyAux" if has_beauty_aov else ""
         for camera in cameras:
             products.insert(0,
                             RenderProduct(productName=beauty_name,

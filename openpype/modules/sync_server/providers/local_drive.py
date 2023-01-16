@@ -5,6 +5,7 @@ import threading
 import time
 
 from openpype.lib import Logger
+from openpype.lib.local_settings import get_local_site_id
 from openpype.pipeline import Anatomy
 from .abstract_provider import AbstractProvider
 
@@ -220,6 +221,6 @@ class LocalDriveHandler(AbstractProvider):
 
     def _normalize_site_name(self, site_name):
         """Transform user id to 'local' for Local settings"""
-        if site_name != 'studio':
+        if site_name == get_local_site_id():
             return 'local'
         return site_name

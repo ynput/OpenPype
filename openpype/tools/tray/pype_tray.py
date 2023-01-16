@@ -6,7 +6,7 @@ import subprocess
 
 import platform
 
-from Qt import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 import openpype.version
 from openpype import resources, style
@@ -401,7 +401,7 @@ class TrayManager:
 
     def initialize_modules(self):
         """Add modules to tray."""
-        from openpype_interfaces import (
+        from openpype.modules import (
             ITrayAction,
             ITrayService
         )
