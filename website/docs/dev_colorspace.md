@@ -55,9 +55,9 @@ The *colorspaceData* are stored at root of representation dictionary during publ
 }
 ```
 
-2. Use any mechanism to set OCIO config to host app resolved from `openpype\pipeline\colorspace.py:get_imageio_config`
-	-	either set OCIO environment during host launching via pre-launch hook
-	- or to set workfile ocio config path if host api is available
+2. Set the OCIO config path for the host to the path returned from `openpype.pipeline.colorspace.get_imageio_config`, for example:
+	- set the `OCIO` environment variable before launching the host via a prelaunch hook
+	- or (if the host allows) to set the workfile OCIO config path using the host's API
 
 3. Each pixle related exporter plugins has to use parent class `openpype\pipeline\publish\publish_plugins.py:ExtractorColormanaged` and use it similarly as it is already implemented here `openpype\hosts\nuke\plugins\publish\extract_render_local.py`
 - **get_colorspace_settings**: is solving all settings for the host context
