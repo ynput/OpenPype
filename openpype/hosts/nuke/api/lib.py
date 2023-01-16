@@ -896,7 +896,9 @@ def get_view_process_node():
     ipn_orig = None
     for v in nuke.allNodes(filter="Viewer"):
         ipn = v['input_process_node'].getValue()
-        if "VIEWER_INPUT" not in ipn:
+        if ipn:
+            if "VIEWER_INPUT" not in ipn:
+                return
             ipn_orig = nuke.toNode(ipn)
             ipn_orig.setSelected(True)
 
