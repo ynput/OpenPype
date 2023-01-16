@@ -4,6 +4,11 @@ import functools
 import logging
 import platform
 import copy
+
+from openpype import AYON_SERVER_ENABLED
+
+# AYON_SERVER_ENABLED = False
+
 from .exceptions import (
     SaveWarningExc
 )
@@ -16,6 +21,11 @@ from .constants import (
     PROJECT_SETTINGS_KEY,
     PROJECT_ANATOMY_KEY,
     DEFAULT_PROJECT_KEY
+)
+
+from .ayon_settings import (
+    get_ayon_project_settings,
+    get_ayon_system_settings
 )
 
 log = logging.getLogger(__name__)
@@ -40,36 +50,17 @@ _SETTINGS_HANDLER = None
 _LOCAL_SETTINGS_HANDLER = None
 
 
-def require_handler(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        global _SETTINGS_HANDLER
-        if _SETTINGS_HANDLER is None:
-            _SETTINGS_HANDLER = create_settings_handler()
-        return func(*args, **kwargs)
-    return wrapper
-
-
-def require_local_handler(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        global _LOCAL_SETTINGS_HANDLER
-        if _LOCAL_SETTINGS_HANDLER is None:
-            _LOCAL_SETTINGS_HANDLER = create_local_settings_handler()
-        return func(*args, **kwargs)
-    return wrapper
-
-
-def create_settings_handler():
-    from .handlers import MongoSettingsHandler
-    # Handler can't be created in global space on initialization but only when
-    # needed. Plus here may be logic: Which handler is used (in future).
-    return MongoSettingsHandler()
-
-
-def create_local_settings_handler():
-    from .handlers import MongoLocalSettingsHandler
-    return MongoLocalSettingsHandler()
+def clear_metadata_from_settings(values):
+    """Remove all metadata keys from loaded settings."""
+    if isinstance(values, dict):
+        for key in tuple(values.keys()):
+            if key in METADATA_KEYS:
+                values.pop(key)
+            else:
+                clear_metadata_from_settings(values[key])
+    elif isinstance(values, list):
+        for item in values:
+            clear_metadata_from_settings(item)
 
 
 def calculate_changes(old_value, new_value):
@@ -89,6 +80,38 @@ def calculate_changes(old_value, new_value):
         if _value != value:
             changes[key] = value
     return changes
+
+
+def create_settings_handler():
+    from .handlers import MongoSettingsHandler
+    # Handler can't be created in global space on initialization but only when
+    # needed. Plus here may be logic: Which handler is used (in future).
+    return MongoSettingsHandler()
+
+
+def create_local_settings_handler():
+    from .handlers import MongoLocalSettingsHandler
+    return MongoLocalSettingsHandler()
+
+
+def require_handler(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        global _SETTINGS_HANDLER
+        if _SETTINGS_HANDLER is None:
+            _SETTINGS_HANDLER = create_settings_handler()
+        return func(*args, **kwargs)
+    return wrapper
+
+
+def require_local_handler(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        global _LOCAL_SETTINGS_HANDLER
+        if _LOCAL_SETTINGS_HANDLER is None:
+            _LOCAL_SETTINGS_HANDLER = create_local_settings_handler()
+        return func(*args, **kwargs)
+    return wrapper
 
 
 @require_handler
@@ -890,7 +913,7 @@ def apply_local_settings_on_project_settings(
         sync_server_config["remote_site"] = remote_site
 
 
-def get_system_settings(clear_metadata=True, exclude_locals=None):
+def _get_system_settings(clear_metadata=True, exclude_locals=None):
     """System settings with applied studio overrides."""
     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
     studio_values = get_studio_system_settings_overrides()
@@ -992,7 +1015,7 @@ def get_anatomy_settings(
     return result
 
 
-def get_project_settings(
+def _get_project_settings(
     project_name, clear_metadata=True, exclude_locals=None
 ):
     """Project settings with applied studio and project overrides."""
@@ -1082,14 +1105,17 @@ def get_general_environments():
     return environments
 
 
-def clear_metadata_from_settings(values):
-    """Remove all metadata keys from loaded settings."""
-    if isinstance(values, dict):
-        for key in tuple(values.keys()):
-            if key in METADATA_KEYS:
-                values.pop(key)
-            else:
-                clear_metadata_from_settings(values[key])
-    elif isinstance(values, list):
-        for item in values:
-            clear_metadata_from_settings(item)
+def get_system_settings(*args, **kwargs):
+    if not AYON_SERVER_ENABLED:
+        return _get_system_settings(*args, **kwargs)
+
+    default_settings = get_default_settings()[SYSTEM_SETTINGS_KEY]
+    return get_ayon_system_settings(default_settings)
+
+
+def get_project_settings(project_name, *args, **kwargs):
+    if not AYON_SERVER_ENABLED:
+        return _get_project_settings(project_name, *args, **kwargs)
+
+    default_settings = get_default_settings()[PROJECT_SETTINGS_KEY]
+    return get_ayon_project_settings(default_settings, project_name)
