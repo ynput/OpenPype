@@ -36,7 +36,7 @@ def _make_temp_json_file():
 
     except IOError as _error:
         raise IOError(
-            "Not able to create temp json file: {}".format(
+            "Unable to create temp json file: {}".format(
                 _error
             )
         )
