@@ -350,6 +350,7 @@ class ExtractOTIOReview(publish.Extractor):
         # start command list
         command = [ffmpeg_path]
 
+        input_extension = None
         if sequence:
             input_dir, collection = sequence
             in_frame_start = min(collection.indexes)
@@ -357,6 +358,7 @@ class ExtractOTIOReview(publish.Extractor):
             # converting image sequence to image sequence
             input_file = collection.format("{head}{padding}{tail}")
             input_path = os.path.join(input_dir, input_file)
+            input_extension = os.path.splitext(input_path)[-1]
 
             # form command for rendering gap files
             command.extend([
@@ -373,6 +375,7 @@ class ExtractOTIOReview(publish.Extractor):
             sec_duration = frames_to_seconds(
                 frame_duration, input_fps
             )
+            input_extension = os.path.splitext(video_path)[-1]
 
             # form command for rendering gap files
             command.extend([
@@ -397,9 +400,21 @@ class ExtractOTIOReview(publish.Extractor):
 
         # add output attributes
         command.extend([
-            "-start_number", str(out_frame_start),
-            output_path
+            "-start_number", str(out_frame_start)
         ])
+
+        # add copying if extensions are matching
+        if (
+            input_extension
+            and self.output_ext == input_extension
+        ):
+            command.extend([
+                "-c", "copy"
+            ])
+
+        # add output path at the end
+        command.append(output_path)
+
         # execute
         self.log.debug("Executing: {}".format(" ".join(command)))
         output = run_subprocess(
