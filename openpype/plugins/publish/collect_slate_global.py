@@ -56,7 +56,8 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
                 "slate_common_data": {},
                 "slate_env": _env,
                 "slate_thumbnail": "",
-                "slate_repre_data": {}
+                "slate_repre_data": {},
+                "slate_task_types": settings["integrate_task_types"]
             })
 
             slate_data = slate_global["slate_common_data"]

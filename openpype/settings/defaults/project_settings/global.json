@@ -51,6 +51,10 @@
             "optional": true,
             "slate_template_path": "",
             "slate_template_res_path": "",
+            "integrate_task_types": [
+                "Paint",
+                "Compositing"
+            ],
             "profiles": [
                 {
                     "families": [

@@ -208,6 +208,14 @@
                     "type": "splitter"
                 },
                 {
+                    "key": "integrate_task_types",
+                    "label": "Slate Main Integration only in Task",
+                    "type": "task-types-enum"
+                },
+                {
+                    "type": "splitter"
+                },
+                {
                     "type": "list",
                     "key": "profiles",
                     "label": "Profiles",

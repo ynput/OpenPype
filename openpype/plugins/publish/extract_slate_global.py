@@ -76,6 +76,7 @@ class SlateCreator:
             self.template_path,
             self.template_res_path
         )
+        self.task_filter = []
 
     def set_logger(self, logger=None):
         """
@@ -164,7 +165,6 @@ class SlateCreator:
         self.log.debug(
             "Data: '{}'".format(self.data)
         )
-
 
     def set_resolution(self, width, height):
         """
@@ -539,6 +539,7 @@ class ExtractSlateGlobal(publish.Extractor):
         "nuke",
         "maya",
         "shell",
+        "houdini"
         # "hiero",
         # "premiere",
         # "harmony",
@@ -556,8 +557,6 @@ class ExtractSlateGlobal(publish.Extractor):
     _slate_data_name = "slateGlobal"
 
     def process(self, instance):
-
-        self.log.debug(dir(instance))
 
         if self._slate_data_name not in instance.data:
             self.log.warning("Slate Global workflow is not active, \
@@ -577,8 +576,17 @@ class ExtractSlateGlobal(publish.Extractor):
 
         # get pyblish comment and intent
         common_data = slate_data["slate_common_data"]
-        common_data["comment"] = instance.context.data.get("comment")
-        common_data["intent"].update(instance.context.data.get("intent"))
+        common_data["comment"] = "-"
+        if instance.context.data.get("comment"):
+            common_data["comment"] = instance.context.data["comment"]
+        common_data["intent"] = {
+            "label": "-",
+            "value": "-"
+        }
+        if instance.context.data.get("intent"):
+            common_data["intent"].update(
+                instance.context.data["intent"])
+
 
         # Init SlateCreator Object
         slate = SlateCreator(
@@ -705,23 +713,26 @@ class ExtractSlateGlobal(publish.Extractor):
             )
 
             # convert slate to final name and format
-            slate.render_image_oiio(
-                temp_slate[0],
-                slate_final_path,
-                in_args=slate.data["oiio_args"]["input"],
-                out_args=slate.data["oiio_args"]["output"]
-            )
-
-            # update repres and instance
-            if isSequence:
-                repre["files"].insert(0, slate.data["slate_file"])
-                repre["frameStart"] = slate.data["real_frameStart"]
-                self.log.debug(
-                    "Added {} to {} representation file list.".format(
-                        slate.data["slate_file"],
-                        repre["name"]
-                    )
+            # only if task is in task list filter
+            if instance.data["anatomyData"]["app"] in slate_data["slate_task_types"]:
+                slate.render_image_oiio(
+                    temp_slate[0],
+                    slate_final_path,
+                    in_args=slate.data["oiio_args"]["input"],
+                    out_args=slate.data["oiio_args"]["output"]
                 )
+
+                # update repres and instance
+                if isSequence:
+                    repre["files"].insert(0, slate.data["slate_file"])
+                    repre["frameStart"] = slate.data["real_frameStart"]
+                    self.log.debug(
+                        "Added {} to {} representation file list.".format(
+                            slate.data["slate_file"],
+                            repre["name"]
+                        )
+                    )
+            
             if "slateFrames" not in instance.data:
                 instance.data["slateFrames"] = {
                     "*": temp_slate[0]
