@@ -189,7 +189,11 @@ def get_dynamic_modules_dirs():
     Returns:
         list: Paths loaded from studio overrides.
     """
+
     output = []
+    if AYON_SERVER_ENABLED:
+        return output
+
     value = get_studio_system_settings_overrides()
     for key in ("modules", "addon_paths", platform.system().lower()):
         if key not in value:
