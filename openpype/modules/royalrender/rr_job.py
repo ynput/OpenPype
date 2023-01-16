@@ -87,7 +87,7 @@ class RRJob:
 
     # Frame Padding of the frame number in the rendered filename.
     # Some render config files are setting the padding at render time.
-    ImageFramePadding = attr.ib(default=None)  # type: str
+    ImageFramePadding = attr.ib(default=None)  # type: int
 
     # Some render applications support overriding the image format at
     # the render commandline.
@@ -129,6 +129,7 @@ class RRJob:
     CustomUserInfo = attr.ib(default=None)  # type: str
     SubmitMachine = attr.ib(default=None)  # type: str
     Color_ID = attr.ib(default=2)  # type: int
+    CompanyProjectName = attr.ib(default=None)  # type: str
 
     RequiredLicenses = attr.ib(default=None)  # type: str
 
@@ -225,7 +226,7 @@ class SubmitFile:
         # <SubmitterParameter>foo=bar~baz~goo</SubmitterParameter>
         self._process_submitter_parameters(
             self.SubmitterParameters, root, job_file)
-
+        root.appendChild(job_file)
         for job in self.Jobs:  # type: RRJob
             if not isinstance(job, RRJob):
                 raise AttributeError(
@@ -247,10 +248,11 @@ class SubmitFile:
                     custom_attr.name)] = custom_attr.value
 
             for item, value in serialized_job.items():
-                xml_attr = root.create(item)
+                xml_attr = root.createElement(item)
                 xml_attr.appendChild(
-                    root.createTextNode(value)
+                    root.createTextNode(str(value))
                 )
                 xml_job.appendChild(xml_attr)
+            job_file.appendChild(xml_job)
 
         return root.toprettyxml(indent="\t")

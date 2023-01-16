@@ -2,11 +2,13 @@
 """Wrapper around Royal Render API."""
 import sys
 import os
+import platform
 
 from openpype.settings import get_project_settings
 from openpype.lib.local_settings import OpenPypeSettingsRegistry
 from openpype.lib import Logger, run_subprocess
 from .rr_job import RRJob, SubmitFile, SubmitterParameter
+from openpype.lib.vendor_bin_utils import find_tool_in_custom_paths
 
 
 class Api:
@@ -20,31 +22,46 @@ class Api:
         self._rr_path = rr_path
         os.environ["RR_ROOT"] = rr_path
 
-    def _get_rr_bin_path(self, rr_root=None):
-        # type: (str) -> str
-        """Get path to RR bin folder."""
+    def _get_rr_bin_path(self, tool_name=None, rr_root=None):
+        # type: (str, str) -> str
+        """Get path to RR bin folder.
+
+        Args:
+            tool_name (str): Name of RR executable you want.
+            rr_root (str, Optional): Custom RR root if needed.
+
+        Returns:
+            str: Path to the tool based on current platform.
+
+        """
         rr_root = rr_root or self._rr_path
         is_64bit_python = sys.maxsize > 2 ** 32
 
-        rr_bin_path = ""
+        rr_bin_parts = [rr_root, "bin"]
         if sys.platform.lower() == "win32":
-            rr_bin_path = "/bin/win64"
-            if not is_64bit_python:
-                # we are using 64bit python
-                rr_bin_path = "/bin/win"
-            rr_bin_path = rr_bin_path.replace(
-                "/", os.path.sep
-            )
+            rr_bin_parts.append("win")
 
         if sys.platform.lower() == "darwin":
-            rr_bin_path = "/bin/mac64"
-            if not is_64bit_python:
-                rr_bin_path = "/bin/mac"
+            rr_bin_parts.append("mac")
 
-        if sys.platform.lower() == "linux":
-            rr_bin_path = "/bin/lx64"
+        if sys.platform.lower().startswith("linux"):
+            rr_bin_parts.append("lx")
 
-        return os.path.join(rr_root, rr_bin_path)
+        rr_bin_path = os.sep.join(rr_bin_parts)
+
+        paths_to_check = []
+        # if we use 64bit python, append 64bit specific path first
+        if is_64bit_python:
+            if not tool_name:
+                return rr_bin_path + "64"
+            paths_to_check.append(rr_bin_path + "64")
+
+        # otherwise use 32bit
+        if not tool_name:
+            return rr_bin_path
+        paths_to_check.append(rr_bin_path)
+
+        return find_tool_in_custom_paths(paths_to_check, tool_name)
 
     def _initialize_module_path(self):
         # type: () -> None
@@ -84,30 +101,25 @@ class Api:
         # type: (SubmitFile, int) -> None
         if mode == self.RR_SUBMIT_CONSOLE:
             self._submit_using_console(file)
+            return
 
-        # RR v7 supports only Python 2.7 so we bail out in fear
+        # RR v7 supports only Python 2.7, so we bail out in fear
         # until there is support for Python 3 😰
         raise NotImplementedError(
             "Submission via RoyalRender API is not supported yet")
         # self._submit_using_api(file)
 
-    def _submit_using_console(self, file):
+    def _submit_using_console(self, job_file):
         # type: (SubmitFile) -> None
-        rr_console = os.path.join(
-            self._get_rr_bin_path(),
-            "rrSubmitterConsole"
-        )
+        rr_start_local = self._get_rr_bin_path("rrStartLocal")
 
-        if sys.platform.lower() == "darwin" and "/bin/mac64" in rr_console:
-            rr_console = rr_console.replace("/bin/mac64", "/bin/mac")
+        self.log.info("rr_console: {}".format(rr_start_local))
 
-        if sys.platform.lower() == "win32":
-            if "/bin/win64" in rr_console:
-                rr_console = rr_console.replace("/bin/win64", "/bin/win")
-            rr_console += ".exe"
-
-        args = [rr_console, file]
-        run_subprocess(" ".join(args), logger=self.log)
+        args = [rr_start_local, "rrSubmitterconsole", job_file]
+        self.log.info("Executing: {}".format(" ".join(args)))
+        env = os.environ
+        env["RR_ROOT"] = self._rr_path
+        run_subprocess(args, logger=self.log, env=env)
 
     def _submit_using_api(self, file):
         # type: (SubmitFile) -> None

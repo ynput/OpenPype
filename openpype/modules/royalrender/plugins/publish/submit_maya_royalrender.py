@@ -38,11 +38,11 @@ class MayaSubmitRoyalRender(InstancePlugin):
         """
         def get_rr_platform():
             if sys.platform.lower() in ["win32", "win64"]:
-                return "win"
+                return "windows"
             elif sys.platform.lower() == "darwin":
                 return "mac"
             else:
-                return "lx"
+                return "linux"
 
         expected_files = self._instance.data["expectedFiles"]
         first_file = next(self._iter_expected_files(expected_files))
@@ -53,8 +53,10 @@ class MayaSubmitRoyalRender(InstancePlugin):
                 .get('maya') \
                 .get('RenderSettings') \
                 .get('default_render_image_folder')
-        filename = os.path.basename(self.scene_path)
-        dirname = os.path.join(workspace, default_render_file)
+        file_name = os.path.basename(self.scene_path)
+        dir_name = os.path.join(workspace, default_render_file)
+        layer = self._instance.data["setMembers"]  # type: str
+        layer_name = layer.removeprefix("rs_")
 
         job = RRJob(
             Software="Maya",
@@ -64,22 +66,22 @@ class MayaSubmitRoyalRender(InstancePlugin):
             SeqStep=int(self._instance.data["byFrameStep"]),
             SeqFileOffset=0,
             Version="{0:.2f}".format(MGlobal.apiVersion() / 10000),
-            SceneName=os.path.basename(self.scene_path),
+            SceneName=self.scene_path,
             IsActive=True,
-            ImageDir=dirname,
-            ImageFilename=filename,
-            ImageExtension="." + os.path.splitext(filename)[1],
+            ImageDir=dir_name,
+            ImageFilename="{}.".format(layer_name),
+            ImageExtension=os.path.splitext(first_file)[1],
             ImagePreNumberLetter=".",
             ImageSingleOutputFile=False,
             SceneOS=get_rr_platform(),
             Camera=self._instance.data["cameras"][0],
-            Layer=self._instance.data["layer"],
+            Layer=layer_name,
             SceneDatabaseDir=workspace,
-            ImageFramePadding=get_attr_in_layer(
-                "defaultRenderGlobals.extensionPadding",
-                self._instance.data["layer"]),
+            CustomSHotName=self._instance.context.data["asset"],
+            CompanyProjectName=self._instance.context.data["projectName"],
             ImageWidth=self._instance.data["resolutionWidth"],
-            ImageHeight=self._instance.data["resolutionHeight"]
+            ImageHeight=self._instance.data["resolutionHeight"],
+            PreID=1
         )
         return job
 
@@ -125,11 +127,9 @@ class MayaSubmitRoyalRender(InstancePlugin):
             self.log.error("Cannot get OpenPype RoyalRender module.")
             raise AssertionError("OpenPype RoyalRender module not found.")
         """
-
-
         file_path = None
         if self.use_published:
-            file_path = get_published_workfile_instance()
+            file_path = get_published_workfile_instance(context)
 
             # fallback if nothing was set
             if not file_path:
@@ -153,7 +153,8 @@ class MayaSubmitRoyalRender(InstancePlugin):
         with open(xml.name, "w") as f:
             f.write(submission.serialize())
 
-        self.rr_api.submit_file(file=xml)
+        self.log.info("submitting job file: {}".format(xml.name))
+        self.rr_api.submit_file(file=xml.name)
 
     @staticmethod
     def _resolve_rr_path(context, rr_path_name):
@@ -184,4 +185,12 @@ class MayaSubmitRoyalRender(InstancePlugin):
 
         return rr_servers[rr_path_name][platform.system().lower()]
 
-
+    @staticmethod
+    def _iter_expected_files(exp):
+        if isinstance(exp[0], dict):
+            for _aov, files in exp[0].items():
+                for file in files:
+                    yield file
+        else:
+            for file in exp:
+                yield file
