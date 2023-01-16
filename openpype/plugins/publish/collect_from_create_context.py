@@ -37,7 +37,6 @@ class CollectFromCreateContext(pyblish.api.ContextPlugin):
             context.data["projectName"] = project_name
 
         for created_instance in create_context.instances:
-            self.log.info(f"created_instance:: {created_instance}")
             instance_data = created_instance.data_to_store()
             if instance_data["active"]:
                 thumbnail_path = thumbnail_paths_by_instance_id.get(

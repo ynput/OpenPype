@@ -105,16 +105,19 @@ class ScrollMessageBox(QtWidgets.QDialog):
         content_widget = QtWidgets.QWidget(self)
         scroll_widget.setWidget(content_widget)
 
-        max_len = 0
+        message_len = 0
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         for message in messages:
             label_widget = QtWidgets.QLabel(message, content_widget)
             content_layout.addWidget(label_widget)
-            max_len = max(max_len, len(message))
+            message_len = max(message_len, len(message))
 
         # guess size of scrollable area
-        max_width = QtWidgets.QApplication.desktop().availableGeometry().width
-        scroll_widget.setMinimumWidth(min(max_width, max_len * 6))
+        desktop = QtWidgets.QApplication.desktop()
+        max_width = desktop.availableGeometry().width()
+        scroll_widget.setMinimumWidth(
+            min(max_width, message_len * 6)
+        )
         layout.addWidget(scroll_widget)
 
         if not cancelable:  # if no specific buttons OK only

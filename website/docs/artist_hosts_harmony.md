@@ -62,7 +62,7 @@ When you `Use selection` on creation, the last selected node will be connected t
 
 `OpenPype > Publish`
 
-![Publish](assets/photoshop_publish.PNG)  <!-- picture has to be changed (Harmony needed) -->
+![Publish](assets/harmony_publish.png)  <!-- picture has to be changed (Harmony needed) -->
 
 This tool will run through checks to make sure the contents you are publishing is correct. Hit the "Play" button to start publishing.
 
@@ -72,25 +72,25 @@ You may encounter issues with publishing which will be indicated with red square
 
 All validators will give some description about what the issue is. You can inspect this by going into the validator through the arrow:
 
-![Inspect](assets/photoshop_publish_inspect.PNG) <!-- picture has to be changed (Harmony needed) -->
+![Inspect](assets/harmony_publish_inspect.png) <!-- picture has to be changed (Harmony needed) -->
 
 You can expand the errors by clicking on them for more details:
 
-![Expand](assets/photoshop_publish_expand.PNG) <!-- picture has to be changed (Harmony needed) -->
+![Expand](assets/harmony_publish_expand.png) <!-- picture has to be changed (Harmony needed) -->
 
 Some validator have repair actions, which will fix the issue. If you can identify validators with actions by the circle icon with an "A":
 
-![Actions](assets/photoshop_publish_actions.PNG) <!-- picture has to be changed (Harmony needed) -->
+![Actions](assets/harmony_publish_actions.png) <!-- picture has to be changed (Harmony needed) -->
 
 To access the actions, you right click on the validator. If an action runs successfully, the actions icon will turn green. Once all issues are fixed, you can just hit the "Refresh" button and try to publish again.
 
-![Repair](assets/photoshop_publish_repair.gif) <!-- gif has to be changed (Harmony needed) -->
+![Repair](assets/harmony_publish_repair.gif) <!-- gif has to be changed (Harmony needed) -->
  
 ### Load
 
 `OpenPype > Load`
 
-![Loader](assets/photoshop_loader.PNG)  <!-- picture has to be changed (Harmony needed) -->
+![Loader](assets/photoshop_loader.png)  <!-- picture has to be changed (Harmony needed) -->
 
 The supported families for Harmony are:
 
@@ -114,7 +114,7 @@ Loading templates or workfiles will import the contents into scene. Referencing 
 
 `OpenPype > Manage`
 
-![Loader](assets/photoshop_manage.PNG)  <!-- picture has to be changed (Harmony needed) -->
+![Loader](assets/photoshop_manage.png)  <!-- picture has to be changed (Harmony needed) -->
 
 You can switch to a previous version of the image or update to the latest.
 
