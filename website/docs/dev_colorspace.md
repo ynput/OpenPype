@@ -11,7 +11,7 @@ import TabItem from '@theme/TabItem';
 Defines the distribution of colors and OCIO config during publishing. Once colorspace data are captured and integrated into representation loaders could use them for loading image and video data with correct colorspace.
 
 :::warning Color Management (ImageIO)
-Settings schema is requred for any host or module which is processing pixel data.
+Adding the `imagio` settings schema is required for any host or module which is processing pixel data.
 :::
 
 ## Data model
