@@ -125,7 +125,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "mvLook",
                 "mvUsdComposition",
                 "mvUsdOverride",
-                "simpleUnrealTexture"
+                "simpleUnrealTexture",
+                "blenderScene"
                 ]
     exclude_families = ["render.farm"]
     db_representation_context_keys = [
