@@ -399,7 +399,7 @@ class ExtractorColormanaged(Extractor):
         # get one filename
         filename = representation["files"]
         if isinstance(filename, list):
-            filename = filename.pop()
+            filename = filename[0]
 
         self.log.debug("__ filename: `{}`".format(
             filename))
