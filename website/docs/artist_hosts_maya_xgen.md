@@ -33,7 +33,7 @@ When you increment the Maya workfile to a new version, all `.xgen` and `.xgd` fi
 
 ## Create
 
-Create an Xgen instance to publish. This needs to contain 1 Xgen collection only, but validation will check for this:
+Create an Xgen instance to publish. This needs to contain only **one Xgen collection**.
 
 `OpenPype > Create... > Xgen`
 
