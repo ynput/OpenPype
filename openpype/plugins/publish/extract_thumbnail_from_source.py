@@ -100,7 +100,7 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
 
         self.log.info("Thumbnail source: {}".format(thumbnail_source))
         src_basename = os.path.basename(thumbnail_source)
-        dst_filename = os.path.splitext(src_basename)[0] + ".jpg"
+        dst_filename = os.path.splitext(src_basename)[0] + "_thumb.jpg"
         full_output_path = os.path.join(dst_staging, dst_filename)
 
         if oiio_supported:
