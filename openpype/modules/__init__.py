@@ -1,8 +1,17 @@
 # -*- coding: utf-8 -*-
+from .interfaces import (
+    ILaunchHookPaths,
+    IPluginPaths,
+    ITrayModule,
+    ITrayAction,
+    ITrayService,
+    ISettingsChangeListener,
+    IHostAddon,
+)
+
 from .base import (
     OpenPypeModule,
     OpenPypeAddOn,
-    OpenPypeInterface,
 
     load_modules,
 
@@ -18,9 +27,16 @@ from .base import (
 
 
 __all__ = (
+    "ILaunchHookPaths",
+    "IPluginPaths",
+    "ITrayModule",
+    "ITrayAction",
+    "ITrayService",
+    "ISettingsChangeListener",
+    "IHostAddon",
+
     "OpenPypeModule",
     "OpenPypeAddOn",
-    "OpenPypeInterface",
 
     "load_modules",
 

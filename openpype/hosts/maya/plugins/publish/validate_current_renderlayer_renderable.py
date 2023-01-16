@@ -1,7 +1,7 @@
 import pyblish.api
 
 from maya import cmds
-from openpype.plugin import contextplugin_should_run
+from openpype.pipeline.publish import context_plugin_should_run
 
 
 class ValidateCurrentRenderLayerIsRenderable(pyblish.api.ContextPlugin):
@@ -24,7 +24,7 @@ class ValidateCurrentRenderLayerIsRenderable(pyblish.api.ContextPlugin):
     def process(self, context):
 
         # Workaround bug pyblish-base#250
-        if not contextplugin_should_run(self, context):
+        if not context_plugin_should_run(self, context):
             return
 
         layer = cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)

@@ -8,13 +8,13 @@ from unreal import EditorAssetLibrary
 from unreal import MovieSceneSkeletalAnimationTrack
 from unreal import MovieSceneSkeletalAnimationSection
 
+from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline import (
     get_representation_path,
     AVALON_CONTAINER_ID
 )
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
-from openpype.api import get_asset
 
 
 class AnimationFBXLoader(plugin.Loader):
@@ -53,6 +53,8 @@ class AnimationFBXLoader(plugin.Loader):
         if not actor:
             return None
 
+        asset_doc = get_current_project_asset(fields=["data.fps"])
+
         task.set_editor_property('filename', self.fname)
         task.set_editor_property('destination_path', asset_dir)
         task.set_editor_property('destination_name', asset_name)
@@ -80,7 +82,7 @@ class AnimationFBXLoader(plugin.Loader):
         task.options.anim_sequence_import_data.set_editor_property(
             'use_default_sample_rate', False)
         task.options.anim_sequence_import_data.set_editor_property(
-            'custom_sample_rate', get_asset()["data"].get("fps"))
+            'custom_sample_rate', asset_doc.get("data", {}).get("fps"))
         task.options.anim_sequence_import_data.set_editor_property(
             'import_custom_attribute', True)
         task.options.anim_sequence_import_data.set_editor_property(
@@ -246,6 +248,7 @@ class AnimationFBXLoader(plugin.Loader):
     def update(self, container, representation):
         name = container["asset_name"]
         source_path = get_representation_path(representation)
+        asset_doc = get_current_project_asset(fields=["data.fps"])
         destination_path = container["namespace"]
 
         task = unreal.AssetImportTask()
@@ -279,7 +282,7 @@ class AnimationFBXLoader(plugin.Loader):
         task.options.anim_sequence_import_data.set_editor_property(
             'use_default_sample_rate', False)
         task.options.anim_sequence_import_data.set_editor_property(
-            'custom_sample_rate', get_asset()["data"].get("fps"))
+            'custom_sample_rate', asset_doc.get("data", {}).get("fps"))
         task.options.anim_sequence_import_data.set_editor_property(
             'import_custom_attribute', True)
         task.options.anim_sequence_import_data.set_editor_property(

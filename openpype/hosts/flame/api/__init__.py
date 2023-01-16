@@ -30,7 +30,8 @@ from .lib import (
     maintained_temp_file_path,
     get_clip_segment,
     get_batch_group_from_desktop,
-    MediaInfoFile
+    MediaInfoFile,
+    TimeEffectMetadata
 )
 from .utils import (
     setup,
@@ -50,7 +51,8 @@ from .pipeline import (
 )
 from .menu import (
     FlameMenuProjectConnect,
-    FlameMenuTimeline
+    FlameMenuTimeline,
+    FlameMenuUniversal
 )
 from .plugin import (
     Creator,
@@ -107,6 +109,7 @@ __all__ = [
     "get_clip_segment",
     "get_batch_group_from_desktop",
     "MediaInfoFile",
+    "TimeEffectMetadata",
 
     # pipeline
     "install",
@@ -129,6 +132,7 @@ __all__ = [
     # menu
     "FlameMenuProjectConnect",
     "FlameMenuTimeline",
+    "FlameMenuUniversal",
 
     # plugin
     "Creator",

@@ -1,7 +1,7 @@
 import logging
 import collections
 
-from Qt import QtCore, QtGui
+from qtpy import QtCore, QtGui
 import qtawesome
 
 from openpype.client import get_assets
@@ -81,7 +81,7 @@ class AssetModel(TreeModel):
         for asset in current_assets:
             # get label from data, otherwise use name
             data = asset.get("data", {})
-            label = data.get("label", asset["name"])
+            label = data.get("label") or asset["name"]
             tags = data.get("tags", [])
 
             # store for the asset for optimization

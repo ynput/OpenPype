@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 from pyblish import api as pyblish
 
-from openpype.api import Logger
+from openpype.lib import Logger
 from openpype.pipeline import (
     schema,
     register_loader_plugin_path,
@@ -16,11 +16,15 @@ from openpype.pipeline import (
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
-from . import lib
-from . import PLUGINS_DIR
 from openpype.tools.utils import host_tools
-log = Logger().get_logger(__name__)
 
+from . import lib
+from .utils import get_resolve_module
+
+log = Logger.get_logger(__name__)
+
+HOST_DIR = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
@@ -39,7 +43,6 @@ def install():
     See the Maya equivalent for inspiration on how to implement this.
 
     """
-    from .. import get_resolve_module
 
     log.info("openpype.hosts.resolve installed")
 
@@ -241,7 +244,7 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
     log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
         instance, old_value, new_value))
 
-    from openpype.hosts.resolve import (
+    from openpype.hosts.resolve.api import (
         set_publish_attribute
     )
 

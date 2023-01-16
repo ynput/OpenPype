@@ -33,6 +33,7 @@ class CollectSlate(pyblish.api.InstancePlugin):
 
             if slate_node:
                 instance.data["slateNode"] = slate_node
+                instance.data["slate"] = True
                 instance.data["families"].append("slate")
                 instance.data["versionData"]["families"].append("slate")
                 self.log.info(

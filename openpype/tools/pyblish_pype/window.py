@@ -523,6 +523,7 @@ class Window(QtWidgets.QDialog):
             instance_item.setData(enable_value, Roles.IsEnabledRole)
 
     def _add_intent_to_context(self):
+        context_value = None
         if (
             self.intent_model.has_items
             and "intent" not in self.controller.context.data
@@ -530,11 +531,17 @@ class Window(QtWidgets.QDialog):
             idx = self.intent_model.index(self.intent_box.currentIndex(), 0)
             intent_value = self.intent_model.data(idx, Roles.IntentItemValue)
             intent_label = self.intent_model.data(idx, QtCore.Qt.DisplayRole)
+            if intent_value:
+                context_value = {
+                    "value": intent_value,
+                    "label": intent_label
+                }
 
-            self.controller.context.data["intent"] = {
-                "value": intent_value,
-                "label": intent_label
-            }
+        # Unset intent if is set to empty value
+        if context_value is None:
+            self.controller.context.data.pop("intent", None)
+        else:
+            self.controller.context.data["intent"] = context_value
 
     def on_instance_toggle(self, index, state=None):
         """An item is requesting to be toggled"""

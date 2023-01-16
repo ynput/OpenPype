@@ -10,7 +10,10 @@ import clique
 
 import pyblish.api
 
-import openpype.api
+from openpype.client import (
+    get_last_version_by_subset_name,
+    get_representations,
+)
 from openpype.pipeline import (
     get_representation_path,
     legacy_io,
@@ -18,15 +21,23 @@ from openpype.pipeline import (
 from openpype.pipeline.farm.patterning import match_aov_pattern
 
 
-def get_resources(version, extension=None):
+def get_resources(project_name, version, extension=None):
     """Get the files from the specific version."""
-    query = {"type": "representation", "parent": version["_id"]}
+
+    # TODO this functions seems to be weird
+    #   - it's looking for representation with one extension or first (any)
+    #       representation from a version?
+    #  - not sure how this should work, maybe it does for specific use cases
+    #       but probably can't be used for all resources from 2D workflows
+    extensions = None
     if extension:
-        query["name"] = extension
+        extensions = [extension]
+    repre_docs = list(get_representations(
+        project_name, version_ids=[version["_id"]], extensions=extensions
+    ))
+    assert repre_docs, "This is a bug"
 
-    representation = legacy_io.find_one(query)
-    assert representation, "This is a bug"
-
+    representation = repre_docs[0]
     directory = get_representation_path(representation)
     print("Source: ", directory)
     resources = sorted(
@@ -115,22 +126,17 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                   "harmony": [r".*"],  # for everything from AE
                   "celaction": [r".*"]}
 
-    enviro_filter = [
+    environ_job_filter = [
+        "OPENPYPE_METADATA_FILE"
+    ]
+
+    environ_keys = [
         "FTRACK_API_USER",
         "FTRACK_API_KEY",
         "FTRACK_SERVER",
-        "OPENPYPE_METADATA_FILE",
-        "AVALON_PROJECT",
-        "AVALON_ASSET",
-        "AVALON_TASK",
         "AVALON_APP_NAME",
-        "OPENPYPE_PUBLISH_JOB"
-
-        "OPENPYPE_LOG_NO_COLORS",
         "OPENPYPE_USERNAME",
-        "OPENPYPE_RENDER_JOB",
-        "OPENPYPE_PUBLISH_JOB",
-        "OPENPYPE_MONGO"
+        "OPENPYPE_VERSION"
     ]
 
     # custom deadline attributes
@@ -147,7 +153,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     # mapping of instance properties to be transfered to new instance for every
     # specified family
     instance_transfer = {
-        "slate": ["slateFrames"],
+        "slate": ["slateFrames", "slate"],
         "review": ["lutPath"],
         "render2d": ["bakingNukeScripts", "version"],
         "renderlayer": ["convertToScanline"]
@@ -211,28 +217,42 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         instance_version = instance.data.get("version")  # take this if exists
         if instance_version != 1:
             override_version = instance_version
-        output_dir = self._get_publish_folder(instance.context.data['anatomy'],
-                                              deepcopy(
-                                                instance.data["anatomyData"]),
-                                              instance.data.get("asset"),
-                                              instances[0]["subset"],
-                                              'render',
-                                              override_version)
+        output_dir = self._get_publish_folder(
+            instance.context.data['anatomy'],
+            deepcopy(instance.data["anatomyData"]),
+            instance.data.get("asset"),
+            instances[0]["subset"],
+            'render',
+            override_version
+        )
 
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
         metadata_path, roothless_metadata_path = \
             self._create_metadata_path(instance)
 
-        environment = job["Props"].get("Env", {})
-        environment["AVALON_PROJECT"] = legacy_io.Session["AVALON_PROJECT"]
-        environment["AVALON_ASSET"] = legacy_io.Session["AVALON_ASSET"]
-        environment["AVALON_TASK"] = legacy_io.Session["AVALON_TASK"]
-        environment["AVALON_APP_NAME"] = os.environ.get("AVALON_APP_NAME")
-        environment["OPENPYPE_LOG_NO_COLORS"] = "1"
-        environment["OPENPYPE_USERNAME"] = instance.context.data["user"]
-        environment["OPENPYPE_PUBLISH_JOB"] = "1"
-        environment["OPENPYPE_RENDER_JOB"] = "0"
+        environment = {
+            "AVALON_PROJECT": legacy_io.Session["AVALON_PROJECT"],
+            "AVALON_ASSET": legacy_io.Session["AVALON_ASSET"],
+            "AVALON_TASK": legacy_io.Session["AVALON_TASK"],
+            "OPENPYPE_USERNAME": instance.context.data["user"],
+            "OPENPYPE_PUBLISH_JOB": "1",
+            "OPENPYPE_RENDER_JOB": "0",
+            "OPENPYPE_REMOTE_JOB": "0",
+            "OPENPYPE_LOG_NO_COLORS": "1"
+        }
+
+        # add environments from self.environ_keys
+        for env_key in self.environ_keys:
+            if os.getenv(env_key):
+                environment[env_key] = os.environ[env_key]
+
+        # pass environment keys from self.environ_job_filter
+        job_environ = job["Props"].get("Env", {})
+        for env_j_key in self.environ_job_filter:
+            if job_environ.get(env_j_key):
+                environment[env_j_key] = job_environ[env_j_key]
+
         # Add mongo url if it's enabled
         if instance.context.data.get("deadlinePassMongoUrl"):
             mongo_url = os.environ.get("OPENPYPE_MONGO")
@@ -284,25 +304,27 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             for assembly_id in instance.data.get("assemblySubmissionJobs"):
                 payload["JobInfo"]["JobDependency{}".format(job_index)] = assembly_id  # noqa: E501
                 job_index += 1
+        elif instance.data.get("bakingSubmissionJobs"):
+            self.log.info("Adding baking submission jobs as dependencies...")
+            job_index = 0
+            for assembly_id in instance.data["bakingSubmissionJobs"]:
+                payload["JobInfo"]["JobDependency{}".format(job_index)] = assembly_id  # noqa: E501
+                job_index += 1
         else:
             payload["JobInfo"]["JobDependency0"] = job["_id"]
 
         if instance.data.get("suspend_publish"):
             payload["JobInfo"]["InitialStatus"] = "Suspended"
 
-        index = 0
-        for key in environment:
-            if key.upper() in self.enviro_filter:
-                payload["JobInfo"].update(
-                    {
-                        "EnvironmentKeyValue%d"
-                        % index: "{key}={value}".format(
-                            key=key, value=environment[key]
-                        )
-                    }
-                )
-                index += 1
-
+        for index, (key_, value_) in enumerate(environment.items()):
+            payload["JobInfo"].update(
+                {
+                    "EnvironmentKeyValue%d"
+                    % index: "{key}={value}".format(
+                        key=key_, value=value_
+                    )
+                }
+            )
         # remove secondary pool
         payload["JobInfo"].pop("SecondaryPool", None)
 
@@ -330,13 +352,21 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         self.log.info("Preparing to copy ...")
         start = instance.data.get("frameStart")
         end = instance.data.get("frameEnd")
+        project_name = legacy_io.active_project()
 
         # get latest version of subset
         # this will stop if subset wasn't published yet
-        version = openpype.api.get_latest_version(instance.data.get("asset"),
-                                                  instance.data.get("subset"))
+        project_name = legacy_io.active_project()
+        version = get_last_version_by_subset_name(
+            project_name,
+            instance.data.get("subset"),
+            asset_name=instance.data.get("asset")
+        )
+
         # get its files based on extension
-        subset_resources = get_resources(version, representation.get("ext"))
+        subset_resources = get_resources(
+            project_name, version, representation.get("ext")
+        )
         r_col, _ = clique.assemble(subset_resources)
 
         # if override remove all frames we are expecting to be rendered
@@ -431,9 +461,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             cam = [c for c in cameras if c in col.head]
             if cam:
-                subset_name = '{}_{}_{}'.format(group_name, cam, aov)
+                if aov:
+                    subset_name = '{}_{}_{}'.format(group_name, cam, aov)
+                else:
+                    subset_name = '{}_{}'.format(group_name, cam)
             else:
-                subset_name = '{}_{}'.format(group_name, aov)
+                if aov:
+                    subset_name = '{}_{}'.format(group_name, aov)
+                else:
+                    subset_name = '{}'.format(group_name)
 
             if isinstance(col, (list, tuple)):
                 staging = os.path.dirname(col[0])
@@ -462,12 +498,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             else:
                 render_file_name = os.path.basename(col)
             aov_patterns = self.aov_filter
-            preview = match_aov_pattern(app, aov_patterns, render_file_name)
 
+            preview = match_aov_pattern(app, aov_patterns, render_file_name)
             # toggle preview on if multipart is on
+
             if instance_data.get("multipartExr"):
                 preview = True
-
+            self.log.debug("preview:{}".format(preview))
             new_instance = deepcopy(instance_data)
             new_instance["subset"] = subset_name
             new_instance["subsetGroup"] = group_name
@@ -510,7 +547,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if new_instance.get("extendFrames", False):
                 self._copy_extend_frames(new_instance, rep)
             instances.append(new_instance)
-
+            self.log.debug("instances:{}".format(instances))
         return instances
 
     def _get_representations(self, instance, exp_files):
@@ -566,11 +603,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     " This may cause issues on farm."
                 ).format(staging))
 
+            frame_start = int(instance.get("frameStartHandle"))
+            if instance.get("slate"):
+                frame_start -= 1
+
             rep = {
                 "name": ext,
                 "ext": ext,
                 "files": [os.path.basename(f) for f in list(collection)],
-                "frameStart": int(instance.get("frameStartHandle")),
+                "frameStart": frame_start,
                 "frameEnd": int(instance.get("frameEndHandle")),
                 # If expectedFile are absolute, we need only filenames
                 "stagingDir": staging,
@@ -670,9 +711,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         self.context = context
         self.anatomy = instance.context.data["anatomy"]
 
-        if hasattr(instance, "_log"):
-            data['_log'] = instance._log
-
         asset = data.get("asset") or legacy_io.Session["AVALON_ASSET"]
         subset = data.get("subset")
 
@@ -742,6 +780,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "handleEnd": handle_end,
             "frameStartHandle": start - handle_start,
             "frameEndHandle": end + handle_end,
+            "comment": instance.data["comment"],
             "fps": fps,
             "source": source,
             "extendFrames": data.get("extendFrames"),
@@ -751,7 +790,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "resolutionHeight": data.get("resolutionHeight", 1080),
             "multipartExr": data.get("multipartExr", False),
             "jobBatchName": data.get("jobBatchName", ""),
-            "useSequenceForReview": data.get("useSequenceForReview", True)
+            "useSequenceForReview": data.get("useSequenceForReview", True),
+            # map inputVersions `ObjectId` -> `str` so json supports it
+            "inputVersions": list(map(str, data.get("inputVersions", [])))
         }
 
         # skip locking version if we are creating v01
@@ -1013,9 +1054,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         prev_start = None
         prev_end = None
 
-        version = openpype.api.get_latest_version(asset_name=asset,
-                                                  subset_name=subset
-                                                  )
+        project_name = legacy_io.active_project()
+        version = get_last_version_by_subset_name(
+            project_name,
+            subset,
+            asset_name=asset
+        )
 
         # Set prev start / end frames for comparison
         if not prev_start and not prev_end:
@@ -1045,7 +1089,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     get publish_path
 
         Args:
-            anatomy (pype.lib.anatomy.Anatomy):
+            anatomy (openpype.pipeline.anatomy.Anatomy):
             template_data (dict): pre-calculated collected data for process
             asset (string): asset name
             subset (string): subset name (actually group name of subset)
@@ -1060,7 +1104,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 based on 'publish' template
         """
         if not version:
-            version = openpype.api.get_latest_version(asset, subset)
+            project_name = legacy_io.active_project()
+            version = get_last_version_by_subset_name(
+                project_name,
+                subset,
+                asset_name=asset
+            )
             if version:
                 version = int(version["name"]) + 1
             else:

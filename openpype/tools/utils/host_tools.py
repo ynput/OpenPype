@@ -6,7 +6,8 @@ use singleton approach with global functions (using helper anyway).
 import os
 
 import pyblish.api
-
+from openpype.host import IWorkfileHost, ILoadHost
+from openpype.lib import Logger
 from openpype.pipeline import (
     registered_host,
     legacy_io,
@@ -23,6 +24,7 @@ class HostToolsHelper:
 
     Class may also contain tools that are available only for one or few hosts.
     """
+
     def __init__(self, parent=None):
         self._log = None
         # Global parent for all tools (may and may not be set)
@@ -32,6 +34,7 @@ class HostToolsHelper:
         self._workfiles_tool = None
         self._loader_tool = None
         self._creator_tool = None
+        self._publisher_tool = None
         self._subset_manager_tool = None
         self._scene_inventory_tool = None
         self._library_loader_tool = None
@@ -41,56 +44,39 @@ class HostToolsHelper:
     @property
     def log(self):
         if self._log is None:
-            from openpype.api import Logger
-
             self._log = Logger.get_logger(self.__class__.__name__)
         return self._log
 
     def get_workfiles_tool(self, parent):
         """Create, cache and return workfiles tool window."""
         if self._workfiles_tool is None:
-            from openpype.tools.workfiles.app import (
-                Window, validate_host_requirements
-            )
+            from openpype.tools.workfiles.app import Window
+
             # Host validation
             host = registered_host()
-            validate_host_requirements(host)
+            IWorkfileHost.validate_workfile_methods(host)
 
             workfiles_window = Window(parent=parent)
             self._workfiles_tool = workfiles_window
 
         return self._workfiles_tool
 
-    def show_workfiles(self, parent=None, use_context=None, save=None):
+    def show_workfiles(
+        self, parent=None, use_context=None, save=None, on_top=None
+    ):
         """Workfiles tool for changing context and saving workfiles."""
-        if use_context is None:
-            use_context = True
-
-        if save is None:
-            save = True
 
         with qt_app_context():
             workfiles_tool = self.get_workfiles_tool(parent)
-            workfiles_tool.set_save_enabled(save)
-
-            if not workfiles_tool.isVisible():
-                workfiles_tool.show()
-
-                if use_context:
-                    context = {
-                        "asset": legacy_io.Session["AVALON_ASSET"],
-                        "task": legacy_io.Session["AVALON_TASK"]
-                    }
-                    workfiles_tool.set_context(context)
-
-            # Pull window to the front.
-            workfiles_tool.raise_()
-            workfiles_tool.activateWindow()
+            workfiles_tool.ensure_visible(use_context, save, on_top)
 
     def get_loader_tool(self, parent):
         """Create, cache and return loader tool window."""
         if self._loader_tool is None:
             from openpype.tools.loader import LoaderWindow
+
+            host = registered_host()
+            ILoadHost.validate_load_methods(host)
 
             loader_window = LoaderWindow(parent=parent or self._parent)
             self._loader_tool = loader_window
@@ -164,6 +150,9 @@ class HostToolsHelper:
         if self._scene_inventory_tool is None:
             from openpype.tools.sceneinventory import SceneInventoryWindow
 
+            host = registered_host()
+            ILoadHost.validate_load_methods(host)
+
             scene_inventory_window = SceneInventoryWindow(
                 parent=parent or self._parent
             )
@@ -204,7 +193,6 @@ class HostToolsHelper:
             library_loader_tool.activateWindow()
             library_loader_tool.showNormal()
             library_loader_tool.refresh()
-
 
     def show_publish(self, parent=None):
         """Try showing the most desirable publish GUI
@@ -281,6 +269,29 @@ class HostToolsHelper:
             dialog.activateWindow()
             dialog.showNormal()
 
+    def get_publisher_tool(self, parent=None, controller=None):
+        """Create, cache and return publisher window."""
+
+        if self._publisher_tool is None:
+            from openpype.tools.publisher.window import PublisherWindow
+
+            host = registered_host()
+            ILoadHost.validate_load_methods(host)
+
+            publisher_window = PublisherWindow(
+                controller=controller, parent=parent or self._parent
+            )
+            self._publisher_tool = publisher_window
+
+        return self._publisher_tool
+
+    def show_publisher_tool(self, parent=None, controller=None, tab=None):
+        with qt_app_context():
+            window = self.get_publisher_tool(parent, controller)
+            if tab:
+                window.set_current_tab(tab)
+            window.make_sure_is_visible()
+
     def get_tool_by_name(self, tool_name, parent=None, *args, **kwargs):
         """Show tool by it's name.
 
@@ -309,6 +320,10 @@ class HostToolsHelper:
 
         elif tool_name == "publish":
             self.log.info("Can't return publish tool window.")
+
+        # "new" publisher
+        elif tool_name == "publisher":
+            return self.get_publisher_tool(parent, *args, **kwargs)
 
         elif tool_name == "experimental_tools":
             return self.get_experimental_tools_dialog(parent, *args, **kwargs)
@@ -346,6 +361,9 @@ class HostToolsHelper:
 
         elif tool_name == "publish":
             self.show_publish(parent, *args, **kwargs)
+
+        elif tool_name == "publisher":
+            self.show_publisher_tool(parent, *args, **kwargs)
 
         elif tool_name == "experimental_tools":
             self.show_experimental_tools_dialog(parent, *args, **kwargs)
@@ -390,9 +408,9 @@ def show_tool_by_name(tool_name, parent=None, *args, **kwargs):
     _SingletonPoint.show_tool_by_name(tool_name, parent, *args, **kwargs)
 
 
-def show_workfiles(parent=None, use_context=None, save=None):
+def show_workfiles(*args, **kwargs):
     _SingletonPoint.show_tool_by_name(
-        "workfiles", parent, use_context=use_context, save=save
+        "workfiles", *args, **kwargs
     )
 
 
@@ -424,6 +442,10 @@ def show_look_assigner(parent=None):
 
 def show_publish(parent=None):
     _SingletonPoint.show_tool_by_name("publish", parent)
+
+
+def show_publisher(parent=None, **kwargs):
+    _SingletonPoint.show_tool_by_name("publisher", parent, **kwargs)
 
 
 def show_experimental_tools_dialog(parent=None):

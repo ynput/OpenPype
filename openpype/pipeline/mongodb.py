@@ -5,6 +5,8 @@ import logging
 import pymongo
 from uuid import uuid4
 
+from openpype.client import OpenPypeMongoConnection
+
 from . import schema
 
 
@@ -156,8 +158,6 @@ class AvalonMongoDB:
 
     @property
     def mongo_client(self):
-        from openpype.lib import OpenPypeMongoConnection
-
         return OpenPypeMongoConnection.get_mongo_client()
 
     @property

@@ -1,6 +1,11 @@
-from Qt import QtWidgets
+import re
+
+from qtpy import QtWidgets
 from openpype.pipeline import create
 from openpype.hosts.photoshop import api as photoshop
+
+from openpype.lib import prepare_template_data
+from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 
 
 class CreateImage(create.LegacyCreator):
@@ -24,7 +29,8 @@ class CreateImage(create.LegacyCreator):
             if len(selection) > 1:
                 # Ask user whether to create one image or image per selected
                 # item.
-                msg_box = QtWidgets.QMessageBox()
+                active_window = QtWidgets.QApplication.activeWindow()
+                msg_box = QtWidgets.QMessageBox(parent=active_window)
                 msg_box.setIcon(QtWidgets.QMessageBox.Warning)
                 msg_box.setText(
                     "Multiple layers selected."
@@ -75,6 +81,7 @@ class CreateImage(create.LegacyCreator):
             groups.append(group)
 
         creator_subset_name = self.data["subset"]
+        layer_name = ''
         for group in groups:
             long_names = []
             group.name = group.name.replace(stub.PUBLISH_ICON, ''). \
@@ -82,12 +89,21 @@ class CreateImage(create.LegacyCreator):
 
             subset_name = creator_subset_name
             if len(groups) > 1:
-                subset_name += group.name.title().replace(" ", "")
+                layer_name = re.sub(
+                    "[^{}]+".format(SUBSET_NAME_ALLOWED_SYMBOLS),
+                    "",
+                    group.name
+                )
+                if "{layer}" not in subset_name.lower():
+                    subset_name += "{Layer}"
+
+            layer_fill = prepare_template_data({"layer": layer_name})
+            subset_name = subset_name.format(**layer_fill)
 
             if group.long_name:
                 for directory in group.long_name[::-1]:
                     name = directory.replace(stub.PUBLISH_ICON, '').\
-                                      replace(stub.LOADED_ICON, '')
+                        replace(stub.LOADED_ICON, '')
                     long_names.append(name)
 
             self.data.update({"subset": subset_name})
@@ -98,3 +114,7 @@ class CreateImage(create.LegacyCreator):
             # reusing existing group, need to rename afterwards
             if not create_group:
                 stub.rename_layer(group.id, stub.PUBLISH_ICON + group.name)
+
+    @classmethod
+    def get_dynamic_data(cls, *args, **kwargs):
+        return {"layer": "{layer}"}

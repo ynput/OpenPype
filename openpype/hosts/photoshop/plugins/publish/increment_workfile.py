@@ -1,6 +1,6 @@
 import os
 import pyblish.api
-from openpype.action import get_errored_plugins_from_data
+from openpype.pipeline.publish import get_errored_plugins_from_context
 from openpype.lib import version_up
 
 from openpype.hosts.photoshop import api as photoshop
@@ -19,7 +19,7 @@ class IncrementWorkfile(pyblish.api.InstancePlugin):
     optional = True
 
     def process(self, instance):
-        errored_plugins = get_errored_plugins_from_data(instance.context)
+        errored_plugins = get_errored_plugins_from_context(instance.context)
         if errored_plugins:
             raise RuntimeError(
                 "Skipping incrementing current file because publishing failed."

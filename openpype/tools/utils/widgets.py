@@ -3,12 +3,36 @@ import logging
 from Qt import QtWidgets, QtCore, QtGui
 import qargparse
 import qtawesome
+
 from openpype.style import (
     get_objected_colors,
     get_style_image_path
 )
+from openpype.lib.attribute_definitions import AbtractAttrDef
 
 log = logging.getLogger(__name__)
+
+
+class CustomTextComboBox(QtWidgets.QComboBox):
+    """Combobox which can have different text showed."""
+
+    def __init__(self, *args, **kwargs):
+        self._custom_text = None
+        super(CustomTextComboBox, self).__init__(*args, **kwargs)
+
+    def set_custom_text(self, text=None):
+        if self._custom_text != text:
+            self._custom_text = text
+            self.repaint()
+
+    def paintEvent(self, event):
+        painter = QtWidgets.QStylePainter(self)
+        option = QtWidgets.QStyleOptionComboBox()
+        self.initStyleOption(option)
+        if self._custom_text is not None:
+            option.currentText = self._custom_text
+        painter.drawComplexControl(QtWidgets.QStyle.CC_ComboBox, option)
+        painter.drawControl(QtWidgets.QStyle.CE_ComboBoxLabel, option)
 
 
 class PlaceholderLineEdit(QtWidgets.QLineEdit):
@@ -18,7 +42,7 @@ class PlaceholderLineEdit(QtWidgets.QLineEdit):
         # Change placeholder palette color
         if hasattr(QtGui.QPalette, "PlaceholderText"):
             filter_palette = self.palette()
-            color_obj = get_objected_colors()["font"]
+            color_obj = get_objected_colors("font")
             color = color_obj.get_qcolor()
             color.setAlpha(67)
             filter_palette.setColor(
@@ -230,6 +254,90 @@ class PixmapLabel(QtWidgets.QLabel):
         super(PixmapLabel, self).resizeEvent(event)
 
 
+class PixmapButtonPainter(QtWidgets.QWidget):
+    def __init__(self, pixmap, parent):
+        super(PixmapButtonPainter, self).__init__(parent)
+
+        self._pixmap = pixmap
+        self._cached_pixmap = None
+
+    def set_pixmap(self, pixmap):
+        self._pixmap = pixmap
+        self._cached_pixmap = None
+
+        self.repaint()
+
+    def _cache_pixmap(self):
+        size = self.size()
+        self._cached_pixmap = self._pixmap.scaled(
+            size.width(),
+            size.height(),
+            QtCore.Qt.KeepAspectRatio,
+            QtCore.Qt.SmoothTransformation
+        )
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter()
+        painter.begin(self)
+        if self._pixmap is None:
+            painter.end()
+            return
+
+        painter.setRenderHints(
+            painter.Antialiasing
+            | painter.SmoothPixmapTransform
+            | painter.HighQualityAntialiasing
+        )
+        if self._cached_pixmap is None:
+            self._cache_pixmap()
+
+        painter.drawPixmap(0, 0, self._cached_pixmap)
+
+        painter.end()
+
+
+class PixmapButton(ClickableFrame):
+    def __init__(self, pixmap=None, parent=None):
+        super(PixmapButton, self).__init__(parent)
+
+        button_painter = PixmapButtonPainter(pixmap, self)
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(2, 2, 2, 2)
+
+        self._button_painter = button_painter
+
+    def setContentsMargins(self, *args):
+        layout = self.layout()
+        layout.setContentsMargins(*args)
+        self._update_painter_geo()
+
+    def set_pixmap(self, pixmap):
+        self._button_painter.set_pixmap(pixmap)
+
+    def sizeHint(self):
+        font_height = self.fontMetrics().height()
+        return QtCore.QSize(font_height, font_height)
+
+    def resizeEvent(self, event):
+        super(PixmapButton, self).resizeEvent(event)
+        self._update_painter_geo()
+
+    def showEvent(self, event):
+        super(PixmapButton, self).showEvent(event)
+        self._update_painter_geo()
+
+    def _update_painter_geo(self):
+        size = self.size()
+        layout = self.layout()
+        left, top, right, bottom = layout.getContentsMargins()
+        self._button_painter.setGeometry(
+            left,
+            top,
+            size.width() - (left + right),
+            size.height() - (top + bottom)
+        )
+
+
 class OptionalMenu(QtWidgets.QMenu):
     """A subclass of `QtWidgets.QMenu` to work with `OptionalAction`
 
@@ -295,8 +403,26 @@ class OptionalAction(QtWidgets.QWidgetAction):
 
     def set_option_tip(self, options):
         sep = "\n\n"
-        mak = (lambda opt: opt["name"] + " :\n    " + opt["help"])
-        self.option_tip = sep.join(mak(opt) for opt in options)
+        if not options or not isinstance(options[0], AbtractAttrDef):
+            mak = (lambda opt: opt["name"] + " :\n    " + opt["help"])
+            self.option_tip = sep.join(mak(opt) for opt in options)
+            return
+
+        option_items = []
+        for option in options:
+            option_lines = []
+            if option.label:
+                option_lines.append(
+                    "{} ({}) :".format(option.label, option.key)
+                )
+            else:
+                option_lines.append("{} :".format(option.key))
+
+            if option.tooltip:
+                option_lines.append("    - {}".format(option.tooltip))
+            option_items.append("\n".join(option_lines))
+
+        self.option_tip = sep.join(option_items)
 
     def on_option(self):
         self.optioned = True
@@ -426,3 +552,57 @@ class OptionDialog(QtWidgets.QDialog):
 
     def parse(self):
         return self._options.copy()
+
+
+class SeparatorWidget(QtWidgets.QFrame):
+    """Prepared widget that can be used as separator with predefined color.
+
+    Args:
+        size (int): Size of separator (width or height).
+        orientation (Qt.Horizontal|Qt.Vertical): Orintation of widget.
+        parent (QtWidgets.QWidget): Parent widget.
+    """
+
+    def __init__(self, size=2, orientation=QtCore.Qt.Horizontal, parent=None):
+        super(SeparatorWidget, self).__init__(parent)
+
+        self.setObjectName("Separator")
+
+        maximum_width = self.maximumWidth()
+        maximum_height = self.maximumHeight()
+
+        self._size = None
+        self._orientation = orientation
+        self._maximum_width = maximum_width
+        self._maximum_height = maximum_height
+        self.set_size(size)
+
+    def set_size(self, size):
+        if size != self._size:
+            self._set_size(size)
+
+    def _set_size(self, size):
+        if self._orientation == QtCore.Qt.Vertical:
+            self.setMinimumWidth(size)
+            self.setMaximumWidth(size)
+        else:
+            self.setMinimumHeight(size)
+            self.setMaximumHeight(size)
+
+        self._size = size
+
+    def set_orientation(self, orientation):
+        if self._orientation == orientation:
+            return
+
+        # Reset min/max sizes in opossite direction
+        if self._orientation == QtCore.Qt.Vertical:
+            self.setMinimumHeight(0)
+            self.setMaximumHeight(self._maximum_height)
+        else:
+            self.setMinimumWidth(0)
+            self.setMaximumWidth(self._maximum_width)
+
+        self._orientation = orientation
+
+        self._set_size(self._size)

@@ -152,7 +152,7 @@ build_exe_options = dict(
 )
 
 bdist_mac_options = dict(
-    bundle_name="OpenPype",
+    bundle_name=f"OpenPype {__version__}",
     iconfile=mac_icon_path
 )
 

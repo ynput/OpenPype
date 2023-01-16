@@ -6,23 +6,31 @@ import copy
 import Qt
 from Qt import QtWidgets, QtCore
 
+from openpype.host import IWorkfileHost
 from openpype.client import get_asset_by_id
+from openpype.pipeline.workfile.lock_workfile import (
+    is_workfile_locked,
+    is_workfile_lock_enabled,
+    is_workfile_locked_for_current_process
+)
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.delegates import PrettyTimeDelegate
-from openpype.lib import (
-    emit_event,
-    Anatomy,
-    get_workfile_template_key,
-    create_workdir_extra_folders,
-)
-from openpype.lib.avalon_context import (
-    update_current_task,
-    compute_session_changes
-)
+from openpype.lib import emit_event
+from openpype.tools.workfiles.lock_dialog import WorkfileLockDialog
 from openpype.pipeline import (
     registered_host,
     legacy_io,
+    Anatomy,
 )
+from openpype.pipeline.context_tools import (
+    compute_session_changes,
+    change_current_context
+)
+from openpype.pipeline.workfile import (
+    get_workfile_template_key,
+    create_workdir_extra_folders,
+)
+
 from .model import (
     WorkAreaFilesModel,
     PublishFilesModel,
@@ -125,7 +133,7 @@ class FilesWidget(QtWidgets.QWidget):
         filter_layout.addWidget(published_checkbox, 0)
 
         # Create the Files models
-        extensions = set(self.host.file_extensions())
+        extensions = set(self._get_host_extensions())
 
         views_widget = QtWidgets.QWidget(self)
         # --- Workarea view ---
@@ -406,8 +414,8 @@ class FilesWidget(QtWidgets.QWidget):
         )
         changes = compute_session_changes(
             session,
-            asset=self._get_asset_doc(),
-            task=self._task_name,
+            self._get_asset_doc(),
+            self._task_name,
             template_key=self.template_key
         )
         session.update(changes)
@@ -420,8 +428,8 @@ class FilesWidget(QtWidgets.QWidget):
         session = legacy_io.Session.copy()
         changes = compute_session_changes(
             session,
-            asset=self._get_asset_doc(),
-            task=self._task_name,
+            self._get_asset_doc(),
+            self._task_name,
             template_key=self.template_key
         )
         if not changes:
@@ -429,9 +437,9 @@ class FilesWidget(QtWidgets.QWidget):
             # to avoid any unwanted Task Changed callbacks to be triggered.
             return
 
-        update_current_task(
-            asset=self._get_asset_doc(),
-            task=self._task_name,
+        change_current_context(
+            self._get_asset_doc(),
+            self._task_name,
             template_key=self.template_key
         )
 
@@ -450,9 +458,25 @@ class FilesWidget(QtWidgets.QWidget):
             "host_name": self.host_name
         }
 
+    def _is_workfile_locked(self, filepath):
+        if not is_workfile_lock_enabled(self.host_name, self.project_name):
+            return False
+        if not is_workfile_locked(filepath):
+            return False
+        return not is_workfile_locked_for_current_process(filepath)
+
     def open_file(self, filepath):
         host = self.host
-        if host.has_unsaved_changes():
+        if self._is_workfile_locked(filepath):
+            # add lockfile dialog
+            WorkfileLockDialog(filepath)
+
+        if isinstance(host, IWorkfileHost):
+            has_unsaved_changes = host.workfile_has_unsaved_changes()
+        else:
+            has_unsaved_changes = host.has_unsaved_changes()
+
+        if has_unsaved_changes:
             result = self.save_changes_prompt()
             if result is None:
                 # Cancel operation
@@ -460,7 +484,10 @@ class FilesWidget(QtWidgets.QWidget):
 
             # Save first if has changes
             if result:
-                current_file = host.current_file()
+                if isinstance(host, IWorkfileHost):
+                    current_file = host.get_current_workfile()
+                else:
+                    current_file = host.current_file()
                 if not current_file:
                     # If the user requested to save the current scene
                     # we can't actually automatically do so if the current
@@ -471,7 +498,10 @@ class FilesWidget(QtWidgets.QWidget):
                     return
 
                 # Save current scene, continue to open file
-                host.save_file(current_file)
+                if isinstance(host, IWorkfileHost):
+                    host.save_workfile(current_file)
+                else:
+                    host.save_file(current_file)
 
         event_data_before = self._get_event_context_data()
         event_data_before["filepath"] = filepath
@@ -482,7 +512,10 @@ class FilesWidget(QtWidgets.QWidget):
             source="workfiles.tool"
         )
         self._enter_session()
-        host.open_file(filepath)
+        if isinstance(host, IWorkfileHost):
+            host.open_workfile(filepath)
+        else:
+            host.open_file(filepath)
         emit_event(
             "workfile.open.after",
             event_data_after,
@@ -524,7 +557,7 @@ class FilesWidget(QtWidgets.QWidget):
             filepath = self._get_selected_filepath()
             extensions = [os.path.splitext(filepath)[1]]
         else:
-            extensions = self.host.file_extensions()
+            extensions = self._get_host_extensions()
 
         window = SaveAsDialog(
             parent=self,
@@ -545,7 +578,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         src = self._get_selected_filepath()
         dst = os.path.join(self._workfiles_root, work_file)
-        shutil.copy(src, dst)
+        shutil.copyfile(src, dst)
 
         self.workfile_created.emit(dst)
 
@@ -572,9 +605,14 @@ class FilesWidget(QtWidgets.QWidget):
 
         self.open_file(path)
 
+    def _get_host_extensions(self):
+        if isinstance(self.host, IWorkfileHost):
+            return self.host.get_workfile_extensions()
+        return self.host.file_extensions()
+
     def on_browse_pressed(self):
         ext_filter = "Work File (*{0})".format(
-            " *".join(self.host.file_extensions())
+            " *".join(self._get_host_extensions())
         )
         kwargs = {
             "caption": "Work Files",
@@ -632,10 +670,16 @@ class FilesWidget(QtWidgets.QWidget):
         self._enter_session()
 
         if not self.published_enabled:
-            self.host.save_file(filepath)
+            if isinstance(self.host, IWorkfileHost):
+                self.host.save_workfile(filepath)
+            else:
+                self.host.save_file(filepath)
         else:
-            shutil.copy(src_path, filepath)
-            self.host.open_file(filepath)
+            shutil.copyfile(src_path, filepath)
+            if isinstance(self.host, IWorkfileHost):
+                self.host.open_workfile(filepath)
+            else:
+                self.host.open_file(filepath)
 
         # Create extra folders
         create_workdir_extra_folders(

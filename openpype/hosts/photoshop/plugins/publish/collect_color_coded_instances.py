@@ -9,13 +9,21 @@ from openpype.settings import get_project_settings
 
 
 class CollectColorCodedInstances(pyblish.api.ContextPlugin):
-    """Creates instances for configured color code of a layer.
+    """Creates instances for layers marked by configurable color.
 
     Used in remote publishing when artists marks publishable layers by color-
-    coding.
+    coding. Top level layers (group) must be marked by specific color to be
+    published as an instance of 'image' family.
 
     Can add group for all publishable layers to allow creation of flattened
     image. (Cannot contain special background layer as it cannot be grouped!)
+
+    Based on value `create_flatten_image` from Settings:
+    - "yes": create flattened 'image' subset of all publishable layers + create
+        'image' subset per publishable layer
+    - "only": create ONLY flattened 'image' subset of all publishable layers
+    - "no": do not create flattened 'image' subset at all,
+        only separate subsets per marked layer.
 
     Identifier:
         id (str): "pyblish.avalon.instance"
@@ -32,8 +40,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
     # TODO check if could be set globally, probably doesn't make sense when
     # flattened template cannot
     subset_template_name = ""
-    create_flatten_image = False
-    # probably not possible to configure this globally
+    create_flatten_image = "no"
     flatten_subset_template = ""
 
     def process(self, context):
@@ -62,6 +69,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
 
         publishable_layers = []
         created_instances = []
+        family_from_settings = None
         for layer in layers:
             self.log.debug("Layer:: {}".format(layer))
             if layer.parents:
@@ -79,6 +87,9 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
             if not resolved_subset_template or not resolved_family:
                 self.log.debug("!!! Not found family or template, skip")
                 continue
+
+            if not family_from_settings:
+                family_from_settings = resolved_family
 
             fill_pairs = {
                 "variant": variant,
@@ -98,13 +109,16 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
                     "Subset {} already created, skipping.".format(subset))
                 continue
 
-            instance = self._create_instance(context, layer, resolved_family,
-                                             asset_name, subset, task_name)
+            if self.create_flatten_image != "flatten_only":
+                instance = self._create_instance(context, layer,
+                                                 resolved_family,
+                                                 asset_name, subset, task_name)
+                created_instances.append(instance)
+
             existing_subset_names.append(subset)
             publishable_layers.append(layer)
-            created_instances.append(instance)
 
-        if self.create_flatten_image and publishable_layers:
+        if self.create_flatten_image != "no" and publishable_layers:
             self.log.debug("create_flatten_image")
             if not self.flatten_subset_template:
                 self.log.warning("No template for flatten image")
@@ -116,7 +130,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
 
             first_layer = publishable_layers[0]  # dummy layer
             first_layer.name = subset
-            family = created_instances[0].data["family"]  # inherit family
+            family = family_from_settings  # inherit family
             instance = self._create_instance(context, first_layer,
                                              family,
                                              asset_name, subset, task_name)

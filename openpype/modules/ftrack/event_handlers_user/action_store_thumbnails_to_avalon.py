@@ -14,8 +14,7 @@ from openpype.client import (
     get_representations
 )
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
-from openpype.api import Anatomy
-from openpype.pipeline import AvalonMongoDB
+from openpype.pipeline import AvalonMongoDB, Anatomy
 
 from openpype_modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
 

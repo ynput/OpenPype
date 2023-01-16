@@ -1,5 +1,5 @@
 import pyblish
-import openpype
+from openpype.pipeline.editorial import is_overlapping_otio_ranges
 from openpype.hosts.hiero import api as phiero
 from openpype.hosts.hiero.api.otio import hiero_export
 import hiero
@@ -48,7 +48,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             self.log.debug("clip_name: {}".format(clip_name))
 
             # get openpype tag data
-            tag_data = phiero.get_track_item_pype_data(track_item)
+            tag_data = phiero.get_trackitem_openpype_data(track_item)
             self.log.debug("__ tag_data: {}".format(pformat(tag_data)))
 
             if not tag_data:
@@ -109,7 +109,8 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 "clipAnnotations": annotations,
 
                 # add all additional tags
-                "tags": phiero.get_track_item_tags(track_item)
+                "tags": phiero.get_track_item_tags(track_item),
+                "newAssetPublishing": True
             })
 
             # otio clip data
@@ -275,7 +276,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             parent_range = otio_audio.range_in_parent()
 
             # if any overaling clip found then return True
-            if openpype.lib.is_overlapping_otio_ranges(
+            if is_overlapping_otio_ranges(
                     parent_range, timeline_range, strict=False):
                 return True
 
@@ -304,7 +305,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 continue
             self.log.debug("__ parent_range: {}".format(parent_range))
             self.log.debug("__ timeline_range: {}".format(timeline_range))
-            if openpype.lib.is_overlapping_otio_ranges(
+            if is_overlapping_otio_ranges(
                     parent_range, timeline_range, strict=True):
 
                 # add pypedata marker to otio_clip metadata
@@ -317,17 +318,15 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
     @staticmethod
     def create_otio_time_range_from_timeline_item_data(track_item):
-        speed = track_item.playbackSpeed()
         timeline = phiero.get_current_sequence()
         frame_start = int(track_item.timelineIn())
-        frame_duration = int((track_item.duration() - 1) / speed)
+        frame_duration = int(track_item.duration())
         fps = timeline.framerate().toFloat()
 
         return hiero_export.create_otio_time_range(
             frame_start, frame_duration, fps)
 
-    @staticmethod
-    def collect_sub_track_items(tracks):
+    def collect_sub_track_items(self, tracks):
         """
         Returns dictionary with track index as key and list of subtracks
         """
@@ -336,8 +335,10 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         for track in tracks:
             items = track.items()
 
+            effet_items = track.subTrackItems()
+
             # skip if no clips on track > need track with effect only
-            if items:
+            if not effet_items:
                 continue
 
             # skip all disabled tracks
@@ -345,10 +346,11 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 continue
 
             track_index = track.trackIndex()
-            _sub_track_items = phiero.flatten(track.subTrackItems())
+            _sub_track_items = phiero.flatten(effet_items)
 
+            _sub_track_items = list(_sub_track_items)
             # continue only if any subtrack items are collected
-            if not list(_sub_track_items):
+            if not _sub_track_items:
                 continue
 
             enabled_sti = []

@@ -5,7 +5,12 @@ from bson.objectid import ObjectId
 
 from aiohttp.web_response import Response
 
-from openpype.pipeline import AvalonMongoDB
+from openpype.client import (
+    get_projects,
+    get_project,
+    get_assets,
+    get_asset_by_name,
+)
 from openpype_modules.webserver.base_routes import RestApiEndpoint
 
 
@@ -14,19 +19,13 @@ class _RestApiEndpoint(RestApiEndpoint):
         self.resource = resource
         super(_RestApiEndpoint, self).__init__()
 
-    @property
-    def dbcon(self):
-        return self.resource.dbcon
-
 
 class AvalonProjectsEndpoint(_RestApiEndpoint):
     async def get(self) -> Response:
-        output = []
-        for project_name in self.dbcon.database.collection_names():
-            project_doc = self.dbcon.database[project_name].find_one({
-                "type": "project"
-            })
-            output.append(project_doc)
+        output = [
+            project_doc
+            for project_doc in get_projects()
+        ]
         return Response(
             status=200,
             body=self.resource.encode(output),
@@ -36,9 +35,7 @@ class AvalonProjectsEndpoint(_RestApiEndpoint):
 
 class AvalonProjectEndpoint(_RestApiEndpoint):
     async def get(self, project_name) -> Response:
-        project_doc = self.dbcon.database[project_name].find_one({
-            "type": "project"
-        })
+        project_doc = get_project(project_name)
         if project_doc:
             return Response(
                 status=200,
@@ -53,9 +50,7 @@ class AvalonProjectEndpoint(_RestApiEndpoint):
 
 class AvalonAssetsEndpoint(_RestApiEndpoint):
     async def get(self, project_name) -> Response:
-        asset_docs = list(self.dbcon.database[project_name].find({
-            "type": "asset"
-        }))
+        asset_docs = list(get_assets(project_name))
         return Response(
             status=200,
             body=self.resource.encode(asset_docs),
@@ -65,10 +60,7 @@ class AvalonAssetsEndpoint(_RestApiEndpoint):
 
 class AvalonAssetEndpoint(_RestApiEndpoint):
     async def get(self, project_name, asset_name) -> Response:
-        asset_doc = self.dbcon.database[project_name].find_one({
-            "type": "asset",
-            "name": asset_name
-        })
+        asset_doc = get_asset_by_name(project_name, asset_name)
         if asset_doc:
             return Response(
                 status=200,
@@ -87,9 +79,6 @@ class AvalonRestApiResource:
     def __init__(self, avalon_module, server_manager):
         self.module = avalon_module
         self.server_manager = server_manager
-
-        self.dbcon = AvalonMongoDB()
-        self.dbcon.install()
 
         self.prefix = "/avalon"
 

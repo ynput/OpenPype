@@ -4,6 +4,8 @@ import signal
 import socket
 import datetime
 
+import ftrack_api
+
 from openpype_modules.ftrack.ftrack_server.ftrack_server import FtrackServer
 from openpype_modules.ftrack.ftrack_server.lib import (
     SocketSession,
@@ -12,16 +14,11 @@ from openpype_modules.ftrack.ftrack_server.lib import (
 )
 from openpype.modules import ModulesManager
 
-from openpype.api import Logger
 from openpype.lib import (
+    Logger,
     get_openpype_version,
     get_build_version
 )
-
-
-import ftrack_api
-
-log = Logger().get_logger("Event processor")
 
 subprocess_started = datetime.datetime.now()
 
@@ -68,6 +65,8 @@ def register(session):
 
 
 def main(args):
+    log = Logger.get_logger("Event processor")
+
     port = int(args[-1])
     # Create a TCP/IP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

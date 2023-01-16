@@ -2,13 +2,11 @@
 import sys
 import os
 
-from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
-
-from .pipeline import get_current_comp
+from .lib import get_current_comp
 
 
 def file_extensions():
-    return HOST_WORKFILE_EXTENSIONS["fusion"]
+    return [".comp"]
 
 
 def has_unsaved_changes():

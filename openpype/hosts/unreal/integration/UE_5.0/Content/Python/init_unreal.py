@@ -3,7 +3,9 @@ import unreal
 openpype_detected = True
 try:
     from openpype.pipeline import install_host
-    from openpype.hosts.unreal import api as openpype_host
+    from openpype.hosts.unreal.api import UnrealHost
+
+    openpype_host = UnrealHost()
 except ImportError as exc:
     openpype_host = None
     openpype_detected = False

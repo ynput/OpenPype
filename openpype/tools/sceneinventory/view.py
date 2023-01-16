@@ -551,16 +551,16 @@ class SceneInventoryView(QtWidgets.QTreeView):
             "toggle": selection_model.Toggle,
         }[options.get("mode", "select")]
 
-        for item in iter_model_rows(model, 0):
-            item = item.data(InventoryModel.ItemRole)
+        for index in iter_model_rows(model, 0):
+            item = index.data(InventoryModel.ItemRole)
             if item.get("isGroupNode"):
                 continue
 
             name = item.get("objectName")
             if name in object_names:
-                self.scrollTo(item)  # Ensure item is visible
+                self.scrollTo(index)  # Ensure item is visible
                 flags = select_mode | selection_model.Rows
-                selection_model.select(item, flags)
+                selection_model.select(index, flags)
 
                 object_names.remove(name)
 

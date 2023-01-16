@@ -1,6 +1,6 @@
 import re
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from openpype.client import (
     get_asset_by_name,
@@ -8,10 +8,12 @@ from openpype.client import (
     get_subsets,
     get_last_version_by_subset_id,
 )
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 from openpype.pipeline import LegacyCreator
-from openpype.lib import TaskNotSetError
-from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
+from openpype.pipeline.create import (
+    SUBSET_NAME_ALLOWED_SYMBOLS,
+    TaskNotSetError,
+)
 
 from . import HelpRole, FamilyRole, ExistsRole, PluginRole, PluginKeyRole
 from . import FamilyDescriptionWidget
@@ -184,19 +186,11 @@ class FamilyWidget(QtWidgets.QWidget):
         if item is None:
             return
 
-        asset_doc = None
-        if asset_name != self.NOT_SELECTED:
-            # Get the assets from the database which match with the name
-            project_name = self.dbcon.active_project()
-            asset_doc = get_asset_by_name(
-                project_name, asset_name, fields=["_id"]
-            )
-
-        # Get plugin and family
-        plugin = item.data(PluginRole)
-
         # Early exit if no asset name
-        if not asset_name.strip():
+        if (
+            asset_name == self.NOT_SELECTED
+            or not asset_name.strip()
+        ):
             self._build_menu([])
             item.setData(ExistsRole, False)
             print("Asset name is required ..")
@@ -208,8 +202,10 @@ class FamilyWidget(QtWidgets.QWidget):
         asset_doc = get_asset_by_name(
             project_name, asset_name, fields=["_id"]
         )
+
         # Get plugin
         plugin = item.data(PluginRole)
+
         if asset_doc and plugin:
             asset_id = asset_doc["_id"]
             task_name = self.dbcon.Session["AVALON_TASK"]

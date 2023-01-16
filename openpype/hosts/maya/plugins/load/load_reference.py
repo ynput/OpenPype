@@ -1,11 +1,11 @@
 import os
 from maya import cmds
 
-from openpype.api import get_project_settings
-from openpype.lib import get_creator_by_name
-from openpype.pipeline import (
-    legacy_io,
+from openpype.settings import get_project_settings
+from openpype.pipeline import legacy_io
+from openpype.pipeline.create import (
     legacy_create,
+    get_legacy_creator_by_name,
 )
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api.lib import maintained_selection
@@ -16,6 +16,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
     families = ["model",
                 "pointcache",
+                "proxyAbc",
                 "animation",
                 "mayaAscii",
                 "mayaScene",
@@ -25,7 +26,8 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 "rig",
                 "camerarig",
                 "xgen",
-                "staticMesh"]
+                "staticMesh",
+                "mvLook"]
     representations = ["ma", "abc", "fbx", "mb"]
 
     label = "Reference"
@@ -52,7 +54,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
             file_url = self.prepare_root_value(self.fname,
-                                               context["project"]["code"])
+                                               context["project"]["name"])
             nodes = cmds.file(file_url,
                               namespace=namespace,
                               sharedReferenceFile=False,
@@ -153,7 +155,9 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         self.log.info("Creating subset: {}".format(namespace))
 
         # Create the animation instance
-        creator_plugin = get_creator_by_name(self.animation_creator_name)
+        creator_plugin = get_legacy_creator_by_name(
+            self.animation_creator_name
+        )
         with maintained_selection():
             cmds.select([output, controls] + roots, noExpand=True)
             legacy_create(

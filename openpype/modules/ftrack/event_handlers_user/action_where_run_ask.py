@@ -3,6 +3,7 @@ import socket
 import getpass
 
 from openpype_modules.ftrack.lib import BaseAction
+from openpype_modules.ftrack.ftrack_server.lib import get_host_ip
 
 
 class ActionWhereIRun(BaseAction):
@@ -53,8 +54,7 @@ class ActionWhereIRun(BaseAction):
         try:
             host_name = socket.gethostname()
             msgs["Hostname"] = host_name
-            host_ip = socket.gethostbyname(host_name)
-            msgs["IP"] = host_ip
+            msgs["IP"] = get_host_ip() or "N/A"
         except Exception:
             pass
 

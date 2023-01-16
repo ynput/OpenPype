@@ -1,11 +1,14 @@
 import os
 
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline import publish
 from openpype.hosts.houdini.api.lib import render_rop
 
+import hou
 
-class ExtractVDBCache(openpype.api.Extractor):
+
+class ExtractVDBCache(publish.Extractor):
 
     order = pyblish.api.ExtractorOrder + 0.1
     label = "Extract VDB Cache"
@@ -14,7 +17,7 @@ class ExtractVDBCache(openpype.api.Extractor):
 
     def process(self, instance):
 
-        ropnode = instance[0]
+        ropnode = hou.node(instance.data["instance_node"])
 
         # Get the filename from the filename parameter
         # `.evalParm(parameter)` will make sure all tokens are resolved

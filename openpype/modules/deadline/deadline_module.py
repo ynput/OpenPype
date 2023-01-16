@@ -3,9 +3,8 @@ import requests
 import six
 import sys
 
-from openpype.lib import requests_get, PypeLogger
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import IPluginPaths
+from openpype.lib import requests_get, Logger
+from openpype.modules import OpenPypeModule, IPluginPaths
 
 
 class DeadlineWebserviceError(Exception):
@@ -58,7 +57,7 @@ class DeadlineModule(OpenPypeModule, IPluginPaths):
 
         """
         if not log:
-            log = PypeLogger.get_logger(__name__)
+            log = Logger.get_logger(__name__)
 
         argument = "{}/api/pools?NamesOnly=true".format(webservice)
         try:

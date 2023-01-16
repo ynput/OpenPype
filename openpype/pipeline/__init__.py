@@ -6,6 +6,7 @@ from .constants import (
 from .mongodb import (
     AvalonMongoDB,
 )
+from .anatomy import Anatomy
 
 from .create import (
     BaseCreator,
@@ -84,6 +85,7 @@ from .context_tools import (
     register_host,
     registered_host,
     deregister_host,
+    get_process_id,
 )
 install = install_host
 uninstall = uninstall_host
@@ -95,6 +97,9 @@ __all__ = (
 
     # --- MongoDB ---
     "AvalonMongoDB",
+
+    # --- Anatomy ---
+    "Anatomy",
 
     # --- Create ---
     "BaseCreator",

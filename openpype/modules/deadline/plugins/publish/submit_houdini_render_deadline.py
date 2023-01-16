@@ -101,6 +101,7 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
             # this application with so the Render Slave can build its own
             # similar environment using it, e.g. "maya2018;vray4.x;yeti3.1.9"
             "AVALON_TOOLS",
+            "OPENPYPE_VERSION"
         ]
         # Add mongo url if it's enabled
         if context.data.get("deadlinePassMongoUrl"):

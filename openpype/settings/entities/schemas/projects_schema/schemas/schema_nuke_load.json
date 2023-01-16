@@ -11,10 +11,52 @@
                 {
                     "key": "LoadImage",
                     "label": "Image Loader"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "LoadClip",
+            "label": "Clip Loader",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
                 },
                 {
-                    "key": "LoadClip",
-                    "label": "Clip Loader"
+                    "type": "list",
+                    "key": "_representations",
+                    "label": "Representations",
+                    "object_type": "text"
+                },
+                {
+                    "type": "text",
+                    "key": "node_name_template",
+                    "label": "Node name template"
+                },
+                {
+                    "type": "splitter"
+                },
+                {
+                    "type": "dict",
+                    "collapsible": false,
+                    "key": "options_defaults",
+                    "label": "Loader option defaults",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "start_at_workfile",
+                            "label": "Start at worfile beggining"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "add_retime",
+                            "label": "Add retime"
+                        }
+                    ]
                 }
             ]
         }

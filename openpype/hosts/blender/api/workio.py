@@ -5,8 +5,6 @@ from typing import List, Optional
 
 import bpy
 
-from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
-
 
 class OpenFileCacher:
     """Store information about opening file.
@@ -78,7 +76,7 @@ def has_unsaved_changes() -> bool:
 def file_extensions() -> List[str]:
     """Return the supported file extensions for Blender scene files."""
 
-    return HOST_WORKFILE_EXTENSIONS["blender"]
+    return [".blend"]
 
 
 def work_root(session: dict) -> str:

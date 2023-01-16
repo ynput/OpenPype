@@ -2,6 +2,8 @@
 import os
 import logging
 from typing import List
+from contextlib import contextmanager
+import semver
 
 import pyblish.api
 
@@ -14,12 +16,16 @@ from openpype.pipeline import (
 )
 from openpype.tools.utils import host_tools
 import openpype.hosts.unreal
+from openpype.host import HostBase, ILoadHost
 
 import unreal  # noqa
 
 
 logger = logging.getLogger("openpype.hosts.unreal")
 OPENPYPE_CONTAINERS = "OpenPypeContainers"
+UNREAL_VERSION = semver.VersionInfo(
+    *os.getenv("OPENPYPE_UNREAL_VERSION").split(".")
+)
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.unreal.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
@@ -27,6 +33,32 @@ PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
+
+
+class UnrealHost(HostBase, ILoadHost):
+    """Unreal host implementation.
+
+    For some time this class will re-use functions from module based
+    implementation for backwards compatibility of older unreal projects.
+    """
+
+    name = "unreal"
+
+    def install(self):
+        install()
+
+    def get_containers(self):
+        return ls()
+
+    def show_tools_popup(self):
+        """Show tools popup with actions leading to show other tools."""
+
+        show_tools_popup()
+
+    def show_tools_dialog(self):
+        """Show tools dialog with actions leading to show other tools."""
+
+        show_tools_dialog()
 
 
 def install():
@@ -84,7 +116,9 @@ def ls():
 
     """
     ar = unreal.AssetRegistryHelpers.get_asset_registry()
-    openpype_containers = ar.get_assets_by_class("AssetContainer", True)
+    # UE 5.1 changed how class name is specified
+    class_name = ["/Script/OpenPype", "AssetContainer"] if UNREAL_VERSION.major == 5 and UNREAL_VERSION.minor > 0 else "AssetContainer"  # noqa
+    openpype_containers = ar.get_assets_by_class(class_name, True)
 
     # get_asset_by_class returns AssetData. To get all metadata we need to
     # load asset. get_tag_values() work only on metadata registered in
@@ -414,3 +448,16 @@ def get_subsequences(sequence: unreal.LevelSequence):
     if subscene_track is not None and subscene_track.get_sections():
         return subscene_track.get_sections()
     return []
+
+
+@contextmanager
+def maintained_selection():
+    """Stub to be either implemented or replaced.
+
+    This is needed for old publisher implementation, but
+    it is not supported (yet) in UE.
+    """
+    try:
+        yield
+    finally:
+        pass

@@ -7,7 +7,7 @@ import contextlib
 
 from maya import cmds
 
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
 
 
@@ -90,7 +90,7 @@ def yetigraph_attribute_values(assumed_destination, resources):
                 pass
 
 
-class ExtractYetiRig(openpype.api.Extractor):
+class ExtractYetiRig(publish.Extractor):
     """Extract the Yeti rig to a Maya Scene and write the Yeti rig data."""
 
     label = "Extract Yeti Rig"

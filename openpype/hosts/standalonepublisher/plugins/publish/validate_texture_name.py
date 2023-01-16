@@ -1,14 +1,16 @@
 import pyblish.api
 
-import openpype.api
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishXmlValidationError,
+)
 
 class ValidateTextureBatchNaming(pyblish.api.InstancePlugin):
     """Validates that all instances had properly formatted name."""
 
     label = "Validate Texture Batch Naming"
     hosts = ["standalonepublisher"]
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     families = ["texture_batch_workfile", "textures"]
     optional = False
 

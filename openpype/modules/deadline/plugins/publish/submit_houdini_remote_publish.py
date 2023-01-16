@@ -55,7 +55,7 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
         scenename = os.path.basename(scene)
 
         # Get project code
-        project = legacy_io.find_one({"type": "project"})
+        project = context.data["projectEntity"]
         code = project["data"].get("code", project["name"])
 
         job_name = "{scene} [PUBLISH]".format(scene=scenename)
@@ -130,6 +130,7 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
             # this application with so the Render Slave can build its own
             # similar environment using it, e.g. "houdini17.5;pluginx2.3"
             "AVALON_TOOLS",
+            "OPENPYPE_VERSION"
         ]
         # Add mongo url if it's enabled
         if context.data.get("deadlinePassMongoUrl"):

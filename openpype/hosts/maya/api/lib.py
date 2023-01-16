@@ -23,8 +23,7 @@ from openpype.client import (
     get_last_versions,
     get_representation_by_name
 )
-from openpype import lib
-from openpype.api import get_anatomy_settings
+from openpype.settings import get_project_settings
 from openpype.pipeline import (
     legacy_io,
     discover_loader_plugins,
@@ -33,6 +32,7 @@ from openpype.pipeline import (
     load_container,
     registered_host,
 )
+from openpype.pipeline.context_tools import get_current_project_asset
 from .commands import reset_frame_range
 
 
@@ -116,7 +116,7 @@ RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
 
 def get_main_window():
     """Acquire Maya's main window"""
-    from Qt import QtWidgets
+    from qtpy import QtWidgets
 
     if self._parent is None:
         self._parent = {
@@ -127,14 +127,19 @@ def get_main_window():
 
 
 @contextlib.contextmanager
-def suspended_refresh():
-    """Suspend viewport refreshes"""
+def suspended_refresh(suspend=True):
+    """Suspend viewport refreshes
 
+    cmds.ogs(pause=True) is a toggle so we cant pass False.
+    """
+    original_state = cmds.ogs(query=True, pause=True)
     try:
-        cmds.refresh(suspend=True)
+        if suspend and not original_state:
+            cmds.ogs(pause=True)
         yield
     finally:
-        cmds.refresh(suspend=False)
+        if suspend and not original_state:
+            cmds.ogs(pause=True)
 
 
 @contextlib.contextmanager
@@ -1532,7 +1537,7 @@ def get_container_members(container):
         if ref.rsplit(":", 1)[-1].startswith("_UNKNOWN_REF_NODE_"):
             continue
 
-        reference_members = cmds.referenceQuery(ref, nodes=True)
+        reference_members = cmds.referenceQuery(ref, nodes=True, dagPath=True)
         reference_members = cmds.ls(reference_members,
                                     long=True,
                                     objectsOnly=True)
@@ -1908,7 +1913,7 @@ def iter_parents(node):
     """
     while True:
         split = node.rsplit("|", 1)
-        if len(split) == 1:
+        if len(split) == 1 or not split[0]:
             return
 
         node = split[0]
@@ -2174,7 +2179,7 @@ def reset_scene_resolution():
     project_name = legacy_io.active_project()
     project_doc = get_project(project_name)
     project_data = project_doc["data"]
-    asset_data = lib.get_asset()["data"]
+    asset_data = get_current_project_asset()["data"]
 
     # Set project resolution
     width_key = "resolutionWidth"
@@ -2208,7 +2213,8 @@ def set_context_settings():
     project_name = legacy_io.active_project()
     project_doc = get_project(project_name)
     project_data = project_doc["data"]
-    asset_data = lib.get_asset()["data"]
+    asset_doc = get_current_project_asset(fields=["data.fps"])
+    asset_data = asset_doc.get("data", {})
 
     # Set project fps
     fps = asset_data.get("fps", project_data.get("fps", 25))
@@ -2233,7 +2239,7 @@ def validate_fps():
 
     """
 
-    fps = lib.get_asset()["data"]["fps"]
+    fps = get_current_project_asset(fields=["data.fps"])["data"]["fps"]
     # TODO(antirotor): This is hack as for framerates having multiple
     # decimal places. FTrack is ceiling decimal values on
     # fps to two decimal places but Maya 2019+ is reporting those fps
@@ -2458,104 +2464,119 @@ def bake_to_world_space(nodes,
 
 
 def load_capture_preset(data=None):
+    """Convert OpenPype Extract Playblast settings to `capture` arguments
+
+    Input data is the settings from:
+        `project_settings/maya/publish/ExtractPlayblast/capture_preset`
+
+    Args:
+        data (dict): Capture preset settings from OpenPype settings
+
+    Returns:
+        dict: `capture.capture` compatible keyword arguments
+
+    """
+
     import capture
 
-    preset = data
-
     options = dict()
+    viewport_options = dict()
+    viewport2_options = dict()
+    camera_options = dict()
 
-    # CODEC
-    id = 'Codec'
-    for key in preset[id]:
-        options[str(key)] = preset[id][key]
+    # Straight key-value match from settings to capture arguments
+    options.update(data["Codec"])
+    options.update(data["Generic"])
+    options.update(data["Resolution"])
 
-    # GENERIC
-    id = 'Generic'
-    for key in preset[id]:
-        options[str(key)] = preset[id][key]
-
-    # RESOLUTION
-    id = 'Resolution'
-    options['height'] = preset[id]['height']
-    options['width'] = preset[id]['width']
+    camera_options.update(data['Camera Options'])
+    viewport_options.update(data["Renderer"])
 
     # DISPLAY OPTIONS
-    id = 'Display Options'
     disp_options = {}
-    for key in preset['Display Options']:
+    for key, value in data['Display Options'].items():
         if key.startswith('background'):
-            disp_options[key] = preset['Display Options'][key]
-            if len(disp_options[key]) == 4:
-                disp_options[key][0] = (float(disp_options[key][0])/255)
-                disp_options[key][1] = (float(disp_options[key][1])/255)
-                disp_options[key][2] = (float(disp_options[key][2])/255)
-                disp_options[key].pop()
+            # Convert background, backgroundTop, backgroundBottom colors
+            if len(value) == 4:
+                # Ignore alpha + convert RGB to float
+                value = [
+                    float(value[0]) / 255,
+                    float(value[1]) / 255,
+                    float(value[2]) / 255
+                ]
+            disp_options[key] = value
         else:
             disp_options['displayGradient'] = True
 
     options['display_options'] = disp_options
 
-    # VIEWPORT OPTIONS
-    temp_options = {}
-    id = 'Renderer'
-    for key in preset[id]:
-        temp_options[str(key)] = preset[id][key]
+    # Viewport Options has a mixture of Viewport2 Options and Viewport Options
+    # to pass along to capture. So we'll need to differentiate between the two
+    VIEWPORT2_OPTIONS = {
+        "textureMaxResolution",
+        "renderDepthOfField",
+        "ssaoEnable",
+        "ssaoSamples",
+        "ssaoAmount",
+        "ssaoRadius",
+        "ssaoFilterRadius",
+        "hwFogStart",
+        "hwFogEnd",
+        "hwFogAlpha",
+        "hwFogFalloff",
+        "hwFogColorR",
+        "hwFogColorG",
+        "hwFogColorB",
+        "hwFogDensity",
+        "motionBlurEnable",
+        "motionBlurSampleCount",
+        "motionBlurShutterOpenFraction",
+        "lineAAEnable"
+    }
+    for key, value in data['Viewport Options'].items():
 
-    temp_options2 = {}
-    id = 'Viewport Options'
-    for key in preset[id]:
+        # There are some keys we want to ignore
+        if key in {"override_viewport_options", "high_quality"}:
+            continue
+
+        # First handle special cases where we do value conversion to
+        # separate option values
         if key == 'textureMaxResolution':
-            if preset[id][key] > 0:
-                temp_options2['textureMaxResolution'] = preset[id][key]
-                temp_options2['enableTextureMaxRes'] = True
-                temp_options2['textureMaxResMode'] = 1
+            viewport2_options['textureMaxResolution'] = value
+            if value > 0:
+                viewport2_options['enableTextureMaxRes'] = True
+                viewport2_options['textureMaxResMode'] = 1
             else:
-                temp_options2['textureMaxResolution'] = preset[id][key]
-                temp_options2['enableTextureMaxRes'] = False
-                temp_options2['textureMaxResMode'] = 0
+                viewport2_options['enableTextureMaxRes'] = False
+                viewport2_options['textureMaxResMode'] = 0
 
-        if key == 'multiSample':
-            if preset[id][key] > 0:
-                temp_options2['multiSampleEnable'] = True
-                temp_options2['multiSampleCount'] = preset[id][key]
-            else:
-                temp_options2['multiSampleEnable'] = False
-                temp_options2['multiSampleCount'] = preset[id][key]
+        elif key == 'multiSample':
+            viewport2_options['multiSampleEnable'] = value > 0
+            viewport2_options['multiSampleCount'] = value
 
-        if key == 'ssaoEnable':
-            if preset[id][key] is True:
-                temp_options2['ssaoEnable'] = True
-            else:
-                temp_options2['ssaoEnable'] = False
+        elif key == 'alphaCut':
+            viewport2_options['transparencyAlgorithm'] = 5
+            viewport2_options['transparencyQuality'] = 1
 
-        if key == 'alphaCut':
-            temp_options2['transparencyAlgorithm'] = 5
-            temp_options2['transparencyQuality'] = 1
+        elif key == 'hwFogFalloff':
+            # Settings enum value string to integer
+            viewport2_options['hwFogFalloff'] = int(value)
 
-        if key == 'headsUpDisplay':
-            temp_options['headsUpDisplay'] = True
+        # Then handle Viewport 2.0 Options
+        elif key in VIEWPORT2_OPTIONS:
+            viewport2_options[key] = value
 
+        # Then assume remainder is Viewport Options
         else:
-            temp_options[str(key)] = preset[id][key]
+            viewport_options[key] = value
 
-    for key in ['override_viewport_options',
-                'high_quality',
-                'alphaCut',
-                'gpuCacheDisplayFilter',
-                'multiSample',
-                'ssaoEnable',
-                'textureMaxResolution'
-                ]:
-        temp_options.pop(key, None)
-
-    options['viewport_options'] = temp_options
-    options['viewport2_options'] = temp_options2
+    options['viewport_options'] = viewport_options
+    options['viewport2_options'] = viewport2_options
+    options['camera_options'] = camera_options
 
     # use active sound track
     scene = capture.parse_active_scene()
     options['sound'] = scene['sound']
-
-    # options['display_options'] = temp_options
 
     return options
 
@@ -2974,8 +2995,9 @@ def update_content_on_context_change():
     This will update scene content to match new asset on context change
     """
     scene_sets = cmds.listSets(allSets=True)
-    new_asset = legacy_io.Session["AVALON_ASSET"]
-    new_data = lib.get_asset()["data"]
+    asset_doc = get_current_project_asset()
+    new_asset = asset_doc["name"]
+    new_data = asset_doc["data"]
     for s in scene_sets:
         try:
             if cmds.getAttr("{}.id".format(s)) == "pyblish.avalon.instance":
@@ -2996,7 +3018,7 @@ def update_content_on_context_change():
 
 
 def show_message(title, msg):
-    from Qt import QtWidgets
+    from qtpy import QtWidgets
     from openpype.widgets import message_window
 
     # Find maya main window
@@ -3080,7 +3102,7 @@ def set_colorspace():
     """Set Colorspace from project configuration
     """
     project_name = os.getenv("AVALON_PROJECT")
-    imageio = get_anatomy_settings(project_name)["imageio"]["maya"]
+    imageio = get_project_settings(project_name)["maya"]["imageio"]
 
     # Maya 2022+ introduces new OCIO v2 color management settings that
     # can override the old color managenement preferences. OpenPype has
@@ -3213,3 +3235,214 @@ def parent_nodes(nodes, parent=None):
                 node[0].setParent(node[1])
         if delete_parent:
             pm.delete(parent_node)
+
+
+@contextlib.contextmanager
+def maintained_time():
+    ct = cmds.currentTime(query=True)
+    try:
+        yield
+    finally:
+        cmds.currentTime(ct, edit=True)
+
+
+def iter_visible_nodes_in_range(nodes, start, end):
+    """Yield nodes that are visible in start-end frame range.
+
+    - Ignores intermediateObjects completely.
+    - Considers animated visibility attributes + upstream visibilities.
+
+    This is optimized for large scenes where some nodes in the parent
+    hierarchy might have some input connections to the visibilities,
+    e.g. key, driven keys, connections to other attributes, etc.
+
+    This only does a single time step to `start` if current frame is
+    not inside frame range since the assumption is made that changing
+    a frame isn't so slow that it beats querying all visibility
+    plugs through MDGContext on another frame.
+
+    Args:
+        nodes (list): List of node names to consider.
+        start (int, float): Start frame.
+        end (int, float): End frame.
+
+    Returns:
+        list: List of node names. These will be long full path names so
+            might have a longer name than the input nodes.
+
+    """
+    # States we consider per node
+    VISIBLE = 1  # always visible
+    INVISIBLE = 0  # always invisible
+    ANIMATED = -1  # animated visibility
+
+    # Ensure integers
+    start = int(start)
+    end = int(end)
+
+    # Consider only non-intermediate dag nodes and use the "long" names.
+    nodes = cmds.ls(nodes, long=True, noIntermediate=True, type="dagNode")
+    if not nodes:
+        return
+
+    with maintained_time():
+        # Go to first frame of the range if the current time is outside
+        # the queried range so can directly query all visible nodes on
+        # that frame.
+        current_time = cmds.currentTime(query=True)
+        if not (start <= current_time <= end):
+            cmds.currentTime(start)
+
+        visible = cmds.ls(nodes, long=True, visible=True)
+        for node in visible:
+            yield node
+        if len(visible) == len(nodes) or start == end:
+            # All are visible on frame one, so they are at least visible once
+            # inside the frame range.
+            return
+
+    # For the invisible ones check whether its visibility and/or
+    # any of its parents visibility attributes are animated. If so, it might
+    # get visible on other frames in the range.
+    def memodict(f):
+        """Memoization decorator for a function taking a single argument.
+
+        See: http://code.activestate.com/recipes/
+             578231-probably-the-fastest-memoization-decorator-in-the-/
+        """
+
+        class memodict(dict):
+            def __missing__(self, key):
+                ret = self[key] = f(key)
+                return ret
+
+        return memodict().__getitem__
+
+    @memodict
+    def get_state(node):
+        plug = node + ".visibility"
+        connections = cmds.listConnections(plug,
+                                           source=True,
+                                           destination=False)
+        if connections:
+            return ANIMATED
+        else:
+            return VISIBLE if cmds.getAttr(plug) else INVISIBLE
+
+    visible = set(visible)
+    invisible = [node for node in nodes if node not in visible]
+    always_invisible = set()
+    # Iterate over the nodes by short to long names to iterate the highest
+    # in hierarchy nodes first. So the collected data can be used from the
+    # cache for parent queries in next iterations.
+    node_dependencies = dict()
+    for node in sorted(invisible, key=len):
+
+        state = get_state(node)
+        if state == INVISIBLE:
+            always_invisible.add(node)
+            continue
+
+        # If not always invisible by itself we should go through and check
+        # the parents to see if any of them are always invisible. For those
+        # that are "ANIMATED" we consider that this node is dependent on
+        # that attribute, we store them as dependency.
+        dependencies = set()
+        if state == ANIMATED:
+            dependencies.add(node)
+
+        traversed_parents = list()
+        for parent in iter_parents(node):
+
+            if parent in always_invisible or get_state(parent) == INVISIBLE:
+                # When parent is always invisible then consider this parent,
+                # this node we started from and any of the parents we
+                # have traversed in-between to be *always invisible*
+                always_invisible.add(parent)
+                always_invisible.add(node)
+                always_invisible.update(traversed_parents)
+                break
+
+            # If we have traversed the parent before and its visibility
+            # was dependent on animated visibilities then we can just extend
+            # its dependencies for to those for this node and break further
+            # iteration upwards.
+            parent_dependencies = node_dependencies.get(parent, None)
+            if parent_dependencies is not None:
+                dependencies.update(parent_dependencies)
+                break
+
+            state = get_state(parent)
+            if state == ANIMATED:
+                dependencies.add(parent)
+
+            traversed_parents.append(parent)
+
+        if node not in always_invisible and dependencies:
+            node_dependencies[node] = dependencies
+
+    if not node_dependencies:
+        return
+
+    # Now we only have to check the visibilities for nodes that have animated
+    # visibility dependencies upstream. The fastest way to check these
+    # visibility attributes across different frames is with Python api 2.0
+    # so we do that.
+    @memodict
+    def get_visibility_mplug(node):
+        """Return api 2.0 MPlug with cached memoize decorator"""
+        sel = om.MSelectionList()
+        sel.add(node)
+        dag = sel.getDagPath(0)
+        return om.MFnDagNode(dag).findPlug("visibility", True)
+
+    @contextlib.contextmanager
+    def dgcontext(mtime):
+        """MDGContext context manager"""
+        context = om.MDGContext(mtime)
+        try:
+            previous = context.makeCurrent()
+            yield context
+        finally:
+            previous.makeCurrent()
+
+    # We skip the first frame as we already used that frame to check for
+    # overall visibilities. And end+1 to include the end frame.
+    scene_units = om.MTime.uiUnit()
+    for frame in range(start + 1, end + 1):
+        mtime = om.MTime(frame, unit=scene_units)
+
+        # Build little cache so we don't query the same MPlug's value
+        # again if it was checked on this frame and also is a dependency
+        # for another node
+        frame_visibilities = {}
+        with dgcontext(mtime) as context:
+            for node, dependencies in list(node_dependencies.items()):
+                for dependency in dependencies:
+                    dependency_visible = frame_visibilities.get(dependency,
+                                                                None)
+                    if dependency_visible is None:
+                        mplug = get_visibility_mplug(dependency)
+                        dependency_visible = mplug.asBool(context)
+                        frame_visibilities[dependency] = dependency_visible
+
+                    if not dependency_visible:
+                        # One dependency is not visible, thus the
+                        # node is not visible.
+                        break
+
+                else:
+                    # All dependencies are visible.
+                    yield node
+                    # Remove node with dependencies for next frame iterations
+                    # because it was visible at least once.
+                    node_dependencies.pop(node)
+
+        # If no more nodes to process break the frame iterations..
+        if not node_dependencies:
+            break
+
+
+def get_attribute_input(attr):
+    connections = cmds.listConnections(attr, plugs=True, destination=False)
+    return connections[0] if connections else None

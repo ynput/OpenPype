@@ -196,12 +196,12 @@ html[data-theme='dark'] .header-github-link::before {
     padding: 20px
 }
 
-.showcase .client {
+.showcase .studio {
     display: flex;
     justify-content: space-between;
 }
 
-.showcase .client img {
+.showcase .studio img {
     max-height: 110px;
     padding: 20px;
     max-width: 160px;

@@ -1,11 +1,6 @@
+from openpype.client import get_projects, get_project
 from openpype_modules.clockify.clockify_api import ClockifyAPI
-from openpype.api import Logger
-from openpype.pipeline import (
-    legacy_io,
-    LauncherAction,
-)
-
-log = Logger.get_logger(__name__)
+from openpype.pipeline import LauncherAction
 
 
 class ClockifySync(LauncherAction):
@@ -22,39 +17,36 @@ class ClockifySync(LauncherAction):
         return self.have_permissions
 
     def process(self, session, **kwargs):
-        project_name = session.get('AVALON_PROJECT', None)
+        project_name = session.get("AVALON_PROJECT") or ""
 
         projects_to_sync = []
-        if project_name.strip() == '' or project_name is None:
-            for project in legacy_io.projects():
-                projects_to_sync.append(project)
+        if project_name.strip():
+            projects_to_sync = [get_project(project_name)]
         else:
-            project = legacy_io.find_one({'type': 'project'})
-            projects_to_sync.append(project)
+            projects_to_sync = get_projects()
 
         projects_info = {}
         for project in projects_to_sync:
-            task_types = project['config']['tasks'].keys()
-            projects_info[project['name']] = task_types
+            task_types = project["config"]["tasks"].keys()
+            projects_info[project["name"]] = task_types
 
         clockify_projects = self.clockapi.get_projects()
         for project_name, task_types in projects_info.items():
-            if project_name not in clockify_projects:
-                response = self.clockapi.add_project(project_name)
-                if 'id' not in response:
-                    self.log.error('Project {} can\'t be created'.format(
-                        project_name
-                    ))
-                    continue
-                project_id = response['id']
-            else:
-                project_id = clockify_projects[project_name]
+            if project_name in clockify_projects:
+                continue
+
+            response = self.clockapi.add_project(project_name)
+            if "id" not in response:
+                self.log.error("Project {} can't be created".format(
+                    project_name
+                ))
+                continue
 
             clockify_workspace_tags = self.clockapi.get_tags()
             for task_type in task_types:
                 if task_type not in clockify_workspace_tags:
                     response = self.clockapi.add_tag(task_type)
-                    if 'id' not in response:
+                    if "id" not in response:
                         self.log.error('Task {} can\'t be created'.format(
                             task_type
                         ))

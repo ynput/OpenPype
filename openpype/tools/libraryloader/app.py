@@ -3,7 +3,7 @@ import sys
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype import style
-from openpype.client import get_project
+from openpype.client import get_projects, get_project
 from openpype.pipeline import AvalonMongoDB
 from openpype.tools.utils import lib as tools_lib
 from openpype.tools.loader.widgets import (
@@ -239,7 +239,7 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
 
     def get_filtered_projects(self):
         projects = list()
-        for project in self.dbcon.projects():
+        for project in get_projects(fields=["name", "data.library_project"]):
             is_library = project.get("data", {}).get("library_project", False)
             if (
                 (is_library and self.show_libraries) or

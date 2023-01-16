@@ -36,7 +36,7 @@ class AbcLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         # hero_001 (abc)
         # asset_counter{optional}
         file_url = self.prepare_root_value(self.fname,
-                                           context["project"]["code"])
+                                           context["project"]["name"])
         nodes = cmds.file(file_url,
                           namespace=namespace,
                           sharedReferenceFile=False,

@@ -299,7 +299,6 @@ class PublishFilesModel(QtGui.QStandardItemModel):
             self.project_name,
             asset_ids=[self._asset_id],
             fields=["_id", "name"]
-
         )
 
         subset_ids = [subset_doc["_id"] for subset_doc in subset_docs]
@@ -329,7 +328,9 @@ class PublishFilesModel(QtGui.QStandardItemModel):
         #   extension
         extensions = [ext.replace(".", "") for ext in self._file_extensions]
         repre_docs = get_representations(
-            self.project_name, version_ids, extensions
+            self.project_name,
+            version_ids=version_ids,
+            context_filters={"ext": extensions}
         )
 
         # Filter queried representations by task name if task is set

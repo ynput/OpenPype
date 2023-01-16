@@ -14,11 +14,13 @@ from openpype.client import (
     get_versions,
     get_representations
 )
-from openpype.api import (
-    Logger,
-    get_anatomy_settings
+from openpype.client.operations import (
+    CURRENT_ASSET_DOC_SCHEMA,
+    CURRENT_PROJECT_SCHEMA,
+    CURRENT_PROJECT_CONFIG_SCHEMA,
 )
-from openpype.lib import ApplicationManager
+from openpype.settings import get_anatomy_settings
+from openpype.lib import ApplicationManager, Logger
 from openpype.pipeline import AvalonMongoDB, schema
 
 from .constants import CUST_ATTR_ID_KEY, FPS_KEYS
@@ -30,14 +32,6 @@ from pymongo import UpdateOne, ReplaceOne
 import ftrack_api
 
 log = Logger.get_logger(__name__)
-
-
-# Current schemas for avalon types
-CURRENT_DOC_SCHEMAS = {
-    "project": "openpype:project-3.0",
-    "asset": "openpype:asset-3.0",
-    "config": "openpype:config-2.0"
-}
 
 
 class InvalidFpsValue(Exception):
@@ -443,6 +437,7 @@ class SyncEntitiesFactory:
         }
 
         self.create_list = []
+        self.project_created = False
         self.unarchive_list = []
         self.updates = collections.defaultdict(dict)
 
@@ -1561,7 +1556,7 @@ class SyncEntitiesFactory:
             deleted_entities.append(mongo_id)
 
             av_ent = self.avalon_ents_by_id[mongo_id]
-            av_ent_path_items = [p for p in av_ent["data"]["parents"]]
+            av_ent_path_items = list(av_ent["data"]["parents"])
             av_ent_path_items.append(av_ent["name"])
             self.log.debug("Deleted <{}>".format("/".join(av_ent_path_items)))
 
@@ -1860,7 +1855,7 @@ class SyncEntitiesFactory:
                 _vis_par = _avalon_ent["data"]["visualParent"]
                 _name = _avalon_ent["name"]
                 if _name in self.all_ftrack_names:
-                    av_ent_path_items = _avalon_ent["data"]["parents"]
+                    av_ent_path_items = list(_avalon_ent["data"]["parents"])
                     av_ent_path_items.append(_name)
                     av_ent_path = "/".join(av_ent_path_items)
                     # TODO report
@@ -2002,7 +1997,7 @@ class SyncEntitiesFactory:
                 {"_id": mongo_id},
                 item
             ))
-            av_ent_path_items = item["data"]["parents"]
+            av_ent_path_items = list(item["data"]["parents"])
             av_ent_path_items.append(item["name"])
             av_ent_path = "/".join(av_ent_path_items)
             self.log.debug(
@@ -2062,7 +2057,7 @@ class SyncEntitiesFactory:
 
         item["_id"] = new_id
         item["parent"] = self.avalon_project_id
-        item["schema"] = CURRENT_DOC_SCHEMAS["asset"]
+        item["schema"] = CURRENT_ASSET_DOC_SCHEMA
         item["data"]["visualParent"] = avalon_parent
 
         new_id_str = str(new_id)
@@ -2115,6 +2110,7 @@ class SyncEntitiesFactory:
 
         entity_dict = self.entities_dict[ftrack_id]
 
+        final_parents = entity_dict["final_entity"]["data"]["parents"]
         if archived_by_id:
             # if is changeable then unarchive (nothing to check here)
             if self.changeability_by_mongo_id[mongo_id]:
@@ -2128,10 +2124,8 @@ class SyncEntitiesFactory:
             archived_name = archived_by_id["name"]
 
             if (
-                archived_name != entity_dict["name"] or
-                archived_parents != entity_dict["final_entity"]["data"][
-                    "parents"
-                ]
+                archived_name != entity_dict["name"]
+                or archived_parents != final_parents
             ):
                 return None
 
@@ -2141,11 +2135,7 @@ class SyncEntitiesFactory:
         for archived in archived_by_name:
             mongo_id = str(archived["_id"])
             archived_parents = archived.get("data", {}).get("parents")
-            if (
-                archived_parents == entity_dict["final_entity"]["data"][
-                    "parents"
-                ]
-            ):
+            if archived_parents == final_parents:
                 return mongo_id
 
         # Secondly try to find more close to current ftrack entity
@@ -2197,8 +2187,8 @@ class SyncEntitiesFactory:
 
         project_item["_id"] = new_id
         project_item["parent"] = None
-        project_item["schema"] = CURRENT_DOC_SCHEMAS["project"]
-        project_item["config"]["schema"] = CURRENT_DOC_SCHEMAS["config"]
+        project_item["schema"] = CURRENT_PROJECT_SCHEMA
+        project_item["config"]["schema"] = CURRENT_PROJECT_CONFIG_SCHEMA
 
         self.ftrack_avalon_mapper[self.ft_project_id] = new_id
         self.avalon_ftrack_mapper[new_id] = self.ft_project_id
@@ -2214,6 +2204,7 @@ class SyncEntitiesFactory:
         self._avalon_ents_by_name[project_item["name"]] = str(new_id)
 
         self.create_list.append(project_item)
+        self.project_created = True
 
         # store mongo id to ftrack entity
         entity = self.entities_dict[self.ft_project_id]["entity"]
@@ -2354,8 +2345,7 @@ class SyncEntitiesFactory:
                 continue
 
             changed = True
-            parents = [par for par in _parents]
-            hierarchy = "/".join(parents)
+            parents = list(_parents)
             self.entities_dict[ftrack_id][
                 "final_entity"]["data"]["parents"] = parents
 

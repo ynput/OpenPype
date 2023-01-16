@@ -1,11 +1,14 @@
 import os
 
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline import publish
 from openpype.hosts.houdini.api.lib import render_rop
 
+import hou
 
-class ExtractAlembic(openpype.api.Extractor):
+
+class ExtractAlembic(publish.Extractor):
 
     order = pyblish.api.ExtractorOrder
     label = "Extract Alembic"
@@ -14,7 +17,7 @@ class ExtractAlembic(openpype.api.Extractor):
 
     def process(self, instance):
 
-        ropnode = instance[0]
+        ropnode = hou.node(instance.data["instance_node"])
 
         # Get the filename from the filename parameter
         output = ropnode.evalParm("filename")

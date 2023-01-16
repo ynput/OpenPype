@@ -11,10 +11,10 @@ from openpype.client import (
     get_version_by_name,
     get_representation_by_name
 )
-from openpype.api import Anatomy
 from openpype.pipeline import (
     get_representation_path,
     AvalonMongoDB,
+    Anatomy,
 )
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 

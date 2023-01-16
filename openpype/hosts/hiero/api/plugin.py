@@ -5,14 +5,16 @@ from copy import deepcopy
 
 import hiero
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 import qargparse
 
-import openpype.api as openpype
+from openpype.settings import get_current_project_settings
+from openpype.lib import Logger
 from openpype.pipeline import LoaderPlugin, LegacyCreator
+from openpype.pipeline.context_tools import get_current_project_asset
 from . import lib
 
-log = openpype.Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 def load_stylesheet():
@@ -168,7 +170,10 @@ class CreatorWidget(QtWidgets.QDialog):
         for func, val in kwargs.items():
             if getattr(item, func):
                 func_attr = getattr(item, func)
-                func_attr(val)
+                if isinstance(val, tuple):
+                    func_attr(*val)
+                else:
+                    func_attr(val)
 
         # add to layout
         layout.addRow(label, item)
@@ -484,7 +489,7 @@ class ClipLoader:
 
         """
         asset_name = self.context["representation"]["context"]["asset"]
-        asset_doc = openpype.get_asset(asset_name)
+        asset_doc = get_current_project_asset(asset_name)
         log.debug("__ asset_doc: {}".format(pformat(asset_doc)))
         self.data["assetData"] = asset_doc["data"]
 
@@ -604,7 +609,7 @@ class Creator(LegacyCreator):
     def __init__(self, *args, **kwargs):
         super(Creator, self).__init__(*args, **kwargs)
         import openpype.hosts.hiero.api as phiero
-        self.presets = openpype.get_current_project_settings()[
+        self.presets = get_current_project_settings()[
             "hiero"]["create"].get(self.__class__.__name__, {})
 
         # adding basic current context resolve objects

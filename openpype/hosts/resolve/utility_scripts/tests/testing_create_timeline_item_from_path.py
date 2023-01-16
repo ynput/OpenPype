@@ -2,10 +2,15 @@
 import os
 import sys
 
-from openpype.pipeline import install_host
-from openpype.hosts.resolve import TestGUI
-import openpype.hosts.resolve as bmdvr
 import clique
+
+from openpype.pipeline import install_host
+from openpype.hosts.resolve.api.testing_utils import TestGUI
+import openpype.hosts.resolve.api as bmdvr
+from openpype.hosts.resolve.api.lib import (
+    create_media_pool_item,
+    create_timeline_item,
+)
 
 
 class ThisTestGUI(TestGUI):
@@ -55,10 +60,10 @@ class ThisTestGUI(TestGUI):
         # skip if unwanted extension
         if ext not in self.extensions:
             return
-        media_pool_item = bmdvr.create_media_pool_item(fpath)
+        media_pool_item = create_media_pool_item(fpath)
         print(media_pool_item)
 
-        track_item = bmdvr.create_timeline_item(media_pool_item)
+        track_item = create_timeline_item(media_pool_item)
         print(track_item)
 
 

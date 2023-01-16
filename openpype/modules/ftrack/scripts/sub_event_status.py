@@ -7,16 +7,19 @@ import signal
 import socket
 import datetime
 
+import appdirs
+
 import ftrack_api
 from openpype_modules.ftrack.ftrack_server.ftrack_server import FtrackServer
 from openpype_modules.ftrack.ftrack_server.lib import (
     SocketSession,
     StatusEventHub,
     TOPIC_STATUS_SERVER,
-    TOPIC_STATUS_SERVER_RESULT
+    TOPIC_STATUS_SERVER_RESULT,
+    get_host_ip
 )
-from openpype.api import Logger
 from openpype.lib import (
+    Logger,
     is_current_version_studio_latest,
     is_running_from_build,
     get_expected_version,
@@ -27,10 +30,10 @@ log = Logger.get_logger("Event storer")
 action_identifier = (
     "event.server.status" + os.environ["FTRACK_EVENT_SUB_ID"]
 )
-host_ip = socket.gethostbyname(socket.gethostname())
+host_ip = get_host_ip()
 action_data = {
     "label": "OpenPype Admin",
-    "variant": "- Event server Status ({})".format(host_ip),
+    "variant": "- Event server Status ({})".format(host_ip or "IP N/A"),
     "description": "Get Infromation about event server",
     "actionIdentifier": action_identifier
 }
@@ -253,6 +256,15 @@ class StatusFactory:
                 )
             })
 
+        items.append({
+            "type": "label",
+            "value": (
+                "Local versions dir: {}<br/>Version repository path: {}"
+            ).format(
+                appdirs.user_data_dir("openpype", "pypeclub"),
+                os.environ.get("OPENPYPE_PATH")
+            )
+        })
         items.append({"type": "label", "value": "---"})
 
         return items

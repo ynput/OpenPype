@@ -1,6 +1,6 @@
 import pyblish.api
 from openpype.pipeline import PublishXmlValidationError
-from openpype.hosts.tvpaint.api import lib
+from openpype.hosts.tvpaint.api.lib import execute_george
 
 
 class RepairStartFrame(pyblish.api.Action):
@@ -11,7 +11,7 @@ class RepairStartFrame(pyblish.api.Action):
     on = "failed"
 
     def process(self, context, plugin):
-        lib.execute_george("tv_startframe 0")
+        execute_george("tv_startframe 0")
 
 
 class ValidateStartFrame(pyblish.api.ContextPlugin):
@@ -24,7 +24,7 @@ class ValidateStartFrame(pyblish.api.ContextPlugin):
     optional = True
 
     def process(self, context):
-        start_frame = lib.execute_george("tv_startframe")
+        start_frame = execute_george("tv_startframe")
         if start_frame == 0:
             return
 

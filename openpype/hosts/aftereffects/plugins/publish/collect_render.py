@@ -6,8 +6,8 @@ import attr
 import pyblish.api
 
 from openpype.settings import get_project_settings
-from openpype.lib import abstract_collect_render
-from openpype.lib.abstract_collect_render import RenderInstance
+from openpype.pipeline import publish
+from openpype.pipeline.publish import RenderInstance
 
 from openpype.hosts.aftereffects.api import get_stub
 
@@ -25,7 +25,7 @@ class AERenderInstance(RenderInstance):
     file_name = attr.ib(default=None)
 
 
-class CollectAERender(abstract_collect_render.AbstractCollectRender):
+class CollectAERender(publish.AbstractCollectRender):
 
     order = pyblish.api.CollectorOrder + 0.405
     label = "Collect After Effects Render Layers"
@@ -102,7 +102,6 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 attachTo=False,
                 setMembers='',
                 publish=True,
-                renderer='aerender',
                 name=subset_name,
                 resolutionWidth=render_q.width,
                 resolutionHeight=render_q.height,
@@ -113,7 +112,6 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 frameStart=frame_start,
                 frameEnd=frame_end,
                 frameStep=1,
-                toBeRenderedOn='deadline',
                 fps=fps,
                 app_version=app_version,
                 publish_attributes=inst.data.get("publish_attributes", {}),
@@ -138,6 +136,9 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 fam = "render.farm"
                 if fam not in instance.families:
                     instance.families.append(fam)
+                instance.toBeRenderedOn = "deadline"
+                instance.renderer = "aerender"
+                instance.farm = True  # to skip integrate
 
             instances.append(instance)
             instances_to_remove.append(inst)

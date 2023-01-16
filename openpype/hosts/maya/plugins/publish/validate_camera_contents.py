@@ -1,8 +1,8 @@
 from maya import cmds
 
 import pyblish.api
-import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
 class ValidateCameraContents(pyblish.api.InstancePlugin):
@@ -15,7 +15,7 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     families = ['camera']
     hosts = ['maya']
     label = 'Camera Contents'
@@ -51,18 +51,7 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
                 raise RuntimeError("No cameras found in empty instance.")
 
         if not cls.validate_shapes:
-            cls.log.info("Not validating shapes in the content.")
-
-            for member in members:
-                parents = cmds.ls(member, long=True)[0].split("|")[1:-1]
-                parents_long_named = [
-                    "|".join(parents[:i]) for i in range(1, 1 + len(parents))
-                ]
-                if cameras[0] in parents_long_named:
-                    cls.log.error(
-                        "{} is parented under camera {}".format(
-                            member, cameras[0]))
-                    invalid.extend(member)
+            cls.log.info("not validating shapes in the content")
             return invalid
 
         # non-camera shapes

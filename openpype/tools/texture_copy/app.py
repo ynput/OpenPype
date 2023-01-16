@@ -6,8 +6,7 @@ import speedcopy
 
 from openpype.client import get_project, get_asset_by_name
 from openpype.lib import Terminal
-from openpype.api import Anatomy
-from openpype.pipeline import legacy_io
+from openpype.pipeline import legacy_io, Anatomy
 
 
 t = Terminal()

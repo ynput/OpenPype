@@ -47,6 +47,10 @@
             ]
         },
         {
+            "type": "schema",
+            "name": "schema_nuke_imageio"
+        },
+        {
            "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
@@ -307,6 +311,10 @@
         {
             "type": "schema_template",
             "name": "template_workfile_options"
+        },
+        {
+            "type": "schema",
+            "name": "schema_templated_workfile_build"
         },
         {
             "type": "schema",

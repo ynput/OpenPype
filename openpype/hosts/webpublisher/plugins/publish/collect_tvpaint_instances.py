@@ -10,7 +10,7 @@ import re
 import copy
 import pyblish.api
 
-from openpype.lib import get_subset_name_with_asset_doc
+from openpype.pipeline.create import get_subset_name
 
 
 class CollectTVPaintInstances(pyblish.api.ContextPlugin):
@@ -47,13 +47,14 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
         new_instances = []
 
         # Workfile instance
-        workfile_subset_name = get_subset_name_with_asset_doc(
+        workfile_subset_name = get_subset_name(
             self.workfile_family,
             self.workfile_variant,
             task_name,
             asset_doc,
             project_name,
-            host_name
+            host_name,
+            project_settings=context.data["project_settings"]
         )
         workfile_instance = self._create_workfile_instance(
             context, workfile_subset_name
@@ -61,13 +62,14 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
         new_instances.append(workfile_instance)
 
         # Review instance
-        review_subset_name = get_subset_name_with_asset_doc(
+        review_subset_name = get_subset_name(
             self.review_family,
             self.review_variant,
             task_name,
             asset_doc,
             project_name,
-            host_name
+            host_name,
+            project_settings=context.data["project_settings"]
         )
         review_instance = self._create_review_instance(
             context, review_subset_name
@@ -114,14 +116,15 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
                     "family": "render"
                 }
 
-                subset_name = get_subset_name_with_asset_doc(
+                subset_name = get_subset_name(
                     self.render_pass_family,
                     render_pass,
                     task_name,
                     asset_doc,
                     project_name,
                     host_name,
-                    dynamic_data=dynamic_data
+                    dynamic_data=dynamic_data,
+                    project_settings=context.data["project_settings"]
                 )
 
                 instance = self._create_render_pass_instance(
@@ -137,14 +140,15 @@ class CollectTVPaintInstances(pyblish.api.ContextPlugin):
                 # Override family for subset name
                 "family": "render"
             }
-            subset_name = get_subset_name_with_asset_doc(
+            subset_name = get_subset_name(
                 self.render_layer_family,
                 variant,
                 task_name,
                 asset_doc,
                 project_name,
                 host_name,
-                dynamic_data=dynamic_data
+                dynamic_data=dynamic_data,
+                project_settings=context.data["project_settings"]
             )
             instance = self._create_render_layer_instance(
                 context, layers, subset_name

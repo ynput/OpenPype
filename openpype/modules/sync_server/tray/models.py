@@ -1,15 +1,15 @@
 import os
 import attr
 from bson.objectid import ObjectId
+import datetime
 
-from Qt import QtCore
-from Qt.QtCore import Qt
+from qtpy import QtCore
 import qtawesome
 
 from openpype.tools.utils.delegates import pretty_timestamp
 
-from openpype.lib import PypeLogger
-from openpype.api import get_local_site_id
+from openpype.lib import Logger, get_local_site_id
+from openpype.client import get_representation_by_id
 
 from . import lib
 
@@ -31,7 +31,7 @@ from openpype.tools.utils.constants import (
 )
 
 
-log = PypeLogger().get_logger("SyncServer")
+log = Logger.get_logger("SyncServer")
 
 
 class _SyncRepresentationModel(QtCore.QAbstractTableModel):
@@ -78,16 +78,16 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
     def columnCount(self, _index=None):
         return len(self._header)
 
-    def headerData(self, section, orientation, role=Qt.DisplayRole):
+    def headerData(self, section, orientation, role=QtCore.Qt.DisplayRole):
         if section >= len(self.COLUMN_LABELS):
             return
 
-        if role == Qt.DisplayRole:
-            if orientation == Qt.Horizontal:
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
                 return self.COLUMN_LABELS[section][1]
 
         if role == HEADER_NAME_ROLE:
-            if orientation == Qt.Horizontal:
+            if orientation == QtCore.Qt.Horizontal:
                 return self.COLUMN_LABELS[section][0]  # return name
 
     def data(self, index, role):
@@ -122,7 +122,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
             return item.status == lib.STATUS[2] and \
                 item.remote_progress < 1
 
-        if role in (Qt.DisplayRole, Qt.EditRole):
+        if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
             # because of ImageDelegate
             if header_value in ['remote_site', 'local_site']:
                 return ""
@@ -145,7 +145,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         if role == STATUS_ROLE:
             return item.status
 
-        if role == Qt.UserRole:
+        if role == QtCore.Qt.UserRole:
             return item._id
 
     @property
@@ -408,10 +408,27 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         """
         for i in range(self.rowCount(None)):
             index = self.index(i, 0)
-            value = self.data(index, Qt.UserRole)
+            value = self.data(index, QtCore.Qt.UserRole)
             if value == id:
                 return index
         return None
+
+    def _convert_date(self, date_value, current_date):
+        """Converts 'date_value' to string.
+
+        Value of date_value might contain date in the future, used for nicely
+        sort queued items next to last downloaded.
+        """
+        try:
+            converted_date = None
+            # ignore date in the future - for sorting only
+            if date_value and date_value < current_date:
+                converted_date = date_value.strftime("%Y%m%dT%H%M%SZ")
+        except (AttributeError, TypeError):
+            # ignore unparseable values
+            pass
+
+        return converted_date
 
 
 class SyncRepresentationSummaryModel(_SyncRepresentationModel):
@@ -422,7 +439,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         full text filtering.
 
         Allows pagination, most of heavy lifting is being done on DB side.
-        Single model matches to single collection. When project is changed,
+        Single model matches to single project. When project is changed,
         model is reset and refreshed.
 
         Args:
@@ -560,7 +577,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         remote_provider = lib.translate_provider_for_icon(self.sync_server,
                                                           self.project,
                                                           remote_site)
-
+        current_date = datetime.datetime.now()
         for repre in result.get("paginatedResults"):
             files = repre.get("files", [])
             if isinstance(files, dict):  # aggregate returns dictionary
@@ -570,14 +587,10 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
             if not files:
                 continue
 
-            local_updated = remote_updated = None
-            if repre.get('updated_dt_local'):
-                local_updated = \
-                    repre.get('updated_dt_local').strftime("%Y%m%dT%H%M%SZ")
-
-            if repre.get('updated_dt_remote'):
-                remote_updated = \
-                    repre.get('updated_dt_remote').strftime("%Y%m%dT%H%M%SZ")
+            local_updated = self._convert_date(repre.get('updated_dt_local'),
+                                               current_date)
+            remote_updated = self._convert_date(repre.get('updated_dt_remote'),
+                                                current_date)
 
             avg_progress_remote = lib.convert_progress(
                 repre.get('avg_progress_remote', '0'))
@@ -645,6 +658,8 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         if limit == 0:
             limit = SyncRepresentationSummaryModel.PAGE_SIZE
 
+        # replace null with value in the future for better sorting
+        dummy_max_date = datetime.datetime(2099, 1, 1)
         aggr = [
             {"$match": self.get_match_part()},
             {'$unwind': '$files'},
@@ -687,7 +702,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                               {'$cond': [
                                   {'$size': "$order_remote.last_failed_dt"},
                                   "$order_remote.last_failed_dt",
-                                  []
+                                  [dummy_max_date]
                               ]}
                               ]}},
                 'updated_dt_local': {'$first': {
@@ -696,7 +711,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                               {'$cond': [
                                   {'$size': "$order_local.last_failed_dt"},
                                   "$order_local.last_failed_dt",
-                                  []
+                                  [dummy_max_date]
                               ]}
                               ]}},
                 'files_size': {'$ifNull': ["$files.size", 0]},
@@ -901,13 +916,12 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         if not self.can_edit:
             return
 
-        repre_id = self.data(index, Qt.UserRole)
+        repre_id = self.data(index, QtCore.Qt.UserRole)
 
-        representation = list(self.dbcon.find({"type": "representation",
-                                               "_id": repre_id}))
+        representation = get_representation_by_id(self.project, repre_id)
         if representation:
             self.sync_server.update_db(self.project, None, None,
-                                       representation.pop(),
+                                       representation,
                                        get_local_site_id(),
                                        priority=value)
         self.is_editing = False
@@ -1039,6 +1053,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                                                           self.project,
                                                           remote_site)
 
+        current_date = datetime.datetime.now()
         for repre in result.get("paginatedResults"):
             # log.info("!!! repre:: {}".format(repre))
             files = repre.get("files", [])
@@ -1046,16 +1061,12 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                 files = [files]
 
             for file in files:
-                local_updated = remote_updated = None
-                if repre.get('updated_dt_local'):
-                    local_updated = \
-                        repre.get('updated_dt_local').strftime(
-                            "%Y%m%dT%H%M%SZ")
-
-                if repre.get('updated_dt_remote'):
-                    remote_updated = \
-                        repre.get('updated_dt_remote').strftime(
-                            "%Y%m%dT%H%M%SZ")
+                local_updated = self._convert_date(
+                    repre.get('updated_dt_local'),
+                    current_date)
+                remote_updated = self._convert_date(
+                    repre.get('updated_dt_remote'),
+                    current_date)
 
                 remote_progress = lib.convert_progress(
                     repre.get('progress_remote', '0'))
@@ -1104,6 +1115,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         if limit == 0:
             limit = SyncRepresentationSummaryModel.PAGE_SIZE
 
+        dummy_max_date = datetime.datetime(2099, 1, 1)
         aggr = [
             {"$match": self.get_match_part()},
             {"$unwind": "$files"},
@@ -1147,7 +1159,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                             '$cond': [
                                 {'$size': "$order_remote.last_failed_dt"},
                                 "$order_remote.last_failed_dt",
-                                []
+                                [dummy_max_date]
                             ]
                         }
                     ]
@@ -1160,7 +1172,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                             '$cond': [
                                 {'$size': "$order_local.last_failed_dt"},
                                 "$order_local.last_failed_dt",
-                                []
+                                [dummy_max_date]
                             ]
                         }
                     ]
@@ -1340,14 +1352,13 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         if not self.can_edit:
             return
 
-        file_id = self.data(index, Qt.UserRole)
+        file_id = self.data(index, QtCore.Qt.UserRole)
 
         updated_file = None
-        # conversion from cursor to list
-        representations = list(self.dbcon.find({"type": "representation",
-                                               "_id": self._id}))
+        representation = get_representation_by_id(self.project, self._id)
+        if not representation:
+            return
 
-        representation = representations.pop()
         for repre_file in representation["files"]:
             if repre_file["_id"] == file_id:
                 updated_file = repre_file

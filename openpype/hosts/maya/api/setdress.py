@@ -296,12 +296,9 @@ def update_package_version(container, version):
 
     assert current_representation is not None, "This is a bug"
 
-    repre_parents = get_representation_parents(
-        project_name, current_representation
+    version_doc, subset_doc, asset_doc, project_doc = (
+        get_representation_parents(project_name, current_representation)
     )
-    version_doc = subset_doc = asset_doc = project_doc = None
-    if repre_parents:
-        version_doc, subset_doc, asset_doc, project_doc = repre_parents
 
     if version == -1:
         new_version = get_last_version_by_subset_id(

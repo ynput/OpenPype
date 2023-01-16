@@ -1,6 +1,11 @@
+from .mongo import (
+    OpenPypeMongoConnection,
+)
+
 from .entities import (
     get_projects,
     get_project,
+    get_whole_project,
 
     get_asset_by_id,
     get_asset_by_name,
@@ -24,20 +29,39 @@ from .entities import (
     get_last_version_by_subset_name,
     get_output_link_versions,
 
+    version_is_latest,
+
     get_representation_by_id,
     get_representation_by_name,
     get_representations,
     get_representation_parents,
     get_representations_parents,
+    get_archived_representations,
 
     get_thumbnail,
     get_thumbnails,
     get_thumbnail_id_from_source,
+
+    get_workfile_info,
 )
 
+from .entity_links import (
+    get_linked_asset_ids,
+    get_linked_assets,
+    get_linked_representation_id,
+)
+
+from .operations import (
+    create_project,
+)
+
+
 __all__ = (
+    "OpenPypeMongoConnection",
+
     "get_projects",
     "get_project",
+    "get_whole_project",
 
     "get_asset_by_id",
     "get_asset_by_name",
@@ -61,13 +85,24 @@ __all__ = (
     "get_last_version_by_subset_name",
     "get_output_link_versions",
 
+    "version_is_latest",
+
     "get_representation_by_id",
     "get_representation_by_name",
     "get_representations",
     "get_representation_parents",
     "get_representations_parents",
+    "get_archived_representations",
 
     "get_thumbnail",
     "get_thumbnails",
     "get_thumbnail_id_from_source",
+
+    "get_workfile_info",
+
+    "get_linked_asset_ids",
+    "get_linked_assets",
+    "get_linked_representation_id",
+
+    "create_project",
 )

@@ -22,7 +22,7 @@ class CollectOutputSOPPath(pyblish.api.InstancePlugin):
 
         import hou
 
-        node = instance[0]
+        node = hou.node(instance.data["instance_node"])
 
         # Get sop path
         node_type = node.type().name()

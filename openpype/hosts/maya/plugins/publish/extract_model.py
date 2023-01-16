@@ -4,11 +4,11 @@ import os
 
 from maya import cmds
 
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
 
 
-class ExtractModel(openpype.api.Extractor):
+class ExtractModel(publish.Extractor):
     """Extract as Model (Maya Scene).
 
     Only extracts contents based on the original "setMembers" data to ensure
