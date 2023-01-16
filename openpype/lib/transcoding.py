@@ -1047,12 +1047,12 @@ def convert_ffprobe_fps_to_float(value):
     return dividend / divisor
 
 
-def convert_colorspace_for_input_paths(
-    input_paths,
-    output_dir,
+def convert_colorspace(
+    input_path,
+    out_filepath,
     config_path,
-    source_color_space,
-    target_color_space,
+    source_colorspace,
+    target_colorspace,
     logger=None
 ):
     """Convert source files from one color space to another.
@@ -1063,13 +1063,13 @@ def convert_colorspace_for_input_paths(
         frame template
 
     Args:
-        input_paths (str): Paths that should be converted. It is expected that
+        input_path (str): Paths that should be converted. It is expected that
             contains single file or image sequence of samy type.
-        output_dir (str): Path to directory where output will be rendered.
+        out_filepath (str): Path to directory where output will be rendered.
             Must not be same as input's directory.
         config_path (str): path to OCIO config file
-        source_color_space (str): ocio valid color space of source files
-        target_color_space (str): ocio valid target color space
+        source_colorspace (str): ocio valid color space of source files
+        target_colorspace (str): ocio valid target color space
         logger (logging.Logger): Logger used for logging.
 
     """
@@ -1083,21 +1083,18 @@ def convert_colorspace_for_input_paths(
         # Don't add any additional attributes
         "--nosoftwareattrib",
         "--colorconfig", config_path,
-        "--colorconvert", source_color_space, target_color_space
+        "--colorconvert", source_colorspace, target_colorspace
     ]
-    for input_path in input_paths:
-        # Prepare subprocess arguments
+    # Prepare subprocess arguments
 
-        oiio_cmd.extend([
-            input_arg, input_path,
-        ])
+    oiio_cmd.extend([
+        input_arg, input_path,
+    ])
 
-        # Add last argument - path to output
-        base_filename = os.path.basename(input_path)
-        output_path = os.path.join(output_dir, base_filename)
-        oiio_cmd.extend([
-            "-o", output_path
-        ])
+    # Add last argument - path to output
+    oiio_cmd.extend([
+        "-o", out_filepath
+    ])
 
-        logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
-        run_subprocess(oiio_cmd, logger=logger)
+    logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
+    run_subprocess(oiio_cmd, logger=logger)
