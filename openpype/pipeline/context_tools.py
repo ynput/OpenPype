@@ -306,6 +306,42 @@ def debug_host():
     return host
 
 
+def get_global_context():
+    return {
+        "project_name": os.environ.get("AVALON_PROJECT"),
+        "asset_name": os.environ.get("AVALON_ASSET"),
+        "task_name": os.environ.get("AVALON_TASK"),
+    }
+
+
+def get_current_context():
+    host = registered_host()
+    if host is not None and hasattr(host, "get_current_context"):
+        return host.get_current_context()
+    return get_global_context()
+
+
+def get_current_project_name():
+    host = registered_host()
+    if host is not None and hasattr(host, "get_current_project_name"):
+        return host.get_current_project_name()
+    return get_global_context()["project_name"]
+
+
+def get_current_asset_name():
+    host = registered_host()
+    if host is not None and hasattr(host, "get_current_asset_name"):
+        return host.get_current_asset_name()
+    return get_global_context()["asset_name"]
+
+
+def get_current_task_name():
+    host = registered_host()
+    if host is not None and hasattr(host, "get_current_task_name"):
+        return host.get_current_task_name()
+    return get_global_context()["task_name"]
+
+
 def get_current_project(fields=None):
     """Helper function to get project document based on global Session.
 
@@ -316,7 +352,7 @@ def get_current_project(fields=None):
         None: Project is not set.
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     return get_project(project_name, fields=fields)
 
 
@@ -341,12 +377,12 @@ def get_current_project_asset(asset_name=None, asset_id=None, fields=None):
         None: Asset is not set or not exist.
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     if asset_id:
         return get_asset_by_id(project_name, asset_id, fields=fields)
 
     if not asset_name:
-        asset_name = legacy_io.Session.get("AVALON_ASSET")
+        asset_name = get_current_asset_name()
         # Skip if is not set even on context
         if not asset_name:
             return None
@@ -363,7 +399,7 @@ def is_representation_from_latest(representation):
         bool: Whether the representation is of latest version.
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     return version_is_latest(project_name, representation["parent"])
 
 
