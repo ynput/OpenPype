@@ -650,9 +650,6 @@ def _determine_mongodb() -> str:
 
 
 def _connect_to_v4_server():
-    if not AYON_SERVER_ENABLED:
-        return
-
     from openpype_common.connection.server import (
         need_server_or_login,
         load_environments,
@@ -689,58 +686,46 @@ def _connect_to_v4_server():
     sys.exit(0)
 
 
-def _check_and_update_addons():
+def _check_and_update_from_ayon_server():
     """Gets addon info from v4, compares with local folder and updates it.
 
     Raises:
         RuntimeError
     """
-    if not AYON_SERVER_ENABLED:
-        return
-
     from openpype_common.distribution.addon_distribution import (
         ADDON_ENDPOINT,
-        check_addons,
-        default_addon_downloader,
-    )
-    from openpype_common.connection.credentials import (
-        load_token
-    )
-
-    local_addon_folder = _get_local_dir("OPENPYPE_ADDONS_DIR", "addons")
-
-    _print(f">>> Checking addons in {local_addon_folder} ...")
-    token = load_token(os.environ.get("OPENPYPE_SERVER_URL"))
-    check_addons(ADDON_ENDPOINT, local_addon_folder,
-                 default_addon_downloader(), token)
-
-    if local_addon_folder not in sys.path:
-        _print(f"Adding {local_addon_folder} to sys path.")
-        sys.path.insert(0, local_addon_folder)
-
-
-def _check_and_update_dependency_package():
-    if not AYON_SERVER_ENABLED:
-        return
-
-    from openpype_common.distribution.addon_distribution import (
         DEPENDENCIES_ENDPOINT,
+        check_addons,
         check_venv,
         default_addon_downloader,
     )
-    from openpype_common.connection.credentials import (
-        load_token
+
+    local_addons_dir = _get_local_dir("AYON_ADDONS_DIR", "addons")
+    local_dependencies_dir = _get_local_dir(
+        "AYON_DEPENDENCIES_DIR", "dependency_packages"
     )
 
-    token = load_token(os.environ.get("OPENPYPE_SERVER_URL"))
-
-    local_dir = _get_local_dir(
-        "OPENPYPE_DEPENDENCIES_DIR", "dependency_packages"
+    default_downloader = default_addon_downloader()
+    _print(f">>> Checking addons in {local_addons_dir} ...")
+    token = os.environ.get("AYON_TOKEN")
+    check_addons(
+        ADDON_ENDPOINT,
+        local_addons_dir,
+        default_downloader,
+        token
     )
 
-    _print(f">>> Checking venvs in {local_dir} ...")
-    check_venv(DEPENDENCIES_ENDPOINT, local_dir,
-               default_addon_downloader(), token)
+    if local_addons_dir not in sys.path:
+        _print(f"Adding {local_addons_dir} to sys path.")
+        sys.path.insert(0, local_addons_dir)
+
+    _print(f">>> Checking venvs in {local_dependencies_dir} ...")
+    check_venv(
+        DEPENDENCIES_ENDPOINT,
+        local_dependencies_dir,
+        default_downloader,
+        token
+    )
 
 
 def _get_local_dir(env_key, dir_name=None):
@@ -1120,11 +1105,9 @@ def boot():
         _print(f"!!! {e}")
         sys.exit(1)
 
-    _connect_to_v4_server()
-
-    _check_and_update_addons()
-
-    _check_and_update_dependency_package()
+    if AYON_SERVER_ENABLED:
+        _connect_to_v4_server()
+        _check_and_update_from_ayon_server()
 
     os.environ["OPENPYPE_MONGO"] = openpype_mongo
     # name of Pype database
