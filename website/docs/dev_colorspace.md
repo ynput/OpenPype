@@ -66,7 +66,7 @@ The **set_representation_colorspace** method adds `colorspaceData` to the repres
 An example implementation can be found here: `openpype\hosts\nuke\plugins\publish\extract_render_local.py`
 
 
-4. Implement the loading procedure. Each loader which needs to have colorspace (detected from representation doc) set to DCC reader nodes should implement following code.
+4. The Loader plug-ins should take into account the `colorspaceData` in the published representation's data to allow the DCC to read in the expected color space.
 ```python
 from openpype.pipeline.colorspace import (
     get_imageio_colorspace_from_filepath,
