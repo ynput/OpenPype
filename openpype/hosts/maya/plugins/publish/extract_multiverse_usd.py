@@ -4,6 +4,7 @@ import six
 from maya import cmds
 from maya import mel
 
+import pyblish.api
 from openpype.pipeline import publish
 from openpype.hosts.maya.api.lib import maintained_selection
 
@@ -156,6 +157,7 @@ class ExtractMultiverseUsd(publish.Extractor):
         return members
 
     def process(self, instance):
+
         # Load plugin first
         cmds.loadPlugin("MultiverseForMaya", quiet=True)
 
@@ -254,7 +256,8 @@ class ExtractMultiverseUsdAnim(ExtractMultiverseUsd):
     Upon publish a .usd sparse cache will be written.
     """
     label = "Extract Multiverse USD Animation Sparse Cache"
-    families = ["animation"]
+    families = ["animation", "usd"]
+    match = pyblish.api.Subset
 
     def get_default_options(self):
         anim_options = self.default_options
