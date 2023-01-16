@@ -908,24 +908,25 @@ class ApplicationLaunchContext:
             self.launch_args.extend(self.data.pop("app_args"))
 
         # Handle launch environemtns
-        env = self.data.pop("env", None)
-        if env is not None and not isinstance(env, dict):
+        src_env = self.data.pop("env", None)
+        if src_env is not None and not isinstance(src_env, dict):
             self.log.warning((
                 "Passed `env` kwarg has invalid type: {}. Expected: `dict`."
                 " Using `os.environ` instead."
-            ).format(str(type(env))))
-            env = None
+            ).format(str(type(src_env))))
+            src_env = None
 
-        if env is None:
-            env = os.environ
+        if src_env is None:
+            src_env = os.environ
 
-        # subprocess.Popen keyword arguments
-        self.kwargs = {
-            "env": {
-                key: str(value)
-                for key, value in env.items()
-            }
+        ignored_env = {"QT_API",}
+        env = {
+            key: str(value)
+            for key, value in src_env.items()
+            if key not in ignored_env
         }
+        # subprocess.Popen keyword arguments
+        self.kwargs = {"env": env}
 
         if platform.system().lower() == "windows":
             # Detach new process from currently running process on Windows
