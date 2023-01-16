@@ -339,7 +339,7 @@ class RenderSettings(object):
         dlRenderGlobals1, of which there is only one. Since this is not the
         "mayaonic" way, we must insert a pre-render MEL into maya's
         "defaultRenderGlobals.preMel", which will help us work this out. We
-        wouldn't this this ... "hack" if deadline allowed us to insert commands
+        wouldn't do this ... "hack" if deadline allowed us to insert commands
         into its MayaBatch stuff, or, if it allowed setting up renderers in a
         sensible way.
         """
