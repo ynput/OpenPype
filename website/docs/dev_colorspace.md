@@ -59,9 +59,12 @@ The *colorspaceData* are stored at root of representation dictionary during publ
 	- set the `OCIO` environment variable before launching the host via a prelaunch hook
 	- or (if the host allows) to set the workfile OCIO config path using the host's API
 
-3. Each pixle related exporter plugins has to use parent class `openpype\pipeline\publish\publish_plugins.py:ExtractorColormanaged` and use it similarly as it is already implemented here `openpype\hosts\nuke\plugins\publish\extract_render_local.py`
-- **get_colorspace_settings**: is solving all settings for the host context
-- **set_representation_colorspace**: is adding colorspaceData to representation. If the colorspace is known then it is added directly to the representation with resolved config path.
+3. Each Extractor exporting pixel data (e.g. image or video) has to use parent class `openpype.pipeline.publish.publish_plugins.ExtractorColormanaged` and use `self.set_representation_colorspace` on the representations to be integrated.
+
+The **set_representation_colorspace** method adds `colorspaceData` to the representation. If the `colorspace` passed is not `None` then it is added directly to the representation with resolved config path otherwise a color space is assumed using the configured file rules. If no file rule matches the `colorspaceData` is **not** added to the representation.
+
+An example implementation can be found here: `openpype\hosts\nuke\plugins\publish\extract_render_local.py`
+
 
 4. Implement the loading procedure. Each loader which needs to have colorspace (detected from representation doc) set to DCC reader nodes should implement following code.
 ```python
