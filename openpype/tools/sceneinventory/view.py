@@ -48,7 +48,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
         self.setIndentation(12)
         self.setAlternatingRowColors(True)
         self.setSortingEnabled(True)
-        self.setSelectionMode(self.ExtendedSelection)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_right_mouse_menu)
         self._hierarchy_view = False

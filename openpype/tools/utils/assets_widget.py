@@ -821,7 +821,9 @@ class MultiSelectAssetsWidget(AssetsWidget):
     """
     def __init__(self, *args, **kwargs):
         super(MultiSelectAssetsWidget, self).__init__(*args, **kwargs)
-        self._view.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
+        self._view.setSelectionMode(
+            QtWidgets.QAbstractItemView.ExtendedSelection
+        )
 
         delegate = UnderlinesAssetDelegate()
         self._view.setItemDelegate(delegate)

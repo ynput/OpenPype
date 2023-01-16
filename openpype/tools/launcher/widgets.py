@@ -423,7 +423,7 @@ class ActionHistory(QtWidgets.QPushButton):
             return
 
         widget = QtWidgets.QListWidget()
-        widget.setSelectionMode(widget.NoSelection)
+        widget.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         widget.setStyleSheet("""
         * {
             font-family: "Courier New";
