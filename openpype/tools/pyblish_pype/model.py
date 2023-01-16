@@ -38,11 +38,14 @@ from openpype.settings import get_system_settings
 
 
 # ItemTypes
-InstanceType = QtGui.QStandardItem.UserType
-PluginType = QtGui.QStandardItem.UserType + 1
-GroupType = QtGui.QStandardItem.UserType + 2
-TerminalLabelType = QtGui.QStandardItem.UserType + 3
-TerminalDetailType = QtGui.QStandardItem.UserType + 4
+UserType = QtGui.QStandardItem.UserType
+if hasattr(UserType, "value"):
+    UserType = UserType.value
+InstanceType = UserType
+PluginType = UserType + 1
+GroupType = UserType + 2
+TerminalLabelType = UserType + 3
+TerminalDetailType = UserType + 4
 
 
 class QAwesomeTextIconFactory:
