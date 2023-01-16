@@ -34,7 +34,7 @@ The *colorspaceData* are stored at root of representation dictionary during publ
 
 
 ## How to integrate it into a host
-1. Each host setting schema should have following shemas. Ideally at top of all categories so it mimic already defined order at other hosts.
+1. The settings for a host should add the `imagio` schema. Ideally near the top of all categories in its `/settings/entities/schemas/system_scheams/host_settings/schema_{host}.json` so it matches the settings layout other hosts.
 ```json
 {
     "key": "imageio",
