@@ -21,6 +21,7 @@ class ExtractThumbnail(openpype.api.Extractor):
     hosts = ["blender"]
     families = ["review"]
     order = pyblish.api.ExtractorOrder + 0.01
+    presets = {}
 
     def process(self, instance):
         self.log.info("Extracting capture..")
@@ -36,11 +37,7 @@ class ExtractThumbnail(openpype.api.Extractor):
         family = instance.data.get("family")
         isolate = instance.data("isolate", None)
 
-        project_settings = instance.context.data["project_settings"]["blender"]
-        extractor_settings = project_settings["publish"]["ExtractThumbnail"]
-        presets = extractor_settings.get("presets")
-
-        preset = presets.get(family, {})
+        preset = self.presets.get(family, {})
 
         preset.update({
             "camera": camera,
