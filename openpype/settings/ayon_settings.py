@@ -689,6 +689,7 @@ class CacheItem:
 
     def update_value(self, value):
         self._value = value
+        self._outdate_time = time.time() + self.lifetime
 
     @property
     def is_outdated(self):
@@ -697,22 +698,45 @@ class CacheItem:
 
 class AyonSettingsCahe:
     _cache_by_project_name = {}
+    _production_settings = None
+
+    @classmethod
+    def get_production_settings(cls):
+        if (
+            cls._production_settings is None
+            or cls._production_settings.is_outdated
+        ):
+            value = ayon_api.get_full_production_settings()
+            if cls._production_settings is None:
+                cls._production_settings = CacheItem(value)
+            else:
+                cls._production_settings.update_value(value)
+        return cls._production_settings.get_value()
+
 
     @classmethod
     def get_value_by_project(cls, project_name):
+        production_settings = cls.get_production_settings()
+        addon_versions = production_settings["versions"]
+        if project_name is None:
+            value = production_settings["settings"]
+            for key, value in value.keys():
+                value["enabled"] = key in addon_versions
+            return value
+
         cache_item = cls._cache_by_project_name.get(project_name)
         if cache_item is None or cache_item.is_outdated:
-            if project_name is None:
-                value = ayon_api.get_production_settings()
-            else:
-                value = ayon_api.get_project_settings(project_name)
-
+            value = ayon_api.get_project_settings(project_name)
             if cache_item is None:
                 cache_item = CacheItem(value)
                 cls._cache_by_project_name[project_name] = cache_item
             else:
                 cache_item.update_value(value)
-        return cache_item.get_value()
+
+        value = cache_item.get_value()
+        for key, value in value.keys():
+            value["enabled"] = key in addon_versions
+        return value
 
 
 def get_ayon_project_settings(default_values, project_name):
