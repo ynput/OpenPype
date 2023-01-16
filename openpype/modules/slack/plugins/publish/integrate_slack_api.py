@@ -62,7 +62,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                     client = SlackPython3Operations(token, self.log)
 
                 if "@" in message:
-                    cache_key = "__cache_ids"
+                    cache_key = "__cache_slack_ids"
                     slack_ids = instance.context.data.get(cache_key, None)
                     if slack_ids is None:
                         users, groups = client.get_users_and_groups()
