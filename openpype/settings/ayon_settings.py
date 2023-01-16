@@ -19,6 +19,8 @@ def _convert_color(color_value):
         return _color_value
 
     if isinstance(color_value, list):
+        # WARNING R,G,B can be 'int' or 'float'
+        # - 'float' variant is using 'int' for min: 0 and max: 1
         if len(color_value) == 3:
             # Add alpha
             color_value.append(255)
