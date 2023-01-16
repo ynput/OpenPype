@@ -919,7 +919,7 @@ class ApplicationLaunchContext:
         if src_env is None:
             src_env = os.environ
 
-        ignored_env = {"QT_API",}
+        ignored_env = {"QT_API", }
         env = {
             key: str(value)
             for key, value in src_env.items()
