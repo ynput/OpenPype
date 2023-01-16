@@ -15,7 +15,11 @@ Adding the `imagio` settings schema is required for any host or module which is 
 :::
 
 ## Data model
-The *colorspaceData* are stored at root of representation dictionary during publishing. Once they are integrated into representation db document they are stored as *representation_doc.data["colorspaceData"]*
+Published representations that are extracted with color managed data store a **colorspaceData** entry in its data: `representation_doc["data"]["colorspaceData"]`.
+
+It's up to the Host implementation to pre-configure the application or workfile to have the correct OCIO config applied.
+It's up to the Extractors to set these values for the representation during publishing.
+It's up to the Loaders to read these values and apply the correct expected color space.
 
 ### Keys
 - **colorspace** - string value used in other publish plugins and loaders
