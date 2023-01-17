@@ -1,11 +1,9 @@
 import os
-import shutil
 from functools import partial
 
 from openpype.settings import get_project_settings
 from openpype.pipeline import install_host
-from openpype.hosts.maya.api import MayaHost, current_file
-from openpype.lib import register_event_callback
+from openpype.hosts.maya.api import MayaHost
 
 from maya import cmds
 

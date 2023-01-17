@@ -1,7 +1,6 @@
 import os
 
 from openpype.lib import PreLaunchHook
-from openpype.settings import get_project_settings
 
 
 class AddLastWorkfileToLaunchArgs(PreLaunchHook):
