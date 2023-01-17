@@ -97,9 +97,15 @@ class NukeCreator(NewCreator):
             if INSTANCE_DATA_KNOB not in node.knobs().keys():
                 continue
             node_data = get_node_data(node, INSTANCE_DATA_KNOB)
+
+            if not node_data:
+                # a node has no instance data
+                continue
+
             # test if subset name is matching
-            if subset_name in node_data.get("subset"):
+            if node_data.get("subset") == subset_name:
                 exists = True
+
         return exists
 
     def create_instance_node(
