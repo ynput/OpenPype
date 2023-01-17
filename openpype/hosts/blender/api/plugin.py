@@ -857,7 +857,7 @@ class Creator(LegacyCreator):
 
     @exec_process
     def process(
-        self, datablocks: List[bpy.types.ID] = None
+        self, datablocks: List[bpy.types.ID] = None, gather_into_collection = True
     ) -> OpenpypeInstance:
         """Create openpype publishable instance from datablocks.
 
@@ -867,6 +867,9 @@ class Creator(LegacyCreator):
 
         Args:
             datablocks (List[bpy.types.ID], optional): Datablocks to process and append to instance. Defaults to None.
+            gather_into_collection (bool): 
+                Process outliner gathering of elements under a single collection.
+                Defaults to True.
 
         Raises:
             RuntimeError: The instance already exists but no datablocks are provided.
@@ -908,7 +911,9 @@ class Creator(LegacyCreator):
         imprint(op_instance, self.data)
 
         # Process outliner if current creator relates to this types
-        if all(t in self.bl_types for t in BL_OUTLINER_TYPES):
+        if gather_into_collection and all(
+            t in self.bl_types for t in BL_OUTLINER_TYPES
+        ):
             container_collection = self._process_outliner(datablocks, name)
             imprint(container_collection, self.data)
 

@@ -469,6 +469,11 @@ class ManageOpenpypeInstance:
     )
     datablock_name: bpy.props.StringProperty(name="Datablock Name")
 
+    gather_into_collection: bpy.props.BoolProperty(
+        name="Gather into collection",
+        description="Gather outliner entities when added to instance under single collection",
+    )
+
 
 class SCENE_OT_CreateOpenpypeInstance(
     ManageOpenpypeInstance, bpy.types.Operator
@@ -536,6 +541,15 @@ class SCENE_OT_CreateOpenpypeInstance(
             if len(creator_plugin["bl_types"]) > 1:
                 row.prop(self, "datapath", text="", icon_only=True)
 
+        # Checkbox to gather selected element in outliner
+        if {
+            t[0]
+            for t in context.scene["openpype_creators"][self.creator_name][
+                "bl_types"
+            ]
+        } <= {BL_TYPE_DATAPATH.get(t) for t in BL_OUTLINER_TYPES}:
+            layout.prop(self, "gather_into_collection")
+
     def execute(self, _context):
         if not self.asset_name:
             self.report({"ERROR"}, f"Asset name must be filled!")
@@ -556,7 +570,8 @@ class SCENE_OT_CreateOpenpypeInstance(
         plugin.process(
             bpy.context.selected_objects
             if self.use_selection
-            else [datapath.get(self.datablock_name)]
+            else [datapath.get(self.datablock_name)],
+            gather_into_collection=self.gather_into_collection
         )
 
         return {"FINISHED"}
@@ -623,7 +638,7 @@ class SCENE_OT_AddToOpenpypeInstance(
         wm = context.window_manager
         return wm.invoke_props_dialog(self)
 
-    def draw(self, _context):
+    def draw(self, context):
         layout = self.layout
 
         # Pick the datablock in a field
@@ -637,6 +652,15 @@ class SCENE_OT_AddToOpenpypeInstance(
         # Pick list if several possibilities match
         if self.bl_types_count > 1:
             row.prop(self, "datapath", text="", icon_only=True)
+
+        # Checkbox to gather selected element in outliner
+        if {
+            t[0]
+            for t in context.scene["openpype_creators"][self.creator_name][
+                "bl_types"
+            ]
+        } <= {BL_TYPE_DATAPATH.get(t) for t in BL_OUTLINER_TYPES}:
+            layout.prop(self, "gather_into_collection")
 
     def execute(self, context):
         # Get datablock
@@ -668,7 +692,9 @@ class SCENE_OT_AddToOpenpypeInstance(
             {"variant": op_instance.name},
         )
         datapath = getattr(bpy.data, self.datapath)
-        plugin.process([datablock])
+        plugin.process(
+            [datablock], gather_into_collection=self.gather_into_collection
+        )
 
         # Set active index to newly created
         op_instance.datablock_active_index = (
