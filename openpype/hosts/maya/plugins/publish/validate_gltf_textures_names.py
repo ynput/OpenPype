@@ -38,6 +38,9 @@ class ValidateGLTFTexturesNames(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Process all the nodes in the instance"""
+        pbs_shader = cmds.ls(type="StingrayPBS")
+        if not pbs_shader:
+            raise RuntimeError("No PBS Shader in the scene")
         invalid = self.get_texture_shader_invalid(instance)
         if invalid:
             raise RuntimeError("Non PBS material found in "
@@ -109,9 +112,12 @@ class ValidateGLTFTexturesNames(pyblish.api.InstancePlugin):
 
         invalid = set()
         shading_grp = self.shader_selection(instance)
-        for shader in shading_grp:
-            if "StingrayPBS" not in shader:
-                invalid.add(shader)
+        for material in shading_grp:
+            main_shader = cmds.listConnections(material,
+                                               destination=True,
+                                               type="StingrayPBS")
+            if not main_shader:
+                invalid.add(material)
         return list(invalid)
 
     def shader_selection(self, instance):
