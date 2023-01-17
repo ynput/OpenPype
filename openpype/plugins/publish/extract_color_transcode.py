@@ -10,7 +10,7 @@ from openpype.lib import (
 )
 
 from openpype.lib.transcoding import (
-    convert_colorspace_for_input_paths,
+    convert_colorspace,
     get_transcode_temp_directory,
 )
 
@@ -69,7 +69,7 @@ class ExtractColorTranscode(publish.Extractor):
                 continue
 
             colorspace_data = repre["colorspaceData"]
-            source_color_space = colorspace_data["colorspace"]
+            source_colorspace = colorspace_data["colorspace"]
             config_path = colorspace_data.get("configData", {}).get("path")
             if not os.path.exists(config_path):
                 self.log.warning("Config file doesn't exist, skipping")
@@ -80,8 +80,8 @@ class ExtractColorTranscode(publish.Extractor):
             for _, output_def in profile.get("outputs", {}).items():
                 new_repre = copy.deepcopy(repre)
 
-                new_staging_dir = get_transcode_temp_directory()
                 original_staging_dir = new_repre["stagingDir"]
+                new_staging_dir = get_transcode_temp_directory()
                 new_repre["stagingDir"] = new_staging_dir
                 files_to_convert = new_repre["files"]
                 if not isinstance(files_to_convert, list):
@@ -92,27 +92,28 @@ class ExtractColorTranscode(publish.Extractor):
                 output_extension = output_def["output_extension"]
                 output_extension = output_extension.replace('.', '')
                 if output_extension:
-                    new_repre["name"] = output_extension
+                    if new_repre["name"] == new_repre["ext"]:
+                        new_repre["name"] = output_extension
                     new_repre["ext"] = output_extension
-
-                    files_to_convert = self._rename_output_files(
-                        files_to_convert, output_extension)
-
-                files_to_convert = [os.path.join(original_staging_dir, path)
-                                    for path in files_to_convert]
 
                 target_colorspace = output_def["output_colorspace"]
                 if not target_colorspace:
                     raise RuntimeError("Target colorspace must be set")
 
-                convert_colorspace_for_input_paths(
-                    files_to_convert,
-                    new_staging_dir,
-                    config_path,
-                    source_color_space,
-                    target_colorspace,
-                    self.log
-                )
+                for file_name in files_to_convert:
+                    input_filepath = os.path.join(original_staging_dir,
+                                                  file_name)
+                    output_path = self._get_output_file_path(input_filepath,
+                                                             new_staging_dir,
+                                                             output_extension)
+                    convert_colorspace(
+                        input_filepath,
+                        output_path,
+                        config_path,
+                        source_colorspace,
+                        target_colorspace,
+                        self.log
+                    )
 
                 instance.context.data["cleanupFullPaths"].extend(
                     files_to_delete)
@@ -130,15 +131,16 @@ class ExtractColorTranscode(publish.Extractor):
 
                 instance.data["representations"].append(new_repre)
 
-    def _rename_output_files(self, files_to_convert, output_extension):
-        """Change extension of converted files."""
-        renamed_files = []
-        for file_name in files_to_convert:
-            file_name, _ = os.path.splitext(file_name)
-            new_file_name = '{}.{}'.format(file_name,
-                                           output_extension)
-            renamed_files.append(new_file_name)
-        return renamed_files
+    def _get_output_file_path(self, input_filepath, output_dir,
+                              output_extension):
+        """Create output file name path."""
+        file_name = os.path.basename(input_filepath)
+        file_name, input_extension = os.path.splitext(file_name)
+        if not output_extension:
+            output_extension = input_extension
+        new_file_name = '{}.{}'.format(file_name,
+                                       output_extension)
+        return os.path.join(output_dir, new_file_name)
 
     def _get_profile(self, instance):
         """Returns profile if and how repre should be color transcoded."""
@@ -160,10 +162,10 @@ class ExtractColorTranscode(publish.Extractor):
 
         if not profile:
             self.log.info((
-                  "Skipped instance. None of profiles in presets are for"
-                  " Host: \"{}\" | Families: \"{}\" | Task \"{}\""
-                  " | Task type \"{}\" | Subset \"{}\" "
-              ).format(host_name, family, task_name, task_type, subset))
+              "Skipped instance. None of profiles in presets are for"
+              " Host: \"{}\" | Families: \"{}\" | Task \"{}\""
+              " | Task type \"{}\" | Subset \"{}\" "
+            ).format(host_name, family, task_name, task_type, subset))
 
         self.log.debug("profile: {}".format(profile))
         return profile
@@ -180,18 +182,19 @@ class ExtractColorTranscode(publish.Extractor):
 
         if repre.get("ext") not in self.supported_exts:
             self.log.debug((
-                    "Representation \"{}\" of unsupported extension. Skipped."
+                    "Representation '{}' of unsupported extension. Skipped."
             ).format(repre["name"]))
             return False
 
         if not repre.get("files"):
             self.log.debug((
-                "Representation \"{}\" have empty files. Skipped."
+                "Representation '{}' have empty files. Skipped."
             ).format(repre["name"]))
             return False
 
         if not repre.get("colorspaceData"):
-            self.log.debug("Repre has no colorspace data. Skipped.")
+            self.log.debug("Representation '{}' has no colorspace data. "
+                           "Skipped.")
             return False
 
         return True
