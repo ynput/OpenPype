@@ -451,6 +451,8 @@ class SubsetWidget(QtWidgets.QWidget):
         repre_loaders = []
         subset_loaders = []
         for loader in available_loaders:
+            if not loader.enabled:
+                continue
             # Skip if its a SubsetLoader.
             if issubclass(loader, SubsetLoaderPlugin):
                 subset_loaders.append(loader)
@@ -1352,6 +1354,8 @@ class RepresentationWidget(QtWidgets.QWidget):
 
         filtered_loaders = []
         for loader in available_loaders:
+            if not loader.enabled:
+                continue
             # Skip subset loaders
             if issubclass(loader, SubsetLoaderPlugin):
                 continue
