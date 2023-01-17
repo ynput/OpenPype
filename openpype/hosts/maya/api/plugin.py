@@ -302,7 +302,6 @@ class ReferenceLoader(Loader):
 
         # Update any xgen containers.
         compound_name = "xgenContainers"
-        object = "SplinePrimitive"
         if cmds.objExists("{}.{}".format(node, compound_name)):
             import xgenm
             container_amount = cmds.getAttr(
@@ -324,7 +323,7 @@ class ReferenceLoader(Loader):
                             path.replace("\\", "/"),
                             palette,
                             description,
-                            object
+                            "SplinePrimitive"
                         )
 
             # Refresh UI and viewport.
