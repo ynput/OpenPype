@@ -66,7 +66,6 @@ class ConvertGLSLShader(publish.Extractor):
                     cmds.connectAttr(dif_output, glsl_dif)
                     cmds.connectAttr(nrm_output, glsl_nrm)
 
-
                     mtl = ".u_MetallicTexture.u_MetallicTexture"
                     mtl = glsl + mtl
                     ao = ".u_OcclusionTexture.u_OcclusionTexture"
