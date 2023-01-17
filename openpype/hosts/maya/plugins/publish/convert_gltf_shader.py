@@ -54,9 +54,7 @@ class ConvertGLSLShader(publish.Extractor):
 
                     orm_packed = cmds.listConnections(shader +
                                                       ".TEX_ao_map")[0]
-                    ao_output = orm_packed + ".outColorR"
-                    rough_output = orm_packed + ".outColorG"
-                    metallic_output = orm_packed + ".outColorB"
+                    orm_output = orm_packed + ".outColor"
 
                     nrm = cmds.listConnections(shader + ".TEX_normal_map")[0]
                     nrm_output = nrm + ".outColor"
@@ -68,18 +66,17 @@ class ConvertGLSLShader(publish.Extractor):
                     cmds.connectAttr(dif_output, glsl_dif)
                     cmds.connectAttr(nrm_output, glsl_nrm)
 
-                    rgb_list = ["R", "G", "B"]
-                    for ch in rgb_list:
-                        mtl = ".u_MetallicTexture.u_MetallicTexture{}".format(ch) # noqa
-                        mtl = glsl + mtl
-                        ao = ".u_OcclusionTexture.u_OcclusionTexture{}".format(ch) # noqa
-                        ao = glsl + ao
-                        rough = ".u_RoughnessTexture.u_RoughnessTexture{}".format(ch) # noqa
-                        rough = glsl + rough
 
-                        cmds.connectAttr(metallic_output, mtl)
-                        cmds.connectAttr(ao_output, ao)
-                        cmds.connectAttr(rough_output, rough)
+                    mtl = ".u_MetallicTexture.u_MetallicTexture"
+                    mtl = glsl + mtl
+                    ao = ".u_OcclusionTexture.u_OcclusionTexture"
+                    ao = glsl + ao
+                    rough = ".u_RoughnessTexture.u_RoughnessTexture"
+                    rough = glsl + rough
+
+                    cmds.connectAttr(orm_output, mtl)
+                    cmds.connectAttr(orm_output, ao)
+                    cmds.connectAttr(orm_output, rough)
 
             # assign the shader to the asset
             cmds.sets(mesh, forceElement=str(glsl_shadingGrp))
