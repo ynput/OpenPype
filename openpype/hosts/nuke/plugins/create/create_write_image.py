@@ -118,13 +118,7 @@ class CreateWriteImage(napi.NukeWriteCreator):
         self.set_selected_nodes(pre_create_data)
 
         # make sure subset name is unique
-        if self.check_existing_subset(subset_name, instance_data):
-            raise napi.NukeCreatorError(
-                (
-                    "Subset '{}' is already created "
-                    "in nodes! Change variant name!"
-                ).format(subset_name)
-            )
+        self.check_existing_subset(subset_name)
 
         instance_node = self.create_instance_node(
             subset_name,
