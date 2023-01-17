@@ -43,11 +43,9 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
             return
 
         # Determine whether to open workfile post initialization.
-        if self.data["app"].host_name == "maya":
-            project_name = self.data["project_name"]
-            settings = get_project_settings(project_name)
+        if self.host_name == "maya":
             key = "open_workfile_post_initialization"
-            if settings["maya"][key]:
+            if self.data["project_settings"]["maya"][key]:
                 self.log.debug("Opening workfile post initialization.")
                 self.data["env"]["OPENPYPE_" + key.upper()] = "1"
                 return

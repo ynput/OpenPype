@@ -1,5 +1,6 @@
 import os
 import shutil
+from functools import partial
 
 from openpype.settings import get_project_settings
 from openpype.pipeline import install_host
@@ -18,8 +19,12 @@ print("Starting OpenPype usersetup...")
 key = "OPENPYPE_OPEN_WORKFILE_POST_INITIALIZATION"
 if bool(int(os.environ.get(key, "0"))):
     cmds.evalDeferred(
-        "cmds.file(os.environ[\"AVALON_LAST_WORKFILE\"], open=True,"
-        " force=True)",
+        partial(
+            cmds.file,
+            os.environ["AVALON_LAST_WORKFILE"],
+            open=True,
+            force=True
+        ),
         lowestPriority=True
     )
 
