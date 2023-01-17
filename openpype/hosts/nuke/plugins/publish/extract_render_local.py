@@ -33,12 +33,10 @@ class NukeRenderLocal(publish.Extractor):
             if x.Class() == "Write":
                 node = x
 
-        self.log.debug("instance collected: {}".format(instance.data))
-
         first_frame = instance.data.get("frameStartHandle", None)
 
         last_frame = instance.data.get("frameEndHandle", None)
-        node_subset_name = instance.data.get("name", None)
+        node_subset_name = instance.data["subset"]
 
         self.log.info("Starting render")
         self.log.info("Start frame: {}".format(first_frame))
@@ -65,7 +63,7 @@ class NukeRenderLocal(publish.Extractor):
 
         # Render frames
         nuke.execute(
-            node_subset_name,
+            str(node_subset_name),
             int(first_frame),
             int(last_frame)
         )

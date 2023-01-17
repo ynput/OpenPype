@@ -893,15 +893,27 @@ def get_imageio_input_colorspace(filename):
 def get_view_process_node():
     reset_selection()
 
-    ipn_orig = None
-    for v in nuke.allNodes(filter="Viewer"):
-        ipn = v['input_process_node'].getValue()
-        if "VIEWER_INPUT" not in ipn:
-            ipn_orig = nuke.toNode(ipn)
-            ipn_orig.setSelected(True)
+    ipn_node = None
+    for v_ in nuke.allNodes(filter="Viewer"):
+        ipn = v_['input_process_node'].getValue()
+        ipn_node = nuke.toNode(ipn)
+        if ipn_node:
+            if ipn == "VIEWER_INPUT":
+                # since it is set by default we can ignore it
+                # nobody usually use this
+                continue
+            else:
+                # in case a Viewer node is transfered from
+                # different workfile with old values
+                raise NameError((
+                    "Input process node name '{}' set in "
+                    "Viewer '{}' is does't exists in nodes"
+                ).format(ipn, v_.name()))
 
-    if ipn_orig:
-        return duplicate_node(ipn_orig)
+        ipn_node.setSelected(True)
+
+    if ipn_node:
+        return duplicate_node(ipn_node)
 
 
 def on_script_load():
