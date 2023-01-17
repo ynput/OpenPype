@@ -35,7 +35,7 @@ jobs:
         .\tools\build.ps1
     - name: Rename Build
       run: |
-        cd ../builds
+        cd ../build
         $platform = "amd64"
         $date = Get-Date -Format "M-d-yy"
         ${{ github.event.workflow_run.head_commit.message }} -match "\[(.*)\]"
