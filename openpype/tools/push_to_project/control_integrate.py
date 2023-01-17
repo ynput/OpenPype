@@ -907,7 +907,7 @@ class ProjectPushItemProcess:
             "fps": src_data.get("fps"),
             "source": src_data.get("source"),
             "machine": socket.gethostname(),
-            "comment": "",
+            "comment": self._item.comment or "",
             "author": get_openpype_username(),
             "time": get_formatted_current_time(),
         }
