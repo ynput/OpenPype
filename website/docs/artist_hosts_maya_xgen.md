@@ -27,10 +27,6 @@ Importing XGen Collections...
 # Error: XGen:  Failed to import collection from file P:/PROJECTS/OP01_CG_demo/shots/sh040/work/Lighting/cg_ball_xgenMain_v035__ball_rigMain_01___collection.xgen  #
 ```
 
-### Workfile Incremental Save
-
-When you increment the Maya workfile to a new version, all `.xgen` and `.xgd` files referenced by the Xgen collection in the workspace is incremented as well.
-
 ## Create
 
 Create an Xgen instance to publish. This needs to contain only **one Xgen collection**.
