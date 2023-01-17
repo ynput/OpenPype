@@ -563,6 +563,12 @@ class ExtractSlateGlobal(publish.Extractor):
                 skipping Global slate extraction...")
             return
 
+        if instance.context.data["host"] == "nuke" and \
+            "render.farm" in instance.data["families"]:
+            self.log.warning("Skipping Slate Global extraction "
+                "in nuke context, defer to deadline...")
+            return
+
         if "representations" not in instance.data:
             self.log.error("No representations to work on!")
             raise ValueError("no items in list.")
@@ -712,26 +718,24 @@ class ExtractSlateGlobal(publish.Extractor):
                 )
             )
 
-            # convert slate to final name and format
-            # only if task is in task list filter
-            if instance.data["anatomyData"]["app"] in slate_data["slate_task_types"]:
-                slate.render_image_oiio(
-                    temp_slate[0],
-                    slate_final_path,
-                    in_args=slate.data["oiio_args"]["input"],
-                    out_args=slate.data["oiio_args"]["output"]
-                )
 
-                # update repres and instance
-                if isSequence:
-                    repre["files"].insert(0, slate.data["slate_file"])
-                    repre["frameStart"] = slate.data["real_frameStart"]
-                    self.log.debug(
-                        "Added {} to {} representation file list.".format(
-                            slate.data["slate_file"],
-                            repre["name"]
-                        )
+            slate.render_image_oiio(
+                temp_slate[0],
+                slate_final_path,
+                in_args=slate.data["oiio_args"]["input"],
+                out_args=slate.data["oiio_args"]["output"]
+            )
+            
+            # update repres and instance
+            if isSequence:
+                repre["files"].insert(0, slate.data["slate_file"])
+                repre["frameStart"] = slate.data["real_frameStart"]
+                self.log.debug(
+                    "Added {} to {} representation file list.".format(
+                        slate.data["slate_file"],
+                        repre["name"]
                     )
+                )
             
             if "slateFrames" not in instance.data:
                 instance.data["slateFrames"] = {

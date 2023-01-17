@@ -71,23 +71,40 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
                 "label": "",
                 "value": ""
             }
-            slate_data["comment"] = ""
-            slate_data["scope"] = ""
+            slate_data["comment"] = "-"
+            slate_data["scope"] = "-"
 
             if "customData" in instance.data:
                 slate_data.update(instance.data["customData"])
 
-            if not "versionData" in instance.data:
-                versionData = {
-                    "versionData": {
-                        "families":[]
-                    }
-                }
-                instance.data.update(versionData)
-            instance.data["slate"] = True
-            instance.data["families"].append("slate")
-            instance.data["versionData"]["families"].append("slate")
+            if "families" not in instance.data:
+                instance.data["families"] = []
 
-            self.log.debug(
-                "SlateGlobal Data: {}".format(slate_global)
-            )
+            if not "versionData" in instance.data:
+                instance.data["versionData"] = {}
+
+            if "families" not in instance.data["versionData"]:
+                instance.data["versionData"]["families"] = []
+
+            if instance.data["anatomyData"]["task"]["type"] in \
+                settings["integrate_task_types"]:
+
+                self.log.debug("Task: {} is enabled for Extract "
+                    "Slate Global workflow, tagging for slate "
+                    "extraction on review families...".format(
+                        instance.data["anatomyData"]["task"]["type"]
+                ))
+
+                instance.data["slate"] = True
+                instance.data["families"].append("slate")
+                instance.data["versionData"]["families"].append("slate")
+
+                self.log.debug(
+                    "SlateGlobal Data: {}".format(slate_global)
+                )
+            else:
+                self.log.debug("Task: {} is disabled for Extract "
+                    "Slate Global workflow, skipping slate "
+                    "extraction on review families...".format(
+                        instance.data["anatomyData"]["task"]["type"]
+                ))
