@@ -3,8 +3,8 @@ import logging
 import shutil
 import copy
 
-import Qt
-from Qt import QtWidgets, QtCore
+import qtpy
+from qtpy import QtWidgets, QtCore
 
 from openpype.host import IWorkfileHost
 from openpype.client import get_asset_by_id
@@ -618,7 +618,7 @@ class FilesWidget(QtWidgets.QWidget):
             "caption": "Work Files",
             "filter": ext_filter
         }
-        if Qt.__binding__ in ("PySide", "PySide2"):
+        if qtpy.API in ("pyside", "pyside2"):
             kwargs["dir"] = self._workfiles_root
         else:
             kwargs["directory"] = self._workfiles_root
