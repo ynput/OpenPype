@@ -15,7 +15,7 @@ permissions:
 jobs:
   build:
 
-    runs-on: windows-latest
+    runs-on: self-hosted
 
     steps:
     - name: checkout repo
@@ -33,3 +33,15 @@ jobs:
     - name: Build
       run: |
         .\tools\build.ps1
+    - name: Rename Build
+      run: |
+        cd ../builds
+        $platform = "amd64"
+        $date = Get-Date -Format "M-d-yy"
+        ${{ github.event.workflow_run.head_commit.message }} -match "\[(.*)\]"
+        $commitmsg = $matches[1]
+        $buildname = ($platform + $date + $commitmsg)
+        mv exe.win-amd64-3.7 $buildname
+    - name: Export Build
+      run: |
+        cp buildname \\fs.hellohornet.lan\tools\dev\_builds
