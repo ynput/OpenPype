@@ -377,6 +377,9 @@ def _update_entries_preset(self, context):
     else:
         self.use_selection = False
 
+    # Prefill data collection
+    _update_datacol(self, context)
+
 
 def _update_subset_name(self: bpy.types.Operator, context: bpy.types.Context):
     """Update subset name by getting the family name from the creator plugin.
@@ -417,6 +420,28 @@ def _update_variant_name(
         _context (bpy.types.Context): Current context
     """
     self.variant_name = self.variant_default
+
+
+def _update_datacol(self: bpy.types.Operator, context: bpy.types.Context):
+    """At data collection update, automatically set the datablock name.
+
+    Args:
+        self (bpy.types.Operator): Current running operator
+        context (bpy.types.Context): Current context
+    """
+    # Prefill with selected entity
+    if (
+        self.datapath == "collections"
+        and context.collection != context.scene.collection
+    ):
+        active_entity = context.collection
+    elif self.datapath == "objects":
+        active_entity = context.active_object
+    else:
+        active_entity = None
+
+    if active_entity:
+        self.datablock_name = active_entity.name
 
 
 class ManageOpenpypeInstance:
@@ -473,6 +498,7 @@ class ManageOpenpypeInstance:
                 self.creator_name
             ]["bl_types"]
         ],
+        update=_update_datacol,
     )
     datablock_name: bpy.props.StringProperty(name="Datablock Name")
 
