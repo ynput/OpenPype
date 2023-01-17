@@ -33,7 +33,7 @@ jobs:
     - name: Build
       run: |
         .\tools\build.ps1
-    - name: Rename Build
+    - name: Rename & Export Build
       run: |
         cd build
         $platform = "amd64"
@@ -41,8 +41,10 @@ jobs:
         $commitmsg = git log -1 --pretty=format:"%s"
         $commitmsg -match "\[(.*)\]"
         $commitmsg = $matches[1]
-        $buildname = ($platform + $date + $commitmsg)
+        $buildname = ($commitmsg + "-" + $date + "-" + $platform)
         mv exe.win-amd64-3.7 $buildname
-    - name: Export Build
-      run: |
         cp $buildname \\fs.hellohornet.lan\tools\dev\_builds
+    - name: Cleanup local build folder
+      run: |
+        cd build
+        rm -R *
