@@ -356,7 +356,7 @@ class UserPublishValues:
         self._event_system.emit(
             "comment.changed",
             {
-                "new_asset_name": comment,
+                "comment": comment,
                 "changes": {
                     "comment": {"new": comment, "old": old_comment}
                 }
