@@ -362,7 +362,7 @@ class ExtractorColormanaged(Extractor):
             {
                 # for other publish plugins and loaders
                 "colorspace": "linear",
-                "configData": {
+                "config": {
                     # for future references in case need
                     "path": "/abs/path/to/config.ocio",
                     # for other plugins within remote publish cases
@@ -418,7 +418,7 @@ class ExtractorColormanaged(Extractor):
         if colorspace:
             colorspace_data = {
                 "colorspace": colorspace,
-                "configData": config_data
+                "config": config_data
             }
 
             # update data key
