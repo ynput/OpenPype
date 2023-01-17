@@ -1,4 +1,3 @@
-# TODO: this head doc string
 """
 Requires:
     instance -> otio_clip
@@ -153,6 +152,8 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
             self.log.debug(collection)
             repre = self._create_representation(
                 frame_start, frame_end, collection=collection)
+
+            instance.data["originalBasename"] = collection.format("{head}")
         else:
             _trim = False
             dirname, filename = os.path.split(media_ref.target_url)
@@ -166,6 +167,10 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
             self.log.debug(filename)
             repre = self._create_representation(
                 frame_start, frame_end, file=filename, trim=_trim)
+
+            instance.data["originalBasename"] = os.path.splitext(filename)[0]
+
+        instance.data["originalDirname"] = self.staging_dir
 
         if repre:
             # add representation to instance data
