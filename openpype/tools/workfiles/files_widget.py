@@ -525,22 +525,25 @@ class FilesWidget(QtWidgets.QWidget):
 
     def save_changes_prompt(self):
         self._messagebox = messagebox = QtWidgets.QMessageBox(parent=self)
-        messagebox.setWindowFlags(messagebox.windowFlags() |
-                                  QtCore.Qt.FramelessWindowHint)
-        messagebox.setIcon(messagebox.Warning)
+        messagebox.setWindowFlags(
+            messagebox.windowFlags() | QtCore.Qt.FramelessWindowHint
+        )
+        messagebox.setIcon(QtWidgets.QMessageBox.Warning)
         messagebox.setWindowTitle("Unsaved Changes!")
         messagebox.setText(
             "There are unsaved changes to the current file."
             "\nDo you want to save the changes?"
         )
         messagebox.setStandardButtons(
-            messagebox.Yes | messagebox.No | messagebox.Cancel
+            QtWidgets.QMessageBox.Yes
+            | QtWidgets.QMessageBox.No
+            | QtWidgets.QMessageBox.Cancel
         )
 
         result = messagebox.exec_()
-        if result == messagebox.Yes:
+        if result == QtWidgets.QMessageBox.Yes:
             return True
-        if result == messagebox.No:
+        if result == QtWidgets.QMessageBox.No:
             return False
         return None
 
