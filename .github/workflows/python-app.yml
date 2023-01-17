@@ -38,10 +38,11 @@ jobs:
         cd build
         $platform = "amd64"
         $date = Get-Date -Format "M-d-yy"
-        ${{ github.event.workflow_run.head_commit.message }} -match "\[(.*)\]"
+        $commitmsg = git log -1 --pretty=format:"%s"
+        $commitmsg -match "\[(.*)\]"
         $commitmsg = $matches[1]
         $buildname = ($platform + $date + $commitmsg)
         mv exe.win-amd64-3.7 $buildname
     - name: Export Build
       run: |
-        cp buildname \\fs.hellohornet.lan\tools\dev\_builds
+        cp $buildname \\fs.hellohornet.lan\tools\dev\_builds
