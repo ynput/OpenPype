@@ -47,8 +47,8 @@ class ValidateGLTFTexturesNames(pyblish.api.InstancePlugin):
                                "{0}".format(invalid))
         invalid = self.get_texture_node_invalid(instance)
         if invalid:
-            raise RuntimeError("Related texture file "
-                               "nodes not connected")
+            raise RuntimeError("At least a Albedo texture file"
+                               "nodes need to be connected")
         invalid = self.get_texture_name_invalid(instance)
         if invalid:
             raise RuntimeError("Invalid texture name(s) found: "
@@ -74,17 +74,19 @@ class ValidateGLTFTexturesNames(pyblish.api.InstancePlugin):
                 if not dif.endswith("_D"):
                     invalid.add(dif_path)
                 orm_packed = cmds.listConnections(shader + ".TEX_ao_mapX")[0]
-                # "_ORM"
-                orm_path = cmds.getAttr(orm_packed + ".fileTextureName")
-                orm = orm_path.split(".")[0]
-                if not orm.endswith("_ORM"):
-                    invalid.add(orm_path)
+                if orm_packed:
+                    # "_ORM"
+                    orm_path = cmds.getAttr(orm_packed + ".fileTextureName")
+                    orm = orm_path.split(".")[0]
+                    if not orm.endswith("_ORM"):
+                        invalid.add(orm_path)
                 nrm = cmds.listConnections(shader + ".TEX_normal_map")[0]
-                nrm_path = cmds.getAttr(nrm + ".fileTextureName")
-                nrm_map = nrm_path.split(".")[0]
-                # "_N"
-                if not nrm_map.endswith("_N"):
-                    invalid.add(nrm_path)
+                if nrm:
+                    nrm_path = cmds.getAttr(nrm + ".fileTextureName")
+                    nrm_map = nrm_path.split(".")[0]
+                    # "_N"
+                    if not nrm_map.endswith("_N"):
+                        invalid.add(nrm_path)
 
         return list(invalid)
 
@@ -100,12 +102,6 @@ class ValidateGLTFTexturesNames(pyblish.api.InstancePlugin):
                 albedo = cmds.listConnections(shader + ".TEX_color_map")
                 if not albedo:
                     invalid.add(albedo)
-                orm_packed = cmds.listConnections(shader + ".TEX_ao_mapX")
-                if not orm_packed:
-                    invalid.add(orm_packed)
-                nrm = cmds.listConnections(shader + ".TEX_normal_map")
-                if not nrm:
-                    invalid.add(nrm)
         return list(invalid)
 
     def get_texture_shader_invalid(self, instance):
