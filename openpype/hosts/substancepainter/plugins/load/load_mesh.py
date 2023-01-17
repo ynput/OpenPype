@@ -7,6 +7,7 @@ from openpype.hosts.substancepainter.api.pipeline import (
     set_container_metadata,
     remove_container_metadata
 )
+from openpype.hosts.substancepainter.api.lib import prompt_new_file_with_mesh
 
 import substance_painter.project
 import qargparse
@@ -45,18 +46,10 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
 
         if not substance_painter.project.is_open():
             # Allow to 'initialize' a new project
-            # TODO: preferably these settings would come from the actual
-            #       new project prompt of Substance (or something that is
-            #       visually similar to still allow artist decisions)
-            settings = substance_painter.project.Settings(
-                default_texture_resolution=4096,
-                import_cameras=import_cameras,
-            )
-
-            substance_painter.project.create(
-                mesh_file_path=self.fname,
-                settings=settings
-            )
+            result = prompt_new_file_with_mesh(mesh_filepath=self.fname)
+            if not result:
+                self.log.info("User cancelled new project prompt.")
+                return
 
         else:
             # Reload the mesh

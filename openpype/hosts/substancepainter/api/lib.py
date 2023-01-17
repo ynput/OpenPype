@@ -520,3 +520,129 @@ def load_shelf(path, name=None):
     substance_painter.resource.Shelves.add(name, path)
 
     return name
+
+
+def _get_new_project_action():
+    """Return QAction which triggers Substance Painter's new project dialog"""
+    from PySide2 import QtGui
+
+    main_window = substance_painter.ui.get_main_window()
+
+    # Find the file menu's New file action
+    menubar = main_window.menuBar()
+    new_action = None
+    for action in menubar.actions():
+        menu = action.menu()
+        if not menu:
+            continue
+
+        if menu.objectName() != "file":
+            continue
+
+        # Find the action with the CTRL+N key sequence
+        new_action = next(action for action in menu.actions()
+                          if action.shortcut() == QtGui.QKeySequence.New)
+        break
+
+    return new_action
+
+
+def prompt_new_file_with_mesh(mesh_filepath):
+    """Prompts the user for a new file using Substance Painter's own dialog.
+
+    This will set the mesh path to load to the given mesh and disables the
+    dialog box to disallow the user to change the path. This way we can allow
+    user configuration of a project but set the mesh path ourselves.
+
+    Warning:
+        This is very hacky and experimental.
+
+    Note:
+       If a project is currently open using the same mesh filepath it can't
+       accurately detect whether the user had actually accepted the new project
+       dialog or whether the project afterwards is still the original project,
+       for example when the user might have cancelled the operation.
+
+    """
+    from PySide2 import QtWidgets, QtCore
+
+    app = QtWidgets.QApplication.instance()
+    assert os.path.isfile(mesh_filepath), \
+        f"Mesh filepath does not exist: {mesh_filepath}"
+
+    def _setup_file_dialog():
+        """Set filepath in QFileDialog and trigger accept result"""
+        file_dialog = app.activeModalWidget()
+        assert isinstance(file_dialog, QtWidgets.QFileDialog)
+
+        # Quickly hide the dialog
+        file_dialog.hide()
+        app.processEvents(QtCore.QEventLoop.ExcludeUserInputEvents, 1000)
+
+        file_dialog.setDirectory(os.path.dirname(mesh_filepath))
+        url = QtCore.QUrl.fromLocalFile(os.path.basename(mesh_filepath))
+        file_dialog.selectUrl(url)
+
+        # Give the explorer window time to refresh to the folder and select
+        # the file
+        while not file_dialog.selectedFiles():
+            app.processEvents(QtCore.QEventLoop.ExcludeUserInputEvents, 1000)
+        print(f"Selected: {file_dialog.selectedFiles()}")
+
+        # Set it again now we know the path is refreshed - without this
+        # accepting the dialog will often not trigger the correct filepath
+        file_dialog.setDirectory(os.path.dirname(mesh_filepath))
+        url = QtCore.QUrl.fromLocalFile(os.path.basename(mesh_filepath))
+        file_dialog.selectUrl(url)
+
+        file_dialog.done(file_dialog.Accepted)
+        app.processEvents(QtCore.QEventLoop.AllEvents)
+
+    def _setup_prompt():
+        app.processEvents(QtCore.QEventLoop.ExcludeUserInputEvents)
+        dialog = app.activeModalWidget()
+        assert dialog.objectName() == "NewProjectDialog"
+
+        # Set the window title
+        mesh = os.path.basename(mesh_filepath)
+        dialog.setWindowTitle(f"New Project with mesh: {mesh}")
+
+        # Get the select mesh file button
+        mesh_select = dialog.findChild(QtWidgets.QPushButton, "meshSelect")
+
+        # Hide the select mesh button to the user to block changing of mesh
+        mesh_select.setVisible(False)
+
+        # Ensure UI is visually up-to-date
+        app.processEvents(QtCore.QEventLoop.ExcludeUserInputEvents)
+
+        # Trigger the 'select file' dialog to set the path and have the
+        # new file dialog to use the path.
+        QtCore.QTimer.singleShot(10, _setup_file_dialog)
+        mesh_select.click()
+
+        app.processEvents(QtCore.QEventLoop.AllEvents, 5000)
+
+        mesh_filename = dialog.findChild(QtWidgets.QFrame, "meshFileName")
+        mesh_filename_label = mesh_filename.findChild(QtWidgets.QLabel)
+        if not mesh_filename_label.text():
+            dialog.close()
+            raise RuntimeError(f"Failed to set mesh path: {mesh_filepath}")
+
+    new_action = _get_new_project_action()
+    if not new_action:
+        raise RuntimeError("Unable to detect new file action..")
+
+    QtCore.QTimer.singleShot(0, _setup_prompt)
+    new_action.trigger()
+    app.processEvents(QtCore.QEventLoop.AllEvents, 5000)
+
+    if not substance_painter.project.is_open():
+        return
+
+    # Confirm mesh was set as expected
+    project_mesh = substance_painter.project.last_imported_mesh_path()
+    if os.path.normpath(project_mesh) != os.path.normpath(mesh_filepath):
+        return
+
+    return project_mesh
