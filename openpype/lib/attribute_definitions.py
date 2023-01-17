@@ -493,7 +493,7 @@ class EnumDef(AbtractAttrDef):
         elif isinstance(items, (tuple, list, set)):
             for item in items:
                 if isinstance(item, dict):
-                    # Test if value is available
+                    # Validate if 'value' is available
                     if "value" not in item:
                         raise KeyError("Item does not contain 'value' key.")
 
