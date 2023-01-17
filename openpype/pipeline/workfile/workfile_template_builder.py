@@ -239,6 +239,8 @@ class AbstractTemplateBuilder(object):
         if self._creators_by_name is None:
             self._creators_by_name = {}
             for creator in discover_legacy_creator_plugins():
+                if not creator.enabled:
+                    continue
                 creator_name = creator.__name__
                 if creator_name in self._creators_by_name:
                     raise KeyError(
