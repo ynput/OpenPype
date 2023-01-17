@@ -37,6 +37,13 @@ class ExtractWorkfileXgen(publish.Extractor):
             )
             return
 
+        publish_settings = instance.context["deadline"]["publish"]
+        if not publish_settings["MayaSubmitDeadline"]["use_published"]:
+            self.log.debug(
+                "Not using the published workfile. Abort Xgen extraction."
+            )
+            return
+
         # Collect Xgen and Delta files.
         xgen_files = []
         sources = []
