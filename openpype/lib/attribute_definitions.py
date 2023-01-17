@@ -419,9 +419,8 @@ class EnumDef(AbtractAttrDef):
     """Enumeration of single item from items.
 
     Args:
-        items: Items definition that can be coverted to
-            `collections.OrderedDict`. Dictionary represent {value: label}
-            relation.
+        items: Items definition that can be coverted using
+            'prepare_enum_items'.
         default: Default value. Must be one key(value) from passed items.
     """
 
@@ -495,7 +494,9 @@ class EnumDef(AbtractAttrDef):
             for item in items:
                 if isinstance(item, dict):
                     # Test if value is available
-                    item["value"]
+                    if "value" not in item:
+                        raise KeyError("Item does not contain 'value' key.")
+
                     if "label" not in item:
                         item["label"] = str(item["value"])
                 elif isinstance(item, (list, tuple)):
