@@ -23,6 +23,37 @@ DEPENDENCIES_ENDPOINT = "dependencies"
 ADDON_ENDPOINT = "addons?details=1"
 
 
+def get_local_dir(*subdirs):
+    if not subdirs:
+        raise RuntimeError("Must fill dir_name if nothing else provided!")
+
+    local_dir = os.path.join(
+        appdirs.user_data_dir("openpype", "pypeclub"),
+        *subdirs
+    )
+    if not os.path.isdir(local_dir):
+        try:
+            os.makedirs(local_dir)
+        except Exception:  # TODO fix exception
+            raise RuntimeError(f"Cannot create {local_dir}")
+
+    return local_dir
+
+
+def get_addons_dir():
+    addons_dir = os.environ.get("AYON_ADDONS_DIR")
+    if not addons_dir:
+        addons_dir = get_local_dir("addons")
+    return addons_dir
+
+
+def get_dependencies_dir():
+    dependencies_dir = os.environ.get("AYON_DEPENDENCIES_DIR")
+    if not dependencies_dir:
+        dependencies_dir = get_local_dir("dependency_packages")
+    return dependencies_dir
+
+
 class AddonDownloader:
     log = logging.getLogger(__name__)
 
