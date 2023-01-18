@@ -29,6 +29,7 @@ from openpype.pipeline.load import (
     load_with_repre_context,
     load_with_subset_context,
     load_with_subset_contexts,
+    LoadError,
     IncompatibleLoaderError,
 )
 from openpype.tools.utils import (
@@ -458,6 +459,8 @@ class SubsetWidget(QtWidgets.QWidget):
         repre_loaders = []
         subset_loaders = []
         for loader in available_loaders:
+            if not loader.enabled:
+                continue
             # Skip if its a SubsetLoader.
             if issubclass(loader, SubsetLoaderPlugin):
                 subset_loaders.append(loader)
@@ -1366,6 +1369,8 @@ class RepresentationWidget(QtWidgets.QWidget):
 
         filtered_loaders = []
         for loader in available_loaders:
+            if not loader.enabled:
+                continue
             # Skip subset loaders
             if issubclass(loader, SubsetLoaderPlugin):
                 continue
@@ -1591,6 +1596,7 @@ def _load_representations_by_loader(loader, repre_contexts,
                 repre_context,
                 options=options
             )
+
         except IncompatibleLoaderError as exc:
             print(exc)
             error_info.append((
@@ -1602,10 +1608,13 @@ def _load_representations_by_loader(loader, repre_contexts,
             ))
 
         except Exception as exc:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            formatted_traceback = "".join(traceback.format_exception(
-                exc_type, exc_value, exc_traceback
-            ))
+            formatted_traceback = None
+            if not isinstance(exc, LoadError):
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                formatted_traceback = "".join(traceback.format_exception(
+                    exc_type, exc_value, exc_traceback
+                ))
+
             error_info.append((
                 str(exc),
                 formatted_traceback,
@@ -1630,7 +1639,7 @@ def _load_subsets_by_loader(loader, subset_contexts, options,
     error_info = []
 
     if options is None:  # not load when cancelled
-        return
+        return error_info
 
     if loader.is_multiple_contexts_compatible:
         subset_names = []
@@ -1645,13 +1654,14 @@ def _load_subsets_by_loader(loader, subset_contexts, options,
                 subset_contexts,
                 options=options
             )
+
         except Exception as exc:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            formatted_traceback = "".join(
-                traceback.format_exception(
+            formatted_traceback = None
+            if not isinstance(exc, LoadError):
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                formatted_traceback = "".join(traceback.format_exception(
                     exc_type, exc_value, exc_traceback
-                )
-            )
+                ))
             error_info.append((
                 str(exc),
                 formatted_traceback,
@@ -1671,13 +1681,15 @@ def _load_subsets_by_loader(loader, subset_contexts, options,
                     subset_context,
                     options=options
                 )
+
             except Exception as exc:
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                formatted_traceback = "\n".join(
-                    traceback.format_exception(
+                formatted_traceback = None
+                if not isinstance(exc, LoadError):
+                    exc_type, exc_value, exc_traceback = sys.exc_info()
+                    formatted_traceback = "".join(traceback.format_exception(
                         exc_type, exc_value, exc_traceback
-                    )
-                )
+                    ))
+
                 error_info.append((
                     str(exc),
                     formatted_traceback,

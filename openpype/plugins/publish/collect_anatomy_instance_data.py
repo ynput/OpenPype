@@ -32,7 +32,6 @@ from openpype.client import (
     get_subsets,
     get_last_versions
 )
-from openpype.pipeline import legacy_io
 
 
 class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
@@ -49,7 +48,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
     def process(self, context):
         self.log.info("Collecting anatomy data for all instances.")
 
-        project_name = legacy_io.active_project()
+        project_name = context.data["projectName"]
         self.fill_missing_asset_docs(context, project_name)
         self.fill_instance_data_from_asset(context)
         self.fill_latest_versions(context, project_name)

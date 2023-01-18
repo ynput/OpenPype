@@ -148,6 +148,10 @@ QPushButton::menu-indicator  {
     padding-right: 5px;
 }
 
+QPushButton[state="error"] {
+    background: {color:publisher:error};
+}
+
 QToolButton {
     border: 0px solid transparent;
     background: {color:bg-buttons};
@@ -1416,6 +1420,13 @@ CreateNextPageOverlay {
 }
 
 /* Globally used names */
+#ValidatedLineEdit[state="valid"], #ValidatedLineEdit[state="valid"]:focus, #ValidatedLineEdit[state="valid"]:hover {
+    border-color: {color:publisher:success};
+}
+#ValidatedLineEdit[state="invalid"], #ValidatedLineEdit[state="invalid"]:focus, #ValidatedLineEdit[state="invalid"]:hover {
+    border-color: {color:publisher:error};
+}
+
 #Separator {
     background: {color:bg-menu-separator};
 }
