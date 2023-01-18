@@ -83,6 +83,8 @@ def calculate_changes(old_value, new_value):
 
 
 def create_settings_handler():
+    if AYON_SERVER_ENABLED:
+        raise RuntimeError("Mongo settings handler was triggered in AYON mode")
     from .handlers import MongoSettingsHandler
     # Handler can't be created in global space on initialization but only when
     # needed. Plus here may be logic: Which handler is used (in future).
@@ -90,6 +92,8 @@ def create_settings_handler():
 
 
 def create_local_settings_handler():
+    if AYON_SERVER_ENABLED:
+        raise RuntimeError("Mongo settings handler was triggered in AYON mode")
     from .handlers import MongoLocalSettingsHandler
     return MongoLocalSettingsHandler()
 
