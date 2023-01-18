@@ -897,18 +897,24 @@ def get_view_process_node():
     for v_ in nuke.allNodes(filter="Viewer"):
         ipn = v_['input_process_node'].getValue()
         ipn_node = nuke.toNode(ipn)
-        if ipn_node:
-            if ipn == "VIEWER_INPUT":
-                # since it is set by default we can ignore it
-                # nobody usually use this
-                continue
-            else:
-                # in case a Viewer node is transfered from
-                # different workfile with old values
-                raise NameError((
-                    "Input process node name '{}' set in "
-                    "Viewer '{}' is does't exists in nodes"
-                ).format(ipn, v_.name()))
+
+        # skip if no input node is set
+        if not ipn:
+            continue
+
+        if ipn == "VIEWER_INPUT" and not ipn_node:
+            # since it is set by default we can ignore it
+            # nobody usually use this but use it if
+            # it exists in nodes
+            continue
+
+        if not ipn_node:
+            # in case a Viewer node is transfered from
+            # different workfile with old values
+            raise NameError((
+                "Input process node name '{}' set in "
+                "Viewer '{}' is does't exists in nodes"
+            ).format(ipn, v_.name()))
 
         ipn_node.setSelected(True)
 
