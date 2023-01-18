@@ -3473,12 +3473,14 @@ def get_color_management_preferences():
     path = cmds.colorManagementPrefs(
         query=True, configFilePath=True
     )
+
     # Resolve environment variables in config path. "MAYA_RESOURCES" are in the
     # path by default.
-    for group in re.search(r'(<.*>)', path).groups():
-        path = path.replace(
-            group, os.environ[group[1:-1]]
-        )
+    def _subst_with_env_value(match):
+        key = match.group(1)
+        return os.environ.get(key, "")
+
+    path = re.sub(r'<([^>]+)>', _subst_with_env_value, path)
 
     data["config"] = path
 
