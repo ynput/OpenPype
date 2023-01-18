@@ -372,7 +372,11 @@ def get_imageio_config(
 
 
 def _get_config_data(path_list, anatomy_data):
-    """Return first existing path in path list formatted by anatomy data.
+    """Return first existing path in path list.
+
+    If template is used in path inputs,
+    then it is formated by anatomy data
+    and environment variables
 
     Args:
         path_list (list[str]): list of abs paths
