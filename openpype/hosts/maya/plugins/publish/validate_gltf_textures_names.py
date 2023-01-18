@@ -1,7 +1,6 @@
 from maya import cmds
 
 import pyblish.api
-import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import ValidateContentsOrder
 
 
@@ -81,7 +80,7 @@ class ValidateGLTFTexturesNames(pyblish.api.InstancePlugin):
                     invalid.add(orm_path)
             nrm = cmds.listConnections(shader + ".TEX_normal_map")
             if nrm:
-                nrm_path = cmds.getAttr(nrm[0]+ ".fileTextureName")
+                nrm_path = cmds.getAttr(nrm[0] + ".fileTextureName")
                 nrm_map = nrm_path.split(".")[0]
                 # "_N"
                 if not nrm_map.endswith("_N"):
