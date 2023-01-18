@@ -1,7 +1,7 @@
 import os
 import logging
 
-from Qt import QtCore, QtGui
+from qtpy import QtCore, QtGui
 import qtawesome
 
 from openpype.client import (

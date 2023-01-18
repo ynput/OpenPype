@@ -25,6 +25,7 @@
             "active": true,
             "tile_assembler_plugin": "OpenPypeTileAssembler",
             "use_published": true,
+            "import_reference": false,
             "asset_dependencies": true,
             "priority": 50,
             "tile_priority": 50,

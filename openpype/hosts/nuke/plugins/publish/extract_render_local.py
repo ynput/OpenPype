@@ -22,18 +22,20 @@ class NukeRenderLocal(publish.ExtractorColormanaged):
 
     def process(self, instance):
         families = instance.data["families"]
+        child_nodes = (
+            instance.data.get("transientData", {}).get("childNodes")
+            or instance
+        )
 
         node = None
-        for x in instance:
+        for x in child_nodes:
             if x.Class() == "Write":
                 node = x
-
-        self.log.debug("instance collected: {}".format(instance.data))
 
         first_frame = instance.data.get("frameStartHandle", None)
 
         last_frame = instance.data.get("frameEndHandle", None)
-        node_subset_name = instance.data.get("name", None)
+        node_subset_name = instance.data["subset"]
 
         self.log.info("Starting render")
         self.log.info("Start frame: {}".format(first_frame))
@@ -60,7 +62,7 @@ class NukeRenderLocal(publish.ExtractorColormanaged):
 
         # Render frames
         nuke.execute(
-            node_subset_name,
+            str(node_subset_name),
             int(first_frame),
             int(last_frame)
         )

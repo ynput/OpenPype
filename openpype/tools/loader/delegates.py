@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtGui, QtCore
+from qtpy import QtWidgets, QtGui, QtCore
 
 
 class LoadedInSceneDelegate(QtWidgets.QStyledItemDelegate):

@@ -18,6 +18,7 @@ from .pipeline import (
     show_tools_popup,
     instantiate,
     UnrealHost,
+    maintained_selection
 )
 
 __all__ = [
@@ -36,4 +37,5 @@ __all__ = [
     "show_tools_popup",
     "instantiate",
     "UnrealHost",
+    "maintained_selection"
 ]

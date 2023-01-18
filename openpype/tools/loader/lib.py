@@ -1,5 +1,5 @@
 import inspect
-from Qt import QtGui
+from qtpy import QtGui
 import qtawesome
 
 from openpype.lib.attribute_definitions import AbtractAttrDef

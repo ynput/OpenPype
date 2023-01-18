@@ -20,6 +20,7 @@ class LegacyCreator(object):
     family = None
     defaults = None
     maintain_selection = True
+    enabled = True
 
     dynamic_subset_keys = []
 
@@ -76,11 +77,10 @@ class LegacyCreator(object):
         print(">>> We have preset for {}".format(plugin_name))
         for option, value in plugin_settings.items():
             if option == "enabled" and value is False:
-                setattr(cls, "active", False)
                 print("  - is disabled by preset")
             else:
-                setattr(cls, option, value)
                 print("  - setting `{}`: `{}`".format(option, value))
+            setattr(cls, option, value)
 
     def process(self):
         pass
