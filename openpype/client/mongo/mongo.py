@@ -5,6 +5,7 @@ import logging
 import pymongo
 import certifi
 
+from openpype import AYON_SERVER_ENABLED
 if sys.version_info[0] == 2:
     from urlparse import urlparse, parse_qs
 else:
@@ -157,6 +158,8 @@ class OpenPypeMongoConnection:
 
     @classmethod
     def create_connection(cls, mongo_url, timeout=None, retry_attempts=None):
+        if AYON_SERVER_ENABLED:
+            raise RuntimeError("Created mongo connection  in AYON mode")
         parsed = urlparse(mongo_url)
         # Force validation of scheme
         if parsed.scheme not in ["mongodb", "mongodb+srv"]:
