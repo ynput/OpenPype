@@ -62,7 +62,7 @@ class RemoteFileHandler:
             return True
         if not hash_type:
             raise ValueError("Provide hash type, md5 or sha256")
-        if hash_type == 'md5':
+        if hash_type == "md5":
             return RemoteFileHandler.check_md5(fpath, hash_value)
         if hash_type == "sha256":
             return RemoteFileHandler.check_sha256(fpath, hash_value)
@@ -94,7 +94,7 @@ class RemoteFileHandler:
         # check if file is already present locally
         if RemoteFileHandler.check_integrity(fpath,
                                              sha256, hash_type="sha256"):
-            print('Using downloaded and verified file: ' + fpath)
+            print(f"Using downloaded and verified file: {fpath}")
             return
 
         # expand redirect chain if needed
@@ -110,13 +110,15 @@ class RemoteFileHandler:
 
         # download the file
         try:
-            print('Downloading ' + url + ' to ' + fpath)
+            print(f"Downloading {url} to {fpath}")
             RemoteFileHandler._urlretrieve(url, fpath, headers=headers)
         except (urllib.error.URLError, IOError) as e:
-            if url[:5] == 'https':
-                url = url.replace('https:', 'http:')
-                print('Failed download. Trying https -> http instead.'
-                      ' Downloading ' + url + ' to ' + fpath)
+            if url[:5] == "https":
+                url = url.replace("https:", "http:")
+                print((
+                    "Failed download. Trying https -> http instead."
+                    f" Downloading {url} to {fpath}"
+                ))
                 RemoteFileHandler._urlretrieve(url, fpath,
                                                headers=headers)
             else:
