@@ -58,13 +58,13 @@ class ConvertGLSLShader(publish.Extractor):
                                                    type="StingrayPBS")
                 for shader in main_shader:
                     # get the file textures related to the PBS Shader
-                    albedo = cmds.listConnections(shader + ".TEX_color_map")[0]
-                    dif_output = albedo + ".outColor"
-                    # get the glsl_shader input
-                    # reconnect the file nodes to maya2gltf shader
-                    glsl_dif = glsl + ".u_BaseColorTexture"
-                    cmds.connectAttr(dif_output, glsl_dif)
-
+                    albedo = cmds.listConnections(shader + ".TEX_color_map")
+                    if albedo:
+                        dif_output = albedo[0] + ".outColor"
+                        # get the glsl_shader input
+                        # reconnect the file nodes to maya2gltf shader
+                        glsl_dif = glsl + ".u_BaseColorTexture"
+                        cmds.connectAttr(dif_output, glsl_dif)
                     # connect orm map if there is one
                     orm_packed = cmds.listConnections(shader +
                                                       ".TEX_ao_map")
