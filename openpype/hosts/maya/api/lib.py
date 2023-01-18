@@ -5,6 +5,7 @@ import sys
 import platform
 import uuid
 import math
+import re
 
 import json
 import logging
@@ -3446,3 +3447,47 @@ def iter_visible_nodes_in_range(nodes, start, end):
 def get_attribute_input(attr):
     connections = cmds.listConnections(attr, plugs=True, destination=False)
     return connections[0] if connections else None
+
+
+def get_color_management_preferences():
+    """Get and resolve OCIO preferences."""
+    data = {
+        # Is color management enabled.
+        "enabled": cmds.colorManagementPrefs(
+            query=True, cmEnabled=True
+        ),
+        "rendering_space": cmds.colorManagementPrefs(
+            query=True, renderingSpaceName=True
+        ),
+        "output_transform": cmds.colorManagementPrefs(
+            query=True, outputTransformName=True
+        ),
+        "output_transform_enabled": cmds.colorManagementPrefs(
+            query=True, outputTransformEnabled=True
+        ),
+        "view_transform": cmds.colorManagementPrefs(
+            query=True, viewTransformName=True
+        )
+    }
+
+    path = cmds.colorManagementPrefs(
+        query=True, configFilePath=True
+    )
+    # Resolve environment variables in config path. "MAYA_RESOURCES" are in the
+    # path by default.
+    for group in re.search(r'(<.*>)', path).groups():
+        path = path.replace(
+            group, os.environ[group[1:-1]]
+        )
+
+    data["config"] = path
+
+    return data
+
+
+def get_color_management_output_transform():
+    preferences = get_color_management_preferences()
+    colorspace = preferences["rendering_space"]
+    if preferences["output_transform_enabled"]:
+        colorspace = preferences["output_transform"]
+    return colorspace
