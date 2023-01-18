@@ -292,7 +292,6 @@ def update_addon_state(addon_infos, destination_folder, factory, token,
     if not log:
         log = logging.getLogger(__name__)
 
-    data = {"headers": {"Authorization": f"Bearer {token}"}}
     download_states = {}
     for addon in addon_infos:
         full_name = "{}_{}".format(addon.name, addon.version)
@@ -310,6 +309,11 @@ def update_addon_state(addon_infos, destination_folder, factory, token,
             download_states[full_name] = failed_state
             continue
 
+        data = {
+            "type": "addon",
+            "name": addon.name,
+            "version": addon.version
+        }
         for source in addon.sources:
             download_states[full_name] = UpdateState.FAILED
 
@@ -397,11 +401,11 @@ def check_venv(server_endpoint, local_venv_dir, downloaders, token, log=None):
                "sources to download from."
         raise RuntimeError(msg)
 
-    server_endpoint = "{}/{}/{}".format(
-        server_endpoint, package.name, package.platform)
-    data = {"server_endpoint": server_endpoint,
-            "token": token}
-
+    data = {
+        "type": "dependency_package",
+        "name": package.name,
+        "platform": package.platform
+    }
     for source in package.sources:
         try:
             downloader = downloaders.get_downloader(source.type)
