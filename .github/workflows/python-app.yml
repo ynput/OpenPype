@@ -35,6 +35,7 @@ jobs:
         .\tools\build.ps1
     - name: Rename & Export Build
       run: |
+        net use T: /delete
         $net = new-object -ComObject WScript.Network
         $net.MapNetworkDrive("T:", "\\fs.hellohornet.lan\tools", $false, $(cat C:\user.txt), $(cat C:\pass.txt))
         cd build
