@@ -5,7 +5,7 @@ from openpype.pipeline.publish import PublishValidationError
 class ValidateVersion(pyblish.api.InstancePlugin):
     """Validate instance version.
 
-    Pype is not allowing overwiting previously published versions.
+    OpenPype does not allow overwriting previously published versions.
     """
 
     order = pyblish.api.ValidatorOrder
