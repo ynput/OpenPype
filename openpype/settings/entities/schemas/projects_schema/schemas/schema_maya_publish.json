@@ -318,7 +318,7 @@
             "collapsible": true,
             "checkbox_key": "enabled",
             "key": "ValidatePathForPlugin",
-            "label": "Non-existent Paths in Non-Maya Nodes",
+            "label": "Plug-in Path Attributes",
             "is_group": true,
             "children": [
                 {
@@ -335,6 +335,10 @@
                     "type": "boolean",
                     "key": "active",
                     "label": "Active"
+                },
+                {
+                    "type": "label",
+                    "label": "Fill in the node types and attributes you want to validate. e.g. <b>AlembicNode.abc_file</b>, the node type is AlembicNode and the node attribute is abc_file"
                 },
                 {
                     "type": "dict-modifiable",

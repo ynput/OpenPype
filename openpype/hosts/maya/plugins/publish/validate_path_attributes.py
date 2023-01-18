@@ -16,7 +16,7 @@ class ValidatePathForPlugin(pyblish.api.InstancePlugin):
     order = ValidateContentsOrder
     hosts = ['maya']
     families = ["workfile"]
-    label = "Non-existent Paths in Non-Maya Nodes"
+    label = "Plug-in Path Attributes"
 
     def get_invalid(self, instance):
         invalid = list()
