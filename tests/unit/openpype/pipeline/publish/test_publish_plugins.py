@@ -24,6 +24,7 @@ from openpype.pipeline import colorspace
 
 log = logging.getLogger(__name__)
 
+
 class TestPipelinePublishPlugins(TestPipeline):
     """ Testing Pipeline pubish_plugins.py
 
@@ -122,7 +123,9 @@ class TestPipelinePublishPlugins(TestPipeline):
 
     def test_get_colorspace_settings(self, context, config_path_asset):
         expected_config_template = (
-            "{root[work]}/{project[name]}/{hierarchy}/{asset}/config/aces.ocio")
+            "{root[work]}/{project[name]}"
+            "/{hierarchy}/{asset}/config/aces.ocio"
+        )
         expected_file_rules = {
             "comp_review": {
                 "pattern": "renderCompMain.baking_h264",
