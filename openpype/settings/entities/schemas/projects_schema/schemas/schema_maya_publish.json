@@ -338,7 +338,7 @@
                 },
                 {
                     "type": "label",
-                    "label": "Fill in the node types and attributes you want to validate. e.g. <b>AlembicNode.abc_file</b>, the node type is AlembicNode and the node attribute is abc_file"
+                    "label": "Fill in the node types and attributes you want to validate. <p>e.g. <b>AlembicNode.abc_file</b>, the node type is <b>AlembicNode</b> and the node attribute is <b>abc_file</b>"
                 },
                 {
                     "type": "dict-modifiable",
