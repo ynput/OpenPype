@@ -127,6 +127,7 @@ class RenderProduct(object):
     """
     productName = attr.ib()
     ext = attr.ib()                             # extension
+    colorspace = attr.ib()                      # colorspace
     aov = attr.ib(default=None)                 # source aov
     driver = attr.ib(default=None)              # source driver
     multipart = attr.ib(default=False)          # multichannel file
@@ -344,7 +345,6 @@ class ARenderProducts:
             separator = file_prefix[matches[0].end(1):matches[1].start(1)]
         return separator
 
-
     def _get_layer_data(self):
         # type: () -> LayerMetadata
         #                      ______________________________________________
@@ -553,6 +553,9 @@ class RenderProductsArnold(ARenderProducts):
             ]
 
         for ai_driver in ai_drivers:
+            colorspace = self._get_colorspace(
+                ai_driver + ".colorManagement"
+            )
             # todo: check aiAOVDriver.prefix as it could have
             #       a custom path prefix set for this driver
 
@@ -590,12 +593,15 @@ class RenderProductsArnold(ARenderProducts):
             global_aov = self._get_attr(aov, "globalAov")
             if global_aov:
                 for camera in cameras:
-                    product = RenderProduct(productName=name,
-                                            ext=ext,
-                                            aov=aov_name,
-                                            driver=ai_driver,
-                                            multipart=multipart,
-                                            camera=camera)
+                    product = RenderProduct(
+                        productName=name,
+                        ext=ext,
+                        aov=aov_name,
+                        driver=ai_driver,
+                        multipart=multipart,
+                        camera=camera,
+                        colorspace=colorspace
+                    )
                     products.append(product)
 
             all_light_groups = self._get_attr(aov, "lightGroups")
@@ -603,13 +609,16 @@ class RenderProductsArnold(ARenderProducts):
                 # All light groups is enabled. A single multipart
                 # Render Product
                 for camera in cameras:
-                    product = RenderProduct(productName=name + "_lgroups",
-                                            ext=ext,
-                                            aov=aov_name,
-                                            driver=ai_driver,
-                                            # Always multichannel output
-                                            multipart=True,
-                                            camera=camera)
+                    product = RenderProduct(
+                        productName=name + "_lgroups",
+                        ext=ext,
+                        aov=aov_name,
+                        driver=ai_driver,
+                        # Always multichannel output
+                        multipart=True,
+                        camera=camera,
+                        colorspace=colorspace
+                    )
                     products.append(product)
             else:
                 value = self._get_attr(aov, "lightGroupsList")
@@ -625,11 +634,27 @@ class RenderProductsArnold(ARenderProducts):
                             aov=aov_name,
                             driver=ai_driver,
                             ext=ext,
-                            camera=camera
+                            camera=camera,
+                            colorspace=colorspace
                         )
                         products.append(product)
 
         return products
+
+    def _get_colorspace(self, attribute):
+        """Resolve colorspace from Arnold settings."""
+
+        def _view_transform():
+            preferences = lib.get_color_management_preferences()
+            return preferences["view_transform"]
+
+        resolved_values = {
+            "Raw": lambda: "Raw",
+            "Use View Transform": _view_transform,
+            # Default. Same as Maya Preferences.
+            "Use Output Transform": lib.get_color_management_output_transform
+        }
+        return resolved_values[self._get_attr(attribute)]()
 
     def get_render_products(self):
         """Get all AOVs.
@@ -659,11 +684,19 @@ class RenderProductsArnold(ARenderProducts):
         ]
 
         default_ext = self._get_attr("defaultRenderGlobals.imfPluginKey")
-        beauty_products = [RenderProduct(
-            productName="beauty",
-            ext=default_ext,
-            driver="defaultArnoldDriver",
-            camera=camera) for camera in cameras]
+        colorspace = self._get_colorspace(
+            "defaultArnoldDriver.colorManagement"
+        )
+        beauty_products = [
+            RenderProduct(
+                productName="beauty",
+                ext=default_ext,
+                driver="defaultArnoldDriver",
+                camera=camera,
+                colorspace=colorspace
+            ) for camera in cameras
+        ]
+
         # AOVs > Legacy > Maya Render View > Mode
         aovs_enabled = bool(
             self._get_attr("defaultArnoldRenderOptions.aovMode")

@@ -4,9 +4,15 @@ from openpype.pipeline import install_host
 from openpype.hosts.maya.api import MayaHost
 from maya import cmds
 
+# MAYA_RESOURCES enviornment variable is referenced in default OCIO path but
+# it's not part of the environment. Patching this so it works as expected.
+if "MAYA_RESOURCES" not in os.environ:
+    os.environ["MAYA_RESOURCES"] = os.path.join(
+        os.environ["MAYA_LOCATION"], "resources"
+    ).replace("\\", "/")
+
 host = MayaHost()
 install_host(host)
-
 
 print("starting OpenPype usersetup")
 

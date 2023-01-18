@@ -427,7 +427,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         self.log.info(
             "Finished copying %i files" % len(resource_files))
 
-    def _create_instances_for_aov(self, instance_data, exp_files):
+    def _create_instances_for_aov(
+        self, instance_data, exp_files, additional_data
+    ):
         """Create instance for each AOV found.
 
         This will create new instance for every aov it can detect in expected
@@ -528,6 +530,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             else:
                 files = os.path.basename(col)
 
+            # Copy render product "colorspace" data to representation.
+            colorspace = ""
+            products = additional_data["renderProducts"].layer_data.products
+            for product in products:
+                if product.productName == aov:
+                    colorspace = product.colorspace
+                    break
+
             rep = {
                 "name": ext,
                 "ext": ext,
@@ -537,7 +547,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 # If expectedFile are absolute, we need only filenames
                 "stagingDir": staging,
                 "fps": new_instance.get("fps"),
-                "tags": ["review"] if preview else []
+                "tags": ["review"] if preview else [],
+                "colorspaceData": {
+                    "colorspace": colorspace,
+                    "configData": {
+                        "path": additional_data["colorspaceConfig"],
+                        "template": ""
+                    }
+                }
             }
 
             # support conversion from tiled to scanline
@@ -561,7 +578,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self.log.debug("instances:{}".format(instances))
         return instances
 
-    def _get_representations(self, instance, exp_files):
+    def _get_representations(self, instance, exp_files, additional_data):
         """Create representations for file sequences.
 
         This will return representations of expected files if they are not
@@ -897,6 +914,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         self.log.info(data.get("expectedFiles"))
 
+        additional_data = {
+            "renderProducts": instance.data["renderProducts"],
+            "colorspaceConfig": instance.data["colorspaceConfig"]
+        }
+
         if isinstance(data.get("expectedFiles")[0], dict):
             # we cannot attach AOVs to other subsets as we consider every
             # AOV subset of its own.
@@ -911,12 +933,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             #       there are multiple renderable cameras in scene)
             instances = self._create_instances_for_aov(
                 instance_skeleton_data,
-                data.get("expectedFiles"))
+                data.get("expectedFiles"),
+                additional_data
+            )
             self.log.info("got {} instance{}".format(
                 len(instances),
                 "s" if len(instances) > 1 else ""))
 
         else:
+            #Need to inject colorspace here.
             representations = self._get_representations(
                 instance_skeleton_data,
                 data.get("expectedFiles")
