@@ -3,13 +3,19 @@ from enum import Enum
 from abc import abstractmethod
 import attr
 import logging
-import requests
 import platform
 import shutil
 
-from .file_handler import RemoteFileHandler
-from .addon_info import AddonInfo, UrlType, DependencyItem
+import appdirs
 import ayon_api
+
+from .file_handler import RemoteFileHandler
+from .addon_info import (
+    AddonInfo,
+    UrlType,
+    DependencyItem,
+    ServerResourceSource,
+)
 
 
 class UpdateState(Enum):
@@ -71,16 +77,19 @@ class AddonDownloader:
 
     @classmethod
     @abstractmethod
-    def download(cls, source, destination_dir, data=None):
+    def download(cls, source, destination_dir, data):
         """Returns url to downloaded addon zip file.
 
         Args:
             source (dict): {type:"http", "url":"https://} ...}
             destination_dir (str): local folder to unzip
-            data (dict): dynamic values, different per downloader type
+            data (dict): More information about download content. Always have
+                'type' key in.
+
         Returns:
             (str) local path to addon zip file
         """
+
         pass
 
     @classmethod
@@ -90,9 +99,11 @@ class AddonDownloader:
         Args:
             addon_path (str): local path to addon zip file
             addon_hash (str): sha256 hash of zip file
+
         Raises:
             ValueError if hashes doesn't match
         """
+
         if not os.path.exists(addon_path):
             raise ValueError(f"{addon_path} doesn't exist.")
         if not RemoteFileHandler.check_integrity(addon_path,
@@ -108,6 +119,7 @@ class AddonDownloader:
             addon_zip_path (str): local path to addon zip file
             destination (str): local folder to unzip
         """
+
         RemoteFileHandler.unzip(addon_zip_path, destination_dir)
         os.remove(addon_zip_path)
 
@@ -118,7 +130,7 @@ class AddonDownloader:
 
 class OSAddonDownloader(AddonDownloader):
     @classmethod
-    def download(cls, source, destination_dir, data=None):
+    def download(cls, source, destination_dir, data):
         # OS doesnt need to download, unzip directly
         addon_url = source["path"].get(platform.system().lower())
         if not os.path.exists(addon_url):
@@ -130,20 +142,26 @@ class HTTPAddonDownloader(AddonDownloader):
     CHUNK_SIZE = 100000
 
     @classmethod
-    def download(cls, source, destination_dir, data=None):
+    def download(cls, source, destination_dir, data):
         source_url = source["url"]
         cls.log.debug(f"Downloading {source_url} to {destination_dir}")
-        file_name = os.path.basename(destination_dir)
-        _, ext = os.path.splitext(file_name)
-        if (ext.replace(".", '') not
-                in set(RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS)):
-            file_name += ".zip"
-        RemoteFileHandler.download_url(source_url,
-                                       destination_dir,
-                                       filename=file_name,
-                                       headers=data.get("headers"))
+        filename = source.get("filename")
+        headers = source.get("headers")
+        if not filename:
+            filename = os.path.basename(source_url)
+            basename, ext = os.path.splitext(filename)
+            allowed_exts = set(RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS)
+            if ext.replace(".", "") not in allowed_exts:
+                filename = basename + ".zip"
 
-        return os.path.join(destination_dir, file_name)
+        RemoteFileHandler.download_url(
+            source_url,
+            destination_dir,
+            filename,
+            headers=headers
+        )
+
+        return os.path.join(destination_dir, filename)
 
 
 class AyonServerDownloader(AddonDownloader):
@@ -155,96 +173,89 @@ class AyonServerDownloader(AddonDownloader):
     CHUNK_SIZE = 8192
 
     @classmethod
-    def download(cls, source, destination_dir, data=None):
+    def download(cls, source, destination_dir, data):
         filename = source["filename"]
+
         cls.log.debug(f"Downloading {filename} to {destination_dir}")
 
-        if not os.environ.get("AYON_SERVER_URL"):
-            raise RuntimeError(f"Must have AYON_SERVER_URL env var!")
+        _, ext = os.path.splitext(filename)
+        clear_ext = ext.lower().replace(".", "")
+        valid_exts = set(RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS)
+        if clear_ext not in valid_exts:
+            raise ValueError(
+                "Invalid file extension \"{}\". Expected {}".format(
+                    clear_ext, ", ".join(valid_exts)
+                ))
 
-        file_name = os.path.basename(filename)
-        _, ext = os.path.splitext(file_name)
-        if (ext.replace(".", '') not
-                in set(RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS)):
-            file_name += ".zip"
+        # dst_filepath = os.path.join(destination_dir, filename)
+        if data["type"] == "dependency_package":
+            # TODO replace with 'download_dependency_package'
+            #   when available/fixed in 'ayon_api'
+            return ayon_api.download_dependency_package(
+                data["name"],
+                destination_dir,
+                filename,
+                platform_name=data["platform"],
+                chunk_size=cls.CHUNK_SIZE
+            )
 
-        session = requests.Session()
-        session.headers.update({
-            "Content-Type": "application/octet-steam",
-            "Authorization": "Bearer " + data["token"]
-        })
-        destination_path = os.path.join(destination_dir, file_name)
-        with session.get(data["server_endpoint"], stream=True) as r:
-            r.raise_for_status()
-            with open(destination_path, 'wb') as f:
-                for chunk in r.iter_content(chunk_size=cls.CHUNK_SIZE):
-                    f.write(chunk)
+        if data["type"] == "addon":
+            # TODO replace with 'download_addon_private_file'
+            #   when available/fixed in 'ayon_api'
+            return ayon_api.download_addon_private_file(
+                data["name"],
+                data["version"],
+                filename,
+                destination_dir,
+                chunk_size=cls.CHUNK_SIZE
+            )
 
-        return destination_path
+        raise ValueError(f"Unknown type to download \"{data['type']}\"")
 
 
-def get_addons_info(server_endpoint=None):
+def get_addons_info():
     """Returns list of addon information from Server
-
-    Arg:
-        server_endpoint (str): addons?details=1
 
     Returns:
         List[AddonInfo]: List of metadata for addons sent from server,
             parsed in AddonInfo objects
     """
-    if not server_endpoint:
-        addons_list = get_addons_info_as_dict()
-    else:
-        response = ayon_api.get(server_endpoint)
-        if response.status != 200:
-            raise Exception(response.content)
-        addons_list = response.data["addons"]
 
     addons_info = []
-    for addon in addons_list:
+    for addon in ayon_api.get_addons_info(details=True)["addons"]:
         addon_info = AddonInfo.from_dict(addon)
-        if addon_info:
-            addons_info.append(AddonInfo.from_dict(addon))
+        if addon_info is not None:
+            addons_info.append(addon_info)
     return addons_info
 
 
-def get_addons_info_as_dict():
-    response = ayon_api.get(ADDON_ENDPOINT)
-    if response.status != 200:
-        raise Exception(response.content)
-
-    return response.data["addons"]
-
-
-def get_dependency_info(server_endpoint=None):
+def get_dependency_package(package_name=None):
     """Returns info about currently used dependency package.
 
     Dependency package means .venv created from all activated addons from the
     server (plus libraries for core Tray app TODO confirm).
     This package needs to be downloaded, unpacked and added to sys.path for
     Tray app to work.
+
     Args:
-        server_endpoint (str): url to server
+        package_name (str): Name of package. Production package name is used
+            if not entered.
+
     Returns:
-        (DependencyItem) or None if no production_package_name found
+        Union[DependencyItem, None]: Item or None if package with the name was
+            not found.
     """
-    if not server_endpoint:
-        server_endpoint = DEPENDENCIES_ENDPOINT
 
-    response = ayon_api.get(server_endpoint)
-    if response.status != 200:
-        raise Exception(response.content)
+    dependencies_info = ayon_api.get_dependencies_info()
 
-    data = response.data
-    dependency_list = data["packages"]
-    production_package_name = data["productionPackage"]
+    dependency_list = dependencies_info["packages"]
+    # Use production package if package is not specified
+    if package_name is None:
+        package_name = dependencies_info["productionPackage"]
 
     for dependency in dependency_list:
-        dependency["productionPackage"] = production_package_name
         dependency_package = DependencyItem.from_dict(dependency)
-        if (dependency_package and
-                dependency_package.name == production_package_name):
+        if dependency_package.name == package_name:
             return dependency_package
 
 
@@ -273,22 +284,30 @@ def _try_convert_to_server_source(addon, source):
 
 def update_addon_state(addon_infos, destination_folder, factory, token,
                        log=None):
+def update_addon_state(
+    addon_infos,
+    destination_folder,
+    factory,
+    log=None
+):
     """Loops through all 'addon_infos', compares local version, unzips.
 
     Loops through server provided list of dictionaries with information about
     available addons. Looks if each addon is already present and deployed.
     If isn't, addon zip gets downloaded and unzipped into 'destination_folder'.
+
     Args:
         addon_infos (list of AddonInfo)
         destination_folder (str): local path
             ('...AppData/Local/pypeclub/openpype/addons')
         factory (AddonDownloader): factory to get appropriate downloader per
             addon type
-        token (str): authorization token
         log (logging.Logger)
+
     Returns:
         (dict): {"addon_full_name": UpdateState}
     """
+
     if not log:
         log = logging.getLogger(__name__)
 
@@ -314,6 +333,7 @@ def update_addon_state(addon_infos, destination_folder, factory, token,
             "name": addon.name,
             "version": addon.version
         }
+
         for source in addon.sources:
             download_states[full_name] = UpdateState.FAILED
 
@@ -323,16 +343,20 @@ def update_addon_state(addon_infos, destination_folder, factory, token,
 
             try:
                 downloader = factory.get_downloader(source.type)
-                zip_file_path = downloader.download(attr.asdict(source),
-                                                    destination_folder,
-                                                    data=data)
+                zip_file_path = downloader.download(
+                    attr.asdict(source),
+                    addon_dest,
+                    data
+                )
                 downloader.check_hash(zip_file_path, addon.hash)
                 downloader.unzip(zip_file_path, destination_folder)
                 download_states[full_name] = UpdateState.UPDATED
                 break
             except Exception:
-                log.warning(f"Error happened during updating {addon.name}",
-                            exc_info=True)
+                log.warning(
+                    f"Error happened during updating {addon.name}",
+                    exc_info=True)
+
                 if os.path.isdir(addon_dest):
                     log.debug(f"Cleaning {addon_dest}")
                     shutil.rmtree(addon_dest)
@@ -340,22 +364,25 @@ def update_addon_state(addon_infos, destination_folder, factory, token,
     return download_states
 
 
-def check_addons(server_endpoint, addon_folder, downloaders, token):
+def make_sure_addons_are_updated(downloaders=None, addon_folder=None):
     """Main entry point to compare existing addons with those on server.
 
     Args:
-        server_endpoint (str): url to v4 server endpoint
-        addon_folder (str): local dir path for addons
         downloaders (AddonDownloader): factory of downloaders
-        token (str): authentication token
+        addon_folder (str): local dir path for addons
+
     Raises:
         (RuntimeError) if any addon failed update
     """
-    addons_info = get_addons_info(server_endpoint)
-    result = update_addon_state(addons_info,
-                                addon_folder,
-                                downloaders,
-                                token=token)
+
+    if downloaders is None:
+        downloaders = get_default_addon_downloader()
+
+    if addon_folder is None:
+        addon_folder = get_addons_dir()
+
+    addons_info = get_addons_info()
+    result = update_addon_state(addons_info, addon_folder, downloaders)
     failed = {}
     ok_states = [UpdateState.UPDATED, UpdateState.EXISTS]
     ok_states.append(UpdateState.FAILED_MISSING_SOURCE)  # TODO remove test only  noqa
@@ -367,22 +394,27 @@ def check_addons(server_endpoint, addon_folder, downloaders, token):
         raise RuntimeError(f"Unable to update some addons {failed}")
 
 
-def check_venv(server_endpoint, local_venv_dir, downloaders, token, log=None):
+def make_sure_venv_is_updated(downloaders=None, local_venv_dir=None, log=None):
     """Main entry point to compare existing addons with those on server.
 
     Args:
-        server_endpoint (str): url to v4 server endpoint
-        local_venv_dir (str): local dir path for addons
         downloaders (AddonDownloader): factory of downloaders
-        token (str): authorization token
+        local_venv_dir (str): local dir path for addons
 
     Raises:
         (RuntimeError) if required production package failed update
     """
-    if not log:
+
+    if downloaders is None:
+        downloaders = get_default_addon_downloader()
+
+    if local_venv_dir is None:
+        local_venv_dir = get_dependencies_dir()
+
+    if log is None:
         log = logging.getLogger(__name__)
 
-    package = get_dependency_info(server_endpoint)
+    package = get_dependency_package()
     if not package:
         log.info("Server does not contain dependency package")
         return
@@ -397,8 +429,10 @@ def check_venv(server_endpoint, local_venv_dir, downloaders, token, log=None):
     os.makedirs(venv_dest_dir)
 
     if not package.sources:
-        msg = f"Package {package.name} doesn't have any "\
-               "sources to download from."
+        msg = (
+            f"Package {package.name} doesn't have any "
+            "sources to download from."
+        )
         raise RuntimeError(msg)
 
     data = {
@@ -409,9 +443,11 @@ def check_venv(server_endpoint, local_venv_dir, downloaders, token, log=None):
     for source in package.sources:
         try:
             downloader = downloaders.get_downloader(source.type)
-            zip_file_path = downloader.download(attr.asdict(source),
-                                                venv_dest_dir,
-                                                data)
+            zip_file_path = downloader.download(
+                attr.asdict(source),
+                venv_dest_dir,
+                data
+            )
             downloader.check_hash(zip_file_path, package.checksum, "md5")
             downloader.unzip(zip_file_path, venv_dest_dir)
             break

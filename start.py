@@ -683,13 +683,12 @@ def _check_and_update_from_ayon_server():
     Raises:
         RuntimeError
     """
+
     from openpype_common.distribution.addon_distribution import (
-        ADDON_ENDPOINT,
-        DEPENDENCIES_ENDPOINT,
-        check_addons,
-        check_venv,
         get_addons_dir,
         get_dependencies_dir,
+        make_sure_addons_are_updated,
+        make_sure_venv_is_updated,
         get_default_addon_downloader,
     )
 
@@ -698,25 +697,14 @@ def _check_and_update_from_ayon_server():
 
     default_downloader = get_default_addon_downloader()
     _print(f">>> Checking addons in {local_addons_dir} ...")
-    token = os.environ.get("AYON_TOKEN")
-    check_addons(
-        ADDON_ENDPOINT,
-        local_addons_dir,
-        default_downloader,
-        token
-    )
+    make_sure_addons_are_updated(default_downloader, local_addons_dir)
 
     if local_addons_dir not in sys.path:
         _print(f"Adding {local_addons_dir} to sys path.")
         sys.path.insert(0, local_addons_dir)
 
     _print(f">>> Checking venvs in {local_dependencies_dir} ...")
-    check_venv(
-        DEPENDENCIES_ENDPOINT,
-        local_dependencies_dir,
-        default_downloader,
-        token
-    )
+    make_sure_venv_is_updated(default_downloader, local_dependencies_dir)
 
 
 def _initialize_environment(openpype_version: OpenPypeVersion) -> None:
