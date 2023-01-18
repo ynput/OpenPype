@@ -15,6 +15,7 @@ from abc import ABCMeta, abstractmethod
 
 import six
 import appdirs
+import ayon_api
 
 from openpype import AYON_SERVER_ENABLED
 from openpype.settings import (
@@ -315,8 +316,8 @@ def _get_v4_addons_information():
     Returns:
         List[Dict[str, Any]]: List of addon information to use.
     """
-    from common.openpype_common.distribution.addon_distribution import get_addons_info_as_dict  # noqa
-    return get_addons_info_as_dict()
+
+    return ayon_api.get_addons_info()
 
 
 def _load_v4_addons(openpype_modules, modules_key, log):
