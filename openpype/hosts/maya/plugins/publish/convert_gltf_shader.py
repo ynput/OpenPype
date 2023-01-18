@@ -21,7 +21,7 @@ class ConvertGLSLShader(publish.Extractor):
         meshes = cmds.ls(instance, type="mesh", long=True)
         self.log.info("meshes: {}".format(meshes))
         # load the glsl shader plugin
-        cmds.loadPlugin("glslShader.mll", quiet=True)
+        cmds.loadPlugin("glslShader", quiet=True)
 
         for mesh in meshes:
 
@@ -33,8 +33,19 @@ class ConvertGLSLShader(publish.Extractor):
                              glsl_shadingGrp + ".surfaceShader")
 
             # load the maya2gltf shader
-            maya_dir = os.getenv("MAYA_APP_DIR")
-            ogsfx = maya_dir + "/maya2glTF/PBR/shaders/glTF_PBR.ogsfx"
+            maya_publish = (
+            instance.context.data["project_settings"]["maya"]["publish"]
+            )
+            ogsfx_path = maya_publish["ConvertGLSLShader"]["ogsfx_path"]
+            if not ogsfx_path:
+                maya_dir = os.getenv("MAYA_APP_DIR")
+                if not maya_dir:
+                    raise RuntimeError("MAYA_APP_DIR not found")
+                ogsfx_path = maya_dir + "/maya2glTF/PBR/shaders/"
+            if not os.path.exists(ogsfx_path):
+                raise RuntimeError("the ogsfx file not found")
+
+            ogsfx = ogsfx_path + "glTF_PBR.ogsfx"
             cmds.setAttr(glsl + ".shader", ogsfx, typ="string")
 
             # list the materials used for the assets
@@ -53,10 +64,8 @@ class ConvertGLSLShader(publish.Extractor):
                     dif_output = albedo + ".outColor"
 
                     orm_packed = cmds.listConnections(shader +
-                                                      ".TEX_ao_mapX")[0]
-                    ao_output = orm_packed + ".outColorR"
-                    rough_output = orm_packed + ".outColorG"
-                    metallic_output = orm_packed + ".outColorB"
+                                                      ".TEX_ao_map")[0]
+                    orm_output = orm_packed + ".outColor"
 
                     nrm = cmds.listConnections(shader + ".TEX_normal_map")[0]
                     nrm_output = nrm + ".outColor"
@@ -68,18 +77,13 @@ class ConvertGLSLShader(publish.Extractor):
                     cmds.connectAttr(dif_output, glsl_dif)
                     cmds.connectAttr(nrm_output, glsl_nrm)
 
-                    rgb_list = ["R", "G", "B"]
-                    for ch in rgb_list:
-                        mtl = ".u_MetallicTexture.u_MetallicTexture{}".format(ch) # noqa
-                        mtl = glsl + mtl
-                        ao = ".u_OcclusionTexture.u_OcclusionTexture{}".format(ch) # noqa
-                        ao = glsl + ao
-                        rough = ".u_RoughnessTexture.u_RoughnessTexture{}".format(ch) # noqa
-                        rough = glsl + rough
+                    mtl = glsl + ".u_MetallicTexture"
+                    ao = glsl + ".u_OcclusionTexture"
+                    rough = glsl + ".u_RoughnessTexture"
 
-                        cmds.connectAttr(metallic_output, mtl)
-                        cmds.connectAttr(ao_output, ao)
-                        cmds.connectAttr(rough_output, rough)
+                    cmds.connectAttr(orm_output, mtl)
+                    cmds.connectAttr(orm_output, ao)
+                    cmds.connectAttr(orm_output, rough)
 
             # assign the shader to the asset
             cmds.sets(mesh, forceElement=str(glsl_shadingGrp))
