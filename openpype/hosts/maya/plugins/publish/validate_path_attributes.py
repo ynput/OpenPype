@@ -7,10 +7,9 @@ import pyblish.api
 from openpype.pipeline.publish import ValidateContentsOrder
 
 
-class ValidatePathForPlugin(pyblish.api.InstancePlugin):
+class ValidatePluginPathAttributes(pyblish.api.InstancePlugin):
     """
-    Ensure Paths in Non-Maya Nodes(from plugins
-    such as Yeti, AbcExport) are correct
+    Validate plug-in path attributes point to existing file paths.
     """
 
     order = ValidateContentsOrder

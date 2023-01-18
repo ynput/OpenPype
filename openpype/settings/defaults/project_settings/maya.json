@@ -338,7 +338,7 @@
                 "rig"
             ]
         },
-        "ValidatePathForPlugin": {
+        "ValidatePluginPathAttributes": {
             "enabled": true,
             "optional": false,
             "active": true,

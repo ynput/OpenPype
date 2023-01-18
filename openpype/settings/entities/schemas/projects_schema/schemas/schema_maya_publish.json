@@ -317,7 +317,7 @@
             "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
-            "key": "ValidatePathForPlugin",
+            "key": "ValidatePluginPathAttributes",
             "label": "Plug-in Path Attributes",
             "is_group": true,
             "children": [
