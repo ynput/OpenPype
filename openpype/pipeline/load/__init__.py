@@ -1,6 +1,7 @@
 from .utils import (
     HeroVersionType,
 
+    LoadError,
     IncompatibleLoaderError,
     InvalidRepresentationContext,
 

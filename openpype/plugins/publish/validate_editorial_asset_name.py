@@ -2,7 +2,6 @@ from pprint import pformat
 
 import pyblish.api
 
-from openpype.pipeline import legacy_io
 from openpype.client import get_assets
 
 
@@ -28,10 +27,7 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
         asset_and_parents = self.get_parents(context)
         self.log.debug("__ asset_and_parents: {}".format(asset_and_parents))
 
-        if not legacy_io.Session:
-            legacy_io.install()
-
-        project_name = legacy_io.active_project()
+        project_name = context.data["projectName"]
         db_assets = list(get_assets(
             project_name, fields=["name", "data.parents"]
         ))

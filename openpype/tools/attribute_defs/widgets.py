@@ -401,9 +401,8 @@ class EnumAttrWidget(_BaseAttrDefWidget):
         if self.attr_def.tooltip:
             input_widget.setToolTip(self.attr_def.tooltip)
 
-        items = self.attr_def.items
-        for key, label in items.items():
-            input_widget.addItem(label, key)
+        for item in self.attr_def.items:
+            input_widget.addItem(item["label"], item["value"])
 
         idx = input_widget.findData(self.attr_def.default)
         if idx >= 0:
