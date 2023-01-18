@@ -248,6 +248,29 @@ def get_dependency_info(server_endpoint=None):
             return dependency_package
 
 
+def _try_convert_to_server_source(addon, source):
+    ayon_base_url = ayon_api.get_base_url()
+    urls = [source.url]
+    if "https://" in source.url:
+        urls.append(source.url.replace("https://", "http://"))
+    elif "http://" in source.url:
+        urls.append(source.url.replace("http://", "https://"))
+
+    addon_url = f"{ayon_base_url}/addons/{addon.name}/{addon.version}/private/"
+    filename = None
+    for url in urls:
+        if url.startswith(addon_url):
+            filename = url.replace(addon_url, "")
+            break
+
+    if not filename:
+        return source
+
+    return ServerResourceSource(
+        type=UrlType.SERVER.value, filename=filename
+    )
+
+
 def update_addon_state(addon_infos, destination_folder, factory, token,
                        log=None):
     """Loops through all 'addon_infos', compares local version, unzips.
@@ -289,6 +312,11 @@ def update_addon_state(addon_infos, destination_folder, factory, token,
 
         for source in addon.sources:
             download_states[full_name] = UpdateState.FAILED
+
+            # Convert 'WebAddonSource' to 'ServerResourceSource' if possible
+            if source.type == UrlType.HTTP.value:
+                source = _try_convert_to_server_source(addon, source)
+
             try:
                 downloader = factory.get_downloader(source.type)
                 zip_file_path = downloader.download(attr.asdict(source),
