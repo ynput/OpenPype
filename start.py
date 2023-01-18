@@ -688,15 +688,15 @@ def _check_and_update_from_ayon_server():
         DEPENDENCIES_ENDPOINT,
         check_addons,
         check_venv,
-        default_addon_downloader,
         get_addons_dir,
         get_dependencies_dir,
+        get_default_addon_downloader,
     )
 
     local_addons_dir = get_addons_dir()
     local_dependencies_dir = get_dependencies_dir()
 
-    default_downloader = default_addon_downloader()
+    default_downloader = get_default_addon_downloader()
     _print(f">>> Checking addons in {local_addons_dir} ...")
     token = os.environ.get("AYON_TOKEN")
     check_addons(
