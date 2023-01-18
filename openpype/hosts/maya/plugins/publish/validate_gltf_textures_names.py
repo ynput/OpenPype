@@ -1,6 +1,7 @@
 from maya import cmds
 
 import pyblish.api
+import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import ValidateContentsOrder
 
 
@@ -60,63 +61,67 @@ class ValidateGLTFTexturesNames(pyblish.api.InstancePlugin):
         # get the materials related to the selected assets
         # get the file textures related to the PBS Shader
         # validate the names of the textures
-        for material in shading_grp:
-            main_shader = cmds.listConnections(material,
-                                               destination=True,
-                                               type="StingrayPBS")
-            for shader in main_shader:
-                albedo = cmds.listConnections(shader + ".TEX_color_map")[0]
-                dif_path = cmds.getAttr(albedo + ".fileTextureName")
-                dif = dif_path.split(".")[0]
-                # "_D"
-                if not dif.endswith("_D"):
-                    invalid.add(dif_path)
-                orm_packed = cmds.listConnections(shader + ".TEX_ao_map")[0]
-                if orm_packed:
-                    # "_ORM"
-                    orm_path = cmds.getAttr(orm_packed + ".fileTextureName")
-                    orm = orm_path.split(".")[0]
-                    if not orm.endswith("_ORM"):
-                        invalid.add(orm_path)
-                nrm = cmds.listConnections(shader + ".TEX_normal_map")[0]
-                if nrm:
-                    nrm_path = cmds.getAttr(nrm + ".fileTextureName")
-                    nrm_map = nrm_path.split(".")[0]
-                    # "_N"
-                    if not nrm_map.endswith("_N"):
-                        invalid.add(nrm_path)
+
+        main_shader = cmds.listConnections(shading_grp,
+                                           destination=True,
+                                           type="StingrayPBS")
+        for shader in main_shader:
+            albedo = cmds.listConnections(shader + ".TEX_color_map")[0]
+            dif_path = cmds.getAttr(albedo + ".fileTextureName")
+            dif = dif_path.split(".")[0]
+            # "_D"
+            if not dif.endswith("_D"):
+                invalid.add(dif_path)
+            orm_packed = cmds.listConnections(shader + ".TEX_ao_map")
+            if orm_packed:
+                orm_path = cmds.getAttr(orm_packed[0] + ".fileTextureName")
+                orm = orm_path.split(".")[0]
+                # "_ORM"
+                if not orm.endswith("_ORM"):
+                    invalid.add(orm_path)
+            nrm = cmds.listConnections(shader + ".TEX_normal_map")
+            if nrm:
+                nrm_path = cmds.getAttr(nrm[0]+ ".fileTextureName")
+                nrm_map = nrm_path.split(".")[0]
+                # "_N"
+                if not nrm_map.endswith("_N"):
+                    invalid.add(nrm_path)
 
         return list(invalid)
 
     def get_texture_node_invalid(self, instance):
         invalid = set()
         shading_grp = self.get_material_from_shapes(instance)
-        for material in shading_grp:
-            main_shader = cmds.listConnections(material,
-                                               destination=True,
-                                               type="StingrayPBS")
-            for shader in main_shader:
-                # diffuse texture file node
-                albedo = cmds.listConnections(shader + ".TEX_color_map")
-                if not albedo:
-                    invalid.add(albedo)
+        main_shader = cmds.listConnections(shading_grp,
+                                           destination=True,
+                                           type="StingrayPBS")
+        for shader in main_shader:
+            # diffuse texture file node
+            albedo = cmds.listConnections(shader + ".TEX_color_map")
+            if not albedo:
+                invalid.add(albedo)
+            orm_packed = cmds.listConnections(shader + ".TEX_ao_map")
+            if not orm_packed:
+                continue
+            nrm = cmds.listConnections(shader + ".TEX_normal_map")
+            if not nrm:
+                continue
         return list(invalid)
 
     def get_texture_shader_invalid(self, instance):
 
         invalid = set()
         shading_grp = self.get_material_from_shapes(instance)
-        for shading_group in shading_grp:
-            material_name = "{}.surfaceShader".format(shading_group)
-            material = cmds.listConnections(material_name,
-                                            source=True,
-                                            destination=False,
-                                            type="StingrayPBS")
+        material_name = "{}.surfaceShader".format(shading_grp)
+        material = cmds.listConnections(material_name,
+                                        source=True,
+                                        destination=False,
+                                        type="StingrayPBS")
 
-            if not material:
-                # add material name
-                material = cmds.listConnections(material_name)[0]
-                invalid.add(material)
+        if not material:
+            # add material name
+            material = cmds.listConnections(material_name)[0]
+            invalid.add(material)
         return list(invalid)
 
     def get_material_from_shapes(self, instance):
@@ -126,4 +131,7 @@ class ValidateGLTFTexturesNames(pyblish.api.InstancePlugin):
                                                destination=True,
                                                type="shadingEngine")
 
-            return shading_grp
+            if shading_grp:
+                return shading_grp[0]
+            else:
+                raise RuntimeError("No Shading Engine found in the scene")
