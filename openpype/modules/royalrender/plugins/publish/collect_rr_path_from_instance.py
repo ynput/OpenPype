@@ -15,19 +15,21 @@ class CollectRRPathFromInstance(pyblish.api.InstancePlugin):
             "Using '{}' for submission.".format(instance.data["rrPathName"]))
 
     @staticmethod
-    def _collect_rr_path_name(render_instance):
+    def _collect_rr_path_name(instance):
         # type: (pyblish.api.Instance) -> str
         """Get Royal Render pat name from render instance."""
         rr_settings = (
-            render_instance.context.data
+            instance.context.data
             ["system_settings"]
             ["modules"]
             ["royalrender"]
         )
+        if not instance.data.get("rrPaths"):
+            return "default"
         try:
             default_servers = rr_settings["rr_paths"]
             project_servers = (
-                render_instance.context.data
+                instance.context.data
                 ["project_settings"]
                 ["royalrender"]
                 ["rr_paths"]
@@ -40,8 +42,8 @@ class CollectRRPathFromInstance(pyblish.api.InstancePlugin):
 
         except (AttributeError, KeyError):
             # Handle situation were we had only one url for royal render.
-            return render_instance.context.data["defaultRRPath"]
+            return rr_settings["rr_paths"]["default"]
 
         return list(rr_servers.keys())[
-                int(render_instance.data.get("rrPaths"))
+                int(instance.data.get("rrPaths"))
             ]
