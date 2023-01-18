@@ -33,7 +33,9 @@ class ConvertGLSLShader(publish.Extractor):
                              glsl_shadingGrp + ".surfaceShader")
 
             # load the maya2gltf shader
-            maya_publish = instance.context.data["project_settings"]["maya"]["publish"] # noqa
+            maya_publish = (
+            instance.context.data["project_settings"]["maya"]["publish"]
+            )
             ogsfx_path = maya_publish["ConvertGLSLShader"]["ogsfx_path"]
             if not ogsfx_path:
                 maya_dir = os.getenv("MAYA_APP_DIR")
@@ -60,28 +62,31 @@ class ConvertGLSLShader(publish.Extractor):
                     # get the file textures related to the PBS Shader
                     albedo = cmds.listConnections(shader + ".TEX_color_map")[0]
                     dif_output = albedo + ".outColor"
-
-                    orm_packed = cmds.listConnections(shader +
-                                                      ".TEX_ao_map")[0]
-                    orm_output = orm_packed + ".outColor"
-
-                    nrm = cmds.listConnections(shader + ".TEX_normal_map")[0]
-                    nrm_output = nrm + ".outColor"
-
                     # get the glsl_shader input
                     # reconnect the file nodes to maya2gltf shader
                     glsl_dif = glsl + ".u_BaseColorTexture"
-                    glsl_nrm = glsl + ".u_NormalTexture"
                     cmds.connectAttr(dif_output, glsl_dif)
-                    cmds.connectAttr(nrm_output, glsl_nrm)
 
-                    mtl = glsl + ".u_MetallicTexture"
-                    ao = glsl + ".u_OcclusionTexture"
-                    rough = glsl + ".u_RoughnessTexture"
+                    # connect orm map if there is one
+                    orm_packed = cmds.listConnections(shader +
+                                                      ".TEX_ao_map")
+                    if orm_packed:
+                        orm_output = orm_packed[0] + ".outColor"
 
-                    cmds.connectAttr(orm_output, mtl)
-                    cmds.connectAttr(orm_output, ao)
-                    cmds.connectAttr(orm_output, rough)
+                        mtl = glsl + ".u_MetallicTexture"
+                        ao = glsl + ".u_OcclusionTexture"
+                        rough = glsl + ".u_RoughnessTexture"
+
+                        cmds.connectAttr(orm_output, mtl)
+                        cmds.connectAttr(orm_output, ao)
+                        cmds.connectAttr(orm_output, rough)
+
+                    # connect nrm map if there is one
+                    nrm = cmds.listConnections(shader + ".TEX_normal_map")
+                    if nrm:
+                        nrm_output = nrm[0] + ".outColor"
+                        glsl_nrm = glsl + ".u_NormalTexture"
+                        cmds.connectAttr(nrm_output, glsl_nrm)
 
             # assign the shader to the asset
             cmds.sets(mesh, forceElement=str(glsl_shadingGrp))
