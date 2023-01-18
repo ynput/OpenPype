@@ -404,7 +404,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                                 file["sites"].append(site)
 
                         update_data["files"][i] = file
-                    
+
                     op_session.update_entity(
                         project_name,
                         old_repre["type"],
