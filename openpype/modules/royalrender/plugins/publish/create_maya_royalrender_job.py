@@ -2,20 +2,18 @@
 """Submitting render job to RoyalRender."""
 import os
 import sys
-import tempfile
 import platform
 
 from maya.OpenMaya import MGlobal  # noqa
 from pyblish.api import InstancePlugin, IntegratorOrder, Context
-from openpype.hosts.maya.api.lib import get_attr_in_layer
 from openpype.pipeline.publish.lib import get_published_workfile_instance
 from openpype.pipeline.publish import KnownPublishError
-from openpype.modules.royalrender.api import Api as rr_api
-from openpype.modules.royalrender.rr_job import RRJob, SubmitterParameter
+from openpype.modules.royalrender.api import Api as rrApi
+from openpype.modules.royalrender.rr_job import RRJob
 
 
-class MayaSubmitRoyalRender(InstancePlugin):
-    label = "Submit to RoyalRender"
+class CreateMayaRoyalRenderJob(InstancePlugin):
+    label = "Create Maya Render job in RR"
     order = IntegratorOrder + 0.1
     families = ["renderlayer"]
     targets = ["local"]
@@ -81,27 +79,8 @@ class MayaSubmitRoyalRender(InstancePlugin):
             CompanyProjectName=self._instance.context.data["projectName"],
             ImageWidth=self._instance.data["resolutionWidth"],
             ImageHeight=self._instance.data["resolutionHeight"],
-            PreID=1
         )
         return job
-
-    @staticmethod
-    def get_submission_parameters():
-        return []
-
-    def create_file(self, name, ext, contents=None):
-        temp = tempfile.NamedTemporaryFile(
-            dir=self.tempdir,
-            suffix=ext,
-            prefix=name + '.',
-            delete=False,
-        )
-
-        if contents:
-            with open(temp.name, 'w') as f:
-                f.write(contents)
-
-        return temp.name
 
     def process(self, instance):
         """Plugin entry point."""
@@ -116,17 +95,8 @@ class MayaSubmitRoyalRender(InstancePlugin):
                 ("Missing RoyalRender root. "
                  "You need to configure RoyalRender module."))
 
-        self.rr_api = rr_api(self._rr_root)
+        self.rr_api = rrApi(self._rr_root)
 
-        # get royalrender module
-        """
-        try:
-            rr_module = context.data.get(
-                "openPypeModules")["royalrender"]
-        except AttributeError:
-            self.log.error("Cannot get OpenPype RoyalRender module.")
-            raise AssertionError("OpenPype RoyalRender module not found.")
-        """
         file_path = None
         if self.use_published:
             file_path = get_published_workfile_instance(context)
@@ -137,24 +107,18 @@ class MayaSubmitRoyalRender(InstancePlugin):
                 file_path = context.data["currentFile"]
 
             self.scene_path = file_path
-        self.job = self.get_job()
-        self.log.info(self.job)
-        self.submission_parameters = self.get_submission_parameters()
 
-        self.process_submission()
+        self._instance.data["rrJobs"] = [self.get_job()]
 
-    def process_submission(self):
-        submission = rr_api.create_submission(
-            [self.job],
-            self.submission_parameters)
-
-        self.log.debug(submission)
-        xml = tempfile.NamedTemporaryFile(suffix=".xml", delete=False)
-        with open(xml.name, "w") as f:
-            f.write(submission.serialize())
-
-        self.log.info("submitting job file: {}".format(xml.name))
-        self.rr_api.submit_file(file=xml.name)
+    @staticmethod
+    def _iter_expected_files(exp):
+        if isinstance(exp[0], dict):
+            for _aov, files in exp[0].items():
+                for file in files:
+                    yield file
+        else:
+            for file in exp:
+                yield file
 
     @staticmethod
     def _resolve_rr_path(context, rr_path_name):
@@ -184,13 +148,3 @@ class MayaSubmitRoyalRender(InstancePlugin):
             return context.data["defaultRRPath"][platform.system().lower()]
 
         return rr_servers[rr_path_name][platform.system().lower()]
-
-    @staticmethod
-    def _iter_expected_files(exp):
-        if isinstance(exp[0], dict):
-            for _aov, files in exp[0].items():
-                for file in files:
-                    yield file
-        else:
-            for file in exp:
-                yield file
