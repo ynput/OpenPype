@@ -146,7 +146,7 @@ class HTTPAddonDownloader(AddonDownloader):
         return os.path.join(destination_dir, file_name)
 
 
-class DependencyDownloader(AddonDownloader):
+class AyonServerDownloader(AddonDownloader):
     """Downloads static resource file from v4 Server.
 
     Expects filled env var AYON_SERVER_URL.
@@ -393,13 +393,9 @@ def check_venv(server_endpoint, local_venv_dir, downloaders, token, log=None):
 
 def default_addon_downloader():
     addon_downloader = AddonDownloader()
-    addon_downloader.register_format(UrlType.FILESYSTEM,
-                                     OSAddonDownloader)
-    addon_downloader.register_format(UrlType.HTTP,
-                                     HTTPAddonDownloader)
-    addon_downloader.register_format(UrlType.SERVER,
-                                     DependencyDownloader)
-
+    addon_downloader.register_format(UrlType.FILESYSTEM, OSAddonDownloader)
+    addon_downloader.register_format(UrlType.HTTP, HTTPAddonDownloader)
+    addon_downloader.register_format(UrlType.SERVER, AyonServerDownloader)
     return addon_downloader
 
 
