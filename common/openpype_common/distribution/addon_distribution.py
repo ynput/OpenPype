@@ -391,7 +391,7 @@ def check_venv(server_endpoint, local_venv_dir, downloaders, token, log=None):
             raise RuntimeError(f"Unable to download {package.name}")
 
 
-def default_addon_downloader():
+def get_default_addon_downloader():
     addon_downloader = AddonDownloader()
     addon_downloader.register_format(UrlType.FILESYSTEM, OSAddonDownloader)
     addon_downloader.register_format(UrlType.HTTP, HTTPAddonDownloader)
