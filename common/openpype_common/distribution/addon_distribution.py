@@ -282,8 +282,6 @@ def _try_convert_to_server_source(addon, source):
     )
 
 
-def update_addon_state(addon_infos, destination_folder, factory, token,
-                       log=None):
 def update_addon_state(
     addon_infos,
     destination_folder,
