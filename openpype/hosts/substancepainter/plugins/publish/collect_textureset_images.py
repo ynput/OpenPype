@@ -65,7 +65,10 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
 
         # Mark as UDIM explicitly if it has UDIM tiles.
         if bool(outputs[0].get("udim")):
-            representation["udim"] = True
+            # The representation for a UDIM sequence should have a `udim` key
+            # that is a list of all udim tiles (str) like: ["1001", "1002"]
+            # strings. See CollectTextures plug-in and Integrators.
+            representation["udim"] = [output["udim"] for output in outputs]
 
         # TODO: Store color space with the representation
 
