@@ -33,7 +33,7 @@ class ConvertGLSLShader(publish.Extractor):
                              glsl_shadingGrp + ".surfaceShader")
 
             # load the maya2gltf shader
-            maya_publish = instance.context.data["project_settings"]["maya"]["publish"]
+            maya_publish = instance.context.data["project_settings"]["maya"]["publish"] # noqa
 
             ogsfx_path = maya_publish["ConvertGLSLShader"]["ogsfx_path"]
             if not ogsfx_path:
