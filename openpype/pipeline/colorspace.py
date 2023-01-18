@@ -347,7 +347,6 @@ def get_imageio_config(
     config_host = imageio_host["ocio_config"]
 
     if config_host["enabled"]:
-        print(config_host["filepath"])
         config_data = _get_config_data(
             config_host["filepath"], anatomy_data
         )
@@ -357,7 +356,6 @@ def get_imageio_config(
     if not config_data:
         # get config path from either global or host_name
         config_global = imageio_global["ocio_config"]
-        print(config_global["filepath"])
         config_data = _get_config_data(
             config_global["filepath"], anatomy_data
         )
