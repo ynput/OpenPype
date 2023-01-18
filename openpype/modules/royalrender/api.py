@@ -2,9 +2,7 @@
 """Wrapper around Royal Render API."""
 import sys
 import os
-import platform
 
-from openpype.settings import get_project_settings
 from openpype.lib.local_settings import OpenPypeSettingsRegistry
 from openpype.lib import Logger, run_subprocess
 from .rr_job import RRJob, SubmitFile, SubmitterParameter

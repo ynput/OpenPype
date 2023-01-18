@@ -279,7 +279,7 @@ class CreateRender(plugin.Creator):
 
         if deadline_enabled and muster_enabled and royalrender_enabled:
             self.log.error(
-                ("Multiple render farm support (Deadline/RoyalRender/Muster) " 
+                ("Multiple render farm support (Deadline/RoyalRender/Muster) "
                  "is enabled. We support only one at time.")
             )
             raise RuntimeError("Both Deadline and Muster are enabled")

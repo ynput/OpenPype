@@ -47,11 +47,14 @@ class CreateMayaRoyalRenderJob(InstancePlugin):
         output_dir = os.path.dirname(first_file)
         self._instance.data["outputDir"] = output_dir
         workspace = self._instance.context.data["workspaceDir"]
-        default_render_file = self._instance.context.data.get('project_settings') \
-                .get('maya') \
-                .get('RenderSettings') \
-                .get('default_render_image_folder')
-        file_name = os.path.basename(self.scene_path)
+        default_render_file = (
+            self._instance.context.data
+            ['project_settings']
+            ['maya']
+            ['RenderSettings']
+            ['default_render_image_folder']
+        )
+        # file_name = os.path.basename(self.scene_path)
         dir_name = os.path.join(workspace, default_render_file)
         layer = self._instance.data["setMembers"]  # type: str
         layer_name = layer.removeprefix("rs_")
@@ -86,7 +89,6 @@ class CreateMayaRoyalRenderJob(InstancePlugin):
         """Plugin entry point."""
         self._instance = instance
         context = instance.context
-        from pprint import pformat
 
         self._rr_root = self._resolve_rr_path(context, instance.data.get("rrPathName"))  # noqa
         self.log.debug(self._rr_root)

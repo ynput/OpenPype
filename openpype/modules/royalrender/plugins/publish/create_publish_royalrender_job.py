@@ -26,12 +26,10 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
         self.context = context
         self.anatomy = instance.context.data["anatomy"]
 
-        asset = data.get("asset")
-        subset = data.get("subset")
-        source = self._remap_source(
-            data.get("source") or context.data["source"])
-
-
+        # asset = data.get("asset")
+        # subset = data.get("subset")
+        # source = self._remap_source(
+        #   data.get("source") or context.data["source"])
 
     def _remap_source(self, source):
         success, rootless_path = (
