@@ -36,7 +36,7 @@ jobs:
     - name: Rename & Export Build
       run: |
         $net = new-object -ComObject WScript.Network
-        $net.MapNetworkDrive("T:", "\\fs.hellohornet.lan\tools", $false, "HELLOHORNET\render", "Hor#116")
+        $net.MapNetworkDrive("T:", "\\fs.hellohornet.lan\tools", $false, $(cat C:\user.txt), $(cat C:\pass.txt))
         cd build
         $platform = "amd64"
         $date = Get-Date -Format "M-d-yy"
