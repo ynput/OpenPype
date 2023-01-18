@@ -44,6 +44,4 @@ class CollectRRPathFromInstance(pyblish.api.InstancePlugin):
             # Handle situation were we had only one url for royal render.
             return rr_settings["rr_paths"]["default"]
 
-        return list(rr_servers.keys())[
-                int(instance.data.get("rrPaths"))
-            ]
+        return list(rr_servers.keys())[int(instance.data.get("rrPaths"))]

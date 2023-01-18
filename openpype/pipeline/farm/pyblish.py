@@ -4,7 +4,9 @@ import attr
 
 @attr.s
 class InstanceSkeleton(object):
-    family = attr.ib(factory=)
+    # family = attr.ib(factory=)
+    pass
+
 
 def remap_source(source, anatomy):
     success, rootless_path = (
@@ -21,7 +23,9 @@ def remap_source(source, anatomy):
                     ).format(source))
     return source
 
-def get_skeleton_instance()
+
+def get_skeleton_instance():
+    """
     instance_skeleton_data = {
         "family": family,
         "subset": subset,
@@ -47,3 +51,5 @@ def get_skeleton_instance()
         # map inputVersions `ObjectId` -> `str` so json supports it
         "inputVersions": list(map(str, data.get("inputVersions", [])))
     }
+    """
+    pass

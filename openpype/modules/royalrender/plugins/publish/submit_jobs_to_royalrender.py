@@ -38,7 +38,9 @@ class SubmitJobsToRoyalRender(ContextPlugin):
             if isinstance(instance.data.get("rrJob"), RRJob):
                 jobs.append(instance.data.get("rrJob"))
             if instance.data.get("rrJobs"):
-                if all(isinstance(job, RRJob) for job in instance.data.get("rrJobs")):
+                if all(
+                        isinstance(job, RRJob)
+                        for job in instance.data.get("rrJobs")):
                     jobs += instance.data.get("rrJobs")
 
         if jobs:
