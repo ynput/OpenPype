@@ -21,7 +21,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
                   "celaction": [r".*"]}
 
     def process(self, instance):
-        data = instance.data.copy()
+        # data = instance.data.copy()
         context = instance.context
         self.context = context
         self.anatomy = instance.context.data["anatomy"]

@@ -17,10 +17,9 @@ def remap_source(source, anatomy):
     else:
         # `rootless_path` is not set to `source` if none of roots match
         log = Logger.get_logger("farm_publishing")
-        log.warning((
-                        "Could not find root path for remapping \"{}\"."
-                        " This may cause issues."
-                    ).format(source))
+        log.warning(
+            ("Could not find root path for remapping \"{}\"."
+             " This may cause issues.").format(source))
     return source
 
 
