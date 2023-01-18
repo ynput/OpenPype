@@ -213,8 +213,8 @@ def get_ocio_config_colorspaces(config_path):
     if sys.version_info[0] == 2:
         return get_colorspace_data_subprocess(config_path)
 
-    from ..scripts.ocio_wrapper import get_colorspace_data
-    return get_colorspace_data(config_path)
+    from ..scripts.ocio_wrapper import _get_colorspace_data
+    return _get_colorspace_data(config_path)
 
 
 def get_colorspace_data_subprocess(config_path):
@@ -266,8 +266,8 @@ def get_ocio_config_views(config_path):
     if sys.version_info[0] == 2:
         return get_views_data_subprocess(config_path)
 
-    from ..scripts.ocio_wrapper import get_views_data
-    return get_views_data(config_path)
+    from ..scripts.ocio_wrapper import _get_views_data
+    return _get_views_data(config_path)
 
 
 def get_views_data_subprocess(config_path):

@@ -8,13 +8,13 @@ Providing functionality:
 - get_colorspace - console command - python 2
                  - returning all available color spaces
                    found in input config path.
-- get_colorspace_data - python 3 - module function
+- _get_colorspace_data - python 3 - module function
                       - returning all available colorspaces
                         found in input config path.
 - get_views - console command - python 2
             - returning all available viewers
               found in input config path.
-- get_views_data - python 3 - module function
+- _get_views_data - python 3 - module function
                  - returning all available viewers
                    found in input config path.
 """
@@ -68,7 +68,7 @@ def get_colorspace(in_path, out_path):
     """
     json_path = Path(out_path)
 
-    out_data = get_colorspace_data(in_path)
+    out_data = _get_colorspace_data(in_path)
 
     with open(json_path, "w") as f:
         json.dump(out_data, f)
@@ -76,7 +76,7 @@ def get_colorspace(in_path, out_path):
     print(f"Colorspace data are saved to '{json_path}'")
 
 
-def get_colorspace_data(config_path):
+def _get_colorspace_data(config_path):
     """Return all found colorspace data.
 
     Args:
@@ -130,7 +130,7 @@ def get_views(in_path, out_path):
     """
     json_path = Path(out_path)
 
-    out_data = get_views_data(in_path)
+    out_data = _get_views_data(in_path)
 
     with open(json_path, "w") as f:
         json.dump(out_data, f)
@@ -138,7 +138,7 @@ def get_views(in_path, out_path):
     print(f"Viewer data are saved to '{json_path}'")
 
 
-def get_views_data(config_path):
+def _get_views_data(config_path):
     """Return all found viewer data.
 
     Args:
