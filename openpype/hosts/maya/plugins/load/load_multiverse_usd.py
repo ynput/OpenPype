@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import maya.cmds as cmds
+from maya import mel
+import os
 
 from openpype.pipeline import (
     load,
@@ -11,12 +13,13 @@ from openpype.hosts.maya.api.lib import (
     unique_namespace
 )
 from openpype.hosts.maya.api.pipeline import containerise
+from openpype.client import get_representation_by_id
 
 
 class MultiverseUsdLoader(load.LoaderPlugin):
     """Read USD data in a Multiverse Compound"""
 
-    families = ["model", "mvUsd", "mvUsdComposition", "mvUsdOverride",
+    families = ["model", "usd", "mvUsdComposition", "mvUsdOverride",
                 "pointcache", "animation"]
     representations = ["usd", "usda", "usdc", "usdz", "abc"]
 
@@ -26,7 +29,6 @@ class MultiverseUsdLoader(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name=None, namespace=None, options=None):
-
         asset = context['asset']['name']
         namespace = namespace or unique_namespace(
             asset + "_",
@@ -34,21 +36,19 @@ class MultiverseUsdLoader(load.LoaderPlugin):
             suffix="_",
         )
 
-        # Create the shape
+        # Make sure we can load the plugin
         cmds.loadPlugin("MultiverseForMaya", quiet=True)
+        import multiverse
 
+        # Create the shape
         shape = None
         transform = None
         with maintained_selection():
             cmds.namespace(addNamespace=namespace)
             with namespaced(namespace, new=False):
-                import multiverse
                 shape = multiverse.CreateUsdCompound(self.fname)
                 transform = cmds.listRelatives(
                     shape, parent=True, fullPath=True)[0]
-
-                # Lock the shape node so the user cannot delete it.
-                cmds.lockNode(shape, lock=True)
 
         nodes = [transform, shape]
         self[:] = nodes
@@ -70,15 +70,34 @@ class MultiverseUsdLoader(load.LoaderPlugin):
         shapes = cmds.ls(members, type="mvUsdCompoundShape")
         assert shapes, "Cannot find mvUsdCompoundShape in container"
 
-        path = get_representation_path(representation)
+        project_name = representation["context"]["project"]["name"]
+        prev_representation_id = cmds.getAttr("{}.representation".format(node))
+        prev_representation = get_representation_by_id(project_name,
+                                                       prev_representation_id)
+        prev_path = os.path.normpath(prev_representation["data"]["path"])
 
+        # Make sure we can load the plugin
+        cmds.loadPlugin("MultiverseForMaya", quiet=True)
         import multiverse
+
         for shape in shapes:
-            multiverse.SetUsdCompoundAssetPaths(shape, [path])
+
+            asset_paths = multiverse.GetUsdCompoundAssetPaths(shape)
+            asset_paths = [os.path.normpath(p) for p in asset_paths]
+
+            assert asset_paths.count(prev_path) == 1, \
+                "Couldn't find matching path (or too many)"
+            prev_path_idx = asset_paths.index(prev_path)
+
+            path = get_representation_path(representation)
+            asset_paths[prev_path_idx] = path
+
+            multiverse.SetUsdCompoundAssetPaths(shape, asset_paths)
 
         cmds.setAttr("{}.representation".format(node),
                      str(representation["_id"]),
                      type="string")
+        mel.eval('refreshEditorTemplates;')
 
     def switch(self, container, representation):
         self.update(container, representation)

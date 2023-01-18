@@ -1038,6 +1038,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
             # Set audio duration
             audio_in_args.append("-to {:0.10f}".format(audio_duration))
 
+            # Ignore video data from audio input
+            audio_in_args.append("-vn")
+
             # Add audio input path
             audio_in_args.append("-i {}".format(
                 path_to_subprocess_arg(audio["filename"])
