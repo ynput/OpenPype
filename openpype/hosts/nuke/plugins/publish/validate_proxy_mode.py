@@ -17,7 +17,6 @@ class FixProxyMode(pyblish.api.Action):
         rootNode["proxy"].setValue(False)
 
 
-@pyblish.api.log
 class ValidateProxyMode(pyblish.api.ContextPlugin):
     """Validate active proxy mode"""
 

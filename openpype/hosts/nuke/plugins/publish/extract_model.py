@@ -36,8 +36,9 @@ class ExtractModel(publish.Extractor):
         self.log.info("instance.data: `{}`".format(
             pformat(instance.data)))
 
-        rm_nodes = list()
-        model_node = instance[0]
+        rm_nodes = []
+        model_node = instance.data["transientData"]["node"]
+
         self.log.info("Crating additional nodes")
         subset = instance.data["subset"]
         staging_dir = self.staging_dir(instance)

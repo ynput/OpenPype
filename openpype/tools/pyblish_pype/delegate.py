@@ -1,6 +1,6 @@
 import platform
 
-from Qt import QtWidgets, QtGui, QtCore
+from qtpy import QtWidgets, QtGui, QtCore
 
 from . import model
 from .awesome import tags as awesome

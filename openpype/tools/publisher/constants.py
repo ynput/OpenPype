@@ -1,4 +1,4 @@
-from Qt import QtCore
+from qtpy import QtCore
 
 # ID of context item in instance view
 CONTEXT_ID = "context"
