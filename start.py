@@ -698,12 +698,12 @@ def _check_and_update_from_ayon_server():
         check_addons,
         check_venv,
         default_addon_downloader,
+        get_addons_dir,
+        get_dependencies_dir,
     )
 
-    local_addons_dir = _get_local_dir("AYON_ADDONS_DIR", "addons")
-    local_dependencies_dir = _get_local_dir(
-        "AYON_DEPENDENCIES_DIR", "dependency_packages"
-    )
+    local_addons_dir = get_addons_dir()
+    local_dependencies_dir = get_dependencies_dir()
 
     default_downloader = default_addon_downloader()
     _print(f">>> Checking addons in {local_addons_dir} ...")
@@ -726,24 +726,6 @@ def _check_and_update_from_ayon_server():
         default_downloader,
         token
     )
-
-
-def _get_local_dir(env_key, dir_name=None):
-    local_dir = os.environ.get(env_key)
-    if not local_dir:
-        import appdirs
-        local_dir = appdirs.user_data_dir("openpype", "pypeclub")
-        if not dir_name:
-            raise RuntimeError("Must fill dir_name if nothing else provided!")
-        local_dir = os.path.join(local_dir, dir_name)
-
-    if not os.path.isdir(local_dir):
-        try:
-            os.makedirs(local_dir)
-        except Exception:  # TODO fix exception
-            raise RuntimeError(f"Cannot create {local_dir}")
-
-    return local_dir
 
 
 def _initialize_environment(openpype_version: OpenPypeVersion) -> None:
