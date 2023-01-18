@@ -6,13 +6,13 @@ sidebar_label: Blender
 
 ## OpenPype global tools
 
--   [Set Context](artist_tools.md#set-context)
--   [Work Files](artist_tools.md#workfiles)
--   [Create](artist_tools.md#creator)
--   [Load](artist_tools.md#loader)
--   [Manage (Inventory)](artist_tools.md#inventory)
--   [Publish](artist_tools.md#publisher)
--   [Library Loader](artist_tools.md#library-loader)
+-   [Set Context](artist_tools_context_manager)
+-   [Work Files](artist_tools_workfiles)
+-   [Create](artist_tools_creator)
+-   [Load](artist_tools_loader)
+-   [Manage (Inventory)](artist_tools_inventory)
+-   [Publish](artist_tools_publisher)
+-   [Library Loader](artist_tools_library_loader)
 
 ## Working with OpenPype in Blender
 
@@ -60,7 +60,7 @@ low resolution stuff. See [Subset](artist_concepts.md#subset).
 <!-- :::note LOD support
 By changing subset name you can take advantage of _LOD support_ in OpenPype. Your
 asset can contain various resolution defined by different subsets. You can then
-switch between them very easy using [Inventory (Manage)](artist_tools.md#inventory).
+switch between them very easy using [Inventory (Manage)](artist_tools_inventory).
 There LODs are conveniently grouped so they don't clutter Inventory view.
 
 Name your subset like `main_LOD1`. Important part is that `_LOD1`. You can have as many LODs as you need.
@@ -96,7 +96,7 @@ Now let's publish it. Go **OpenPype → Publish...**. You will be presented with
 ![Model publish](assets/blender-model_pre_publish.jpg)
 
 Note that content of this window can differs by your pipeline configuration.
-For more detail see [Publisher](artist_tools.md#publisher).
+For more detail see [Publisher](artist_tools_publisher).
 
 Items in left column are instances you will be publishing. You can disable them
 by clicking on square next to them. White filled square indicate they are ready for
@@ -150,12 +150,12 @@ it can take a while. You should end up with everything green and message
 **Finished successfully ...** You can now close publisher window.
 
 To check for yourself that model is published, open
-[Asset Loader](artist_tools.md#loader) - **OpenPype → Load...**.
+[Asset Loader](artist_tools_loader) - **OpenPype → Load...**.
 There you should see your model, named `modelDefault`.
 
 ### Loading models
 
-You can load model with [Loader](artist_tools.md#loader). Go **OpenPype → Load...**,
+You can load model with [Loader](artist_tools_loader). Go **OpenPype → Load...**,
 select your rig, right click on it and click **Link model (blend)**.
 
 ## Creating Rigs
@@ -195,11 +195,11 @@ this:
 ### Publishing rigs
 
 Publishing rig is done in same way as publishing everything else. Save your scene
-and go **OpenPype → Publish**. For more detail see [Publisher](artist_tools.md#publisher).
+and go **OpenPype → Publish**. For more detail see [Publisher](artist_tools_publisher).
 
 ### Loading rigs
 
-You can load rig with [Loader](artist_tools.md#loader). Go **OpenPype → Load...**,
+You can load rig with [Loader](artist_tools_loader). Go **OpenPype → Load...**,
 select your rig, right click on it and click **Link rig (blend)**.
 
 ## Layouts in Blender
@@ -210,7 +210,7 @@ and manage those sets.
 ### Publishing a layout
 
 Working with Layout is easy. Just load your assets into scene with
-[Loader](artist_tools.md#loader) (**OpenPype → Load...**). Populate your scene as
+[Loader](artist_tools_loader) (**OpenPype → Load...**). Populate your scene as
 you wish, translate each piece to fit your need. When ready, select all imported
 stuff and go **OpenPype → Create...** and select **Layout**. When selecting rigs,
 you need to select only the armature, the geometry will automatically be included.
@@ -220,7 +220,7 @@ Now you can publish is with **OpenPype → Publish**.
 
 ### Loading layouts
 
-You can load a Layout using [Loader](artist_tools.md#loader)
+You can load a Layout using [Loader](artist_tools_loader)
 (**OpenPype → Load...**). Select your layout, right click on it and
 select **Link Layout (blend)**. This will populate your scene with all those
 models you've put into layout.

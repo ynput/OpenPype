@@ -6,12 +6,12 @@ sidebar_label: AfterEffects
 <!-- based on PS implementation, same principle and menu -->
 ## Available Tools
 
--   [Work Files](artist_tools.md#workfiles)
--   [Create](artist_tools.md#creator)
--   [Load](artist_tools.md#loader)
--   [Publish](artist_tools.md#publisher)
--   [Manage](artist_tools.md#inventory)
--   [Subset Manager](artist_tools.md#subset-manager)
+-   [Work Files](artist_tools_workfiles)
+-   [Create](artist_tools_creator)
+-   [Load](artist_tools_loader)
+-   [Publish](artist_tools_publisher)
+-   [Manage](artist_tools_inventory)
+-   [Subset Manager](artist_tools_subset_manager)
 
 ## Setup
 
@@ -65,7 +65,7 @@ When you are ready to share your work, you will need to publish it. This is done
 
 This tool will run through checks to make sure the contents you are publishing is correct. Hit the "Play" button to start publishing.
 
-You may encounter issues with publishing which will be indicated with red squares. If these issues are within the validation section, then you can fix the issue. If there are issues outside of validation section, please let the OpenPype team know. For More details have a look at the general [Publish](artist_tools.md#publisher) documentation.
+You may encounter issues with publishing which will be indicated with red squares. If these issues are within the validation section, then you can fix the issue. If there are issues outside of validation section, please let the OpenPype team know. For More details have a look at the general [Publish](artist_tools_publisher) documentation.
 
 ### Load
 
