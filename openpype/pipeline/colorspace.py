@@ -372,7 +372,7 @@ def get_imageio_config(
 
 
 def _get_config_data(path_list, anatomy_data):
-    """Path formating in interation
+    """Return first existing path in path list formatted by anatomy data.
 
     Args:
         path_list (list[str]): list of abs paths
