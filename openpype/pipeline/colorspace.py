@@ -381,9 +381,15 @@ def _get_config_data(path_list, anatomy_data):
     Returns:
         dict: config data
     """
+    formatting_data = deepcopy(anatomy_data)
+
+    # format the path for potential env vars
+    formatting_data.update(dict(**os.environ))
+
     # first try host config paths
     for path_ in path_list:
-        formated_path = _format_path(path_, anatomy_data)
+        formated_path = _format_path(path_, formatting_data)
+
         if not os.path.exists(formated_path):
             continue
 
@@ -393,21 +399,17 @@ def _get_config_data(path_list, anatomy_data):
         }
 
 
-def _format_path(tempate_path, anatomy_data):
+def _format_path(tempate_path, formatting_data):
     """Single template path formating.
 
     Args:
         tempate_path (str): template string
-        anatomy_data (dict): formating data
+        formatting_data (dict): data to be used for
+                                template formating
 
     Returns:
         str: absolute formated path
     """
-    formatting_data = deepcopy(anatomy_data)
-
-    # format the path for potential env vars
-    formatting_data.update(dict(**os.environ))
-
     # format path for anatomy keys
     formatted_path = StringTemplate(tempate_path).format(
         formatting_data)
