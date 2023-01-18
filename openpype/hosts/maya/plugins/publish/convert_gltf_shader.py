@@ -21,7 +21,7 @@ class ConvertGLSLShader(publish.Extractor):
         meshes = cmds.ls(instance, type="mesh", long=True)
         self.log.info("meshes: {}".format(meshes))
         # load the glsl shader plugin
-        cmds.loadPlugin("glslShader.mll", quiet=True)
+        cmds.loadPlugin("glslShader", quiet=True)
 
         for mesh in meshes:
 
@@ -33,8 +33,19 @@ class ConvertGLSLShader(publish.Extractor):
                              glsl_shadingGrp + ".surfaceShader")
 
             # load the maya2gltf shader
-            maya_dir = os.getenv("MAYA_APP_DIR")
-            ogsfx = maya_dir + "/maya2glTF/PBR/shaders/glTF_PBR.ogsfx"
+            maya_publish = (
+            instance.context.data["project_settings"]["maya"]["publish"]
+            )
+            ogsfx_path = maya_publish["ConvertGLSLShader"]["ogsfx_path"]
+            if not ogsfx_path:
+                maya_dir = os.getenv("MAYA_APP_DIR")
+                if not maya_dir:
+                    raise RuntimeError("MAYA_APP_DIR not found")
+                ogsfx_path = maya_dir + "/maya2glTF/PBR/shaders/"
+            if not os.path.exists(ogsfx_path):
+                raise RuntimeError("the ogsfx file not found")
+
+            ogsfx = ogsfx_path + "glTF_PBR.ogsfx"
             cmds.setAttr(glsl + ".shader", ogsfx, typ="string")
 
             # list the materials used for the assets

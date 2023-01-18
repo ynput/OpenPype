@@ -350,7 +350,7 @@
             "active": true
         },
         "ValidateGLTFTexturesNames": {
-            "enabled": true,
+            "enabled": false,
             "optional": false,
             "active": true
         },
@@ -828,6 +828,12 @@
                     "overscan": 1.0
                 }
             }
+        },
+        "ConvertGLSLShader": {
+            "enabled": false,
+            "optional": true,
+            "active": true,
+            "ogsfx_path": ""
         },
         "ExtractMayaSceneRaw": {
             "enabled": true,
