@@ -380,7 +380,8 @@ def check_venv(server_endpoint, local_venv_dir, downloaders, token, log=None):
 
     package = get_dependency_info(server_endpoint)
     if not package:
-        raise RuntimeError("Server doesn't contain dependency package!")
+        log.info("Server does not contain dependency package")
+        return
 
     venv_dest_dir = os.path.join(local_venv_dir, package.name)
     log.debug(f"Checking {package.name} in {local_venv_dir}")
