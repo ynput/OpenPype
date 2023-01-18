@@ -226,7 +226,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 "version": version_number
             }
 
-            # Hiearchy
+            # Hierarchy
             asset_doc = instance.data.get("assetEntity")
             if (
                 asset_doc
