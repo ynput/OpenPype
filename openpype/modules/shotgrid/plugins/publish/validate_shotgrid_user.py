@@ -21,12 +21,19 @@ class ValidateShotgridUser(pyblish.api.ContextPlugin):
         if not (login and sg and project):
             raise KeyError()
 
-        user = sg.find_one("HumanUser", [["login", "is", login]], ["projects"])
+        ### Starts Alkemy-X Override ###
+        # user = sg.find_one("HumanUser", [["login", "is", login]], ["projects"])
+        user = sg.find_one("HumanUser", [["login", "is", login]], ["projects", "permission_rule_set"])
+        admin = user["permission_rule_set"]["name"] == "Admin"
+        ### Ends Alkemy-X Override ###
 
         self.log.info(user)
         self.log.info(login)
         user_projects_id = [p["id"] for p in user.get("projects", [])]
-        if not project.get("id") in user_projects_id:
+        ### Starts Alkemy-X Override ###
+        # if not project.get("id") in user_projects_id:
+        if not project.get("id") in user_projects_id and not admin:
+        ### Ends Alkemy-X Override ###
             raise PermissionError(
                 "Login {} don't have access to the project {}".format(
                     login, project

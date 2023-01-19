@@ -68,6 +68,12 @@ def _get_shotgrid_collection(project):
 def _get_shotgrid_project(context):
     shotgrid_project_id = context.data["project_settings"].get(
         "shotgrid_project_id")
+    ### Starts Alkemy-X Override ###
+    if not shotgrid_project_id:
+        shotgrid_data = context.data["project_settings"].get("shotgrid")
+        if shotgrid_data:
+            shotgrid_project_id = shotgrid_data.get("shotgrid_project_id")
+    ### Ends Alkemy-X Override ###
     if shotgrid_project_id:
         return {"type": "Project", "id": shotgrid_project_id}
     return {}

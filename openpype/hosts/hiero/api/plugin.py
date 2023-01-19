@@ -167,6 +167,14 @@ class CreatorWidget(QtWidgets.QDialog):
 
         # assign the created attribute to variable
         item = getattr(self, attr_name)
+        ### Starts Alkemy-X Override ###
+        # Bug fix for setting values over default maximum before maximum is set
+        if "setMaximum" in item.__dir__():
+            item.setMaximum(100000)
+        if "setMimimum" in item.__dir__():
+            item.setMinimum(0)
+        ### Ends Alkemy-X Override ###
+
         for func, val in kwargs.items():
             if getattr(item, func):
                 func_attr = getattr(item, func)
