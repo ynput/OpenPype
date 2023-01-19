@@ -15,7 +15,6 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
     legacy_io,
 )
-from openpype.api import get_current_project_settings
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as upipeline
 
@@ -32,6 +31,17 @@ class ExistingLayoutLoader(plugin.Loader):
     icon = "code-fork"
     color = "orange"
     ASSET_ROOT = "/Game/OpenPype"
+
+    delete_unmatched_assets = True
+
+    @classmethod
+    def apply_settings(cls, project_settings, *args, **kwargs):
+        super(ExistingLayoutLoader, cls).apply_settings(
+            project_settings, *args, **kwargs
+        )
+        cls.delete_unmatched_assets = (
+            project_settings["unreal"]["delete_unmatched_assets"]
+        )
 
     @staticmethod
     def _create_container(
@@ -222,8 +232,6 @@ class ExistingLayoutLoader(plugin.Loader):
         return assets
 
     def _process(self, lib_path):
-        data = get_current_project_settings()
-        delete_unmatched = data["unreal"]["delete_unmatched_assets"]
 
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
@@ -360,7 +368,7 @@ class ExistingLayoutLoader(plugin.Loader):
                 continue
             if actor not in actors_matched:
                 self.log.warning(f"Actor {actor.get_name()} not matched.")
-                if delete_unmatched:
+                if self.delete_unmatched_assets:
                     EditorLevelLibrary.destroy_actor(actor)
 
         return containers
