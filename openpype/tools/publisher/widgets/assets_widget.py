@@ -86,9 +86,9 @@ class CreateWidgetAssetsWidget(SingleSelectAssetsWidget):
 
 
 class AssetsHierarchyModel(QtGui.QStandardItemModel):
-    """Assets hiearrchy model.
+    """Assets hierarchy model.
 
-    For selecting asset for which should beinstance created.
+    For selecting asset for which an instance should be created.
 
     Uses controller to load asset hierarchy. All asset documents are stored by
     their parents.
