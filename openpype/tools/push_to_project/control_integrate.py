@@ -326,6 +326,13 @@ class ProjectPushRepreItem:
             self.get_source_files()
         return self._resource_files
 
+    @staticmethod
+    def _clean_path(path):
+        new_value = path.replace("\\", "/")
+        while "//" in new_value:
+            new_value = new_value.replace("//", "/")
+        return new_value
+
     @property
     def frame(self):
         """First frame of representation files.
@@ -407,8 +414,8 @@ class ProjectPushRepreItem:
         fill_roots = fill_repre_context["root"]
         for root_name in tuple(fill_roots.keys()):
             fill_roots[root_name] = "{{root[{}]}}".format(root_name)
-        repre_path = StringTemplate.format_template(template,
-                                                    fill_repre_context)
+        repre_path = StringTemplate.format_template(
+            template, fill_repre_context)
         repre_path = repre_path.replace("\\", "/")
         src_dirpath, src_basename = os.path.split(repre_path)
         src_basename = (
@@ -418,10 +425,11 @@ class ProjectPushRepreItem:
         )
         src_basename_regex = re.compile("^{}$".format(src_basename))
         for file_info in self._repre_doc["files"]:
-            filepath_template = file_info["path"].replace("\\", "/")
-            filepath = os.path.normpath(
+            filepath_template = self._clean_path(file_info["path"])
+            filepath = self._clean_path(
                 filepath_template.format(root=self._roots)
             )
+
             dirpath, basename = os.path.split(filepath_template)
             if (
                 dirpath != src_dirpath
@@ -463,8 +471,10 @@ class ProjectPushRepreItem:
         repre_path = repre_path.replace("\\", "/")
         src_dirpath = os.path.dirname(repre_path)
         for file_info in self._repre_doc["files"]:
-            filepath_template = file_info["path"].replace("\\", "/")
-            filepath = filepath_template.format(root=self._roots)
+            filepath_template = self._clean_path(file_info["path"])
+            filepath = self._clean_path(
+                filepath_template.format(root=self._roots))
+
             if filepath_template == repre_path:
                 src_files.append(SourceFile(filepath))
             else:
