@@ -84,6 +84,12 @@ class ResourceFile(FileItem):
     def __repr__(self):
         return "<{}> '{}'".format(self.__class__.__name__, self.relative_path)
 
+    @property
+    def is_valid_file(self):
+        if not self.relative_path:
+            return False
+        return super(ResourceFile, self).is_valid_file
+
 
 class ProjectPushItem:
     def __init__(
@@ -333,6 +339,19 @@ class ProjectPushRepreItem:
             new_value = new_value.replace("//", "/")
         return new_value
 
+    @staticmethod
+    def _get_relative_path(path, src_dirpath):
+        dirpath, basename = os.path.split(path)
+        if not dirpath.lower().startswith(src_dirpath.lower()):
+            return None
+
+        relative_dir = dirpath[len(src_dirpath):].lstrip("/")
+        if relative_dir:
+            relative_path = "/".join([relative_dir, basename])
+        else:
+            relative_path = basename
+        return relative_path
+
     @property
     def frame(self):
         """First frame of representation files.
@@ -429,20 +448,16 @@ class ProjectPushRepreItem:
             filepath = self._clean_path(
                 filepath_template.format(root=self._roots)
             )
-
             dirpath, basename = os.path.split(filepath_template)
             if (
-                dirpath != src_dirpath
+                dirpath.lower() != src_dirpath.lower()
                 or not src_basename_regex.match(basename)
             ):
-                relative_dir = dirpath.replace(src_dirpath, "")
-                if relative_dir:
-                    relative_path = "/".join([relative_dir, basename])
-                else:
-                    relative_path = basename
+                relative_path = self._get_relative_path(filepath, src_dirpath)
                 resource_files.append(ResourceFile(filepath, relative_path))
                 continue
 
+            filepath = os.path.join(src_dirpath, basename)
             frame = None
             udim = None
             for item in src_basename_regex.finditer(basename):
@@ -475,16 +490,14 @@ class ProjectPushRepreItem:
             filepath = self._clean_path(
                 filepath_template.format(root=self._roots))
 
-            if filepath_template == repre_path:
-                src_files.append(SourceFile(filepath))
+            if filepath_template.lower() == repre_path.lower():
+                src_files.append(
+                    SourceFile(repre_path.format(root=self._roots))
+                )
             else:
-                dirpath, basename = os.path.split(filepath_template)
-                relative_dir = dirpath.replace(src_dirpath, "")
-                if relative_dir:
-                    relative_path = "/".join([relative_dir, basename])
-                else:
-                    relative_path = basename
-
+                relative_path = self._get_relative_path(
+                    filepath_template, src_dirpath
+                )
                 resource_files.append(
                     ResourceFile(filepath, relative_path)
                 )
