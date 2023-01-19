@@ -416,7 +416,7 @@ class ProjectPushRepreItem:
             fill_roots[root_name] = "{{root[{}]}}".format(root_name)
         repre_path = StringTemplate.format_template(
             template, fill_repre_context)
-        repre_path = repre_path.replace("\\", "/")
+        repre_path = self._clean_path(repre_path)
         src_dirpath, src_basename = os.path.split(repre_path)
         src_basename = (
             re.escape(src_basename)
@@ -468,7 +468,7 @@ class ProjectPushRepreItem:
             fill_roots[root_name] = "{{root[{}]}}".format(root_name)
         repre_path = StringTemplate.format_template(template,
                                                     fill_repre_context)
-        repre_path = repre_path.replace("\\", "/")
+        repre_path = self._clean_path(repre_path)
         src_dirpath = os.path.dirname(repre_path)
         for file_info in self._repre_doc["files"]:
             filepath_template = self._clean_path(file_info["path"])
