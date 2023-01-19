@@ -282,7 +282,7 @@ class ExistingLayoutLoader(plugin.Loader):
         actors_matched = []
 
         for (repr_data, lasset) in layout_data:
-             # For every actor in the scene, check if it has a representation in
+            # For every actor in the scene, check if it has a representation in
             # those we got from the JSON. If so, create a container for it.
             # Otherwise, remove it from the scene.
             found = False
