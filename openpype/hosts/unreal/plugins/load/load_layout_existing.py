@@ -250,7 +250,7 @@ class ExistingLayoutLoader(plugin.Loader):
         for element in data:
             repre_id = element.get('representation')
             if repre_id:
-                repre_ids.append(repre_id)
+                repre_ids.add(repre_id)
                 elements.append(element)
 
         repre_docs = get_representations(
