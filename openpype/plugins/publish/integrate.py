@@ -534,6 +534,15 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         template_data["representation"] = repre["name"]
         template_data["ext"] = repre["ext"]
 
+        # add template data for colorspaceData
+        if repre.get("colorspaceData"):
+            colorspace = repre["colorspaceData"]["colorspace"]
+            # replace spaces with underscores
+            # pipeline.colorspace.parse_colorspace_from_filepath
+            # is checking it with underscores too
+            colorspace = colorspace.replace(" ", "_")
+            template_data["colorspace"] = colorspace
+
         stagingdir = repre.get("stagingDir")
         if not stagingdir:
             # Fall back to instance staging dir if not explicitly
@@ -547,15 +556,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             raise KnownPublishError(
                 "No staging directory set for representation: {}".format(repre)
             )
-
-        # add template data for colorspaceData
-        if repre.get("colorspaceData"):
-            colorspace = repre["colorspaceData"]["colorspace"]
-            # replace spaces with underscores
-            # pipeline.colorspace.parse_colorspace_from_filepath
-            # is checking it with underscores too
-            colorspace = colorspace.replace(" ", "_")
-            template_data["colorspace"] = colorspace
 
         # optionals
         # retrieve additional anatomy data from representation if exists

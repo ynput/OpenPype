@@ -2,14 +2,12 @@
     "key": "imageio",
     "type": "dict",
     "label": "Color Management (ImageIO)",
-    "checkbox_key": "enabled",
     "collapsible": true,
     "is_group": true,
     "children": [
         {
-            "type": "boolean",
-            "key": "enabled",
-            "label": "Enabled"
+            "type": "label",
+            "label": "<b style='color:red'>'Custom OCIO config path'</b> has deprecated. <br> If you need to set custom config, just enable and add path into 'OCIO config'. <br>Anatomy keys are supported.</i>."
         },
         {
             "type": "schema",
@@ -51,10 +49,6 @@
             "label": "Workfile",
             "collapsible": false,
             "children": [
-                {
-                    "type": "label",
-                    "label": "<b style='color:red'>'customOCIOConfigPath'</b> will be deprecated. <br>Please move values to : <i>project_settings/{app}/imageio/ocio_config/filepath</i>."
-                },
                 {
                     "type": "form",
                     "children": [
