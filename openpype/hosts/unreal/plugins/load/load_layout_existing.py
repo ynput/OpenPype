@@ -4,9 +4,7 @@ from pathlib import Path
 import unreal
 from unreal import EditorLevelLibrary
 
-from bson.objectid import ObjectId
-
-from openpype import pipeline
+from openpype.client import get_representations
 from openpype.pipeline import (
     discover_loader_plugins,
     loaders_from_representation,
@@ -189,14 +187,7 @@ class ExistingLayoutLoader(plugin.Loader):
 
         return None
 
-    def _load_asset(self, representation, version, instance_name, family):
-        valid_formats = ['fbx', 'abc']
-
-        repr_data = legacy_io.find_one({
-            "type": "representation",
-            "parent": ObjectId(version),
-            "name": {"$in": valid_formats}
-        })
+    def _load_asset(self, repr_data, representation, instance_name, family):
         repr_format = repr_data.get('name')
 
         all_loaders = discover_loader_plugins()
@@ -231,6 +222,19 @@ class ExistingLayoutLoader(plugin.Loader):
 
         return assets
 
+    def _get_valid_repre_docs(self, project_name, version_ids):
+        valid_formats = ['fbx', 'abc']
+
+        repre_docs = list(get_representations(
+            project_name,
+            representation_names=valid_formats,
+            version_ids=version_ids
+        ))
+        repre_doc_by_version_id = {}
+        for repre_doc in repre_docs:
+            version_id = str(repre_doc["parent"])
+            repre_doc_by_version_id[version_id] = repre_doc
+        return repre_doc_by_version_id
 
     def _process(self, lib_path, project_name):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
@@ -240,31 +244,45 @@ class ExistingLayoutLoader(plugin.Loader):
         with open(lib_path, "r") as fp:
             data = json.load(fp)
 
-        layout_data = []
-
+        elements = []
+        repre_ids = set()
         # Get all the representations in the JSON from the database.
         for element in data:
-            if element.get('representation'):
-                layout_data.append((
-                    pipeline.legacy_io.find_one({
-                        "_id": ObjectId(element.get('representation'))
-                    }),
-                    element
-                ))
+            repre_id = element.get('representation')
+            if repre_id:
+                repre_ids.append(repre_id)
+                elements.append(element)
 
+        repre_docs = get_representations(
+            project_name, representation_ids=repre_ids
+        )
+        repre_docs_by_id = {
+            str(repre_doc["_id"]): repre_doc
+            for repre_doc in repre_docs
+        }
+        layout_data = []
+        version_ids = set()
+        for element in elements:
+            repre_id = element.get("representation")
+            repre_doc = repre_docs_by_id.get(repre_id)
+            if not repre_doc:
+                raise AssertionError("Representation not found")
+            if not (repre_doc.get('data') or repre_doc['data'].get('path')):
+                raise AssertionError("Representation does not have path")
+            if not repre_doc.get('context'):
+                raise AssertionError("Representation does not have context")
+
+            layout_data.append((repre_doc, element))
+            version_ids.add(repre_doc["parent"])
+
+        # Prequery valid repre documents for all elements at once
+        valid_repre_doc_by_version_id = self._get_valid_repre_docs(
+            project_name, version_ids)
         containers = []
         actors_matched = []
 
         for (repr_data, lasset) in layout_data:
-            if not repr_data:
-                raise AssertionError("Representation not found")
-            if not (repr_data.get('data') or
-                    repr_data.get('data').get('path')):
-                raise AssertionError("Representation does not have path")
-            if not repr_data.get('context'):
-                raise AssertionError("Representation does not have context")
-
-            # For every actor in the scene, check if it has a representation in
+             # For every actor in the scene, check if it has a representation in
             # those we got from the JSON. If so, create a container for it.
             # Otherwise, remove it from the scene.
             found = False
@@ -347,8 +365,8 @@ class ExistingLayoutLoader(plugin.Loader):
                 continue
 
             assets = self._load_asset(
+                valid_repre_doc_by_version_id.get(lasset.get('version')),
                 lasset.get('representation'),
-                lasset.get('version'),
                 lasset.get('instance_name'),
                 lasset.get('family')
             )
