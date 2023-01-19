@@ -3474,13 +3474,10 @@ def get_color_management_preferences():
         query=True, configFilePath=True
     )
 
-    # Resolve environment variables in config path. "MAYA_RESOURCES" are in the
-    # path by default.
-    def _subst_with_env_value(match):
-        key = match.group(1)
-        return os.environ.get(key, "")
-
-    path = re.sub(r'<([^>]+)>', _subst_with_env_value, path)
+    # The OCIO config supports a custom <MAYA_RESOURCES> token.
+    maya_resources_token = "<MAYA_RESOURCES>"
+    maya_resources_path = om.MGlobal.getAbsolutePathToResources()
+    path = path.replace(maya_resources_token, maya_resources_path)
 
     data["config"] = path
 
