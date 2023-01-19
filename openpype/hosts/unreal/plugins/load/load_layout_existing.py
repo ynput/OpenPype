@@ -231,8 +231,8 @@ class ExistingLayoutLoader(plugin.Loader):
 
         return assets
 
-    def _process(self, lib_path):
 
+    def _process(self, lib_path, project_name):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
         actors = EditorLevelLibrary.get_all_level_actors()
@@ -385,7 +385,8 @@ class ExistingLayoutLoader(plugin.Loader):
         if not curr_level:
             raise AssertionError("Current level not saved")
 
-        containers = self._process(self.fname)
+        project_name = context["project"]["name"]
+        containers = self._process(self.fname, project_name)
 
         curr_level_path = Path(
             curr_level.get_outer().get_path_name()).parent.as_posix()
@@ -415,7 +416,8 @@ class ExistingLayoutLoader(plugin.Loader):
         asset_dir = container.get('namespace')
 
         source_path = get_representation_path(representation)
-        containers = self._process(source_path)
+        project_name = legacy_io.active_project()
+        containers = self._process(source_path, project_name)
 
         data = {
             "representation": str(representation["_id"]),
