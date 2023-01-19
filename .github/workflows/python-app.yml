@@ -46,7 +46,7 @@ jobs:
         $commitmsg = $matches[1]
         $buildname = ($commitmsg + "-" + $date + "-" + $platform)
         mv exe.win-amd64-3.7 $buildname
-        cp $buildname T:\dev\_builds
+        cp $buildname T:\dev\_builds -R
     - name: Cleanup local build folder
       run: |
         cd build
