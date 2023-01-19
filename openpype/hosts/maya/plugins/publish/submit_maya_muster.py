@@ -52,6 +52,11 @@ def _get_script():
     return module_path
 
 
+def get_renderer(layer):
+    with lib.renderlayer(layer):
+        return cmds.getAttr("defaultRenderGlobals.currentRenderer")
+
+
 def get_renderer_variables(renderlayer=None):
     """Retrieve the extension which has been set in the VRay settings
 
@@ -66,7 +71,7 @@ def get_renderer_variables(renderlayer=None):
         dict
     """
 
-    renderer = lib.get_renderer(renderlayer or lib.get_current_renderlayer())
+    renderer = get_renderer(renderlayer or lib.get_current_renderlayer())
     render_attrs = lib.RENDER_ATTRS.get(renderer, lib.RENDER_ATTRS["default"])
 
     padding = cmds.getAttr("{}.{}".format(render_attrs["node"],
