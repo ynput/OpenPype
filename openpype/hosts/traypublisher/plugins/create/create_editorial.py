@@ -30,14 +30,14 @@ from openpype.lib import (
 CLIP_ATTR_DEFS = [
     EnumDef(
         "fps",
-        items={
-            "from_selection": "From selection",
-            23.997: "23.976",
-            24: "24",
-            25: "25",
-            29.97: "29.97",
-            30: "30"
-        },
+        items=[
+            {"value": "from_selection", "label": "From selection"},
+            {"value": 23.997, "label": "23.976"},
+            {"value": 24, "label": "24"},
+            {"value": 25, "label": "25"},
+            {"value": 29.97, "label": "29.97"},
+            {"value": 30, "label": "30"}
+        ],
         label="FPS"
     ),
     NumberDef(

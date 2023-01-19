@@ -6,11 +6,11 @@ sidebar_label: Photoshop
 
 ## Available Tools
 
--   [Work Files](artist_tools.md#workfiles)
--   [Create](artist_tools.md#creator)
--   [Load](artist_tools.md#loader)
--   [Publish](artist_tools.md#publisher)
--   [Manage](artist_tools.md#inventory)
+-   [Work Files](artist_tools_workfiles)
+-   [Create](artist_tools_creator)
+-   [Load](artist_tools_loader)
+-   [Publish](artist_tools_publisher)
+-   [Manage](artist_tools_inventory)
 
 ## Setup
 
