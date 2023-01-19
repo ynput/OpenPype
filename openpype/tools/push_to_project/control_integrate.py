@@ -419,7 +419,9 @@ class ProjectPushRepreItem:
         src_basename_regex = re.compile("^{}$".format(src_basename))
         for file_info in self._repre_doc["files"]:
             filepath_template = file_info["path"].replace("\\", "/")
-            filepath = filepath_template.format(root=self._roots)
+            filepath = os.path.normpath(
+                filepath_template.format(root=self._roots)
+            )
             dirpath, basename = os.path.split(filepath_template)
             if (
                 dirpath != src_dirpath
