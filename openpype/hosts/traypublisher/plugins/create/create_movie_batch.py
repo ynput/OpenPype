@@ -59,7 +59,7 @@ class BatchMovieCreator(TrayPublishCreator):
             instance_data["creator_attributes"] = {"filepath": filepath}
 
             asset_doc, version = get_asset_doc_from_file_name(
-                file_name, self.project_name)
+                file_name, self.project_name, self.version_regex)
 
             subset_name, task_name = self._get_subset_and_task(
                 asset_doc, data["variant"], self.project_name)
@@ -72,7 +72,7 @@ class BatchMovieCreator(TrayPublishCreator):
                                            instance_data, self)
             self._store_new_instance(new_instance)
 
-    def get_subset_and_task(self, asset_doc, variant, project_name):
+    def _get_subset_and_task(self, asset_doc, variant, project_name):
         """Create subset name according to standard template process"""
         task_name = self._get_task_name(asset_doc)
 

@@ -36,10 +36,6 @@ def get_asset_doc_from_file_name(source_filename, project_name,
         matching_asset_doc = parse_containing(project_name, asset_name,
                                               all_selected_asset_ids)
 
-    if matching_asset_doc is None:
-        raise CreatorError(
-            "Cannot guess asset name from {}".format(source_filename))
-
     return matching_asset_doc, version
 
 
@@ -49,7 +45,8 @@ def parse_with_version(project_name, asset_name, version_regex,
 
     Eg. 'chair_v001.mov' >> 'chair', 1
     """
-    log = _handle_log(log)
+    if not log:
+        log = Logger.get_logger(__name__)
     log.debug(
         ("Asset doc by \"{}\" was not found, trying version regex.".
          format(asset_name)))
@@ -80,6 +77,8 @@ def get_asset_by_name_case_not_sensitive(project_name, asset_name,
                                          all_selected_asset_ids=None,
                                          log=None):
     """Handle more cases in file names"""
+    if not log:
+        log = Logger.get_logger(__name__)
     asset_name = re.compile(asset_name, re.IGNORECASE)
 
     assets = list(get_assets(project_name, asset_ids=all_selected_asset_ids,
@@ -91,10 +90,3 @@ def get_asset_by_name_case_not_sensitive(project_name, asset_name,
             return
 
         return assets.pop()
-
-
-def _handle_log(log):
-    if not log:
-        log = Logger.get_logger(__name__)
-
-    return log
