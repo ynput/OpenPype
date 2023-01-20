@@ -1,4 +1,22 @@
 {
+    "imageio": {
+        "ocio_config": {
+            "filepath": [
+                "{OPENPYPE_ROOT}/vendor/bin/ocioconfig/OpenColorIOConfigs/aces_1.2/config.ocio",
+                "{OPENPYPE_ROOT}/vendor/bin/ocioconfig/OpenColorIOConfigs/nuke-default/config.ocio"
+            ]
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {
+                "example": {
+                    "pattern": ".*(beauty).*",
+                    "colorspace": "ACES - ACEScg",
+                    "ext": "exr"
+                }
+            }
+        }
+    },
     "publish": {
         "CollectAnatomyInstanceData": {
             "follow_workfile_version": false
@@ -422,7 +440,9 @@
                     "template": "{family}{Task}"
                 },
                 {
-                    "families": ["render"],
+                    "families": [
+                        "render"
+                    ],
                     "hosts": [
                         "aftereffects"
                     ],

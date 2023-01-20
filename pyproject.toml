@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.14.2" # OpenPype
+version = "3.14.10" # OpenPype
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -71,6 +71,7 @@ pysftp = "^0.2.9"
 dropbox = "^11.20.0"
 aiohttp-middlewares = "^2.0.0"
 ayon-python-api = "^0.1"
+opencolorio = "^2.2.0"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^6.0"
