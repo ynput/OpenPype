@@ -179,10 +179,10 @@ def _convert_muster(ayon_settings, output):
 def _convert_royalrender(ayon_settings, output):
     royalrender_settings = output["modules"]["royalrender"]
     ayon_royalrender = ayon_settings["royalrender"]
-    rr_paths = {}
-    for item in ayon_royalrender:
-        rr_paths[item["name"]] = item["value"]
-    royalrender_settings["rr_paths"] = rr_paths
+    royalrender_settings["rr_paths"] = {
+        item["name"]: item["value"]
+        for item in ayon_royalrender["rr_paths"]
+    }
 
 
 def _convert_modules(ayon_settings, output):
