@@ -16,14 +16,6 @@ class LinkCameraLoader(plugin.AssetLoader):
 
     load_type = "LINK"
 
-    maintained_parameters = [
-        "parent",
-        "transforms",
-        "constraints",
-        "targets",
-        "drivers",
-    ]
-
 
 class AppendCameraLoader(LinkCameraLoader):
     """Append a camera from a .blend file."""

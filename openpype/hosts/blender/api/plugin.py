@@ -13,7 +13,10 @@ import bpy
 from mathutils import Matrix
 
 from openpype.api import Logger
-from openpype.hosts.blender.api.properties import OpenpypeContainer, OpenpypeInstance
+from openpype.hosts.blender.api.properties import (
+    OpenpypeContainer,
+    OpenpypeInstance,
+)
 from openpype.hosts.blender.api.utils import (
     BL_OUTLINER_TYPES,
     BL_TYPE_DATAPATH,
@@ -128,7 +131,9 @@ def remove_container_datablocks(container: OpenpypeContainer):
     """
     for d_ref in container.datablock_refs:
         if d_ref.datablock:
-            datapath = getattr(bpy.data, BL_TYPE_DATAPATH.get(type(d_ref.datablock)))
+            datapath = getattr(
+                bpy.data, BL_TYPE_DATAPATH.get(type(d_ref.datablock))
+            )
             d_ref.datablock.use_fake_user = False
             datapath.remove(d_ref.datablock)
 
@@ -156,7 +161,7 @@ def remove_container(
     # Delete container
     openpype_containers = bpy.context.scene.openpype_containers
     openpype_containers.remove(openpype_containers.find(container.name))
-    
+
     # Orphan purge
     orphans_purge()
 
@@ -380,7 +385,7 @@ def make_local(obj, data_local=True):
 
 def exec_process(process_func: Callable):
     """Decorator to make sure the process function is executed in main thread.
-    
+
     OP GUI is not run in Blender's thread to avoid disruptions.
 
     Args:
@@ -394,364 +399,6 @@ def exec_process(process_func: Callable):
         else:
             return process_func(*args, **kwargs)
     return wrapper_exec_process
-
-
-class ContainerMaintainer(ExitStack):
-    """ContextManager to maintain all important properties
-    when updating container.
-
-    Arguments:
-        container: Container to maintain after updating.
-    """
-
-    maintained_parameters = [
-        "parent",
-        "transforms",
-        "modifiers",
-        "constraints",
-        "targets",
-        "drivers",
-        "actions",
-    ]
-
-    def __init__(
-        self,
-        container: Union[bpy.types.Collection, bpy.types.Object],
-        parameters: Optional[List] = None
-    ):
-        super().__init__()
-        self.container = container
-        self.container_objects = set(get_container_objects(self.container))
-        if parameters is not None:
-            self.maintained_parameters = parameters
-
-    def __enter__(self):
-        for parameter in self.maintained_parameters:
-            options = {}
-            if isinstance(parameter, (list, tuple)):
-                parameter, options = parameter
-            maintainer = getattr(self, f"maintained_{parameter}", None)
-            if maintainer:
-                self.enter_context(maintainer(**options))
-
-    @contextmanager
-    def maintained_parent(self):
-        """Maintain parent during context."""
-        scene_objects = set(bpy.context.scene.objects) - self.container_objects
-        objects_parents = dict()
-        for obj in scene_objects:
-            if obj.parent in self.container_objects:
-                objects_parents[obj.name] = {
-                    "name": obj.parent.name,
-                    "type": obj.parent_type,
-                    "bone": obj.parent_bone,
-                    "vertices": list(obj.parent_vertices),
-                    "matrix_inverse": obj.matrix_parent_inverse.copy(),
-                }
-        for obj in self.container_objects:
-            if obj.parent in scene_objects:
-                objects_parents[obj.name] = {
-                    "name": obj.parent.name,
-                    "type": obj.parent_type,
-                    "bone": obj.parent_bone,
-                    "vertices": list(obj.parent_vertices),
-                    "matrix_inverse": obj.matrix_parent_inverse.copy(),
-                }
-        try:
-            yield
-        finally:
-            # Restor parent.
-            for obj_name, parent_data in objects_parents.items():
-                obj = bpy.context.scene.objects.get(obj_name)
-                parent = bpy.context.scene.objects.get(parent_data["name"])
-                if obj and parent and obj.parent is not parent:
-                    obj.parent = parent
-                    obj.parent_type = parent_data["type"]
-                    obj.parent_bone = parent_data["bone"]
-                    obj.parent_vertices = parent_data["vertices"]
-                    obj.matrix_parent_inverse = parent_data["matrix_inverse"]
-
-    @contextmanager
-    def maintained_transforms(self):
-        """Maintain transforms during context."""
-        # Store transforms for all objects in container.
-        objects_transforms = {
-            obj.name: obj.matrix_basis.copy()
-            for obj in self.container_objects
-        }
-        # Store transforms for all bones from armatures in container.
-        bones_transforms = {
-            obj.name: {
-                bone.name: bone.matrix_basis.copy()
-                for bone in obj.pose.bones
-            }
-            for obj in self.container_objects
-            if obj.type == "ARMATURE"
-        }
-        try:
-            yield
-        finally:
-            # Restor transforms.
-            for obj in set(bpy.context.scene.objects):
-                if obj.name in objects_transforms:
-                    obj.matrix_basis = objects_transforms[obj.name]
-                # Restor transforms for bones from armature.
-                if obj.type == "ARMATURE" and obj.name in bones_transforms:
-                    for bone in obj.pose.bones:
-                        if bone.name in bones_transforms[obj.name]:
-                            bone.matrix_basis = (
-                                bones_transforms[obj.name][bone.name]
-                            )
-
-    @contextmanager
-    def maintained_modifiers(self):
-        """Maintain modifiers during context."""
-        objects_modifiers = [
-            [ModifierDescriptor(modifier) for modifier in obj.modifiers]
-            for obj in self.container_objects
-        ]
-        try:
-            yield
-        finally:
-            # Restor modifiers.
-            for modifiers in objects_modifiers:
-                for modifier in modifiers:
-                    modifier.restor()
-                # Restor modifiers order.
-                #   NOTE (kaamaurice) This could be verry tricky if the
-                #   upstream object hasn't the same modifiers count.
-                #   So currently we reorder only non-override modifiers
-                #   and if object has the same modifiers count.
-                for modifier in modifiers:
-                    obj = modifier.get_object()
-                    if not obj or len(obj.modifiers) != len(modifiers):
-                        break
-                    if not modifier.is_override_data:
-                        modifier.reorder()
-
-    @contextmanager
-    def maintained_constraints(self):
-        """Maintain constraints during context."""
-        objects_constraints = []
-        armature_constraints = []
-        for obj in self.container_objects:
-            objects_constraints.append(
-                [
-                    ConstraintDescriptor(constraint)
-                    for constraint in obj.constraints
-                ]
-            )
-            if obj.type == "ARMATURE":
-                armature_constraints.append(
-                    {
-                        bone.name: [
-                            ConstraintDescriptor(constraint)
-                            for constraint in bone.constraints
-                        ]
-                        for bone in obj.pose.bones
-                    }
-                )
-        try:
-            yield
-        finally:
-            # Restor constraints.
-            for constraints in objects_constraints:
-                for constraint in constraints:
-                    constraint.restor()
-            for bones_constraints in armature_constraints:
-                for bone_name, constraints in bones_constraints.items():
-                    for constraint in constraints:
-                        constraint.restor(bone_name=bone_name)
-
-    @contextmanager
-    def maintained_targets(self):
-        """Maintain constraints during context."""
-        objects = self.container_objects
-        scene_objects = set(bpy.context.scene.objects) - objects
-        stored_targets = []
-        for obj in scene_objects:
-            # store constraints targets from object
-            stored_targets += [
-                (constraint, constraint.target.name, "target")
-                for constraint in obj.constraints
-                if getattr(constraint, "target", None) in objects
-            ]
-            # store modifiers targets from object
-            for attr_name in ("target", "object", "object_from", "object_to"):
-                stored_targets += [
-                    (modifier, getattr(modifier, attr_name).name, attr_name)
-                    for modifier in obj.modifiers
-                    if getattr(modifier, attr_name, None) in objects
-                ]
-            # store constraints targets from bones in armature
-            if obj.type == "ARMATURE":
-                for bone in obj.pose.bones:
-                    stored_targets += [
-                        (constraint, constraint.target.name, "target")
-                        for constraint in bone.constraints
-                        if getattr(constraint, "target", None) in objects
-                    ]
-            # store texture mesh target from mesh object
-            if obj.type == "MESH":
-                if obj.data.texture_mesh in self.container_objects:
-                    stored_targets.append(
-                        (obj.data, obj.data.texture_mesh.name, "texture_mesh")
-                    )
-            # store driver variable targets from animation data
-            if obj.animation_data:
-                for driver in obj.animation_data.drivers:
-                    for var in driver.driver.variables:
-                        for target in var.targets:
-                            if target.id in self.container_objects:
-                                stored_targets.append(
-                                    target, target.id.name, "id"
-                                )
-        try:
-            yield
-        finally:
-            # Restor targets.
-            for entity, target_name, attr_name in stored_targets:
-                target = bpy.context.scene.objects.get(target_name)
-                if target and hasattr(entity, attr_name):
-                    setattr(entity, attr_name, target)
-
-    @contextmanager
-    def maintained_drivers(self):
-        """Maintain drivers during context."""
-        objects_drivers = {}
-        objects_copies = []
-        for obj in self.container_objects:
-            if obj.animation_data and len(obj.animation_data.drivers):
-                obj_copy = obj.copy()
-                obj_copy.name = f"{obj_copy.name}.copy"
-                obj_copy.use_fake_user = True
-                objects_copies.append(obj_copy)
-                objects_drivers[obj.name] = [
-                    driver
-                    for driver in obj_copy.animation_data.drivers
-                ]
-        try:
-            yield
-        finally:
-            # Restor drivers.
-            for obj_name, drivers in objects_drivers.items():
-                obj = bpy.context.scene.objects.get(obj_name)
-                if not obj:
-                    continue
-                if not obj.animation_data:
-                    obj.animation_data_create()
-                for driver in drivers:
-                    obj.animation_data.drivers.from_existing(src_driver=driver)
-            # Clear copies.
-            for obj_copy in objects_copies:
-                obj_copy.use_fake_user = False
-                bpy.data.objects.remove(obj_copy)
-
-    @contextmanager
-    def maintained_actions(self):
-        """Maintain action during context."""
-        actions = {}
-        rig_action = None
-        # Store actions from objects.
-        for obj in self.container_objects:
-            if obj.animation_data and obj.animation_data.action:
-                actions[obj.name] = obj.animation_data.action
-                obj.animation_data.action.use_fake_user = True
-                # Keep action if armature from Rig asset.
-                if (
-                    rig_action is None
-                    and obj.type == "ARMATURE"
-                    and is_container(self.container, "rig")
-                ):
-                    rig_action = obj.animation_data.action
-        try:
-            yield
-        finally:
-            # Restor actions.
-            for obj_name, action in actions.items():
-                obj = bpy.context.scene.objects.get(obj_name)
-                if obj:
-                    if obj.animation_data is None:
-                        obj.animation_data_create()
-                    obj.animation_data.action = action
-            # Force restor action for armature from Rig asset
-            if rig_action:
-                for obj in self.container.all_objects:
-                    if obj.type == "ARMATURE":
-                        if obj.animation_data is None:
-                            obj.animation_data_create()
-                        if not obj.animation_data.action:
-                            obj.animation_data.action = rig_action
-            # Clear fake user.
-            for action in actions.values():
-                action.use_fake_user = False
-
-    @contextmanager
-    def maintained_local_data(self, data_types=None):
-        """Maintain local data during context."""
-        local_data = {}
-        # Store local data from mesh objects.
-        for obj in self.container_objects:
-            if (
-                obj.type == "MESH"
-                and not obj.data.library
-                and not obj.data.override_library
-            ):
-                # TODO : check if obj.data has data_type
-                local_copy = obj.data.copy()
-                local_copy.name = f"{obj.data.name}.copy"
-                local_copy.use_fake_user = True
-                local_data[obj.name] = local_copy
-        try:
-            yield
-        finally:
-            # Transfert local data.
-            for obj_name, data in local_data.items():
-                obj = bpy.context.scene.objects.get(obj_name)
-                if obj and obj.type == "MESH":
-
-                    if obj.override_library or obj.library:
-                        obj = make_local(obj)
-
-                    tmp = bpy.data.objects.new("tmp", data)
-                    link_to_collection(tmp, bpy.context.scene.collection)
-                    tmp.matrix_world = obj.matrix_world.copy()
-
-                    deselect_all()
-                    bpy.context.view_layer.objects.active = tmp
-                    obj.select_set(True)
-
-                    if data.unit_test_compare(mesh=obj.data) == "Same":
-                        mapping = {
-                            "vert_mapping": "TOPOLOGY",
-                            "edge_mapping": "TOPOLOGY",
-                            "loop_mapping": "TOPOLOGY",
-                            "poly_mapping": "TOPOLOGY",
-                        }
-                    else:
-                        mapping = {
-                            "vert_mapping": "EDGE_NEAREST",
-                            "edge_mapping": "POLY_NEAREST",
-                            "loop_mapping": "NEAREST_POLYNOR",
-                            "poly_mapping": "NEAREST",
-                        }
-
-                    if data_types:
-                        for data_type in data_types:
-                            with context_override(active=tmp, selected=obj):
-                                bpy.ops.object.data_transfer(
-                                    data_type=data_type,
-                                    layers_select_src="ALL",
-                                    layers_select_dst="NAME",
-                                    **mapping
-                                )
-
-                    bpy.data.objects.remove(tmp)
-                    deselect_all()
-
-            # Clear local data.
-            for data in local_data.values():
-                bpy.data.meshes.remove(data)
 
 
 class Creator(LegacyCreator):
@@ -784,9 +431,10 @@ class Creator(LegacyCreator):
         """Link objects and then collections to the container collection.
 
         Args:
-            container_collection (bpy.types.Collection): Container collection to link to
-            collections (List[bpy.types.Collection]): Collections to link
-            objects (List[bpy.types.Object]): Objects to link
+            container_collection (bpy.types.Collection): Container collection
+                to link to.
+            collections (List[bpy.types.Collection]): Collections to link.
+            objects (List[bpy.types.Object]): Objects to link.
         """
         # Link Selected
         link_to_collection(objects, container_collection)
@@ -805,11 +453,14 @@ class Creator(LegacyCreator):
     ) -> bpy.types.Collection:
         """Process outliner structure in case it concerns outliner datablocks.
 
-        Link all objects and collections to a single container collection with appropriate name.
-        In case there is only one collection between the container one and the objects, it's removed.
+        Link all objects and collections to a single container collection with
+            appropriate name.
+        In case there is only one collection between the container one and the
+            objects, it's removed.
 
         Args:
-            datablocks (List[bpy.types.ID]): Datablocks to filter and link to container collection
+            datablocks (List[bpy.types.ID]): Datablocks to filter and link to
+                container collection
             collection_name (str): Name of the container collection
 
         Returns:
@@ -863,7 +514,8 @@ class Creator(LegacyCreator):
 
         Instances are created in `scene.openpype_instances`.
         If no datablocks are provided, it creates an empty instance.
-        Processing datablocks for an instance which already exists appends the datablocks to it.
+        Processing datablocks for an instance which already exists
+            appends the datablocks to it.
 
         Args:
             datablocks (List[bpy.types.ID], optional): Datablocks to process and append to instance. Defaults to None.
@@ -872,7 +524,8 @@ class Creator(LegacyCreator):
                 Defaults to True.
 
         Raises:
-            RuntimeError: The instance already exists but no datablocks are provided.
+            RuntimeError: The instance already exists but no datablocks
+                are provided.
 
         Returns:
             OpenpypeInstance: Created or existing instance
@@ -976,7 +629,6 @@ class Creator(LegacyCreator):
 
         return True
 
-
 class Loader(LoaderPlugin):
     """Base class for Loader plug-ins."""
 
@@ -984,7 +636,7 @@ class Loader(LoaderPlugin):
     representations = []
 
 
-class AssetLoader(LoaderPlugin):
+class AssetLoader(Loader):
     """A basic AssetLoader for Blender
 
     This will implement the basic logic for linking/appending assets
@@ -994,16 +646,6 @@ class AssetLoader(LoaderPlugin):
     it's different for different types (e.g. model, rig, animation,
     etc.).
     """
-    update_maintainer = ContainerMaintainer
-    maintained_parameters = [
-        "parent",
-        "transforms",
-        "modifiers",
-        "constraints",
-        "targets",
-        "drivers",
-        "actions",
-    ]
 
     load_type = None
 
@@ -1023,12 +665,15 @@ class AssetLoader(LoaderPlugin):
         Args:
             collections (List): List of collections to find container in.
             container_name (str): Name of container to match.
-            famillies (Optional[List], optional): Container family. Defaults to None.
+            famillies (Optional[List], optional): Container family.
+                Defaults to None.
 
         Returns:
             Optional[bpy.types.Collection]: Container collection.
         """
-        return next((col for col in collections if col.name == container_name), None)
+        return next(
+            (col for col in collections if col.name == container_name), None
+        )
 
     def _get_scene_container(
         self, container: dict
@@ -1044,50 +689,6 @@ class AssetLoader(LoaderPlugin):
         return bpy.context.scene.openpype_containers.get(
             container["objectName"]
         )
-
-    def _rename_with_namespace(
-        self,
-        container: OpenpypeContainer,
-        namespace: str
-    ):
-        """Rename all objects and child collections from asset_group and
-        their dependencies with namespace prefix.
-        TODO
-        """
-        materials = set()
-        objects_data = set()
-
-        for obj in get_container_objects(container):
-
-            if obj is not container:
-                obj.name = f"{namespace}:{obj.name}"
-
-            if obj.data and not obj.data.library and obj.data.users == 1:
-                objects_data.add(obj.data)
-
-            if obj.type == 'MESH':
-                for material_slot in obj.material_slots:
-                    mtl = material_slot.material
-                    if mtl and not mtl.library and mtl.users == 1:
-                        materials.add(material_slot.material)
-
-            elif obj.type == 'ARMATURE':
-                anim_data = obj.animation_data
-                if anim_data:
-                    action = anim_data.action
-                    if action and not action.library and action.users == 1:
-                        action.name = f"{namespace}:{anim_data.action.name}"
-
-        for data in objects_data:
-            data.name = f"{namespace}:{data.name}"
-
-        for material in materials:
-            material.name = f"{namespace}:{material.name}"
-
-        container_collection = container.outliner_entity
-        if isinstance(container_collection, bpy.types.Collection):
-            for child in container_collection.children_recursive:
-                child.name = f"{namespace}:{child.name}"
 
     def _load_library_datablocks(
         self,
@@ -1115,7 +716,9 @@ class AssetLoader(LoaderPlugin):
         """
         # Load datablocks from libpath library.
         loaded_data_collections = set()
-        with bpy.data.libraries.load(libpath.as_posix(), link=link, relative=False) as (
+        with bpy.data.libraries.load(
+            libpath.as_posix(), link=link, relative=False
+        ) as (
             data_from,
             data_to,
         ):
@@ -1159,11 +762,14 @@ class AssetLoader(LoaderPlugin):
             # Ensure container collection
             if container_collection:
                 if do_override:
-                    # Create override for the library collection and this elements
-                    container_collection = container_collection.override_hierarchy_create(
-                        bpy.context.scene,
-                        bpy.context.view_layer
-                        # NOTE After BL3.4: do_fully_editable=True
+                    # Create override for the library collection and
+                    # this elements.
+                    container_collection = (
+                        container_collection.override_hierarchy_create(
+                            bpy.context.scene,
+                            bpy.context.view_layer
+                            # NOTE After BL3.4: do_fully_editable=True
+                        )
                     )
 
                     # Update datablocks because could have been renamed
@@ -1179,8 +785,10 @@ class AssetLoader(LoaderPlugin):
             else:
                 # Create collection container
                 container_collection = bpy.data.collections.new(container_name)
-                bpy.context.scene.collection.children.link(container_collection)
-            
+                bpy.context.scene.collection.children.link(
+                    container_collection
+                )
+
             # Set color
             container_collection.color_tag = self.color_tag
 
@@ -1226,7 +834,11 @@ class AssetLoader(LoaderPlugin):
         deselect_all()
 
     def _link_blend(
-        self, libpath: Path, container_name: str, container: OpenpypeContainer = None, override=True
+        self,
+        libpath: Path,
+        container_name: str,
+        container: OpenpypeContainer = None,
+        override=True
     ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
         """Link blend process.
 
@@ -1235,10 +847,12 @@ class AssetLoader(LoaderPlugin):
             container_name (str): Name of container to link.
             container (OpenpypeContainer): Load into existing container.
                 Defaults to None.
-            override (bool, optional): Apply library override to linked datablocks. Defaults to True.
+            override (bool, optional): Apply library override to linked
+                datablocks. Defaults to True.
 
         Returns:
-            Tuple[List[bpy.types.ID], OpenpypeContainer]: (Created scene container, Linked datablocks)
+            Tuple[List[bpy.types.ID], OpenpypeContainer]:
+                (Created scene container, Linked datablocks)
         """
         # Load collections from libpath library.
         container, all_datablocks = self._load_library_datablocks(
@@ -1270,7 +884,10 @@ class AssetLoader(LoaderPlugin):
         return container, all_datablocks
 
     def _append_blend(
-        self, libpath: Path, container_name: str, container: OpenpypeContainer = None
+        self,
+        libpath: Path,
+        container_name: str,
+        container: OpenpypeContainer = None
     ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
         """Append blend process.
 
@@ -1281,7 +898,8 @@ class AssetLoader(LoaderPlugin):
                 Defaults to None.
 
         Returns:
-            Tuple[List[bpy.types.ID], OpenpypeContainer]: (Created scene container, Appended datablocks)
+            Tuple[List[bpy.types.ID], OpenpypeContainer]:
+                (Created scene container, Appended datablocks)
         """
         # Load collections from libpath library.
         container, all_datablocks = self._load_library_datablocks(
@@ -1291,12 +909,17 @@ class AssetLoader(LoaderPlugin):
         # Link loaded collection to scene
         container_collection = container.outliner_entity
         if container_collection:
-            link_to_collection(container_collection, bpy.context.scene.collection)
+            link_to_collection(
+                container_collection, bpy.context.scene.collection
+            )
 
         return container, all_datablocks
 
     def _instance_blend(
-        self, libpath: Path, container_name: str, container: OpenpypeContainer = None
+        self,
+        libpath: Path,
+        container_name: str,
+        container: OpenpypeContainer = None
     ) -> Tuple[OpenpypeContainer, List[bpy.types.ID]]:
         """Instance blend process.
 
@@ -1342,18 +965,15 @@ class AssetLoader(LoaderPlugin):
         return container, all_datablocks
 
     def _apply_options(self, asset_group, options):
-        """Must be implemented by a sub-class"""
+        """Can be implemented by a sub-class"""
         pass
-
-    def _load_process(*args, **kwargs):
-        """Must be implemented by a sub-class"""
-        raise NotImplementedError("Must be implemented by a sub-class")
 
     def get_load_function(self) -> Callable:
         """Get appropriate function regarding the load type of the loader.
 
         Raises:
-            ValueError: load_type has not a correct value. Must be APPEND, INSTANCE or LINK.
+            ValueError: load_type has not a correct value. Must be
+                APPEND, INSTANCE or LINK.
 
         Returns:
             Callable: Load function
@@ -1404,10 +1024,6 @@ class AssetLoader(LoaderPlugin):
         if not container:
             return container, datablocks
 
-        # Rename outliner container with namespace if any
-        if namespace and container.outliner_entity:
-            self._rename_with_namespace(container, namespace)
-
         # Ensure container metadata
         if not container.get(AVALON_PROPERTY):
             metadata_update(
@@ -1445,7 +1061,8 @@ class AssetLoader(LoaderPlugin):
 
         Args:
             container_metadata (Dict): Data of container to switch.
-            representation (Dict): Representation doc to replace container with.
+            representation (Dict): Representation doc to replace
+                container with.
 
         Returns:
             Tuple[OpenpypeContainer, List[bpy.types.ID]]:
@@ -1479,7 +1096,6 @@ class AssetLoader(LoaderPlugin):
             container,
             {
                 "libpath": new_libpath.as_posix(),
-                "namespace": container.name,
                 "representation": str(representation["_id"]),
             },
         )
@@ -1499,111 +1115,112 @@ class AssetLoader(LoaderPlugin):
             new_container_name (str): Name of new container to load.
 
         Returns:
-            Tuple[OpenpypeContainer, List[bpy.types.ID]]: (Container, List of loaded datablocks)
+            Tuple[OpenpypeContainer, List[bpy.types.ID]]:
+                (Container, List of loaded datablocks)
         """
         load_func = self.get_load_function()
 
         # Update the asset group with maintained contexts.
-        with self.update_maintainer(container, self.maintained_parameters):
-            container_metadata = container.get(AVALON_PROPERTY, {})
+        container_metadata = container.get(AVALON_PROPERTY, {})
 
-            # Check is same loader than the previous load
-            same_loader = self.__class__.__name__ == container_metadata.get(
-                "loader"
+        # Check is same loader than the previous load
+        same_loader = self.__class__.__name__ == container_metadata.get(
+            "loader"
+        )
+
+        # In case several containers share same library
+        library_multireferenced = any(
+            [
+                c
+                for c in bpy.context.scene.openpype_containers
+                if c != container and c.library is container.library
+            ]
+        )
+
+        # In special configuration, optimization by changing the library
+        if (
+            same_loader
+            and self.load_type in ("INSTANCE", "LINK")
+            and not library_multireferenced
+        ):
+            # Keep current datablocks
+            old_datablocks = {
+                d_ref.datablock for d_ref in container.datablock_refs
+            }
+
+            # Relink library
+            container.library.filepath = new_libpath.as_posix()
+            container.library.reload()
+            container.library.name = new_libpath.name
+
+            # Substitute library to keep reference
+            # if purged because duplicate references
+            container.library = (
+                container.outliner_entity.override_library.reference.library
+                if self.load_type == "LINK"
+                else container.outliner_entity.instance_collection.library
             )
 
-            # In case several containers share same library
-            library_multireferenced = any(
-                [
-                    c
-                    for c in bpy.context.scene.openpype_containers
-                    if c != container and c.library is container.library
-                ]
-            )
-
-            # In special configuration, optimization by changing the library
-            if (
-                same_loader
-                and self.load_type in ["INSTANCE", "LINK"]
-                and not library_multireferenced
-            ):
-                # Find if target library exists: already linked to file
-                existing_library = bpy.data.libraries.get(new_libpath.name)
-
-                # Relink library
-                container.library.filepath = new_libpath.as_posix()
-                container.library.reload()
-                container.library.name = new_libpath.name
-
-                # Substitute library to keep reference
-                # if purged because duplicate references
-                if existing_library:
-                    container.library = existing_library
-
-                datablocks = [
-                    d_ref.datablock for d_ref in container.datablock_refs
-                ]
+            datablocks = [
+                d_ref.datablock for d_ref in container.datablock_refs
+            ]
+        else:
+            # Default behaviour to wipe and reload everything
+            # but keeping same container
+            if container.outliner_entity:
+                parent_collection = get_parent_collection(
+                    container.outliner_entity
+                )
             else:
-                # Default behaviour to wipe and reload everything
-                # but keeping same container
-                if container.outliner_entity:
-                    parent_collection = get_parent_collection(
-                        container.outliner_entity
-                    )
-                else:
-                    parent_collection = None
+                parent_collection = None
 
-                # Keep current datablocks
-                old_datablocks = {
-                    d_ref.datablock for d_ref in container.datablock_refs
-                }
+            # Keep current datablocks
+            old_datablocks = {
+                d_ref.datablock for d_ref in container.datablock_refs
+            }
 
-                # Clear container datablocks
-                container.datablock_refs.clear()
+            # Clear container datablocks
+            container.datablock_refs.clear()
 
-                # Load new into same container
-                container, datablocks = load_func(
-                    new_libpath,
-                    new_container_name,
-                    container=container,
+            # Load new into same container
+            container, datablocks = load_func(
+                new_libpath,
+                new_container_name,
+                container=container,
+            )
+
+            # Old datablocks remap and deletion
+            for old_datablock in old_datablocks:
+                # Find matching new datablock by name without .###
+                new_datablock = next(
+                    (
+                        d
+                        for d in datablocks
+                        if old_datablock.name.rstrip(f".{digits}")
+                        == d.name.rstrip(f".{digits}")
+                    ),
+                    None,
                 )
 
-                # Old datablocks remap and deletion
-                for old_datablock in old_datablocks:
-                    # Find matching new datablock by name without .###
-                    new_datablock = next(
-                        (
-                            d
-                            for d in datablocks
-                            if old_datablock.name.rstrip(f".{digits}")
-                            == d.name.rstrip(f".{digits}")
-                        ),
-                        None,
-                    )
+                # Replace old by new datablock and keep the original name.
+                if new_datablock:
+                    original_datablock_name = old_datablock.name
+                    old_datablock.name += ".old"
+                    new_datablock.name = original_datablock_name
+                    old_datablock.user_remap(new_datablock)
 
-                    # Replace old by new datablock
-                    if new_datablock:
-                        old_datablock.user_remap(new_datablock)
+            # Restore parent collection if existing
+            if parent_collection:
+                unlink_from_collection(
+                    container.outliner_entity,
+                    bpy.context.scene.collection
+                )
+                link_to_collection(
+                    container.outliner_entity,
+                    parent_collection
+                )
 
-                # Restore parent collection if existing
-                if parent_collection:
-                    unlink_from_collection(
-                        container.outliner_entity,
-                        bpy.context.scene.collection
-                    )
-                    link_to_collection(
-                        container.outliner_entity,
-                        parent_collection
-                    )
-
-            # If asset had namespace, all this object will be renamed with
-            # namespace as prefix.
-            namespace = container_metadata.get("namespace")
-            if namespace:
-                self._rename_with_namespace(container, namespace)
-
-        # With maintained contextmanager functions some datablocks could
-        # remain, so we do orphans purge one last time.
+        # Clear and purge useless datablocks.
         orphans_purge()
 
         # Update override library operations from asset objects if available.
@@ -1621,10 +1238,12 @@ class AssetLoader(LoaderPlugin):
 
         Args:
             container_metadata (Dict): Data of container to switch.
-            representation (Dict): Representation doc to replace container with.
+            representation (Dict): Representation doc to replace
+                container with.
 
         Returns:
-            Tuple[OpenpypeContainer, List[bpy.types.ID]]: (Container, List of loaded datablocks)
+            Tuple[OpenpypeContainer, List[bpy.types.ID]]:
+                (Container, List of loaded datablocks)
         """
         object_name = container_metadata["objectName"]
         container = self._get_scene_container(container_metadata)
@@ -1670,7 +1289,7 @@ class AssetLoader(LoaderPlugin):
         )
 
         return container, datablocks
-        
+
     @exec_process
     def remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.

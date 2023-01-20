@@ -17,10 +17,8 @@ from openpype.pipeline import (
     legacy_io,
     register_loader_plugin_path,
     register_creator_plugin_path,
-    register_inventory_action_path,
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
-    deregister_inventory_action_path,
     AVALON_CONTAINER_ID,
 )
 from openpype.lib import (
@@ -37,7 +35,6 @@ PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 SCRIPTS_PATH = os.path.join(HOST_DIR, "scripts")
 
 ORIGINAL_EXCEPTHOOK = sys.excepthook
@@ -63,7 +60,6 @@ def install():
 
     register_loader_plugin_path(str(LOAD_PATH))
     register_creator_plugin_path(str(CREATE_PATH))
-    register_inventory_action_path(str(INVENTORY_PATH))
 
     lib.append_user_scripts()
 
@@ -88,7 +84,6 @@ def uninstall():
 
     deregister_loader_plugin_path(str(LOAD_PATH))
     deregister_creator_plugin_path(str(CREATE_PATH))
-    deregister_inventory_action_path(str(INVENTORY_PATH))
 
     if not IS_HEADLESS:
         ops.unregister()

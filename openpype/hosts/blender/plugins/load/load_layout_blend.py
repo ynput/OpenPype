@@ -1,86 +1,15 @@
 """Load a layout in Blender."""
-from contextlib import contextmanager
-
 import bpy
 
-from openpype.hosts.blender.api.properties import (
-    OpenpypeContainer,
-)
-from openpype.pipeline import legacy_io, AVALON_INSTANCE_ID
+from openpype.pipeline import legacy_io
+from openpype.hosts.blender.api.properties import OpenpypeContainer
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
-
-
-class LayoutMaintainer(plugin.ContainerMaintainer):
-    """Overloaded ContainerMaintainer to maintain only needed properties
-    for layout container."""
-
-    @contextmanager
-    def maintained_animation_instances(self):
-        """Maintain animation container content during context."""
-        # Store animation instance collections content from scene collection.
-        animation_instances = {
-            collection.name: {
-                "objects": [
-                    obj.name
-                    for obj in collection.objects
-                    if obj in self.container_objects
-                ],
-                "childrens": [
-                    children.name for children in collection.children
-                ],
-            }
-            for collection in plugin.get_children_recursive(
-                bpy.context.scene.collection
-            )
-            if (
-                collection.get(AVALON_PROPERTY)
-                and collection[AVALON_PROPERTY]["id"] == AVALON_INSTANCE_ID
-                and collection[AVALON_PROPERTY]["family"] == "animation"
-            )
-        }
-        try:
-            yield
-        finally:
-            # Restor animation instance collections content.
-            scene_collections = set(
-                plugin.get_children_recursive(bpy.context.scene.collection)
-            )
-
-            for instance_name, content in animation_instances.items():
-                # Ensure animation instance still linked to the scene.
-                for collection in scene_collections:
-                    if collection.name == instance_name:
-                        anim_instance = collection
-                        scene_collections.remove(collection)
-                        break
-                else:
-                    continue
-                # Restor content if animation_instance still valid.
-                for collection in scene_collections:
-                    if collection.name in content["childrens"]:
-                        plugin.link_to_collection(collection, anim_instance)
-                for obj in bpy.context.scene.objects:
-                    if obj.name in content["objects"]:
-                        plugin.link_to_collection(obj, anim_instance)
 
 
 class LayoutLoader(plugin.AssetLoader):
     """Link layout from a .blend file."""
 
     color = "orange"
-
-    update_maintainer = LayoutMaintainer
-    maintained_parameters = [
-        "parent",
-        "transforms",
-        "modifiers",
-        "constraints",
-        "targets",
-        "drivers",
-        "actions",
-        "animation_instances",
-    ]
 
     def _make_local_actions(self, container: OpenpypeContainer):
         """Make local for all actions from objects.
