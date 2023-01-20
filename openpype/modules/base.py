@@ -307,8 +307,9 @@ def load_modules(force=False):
             time.sleep(0.1)
 
 
-def _get_v4_addons_information():
+def _get_ayon_addons_information():
     """Receive information about addons to use from server.
+
     Todos:
         Actually ask server for the information.
         Allow project name as optional argument to be able to query information
@@ -317,10 +318,10 @@ def _get_v4_addons_information():
         List[Dict[str, Any]]: List of addon information to use.
     """
 
-    return ayon_api.get_addons_info()
+    return ayon_api.get_addons_info()["addons"]
 
 
-def _load_v4_addons(openpype_modules, modules_key, log):
+def _load_ayon_addons(openpype_modules, modules_key, log):
     """Load v4 addons based on information from server.
 
     This function should not trigger downloading of any addons but only use
@@ -339,7 +340,7 @@ def _load_v4_addons(openpype_modules, modules_key, log):
 
     v3_addons_to_skip = []
 
-    addons_info = _get_v4_addons_information()
+    addons_info = _get_ayon_addons_information()
     if not addons_info:
         return v3_addons_to_skip
     addons_dir = os.path.join(
@@ -419,7 +420,7 @@ def _load_modules():
 
     ignore_addon_names = []
     if AYON_SERVER_ENABLED:
-        ignore_addon_names = _load_v4_addons(
+        ignore_addon_names = _load_ayon_addons(
             openpype_modules, modules_key, log
         )
 
