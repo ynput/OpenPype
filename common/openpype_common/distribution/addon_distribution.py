@@ -50,6 +50,7 @@ def get_addons_dir():
     addons_dir = os.environ.get("AYON_ADDONS_DIR")
     if not addons_dir:
         addons_dir = get_local_dir("addons")
+        os.environ["AYON_ADDONS_DIR"] = addons_dir
     return addons_dir
 
 
@@ -57,6 +58,7 @@ def get_dependencies_dir():
     dependencies_dir = os.environ.get("AYON_DEPENDENCIES_DIR")
     if not dependencies_dir:
         dependencies_dir = get_local_dir("dependency_packages")
+        os.environ["AYON_DEPENDENCIES_DIR"] = dependencies_dir
     return dependencies_dir
 
 
