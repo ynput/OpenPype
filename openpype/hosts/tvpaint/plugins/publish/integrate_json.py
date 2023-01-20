@@ -20,7 +20,7 @@ class IntegrateJson(pyblish.api.InstancePlugin):
         )
 
         representations = instance.data.get("representations")
-        json_repres = [repre for repre in representations if repre['name'] == "json"]
+        json_repres = [repre for repre in representations if repre['name'] == "json"]  # noqa
 
         if not json_repres:
             self.log.info("No json file to integrate. Skipping.")
