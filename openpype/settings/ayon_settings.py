@@ -804,7 +804,7 @@ class CacheItem:
         return time.time() > self._outdate_time
 
 
-class AyonSettingsCahe:
+class AyonSettingsCache:
     _cache_by_project_name = {}
     _production_settings = None
 
@@ -844,10 +844,10 @@ class AyonSettingsCahe:
 
 
 def get_ayon_project_settings(default_values, project_name):
-    ayon_settings = AyonSettingsCahe.get_value_by_project(project_name)
+    ayon_settings = AyonSettingsCache.get_value_by_project(project_name)
     return convert_project_settings(ayon_settings, default_values)
 
 
 def get_ayon_system_settings(default_values):
-    ayon_settings = AyonSettingsCahe.get_value_by_project(None)
+    ayon_settings = AyonSettingsCache.get_value_by_project(None)
     return convert_system_settings(ayon_settings, default_values)
