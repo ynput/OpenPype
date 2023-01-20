@@ -1,6 +1,5 @@
 from itertools import chain
 import os
-import re
 import traceback
 import importlib
 import contextlib
@@ -9,7 +8,11 @@ from typing import Dict, Iterator, List, Union
 import bpy
 import addon_utils
 from openpype.hosts.blender.api.properties import OpenpypeContainer
-from openpype.hosts.blender.api.utils import BL_OUTLINER_TYPES, assign_loader_to_datablocks, get_instanced_collections
+from openpype.hosts.blender.api.utils import (
+    BL_OUTLINER_TYPES,
+    assign_loader_to_datablocks,
+    get_instanced_collections,
+)
 from openpype.lib import Logger
 from openpype.pipeline import schema
 from openpype.pipeline.constants import AVALON_CONTAINER_ID
@@ -18,7 +21,10 @@ from . import pipeline
 
 log = Logger.get_logger(__name__)
 
-def add_datablocks_to_container(datablocks: List[bpy.types.ID], container: OpenpypeContainer):
+def add_datablocks_to_container(
+    datablocks: List[bpy.types.ID],
+    container: OpenpypeContainer
+):
     """Add datablocks reference to container.
 
     Args:
@@ -44,7 +50,7 @@ def create_container(
     """
     container = bpy.context.scene.openpype_containers.add()
     container.name = name
-    
+
     add_datablocks_to_container(datablocks, container)
 
     return container
@@ -74,10 +80,6 @@ def parse_container(
         and container.instance_collection
     ):
         data.update(read(container.instance_collection))
-        # Fix namespace if empty
-        if not data.get("namespace"):
-            match = re.match(r"(^[^_]+(_\d+)?).*", container.name)
-            data["namespace"] = match.group(1) if match else container.name
 
     # Append transient data
     data["objectName"] = container.name
@@ -187,7 +189,7 @@ def ls() -> Iterator:
 
     # Parse containers
     return [parse_container(container) for container in openpype_containers]
-    
+
 
 def load_scripts(paths):
     """Copy of `load_scripts` from Blender's implementation.
