@@ -1,4 +1,3 @@
-import os
 import json
 import copy
 import time
@@ -26,7 +25,12 @@ def _convert_color(color_value):
             color_value.append(255)
         else:
             # Convert float alha to int
-            color_value[3] = int(color_value[3] * 255)
+            alpha = int(color_value[3] * 255)
+            if alpha > 255:
+                alpha = 255
+            elif alpha < 0:
+                alpha = 0
+            color_value[3] = alpha
     return color_value
 
 
@@ -147,7 +151,9 @@ def _convert_timers_manager(ayon_settings, output):
 def _convert_clockify(ayon_settings, output):
     clockify_settings = output["modules"]["clockify"]
     ayon_clockify = ayon_settings["clockify"]
-    for key in {"worskpace_name",}:
+    for key in {
+        "worskpace_name",
+    }:
         clockify_settings[key] = ayon_clockify[key]
 
 
@@ -329,7 +335,111 @@ def _convert_fusion_project_settings(ayon_settings, output):
 def _convert_maya_project_settings(ayon_settings, output):
     if "maya" not in ayon_settings:
         return
-    # TODO implement (maya's settings are missing on ayon server)
+    # WARNING NOT FINISHED!!!
+    # TODO implement conversion of 'imageio' and 'create' which are not up
+    #   to date with v3 settings
+    ayon_maya = ayon_settings["maya"]
+    openpype_maya = output["maya"]
+
+    # Change key of render settings
+    ayon_maya["RenderSettings"] = ayon_maya.pop("render_settings")
+
+    # Convert extensions mapping
+    ayon_maya["ext_mapping"] = {
+        item["name"]: item["value"]
+        for item in ayon_maya["ext_mapping"]
+    }
+
+    # Publish UI filters
+    new_filters = {}
+    for item in ayon_maya["filters"]:
+        new_filters[item["name"]] = {
+            subitem["name"]: subitem["value"]
+            for subitem in item["value"]
+        }
+    ayon_maya["filters"] = new_filters
+
+    # Maya dirmap
+    ayon_maya_dirmap = ayon_maya.pop("maya_dirmap")
+    ayon_maya_dirmap_path = ayon_maya_dirmap["paths"]
+    ayon_maya_dirmap_path["source-path"] = (
+        ayon_maya_dirmap_path.pop("source_path")
+    )
+    ayon_maya_dirmap_path["destination-path"] = (
+        ayon_maya_dirmap_path.pop("destination_path")
+    )
+    ayon_maya["maya-dirmap"] = ayon_maya_dirmap
+
+    # Create plugins
+    ayon_create = ayon_maya["create"]
+    ayon_create_static_mesh = ayon_create["CreateUnrealStaticMesh"]
+    if "static_mesh_prefixes" in ayon_create_static_mesh:
+        ayon_create_static_mesh["static_mesh_prefix"] = (
+            ayon_create_static_mesh.pop("static_mesh_prefixes")
+        )
+
+    # --- Publish (START) ---
+    ayon_publish = ayon_maya["publish"]
+    try:
+        attributes = json.loads(
+            ayon_publish["ValidateAttributes"]["attributes"]
+        )
+    except ValueError:
+        attributes = {}
+    ayon_publish["ValidateAttributes"]["attributes"] = attributes
+
+    try:
+        SUFFIX_NAMING_TABLE = json.loads(
+            ayon_publish
+            ["ValidateTransformNamingSuffix"]
+            ["SUFFIX_NAMING_TABLE"]
+        )
+    except ValueError:
+        SUFFIX_NAMING_TABLE = {}
+    ayon_publish["ValidateTransformNamingSuffix"]["SUFFIX_NAMING_TABLE"] = (
+        SUFFIX_NAMING_TABLE
+    )
+
+    # Extract playblast capture settings
+    ayon_capture_preset = ayon_publish["ExtractPlayblast"]["capture_preset"]
+    display_options = ayon_capture_preset["DisplayOptions"]
+    for key in ("background", "backgroundBottom", "backgroundTop"):
+        display_options[key] = _convert_color(display_options[key])
+
+    for src_key, dst_key in (
+        ("DisplayOptions", "Display Options"),
+        ("ViewportOptions", "Viewport Options"),
+        ("CameraOptions", "Camera Options"),
+    ):
+        ayon_capture_preset[dst_key] = ayon_capture_preset.pop(src_key)
+
+    # Extract Camera Alembic bake attributes
+    try:
+        bake_attributes = json.loads(
+            ayon_publish["ExtractCameraAlembic"]["bake_attributes"]
+        )
+    except ValueError:
+        bake_attributes = []
+    ayon_publish["ExtractCameraAlembic"]["bake_attributes"] = bake_attributes
+
+    # --- Publish (END) ---
+
+    same_keys = {
+        "imageio",
+        "scriptsmenu",
+        "templated_workfile_build",
+        "load",
+        "create",
+        "publish",
+        "mel_workspace",
+        "ext_mapping",
+        "workfile_build",
+        "filters",
+        "maya-dirmap",
+        "RenderSettings",
+    }
+    for key in same_keys:
+        openpype_maya[key] = ayon_maya[key]
 
 
 def _convert_nuke_project_settings(ayon_settings, output):
@@ -378,9 +488,7 @@ def _convert_tvpaint_project_settings(ayon_settings, output):
     ayon_publish_settings = ayon_tvpaint["publish"]
     tvpaint_publish_settings = tvpaint_settings["publish"]
     for plugin_name in ("CollectRenderScene", "ExtractConvertToEXR"):
-        tvpaint_publish_settings[plugin_name] = (
-            ayon_publish_settings[plugin_name]
-        )
+        tvpaint_publish_settings[plugin_name] = ayon_publish_settings[plugin_name]
 
     for plugin_name in (
         "ValidateProjectSettings",
@@ -392,14 +500,14 @@ def _convert_tvpaint_project_settings(ayon_settings, output):
         tvpaint_value = tvpaint_publish_settings[plugin_name]
         for src_key, dst_key in (
             ("action_enabled", "optional"),
-            ("action_enable", "active")
+            ("action_enable", "active"),
         ):
             if src_key in ayon_value:
                 tvpaint_value[dst_key] = ayon_value[src_key]
 
     review_color = ayon_publish_settings["ExtractSequence"]["review_bg"]
-    tvpaint_publish_settings["ExtractSequence"]["review_bg"] = (
-        _convert_color(review_color)
+    tvpaint_publish_settings["ExtractSequence"]["review_bg"] = _convert_color(
+        review_color
     )
 
 
@@ -410,13 +518,9 @@ def _convert_traypublisher_project_settings(ayon_settings, output):
     ayon_traypublisher = ayon_settings["traypublisher"]
     traypublisher_settings = output["traypublisher"]
 
-    ayon_editorial_simple = (
-        ayon_traypublisher["editorial_creators"]["editorial_simple"]
-    )
+    ayon_editorial_simple = ayon_traypublisher["editorial_creators"]["editorial_simple"]
     if "shot_metadata_creator" in ayon_editorial_simple:
-        shot_metadata_creator = ayon_editorial_simple.pop(
-            "shot_metadata_creator"
-        )
+        shot_metadata_creator = ayon_editorial_simple.pop("shot_metadata_creator")
         if isinstance(shot_metadata_creator["clip_name_tokenizer"], dict):
             shot_metadata_creator["clip_name_tokenizer"] = [
                 {"name": "_sequence_", "regex": "(sc\\d{3})"},
@@ -430,24 +534,19 @@ def _convert_traypublisher_project_settings(ayon_settings, output):
     }
 
     if "shot_subset_creator" in ayon_editorial_simple:
-        ayon_editorial_simple.update(
-            ayon_editorial_simple.pop("shot_subset_creator")
-        )
+        ayon_editorial_simple.update(ayon_editorial_simple.pop("shot_subset_creator"))
     for item in ayon_editorial_simple["shot_hierarchy"]["parents"]:
         item["type"] = item.pop("parent_type")
 
     shot_add_tasks = ayon_editorial_simple["shot_add_tasks"]
     if isinstance(shot_add_tasks, dict):
         shot_add_tasks = []
-    new_shot_add_tasks = {
-        item["name"]: item["task_type"]
-        for item in shot_add_tasks
-    }
+    new_shot_add_tasks = {item["name"]: item["task_type"] for item in shot_add_tasks}
     ayon_editorial_simple["shot_add_tasks"] = new_shot_add_tasks
 
-    traypublisher_settings["editorial_creators"]["editorial_simple"] = (
-        ayon_editorial_simple
-    )
+    traypublisher_settings["editorial_creators"][
+        "editorial_simple"
+    ] = ayon_editorial_simple
 
 
 def _convert_webpublisher_project_settings(ayon_settings, output):
@@ -495,14 +594,12 @@ def _convert_deadline_project_settings(ayon_settings, output):
         for item in nuke_submit.pop("env_search_replace_values")
     }
     nuke_submit["limit_groups"] = {
-        item["name"]: item["value"]
-        for item in nuke_submit.pop("limit_groups")
+        item["name"]: item["value"] for item in nuke_submit.pop("limit_groups")
     }
 
     process_subsetted_job = ayon_deadline_publish["ProcessSubmittedJobOnFarm"]
     process_subsetted_job["aov_filter"] = {
-        item["name"]: item["value"]
-        for item in process_subsetted_job.pop("aov_filter")
+        item["name"]: item["value"] for item in process_subsetted_job.pop("aov_filter")
     }
     deadline_publish_settings = deadline_settings["publish"]
     for key in tuple(deadline_publish_settings.keys()):
@@ -530,7 +627,7 @@ def _convert_shotgrid_project_settings(ayon_settings, output):
         "leecher_backend_url",
         "filter_projects_by_login",
         "shotgrid_settings",
-        "leecher_manager_url"
+        "leecher_manager_url",
     }:
         ayon_shotgrid.pop(key)
 
@@ -645,9 +742,7 @@ def _convert_global_project_settings(ayon_settings, output):
     ayon_loader_tool = ayon_tools["loader"]
     for profile in ayon_loader_tool["family_filter_profiles"]:
         if "template_publish_families" in profile:
-            profile["filter_families"] = profile.pop(
-                "template_publish_families"
-            )
+            profile["filter_families"] = profile.pop("template_publish_families")
     global_tools["loader"] = ayon_loader_tool
 
     global_tools["publish"] = ayon_tools["publish"]
@@ -669,7 +764,7 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_celaction_project_settings(ayon_settings, output)
     _convert_flame_project_settings(ayon_settings, output)
     _convert_fusion_project_settings(ayon_settings, output)
-    # _convert_maya_project_settings(ayon_settings, output)
+    _convert_maya_project_settings(ayon_settings, output)
     # _convert_nuke_project_settings(ayon_settings, output)
     _convert_photoshop_project_settings(ayon_settings, output)
     _convert_tvpaint_project_settings(ayon_settings, output)
@@ -715,17 +810,13 @@ class AyonSettingsCahe:
 
     @classmethod
     def get_production_settings(cls):
-        if (
-            cls._production_settings is None
-            or cls._production_settings.is_outdated
-        ):
+        if cls._production_settings is None or cls._production_settings.is_outdated:
             value = ayon_api.get_full_production_settings()
             if cls._production_settings is None:
                 cls._production_settings = CacheItem(value)
             else:
                 cls._production_settings.update_value(value)
         return cls._production_settings.get_value()
-
 
     @classmethod
     def get_value_by_project(cls, project_name):
