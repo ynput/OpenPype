@@ -4,6 +4,7 @@ import sys
 import logging
 import functools
 
+from openpype import AYON_SERVER_ENABLED
 from . import schema
 from .mongodb import AvalonMongoDB, session_data_from_environment
 
@@ -39,8 +40,9 @@ def install():
     _connection_object.Session.update(session)
     _connection_object.install()
 
-    module._mongo_client = _connection_object.mongo_client
-    module._database = module.database = _connection_object.database
+    if not AYON_SERVER_ENABLED:
+        module._mongo_client = _connection_object.mongo_client
+        module._database = module.database = _connection_object.database
 
     module._is_installed = True
 
