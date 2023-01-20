@@ -1,0 +1,139 @@
+stages:
+  - build
+  - test
+  - deploy
+  - staging
+  - production
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  OP_APP_DIR: /prod/softprod/apps/openpype
+  OP_STAGING_PATH: $OP_APP_DIR/staging
+  OP_PROD_PATH: $OP_APP_DIR/latest
+  OP_VERSION_PATH: $OP_APP_DIR/VERSION_NOT_SET
+  DEADLINE_CUSTOM: /prod/softprod/apps/deadline/repo/
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG != ""
+      variables:
+        OP_VERSION: "$CI_COMMIT_TAG"
+        OP_VERSION_PATH: "$OP_APP_DIR/$CI_COMMIT_TAG"
+    - if: $CI_COMMIT_TAG == null || $CI_COMMIT_TAG ==""
+      variables:
+        OP_VERSION: "$CI_COMMIT_BRANCH/$CI_COMMIT_SHORT_SHA"
+        OP_VERSION_PATH: "$OP_APP_DIR/$CI_COMMIT_BRANCH/$CI_COMMIT_SHORT_SHA"
+    - when: always
+
+.build-centos:
+  stage: build
+  tags: [shell, centos]
+  script:
+    - echo "Build then copy to $OP_VERSION_PATH"
+    # Add python 3.7.9 from softprod
+    - export PYTHEMP=$(mktemp -d -t ci-XXXXXXXXXX -p ./)
+    - rsync -rtl --chmod a+w /prod/softprod/apps/python/3.7.9/linux $PYTHEMP/
+    - export PATH="$PYTHEMP/linux/bin:$PATH"
+    # Create virtual environment in ./venv
+    - ./tools/create_env.sh
+    # Get PySide2, ffmpeg, oiio and other tools needed
+    - ./tools/fetch_thirdparty_libs.sh
+    # Build pype executables in ./build
+    - ./tools/build.sh
+    # Copy build in softprod
+    - mkdir -p $OP_VERSION_PATH/linux
+    # Copy to softprod
+    - echo "Copy to $OP_VERSION_PATH/linux/"
+    - rsync -rptl ./build/exe.linux-x86_64-3.7/ $OP_VERSION_PATH/linux/
+
+.build-windows:
+  stage: build
+  tags: [shell, windows]
+  script:
+    - echo "Build then copy to $env:OP_VERSION_PATH"
+    # Add python 3.7.9 from softprod
+    - $env:PATH="c:\prod\softprod\apps\python\3.7.9\windows\;"+$env:PATH
+    # Setup git from softprod and remove git ssl verification
+    - $env:PATH="c:\prod\softprod\apps\git-bash\latest\windows\cmd\;"+$env:PATH
+    - git config --global http.sslVerify false
+    # Create virtual environment in ./venv
+    - .\tools\create_env.ps1
+    # Get PySide2, ffmpeg, oiio and other tools needed
+    - .\tools\fetch_thirdparty_libs.ps1
+    # Build pype executables in ./build
+    - .\tools\build.ps1
+    # Copy to softprod
+    - echo "Copy to $OP_VERSION_PATH\windows"
+    - Copy-Item -Force -Recurse .\build\exe.win-amd64-3.7 $env:OP_VERSION_PATH\windows
+
+build-centos-on-tags:
+  extends: .build-centos
+  variables:
+    VERSION: $CI_COMMIT_TAG
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: always
+
+build-centos-manual:
+  extends: .build-centos
+  variables:
+    VERSION: $CI_COMMIT_REF_SLUG
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH == "cicd"
+      when: manual
+
+build-windows-on-tags:
+  extends: .build-windows
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: always
+
+build-windows-manual:
+  extends: .build-windows
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH == "cicd"
+      when: manual
+
+.deploy-staged:
+  stage: staging
+  needs: [build-windows-on-tags, build-centos-on-tags]
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: always
+  tags: [shell, centos]
+  script:
+    - echo "Set staging link $OP_STAGING_PATH to $OP_VERSION_PATH"
+    - ln -sfn $OP_VERSION_PATH $OP_STAGING_PATH
+
+deploy-staged-on-tags:
+  extends: .deploy-staged
+  needs: [ {job: build-centos-on-tags, optional: false }, {job: build-windows-on-tags, optional: false } ]
+  rules:
+    - if: $CI_COMMIT_TAG
+
+deploy-staged-manual:
+  extends: .deploy-staged
+  needs: [ {job: build-centos-manual, optional: true }, {job: build-windows-manual, optional: true } ]
+  rules:
+    - if: $CI_COMMIT_BRANCH == "cicd"
+
+deploy-prod:
+  when: manual
+  stage: production
+  needs: [{job: deploy-staged-on-tags, optional: true }, {job: deploy-staged-manual, optional: true }]
+  tags: [shell, centos]
+  script:
+    - echo "Set prod link $OP_VERSION/ to $OP_PROD_PATH"
+    - ln -sfn $OP_VERSION/ $OP_PROD_PATH
+
+deploy-deadline:
+  stage: production
+  needs: [deploy-prod]
+  tags: [shell, centos]
+  script:
+    - echo "Deadline plugins $OP_PROD_PATH/linux/openpype/modules/deadline/repository/custom to deadline directory $DEADLINE_CUSTOM"
+    - cp -a $OP_PROD_PATH/linux/openpype/modules/deadline/repository/custom $DEADLINE_CUSTOM
