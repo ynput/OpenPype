@@ -488,7 +488,9 @@ def _convert_tvpaint_project_settings(ayon_settings, output):
     ayon_publish_settings = ayon_tvpaint["publish"]
     tvpaint_publish_settings = tvpaint_settings["publish"]
     for plugin_name in ("CollectRenderScene", "ExtractConvertToEXR"):
-        tvpaint_publish_settings[plugin_name] = ayon_publish_settings[plugin_name]
+        tvpaint_publish_settings[plugin_name] = (
+            ayon_publish_settings[plugin_name]
+        )
 
     for plugin_name in (
         "ValidateProjectSettings",
@@ -518,9 +520,13 @@ def _convert_traypublisher_project_settings(ayon_settings, output):
     ayon_traypublisher = ayon_settings["traypublisher"]
     traypublisher_settings = output["traypublisher"]
 
-    ayon_editorial_simple = ayon_traypublisher["editorial_creators"]["editorial_simple"]
+    ayon_editorial_simple = (
+        ayon_traypublisher["editorial_creators"]["editorial_simple"]
+    )
     if "shot_metadata_creator" in ayon_editorial_simple:
-        shot_metadata_creator = ayon_editorial_simple.pop("shot_metadata_creator")
+        shot_metadata_creator = ayon_editorial_simple.pop(
+            "shot_metadata_creator"
+        )
         if isinstance(shot_metadata_creator["clip_name_tokenizer"], dict):
             shot_metadata_creator["clip_name_tokenizer"] = [
                 {"name": "_sequence_", "regex": "(sc\\d{3})"},
@@ -534,7 +540,8 @@ def _convert_traypublisher_project_settings(ayon_settings, output):
     }
 
     if "shot_subset_creator" in ayon_editorial_simple:
-        ayon_editorial_simple.update(ayon_editorial_simple.pop("shot_subset_creator"))
+        ayon_editorial_simple.update(
+            ayon_editorial_simple.pop("shot_subset_creator"))
     for item in ayon_editorial_simple["shot_hierarchy"]["parents"]:
         item["type"] = item.pop("parent_type")
 
@@ -599,7 +606,8 @@ def _convert_deadline_project_settings(ayon_settings, output):
 
     process_subsetted_job = ayon_deadline_publish["ProcessSubmittedJobOnFarm"]
     process_subsetted_job["aov_filter"] = {
-        item["name"]: item["value"] for item in process_subsetted_job.pop("aov_filter")
+        item["name"]: item["value"]
+        for item in process_subsetted_job.pop("aov_filter")
     }
     deadline_publish_settings = deadline_settings["publish"]
     for key in tuple(deadline_publish_settings.keys()):
@@ -742,7 +750,9 @@ def _convert_global_project_settings(ayon_settings, output):
     ayon_loader_tool = ayon_tools["loader"]
     for profile in ayon_loader_tool["family_filter_profiles"]:
         if "template_publish_families" in profile:
-            profile["filter_families"] = profile.pop("template_publish_families")
+            profile["filter_families"] = (
+                profile.pop("template_publish_families")
+            )
     global_tools["loader"] = ayon_loader_tool
 
     global_tools["publish"] = ayon_tools["publish"]
@@ -810,7 +820,10 @@ class AyonSettingsCache:
 
     @classmethod
     def get_production_settings(cls):
-        if cls._production_settings is None or cls._production_settings.is_outdated:
+        if (
+            cls._production_settings is None
+            or cls._production_settings.is_outdated
+        ):
             value = ayon_api.get_full_production_settings()
             if cls._production_settings is None:
                 cls._production_settings = CacheItem(value)
