@@ -39,6 +39,7 @@ class CreatorsModel(QtGui.QStandardItemModel):
             item.setData(QtCore.Qt.ItemIsEnabled, False)
             items.append(item)
 
+        items.sort(key=lambda item: item.text())
         self.invisibleRootItem().appendRows(items)
 
     def get_creator_by_id(self, item_id):

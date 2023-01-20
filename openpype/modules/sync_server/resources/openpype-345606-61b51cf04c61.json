@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "openpype-345606",
+  "private_key_id": "61b51cf04c61b80b7a649dc4d5c0464b410ec280",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCS5GOSO6oQBQyM\n6qjlUaiK1XyTEgDuzyO24ZtLxe0Q0lONdhZzoJUNJ8E/sqwMSiT7DNJYY/z/xfRG\nUGhAsJN5EU7pgz/3HYyYQPEs9rLuyen/VJ+6TjidKwV+0ae/vVm1VCbCHpEkOBGW\nTBHBXfAWf1OQOzrBKWrjDPqEG1qW3Zi0oO7JBHP3Do/pWSoHfme/oe4MlmSS3FYJ\nGqdRRgRycbjPO4nxDRjh0GNUmHXTqPbjm8Sgi618mHTPfFItHSXucLlqlUmPSKXk\n0g9IRRSbGTy+MMosv8rLv7DALoLjsmMXqnL7t96TMCToEF4kHmL3l+LR97VPyLk0\nUDcgjLtzAgMBAAECggEAMIFcY+hx0tJn/4xpczgQyK+QcFwslK8v4u8CwfW8v6ZE\nUt0gstPfBDYReUA90d0V8xSbzPZPkAJFFIbuthXYzMyrWy6tC6PlTk17llZsZa+l\nJlxCVloIFdYj/Wmr1APpwJfmKInBcc1V+WRrJIgphLRM2r7EOw67LfiWLNN/iXtp\nDA5Qmxkyg2RnSropEke5qrtCf5wR2loiRf5xxSL2CGivpaN8gW7IKsTlVSkPGMeF\nJ93MGPinOaRO8OPvAAGxoeGw1ui//i8R1LIgzzVbC0ZDRKftB+tVZCNEzaCEPgcL\nYDsrnyrVza+MZsyUPTqWfLwLDeIOEyNCpzbyhlS0OQKBgQDJlkr1Li/q6ZDQ7wgU\nUVT/pD8paPsoFU9KXa7CSGmnPXiff0vdQDU2BMbwvOdfznkROHlI/8KS50Cyv2nM\nQtJw+0H7orp9EuPsOwqc9rXXiOLKXBc87YbJ2kQEz5Su/FQyOTgq5MqQ7kao9XTy\nfKuOQdUMPiPFJpVp1PcpuyjbpwKBgQC6iqpJget6JwsumTQwHxQ+l5twpuNj4JlC\nCThYTiMN+CA934IPyV/DbRs84uwNciPwOkJXBNFh0QcTHY8xxf2zpFLxTWzejNjv\n5FXIojvrzrvybPHwVPLvOqblnwiNbfurv9xnpXpGSr6EzcVFwUYwqv10kl8fkiWa\nLQrKyAtrVQKBgQC1XBqJ5IjFrmZUIojBRr7S06Djj4hN8oYIYKpGLkGnbX1k+XB2\nWDrHI5sboMgEgMyY+pbbXwZdheHGLsFvPDr53ILrceaXefRGZoPQ3YCRrZxj9GAP\nt56JYW3KajrZBzh0itgGdxnrNAOsJFCXjCQH8yBKSGmECIdp1GidSb2jhwKBgAYb\nuEvD51QOpz0VYzIYMm+CQ2LC9Ds3BY22A5RQqrEwaM3d3cJqk6owjm3F+HjQPgEF\nx1pWHA0Z7SNhGmlE1HPnc5fXMzNuZUQls/Fn7pJgKKNdkeaOwY232/M06/DFozIS\njEMQlhprJCXxHv6Tv5qkXrxMdrTv8i9EPlA5kLYpAoGAfxlKfbhnywycjlHiMl6K\nZplGIRXzAX7V1GKAnUS57r3wmGz/zH8h8u5ekXJHzs6jVLKaHX5nqx1Afn8KGDOk\nQwFVT0d4WmRM/BS0ZEXcKli4mxf0LUqrDEk8897dsu9j7kcMetsjvRibrqS7gz61\nBdALcdfOGjDap1Or68D95mg=\n-----END PRIVATE KEY-----\n",
+  "client_email": "sitesync@openpype-345606.iam.gserviceaccount.com",
+  "client_id": "111478103384924019043",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/sitesync%40openpype-345606.iam.gserviceaccount.com"
+}
