@@ -676,58 +676,28 @@ def _check_and_update_from_ayon_server():
     Raises:
         RuntimeError
     """
+
     from openpype_common.distribution.addon_distribution import (
-        ADDON_ENDPOINT,
-        DEPENDENCIES_ENDPOINT,
-        check_addons,
-        check_venv,
-        default_addon_downloader,
+        get_addons_dir,
+        get_dependencies_dir,
+        make_sure_addons_are_updated,
+        make_sure_venv_is_updated,
+        get_default_addon_downloader,
     )
 
-    local_addons_dir = _get_local_dir("AYON_ADDONS_DIR", "addons")
-    local_dependencies_dir = _get_local_dir(
-        "AYON_DEPENDENCIES_DIR", "dependency_packages"
-    )
+    local_addons_dir = get_addons_dir()
+    local_dependencies_dir = get_dependencies_dir()
 
-    default_downloader = default_addon_downloader()
+    default_downloader = get_default_addon_downloader()
     _print(f">>> Checking addons in {local_addons_dir} ...")
-    token = os.environ.get("AYON_TOKEN")
-    check_addons(
-        ADDON_ENDPOINT,
-        local_addons_dir,
-        default_downloader,
-        token
-    )
+    make_sure_addons_are_updated(default_downloader, local_addons_dir)
 
     if local_addons_dir not in sys.path:
         _print(f"Adding {local_addons_dir} to sys path.")
         sys.path.insert(0, local_addons_dir)
 
     _print(f">>> Checking venvs in {local_dependencies_dir} ...")
-    check_venv(
-        DEPENDENCIES_ENDPOINT,
-        local_dependencies_dir,
-        default_downloader,
-        token
-    )
-
-
-def _get_local_dir(env_key, dir_name=None):
-    local_dir = os.environ.get(env_key)
-    if not local_dir:
-        import appdirs
-        local_dir = appdirs.user_data_dir("openpype", "pypeclub")
-        if not dir_name:
-            raise RuntimeError("Must fill dir_name if nothing else provided!")
-        local_dir = os.path.join(local_dir, dir_name)
-
-    if not os.path.isdir(local_dir):
-        try:
-            os.makedirs(local_dir)
-        except Exception:  # TODO fix exception
-            raise RuntimeError(f"Cannot create {local_dir}")
-
-    return local_dir
+    make_sure_venv_is_updated(default_downloader, local_dependencies_dir)
 
 
 def _initialize_environment(openpype_version: OpenPypeVersion) -> None:
