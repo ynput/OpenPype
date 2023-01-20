@@ -71,14 +71,13 @@ class AddonInfo(object):
             source_type = source.get("type")
             if source_type == UrlType.FILESYSTEM.value:
                 source_addon = LocalAddonSource(
-                    type=source["type"], path=source["path"])
+                    type=source_type, path=source["path"])
             elif source_type == UrlType.HTTP.value:
                 source_addon = WebAddonSource(
-                    type=source["type"], url=source["path"])
-
+                    type=source_type, url=source["path"])
             elif source_type == UrlType.SERVER.value:
                 source_addon = ServerResourceSource(
-                    type=source["type"], filename=source["filename"])
+                    type=source_type, filename=source["filename"])
             else:
                 print(f"Unknown source {source_type}")
                 unknown_sources.append(source)
