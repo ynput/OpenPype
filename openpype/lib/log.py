@@ -327,7 +327,8 @@ class Logger:
         # Change initialization state to prevent runtime changes
         # if is executed during runtime
         cls.initialized = False
-        cls.log_mongo_url_components = get_default_components()
+        if not AYON_SERVER_ENABLED:
+            cls.log_mongo_url_components = get_default_components()
 
         # Define if should logging to mongo be used
         if AYON_SERVER_ENABLED:
