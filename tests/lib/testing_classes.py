@@ -14,6 +14,7 @@ import re
 from tests.lib.db_handler import DBHandler
 from common.openpype_common.distribution.file_handler import RemoteFileHandler
 from openpype.modules import ModulesManager
+from openpype.settings import get_project_settings
 
 
 class BaseTest:
@@ -28,6 +29,7 @@ class ModuleUnitTest(BaseTest):
 
         Implemented fixtures:
             monkeypatch_session - fixture for env vars with session scope
+            project_settings - fixture for project settings with session scope
             download_test_data - tmp folder with extracted data from GDrive
             env_var - sets env vars from input file
             db_setup - prepares avalon AND openpype DBs for testing from
@@ -59,6 +61,12 @@ class ModuleUnitTest(BaseTest):
         yield m
         m.undo()
 
+    @pytest.fixture(scope='module')
+    def project_settings(self):
+        yield get_project_settings(
+            self.PROJECT
+        )
+
     @pytest.fixture(scope="module")
     def download_test_data(self, test_data_folder, persist, request):
         test_data_folder = test_data_folder or self.TEST_DATA_FOLDER
@@ -67,6 +75,7 @@ class ModuleUnitTest(BaseTest):
             yield test_data_folder
         else:
             tmpdir = tempfile.mkdtemp()
+            print("Temporary folder created:: {}".format(tmpdir))
             for test_file in self.TEST_FILES:
                 file_id, file_name, md5 = test_file
 
@@ -78,7 +87,6 @@ class ModuleUnitTest(BaseTest):
 
                 if ext.lstrip('.') in RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS:  # noqa: E501
                     RemoteFileHandler.unzip(os.path.join(tmpdir, file_name))
-                print("Temporary folder created:: {}".format(tmpdir))
                 yield tmpdir
 
                 persist = (persist or self.PERSIST or
@@ -86,6 +94,15 @@ class ModuleUnitTest(BaseTest):
                 if not persist:
                     print("Removing {}".format(tmpdir))
                     shutil.rmtree(tmpdir)
+
+    @pytest.fixture(scope="module")
+    def output_folder_url(self, download_test_data):
+        """Returns location of published data, cleans it first if exists."""
+        path = os.path.join(download_test_data, "output")
+        if os.path.exists(path):
+            print("Purging {}".format(path))
+            shutil.rmtree(path)
+        yield path
 
     @pytest.fixture(scope="module")
     def env_var(self, monkeypatch_session, download_test_data):
@@ -152,14 +169,27 @@ class ModuleUnitTest(BaseTest):
             db_handler.teardown(self.TEST_OPENPYPE_NAME)
 
     @pytest.fixture(scope="module")
-    def dbcon(self, db_setup):
+    def dbcon(self, db_setup, output_folder_url):
         """Provide test database connection.
 
             Database prepared from dumps with 'db_setup' fixture.
         """
         from openpype.pipeline import AvalonMongoDB
         dbcon = AvalonMongoDB()
-        dbcon.Session["AVALON_PROJECT"] = self.TEST_PROJECT_NAME
+        dbcon.Session["AVALON_PROJECT"] = self.PROJECT
+        dbcon.Session["AVALON_ASSET"] = self.ASSET
+        dbcon.Session["AVALON_TASK"] = self.TASK
+
+        # set project root to temp folder
+        platform_str = platform.system().lower()
+        root_key = "config.roots.work.{}".format(platform_str)
+        dbcon.update_one(
+            {"type": "project"},
+            {"$set":
+                {
+                    root_key: output_folder_url
+                }}
+        )
         yield dbcon
 
     @pytest.fixture(scope="module")
@@ -229,15 +259,6 @@ class PublishTest(ModuleUnitTest):
         yield "{}/{}".format(self.APP_GROUP, app_variant)
 
     @pytest.fixture(scope="module")
-    def output_folder_url(self, download_test_data):
-        """Returns location of published data, cleans it first if exists."""
-        path = os.path.join(download_test_data, "output")
-        if os.path.exists(path):
-            print("Purging {}".format(path))
-            shutil.rmtree(path)
-        yield path
-
-    @pytest.fixture(scope="module")
     def app_args(self, download_test_data):
         """Returns additional application arguments from a test file.
 
@@ -267,17 +288,6 @@ class PublishTest(ModuleUnitTest):
     def launched_app(self, dbcon, download_test_data, last_workfile_path,
                      startup_scripts, app_args, app_name, output_folder_url):
         """Launch host app"""
-        # set publishing folders
-        platform_str = platform.system().lower()
-        root_key = "config.roots.work.{}".format(platform_str)
-        dbcon.update_one(
-            {"type": "project"},
-            {"$set":
-                {
-                    root_key: output_folder_url
-                }}
-        )
-
         # set schema - for integrate_new
         from openpype import PACKAGE_DIR
         # Path to OpenPype's schema
