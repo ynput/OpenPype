@@ -450,6 +450,19 @@ def _convert_traypublisher_project_settings(ayon_settings, output):
     )
 
 
+def _convert_webpublisher_project_settings(ayon_settings, output):
+    if "webpublisher" not in ayon_settings:
+        return
+    ayon_publish = ayon_settings["webpublisher"]["publish"]
+
+    ayon_collect_files = ayon_publish["CollectPublishedFiles"]
+    ayon_collect_files["task_type_to_family"] = {
+        item["name"]: item["value"]
+        for item in ayon_collect_files["task_type_to_family"]
+    }
+    output["webpublisher"]["publish"] = ayon_publish
+
+
 def _convert_deadline_project_settings(ayon_settings, output):
     if "deadline" not in ayon_settings:
         return
@@ -661,6 +674,7 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_photoshop_project_settings(ayon_settings, output)
     _convert_tvpaint_project_settings(ayon_settings, output)
     _convert_traypublisher_project_settings(ayon_settings, output)
+    _convert_webpublisher_project_settings(ayon_settings, output)
 
     _convert_deadline_project_settings(ayon_settings, output)
     _convert_kitsu_project_settings(ayon_settings, output)
@@ -669,7 +683,6 @@ def convert_project_settings(ayon_settings, default_settings):
 
     _convert_global_project_settings(ayon_settings, output)
     not_available = {
-        "webpublisher",
         "hiero",
         "standalonepublisher",
     }
