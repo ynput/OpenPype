@@ -5,10 +5,6 @@ import re
 from openpype.lib import Logger
 from openpype.client import get_assets, get_asset_by_name
 
-from openpype.pipeline import (
-    CreatorError
-)
-
 
 def get_asset_doc_from_file_name(source_filename, project_name,
                                  version_regex, all_selected_asset_ids=None):
