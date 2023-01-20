@@ -6,7 +6,7 @@ import subprocess
 
 import platform
 
-from Qt import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 import openpype.version
 from openpype import resources, style

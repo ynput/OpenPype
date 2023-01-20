@@ -10,7 +10,7 @@ from collections import OrderedDict
 import clique
 
 import nuke
-from Qt import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 from openpype.client import (
     get_project,
@@ -81,7 +81,6 @@ class Context:
 def get_main_window():
     """Acquire Nuke's main window"""
     if Context.main_window is None:
-        from Qt import QtWidgets
 
         top_widgets = QtWidgets.QApplication.topLevelWidgets()
         name = "Foundry::UI::DockMainWindow"
@@ -611,7 +610,10 @@ def get_created_node_imageio_setting_legacy(nodeclass, creator, subset):
 
         if (
             onode["subsets"]
-            and not any(re.search(s, subset) for s in onode["subsets"])
+            and not any(
+                re.search(s.lower(), subset.lower())
+                for s in onode["subsets"]
+            )
         ):
             continue
 
@@ -694,7 +696,8 @@ def get_imageio_node_override_setting(
     # find matching override node
     override_imageio_node = None
     for onode in override_nodes:
-        log.info(onode)
+        log.debug("__ onode: {}".format(onode))
+        log.debug("__ subset: {}".format(subset))
         if node_class not in onode["nukeNodeClass"]:
             continue
 
@@ -703,7 +706,10 @@ def get_imageio_node_override_setting(
 
         if (
             onode["subsets"]
-            and not any(re.search(s, subset) for s in onode["subsets"])
+            and not any(
+                re.search(s.lower(), subset.lower())
+                for s in onode["subsets"]
+            )
         ):
             continue
 
@@ -2859,10 +2865,11 @@ def get_group_io_nodes(nodes):
                 break
 
         if input_node is None:
-            raise ValueError("No Input found")
+            log.warning("No Input found")
 
         if output_node is None:
-            raise ValueError("No Output found")
+            log.warning("No Output found")
+
     return input_node, output_node
 
 
@@ -2961,7 +2968,7 @@ def get_viewer_config_from_string(input_string):
         viewer = split[1]
         display = split[0]
     elif "(" in viewer:
-        pattern = r"([\w\d\s]+).*[(](.*)[)]"
+        pattern = r"([\w\d\s\.\-]+).*[(](.*)[)]"
         result = re.findall(pattern, viewer)
         try:
             result = result.pop()

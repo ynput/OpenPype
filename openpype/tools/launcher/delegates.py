@@ -1,5 +1,5 @@
 import time
-from Qt import QtCore, QtWidgets, QtGui
+from qtpy import QtCore, QtWidgets, QtGui
 from .constants import (
     ANIMATION_START_ROLE,
     ANIMATION_STATE_ROLE,

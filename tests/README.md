@@ -1,5 +1,15 @@
 Automatic tests for OpenPype
 ============================
+
+Requirements:
+============
+Tests are recreating fresh DB for each run, so `mongorestore`, `mongodump` and `mongoimport` command line tools must be installed and on Path.
+
+You can find intallers here: https://www.mongodb.com/docs/database-tools/installation/installation/
+
+You can test that `mongorestore` is available by running this in console, or cmd:
+```mongorestore --version```
+
 Structure:
 - integration - end to end tests, slow (see README.md in the integration folder for more info)
     - openpype/modules/MODULE_NAME - structure follow directory structure in code base

@@ -9,10 +9,10 @@ UOpenPypePublishInstanceFactory::UOpenPypePublishInstanceFactory(const FObjectIn
 	bEditorImport = true;
 }
 
-UObject* UOpenPypePublishInstanceFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
+UObject* UOpenPypePublishInstanceFactory::FactoryCreateNew(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
 {
-	UOpenPypePublishInstance* OpenPypePublishInstance = NewObject<UOpenPypePublishInstance>(InParent, Class, Name, Flags);
-	return OpenPypePublishInstance;
+	check(InClass->IsChildOf(UOpenPypePublishInstance::StaticClass()));
+	return NewObject<UOpenPypePublishInstance>(InParent, InClass, InName, Flags);
 }
 
 bool UOpenPypePublishInstanceFactory::ShouldShowInNewMenu() const {
