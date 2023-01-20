@@ -824,8 +824,9 @@ class AyonSettingsCache:
         addon_versions = production_settings["versions"]
         if project_name is None:
             value = production_settings["settings"]
-            for key, value in value.keys():
-                value["enabled"] = key in addon_versions
+            for category, category_value in value.items():
+                if "enabled" in category_value:
+                    category_value["enabled"] = category in addon_versions
             return value
 
         cache_item = cls._cache_by_project_name.get(project_name)
@@ -838,8 +839,9 @@ class AyonSettingsCache:
                 cache_item.update_value(value)
 
         value = cache_item.get_value()
-        for key, value in value.keys():
-            value["enabled"] = key in addon_versions
+        for category, category_value in value.items():
+            if "enabled" in category_value:
+                category_value["enabled"] = category in addon_versions
         return value
 
 
