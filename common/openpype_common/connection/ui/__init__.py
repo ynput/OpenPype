@@ -1,4 +1,4 @@
-from .window import (
+from .login_window import (
     ServerLoginWindow,
     ask_to_login,
 )
