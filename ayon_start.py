@@ -433,7 +433,7 @@ def _check_and_update_from_ayon_server():
 
     default_downloader = get_default_addon_downloader()
     _print(f">>> Checking addons in {local_addons_dir} ...")
-    # make_sure_addons_are_updated(default_downloader, local_addons_dir)
+    make_sure_addons_are_updated(default_downloader, local_addons_dir)
 
     if local_addons_dir not in sys.path:
         _print(f"Adding {local_addons_dir} to sys path.")
@@ -524,11 +524,6 @@ def boot():
 
 def get_info(use_staging=None) -> list:
     """Print additional information to console."""
-    try:
-        from openpype.lib.log import Logger
-    except ImportError:
-        # Backwards compatibility for 'PypeLogger'
-        from openpype.lib.log import PypeLogger as Logger
 
     inf = []
     if use_staging:
