@@ -17,7 +17,6 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
 
         # TODO: Use path template solver to build version code from settings
         anatomy = instance.data.get("anatomyData", {})
-
         ### Starts Alkemy-X Override ###
         # code = "_".join(
         #     [
@@ -49,7 +48,6 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
                 ]
             )
         ### Ends Alkemy-X Override ###
-
 
         version = self._find_existing_version(code, context)
 
