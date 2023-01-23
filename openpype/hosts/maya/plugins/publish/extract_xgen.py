@@ -10,7 +10,14 @@ from openpype.lib import StringTemplate
 
 
 class ExtractXgenCache(publish.Extractor):
-    """Extract Xgen"""
+    """Extract Xgen
+
+    Workflow:
+    - Duplicate nodes used for patches.
+    - Export palette and import onto duplicate nodes.
+    - Export/Publish duplicate nodes and palette.
+    - Publish all xgen files as resources.
+    """
 
     label = "Extract Xgen"
     hosts = ["maya"]
@@ -55,28 +62,11 @@ class ExtractXgenCache(publish.Extractor):
 
             # Duplicate_transform subd patch geometry.
             duplicate_transform = cmds.duplicate(transform_name)[0]
-            duplicate_shape = cmds.listRelatives(
-                duplicate_transform,
-                shapes=True,
-                fullPath=True
-            )[0]
 
             # Discard the children.
             shapes = cmds.listRelatives(duplicate_transform, shapes=True)
             children = cmds.listRelatives(duplicate_transform, children=True)
             cmds.delete(set(children) - set(shapes))
-
-            # Connect attributes.
-            cmds.connectAttr(
-                "{}.matrix".format(duplicate_transform),
-                "{}.transform".format(node),
-                force=True
-            )
-            cmds.connectAttr(
-                "{}.worldMesh".format(duplicate_shape),
-                "{}.geometry".format(node),
-                force=True
-            )
 
             duplicate_transform = cmds.parent(
                 duplicate_transform, world=True
@@ -87,17 +77,17 @@ class ExtractXgenCache(publish.Extractor):
         # Import xgen onto the duplicate.
         with maintained_selection():
             cmds.select(duplicate_nodes)
-            collection = xgenm.importPalette(xgen_path, [])
+            palette = xgenm.importPalette(xgen_path, [])
 
         attribute_data = {
-            "{}.xgFileName".format(collection): xgen_filename
+            "{}.xgFileName".format(palette): xgen_filename
         }
 
         # Export Maya file.
         type = "mayaAscii" if self.scene_type == "ma" else "mayaBinary"
         with attribute_values(attribute_data):
             with maintained_selection():
-                cmds.select(duplicate_nodes + [collection])
+                cmds.select(duplicate_nodes + [palette])
                 cmds.file(
                     maya_filepath,
                     force=True,
@@ -117,18 +107,11 @@ class ExtractXgenCache(publish.Extractor):
             "ext": self.scene_type,
             "files": maya_filename,
             "stagingDir": staging_dir,
-            "data": {"xgenName": collection}
+            "data": {"xgenName": palette}
         }
         instance.data["representations"].append(representation)
 
-        # Revert to original xgen connections.
-        for node, connections in instance.data["xgenConnections"].items():
-            for attr, src in connections.items():
-                cmds.connectAttr(
-                    src, "{}.{}".format(node, attr), force=True
-                )
-
-        cmds.delete(duplicate_nodes + [collection])
+        cmds.delete(duplicate_nodes + [palette])
 
         # Collect all files under palette root as resources.
         data_path = xgenm.getAttr(
