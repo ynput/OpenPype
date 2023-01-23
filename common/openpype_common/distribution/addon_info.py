@@ -46,6 +46,7 @@ class AddonInfo(object):
     """Object matching json payload from Server"""
     name = attr.ib()
     version = attr.ib()
+    full_name = attr.ib()
     title = attr.ib(default=None)
     sources = attr.ib(default=attr.Factory(list))
     unknown_sources = attr.ib(default=attr.Factory(list))
@@ -85,8 +86,10 @@ class AddonInfo(object):
 
             sources.append(source_addon)
 
+        full_name = "{}_{}".format(data["name"], production_version)
         return cls(name=data.get("name"),
                    version=production_version,
+                   full_name=full_name,
                    sources=sources,
                    unknown_sources=unknown_sources,
                    hash=data.get("hash"),
