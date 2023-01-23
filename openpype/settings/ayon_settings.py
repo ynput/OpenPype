@@ -185,7 +185,7 @@ def _convert_royalrender(ayon_settings, output):
     }
 
 
-def _convert_modules(ayon_settings, output):
+def _convert_modules(ayon_settings, output, addon_versions):
     # TODO add all modules
     # TODO add 'enabled' values
     for key, func in (
@@ -201,13 +201,18 @@ def _convert_modules(ayon_settings, output):
         if key in ayon_settings:
             func(ayon_settings, output)
 
+    for module_name, value in output["modules"].items():
+        if "enabled" not in value:
+            continue
+        value["enabled"] = module_name in addon_versions
+
     # Missing modules conversions
     # - "sync_server" -> renamed to sitesync
     # - "slack" -> only 'enabled'
     # - "job_queue" -> completelly missing in ayon
 
 
-def convert_system_settings(ayon_settings, default_settings):
+def convert_system_settings(ayon_settings, default_settings, addon_versions):
     output = copy.deepcopy(default_settings)
     if "applications" in ayon_settings:
         _convert_applications(ayon_settings, output, False)
@@ -215,7 +220,7 @@ def convert_system_settings(ayon_settings, default_settings):
     if "core" in ayon_settings:
         _convert_general(ayon_settings, output)
 
-    _convert_modules(ayon_settings, output)
+    _convert_modules(ayon_settings, output, addon_versions)
     return output
 
 
@@ -836,11 +841,7 @@ class AyonSettingsCache:
         production_settings = cls.get_production_settings()
         addon_versions = production_settings["versions"]
         if project_name is None:
-            value = production_settings["settings"]
-            for category, category_value in value.items():
-                if "enabled" in category_value:
-                    category_value["enabled"] = category in addon_versions
-            return value
+            return production_settings["settings"], addon_versions
 
         cache_item = cls._cache_by_project_name.get(project_name)
         if cache_item is None or cache_item.is_outdated:
@@ -851,18 +852,20 @@ class AyonSettingsCache:
             else:
                 cache_item.update_value(value)
 
-        value = cache_item.get_value()
-        for category, category_value in value.items():
-            if "enabled" in category_value:
-                category_value["enabled"] = category in addon_versions
-        return value
+        return cache_item.get_value(), addon_versions
 
 
 def get_ayon_project_settings(default_values, project_name):
-    ayon_settings = AyonSettingsCache.get_value_by_project(project_name)
+    ayon_settings, addon_versions = (
+        AyonSettingsCache.get_value_by_project(project_name)
+    )
     return convert_project_settings(ayon_settings, default_values)
 
 
 def get_ayon_system_settings(default_values):
-    ayon_settings = AyonSettingsCache.get_value_by_project(None)
-    return convert_system_settings(ayon_settings, default_values)
+    ayon_settings, addon_versions = (
+        AyonSettingsCache.get_value_by_project(None)
+    )
+    return convert_system_settings(
+        ayon_settings, default_values, addon_versions
+    )
