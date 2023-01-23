@@ -364,7 +364,7 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
         if not os.path.exists(addon_dir):
             log.warning((
                 "Directory for addon {} {} does not exists. Path \"{}\""
-            ).format(addon_name, addon_version, addons_dir))
+            ).format(addon_name, addon_version, addon_dir))
             continue
 
         sys.path.insert(0, addon_dir)
