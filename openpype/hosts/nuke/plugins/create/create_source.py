@@ -49,10 +49,7 @@ class CreateSource(NukeCreator):
                 _subset_name = subset_name + node_name
 
                 # make sure subset name is unique
-                if self.check_existing_subset(_subset_name, instance_data):
-                    raise NukeCreatorError(
-                        ("subset {} is already published"
-                         "definition.").format(_subset_name))
+                self.check_existing_subset(_subset_name)
 
                 instance_node = self.create_instance_node(
                     _subset_name,

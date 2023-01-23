@@ -1112,17 +1112,21 @@ class RootItem(FormatObject):
         result = False
         output = str(path)
 
-        root_paths = list(self.cleaned_data.values())
         mod_path = self.clean_path(path)
-        for root_path in root_paths:
+        for root_os, root_path in self.cleaned_data.items():
             # Skip empty paths
             if not root_path:
                 continue
 
-            if mod_path.startswith(root_path):
+            _mod_path = mod_path  # reset to original cleaned value
+            if root_os == "windows":
+                root_path = root_path.lower()
+                _mod_path = _mod_path.lower()
+
+            if _mod_path.startswith(root_path):
                 result = True
                 replacement = "{" + self.full_key() + "}"
-                output = replacement + mod_path[len(root_path):]
+                output = replacement + _mod_path[len(root_path):]
                 break
 
         return (result, output)

@@ -1,4 +1,14 @@
 {
+    "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        }
+    },
     "workfile_builder": {
         "create_first_version": false,
         "custom_templates": []

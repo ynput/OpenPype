@@ -31,7 +31,6 @@ from openpype.lib import (
 
 from openpype.settings import (
     get_project_settings,
-    get_anatomy_settings,
     get_current_project_settings,
 )
 from openpype.modules import ModulesManager
@@ -44,6 +43,9 @@ from openpype.pipeline import (
 from openpype.pipeline.context_tools import (
     get_current_project_asset,
     get_custom_workfile_template_from_session
+)
+from openpype.pipeline.colorspace import (
+    get_imageio_config
 )
 from openpype.pipeline.workfile import BuildWorkfile
 
@@ -690,14 +692,6 @@ def get_node_path(path, padding=4):
 
 
 def get_nuke_imageio_settings():
-    project_imageio = get_project_settings(
-        Context.project_name)["nuke"]["imageio"]
-
-    # backward compatibility for project started before 3.10
-    # those are still having `__legacy__` knob types.
-    if not project_imageio["enabled"]:
-        return get_anatomy_settings(Context.project_name)["imageio"]["nuke"]
-
     return get_project_settings(Context.project_name)["nuke"]["imageio"]
 
 
@@ -893,15 +887,33 @@ def get_imageio_input_colorspace(filename):
 def get_view_process_node():
     reset_selection()
 
-    ipn_orig = None
-    for v in nuke.allNodes(filter="Viewer"):
-        ipn = v['input_process_node'].getValue()
-        if "VIEWER_INPUT" not in ipn:
-            ipn_orig = nuke.toNode(ipn)
-            ipn_orig.setSelected(True)
+    ipn_node = None
+    for v_ in nuke.allNodes(filter="Viewer"):
+        ipn = v_['input_process_node'].getValue()
+        ipn_node = nuke.toNode(ipn)
 
-    if ipn_orig:
-        return duplicate_node(ipn_orig)
+        # skip if no input node is set
+        if not ipn:
+            continue
+
+        if ipn == "VIEWER_INPUT" and not ipn_node:
+            # since it is set by default we can ignore it
+            # nobody usually use this but use it if
+            # it exists in nodes
+            continue
+
+        if not ipn_node:
+            # in case a Viewer node is transfered from
+            # different workfile with old values
+            raise NameError((
+                "Input process node name '{}' set in "
+                "Viewer '{}' is does't exists in nodes"
+            ).format(ipn, v_.name()))
+
+        ipn_node.setSelected(True)
+
+    if ipn_node:
+        return duplicate_node(ipn_node)
 
 
 def on_script_load():
@@ -1984,59 +1996,55 @@ class WorkfileSettings(object):
                 "Attention! Viewer nodes {} were erased."
                 "It had wrong color profile".format(erased_viewers))
 
-    def set_root_colorspace(self, root_dict):
+    def set_root_colorspace(self, nuke_colorspace):
         ''' Adds correct colorspace to root
 
         Arguments:
-            root_dict (dict): adjustmensts from presets
+            nuke_colorspace (dict): adjustmensts from presets
 
         '''
-        if not isinstance(root_dict, dict):
-            msg = "set_root_colorspace(): argument should be dictionary"
-            log.error(msg)
-            nuke.message(msg)
+        workfile_settings = nuke_colorspace["workfile"]
 
-        log.debug(">> root_dict: {}".format(root_dict))
+        # resolve config data if they are enabled in host
+        config_data = None
+        if nuke_colorspace.get("ocio_config", {}).get("enabled"):
+            # switch ocio config to custom config
+            workfile_settings["OCIO_config"] = "custom"
+            workfile_settings["colorManagement"] = "OCIO"
+
+            # get resolved ocio config path
+            config_data = get_imageio_config(
+                legacy_io.active_project(), "nuke"
+            )
 
         # first set OCIO
         if self._root_node["colorManagement"].value() \
-                not in str(root_dict["colorManagement"]):
+                not in str(workfile_settings["colorManagement"]):
             self._root_node["colorManagement"].setValue(
-                str(root_dict["colorManagement"]))
-            log.debug("nuke.root()['{0}'] changed to: {1}".format(
-                "colorManagement", root_dict["colorManagement"]))
-            root_dict.pop("colorManagement")
+                str(workfile_settings["colorManagement"]))
+
+            # we dont need the key anymore
+            workfile_settings.pop("colorManagement")
 
         # second set ocio version
         if self._root_node["OCIO_config"].value() \
-                not in str(root_dict["OCIO_config"]):
+                not in str(workfile_settings["OCIO_config"]):
             self._root_node["OCIO_config"].setValue(
-                str(root_dict["OCIO_config"]))
-            log.debug("nuke.root()['{0}'] changed to: {1}".format(
-                "OCIO_config", root_dict["OCIO_config"]))
-            root_dict.pop("OCIO_config")
+                str(workfile_settings["OCIO_config"]))
+
+            # we dont need the key anymore
+            workfile_settings.pop("OCIO_config")
 
         # third set ocio custom path
-        if root_dict.get("customOCIOConfigPath"):
-            unresolved_path = root_dict["customOCIOConfigPath"]
-            ocio_paths = unresolved_path[platform.system().lower()]
-
-            resolved_path = None
-            for ocio_p in ocio_paths:
-                resolved_path = str(ocio_p).format(**os.environ)
-                if not os.path.exists(resolved_path):
-                    continue
-
-            if resolved_path:
-                self._root_node["customOCIOConfigPath"].setValue(
-                    str(resolved_path).replace("\\", "/")
-                )
-                log.debug("nuke.root()['{}'] changed to: {}".format(
-                    "customOCIOConfigPath", resolved_path))
-                root_dict.pop("customOCIOConfigPath")
+        if config_data:
+            self._root_node["customOCIOConfigPath"].setValue(
+                str(config_data["path"]).replace("\\", "/")
+            )
+            # backward compatibility, remove in case it exists
+            workfile_settings.pop("customOCIOConfigPath")
 
         # then set the rest
-        for knob, value in root_dict.items():
+        for knob, value in workfile_settings.items():
             # skip unfilled ocio config path
             # it will be dict in value
             if isinstance(value, dict):
@@ -2166,7 +2174,7 @@ class WorkfileSettings(object):
 
         log.info("Setting colorspace to workfile...")
         try:
-            self.set_root_colorspace(nuke_colorspace["workfile"])
+            self.set_root_colorspace(nuke_colorspace)
         except AttributeError:
             msg = "set_colorspace(): missing `workfile` settings in template"
             nuke.message(msg)

@@ -8,11 +8,6 @@ import string
 from collections import OrderedDict, defaultdict
 from abc import abstractmethod
 
-from openpype.client import (
-    get_asset_by_name,
-    get_subsets,
-)
-
 from openpype.settings import get_current_project_settings
 from openpype.lib import (
     BoolDef,
@@ -94,15 +89,36 @@ class NukeCreator(NewCreator):
         """)
         node.addKnob(info_knob)
 
-    def check_existing_subset(self, subset_name, instance_data):
-        """Check if existing subset name already exists."""
-        exists = False
-        for node in nuke.allNodes(recurseGroups=True):
-            node_data = get_node_data(node, INSTANCE_DATA_KNOB)
-            if subset_name in node_data.get("subset"):
-                exists = True
+    def check_existing_subset(self, subset_name):
+        """Make sure subset name is unique.
 
-        return exists
+        It search within all nodes recursively
+        and checks if subset name is found in
+        any node having instance data knob.
+
+        Arguments:
+            subset_name (str): Subset name
+        """
+
+        for node in nuke.allNodes(recurseGroups=True):
+            # make sure testing node is having instance knob
+            if INSTANCE_DATA_KNOB not in node.knobs().keys():
+                continue
+            node_data = get_node_data(node, INSTANCE_DATA_KNOB)
+
+            if not node_data:
+                # a node has no instance data
+                continue
+
+            # test if subset name is matching
+            if node_data.get("subset") == subset_name:
+                raise NukeCreatorError(
+                    (
+                        "A publish instance for '{}' already exists "
+                        "in nodes! Please change the variant "
+                        "name to ensure unique output."
+                    ).format(subset_name)
+                )
 
     def create_instance_node(
         self,
@@ -161,10 +177,7 @@ class NukeCreator(NewCreator):
         self.set_selected_nodes(pre_create_data)
 
         # make sure subset name is unique
-        if self.check_existing_subset(subset_name, instance_data):
-            raise NukeCreatorError(
-                ("subset {} is already published"
-                 "definition.").format(subset_name))
+        self.check_existing_subset(subset_name)
 
         try:
             instance_node = self.create_instance_node(
@@ -314,10 +327,7 @@ class NukeWriteCreator(NukeCreator):
         self.set_selected_nodes(pre_create_data)
 
         # make sure subset name is unique
-        if self.check_existing_subset(subset_name, instance_data):
-            raise NukeCreatorError(
-                ("subset {} is already published"
-                 "definition.").format(subset_name))
+        self.check_existing_subset(subset_name)
 
         instance_node = self.create_instance_node(
             subset_name,
