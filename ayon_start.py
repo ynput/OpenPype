@@ -234,49 +234,6 @@ def set_global_environments() -> None:
         os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 
 
-def run_disk_mapping_commands():
-    """ Run disk mapping command
-
-        Used to map shared disk for OP to pull codebase.
-    """
-    # TODO implement this functionality for AYON
-    return
-    low_platform = platform.system().lower()
-    disk_mapping = settings.get("disk_mapping")
-    if not disk_mapping:
-        return
-
-    mappings = disk_mapping.get(low_platform) or []
-    for source, destination in mappings:
-        destination = destination.rstrip('/')
-        source = source.rstrip('/')
-
-        if low_platform == "darwin":
-            scr = (
-                f'do shell script "ln -s {source} {destination}"'
-                ' with administrator privileges'
-            )
-
-            args = ["osascript", "-e", scr]
-        elif low_platform == "windows":
-            args = ["subst", destination, source]
-        else:
-            args = ["sudo", "ln", "-s", source, destination]
-
-        _print(f"*** disk mapping arguments: {args}")
-        try:
-            if not os.path.exists(destination):
-                output = subprocess.Popen(args)
-                if output.returncode and output.returncode != 0:
-                    exc_msg = f'Executing was not successful: "{args}"'
-
-                    raise RuntimeError(exc_msg)
-        except TypeError as exc:
-            _print(
-                f"Error {str(exc)} in mapping drive {source}, {destination}")
-            raise
-
-
 def set_addons_environments():
     """Set global environments for OpenPype modules.
 
@@ -466,9 +423,6 @@ def boot():
 
     _connect_to_ayon_server()
     _check_and_update_from_ayon_server()
-
-    _print(">>> run disk mapping command ...")
-    run_disk_mapping_commands()
 
     # delete OpenPype module and it's submodules from cache so it is used from
     # specific version
