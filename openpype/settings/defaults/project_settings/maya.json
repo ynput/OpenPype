@@ -1,5 +1,13 @@
 {
     "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        },
         "colorManagementPreference_v2": {
             "enabled": true,
             "configFilePath": {
@@ -59,6 +67,7 @@
         "default_render_image_folder": "renders/maya",
         "enable_all_lights": true,
         "aov_separator": "underscore",
+        "remove_aovs": false,
         "reset_current_frame": false,
         "arnold_renderer": {
             "image_prefix": "<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>",
@@ -149,6 +158,34 @@
                 "Main"
             ]
         },
+        "CreateProxyAlembic": {
+            "enabled": true,
+            "write_color_sets": false,
+            "write_face_sets": false,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateAss": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ],
+            "expandProcedurals": false,
+            "motionBlur": true,
+            "motionBlurKeys": 2,
+            "motionBlurLength": 0.5,
+            "maskOptions": false,
+            "maskCamera": false,
+            "maskLight": false,
+            "maskShape": false,
+            "maskShader": false,
+            "maskOverride": false,
+            "maskDriver": false,
+            "maskFilter": false,
+            "maskColor_manager": false,
+            "maskOperator": false
+        },
         "CreateMultiverseUsd": {
             "enabled": true,
             "defaults": [
@@ -162,12 +199,6 @@
             ]
         },
         "CreateMultiverseUsdOver": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateAss": {
             "enabled": true,
             "defaults": [
                 "Main"
@@ -248,6 +279,9 @@
             "sync_workfile_version": false
         },
         "CollectFbxCamera": {
+            "enabled": false
+        },
+        "CollectGLTF": {
             "enabled": false
         },
         "ValidateInstanceInContext": {
@@ -568,6 +602,12 @@
             "enabled": true,
             "optional": false,
             "active": true
+        },
+        "ExtractProxyAlembic": {
+            "enabled": true,
+            "families": [
+                "proxyAbc"
+            ]
         },
         "ExtractAlembic": {
             "enabled": true,
@@ -915,7 +955,7 @@
                 "current_context": [
                     {
                         "subset_name_filters": [
-                            "\".+[Mm]ain\""
+                            ".+[Mm]ain"
                         ],
                         "families": [
                             "model"
@@ -932,7 +972,8 @@
                         "subset_name_filters": [],
                         "families": [
                             "animation",
-                            "pointcache"
+                            "pointcache",
+                            "proxyAbc"
                         ],
                         "repre_names": [
                             "abc"

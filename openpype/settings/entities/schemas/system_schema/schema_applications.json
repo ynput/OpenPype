@@ -11,6 +11,10 @@
     },
     {
       "type": "schema",
+      "name": "schema_3dsmax"
+    },
+    {
+      "type": "schema",
       "name": "schema_flame"
     },
     {

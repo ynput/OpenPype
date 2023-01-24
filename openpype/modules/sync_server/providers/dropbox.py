@@ -22,7 +22,7 @@ class DropboxHandler(AbstractProvider):
             )
             return
 
-        if not self.presets["enabled"]:
+        if not self.presets.get("enabled"):
             self.log.debug("Sync Server: Site {} not enabled for {}.".
                       format(site_name, project_name))
             return
@@ -165,7 +165,7 @@ class DropboxHandler(AbstractProvider):
         Returns:
             (boolean)
         """
-        return self.presets["enabled"] and self.dbx is not None
+        return self.presets.get("enabled") and self.dbx is not None
 
     @classmethod
     def get_configurable_items(cls):

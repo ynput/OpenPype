@@ -3,6 +3,7 @@ import re
 import collections
 import uuid
 import json
+import copy
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
@@ -105,11 +106,14 @@ class AbtractAttrDef(object):
     How to force to set `key` attribute?
 
     Args:
-        key(str): Under which key will be attribute value stored.
-        label(str): Attribute label.
-        tooltip(str): Attribute tooltip.
-        is_label_horizontal(bool): UI specific argument. Specify if label is
+        key (str): Under which key will be attribute value stored.
+        default (Any): Default value of an attribute.
+        label (str): Attribute label.
+        tooltip (str): Attribute tooltip.
+        is_label_horizontal (bool): UI specific argument. Specify if label is
             next to value input or ahead.
+        hidden (bool): Will be item hidden (for UI purposes).
+        disabled (bool): Item will be visible but disabled (for UI purposes).
     """
 
     type_attributes = []
@@ -117,16 +121,29 @@ class AbtractAttrDef(object):
     is_value_def = True
 
     def __init__(
-        self, key, default, label=None, tooltip=None, is_label_horizontal=None
+        self,
+        key,
+        default,
+        label=None,
+        tooltip=None,
+        is_label_horizontal=None,
+        hidden=False,
+        disabled=False
     ):
         if is_label_horizontal is None:
             is_label_horizontal = True
+
+        if hidden is None:
+            hidden = False
+
         self.key = key
         self.label = label
         self.tooltip = tooltip
         self.default = default
         self.is_label_horizontal = is_label_horizontal
-        self._id = uuid.uuid4()
+        self.hidden = hidden
+        self.disabled = disabled
+        self._id = uuid.uuid4().hex
 
         self.__init__class__ = AbtractAttrDef
 
@@ -173,7 +190,9 @@ class AbtractAttrDef(object):
             "label": self.label,
             "tooltip": self.tooltip,
             "default": self.default,
-            "is_label_horizontal": self.is_label_horizontal
+            "is_label_horizontal": self.is_label_horizontal,
+            "hidden": self.hidden,
+            "disabled": self.disabled
         }
         for attr in self.type_attributes:
             data[attr] = getattr(self, attr)
@@ -229,6 +248,26 @@ class UnknownDef(AbtractAttrDef):
 
     def __init__(self, key, default=None, **kwargs):
         kwargs["default"] = default
+        super(UnknownDef, self).__init__(key, **kwargs)
+
+    def convert_value(self, value):
+        return value
+
+
+class HiddenDef(AbtractAttrDef):
+    """Hidden value of Any type.
+
+    This attribute can be used for UI purposes to pass values related
+    to other attributes (e.g. in multi-page UIs).
+
+    Keep in mind the value should be possible to parse by json parser.
+    """
+
+    type = "hidden"
+
+    def __init__(self, key, default=None, **kwargs):
+        kwargs["default"] = default
+        kwargs["hidden"] = True
         super(UnknownDef, self).__init__(key, **kwargs)
 
     def convert_value(self, value):
@@ -380,9 +419,8 @@ class EnumDef(AbtractAttrDef):
     """Enumeration of single item from items.
 
     Args:
-        items: Items definition that can be coverted to
-            `collections.OrderedDict`. Dictionary represent {value: label}
-            relation.
+        items: Items definition that can be coverted using
+            'prepare_enum_items'.
         default: Default value. Must be one key(value) from passed items.
     """
 
@@ -395,38 +433,95 @@ class EnumDef(AbtractAttrDef):
                 " defined values on initialization."
             ).format(self.__class__.__name__))
 
-        items = collections.OrderedDict(items)
-        if default not in items:
-            for _key in items.keys():
-                default = _key
+        items = self.prepare_enum_items(items)
+        item_values = [item["value"] for item in items]
+        if default not in item_values:
+            for value in item_values:
+                default = value
                 break
 
         super(EnumDef, self).__init__(key, default=default, **kwargs)
 
         self.items = items
+        self._item_values = set(item_values)
 
     def __eq__(self, other):
         if not super(EnumDef, self).__eq__(other):
             return False
 
-        if set(self.items.keys()) != set(other.items.keys()):
-            return False
-
-        for key, label in self.items.items():
-            if other.items[key] != label:
-                return False
-        return True
+        return self.items == other.items
 
     def convert_value(self, value):
-        if value in self.items:
+        if value in self._item_values:
             return value
         return self.default
 
     def serialize(self):
         data = super(TextDef, self).serialize()
-        data["items"] = list(self.items)
+        data["items"] = copy.deepcopy(self.items)
         return data
 
+    @staticmethod
+    def prepare_enum_items(items):
+        """Convert items to unified structure.
+
+        Output is a list where each item is dictionary with 'value'
+        and 'label'.
+
+        ```python
+        # Example output
+        [
+            {"label": "Option 1", "value": 1},
+            {"label": "Option 2", "value": 2},
+            {"label": "Option 3", "value": 3}
+        ]
+        ```
+
+        Args:
+            items (Union[Dict[str, Any], List[Any], List[Dict[str, Any]]): The
+                items to convert.
+
+        Returns:
+            List[Dict[str, Any]]: Unified structure of items.
+        """
+
+        output = []
+        if isinstance(items, dict):
+            for value, label in items.items():
+                output.append({"label": label, "value": value})
+
+        elif isinstance(items, (tuple, list, set)):
+            for item in items:
+                if isinstance(item, dict):
+                    # Validate if 'value' is available
+                    if "value" not in item:
+                        raise KeyError("Item does not contain 'value' key.")
+
+                    if "label" not in item:
+                        item["label"] = str(item["value"])
+                elif isinstance(item, (list, tuple)):
+                    if len(item) == 2:
+                        value, label = item
+                    elif len(item) == 1:
+                        value = item[0]
+                        label = str(value)
+                    else:
+                        raise ValueError((
+                            "Invalid items count {}."
+                            " Expected 1 or 2. Value: {}"
+                        ).format(len(item), str(item)))
+
+                    item = {"label": label, "value": value}
+                else:
+                    item = {"label": str(item), "value": item}
+                output.append(item)
+
+        else:
+            raise TypeError(
+                "Unknown type for enum items '{}'".format(type(items))
+            )
+
+        return output
 
 class BoolDef(AbtractAttrDef):
     """Boolean representation.
@@ -540,6 +635,13 @@ class FileDefItem(object):
         if ext:
             return ext
         return None
+
+    @property
+    def lower_ext(self):
+        ext = self.ext
+        if ext is not None:
+            return ext.lower()
+        return ext
 
     @property
     def is_dir(self):

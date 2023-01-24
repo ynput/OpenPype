@@ -157,6 +157,8 @@ module.exports = {
                 "dev_host_implementation",
                 "dev_publishing"
             ]
-        }
+        },
+        "dev_deadline",
+        "dev_colorspace"
     ]
 };

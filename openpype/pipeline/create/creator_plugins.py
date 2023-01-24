@@ -393,8 +393,9 @@ class BaseCreator:
             asset_doc(dict): Asset document for which subset is created.
             project_name(str): Project name.
             host_name(str): Which host creates subset.
-            instance(str|None): Object of 'CreatedInstance' for which is
-                subset name updated. Passed only on subset name update.
+            instance(CreatedInstance|None): Object of 'CreatedInstance' for
+                which is subset name updated. Passed only on subset name
+                update.
         """
 
         dynamic_data = self.get_dynamic_data(
@@ -607,7 +608,7 @@ def discover_legacy_creator_plugins():
             plugin.apply_settings(project_settings, system_settings)
         except Exception:
             log.warning(
-                "Failed to apply settings to loader {}".format(
+                "Failed to apply settings to creator {}".format(
                     plugin.__name__
                 ),
                 exc_info=True

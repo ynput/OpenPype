@@ -60,6 +60,16 @@ class HeroVersionType(object):
         return self.version.__format__(format_spec)
 
 
+class LoadError(Exception):
+    """Known error that happened during loading.
+
+    A message is shown to user (without traceback). Make sure an artist can
+    understand the problem.
+    """
+
+    pass
+
+
 class IncompatibleLoaderError(ValueError):
     """Error when Loader is incompatible with a representation."""
     pass

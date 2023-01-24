@@ -1,42 +1,41 @@
-import hou
+# -*- coding: utf-8 -*-
+"""Creator plugin for creating USD renders."""
 from openpype.hosts.houdini.api import plugin
+from openpype.pipeline import CreatedInstance
 
 
-class CreateUSDRender(plugin.Creator):
+class CreateUSDRender(plugin.HoudiniCreator):
     """USD Render ROP in /stage"""
-
+    identifier = "io.openpype.creators.houdini.usdrender"
     label = "USD Render (experimental)"
     family = "usdrender"
     icon = "magic"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateUSDRender, self).__init__(*args, **kwargs)
+    def create(self, subset_name, instance_data, pre_create_data):
+        import hou  # noqa
 
-        self.parent = hou.node("/stage")
+        instance_data["parent"] = hou.node("/stage")
 
         # Remove the active, we are checking the bypass flag of the nodes
-        self.data.pop("active", None)
+        instance_data.pop("active", None)
+        instance_data.update({"node_type": "usdrender"})
 
-        self.data.update({"node_type": "usdrender"})
+        instance = super(CreateUSDRender, self).create(
+            subset_name,
+            instance_data,
+            pre_create_data)  # type: CreatedInstance
 
-    def _process(self, instance):
-        """Creator main entry point.
+        instance_node = hou.node(instance.get("instance_node"))
 
-        Args:
-            instance (hou.Node): Created Houdini instance.
 
-         """
         parms = {
             # Render frame range
             "trange": 1
         }
-        if self.nodes:
-            node = self.nodes[0]
-            parms.update({"loppath": node.path()})
-        instance.setParms(parms)
+        if self.selected_nodes:
+            parms["loppath"] = self.selected_nodes[0].path()
+        instance_node.setParms(parms)
 
         # Lock some Avalon attributes
         to_lock = ["family", "id"]
-        for name in to_lock:
-            parm = instance.parm(name)
-            parm.lock(True)
+        self.lock_parameters(instance_node, to_lock)

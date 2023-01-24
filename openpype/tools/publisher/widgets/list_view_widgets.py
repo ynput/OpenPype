@@ -24,11 +24,11 @@ selection can be enabled disabled using checkbox or keyboard key presses:
 """
 import collections
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.style import get_objected_colors
 from openpype.widgets.nice_checkbox import NiceCheckbox
-from openpype.tools.utils.lib import html_escape
+from openpype.tools.utils.lib import html_escape, checkstate_int_to_enum
 from .widgets import AbstractInstanceView
 from ..constants import (
     INSTANCE_ID_ROLE,
@@ -86,9 +86,9 @@ class ListItemDelegate(QtWidgets.QStyledItemDelegate):
 
         painter.save()
         painter.setRenderHints(
-            painter.Antialiasing
-            | painter.SmoothPixmapTransform
-            | painter.TextAntialiasing
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
+            | QtGui.QPainter.TextAntialiasing
         )
 
         # Draw backgrounds
@@ -272,6 +272,7 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
             state(QtCore.Qt.CheckState): Checkstate of checkbox. Have 3
                 variants Unchecked, Checked and PartiallyChecked.
         """
+
         if self.checkstate() == state:
             return
         self._ignore_state_change = True
@@ -279,7 +280,8 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
         self._ignore_state_change = False
 
     def checkstate(self):
-        """CUrrent checkstate of "active" checkbox."""
+        """Current checkstate of "active" checkbox."""
+
         return self.toggle_checkbox.checkState()
 
     def _on_checkbox_change(self, state):
@@ -887,6 +889,7 @@ class InstanceListView(AbstractInstanceView):
         self._instance_view.setExpanded(proxy_index, expanded)
 
     def _on_group_toggle_request(self, group_name, state):
+        state = checkstate_int_to_enum(state)
         if state == QtCore.Qt.PartiallyChecked:
             return
 
@@ -911,6 +914,13 @@ class InstanceListView(AbstractInstanceView):
         proxy_index = self._proxy_model.mapFromSource(group_item.index())
         if not self._instance_view.isExpanded(proxy_index):
             self._instance_view.expand(proxy_index)
+
+    def has_items(self):
+        if self._convertor_group_widget is not None:
+            return True
+        if self._group_items:
+            return True
+        return False
 
     def get_selected_items(self):
         """Get selected instance ids and context selection.
@@ -1024,17 +1034,20 @@ class InstanceListView(AbstractInstanceView):
 
         selection_model.setCurrentIndex(
             first_index,
-            selection_model.ClearAndSelect | selection_model.Rows
+            QtCore.QItemSelectionModel.ClearAndSelect
+            | QtCore.QItemSelectionModel.Rows
         )
 
         for index in select_indexes:
             proxy_index = proxy_model.mapFromSource(index)
             selection_model.select(
                 proxy_index,
-                selection_model.Select | selection_model.Rows
+                QtCore.QItemSelectionModel.Select
+                | QtCore.QItemSelectionModel.Rows
             )
 
         selection_model.setCurrentIndex(
             last_index,
-            selection_model.Select | selection_model.Rows
+            QtCore.QItemSelectionModel.Select
+            | QtCore.QItemSelectionModel.Rows
         )

@@ -1,4 +1,4 @@
-from Qt import QtCore
+from qtpy import QtCore
 
 # ID of context item in instance view
 CONTEXT_ID = "context"
@@ -35,5 +35,8 @@ __all__ = (
     "SORT_VALUE_ROLE",
     "IS_GROUP_ROLE",
     "CREATOR_IDENTIFIER_ROLE",
-    "FAMILY_ROLE"
+    "CREATOR_THUMBNAIL_ENABLED_ROLE",
+    "FAMILY_ROLE",
+    "GROUP_ROLE",
+    "CONVERTER_IDENTIFIER_ROLE",
 )

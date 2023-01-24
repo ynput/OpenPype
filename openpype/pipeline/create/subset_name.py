@@ -14,6 +14,53 @@ class TaskNotSetError(KeyError):
         super(TaskNotSetError, self).__init__(msg)
 
 
+def get_subset_name_template(
+    project_name,
+    family,
+    task_name,
+    task_type,
+    host_name,
+    default_template=None,
+    project_settings=None
+):
+    """Get subset name template based on passed context.
+
+    Args:
+        project_name (str): Project on which the context lives.
+        family (str): Family (subset type) for which the subset name is
+            calculated.
+        host_name (str): Name of host in which the subset name is calculated.
+        task_name (str): Name of task in which context the subset is created.
+        task_type (str): Type of task in which context the subset is created.
+        default_template (Union[str, None]): Default template which is used if
+            settings won't find any matching possitibility. Constant
+            'DEFAULT_SUBSET_TEMPLATE' is used if not defined.
+        project_settings (Union[Dict[str, Any], None]): Prepared settings for
+            project. Settings are queried if not passed.
+    """
+
+    if project_settings is None:
+        project_settings = get_project_settings(project_name)
+    tools_settings = project_settings["global"]["tools"]
+    profiles = tools_settings["creator"]["subset_name_profiles"]
+    filtering_criteria = {
+        "families": family,
+        "hosts": host_name,
+        "tasks": task_name,
+        "task_types": task_type
+    }
+
+    matching_profile = filter_profiles(profiles, filtering_criteria)
+    template = None
+    if matching_profile:
+        template = matching_profile["template"]
+
+    # Make sure template is set (matching may have empty string)
+    if not template:
+        template = default_template or DEFAULT_SUBSET_TEMPLATE
+    return template
+
+
 def get_subset_name(
     family,
     variant,
@@ -37,9 +84,9 @@ def get_subset_name(
 
     Args:
         family (str): Instance family.
-        variant (str): In most of cases it is user input during creation.
+        variant (str): In most of the cases it is user input during creation.
         task_name (str): Task name on which context is instance created.
-        asset_doc (dict): Queried asset document with it's tasks in data.
+        asset_doc (dict): Queried asset document with its tasks in data.
             Used to get task type.
         project_name (str): Name of project on which is instance created.
             Important for project settings that are loaded.
@@ -50,15 +97,15 @@ def get_subset_name(
             is not passed.
         dynamic_data (dict): Dynamic data specific for a creator which creates
             instance.
-        dbcon (AvalonMongoDB): Mongo connection to be able query asset document
-            if 'asset_doc' is not passed.
+        project_settings (Union[Dict[str, Any], None]): Prepared settings for
+            project. Settings are queried if not passed.
     """
 
     if not family:
         return ""
 
     if not host_name:
-        host_name = os.environ["AVALON_APP"]
+        host_name = os.environ.get("AVALON_APP")
 
     # Use only last part of class family value split by dot (`.`)
     family = family.rsplit(".", 1)[-1]
@@ -70,27 +117,15 @@ def get_subset_name(
     task_info = asset_tasks.get(task_name) or {}
     task_type = task_info.get("type")
 
-    # Get settings
-    if not project_settings:
-        project_settings = get_project_settings(project_name)
-    tools_settings = project_settings["global"]["tools"]
-    profiles = tools_settings["creator"]["subset_name_profiles"]
-    filtering_criteria = {
-        "families": family,
-        "hosts": host_name,
-        "tasks": task_name,
-        "task_types": task_type
-    }
-
-    matching_profile = filter_profiles(profiles, filtering_criteria)
-    template = None
-    if matching_profile:
-        template = matching_profile["template"]
-
-    # Make sure template is set (matching may have empty string)
-    if not template:
-        template = default_template or DEFAULT_SUBSET_TEMPLATE
-
+    template = get_subset_name_template(
+        project_name,
+        family,
+        task_name,
+        task_type,
+        host_name,
+        default_template=default_template,
+        project_settings=project_settings
+    )
     # Simple check of task name existence for template with {task} in
     #   - missing task should be possible only in Standalone publisher
     if not task_name and "{task" in template.lower():

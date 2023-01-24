@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
 from openpype.client import (
@@ -180,7 +180,7 @@ class TasksWidget(QtWidgets.QWidget):
         tasks_view = DeselectableTreeView(self)
         tasks_view.setIndentation(0)
         tasks_view.setSortingEnabled(True)
-        tasks_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
+        tasks_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         header_view = tasks_view.header()
         header_view.setSortIndicator(0, QtCore.Qt.AscendingOrder)
@@ -257,7 +257,10 @@ class TasksWidget(QtWidgets.QWidget):
         selection_model.clearSelection()
 
         # Select the task
-        mode = selection_model.Select | selection_model.Rows
+        mode = (
+            QtCore.QItemSelectionModel.Select
+            | QtCore.QItemSelectionModel.Rows
+        )
         for row in range(task_view_model.rowCount()):
             index = task_view_model.index(row, 0)
             name = index.data(TASK_NAME_ROLE)

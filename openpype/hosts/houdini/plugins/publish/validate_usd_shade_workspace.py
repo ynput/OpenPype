@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 import pyblish.api
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline import PublishValidationError
 
 import hou
 
@@ -12,14 +13,14 @@ class ValidateUsdShadeWorkspace(pyblish.api.InstancePlugin):
 
     """
 
-    order = ValidateContentsOrder
+    order = pyblish.api.ValidatorOrder
     hosts = ["houdini"]
     families = ["usdShade"]
     label = "USD Shade Workspace"
 
     def process(self, instance):
 
-        rop = instance[0]
+        rop = hou.node(instance.data.get("instance_node"))
         workspace = rop.parent()
 
         definition = workspace.type().definition()
@@ -39,13 +40,14 @@ class ValidateUsdShadeWorkspace(pyblish.api.InstancePlugin):
             if node_type != other_node_type:
                 continue
 
-            # Get highest version
+            # Get the highest version
             highest = max(highest, other_version)
 
         if version != highest:
-            raise RuntimeError(
-                "Shading Workspace is not the latest version."
-                " Found %s. Latest is %s." % (version, highest)
+            raise PublishValidationError(
+                ("Shading Workspace is not the latest version."
+                 " Found {}. Latest is {}.").format(version, highest),
+                title=self.label
             )
 
         # There were some issues with the editable node not having the right
@@ -56,8 +58,9 @@ class ValidateUsdShadeWorkspace(pyblish.api.InstancePlugin):
         )
         rop_value = rop.parm("lopoutput").rawValue()
         if rop_value != value:
-            raise RuntimeError(
-                "Shading Workspace has invalid 'lopoutput'"
-                " parameter value. The Shading Workspace"
-                " needs to be reset to its default values."
+            raise PublishValidationError(
+                ("Shading Workspace has invalid 'lopoutput'"
+                 " parameter value. The Shading Workspace"
+                 " needs to be reset to its default values."),
+                title=self.label
             )

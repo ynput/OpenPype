@@ -788,6 +788,10 @@ class CreatorType:
     def __eq__(self, other):
         return self.name == str(other)
 
+    def __ne__(self, other):
+        # This is implemented only because of Python 2
+        return not self == other
+
 
 class CreatorTypes:
     base = CreatorType("base")

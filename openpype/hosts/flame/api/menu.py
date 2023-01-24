@@ -1,5 +1,5 @@
 import os
-from Qt import QtWidgets
+from qtpy import QtWidgets
 from copy import deepcopy
 from pprint import pformat
 from openpype.tools.utils.host_tools import HostToolsHelper

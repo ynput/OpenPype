@@ -1,7 +1,7 @@
 import collections
 from queue import Queue
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.client import get_project
 from .delegates import (
@@ -28,7 +28,7 @@ class NameDef:
 class NumberDef:
     def __init__(self, minimum=None, maximum=None, decimals=None):
         self.minimum = 0 if minimum is None else minimum
-        self.maximum = 999999 if maximum is None else maximum
+        self.maximum = 999999999 if maximum is None else maximum
         self.decimals = 0 if decimals is None else decimals
 
 
@@ -134,9 +134,9 @@ class HierarchyView(QtWidgets.QTreeView):
         main_delegate = QtWidgets.QStyledItemDelegate()
         self.setItemDelegate(main_delegate)
         self.setAlternatingRowColors(True)
-        self.setSelectionMode(HierarchyView.ExtendedSelection)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.setEditTriggers(HierarchyView.AllEditTriggers)
+        self.setEditTriggers(QtWidgets.QAbstractItemView.AllEditTriggers)
 
         column_delegates = {}
         column_key_to_index = {}

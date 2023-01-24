@@ -1,8 +1,7 @@
 import sys
 import contextlib
 
-
-from Qt import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 
 class Popup(QtWidgets.QDialog):

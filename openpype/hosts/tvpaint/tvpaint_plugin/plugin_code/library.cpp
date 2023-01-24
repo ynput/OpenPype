@@ -302,8 +302,9 @@ private:
     std::string websocket_url;
     // Should be avalon plugin available?
     // - this may change during processing if websocketet url is not set or server is down
-    bool use_avalon;
+    bool server_available;
 public:
+    Communicator(std::string url);
     Communicator();
     websocket_endpoint endpoint;
     bool is_connected();
@@ -314,43 +315,45 @@ public:
     void call_notification(std::string method_name, nlohmann::json params);
 };
 
-Communicator::Communicator() {
+
+Communicator::Communicator(std::string url) {
     // URL to websocket server
-    websocket_url = std::getenv("WEBSOCKET_URL");
+    websocket_url = url;
     // Should be avalon plugin available?
     // - this may change during processing if websocketet url is not set or server is down
-    if (websocket_url == "") {
-        use_avalon = false;
+    if (url == "") {
+        server_available = false;
     } else {
-        use_avalon = true;
+        server_available = true;
     }
 }
+
 
 bool Communicator::is_connected(){
     return endpoint.connected();
 }
 
 bool Communicator::is_usable(){
-    return use_avalon;
+    return server_available;
 }
 
 void Communicator::connect()
 {
-    if (!use_avalon) {
+    if (!server_available) {
         return;
     }
     int con_result;
     con_result = endpoint.connect(websocket_url);
     if (con_result == -1)
     {
-        use_avalon = false;
+        server_available = false;
     } else {
-        use_avalon = true;
+        server_available = true;
     }
 }
 
 void Communicator::call_notification(std::string method_name, nlohmann::json params) {
-    if (!use_avalon || !is_connected()) {return;}
+    if (!server_available || !is_connected()) {return;}
 
     jsonrpcpp::Notification notification = {method_name, params};
     endpoint.send_notification(&notification);
@@ -358,7 +361,7 @@ void Communicator::call_notification(std::string method_name, nlohmann::json par
 
 jsonrpcpp::Response Communicator::call_method(std::string method_name, nlohmann::json params) {
     jsonrpcpp::Response response;
-    if (!use_avalon || !is_connected())
+    if (!server_available || !is_connected())
     {
         return response;
     }
@@ -382,7 +385,7 @@ jsonrpcpp::Response Communicator::call_method(std::string method_name, nlohmann:
 }
 
 void Communicator::process_requests() {
-    if (!use_avalon || !is_connected() || Data.messages.empty()) {return;}
+    if (!server_available || !is_connected() || Data.messages.empty()) {return;}
 
     std::string msg = Data.messages.front();
     Data.messages.pop();
@@ -458,7 +461,7 @@ void register_callbacks(){
     parser.register_request_callback("execute_george", execute_george);
 }
 
-Communicator communication;
+Communicator* communication = nullptr;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
@@ -484,7 +487,7 @@ static char* GetLocalString( PIFilter* iFilter, int iNum, char* iDefault )
 // in the localized file (or the localized file doesn't exist).
 std::string label_from_evn()
 {
-    std::string _plugin_label = "Avalon";
+    std::string _plugin_label = "OpenPype";
     if (std::getenv("AVALON_LABEL") && std::getenv("AVALON_LABEL") != "")
     {
         _plugin_label = std::getenv("AVALON_LABEL");
@@ -540,9 +543,12 @@ int FAR PASCAL PI_Open( PIFilter* iFilter )
     {
         PI_Parameters( iFilter, NULL ); // NULL as iArg means "open the requester"
     }
-
-    communication.connect();
-    register_callbacks();
+    char *env_value = std::getenv("WEBSOCKET_URL");
+    if (env_value != NULL) {
+        communication = new Communicator(env_value);
+        communication->connect();
+        register_callbacks();
+    }
     return  1; // OK
 }
 
@@ -560,7 +566,10 @@ void FAR PASCAL PI_Close( PIFilter* iFilter )
     {
         TVCloseReq( iFilter, Data.mReq );
     }
-    communication.endpoint.close_connection();
+    if (communication != nullptr) {
+        communication->endpoint.close_connection();
+        delete communication;
+    }
 }
 
 
@@ -709,7 +718,7 @@ int FAR PASCAL PI_Msg( PIFilter* iFilter, INTPTR iEvent, INTPTR iReq, INTPTR* iA
             if (Data.menuItemsById.contains(button_up_item_id_str))
             {
                 std::string callback_name = Data.menuItemsById[button_up_item_id_str].get<std::string>();
-                communication.call_method(callback_name, nlohmann::json::array());
+                communication->call_method(callback_name, nlohmann::json::array());
             }
             TVExecute( iFilter );
             break;
@@ -737,7 +746,9 @@ int FAR PASCAL PI_Msg( PIFilter* iFilter, INTPTR iEvent, INTPTR iReq, INTPTR* iA
             {
                 newMenuItemsProcess(iFilter);
             }
-            communication.process_requests();
+            if (communication != nullptr) {
+                communication->process_requests();
+            }
     }
 
     return  1;
