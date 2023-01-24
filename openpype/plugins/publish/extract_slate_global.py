@@ -464,12 +464,13 @@ class SlateCreator:
                     nums.append(vals[i])
                 nums.reverse()
                 tc = ":".join(nums)
-                self.log.debug("{0}: New starting timecode Found: {1}".format(name, tc))
-                tc_frames = self.timecode_to_frames(tc, self.data["fps"])
-                tc_frames -= 1
-                tc = self.frames_to_timecode(tc_frames, self.data["fps"])
-                self.log.debug("{0}: New timecode for slate: {1}".format(name, tc))
                 break
+        
+        self.log.debug("{0}: New starting timecode Found: {1}".format(name, tc))
+        tc_frames = self.timecode_to_frames(tc, self.data["fps"])
+        tc_frames -= 1
+        tc = self.frames_to_timecode(tc_frames, self.data["fps"])
+        self.log.debug("{0}: New timecode for slate: {1}".format(name, tc))
 
         self.data["timecode"] = tc
         
@@ -563,12 +564,6 @@ class ExtractSlateGlobal(publish.Extractor):
                 skipping Global slate extraction...")
             return
 
-        if instance.context.data["host"] == "nuke" and \
-            "render.farm" in instance.data["families"]:
-            self.log.warning("Skipping Slate Global extraction "
-                "in nuke context, defer to deadline...")
-            return
-
         if "representations" not in instance.data:
             self.log.error("No representations to work on!")
             raise ValueError("no items in list.")
@@ -603,15 +598,6 @@ class ExtractSlateGlobal(publish.Extractor):
             env=slate_data["slate_env"]
         )
 
-        # loop through repres for thumbnail
-        thumbnail_path = ""
-        for repre in instance.data["representations"]:
-            if repre["name"] == "thumbnail":
-                thumbnail_path = os.path.join(
-                    repre["stagingDir"],
-                    repre["files"]
-                )
-
         # loop through repres
         for repre in instance.data["representations"]:
             if repre["name"] in repre_ignore_list:
@@ -619,6 +605,18 @@ class ExtractSlateGlobal(publish.Extractor):
                     repre["name"]
                 ))
                 continue
+
+            with open("C:/Users/22DOGS/repres.json", "a") as f:
+                f.write(json.dumps(repre, indent=4, default=str))
+
+            # loop through repres for thumbnail
+            thumbnail_path = ""
+            for thumb_repre in instance.data["representations"]:
+                if thumb_repre["name"] == "thumbnail":
+                    thumbnail_path = os.path.join(
+                        thumb_repre["stagingDir"],
+                        thumb_repre["files"]
+                    )
 
             # check if repre is a sequence
             isSequence = False
@@ -648,20 +646,26 @@ class ExtractSlateGlobal(publish.Extractor):
                     frame_start,
                     ext
                 )
+                thumbnail_path = os.path.join(
+                    repre["stagingDir"],
+                    "{}_slate_thumb.png".format(repre["name"])
+                ).replace("\\", "/")
+                slate.render_image_oiio(
+                    file_path.replace("\\", "/"),
+                    thumbnail_path
+                )
                 repre_match = instance.data["family"]
             else:
                 frame_start = int(repre["frameStart"])
                 frame_end = int(repre["frameEnd"])
-                output_name = "{}_{}_slate.png".format(
-                    filename,
-                    repre["name"]
-                )
+                output_name = "{}_slate_temp.png".format(repre["name"])
                 for tag in repre["tags"]:
                     for profile in slate_data["slate_profiles"]:
                         if tag in profile["families"]:
                             repre_match = tag
-            
-            timecode = slate.get_timecode_oiio(file_path, tc_frame=frame_start)
+
+            timecode = slate.get_timecode_oiio(file_path,
+                tc_frame=int(repre["frameStart"]))
             resolution = slate.get_resolution_ffprobe(file_path)
 
             for profile in slate_data["slate_profiles"]:
@@ -722,8 +726,8 @@ class ExtractSlateGlobal(publish.Extractor):
             slate.render_image_oiio(
                 temp_slate[0],
                 slate_final_path,
-                in_args=slate.data["oiio_args"]["input"],
-                out_args=slate.data["oiio_args"]["output"]
+                in_args=oiio_profile["oiio_args"]["input"],
+                out_args=oiio_profile["oiio_args"]["output"]
             )
             
             # update repres and instance
@@ -736,16 +740,16 @@ class ExtractSlateGlobal(publish.Extractor):
                         repre["name"]
                     )
                 )
-            
-            if "slateFrames" not in instance.data:
-                instance.data["slateFrames"] = {
-                    "*": temp_slate[0]
-                }
             else:
-                instance.data["slateFrames"].update({
-                    output_name: temp_slate[0]
-                })
-            instance.data["slateFrame"] = temp_slate[0]
-            self.log.debug("SlateFrames: {}".format(
-                instance.data["slateFrames"]
-            ))
+                if "slateFrames" not in instance.data:
+                    instance.data["slateFrames"] = {
+                        "*": slate_final_path
+                    }
+                else:
+                    instance.data["slateFrames"].update({
+                        repre["name"]: slate_final_path
+                    })
+                instance.data["slateFrame"] = slate_final_path
+                self.log.debug("SlateFrames: {}".format(
+                    instance.data["slateFrames"]
+                ))

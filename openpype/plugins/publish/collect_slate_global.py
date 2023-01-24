@@ -37,6 +37,12 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
             
             self.log.info("ExtractSlateGlobal is active.")
 
+            if instance.context.data.get("host") == "nuke" and (
+                "render.farm" in instance.data.get("families")):
+                self.log.warning("Skipping Slate Global Collect "
+                    "in nuke context, defer to deadline...")
+                return
+
             tpl_path = settings["slate_template_path"].format(**os.environ)
             res_path = settings["slate_template_res_path"].format(**os.environ)
             _env = {
