@@ -132,7 +132,7 @@ def get_folders_with_tasks(
     if fields:
         fields = set(fields)
     else:
-        fields = con.get_all_fields_for_type("folder")
+        fields = con.get_default_fields_for_type("folder")
 
     if active is not None:
         fields.add("active")
