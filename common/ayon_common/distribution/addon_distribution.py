@@ -609,11 +609,11 @@ class DistributionItem:
 
             try:
                 zip_filepath = downloader.download(
-                source_data,
-                download_dirpath,
-                self.downloader_data,
-                source_progress.transfer_progress,
-            )
+                    source_data,
+                    download_dirpath,
+                    self.downloader_data,
+                    source_progress.transfer_progress,
+                )
             except Exception:
                 message = "Failed to download source"
                 source_progress.set_failed(message)
@@ -1014,7 +1014,6 @@ class AyonDistribution:
         raise RuntimeError("Failed to distribute {}".format(
             ", ".join([f'"{item}"' for item in invalid])
         ))
-
 
     def get_sys_paths(self):
         output = []
