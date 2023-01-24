@@ -8,13 +8,13 @@ class UpdateCurrentWorkfileLastPublishTime(pyblish.api.ContextPlugin):
     Used to ensure current workfile is up to date with published workfiles.
     """
 
-    order = pyblish.api.IntegratorOrder + 10
+    order = pyblish.api.IntegratorOrder + 0.8
     hosts = ["blender"]
     families = ["workfile"]
     label = "Update Current Workfile Last Publish Time"
     optional = False
 
     def process(self, context):
-        bpy.context.window_manager.current_workfile_last_publish_time = (
-            context.data["time"]
-        )
+        scene = bpy.context.scene
+        scene["op_published_time"] = context.data["time"]
+        scene.is_workfile_up_to_date = True
