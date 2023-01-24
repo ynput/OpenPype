@@ -195,7 +195,7 @@ Applicable context filters:
 
 #### Subset grouping profiles
 
-Published subsets might be grouped together for cleaner and easier selection in **[Loader](artist_tools.md#subset-groups)**
+Published subsets might be grouped together for cleaner and easier selection in the **[Subset Manager](artist_tools_subset_manager)**
 
 Group name is chosen with use of [profile filtering](#profile-filters)
 
@@ -212,7 +212,7 @@ Applicable context filters:
 Settings for OpenPype tools.
 
 ## Creator
-Settings related to [Creator tool](artist_tools.md#details).
+Settings related to [Creator tool](artist_tools_creator).
 
 ### Subset name profiles
 ![global_tools_creator_subset_template](assets/global_tools_creator_subset_template.png)
