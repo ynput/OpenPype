@@ -75,9 +75,10 @@ class AddonInfo(object):
                 source_addon = LocalSourceInfo(
                     type=source_type, path=source["path"])
             elif source_type == UrlType.HTTP.value:
+                url = source["path"]
                 source_addon = WebSourceInfo(
                     type=source_type,
-                    url=source["url"],
+                    url=url,
                     headers=source.get("headers")
                 )
             elif source_type == UrlType.SERVER.value:
@@ -124,9 +125,10 @@ class DependencyItem(object):
                 source_addon = LocalSourceInfo(
                     type=source_type, path=source["path"])
             elif source_type == UrlType.HTTP.value:
+                url = source["path"]
                 source_addon = WebSourceInfo(
                     type=source_type,
-                    url=source["url"],
+                    url=url,
                     headers=source.get("headers")
                 )
             elif source_type == UrlType.SERVER.value:
