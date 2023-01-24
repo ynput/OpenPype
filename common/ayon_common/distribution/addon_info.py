@@ -17,22 +17,23 @@ class MultiPlatformPath(object):
 
 
 @attr.s
-class AddonSource(object):
+class SourceInfo(object):
     type = attr.ib()
 
 
 @attr.s
-class LocalAddonSource(AddonSource):
+class LocalSourceInfo(SourceInfo):
     path = attr.ib(default=attr.Factory(MultiPlatformPath))
 
 
 @attr.s
-class WebAddonSource(AddonSource):
+class WebSourceInfo(SourceInfo):
     url = attr.ib(default=None)
+    headers = attr.ib(default=None)
 
 
 @attr.s
-class ServerResourceSource(AddonSource):
+class ServerSourceInfo(SourceInfo):
     filename = attr.ib(default=None)
 
 
@@ -71,13 +72,16 @@ class AddonInfo(object):
         for source in version_data.get("clientSourceInfo", []):
             source_type = source.get("type")
             if source_type == UrlType.FILESYSTEM.value:
-                source_addon = LocalAddonSource(
+                source_addon = LocalSourceInfo(
                     type=source_type, path=source["path"])
             elif source_type == UrlType.HTTP.value:
-                source_addon = WebAddonSource(
-                    type=source_type, url=source["path"])
+                source_addon = WebSourceInfo(
+                    type=source_type,
+                    url=source["url"],
+                    headers=source.get("headers")
+                )
             elif source_type == UrlType.SERVER.value:
-                source_addon = ServerResourceSource(
+                source_addon = ServerSourceInfo(
                     type=source_type, filename=source["filename"])
             else:
                 print(f"Unknown source {source_type}")
@@ -117,13 +121,16 @@ class DependencyItem(object):
         for source in package.get("sources", []):
             source_type = source.get("type")
             if source_type == UrlType.FILESYSTEM.value:
-                source_addon = LocalAddonSource(
+                source_addon = LocalSourceInfo(
                     type=source_type, path=source["path"])
             elif source_type == UrlType.HTTP.value:
-                source_addon = WebAddonSource(
-                    type=source_type, url=source["url"])
+                source_addon = WebSourceInfo(
+                    type=source_type,
+                    url=source["url"],
+                    headers=source.get("headers")
+                )
             elif source_type == UrlType.SERVER.value:
-                source_addon = ServerResourceSource(
+                source_addon = ServerSourceInfo(
                     type=source_type, filename=source["filename"])
             else:
                 print(f"Unknown source {source_type}")
