@@ -1,5 +1,9 @@
 import pyblish.api
-from openpype.lib.attribute_definitions import TextDef
+from openpype.lib.attribute_definitions import (
+    TextDef,
+    BoolDef
+)
+
 from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 from openpype.client.entities import (
     get_last_version_by_subset_name,
@@ -27,6 +31,8 @@ class CollectFramesFixDef(
     def process(self, instance):
         attribute_values = self.get_attr_values_from_data(instance.data)
         frames_to_fix = attribute_values.get("frames_to_fix")
+        rewrite_version = attribute_values.get("rewrite_version")
+
         if frames_to_fix:
             instance.data["frames_to_fix"] = frames_to_fix
 
@@ -58,10 +64,17 @@ class CollectFramesFixDef(
             self.log.debug("last_version_published_files::{}".format(
                 instance.data["last_version_published_files"]))
 
+            if rewrite_version:
+                instance.data["version"] = version["name"]
+                # limits triggering version validator
+                instance.data.pop("latestVersion")
+
     @classmethod
     def get_attribute_defs(cls):
         return [
             TextDef("frames_to_fix", label="Frames to fix",
                     placeholder="5,10-15",
-                    regex="[0-9,-]+")
+                    regex="[0-9,-]+"),
+            BoolDef("rewrite_version", label="Rewrite latest version",
+                    default=False),
         ]
