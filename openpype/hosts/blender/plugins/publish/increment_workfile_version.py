@@ -20,6 +20,7 @@ class IncrementWorkfileVersion(pyblish.api.ContextPlugin):
         "blender.nodegroup",
         "blender.particles",
         "blender.world",
+        "blender.lighting"
     ]
 
     def process(self, context):
