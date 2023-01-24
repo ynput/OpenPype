@@ -128,6 +128,17 @@ class AddonDownloader:
         pass
 
     @classmethod
+    @abstractmethod
+    def cleanup(cls, source, destination_dir, data):
+        """Cleanup files when distribution finishes or crashes.
+
+        Cleanup e.g. temporary files (downloaded zip) or other related stuff
+        to downloader.
+        """
+
+        pass
+
+    @classmethod
     def check_hash(cls, addon_path, addon_hash, hash_type="sha256"):
         """Compares 'hash' of downloaded 'addon_url' file.
 
@@ -158,10 +169,6 @@ class AddonDownloader:
         RemoteFileHandler.unzip(addon_zip_path, destination_dir)
         os.remove(addon_zip_path)
 
-    @classmethod
-    def remove(cls, addon_url):
-        pass
-
 
 class OSAddonDownloader(AddonDownloader):
     @classmethod
@@ -171,6 +178,11 @@ class OSAddonDownloader(AddonDownloader):
         if not os.path.exists(addon_url):
             raise ValueError("{} is not accessible".format(addon_url))
         return addon_url
+
+    @classmethod
+    def cleanup(cls, source, destination_dir, data):
+        # Nothing to do - download does not copy anything
+        pass
 
 
 class HTTPAddonDownloader(AddonDownloader):
@@ -197,6 +209,14 @@ class HTTPAddonDownloader(AddonDownloader):
         )
 
         return os.path.join(destination_dir, filename)
+
+    @classmethod
+    def cleanup(cls, source, destination_dir, data):
+        # Nothing to do - download does not copy anything
+        filename = cls.get_filename(source)
+        filepath = os.path.join(destination_dir, filename)
+        if os.path.exists(filepath) and os.path.isfile(filepath):
+            os.remove(filepath)
 
 
 class AyonServerDownloader(AddonDownloader):
@@ -246,6 +266,14 @@ class AyonServerDownloader(AddonDownloader):
             )
 
         raise ValueError(f"Unknown type to download \"{data['type']}\"")
+
+    @classmethod
+    def cleanup(cls, source, destination_dir, data):
+        # Nothing to do - download does not copy anything
+        filename = source["filename"]
+        filepath = os.path.join(destination_dir, filename)
+        if os.path.exists(filepath) and os.path.isfile(filepath):
+            os.remove(filepath)
 
 
 def get_addons_info():
