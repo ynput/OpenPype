@@ -255,8 +255,6 @@ class AyonServerDownloader(AddonDownloader):
 
         # dst_filepath = os.path.join(destination_dir, filename)
         if data["type"] == "dependency_package":
-            # TODO replace with 'download_dependency_package'
-            #   when available/fixed in 'ayon_api'
             return ayon_api.download_dependency_package(
                 data["name"],
                 destination_dir,
@@ -267,8 +265,6 @@ class AyonServerDownloader(AddonDownloader):
             )
 
         if data["type"] == "addon":
-            # TODO replace with 'download_addon_private_file'
-            #   when available/fixed in 'ayon_api'
             return ayon_api.download_addon_private_file(
                 data["name"],
                 data["version"],
@@ -990,7 +986,6 @@ class AyonDistribution:
         return output
 
     def distribute(self, threaded=False):
-        # TODO add metadata file about downloaded addon
         if self._dist_started:
             raise RuntimeError("Distribution already started")
         self._dist_started = True
