@@ -19,7 +19,7 @@ class CollectFramesFixDef(
     """
     order = pyblish.api.CollectorOrder + 0.495
     label = "Collect Frames to Fix"
-    # Disable plugin by default
+    hosts = ["nuke"]
     families = ["render"]
     enabled = True
 
