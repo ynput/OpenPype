@@ -1126,7 +1126,7 @@ class RootItem(FormatObject):
             if _mod_path.startswith(root_path):
                 result = True
                 replacement = "{" + self.full_key() + "}"
-                output = replacement + _mod_path[len(root_path):]
+                output = replacement + mod_path[len(root_path):]
                 break
 
         return (result, output)

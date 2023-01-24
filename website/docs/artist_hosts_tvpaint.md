@@ -4,13 +4,13 @@ title: TVPaint
 sidebar_label: TVPaint
 ---
 
--   [Work Files](artist_tools.md#workfiles)
--   [Load](artist_tools.md#loader)
--   [Create](artist_tools.md#creator)
--   [Subset Manager](artist_tools.md#subset-manager)
--   [Scene Inventory](artist_tools.md#scene-inventory)
--   [Publish](artist_tools.md#publisher)
--   [Library](artist_tools.md#library)
+-   [Work Files](artist_tools_workfiles)
+-   [Load](artist_tools_loader)
+-   [Create](artist_tools_creator)
+-   [Subset Manager](artist_tools_subset_manager)
+-   [Scene Inventory](artist_tools_inventory)
+-   [Publish](artist_tools_publisher)
+-   [Library](artist_tools_library)
 
 
 ## Setup

@@ -22,7 +22,7 @@ class ValidateAlembicInputNode(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError(
-                ("Primitive types found that are not supported"
+                ("Primitive types found that are not supported "
                  "for Alembic output."),
                 title=self.label
             )
