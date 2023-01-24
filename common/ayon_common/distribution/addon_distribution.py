@@ -667,6 +667,337 @@ class DistributionItem:
                 shutil.rmtree(self.unzip_dirpath)
 
 
+class AyonDistribution:
+    """Distribution control.
+
+    Receive information from server what addons and dependency packages
+    should be available locally and prepare/validate their distribution.
+    """
+
+    def __init__(
+        self,
+        addon_dirpath=None,
+        dependency_dirpath=None,
+        dist_factory=None
+    ):
+        self._addons_dirpath = addon_dirpath or get_addons_dir()
+        self._dependency_dirpath = dependency_dirpath or get_dependencies_dir()
+        self._dist_factory = (
+            dist_factory or get_default_addon_downloader()
+        )
+
+        self._dist_started = False
+        self._dist_finished = False
+        self._log = None
+        self._addons_info = None
+        self._addons_progress = None
+        self._dependency_package = -1
+        self._dependency_progress = None
+
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = logging.getLogger(self.__class__.__name__)
+        return self._log
+
+    @property
+    def addons_info(self):
+        if self._addons_info is None:
+            addons_info = {}
+            server_addons_info = ayon_api.get_addons_info(details=True)
+            for addon in server_addons_info["addons"]:
+                addon_info = AddonInfo.from_dict(addon)
+                if addon_info is None:
+                    continue
+                addons_info[addon_info.full_name] = addon_info
+
+            self._addon_info = addons_info
+        return self._addon_info
+
+    @property
+    def dependency_package(self):
+        if self._dependency_package == -1:
+            self._dependency_package = get_dependency_package()
+        return self._dependency_package
+
+    def _prepare_current_addons_state(self):
+        addons_metadata = self.get_addons_metadata()
+        output = {}
+        for full_name, addon_info in self.addons_info.items():
+            addon_dest = os.path.join(self._addons_dirpath, full_name)
+            self.log.debug(f"Checking {full_name} in {addon_dest}")
+            addon_in_metadata = (
+                addon_info.name in addons_metadata
+                and addon_info.version in addons_metadata[addon_info.name]
+            )
+            if addon_in_metadata and os.path.isdir(addon_dest):
+                self.log.debug(
+                    f"Addon version folder {addon_dest} already exists."
+                )
+                state = UpdateState.UPDATED
+
+            else:
+                state = UpdateState.OUTDATED
+
+            # ---------- Develop ----------------
+            # WARNING this is only temporary solution for development purposes
+            #   is you see 'example' lines below, remove them!
+            if addon_info.name == "example":
+                state = UpdateState.UPDATED
+            # -----------------------------------
+
+            downloader_data = {
+                "type": "addon",
+                "name": addon_info.name,
+                "version": addon_info.version
+            }
+            sources = []
+            for source in addon_info.sources:
+                if source.type == UrlType.HTTP.value:
+                    source = _try_convert_to_server_source(addon_info, source)
+                sources.append(source)
+
+            output[full_name] = DistributionItem(
+                state,
+                addon_dest,
+                addon_dest,
+                addon_info.hash,
+                self._dist_factory,
+                sources,
+                downloader_data,
+                full_name,
+                self.log
+            )
+        return output
+
+    def _preapre_dependency_progress(self):
+        package = self.dependency_package
+        downloader_data = {
+            "type": "dependency_package",
+            "name": None,
+            "platform": None
+        }
+        state = UpdateState.UPDATED
+        file_hash = None
+        sources = []
+        item_label = "Dependency package"
+
+        package_dir = zip_dir = None
+        if package is not None:
+            metadata = self.get_dependency_metadata()
+            downloader_data["name"] = package.name
+            downloader_data["platform"] = package.platform
+
+            sources = package.sources
+            file_hash = package.checksum
+            item_label = package.name
+            zip_dir = package_dir = os.path.join(
+                self._dependency_dirpath, package.name
+            )
+            self.log.debug(f"Checking {package.name} in {package_dir}")
+
+            if not os.path.isdir(package_dir) or package.name not in metadata:
+                state = UpdateState.OUTDATED
+
+        return DistributionItem(
+            state,
+            zip_dir,
+            package_dir,
+            file_hash,
+            self._dist_factory,
+            sources,
+            downloader_data,
+            item_label,
+            self.log,
+        )
+
+    def get_addons_progress(self):
+        if self._addons_progress is None:
+            self._addons_progress = self._prepare_current_addons_state()
+        return self._addons_progress
+
+    def get_dependency_progress(self):
+        if self._dependency_progress is None:
+            self._dependency_progress = self._preapre_dependency_progress()
+        return self._dependency_progress
+
+    def get_dependency_metadata_filepath(self):
+        return os.path.join(self._dependency_dirpath, "dependency.json")
+
+    def get_addons_metadata_filepath(self):
+        return os.path.join(self._addons_dirpath, "addons.json")
+
+    def read_metadata_file(self, filepath, default_value=None):
+        """Read json file from path.
+
+        Method creates the file when does not exist with default value.
+
+        Args:
+            filepath (str): Path to json file.
+            default_value (Union[Dict[str, Any], List[Any], None]): Default
+                value if the file is not available (or valid).
+
+        Returns:
+            Union[Dict[str, Any], List[Any]]: Value from file.
+        """
+
+        if not os.path.exists(filepath):
+            dirpath = os.path.dirname(filepath)
+            if not os.path.exists(dirpath):
+                os.makedirs(dirpath)
+
+            if default_value is None:
+                default_value = {}
+            with open(filepath, "w") as stream:
+                json.dump(default_value, stream)
+
+        try:
+            with open(filepath, "r") as stream:
+                data = json.load(stream)
+        except ValueError:
+            data = default_value
+        return data
+
+    def save_metadata_file(self, filepath, data):
+        """Store data to json file.
+
+        Method creates the file when does not exist.
+
+        Args:
+            filepath (str): Path to json file.
+            data (Union[Dict[str, Any], List[Any]]): Data to store into file.
+        """
+
+        if not os.path.exists(filepath):
+            dirpath = os.path.dirname(filepath)
+            if not os.path.exists(dirpath):
+                os.makedirs(dirpath)
+        with open(filepath, "w") as stream:
+            json.dump(data, stream, indent=4)
+
+    def get_dependency_metadata(self):
+        filepath = self.get_dependency_metadata_filepath()
+        return self.read_metadata_file(filepath, {})
+
+    def update_dependency_metadata(self, package_name, data):
+        dependency_metadata = self.get_dependency_metadata()
+        dependency_metadata[package_name] = data
+        filepath = self.get_dependency_metadata_filepath()
+        self.save_metadata_file(filepath, dependency_metadata)
+
+    def get_addons_metadata(self):
+        filepath = self.get_addons_metadata_filepath()
+        return self.read_metadata_file(filepath, {})
+
+    def update_addons_metadata(self, addons_information):
+        if not addons_information:
+            return
+        addons_metadata = self.get_addons_metadata()
+        for addon_name, version_value in addons_information.items():
+            if addon_name not in addons_metadata:
+                addons_metadata[addon_name] = {}
+            for addon_version, version_data in version_value.items():
+                addons_metadata[addon_name][addon_version] = version_data
+
+        filepath = self.get_addons_metadata_filepath()
+        self.save_metadata_file(filepath, addons_metadata)
+
+    def finish_distribution(self):
+        self._dist_finished = True
+        stored_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        dependency_progress = self.get_dependency_progress()
+        if (
+            dependency_progress.need_distribution
+            and dependency_progress.state == UpdateState.UPDATED
+        ):
+            package = self.dependency_package
+            source = dependency_progress.used_source
+            if source is not None:
+                data = {
+                    "source": source,
+                    "file_hash": dependency_progress.file_hash,
+                    "distributed_dt": stored_time
+                }
+                self.update_dependency_metadata(package.name, data)
+
+        addons_info = {}
+        for full_name, progress in self.get_addons_progress().items():
+            if (
+                not progress.need_distribution
+                or progress.state != UpdateState.UPDATED
+            ):
+                continue
+
+            source_data = progress.used_source
+            if not source_data:
+                continue
+            addon_info = self.addons_info[full_name]
+            if addon_info.name not in addons_info:
+                addons_info[addon_info.name] = {}
+            addons_info[addon_info.name][addon_info.version] = {
+                "source": source_data,
+                "file_hash": progress.file_hash,
+                "distributed_dt": stored_time
+            }
+
+        self.update_addons_metadata(addons_info)
+
+    def get_all_distribution_items(self):
+        output = [self.get_dependency_progress()]
+        for progress in self.get_addons_progress().values():
+            output.append(progress)
+        return output
+
+    def distribute(self, threaded=False):
+        # TODO add metadata file about downloaded addon
+        if self._dist_started:
+            raise RuntimeError("Distribution already started")
+        self._dist_started = True
+        threads = collections.deque()
+        for item in self.get_all_distribution_items():
+            if threaded:
+                threads.append(threading.Thread(target=item.distribute))
+            else:
+                item.distribute()
+
+        while threads:
+            thread = threads.popleft()
+            if thread.is_alive():
+                threads.append(thread)
+            else:
+                thread.join()
+
+        self.finish_distribution()
+
+    def validate_distribution(self):
+        invalid = []
+        dependency_package = self.get_dependency_progress()
+        if dependency_package.state != UpdateState.UPDATED:
+            invalid.append("Dependency package")
+
+        for addon_name, progress in self.get_addons_progress().items():
+            if progress.state != UpdateState.UPDATED:
+                invalid.append(addon_name)
+
+        if not invalid:
+            return
+
+        raise RuntimeError("Failed to distribute {}".format(
+            ", ".join([f'"{item}"' for item in invalid])
+        ))
+
+
+    def get_sys_paths(self):
+        output = []
+        for item in self.get_all_distribution_items():
+            if item.state != UpdateState.UPDATED:
+                continue
+            unzip_dirpath = item.unzip_dirpath
+            if unzip_dirpath and os.path.exists(unzip_dirpath):
+                output.append(unzip_dirpath)
+        return output
+
+
 def update_addon_state(
     addon_infos,
     destination_folder,
