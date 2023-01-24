@@ -112,7 +112,7 @@ class AddonDownloader:
 
     @classmethod
     @abstractmethod
-    def download(cls, source, destination_dir, data):
+    def download(cls, source, destination_dir, data, transfer_progress):
         """Returns url to downloaded addon zip file.
 
         Args:
@@ -172,7 +172,7 @@ class AddonDownloader:
 
 class OSAddonDownloader(AddonDownloader):
     @classmethod
-    def download(cls, source, destination_dir, data):
+    def download(cls, source, destination_dir, data, transfer_progress):
         # OS doesnt need to download, unzip directly
         addon_url = source["path"].get(platform.system().lower())
         if not os.path.exists(addon_url):
@@ -188,19 +188,26 @@ class OSAddonDownloader(AddonDownloader):
 class HTTPAddonDownloader(AddonDownloader):
     CHUNK_SIZE = 100000
 
-    @classmethod
-    def download(cls, source, destination_dir, data):
+    @staticmethod
+    def get_filename(source):
         source_url = source["url"]
-        cls.log.debug(f"Downloading {source_url} to {destination_dir}")
         filename = source.get("filename")
-        headers = source.get("headers")
         if not filename:
             filename = os.path.basename(source_url)
             basename, ext = os.path.splitext(filename)
             allowed_exts = set(RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS)
             if ext.replace(".", "") not in allowed_exts:
                 filename = basename + ".zip"
+        return filename
 
+    @classmethod
+    def download(cls, source, destination_dir, data, transfer_progress):
+        source_url = source["url"]
+        cls.log.debug(f"Downloading {source_url} to {destination_dir}")
+        headers = source.get("headers")
+        filename = cls.get_filename(source)
+
+        # TODO use transfer progress
         RemoteFileHandler.download_url(
             source_url,
             destination_dir,
@@ -228,7 +235,7 @@ class AyonServerDownloader(AddonDownloader):
     CHUNK_SIZE = 8192
 
     @classmethod
-    def download(cls, source, destination_dir, data):
+    def download(cls, source, destination_dir, data, transfer_progress):
         filename = source["filename"]
 
         cls.log.debug(f"Downloading {filename} to {destination_dir}")
@@ -251,7 +258,8 @@ class AyonServerDownloader(AddonDownloader):
                 destination_dir,
                 filename,
                 platform_name=data["platform"],
-                chunk_size=cls.CHUNK_SIZE
+                chunk_size=cls.CHUNK_SIZE,
+                progress=transfer_progress
             )
 
         if data["type"] == "addon":
@@ -262,7 +270,8 @@ class AyonServerDownloader(AddonDownloader):
                 data["version"],
                 filename,
                 destination_dir,
-                chunk_size=cls.CHUNK_SIZE
+                chunk_size=cls.CHUNK_SIZE,
+                progress=transfer_progress
             )
 
         raise ValueError(f"Unknown type to download \"{data['type']}\"")
