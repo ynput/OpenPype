@@ -423,6 +423,250 @@ class DistributeTransferProgress:
         return self._fail_reason or self._transfer_progress.fail_reason
 
 
+class DistributionItem:
+    """Distribution item with sources and target directories.
+
+    Distribution item can be an addon or dependency package. Distribution item
+    can be already distributed and don't need any progression. The item keeps
+    track of the progress. The reason is to be able to use the distribution
+    items as source data for UI without implementing the same logic.
+
+    Distribution is "state" based. Distribution can be 'UPDATED' or 'OUTDATED'
+    at the initialization. If item is 'UPDATED' the distribution is skipped
+    and 'OUTDATED' will trigger the distribution process.
+
+    Because the distribution may have multiple sources each source has own
+    progress item.
+
+    Args:
+        state (UpdateState): Initial state (UpdateState.UPDATED or
+            UpdateState.OUTDATED).
+        unzip_dirpath (str): Path to directory where zip is downloaded.
+        download_dirpath (str): Path to directory where file is unzipped.
+        file_hash (str): Hash of file for validation.
+        factory (AddonDownloader): Downloaders factory object.
+        sources (List[SourceInfo]): Possible sources to receive the
+            distribution item.
+        downloader_data (Dict[str, Any]): More information for downloaders.
+        item_label (str): Label used in log outputs (and in UI).
+        logger (logging.Logger): Logger object.
+    """
+
+    def __init__(
+        self,
+        state,
+        unzip_dirpath,
+        download_dirpath,
+        file_hash,
+        factory,
+        sources,
+        downloader_data,
+        item_label,
+        logger=None,
+    ):
+        if logger is None:
+            logger = logging.getLogger(self.__class__.__name__)
+        self.log = logger
+        self.state = state
+        self.unzip_dirpath = unzip_dirpath
+        self.download_dirpath = download_dirpath
+        self.file_hash = file_hash
+        self.factory = factory
+        self.sources = [
+            (source, DistributeTransferProgress())
+            for source in sources
+        ]
+        self.downloader_data = downloader_data
+        self.item_label = item_label
+
+        self._need_distribution = state != UpdateState.UPDATED
+        self._current_source_progress = None
+        self._used_source_progress = None
+        self._used_source = None
+        self._dist_started = False
+        self._dist_finished = False
+
+        self._error_msg = None
+        self._error_detail = None
+
+    @property
+    def need_distribution(self):
+        """Need distribution based on initial state.
+
+        Returns:
+            bool: Need distribution.
+        """
+
+        return self._need_distribution
+
+    @property
+    def current_source_progress(self):
+        """Currently processed source progress object.
+
+        Returns:
+            Union[DistributeTransferProgress, None]: Transfer progress or None.
+        """
+
+        return self._current_source_progress
+
+    @property
+    def used_source_progress(self):
+        """Transfer progress that successfully distributed the item.
+
+        Returns:
+            Union[DistributeTransferProgress, None]: Transfer progress or None.
+        """
+
+        return self._used_source_progress
+
+    @property
+    def used_source(self):
+        """Data of source item.
+
+        Returns:
+            Union[Dict[str, Any], None]: SourceInfo data or None.
+        """
+
+        return self._used_source
+
+    def _distribute(self):
+        if not self.sources:
+            message = (
+                f"{self.item_label}: Don't have"
+                " any sources to download from."
+            )
+            self.log.error(message)
+            self._error_msg = message
+            self.state = UpdateState.MISS_SOURCE_FILES
+            return
+
+        download_dirpath = self.download_dirpath
+        unzip_dirpath = self.unzip_dirpath
+        for source, source_progress in self.sources:
+            self._current_source_progress = source_progress
+            source_progress.set_started()
+
+            # Remove directory if exists
+            if os.path.isdir(unzip_dirpath):
+                self.log.debug(f"Cleaning {unzip_dirpath}")
+                shutil.rmtree(unzip_dirpath)
+
+            # Create directory
+            os.makedirs(unzip_dirpath)
+            if not os.path.isdir(download_dirpath):
+                os.makedirs(download_dirpath)
+
+            try:
+                downloader = self.factory.get_downloader(source.type)
+            except Exception:
+                source_progress.set_failed(f"Unknown downloader {source.type}")
+                self.log.warning(message, exc_info=True)
+                continue
+
+            source_data = attr.asdict(source)
+            cleanup_args = (
+                source_data,
+                download_dirpath,
+                self.downloader_data
+            )
+
+            try:
+                zip_filepath = downloader.download(
+                source_data,
+                download_dirpath,
+                self.downloader_data,
+                source_progress.transfer_progress,
+            )
+            except Exception:
+                message = "Failed to download source"
+                source_progress.set_failed(message)
+                self.log.warning(
+                    f"{self.item_label}: {message}",
+                    exc_info=True
+                )
+                downloader.cleanup(*cleanup_args)
+                continue
+
+            source_progress.set_hash_check_started()
+            try:
+                downloader.check_hash(zip_filepath, self.file_hash)
+            except Exception:
+                message = "File hash does not match"
+                source_progress.set_failed(message)
+                self.log.warning(
+                    f"{self.item_label}: {message}",
+                    exc_info=True
+                )
+                downloader.cleanup(*cleanup_args)
+                continue
+
+            source_progress.set_hash_check_finished()
+            source_progress.set_unzip_started()
+            try:
+                downloader.unzip(zip_filepath, unzip_dirpath)
+            except Exception:
+                message = "Couldn't unzip source file"
+                source_progress.set_failed(message)
+                self.log.warning(
+                    f"{self.item_label}: {message}",
+                    exc_info=True
+                )
+                downloader.cleanup(*cleanup_args)
+                continue
+
+            source_progress.set_unzip_finished()
+            downloader.cleanup(*cleanup_args)
+            self.state = UpdateState.UPDATED
+            self._used_source = source_data
+            break
+
+        last_progress = self._current_source_progress
+        self._current_source_progress = None
+        if self.state == UpdateState.UPDATED:
+            self._used_source_progress = last_progress
+            self.log.info(f"{self.item_label}: Distributed")
+            return
+
+        self.log.error(f"{self.item_label}: Failed to distribute")
+        self._error_msg = "Failed to receive or install source files"
+
+    def distribute(self):
+        """Execute distribution logic."""
+
+        if not self.need_distribution or self._dist_started:
+            return
+
+        self._dist_started = True
+        try:
+            if self.state == UpdateState.OUTDATED:
+                self._distribute()
+
+        except Exception as exc:
+            self.state = UpdateState.UPDATE_FAILED
+            self._error_msg = str(exc)
+            self._error_detail = "".join(
+                traceback.format_exception(*sys.exc_info())
+            )
+            self.log.error(
+                f"{self.item_label}: Distibution filed",
+                exc_info=True
+            )
+
+        finally:
+            self._dist_finished = True
+            if self.state == UpdateState.OUTDATED:
+                self.state = UpdateState.UPDATE_FAILED
+                self._error_msg = "Distribution failed"
+
+            if (
+                self.state != UpdateState.UPDATED
+                and self.unzip_dirpath
+                and os.path.isdir(self.unzip_dirpath)
+            ):
+                self.log.debug(f"Cleaning {self.unzip_dirpath}")
+                shutil.rmtree(self.unzip_dirpath)
+
+
 def update_addon_state(
     addon_infos,
     destination_folder,
