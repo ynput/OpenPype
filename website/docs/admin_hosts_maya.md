@@ -25,8 +25,6 @@ file prefix
 
 For **Vray**:
 - AOV separator must be set to `_` (underscore)
-    
-- test note
 
 For **Redshift**:
 - all AOVs must follow `<BeautyPath>/<BeautyFile>_<RenderPass>` image file prefix
