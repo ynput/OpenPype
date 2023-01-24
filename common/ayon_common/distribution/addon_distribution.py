@@ -776,13 +776,6 @@ class AyonDistribution:
             else:
                 state = UpdateState.OUTDATED
 
-            # ---------- Develop ----------------
-            # WARNING this is only temporary solution for development purposes
-            #   is you see 'example' lines below, remove them!
-            if addon_info.name == "example":
-                state = UpdateState.UPDATED
-            # -----------------------------------
-
             downloader_data = {
                 "type": "addon",
                 "name": addon_info.name,
