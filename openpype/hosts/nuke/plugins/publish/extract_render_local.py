@@ -42,11 +42,6 @@ class NukeRenderLocal(publish.ExtractorColormanaged):
         first_frame = instance.data.get("frameStartHandle", None)
         last_frame = instance.data.get("frameEndHandle", None)
 
-        frames_to_fix = instance.data.get("frames_to_fix")
-        frames_to_render = self._get_frames_to_render(frames_to_fix,
-                                                      first_frame,
-                                                      last_frame)
-
         filenames = []
         node_file = node["file"]
         # Collect expected filepaths for each frame
@@ -67,9 +62,14 @@ class NukeRenderLocal(publish.ExtractorColormanaged):
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
 
-        if instance.data.get("last_version_published_files"):
+        frames_to_render = [(first_frame, last_frame)]
+
+        frames_to_fix = instance.data.get("frames_to_fix")
+        if instance.data.get("last_version_published_files") and frames_to_fix:
+            frames_to_render = self._get_frames_to_render(frames_to_fix)
             anatomy = instance.context.data["anatomy"]
-            self._copy_last_published(anatomy, instance, out_dir, filenames)
+            self._copy_last_published(anatomy, instance, out_dir,
+                                      filenames)
 
         for render_first_frame, render_last_frame in frames_to_render:
 
@@ -181,7 +181,7 @@ class NukeRenderLocal(publish.ExtractorColormanaged):
             # TODO shouldn't this be uncommented
             # instance.context.data["cleanupFullPaths"].append(out_path)
 
-    def _get_frames_to_render(self, frames_to_fix, first_frame, last_frame):
+    def _get_frames_to_render(self, frames_to_fix):
         """Return list of frame range tuples to render
 
         Args:
@@ -193,20 +193,18 @@ class NukeRenderLocal(publish.ExtractorColormanaged):
             (list): [(1005, 1005), (1009-1010)]
         """
         frames_to_render = []
-        if not frames_to_fix:
-            frames_to_render.append((first_frame, last_frame))
-        else:
-            for frame_range in frames_to_fix.split(","):
-                if isinstance(frame_range, int) or frame_range.isdigit():
-                    render_first_frame = frame_range
-                    render_last_frame = frame_range
-                elif '-' in frame_range:
-                    frames = frame_range.split('-')
-                    render_first_frame = int(frames[0])
-                    render_last_frame = int(frames[1])
-                else:
-                    raise ValueError("Wrong format of frames to fix {}"
-                                     .format(frames_to_fix))
-                frames_to_render.append((render_first_frame,
-                                         render_last_frame))
+
+        for frame_range in frames_to_fix.split(","):
+            if isinstance(frame_range, int) or frame_range.isdigit():
+                render_first_frame = frame_range
+                render_last_frame = frame_range
+            elif '-' in frame_range:
+                frames = frame_range.split('-')
+                render_first_frame = int(frames[0])
+                render_last_frame = int(frames[1])
+            else:
+                raise ValueError("Wrong format of frames to fix {}"
+                                 .format(frames_to_fix))
+            frames_to_render.append((render_first_frame,
+                                     render_last_frame))
         return frames_to_render
