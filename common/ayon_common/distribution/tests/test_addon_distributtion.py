@@ -2,7 +2,7 @@ import pytest
 import attr
 import tempfile
 
-from common.openpype_common.distribution.addon_distribution import (
+from common.ayon_common.distribution.addon_distribution import (
     AddonDownloader,
     OSAddonDownloader,
     HTTPAddonDownloader,
@@ -10,7 +10,7 @@ from common.openpype_common.distribution.addon_distribution import (
     update_addon_state,
     UpdateState
 )
-from common.openpype_common.distribution.addon_info import UrlType
+from common.ayon_common.distribution.addon_info import UrlType
 
 
 @pytest.fixture
