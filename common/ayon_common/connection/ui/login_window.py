@@ -4,7 +4,7 @@ from Qt import QtWidgets, QtCore, QtGui
 from ayon_api.exceptions import UrlError
 from ayon_api.utils import validate_url, login_to_server
 
-from openpype_common.resources import (
+from ayon_common.resources import (
     get_resource_path,
     get_icon_path,
     load_stylesheet,

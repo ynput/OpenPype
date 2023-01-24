@@ -186,17 +186,17 @@ elif os.getenv("SSL_CERT_FILE") != certifi.where():
     _print("--- your system is set to use custom CA certificate bundle.")
 
 import igniter
-from openpype_common.connection.server import (
+from ayon_common.connection.server import (
     need_server_or_login,
     load_environments,
     set_environments,
 )
-from openpype_common.connection.credentials import (
+from ayon_common.connection.credentials import (
     ask_to_login_ui,
     add_server,
     store_token
 )
-from openpype_common.distribution.addon_distribution import (
+from ayon_common.distribution.addon_distribution import (
     get_addons_dir,
     get_dependencies_dir,
     make_sure_addons_are_updated,
