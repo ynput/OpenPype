@@ -2,11 +2,14 @@ import os
 import json
 import collections
 
+import ayon_api
 from qtpy import QtCore, QtGui, QtWidgets
 
 from openpype import style
 from openpype import resources
+from openpype import AYON_SERVER_ENABLED
 from openpype.settings.lib import get_local_settings
+from openpype.lib import get_openpype_execute_args
 from openpype.lib.pype_info import (
     get_all_current_info,
     get_openpype_info,
@@ -327,8 +330,9 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
         main_layout.addWidget(self._create_openpype_info_widget(), 0)
         main_layout.addWidget(self._create_separator(), 0)
         main_layout.addWidget(self._create_workstation_widget(), 0)
-        main_layout.addWidget(self._create_separator(), 0)
-        main_layout.addWidget(self._create_local_settings_widget(), 0)
+        if not AYON_SERVER_ENABLED:
+            main_layout.addWidget(self._create_separator(), 0)
+            main_layout.addWidget(self._create_local_settings_widget(), 0)
         main_layout.addWidget(self._create_separator(), 0)
         main_layout.addWidget(self._create_environ_widget(), 1)
 
@@ -425,31 +429,59 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
     def _create_openpype_info_widget(self):
         """Create widget with information about OpenPype application."""
 
-        # Get pype info data
-        pype_info = get_openpype_info()
-        # Modify version key/values
-        version_value = "{} ({})".format(
-            pype_info.pop("version", self.not_applicable),
-            pype_info.pop("version_type", self.not_applicable)
-        )
-        pype_info["version_value"] = version_value
-        # Prepare label mapping
-        key_label_mapping = {
-            "version_value": "Running version:",
-            "build_verison": "Build version:",
-            "executable": "OpenPype executable:",
-            "pype_root": "OpenPype location:",
-            "mongo_url": "OpenPype Mongo URL:"
-        }
-        # Prepare keys order
-        keys_order = [
-            "version_value",
-            "build_verison",
-            "executable",
-            "pype_root",
-            "mongo_url"
-        ]
-        for key in pype_info.keys():
+        if AYON_SERVER_ENABLED:
+            executable_args = get_openpype_execute_args()
+            username = "N/A"
+            user_info = ayon_api.get_user()
+            if user_info:
+                username = user_info.get("name") or username
+                full_name = user_info.get("attrib", {}).get("fullName")
+                if full_name:
+                    username = "{} ({})".format(full_name, username)
+            info_values = {
+                "executable": executable_args[-1],
+                "server_url": os.environ["AYON_SERVER_URL"],
+                "username": username
+            }
+            key_label_mapping = {
+                "executable": "AYON Executable:",
+                "server_url": "AYON Server:",
+                "username": "AYON Username:"
+            }
+            # Prepare keys order
+            keys_order = [
+                "server_url",
+                "username",
+                "executable",
+            ]
+
+        else:
+            # Get pype info data
+            info_values = get_openpype_info()
+            # Modify version key/values
+            version_value = "{} ({})".format(
+                info_values.pop("version", self.not_applicable),
+                info_values.pop("version_type", self.not_applicable)
+            )
+            info_values["version_value"] = version_value
+            # Prepare label mapping
+            key_label_mapping = {
+                "version_value": "Running version:",
+                "build_verison": "Build version:",
+                "executable": "OpenPype executable:",
+                "pype_root": "OpenPype location:",
+                "mongo_url": "OpenPype Mongo URL:"
+            }
+            # Prepare keys order
+            keys_order = [
+                "version_value",
+                "build_verison",
+                "executable",
+                "pype_root",
+                "mongo_url"
+            ]
+
+        for key in info_values.keys():
             if key not in keys_order:
                 keys_order.append(key)
 
@@ -466,9 +498,9 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
         info_layout.addWidget(title_label, 0, 0, 1, 2)
 
         for key in keys_order:
-            if key not in pype_info:
+            if key not in info_values:
                 continue
-            value = pype_info[key]
+            value = info_values[key]
             label = key_label_mapping.get(key, key)
             row = info_layout.rowCount()
             info_layout.addWidget(
