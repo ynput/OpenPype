@@ -19,6 +19,7 @@ class CollectFramesFixDef(
     """
     order = pyblish.api.CollectorOrder + 0.495
     label = "Collect Frames to Fix"
+    targets = ["local"]
     hosts = ["nuke"]
     families = ["render", "prerender"]
     enabled = True
