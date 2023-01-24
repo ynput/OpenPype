@@ -5,9 +5,7 @@ Bootstrapping process of AYON.
 """
 import os
 import sys
-import platform
 import traceback
-import distutils.spawn
 
 
 # Enabled logging debug mode when "--debug" is passed
@@ -248,74 +246,6 @@ def set_addons_environments():
         os.environ.update(env)
 
 
-def _validate_thirdparty_binaries():
-    """Check existence of thirdpart executables."""
-
-    low_platform = platform.system().lower()
-    binary_vendors_dir = os.path.join(AYON_ROOT, "vendor", "bin")
-
-    error_msg = (
-        "Missing binary dependency {}. Please fetch thirdparty dependencies."
-    )
-    # Validate existence of FFmpeg
-    ffmpeg_dir = os.path.join(binary_vendors_dir, "ffmpeg", low_platform)
-    if low_platform == "windows":
-        ffmpeg_dir = os.path.join(ffmpeg_dir, "bin")
-    ffmpeg_executable = os.path.join(ffmpeg_dir, "ffmpeg")
-    ffmpeg_result = distutils.spawn.find_executable(ffmpeg_executable)
-    if ffmpeg_result is None:
-        raise RuntimeError(error_msg.format("FFmpeg"))
-
-    # Validate existence of OpenImageIO (not on MacOs)
-    oiio_tool_path = None
-    if low_platform == "linux":
-        oiio_tool_path = os.path.join(
-            binary_vendors_dir,
-            "oiio",
-            low_platform,
-            "bin",
-            "oiiotool"
-        )
-    elif low_platform == "windows":
-        oiio_tool_path = os.path.join(
-            binary_vendors_dir,
-            "oiio",
-            low_platform,
-            "oiiotool"
-        )
-    oiio_result = None
-    if oiio_tool_path is not None:
-        oiio_result = distutils.spawn.find_executable(oiio_tool_path)
-
-    if oiio_result is None:
-        raise RuntimeError(error_msg.format("OpenImageIO"))
-
-
-def _startup_validations():
-    """Validations before OpenPype starts."""
-    try:
-        _validate_thirdparty_binaries()
-    except Exception as exc:
-        if HEADLESS_MODE_ENABLED:
-            raise
-
-        import tkinter
-        from tkinter.messagebox import showerror
-
-        root = tkinter.Tk()
-        root.attributes("-alpha", 0.0)
-        root.wm_state("iconic")
-        if platform.system().lower() != "windows":
-            root.withdraw()
-
-        showerror(
-            "Startup validations didn't pass",
-            str(exc)
-        )
-        root.withdraw()
-        sys.exit(1)
-
-
 def _connect_to_ayon_server():
     load_environments()
     if not need_server_or_login():
@@ -372,11 +302,6 @@ def boot():
     # TODO load version
     os.environ["OPENPYPE_VERSION"] = __version__
     os.environ["AYON_VERSION"] = __version__
-
-    # ------------------------------------------------------------------------
-    # Do necessary startup validations
-    # ------------------------------------------------------------------------
-    _startup_validations()
 
     use_staging = os.environ.get("OPENPYPE_USE_STAGING") == "1"
 
