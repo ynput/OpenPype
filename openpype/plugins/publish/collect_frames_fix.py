@@ -1,14 +1,24 @@
 import pyblish.api
 from openpype.lib.attribute_definitions import TextDef
 from openpype.pipeline.publish import OpenPypePyblishPluginMixin
+from openpype.client.entities import (
+    get_last_version_by_subset_name,
+    get_representations
+)
 
 
 class CollectFramesFixDef(
-    pyblish.api.ContextPlugin,
+    pyblish.api.InstancePlugin,
     OpenPypePyblishPluginMixin
 ):
-    label = "Collect frames to fix"
-    targets = ["local"]
+    """Provides text field to insert frame(s) to be rerendered.
+
+    Published files of last version of an instance subset are collected into
+    instance.data["last_version_published_files"]. All these but frames
+    mentioned in text field will be reused for new version.
+    """
+    order = pyblish.api.CollectorOrder + 0.495
+    label = "Collect Frames to Fix"
     # Disable plugin by default
     families = ["render"]
     enabled = True
@@ -19,6 +29,32 @@ class CollectFramesFixDef(
         if frames_to_fix:
             instance.data["frames_to_fix"] = frames_to_fix
 
+            subset_name = instance.data["subset"]
+            asset_name = instance.data["asset"]
+
+            project_entity = instance.data["projectEntity"]
+            project_name = project_entity["name"]
+
+            version = get_last_version_by_subset_name(project_name,
+                                                      subset_name,
+                                                      asset_name=asset_name)
+            if not version:
+                return
+
+            representations = get_representations(project_name,
+                                                  version_ids=[version["_id"]])
+            published_files = []
+            for repre in representations:
+                if repre["context"]["family"] not in self.families:
+                    continue
+
+                for file_info in repre.get("files"):
+                    published_files.append(file_info["path"])
+
+            instance.data["last_version_published_files"] = published_files
+            self.log.debug("last_version_published_files::{}".format(
+                instance.data["last_version_published_files"]))
+
     @classmethod
     def get_attribute_defs(cls):
         return [
@@ -26,4 +62,3 @@ class CollectFramesFixDef(
                     placeholder="5,10-15",
                     regex="[0-9,-]+")
         ]
-
