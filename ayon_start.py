@@ -7,7 +7,6 @@ import os
 import sys
 import platform
 import traceback
-import subprocess
 import distutils.spawn
 
 
