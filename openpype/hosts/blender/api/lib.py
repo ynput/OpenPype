@@ -622,7 +622,7 @@ def download_last_workfile() -> str:
 
     # Get workfile representation
     last_version_doc = get_last_version_by_subset_id(
-        project_name, subset_id, fields=["_id", "name"]
+        project_name, subset_id, fields=["_id", "name", "data"]
     )
     if not last_version_doc:
         print("Subset does not have any version")
@@ -658,4 +658,4 @@ def download_last_workfile() -> str:
         last_version_doc,
         anatomy=anatomy,
         asset_doc=asset_doc,
-    )
+    ), last_version_doc["data"]["time"]

@@ -7,6 +7,7 @@ import bpy
 
 from openpype.settings import get_project_settings
 from openpype.pipeline import legacy_io
+from openpype.client.entities import get_last_version_by_subset_name
 
 
 class OpenFileCacher:
@@ -95,3 +96,36 @@ def work_root(session: dict) -> str:
     if scene_dir:
         return str(Path(work_dir, scene_dir))
     return work_dir
+
+
+def check_workfile_up_to_date() -> bool:
+    """Check if the current workfile is out of date.
+
+    This is based on last modification date, so if a user modifies an out of
+    date workfile, this will return `False`. Also, in case of partial publish,
+    this will return `True`.
+
+    Returns:
+        bool: True if the current workfile is up to date.
+    """
+    session = legacy_io.Session
+
+    # Get date and time of the latest published workfile
+    last_published_version = get_last_version_by_subset_name(
+        legacy_io.active_project(),
+        f"workfile{session.get('AVALON_TASK')}",
+        asset_name=session.get("AVALON_ASSET"),
+        fields=["data"]
+    )
+
+    # Check if version exists
+    if not last_published_version:
+        return True
+
+    scene = bpy.context.scene
+    
+    last_published_time = last_published_version["data"]["time"]
+    if scene.get("op_published_time"):
+        return last_published_time <= scene["op_published_time"]
+    else:
+        return False

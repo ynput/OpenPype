@@ -51,9 +51,13 @@ from openpype.tools.utils.lib import qt_app_context
 from .workio import OpenFileCacher, save_file, work_root
 from openpype.pipeline import legacy_io, Anatomy
 from openpype.tools.utils import host_tools
-from openpype.modules.base import ModulesManager
-from .lib import download_last_workfile
-from .workio import OpenFileCacher
+from openpype.tools.utils.lib import qt_app_context
+from .workio import (
+    OpenFileCacher,
+    save_file,
+    work_root,
+    check_workfile_up_to_date,
+)
 
 PREVIEW_COLLECTIONS: Dict = dict()
 
@@ -1098,53 +1102,16 @@ class BuildWorkFile(bpy.types.Operator):
 
     def invoke(self, context, event):
         return bpy.context.window_manager.invoke_props_dialog(self, width=150)
-class WM_OT_DownloadLastWorkfile(bpy.types.Operator):
-    """Download Last Workfile."""
+class WM_OT_CheckWorkfileUpToDate(bpy.types.Operator):
+    """Check if the current workfile is up to date.
 
-    bl_idname = "wm.download_last_workfile"
-    bl_label = "Download Latest Workfile"
+    If it's out of date, the workfile out of date dialog will open.
+    Otherwise, a dialog notifying user that their workfile is up to date will
+    appear.
+    """
 
-    @classmethod
-    def poll(cls, context):
-        """Return if this operator is available or not."""
-        return context.window_manager.is_workfile_out_of_date
-
-    def execute(self, context):
-        """Execute this operator."""
-        # Get sync server module
-        sync_server = ModulesManager().modules_by_name.get("sync_server")
-        if not sync_server or not sync_server.enabled:
-            self.report(
-                {"WARNING"}, "Sync server module is disabled or unavailable."
-            )
-            return {"CANCELLED"}
-
-        session = legacy_io.Session
-        project_name = session.get("AVALON_PROJECT")
-        task_name = session.get("AVALON_TASK")
-        asset_name = session.get("AVALON_ASSET")
-        anatomy = Anatomy(project_name)
-        last_workfile_representation = get_last_workfile_representation(project_name, asset_name, task_name)
-        last_workfile_path = download_last_published_workfile(...)
-        if last_workfile_path:
-            bpy.ops.wm.open_mainfile(filepath=last_workfile_path)
-            return {"FINISHED"}
-        else:
-            self.report({"ERROR"}, "Failed to download last workfile.")
-            return {"CANCELLED"}
-
-    def invoke(self, context, event):
-        """Invoke this operator."""
-        return self.execute(context)
-
-
-class WM_OT_DrawWorkFileOutOfDateWarning(bpy.types.Operator):
-    """Display a warning message about the workfile being out of date.
-    Either the user chooses to willingly proceed with their out of date
-    workfile, or blender will be closed after clicking on `OK`."""
-
-    bl_idname = "wm.workfile_out_of_date"
-    bl_label = "WARNING: Workfile is out of date"
+    bl_idname = "wm.check_workfile_up_to_date"
+    bl_label = "Check Workfile Up To Date"
 
     action: bpy.props.EnumProperty(
         name="Action Enum",
@@ -1155,38 +1122,74 @@ class WM_OT_DrawWorkFileOutOfDateWarning(bpy.types.Operator):
         ),
     )
 
-    def execute(self, context):
-        """Execute this operator."""
-        if self.action == "DOWNLOAD":
-            bpy.ops.wm.download_last_workfile("EXEC_DEFAULT")
-        elif self.action == "QUIT":
-            bpy.ops.wm.quit_blender()
-        elif self.action != "PROCEED":
-            self.report(
-                {"ERROR"}, "Undefined enum value error"
-            )
-            return {"CANCELLED"}
-        return {"FINISHED"}
-
-    def cancel(self, context):
-        """Run when this operator is cancelled."""
-        bpy.ops.wm.workfile_out_of_date("INVOKE_DEFAULT")
-
-    def invoke(self, context, event):
+    def invoke(self, context, _event):
         """Invoke this operator."""
-        return context.window_manager.invoke_props_dialog(self)
+        context.scene.is_workfile_up_to_date = check_workfile_up_to_date()
+        if context.scene.is_workfile_up_to_date:
+            return context.window_manager.invoke_popup(self)
+        else:
+            return context.window_manager.invoke_props_dialog(self)
 
     def draw(self, context):
         """Draw UI."""
-        col = self.layout.column()
+        if context.scene.is_workfile_up_to_date:
+            layout = self.layout
+            layout.ui_units_x = 7.5
+            layout.label(text="Your workfile is up to date!")
+        else:
+            col = self.layout.column()
 
-        # Display alert
-        row = col.row()
-        row.alert = True
-        row.label(text="Your workfile is out of date.")
+            # Display alert
+            row = col.row()
+            row.alert = True
+            row.label(text="Your workfile is out of date.")
 
-        # Display enum
-        col.prop(self, "action", expand=True)
+            # Display enum
+            col.prop(self, "action", expand=True)
+
+    def execute(self, context):
+        """Execute this operator."""
+        # Check workfile is up to date
+        if context.scene.is_workfile_up_to_date:
+            return {"FINISHED"}
+
+        if self.action == "DOWNLOAD":
+            context.window.cursor_set("WAIT")
+
+            # Get sync server module
+            sync_server = ModulesManager().modules_by_name.get("sync_server")
+            if not sync_server or not sync_server.enabled:
+                self.report(
+                    {"WARNING"},
+                    "Sync server module is disabled or unavailable.",
+                )
+                return {"CANCELLED"}
+
+            last_workfile_path, last_published_time = download_last_workfile()
+            if last_workfile_path:
+                bpy.ops.wm.open_mainfile(filepath=last_workfile_path)
+
+                # Update variables
+                context.scene["op_published_time"] = last_published_time
+                context.scene.is_workfile_up_to_date = True
+
+                bpy.ops.wm.save_mainfile()
+                return {"FINISHED"}
+            else:
+                self.report({"ERROR"}, "Failed to download last workfile.")
+                return {"CANCELLED"}
+        elif self.action == "QUIT":
+            bpy.ops.wm.quit_blender()
+        elif self.action == "PROCEED":
+            return {"FINISHED"}
+        else:
+            self.report({"ERROR"}, "Undefined enum value error")
+            return {"CANCELLED"}
+
+    def cancel(self, context):
+        """Run when this operator is cancelled."""
+        if not context.scene.is_workfile_up_to_date:
+            bpy.ops.wm.check_workfile_up_to_date("INVOKE_DEFAULT")
 
 
 class TOPBAR_MT_avalon(bpy.types.Menu):
@@ -1201,7 +1204,7 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         layout = self.layout
 
         # Display workfile out of date warning
-        if context.window_manager.is_workfile_out_of_date:
+        if not context.scene.is_workfile_up_to_date:
             row = layout.row()
             row.label(text="Your workfile is out of date!", icon="ERROR")
             layout.separator()
@@ -1237,9 +1240,8 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         #                'Set Resolution'?
         layout.separator()
         layout.operator(BuildWorkFile.bl_idname, text="Build First Workfile")
-        layout.operator(
-            WM_OT_DownloadLastWorkfile.bl_idname, text="Update Workfile"
-        )
+        layout.separator()
+        layout.operator(WM_OT_CheckWorkfileUpToDate.bl_idname)
 
 
 def draw_avalon_menu(self, context):
@@ -1248,7 +1250,7 @@ def draw_avalon_menu(self, context):
     self.layout.menu(
         TOPBAR_MT_avalon.bl_idname,
         icon="ERROR"
-        if context.window_manager.is_workfile_out_of_date
+        if not context.scene.is_workfile_up_to_date
         else "NONE",
     )
 
@@ -1504,9 +1506,13 @@ classes = [
     LaunchManager,
     LaunchLibrary,
     LaunchWorkFiles,
+<<<<<<< HEAD
     BuildWorkFile,
     WM_OT_DownloadLastWorkfile,
     WM_OT_DrawWorkFileOutOfDateWarning,
+=======
+    WM_OT_CheckWorkfileUpToDate,
+>>>>>>> 5bb7dfe4b9 (Enhancement: workfile out of date check no longer uses modification time.)
     TOPBAR_MT_avalon,
     SCENE_OT_MakeContainerPublishable,
     SCENE_OT_ExposeContainerContent,
@@ -1518,6 +1524,11 @@ classes = [
     SCENE_OT_MoveOpenpypeInstance,
     SCENE_OT_MoveOpenpypeInstanceDatablock,
 ]
+
+def update_workfile_up_to_date():
+    """Check regularily the current workfile is up-to-date."""
+    bpy.context.scene.is_workfile_up_to_date = check_workfile_up_to_date()
+    return 60 * 10
 
 
 def register():
@@ -1539,6 +1550,12 @@ def register():
     # Hack to store creators with parameters for optimization purpose
     bpy.app.handlers.load_post.append(discover_creators_handler)
 
+<<<<<<< HEAD
+=======
+    # Regularily check the workfile is up-to-date
+    bpy.app.timers.register(update_workfile_up_to_date, first_interval=0, persistent=True)
+
+>>>>>>> 5bb7dfe4b9 (Enhancement: workfile out of date check no longer uses modification time.)
 
 def unregister():
     """Unregister the operators and menu."""
@@ -1548,3 +1565,5 @@ def unregister():
     bpy.types.TOPBAR_MT_editor_menus.remove(draw_avalon_menu)
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
+
+    bpy.app.timers.unregister(check_workfile_up_to_date)
