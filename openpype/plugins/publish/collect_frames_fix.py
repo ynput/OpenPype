@@ -39,6 +39,8 @@ class CollectFramesFixDef(
                                                       subset_name,
                                                       asset_name=asset_name)
             if not version:
+                self.log.warning("No last version found, "
+                                 "re-render not possible")
                 return
 
             representations = get_representations(project_name,
