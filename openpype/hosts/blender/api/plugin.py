@@ -3,7 +3,6 @@
 from pprint import pformat
 from inspect import getmembers
 from pathlib import Path
-from contextlib import contextmanager, ExitStack
 from string import digits
 import threading
 from typing import Callable, Dict, List, Optional, Set, Tuple, Union, Iterator
@@ -750,22 +749,21 @@ class AssetLoader(Loader):
 
         if self.bl_types & BL_OUTLINER_TYPES:
             # Get the right asset container from imported collections.
-            container_collection = next(
+            outliner_entity = next(
                 (
-                    col
-                    for col in data_to.collections
-                    if col.name.startswith(container_name)
+                    entity
+                    for entity in list(data_to.collections)
+                    + list(data_to.objects)
+                    if entity.name.startswith(container_name)
                 ),
                 None,
             )
 
-            # Ensure container collection
-            if container_collection:
+            if outliner_entity:
+                # Create override for the library collection and its elements
                 if do_override:
-                    # Create override for the library collection and
-                    # this elements.
-                    container_collection = (
-                        container_collection.override_hierarchy_create(
+                    outliner_entity = (
+                        outliner_entity.override_hierarchy_create(
                             bpy.context.scene,
                             bpy.context.view_layer
                             # NOTE After BL3.4: do_fully_editable=True
@@ -774,28 +772,25 @@ class AssetLoader(Loader):
 
                     # Update datablocks because could have been renamed
                     datablocks = set(
-                        container_collection.children_recursive
-                    ) | set(container_collection.all_objects)
-                    datablocks.add(container_collection)
+                        outliner_entity.children_recursive
+                    )
+                    if isinstance(outliner_entity, bpy.types.Collection):
+                        datablocks.update(set(outliner_entity.all_objects))
+                    datablocks.add(outliner_entity)
 
                     # Ensure user override NOTE: will be unecessary after BL3.4
                     for d in datablocks:
                         if hasattr(d.override_library, "is_system_override"):
                             d.override_library.is_system_override = False
-            else:
-                # Create collection container
-                container_collection = bpy.data.collections.new(container_name)
-                bpy.context.scene.collection.children.link(
-                    container_collection
-                )
 
-            # Set color
-            container_collection.color_tag = self.color_tag
+                # Set color
+                if hasattr(outliner_entity, "color_tag"):
+                    outliner_entity.color_tag = self.color_tag
 
-            # Substitute name in case renamed with .###
-            container_name = container_collection.name
+                # Substitute name in case renamed with .###
+                container_name = outliner_entity.name
         else:
-            container_collection = None
+            outliner_entity = None
 
         if container:
             # Add datablocks to container
@@ -810,7 +805,7 @@ class AssetLoader(Loader):
 
         # Set data to container
         container.library = bpy.data.libraries.get(libpath.name)
-        container.outliner_entity = container_collection
+        container.outliner_entity = outliner_entity
 
         return container, datablocks
 
