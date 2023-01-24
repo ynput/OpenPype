@@ -19,14 +19,11 @@ from .addon_info import (
 
 
 class UpdateState(Enum):
-    EXISTS = "exists"
-    UPDATED = "updated"
-    FAILED_MISSING_SOURCE = "failed_no_download_source"
-    FAILED = "failed"
-
-
-DEPENDENCIES_ENDPOINT = "dependencies"
-ADDON_ENDPOINT = "addons?details=1"
+    UNKNOWN = "unknown"
+    UPDATED = "udated"
+    OUTDATED = "outdated"
+    UPDATE_FAILED = "failed"
+    MISS_SOURCE_FILES = "miss_source_files"
 
 
 def get_local_dir(*subdirs):
