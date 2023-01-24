@@ -177,21 +177,17 @@ if not os.getenv("SSL_CERT_FILE"):
 elif os.getenv("SSL_CERT_FILE") != certifi.where():
     _print("--- your system is set to use custom CA certificate bundle.")
 
-from ayon_common.connection.credentials import (
-    ask_to_login_ui,
-    add_server,
-    store_token,
+from ayon_common.connection.server import (
     need_server_or_login,
     load_environments,
     set_environments,
 )
-from ayon_common.distribution.addon_distribution import (
-    get_addons_dir,
-    get_dependencies_dir,
-    make_sure_addons_are_updated,
-    make_sure_venv_is_updated,
-    get_default_addon_downloader,
+from ayon_common.connection.credentials import (
+    ask_to_login_ui,
+    add_server,
+    store_token,
 )
+from ayon_common.distribution.addon_distribution import AyonDistribution
 
 
 def set_global_environments() -> None:
@@ -258,9 +254,9 @@ def _connect_to_ayon_server():
         sys.exit(1)
 
     current_url = os.environ.get("AYON_SERVER_URL")
-    url, token, username = ask_to_login_ui(current_url)
+    url, token = ask_to_login_ui(current_url)
     if url is not None:
-        add_server(url, username)
+        add_server(url)
         if token is not None:
             store_token(url, token)
             set_environments(url, token)
@@ -277,19 +273,11 @@ def _check_and_update_from_ayon_server():
         RuntimeError
     """
 
-    local_addons_dir = get_addons_dir()
-    local_dependencies_dir = get_dependencies_dir()
-
-    default_downloader = get_default_addon_downloader()
-    _print(f">>> Checking addons in {local_addons_dir} ...")
-    make_sure_addons_are_updated(default_downloader, local_addons_dir)
-
-    if local_addons_dir not in sys.path:
-        _print(f"Adding {local_addons_dir} to sys path.")
-        sys.path.insert(0, local_addons_dir)
-
-    _print(f">>> Checking venvs in {local_dependencies_dir} ...")
-    make_sure_venv_is_updated(default_downloader, local_dependencies_dir)
+    distribution = AyonDistribution()
+    distribution.distribute()
+    distribution.validate_distribution()
+    for path in distribution.get_sys_paths():
+        sys.path.insert(0, path)
 
 
 def boot():
