@@ -773,7 +773,8 @@ def convert_project_settings(ayon_settings, default_settings):
         "unreal",
     }
     for key in exact_match:
-        output[key] = ayon_settings[key]
+        if key in ayon_settings:
+            output[key] = ayon_settings[key]
 
     _convert_blender_project_settings(ayon_settings, output)
     _convert_celaction_project_settings(ayon_settings, output)
