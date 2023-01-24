@@ -65,7 +65,6 @@ if "--use-staging" in sys.argv:
 
 _silent_commands = {
     "run",
-    "igniter",
     "standalonepublisher",
     "extractenvironments",
     "version"
@@ -81,10 +80,6 @@ IS_BUILT_APPLICATION = getattr(sys, "frozen", False)
 HEADLESS_MODE_ENABLED = os.environ.get("OPENPYPE_HEADLESS_MODE") == "1"
 SILENT_MODE_ENABLED = any(arg in _silent_commands for arg in sys.argv)
 
-# AYON_ROOT is variable pointing to build (or code) directory
-# WARNING `AYON_ROOT` must be defined before igniter import
-# - igniter changes cwd which cause that filepath of this script won't lead
-#   to right directory
 _pythonpath = os.getenv("PYTHONPATH", "")
 _python_paths = _pythonpath.split(os.pathsep)
 if not IS_BUILT_APPLICATION:
@@ -184,7 +179,6 @@ if not os.getenv("SSL_CERT_FILE"):
 elif os.getenv("SSL_CERT_FILE") != certifi.where():
     _print("--- your system is set to use custom CA certificate bundle.")
 
-import igniter
 from ayon_common.connection.server import (
     need_server_or_login,
     load_environments,
@@ -322,35 +316,6 @@ def _startup_validations():
         sys.exit(1)
 
 
-def _process_igniter_argument():
-    """Process command line arguments.
-
-    Returns:
-        tuple: Return tuple with specific version to use (if any) and flag
-            to prioritize staging (if set)
-    """
-
-    # handle igniter
-    # this is helper to run igniter before anything else
-    if "igniter" not in sys.argv:
-        return
-
-    if HEADLESS_MODE_ENABLED:
-        _print("!!! Cannot open Igniter dialog in headless mode.")
-        sys.exit(1)
-
-    return_code = igniter.open_dialog()
-
-    # this is when we want to run OpenPype without installing anything.
-    # or we are ready to run.
-    if return_code not in [2, 3]:
-        sys.exit(return_code)
-
-    idx = sys.argv.index("igniter")
-    sys.argv.pop(idx)
-    sys.argv.insert(idx, "tray")
-
-
 def _connect_to_ayon_server():
     load_environments()
     if not need_server_or_login():
@@ -413,11 +378,6 @@ def boot():
     # ------------------------------------------------------------------------
     _startup_validations()
 
-    # ------------------------------------------------------------------------
-    # Process arguments
-    # ------------------------------------------------------------------------
-    if "igniter" in sys.argv:
-        _process_igniter_argument()
     use_staging = os.environ.get("OPENPYPE_USE_STAGING") == "1"
 
     _connect_to_ayon_server()
