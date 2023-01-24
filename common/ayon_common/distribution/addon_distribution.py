@@ -20,7 +20,7 @@ from .addon_info import (
     AddonInfo,
     UrlType,
     DependencyItem,
-    ServerResourceSource,
+    ServerSourceInfo,
 )
 
 
@@ -349,7 +349,7 @@ def _try_convert_to_server_source(addon, source):
     if not filename:
         return source
 
-    return ServerResourceSource(
+    return ServerSourceInfo(
         type=UrlType.SERVER.value, filename=filename
     )
 
