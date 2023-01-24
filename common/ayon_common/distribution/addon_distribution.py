@@ -729,7 +729,7 @@ class AyonDistribution:
         self._addons_info = None
         self._addons_progress = None
         self._dependency_package = -1
-        self._dependency_progress = None
+        self._dependency_progress = -1
 
     @property
     def log(self):
@@ -761,6 +761,8 @@ class AyonDistribution:
         addons_metadata = self.get_addons_metadata()
         output = {}
         for full_name, addon_info in self.addons_info.items():
+            if not addon_info.require_distribution:
+                continue
             addon_dest = os.path.join(self._addons_dirpath, full_name)
             self.log.debug(f"Checking {full_name} in {addon_dest}")
             addon_in_metadata = (
@@ -802,42 +804,34 @@ class AyonDistribution:
 
     def _preapre_dependency_progress(self):
         package = self.dependency_package
+        if package is None or not package.require_distribution:
+            return None
+
+        metadata = self.get_dependency_metadata()
         downloader_data = {
             "type": "dependency_package",
-            "name": None,
-            "platform": None
+            "name": package.name,
+            "platform": package.platform
         }
-        state = UpdateState.UPDATED
-        file_hash = None
-        sources = []
-        item_label = "Dependency package"
+        zip_dir = package_dir = os.path.join(
+            self._dependency_dirpath, package.name
+        )
+        self.log.debug(f"Checking {package.name} in {package_dir}")
 
-        package_dir = zip_dir = None
-        if package is not None:
-            metadata = self.get_dependency_metadata()
-            downloader_data["name"] = package.name
-            downloader_data["platform"] = package.platform
-
-            sources = package.sources
-            file_hash = package.checksum
-            item_label = package.name
-            zip_dir = package_dir = os.path.join(
-                self._dependency_dirpath, package.name
-            )
-            self.log.debug(f"Checking {package.name} in {package_dir}")
-
-            if not os.path.isdir(package_dir) or package.name not in metadata:
-                state = UpdateState.OUTDATED
+        if not os.path.isdir(package_dir) or package.name not in metadata:
+            state = UpdateState.OUTDATED
+        else:
+            state = UpdateState.UPDATED
 
         return DistributionItem(
             state,
             zip_dir,
             package_dir,
-            file_hash,
+            package.checksum,
             self._dist_factory,
-            sources,
+            package.sources,
             downloader_data,
-            item_label,
+            package.name,
             self.log,
         )
 
@@ -847,7 +841,7 @@ class AyonDistribution:
         return self._addons_progress
 
     def get_dependency_progress(self):
-        if self._dependency_progress is None:
+        if self._dependency_progress == -1:
             self._dependency_progress = self._preapre_dependency_progress()
         return self._dependency_progress
 
@@ -937,7 +931,8 @@ class AyonDistribution:
         stored_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         dependency_progress = self.get_dependency_progress()
         if (
-            dependency_progress.need_distribution
+            dependency_progress is not None
+            and dependency_progress.need_distribution
             and dependency_progress.state == UpdateState.UPDATED
         ):
             package = self.dependency_package
@@ -973,7 +968,10 @@ class AyonDistribution:
         self.update_addons_metadata(addons_info)
 
     def get_all_distribution_items(self):
-        output = [self.get_dependency_progress()]
+        output = []
+        dependency_progress = self.get_dependency_progress()
+        if dependency_progress is not None:
+            output.append(dependency_progress)
         for progress in self.get_addons_progress().values():
             output.append(progress)
         return output
@@ -1001,7 +999,10 @@ class AyonDistribution:
     def validate_distribution(self):
         invalid = []
         dependency_package = self.get_dependency_progress()
-        if dependency_package.state != UpdateState.UPDATED:
+        if (
+            dependency_package is not None
+            and dependency_package.state != UpdateState.UPDATED
+        ):
             invalid.append("Dependency package")
 
         for addon_name, progress in self.get_addons_progress().items():
