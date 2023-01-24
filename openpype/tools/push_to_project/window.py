@@ -230,9 +230,13 @@ class AssetsModel(QtGui.QStandardItemModel):
             item = self._items.pop(item_id, None)
             if item is None:
                 continue
+            row = item.row()
+            if row < 0:
+                continue
             parent = item.parent()
-            if parent is not None:
-                parent.takeRow(item.row())
+            if parent is None:
+                parent = root_item
+            parent.takeRow(row)
 
         self.items_changed.emit()
 

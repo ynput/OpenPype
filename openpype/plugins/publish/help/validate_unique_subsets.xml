@@ -3,12 +3,15 @@
 <error id="main">
 <title>Subset not unique</title>
 <description>
-## Non unique subset name found
+## Clashing subset names found
+
+Multiples instances from your scene are set to publish into the same asset > subset.
 
     Non unique subset names: '{non_unique}'
+
 ### How to repair?
 
-Remove offending instance, rename it to have unique name. Maybe layer name wasn't used for multiple instances?
+Remove the offending instances or rename to have a unique name.
 </description>
 </error>
 </root>
