@@ -1,10 +1,16 @@
 import os
+import sys
+import json
+import traceback
+import collections
+import datetime
 from enum import Enum
 from abc import abstractmethod
 import attr
 import logging
 import platform
 import shutil
+import threading
 
 import appdirs
 import ayon_api
@@ -41,6 +47,7 @@ def get_local_dir(*subdirs):
 
     local_dir = os.path.join(
         appdirs.user_data_dir("openpype", "pypeclub"),
+        # appdirs.user_data_dir("ayon", "ynput"),
         *subdirs
     )
     if not os.path.isdir(local_dir):
