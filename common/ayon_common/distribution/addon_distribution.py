@@ -317,6 +317,112 @@ def _try_convert_to_server_source(addon, source):
     )
 
 
+class DistributeTransferProgress:
+    """Progress of single source item in 'DistributionItem'.
+
+    The item is to keep track of single source item.
+    """
+
+    def __init__(self):
+        self._transfer_progress = ayon_api.TransferProgress()
+        self._started = False
+        self._failed = False
+        self._fail_reason = None
+        self._unzip_started = False
+        self._unzip_finished = False
+        self._hash_check_started = False
+        self._hash_check_finished = False
+
+    def set_started(self):
+        """Call when source distribution starts."""
+
+        self._started = True
+
+    def set_failed(self, reason):
+        """Set source distribution as failed.
+
+        Args:
+            reason (str): Error message why the transfer failed.
+        """
+
+        self._failed = True
+        self._fail_reason = reason
+
+    def set_hash_check_started(self):
+        """Call just before hash check starts."""
+
+        self._hash_check_started = True
+
+    def set_hash_check_finished(self):
+        """Call just after hash check finishes."""
+
+        self._hash_check_finished = True
+
+    def set_unzip_started(self):
+        """Call just before unzip starts."""
+
+        self._unzip_started = True
+
+    def set_unzip_finished(self):
+        """Call just after unzip finishes."""
+
+        self._unzip_finished = True
+
+    @property
+    def is_running(self):
+        """Source distribution is in progress.
+
+        Returns:
+            bool: Transfer is in progress.
+        """
+
+        if (
+            not self._started
+            or self._failed
+            or self._hash_check_finished
+        ):
+            return False
+        return True
+
+    @property
+    def transfer_progress(self):
+        """Source file 'download' progress tracker.
+
+        Returns:
+            ayon_api.TransferProgress.: Content download progress.
+        """
+
+        return self._transfer_progress
+
+    @property
+    def started(self):
+        return self._started
+
+    @property
+    def hash_check_started(self):
+        return self._hash_check_started
+
+    @property
+    def hash_check_finished(self):
+        return self._has_check_finished
+
+    @property
+    def unzip_started(self):
+        return self._unzip_started
+
+    @property
+    def unzip_finished(self):
+        return self._unzip_finished
+
+    @property
+    def failed(self):
+        return self._failed or self._transfer_progress.failed
+
+    @property
+    def fail_reason(self):
+        return self._fail_reason or self._transfer_progress.fail_reason
+
+
 def update_addon_state(
     addon_infos,
     destination_folder,
