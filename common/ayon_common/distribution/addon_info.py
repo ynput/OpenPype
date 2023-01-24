@@ -49,6 +49,7 @@ class AddonInfo(object):
     version = attr.ib()
     full_name = attr.ib()
     title = attr.ib(default=None)
+    require_distribution = attr.ib(default=False)
     sources = attr.ib(default=attr.Factory(list))
     unknown_sources = attr.ib(default=attr.Factory(list))
     hash = attr.ib(default=None)
@@ -68,8 +69,9 @@ class AddonInfo(object):
         # server payload contains info about all versions
         # active addon must have 'productionVersion' and matching version info
         version_data = data.get("versions", {})[production_version]
-
-        for source in version_data.get("clientSourceInfo", []):
+        source_info = version_data.get("clientSourceInfo")
+        require_distribution = source_info is not None
+        for source in (source_info or []):
             source_type = source.get("type")
             if source_type == UrlType.FILESYSTEM.value:
                 source_addon = LocalSourceInfo(
@@ -92,16 +94,19 @@ class AddonInfo(object):
             sources.append(source_addon)
 
         full_name = "{}_{}".format(data["name"], production_version)
-        return cls(name=data.get("name"),
-                   version=production_version,
-                   full_name=full_name,
-                   sources=sources,
-                   unknown_sources=unknown_sources,
-                   hash=data.get("hash"),
-                   description=data.get("description"),
-                   title=data.get("title"),
-                   license=data.get("license"),
-                   authors=data.get("authors"))
+        return cls(
+            name=data.get("name"),
+            version=production_version,
+            full_name=full_name,
+            require_distribution=require_distribution,
+            sources=sources,
+            unknown_sources=unknown_sources,
+            hash=data.get("hash"),
+            description=data.get("description"),
+            title=data.get("title"),
+            license=data.get("license"),
+            authors=data.get("authors")
+        )
 
 
 @attr.s
@@ -110,6 +115,7 @@ class DependencyItem(object):
     name = attr.ib()
     platform = attr.ib()
     checksum = attr.ib()
+    require_distribution = attr.ib()
     sources = attr.ib(default=attr.Factory(list))
     unknown_sources = attr.ib(default=attr.Factory(list))
     addon_list = attr.ib(default=attr.Factory(list))
@@ -119,7 +125,9 @@ class DependencyItem(object):
     def from_dict(cls, package):
         sources = []
         unknown_sources = []
-        for source in package.get("sources", []):
+        package_sources = package.get("sources")
+        require_distribution = package_sources is not None
+        for source in (package_sources or []):
             source_type = source.get("type")
             if source_type == UrlType.FILESYSTEM.value:
                 source_addon = LocalSourceInfo(
@@ -144,10 +152,13 @@ class DependencyItem(object):
                       for name, version in
                       package.get("supportedAddons").items()]
 
-        return cls(name=package.get("name"),
-                   platform=package.get("platform"),
-                   sources=sources,
-                   unknown_sources=unknown_sources,
-                   checksum=package.get("checksum"),
-                   addon_list=addon_list,
-                   python_modules=package.get("pythonModules"))
+        return cls(
+            name=package.get("name"),
+            platform=package.get("platform"),
+            require_distribution=require_distribution,
+            sources=sources,
+            unknown_sources=unknown_sources,
+            checksum=package.get("checksum"),
+            addon_list=addon_list,
+            python_modules=package.get("pythonModules")
+        )
