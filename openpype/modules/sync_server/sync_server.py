@@ -17,6 +17,7 @@ from openpype.pipeline import Anatomy
 from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.pipeline.load.utils import get_representation_path_with_anatomy
 from openpype.pipeline.workfile.path_resolving import (
+    get_last_workfile_with_version,
     get_workfile_template_key,
     get_workdir,
 )
@@ -361,38 +362,21 @@ def download_last_published_workfile(
         task_name, host_name, project_name, project_settings
     )
 
-    # Get version patter for regex search
-    version_pattern = anatomy.templates[template_key]["version"]
-    version_pattern = re.sub(
-        r"{version.*?}",
-        r"([0-9]+)",
-        version_pattern,
-    )
-
     # Get local workfile version number
-    last_local_workfile_version = None
-    for filename in sorted(
-        os.listdir(
-            get_workdir(
-                get_project(project_name),
-                asset_doc,
-                task_name,
-                host_name,
-                anatomy=anatomy,
-                template_key=template_key,
-                project_settings=project_settings,
-            )
+    _, last_local_workfile_version = get_last_workfile_with_version(
+        get_workdir(
+            get_project(project_name),
+            asset_doc,
+            task_name,
+            host_name,
+            anatomy=anatomy,
+            template_key=template_key,
+            project_settings=project_settings,
         ),
-        reverse=True,
-    ):
-        if filename.endswith(extension):
-            match = re.search(
-                version_pattern,
-                filename
-            )
-            if match:
-                last_local_workfile_version = int(match.group(1))
-                break
+        anatomy.templates[template_key]["file"],
+        workfile_data,
+        [extension],
+    )
 
     # Set workfile data workfile version
     # Either last published version or last local version, whichever is higher
