@@ -27,7 +27,8 @@ class ValidatePluginPathAttributes(pyblish.api.InstancePlugin):
         file_attr = validate_path["ValidatePathForPlugin"]["attribute"]
         if not file_attr:
             return invalid
-            # get the nodes and file attributes
+
+        # get the nodes and file attributes
         for node, attr in file_attr.items():
             # check the related nodes
             targets = cmds.ls(type=node)
