@@ -89,7 +89,7 @@ class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
 
         """
 
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
         from openpype.hosts.maya.api import lib
 
         # Store namespace in variable, cosmetics thingy

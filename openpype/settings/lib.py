@@ -581,7 +581,7 @@ def load_jsons_from_dir(path, *args, **kwargs):
     Data are loaded recursively from a directory and recreate the
     hierarchy as a dictionary.
 
-    Entered path hiearchy:
+    Entered path hierarchy:
     |_ folder1
     | |_ data1.json
     |_ folder2

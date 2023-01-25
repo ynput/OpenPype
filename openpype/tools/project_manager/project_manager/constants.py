@@ -1,5 +1,5 @@
 import re
-from Qt import QtCore
+from qtpy import QtCore
 
 
 # Item identifier (unique ID - uuid4 is used)

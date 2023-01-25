@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype import resources
 from openpype.style import load_stylesheet

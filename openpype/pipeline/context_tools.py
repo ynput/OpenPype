@@ -158,17 +158,24 @@ def install_openpype_plugins(project_name=None, host_name=None):
     pyblish.api.register_discovery_filter(filter_pyblish_plugins)
     register_loader_plugin_path(LOAD_PATH)
 
-    modules_manager = _get_modules_manager()
-    publish_plugin_dirs = modules_manager.collect_plugin_paths()["publish"]
-    for path in publish_plugin_dirs:
-        pyblish.api.register_plugin_path(path)
-
     if host_name is None:
         host_name = os.environ.get("AVALON_APP")
 
-    creator_paths = modules_manager.collect_creator_plugin_paths(host_name)
-    for creator_path in creator_paths:
-        register_creator_plugin_path(creator_path)
+    modules_manager = _get_modules_manager()
+    publish_plugin_dirs = modules_manager.collect_publish_plugin_paths(
+        host_name)
+    for path in publish_plugin_dirs:
+        pyblish.api.register_plugin_path(path)
+
+    create_plugin_paths = modules_manager.collect_create_plugin_paths(
+        host_name)
+    for path in create_plugin_paths:
+        register_creator_plugin_path(path)
+
+    load_plugin_paths = modules_manager.collect_load_plugin_paths(
+        host_name)
+    for path in load_plugin_paths:
+        register_loader_plugin_path(path)
 
     if project_name is None:
         project_name = os.environ.get("AVALON_PROJECT")

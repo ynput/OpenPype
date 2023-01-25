@@ -15,6 +15,7 @@ class ExtractLayout(publish.Extractor):
     label = "Extract Layout"
     hosts = ["maya"]
     families = ["layout"]
+    project_container = "AVALON_CONTAINERS"
     optional = True
 
     def process(self, instance):
@@ -33,12 +34,25 @@ class ExtractLayout(publish.Extractor):
 
         for asset in cmds.sets(str(instance), query=True):
             # Find the container
-            grp_name = asset.split(':')[0]
+            project_container = self.project_container
+            container_list = cmds.ls(project_container)
+            if len(container_list) == 0:
+                self.log.warning("Project container is not found!")
+                self.log.warning("The asset(s) may not be properly loaded after published") # noqa
+                continue
+
+            grp_loaded_ass = instance.data.get("groupLoadedAssets", False)
+            if grp_loaded_ass:
+                asset_list = cmds.listRelatives(asset, children=True)
+                for asset in asset_list:
+                    grp_name = asset.split(':')[0]
+            else:
+                grp_name = asset.split(':')[0]
             containers = cmds.ls("{}*_CON".format(grp_name))
-
-            assert len(containers) == 1, \
-                "More than one container found for {}".format(asset)
-
+            if len(containers) == 0:
+                self.log.warning("{} isn't from the loader".format(asset))
+                self.log.warning("It may not be properly loaded after published") # noqa
+                continue
             container = containers[0]
 
             representation_id = cmds.getAttr(

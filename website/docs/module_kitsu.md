@@ -26,6 +26,8 @@ openpype_console module kitsu sync-service -l me@domain.ext -p my_password
 ### Events listening
 Listening to Kitsu events is the key to automation of many tasks like _project/episode/sequence/shot/asset/task create/update/delete_ and some more. Events listening should run at all times to perform the required processing as it is not possible to catch some of them retrospectively with strong reliability. If such timeout has been encountered, you must relaunch the `sync-service` command to run the synchronization step again.
 
+Connection token is refreshed every week.
+
 ### Push to Kitsu
 An utility function is provided to help update Kitsu data (a.k.a Zou database) with OpenPype data if the publishing to the production tracker hasn't been possible for some time. Running `push-to-zou` will create the data on behalf of the user.
 :::caution

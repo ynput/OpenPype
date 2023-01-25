@@ -2,7 +2,7 @@ import sys
 import traceback
 import contextlib
 from enum import Enum
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 import qtawesome
 
 from openpype.lib import get_openpype_version

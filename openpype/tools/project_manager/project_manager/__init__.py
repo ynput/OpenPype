@@ -44,7 +44,7 @@ from .window import ProjectManagerWindow
 
 def main():
     import sys
-    from Qt import QtWidgets
+    from qtpy import QtWidgets
 
     app = QtWidgets.QApplication([])
 

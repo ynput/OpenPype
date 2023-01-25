@@ -116,7 +116,7 @@ RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
 
 def get_main_window():
     """Acquire Maya's main window"""
-    from Qt import QtWidgets
+    from qtpy import QtWidgets
 
     if self._parent is None:
         self._parent = {
@@ -128,13 +128,18 @@ def get_main_window():
 
 @contextlib.contextmanager
 def suspended_refresh(suspend=True):
-    """Suspend viewport refreshes"""
-    original_state = cmds.refresh(query=True, suspend=True)
+    """Suspend viewport refreshes
+
+    cmds.ogs(pause=True) is a toggle so we cant pass False.
+    """
+    original_state = cmds.ogs(query=True, pause=True)
     try:
-        cmds.refresh(suspend=suspend)
+        if suspend and not original_state:
+            cmds.ogs(pause=True)
         yield
     finally:
-        cmds.refresh(suspend=original_state)
+        if suspend and not original_state:
+            cmds.ogs(pause=True)
 
 
 @contextlib.contextmanager
@@ -282,73 +287,6 @@ def pairwise(iterable):
 
     a = iter(iterable)
     return zip(a, a)
-
-
-def export_alembic(nodes,
-                   file,
-                   frame_range=None,
-                   write_uv=True,
-                   write_visibility=True,
-                   attribute_prefix=None):
-    """Wrap native MEL command with limited set of arguments
-
-    Arguments:
-        nodes (list): Long names of nodes to cache
-
-        file (str): Absolute path to output destination
-
-        frame_range (tuple, optional): Start- and end-frame of cache,
-            default to current animation range.
-
-        write_uv (bool, optional): Whether or not to include UVs,
-            default to True
-
-        write_visibility (bool, optional): Turn on to store the visibility
-        state of objects in the Alembic file. Otherwise, all objects are
-        considered visible, default to True
-
-        attribute_prefix (str, optional): Include all user-defined
-            attributes with this prefix.
-
-    """
-
-    if frame_range is None:
-        frame_range = (
-            cmds.playbackOptions(query=True, ast=True),
-            cmds.playbackOptions(query=True, aet=True)
-        )
-
-    options = [
-        ("file", file),
-        ("frameRange", "%s %s" % frame_range),
-    ] + [("root", mesh) for mesh in nodes]
-
-    if isinstance(attribute_prefix, string_types):
-        # Include all attributes prefixed with "mb"
-        # TODO(marcus): This would be a good candidate for
-        #   external registration, so that the developer
-        #   doesn't have to edit this function to modify
-        #   the behavior of Alembic export.
-        options.append(("attrPrefix", str(attribute_prefix)))
-
-    if write_uv:
-        options.append(("uvWrite", ""))
-
-    if write_visibility:
-        options.append(("writeVisibility", ""))
-
-    # Generate MEL command
-    mel_args = list()
-    for key, value in options:
-        mel_args.append("-{0} {1}".format(key, value))
-
-    mel_args_string = " ".join(mel_args)
-    mel_cmd = "AbcExport -j \"{0}\"".format(mel_args_string)
-
-    # For debuggability, put the string passed to MEL in the Script editor.
-    print("mel.eval('%s')" % mel_cmd)
-
-    return mel.eval(mel_cmd)
 
 
 def collect_animation_data(fps=False):
@@ -3013,7 +2951,7 @@ def update_content_on_context_change():
 
 
 def show_message(title, msg):
-    from Qt import QtWidgets
+    from qtpy import QtWidgets
     from openpype.widgets import message_window
 
     # Find maya main window
@@ -3436,3 +3374,8 @@ def iter_visible_nodes_in_range(nodes, start, end):
         # If no more nodes to process break the frame iterations..
         if not node_dependencies:
             break
+
+
+def get_attribute_input(attr):
+    connections = cmds.listConnections(attr, plugs=True, destination=False)
+    return connections[0] if connections else None
