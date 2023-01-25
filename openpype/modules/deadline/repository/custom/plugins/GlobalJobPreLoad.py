@@ -353,17 +353,23 @@ def inject_openpype_environment(deadlinePlugin):
             ))
 
         if not os.environ.get("OPENPYPE_MONGO"):
-            print(">>> Missing OPENPYPE_MONGO env var, process won't work")
+            if not job.GetJobEnvironmentKeyValue('OPENPYPE_MONGO'):
+                print(">>> Missing OPENPYPE_MONGO env var, process won't work")
 
         os.environ["AVALON_TIMEOUT"] = "5000"
 
         args_str = subprocess.list2cmdline(args)
         print(">>> Executing: {} {}".format(exe, args_str))
-        process = ProcessUtils.SpawnProcess(
-            exe, args_str, os.path.dirname(exe)
+
+        my_env = {**os.environ}
+        my_env["OPENPYPE_MONGO"] = job.GetJobEnvironmentKeyValue(
+            'OPENPYPE_MONGO'
         )
-        ProcessUtils.WaitForExit(process, -1)
-        if process.ExitCode != 0:
+
+        process = subprocess.Popen([exe] + args, env=my_env)
+
+        output = process.communicate()[0]
+        if process.returncode != 0:
             raise RuntimeError(
                 "Failed to run OpenPype process to extract environments."
             )
