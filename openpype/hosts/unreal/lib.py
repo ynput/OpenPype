@@ -221,14 +221,14 @@ def create_unreal_project(project_name: str,
 
     # engine_path should be the location of UE_X.X folder
 
-    ue_editor_exe_path: Path = get_editor_exe_path(engine_path, ue_version)
-    cmdlet_project_path = get_path_to_cmdlet_project(ue_version)
+    ue_editor_exe: Path = get_editor_exe_path(engine_path, ue_version)
+    cmdlet_project: Path = get_path_to_cmdlet_project(ue_version)
 
     project_file = pr_dir / f"{project_name}.uproject"
 
     print("--- Generating a new project ...")
-    commandlet_cmd = [f'{ue_editor_exe_path.as_posix()}',
-                      f'{cmdlet_project_path.as_posix()}',
+    commandlet_cmd = [f'{ue_editor_exe.as_posix()}',
+                      f'{cmdlet_project.as_posix()}',
                       f'-run=OPGenerateProject',
                       f'{project_file.resolve().as_posix()}']
 
@@ -297,18 +297,21 @@ def get_path_to_uat(engine_path: Path) -> Path:
     if platform.system().lower() == "windows":
         return engine_path / "Engine/Build/BatchFiles/RunUAT.bat"
 
-    if platform.system().lower() == "linux" or platform.system().lower() == "darwin":
+    if platform.system().lower() == "linux" \
+            or platform.system().lower() == "darwin":
         return engine_path / "Engine/Build/BatchFiles/RunUAT.sh"
 
 
 def get_path_to_cmdlet_project(ue_version: str) -> Path:
-    commandlet_project_path: Path = Path(os.path.dirname(os.path.abspath(openpype.__file__)))
+    cmdlet_project: Path = Path(os.path.dirname(os.path.abspath(openpype.__file__)))
 
     # For now, only tested on Windows (For Linux and Mac it has to be implemented)
     if ue_version.split(".")[0] == "4":
-        return commandlet_project_path / "hosts/unreal/integration/UE_4.7/CommandletProject/CommandletProject.uproject"
+        cmdlet_project /= "hosts/unreal/integration/UE_4.7"
     elif ue_version.split(".")[0] == "5":
-        return commandlet_project_path / "hosts/unreal/integration/UE_5.0/CommandletProject/CommandletProject.uproject"
+        cmdlet_project /= "hosts/unreal/integration/UE_5.0"
+
+    return cmdlet_project / "CommandletProject/CommandletProject.uproject"
 
 
 def get_path_to_ubt(engine_path: Path, ue_version: str) -> Path:
@@ -374,12 +377,12 @@ def try_installing_plugin(engine_path: Path,
     if not (openpype_plugin_path / "Binaries").is_dir() \
             or not (openpype_plugin_path / "Intermediate").is_dir():
         print("--- Binaries are not present. Building the plugin ...")
-        _build_and_move_integration_plugin(engine_path, openpype_plugin_path, env)
+        _build_and_move_plugin(engine_path, openpype_plugin_path, env)
 
 
-def _build_and_move_integration_plugin(engine_path: Path,
-                                       plugin_build_path: Path,
-                                       env: dict = None) -> None:
+def _build_and_move_plugin(engine_path: Path,
+                           plugin_build_path: Path,
+                           env: dict = None) -> None:
     uat_path: Path = get_path_to_uat(engine_path)
 
     env = env or os.environ
@@ -390,191 +393,24 @@ def _build_and_move_integration_plugin(engine_path: Path,
         temp_dir.mkdir(exist_ok=True)
         uplugin_path: Path = integration_plugin_path / "OpenPype.uplugin"
 
-        # in order to successfully build the plugin, It must be built outside the Engine directory and then moved
+        # in order to successfully build the plugin,
+        # It must be built outside the Engine directory and then moved
         build_plugin_cmd: List[str] = [f'{uat_path.as_posix()}',
                                        'BuildPlugin',
                                        f'-Plugin={uplugin_path.as_posix()}',
                                        f'-Package={temp_dir.as_posix()}']
         subprocess.run(build_plugin_cmd)
 
-        # Copy the contents of the 'Temp' dir into the 'OpenPype' directory in the engine
+        # Copy the contents of the 'Temp' dir into the
+        # 'OpenPype' directory in the engine
         dir_util.copy_tree(temp_dir.as_posix(), plugin_build_path.as_posix())
 
-        # We need to also copy the config folder. The UAT doesn't include the Config folder in the build
+        # We need to also copy the config folder.
+        # The UAT doesn't include the Config folder in the build
         plugin_install_config_path: Path = plugin_build_path / "Config"
         integration_plugin_config_path = integration_plugin_path / "Config"
 
-        dir_util.copy_tree(integration_plugin_config_path.as_posix(), plugin_install_config_path.as_posix())
+        dir_util.copy_tree(integration_plugin_config_path.as_posix(),
+                           plugin_install_config_path.as_posix())
 
         dir_util.remove_tree(temp_dir.as_posix())
-
-
-def _prepare_cpp_project(
-        project_file: Path, engine_path: Path, ue_version: str) -> None:
-    """Prepare CPP Unreal Project.
-
-    This function will add source files needed for project to be
-    rebuild along with the OpenPype integration plugin.
-
-    There seems not to be automated way to do it from command line.
-    But there might be way to create at least those target and build files
-    by some generator. This needs more research as manually writing
-    those files is rather hackish. :skull_and_crossbones:
-
-
-    Args:
-        project_file (str): Path to .uproject file.
-        engine_path (str): Path to unreal engine associated with project.
-
-    """
-    project_name = project_file.stem
-    project_dir = project_file.parent
-    targets_dir = project_dir / "Source"
-    sources_dir = targets_dir / project_name
-
-    sources_dir.mkdir(parents=True, exist_ok=True)
-    (project_dir / "Content").mkdir(parents=True, exist_ok=True)
-
-    module_target = '''
-using UnrealBuildTool;
-using System.Collections.Generic;
-
-public class {0}Target : TargetRules
-{{
-    public {0}Target( TargetInfo Target) : base(Target)
-    {{
-        Type = TargetType.Game;
-        ExtraModuleNames.AddRange( new string[] {{ "{0}" }} );
-    }}
-}}
-'''.format(project_name)
-
-    editor_module_target = '''
-using UnrealBuildTool;
-using System.Collections.Generic;
-
-public class {0}EditorTarget : TargetRules
-{{
-    public {0}EditorTarget( TargetInfo Target) : base(Target)
-    {{
-        Type = TargetType.Editor;
-
-        ExtraModuleNames.AddRange( new string[] {{ "{0}" }} );
-    }}
-}}
-'''.format(project_name)
-
-    module_build = '''
-using UnrealBuildTool;
-public class {0} : ModuleRules
-{{
-    public {0}(ReadOnlyTargetRules Target) : base(Target)
-    {{
-        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-        PublicDependencyModuleNames.AddRange(new string[] {{ "Core",
-            "CoreUObject", "Engine", "InputCore" }});
-        PrivateDependencyModuleNames.AddRange(new string[] {{  }});
-    }}
-}}
-'''.format(project_name)
-
-    module_cpp = '''
-#include "{0}.h"
-#include "Modules/ModuleManager.h"
-
-IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, {0}, "{0}" );
-'''.format(project_name)
-
-    module_header = '''
-#pragma once
-#include "CoreMinimal.h"
-'''
-
-    game_mode_cpp = '''
-#include "{0}GameModeBase.h"
-'''.format(project_name)
-
-    game_mode_h = '''
-#pragma once
-
-#include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
-#include "{0}GameModeBase.generated.h"
-
-UCLASS()
-class {1}_API A{0}GameModeBase : public AGameModeBase
-{{
-    GENERATED_BODY()
-}};
-'''.format(project_name, project_name.upper())
-
-    with open(targets_dir / f"{project_name}.Target.cs", mode="w") as f:
-        f.write(module_target)
-
-    with open(targets_dir / f"{project_name}Editor.Target.cs", mode="w") as f:
-        f.write(editor_module_target)
-
-    with open(sources_dir / f"{project_name}.Build.cs", mode="w") as f:
-        f.write(module_build)
-
-    with open(sources_dir / f"{project_name}.cpp", mode="w") as f:
-        f.write(module_cpp)
-
-    with open(sources_dir / f"{project_name}.h", mode="w") as f:
-        f.write(module_header)
-
-    with open(sources_dir / f"{project_name}GameModeBase.cpp", mode="w") as f:
-        f.write(game_mode_cpp)
-
-    with open(sources_dir / f"{project_name}GameModeBase.h", mode="w") as f:
-        f.write(game_mode_h)
-
-    u_build_tool_path = engine_path / "Engine/Binaries/DotNET"
-    if ue_version.split(".")[0] == "4":
-        u_build_tool_path /= "UnrealBuildTool.exe"
-    elif ue_version.split(".")[0] == "5":
-        u_build_tool_path /= "UnrealBuildTool/UnrealBuildTool.exe"
-    u_build_tool = Path(u_build_tool_path)
-    u_header_tool = None
-
-    arch = "Win64"
-    if platform.system().lower() == "windows":
-        arch = "Win64"
-        u_header_tool = Path(
-            engine_path / "Engine/Binaries/Win64/UnrealHeaderTool.exe")
-    elif platform.system().lower() == "linux":
-        arch = "Linux"
-        u_header_tool = Path(
-            engine_path / "Engine/Binaries/Linux/UnrealHeaderTool")
-    elif platform.system().lower() == "darwin":
-        # we need to test this out
-        arch = "Mac"
-        u_header_tool = Path(
-            engine_path / "Engine/Binaries/Mac/UnrealHeaderTool")
-
-    if not u_header_tool:
-        raise NotImplementedError("Unsupported platform")
-
-    command1 = [u_build_tool.as_posix(), "-projectfiles",
-                f"-project={project_file}", "-progress"]
-
-    subprocess.run(command1)
-
-    command2 = [u_build_tool.as_posix(),
-                f"-ModuleWithSuffix={project_name},3555", arch,
-                "Development", "-TargetType=Editor",
-                f'-Project={project_file}',
-                f'{project_file}',
-                "-IgnoreJunk"]
-
-    subprocess.run(command2)
-
-    """
-    uhtmanifest = os.path.join(os.path.dirname(project_file),
-                               f"{project_name}.uhtmanifest")
-
-    command3 = [u_header_tool, f'"{project_file}"', f'"{uhtmanifest}"',
-                "-Unattended", "-WarningsAsErrors", "-installed"]
-
-    subprocess.run(command3)
-    """
