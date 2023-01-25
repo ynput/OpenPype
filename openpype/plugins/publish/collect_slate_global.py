@@ -35,13 +35,13 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
                 self.log.warning("ExtractSlateGlobal is not active. Skipping...")
                 return
             
-            self.log.info("ExtractSlateGlobal is active.")
-
             if instance.context.data.get("host") == "nuke" and (
                 "render.farm" in instance.data.get("families")):
                 self.log.warning("Skipping Slate Global Collect "
                     "in nuke context, defer to deadline...")
                 return
+
+            self.log.info("ExtractSlateGlobal is active.")
 
             tpl_path = settings["slate_template_path"].format(**os.environ)
             res_path = settings["slate_template_res_path"].format(**os.environ)
@@ -53,7 +53,7 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
             }
 
             if "slateGlobal" not in instance.data:
-                slate_global = instance.data["slateGlobal"] = {}
+                slate_global = instance.data["slateGlobal"] = dict()
 
             slate_global.update({
                 "slate_template_path": tpl_path,
@@ -84,13 +84,13 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
                 slate_data.update(instance.data["customData"])
 
             if "families" not in instance.data:
-                instance.data["families"] = []
+                instance.data["families"] = list()
 
             if not "versionData" in instance.data:
-                instance.data["versionData"] = {}
+                instance.data["versionData"] = dict()
 
             if "families" not in instance.data["versionData"]:
-                instance.data["versionData"]["families"] = []
+                instance.data["versionData"]["families"] = list()
 
             if instance.data["anatomyData"]["task"]["type"] in \
                 settings["integrate_task_types"]:
@@ -106,7 +106,8 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
                 instance.data["versionData"]["families"].append("slate")
 
                 self.log.debug(
-                    "SlateGlobal Data: {}".format(slate_global)
+                    "SlateGlobal Data: {}".format(
+                        instance.data["slateGlobal"])
                 )
             else:
                 self.log.debug("Task: {} is disabled for Extract "
