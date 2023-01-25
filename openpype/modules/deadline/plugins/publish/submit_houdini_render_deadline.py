@@ -88,20 +88,18 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
         for key in keys:
-            val = environment.get(key)
-            if val:
-                job_info.EnvironmentKeyValue = "{key}={value}".format(
-                    key=key,
-                    value=val
-                )
+            value = environment.get(key)
+            if value:
+                job_info.EnvironmentKeyValue[key] = value
+
         # to recognize job from PYPE for turning Event On/Off
-        job_info.EnvironmentKeyValue = "OPENPYPE_RENDER_JOB=1"
+        job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
 
         for i, filepath in enumerate(instance.data["files"]):
             dirname = os.path.dirname(filepath)
             fname = os.path.basename(filepath)
-            job_info.OutputDirectory = dirname.replace("\\", "/")
-            job_info.OutputFilename = fname
+            job_info.OutputDirectory += dirname.replace("\\", "/")
+            job_info.OutputFilename += fname
 
         return job_info
 
