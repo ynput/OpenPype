@@ -4,7 +4,7 @@ title: 3dsmax
 sidebar_label: 3dsmax
 ---
 
-### *Still Work In Progress Page*
+### *Still Work In Progress Docs Page*
 
 ## OpenPype Global Tools
 
