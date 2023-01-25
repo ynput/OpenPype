@@ -178,7 +178,7 @@ def on_new():
     if set_frames_startup:
         set_frame_range(data)
 
-    bpy.types.Scene.is_workfile_up_to_date= bpy.props.BoolProperty(
+    bpy.types.Scene.is_workfile_up_to_date = bpy.props.BoolProperty(
         name="Is Workfile Up To Date",
     )
 
