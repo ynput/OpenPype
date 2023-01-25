@@ -34,6 +34,7 @@ from .workio import (
     work_root,
     check_workfile_up_to_date,
 )
+from .lib import download_last_workfile
 
 PREVIEW_COLLECTIONS: Dict = dict()
 
@@ -563,13 +564,6 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.TOPBAR_MT_editor_menus.append(draw_avalon_menu)
-
-    # Add make_container_publishable to collection and outliner menus
-    bpy.types.OUTLINER_MT_collection.append(draw_op_collection_menu)
-    bpy.types.OUTLINER_MT_context_menu.append(draw_op_collection_menu)
-
-    # Hack to store creators with parameters for optimization purpose
-    bpy.app.handlers.load_post.append(discover_creators_handler)
 
     # Regularily check the workfile is up-to-date
     bpy.app.timers.register(update_workfile_up_to_date, first_interval=0, persistent=True)
