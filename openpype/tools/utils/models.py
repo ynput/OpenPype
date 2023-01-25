@@ -1,8 +1,8 @@
 import re
 import logging
 
-import Qt
-from Qt import QtCore, QtGui
+import qtpy
+from qtpy import QtCore, QtGui
 from openpype.client import get_projects
 from .constants import (
     PROJECT_IS_ACTIVE_ROLE,
@@ -69,7 +69,7 @@ class TreeModel(QtCore.QAbstractItemModel):
                 item[key] = value
 
                 # passing `list()` for PyQt5 (see PYSIDE-462)
-                if Qt.__binding__ in ("PyQt4", "PySide"):
+                if qtpy.API in ("pyqt4", "pyside"):
                     self.dataChanged.emit(index, index)
                 else:
                     self.dataChanged.emit(index, index, [role])
@@ -203,8 +203,13 @@ class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
         the filter string but first checks if any children does.
     """
     def filterAcceptsRow(self, row, parent_index):
-        regex = self.filterRegExp()
-        if not regex.isEmpty():
+        if hasattr(self, "filterRegularExpression"):
+            regex = self.filterRegularExpression()
+        else:
+            regex = self.filterRegExp()
+
+        pattern = regex.pattern()
+        if pattern:
             model = self.sourceModel()
             source_index = model.index(
                 row, self.filterKeyColumn(), parent_index

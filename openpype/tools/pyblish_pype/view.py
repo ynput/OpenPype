@@ -1,4 +1,4 @@
-from Qt import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 from . import model
 from .constants import Roles, EXPANDER_WIDTH
 # Imported when used
@@ -24,7 +24,7 @@ class OverviewView(QtWidgets.QTreeView):
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.setItemsExpandable(True)
-        self.setVerticalScrollMode(QtWidgets.QTreeView.ScrollPerPixel)
+        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.setHeaderHidden(True)
         self.setRootIsDecorated(False)
         self.setIndentation(0)
@@ -248,7 +248,7 @@ class TerminalView(QtWidgets.QTreeView):
         self.setAutoScroll(False)
         self.setHeaderHidden(True)
         self.setIndentation(0)
-        self.setVerticalScrollMode(QtWidgets.QTreeView.ScrollPerPixel)
+        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.verticalScrollBar().setSingleStep(10)
         self.setRootIsDecorated(False)
 

@@ -1,7 +1,7 @@
 import uuid
 import copy
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from openpype.lib.attribute_definitions import (
     AbtractAttrDef,

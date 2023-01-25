@@ -1,5 +1,9 @@
-from Qt import QtCore
+from qtpy import QtCore
 
+
+UNCHECKED_INT = getattr(QtCore.Qt.Unchecked, "value", 0)
+PARTIALLY_CHECKED_INT = getattr(QtCore.Qt.PartiallyChecked, "value", 1)
+CHECKED_INT = getattr(QtCore.Qt.Checked, "value", 2)
 
 DEFAULT_PROJECT_LABEL = "< Default >"
 PROJECT_NAME_ROLE = QtCore.Qt.UserRole + 101
