@@ -114,30 +114,31 @@ class HoudiniCreatorBase(object):
             Dict[str, Any]: Shared data dictionary.
 
         """
-        if shared_data.get("houdini_cached_subsets") is None:
-            shared_data["houdini_cached_subsets"] = {}
-            if shared_data.get("houdini_cached_legacy_subsets") is None:
-                shared_data["houdini_cached_legacy_subsets"] = {}
-            cached_instances = lsattr("id", "pyblish.avalon.instance")
-            for i in cached_instances:
-                if not i.parm("creator_identifier"):
-                    # we have legacy instance
-                    family = i.parm("family").eval()
-                    if family not in shared_data[
-                            "houdini_cached_legacy_subsets"]:
-                        shared_data["houdini_cached_legacy_subsets"][
-                            family] = [i]
-                    else:
-                        shared_data[
-                            "houdini_cached_legacy_subsets"][family].append(i)
-                    continue
+        if shared_data.get("houdini_cached_subsets") is not None:
+            cache = dict()
+            cache_legacy = dict()
 
-                creator_id = i.parm("creator_identifier").eval()
-                if creator_id not in shared_data["houdini_cached_subsets"]:
-                    shared_data["houdini_cached_subsets"][creator_id] = [i]
+            for node in lsattr("id", "pyblish.avalon.instance"):
+
+                creator_identifier_parm = node.parm("creator_identifier")
+                if creator_identifier_parm:
+                    # creator instance
+                    creator_id = creator_identifier_parm.eval()
+                    cache.setdefault(creator_id, []).append(node)
+
                 else:
-                    shared_data[
-                        "houdini_cached_subsets"][creator_id].append(i)  # noqa
+                    # legacy instance
+                    family_parm = node.parm("family")
+                    if not family_parm:
+                        # must be a broken instance
+                        continue
+
+                    family = family_parm.eval()
+                    cache_legacy.setdefault(family, []).append(node)
+
+            shared_data["houdini_cached_subsets"] = dict(cache)
+            shared_data["houdini_cached_legacy_subsets"] = dict(cache_legacy)
+
         return shared_data
 
     @staticmethod
