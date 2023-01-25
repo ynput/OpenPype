@@ -521,10 +521,6 @@ class AbstractTemplateBuilder(object):
         if not level_limit:
             level_limit = 1000
 
-        placeholder_by_scene_id = {
-            placeholder.scene_identifier: placeholder
-            for placeholder in placeholders
-        }
         all_processed = len(placeholders) == 0
         # Counter is checked at the ned of a loop so the loop happens at least
         #   once.
@@ -573,16 +569,6 @@ class AbstractTemplateBuilder(object):
                 break
 
             all_processed = True
-            collected_placeholders = self.get_placeholders()
-            for placeholder in collected_placeholders:
-                identifier = placeholder.scene_identifier
-                if identifier in placeholder_by_scene_id:
-                    continue
-
-                all_processed = False
-                placeholder_by_scene_id[identifier] = placeholder
-                placeholders.append(placeholder)
-
         self.refresh()
 
     def _get_build_profiles(self):

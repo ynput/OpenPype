@@ -240,7 +240,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         cmds.setAttr(node + ".hiddenInOutliner", True)
 
     def load_succeed(self, placeholder, container):
-        self._parent_in_hierarhchy(placeholder, container)
+        self._parent_in_hierarchy(placeholder, container)
 
     def _parent_in_hierarchy(self, placeholder, container):
         """Parent loaded container to placeholder's parent.
