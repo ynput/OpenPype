@@ -1,8 +1,6 @@
 import os
 import sys
 import traceback
-from pathlib import Path
-from datetime import datetime
 from typing import Callable, Dict, Iterator, List, Optional
 
 import bpy
@@ -12,9 +10,7 @@ from . import ops
 
 import pyblish.api
 
-from openpype.lib.dateutils import get_timestamp
 from openpype.client.entities import get_asset_by_name
-from openpype.settings import get_project_settings
 from openpype.pipeline import (
     schema,
     legacy_io,
@@ -30,7 +26,6 @@ from openpype.lib import (
     emit_event
 )
 import openpype.hosts.blender
-from .workio import current_file, check_workfile_up_to_date
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.blender.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
