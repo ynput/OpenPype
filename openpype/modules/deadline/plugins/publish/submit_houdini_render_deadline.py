@@ -111,7 +111,7 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         context = instance.context
 
         # Output driver to render
-        driver = instance[0]
+        driver = hou.node(instance.data["instance_node"])
         hou_major_minor = hou.applicationVersionString().rsplit(".", 1)[0]
 
         plugin_info = DeadlinePluginInfo(
