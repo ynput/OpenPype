@@ -4,6 +4,7 @@ from openpype.hosts.houdini.api import plugin
 class CreateArnoldRop(plugin.HoudiniCreator):
     """Arnold ROP"""
 
+    identifier = "io.openpype.creators.houdini.arnold_rop"
     label = "Arnold ROP"
     family = "arnold_rop"
     icon = "magic"
