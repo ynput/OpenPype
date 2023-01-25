@@ -103,9 +103,8 @@ class HoudiniCreatorBase(object):
         fill it with all collected instances from the scene under its
         respective creator identifiers.
 
-        If legacy instances are detected in the scene, create
-        `houdini_cached_legacy_subsets` there and fill it with
-        all legacy subsets under family as a key.
+        Create `houdini_cached_legacy_subsets` key for any legacy instances
+        detected in the scene as instances per family.
 
         Args:
             Dict[str, Any]: Shared data.
