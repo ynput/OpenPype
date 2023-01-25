@@ -400,7 +400,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                         for site in old_repre_files_sites[i]:
                             if site["name"] not in repre_sites_names:
                                 # Pop the date to tag for sync
-                                site.pop("created_dt")
+                                site.pop("created_dt", None)
                                 file["sites"].append(site)
 
                         update_data["files"][i] = file
