@@ -3,9 +3,11 @@ import hou
 import os
 import attr
 import getpass
+from datetime import datetime
 import pyblish.api
 
 from openpype.pipeline import legacy_io
+from openpype.tests.lib import is_in_tests
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 
@@ -54,6 +56,9 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         job_info.Plugin = "Houdini"
         job_info.UserName = context.data.get(
             "deadlineUser", getpass.getuser())
+
+        if is_in_tests():
+            job_info.BatchName += datetime.now().strftime("%d%m%Y%H%M%S")
 
         # Deadline requires integers in frame range
         frames = "{start}-{end}x{step}".format(

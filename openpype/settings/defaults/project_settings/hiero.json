@@ -1,5 +1,13 @@
 {
     "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        },
         "workfile": {
             "ocioConfigName": "nuke-default",
             "ocioconfigpath": {

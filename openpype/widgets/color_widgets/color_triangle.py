@@ -1,6 +1,6 @@
 from enum import Enum
 from math import floor, ceil, sqrt, sin, cos, acos, pi as PI
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 TWOPI = PI * 2
 

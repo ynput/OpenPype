@@ -18,6 +18,7 @@ from openpype.pipeline import (
     get_representation_path,
     legacy_io,
 )
+from openpype.tests.lib import is_in_tests
 from openpype.pipeline.farm.patterning import match_aov_pattern
 
 
@@ -208,6 +209,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         more universal code. Muster post job is sent directly by Muster
         submitter, so this type of code isn't necessary for it.
 
+        Returns:
+            (str): deadline_publish_job_id
         """
         data = instance.data.copy()
         subset = data["subset"]
@@ -241,7 +244,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "OPENPYPE_PUBLISH_JOB": "1",
             "OPENPYPE_RENDER_JOB": "0",
             "OPENPYPE_REMOTE_JOB": "0",
-            "OPENPYPE_LOG_NO_COLORS": "1"
+            "OPENPYPE_LOG_NO_COLORS": "1",
+            "IS_TEST": str(int(is_in_tests()))
         }
 
         # add environments from self.environ_keys
@@ -270,6 +274,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "--targets", "deadline",
             "--targets", "farm"
         ]
+
+        if is_in_tests():
+            args.append("--automatic-tests")
 
         # Generate the payload for Deadline submission
         payload = {
@@ -336,6 +343,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         response = requests.post(url, json=payload, timeout=10)
         if not response.ok:
             raise Exception(response.text)
+
+        deadline_publish_job_id = response.json()["_id"]
+
+        return deadline_publish_job_id
 
     def _copy_extend_frames(self, instance, representation):
         """Copy existing frames from latest version.
@@ -998,7 +1009,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 self.deadline_url = instance.data.get("deadlineUrl")
             assert self.deadline_url, "Requires Deadline Webservice URL"
 
-            self._submit_deadline_post_job(instance, render_job, instances)
+            deadline_publish_job_id = \
+                self._submit_deadline_post_job(instance, render_job, instances)
 
         # publish job file
         publish_job = {
@@ -1015,6 +1027,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "session": legacy_io.Session.copy(),
             "instances": instances
         }
+
+        if deadline_publish_job_id:
+            publish_job["deadline_publish_job_id"] = deadline_publish_job_id
 
         # add audio to metadata file if available
         audio_file = context.data.get("audioFile")
