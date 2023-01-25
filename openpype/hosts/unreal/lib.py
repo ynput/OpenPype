@@ -303,15 +303,15 @@ def get_path_to_uat(engine_path: Path) -> Path:
 
 
 def get_path_to_cmdlet_project(ue_version: str) -> Path:
-    cmdlet_project: Path = Path(os.path.dirname(os.path.abspath(openpype.__file__)))
+    cmd_project: Path = Path(os.path.dirname(os.path.abspath(openpype.__file__)))
 
     # For now, only tested on Windows (For Linux and Mac it has to be implemented)
     if ue_version.split(".")[0] == "4":
-        cmdlet_project /= "hosts/unreal/integration/UE_4.7"
+        cmd_project /= "hosts/unreal/integration/UE_4.7"
     elif ue_version.split(".")[0] == "5":
-        cmdlet_project /= "hosts/unreal/integration/UE_5.0"
+        cmd_project /= "hosts/unreal/integration/UE_5.0"
 
-    return cmdlet_project / "CommandletProject/CommandletProject.uproject"
+    return cmd_project / "CommandletProject/CommandletProject.uproject"
 
 
 def get_path_to_ubt(engine_path: Path, ue_version: str) -> Path:
@@ -363,21 +363,21 @@ def try_installing_plugin(engine_path: Path,
         raise RuntimeError("Path to the integration plugin is null!")
 
     # Create a path to the plugin in the engine
-    openpype_plugin_path: Path = engine_path / "Engine/Plugins/Marketplace/OpenPype"
+    op_plugin_path: Path = engine_path / "Engine/Plugins/Marketplace/OpenPype"
 
-    if not openpype_plugin_path.is_dir():
-        print("--- OpenPype Plugin is not present. Creating a new plugin directory ...")
-        openpype_plugin_path.mkdir(parents=True, exist_ok=True)
+    if not op_plugin_path.is_dir():
+        print("--- OpenPype Plugin is not present. Installing ...")
+        op_plugin_path.mkdir(parents=True, exist_ok=True)
 
-        engine_plugin_config_path: Path = openpype_plugin_path / "Config"
+        engine_plugin_config_path: Path = op_plugin_path / "Config"
         engine_plugin_config_path.mkdir(exist_ok=True)
 
         dir_util._path_created = {}
 
-    if not (openpype_plugin_path / "Binaries").is_dir() \
-            or not (openpype_plugin_path / "Intermediate").is_dir():
+    if not (op_plugin_path / "Binaries").is_dir() \
+            or not (op_plugin_path / "Intermediate").is_dir():
         print("--- Binaries are not present. Building the plugin ...")
-        _build_and_move_plugin(engine_path, openpype_plugin_path, env)
+        _build_and_move_plugin(engine_path, op_plugin_path, env)
 
 
 def _build_and_move_plugin(engine_path: Path,
