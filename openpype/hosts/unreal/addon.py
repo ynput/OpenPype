@@ -17,7 +17,7 @@ class UnrealAddon(OpenPypeModule, IHostAddon):
 
         ue_plugin = "UE_5.0" if app.name[:1] == "5" else "UE_4.7"
         unreal_plugin_path = os.path.join(
-            UNREAL_ROOT_DIR, "integration", ue_plugin
+            UNREAL_ROOT_DIR, "integration", ue_plugin, "OpenPype"
         )
         if not env.get("OPENPYPE_UNREAL_PLUGIN"):
             env["OPENPYPE_UNREAL_PLUGIN"] = unreal_plugin_path
