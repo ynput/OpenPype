@@ -82,6 +82,9 @@ class AddSyncSite(load.LoaderPlugin):
     def _add_hero_representation_ids(self, project_name, repre_id):
         """Find hero version if exists for repre_id.
 
+        Args:
+            project_name (str)
+            repre_id (ObjectId)
         Returns:
             (list): at least [repre_id] if no hero version found
         """
