@@ -4,7 +4,9 @@ title: 3dsmax
 sidebar_label: 3dsmax
 ---
 
-## Still Work In Progress Doc
+### *Still Work In Progress Page*
+
+## OpenPype Global Tools
 
 -   [Set Context](artist_tools_context_manager)
 -   [Work Files](artist_tools_workfiles)
@@ -26,8 +28,8 @@ it with few examples.
 
 ## Setting scene data
 
-Blender settings concerning framerate, resolution and frame range are handled
-by OpenPype. If set correctly in Ftrack, Blender will automatically set the 
+3dsmax settings concerning framerate, resolution and frame range are handled
+by OpenPype. If set correctly in OP Project Manager/Ftrack, 3dsmax will automatically set the 
 values for you.
 
 
@@ -35,12 +37,12 @@ values for you.
 
 ### Intro
 
-Publishing models in Blender is pretty straightforward. Create your model as you
+Publishing models in 3dsmax is pretty straightforward. Create your model as you
 need. You might need to adhere to specifications of your studio that can be different
 between studios and projects but by default your geometry does not need any
 other convention.
 
-![Model example](assets/blender-model_example.jpg)
+![Model example](assets/3dsmax_model_OP.png)
 
 ### Creating instance
 
