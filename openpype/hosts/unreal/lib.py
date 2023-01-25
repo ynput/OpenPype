@@ -303,7 +303,7 @@ def get_path_to_uat(engine_path: Path) -> Path:
 
 
 def get_path_to_cmdlet_project(ue_version: str) -> Path:
-    cmd_project: Path = Path(os.path.dirname(os.path.abspath(openpype.__file__)))
+    cmd_project = Path(os.path.dirname(os.path.abspath(openpype.__file__)))
 
     # For now, only tested on Windows (For Linux and Mac it has to be implemented)
     if ue_version.split(".")[0] == "4":
