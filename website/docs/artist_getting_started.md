@@ -18,13 +18,17 @@ If this is not the case, please contact your administrator to consult on how to 
 If you are working from home though, you'll need to install it yourself. You should, however, receive the OpenPype installer files from your studio
 admin, supervisor or production, because OpenPype versions and executables might not be compatible between studios.  
 
-To install OpenPype you just need to unzip it anywhere on the disk
+Installing OpenPype is possible by Windows installer or by unzipping it anywhere on the disk from downloaded ZIP archive.
 
-To use it, you have two options
+There are two options running OpenPype
 
-**openpype_gui.exe** is the most common for artists. It runs OpenPype GUI in system tray. From there you can run all the available tools. To use any of the features, OpenPype must be running in the tray.
+first most common one by using OP icon on the Desktop triggering
 
-**openpype_console.exe** in useful for debugging and error reporting. It opens console window where all the necessary information will appear during user's work. 
+**openpype_gui.exe** suitable for artists. It runs OpenPype GUI in the OS tray. From there you can run all the available tools. To use any of the features, OpenPype must be running in the tray.
+
+or alternatively by using
+
+**openpype_console.exe** located in the OpenPype folder which is suitable for TDs/admins for debugging and error reporting. It opens console window where all the necessary information will appear during user's work. 
 
 
 <Tabs
@@ -71,7 +75,7 @@ Sometimes your studio might also ask you to fill in the path to it's version
 repository. This is a location where OpenPype will be looking for when checking
 if it's up to date and where updates are installed from automatically. 
 
-This pat is usually taken from the database directly, so you shouldn't need it. 
+This path is usually taken from the database directly, so you shouldn't need it. 
 
 
 ## Updates
@@ -79,6 +83,6 @@ This pat is usually taken from the database directly, so you shouldn't need it.
 If you're connected to your studio, OpenPype will check for, and install updates automatically every time you run it. That's why during the first start, it will go through a quick update installation process, even though you might have just installed it. 
 
 
-## Advanced use
+## Advanced Usage
 
 For more advanced use of OpenPype commands please visit [Admin section](admin_openpype_commands.md).
