@@ -511,6 +511,7 @@ classes = [
     TOPBAR_MT_avalon,
 ]
 
+
 def update_workfile_up_to_date():
     """Check regularily the current workfile is up-to-date."""
     bpy.context.scene.is_workfile_up_to_date = check_workfile_up_to_date()
@@ -530,7 +531,9 @@ def register():
     bpy.types.TOPBAR_MT_editor_menus.append(draw_avalon_menu)
 
     # Regularily check the workfile is up-to-date
-    bpy.app.timers.register(update_workfile_up_to_date, first_interval=0, persistent=True)
+    bpy.app.timers.register(
+        update_workfile_up_to_date, first_interval=0, persistent=True
+    )
 
 
 def unregister():
