@@ -1,6 +1,5 @@
 """Python 3 only implementation."""
 import os
-import re
 import shutil
 import asyncio
 import threading
