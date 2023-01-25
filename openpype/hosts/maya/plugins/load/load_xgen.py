@@ -1,6 +1,5 @@
 import os
 import shutil
-import tempfile
 
 import maya.cmds as cmds
 import xgenm
@@ -26,18 +25,6 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     icon = "code-fork"
     color = "orange"
 
-    def write_xgen_file(self, file_path, data):
-        lines = []
-        with open(file_path, "r") as f:
-            for key, value in data.items():
-                for line in [line.rstrip() for line in f]:
-                    if line.startswith("\t" + key):
-                        line = "\t{}\t\t{}".format(key, value)
-                    lines.append(line)
-
-        with open(file_path, "w") as f:
-            f.write("\n".join(lines))
-
     def setup_xgen_palette_file(self, maya_filepath, namespace, name):
         # Setup xgen palette file.
         project_path = os.path.dirname(current_file())
@@ -60,26 +47,28 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         # and published version directory second. This ensure that any newly
         # created xgen files are created in the current workspace.
         resources_path = os.path.join(os.path.dirname(source), "resources")
-
+        lines = []
         with open(xgen_file, "r") as f:
             for line in [line.rstrip() for line in f]:
                 if line.startswith("\txgDataPath"):
                     data_path = line.split("\t")[-1]
-
-        data = {
-            "xgDataPath": (
-                "${{PROJECT}}xgen/collections/{}__ns__{}/{}{}".format(
-                    namespace,
-                    name,
-                    os.pathsep,
-                    data_path.replace(
-                        "${PROJECT}xgen", resources_path.replace("\\", "/")
+                    line = "\txgDataPath\t\t{}{}{}".format(
+                        data_path,
+                        os.pathsep,
+                        data_path.replace(
+                            "${PROJECT}xgen", resources_path.replace("\\", "/")
+                        )
                     )
-                )
-            ),
-            "xgProjectPath": project_path.replace("\\", "/")
-        }
-        self.write_xgen_file(xgen_file, data)
+
+                if line.startswith("\txgProjectPath"):
+                    line = "\txgProjectPath\t\t{}/".format(
+                        project_path.replace("\\", "/")
+                    )
+
+                lines.append(line)
+
+        with open(xgen_file, "w") as f:
+            f.write("\n".join(lines))
 
         xgd_file = xgen_file.replace(".xgen", ".xgd")
 
@@ -100,31 +89,14 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             self.fname, context["project"]["name"]
         )
 
+        name = context["representation"]["data"]["xgenName"]
         xgen_file, xgd_file = self.setup_xgen_palette_file(
-            maya_filepath, namespace, "collection"
+            maya_filepath, namespace, name
         )
-
-        # Making temporary copy of xgen file from published so we can
-        # modify the paths.
-        temp_xgen_file = os.path.join(tempfile.gettempdir(), "temp.xgen")
-        _, maya_extension = os.path.splitext(maya_filepath)
-        source = maya_filepath.replace(maya_extension, ".xgen")
-        shutil.copy(source, temp_xgen_file)
-
-        resources_path = os.path.join(os.path.dirname(source), "resources")
-        with open(xgen_file, "r") as f:
-            for line in [line.rstrip() for line in f]:
-                if line.startswith("\txgDataPath"):
-                    data_path = line.split("\t")[-1]
-        data = {
-            "xgDataPath": data_path.replace(
-                "${PROJECT}xgen", resources_path.replace("\\", "/")
-            )
-        }
-        self.write_xgen_file(temp_xgen_file, data)
 
         # Reference xgen. Xgen does not like being referenced in under a group.
         new_nodes = []
+
         with maintained_selection():
             nodes = cmds.file(
                 maya_filepath,
@@ -134,11 +106,7 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 returnNewNodes=True
             )
 
-            xgen_palette = xgenm.importPalette(
-                temp_xgen_file.replace("\\", "/"), [], nameSpace=namespace
-            )
-            os.remove(temp_xgen_file)
-
+            xgen_palette = cmds.ls(nodes, type="xgmPalette", long=True)[0]
             self.set_palette_attributes(xgen_palette, xgen_file, xgd_file)
 
             # This create an expression attribute of float. If we did not add
@@ -151,7 +119,7 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
             shapes = cmds.ls(nodes, shapes=True, long=True)
 
-            new_nodes = (list(set(nodes) - set(shapes)) + [xgen_palette])
+            new_nodes = (list(set(nodes) - set(shapes)))
 
             self[:] = new_nodes
 

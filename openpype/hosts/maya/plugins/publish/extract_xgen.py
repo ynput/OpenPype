@@ -5,7 +5,7 @@ from maya import cmds
 import xgenm
 
 from openpype.pipeline import publish
-from openpype.hosts.maya.api.lib import maintained_selection
+from openpype.hosts.maya.api.lib import maintained_selection, attribute_values
 from openpype.lib import StringTemplate
 
 
@@ -74,21 +74,31 @@ class ExtractXgenCache(publish.Extractor):
 
             duplicate_nodes.append(duplicate_transform)
 
-        # Export Maya file.
-        type = "mayaAscii" if self.scene_type == "ma" else "mayaBinary"
+        # Import xgen onto the duplicate.
         with maintained_selection():
             cmds.select(duplicate_nodes)
-            cmds.file(
-                maya_filepath,
-                force=True,
-                type=type,
-                exportSelected=True,
-                preserveReferences=False,
-                constructionHistory=True,
-                shader=True,
-                constraints=True,
-                expressions=True
-            )
+            palette = xgenm.importPalette(xgen_path, [])
+
+        attribute_data = {
+            "{}.xgFileName".format(palette): xgen_filename
+        }
+
+        # Export Maya file.
+        type = "mayaAscii" if self.scene_type == "ma" else "mayaBinary"
+        with attribute_values(attribute_data):
+            with maintained_selection():
+                cmds.select(duplicate_nodes + [palette])
+                cmds.file(
+                    maya_filepath,
+                    force=True,
+                    type=type,
+                    exportSelected=True,
+                    preserveReferences=False,
+                    constructionHistory=True,
+                    shader=True,
+                    constraints=True,
+                    expressions=True
+                )
 
         self.log.info("Extracted to {}".format(maya_filepath))
 
@@ -96,11 +106,12 @@ class ExtractXgenCache(publish.Extractor):
             "name": self.scene_type,
             "ext": self.scene_type,
             "files": maya_filename,
-            "stagingDir": staging_dir
+            "stagingDir": staging_dir,
+            "data": {"xgenName": palette}
         }
         instance.data["representations"].append(representation)
 
-        cmds.delete(duplicate_nodes)
+        cmds.delete(duplicate_nodes + [palette])
 
         # Collect all files under palette root as resources.
         data_path = xgenm.getAttr(
