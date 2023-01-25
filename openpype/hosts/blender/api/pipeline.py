@@ -172,7 +172,6 @@ def set_use_file_compression():
 
 def on_new():
     set_start_end_frames()
-    set_use_file_compression()
     bpy.types.Scene.is_workfile_up_to_date= bpy.props.BoolProperty(
         name="Is Workfile Up To Date",
     )
@@ -189,7 +188,6 @@ def on_new():
 
 def on_open():
     set_start_end_frames()
-    set_use_file_compression()
     if hasattr(
         bpy.types, bpy.ops.wm.check_workfile_up_to_date.idname()
     ):

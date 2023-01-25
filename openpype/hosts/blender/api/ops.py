@@ -22,10 +22,6 @@ from openpype import style
 from openpype.client.entities import (
     get_asset_by_name,
     get_assets,
-    get_subset_by_id,
-    get_version_by_id,
-    match_subset_id,
-    get_representation_by_task,
 )
 from openpype.hosts.blender.api.lib import add_datablocks_to_container
 from openpype.hosts.blender.api.utils import (
@@ -50,6 +46,7 @@ from openpype.hosts.blender.scripts import build_workfile
 from openpype.tools.utils.lib import qt_app_context
 from .workio import OpenFileCacher, save_file, work_root
 from openpype.pipeline import legacy_io, Anatomy
+from openpype.modules.base import ModulesManager
 from openpype.tools.utils import host_tools
 from openpype.tools.utils.lib import qt_app_context
 from .workio import (
@@ -58,6 +55,7 @@ from .workio import (
     work_root,
     check_workfile_up_to_date,
 )
+from .lib import download_last_workfile
 
 PREVIEW_COLLECTIONS: Dict = dict()
 
@@ -1543,6 +1541,7 @@ def register():
         bpy.utils.register_class(cls)
     bpy.types.TOPBAR_MT_editor_menus.append(draw_avalon_menu)
 
+<<<<<<< HEAD
     # Add make_container_publishable to collection and outliner menus
     bpy.types.OUTLINER_MT_collection.append(draw_op_collection_menu)
     bpy.types.OUTLINER_MT_context_menu.append(draw_op_collection_menu)
@@ -1552,6 +1551,8 @@ def register():
 
 <<<<<<< HEAD
 =======
+=======
+>>>>>>> 8c439dbb58 (Fixed cherry-pick issues)
     # Regularily check the workfile is up-to-date
     bpy.app.timers.register(update_workfile_up_to_date, first_interval=0, persistent=True)
 
