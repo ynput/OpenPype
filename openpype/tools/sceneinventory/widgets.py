@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 from openpype import style
 
 
@@ -8,7 +8,7 @@ class ButtonWithMenu(QtWidgets.QToolButton):
 
         self.setObjectName("ButtonWithMenu")
 
-        self.setPopupMode(self.MenuButtonPopup)
+        self.setPopupMode(QtWidgets.QToolButton.MenuButtonPopup)
         menu = QtWidgets.QMenu(self)
 
         self.setMenu(menu)
@@ -42,7 +42,7 @@ class SearchComboBox(QtWidgets.QComboBox):
         super(SearchComboBox, self).__init__(parent)
 
         self.setEditable(True)
-        self.setInsertPolicy(self.NoInsert)
+        self.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
 
         combobox_delegate = QtWidgets.QStyledItemDelegate(self)
         self.setItemDelegate(combobox_delegate)

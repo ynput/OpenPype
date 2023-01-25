@@ -2,7 +2,7 @@ import collections
 import logging
 from functools import partial
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 import qtawesome
 from bson.objectid import ObjectId
 
@@ -48,7 +48,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
         self.setIndentation(12)
         self.setAlternatingRowColors(True)
         self.setSortingEnabled(True)
-        self.setSelectionMode(self.ExtendedSelection)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_right_mouse_menu)
         self._hierarchy_view = False
@@ -546,9 +546,9 @@ class SceneInventoryView(QtWidgets.QTreeView):
         selection_model = self.selectionModel()
 
         select_mode = {
-            "select": selection_model.Select,
-            "deselect": selection_model.Deselect,
-            "toggle": selection_model.Toggle,
+            "select": QtCore.QItemSelectionModel.Select,
+            "deselect": QtCore.QItemSelectionModel.Deselect,
+            "toggle": QtCore.QItemSelectionModel.Toggle,
         }[options.get("mode", "select")]
 
         for index in iter_model_rows(model, 0):
@@ -559,7 +559,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
             name = item.get("objectName")
             if name in object_names:
                 self.scrollTo(index)  # Ensure item is visible
-                flags = select_mode | selection_model.Rows
+                flags = select_mode | QtCore.QItemSelectionModel.Rows
                 selection_model.select(index, flags)
 
                 object_names.remove(name)

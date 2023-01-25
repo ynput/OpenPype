@@ -1,4 +1,5 @@
 from qtpy import QtCore, QtGui, QtWidgets
+from openpype.tools.utils.lib import checkstate_int_to_enum
 
 
 class ComboItemDelegate(QtWidgets.QStyledItemDelegate):
@@ -108,7 +109,9 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
             return
 
         index_flags = current_index.flags()
-        state = current_index.data(QtCore.Qt.CheckStateRole)
+        state = checkstate_int_to_enum(
+            current_index.data(QtCore.Qt.CheckStateRole)
+        )
         new_state = None
 
         if event.type() == QtCore.QEvent.MouseButtonRelease:
@@ -311,7 +314,9 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
     def value(self):
         items = list()
         for idx in range(self.count()):
-            state = self.itemData(idx, role=QtCore.Qt.CheckStateRole)
+            state = checkstate_int_to_enum(
+                self.itemData(idx, role=QtCore.Qt.CheckStateRole)
+            )
             if state == QtCore.Qt.Checked:
                 items.append(
                     self.itemData(idx, role=QtCore.Qt.UserRole)
@@ -321,7 +326,9 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
     def checked_items_text(self):
         items = list()
         for idx in range(self.count()):
-            state = self.itemData(idx, role=QtCore.Qt.CheckStateRole)
+            state = checkstate_int_to_enum(
+                self.itemData(idx, role=QtCore.Qt.CheckStateRole)
+            )
             if state == QtCore.Qt.Checked:
                 items.append(self.itemText(idx))
         return items
