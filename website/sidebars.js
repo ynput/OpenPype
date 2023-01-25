@@ -49,6 +49,7 @@ module.exports = {
                     ],
                 },
                 "artist_hosts_blender",
+                "artist_hosts_3dsmax",
                 "artist_hosts_harmony",
                 "artist_hosts_houdini",
                 "artist_hosts_aftereffects",
