@@ -48,11 +48,8 @@ from .workio import OpenFileCacher, save_file, work_root
 from openpype.pipeline import legacy_io, Anatomy
 from openpype.modules.base import ModulesManager
 from openpype.tools.utils import host_tools
-from openpype.tools.utils.lib import qt_app_context
 from .workio import (
     OpenFileCacher,
-    save_file,
-    work_root,
     check_workfile_up_to_date,
 )
 from .lib import download_last_workfile
