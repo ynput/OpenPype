@@ -5,6 +5,7 @@ from openpype.pipeline import registered_host
 from openpype.action import get_errored_plugins_from_data
 from openpype.hosts.houdini.api import HoudiniHost
 
+
 class IncrementCurrentFile(pyblish.api.ContextPlugin):
     """Increment the current file.
 
@@ -18,18 +19,8 @@ class IncrementCurrentFile(pyblish.api.ContextPlugin):
     families = ["workfile", "redshift_rop", "arnold_rop", "usdrender"]
     optional = True
 
-    def process(self, instance):
+    def process(self, context):
 
-        # This should be a ContextPlugin, but this is a workaround
-        # for a bug in pyblish to run once for a family: issue #250
-        context = instance.context
-        key = "__hasRun{}".format(self.__class__.__name__)
-        if context.data.get(key, False):
-            return
-        else:
-            context.data[key] = True
-
-        context = instance.context
         errored_plugins = get_errored_plugins_from_data(context)
         if any(
             plugin.__name__ == "HoudiniSubmitPublishDeadline"
