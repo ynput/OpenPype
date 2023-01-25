@@ -30,8 +30,6 @@ from . import pipeline
 from openpype.tools.utils.lib import qt_app_context
 from .workio import (
     OpenFileCacher,
-    save_file,
-    work_root,
     check_workfile_up_to_date,
 )
 from .lib import download_last_workfile

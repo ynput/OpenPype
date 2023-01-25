@@ -5,7 +5,6 @@ from typing import List, Optional
 
 import bpy
 
-from openpype.settings import get_project_settings
 from openpype.pipeline import legacy_io
 from openpype.client.entities import get_last_version_by_subset_name
 
