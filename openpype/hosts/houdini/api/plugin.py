@@ -135,8 +135,8 @@ class HoudiniCreatorBase(object):
                     family = family_parm.eval()
                     cache_legacy.setdefault(family, []).append(node)
 
-            shared_data["houdini_cached_subsets"] = dict(cache)
-            shared_data["houdini_cached_legacy_subsets"] = dict(cache_legacy)
+            shared_data["houdini_cached_subsets"] = cache
+            shared_data["houdini_cached_legacy_subsets"] = cache_legacy
 
         return shared_data
 
