@@ -1520,6 +1520,7 @@ classes = [
     SCENE_OT_MoveOpenpypeInstanceDatablock,
 ]
 
+
 def update_workfile_up_to_date():
     """Check regularily the current workfile is up-to-date."""
     bpy.context.scene.is_workfile_up_to_date = check_workfile_up_to_date()
@@ -1551,7 +1552,9 @@ def register():
 =======
 >>>>>>> 8c439dbb58 (Fixed cherry-pick issues)
     # Regularily check the workfile is up-to-date
-    bpy.app.timers.register(update_workfile_up_to_date, first_interval=0, persistent=True)
+    bpy.app.timers.register(
+        update_workfile_up_to_date, first_interval=0, persistent=True
+    )
 
 >>>>>>> 5bb7dfe4b9 (Enhancement: workfile out of date check no longer uses modification time.)
 
