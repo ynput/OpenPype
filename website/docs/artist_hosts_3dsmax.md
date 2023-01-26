@@ -20,13 +20,15 @@ This part of documentation is still work in progress.
 -->
 
 
-## First Steps With OpenPype Running
+## First Steps With OpenPype
 
 Locate **OpenPype Icon** in the OS tray (if hidden dive in the tray toolbar).
 
-*If you cannot locate the OpenPype icon ...it is not probably running so check [Getting Started](artist_getting_started.md) first.*
+> If you cannot locate the OpenPype icon ...it is not probably running so check [Getting Started](artist_getting_started.md) first.
 
-By **clicking the OP icon**  ```OpenPype Menu``` rolls out. Choose ```OpenPype Menu > Launcher``` to open the ```Launcher``` window.
+By clicking the icon  ```OpenPype Menu``` rolls out.
+
+Choose ```OpenPype Menu > Launcher``` to open the ```Launcher``` window.
 
 When opened you can **choose** the **project** to work in from the list. Then choose the particular **asset** you want to work on then choose **task** 
 and finally **run 3dsmax by its icon** in the tools.
@@ -44,29 +46,36 @@ This is the core functional area for you as a user. Most of your actions will ta
 
 ![Menu OpenPype](assets/3dsmax_menu_first_OP.png)
 
-
 :::note OpenPype Menu
-User instead of using classic ```File > Open``` and ```Save As``` actions uses this menu for working with scene files (reffered as **workfiles**) completely discarding native file operations even though still functional and available. User can use ```File > Save``` by constantly hitting ```CTRL+S``` keys for quickly saving changes for example.
+User should use this menu for Opening / Saving when dealing with work files not standard 3dsmax ```File Menu``` even though still possible.
 :::
 
 ## Working With Scene Files
 
-First go to ```Work Files``` menu item so **Work Files  Window** shows up. Here you can perform Save/Load actions as you would normally do with ```File Save ``` and/or ```File Open``` in the standard 3dsmax File Menu.
+In OpenPype menu first go to ```Work Files``` menu item so **Work Files  Window** shows up.
 
-```OP Menu > Work Files...``` basically substitutes all file operations user can perform.
+ Here you can perform Save / Load actions as you would normally do with ```File Save ``` and ```File Open``` in the standard 3dsmax ```File Menu``` and navigate to different project components like assets, tasks, workfiles etc.
 
-You first choose the project in left top window then particular asset present in the project and it's task available to you as an artist. Finally you choose the workfile to open. If not any workfile present you simply hit ```Save As``` button.
-
-
-
-Here is an overview of the Work Files window with descriptions what each area is used for and could contain.
 
 ![Menu OpenPype](assets/3dsmax_menu_OP.png)
 
-:::note Work Files window
-Think of reading from left to right manner mimicking hiearchy of listed items ```Project``` > ```asset``` > ```task``` > ```workfile``` going from parent to children.
-:::
+You first choose particular asset and assigned task and corresponding workfile you would like to open.
 
+If not any workfile present simply hit ```Save As``` and keep ```Subversion``` empty and hitting ```Ok```.
+
+![Save As Dialog](assets/3dsmax_SavingFirstFile_OP.png)
+
+OpenPype correctly names it and add version to the workfile. This basically happens whenever user trigger ```Save As``` action. Resulting into incremental version numbers like ```workfileName_v001``` ```workfileName_v002``` etc. 
+
+> There also additional tools for naming like ```Subversion``` in ```Save As``` dialog but we won't dive into it for now.
+
+![Save As Dialog](assets/3dsmax_SavingFirstFile2_OP.png)
+
+## Understanding Context
+
+It is good to be aware that whenever you as a user choose ```asset``` and ```task``` you happen to be in so called **context** meaning that all user actions are in relation with particular ```asset```. This could be quickly seen in host application header and or ```OpenPype Menu``` and its accompanying tools.
+
+![Workfile Context](assets/3dsmax_context.png)
 
 ---
 
