@@ -2,38 +2,65 @@ from openpype.hosts.maya.api import (
     lib,
     plugin
 )
+from openpype.lib import (
+    BoolDef,
+    TextDef
+)
 
 
-class CreatePointCache(plugin.Creator):
+class CreatePointCache(plugin.MayaCreator):
     """Alembic pointcache for animated data"""
 
-    name = "pointcache"
-    label = "Point Cache"
+    identifier = "io.openpype.creators.maya.pointcache"
+    label = "Pointcache"
     family = "pointcache"
     icon = "gears"
-    write_color_sets = False
-    write_face_sets = False
 
-    def __init__(self, *args, **kwargs):
-        super(CreatePointCache, self).__init__(*args, **kwargs)
+    def get_instance_attr_defs(self):
 
-        # Add animation data
-        self.data.update(lib.collect_animation_data())
+        defs = lib.collect_animation_defs()
 
-        # Vertex colors with the geometry.
-        self.data["writeColorSets"] = self.write_color_sets
-        # Vertex colors with the geometry.
-        self.data["writeFaceSets"] = self.write_face_sets
-        self.data["renderableOnly"] = False  # Only renderable visible shapes
-        self.data["visibleOnly"] = False     # only nodes that are visible
-        self.data["includeParentHierarchy"] = False  # Include parent groups
-        self.data["worldSpace"] = True       # Default to exporting world-space
-        self.data["refresh"] = False       # Default to suspend refresh.
+        defs.extend([
+            BoolDef("writeColorSets",
+                    label="Write vertex colors",
+                    tooltip="Write vertex colors with the geometry",
+                    default=False),
+            BoolDef("writeFaceSets",
+                    label="Write face sets",
+                    tooltip="Write face sets with the geometry",
+                    default=False),
+            BoolDef("renderableOnly",
+                    label="Renderable Only",
+                    tooltip="Only export renderable visible shapes",
+                    default=False),
+            BoolDef("visibleOnly",
+                    label="Visible Only",
+                    tooltip="Only export dag objects visible during "
+                            "frame range",
+                    default=False),
+            BoolDef("includeParentHierarchy",
+                    label="Include Parent Hierarchy",
+                    default=False),
+            BoolDef("worldSpace",
+                    label="World-Space Export",
+                    default=True),
+            BoolDef("refresh",
+                    label="Refresh viewport during export",
+                    default=False),
+            TextDef("attr",
+                    label="Custom Attributes",
+                    default="",
+                    placeholder="attr1, attr2"),
+            TextDef("attrPrefix",
+                    label="Custom Attributes Prefix",
+                    placeholder="prefix1, prefix2")
+        ])
 
-        # Add options for custom attributes
-        self.data["attr"] = ""
-        self.data["attrPrefix"] = ""
-
+        # TODO: Implement these on a Deadline plug-in instead?
+        """
         # Default to not send to farm.
         self.data["farm"] = False
         self.data["priority"] = 50
+        """
+
+        return defs
