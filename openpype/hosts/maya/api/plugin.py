@@ -1,4 +1,10 @@
 import os
+import sys
+import json
+from abc import (
+    ABCMeta
+)
+import six
 
 from maya import cmds
 
@@ -6,15 +12,34 @@ import qargparse
 
 from openpype.lib import Logger
 from openpype.pipeline import (
-    LegacyCreator,
     LoaderPlugin,
     get_representation_path,
     AVALON_CONTAINER_ID,
     Anatomy,
+    CreatorError,
+    LegacyCreator,
+    Creator as NewCreator,
+    CreatedInstance
 )
+from openpype.lib import BoolDef
+from .lib import imprint, read, lsattr
+
 from openpype.settings import get_project_settings
 from .pipeline import containerise
 from . import lib
+
+
+CREATOR_INSTANCE_ATTRS = {
+    "id", "asset", "subset", "task", "variant", "family", "instance_id",
+    "creator_attributes", "publish_attributes", "active"
+}
+
+
+def _get_attr(node, attr, default=None):
+    """Helper to get attribute which allows attribute to not exist."""
+    if not cmds.attributeQuery(attr, node=node, exists=True):
+        return default
+    return cmds.getAttr("{}.{}".format(node, attr))
 
 
 def get_reference_node(members, log=None):
@@ -96,6 +121,154 @@ class Creator(LegacyCreator):
             lib.imprint(instance, self.data)
 
         return instance
+
+
+#@six.add_metaclass(ABCMeta)
+class MayaCreator(NewCreator):
+
+    def create(self, subset_name, instance_data, pre_create_data):
+
+        members = list()
+        if pre_create_data.get("use_selection"):
+            members = cmds.ls(selection=True)
+
+        with lib.undo_chunk():
+            instance_node = cmds.sets(members, name=subset_name)
+            instance_data["instance_node"] = instance_node
+            instance = CreatedInstance(
+                self.family,
+                subset_name,
+                instance_data,
+                self)
+            self._add_instance_to_context(instance)
+
+            self.imprint_instance_node(instance_node,
+                                       data=instance.data_to_store())
+            return instance
+
+    def collect_instances(self):
+        self.cache_subsets(self.collection_shared_data)
+        cached_subsets = self.collection_shared_data["maya_cached_subsets"]
+        for node in cached_subsets.get(self.identifier, []):
+            node_data = self.read_instance_node(node)
+
+            # Explicitly re-parse the node name
+            node_data["instance_node"] = node
+
+            created_instance = CreatedInstance.from_existing(node_data, self)
+            self._add_instance_to_context(created_instance)
+
+    def update_instances(self, update_list):
+        for created_inst, _changes in update_list:
+            data = created_inst.data_to_store()
+            node = data.get("instance_node")
+
+            self.imprint_instance_node(node, data)
+
+    def imprint_instance_node(self, node, data):
+
+        # We never store the instance_node as value on the node since
+        # it's the node name itself
+        data.pop("instance_node", None)
+
+        # We store creator attributes at the root level and assume they
+        # will not clash in names with `subset`, `task`, etc. and other
+        # default names. This is just so these attributes in many cases
+        # are still editable in the maya UI by artists.
+        data.update(data.pop("creator_attributes", {}))
+
+        # We know the "publish_attributes" will be complex data of
+        # settings per plugins, we'll store this as a flattened json structure
+        publish_attributes = json.dumps(data.get("publish_attributes", {}))
+        data.pop("publish_attributes", None)    # pop to move to end of dict
+        data["publish_attributes"] = publish_attributes
+
+        # Kill any existing attributes just we can imprint cleanly again
+        for attr in data.keys():
+            if cmds.attributeQuery(attr, node=node, exists=True):
+                cmds.deleteAttr("{}.{}".format(node, attr))
+
+        return imprint(node, data)
+
+    def read_instance_node(self, node):
+        node_data = read(node)
+
+        # Move the relevant attributes into "creator_attributes" that
+        # we flattened originally
+        node_data["creator_attributes"] = {}
+        for key, value in node_data.items():
+            if key not in CREATOR_INSTANCE_ATTRS:
+                node_data["creator_attributes"][key] = value
+
+        publish_attributes = node_data.get("publish_attributes")
+        if publish_attributes:
+            node_data["publish_attributes"] = json.loads(publish_attributes)
+
+        return node_data
+
+    def remove_instances(self, instances):
+        """Remove specified instance from the scene.
+
+        This is only removing `id` parameter so instance is no longer
+        instance, because it might contain valuable data for artist.
+
+        """
+        for instance in instances:
+            node = instance.data.get("instance_node")
+            if node:
+                cmds.delete(node)
+
+            self._remove_instance_from_context(instance)
+
+    def get_pre_create_attr_defs(self):
+        return [
+            BoolDef("use_selection", label="Use selection")
+        ]
+
+    @staticmethod
+    def cache_subsets(shared_data):
+        """Cache instances for Creators to shared data.
+
+        Create `maya_cached_subsets` key when needed in shared data and
+        fill it with all collected instances from the scene under its
+        respective creator identifiers.
+
+        If legacy instances are detected in the scene, create
+        `maya_cached_legacy_subsets` there and fill it with
+        all legacy subsets under family as a key.
+
+        Args:
+            Dict[str, Any]: Shared data.
+
+        Return:
+            Dict[str, Any]: Shared data dictionary.
+
+        """
+        if shared_data.get("maya_cached_subsets") is None:
+            cache = dict()
+            cache_legacy = dict()
+
+            for node in cmds.ls(type='objectSet'):
+
+                if _get_attr(node, attr="id") != "pyblish.avalon.instance":
+                    continue
+
+                creator_id = _get_attr(node, attr="creator_identifier")
+                if creator_id is not None:
+                    # creator instance
+                    cache.setdefault(creator_id, []).append(node)
+                else:
+                    # legacy instance
+                    family = _get_attr(node, attr="family")
+                    if family is None:
+                        # must be a broken instance
+                        continue
+
+                    cache_legacy.setdefault(family, []).append(node)
+
+            shared_data["maya_cached_subsets"] = cache
+            shared_data["maya_cached_legacy_subsets"] = cache_legacy
+        return shared_data
 
 
 class Loader(LoaderPlugin):

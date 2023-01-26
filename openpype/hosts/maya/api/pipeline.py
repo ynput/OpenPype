@@ -13,6 +13,7 @@ from openpype.host import (
     HostBase,
     IWorkfileHost,
     ILoadHost,
+    IPublishHost,
     HostDirmap,
 )
 from openpype.tools.utils import host_tools
@@ -63,7 +64,7 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
 
-class MayaHost(HostBase, IWorkfileHost, ILoadHost):
+class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     name = "maya"
 
     def __init__(self):
@@ -145,6 +146,12 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
     def maintained_selection(self):
         with lib.maintained_selection():
             yield
+
+    def get_context_data(self):
+        return {}
+
+    def update_context_data(self, data, changes):
+        return
 
     def _register_callbacks(self):
         for handler, event in self._op_events.copy().items():

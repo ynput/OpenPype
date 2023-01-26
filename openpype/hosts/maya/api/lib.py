@@ -32,6 +32,7 @@ from openpype.pipeline import (
     load_container,
     registered_host,
 )
+from openpype.lib import NumberDef
 from openpype.pipeline.context_tools import get_current_project_asset
 from .commands import reset_frame_range
 
@@ -313,6 +314,57 @@ def collect_animation_data(fps=False):
         data["fps"] = mel.eval('currentTimeUnitToFPS()')
 
     return data
+
+
+def collect_animation_defs(fps=False):
+    """Get the basic animation attribute defintions for the publisher.
+
+    Returns:
+        OrderedDict
+
+    """
+
+    # get scene values as defaults
+    start = cmds.playbackOptions(query=True, animationStartTime=True)
+    end = cmds.playbackOptions(query=True, animationEndTime=True)
+
+    # build attributes
+    defs = [
+        NumberDef("frameStart",
+                  label="Frame Start",
+                  default=start,
+                  decimals=0),
+        NumberDef("frameEnd",
+                  label="Frame End",
+                  default=end,
+                  decimals=0),
+        NumberDef("handleStart",
+                  label="Handle Start",
+                  default=0,
+                  decimals=0),
+        NumberDef("handleEnd",
+                  label="Handle End",
+                  default=0,
+                  decimals=0),
+        NumberDef("step",
+                  label="Step size",
+                  tooltip="A smaller step size means more samples and larger "
+                          "output files.\n"
+                          "A 1.0 step size is a single sample every frame.\n"
+                          "A 0.5 step size is two samples per frame.\n"
+                          "A 0.2 step size is five samples per frame.",
+                  default=1.0,
+                  decimals=3),
+    ]
+
+    if fps:
+        current_fps = mel.eval('currentTimeUnitToFPS()')
+        fps_def = NumberDef(
+          "fps", label="FPS", default=current_fps, decimals=5
+        )
+        defs.append(fps_def)
+
+    return defs
 
 
 def imprint(node, data):
