@@ -69,14 +69,14 @@ class ExtractOIIOTranscode(publish.Extractor):
             if not self._repre_is_valid(repre):
                 continue
 
+            added_representations = False
+
             colorspace_data = repre["colorspaceData"]
             source_colorspace = colorspace_data["colorspace"]
             config_path = colorspace_data.get("config", {}).get("path")
             if not config_path or not os.path.exists(config_path):
                 self.log.warning("Config file doesn't exist, skipping")
                 continue
-
-            repre = self._handle_original_repre(repre, profile)
 
             for _, output_def in profile.get("outputs", {}).items():
                 new_repre = copy.deepcopy(repre)
@@ -150,6 +150,10 @@ class ExtractOIIOTranscode(publish.Extractor):
                         new_repre["tags"].append(tag)
 
                 instance.data["representations"].append(new_repre)
+                added_representations = True
+
+            if added_representations:
+                self._mark_original_repre_for_deletion(repre, profile)
 
     def _translate_to_sequence(self, files_to_convert):
         """Returns original list of files or single sequence format filename.
@@ -253,7 +257,8 @@ class ExtractOIIOTranscode(publish.Extractor):
 
         return True
 
-    def _handle_original_repre(self, repre, profile):
+    def _mark_original_repre_for_deletion(self, repre, profile):
+        """If new transcoded representation created, delete old."""
         delete_original = profile["delete_original"]
 
         if delete_original:
@@ -264,5 +269,3 @@ class ExtractOIIOTranscode(publish.Extractor):
                 repre["tags"].remove("review")
             if "delete" not in repre["tags"]:
                 repre["tags"].append("delete")
-
-        return repre
