@@ -177,6 +177,99 @@ def prepare_failed_creator_operation_info(
     }
 
 
+class ChangedItem(object):
+    def __init__(self, old_value, new_value):
+        self._old_value = copy.deepcopy(old_value)
+        self._new_value = copy.deepcopy(new_value)
+        self._changed = self._old_value != self._new_value
+
+        old_is_dict = isinstance(old_value, dict)
+        new_is_dict = isinstance(new_value, dict)
+        children = {}
+        changed_keys = set()
+        available_keys = set()
+        if old_is_dict and new_is_dict:
+            old_keys = set(old_value.keys())
+            new_keys = set(new_value.keys())
+            available_keys = old_keys | new_keys
+            for key in available_keys:
+                item = ChangedItem(
+                    old_value.get(key), new_value.get(key)
+                )
+                children[key] = item
+                if item.changed or key not in old_keys or key not in new_keys:
+                    changed_keys.add(key)
+
+        elif old_is_dict:
+            available_keys = set(old_value.keys())
+            changed_keys = set(available_keys)
+            for key in available_keys:
+                children[key] = ChangedItem(old_value.get(key), None)
+
+        elif new_is_dict:
+            available_keys = set(new_value.keys())
+            changed_keys = set(available_keys)
+            for key in available_keys:
+                children[key] = ChangedItem(None, new_value.get(key))
+
+        self._changed_keys = changed_keys
+        self._available_keys = available_keys
+        self._children = children
+        self._old_is_dict = old_is_dict
+        self._new_is_dict = new_is_dict
+
+    def __getitem__(self, key):
+        return self._children[key]
+
+    def __bool__(self):
+        return self._changed
+
+    def __iter__(self):
+        for key in self._changed_keys:
+            yield key
+
+    def keys(self):
+        return set(self._changed_keys)
+
+    @property
+    def changed(self):
+        return self._changed
+
+    @property
+    def changes(self):
+        if not self._old_is_dict and not self._new_is_dict:
+            return (self.old_value, self.new_value)
+
+        old_value = self.old_value
+        new_value = self.new_value
+        output = {}
+        for key in self.changed_keys:
+            _old = None
+            _new = None
+            if self._old_is_dict:
+                _old = old_value.get(key)
+            if self._new_is_dict:
+                _new = new_value.get(key)
+            output[key] = (_old, _new)
+        return output
+
+    @property
+    def changed_keys(self):
+        return set(self._changed_keys)
+
+    @property
+    def available_keys(self):
+        return set(self._available_keys)
+
+    @property
+    def old_value(self):
+        return copy.deepcopy(self._old_value)
+
+    @property
+    def new_value(self):
+        return copy.deepcopy(self._new_value)
+
+
 class InstanceMember:
     """Representation of instance member.
 
