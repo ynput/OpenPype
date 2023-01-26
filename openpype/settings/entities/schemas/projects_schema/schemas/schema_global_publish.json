@@ -267,8 +267,8 @@
                                     "type": "dict",
                                     "children": [
                                         {
-                                            "key": "output_extension",
-                                            "label": "Output extension",
+                                            "key": "extension",
+                                            "label": "Extension",
                                             "type": "text"
                                         },
                                         {
