@@ -1,10 +1,10 @@
 from openpype.hosts.maya.api import plugin
 
 
-class CreateAssembly(plugin.Creator):
+class CreateAssembly(plugin.MayaCreator):
     """A grouped package of loaded content"""
 
-    name = "assembly"
+    identifier = "io.openpype.creators.maya.assembly"
     label = "Assembly"
     family = "assembly"
     icon = "cubes"
