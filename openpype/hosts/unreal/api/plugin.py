@@ -4,7 +4,6 @@ import six
 from abc import (
     ABC,
     ABCMeta,
-    abstractmethod
 )
 
 import unreal
@@ -12,7 +11,8 @@ import unreal
 from .pipeline import (
     create_publish_instance,
     imprint,
-    lsinst
+    lsinst,
+    UNREAL_VERSION
 )
 from openpype.lib import BoolDef
 from openpype.pipeline import (
@@ -77,9 +77,28 @@ class UnrealBaseCreator(Creator):
                     shared_data["unreal_cached_subsets"][creator_id].append(i)
         return shared_data
 
-    @abstractmethod
     def create(self, subset_name, instance_data, pre_create_data):
-        pass
+        try:
+            instance_name = f"{subset_name}{self.suffix}"
+            create_publish_instance(instance_name, self.root)
+
+            instance_data["subset"] = subset_name
+            instance_data["instance_path"] = f"{self.root}/{instance_name}"
+
+            instance = CreatedInstance(
+                self.family,
+                subset_name,
+                instance_data,
+                self)
+            self._add_instance_to_context(instance)
+
+            imprint(f"{self.root}/{instance_name}", instance_data)
+
+        except Exception as er:
+            six.reraise(
+                OpenPypeCreatorError,
+                OpenPypeCreatorError(f"Creator error: {er}"),
+                sys.exc_info()[2])
 
     def collect_instances(self):
         # cache instances if missing
@@ -117,7 +136,7 @@ class UnrealBaseCreator(Creator):
 
     def get_pre_create_attr_defs(self):
         return [
-            BoolDef("use_selection", label="Use selection")
+            BoolDef("use_selection", label="Use selection", default=True)
         ]
 
 
@@ -137,25 +156,21 @@ class UnrealAssetCreator(UnrealBaseCreator):
             CreatedInstance: Created instance.
         """
         try:
-            selection = []
+            # Check if instance data has members, filled by the plugin.
+            # If not, use selection.
+            if not instance_data.get("members"):
+                selection = []
 
-            if pre_create_data.get("use_selection"):
-                sel_objects = unreal.EditorUtilityLibrary.get_selected_assets()
-                selection = [a.get_path_name() for a in sel_objects]
+                if pre_create_data.get("use_selection"):
+                    sel_objects = unreal.EditorUtilityLibrary.get_selected_assets()
+                    selection = [a.get_path_name() for a in sel_objects]
 
-            instance_name = f"{subset_name}{self.suffix}"
-            create_publish_instance(instance_name, self.root)
-            instance_data["members"] = selection
-            instance_data["subset"] = subset_name
-            instance_data["instance_path"] = f"{self.root}/{instance_name}"
-            instance = CreatedInstance(
-                self.family,
+                instance_data["members"] = selection
+
+            super(UnrealAssetCreator, self).create(
                 subset_name,
                 instance_data,
-                self)
-            self._add_instance_to_context(instance)
-
-            imprint(f"{self.root}/{instance_name}", instance_data)
+                pre_create_data)
 
         except Exception as er:
             six.reraise(
@@ -180,27 +195,33 @@ class UnrealActorCreator(UnrealBaseCreator):
             CreatedInstance: Created instance.
         """
         try:
-            selection = []
+            if UNREAL_VERSION.major == 5:
+                world = unreal.UnrealEditorSubsystem().get_editor_world()
+            else:
+                world = unreal.EditorLevelLibrary.get_editor_world()
 
-            if pre_create_data.get("use_selection"):
-                sel_objects = unreal.EditorUtilityLibrary.get_selected_actors()
-                selection = [a.get_path_name() for a in sel_objects]
+            # Check if the level is saved
+            if world.get_path_name().startswith("/Temp/"):
+                raise OpenPypeCreatorError(
+                    "Level must be saved before creating instances.")
 
-            instance_name = f"{subset_name}{self.suffix}"
-            create_publish_instance(instance_name, self.root)
-            instance_data["members"] = selection
-            instance_data[
-                "level"] = unreal.EditorLevelLibrary.get_editor_world()
-            instance_data["subset"] = subset_name
-            instance_data["instance_path"] = f"{self.root}/{instance_name}"
-            instance = CreatedInstance(
-                self.family,
+            # Check if instance data has members, filled by the plugin.
+            # If not, use selection.
+            if not instance_data.get("members"):
+                selection = []
+
+                if pre_create_data.get("use_selection"):
+                    sel_objects = unreal.EditorUtilityLibrary.get_selected_actors()
+                    selection = [a.get_path_name() for a in sel_objects]
+
+                instance_data["members"] = selection
+
+            instance_data["level"] = world.get_path_name()
+
+            super(UnrealActorCreator, self).create(
                 subset_name,
                 instance_data,
-                self)
-            self._add_instance_to_context(instance)
-
-            imprint(f"{self.root}/{instance_name}", instance_data)
+                pre_create_data)
 
         except Exception as er:
             six.reraise(
