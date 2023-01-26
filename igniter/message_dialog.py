@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtGui
+from qtpy import QtWidgets, QtGui
 
 from .tools import (
     load_stylesheet,

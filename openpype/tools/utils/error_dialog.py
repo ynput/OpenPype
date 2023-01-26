@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from .widgets import ClickableFrame, ExpandBtn, SeparatorWidget
 

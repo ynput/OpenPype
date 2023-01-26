@@ -2,7 +2,7 @@ from openpype.pipeline import KnownPublishError, publish
 import substance_painter.export
 
 
-class ExtractTextures(publish.Extractor):
+class ExtractTextures(publish.ExtractorColormanaged):
     """Extract Textures using an output template config.
 
     Note:
@@ -39,6 +39,23 @@ class ExtractTextures(publish.Extractor):
             # TODO: Confirm outputs match what we collected
             # TODO: Confirm the files indeed exist
             # TODO: make sure representations are registered
+
+        # We'll insert the color space data for each image instance that we
+        # added into this texture set. The collector couldn't do so because
+        # some anatomy and other instance data needs to be collected prior
+        context = instance.context
+        for image_instance in instance:
+
+            colorspace = image_instance.data.get("colorspace")
+            if not colorspace:
+                self.log.debug("No color space data present for instance: "
+                               f"{image_instance}")
+                continue
+
+            for representation in image_instance.data["representations"]:
+                self.set_representation_colorspace(representation,
+                                                   context=context,
+                                                   colorspace=colorspace)
 
         # Add a fake representation which won't be integrated so the
         # Integrator leaves us alone - otherwise it would error

@@ -4,7 +4,9 @@
 import os
 import pyblish.api
 
-from openpype.pipeline import legacy_io
+from openpype.host import IPublishHost
+from openpype.pipeline import legacy_io, registered_host
+from openpype.pipeline.create import CreateContext
 
 
 class CollectFromCreateContext(pyblish.api.ContextPlugin):
@@ -15,7 +17,11 @@ class CollectFromCreateContext(pyblish.api.ContextPlugin):
 
     def process(self, context):
         create_context = context.data.pop("create_context", None)
-        # Skip if create context is not available
+        if not create_context:
+            host = registered_host()
+            if isinstance(host, IPublishHost):
+                create_context = CreateContext(host)
+
         if not create_context:
             return
 

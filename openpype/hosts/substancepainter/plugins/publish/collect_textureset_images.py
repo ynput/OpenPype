@@ -70,8 +70,6 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
             # strings. See CollectTextures plug-in and Integrators.
             representation["udim"] = [output["udim"] for output in outputs]
 
-        # TODO: Store color space with the representation
-
         # Clone the instance
         image_instance = context.create_instance(instance.name)
         image_instance[:] = instance[:]
@@ -85,6 +83,13 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
 
         # Group the textures together in the loader
         image_instance.data["subsetGroup"] = instance.data["subset"]
+
+        # Store color space with the instance
+        # Note: The extractor will assign it to the representation
+        colorspace = outputs[0].get("colorSpace")
+        if colorspace:
+            self.log.debug(f"{image_subset} colorspace: {colorspace}")
+            image_instance.data["colorspace"] = colorspace
 
         # Set up the representation for thumbnail generation
         # TODO: Simplify this once thumbnail extraction is refactored

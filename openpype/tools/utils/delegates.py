@@ -3,13 +3,7 @@ from datetime import datetime
 import logging
 import numbers
 
-import Qt
-from Qt import QtWidgets, QtGui, QtCore
-
-if Qt.__binding__ == "PySide":
-    from PySide.QtGui import QStyleOptionViewItemV4
-elif Qt.__binding__ == "PyQt4":
-    from PyQt4.QtGui import QStyleOptionViewItemV4
+from qtpy import QtWidgets, QtGui, QtCore
 
 from openpype.client import (
     get_versions,
@@ -60,7 +54,10 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
             style = QtWidgets.QApplication.style()
 
         style.drawControl(
-            style.CE_ItemViewItem, option, painter, option.widget
+            QtWidgets.QStyle.CE_ItemViewItem,
+            option,
+            painter,
+            option.widget
         )
 
         painter.save()
@@ -72,9 +69,12 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
         pen.setColor(fg_color)
         painter.setPen(pen)
 
-        text_rect = style.subElementRect(style.SE_ItemViewItemText, option)
+        text_rect = style.subElementRect(
+            QtWidgets.QStyle.SE_ItemViewItemText,
+            option
+        )
         text_margin = style.proxy().pixelMetric(
-            style.PM_FocusFrameHMargin, option, option.widget
+            QtWidgets.QStyle.PM_FocusFrameHMargin, option, option.widget
         ) + 1
 
         painter.drawText(
