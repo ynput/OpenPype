@@ -8,13 +8,13 @@ from openpype.hosts.max.api import (
 )
 
 
-class ExtractAlembicCamera(publish.Extractor):
+class ExtractCameraAlembic(publish.Extractor):
     """
     Extract Camera with AlembicExport
     """
 
     order = pyblish.api.ExtractorOrder - 0.1
-    label = "Extract Almebic Camera"
+    label = "Extract Alembic Camera"
     hosts = ["max"]
     families = ["camera"]
     optional = True
