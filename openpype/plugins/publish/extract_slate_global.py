@@ -578,12 +578,12 @@ class ExtractSlateGlobal(publish.Extractor):
         # get pyblish comment and intent
         common_data = slate_data["slate_common_data"]
         common_data["comment"] = "-"
-        if instance.context.data.get("comment"):
-            common_data["comment"] = instance.context.data["comment"]
         common_data["intent"] = {
             "label": "-",
             "value": "-"
         }
+        if instance.context.data.get("comment"):
+            common_data["comment"] = instance.context.data["comment"]
         if instance.context.data.get("intent"):
             common_data["intent"].update(
                 instance.context.data["intent"])
@@ -605,9 +605,6 @@ class ExtractSlateGlobal(publish.Extractor):
                     repre["name"]
                 ))
                 continue
-
-            with open("C:/Users/22DOGS/repres.json", "a") as f:
-                f.write(json.dumps(repre, indent=4, default=str))
 
             # loop through repres for thumbnail
             thumbnail_path = ""
@@ -643,7 +640,8 @@ class ExtractSlateGlobal(publish.Extractor):
                 frame_end = len(repre["files"]) + frame_start
                 output_name = "{}.{}.{}".format(
                     filename,
-                    frame_start,
+                    str(frame_start).zfill(
+                        int(slate_data["frame_padding"])),
                     ext
                 )
                 thumbnail_path = os.path.join(

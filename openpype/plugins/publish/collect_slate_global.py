@@ -73,6 +73,7 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
             ).zfill(
                 version_padding
             )
+            slate_data["frame_padding"] = version_padding
             slate_data["intent"] = {
                 "label": "",
                 "value": ""
