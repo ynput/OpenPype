@@ -11,7 +11,7 @@ from openpype.hosts.max.api import (
 )
 
 
-class ExtractAlembicCamera(publish.Extractor,
+class ExtractCameraAlembic(publish.Extractor,
                            OptionalPyblishPluginMixin):
     """
     Extract Camera with AlembicExport
