@@ -188,6 +188,8 @@ class ChangedItem(object):
         children = {}
         changed_keys = set()
         available_keys = set()
+        new_keys = set()
+        old_keys = set()
         if old_is_dict and new_is_dict:
             old_keys = set(old_value.keys())
             new_keys = set(new_value.keys())
@@ -201,13 +203,15 @@ class ChangedItem(object):
                     changed_keys.add(key)
 
         elif old_is_dict:
-            available_keys = set(old_value.keys())
+            old_keys = set(old_value.keys())
+            available_keys = set(old_keys)
             changed_keys = set(available_keys)
             for key in available_keys:
                 children[key] = ChangedItem(old_value.get(key), None)
 
         elif new_is_dict:
-            available_keys = set(new_value.keys())
+            new_keys = set(new_value.keys())
+            available_keys = set(new_keys)
             changed_keys = set(available_keys)
             for key in available_keys:
                 children[key] = ChangedItem(None, new_value.get(key))
@@ -217,6 +221,8 @@ class ChangedItem(object):
         self._children = children
         self._old_is_dict = old_is_dict
         self._new_is_dict = new_is_dict
+        self._old_keys = old_keys
+        self._new_keys = new_keys
 
     def __getitem__(self, key):
         return self._children[key]
@@ -225,11 +231,14 @@ class ChangedItem(object):
         return self._changed
 
     def __iter__(self):
-        for key in self._changed_keys:
+        for key in self.changed_keys:
             yield key
 
+    def get(self, key, default=None):
+        return self._children.get(key, default)
+
     def keys(self):
-        return set(self._changed_keys)
+        return self.changed_keys
 
     def items(self):
         changes = self.changes
@@ -268,6 +277,14 @@ class ChangedItem(object):
     @property
     def available_keys(self):
         return set(self._available_keys)
+
+    @property
+    def old_keys(self):
+        return set(self._old_keys)
+
+    @property
+    def new_keys(self):
+        return set(self._new_keys)
 
     @property
     def old_value(self):
