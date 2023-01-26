@@ -2,6 +2,7 @@ import os
 import attr
 import getpass
 import pyblish.api
+from datetime import datetime
 
 from openpype.lib import (
     env_value_to_bool,
@@ -10,6 +11,7 @@ from openpype.lib import (
 from openpype.pipeline import legacy_io
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+from openpype.tests.lib import is_in_tests
 
 
 @attr.s
@@ -48,9 +50,11 @@ class AfterEffectsSubmitDeadline(
 
         context = self._instance.context
 
+        batch_name = os.path.basename(self._instance.data["source"])
+        if is_in_tests():
+            batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
         dln_job_info.Name = self._instance.data["name"]
-        dln_job_info.BatchName = os.path.basename(self._instance.
-                                                  data["source"])
+        dln_job_info.BatchName = batch_name
         dln_job_info.Plugin = "AfterEffects"
         dln_job_info.UserName = context.data.get(
             "deadlineUser", getpass.getuser())
@@ -83,7 +87,8 @@ class AfterEffectsSubmitDeadline(
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
             "OPENPYPE_LOG_NO_COLORS",
-            "OPENPYPE_VERSION"
+            "OPENPYPE_VERSION",
+            "IS_TEST"
         ]
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):

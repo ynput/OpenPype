@@ -175,6 +175,7 @@ module.exports = {
                 "dev_publishing"
             ]
         },
-        "dev_deadline"
+        "dev_deadline",
+        "dev_colorspace"
     ]
 };
