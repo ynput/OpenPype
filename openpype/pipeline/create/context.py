@@ -241,7 +241,7 @@ class ChangedItem(object):
         return self.changed_keys
 
     def items(self):
-        if self.is_dict:
+        if not self.is_dict:
             yield None, self.changes
         else:
             for item in self.changes.items():
