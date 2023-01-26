@@ -27,7 +27,6 @@ class ValidateGLTFTexturesNames(pyblish.api.InstancePlugin):
     families = ['gltf']
     hosts = ['maya']
     label = 'GLTF Textures Name'
-    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
     def process(self, instance):
         """Process all the nodes in the instance"""
