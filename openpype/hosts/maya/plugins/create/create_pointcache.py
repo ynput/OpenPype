@@ -40,6 +40,8 @@ class CreatePointCache(plugin.MayaCreator):
                     default=False),
             BoolDef("includeParentHierarchy",
                     label="Include Parent Hierarchy",
+                    tooltip="Whether to include parent hierarchy of nodes in "
+                            "the publish instance",
                     default=False),
             BoolDef("worldSpace",
                     label="World-Space Export",
