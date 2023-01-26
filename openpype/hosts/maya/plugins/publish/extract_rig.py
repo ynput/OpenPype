@@ -4,11 +4,11 @@ import os
 
 from maya import cmds
 
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.maya.api.lib import maintained_selection
 
 
-class ExtractRig(openpype.api.Extractor):
+class ExtractRig(publish.Extractor):
     """Extract rig as Maya Scene."""
 
     label = "Extract Rig (Maya Scene)"

@@ -2,11 +2,11 @@ import os
 
 from maya import cmds
 
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.maya.api.lib import maintained_selection
 
 
-class ExtractVRayProxy(openpype.api.Extractor):
+class ExtractVRayProxy(publish.Extractor):
     """Extract the content of the instance to a vrmesh file
 
     Things to pay attention to:

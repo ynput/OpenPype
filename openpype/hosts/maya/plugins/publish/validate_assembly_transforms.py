@@ -1,5 +1,4 @@
 import pyblish.api
-import openpype.api
 
 from maya import cmds
 
@@ -90,16 +89,16 @@ class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
 
         """
 
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
         from openpype.hosts.maya.api import lib
 
         # Store namespace in variable, cosmetics thingy
-        messagebox = QtWidgets.QMessageBox
-        mode = messagebox.StandardButton.Ok | messagebox.StandardButton.Cancel
-        choice = messagebox.warning(None,
-                                    "Matrix reset",
-                                    cls.prompt_message,
-                                    mode)
+        choice = QtWidgets.QMessageBox.warning(
+            None,
+            "Matrix reset",
+            cls.prompt_message,
+            QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel
+        )
 
         invalid = cls.get_invalid(instance)
         if not invalid:

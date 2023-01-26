@@ -8,7 +8,24 @@ module.exports = {
                 "artist_getting_started",
                 "artist_concepts",
                 "artist_publish",
-                "artist_tools",
+                {
+                    type: "category",
+                    collapsed: true,
+                    label: "Tools",
+                    link: {type: 'doc', id: 'artist_tools'},
+                    items: [
+                        "artist_tools_context_manager",
+                        "artist_tools_creator",
+                        "artist_tools_loader",
+                        "artist_tools_library_loader",
+                        "artist_tools_publisher",
+                        "artist_tools_inventory",
+                        "artist_tools_workfiles",
+                        "artist_tools_look_assigner",
+                        "artist_tools_subset_manager",
+                        "artist_tools_sync_queue"
+                    ],
+                },
                 "artist_install"
             ],
         },
@@ -101,6 +118,7 @@ module.exports = {
             items: [
                 "admin_hosts_blender",
                 "admin_hosts_hiero",
+                "admin_hosts_houdini",
                 "admin_hosts_maya",
                 "admin_hosts_nuke",
                 "admin_hosts_resolve",
@@ -142,7 +160,7 @@ module.exports = {
             ],
         },
     ],
-     Dev: [
+    Dev: [
         "dev_introduction",
         "dev_requirements",
         "dev_build",
@@ -156,6 +174,8 @@ module.exports = {
                 "dev_host_implementation",
                 "dev_publishing"
             ]
-        }
-     ]
+        },
+        "dev_deadline",
+        "dev_colorspace"
+    ]
 };

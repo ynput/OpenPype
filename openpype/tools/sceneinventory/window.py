@@ -1,7 +1,7 @@
 import os
 import sys
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 import qtawesome
 
 from openpype import style
@@ -40,8 +40,6 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         project_name = os.getenv("AVALON_PROJECT") or "<Project not set>"
         self.setWindowTitle("Scene Inventory 1.0 - {}".format(project_name))
         self.setObjectName("SceneInventory")
-        # Maya only property
-        self.setProperty("saveWindowPref", True)
 
         self.resize(1100, 480)
 
@@ -162,7 +160,10 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         self._model.set_hierarchy_view(enabled)
 
     def _on_text_filter_change(self, text_filter):
-        self._proxy.setFilterRegExp(text_filter)
+        if hasattr(self._proxy, "setFilterRegularExpression"):
+            self._proxy.setFilterRegularExpression(text_filter)
+        else:
+            self._proxy.setFilterRegExp(text_filter)
 
     def _on_outdated_state_change(self):
         self._proxy.set_filter_outdated(

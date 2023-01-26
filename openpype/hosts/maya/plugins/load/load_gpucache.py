@@ -4,13 +4,13 @@ from openpype.pipeline import (
     load,
     get_representation_path
 )
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 
 
 class GpuCacheLoader(load.LoaderPlugin):
     """Load Alembic as gpuCache"""
 
-    families = ["model", "animation", "pointcache"]
+    families = ["model", "animation", "proxyAbc", "pointcache"]
     representations = ["abc"]
 
     label = "Import Gpu Cache"

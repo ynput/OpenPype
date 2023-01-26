@@ -3,14 +3,20 @@ import logging
 import shutil
 import copy
 
-import Qt
-from Qt import QtWidgets, QtCore
+import qtpy
+from qtpy import QtWidgets, QtCore
 
 from openpype.host import IWorkfileHost
 from openpype.client import get_asset_by_id
+from openpype.pipeline.workfile.lock_workfile import (
+    is_workfile_locked,
+    is_workfile_lock_enabled,
+    is_workfile_locked_for_current_process
+)
 from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 from openpype.lib import emit_event
+from openpype.tools.workfiles.lock_dialog import WorkfileLockDialog
 from openpype.pipeline import (
     registered_host,
     legacy_io,
@@ -452,8 +458,19 @@ class FilesWidget(QtWidgets.QWidget):
             "host_name": self.host_name
         }
 
+    def _is_workfile_locked(self, filepath):
+        if not is_workfile_lock_enabled(self.host_name, self.project_name):
+            return False
+        if not is_workfile_locked(filepath):
+            return False
+        return not is_workfile_locked_for_current_process(filepath)
+
     def open_file(self, filepath):
         host = self.host
+        if self._is_workfile_locked(filepath):
+            # add lockfile dialog
+            WorkfileLockDialog(filepath)
+
         if isinstance(host, IWorkfileHost):
             has_unsaved_changes = host.workfile_has_unsaved_changes()
         else:
@@ -508,22 +525,25 @@ class FilesWidget(QtWidgets.QWidget):
 
     def save_changes_prompt(self):
         self._messagebox = messagebox = QtWidgets.QMessageBox(parent=self)
-        messagebox.setWindowFlags(messagebox.windowFlags() |
-                                  QtCore.Qt.FramelessWindowHint)
-        messagebox.setIcon(messagebox.Warning)
+        messagebox.setWindowFlags(
+            messagebox.windowFlags() | QtCore.Qt.FramelessWindowHint
+        )
+        messagebox.setIcon(QtWidgets.QMessageBox.Warning)
         messagebox.setWindowTitle("Unsaved Changes!")
         messagebox.setText(
             "There are unsaved changes to the current file."
             "\nDo you want to save the changes?"
         )
         messagebox.setStandardButtons(
-            messagebox.Yes | messagebox.No | messagebox.Cancel
+            QtWidgets.QMessageBox.Yes
+            | QtWidgets.QMessageBox.No
+            | QtWidgets.QMessageBox.Cancel
         )
 
         result = messagebox.exec_()
-        if result == messagebox.Yes:
+        if result == QtWidgets.QMessageBox.Yes:
             return True
-        if result == messagebox.No:
+        if result == QtWidgets.QMessageBox.No:
             return False
         return None
 
@@ -561,7 +581,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         src = self._get_selected_filepath()
         dst = os.path.join(self._workfiles_root, work_file)
-        shutil.copy(src, dst)
+        shutil.copyfile(src, dst)
 
         self.workfile_created.emit(dst)
 
@@ -601,7 +621,7 @@ class FilesWidget(QtWidgets.QWidget):
             "caption": "Work Files",
             "filter": ext_filter
         }
-        if Qt.__binding__ in ("PySide", "PySide2"):
+        if qtpy.API in ("pyside", "pyside2"):
             kwargs["dir"] = self._workfiles_root
         else:
             kwargs["directory"] = self._workfiles_root
@@ -658,7 +678,7 @@ class FilesWidget(QtWidgets.QWidget):
             else:
                 self.host.save_file(filepath)
         else:
-            shutil.copy(src_path, filepath)
+            shutil.copyfile(src_path, filepath)
             if isinstance(self.host, IWorkfileHost):
                 self.host.open_workfile(filepath)
             else:

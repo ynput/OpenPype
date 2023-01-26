@@ -1,10 +1,12 @@
 from .constants import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
     DEFAULT_SUBSET_TEMPLATE,
+    PRE_CREATE_THUMBNAIL_KEY,
 )
 
 from .subset_name import (
     TaskNotSetError,
+    get_subset_name_template,
     get_subset_name,
 )
 
@@ -24,6 +26,8 @@ from .creator_plugins import (
     deregister_creator_plugin,
     register_creator_plugin_path,
     deregister_creator_plugin_path,
+
+    cache_and_get_instances,
 )
 
 from .context import (
@@ -40,8 +44,10 @@ from .legacy_create import (
 __all__ = (
     "SUBSET_NAME_ALLOWED_SYMBOLS",
     "DEFAULT_SUBSET_TEMPLATE",
+    "PRE_CREATE_THUMBNAIL_KEY",
 
     "TaskNotSetError",
+    "get_subset_name_template",
     "get_subset_name",
 
     "CreatorError",

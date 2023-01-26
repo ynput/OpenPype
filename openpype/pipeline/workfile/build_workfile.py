@@ -1,3 +1,14 @@
+"""Workfile build based on settings.
+
+Workfile builder will do stuff based on project settings. Advantage is that
+it need only access to settings. Disadvantage is that it is hard to focus
+build per context and being explicit about loaded content.
+
+For more explicit workfile build is recommended 'AbstractTemplateBuilder'
+from '~/openpype/pipeline/workfile/workfile_template_builder'. Which gives
+more abilities to define how build happens but require more code to achive it.
+"""
+
 import os
 import re
 import collections
@@ -109,6 +120,8 @@ class BuildWorkfile:
         # Prepare available loaders
         loaders_by_name = {}
         for loader in discover_loader_plugins():
+            if not loader.enabled:
+                continue
             loader_name = loader.__name__
             if loader_name in loaders_by_name:
                 raise KeyError(

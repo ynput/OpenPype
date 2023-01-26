@@ -2,7 +2,7 @@ import os
 
 from maya import cmds
 
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.maya.api.lib import (
     extract_alembic,
     suspended_refresh,
@@ -11,7 +11,7 @@ from openpype.hosts.maya.api.lib import (
 )
 
 
-class ExtractAlembic(openpype.api.Extractor):
+class ExtractAlembic(publish.Extractor):
     """Produce an alembic of just point positions and normals.
 
     Positions and normals, uvs, creases are preserved, but nothing more,
@@ -86,13 +86,16 @@ class ExtractAlembic(openpype.api.Extractor):
                                                      start=start,
                                                      end=end))
 
-        with suspended_refresh():
+        suspend = not instance.data.get("refresh", False)
+        with suspended_refresh(suspend=suspend):
             with maintained_selection():
                 cmds.select(nodes, noExpand=True)
-                extract_alembic(file=path,
-                                startFrame=start,
-                                endFrame=end,
-                                **options)
+                extract_alembic(
+                    file=path,
+                    startFrame=start,
+                    endFrame=end,
+                    **options
+                )
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

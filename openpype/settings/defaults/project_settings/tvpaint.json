@@ -1,4 +1,14 @@
 {
+    "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        }
+    },
     "stop_timer_on_application_exit": false,
     "publish": {
         "CollectRenderScene": {
@@ -11,6 +21,11 @@
                 255,
                 255,
                 255
+            ],
+            "families_to_review": [
+                "review",
+                "renderlayer",
+                "renderscene"
             ]
         },
         "ValidateProjectSettings": {

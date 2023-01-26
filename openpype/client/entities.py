@@ -389,10 +389,11 @@ def get_subset_by_name(project_name, subset_name, asset_id, fields=None):
             returned if 'None' is passed.
 
     Returns:
-        None: If subset with specified filters was not found.
-        Dict: Subset document which can be reduced to specified 'fields'.
-    """
+        Union[None, Dict[str, Any]]: None if subset with specified filters was
+            not found or dict subset document which can be reduced to
+            specified 'fields'.
 
+    """
     if not subset_name:
         return None
 

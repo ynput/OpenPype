@@ -1,12 +1,13 @@
-import pyblish.api
-import nuke
 import os
-import openpype
+
+import pyblish.api
 import clique
+import nuke
+
+from openpype.pipeline import publish
 
 
-class NukeRenderLocal(openpype.api.Extractor):
-    # TODO: rewrite docstring to nuke
+class NukeRenderLocal(publish.ExtractorColormanaged):
     """Render the current Nuke composition locally.
 
     Extract the result of savers by starting a comp render
@@ -21,18 +22,20 @@ class NukeRenderLocal(openpype.api.Extractor):
 
     def process(self, instance):
         families = instance.data["families"]
+        child_nodes = (
+            instance.data.get("transientData", {}).get("childNodes")
+            or instance
+        )
 
         node = None
-        for x in instance:
+        for x in child_nodes:
             if x.Class() == "Write":
                 node = x
-
-        self.log.debug("instance collected: {}".format(instance.data))
 
         first_frame = instance.data.get("frameStartHandle", None)
 
         last_frame = instance.data.get("frameEndHandle", None)
-        node_subset_name = instance.data.get("name", None)
+        node_subset_name = instance.data["subset"]
 
         self.log.info("Starting render")
         self.log.info("Start frame: {}".format(first_frame))
@@ -59,12 +62,13 @@ class NukeRenderLocal(openpype.api.Extractor):
 
         # Render frames
         nuke.execute(
-            node_subset_name,
+            str(node_subset_name),
             int(first_frame),
             int(last_frame)
         )
 
         ext = node["file_type"].value()
+        colorspace = node["colorspace"].value()
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -88,6 +92,13 @@ class NukeRenderLocal(openpype.api.Extractor):
                 'files': filenames,
                 "stagingDir": out_dir
             }
+
+        # inject colorspace data
+        self.set_representation_colorspace(
+            repre, instance.context,
+            colorspace=colorspace
+        )
+
         instance.data["representations"].append(repre)
 
         self.log.info("Extracted instance '{0}' to: {1}".format(

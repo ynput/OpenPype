@@ -32,7 +32,6 @@ from openpype.client import (
     get_subsets,
     get_last_versions
 )
-from openpype.pipeline import legacy_io
 
 
 class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
@@ -49,7 +48,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
     def process(self, context):
         self.log.info("Collecting anatomy data for all instances.")
 
-        project_name = legacy_io.active_project()
+        project_name = context.data["projectName"]
         self.fill_missing_asset_docs(context, project_name)
         self.fill_instance_data_from_asset(context)
         self.fill_latest_versions(context, project_name)
@@ -145,7 +144,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             None
 
         """
-        self.log.debug("Qeurying latest versions for instances.")
+        self.log.debug("Querying latest versions for instances.")
 
         hierarchy = {}
         names_by_asset_ids = collections.defaultdict(set)
@@ -154,7 +153,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             latest_version = instance.data.get("latestVersion")
             instance.data["latestVersion"] = latest_version
 
-            # Skip instances withou "assetEntity"
+            # Skip instances without "assetEntity"
             asset_doc = instance.data.get("assetEntity")
             if not asset_doc:
                 continue
@@ -163,7 +162,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             asset_id = asset_doc["_id"]
             subset_name = instance.data["subset"]
 
-            # Prepare instance hiearchy for faster filling latest versions
+            # Prepare instance hierarchy for faster filling latest versions
             if asset_id not in hierarchy:
                 hierarchy[asset_id] = {}
             if subset_name not in hierarchy[asset_id]:
@@ -188,7 +187,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         for subset_doc in subset_docs:
             subset_id = subset_doc["_id"]
             last_version_doc = last_version_docs_by_subset_id.get(subset_id)
-            if last_version_docs_by_subset_id is None:
+            if last_version_doc is None:
                 continue
 
             asset_id = subset_doc["parent"]
@@ -227,7 +226,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 "version": version_number
             }
 
-            # Hiearchy
+            # Hierarchy
             asset_doc = instance.data.get("assetEntity")
             if (
                 asset_doc

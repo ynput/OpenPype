@@ -14,7 +14,7 @@ CURRENT_FILE = os.path.abspath(__file__)
 
 def show_error_messagebox(title, message, detail_message=None):
     """Function will show message and process ends after closing it."""
-    from Qt import QtWidgets, QtCore
+    from qtpy import QtWidgets, QtCore
     from openpype import style
 
     app = QtWidgets.QApplication([])

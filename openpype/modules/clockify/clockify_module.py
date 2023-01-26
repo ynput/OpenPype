@@ -2,15 +2,16 @@ import os
 import threading
 import time
 
+from openpype.modules import (
+    OpenPypeModule,
+    ITrayModule,
+    IPluginPaths
+)
+
 from .clockify_api import ClockifyAPI
 from .constants import (
     CLOCKIFY_FTRACK_USER_PATH,
     CLOCKIFY_FTRACK_SERVER_PATH
-)
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import (
-    ITrayModule,
-    IPluginPaths
 )
 
 
@@ -182,7 +183,7 @@ class ClockifyModule(
     # Definition of Tray menu
     def tray_menu(self, parent_menu):
         # Menu for Tray App
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
         menu = QtWidgets.QMenu("Clockify", parent_menu)
         menu.setProperty("submenu", "on")
 

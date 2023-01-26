@@ -36,6 +36,20 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CollectGLTF",
+            "label": "Collect Assets for GLTF/GLB export",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
             "type": "splitter"
         },
         {
@@ -62,7 +76,7 @@
                 }
             ]
         },
-        {   
+        {
             "type": "dict",
             "collapsible": true,
             "key": "ValidateFrameRange",
@@ -296,6 +310,45 @@
                     "label": "Families",
                     "type": "list",
                     "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "ValidatePluginPathAttributes",
+            "label": "Plug-in Path Attributes",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "label",
+                    "label": "Fill in the node types and attributes you want to validate. <p>e.g. <b>AlembicNode.abc_file</b>, the node type is <b>AlembicNode</b> and the node attribute is <b>abc_file</b>"
+                },
+                {
+                    "type": "dict-modifiable",
+                    "collapsible": true,
+                    "key": "attribute",
+                    "label": "File Attribute",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "text"
+                    }
                 }
             ]
         },
@@ -641,6 +694,26 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "ExtractProxyAlembic",
+                    "label": "Extract Proxy Alembic",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "key": "families",
+                            "label": "Families",
+                            "type": "list",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "ExtractAlembic",
                     "label": "Extract Alembic",
                     "checkbox_key": "enabled",
@@ -655,6 +728,25 @@
                             "label": "Families",
                             "type": "list",
                             "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ExtractObj",
+                    "label": "Extract OBJ",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
                         }
                     ]
                 }

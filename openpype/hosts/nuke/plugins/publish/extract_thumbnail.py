@@ -2,18 +2,15 @@ import sys
 import os
 import nuke
 import pyblish.api
-import openpype
-from openpype.hosts.nuke.api import (
-    maintained_selection,
-    get_view_process_node
-)
 
+from openpype.pipeline import publish
+from openpype.hosts.nuke import api as napi
 
 if sys.version_info[0] >= 3:
     unicode = str
 
 
-class ExtractThumbnail(openpype.api.Extractor):
+class ExtractThumbnail(publish.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
     must be run after extract_render_local.py
@@ -37,7 +34,7 @@ class ExtractThumbnail(openpype.api.Extractor):
         if "render.farm" in instance.data["families"]:
             return
 
-        with maintained_selection():
+        with napi.maintained_selection():
             self.log.debug("instance: {}".format(instance))
             self.log.debug("instance.data[families]: {}".format(
                 instance.data["families"]))
@@ -68,7 +65,7 @@ class ExtractThumbnail(openpype.api.Extractor):
         bake_viewer_input_process_node = kwargs[
             "bake_viewer_input_process"]
 
-        node = instance[0]  # group node
+        node = instance.data["transientData"]["node"]  # group node
         self.log.info("Creating staging dir...")
 
         if "representations" not in instance.data:
@@ -143,7 +140,7 @@ class ExtractThumbnail(openpype.api.Extractor):
         if bake_viewer_process:
             if bake_viewer_input_process_node:
                 # get input process and connect it to baking
-                ipn = get_view_process_node()
+                ipn = napi.get_view_process_node()
                 if ipn is not None:
                     ipn.setInput(0, previous_node)
                     previous_node = ipn

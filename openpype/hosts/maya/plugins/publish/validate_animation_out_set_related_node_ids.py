@@ -1,7 +1,6 @@
 import maya.cmds as cmds
 
 import pyblish.api
-import openpype.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
@@ -21,7 +20,7 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
     """
 
     order = ValidateContentsOrder
-    families = ['animation', "pointcache"]
+    families = ['animation', "pointcache", "proxyAbc"]
     hosts = ['maya']
     label = 'Animation Out Set Related Node Ids'
     actions = [

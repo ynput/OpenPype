@@ -5,7 +5,22 @@ import tempfile
 import pyblish.api
 
 from openpype.pipeline import legacy_io
-from openpype.hosts.tvpaint.api import pipeline, lib
+from openpype.hosts.tvpaint.api.lib import (
+    execute_george,
+    execute_george_through_file,
+    get_layers_data,
+    get_groups_data,
+)
+from openpype.hosts.tvpaint.api.pipeline import (
+    SECTION_NAME_CONTEXT,
+    SECTION_NAME_INSTANCES,
+    SECTION_NAME_CONTAINERS,
+
+    get_workfile_metadata_string,
+    write_workfile_metadata,
+    get_current_workfile_context,
+    list_instances,
+)
 
 
 class ResetTVPaintWorkfileMetadata(pyblish.api.Action):
@@ -15,12 +30,12 @@ class ResetTVPaintWorkfileMetadata(pyblish.api.Action):
 
     def process(self, context, plugin):
         metadata_keys = {
-            pipeline.SECTION_NAME_CONTEXT: {},
-            pipeline.SECTION_NAME_INSTANCES: [],
-            pipeline.SECTION_NAME_CONTAINERS: []
+            SECTION_NAME_CONTEXT: {},
+            SECTION_NAME_INSTANCES: [],
+            SECTION_NAME_CONTAINERS: []
         }
         for metadata_key, default in metadata_keys.items():
-            json_string = pipeline.get_workfile_metadata_string(metadata_key)
+            json_string = get_workfile_metadata_string(metadata_key)
             if not json_string:
                 continue
 
@@ -35,7 +50,7 @@ class ResetTVPaintWorkfileMetadata(pyblish.api.Action):
                     ).format(metadata_key, default, json_string),
                     exc_info=True
                 )
-                pipeline.write_workfile_metadata(metadata_key, default)
+                write_workfile_metadata(metadata_key, default)
 
 
 class CollectWorkfileData(pyblish.api.ContextPlugin):
@@ -45,8 +60,8 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
     actions = [ResetTVPaintWorkfileMetadata]
 
     def process(self, context):
-        current_project_id = lib.execute_george("tv_projectcurrentid")
-        lib.execute_george("tv_projectselect {}".format(current_project_id))
+        current_project_id = execute_george("tv_projectcurrentid")
+        execute_george("tv_projectselect {}".format(current_project_id))
 
         # Collect and store current context to have reference
         current_context = {
@@ -60,7 +75,7 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
         # Collect context from workfile metadata
         self.log.info("Collecting workfile context")
 
-        workfile_context = pipeline.get_current_workfile_context()
+        workfile_context = get_current_workfile_context()
         # Store workfile context to pyblish context
         context.data["workfile_context"] = workfile_context
         if workfile_context:
@@ -96,7 +111,7 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
 
         # Collect instances
         self.log.info("Collecting instance data from workfile")
-        instance_data = pipeline.list_instances()
+        instance_data = list_instances()
         context.data["workfileInstances"] = instance_data
         self.log.debug(
             "Instance data:\"{}".format(json.dumps(instance_data, indent=4))
@@ -104,7 +119,7 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
 
         # Collect information about layers
         self.log.info("Collecting layers data from workfile")
-        layers_data = lib.layers_data()
+        layers_data = get_layers_data()
         layers_by_name = {}
         for layer in layers_data:
             layer_name = layer["name"]
@@ -120,14 +135,14 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
 
         # Collect information about groups
         self.log.info("Collecting groups data from workfile")
-        group_data = lib.groups_data()
+        group_data = get_groups_data()
         context.data["groupsData"] = group_data
         self.log.debug(
             "Group data:\"{}".format(json.dumps(group_data, indent=4))
         )
 
         self.log.info("Collecting scene data from workfile")
-        workfile_info_parts = lib.execute_george("tv_projectinfo").split(" ")
+        workfile_info_parts = execute_george("tv_projectinfo").split(" ")
 
         # Project frame start - not used
         workfile_info_parts.pop(-1)
@@ -139,10 +154,10 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
         workfile_path = " ".join(workfile_info_parts).replace("\"", "")
 
         # Marks return as "{frame - 1} {state} ", example "0 set".
-        result = lib.execute_george("tv_markin")
+        result = execute_george("tv_markin")
         mark_in_frame, mark_in_state, _ = result.split(" ")
 
-        result = lib.execute_george("tv_markout")
+        result = execute_george("tv_markout")
         mark_out_frame, mark_out_state, _ = result.split(" ")
 
         scene_data = {
@@ -156,7 +171,7 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
             "sceneMarkInState": mark_in_state == "set",
             "sceneMarkOut": int(mark_out_frame),
             "sceneMarkOutState": mark_out_state == "set",
-            "sceneStartFrame": int(lib.execute_george("tv_startframe")),
+            "sceneStartFrame": int(execute_george("tv_startframe")),
             "sceneBgColor": self._get_bg_color()
         }
         self.log.debug(
@@ -188,7 +203,7 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
         ]
 
         george_script = "\n".join(george_script_lines)
-        lib.execute_george_through_file(george_script)
+        execute_george_through_file(george_script)
 
         with open(output_filepath, "r") as stream:
             data = stream.read()

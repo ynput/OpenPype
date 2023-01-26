@@ -1,6 +1,5 @@
 import pyblish.api
 
-import openpype.api
 from openpype.hosts.maya.api.lib import iter_visible_nodes_in_range
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import ValidateContentsOrder

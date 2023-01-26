@@ -1,11 +1,13 @@
 import os
 
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline import publish
 from openpype.hosts.houdini.api.lib import render_rop
 
+import hou
 
-class ExtractUSD(openpype.api.Extractor):
+class ExtractUSD(publish.Extractor):
 
     order = pyblish.api.ExtractorOrder
     label = "Extract USD"
@@ -16,7 +18,7 @@ class ExtractUSD(openpype.api.Extractor):
 
     def process(self, instance):
 
-        ropnode = instance[0]
+        ropnode = hou.node(instance.data.get("instance_node"))
 
         # Get the filename from the filename parameter
         output = ropnode.evalParm("lopoutput")

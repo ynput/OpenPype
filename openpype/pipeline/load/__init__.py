@@ -1,10 +1,12 @@
 from .utils import (
     HeroVersionType,
 
+    LoadError,
     IncompatibleLoaderError,
     InvalidRepresentationContext,
 
     get_repres_contexts,
+    get_contexts_for_repre_docs,
     get_subset_contexts,
     get_representation_context,
 
@@ -50,10 +52,12 @@ __all__ = (
     # utils.py
     "HeroVersionType",
 
+    "LoadError",
     "IncompatibleLoaderError",
     "InvalidRepresentationContext",
 
     "get_repres_contexts",
+    "get_contexts_for_repre_docs",
     "get_subset_contexts",
     "get_representation_context",
 

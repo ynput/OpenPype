@@ -6,9 +6,31 @@
     "is_file": true,
     "children": [
         {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (ImageIO)",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_config"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_file_rules"
+                }
+
+            ]
+        },
+        {
             "type": "boolean",
             "key": "level_sequences_for_layouts",
             "label": "Generate level sequences when loading layouts"
+        },
+        {
+            "type": "boolean",
+            "key": "delete_unmatched_assets",
+            "label": "Delete assets that are not matched"
         },
         {
             "type": "dict",

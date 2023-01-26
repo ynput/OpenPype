@@ -32,11 +32,6 @@ class CreateCamera(plugin.Creator):
         subset = self.data["subset"]
         name = plugin.asset_name(asset, subset)
 
-        camera = bpy.data.cameras.new(subset)
-        camera_obj = bpy.data.objects.new(subset, camera)
-
-        instances.objects.link(camera_obj)
-
         asset_group = bpy.data.objects.new(name=name, object_data=None)
         asset_group.empty_display_type = 'SINGLE_ARROW'
         instances.objects.link(asset_group)
@@ -53,6 +48,11 @@ class CreateCamera(plugin.Creator):
             bpy.ops.object.parent_set(keep_transform=True)
         else:
             plugin.deselect_all()
+            camera = bpy.data.cameras.new(subset)
+            camera_obj = bpy.data.objects.new(subset, camera)
+
+            instances.objects.link(camera_obj)
+
             camera_obj.select_set(True)
             asset_group.select_set(True)
             bpy.context.view_layer.objects.active = asset_group

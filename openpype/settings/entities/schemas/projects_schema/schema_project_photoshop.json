@@ -6,6 +6,23 @@
     "is_file": true,
     "children": [
         {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (ImageIO)",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_config"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_file_rules"
+                }
+
+            ]
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "create",
@@ -128,6 +145,35 @@
                             "type": "text",
                             "key": "flatten_subset_template",
                             "label": "Subset template for flatten image"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CollectReview",
+                    "label": "Collect Review",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "publish",
+                            "label": "Active"
+                         }
+                     ]
+                 },
+                 {
+                    "type": "dict",
+                    "key": "CollectVersion",
+                    "label": "Collect Version",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Synchronize version for image and review instances by workfile version."
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
                         }
                     ]
                 },

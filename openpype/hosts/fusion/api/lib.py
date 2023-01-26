@@ -3,8 +3,7 @@ import sys
 import re
 import contextlib
 
-from Qt import QtGui
-
+from openpype.lib import Logger
 from openpype.client import (
     get_asset_by_name,
     get_subset_by_name,
@@ -17,13 +16,14 @@ from openpype.pipeline import (
     switch_container,
     legacy_io,
 )
-from .pipeline import get_current_comp, comp_lock_and_undo_chunk
+from openpype.pipeline.context_tools import get_current_project_asset
 
 self = sys.modules[__name__]
 self._project = None
 
 
-def update_frame_range(start, end, comp=None, set_render_range=True):
+def update_frame_range(start, end, comp=None, set_render_range=True,
+                       handle_start=0, handle_end=0):
     """Set Fusion comp's start and end frame range
 
     Args:
@@ -32,6 +32,8 @@ def update_frame_range(start, end, comp=None, set_render_range=True):
         comp (object, Optional): comp object from fusion
         set_render_range (bool, Optional): When True this will also set the
             composition's render start and end frame.
+        handle_start (float, int, Optional): frame handles before start frame
+        handle_end (float, int, Optional): frame handles after end frame
 
     Returns:
         None
@@ -41,11 +43,16 @@ def update_frame_range(start, end, comp=None, set_render_range=True):
     if not comp:
         comp = get_current_comp()
 
+    # Convert any potential none type to zero
+    handle_start = handle_start or 0
+    handle_end = handle_end or 0
+
     attrs = {
-        "COMPN_GlobalStart": start,
-        "COMPN_GlobalEnd": end
+        "COMPN_GlobalStart": start - handle_start,
+        "COMPN_GlobalEnd": end + handle_end
     }
 
+    # set frame range
     if set_render_range:
         attrs.update({
             "COMPN_RenderStart": start,
@@ -56,24 +63,122 @@ def update_frame_range(start, end, comp=None, set_render_range=True):
         comp.SetAttrs(attrs)
 
 
-def get_additional_data(container):
-    """Get Fusion related data for the container
+def set_asset_framerange():
+    """Set Comp's frame range based on current asset"""
+    asset_doc = get_current_project_asset()
+    start = asset_doc["data"]["frameStart"]
+    end = asset_doc["data"]["frameEnd"]
+    handle_start = asset_doc["data"]["handleStart"]
+    handle_end = asset_doc["data"]["handleEnd"]
+    update_frame_range(start, end, set_render_range=True,
+                       handle_start=handle_start,
+                       handle_end=handle_end)
 
-    Args:
-        container(dict): the container found by the ls() function
 
-    Returns:
-        dict
+def set_asset_resolution():
+    """Set Comp's resolution width x height default based on current asset"""
+    asset_doc = get_current_project_asset()
+    width = asset_doc["data"]["resolutionWidth"]
+    height = asset_doc["data"]["resolutionHeight"]
+    comp = get_current_comp()
+
+    print("Setting comp frame format resolution to {}x{}".format(width,
+                                                                 height))
+    comp.SetPrefs({
+        "Comp.FrameFormat.Width": width,
+        "Comp.FrameFormat.Height": height,
+    })
+
+
+def validate_comp_prefs(comp=None, force_repair=False):
+    """Validate current comp defaults with asset settings.
+
+    Validates fps, resolutionWidth, resolutionHeight, aspectRatio.
+
+    This does *not* validate frameStart, frameEnd, handleStart and handleEnd.
     """
 
-    tool = container["_tool"]
-    tile_color = tool.TileColor
-    if tile_color is None:
-        return {}
+    if comp is None:
+        comp = get_current_comp()
 
-    return {"color": QtGui.QColor.fromRgbF(tile_color["R"],
-                                           tile_color["G"],
-                                           tile_color["B"])}
+    log = Logger.get_logger("validate_comp_prefs")
+
+    fields = [
+        "name",
+        "data.fps",
+        "data.resolutionWidth",
+        "data.resolutionHeight",
+        "data.pixelAspect"
+    ]
+    asset_doc = get_current_project_asset(fields=fields)
+    asset_data = asset_doc["data"]
+
+    comp_frame_format_prefs = comp.GetPrefs("Comp.FrameFormat")
+
+    # Pixel aspect ratio in Fusion is set as AspectX and AspectY so we convert
+    # the data to something that is more sensible to Fusion
+    asset_data["pixelAspectX"] = asset_data.pop("pixelAspect")
+    asset_data["pixelAspectY"] = 1.0
+
+    validations = [
+        ("fps", "Rate", "FPS"),
+        ("resolutionWidth", "Width", "Resolution Width"),
+        ("resolutionHeight", "Height", "Resolution Height"),
+        ("pixelAspectX", "AspectX", "Pixel Aspect Ratio X"),
+        ("pixelAspectY", "AspectY", "Pixel Aspect Ratio Y")
+    ]
+
+    invalid = []
+    for key, comp_key, label in validations:
+        asset_value = asset_data[key]
+        comp_value = comp_frame_format_prefs.get(comp_key)
+        if asset_value != comp_value:
+            invalid_msg = "{} {} should be {}".format(label,
+                                                      comp_value,
+                                                      asset_value)
+            invalid.append(invalid_msg)
+
+            if not force_repair:
+                # Do not log warning if we force repair anyway
+                log.warning(
+                    "Comp {pref} {value} does not match asset "
+                    "'{asset_name}' {pref} {asset_value}".format(
+                        pref=label,
+                        value=comp_value,
+                        asset_name=asset_doc["name"],
+                        asset_value=asset_value)
+                )
+
+    if invalid:
+
+        def _on_repair():
+            attributes = dict()
+            for key, comp_key, _label in validations:
+                value = asset_data[key]
+                comp_key_full = "Comp.FrameFormat.{}".format(comp_key)
+                attributes[comp_key_full] = value
+            comp.SetPrefs(attributes)
+
+        if force_repair:
+            log.info("Applying default Comp preferences..")
+            _on_repair()
+            return
+
+        from . import menu
+        from openpype.widgets import popup
+        from openpype.style import load_stylesheet
+        dialog = popup.Popup(parent=menu.menu)
+        dialog.setWindowTitle("Fusion comp has invalid configuration")
+
+        msg = "Comp preferences mismatches '{}'".format(asset_doc["name"])
+        msg += "\n" + "\n".join(invalid)
+        dialog.setMessage(msg)
+        dialog.setButtonText("Repair")
+        dialog.on_clicked.connect(_on_repair)
+        dialog.show()
+        dialog.raise_()
+        dialog.activateWindow()
+        dialog.setStyleSheet(load_stylesheet())
 
 
 def switch_item(container,
@@ -195,3 +300,21 @@ def get_frame_path(path):
         padding = 4  # default Fusion padding
 
     return filename, padding, ext
+
+
+def get_current_comp():
+    """Hack to get current comp in this session"""
+    fusion = getattr(sys.modules["__main__"], "fusion", None)
+    return fusion.CurrentComp if fusion else None
+
+
+@contextlib.contextmanager
+def comp_lock_and_undo_chunk(comp, undo_queue_name="Script CMD"):
+    """Lock comp and open an undo chunk during the context"""
+    try:
+        comp.Lock()
+        comp.StartUndo(undo_queue_name)
+        yield
+    finally:
+        comp.Unlock()
+        comp.EndUndo()

@@ -9,8 +9,9 @@ import time
 import queue
 import collections
 import appdirs
-import pymongo
+import socket
 
+import pymongo
 import requests
 import ftrack_api
 import ftrack_api.session
@@ -26,43 +27,20 @@ except ImportError:
 from openpype_modules.ftrack.lib import get_ftrack_event_mongo_info
 
 from openpype.client import OpenPypeMongoConnection
-from openpype.api import Logger
+from openpype.lib import Logger
 
 TOPIC_STATUS_SERVER = "openpype.event.server.status"
 TOPIC_STATUS_SERVER_RESULT = "openpype.event.server.status.result"
 
 
-def check_ftrack_url(url, log_errors=True, logger=None):
-    """Checks if Ftrack server is responding"""
-    if logger is None:
-        logger = Logger.get_logger(__name__)
-
-    if not url:
-        logger.error("Ftrack URL is not set!")
-        return None
-
-    url = url.strip('/ ')
-
-    if 'http' not in url:
-        if url.endswith('ftrackapp.com'):
-            url = 'https://' + url
-        else:
-            url = 'https://{0}.ftrackapp.com'.format(url)
+def get_host_ip():
+    host_name = socket.gethostname()
     try:
-        result = requests.get(url, allow_redirects=False)
-    except requests.exceptions.RequestException:
-        if log_errors:
-            logger.error("Entered Ftrack URL is not accesible!")
-        return False
+        return socket.gethostbyname(host_name)
+    except Exception:
+        pass
 
-    if (result.status_code != 200 or 'FTRACK_VERSION' not in result.headers):
-        if log_errors:
-            logger.error("Entered Ftrack URL is not accesible!")
-        return False
-
-    logger.debug("Ftrack server {} is accessible.".format(url))
-
-    return url
+    return None
 
 
 class SocketBaseEventHub(ftrack_api.event.hub.EventHub):

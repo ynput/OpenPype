@@ -6,6 +6,23 @@
     "is_file": true,
     "children": [
         {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (ImageIO)",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_config"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_file_rules"
+                }
+
+            ]
+        },
+        {
             "type": "boolean",
             "key": "stop_timer_on_application_exit",
             "label": "Stop timer on application exit"
@@ -56,6 +73,18 @@
                             "key": "review_bg",
                             "label": "Review BG color",
                             "use_alpha": false
+                        },
+                        {
+                            "type": "enum",
+                            "key": "families_to_review",
+                            "label": "Families to review",
+                            "multiselection": true,
+                            "enum_items": [
+                                {"review": "review"},
+                                {"renderpass": "renderPass"},
+                                {"renderlayer": "renderLayer"},
+                                {"renderscene": "renderScene"}
+                            ]
                         }
                     ]
                 },

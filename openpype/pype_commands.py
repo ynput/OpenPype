@@ -187,7 +187,7 @@ class PypeCommands:
                 (to choose validator for example)
         """
 
-        from openpype.hosts.webpublisher.cli_functions import (
+        from openpype.hosts.webpublisher.publish_functions import (
             cli_publish_from_app
         )
 
@@ -218,7 +218,7 @@ class PypeCommands:
             RuntimeError: When there is no path to process.
         """
 
-        from openpype.hosts.webpublisher.cli_functions import (
+        from openpype.hosts.webpublisher.publish_functions import (
             cli_publish
         )
 
@@ -299,7 +299,7 @@ class PypeCommands:
         if pyargs:
             args.extend(["--pyargs", pyargs])
 
-        if persist:
+        if test_data_folder:
             args.extend(["--test_data_folder", test_data_folder])
 
         if persist:
