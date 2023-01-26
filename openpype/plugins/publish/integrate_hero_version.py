@@ -36,7 +36,8 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
     active = True
 
     # Families are modified using settings
-    families = IntegrateAsset.families
+    # TODO can't we use sets?
+    families = list(set(IntegrateAsset.families) - {"workfile"})
 
     # Can specify representation names that will be ignored (lower case)
     ignored_representation_names = []
