@@ -384,6 +384,10 @@ class AttributeValues(object):
         """Pointer to attribute definitions."""
         return self._attr_defs
 
+    @property
+    def origin_data(self):
+        return copy.deepcopy(self._origin_data)
+
     def data_to_store(self):
         """Create new dictionary with data to store."""
         output = {}
@@ -394,19 +398,6 @@ class AttributeValues(object):
             if key not in output:
                 output[key] = attr_def.default
         return output
-
-    @staticmethod
-    def calculate_changes(new_data, old_data):
-        """Calculate changes of 2 dictionary objects."""
-        changes = {}
-        for key, new_value in new_data.items():
-            old_value = old_data.get(key)
-            if old_value != new_value:
-                changes[key] = (old_value, new_value)
-        return changes
-
-    def changes(self):
-        return self.calculate_changes(self._data, self._origin_data)
 
 
 class CreatorAttributeValues(AttributeValues):
@@ -525,21 +516,9 @@ class PublishAttributes:
             output[key] = attr_value.data_to_store()
         return output
 
-    def changes(self):
-        """Return changes per each key."""
-
-        changes = {}
-        for key, attr_val in self._data.items():
-            attr_changes = attr_val.changes()
-            if attr_changes:
-                if key not in changes:
-                    changes[key] = {}
-                changes[key].update(attr_val)
-
-        for key, value in self._origin_data.items():
-            if key not in self._data:
-                changes[key] = (value, None)
-        return changes
+    @property
+    def origin_data(self):
+        return copy.deepcopy(self._origin_data)
 
     def set_publish_plugins(self, attr_plugins):
         """Set publish plugins attribute definitions."""
@@ -747,6 +726,10 @@ class CreatedInstance:
         return self.creator.get_group_label()
 
     @property
+    def origin_data(self):
+        return copy.deepcopy(self._orig_data)
+
+    @property
     def creator_identifier(self):
         return self.creator.identifier
 
@@ -837,29 +820,7 @@ class CreatedInstance:
     def changes(self):
         """Calculate and return changes."""
 
-        changes = {}
-        new_keys = set()
-        for key, new_value in self._data.items():
-            new_keys.add(key)
-            if key in ("creator_attributes", "publish_attributes"):
-                continue
-
-            old_value = self._orig_data.get(key)
-            if old_value != new_value:
-                changes[key] = (old_value, new_value)
-
-        creator_attr_changes = self.creator_attributes.changes()
-        if creator_attr_changes:
-            changes["creator_attributes"] = creator_attr_changes
-
-        publish_attr_changes = self.publish_attributes.changes()
-        if publish_attr_changes:
-            changes["publish_attributes"] = publish_attr_changes
-
-        for key, old_value in self._orig_data.items():
-            if key not in new_keys:
-                changes[key] = (old_value, None)
-        return changes
+        return ChangedItem(self.origin_data, self.data_to_store())
 
     def mark_as_stored(self):
         """Should be called when instance data are stored.
@@ -1390,11 +1351,9 @@ class CreateContext:
 
     def context_data_changes(self):
         """Changes of attributes."""
-        changes = {}
-        publish_attribute_changes = self._publish_attributes.changes()
-        if publish_attribute_changes:
-            changes["publish_attributes"] = publish_attribute_changes
-        return changes
+
+        old_value = copy.deepcopy(self._original_context_data)
+        return ChangedItem(old_value, self.context_data_to_store())
 
     def creator_adds_instance(self, instance):
         """Creator adds new instance to context.
