@@ -4,6 +4,8 @@ import pyblish.api
 import openpype.api
 from openpype.hosts.houdini.api.lib import render_rop
 
+import hou
+
 
 class ExtractOpenGL(openpype.api.Extractor):
 
@@ -15,7 +17,7 @@ class ExtractOpenGL(openpype.api.Extractor):
 
     def process(self, instance):
 
-        ropnode = instance[0]
+        ropnode = hou.node(instance.data["instance_node"])
 
         # Get the filename from the filename parameter
         # `.evalParm(parameter)` will make sure all tokens are resolved
