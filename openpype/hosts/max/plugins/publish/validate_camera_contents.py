@@ -2,7 +2,6 @@
 import pyblish.api
 from openpype.pipeline import PublishValidationError
 from pymxs import runtime as rt
-from openpype.hosts.max.api import get_all_children
 
 
 class ValidateCameraContent(pyblish.api.InstancePlugin):
