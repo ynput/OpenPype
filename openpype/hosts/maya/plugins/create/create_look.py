@@ -12,7 +12,6 @@ class CreateLook(plugin.MayaCreator):
     """Shader connections defining shape look"""
 
     identifier = "io.openpype.creators.maya.look"
-    name = "look"
     label = "Look"
     family = "look"
     icon = "paint-brush"
