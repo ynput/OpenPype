@@ -1,56 +1,53 @@
 # -*- coding: utf-8 -*-
-"""Create look in Unreal."""
-import unreal  # noqa
-from openpype.hosts.unreal.api import pipeline, plugin
-from openpype.pipeline import LegacyCreator
+import unreal
+
+from openpype.hosts.unreal.api.pipeline import (
+    create_folder
+)
+from openpype.hosts.unreal.api.plugin import (
+    UnrealAssetCreator
+)
 
 
-class CreateLook(LegacyCreator):
+class CreateLook(UnrealAssetCreator):
     """Shader connections defining shape look."""
 
-    name = "unrealLook"
-    label = "Unreal - Look"
+    identifier = "io.openpype.creators.unreal.look"
+    label = "Look"
     family = "look"
     icon = "paint-brush"
 
-    root = "/Game/Avalon/Assets"
-    suffix = "_INS"
-
-    def __init__(self, *args, **kwargs):
-        super(CreateLook, self).__init__(*args, **kwargs)
-
-    def process(self):
-        name = self.data["subset"]
-
+    def create(self, subset_name, instance_data, pre_create_data):
         selection = []
-        if (self.options or {}).get("useSelection"):
+        if pre_create_data.get("use_selection"):
             sel_objects = unreal.EditorUtilityLibrary.get_selected_assets()
             selection = [a.get_path_name() for a in sel_objects]
 
+        if len(selection) != 1:
+            raise RuntimeError("Please select only one asset.")
+
+        selected_asset = selection[0]
+
+        look_directory = "/Game/OpenPype/Looks"
+
         # Create the folder
-        path = f"{self.root}/{self.data['asset']}"
-        new_name = pipeline.create_folder(path, name)
-        full_path = f"{path}/{new_name}"
+        folder_name = create_folder(look_directory, subset_name)
+        path = f"{look_directory}/{folder_name}"
 
         # Create a new cube static mesh
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
         cube = ar.get_asset_by_object_path("/Engine/BasicShapes/Cube.Cube")
 
-        # Create the avalon publish instance object
-        container_name = f"{name}{self.suffix}"
-        pipeline.create_publish_instance(
-            instance=container_name, path=full_path)
-
         # Get the mesh of the selected object
-        original_mesh = ar.get_asset_by_object_path(selection[0]).get_asset()
-        materials = original_mesh.get_editor_property('materials')
+        original_mesh = ar.get_asset_by_object_path(selected_asset).get_asset()
+        materials = original_mesh.get_editor_property('static_materials')
 
-        self.data["members"] = []
+        instance_data["members"] = []
 
         # Add the materials to the cube
         for material in materials:
-            name = material.get_editor_property('material_slot_name')
-            object_path = f"{full_path}/{name}.{name}"
+            mat_name = material.get_editor_property('material_slot_name')
+            object_path = f"{path}/{mat_name}.{mat_name}"
             unreal_object = unreal.EditorAssetLibrary.duplicate_loaded_asset(
                 cube.get_asset(), object_path
             )
@@ -61,8 +58,11 @@ class CreateLook(LegacyCreator):
             unreal_object.add_material(
                 material.get_editor_property('material_interface'))
 
-            self.data["members"].append(object_path)
+            instance_data["members"].append(object_path)
 
             unreal.EditorAssetLibrary.save_asset(object_path)
 
-        pipeline.imprint(f"{full_path}/{container_name}", self.data)
+        super(CreateLook, self).create(
+            subset_name,
+            instance_data,
+            pre_create_data)
