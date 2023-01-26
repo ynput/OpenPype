@@ -1076,25 +1076,15 @@ def convert_colorspace(
     if logger is None:
         logger = logging.getLogger(__name__)
 
-    input_arg = "-i"
     oiio_cmd = [
         get_oiio_tools_path(),
-
+        input_path,
         # Don't add any additional attributes
         "--nosoftwareattrib",
         "--colorconfig", config_path,
-        "--colorconvert", source_colorspace, target_colorspace
-    ]
-    # Prepare subprocess arguments
-
-    oiio_cmd.extend([
-        input_arg, input_path,
-    ])
-
-    # Add last argument - path to output
-    oiio_cmd.extend([
+        "--colorconvert", source_colorspace, target_colorspace,
         "-o", out_filepath
-    ])
+    ]
 
     logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
     run_subprocess(oiio_cmd, logger=logger)
