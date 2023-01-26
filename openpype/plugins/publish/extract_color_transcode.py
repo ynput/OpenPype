@@ -17,7 +17,7 @@ from openpype.lib.transcoding import (
 from openpype.lib.profiles_filtering import filter_profiles
 
 
-class ExtractColorTranscode(publish.Extractor):
+class ExtractOIIOTranscode(publish.Extractor):
     """
     Extractor to convert colors from one colorspace to different.
 
@@ -89,14 +89,14 @@ class ExtractColorTranscode(publish.Extractor):
 
                 files_to_delete = copy.deepcopy(files_to_convert)
 
-                output_extension = output_def["output_extension"]
+                output_extension = output_def["extension"]
                 output_extension = output_extension.replace('.', '')
                 if output_extension:
                     if new_repre["name"] == new_repre["ext"]:
                         new_repre["name"] = output_extension
                     new_repre["ext"] = output_extension
 
-                target_colorspace = output_def["output_colorspace"]
+                target_colorspace = output_def["colorspace"]
                 if not target_colorspace:
                     raise RuntimeError("Target colorspace must be set")
 
