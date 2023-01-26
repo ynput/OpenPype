@@ -231,6 +231,14 @@ class ChangedItem(object):
     def keys(self):
         return set(self._changed_keys)
 
+    def items(self):
+        changes = self.changes
+        if isinstance(changes, tuple):
+            yield None, changes
+        else:
+            for item in changes.items():
+                yield item
+
     @property
     def changed(self):
         return self._changed
