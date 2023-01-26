@@ -144,8 +144,7 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         """
         obj_network = hou.node("/obj")
-        op_ctx = obj_network.createNode(
-            "null", node_name="OpenPypeContext")
+        op_ctx = obj_network.createNode("null", node_name="OpenPypeContext")
 
         # A null in houdini by default comes with content inside to visualize
         # the null. However since we explicitly want to hide the node lets
