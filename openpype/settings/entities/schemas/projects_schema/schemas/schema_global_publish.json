@@ -277,6 +277,16 @@
                                             "type": "text"
                                         },
                                         {
+                                            "key": "display",
+                                            "label": "Display",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "view",
+                                            "label": "View",
+                                            "type": "text"
+                                        },
+                                        {
                                             "type": "schema",
                                             "name": "schema_representation_tags"
                                         },
