@@ -241,11 +241,10 @@ class ChangedItem(object):
         return self.changed_keys
 
     def items(self):
-        changes = self.changes
-        if isinstance(changes, tuple):
-            yield None, changes
+        if self.is_dict:
+            yield None, self.changes
         else:
-            for item in changes.items():
+            for item in self.changes.items():
                 yield item
 
     @property
@@ -253,8 +252,12 @@ class ChangedItem(object):
         return self._changed
 
     @property
+    def is_dict(self):
+        return self._old_is_dict or self._new_is_dict
+
+    @property
     def changes(self):
-        if not self._old_is_dict and not self._new_is_dict:
+        if not self.is_dict:
             return (self.old_value, self.new_value)
 
         old_value = self.old_value
