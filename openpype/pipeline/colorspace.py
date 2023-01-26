@@ -36,7 +36,7 @@ def _make_temp_json_file():
 
     except IOError as _error:
         raise IOError(
-            "Not able to create temp json file: {}".format(
+            "Unable to create temp json file: {}".format(
                 _error
             )
         )
@@ -213,8 +213,8 @@ def get_ocio_config_colorspaces(config_path):
     if sys.version_info[0] == 2:
         return get_colorspace_data_subprocess(config_path)
 
-    from ..scripts.ocio_wrapper import get_colorspace_data
-    return get_colorspace_data(config_path)
+    from ..scripts.ocio_wrapper import _get_colorspace_data
+    return _get_colorspace_data(config_path)
 
 
 def get_colorspace_data_subprocess(config_path):
@@ -266,8 +266,8 @@ def get_ocio_config_views(config_path):
     if sys.version_info[0] == 2:
         return get_views_data_subprocess(config_path)
 
-    from ..scripts.ocio_wrapper import get_views_data
-    return get_views_data(config_path)
+    from ..scripts.ocio_wrapper import _get_views_data
+    return _get_views_data(config_path)
 
 
 def get_views_data_subprocess(config_path):
@@ -347,7 +347,6 @@ def get_imageio_config(
     config_host = imageio_host["ocio_config"]
 
     if config_host["enabled"]:
-        print(config_host["filepath"])
         config_data = _get_config_data(
             config_host["filepath"], anatomy_data
         )
@@ -357,7 +356,6 @@ def get_imageio_config(
     if not config_data:
         # get config path from either global or host_name
         config_global = imageio_global["ocio_config"]
-        print(config_global["filepath"])
         config_data = _get_config_data(
             config_global["filepath"], anatomy_data
         )
@@ -372,7 +370,11 @@ def get_imageio_config(
 
 
 def _get_config_data(path_list, anatomy_data):
-    """Path formating in interation
+    """Return first existing path in path list.
+
+    If template is used in path inputs,
+    then it is formated by anatomy data
+    and environment variables
 
     Args:
         path_list (list[str]): list of abs paths
@@ -381,9 +383,15 @@ def _get_config_data(path_list, anatomy_data):
     Returns:
         dict: config data
     """
+    formatting_data = deepcopy(anatomy_data)
+
+    # format the path for potential env vars
+    formatting_data.update(dict(**os.environ))
+
     # first try host config paths
     for path_ in path_list:
-        formated_path = _format_path(path_, anatomy_data)
+        formated_path = _format_path(path_, formatting_data)
+
         if not os.path.exists(formated_path):
             continue
 
@@ -393,21 +401,17 @@ def _get_config_data(path_list, anatomy_data):
         }
 
 
-def _format_path(tempate_path, anatomy_data):
+def _format_path(tempate_path, formatting_data):
     """Single template path formating.
 
     Args:
         tempate_path (str): template string
-        anatomy_data (dict): formating data
+        formatting_data (dict): data to be used for
+                                template formating
 
     Returns:
         str: absolute formated path
     """
-    formatting_data = deepcopy(anatomy_data)
-
-    # format the path for potential env vars
-    formatting_data.update(dict(**os.environ))
-
     # format path for anatomy keys
     formatted_path = StringTemplate(tempate_path).format(
         formatting_data)

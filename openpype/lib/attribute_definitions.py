@@ -3,6 +3,7 @@ import re
 import collections
 import uuid
 import json
+import copy
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
@@ -418,9 +419,8 @@ class EnumDef(AbtractAttrDef):
     """Enumeration of single item from items.
 
     Args:
-        items: Items definition that can be coverted to
-            `collections.OrderedDict`. Dictionary represent {value: label}
-            relation.
+        items: Items definition that can be coverted using
+            'prepare_enum_items'.
         default: Default value. Must be one key(value) from passed items.
     """
 
@@ -433,38 +433,95 @@ class EnumDef(AbtractAttrDef):
                 " defined values on initialization."
             ).format(self.__class__.__name__))
 
-        items = collections.OrderedDict(items)
-        if default not in items:
-            for _key in items.keys():
-                default = _key
+        items = self.prepare_enum_items(items)
+        item_values = [item["value"] for item in items]
+        if default not in item_values:
+            for value in item_values:
+                default = value
                 break
 
         super(EnumDef, self).__init__(key, default=default, **kwargs)
 
         self.items = items
+        self._item_values = set(item_values)
 
     def __eq__(self, other):
         if not super(EnumDef, self).__eq__(other):
             return False
 
-        if set(self.items.keys()) != set(other.items.keys()):
-            return False
-
-        for key, label in self.items.items():
-            if other.items[key] != label:
-                return False
-        return True
+        return self.items == other.items
 
     def convert_value(self, value):
-        if value in self.items:
+        if value in self._item_values:
             return value
         return self.default
 
     def serialize(self):
         data = super(TextDef, self).serialize()
-        data["items"] = list(self.items)
+        data["items"] = copy.deepcopy(self.items)
         return data
 
+    @staticmethod
+    def prepare_enum_items(items):
+        """Convert items to unified structure.
+
+        Output is a list where each item is dictionary with 'value'
+        and 'label'.
+
+        ```python
+        # Example output
+        [
+            {"label": "Option 1", "value": 1},
+            {"label": "Option 2", "value": 2},
+            {"label": "Option 3", "value": 3}
+        ]
+        ```
+
+        Args:
+            items (Union[Dict[str, Any], List[Any], List[Dict[str, Any]]): The
+                items to convert.
+
+        Returns:
+            List[Dict[str, Any]]: Unified structure of items.
+        """
+
+        output = []
+        if isinstance(items, dict):
+            for value, label in items.items():
+                output.append({"label": label, "value": value})
+
+        elif isinstance(items, (tuple, list, set)):
+            for item in items:
+                if isinstance(item, dict):
+                    # Validate if 'value' is available
+                    if "value" not in item:
+                        raise KeyError("Item does not contain 'value' key.")
+
+                    if "label" not in item:
+                        item["label"] = str(item["value"])
+                elif isinstance(item, (list, tuple)):
+                    if len(item) == 2:
+                        value, label = item
+                    elif len(item) == 1:
+                        value = item[0]
+                        label = str(value)
+                    else:
+                        raise ValueError((
+                            "Invalid items count {}."
+                            " Expected 1 or 2. Value: {}"
+                        ).format(len(item), str(item)))
+
+                    item = {"label": label, "value": value}
+                else:
+                    item = {"label": str(item), "value": item}
+                output.append(item)
+
+        else:
+            raise TypeError(
+                "Unknown type for enum items '{}'".format(type(items))
+            )
+
+        return output
 
 class BoolDef(AbtractAttrDef):
     """Boolean representation.

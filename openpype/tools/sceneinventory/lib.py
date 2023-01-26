@@ -1,7 +1,7 @@
 import os
 from openpype_modules import sync_server
 
-from Qt import QtGui
+from qtpy import QtGui
 
 
 def walk_hierarchy(node):
