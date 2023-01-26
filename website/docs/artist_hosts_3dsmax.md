@@ -4,7 +4,9 @@ title: 3dsmax
 sidebar_label: 3dsmax
 ---
 
-### *Still Work In Progress Docs Page*
+:::note Work in progress
+This part of documentation is still work in progress.
+:::
 
 ## OpenPype Global Tools
 
@@ -16,14 +18,20 @@ sidebar_label: 3dsmax
 -   [Publish](artist_tools_publisher)
 -   [Library Loader](artist_tools_library_loader)
 
-## Working with OpenPype in 3dsmax
 
-OpenPype is here to ease you the burden of working on project with lots of
-collaborators, worrying about naming, setting stuff, browsing through endless
-directories, loading and exporting and so on. To achieve that, OpenPype is using
-concept of being _"data driven"_. This means that what happens when publishing
-is influenced by data in scene. This can by slightly confusing so let's get to
-it with few examples.
+## First Steps With OpenPype Running
+
+When **OpenPype** (reffered as **OP** ) properly installed and 3dsmax launched via OP Launcher/Ftrack (or similar) there should be **OpenPype Menu** visible in 3dsmax top header after start.
+
+![Menu OpenPype](assets/3dsmax_menu_first_OP.png)
+
+## Working With Scene Files
+
+Most user actions happens in ```Work Files``` menu item. There user can perform Save/Load actions as he would normally do with ```File Save ``` and/or ```File Open``` in the standard 3dsmax File Menu. ```OP Menu > Work Files...``` basically substitutes all file operations user can perform.
+
+Here you have an overview of the **Work Files window** with descriptions what each area is used for.
+
+![Menu OpenPype](assets/3dsmax_menu_OP.png)
 
 
 ## Setting scene data
@@ -160,69 +168,6 @@ There you should see your model, named `modelDefault`.
 You can load model with [Loader](artist_tools_loader). Go **OpenPype → Load...**,
 select your rig, right click on it and click **Link model (blend)**.
 
-## Creating Rigs
 
-Creating and publishing rigs with OpenPype follows similar workflow as with
-other data types. Create your rig and mark parts of your hierarchy in sets to
-help OpenPype validators and extractors to check it and publish it.
 
-### Preparing rig for publish
 
-When creating rigs in Blender, it is important to keep a specific structure for
-the bones and the geometry. Let's first create a model and its rig. For
-demonstration, I'll create a simple model for a robotic arm made of simple boxes.
-
-![Blender - Simple model for rigging](assets/blender-rig_model_setup.jpg)
-
-I have now created the armature `RIG_RobotArm`. While the naming is not important,
-you can just adhere to your naming conventions, the hierarchy is. Once the models
-are skinned to the armature, the geometry must be organized in a separate Collection.
-In this case, I have the armature in the main Collection, and the geometry in 
-the `Geometry` Collection.
-
-![Blender - Rig Hierarchy Example](assets/blender-rig_hierarchy_example.jpg)
-
-When you've prepared your hierarchy, it's time to create *Rig instance* in OpenPype.
-Select your whole rig hierarchy and go **OpenPype → Create...**. Select **Rig**.
-
-![Blender - Rig Hierarchy Example](assets/blender-rig_create.jpg)
-
-A new collection named after the selected Asset and Subset should have been created.
-In our case, it is `character1_rigDefault`. All the selected armature and models
-have been linked in this new collection. You should end up with something like
-this:
-
-![Blender - Rig Hierarchy Example](assets/blender-rig_hierarchy_before_publish.jpg)
-
-### Publishing rigs
-
-Publishing rig is done in same way as publishing everything else. Save your scene
-and go **OpenPype → Publish**. For more detail see [Publisher](artist_tools_publisher).
-
-### Loading rigs
-
-You can load rig with [Loader](artist_tools_loader). Go **OpenPype → Load...**,
-select your rig, right click on it and click **Link rig (blend)**.
-
-## Layouts in Blender
-
-A layout is a set of elements that populate a scene. OpenPype allows to version
-and manage those sets.
-
-### Publishing a layout
-
-Working with Layout is easy. Just load your assets into scene with
-[Loader](artist_tools_loader) (**OpenPype → Load...**). Populate your scene as
-you wish, translate each piece to fit your need. When ready, select all imported
-stuff and go **OpenPype → Create...** and select **Layout**. When selecting rigs,
-you need to select only the armature, the geometry will automatically be included.
-This will create set containing your selection and marking it for publishing.
-
-Now you can publish is with **OpenPype → Publish**.
-
-### Loading layouts
-
-You can load a Layout using [Loader](artist_tools_loader)
-(**OpenPype → Load...**). Select your layout, right click on it and
-select **Link Layout (blend)**. This will populate your scene with all those
-models you've put into layout.
