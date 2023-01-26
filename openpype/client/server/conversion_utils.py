@@ -167,11 +167,17 @@ def convert_v4_project_to_v3(project):
         "name": project_name,
         "schema": CURRENT_PROJECT_SCHEMA
     }
+
+    data = project.get("data") or {}
+    attribs = project.get("attrib") or {}
+    applications = attribs.pop("applications", [])
+    data.update(attribs)
+
     config = {}
     project_config = project.get("config")
 
     if project_config:
-        config["apps"] = []
+        config["apps"] = applications
         config["roots"] = project_config["roots"]
 
         templates = project_config["templates"]
@@ -213,8 +219,6 @@ def convert_v4_project_to_v3(project):
 
     if config:
         output["config"] = config
-
-    data = project.get("data") or {}
 
     for data_key, key in (
         ("library_project", "library"),
