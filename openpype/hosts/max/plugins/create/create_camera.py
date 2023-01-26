@@ -13,11 +13,11 @@ class CreateCamera(plugin.MaxCreator):
     def create(self, subset_name, instance_data, pre_create_data):
         from pymxs import runtime as rt
         sel_obj = list(rt.selection)
-        _ = super(CreateCamera, self).create(
+        instance = super(CreateCamera, self).create(
             subset_name,
             instance_data,
             pre_create_data)  # type: CreatedInstance
-        container = rt.getNodeByName(subset_name)
+        container = rt.getNodeByName(instance.data.get("instance_node"))
         # TODO: Disable "Add to Containers?" Panel
         # parent the selected cameras into the container
         for obj in sel_obj:

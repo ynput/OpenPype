@@ -1,6 +1,9 @@
 import os
 import pyblish.api
-from openpype.pipeline import publish
+from openpype.pipeline import (
+    publish,
+    OptionalPyblishPluginMixin
+)
 from pymxs import runtime as rt
 from openpype.hosts.max.api import (
     maintained_selection,
@@ -8,7 +11,8 @@ from openpype.hosts.max.api import (
 )
 
 
-class ExtractCameraAlembic(publish.Extractor):
+class ExtractAlembicCamera(publish.Extractor,
+                           OptionalPyblishPluginMixin):
     """
     Extract Camera with AlembicExport
     """
@@ -20,6 +24,8 @@ class ExtractCameraAlembic(publish.Extractor):
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
         start = float(instance.data.get("frameStartHandle", 1))
         end = float(instance.data.get("frameEndHandle", 1))
 

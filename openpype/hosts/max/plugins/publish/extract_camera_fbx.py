@@ -1,6 +1,9 @@
 import os
 import pyblish.api
-from openpype.pipeline import publish
+from openpype.pipeline import (
+    publish,
+    OptionalPyblishPluginMixin
+)
 from pymxs import runtime as rt
 from openpype.hosts.max.api import (
     maintained_selection,
@@ -8,7 +11,8 @@ from openpype.hosts.max.api import (
 )
 
 
-class ExtractCameraFbx(publish.Extractor):
+class ExtractCameraFbx(publish.Extractor,
+                       OptionalPyblishPluginMixin):
     """
     Extract Camera with FbxExporter
     """
@@ -17,8 +21,11 @@ class ExtractCameraFbx(publish.Extractor):
     label = "Extract Fbx Camera"
     hosts = ["max"]
     families = ["camera"]
+    optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
         container = instance.data["instance_node"]
 
         self.log.info("Extracting Camera ...")
