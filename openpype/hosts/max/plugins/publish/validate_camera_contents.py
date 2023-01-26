@@ -33,23 +33,16 @@ class ValidateCameraContent(pyblish.api.InstancePlugin):
                       "{}".format(container))
 
         con = rt.getNodeByName(container)
-        selection_list = self.list_children(con)
-        validation_msg = list()
+        selection_list = list(con.Children)
         for sel in selection_list:
             # to avoid Attribute Error from pymxs wrapper
             sel_tmp = str(sel)
+            found = False
             for cam in self.camera_type:
                 if sel_tmp.startswith(cam):
-                    validation_msg.append("Camera Found")
-                else:
-                    validation_msg.append("Camera Not Found")
-            if "Camera Found" not in validation_msg:
+                    found = True
+                    break
+            if not found:
+                self.log.error("Camera not found")
                 invalid.append(sel)
-        # go through the camera type to see if there are same name
         return invalid
-
-    def list_children(self, node):
-        children = []
-        for c in node.Children:
-            children.append(c)
-        return children
