@@ -34,7 +34,7 @@ class ExtractMaxSceneRaw(publish.Extractor):
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
-        #add extra blacklash for saveNodes in MaxScript
+        # add extra blacklash for saveNodes in MaxScript
         re_max_path = stagingdir + "\\\\" + filename
         # saving max scene
         raw_export_cmd = (
@@ -42,13 +42,12 @@ class ExtractMaxSceneRaw(publish.Extractor):
 sel = getCurrentSelection()
 for s in sel do
 (
- 	select s
- 	f="{re_max_path}"
- 	print f
- 	saveNodes selection f quiet:true
+    select s
+    f="{re_max_path}"
+    print f
+    saveNodes selection f quiet:true
 )
-            """)
-
+            """) # noqa
         self.log.debug(f"Executing Maxscript command: {raw_export_cmd}")
 
         with maintained_selection():

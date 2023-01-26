@@ -24,7 +24,6 @@ class ValidateCameraContent(pyblish.api.InstancePlugin):
             raise PublishValidationError("Camera instance must only include"
                                          "camera (and camera target)")
 
-
     def get_invalid(self, instance):
         """
         Get invalid nodes if the instance is not camera
@@ -32,7 +31,7 @@ class ValidateCameraContent(pyblish.api.InstancePlugin):
         invalid = list()
         container = instance.data["instance_node"]
         self.log.info("Validating look content for "
-                     "'{}'".format(container))
+                      "{}".format(container))
 
         con = rt.getNodeByName(container)
         selection_list = self.list_children(con)
