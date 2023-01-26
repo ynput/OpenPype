@@ -200,8 +200,8 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "ExtractColorTranscode",
-            "label": "ExtractColorTranscode (ImageIO)",
+            "key": "ExtractOIIOTranscode",
+            "label": "Extract OIIO Transcode",
             "checkbox_key": "enabled",
             "is_group": true,
             "children": [
