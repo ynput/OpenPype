@@ -96,6 +96,14 @@ class ExtractOIIOTranscode(publish.Extractor):
                         new_repre["name"] = output_extension
                     new_repre["ext"] = output_extension
 
+                    renamed_files = []
+                    _, orig_ext = os.path.splitext(files_to_convert[0])
+                    for file_name in files_to_convert:
+                        file_name = file_name.replace(orig_ext,
+                                                      "."+output_extension)
+                        renamed_files.append(file_name)
+                    new_repre["files"] = renamed_files
+
                 target_colorspace = output_def["colorspace"]
                 if not target_colorspace:
                     raise RuntimeError("Target colorspace must be set")
