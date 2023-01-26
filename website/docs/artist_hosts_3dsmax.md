@@ -8,7 +8,7 @@ sidebar_label: 3dsmax
 This part of documentation is still work in progress.
 :::
 
-## OpenPype Global Tools
+<!-- ## OpenPype Global Tools
 
 -   [Set Context](artist_tools_context_manager)
 -   [Work Files](artist_tools_workfiles)
@@ -17,31 +17,69 @@ This part of documentation is still work in progress.
 -   [Manage (Inventory)](artist_tools_inventory)
 -   [Publish](artist_tools_publisher)
 -   [Library Loader](artist_tools_library_loader)
+-->
 
 
 ## First Steps With OpenPype Running
 
-When **OpenPype** (reffered as **OP** ) properly installed and 3dsmax launched via OP Launcher/Ftrack (or similar) there should be **OpenPype Menu** visible in 3dsmax top header after start.
+Locate **OpenPype Icon** in the OS tray (if hidden dive in the tray toolbar).
+
+*If you cannot locate the OpenPype icon ...it is not probably running so check [Getting Started](artist_getting_started.md) first.*
+
+By **clicking the OP icon**  ```OpenPype Menu``` rolls out. Choose ```OpenPype Menu > Launcher``` to open the ```Launcher``` window.
+
+When opened you can **choose** the **project** to work in from the list. Then choose the particular **asset** you want to work on then choose **task** 
+and finally **run 3dsmax by its icon** in the tools.
+
+![Menu OpenPype](assets/3dsmax_tray_OP.png)
+
+:::note Launcher Content
+The list of available projects, assets, tasks and tools will differ according to your Studio and need to be set in advance by supervisor/admin.
+:::
+
+## Running in the 3dsmax
+
+If 3dsmax has been launched via OP Launcher there should be **OpenPype Menu** visible in 3dsmax **top header** after start.
+This is the core functional area for you as a user. Most of your actions will take place here.
 
 ![Menu OpenPype](assets/3dsmax_menu_first_OP.png)
 
+
+:::note OpenPype Menu
+User instead of using classic ```File > Open``` and ```Save As``` actions uses this menu for working with scene files (reffered as **workfiles**) completely discarding native file operations even though still functional and available. User can use ```File > Save``` by constantly hitting ```CTRL+S``` keys for quickly saving changes for example.
+:::
+
 ## Working With Scene Files
 
-Most user actions happens in ```Work Files``` menu item. There user can perform Save/Load actions as he would normally do with ```File Save ``` and/or ```File Open``` in the standard 3dsmax File Menu. ```OP Menu > Work Files...``` basically substitutes all file operations user can perform.
+First go to ```Work Files``` menu item so **Work Files  Window** shows up. Here you can perform Save/Load actions as you would normally do with ```File Save ``` and/or ```File Open``` in the standard 3dsmax File Menu.
 
-Here you have an overview of the **Work Files window** with descriptions what each area is used for.
+```OP Menu > Work Files...``` basically substitutes all file operations user can perform.
+
+You first choose the project in left top window then particular asset present in the project and it's task available to you as an artist. Finally you choose the workfile to open. If not any workfile present you simply hit ```Save As``` button.
+
+
+
+Here is an overview of the Work Files window with descriptions what each area is used for and could contain.
 
 ![Menu OpenPype](assets/3dsmax_menu_OP.png)
 
+:::note Work Files window
+Think of reading from left to right manner mimicking hiearchy of listed items ```Project``` > ```asset``` > ```task``` > ```workfile``` going from parent to children.
+:::
 
-## Setting scene data
+
+---
+
+# *...to be edited for 3dsmax*
+
+## ~~Setting scene data~~
 
 3dsmax settings concerning framerate, resolution and frame range are handled
 by OpenPype. If set correctly in OP Project Manager/Ftrack, 3dsmax will automatically set the 
 values for you.
 
 
-## Publishing models
+## ~~Publishing models~~
 
 ### Intro
 
@@ -99,7 +137,7 @@ be `project_XY_asset_task_version`, so in our case
 
 ![Model create instance](assets/blender-save_modelling_file.jpg)
 
-### Publishing models
+### ~~Publishing models~~
 
 Now let's publish it. Go **OpenPype → Publish...**. You will be presented with following window:
 
@@ -125,7 +163,9 @@ Lets do dry-run on publishing to see if we pass all validators. Click on flask
 icon at the bottom. Validators are run. Ideally you will end up with everything
 green in validator section.
 
-### Fixing problems
+---
+
+### ~~Fixing problems~~
 
 For the sake of demonstration, I intentionally kept the model in Edit Mode, to
 trigger the validator designed to check just this.
@@ -163,7 +203,7 @@ To check for yourself that model is published, open
 [Asset Loader](artist_tools_loader) - **OpenPype → Load...**.
 There you should see your model, named `modelDefault`.
 
-### Loading models
+### ~~Loading models~~
 
 You can load model with [Loader](artist_tools_loader). Go **OpenPype → Load...**,
 select your rig, right click on it and click **Link model (blend)**.
