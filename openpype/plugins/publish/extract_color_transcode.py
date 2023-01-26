@@ -106,8 +106,15 @@ class ExtractOIIOTranscode(publish.Extractor):
                     new_repre["files"] = renamed_files
 
                 target_colorspace = output_def["colorspace"]
-                if not target_colorspace:
-                    raise RuntimeError("Target colorspace must be set")
+                view = output_def["view"] or colorspace_data.get("view")
+                display = (output_def["display"] or
+                           colorspace_data.get("display"))
+                # both could be already collected by DCC,
+                # but could be overwritten
+                if view:
+                    new_repre["colorspaceData"]["view"] = view
+                if display:
+                    new_repre["colorspaceData"]["view"] = display
 
                 files_to_convert = self._translate_to_sequence(
                     files_to_convert)
@@ -123,6 +130,8 @@ class ExtractOIIOTranscode(publish.Extractor):
                         config_path,
                         source_colorspace,
                         target_colorspace,
+                        view,
+                        display,
                         self.log
                     )
 

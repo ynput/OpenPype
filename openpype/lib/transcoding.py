@@ -1053,6 +1053,8 @@ def convert_colorspace(
     config_path,
     source_colorspace,
     target_colorspace,
+    view,
+    display,
     logger=None
 ):
     """Convert source files from one color space to another.
@@ -1070,8 +1072,11 @@ def convert_colorspace(
         config_path (str): path to OCIO config file
         source_colorspace (str): ocio valid color space of source files
         target_colorspace (str): ocio valid target color space
+        view (str): name for viewer space (ocio valid)
+        display (str): name for display-referred reference space (ocio valid)
         logger (logging.Logger): Logger used for logging.
-
+    Raises:
+        ValueError: if misconfigured
     """
     if logger is None:
         logger = logging.getLogger(__name__)
@@ -1082,9 +1087,23 @@ def convert_colorspace(
         # Don't add any additional attributes
         "--nosoftwareattrib",
         "--colorconfig", config_path,
-        "--colorconvert", source_colorspace, target_colorspace,
         "-o", out_filepath
     ]
+
+    if all([target_colorspace, view, display]):
+        raise ValueError("Colorspace and both screen and display"
+                         " cannot be set together."
+                         "Choose colorspace or screen and display")
+    if not target_colorspace and not all([view, display]):
+        raise ValueError("Both screen and display must be set.")
+
+    if target_colorspace:
+        oiio_cmd.extend(["--colorconvert",
+                         source_colorspace,
+                         target_colorspace])
+    if view and display:
+        oiio_cmd.extend(["--iscolorspace", source_colorspace])
+        oiio_cmd.extend(["--ociodisplay", display, view])
 
     logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
     run_subprocess(oiio_cmd, logger=logger)
