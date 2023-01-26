@@ -70,8 +70,8 @@ class ExtractOIIOTranscode(publish.Extractor):
 
             colorspace_data = repre["colorspaceData"]
             source_colorspace = colorspace_data["colorspace"]
-            config_path = colorspace_data.get("configData", {}).get("path")
-            if not os.path.exists(config_path):
+            config_path = colorspace_data.get("config", {}).get("path")
+            if not config_path or not os.path.exists(config_path):
                 self.log.warning("Config file doesn't exist, skipping")
                 continue
 
