@@ -1,5 +1,6 @@
 import os
 import copy
+import clique
 
 import pyblish.api
 
@@ -108,6 +109,8 @@ class ExtractOIIOTranscode(publish.Extractor):
                 if not target_colorspace:
                     raise RuntimeError("Target colorspace must be set")
 
+                files_to_convert = self._translate_to_sequence(
+                    files_to_convert)
                 for file_name in files_to_convert:
                     input_filepath = os.path.join(original_staging_dir,
                                                   file_name)
@@ -138,6 +141,40 @@ class ExtractOIIOTranscode(publish.Extractor):
                         new_repre["tags"].append(tag)
 
                 instance.data["representations"].append(new_repre)
+
+    def _translate_to_sequence(self, files_to_convert):
+        """Returns original list of files or single sequence format filename.
+
+        Uses clique to find frame sequence, in this case it merges all frames
+        into sequence format (%0X) and returns it.
+        If sequence not found, it returns original list
+
+        Args:
+            files_to_convert (list): list of file names
+        Returns:
+            (list) of [file.%04.exr] or [fileA.exr, fileB.exr]
+        """
+        pattern = [clique.PATTERNS["frames"]]
+        collections, remainder = clique.assemble(
+            files_to_convert, patterns=pattern,
+            assume_padded_when_ambiguous=True)
+
+        if collections:
+            if len(collections) > 1:
+                raise ValueError(
+                    "Too many collections {}".format(collections))
+
+            collection = collections[0]
+            padding = collection.padding
+            padding_str = "%0{}".format(padding)
+            frames = list(collection.indexes)
+            frame_str = "{}-{}#".format(frames[0], frames[-1])
+            file_name = "{}{}{}".format(collection.head, frame_str,
+                                        collection.tail)
+
+            files_to_convert = [file_name]
+
+        return files_to_convert
 
     def _get_output_file_path(self, input_filepath, output_dir,
                               output_extension):
