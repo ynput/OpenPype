@@ -34,7 +34,8 @@ class ConvertGLSLShader(publish.Extractor):
             # load the maya2gltf shader
             ogsfx_path = instance.context.data["project_settings"]["maya"]["publish"]["ConvertGLSLShader"]["ogsfx_path"]  # noqa
             if not os.path.exists(ogsfx_path):
-                raise RuntimeError("The ogsfx shader file does not exist: {}".format(ogsfx_path))
+                raise RuntimeError("The ogsfx shader file does not "
+                                   "exist: {}".format(ogsfx_path))
 
             cmds.setAttr(glsl + ".shader", ogsfx_path, typ="string")
 
