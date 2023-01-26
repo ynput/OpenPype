@@ -272,8 +272,8 @@
                                             "type": "text"
                                         },
                                         {
-                                            "key": "output_colorspace",
-                                            "label": "Output colorspace",
+                                            "key": "colorspace",
+                                            "label": "Colorspace",
                                             "type": "text"
                                         },
                                         {
