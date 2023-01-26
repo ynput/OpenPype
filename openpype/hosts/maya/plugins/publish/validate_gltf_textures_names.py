@@ -12,15 +12,15 @@ class ValidateGLTFTexturesNames(pyblish.api.InstancePlugin):
     the packed ORM/ORMS standard.
     The texture naming conventions follows the UE5-style-guides:
     https://github.com/Allar/ue5-style-guide#anc-textures-packing
-    ORM: Occulsion Roughness Metallic
-    ORMS: Occulsion Roughness Metallic Specular
+    ORM: Occlusion Roughness Metallic
+    ORMS: Occlusion Roughness Metallic Specular
     Texture Naming Style:
-    Albedo/Diffuse: {Name}_D.{imageExtension} or
-                    {Name}_D.<UDIM>.{imageExtension}
-    Normal: {Name}_N.{imageExtension} or
-            {Name}_N.<UDIM>.{imageExtension}
-    ORM: {Name}_ORM.{imageExtension} or
-         {Name}_ORM.<UDIM>.{imageExtension}
+    Albedo/Diffuse: {name}_D.{ext} or
+                    {name}_D.<UDIM>.{ext}
+    Normal: {name}_N.{ext} or
+            {name}_N.<UDIM>.{ext}
+    ORM: {name}_ORM.{ext} or
+         {name}_ORM.<UDIM>.{ext}
     """
 
     order = ValidateContentsOrder
