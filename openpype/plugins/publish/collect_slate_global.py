@@ -1,4 +1,5 @@
 import os
+import json
 import pyblish.api
 from openpype.lib import (
     get_oiio_tools_path,
@@ -108,7 +109,12 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
 
                 self.log.debug(
                     "SlateGlobal Data: {}".format(
-                        instance.data["slateGlobal"])
+                        json.dumps(
+                            instance.data["slateGlobal"],
+                            indent=4,
+                            default=str
+                        )
+                    )
                 )
             else:
                 self.log.debug("Task: {} is disabled for Extract "
