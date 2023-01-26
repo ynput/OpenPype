@@ -2,6 +2,7 @@
 import os
 import logging
 from typing import List
+from contextlib import contextmanager
 import semver
 
 import pyblish.api
@@ -447,3 +448,16 @@ def get_subsequences(sequence: unreal.LevelSequence):
     if subscene_track is not None and subscene_track.get_sections():
         return subscene_track.get_sections()
     return []
+
+
+@contextmanager
+def maintained_selection():
+    """Stub to be either implemented or replaced.
+
+    This is needed for old publisher implementation, but
+    it is not supported (yet) in UE.
+    """
+    try:
+        yield
+    finally:
+        pass

@@ -8,7 +8,6 @@ from openpype.pipeline import publish
 
 
 class NukeRenderLocal(publish.ExtractorColormanaged):
-    # TODO: rewrite docstring to nuke
     """Render the current Nuke composition locally.
 
     Extract the result of savers by starting a comp render
@@ -22,23 +21,21 @@ class NukeRenderLocal(publish.ExtractorColormanaged):
     families = ["render.local", "prerender.local", "still.local"]
 
     def process(self, instance):
-        # get colorspace settings data
-        config_data, file_rules = self.get_colorspace_settings(
-            instance.context)
-
         families = instance.data["families"]
+        child_nodes = (
+            instance.data.get("transientData", {}).get("childNodes")
+            or instance
+        )
 
         node = None
-        for x in instance:
+        for x in child_nodes:
             if x.Class() == "Write":
                 node = x
-
-        self.log.debug("instance collected: {}".format(instance.data))
 
         first_frame = instance.data.get("frameStartHandle", None)
 
         last_frame = instance.data.get("frameEndHandle", None)
-        node_subset_name = instance.data.get("name", None)
+        node_subset_name = instance.data["subset"]
 
         self.log.info("Starting render")
         self.log.info("Start frame: {}".format(first_frame))
@@ -65,7 +62,7 @@ class NukeRenderLocal(publish.ExtractorColormanaged):
 
         # Render frames
         nuke.execute(
-            node_subset_name,
+            str(node_subset_name),
             int(first_frame),
             int(last_frame)
         )
@@ -99,7 +96,6 @@ class NukeRenderLocal(publish.ExtractorColormanaged):
         # inject colorspace data
         self.set_representation_colorspace(
             repre, instance.context,
-            config_data, file_rules,
             colorspace=colorspace
         )
 

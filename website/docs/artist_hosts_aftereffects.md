@@ -6,12 +6,12 @@ sidebar_label: AfterEffects
 <!-- based on PS implementation, same principle and menu -->
 ## Available Tools
 
--   [Work Files](artist_tools.md#workfiles)
--   [Create](artist_tools.md#creator)
--   [Load](artist_tools.md#loader)
--   [Publish](artist_tools.md#publisher)
--   [Manage](artist_tools.md#inventory)
--   [Subset Manager](artist_tools.md#subset-manager)
+-   [Work Files](artist_tools_workfiles)
+-   [Create](artist_tools_creator)
+-   [Load](artist_tools_loader)
+-   [Publish](artist_tools_publisher)
+-   [Manage](artist_tools_inventory)
+-   [Subset Manager](artist_tools_subset_manager)
 
 ## Setup
 

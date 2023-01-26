@@ -1,6 +1,6 @@
 import re
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.pipeline.create import (
     SUBSET_NAME_ALLOWED_SYMBOLS,

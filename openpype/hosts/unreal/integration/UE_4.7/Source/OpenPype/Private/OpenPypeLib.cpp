@@ -1,4 +1,6 @@
 #include "OpenPypeLib.h"
+
+#include "AssetViewUtils.h"
 #include "Misc/Paths.h"
 #include "Misc/ConfigCacheIni.h"
 #include "UObject/UnrealType.h"
@@ -10,21 +12,23 @@
  * @warning This color will appear only after Editor restart. Is there a better way?
  */
 
-void UOpenPypeLib::CSetFolderColor(FString FolderPath, FLinearColor FolderColor, bool bForceAdd)
+bool UOpenPypeLib::SetFolderColor(const FString& FolderPath, const FLinearColor& FolderColor, const bool& bForceAdd)
 {
-	auto SaveColorInternal = [](FString InPath, FLinearColor InFolderColor)
+	if (AssetViewUtils::DoesFolderExist(FolderPath))
 	{
-		// Saves the color of the folder to the config
-		if (FPaths::FileExists(GEditorPerProjectIni))
-		{
-			GConfig->SetString(TEXT("PathColor"), *InPath, *InFolderColor.ToString(), GEditorPerProjectIni);
-		}
+		const TSharedPtr<FLinearColor> LinearColor = MakeShared<FLinearColor>(FolderColor);
 
-	};
+		AssetViewUtils::SaveColor(FolderPath, LinearColor, true);
+		UE_LOG(LogAssetData, Display, TEXT("A color {%s} has been set to folder \"%s\""), *LinearColor->ToString(),
+		       *FolderPath)
+		return true;
+	}
 
-	SaveColorInternal(FolderPath, FolderColor);
-
+	UE_LOG(LogAssetData, Display, TEXT("Setting a color {%s} to folder \"%s\" has failed! Directory doesn't exist!"),
+	       *FolderColor.ToString(), *FolderPath)
+	return false;
 }
+
 /**
  * Returns all poperties on  given object
  * @param cls - class

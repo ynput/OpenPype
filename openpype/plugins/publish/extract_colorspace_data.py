@@ -7,7 +7,7 @@ class ExtractColorspaceData(publish.ExtractorColormanaged):
 
     Input data:
     - context.data[colorspace_config_path]:
-        for anatomy formating of possible template tokkens in config path
+        for anatomy formatting of possible template tokens in config path
     - context.data[colorspace_config_path]:
         for resolving project and host related config.ocio
     - context.data[colorspace_file_rules]:
@@ -17,7 +17,7 @@ class ExtractColorspaceData(publish.ExtractorColormanaged):
     Output data:
         representation[colorspaceData] = {
             "colorspace": "linear",
-            "configData": {
+            "config": {
                 "path": "/abs/path/to/config.ocio",
                 "template": "{project[root]}/path/to/config.ocio"
             }
@@ -35,7 +35,6 @@ class ExtractColorspaceData(publish.ExtractorColormanaged):
 
         # get colorspace settings
         context = instance.context
-        config_data, file_rules = self.get_colorspace_settings(context)
 
         # loop representations
         for representation in representations:
@@ -44,6 +43,5 @@ class ExtractColorspaceData(publish.ExtractorColormanaged):
                 continue
 
             self.set_representation_colorspace(
-                representation, context,
-                config_data, file_rules
+                representation, context
             )

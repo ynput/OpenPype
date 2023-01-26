@@ -120,6 +120,8 @@ class BuildWorkfile:
         # Prepare available loaders
         loaders_by_name = {}
         for loader in discover_loader_plugins():
+            if not loader.enabled:
+                continue
             loader_name = loader.__name__
             if loader_name in loaders_by_name:
                 raise KeyError(

@@ -31,11 +31,15 @@ class TestPipelineColorspace(TestPipeline):
 
     TEST_FILES = [
         (
-            "1uhWvVdJBUSetpPVG8OzSjYXH4voIpf_G",
+            "1d7t9_cVKeZRVF0ppCHiE5MJTTtTlJgBe",
             "test_pipeline_colorspace.zip",
             ""
         )
     ]
+
+    PROJECT = "test_project"
+    ASSET = "test_asset"
+    TASK = "test_task"
 
     @pytest.fixture(scope="module")
     def config_path_project(
@@ -54,11 +58,11 @@ class TestPipelineColorspace(TestPipeline):
         dest_dir = os.path.join(
             output_folder_url,
             self.PROJECT,
-            "ocio"
+            "config"
         )
         dest_path = os.path.join(
             dest_dir,
-            "config.ocio"
+            "aces.ocio"
         )
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
@@ -85,11 +89,11 @@ class TestPipelineColorspace(TestPipeline):
             output_folder_url,
             self.PROJECT,
             self.ASSET,
-            "ocio"
+            "config"
         )
         dest_path = os.path.join(
             dest_dir,
-            "config.ocio"
+            "aces.ocio"
         )
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
@@ -104,7 +108,7 @@ class TestPipelineColorspace(TestPipeline):
         config_path_project,
         project_settings
     ):
-        expected_template = "{root[work]}/{project[name]}/ocio/config.ocio"
+        expected_template = "{root[work]}/{project[name]}/config/aces.ocio"
 
         # get config_data from hiero
         # where project level config is defined
@@ -159,14 +163,14 @@ class TestPipelineColorspace(TestPipeline):
         expected_nuke = {
             "comp_review": {
                 "pattern": "renderCompMain.baking_h264",
-                "colorspace": "Output - Rec.709",
+                "colorspace": "Camera Rec.709",
                 "ext": "mp4"
             }
         }
         expected_hiero = {
             "comp_review": {
                 "pattern": "renderCompMain_h264burninburnin",
-                "colorspace": "Output - sRGB",
+                "colorspace": "sRGB - Texture",
                 "ext": "mp4"
             }
         }

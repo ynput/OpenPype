@@ -14,8 +14,8 @@
             "type": "path",
             "key": "filepath",
             "label": "Config path",
-            "multiplatform": true,
-            "multipath": false
+            "multiplatform": false,
+            "multipath": true
         }
     ]
 }

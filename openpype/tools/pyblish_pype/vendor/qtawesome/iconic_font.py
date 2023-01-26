@@ -6,7 +6,7 @@ import json
 import os
 
 import six
-from Qt import QtCore, QtGui
+from qtpy import QtCore, QtGui
 
 
 _default_options = {

@@ -256,12 +256,12 @@ class RepairContextAction(pyblish.api.Action):
         if not hasattr(plugin, "repair"):
             raise RuntimeError("Plug-in does not have repair method.")
 
-        # Get the errored instances
+        # Get the failed instances
         self.log.info("Finding failed instances..")
-        errored_plugins = get_errored_plugins_from_context(context)
+        failed_plugins = get_errored_plugins_from_context(context)
 
         # Apply pyblish.logic to get the instances for the plug-in
-        if plugin in errored_plugins:
+        if plugin in failed_plugins:
             self.log.info("Attempting fix ...")
             plugin.repair(context)
 
@@ -289,9 +289,12 @@ class Extractor(pyblish.api.InstancePlugin):
 
 
 class ExtractorColormanaged(Extractor):
-    """Extractor Colormanaged class.
+    """Extractor base for color managed image data.
 
-    Class implements a "set_representation_colorspace" function, which is used
+    Each Extractor intended to export pixel data representation
+    should inherit from this class to allow color managed data.
+    Class implements "get_colorspace_settings" and
+    "set_representation_colorspace" functions used
     for injecting colorspace data to representation data for farther
     integration into db document.
 
@@ -304,7 +307,19 @@ class ExtractorColormanaged(Extractor):
         "sgi", "rgba", "rgb", "bw", "tga", "tiff", "tif", "img"
     ]
 
-    def get_colorspace_settings(self, context):
+    @staticmethod
+    def get_colorspace_settings(context):
+        """Retuns solved settings for the host context.
+
+        Args:
+            context (publish.Context): publishing context
+
+        Returns:
+            tuple | bool: config, file rules or None
+        """
+        if "imageioSettings" in context.data:
+            return context.data["imageioSettings"]
+
         project_name = context.data["projectName"]
         host_name = context.data["hostName"]
         anatomy_data = context.data["anatomyData"]
@@ -319,13 +334,49 @@ class ExtractorColormanaged(Extractor):
             project_name, host_name,
             project_settings=project_settings_
         )
+
+        # caching settings for future instance processing
+        context.data["imageioSettings"] = (config_data, file_rules)
+
         return config_data, file_rules
 
     def set_representation_colorspace(
         self, representation, context,
-        config_data, file_rules,
-        colorspace=None
+        colorspace=None,
+        colorspace_settings=None
     ):
+        """Sets colorspace data to representation.
+
+        Args:
+            representation (dict): publishing representation
+            context (publish.Context): publishing context
+            config_data (dict): host resolved config data
+            file_rules (dict): host resolved file rules data
+            colorspace (str, optional): colorspace name. Defaults to None.
+            colorspace_settings (tuple[dict, dict], optional):
+                Settings for config_data and file_rules.
+                Defaults to None.
+
+        Example:
+            ```
+            {
+                # for other publish plugins and loaders
+                "colorspace": "linear",
+                "config": {
+                    # for future references in case need
+                    "path": "/abs/path/to/config.ocio",
+                    # for other plugins within remote publish cases
+                    "template": "{project[root]}/path/to/config.ocio"
+                }
+            }
+            ```
+
+        """
+        if colorspace_settings is None:
+            colorspace_settings = self.get_colorspace_settings(context)
+
+        # unpack colorspace settings
+        config_data, file_rules = colorspace_settings
 
         if not config_data:
             # warn in case no colorspace path was defined
@@ -348,7 +399,7 @@ class ExtractorColormanaged(Extractor):
         # get one filename
         filename = representation["files"]
         if isinstance(filename, list):
-            filename = filename.pop()
+            filename = filename[0]
 
         self.log.debug("__ filename: `{}`".format(
             filename))
@@ -367,7 +418,7 @@ class ExtractorColormanaged(Extractor):
         if colorspace:
             colorspace_data = {
                 "colorspace": colorspace,
-                "configData": config_data
+                "config": config_data
             }
 
             # update data key

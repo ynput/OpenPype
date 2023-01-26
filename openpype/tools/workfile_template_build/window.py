@@ -1,4 +1,4 @@
-from Qt import QtWidgets
+from qtpy import QtWidgets
 
 from openpype import style
 from openpype.lib import Logger

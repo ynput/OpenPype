@@ -36,7 +36,7 @@ def _make_temp_json_file():
 
     except IOError as _error:
         raise IOError(
-            "Not able to create temp json file: {}".format(
+            "Unable to create temp json file: {}".format(
                 _error
             )
         )
@@ -75,7 +75,7 @@ def get_imageio_colorspace_from_filepath(
         path (str): path string, file rule pattern is tested on it
         host_name (str): host name
         project_name (str): project name
-        config_data (dict, optional): config path and tempate in dict.
+        config_data (dict, optional): config path and template in dict.
                                       Defaults to None.
         file_rules (dict, optional): file rule data from settings.
                                      Defaults to None.
@@ -138,7 +138,7 @@ def parse_colorspace_from_filepath(
         path (str): path string
         host_name (str): host name
         project_name (str): project name
-        config_data (dict, optional): config path and tempate in dict.
+        config_data (dict, optional): config path and template in dict.
                                       Defaults to None.
         project_settings (dict, optional): project settings. Defaults to None.
 
@@ -213,8 +213,8 @@ def get_ocio_config_colorspaces(config_path):
     if sys.version_info[0] == 2:
         return get_colorspace_data_subprocess(config_path)
 
-    from ..scripts.ocio_wrapper import get_colorspace_data
-    return get_colorspace_data(config_path)
+    from ..scripts.ocio_wrapper import _get_colorspace_data
+    return _get_colorspace_data(config_path)
 
 
 def get_colorspace_data_subprocess(config_path):
@@ -254,7 +254,7 @@ def get_colorspace_data_subprocess(config_path):
 def get_ocio_config_views(config_path):
     """Get all viewer data
 
-    Wrapper function for aggregating all display and related viwers.
+    Wrapper function for aggregating all display and related viewers.
     Key can be used for building gui menu with submenus.
 
     Args:
@@ -266,8 +266,8 @@ def get_ocio_config_views(config_path):
     if sys.version_info[0] == 2:
         return get_views_data_subprocess(config_path)
 
-    from ..scripts.ocio_wrapper import get_views_data
-    return get_views_data(config_path)
+    from ..scripts.ocio_wrapper import _get_views_data
+    return _get_views_data(config_path)
 
 
 def get_views_data_subprocess(config_path):
@@ -312,7 +312,7 @@ def get_imageio_config(
 ):
     """Returns config data from settings
 
-    Config path is formated in `path` key
+    Config path is formatted in `path` key
     and original settings input is saved into `template` key.
 
     Args:
@@ -320,7 +320,7 @@ def get_imageio_config(
         host_name (str): host name
         project_settings (dict, optional): project settings.
                                            Defaults to None.
-        anatomy_data (dict, optional): anatomy formating data.
+        anatomy_data (dict, optional): anatomy formatting data.
                                        Defaults to None.
         anatomy (lib.Anatomy, optional): Anatomy object.
                                          Defaults to None.
@@ -330,7 +330,6 @@ def get_imageio_config(
     """
     project_settings = project_settings or get_project_settings(project_name)
     anatomy = anatomy or Anatomy(project_name)
-    current_platform = platform.system().lower()
 
     if not anatomy_data:
         from openpype.pipeline.context_tools import (
@@ -339,39 +338,85 @@ def get_imageio_config(
 
     # add project roots to anatomy data
     anatomy_data["root"] = anatomy.roots
+    anatomy_data["platform"] = platform.system().lower()
 
     # get colorspace settings
     imageio_global, imageio_host = _get_imageio_settings(
         project_settings, host_name)
 
-    # get config path from either global or host_name
-    config_global = imageio_global["ocio_config"]
     config_host = imageio_host["ocio_config"]
 
-    # set config path
-    config_path = None
-    if config_global["enabled"]:
-        config_path = config_global["filepath"][current_platform]
     if config_host["enabled"]:
-        config_path = config_host["filepath"][current_platform]
+        config_data = _get_config_data(
+            config_host["filepath"], anatomy_data
+        )
+    else:
+        config_data = None
 
-    if not config_path:
-        return
+    if not config_data:
+        # get config path from either global or host_name
+        config_global = imageio_global["ocio_config"]
+        config_data = _get_config_data(
+            config_global["filepath"], anatomy_data
+        )
 
-    formating_data = deepcopy(anatomy_data)
+    if not config_data:
+        raise FileExistsError(
+            "No OCIO config found in settings. It is "
+            "either missing or there is typo in path inputs"
+        )
+
+    return config_data
+
+
+def _get_config_data(path_list, anatomy_data):
+    """Return first existing path in path list.
+
+    If template is used in path inputs,
+    then it is formated by anatomy data
+    and environment variables
+
+    Args:
+        path_list (list[str]): list of abs paths
+        anatomy_data (dict): formating data
+
+    Returns:
+        dict: config data
+    """
+    formatting_data = deepcopy(anatomy_data)
 
     # format the path for potential env vars
-    formating_data.update(dict(**os.environ))
+    formatting_data.update(dict(**os.environ))
 
+    # first try host config paths
+    for path_ in path_list:
+        formated_path = _format_path(path_, formatting_data)
+
+        if not os.path.exists(formated_path):
+            continue
+
+        return {
+            "path": os.path.normpath(formated_path),
+            "template": path_
+        }
+
+
+def _format_path(tempate_path, formatting_data):
+    """Single template path formating.
+
+    Args:
+        tempate_path (str): template string
+        formatting_data (dict): data to be used for
+                                template formating
+
+    Returns:
+        str: absolute formated path
+    """
     # format path for anatomy keys
-    formated_path = StringTemplate(config_path).format(
-        formating_data)
+    formatted_path = StringTemplate(tempate_path).format(
+        formatting_data)
 
-    abs_path = os.path.abspath(formated_path)
-    return {
-        "path": os.path.normpath(abs_path),
-        "template": config_path
-    }
+    return os.path.abspath(formatted_path)
 
 
 def get_imageio_file_rules(project_name, host_name, project_settings=None):
