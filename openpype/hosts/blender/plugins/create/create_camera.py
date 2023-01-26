@@ -16,7 +16,7 @@ class CreateCamera(plugin.Creator):
     icon = "video-camera"
 
     def process(
-        self, datablocks: List[bpy.types.ID] = None
+        self, datablocks: List[bpy.types.ID] = None, **kwargs
     ) -> OpenpypeInstance:
         # Create instance object
         asset = self.data["asset"]
@@ -36,4 +36,4 @@ class CreateCamera(plugin.Creator):
             datablocks.append(camera_obj)
 
         # Create Instance
-        return super().process(datablocks)
+        return super().process(datablocks, **kwargs)
