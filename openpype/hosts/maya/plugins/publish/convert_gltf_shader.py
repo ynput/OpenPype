@@ -32,15 +32,11 @@ class ConvertGLSLShader(publish.Extractor):
                              glsl_shadingGrp + ".surfaceShader")
 
             # load the maya2gltf shader
-            maya_publish = instance.context.data["project_settings"]["maya"]["publish"] # noqa
-
-            ogsfx_path = maya_publish["ConvertGLSLShader"]["ogsfx_path"]
-
+            ogsfx_path = instance.context.data["project_settings"]["maya"]["publish"]["ConvertGLSLShader"]["ogsfx_path"]  # noqa
             if not os.path.exists(ogsfx_path):
-                raise RuntimeError("the ogsfx file not found")
+                raise RuntimeError("The ogsfx shader file does not exist: {}".format(ogsfx_path))
 
-            ogsfx = ogsfx_path + "glTF_PBR.ogsfx"
-            cmds.setAttr(glsl + ".shader", ogsfx, typ="string")
+            cmds.setAttr(glsl + ".shader", ogsfx_path, typ="string")
 
             # list the materials used for the assets
             shading_grp = cmds.listConnections(mesh,

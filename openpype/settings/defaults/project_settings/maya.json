@@ -833,7 +833,7 @@
             "enabled": false,
             "optional": true,
             "active": true,
-            "ogsfx_path": "{MAYA_APP_DIR}/maya2glTF/PBR/shaders/"
+            "ogsfx_path": "{MAYA_APP_DIR}/maya2glTF/PBR/shaders/glTF_PBR.ogsfx"
         },
         "ExtractMayaSceneRaw": {
             "enabled": true,
