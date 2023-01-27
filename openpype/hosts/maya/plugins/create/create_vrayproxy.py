@@ -1,20 +1,37 @@
-from openpype.hosts.maya.api import plugin
+from openpype.hosts.maya.api import (
+    plugin,
+    lib
+)
+from openpype.lib import BoolDef
 
 
-class CreateVrayProxy(plugin.Creator):
+class CreateVrayProxy(plugin.MayaCreator):
     """Alembic pointcache for animated data"""
 
-    name = "vrayproxy"
+    identifier = "io.openpype.creators.maya.vrayproxy"
     label = "VRay Proxy"
     family = "vrayproxy"
     icon = "gears"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateVrayProxy, self).__init__(*args, **kwargs)
+    def get_instance_attr_defs(self):
 
-        self.data["animation"] = False
-        self.data["frameStart"] = 1
-        self.data["frameEnd"] = 1
+        defs = [
+            BoolDef("animation",
+                    label="Export Animation",
+                    default=False)
+        ]
 
-        # Write vertex colors
-        self.data["vertexColors"] = False
+        # Add time range attributes but remove some attributes
+        # which this instance actually doesn't use
+        defs.extend(lib.collect_animation_defs())
+        remove = {"handleStart", "handleEnd", "step"}
+        defs = [attr_def for attr_def in defs if attr_def.key not in remove]
+
+        defs.extend([
+            BoolDef("vertexColors",
+                    label="Write vertex colors",
+                    tooltip="Write vertex colors with the geometry",
+                    default=False),
+        ])
+
+        return defs
