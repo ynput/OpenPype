@@ -662,23 +662,28 @@ def ask_to_login(url=None, username=None):
     if username:
         window.set_username(username)
 
+    _output = {"out": None}
     def _exec_window():
         window.exec_()
         result = window.result()
         out_url, out_token, out_username, _logged_out = result
-        return out_url, out_token, out_username
+        _output["out"] = out_url, out_token, out_username
+        return _output["out"]
 
     # Use QTimer to exec dialog if application is not running yet
     # - it is not possible to call 'exec_' on dialog without running app
     #   - it is but the window is stuck
-    if app_instance.startingUp():
-        timer = QtCore.QTimer()
-        timer.setSingleShot(True)
-        timer.timeout.connect(_exec_window)
-        timer.start()
-        # This can become main Qt loop. Maybe should live elsewhere
-        app_instance.exec_()
-    return _exec_window()
+    if not app_instance.startingUp():
+        return _exec_window()
+
+    timer = QtCore.QTimer()
+    timer.setSingleShot(True)
+    timer.timeout.connect(_exec_window)
+    timer.start()
+    # This can become main Qt loop. Maybe should live elsewhere
+    app_instance.exec_()
+
+    return _output["out"]
 
 
 def change_user(url, username, api_key):
@@ -708,18 +713,23 @@ def change_user(url, username, api_key):
     window = ServerLoginWindow()
     window.set_logged_in(True, url, username, api_key)
 
+    _output = {"out": None}
+
     def _exec_window():
         window.exec_()
-        return window.result()
+        _output["out"] = window.result()
+        return _output["out"]
 
     # Use QTimer to exec dialog if application is not running yet
     # - it is not possible to call 'exec_' on dialog without running app
     #   - it is but the window is stuck
-    if app_instance.startingUp():
-        timer = QtCore.QTimer()
-        timer.setSingleShot(True)
-        timer.timeout.connect(_exec_window)
-        timer.start()
-        # This can become main Qt loop. Maybe should live elsewhere
-        app_instance.exec_()
-    return _exec_window()
+    if not app_instance.startingUp():
+        return _exec_window()
+
+    timer = QtCore.QTimer()
+    timer.setSingleShot(True)
+    timer.timeout.connect(_exec_window)
+    timer.start()
+    # This can become main Qt loop. Maybe should live elsewhere
+    app_instance.exec_()
+    return _output["out"]
