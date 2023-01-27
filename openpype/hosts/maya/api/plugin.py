@@ -20,7 +20,7 @@ from openpype.pipeline import (
     CreatedInstance
 )
 from openpype.lib import BoolDef
-from .lib import imprint, read, lsattr
+from .lib import imprint, read
 
 from openpype.settings import get_project_settings
 from .pipeline import containerise
