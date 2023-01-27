@@ -31,7 +31,7 @@ from . import lib
 
 CREATOR_INSTANCE_ATTRS = {
     "id", "asset", "subset", "task", "variant", "family", "instance_id",
-    "creator_attributes", "publish_attributes", "active"
+    "creator_identifier", "creator_attributes", "publish_attributes", "active"
 }
 
 
