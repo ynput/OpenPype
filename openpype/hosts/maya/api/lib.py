@@ -360,7 +360,7 @@ def collect_animation_defs(fps=False):
     if fps:
         current_fps = mel.eval('currentTimeUnitToFPS()')
         fps_def = NumberDef(
-          "fps", label="FPS", default=current_fps, decimals=5
+            "fps", label="FPS", default=current_fps, decimals=5
         )
         defs.append(fps_def)
 
