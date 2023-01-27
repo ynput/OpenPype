@@ -240,7 +240,10 @@ class AyonServerDownloader(AddonDownloader):
 
     @classmethod
     def download(cls, source, destination_dir, data, transfer_progress):
+        path = source["path"]
         filename = source["filename"]
+        if path and not filename:
+            filename = path.split("/")[-1]
 
         cls.log.debug(f"Downloading {filename} to {destination_dir}")
 
@@ -252,6 +255,15 @@ class AyonServerDownloader(AddonDownloader):
                 "Invalid file extension \"{}\". Expected {}".format(
                     clear_ext, ", ".join(valid_exts)
                 ))
+
+        if path:
+            filepath = os.path.join(destination_dir, filename)
+            return ayon_api.download_file(
+                path,
+                filepath,
+                chunk_size=cls.CHUNK_SIZE,
+                progress=transfer_progress
+            )
 
         # dst_filepath = os.path.join(destination_dir, filename)
         if data["type"] == "dependency_package":
