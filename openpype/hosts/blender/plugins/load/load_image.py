@@ -116,8 +116,11 @@ class BackgroundLoader(ImageLoader):
         camera = None
 
         # First try, catching camera with current active object.
-        if bpy.context.object and bpy.context.object.type == "CAMERA":
-            camera = bpy.context.object
+        if (
+            bpy.context.active_object
+            and bpy.context.active_object.type == "CAMERA"
+        ):
+            camera = bpy.context.active_object
         # Second try, catching camera with current selection.
         if not camera:
             camera = next(
