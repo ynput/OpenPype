@@ -922,7 +922,7 @@ class CreatedInstance:
         }
 
     @classmethod
-    def deserialize_on_remote(cls, serialized_data, creator_items):
+    def deserialize_on_remote(cls, serialized_data):
         """Convert instance data to CreatedInstance.
 
         This is fake instance in remote process e.g. in UI process. The creator
