@@ -175,6 +175,8 @@ class ExtractOIIOTranscode(publish.Extractor):
                 if new_repre.get("tags") is None:
                     new_repre["tags"] = []
                 for tag in output_def["tags"]:
+                    if not new_repre.get("tags"):
+                        new_repre["tags"] = []
                     if tag not in new_repre["tags"]:
                         new_repre["tags"].append(tag)
 
