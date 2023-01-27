@@ -1407,8 +1407,8 @@ class CreateContext:
         with self.bulk_instances_collection():
             self._bulk_instances_to_process.append(instance)
 
-    def create(self, identifier, *args, **kwargs):
-        """Wrapper for creators to trigger created.
+    def raw_create(self, identifier, *args, **kwargs):
+        """Wrapper for creators to trigger 'create' method.
 
         Different types of creators may expect different arguments thus the
         hints for args are blind.
@@ -1417,6 +1417,9 @@ class CreateContext:
             identifier (str): Creator's identifier.
             *args (Tuple[Any]): Arguments for create method.
             **kwargs (Dict[Any, Any]): Keyword argument for create method.
+
+        Raises:
+            CreatorsCreateFailed: When creation fails.
         """
 
         error_message = "Failed to run Creator with identifier \"{}\". {}"
@@ -1457,7 +1460,7 @@ class CreateContext:
             ])
         return result
 
-    def create_with_context(
+    def create(
         self,
         creator_identifier,
         variant=None,
