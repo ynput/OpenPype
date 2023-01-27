@@ -1111,6 +1111,8 @@ class CreateContext:
 
     @property
     def host_name(self):
+        if hasattr(self.host, "name"):
+            return self.host.name
         return os.environ["AVALON_APP"]
 
     def get_current_project_name(self):
