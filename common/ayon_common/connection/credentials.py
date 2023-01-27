@@ -40,17 +40,63 @@ def get_servers_info_data():
     return data
 
 
-def get_last_server():
-    data = get_servers_info_data()
-    return data.get("last_server")
-
-
-def add_server(url):
+def add_server(url, username):
     servers_info_path = _get_servers_path()
     data = get_servers_info_data()
     data["last_server"] = url
+    if "urls" not in data:
+        data["urls"] = {}
+    data["urls"][url] = {
+        "updated_dt": datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S"),
+        "username": username,
+    }
+
     with open(servers_info_path, "w") as stream:
         json.dump(data, stream)
+
+
+def remove_server(url):
+    if not url:
+        return
+
+    servers_info_path = _get_servers_path()
+    data = get_servers_info_data()
+    if data.get("last_server") == url:
+        data["last_server"] = None
+
+    if "urls" in data:
+        data["urls"].pop(url, None)
+
+    with open(servers_info_path, "w") as stream:
+        json.dump(data, stream)
+
+
+def get_last_server(data=None):
+    if data is None:
+        data = get_servers_info_data()
+    return data.get("last_server")
+
+
+def get_last_username_by_url(url, data=None):
+    if not url:
+        return None
+
+    if data is None:
+        data = get_servers_info_data()
+
+    urls = data.get("urls")
+    if urls:
+        url_info = urls.get(url)
+        if url_info:
+            return url_info.get("username")
+    return None
+
+
+def get_last_server_with_username():
+    data = get_servers_info_data()
+    url = get_last_server(data)
+    username = get_last_username_by_url(url)
+    return url, username
 
 
 class TokenKeyring:
