@@ -4,6 +4,7 @@ from maya import cmds
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    OptionalPyblishPluginMixin
 )
 from openpype.hosts.maya.api.lib_rendersetup import (
     get_attr_overrides,
@@ -12,7 +13,8 @@ from openpype.hosts.maya.api.lib_rendersetup import (
 from maya.app.renderSetup.model.override import AbsOverride
 
 
-class ValidateFrameRange(pyblish.api.InstancePlugin):
+class ValidateFrameRange(pyblish.api.InstancePlugin,
+                         OptionalPyblishPluginMixin):
     """Validates the frame ranges.
 
     This is an optional validator checking if the frame range on instance
@@ -39,6 +41,9 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
     exclude_families = []
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         context = instance.context
         if instance.data.get("tileRendering"):
             self.log.info((
