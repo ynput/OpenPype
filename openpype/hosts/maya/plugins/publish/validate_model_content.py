@@ -3,7 +3,10 @@ from maya import cmds
 import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateModelContent(pyblish.api.InstancePlugin):
@@ -97,4 +100,7 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise RuntimeError("Model content is invalid. See log.")
+            raise PublishValidationError(
+                title="Model content is invalid",
+                message="See log for more details"
+            )
