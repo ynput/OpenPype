@@ -753,15 +753,15 @@ class CreatedInstance:
         label = self._data.get("group")
         if label:
             return label
-        return self.creator.get_group_label()
+        return self._group_label
 
     @property
     def creator_identifier(self):
-        return self.creator.identifier
+        return self._data["creator_identifier"]
 
     @property
     def creator_label(self):
-        return self.creator.label or self.creator_identifier
+        return self._creator_label or self.creator_identifier
 
     @property
     def id(self):
@@ -1477,7 +1477,7 @@ class CreateContext:
         self._instances_by_id[instance.id] = instance
         # Prepare publish plugin attributes and set it on instance
         attr_plugins = self._get_publish_plugins_with_attr_for_family(
-            instance.creator.family
+            instance.family
         )
         instance.set_publish_plugins(attr_plugins)
 
