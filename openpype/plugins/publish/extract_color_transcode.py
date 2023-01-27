@@ -222,6 +222,21 @@ class ExtractOIIOTranscode(publish.Extractor):
             renamed_files.append(file_name)
         new_repre["files"] = renamed_files
 
+    def _rename_in_representation(self, new_repre, files_to_convert,
+                                  output_extension):
+        """Replace old extension with new one everywhere in representation."""
+        if new_repre["name"] == new_repre["ext"]:
+            new_repre["name"] = output_extension
+        new_repre["ext"] = output_extension
+
+        renamed_files = []
+        for file_name in files_to_convert:
+            file_name, _ = os.path.splitext(file_name)
+            file_name = '{}.{}'.format(file_name,
+                                       output_extension)
+            renamed_files.append(file_name)
+        new_repre["files"] = renamed_files
+
     def _translate_to_sequence(self, files_to_convert):
         """Returns original list or list with filename formatted in single
         sequence format.
