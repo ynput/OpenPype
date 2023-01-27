@@ -104,6 +104,17 @@ class CollectNewInstances(pyblish.api.InstancePlugin):
         # Store the exact members of the object set
         instance.data["setMembers"] = members
 
+        # TODO: This might make more sense as a separate collector
+        # Collect frameStartHandle and frameEndHandle if frames present
+        if "frameStart" in instance.data:
+            handle_start = instance.data.get("handleStart", 0)
+            frame_start_handle = instance.data["frameStart"] - handle_start
+            instance.data["frameStartHandle"] = frame_start_handle
+        if "frameEnd" in instance.data:
+            handle_end = instance.data.get("handleEnd", 0)
+            frame_end_handle = instance.data["frameEnd"] + handle_end
+            instance.data["frameEndHandle"] = frame_end_handle
+
     def get_all_parents(self, nodes):
         """Get all parents by using string operations (optimization)
 
