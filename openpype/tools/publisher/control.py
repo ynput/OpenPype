@@ -1589,20 +1589,19 @@ class PublisherController(BasePublisherController):
     Handle both creation and publishing parts.
 
     Args:
-        dbcon (AvalonMongoDB): Connection to mongo with context.
         headless (bool): Headless publishing. ATM not implemented or used.
     """
 
     _log = None
 
-    def __init__(self, dbcon=None, headless=False):
+    def __init__(self, headless=False):
         super(PublisherController, self).__init__()
 
         self._host = registered_host()
         self._headless = headless
 
         self._create_context = CreateContext(
-            self._host, dbcon, headless=headless, reset=False
+            self._host, headless=headless, reset=False
         )
 
         self._publish_plugins_proxy = None

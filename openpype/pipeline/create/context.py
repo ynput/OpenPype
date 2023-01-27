@@ -1003,8 +1003,6 @@ class CreateContext:
     Args:
         host(ModuleType): Host implementation which handles implementation and
             global metadata.
-        dbcon(AvalonMongoDB): Connection to mongo with context (at least
-            project).
         headless(bool): Context is created out of UI (Current not used).
         reset(bool): Reset context on initialization.
         discover_publish_plugins(bool): Discover publish plugins during reset
@@ -1012,16 +1010,8 @@ class CreateContext:
     """
 
     def __init__(
-        self, host, dbcon=None, headless=False, reset=True,
-        discover_publish_plugins=True
+        self, host, headless=False, reset=True, discover_publish_plugins=True
     ):
-        # Create conncetion if is not passed
-        if dbcon is None:
-            session = session_data_from_environment(True)
-            dbcon = AvalonMongoDB(session)
-            dbcon.install()
-
-        self.dbcon = dbcon
         self.host = host
 
         # Prepare attribute for logger (Created on demand in `log` property)
@@ -1044,6 +1034,10 @@ class CreateContext:
                 "Host miss required methods to be able use creation."
                 " Missing methods: {}"
             ).format(joined_methods))
+
+        self._current_project_name = None
+        self._current_asset_name = None
+        self._current_task_name = None
 
         self._host_is_valid = host_is_valid
         # Currently unused variable
@@ -1119,9 +1113,16 @@ class CreateContext:
     def host_name(self):
         return os.environ["AVALON_APP"]
 
-    @property
-    def project_name(self):
-        return self.dbcon.active_project()
+    def get_current_project_name(self):
+        return self._current_project_name
+
+    def get_current_asset_name(self):
+        return self._current_asset_name
+
+    def get_current_task_name(self):
+        return self._current_task_name
+
+    project_name = property(get_current_project_name)
 
     @property
     def log(self):
@@ -1210,12 +1211,9 @@ class CreateContext:
         if not task_name:
             task_name = legacy_io.Session.get("AVALON_TASK")
 
-        if project_name:
-            self.dbcon.Session["AVALON_PROJECT"] = project_name
-        if asset_name:
-            self.dbcon.Session["AVALON_ASSET"] = asset_name
-        if task_name:
-            self.dbcon.Session["AVALON_TASK"] = task_name
+        self._current_project_name = project_name
+        self._current_asset_name = asset_name
+        self._current_task_name = task_name
 
     def reset_plugins(self, discover_publish_plugins=True):
         """Reload plugins.
