@@ -5,6 +5,7 @@ import shutil
 from tests.lib.testing_classes import (
     HostFixtures,
     PublishTest,
+    DeadlinePublishTest
 )
 
 
@@ -50,3 +51,7 @@ class MayaHostFixtures(HostFixtures):
 
 class MayaLocalPublishTestClass(MayaHostFixtures, PublishTest):
     """Testing class for local publishes."""
+
+
+class MayaDeadlinePublishTestClass(MayaHostFixtures, DeadlinePublishTest):
+    """Testing class for Deadline publishes."""

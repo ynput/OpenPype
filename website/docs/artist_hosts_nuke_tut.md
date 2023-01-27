@@ -10,13 +10,13 @@ OpenPype supports Nuke version **`11.0`** and above.
 
 ## OpenPype global tools
 
--   [Set Context](artist_tools.md#set-context)
--   [Work Files](artist_tools.md#workfiles)
--   [Create](artist_tools.md#creator)
--   [Load](artist_tools.md#loader)
--   [Manage (Inventory)](artist_tools.md#inventory)
--   [Publish](artist_tools.md#publisher)
--   [Library Loader](artist_tools.md#library-loader)
+-   [Set Context](artist_tools_context_manager)
+-   [Work Files](artist_tools_workfiles)
+-   [Create](artist_tools_creator)
+-   [Load](artist_tools_loader)
+-   [Manage (Inventory)](artist_tools_inventory)
+-   [Publish](artist_tools_publisher)
+-   [Library Loader](artist_tools_library_loader)
 
 ## Nuke specific tools
 
@@ -186,7 +186,7 @@ The Next Available Version checks the work folder for already used versions and 
 
 Subversion can be used to distinguish or name versions. For example used to add shortened artist name.
 
-More about [workfiles](artist_tools.md#workfiles).
+More about [workfiles](artist_tools_workfiles).
 
 
 :::tip Admin Tips
@@ -214,7 +214,7 @@ Note that the Read node created by OpenPype is green. Green color indicates the 
 
 ![Asset Load](assets/nuke_tut/nuke_AssetLoadOutOfDate.png)
 
-More about [Asset loader](artist_tools.md#loader).
+More about [Asset loader](artist_tools_loader).
 
 ### Create Write Node
 To create OpenPype managed Write node, select the Read node you just created, from OpenPype menu, pick Create.
@@ -273,7 +273,7 @@ Pyblish Dialog tries to pack a lot of info in a small area. One of the more tric
 
 If you run the publish and decide to not publish the Nuke script, you can turn it off right in the Pyblish dialog by clicking on the checkbox. If you decide to render and  publish the shot in lower resolution to speed up the turnaround, you have to turn off the Write Resolution validator. If you want to use an older version of the asset (older version of the plate...), you have to turn off the Validate containers, and so on.
 
-More info about [Using Pyblish](artist_tools.md#publisher)
+More info about [Using Pyblish](artist_tools_publisher)
 
 :::tip Admin Tip - Configuring validators
 You can configure Nuke validators like Output Resolution in **Studio Settings → Project → Nuke → Publish plugins**

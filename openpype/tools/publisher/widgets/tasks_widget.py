@@ -1,4 +1,4 @@
-from Qt import QtCore, QtGui
+from qtpy import QtCore, QtGui
 
 from openpype.tools.utils.tasks_widget import TasksWidget, TASK_NAME_ROLE
 from openpype.tools.utils.lib import get_default_task_icon

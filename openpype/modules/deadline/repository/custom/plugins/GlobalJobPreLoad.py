@@ -333,10 +333,13 @@ def inject_openpype_environment(deadlinePlugin):
             "app": job.GetJobEnvironmentKeyValue("AVALON_APP_NAME"),
             "envgroup": "farm"
         }
+        
+        if job.GetJobEnvironmentKeyValue('IS_TEST'):
+            args.append("--automatic-tests")
+
         if all(add_kwargs.values()):
             for key, value in add_kwargs.items():
                 args.extend(["--{}".format(key), value])
-
         else:
             raise RuntimeError((
                 "Missing required env vars: AVALON_PROJECT, AVALON_ASSET,"

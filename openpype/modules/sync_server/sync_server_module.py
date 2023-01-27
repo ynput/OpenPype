@@ -124,7 +124,6 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         self.action_show_widget = None
         self._paused = False
         self._paused_projects = set()
-        self._paused_representations = set()
         self._anatomies = {}
 
         self._connection = None
@@ -475,7 +474,6 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 site_name (string): 'gdrive', 'studio' etc.
         """
         self.log.info("Pausing SyncServer for {}".format(representation_id))
-        self._paused_representations.add(representation_id)
         self.reset_site_on_representation(project_name, representation_id,
                                           site_name=site_name, pause=True)
 
@@ -492,35 +490,47 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 site_name (string): 'gdrive', 'studio' etc.
         """
         self.log.info("Unpausing SyncServer for {}".format(representation_id))
-        try:
-            self._paused_representations.remove(representation_id)
-        except KeyError:
-            pass
-        # self.paused_representations is not persistent
         self.reset_site_on_representation(project_name, representation_id,
                                           site_name=site_name, pause=False)
 
-    def is_representation_paused(self, representation_id,
-                                 check_parents=False, project_name=None):
+    def is_representation_paused(self, project_name, representation_id,
+                                 site_name, check_parents=False):
         """
-            Returns if 'representation_id' is paused or not.
+            Returns if 'representation_id' is paused or not for site.
 
             Args:
-                representation_id (string): MongoDB objectId value
+                project_name (str): project to check if paused
+                representation_id (str): MongoDB objectId value
+                site (str): site to check representation is paused for
                 check_parents (bool): check if parent project or server itself
                     are not paused
-                project_name (string): project to check if paused
 
-                if 'check_parents', 'project_name' should be set too
             Returns:
                 (bool)
         """
-        condition = representation_id in self._paused_representations
-        if check_parents and project_name:
-            condition = condition or \
-                self.is_project_paused(project_name) or \
-                self.is_paused()
-        return condition
+        # Check parents are paused
+        if check_parents and (
+            self.is_project_paused(project_name)
+            or self.is_paused()
+        ):
+            return True
+
+        # Get representation
+        representation = get_representation_by_id(project_name,
+                                                  representation_id,
+                                                  fields=["files.sites"])
+        if not representation:
+            return False
+
+        # Check if representation is paused
+        for file_info in representation.get("files", []):
+            for site in file_info.get("sites", []):
+                if site["name"] != site_name:
+                    continue
+
+                return site.get("paused", False)
+
+        return False
 
     def pause_project(self, project_name):
         """
@@ -1484,7 +1494,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                             "$elemMatch": {
                                 "name": {"$in": [remote_site]},
                                 "created_dt": {"$exists": False},
-                                "tries": {"$in": retries_arr}
+                                "tries": {"$in": retries_arr},
+                                "paused": {"$exists": False}
                             }
                         }
                     }]},
@@ -1494,7 +1505,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                             "$elemMatch": {
                                 "name": active_site,
                                 "created_dt": {"$exists": False},
-                                "tries": {"$in": retries_arr}
+                                "tries": {"$in": retries_arr},
+                                "paused": {"$exists": False}
                             }
                         }}, {
                         "files.sites": {
