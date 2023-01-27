@@ -842,7 +842,7 @@ class PlaceholderPlugin(object):
         """Placeholder options for data showed.
 
         Returns:
-            List[AbtractAttrDef]: Attribute definitions of placeholder options.
+            List[AbstractAttrDef]: Attribute definitions of placeholder options.
         """
 
         return []
@@ -1143,7 +1143,7 @@ class PlaceholderLoadMixin(object):
                 as defaults for attributes.
 
         Returns:
-            List[AbtractAttrDef]: Attribute definitions common for load
+            List[AbstractAttrDef]: Attribute definitions common for load
                 plugins.
         """
 
@@ -1513,7 +1513,7 @@ class PlaceholderCreateMixin(object):
                 as defaults for attributes.
 
         Returns:
-            List[AbtractAttrDef]: Attribute definitions common for create
+            List[AbstractAttrDef]: Attribute definitions common for create
                 plugins.
         """
 
