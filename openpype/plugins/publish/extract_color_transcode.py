@@ -114,7 +114,7 @@ class ExtractOIIOTranscode(publish.Extractor):
                 if view:
                     new_repre["colorspaceData"]["view"] = view
                 if display:
-                    new_repre["colorspaceData"]["view"] = display
+                    new_repre["colorspaceData"]["display"] = display
 
                 files_to_convert = self._translate_to_sequence(
                     files_to_convert)
