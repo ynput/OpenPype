@@ -826,7 +826,6 @@ class CreatorItem:
         label,
         group_label,
         icon,
-        instance_attributes_defs,
         description,
         detailed_description,
         default_variant,
@@ -847,11 +846,7 @@ class CreatorItem:
         self.default_variants = default_variants
         self.create_allow_context_change = create_allow_context_change
         self.create_allow_thumbnail = create_allow_thumbnail
-        self.instance_attributes_defs = instance_attributes_defs
         self.pre_create_attributes_defs = pre_create_attributes_defs
-
-    def get_instance_attr_defs(self):
-        return self.instance_attributes_defs
 
     def get_group_label(self):
         return self.group_label
@@ -891,7 +886,6 @@ class CreatorItem:
             creator.label or identifier,
             creator.get_group_label(),
             creator.get_icon(),
-            creator.get_instance_attr_defs(),
             description,
             detail_description,
             default_variant,
@@ -902,12 +896,6 @@ class CreatorItem:
         )
 
     def to_data(self):
-        instance_attributes_defs = None
-        if self.instance_attributes_defs is not None:
-            instance_attributes_defs = serialize_attr_defs(
-                self.instance_attributes_defs
-            )
-
         pre_create_attributes_defs = None
         if self.pre_create_attributes_defs is not None:
             pre_create_attributes_defs = serialize_attr_defs(
@@ -927,18 +915,11 @@ class CreatorItem:
             "default_variants": self.default_variants,
             "create_allow_context_change": self.create_allow_context_change,
             "create_allow_thumbnail": self.create_allow_thumbnail,
-            "instance_attributes_defs": instance_attributes_defs,
             "pre_create_attributes_defs": pre_create_attributes_defs,
         }
 
     @classmethod
     def from_data(cls, data):
-        instance_attributes_defs = data["instance_attributes_defs"]
-        if instance_attributes_defs is not None:
-            data["instance_attributes_defs"] = deserialize_attr_defs(
-                instance_attributes_defs
-            )
-
         pre_create_attributes_defs = data["pre_create_attributes_defs"]
         if pre_create_attributes_defs is not None:
             data["pre_create_attributes_defs"] = deserialize_attr_defs(
