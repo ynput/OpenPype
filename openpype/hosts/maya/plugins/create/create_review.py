@@ -1,45 +1,64 @@
-from collections import OrderedDict
 from openpype.hosts.maya.api import (
     lib,
     plugin
 )
+from openpype.lib import (
+    BoolDef,
+    NumberDef,
+    EnumDef
+)
+
+TRANSPARENCIES = [
+    "preset",
+    "simple",
+    "object sorting",
+    "weighted average",
+    "depth peeling",
+    "alpha cut"
+]
 
 
-class CreateReview(plugin.Creator):
-    """Single baked camera"""
+class CreateReview(plugin.MayaCreator):
+    """Playblast reviewable"""
 
-    name = "reviewDefault"
+    identifier = "io.openpype.creators.maya.review"
     label = "Review"
     family = "review"
     icon = "video-camera"
-    keepImages = False
-    isolate = False
-    imagePlane = True
-    Width = 0
-    Height = 0
-    transparency = [
-        "preset",
-        "simple",
-        "object sorting",
-        "weighted average",
-        "depth peeling",
-        "alpha cut"
-    ]
 
-    def __init__(self, *args, **kwargs):
-        super(CreateReview, self).__init__(*args, **kwargs)
+    def get_instance_attr_defs(self):
 
-        # get basic animation data : start / end / handles / steps
-        data = OrderedDict(**self.data)
-        animation_data = lib.collect_animation_data(fps=True)
-        for key, value in animation_data.items():
-            data[key] = value
+        defs = lib.collect_animation_defs()
 
-        data["review_width"] = self.Width
-        data["review_height"] = self.Height
-        data["isolate"] = self.isolate
-        data["keepImages"] = self.keepImages
-        data["imagePlane"] = self.imagePlane
-        data["transparency"] = self.transparency
+        defs.extend([
+            NumberDef("review_width",
+                      label="Review width",
+                      tooltip="A value of zero will use the asset resolution.",
+                      decimals=0,
+                      minimum=0,
+                      default=0),
+            NumberDef("review_height",
+                      label="Review height",
+                      tooltip="A value of zero will use the asset resolution.",
+                      decimals=0,
+                      minimum=0,
+                      default=0),
+            BoolDef("keepImages",
+                    label="Keep Images",
+                    tooltip="Whether to also publish along the image sequence "
+                            "next to the video reviewable.",
+                    default=False),
+            BoolDef("isolate",
+                    label="Isolate render members of instance",
+                    tooltip="When enabled only the members of the instance "
+                            "will be included in the playblast review.",
+                    default=False),
+            BoolDef("imagePlane",
+                    label="Show Image Plane",
+                    default=True),
+            EnumDef("transparency",
+                    label="Transparency",
+                    items={key: key for key in TRANSPARENCIES})
+        ])
 
-        self.data = data
+        return defs
