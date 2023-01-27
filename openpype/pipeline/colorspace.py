@@ -344,9 +344,9 @@ def get_imageio_config(
     imageio_global, imageio_host = _get_imageio_settings(
         project_settings, host_name)
 
-    config_host = imageio_host["ocio_config"]
+    config_host = imageio_host.get("ocio_config", {})
 
-    if config_host["enabled"]:
+    if config_host.get("enabled"):
         config_data = _get_config_data(
             config_host["filepath"], anatomy_data
         )
