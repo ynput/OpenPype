@@ -678,3 +678,47 @@ def ask_to_login(url=None, username=None):
         # This can become main Qt loop. Maybe should live elsewhere
         app_instance.exec_()
     return _exec_window()
+
+
+def change_user(url, username, api_key):
+    """Ask user to login using Qt dialog.
+
+    Function creates new QApplication if is not created yet.
+
+    Args:
+        url (str): Server url that will be prefilled in dialog.
+
+    Returns:
+        Tuple[str, str]: Returns Url and user's token. Url can be changed
+            during dialog lifetime that's why the url is returned.
+    """
+
+    app_instance = QtWidgets.QApplication.instance()
+    if app_instance is None:
+        for attr_name in (
+            "AA_EnableHighDpiScaling",
+            "AA_UseHighDpiPixmaps"
+        ):
+            attr = getattr(QtCore.Qt, attr_name, None)
+            if attr is not None:
+                QtWidgets.QApplication.setAttribute(attr)
+        app_instance = QtWidgets.QApplication([])
+
+    window = ServerLoginWindow()
+    window.set_logged_in(True, url, username, api_key)
+
+    def _exec_window():
+        window.exec_()
+        return window.result()
+
+    # Use QTimer to exec dialog if application is not running yet
+    # - it is not possible to call 'exec_' on dialog without running app
+    #   - it is but the window is stuck
+    if app_instance.startingUp():
+        timer = QtCore.QTimer()
+        timer.setSingleShot(True)
+        timer.timeout.connect(_exec_window)
+        timer.start()
+        # This can become main Qt loop. Maybe should live elsewhere
+        app_instance.exec_()
+    return _exec_window()
