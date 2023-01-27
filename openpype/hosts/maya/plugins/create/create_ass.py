@@ -2,17 +2,20 @@ from openpype.hosts.maya.api import (
     lib,
     plugin
 )
+from openpype.lib import (
+    NumberDef,
+    BoolDef
+)
 
-from maya import cmds
 
-
-class CreateAss(plugin.Creator):
+class CreateAss(plugin.MayaCreator):
     """Arnold Scene Source"""
 
-    name = "ass"
+    identifier = "io.openpype.creators.maya.ass"
     label = "Arnold Scene Source"
     family = "ass"
     icon = "cube"
+
     expandProcedurals = False
     motionBlur = True
     motionBlurKeys = 2
@@ -28,39 +31,72 @@ class CreateAss(plugin.Creator):
     maskColor_manager = False
     maskOperator = False
 
-    def __init__(self, *args, **kwargs):
-        super(CreateAss, self).__init__(*args, **kwargs)
+    def get_instance_attr_defs(self):
 
-        # Add animation data
-        self.data.update(lib.collect_animation_data())
+        defs = lib.collect_animation_defs()
 
-        self.data["expandProcedurals"] = self.expandProcedurals
-        self.data["motionBlur"] = self.motionBlur
-        self.data["motionBlurKeys"] = self.motionBlurKeys
-        self.data["motionBlurLength"] = self.motionBlurLength
+        defs.extend([
+            BoolDef("expandProcedural",
+                    label="Expand Procedural",
+                    default=self.expandProcedurals),
+            BoolDef("motionBlur",
+                    label="Motion Blur",
+                    default=self.motionBlur),
+            NumberDef("motionBlurKeys",
+                      label="Motion Blur Keys",
+                      decimals=0,
+                      default=self.motionBlurKeys),
+            NumberDef("motionBlurLength",
+                      label="Motion Blur Length",
+                      decimals=3,
+                      default=self.motionBlurLength),
 
-        # Masks
-        self.data["maskOptions"] = self.maskOptions
-        self.data["maskCamera"] = self.maskCamera
-        self.data["maskLight"] = self.maskLight
-        self.data["maskShape"] = self.maskShape
-        self.data["maskShader"] = self.maskShader
-        self.data["maskOverride"] = self.maskOverride
-        self.data["maskDriver"] = self.maskDriver
-        self.data["maskFilter"] = self.maskFilter
-        self.data["maskColor_manager"] = self.maskColor_manager
-        self.data["maskOperator"] = self.maskOperator
+            # Masks
+            BoolDef("maskOptions",
+                    label="Mask Options",
+                    default=self.maskOptions),
+            BoolDef("maskCamera",
+                    label="Mask Camera",
+                    default=self.maskCamera),
+            BoolDef("maskLight",
+                    label="Mask Light",
+                    default=self.maskLight),
+            BoolDef("maskShape",
+                    label="Mask Shape",
+                    default=self.maskShape),
+            BoolDef("maskShader",
+                    label="Mask Shader",
+                    default=self.maskShader),
+            BoolDef("maskOverride",
+                    label="Mask Override",
+                    default=self.maskOverride),
+            BoolDef("maskDriver",
+                    label="Mask Driver",
+                    default=self.maskDriver),
+            BoolDef("maskFilter",
+                    label="Mask Filter",
+                    default=self.maskFilter),
+            BoolDef("maskColor_manager",
+                    label="Mask Color Manager",
+                    default=self.maskColor_manager),
+            BoolDef("maskOperator",
+                    label="Mask Operator",
+                    default=self.maskOperator),
+        ])
 
-    def process(self):
-        instance = super(CreateAss, self).process()
+        return defs
 
-        nodes = []
+    def create(self, subset_name, instance_data, pre_create_data):
 
-        if (self.options or {}).get("useSelection"):
-            nodes = cmds.ls(selection=True)
+        from maya import cmds
 
-        cmds.sets(nodes, rm=instance)
+        instance = super(CreateAss, self).create(subset_name,
+                                                 instance_data,
+                                                 pre_create_data)
 
-        assContent = cmds.sets(name="content_SET")
-        assProxy = cmds.sets(name="proxy_SET", empty=True)
-        cmds.sets([assContent, assProxy], forceElement=instance)
+        instance_node = instance.get("instance_node")
+
+        self.log.info("Creating ass instance set up ...")
+        content = cmds.sets(name="content_SET", empty=True)
+        proxy = cmds.sets(name="proxy_SET", empty=True)
+        cmds.sets([content, proxy], forceElement=instance_node)
