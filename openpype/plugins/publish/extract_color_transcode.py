@@ -142,6 +142,8 @@ class ExtractOIIOTranscode(publish.Extractor):
 
                 # Add additional tags from output definition to representation
                 for tag in output_def["tags"]:
+                    if not new_repre.get("tags"):
+                        new_repre["tags"] = []
                     if tag not in new_repre["tags"]:
                         new_repre["tags"].append(tag)
 
