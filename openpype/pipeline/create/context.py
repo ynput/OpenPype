@@ -33,6 +33,7 @@ from .creator_plugins import (
     CreatorError,
 )
 
+# Changes of instances and context are send as tuple of 2 information
 UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
 
 
@@ -300,7 +301,12 @@ class AttributeValues(object):
         return list(self._attr_defs)
 
     def data_to_store(self):
-        """Create new dictionary with data to store."""
+        """Create new dictionary with data to store.
+
+        Returns:
+            Dict[str, Any]: Attribute values that should be stored.
+        """
+
         output = {}
         for key in self._data:
             output[key] = self[key]
@@ -313,6 +319,7 @@ class AttributeValues(object):
     @staticmethod
     def calculate_changes(new_data, old_data):
         """Calculate changes of 2 dictionary objects."""
+
         changes = {}
         for key, new_value in new_data.items():
             old_value = old_data.get(key)
@@ -379,13 +386,14 @@ class PublishAttributes:
     """Wrapper for publish plugin attribute definitions.
 
     Cares about handling attribute definitions of multiple publish plugins.
+    Keep information about attribute definitions and their values.
 
     Args:
         parent(CreatedInstance, CreateContext): Parent for which will be
             data stored and from which are data loaded.
         origin_data(dict): Loaded data by plugin class name.
-        attr_plugins(list): List of publish plugins that may have defined
-            attribute definitions.
+        attr_plugins(Union[List[pyblish.api.Plugin], None]): List of publish
+            plugins that may have defined attribute definitions.
     """
 
     def __init__(self, parent, origin_data, attr_plugins=None):
@@ -765,7 +773,11 @@ class CreatedInstance:
 
     @property
     def id(self):
-        """Instance identifier."""
+        """Instance identifier.
+
+        Returns:
+            str: UUID of instance.
+        """
 
         return self._data["instance_id"]
 
@@ -774,6 +786,10 @@ class CreatedInstance:
         """Legacy access to data.
 
         Access to data is needed to modify values.
+
+        Returns:
+            CreatedInstance: Object can be used as dictionary but with
+                validations of immutable keys.
         """
 
         return self
@@ -850,6 +866,12 @@ class CreatedInstance:
 
     @property
     def creator_attribute_defs(self):
+        """Attribute defintions defined by creator plugin.
+    
+        Returns:
+              List[AbstractAttrDef]: Attribute defitions.
+        """
+        
         return self.creator_attributes.attr_defs
 
     @property
@@ -861,7 +883,7 @@ class CreatedInstance:
 
         It is possible to recreate the instance using these data.
 
-        Todo:
+        Todos:
             We probably don't need OrderedDict. When data are loaded they
                 are not ordered anymore.
 
@@ -882,7 +904,15 @@ class CreatedInstance:
 
     @classmethod
     def from_existing(cls, instance_data, creator):
-        """Convert instance data from workfile to CreatedInstance."""
+        """Convert instance data from workfile to CreatedInstance.
+
+        Args:
+            instance_data (Dict[str, Any]): Data in a structure ready for
+                'CreatedInstance' object.
+            creator (Creator): Creator plugin which is creating the instance
+                of for which the instance belong.
+        """
+
         instance_data = copy.deepcopy(instance_data)
 
         family = instance_data.get("family", None)
@@ -895,10 +925,21 @@ class CreatedInstance:
         )
 
     def set_publish_plugins(self, attr_plugins):
+        """Set publish plugins with attribute definitions.
+
+        This method should be called only from 'CreateContext'.
+
+        Args:
+            attr_plugins (List[pyblish.api.Plugin]): Pyblish plugins which
+                inherit from 'OpenPypePyblishPluginMixin' and may contain
+                attribute definitions.
+        """
+
         self.publish_attributes.set_publish_plugins(attr_plugins)
 
     def add_members(self, members):
         """Currently unused method."""
+
         for member in members:
             if member not in self._members:
                 self._members.append(member)
@@ -932,9 +973,6 @@ class CreatedInstance:
         Args:
             serialized_data (Dict[str, Any]): Serialized data for remote
                 recreating. Should contain 'data' and 'orig_data'.
-            creator_items (Dict[str, Any]): Mapping of creator identifier and
-                objects that behave like a creator for most of attribute
-                access.
         """
 
         instance_data = copy.deepcopy(serialized_data["data"])
@@ -1097,6 +1135,10 @@ class CreateContext:
 
     Context itself also can store data related to whole creation (workfile).
     - those are mainly for Context publish plugins
+
+    Todos:
+        Don't use 'AvalonMongoDB'. It's used only to keep track about current
+            context which should be handled by host.
 
     Args:
         host(ModuleType): Host implementation which handles implementation and
