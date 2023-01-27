@@ -15,6 +15,8 @@ from openpype.settings import (
 )
 from openpype.lib.attribute_definitions import (
     UnknownDef,
+    serialize_attr_defs,
+    deserialize_attr_defs,
 )
 from openpype.host import IPublishHost
 from openpype.pipeline import legacy_io
@@ -331,6 +333,15 @@ class AttributeValues(object):
             elif self.get(key) != new_value:
                 self[key] = new_value
 
+    def get_serialized_attr_defs(self):
+        """Serialize attribute definitions to json serializable types.
+
+        Returns:
+            List[Dict[str, Any]]: Serialized attribute definitions.
+        """
+
+        return serialize_attr_defs(self._attr_defs)
+
 
 class CreatorAttributeValues(AttributeValues):
     """Creator specific attribute values of an instance.
@@ -505,6 +516,42 @@ class PublishAttributes:
             value = data.get(key) or {}
             orig_value = copy.deepcopy(origin_data.get(key) or {})
             self._data[key] = PublishAttributeValues(
+                self, attr_defs, value, orig_value
+            )
+
+        for key, value in data.items():
+            if key not in added_keys:
+                self._missing_plugins.append(key)
+                self._data[key] = PublishAttributeValues(
+                    self, [], value, value
+                )
+
+    def serialize_attributes(self):
+        return {
+            "attr_defs": {
+                plugin_name: attrs_value.get_serialized_attr_defs()
+                for plugin_name, attrs_value in self._data.items()
+            },
+            "plugin_names_order": self._plugin_names_order,
+            "missing_plugins": self._missing_plugins
+        }
+
+    def deserialize_attributes(self, data):
+        self._plugin_names_order = data["plugin_names_order"]
+        self._missing_plugins = data["missing_plugins"]
+
+        attr_defs = deserialize_attr_defs(data["attr_defs"])
+
+        origin_data = self._origin_data
+        data = self._data
+        self._data = {}
+
+        added_keys = set()
+        for plugin_name, attr_defs_data in attr_defs.items():
+            attr_defs = deserialize_attr_defs(attr_defs_data)
+            value = data.get(plugin_name) or {}
+            orig_value = copy.deepcopy(origin_data.get(plugin_name) or {})
+            self._data[plugin_name] = PublishAttributeValues(
                 self, attr_defs, value, orig_value
             )
 
