@@ -1053,8 +1053,8 @@ def convert_colorspace(
     config_path,
     source_colorspace,
     target_colorspace,
-    view,
-    display,
+    view=None,
+    display=None,
     logger=None
 ):
     """Convert source file from one color space to another.
@@ -1067,7 +1067,9 @@ def convert_colorspace(
         config_path (str): path to OCIO config file
         source_colorspace (str): ocio valid color space of source files
         target_colorspace (str): ocio valid target color space
+                    if filled, 'view' and 'display' must be empty
         view (str): name for viewer space (ocio valid)
+            both 'view' and 'display' must be filled (if 'target_colorspace')
         display (str): name for display-referred reference space (ocio valid)
         logger (logging.Logger): Logger used for logging.
     Raises:
