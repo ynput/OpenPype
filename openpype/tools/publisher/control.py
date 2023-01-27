@@ -910,7 +910,7 @@ class CreatorItem:
 
         pre_create_attributes_defs = None
         if self.pre_create_attributes_defs is not None:
-            instance_attributes_defs = serialize_attr_defs(
+            pre_create_attributes_defs = serialize_attr_defs(
                 self.pre_create_attributes_defs
             )
 
