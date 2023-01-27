@@ -13,6 +13,9 @@ from openpype.settings import (
     get_system_settings,
     get_project_settings
 )
+from openpype.lib.attribute_definitions import (
+    UnknownDef,
+)
 from openpype.host import IPublishHost
 from openpype.pipeline import legacy_io
 from openpype.pipeline.mongodb import (
@@ -214,8 +217,6 @@ class AttributeValues(object):
     """
 
     def __init__(self, attr_defs, values, origin_data=None):
-        from openpype.lib.attribute_definitions import UnknownDef
-
         if origin_data is None:
             origin_data = copy.deepcopy(values)
         self._origin_data = origin_data
