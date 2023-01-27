@@ -1175,6 +1175,7 @@ class WM_OT_CheckWorkfileUpToDate(bpy.types.Operator):
                 return {"CANCELLED"}
         elif self.action == "QUIT":
             bpy.ops.wm.quit_blender()
+            return {"FINISHED"}
         elif self.action == "PROCEED":
             return {"FINISHED"}
         else:
@@ -1201,7 +1202,7 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         # Display workfile out of date warning
         if not context.scene.is_workfile_up_to_date:
             row = layout.row()
-            row.label(text="Your workfile is out of date!", icon="ERROR")
+            row.operator(WM_OT_CheckWorkfileUpToDate.bl_idname, text="Your workfile is out of date!", icon="ERROR")
             layout.separator()
 
         pcoll = PREVIEW_COLLECTIONS.get("avalon")
