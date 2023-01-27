@@ -6,7 +6,10 @@ from maya import cmds
 import pyblish.api
 
 from openpype.pipeline import legacy_io
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin
+)
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.shader_definition_editor import (
     DEFINITION_FILENAME)
@@ -14,7 +17,8 @@ from openpype.client.mongo import OpenPypeMongoConnection
 import gridfs
 
 
-class ValidateModelName(pyblish.api.InstancePlugin):
+class ValidateModelName(pyblish.api.InstancePlugin,
+                        OptionalPyblishPluginMixin):
     """Validate name of model
 
     starts with (somename)_###_(materialID)_GEO
@@ -145,6 +149,9 @@ class ValidateModelName(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Plugin entry point."""
+        if not self.is_active(instance.data):
+            return
+
         invalid = self.get_invalid(instance)
 
         if invalid:

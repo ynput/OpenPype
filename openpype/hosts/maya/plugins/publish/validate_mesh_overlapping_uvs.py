@@ -5,7 +5,10 @@ import maya.api.OpenMaya as om
 import pymel.core as pm
 
 from six.moves import xrange
-from openpype.pipeline.publish import ValidateMeshOrder
+from openpype.pipeline.publish import (
+    ValidateMeshOrder,
+    OptionalPyblishPluginMixin
+)
 
 
 class GetOverlappingUVs(object):
@@ -225,7 +228,8 @@ class GetOverlappingUVs(object):
         return faces
 
 
-class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
+class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin,
+                                    OptionalPyblishPluginMixin):
     """ Validate the current mesh overlapping UVs.
 
     It validates whether the current UVs are overlapping or not.
@@ -274,6 +278,8 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
         return invalid
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
 
         invalid = self.get_invalid(instance, compute=True)
         if invalid:

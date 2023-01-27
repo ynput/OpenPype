@@ -4,10 +4,12 @@ import pyblish.api
 from openpype.pipeline.publish import (
     RepairContextAction,
     ValidateContentsOrder,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateAttributes(pyblish.api.ContextPlugin):
+class ValidateAttributes(pyblish.api.ContextPlugin,
+                         OptionalPyblishPluginMixin):
     """Ensure attributes are consistent.
 
     Attributes to validate and their values comes from the
@@ -29,6 +31,8 @@ class ValidateAttributes(pyblish.api.ContextPlugin):
 
     def process(self, context):
         # Check for preset existence.
+        if not self.is_active(context.data):
+            return
 
         if not self.attributes:
             return

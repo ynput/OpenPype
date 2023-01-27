@@ -5,10 +5,14 @@ from maya import cmds
 import pyblish.api
 
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin
+)
 
 
-class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
+class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin,
+                                    OptionalPyblishPluginMixin):
     """Validates transform suffix based on the type of its children shapes.
 
     Suffices must be:
@@ -112,6 +116,9 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
             instance (:class:`pyblish.api.Instance`): published instance.
 
         """
+        if not self.is_active(instance.data):
+            return
+
         invalid = self.get_invalid(instance)
         if invalid:
             valid = self.get_table_for_invalid()

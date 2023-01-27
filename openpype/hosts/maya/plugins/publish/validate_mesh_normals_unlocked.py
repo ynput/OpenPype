@@ -6,10 +6,12 @@ import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateMeshOrder,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateMeshNormalsUnlocked(pyblish.api.Validator):
+class ValidateMeshNormalsUnlocked(pyblish.api.Validator,
+                                  OptionalPyblishPluginMixin):
     """Validate all meshes in the instance have unlocked normals
 
     These can be unlocked manually through:
@@ -49,6 +51,8 @@ class ValidateMeshNormalsUnlocked(pyblish.api.Validator):
 
     def process(self, instance):
         """Raise invalid when any of the meshes have locked normals"""
+        if not self.is_active(instance.data):
+            return
 
         invalid = self.get_invalid(instance)
 

@@ -4,10 +4,14 @@ from maya import cmds
 import pyblish.api
 
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin
+)
 
 
-class ValidateShaderName(pyblish.api.InstancePlugin):
+class ValidateShaderName(pyblish.api.InstancePlugin,
+                         OptionalPyblishPluginMixin):
     """Validate shader name assigned.
 
        It should be <assetName>_<*>_SHD
@@ -23,6 +27,8 @@ class ValidateShaderName(pyblish.api.InstancePlugin):
 
     # The default connections to check
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
 
         invalid = self.get_invalid(instance)
         if invalid:

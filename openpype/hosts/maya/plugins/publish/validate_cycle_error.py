@@ -4,10 +4,14 @@ import pyblish.api
 
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.lib import maintained_selection
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin
+)
 
 
-class ValidateCycleError(pyblish.api.InstancePlugin):
+class ValidateCycleError(pyblish.api.InstancePlugin,
+                         OptionalPyblishPluginMixin):
     """Validate nodes produce no cycle errors."""
 
     order = ValidateContentsOrder + 0.05
@@ -18,6 +22,9 @@ class ValidateCycleError(pyblish.api.InstancePlugin):
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         invalid = self.get_invalid(instance)
         if invalid:
             raise RuntimeError("Nodes produce a cycle error: %s" % invalid)

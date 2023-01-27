@@ -4,7 +4,10 @@ from maya import cmds
 
 import pyblish.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateMeshOrder
+from openpype.pipeline.publish import (
+    ValidateMeshOrder,
+    OptionalPyblishPluginMixin
+)
 
 
 def len_flattened(components):
@@ -36,7 +39,8 @@ def len_flattened(components):
     return n
 
 
-class ValidateMeshHasUVs(pyblish.api.InstancePlugin):
+class ValidateMeshHasUVs(pyblish.api.InstancePlugin,
+                         OptionalPyblishPluginMixin):
     """Validate the current mesh has UVs.
 
     It validates whether the current UV set has non-zero UVs and
@@ -88,6 +92,8 @@ class ValidateMeshHasUVs(pyblish.api.InstancePlugin):
         return invalid
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
 
         invalid = self.get_invalid(instance)
         if invalid:

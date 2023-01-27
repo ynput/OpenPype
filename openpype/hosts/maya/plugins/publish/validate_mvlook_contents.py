@@ -1,14 +1,18 @@
 import os
 import pyblish.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin
+)
 
 
 COLOUR_SPACES = ['sRGB', 'linear', 'auto']
 MIPMAP_EXTENSIONS = ['tdl']
 
 
-class ValidateMvLookContents(pyblish.api.InstancePlugin):
+class ValidateMvLookContents(pyblish.api.InstancePlugin,
+                             OptionalPyblishPluginMixin):
     order = ValidateContentsOrder
     families = ['mvLook']
     hosts = ['maya']
@@ -23,6 +27,9 @@ class ValidateMvLookContents(pyblish.api.InstancePlugin):
     enforced_intents = ['-', 'Final']
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         intent = instance.context.data['intent']['value']
         publishMipMap = instance.data["publishMipMap"]
         enforced = True

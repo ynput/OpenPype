@@ -9,7 +9,8 @@ from openpype.hosts.maya.api.lib import (
 )
 
 
-class ExtractXgenCache(publish.Extractor):
+class ExtractXgenCache(publish.Extractor,
+                       publish.OptionalPyblishPluginMixin):
     """Produce an alembic of just xgen interactive groom
 
     """
@@ -20,6 +21,8 @@ class ExtractXgenCache(publish.Extractor):
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
 
         # Collect the out set nodes
         out_descriptions = [node for node in instance

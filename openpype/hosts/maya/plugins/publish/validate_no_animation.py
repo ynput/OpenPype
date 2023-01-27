@@ -2,10 +2,14 @@ from maya import cmds
 
 import pyblish.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin
+)
 
 
-class ValidateNoAnimation(pyblish.api.Validator):
+class ValidateNoAnimation(pyblish.api.Validator,
+                          OptionalPyblishPluginMixin):
     """Ensure no keyframes on nodes in the Instance.
 
     Even though a Model would extract without animCurves correctly this avoids
@@ -22,6 +26,8 @@ class ValidateNoAnimation(pyblish.api.Validator):
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
 
         invalid = self.get_invalid(instance)
         if invalid:
