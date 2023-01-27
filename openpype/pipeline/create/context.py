@@ -891,7 +891,7 @@ class CreatedInstance:
         subset_name = instance_data.get("subset", None)
 
         return cls(
-            family, subset_name, instance_data, creator, new=False
+            family, subset_name, instance_data, creator
         )
 
     def set_publish_plugins(self, attr_plugins):
