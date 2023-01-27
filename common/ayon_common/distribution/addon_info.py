@@ -35,6 +35,7 @@ class WebSourceInfo(SourceInfo):
 @attr.s
 class ServerSourceInfo(SourceInfo):
     filename = attr.ib(default=None)
+    path = attr.ib(default=None)
 
 
 @attr.s
@@ -85,7 +86,10 @@ class AddonInfo(object):
                 )
             elif source_type == UrlType.SERVER.value:
                 source_addon = ServerSourceInfo(
-                    type=source_type, filename=source["filename"])
+                    type=source_type,
+                    filename=source.get("filename"),
+                    path=source.get("path")
+                )
             else:
                 print(f"Unknown source {source_type}")
                 unknown_sources.append(source)
@@ -141,7 +145,10 @@ class DependencyItem(object):
                 )
             elif source_type == UrlType.SERVER.value:
                 source_addon = ServerSourceInfo(
-                    type=source_type, filename=source["filename"])
+                    type=source_type,
+                    filename=source.get("filename"),
+                    path=source.get("path")
+                )
             else:
                 print(f"Unknown source {source_type}")
                 unknown_sources.append(source)
