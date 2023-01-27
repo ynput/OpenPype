@@ -1,6 +1,9 @@
 import pyblish.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateInstanceHasMembers(pyblish.api.InstancePlugin):
@@ -15,7 +18,7 @@ class ValidateInstanceHasMembers(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
 
         invalid = list()
-        if not instance.data["setMembers"]:
+        if not instance.data.get("setMembers"):
             objectset_name = instance.data['name']
             invalid.append(objectset_name)
 
@@ -25,4 +28,9 @@ class ValidateInstanceHasMembers(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Empty instances found: {0}".format(invalid))
+            # Invalid will always be a single entry, we log the single name
+            name = invalid[0]
+            raise PublishValidationError(
+                title="Empty instance",
+                message="Instance '{0}' is empty".format(name)
+            )
