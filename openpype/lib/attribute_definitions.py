@@ -57,8 +57,8 @@ def get_default_values(attribute_definitions):
     """Receive default values for attribute definitions.
 
     Args:
-        attribute_definitions (List[AbstractAttrDef]): Attribute definitions for
-            which default values should be collected.
+        attribute_definitions (List[AbstractAttrDef]): Attribute definitions
+            for which default values should be collected.
 
     Returns:
         Dict[str, Any]: Default values for passet attribute definitions.
@@ -530,6 +530,7 @@ class EnumDef(AbstractAttrDef):
             )
 
         return output
+
 
 class BoolDef(AbstractAttrDef):
     """Boolean representation.

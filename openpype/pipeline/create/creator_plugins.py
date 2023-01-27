@@ -425,8 +425,8 @@ class BaseCreator:
         keys/values when plugin attributes change.
 
         Returns:
-            List[AbstractAttrDef]: Attribute definitions that can be tweaked for
-                created instance.
+            List[AbstractAttrDef]: Attribute definitions that can be tweaked
+                for created instance.
         """
 
         return self.instance_attr_defs
@@ -563,8 +563,8 @@ class Creator(BaseCreator):
             updating keys/values when plugin attributes change.
 
         Returns:
-            List[AbstractAttrDef]: Attribute definitions that can be tweaked for
-                created instance.
+            List[AbstractAttrDef]: Attribute definitions that can be tweaked
+                for created instance.
         """
         return self.pre_create_attr_defs
 

@@ -842,7 +842,8 @@ class PlaceholderPlugin(object):
         """Placeholder options for data showed.
 
         Returns:
-            List[AbstractAttrDef]: Attribute definitions of placeholder options.
+            List[AbstractAttrDef]: Attribute definitions of
+                placeholder options.
         """
 
         return []

@@ -867,11 +867,11 @@ class CreatedInstance:
     @property
     def creator_attribute_defs(self):
         """Attribute defintions defined by creator plugin.
-    
+
         Returns:
               List[AbstractAttrDef]: Attribute defitions.
         """
-        
+
         return self.creator_attributes.attr_defs
 
     @property
