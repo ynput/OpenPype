@@ -1860,12 +1860,12 @@ class PublisherController(BasePublisherController):
                 which should be attribute definitions returned.
         """
 
+        # NOTE it would be great if attrdefs would have hash method implemented
+        #   so they could be used as keys in dictionary
         output = []
         _attr_defs = {}
         for instance in instances:
-            creator_identifier = instance.creator_identifier
-            creator_item = self.creator_items[creator_identifier]
-            for attr_def in creator_item.instance_attributes_defs:
+            for attr_def in instance.creator_attribute_defs:
                 found_idx = None
                 for idx, _attr_def in _attr_defs.items():
                     if attr_def == _attr_def:
