@@ -570,15 +570,22 @@ class CreatedInstance:
     about instance like "asset" and "task" and all data used for filling subset
     name as creators may have custom data for subset name filling.
 
+    Notes:
+        Object have 2 possible initialization. One using 'creator' object which
+            is recommended for api usage. Second by passing information about
+            creator.
+
     Args:
-        family(str): Name of family that will be created.
-        subset_name(str): Name of subset that will be created.
-        data(dict): Data used for filling subset name or override data from
-            already existing instance.
-        creator(BaseCreator): Creator responsible for instance.
-        host(ModuleType): Host implementation loaded with
-            `openpype.pipeline.registered_host`.
-        new(bool): Is instance new.
+        family (str): Name of family that will be created.
+        subset_name (str): Name of subset that will be created.
+        data (Dict[str, Any]): Data used for filling subset name or override
+            data from already existing instance.
+        creator (Union[BaseCreator, None]): Creator responsible for instance.
+        creator_identifier (str): Identifier of creator plugin.
+        creator_label (str): Creator plugin label.
+        group_label (str): Default group label from creator plugin.
+        creator_attr_defs (List[AbstractAttrDef]): Attribute definitions from
+            creator.
     """
 
     # Keys that can't be changed or removed from data after loading using
@@ -595,9 +602,24 @@ class CreatedInstance:
     )
 
     def __init__(
-        self, family, subset_name, data, creator, new=True
+        self,
+        family,
+        subset_name,
+        data,
+        creator=None,
+        creator_identifier=None,
+        creator_label=None,
+        group_label=None,
+        creator_attr_defs=None,
     ):
-        self.creator = creator
+        if creator is not None:
+            creator_identifier = creator.identifier
+            group_label = creator.get_group_label()
+            creator_label = creator.label
+            creator_attr_defs = creator.get_instance_attr_defs()
+
+        self._creator_label = creator_label
+        self._group_label = group_label or creator_identifier
 
         # Instance members may have actions on them
         # TODO implement members logic
@@ -627,7 +649,7 @@ class CreatedInstance:
         self._data["family"] = family
         self._data["subset"] = subset_name
         self._data["active"] = data.get("active", True)
-        self._data["creator_identifier"] = creator.identifier
+        self._data["creator_identifier"] = creator_identifier
 
         # Pop from source data all keys that are defined in `_data` before
         #   this moment and through their values away
@@ -641,10 +663,12 @@ class CreatedInstance:
         # Stored creator specific attribute values
         # {key: value}
         creator_values = copy.deepcopy(orig_creator_attributes)
-        creator_attr_defs = creator.get_instance_attr_defs()
 
         self._data["creator_attributes"] = CreatorAttributeValues(
-            self, creator_attr_defs, creator_values, orig_creator_attributes
+            self,
+            list(creator_attr_defs),
+            creator_values,
+            orig_creator_attributes
         )
 
         # Stored publish specific attribute values
