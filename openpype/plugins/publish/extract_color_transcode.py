@@ -84,26 +84,18 @@ class ExtractOIIOTranscode(publish.Extractor):
                 original_staging_dir = new_repre["stagingDir"]
                 new_staging_dir = get_transcode_temp_directory()
                 new_repre["stagingDir"] = new_staging_dir
-                files_to_convert = new_repre["files"]
-                if not isinstance(files_to_convert, list):
-                    files_to_convert = [files_to_convert]
 
-                files_to_delete = copy.deepcopy(files_to_convert)
+                if isinstance(new_repre["files"], list):
+                    files_to_convert = copy.deepcopy(new_repre["files"])
+                else:
+                    files_to_convert = [new_repre["files"]]
 
                 output_extension = output_def["extension"]
                 output_extension = output_extension.replace('.', '')
                 if output_extension:
-                    if new_repre["name"] == new_repre["ext"]:
-                        new_repre["name"] = output_extension
-                    new_repre["ext"] = output_extension
-
-                    renamed_files = []
-                    _, orig_ext = os.path.splitext(files_to_convert[0])
-                    for file_name in files_to_convert:
-                        file_name = file_name.replace(orig_ext,
-                                                      "."+output_extension)
-                        renamed_files.append(file_name)
-                    new_repre["files"] = renamed_files
+                    self._rename_in_representation(new_repre,
+                                                   files_to_convert,
+                                                   output_extension)
 
                 target_colorspace = output_def["colorspace"]
                 view = output_def["view"] or colorspace_data.get("view")
@@ -135,8 +127,12 @@ class ExtractOIIOTranscode(publish.Extractor):
                         self.log
                     )
 
-                instance.context.data["cleanupFullPaths"].extend(
-                    files_to_delete)
+                # cleanup temporary transcoded files
+                for file_name in new_repre["files"]:
+                    transcoded_file_path = os.path.join(new_staging_dir,
+                                                        file_name)
+                    instance.context.data["cleanupFullPaths"].append(
+                        transcoded_file_path)
 
                 custom_tags = output_def.get("custom_tags")
                 if custom_tags:
@@ -154,6 +150,21 @@ class ExtractOIIOTranscode(publish.Extractor):
 
             if added_representations:
                 self._mark_original_repre_for_deletion(repre, profile)
+
+    def _rename_in_representation(self, new_repre, files_to_convert,
+                                  output_extension):
+        """Replace old extension with new one everywhere in representation."""
+        if new_repre["name"] == new_repre["ext"]:
+            new_repre["name"] = output_extension
+        new_repre["ext"] = output_extension
+
+        renamed_files = []
+        for file_name in files_to_convert:
+            file_name, _ = os.path.splitext(file_name)
+            file_name = '{}.{}'.format(file_name,
+                                       output_extension)
+            renamed_files.append(file_name)
+        new_repre["files"] = renamed_files
 
     def _translate_to_sequence(self, files_to_convert):
         """Returns original list or list with filename formatted in single
