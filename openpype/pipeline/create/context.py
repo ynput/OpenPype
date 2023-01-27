@@ -904,9 +904,21 @@ class CreatedInstance:
                 self._members.append(member)
 
     def serialize_for_remote(self):
+        """Serialize object into data to be possible recreated object.
+
+        Returns:
+            Dict[str, Any]: Serialized data.
+        """
+
+        creator_attr_defs = self.creator_attributes.get_serialized_attr_defs()
+        publish_attributes = self.publish_attributes.serialize_attributes()
         return {
             "data": self.data_to_store(),
-            "orig_data": copy.deepcopy(self._orig_data)
+            "orig_data": copy.deepcopy(self._orig_data),
+            "creator_attr_defs": creator_attr_defs,
+            "publish_attributes": publish_attributes,
+            "creator_label": self._creator_label,
+            "group_label": self._group_label,
         }
 
     @classmethod
@@ -927,17 +939,28 @@ class CreatedInstance:
 
         instance_data = copy.deepcopy(serialized_data["data"])
         creator_identifier = instance_data["creator_identifier"]
-        creator_item = creator_items[creator_identifier]
 
-        family = instance_data.get("family", None)
-        if family is None:
-            family = creator_item.family
+        family = instance_data["family"]
         subset_name = instance_data.get("subset", None)
 
+        creator_label = serialized_data["creator_label"]
+        group_label = serialized_data["group_label"]
+        creator_attr_defs = deserialize_attr_defs(
+            serialized_data["creator_attr_defs"]
+        )
+        publish_attributes = serialized_data["publish_attributes"]
+
         obj = cls(
-            family, subset_name, instance_data, creator_item, new=False
+            family,
+            subset_name,
+            instance_data,
+            creator_identifier=creator_identifier,
+            creator_label=creator_label,
+            group_label=group_label,
+            creator_attributes=creator_attr_defs
         )
         obj._orig_data = serialized_data["orig_data"]
+        obj.publish_attributes.deserialize_attributes(publish_attributes)
 
         return obj
 
