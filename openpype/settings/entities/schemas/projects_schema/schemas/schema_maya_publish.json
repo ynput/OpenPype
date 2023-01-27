@@ -906,35 +906,6 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "ConvertGLSLShader",
-            "label": "Convert PBS Shader to GLSL Shader",
-            "checkbox_key": "enabled",
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                },
-                {
-                    "type": "boolean",
-                    "key": "optional",
-                    "label": "Optional"
-                },
-                {
-                    "type": "boolean",
-                    "key": "active",
-                    "label": "Active"
-                },
-                {
-                    "type": "text",
-                    "key": "ogsfx_path",
-                    "label": "GLSL Shader Directory"
-                }
-            ]
-        },
-        {
-            "type": "dict",
-            "collapsible": true,
             "key": "ExtractMayaSceneRaw",
             "label": "Maya Scene (Raw)",
             "checkbox_key": "enabled",
@@ -987,6 +958,30 @@
                     "key": "bake_attributes",
                     "label": "Bake Attributes",
                     "is_list": true
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractGLB",
+            "label": "Extract GLB",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "text",
+                    "key": "ogsfx_path",
+                    "label": "GLSL Shader Directory"
                 }
             ]
         }
