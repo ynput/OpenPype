@@ -156,6 +156,9 @@ class AbtractAttrDef(object):
             return False
         return self.key == other.key
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     @abstractproperty
     def type(self):
         """Attribute definition type also used as identifier of class.
