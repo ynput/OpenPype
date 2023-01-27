@@ -72,3 +72,13 @@ QLineEdit[state="invalid"] {
 #PasswordBtn:hover {
     background: #434a56;
 }
+
+#LikeDisabledInput {
+    background: #2C313A;
+}
+#LikeDisabledInput:hover {
+    border-color: #373D48;
+}
+#LikeDisabledInput:focus {
+    border-color: #373D48;
+}
