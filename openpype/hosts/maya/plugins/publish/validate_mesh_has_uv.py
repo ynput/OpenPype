@@ -6,7 +6,8 @@ import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     ValidateMeshOrder,
-    OptionalPyblishPluginMixin
+    OptionalPyblishPluginMixin,
+    PublishValidationError
 )
 
 
@@ -97,5 +98,14 @@ class ValidateMeshHasUVs(pyblish.api.InstancePlugin,
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Meshes found in instance without "
-                               "valid UVs: {0}".format(invalid))
+
+            names = "<br>".join(
+                " - {}".format(node) for node in invalid
+            )
+
+            raise PublishValidationError(
+                title="Mesh has no UVs",
+                message="Model meshes are required to have UVs.<br><br>"
+                        "Meshes detected with invalid or missing UVs:<br>"
+                        "{0}".format(names)
+            )

@@ -7,7 +7,8 @@ import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
-    OptionalPyblishPluginMixin
+    OptionalPyblishPluginMixin,
+    PublishValidationError
 )
 
 
@@ -53,8 +54,8 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin,
     def get_table_for_invalid(cls):
         ss = []
         for k, v in cls.SUFFIX_NAMING_TABLE.items():
-            ss.append(" - {}: {}".format(k, ", ".join(v)))
-        return "\n".join(ss)
+            ss.append(" - <b>{}</b>: {}".format(k, ", ".join(v)))
+        return "<br>".join(ss)
 
     @staticmethod
     def is_valid_name(node_name, shape_type,
@@ -122,6 +123,14 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin,
         invalid = self.get_invalid(instance)
         if invalid:
             valid = self.get_table_for_invalid()
-            raise ValueError("Incorrectly named geometry "
-                             "transforms: {0}, accepted suffixes are: "
-                             "\n{1}".format(invalid, valid))
+
+            names = "<br>".join(
+                " - {}".format(node) for node in invalid
+            )
+            valid = valid.replace("\n", "<br>")
+
+            raise PublishValidationError(
+                title="Invalid naming suffix",
+                message="Valid suffixes are:<br>{0}<br><br>"
+                        "Incorrectly named geometry transforms:<br>{1}"
+                        "".format(valid, names))
