@@ -104,7 +104,7 @@ class ValidateMeshHasUVs(pyblish.api.InstancePlugin,
             )
 
             raise PublishValidationError(
-                title="Mesh has no UVs",
+                title="Mesh has missing UVs",
                 message="Model meshes are required to have UVs.<br><br>"
                         "Meshes detected with invalid or missing UVs:<br>"
                         "{0}".format(names)
