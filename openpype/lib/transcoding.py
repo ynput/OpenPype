@@ -1081,8 +1081,7 @@ def convert_colorspace(
         input_path,
         # Don't add any additional attributes
         "--nosoftwareattrib",
-        "--colorconfig", config_path,
-        "-o", output_path
+        "--colorconfig", config_path
     ]
 
     if all([target_colorspace, view, display]):
@@ -1099,6 +1098,8 @@ def convert_colorspace(
     if view and display:
         oiio_cmd.extend(["--iscolorspace", source_colorspace])
         oiio_cmd.extend(["--ociodisplay", display, view])
+
+    oiio_cmd.extend(["-o", output_path])
 
     logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
     run_subprocess(oiio_cmd, logger=logger)
