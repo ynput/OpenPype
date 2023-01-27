@@ -154,7 +154,12 @@ class AbtractAttrDef(object):
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return False
-        return self.key == other.key
+        return (
+            self.key == other.key
+            and self.hidden == other.hidden
+            and self.default == other.default
+            and self.disabled == other.disabled
+        )
 
     def __ne__(self, other):
         return not self.__eq__(other)
