@@ -68,7 +68,7 @@ class CreateMultiverseUsd(plugin.MayaCreator):
                     label="Write Lights",
                     default=False),
             BoolDef("writeJoints",
-                    label="Write Joins",
+                    label="Write Joints",
                     default=False),
             BoolDef("writeCollections",
                     label="Write Collections",
