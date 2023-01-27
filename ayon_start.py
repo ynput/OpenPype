@@ -258,9 +258,9 @@ def _connect_to_ayon_server():
         sys.exit(1)
 
     current_url = os.environ.get("AYON_SERVER_URL")
-    url, token = ask_to_login_ui(current_url)
+    url, token, username = ask_to_login_ui(current_url)
     if url is not None:
-        add_server(url)
+        add_server(url, username)
         if token is not None:
             store_token(url, token)
             set_environments(url, token)
