@@ -1138,7 +1138,7 @@ class CreateContext:
 
         self.reset_preparation()
 
-        self.reset_avalon_context()
+        self.reset_current_context()
         self.reset_plugins(discover_publish_plugins)
         self.reset_context_data()
 
@@ -1185,8 +1185,8 @@ class CreateContext:
         self._collection_shared_data = None
         self.refresh_thumbnails()
 
-    def reset_avalon_context(self):
-        """Give ability to reset avalon context.
+    def reset_current_context(self):
+        """Refresh current context.
 
         Reset is based on optional host implementation of `get_current_context`
         function or using `legacy_io.Session`.

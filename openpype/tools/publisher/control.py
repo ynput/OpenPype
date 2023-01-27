@@ -1756,7 +1756,7 @@ class PublisherController(BasePublisherController):
         self._create_context.reset_preparation()
 
         # Reset avalon context
-        self._create_context.reset_avalon_context()
+        self._create_context.reset_current_context()
 
         self._asset_docs_cache.reset()
 
