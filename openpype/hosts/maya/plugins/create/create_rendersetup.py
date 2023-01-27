@@ -6,7 +6,6 @@ class CreateRenderSetup(plugin.MayaCreator):
     """Create rendersetup template json data"""
 
     identifier = "io.openpype.creators.maya.rendersetup"
-    name = "rendersetup"
     label = "Render Setup Preset"
     family = "rendersetup"
     icon = "tablet"
