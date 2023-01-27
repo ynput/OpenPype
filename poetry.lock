@@ -304,19 +304,21 @@ tomli = {version = "*", markers = "python_version < \"3.11\""}
 
 [[package]]
 name = "ayon-python-api"
-version = "0.1.7"
+version = "0.1.9"
 description = "AYON Python API"
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "ayon-python-api-0.1.7.tar.gz", hash = "sha256:58b2228166710663340fd2743a916cded52c8068ea62ac2e8719a8eedba05d15"},
-    {file = "ayon_python_api-0.1.7-py3-none-any.whl", hash = "sha256:95c91784a1f8cc03effcf73fda56ad44c8bf98543ae6b44807b97dc5cd172753"},
+    {file = "ayon-python-api-0.1.9.tar.gz", hash = "sha256:74de044ef70c56725751359046b2f8db0df9507efa370e7121a9071f645e2a9d"},
+    {file = "ayon_python_api-0.1.9-py3-none-any.whl", hash = "sha256:3e5b2c35c7ef349464c2724ac38fa5fdc5072ec503f1c0c0765aa45c6d5420b9"},
 ]
 
 [package.dependencies]
+appdirs = ">=1,<2"
 requests = ">=2.27.1"
 six = ">=1.15"
+Unidecode = ">=1.3.6"
 
 [[package]]
 name = "babel"
