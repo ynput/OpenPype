@@ -14,6 +14,28 @@ from ayon_api.utils import (
 )
 
 
+class ChangeUserResult:
+    def __init__(
+        self, logged_out, old_url, old_token, old_username,
+        new_url, new_token, new_username
+    ):
+        shutdown = logged_out
+        restart = new_url is not None and new_url != old_url
+        token_changed = new_token is not None and new_token == old_token
+
+        self.logged_out = logged_out
+        self.old_url = old_url
+        self.old_token = old_token
+        self.old_username = old_username
+        self.new_url = new_url
+        self.new_token = new_token
+        self.new_username = new_username
+
+        self.shutdown = shutdown
+        self.restart = restart
+        self.token_changed = token_changed
+
+
 def _get_servers_path():
     return os.path.join(
         appdirs.user_data_dir("ayon", "ynput"), "used_servers.json"
@@ -154,6 +176,37 @@ def ask_to_login_ui(url=None):
         url = get_last_server()
     username = get_last_username_by_url(url)
     return ask_to_login(url, username)
+
+
+def change_user_ui():
+    """
+
+    Returns:
+         Tuple[Union[bool, None], : True if user logged out
+    """
+
+    from .ui import change_user
+
+    url, username = get_last_server_with_username()
+    token = load_token(url)
+    result = change_user(url, username, token)
+    new_url, new_token, new_username, logged_out = result
+
+    output = ChangeUserResult(
+        logged_out, url, token, username,
+        new_url, new_token, new_username
+    )
+    if output.logged_out:
+        logout(url, token)
+
+    elif output.token_changed:
+        change_token(
+            output.new_url,
+            output.new_token,
+            output.new_username,
+            output.old_url
+        )
+    return output
 
 
 def change_token(url, token, username=None, old_url=None):
