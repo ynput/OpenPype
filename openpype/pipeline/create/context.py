@@ -1429,6 +1429,7 @@ class CreateContext:
         failed = False
         add_traceback = False
         exc_info = None
+        result = None
         try:
             # Fake CreatorError (Could be maybe specific exception?)
             if creator is None:
@@ -1436,7 +1437,7 @@ class CreateContext:
                     "Creator {} was not found".format(identifier)
                 )
 
-            creator.create(*args, **kwargs)
+            result = creator.create(*args, **kwargs)
 
         except CreatorError:
             failed = True
@@ -1458,6 +1459,7 @@ class CreateContext:
                     identifier, label, exc_info, add_traceback
                 )
             ])
+        return result
 
     def creator_removed_instance(self, instance):
         """When creator removes instance context should be acknowledged.
