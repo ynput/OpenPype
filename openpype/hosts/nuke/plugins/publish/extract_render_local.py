@@ -195,7 +195,7 @@ class NukeRenderLocal(publish.ExtractorColormanaged):
         frames_to_render = []
 
         for frame_range in frames_to_fix.split(","):
-            if isinstance(frame_range, int) or frame_range.isdigit():
+            if frame_range.isdigit():
                 render_first_frame = frame_range
                 render_last_frame = frame_range
             elif '-' in frame_range:
