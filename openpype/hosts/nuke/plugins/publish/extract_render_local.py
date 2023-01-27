@@ -187,8 +187,6 @@ class NukeRenderLocal(publish.ExtractorColormanaged):
         Args:
             frames_to_fix (str): specific or range of frames to be rerendered
              (1005, 1009-1010)
-            first_frame (int): original first frame
-            last_frame (int)
         Returns:
             (list): [(1005, 1005), (1009-1010)]
         """
