@@ -123,7 +123,7 @@ class Creator(LegacyCreator):
         return instance
 
 
-#@six.add_metaclass(ABCMeta)
+@six.add_metaclass(ABCMeta)
 class MayaCreator(NewCreator):
 
     def create(self, subset_name, instance_data, pre_create_data):
