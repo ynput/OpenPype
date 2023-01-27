@@ -292,7 +292,7 @@ class ServerLoginWindow(QtWidgets.QDialog):
 
         self._url_is_valid = None
         self._credentials_are_valid = None
-        self._result = (None, None, False)
+        self._result = (None, None, None, False)
         self._first_show = True
 
         self._allow_logout = False
@@ -365,7 +365,8 @@ class ServerLoginWindow(QtWidgets.QDialog):
         if url is None:
             url = self._url_input.text()
 
-        enabled = url and (url_edit or user_edit)
+        enabled = bool(url) and (url_edit or user_edit)
+
         self._login_btn.setEnabled(enabled)
         self._confirm_btn.setEnabled(enabled)
 
@@ -470,7 +471,7 @@ class ServerLoginWindow(QtWidgets.QDialog):
         dialog = LogoutConfirmDialog(self)
         dialog.exec_()
         if dialog.get_result():
-            self._result = (None, None, True)
+            self._result = (None, None, None, True)
             self.accept()
 
     def _on_login_click(self):
@@ -535,7 +536,7 @@ class ServerLoginWindow(QtWidgets.QDialog):
             return
 
         if token is not None:
-            self._result = (url, token, False)
+            self._result = (url, token, username, False)
             self.accept()
             return
 
@@ -664,8 +665,8 @@ def ask_to_login(url=None, username=None):
     def _exec_window():
         window.exec_()
         result = window.result()
-        url, username, _logged_out = result
-        return url, username
+        out_url, out_token, out_username, _logged_out = result
+        return out_url, out_token, out_username
 
     # Use QTimer to exec dialog if application is not running yet
     # - it is not possible to call 'exec_' on dialog without running app
