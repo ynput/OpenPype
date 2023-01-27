@@ -88,7 +88,7 @@ importFile @"{file_path}" #noPrompt
             children = []
             for c in node.Children:
                 children.append(c)
-                children = children + list_children(c)
+                children += list_children(c)
             return children
 
         filtered = []
