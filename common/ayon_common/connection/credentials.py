@@ -147,10 +147,25 @@ def store_token(url, token):
     TokenKeyring(url).set_value(token)
 
 
-def ask_to_login_ui(*args, **kwargs):
+def ask_to_login_ui(url=None):
     from .ui import ask_to_login
 
-    return ask_to_login(*args, **kwargs)
+    if url is None:
+        url = get_last_server()
+    username = get_last_username_by_url(url)
+    return ask_to_login(url, username)
+
+
+def change_token(url, token, username=None, old_url=None):
+    if old_url is None:
+        old_url = get_last_server()
+    if old_url and old_url == url:
+        remove_url_cache(old_url)
+
+    # TODO check if ayon_api is already connected
+    add_server(url, username)
+    store_token(url, token)
+    ayon_api.change_token(url, token)
 
 
 def remove_url_cache(url):
