@@ -1472,9 +1472,9 @@ class CreateContext:
 
         Args:
             creator_identifier (str):
+            variant (str): Variant used for subset name.
             asset_doc (Dict[str, Any]):
             task_name (str): Name of task to which is context related.
-            variant (str): Variant used for subset name.
             pre_create_data (Dict[str, Any]): Pre-create attribute values.
 
         Returns:
