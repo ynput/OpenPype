@@ -289,8 +289,13 @@ class AttributeValues(object):
 
     @property
     def attr_defs(self):
-        """Pointer to attribute definitions."""
-        return self._attr_defs
+        """Pointer to attribute definitions.
+
+        Returns:
+            List[AbstractAttrDef]: Attribute definitions.
+        """
+
+        return list(self._attr_defs)
 
     def data_to_store(self):
         """Create new dictionary with data to store."""
