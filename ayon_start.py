@@ -177,15 +177,13 @@ if not os.getenv("SSL_CERT_FILE"):
 elif os.getenv("SSL_CERT_FILE") != certifi.where():
     _print("--- your system is set to use custom CA certificate bundle.")
 
-from ayon_common.connection.server import (
-    need_server_or_login,
-    load_environments,
-    set_environments,
-)
 from ayon_common.connection.credentials import (
     ask_to_login_ui,
     add_server,
-    store_token
+    store_token,
+    need_server_or_login,
+    load_environments,
+    set_environments,
 )
 from ayon_common.distribution.addon_distribution import (
     get_addons_dir,
