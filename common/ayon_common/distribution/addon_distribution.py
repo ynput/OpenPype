@@ -721,13 +721,23 @@ class AyonDistribution:
 
     Receive information from server what addons and dependency packages
     should be available locally and prepare/validate their distribution.
+
+    Arguments are available for testing of the class.
+
+    Args:
+        addon_dirpath (str): Where addons will be stored.
+        dependency_dirpath (str): Where dependencies will be stored.
+        dist_factory (AddonDownloader): Factory which cares about downloading
+            of items based on source type.
+        addons_info (List[AddonInfo]): List of prepared addons info.
     """
 
     def __init__(
         self,
         addon_dirpath=None,
         dependency_dirpath=None,
-        dist_factory=None
+        dist_factory=None,
+        addons_info=None,
     ):
         self._addons_dirpath = addon_dirpath or get_addons_dir()
         self._dependency_dirpath = dependency_dirpath or get_dependencies_dir()
@@ -735,10 +745,12 @@ class AyonDistribution:
             dist_factory or get_default_addon_downloader()
         )
 
+        if isinstance(addons_info, list):
+            addons_info = {item.full_name: item for item in addons_info}
         self._dist_started = False
         self._dist_finished = False
         self._log = None
-        self._addons_info = None
+        self._addons_info = addons_info
         self._addons_progress = None
         self._dependency_package = -1
         self._dependency_progress = -1
