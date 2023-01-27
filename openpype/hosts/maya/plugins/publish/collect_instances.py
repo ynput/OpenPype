@@ -77,6 +77,12 @@ class CollectInstances(pyblish.api.ContextPlugin):
         context.data['objectsets'] = objectset
         for objset in objectset:
 
+            if cmds.attributeQuery("creator_identifier",
+                                   node=objset,
+                                   exists=True):
+                # Ignore new style instances
+                continue
+
             if not cmds.attributeQuery("id", node=objset, exists=True):
                 continue
 
