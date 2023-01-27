@@ -158,7 +158,6 @@ def containerise(name: str, nodes: list, context, loader=None, suffix="_CON"):
 
     container_name = f"{name}{suffix}"
     container = rt.container(name=container_name)
-    print(nodes)
     for node in nodes:
         node.Parent = container
 
