@@ -1041,7 +1041,7 @@ def convert_ffprobe_fps_to_float(value):
 
 def convert_colorspace(
     input_path,
-    out_filepath,
+    output_path,
     config_path,
     source_colorspace,
     target_colorspace,
@@ -1049,18 +1049,13 @@ def convert_colorspace(
     display,
     logger=None
 ):
-    """Convert source files from one color space to another.
-
-    Filenames of input files are kept so make sure that output directory
-    is not the same directory as input files have.
-    - This way it can handle gaps and can keep input filenames without handling
-        frame template
+    """Convert source file from one color space to another.
 
     Args:
-        input_path (str): Paths that should be converted. It is expected that
-            contains single file or image sequence of samy type.
-        out_filepath (str): Path to directory where output will be rendered.
-            Must not be same as input's directory.
+        input_path (str): Path that should be converted. It is expected that
+            contains single file or image sequence of same type
+            (sequence in format 'file.FRAMESTART-FRAMEEND#.exr', see oiio docs)
+        output_path (str): Path to output filename.
         config_path (str): path to OCIO config file
         source_colorspace (str): ocio valid color space of source files
         target_colorspace (str): ocio valid target color space
@@ -1079,7 +1074,7 @@ def convert_colorspace(
         # Don't add any additional attributes
         "--nosoftwareattrib",
         "--colorconfig", config_path,
-        "-o", out_filepath
+        "-o", output_path
     ]
 
     if all([target_colorspace, view, display]):

@@ -119,13 +119,13 @@ class ExtractOIIOTranscode(publish.Extractor):
                 files_to_convert = self._translate_to_sequence(
                     files_to_convert)
                 for file_name in files_to_convert:
-                    input_filepath = os.path.join(original_staging_dir,
-                                                  file_name)
-                    output_path = self._get_output_file_path(input_filepath,
+                    input_path = os.path.join(original_staging_dir,
+                                              file_name)
+                    output_path = self._get_output_file_path(input_path,
                                                              new_staging_dir,
                                                              output_extension)
                     convert_colorspace(
-                        input_filepath,
+                        input_path,
                         output_path,
                         config_path,
                         source_colorspace,
@@ -156,16 +156,17 @@ class ExtractOIIOTranscode(publish.Extractor):
                 self._mark_original_repre_for_deletion(repre, profile)
 
     def _translate_to_sequence(self, files_to_convert):
-        """Returns original list of files or single sequence format filename.
+        """Returns original list or list with filename formatted in single
+        sequence format.
 
         Uses clique to find frame sequence, in this case it merges all frames
-        into sequence format (%0X) and returns it.
+        into sequence format (FRAMESTART-FRAMEEND#) and returns it.
         If sequence not found, it returns original list
 
         Args:
             files_to_convert (list): list of file names
         Returns:
-            (list) of [file.%04.exr] or [fileA.exr, fileB.exr]
+            (list) of [file.1001-1010#.exr] or [fileA.exr, fileB.exr]
         """
         pattern = [clique.PATTERNS["frames"]]
         collections, remainder = clique.assemble(
@@ -178,8 +179,6 @@ class ExtractOIIOTranscode(publish.Extractor):
                     "Too many collections {}".format(collections))
 
             collection = collections[0]
-            padding = collection.padding
-            padding_str = "%0{}".format(padding)
             frames = list(collection.indexes)
             frame_str = "{}-{}#".format(frames[0], frames[-1])
             file_name = "{}{}{}".format(collection.head, frame_str,
@@ -189,10 +188,10 @@ class ExtractOIIOTranscode(publish.Extractor):
 
         return files_to_convert
 
-    def _get_output_file_path(self, input_filepath, output_dir,
+    def _get_output_file_path(self, input_path, output_dir,
                               output_extension):
         """Create output file name path."""
-        file_name = os.path.basename(input_filepath)
+        file_name = os.path.basename(input_path)
         file_name, input_extension = os.path.splitext(file_name)
         if not output_extension:
             output_extension = input_extension
