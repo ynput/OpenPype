@@ -8,17 +8,13 @@ import inspect
 from uuid import uuid4
 from contextlib import contextmanager
 
-from openpype.client import get_assets
+from openpype.client import get_assets, get_asset_by_name
 from openpype.settings import (
     get_system_settings,
     get_project_settings
 )
 from openpype.host import IPublishHost
 from openpype.pipeline import legacy_io
-from openpype.pipeline.mongodb import (
-    AvalonMongoDB,
-    session_data_from_environment,
-)
 
 from .creator_plugins import (
     Creator,
@@ -1460,6 +1456,64 @@ class CreateContext:
                 )
             ])
         return result
+
+    def create_with_context(
+        self,
+        creator_identifier,
+        variant=None,
+        asset_doc=None,
+        task_name=None,
+        pre_create_data=None
+    ):
+        """Trigger create of plugins with standartized
+
+        Args:
+            creator_identifier (str):
+            asset_doc (Dict[str, Any]):
+            task_name (str): Name of task to which is context related.
+            variant (str): Variant used for subset name.
+            pre_create_data (Dict[str, Any]): Pre-create attribute values.
+
+        Returns:
+            Any: Output of triggered creator's 'create' method.
+
+        Raises:
+            CreatorsCreateFailed: When creation fails.
+        """
+
+        if pre_create_data is None:
+            pre_create_data = {}
+
+        project_name = self.project_name
+        if asset_doc is None:
+            asset_name = self.get_current_asset_name()
+            asset_doc = get_asset_by_name(project_name, asset_name)
+            task_name = self.get_current_task_name()
+
+        creator = self.creators.get(creator_identifier)
+        family = None
+        subset_name = None
+        if creator is not None:
+            family = creator.family
+            subset_name = creator.get_subset_name(
+                variant,
+                task_name,
+                asset_doc,
+                project_name,
+                self.host_name
+            )
+        instance_data = {
+            "asset": asset_doc["name"],
+            "task": task_name,
+            "variant": variant,
+            "family": family
+        }
+        return self.raw_create(
+            creator_identifier,
+            subset_name,
+            instance_data,
+            pre_create_data
+        )
 
     def creator_removed_instance(self, instance):
         """When creator removes instance context should be acknowledged.
