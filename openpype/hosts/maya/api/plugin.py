@@ -1,5 +1,4 @@
 import os
-import sys
 import json
 from abc import (
     ABCMeta
@@ -16,7 +15,6 @@ from openpype.pipeline import (
     get_representation_path,
     AVALON_CONTAINER_ID,
     Anatomy,
-    CreatorError,
     LegacyCreator,
     Creator as NewCreator,
     CreatedInstance
