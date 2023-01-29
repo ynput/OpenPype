@@ -31,6 +31,7 @@ import attr
 from maya import cmds
 
 from openpype.pipeline import legacy_io
+from openpype.lib import NumberDef
 
 from openpype.hosts.maya.api.lib_rendersettings import RenderSettings
 from openpype.hosts.maya.api.lib import get_attr_in_layer
@@ -104,6 +105,21 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
     jobInfo = {}
     pluginInfo = {}
     group = "none"
+
+    @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        settings = project_settings["deadline"]["publish"]["MayaSubmitDeadline"]  # noqa
+
+        # Take some defaults from settings
+        cls.asset_dependencies = settings.get("asset_dependencies",
+                                              cls.asset_dependencies)
+        cls.import_reference = settings.get("import_reference",
+                                            cls.import_reference)
+        cls.use_published = settings.get("use_published", cls.use_published)
+        cls.priority = settings.get("priority", cls.priority)
+        cls.tile_priority = settings.get("tile_priority", cls.tile_priority)
+        cls.limit = settings.get("limit", cls.limit)
+        cls.group = settings.get("group", cls.group)
 
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="MayaBatch")
@@ -747,6 +763,19 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         else:
             for file in exp:
                 yield file
+
+    @classmethod
+    def get_attribute_defs(cls):
+        defs = super(MayaSubmitDeadline, cls).get_attribute_defs()
+
+        defs.extend([
+            NumberDef("tile_priority",
+                      label="Tile Assembler Priority",
+                      decimals=0,
+                      default=cls.tile_priority)
+        ])
+
+        return defs
 
 
 def _format_tiles(
