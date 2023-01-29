@@ -87,10 +87,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     These jobs are dependent on a deadline or muster job
     submission prior to this plug-in.
 
-    - In case of Deadline, it creates dependend job on farm publishing
+    - In case of Deadline, it creates dependent job on farm publishing
       rendered image sequence.
 
-    - In case of Muster, there is no need for such thing as dependend job,
+    - In case of Muster, there is no need for such thing as dependent job,
       post action will be executed and rendered sequence will be published.
 
     Options in instance.data:
