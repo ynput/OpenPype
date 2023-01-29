@@ -4,8 +4,7 @@ Global = {
  Paths = {
   Map = {
    ["OpenPype:"] = "$(OPENPYPE_FUSION)/deploy",
-   ["Reactor:"] = "$(REACTOR)",
-
+   ["Reactor:"] = "$(REACTOR_INSTALL_PATHMAP)/Reactor",
    ["Config:"] = "UserPaths:Config;OpenPype:Config",
    ["Scripts:"] = "UserPaths:Scripts;Reactor:System/Scripts;OpenPype:Scripts",
    ["UserPaths:"] = "UserData:;AllData:;Fusion:;Reactor:Deploy"
