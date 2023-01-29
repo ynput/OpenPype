@@ -40,7 +40,8 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
                 attr_values.get("secondaryPool") or self.secondary_pool or "none"  # noqa
             )
 
-    def get_attribute_defs(self):
+    @classmethod
+    def get_attribute_defs(cls):
 
         # TODO: Preferably this would be an enum for the user
         #       but the Deadline server URL can be dynamic and
@@ -53,8 +54,8 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
         return [
             TextDef("primaryPool",
                     label="Primary Pool",
-                    default=self.primary_pool),
+                    default=cls.primary_pool),
             TextDef("secondaryPool",
                     label="Secondary Pool",
-                    default=self.secondary_pool)
+                    default=cls.secondary_pool)
         ]
