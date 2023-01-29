@@ -26,8 +26,7 @@ class MayaPluginInfo(object):
 
 
 class MayaSubmitRemotePublishDeadline(
-    abstract_submit_deadline.AbstractSubmitDeadline
-    ):
+        abstract_submit_deadline.AbstractSubmitDeadline):
     """Submit Maya scene to perform a local publish in Deadline.
 
     Publishing in Deadline can be helpful for scenes that publish very slow.
