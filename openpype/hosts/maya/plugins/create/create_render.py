@@ -41,23 +41,12 @@ def ensure_namespace(namespace):
 class CreateRender(plugin.MayaCreator):
     """Create *render* instance.
 
-    Render instances are not actually published, they hold options for
-    collecting of render data. It render instance is present, it will trigger
-    collection of render layers, AOVs, cameras for either direct submission
-    to render farm or export as various standalone formats (like V-Rays
-    ``vrscenes`` or Arnolds ``ass`` files) and then submitting them to render
-    farm.
+    This render instance is not visible in the UI as an instance nor does
+    it by itself publish. Instead, whenever this is created the
+    CreateRenderlayer creator collects the active scene's actual renderlayers
+    as individual instances to submit for publishing.
 
-    Instance has following attributes::
-        extendFrames (bool): Use already existing frames from previous version
-            to extend current render.
-        overrideExistingFrame (bool): Overwrite already existing frames.
-        vrscene (bool): Submit as ``vrscene`` file for standalone V-Ray
-            renderer.
-        ass (bool): Submit as ``ass`` file for standalone Arnold renderer.
-        tileRendering (bool): Instance is set to tile rendering mode. We
-            won't submit actual render, but we'll make publish job to wait
-            for Tile Assembly job done and then publish.
+    This Creator is solely to SHOW in the "Create" of the new publisher.
 
     See Also:
         https://pype.club/docs/artist_hosts_maya#creating-basic-render-setup
@@ -109,7 +98,7 @@ class CreateRender(plugin.MayaCreator):
         return []
 
 
-class RenderlayerCreator(HiddenCreator, plugin.MayaCreatorBase):
+class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
     """Create and manges renderlayer subset per renderLayer in workfile.
 
     This does no do ANYTHING until a CreateRender subset exists in the
