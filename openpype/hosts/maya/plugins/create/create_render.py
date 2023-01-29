@@ -16,6 +16,7 @@ from openpype.lib import (
 from openpype.pipeline import legacy_io
 from openpype.pipeline.create import (
     CreatorError,
+    Creator,
     HiddenCreator,
     CreatedInstance
 )
@@ -38,7 +39,7 @@ def ensure_namespace(namespace):
         return cmds.namespace(add=namespace)
 
 
-class CreateRender(plugin.MayaCreator):
+class CreateRender(Creator):
     """Create *render* instance.
 
     This render instance is not visible in the UI as an instance nor does
@@ -67,7 +68,7 @@ class CreateRender(plugin.MayaCreator):
     def create(self, subset_name, instance_data, pre_create_data):
 
         # Only allow a single render instance to exist
-        nodes = lib.lsattr("creator_identifier", self.identifier)
+        nodes = lib.lsattr("pre_creator_identifier", self.identifier)
         if nodes:
             raise CreatorError("A Render instance already exists - only "
                                "one can be configured.")
@@ -76,26 +77,28 @@ class CreateRender(plugin.MayaCreator):
         if self.render_settings.get("apply_render_settings"):
             lib_rendersettings.RenderSettings().set_default_renderer_settings()
 
+        # TODO: Create default 'Main' renderlayer if no renderlayers exist yet
+
         with lib.undo_chunk():
-            instance = super(CreateRender, self).create(subset_name,
-                                                        instance_data,
-                                                        pre_create_data)
-            # We never want to SHOW the instance in the UI since the parent
-            # class already adds it after creation let's directly remove it.
-            self._remove_instance_from_context(instance)
+            node = cmds.sets(empty=True, name=subset_name)
+            lib.imprint(node, data={
+                "pre_creator_identifier": self.identifier
+            })
 
             # TODO: Now make it so that RenderLayerCreator 'collect'
             #       automatically gets triggered to directly see renderlayers
 
-        return instance
+        return
 
     def collect_instances(self):
         # We never show this instance in the publish UI
         return
 
-    def get_pre_create_attr_defs(self):
-        # Do not show the "use_selection" setting from parent class
-        return []
+    def update_instances(self, update_list):
+        return
+
+    def remove_instances(self, instances):
+        return
 
 
 class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
@@ -148,10 +151,7 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
     def collect_instances(self):
 
         # We only collect if a CreateRender instance exists
-        create_render_exists = any(
-            self.iter_subset_nodes(identifier=CreateRender.identifier)
-        )
-        if not create_render_exists:
+        if not lib.lsattr("pre_creator_identifier", CreateRender.identifier):
             return
 
         rs = renderSetup.instance()
