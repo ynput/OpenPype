@@ -130,13 +130,13 @@ class RenderlayerCreator(HiddenCreator, plugin.MayaCreatorBase):
     def create(self, instance_data, source_data):
         # Make sure an instance exists per renderlayer in the scene
 
-        # create namespace with instance
-        #namespace_name = "_{}".format(subset_name)
-        #namespace = ensure_namespace(namespace_name)
-
-        # Pre-process any existing layers
-        # TODO: Document why we're processing the layers explicitly?
-
+        # # create namespace with instance
+        # namespace_name = "_{}".format(subset_name)
+        # namespace = ensure_namespace(namespace_name)
+        #
+        # # Pre-process any existing layers
+        # # TODO: Document why we're processing the layers explicitly?
+        #
         # self.log.info("Processing existing layers")
         # sets = []
         # for layer in layers:
