@@ -1,6 +1,6 @@
 import collections
 import copy
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype import (
     resources,

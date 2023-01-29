@@ -106,7 +106,7 @@ class CollectUpstreamInputs(pyblish.api.InstancePlugin):
             # If no valid output node is set then ignore it as validation
             # will be checking those cases.
             self.log.debug(
-                "No output node found, skipping " "collecting of inputs.."
+                "No output node found, skipping collecting of inputs.."
             )
             return
 
