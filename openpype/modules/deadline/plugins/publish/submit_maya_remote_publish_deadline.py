@@ -93,7 +93,7 @@ class MayaSubmitRemotePublishDeadline(
         job_info.Group = deadline_publish_job_sett["deadline_group"]
         job_info.Pool = deadline_publish_job_sett["deadline_pool"]
 
-        # Include critical environment variables with submission + api.Session
+        # Include critical environment variables with submission + Session
         keys = [
             "FTRACK_API_USER",
             "FTRACK_API_KEY",
@@ -119,10 +119,7 @@ class MayaSubmitRemotePublishDeadline(
 
     def get_plugin_info(self):
 
-        instance = self._instance
-        context = instance.context
-
-        scene = context.data["currentFile"]
+        scene = self._instance.context.data["currentFile"]
 
         plugin_info = MayaPluginInfo()
         plugin_info.SceneFile = scene
