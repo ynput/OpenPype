@@ -426,8 +426,10 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         assembly_job_info.Name += " - Tile Assembly Job"
         assembly_job_info.Frames = 1
         assembly_job_info.MachineLimit = 1
-        assembly_job_info.Priority = instance.data.get("tile_priority",
-                                                       self.tile_priority)
+
+        attr_values = self.get_attr_values_from_data(instance.data)
+        assembly_job_info.Priority = attr_values.get("tile_priority",
+                                                     self.tile_priority)
 
         assembly_plugin_info = {
             "CleanupTiles": 1,
