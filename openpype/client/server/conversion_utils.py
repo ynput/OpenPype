@@ -170,7 +170,11 @@ def convert_v4_project_to_v3(project):
 
     data = project.get("data") or {}
     attribs = project.get("attrib") or {}
-    applications = attribs.pop("applications", [])
+    apps_attr = attribs.pop("applications") or []
+    applications = [
+        {"name": app_name}
+        for app_name in apps_attr
+    ]
     data.update(attribs)
 
     config = {}
