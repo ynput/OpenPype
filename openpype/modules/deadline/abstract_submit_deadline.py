@@ -19,7 +19,13 @@ import requests
 import pyblish.api
 from openpype.pipeline.publish import (
     AbstractMetaInstancePlugin,
-    KnownPublishError
+    KnownPublishError,
+    OpenPypePyblishPluginMixin
+)
+from openpype.lib import (
+    NumberDef,
+    TextDef,
+    EnumDef
 )
 
 JSONDecodeError = getattr(json.decoder, "JSONDecodeError", ValueError)
@@ -395,14 +401,17 @@ class DeadlineJobInfo(object):
 
 
 @six.add_metaclass(AbstractMetaInstancePlugin)
-class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
+class AbstractSubmitDeadline(pyblish.api.InstancePlugin,
+                             OpenPypePyblishPluginMixin):
     """Class abstracting access to Deadline."""
 
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
+
     import_reference = False
     use_published = True
     asset_dependencies = False
+    default_priority = 50
 
     def __init__(self, *args, **kwargs):
         super(AbstractSubmitDeadline, self).__init__(*args, **kwargs)
@@ -667,3 +676,29 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
                 "Workfile (scene) must be published along")
 
             return i
+
+    @classmethod
+    def get_attribute_defs(cls):
+        return [
+            NumberDef("priority",
+                      label="Priority",
+                      default=cls.default_priority,
+                      decimals=0),
+            NumberDef("framesPerTask",
+                      label="Frames Per Task",
+                      default=1,
+                      decimals=0,
+                      minimum=1,
+                      maximum=1000),
+            TextDef("machineList",
+                    label="Machine List",
+                    default="",
+                    placeholder="machine1,machine2"),
+            EnumDef("whitelist",
+                    label="Machine List (Allow/Deny)",
+                    items={
+                        True: "Allow List",
+                        False: "Deny List",
+                    },
+                    default="Deny List")
+        ]
