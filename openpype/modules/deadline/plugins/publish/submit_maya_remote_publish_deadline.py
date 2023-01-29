@@ -5,7 +5,6 @@ from datetime import datetime
 from maya import cmds
 
 from openpype.pipeline import legacy_io, PublishXmlValidationError
-from openpype.settings import get_project_settings
 from openpype.tests.lib import is_in_tests
 
 import pyblish.api
@@ -36,12 +35,10 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         project_name = instance.context.data["projectName"]
-        # TODO settings can be received from 'context.data["project_settings"]'
-        settings = get_project_settings(project_name)
+
         # use setting for publish job on farm, no reason to have it separately
-        deadline_publish_job_sett = (settings["deadline"]
-                                     ["publish"]
-                                     ["ProcessSubmittedJobOnFarm"])
+        project_settings = instance.context.data["project_settings"]
+        deadline_publish_job_sett = project_settings["deadline"]["publish"]["ProcessSubmittedJobOnFarm"]  # noqa
 
         # Ensure no errors so far
         if not (all(result["success"]
