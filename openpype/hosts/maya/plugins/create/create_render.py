@@ -109,6 +109,7 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
     identifier = "io.openpype.creators.maya.renderlayer"
     family = "renderlayer"
     label = "Renderlayer"
+    icon = "eye"
 
     render_settings = {}
 
