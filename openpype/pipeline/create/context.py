@@ -1463,7 +1463,7 @@ class CreateContext:
     def create(
         self,
         creator_identifier,
-        variant=None,
+        variant,
         asset_doc=None,
         task_name=None,
         pre_create_data=None
