@@ -1191,7 +1191,15 @@ class CreateContext:
         function or using `legacy_io.Session`.
 
         Some hosts have ability to change context file without using workfiles
-        tool but that change is not propagated to
+        tool but that change is not propagated to 'legacy_io.Session'
+        nor 'os.environ'.
+
+        Todos:
+            UI: Current context should be also checked on save - compare
+                initial values vs. current values.
+            Related to UI checks: Current workfile can be also considered
+                as current context information as that's where the metadata
+                are stored. We should store the workfile (if is available) too.
         """
 
         project_name = asset_name = task_name = None
@@ -1468,12 +1476,19 @@ class CreateContext:
         task_name=None,
         pre_create_data=None
     ):
-        """Trigger create of plugins with standartized
+        """Trigger create of plugins with standartized arguments.
+
+        Arguments 'asset_doc' and 'task_name' use current context as default
+        values. If only 'task_name' is provided it will be overriden by
+        task name from current context. If 'task_name' is not provided
+        when 'asset_doc' is, it is considered that task name is not specified,
+        which can lead to error if subset name template requires task name.
 
         Args:
-            creator_identifier (str):
+            creator_identifier (str): Identifier of creator plugin.
             variant (str): Variant used for subset name.
-            asset_doc (Dict[str, Any]):
+            asset_doc (Dict[str, Any]): Asset document which define context of
+                creation (possible context of created instance/s).
             task_name (str): Name of task to which is context related.
             pre_create_data (Dict[str, Any]): Pre-create attribute values.
 
@@ -1481,6 +1496,7 @@ class CreateContext:
             Any: Output of triggered creator's 'create' method.
 
         Raises:
+            CreatorError: If creator was not found or asset is empty.
             CreatorsCreateFailed: When creation fails.
         """
 
