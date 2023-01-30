@@ -153,7 +153,7 @@ class CreatorsRemoveFailed(CreatorsOperationFailed):
 
 class CreatorsCreateFailed(CreatorsOperationFailed):
     def __init__(self, failed_info):
-        msg = "Faled to create instances"
+        msg = "Failed to create instances"
         super(CreatorsCreateFailed, self).__init__(
             msg, failed_info
         )
