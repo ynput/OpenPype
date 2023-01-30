@@ -772,8 +772,8 @@ class AyonDistribution:
                     continue
                 addons_info[addon_info.full_name] = addon_info
 
-            self._addon_info = addons_info
-        return self._addon_info
+            self._addons_info = addons_info
+        return self._addons_info
 
     @property
     def dependency_package(self):
