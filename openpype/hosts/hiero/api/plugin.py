@@ -167,6 +167,14 @@ class CreatorWidget(QtWidgets.QDialog):
 
         # assign the created attribute to variable
         item = getattr(self, attr_name)
+        ### Starts Alkemy-X Override ###
+        # Bug fix for setting values over default maximum before maximum is set
+        if "setMaximum" in item.__dir__():
+            item.setMaximum(100000)
+        if "setMimimum" in item.__dir__():
+            item.setMinimum(0)
+        ### Ends Alkemy-X Override ###
+
         for func, val in kwargs.items():
             if getattr(item, func):
                 func_attr = getattr(item, func)
@@ -691,11 +699,24 @@ class PublishClip:
         # adding ui inputs if any
         self.ui_inputs = kwargs.get("ui_inputs", {})
 
+        ### Starts Alkemy-X Override ###
+        # If shot path token found, update hierarchy data to respect those values
+        hierarchy_value = self.ui_inputs.get("hierarchy", {}).get("value")
+        if hierarchy_value:
+            self.update_path_token_hierarchy()            
+        ### Ends Alkemy-X Override ###
+
         # populate default data before we get other attributes
         self._populate_track_item_default_data()
 
         # use all populated default data to create all important attributes
         self._populate_attributes()
+        
+        ### Starts Alkemy-X Override ###
+        # Override self.hierarchy if path token was updated
+        if hierarchy_value:
+            self.solve_path_token_hierarchy()
+        ### Ends Alkemy-X Override ###
 
         # create parents with correct types
         self._create_parents()
@@ -735,6 +756,34 @@ class PublishClip:
         lib.imprint(self.track_item, self.tag_data)
 
         return self.track_item
+
+    ### Starts Alkemy-X Override ###
+    def update_path_token_hierarchy(self):
+        """Update UI inputs from clip name to avoid typing values for episode/sequence."""
+        episode = ""
+        sequence = ""
+        shot = ""
+        if self.ti_name.count("_") == 0:
+            shot = self.ti_name
+        elif self.ti_name.count("_") == 1:
+            sequence, shot = self.ti_name.split("_")
+        elif self.ti_name.count("_") >= 2:
+            episode, sequence, shot = self.ti_name.split("_")[-3:]
+
+        self.shot_path_tokens = {"episode": episode, "sequence": sequence, "shot": shot}
+        for key in self.shot_path_tokens:
+            self.ui_inputs["hierarchyData"]["value"][key]["value"] = self.shot_path_tokens[key]
+
+    def solve_path_token_hierarchy(self):
+        """Override self.hierarchy with new inferred path tokens."""
+        # Don't change ui_inputs - this is needed for next iterations
+        if self.shot_path_tokens.get("episode"):
+            new_subpath = "{episode}/{sequence}"
+        else:
+            new_subpath = "{sequence}"
+
+        self.hierarchy = self.hierarchy.replace("{path}", new_subpath)
+    ### Ends Alkemy-X Override ###
 
     def _populate_track_item_default_data(self):
         """ Populate default formatting data from track item. """

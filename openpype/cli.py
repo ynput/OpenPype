@@ -274,6 +274,9 @@ def launch(app, project, asset, task,
     # test required
     if not project or not asset or not task:
         print("!!! Missing required arguments")
+        ### Starts Alkemy-X Override ###
+        print("Please use format: launch --app @name/@version --project abc --asset 101_010_010 --task comp @optional_args")
+        ### Ends Alkemy-X Override ###
         return
 
     PypeCommands().run_application(app, project, asset, task, tools, arguments)
