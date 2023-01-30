@@ -234,6 +234,18 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
             self.imprint_instance_node(instance_node,
                                        data=instance.data_to_store())
 
+    def imprint_instance_node(self, node, data):
+        # Do not ever try to update the `renderlayer` since it'll try
+        # to remove the attribute and recreate it but fail to keep it a
+        # message attribute link. We only ever imprint that on the initial
+        # node creation.
+        # TODO: Improve how this is handled
+        data.pop("renderlayer", None)
+        data.get("creator_attributes", {}).pop("renderlayer", None)
+
+        return super(CreateRenderlayer, self).imprint_instance_node(node,
+                                                                    data=data)
+
     def remove_instances(self, instances):
         """Remove specified instance from the scene.
 
