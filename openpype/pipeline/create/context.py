@@ -1513,8 +1513,7 @@ class CreateContext:
         instance_data = {
             "asset": asset_doc["name"],
             "task": task_name,
-            "variant": variant,
-            "family": family
+            "variant": variant
         }
         return self.raw_create(
             creator_identifier,
