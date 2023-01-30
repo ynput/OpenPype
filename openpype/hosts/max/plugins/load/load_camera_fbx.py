@@ -1,7 +1,8 @@
 import os
-from openpype.pipeline import(
+from openpype.pipeline import (
     load
 )
+
 
 class FbxLoader(load.LoaderPlugin):
     """Fbx Loader"""

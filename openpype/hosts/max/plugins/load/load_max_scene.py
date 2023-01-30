@@ -1,7 +1,8 @@
 import os
-from openpype.pipeline import(
+from openpype.pipeline import (
     load
 )
+
 
 class MaxSceneLoader(load.LoaderPlugin):
     """Max Scene Loader"""
@@ -14,7 +15,6 @@ class MaxSceneLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
-        import re
         path = os.path.normpath(self.fname)
         # import the max scene by using "merge file"
         path = path.replace('\\', '/')
@@ -48,4 +48,3 @@ class MaxSceneLoader(load.LoaderPlugin):
 
         node = container["node"]
         rt.delete(node)
-
