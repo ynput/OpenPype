@@ -253,10 +253,10 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
             if instance.get("creator_identifier") == self.identifier:
                 self._remove_instance_from_context(instance)
 
-                # TODO: Remove the stored settings per renderlayer too?
-                # node = instance.data.get("instance_node")
-                # if node:
-                #     cmds.delete(node)
+                # Remove the stored settings per renderlayer too
+                node = instance.data.get("instance_node")
+                if node and cmds.objExists(node):
+                    cmds.delete(node)
 
     def get_instance_attr_defs(self):
         """Create instance settings."""
