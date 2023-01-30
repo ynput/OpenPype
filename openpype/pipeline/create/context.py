@@ -1484,27 +1484,32 @@ class CreateContext:
             CreatorsCreateFailed: When creation fails.
         """
 
-        if pre_create_data is None:
-            pre_create_data = {}
+        creator = self.creators.get(creator_identifier)
+        if creator is None:
+            raise CreatorError(
+                "Creator {} was not found".format(creator_identifier)
+            )
 
         project_name = self.project_name
         if asset_doc is None:
             asset_name = self.get_current_asset_name()
             asset_doc = get_asset_by_name(project_name, asset_name)
             task_name = self.get_current_task_name()
+            if asset_doc is None:
+                raise CreatorError(
+                    "Asset with name {} was not found".format(asset_name)
+                )
 
-        creator = self.creators.get(creator_identifier)
-        family = None
-        subset_name = None
-        if creator is not None:
-            family = creator.family
-            subset_name = creator.get_subset_name(
-                variant,
-                task_name,
-                asset_doc,
-                project_name,
-                self.host_name
-            )
+        if pre_create_data is None:
+            pre_create_data = {}
+
+        subset_name = creator.get_subset_name(
+            variant,
+            task_name,
+            asset_doc,
+            project_name,
+            self.host_name
+        )
         instance_data = {
             "asset": asset_doc["name"],
             "task": task_name,
