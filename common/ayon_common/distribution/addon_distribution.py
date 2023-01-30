@@ -826,7 +826,7 @@ class AyonDistribution:
             )
         return output
 
-    def _preapre_dependency_progress(self):
+    def _prepare_dependency_progress(self):
         package = self.dependency_package
         if package is None or not package.require_distribution:
             return None
@@ -866,7 +866,7 @@ class AyonDistribution:
 
     def get_dependency_progress(self):
         if self._dependency_progress == -1:
-            self._dependency_progress = self._preapre_dependency_progress()
+            self._dependency_progress = self._prepare_dependency_progress()
         return self._dependency_progress
 
     def get_dependency_metadata_filepath(self):
