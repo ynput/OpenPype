@@ -343,29 +343,6 @@ def get_dependency_package(package_name=None):
             return dependency_package
 
 
-def _try_convert_to_server_source(addon, source):
-    ayon_base_url = ayon_api.get_base_url()
-    urls = [source.url]
-    if "https://" in source.url:
-        urls.append(source.url.replace("https://", "http://"))
-    elif "http://" in source.url:
-        urls.append(source.url.replace("http://", "https://"))
-
-    addon_url = f"{ayon_base_url}/addons/{addon.name}/{addon.version}/private/"
-    filename = None
-    for url in urls:
-        if url.startswith(addon_url):
-            filename = url.replace(addon_url, "")
-            break
-
-    if not filename:
-        return source
-
-    return ServerSourceInfo(
-        type=UrlType.SERVER.value, filename=filename
-    )
-
-
 class DistributeTransferProgress:
     """Progress of single source item in 'DistributionItem'.
 
@@ -809,8 +786,6 @@ class AyonDistribution:
             }
             sources = []
             for source in addon_info.sources:
-                if source.type == UrlType.HTTP.value:
-                    source = _try_convert_to_server_source(addon_info, source)
                 sources.append(source)
 
             output[full_name] = DistributionItem(
