@@ -321,13 +321,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 )
             }
 
-            # Collect Deadline url if Deadline module is enabled
-            deadline_settings = (
-                context.data["system_settings"]["modules"]["deadline"]
-            )
-            if deadline_settings["enabled"]:
-                data["deadlineUrl"] = render_instance.data.get("deadlineUrl")
-
             if self.sync_workfile_version:
                 data["version"] = context.data["version"]
 
