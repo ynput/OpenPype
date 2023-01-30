@@ -81,25 +81,24 @@ class CollectNewInstances(pyblish.api.InstancePlugin):
         if creator_attributes:
             instance.data.update(creator_attributes)
 
-        members = cmds.sets(objset, query=True)
-        if members is None:
-            self.log.warning("Skipped empty instance: \"%s\" " % objset)
-            return
+        members = cmds.sets(objset, query=True) or []
+        if not members:
+            self.log.warning("Empty instance: \"%s\" " % objset)
+        else:
+            # Collect members
+            members = cmds.ls(members, long=True) or []
 
-        # Collect members
-        members = cmds.ls(members, long=True) or []
+            dag_members = cmds.ls(members, type="dagNode", long=True)
+            children = get_all_children(dag_members)
+            children = cmds.ls(children, noIntermediate=True, long=True)
+            parents = []
+            if creator_attributes.get("includeParentHierarchy", True):
+                # If `includeParentHierarchy` then include the parents
+                # so they will also be picked up in the instance by validators
+                parents = self.get_all_parents(members)
+            members_hierarchy = list(set(members + children + parents))
 
-        dag_members = cmds.ls(members, type="dagNode", long=True)
-        children = get_all_children(dag_members)
-        children = cmds.ls(children, noIntermediate=True, long=True)
-        parents = []
-        if creator_attributes.get("includeParentHierarchy", True):
-            # If `includeParentHierarchy` then include the parents
-            # so they will also be picked up in the instance by validators
-            parents = self.get_all_parents(members)
-        members_hierarchy = list(set(members + children + parents))
-
-        instance[:] = members_hierarchy
+            instance[:] = members_hierarchy
 
         # Store the exact members of the object set
         instance.data["setMembers"] = members
