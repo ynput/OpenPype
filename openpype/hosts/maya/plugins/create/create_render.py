@@ -17,7 +17,6 @@ from openpype.pipeline import legacy_io
 from openpype.pipeline.create import (
     CreatorError,
     Creator,
-    HiddenCreator,
     CreatedInstance
 )
 
@@ -39,33 +38,33 @@ def ensure_namespace(namespace):
         return cmds.namespace(add=namespace)
 
 
-class CreateRender(Creator):
-    """Create *render* instance.
+class CreateRenderlayer(Creator, plugin.MayaCreatorBase):
+    """Create and manages renderlayer subset per renderLayer in workfile.
 
-    This render instance is not visible in the UI as an instance nor does
-    it by itself publish. Instead, whenever this is created the
-    CreateRenderlayer creator collects the active scene's actual renderlayers
-    as individual instances to submit for publishing.
-
-    This Creator is solely to SHOW in the "Create" of the new publisher.
-
-    See Also:
-        https://pype.club/docs/artist_hosts_maya#creating-basic-render-setup
+    This generates a single node in the scene which tells the Creator to if
+    it exists collect Maya rendersetup renderlayers as individual instances.
+    As such, triggering create doesn't actually create the instance node per
+    layer but only the node which tells the Creator it may now collect
+    the renderlayers.
 
     """
 
-    identifier = "io.openpype.creators.maya.render"
+    identifier = "io.openpype.creators.maya.renderlayer"
+    family = "renderlayer"
     label = "Render"
-    family = "rendering"
     icon = "eye"
 
     render_settings = {}
+    singleton_node_name = "renderingMain"
 
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
         cls.render_settings = project_settings["maya"]["RenderSettings"]
 
     def create(self, subset_name, instance_data, pre_create_data):
+        # A Renderlayer is never explicitly created using the create method.
+        # Instead, renderlayers from the scene are collected. Thus "create"
+        # would only ever be called to say, 'hey, please refresh collect'
 
         # Only allow a single render instance to exist
         nodes = lib.lsattr("pre_creator_identifier", self.identifier)
@@ -86,7 +85,7 @@ class CreateRender(Creator):
             collection.getSelector().setPattern('*')
 
         with lib.undo_chunk():
-            node = cmds.sets(empty=True, name=subset_name)
+            node = cmds.sets(empty=True, name=self.singleton_node_name)
             lib.imprint(node, data={
                 "pre_creator_identifier": self.identifier
             })
@@ -94,54 +93,12 @@ class CreateRender(Creator):
             # By RenderLayerCreator.create we make it so that the renderlayer
             # instances directly appear even though it just collects scene
             # renderlayers. This doesn't actually 'create' any scene contents.
-            self.create_context.create(
-                CreateRenderlayer.identifier,
-                instance_data={},
-                source_data=instance_data
-            )
-
-    def collect_instances(self):
-        # We never show this instance in the publish UI
-        return
-
-    def update_instances(self, update_list):
-        return
-
-    def remove_instances(self, instances):
-        return
-
-
-class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
-    """Create and manges renderlayer subset per renderLayer in workfile.
-
-    This does no do ANYTHING until a CreateRender subset exists in the
-    scene, created by the CreateRender creator.
-
-    """
-
-    identifier = "io.openpype.creators.maya.renderlayer"
-    family = "renderlayer"
-    label = "Renderlayer"
-    icon = "eye"
-
-    enable_all_lights = False
-
-    @classmethod
-    def apply_settings(cls, project_settings, system_settings):
-        render_settings = project_settings["maya"]["RenderSettings"]
-        cls.enable_all_lights = render_settings.get("enable_all_lights",
-                                                    cls.enable_all_lights)
-
-    def create(self, instance_data, source_data):
-        # A Renderlayer is never explicitly created using the create method.
-        # Instead, renderlayers from the scene are collected. Thus "create"
-        # would only ever be called to say, 'hey, please refresh collect'
-        self.collect_instances()
+            self.collect_instances()
 
     def collect_instances(self):
 
         # We only collect if a CreateRender instance exists
-        if not lib.lsattr("pre_creator_identifier", CreateRender.identifier):
+        if not lib.lsattr("pre_creator_identifier", self.identifier):
             return
 
         rs = renderSetup.instance()
@@ -194,13 +151,13 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
 
         # We only collect if a CreateRender instance exists
         create_render_sets = lib.lsattr("pre_creator_identifier",
-                                        CreateRender.identifier)
+                                        self.identifier)
         if not create_render_sets:
             raise CreatorError("Creating a renderlayer instance node is not "
                                "allowed if no 'CreateRender' instance exists")
         create_render_set = create_render_sets[0]
 
-        namespace = "_renderingMain"
+        namespace = "_{}".format(self.singleton_node_name)
         namespace = ensure_namespace(namespace)
 
         name = "{}:{}".format(namespace, layer.name())
@@ -258,7 +215,7 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
         # Instead of removing the single instance or renderlayers we instead
         # remove the CreateRender node this creator relies on to decide whether
         # it should collect anything at all.
-        nodes = lib.lsattr("pre_creator_identifier", CreateRender.identifier)
+        nodes = lib.lsattr("pre_creator_identifier", self.identifier)
         if nodes:
             cmds.delete(nodes)
 
@@ -323,5 +280,6 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
 
             BoolDef("renderSetupIncludeLights",
                     label="Render Setup Include Lights",
-                    default=self.enable_all_lights)
+                    default=self.render_settings.get("enable_all_lights",
+                                                     False))
         ]
