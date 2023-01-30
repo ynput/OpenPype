@@ -57,6 +57,11 @@ class CreateRenderlayer(Creator, plugin.MayaCreatorBase):
     render_settings = {}
     singleton_node_name = "renderingMain"
 
+    def _get_singleton_node(self, return_all=False):
+        nodes = lib.lsattr("pre_creator_identifier", self.identifier)
+        if nodes:
+            return nodes if return_all else nodes[0]
+
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
         cls.render_settings = project_settings["maya"]["RenderSettings"]
@@ -67,8 +72,7 @@ class CreateRenderlayer(Creator, plugin.MayaCreatorBase):
         # would only ever be called to say, 'hey, please refresh collect'
 
         # Only allow a single render instance to exist
-        nodes = lib.lsattr("pre_creator_identifier", self.identifier)
-        if nodes:
+        if not self._get_singleton_node():
             raise CreatorError("A Render instance already exists - only "
                                "one can be configured.")
 
@@ -97,8 +101,8 @@ class CreateRenderlayer(Creator, plugin.MayaCreatorBase):
 
     def collect_instances(self):
 
-        # We only collect if a CreateRender instance exists
-        if not lib.lsattr("pre_creator_identifier", self.identifier):
+        # We only collect if the global render instance exists
+        if not self._get_singleton_node():
             return
 
         rs = renderSetup.instance()
@@ -112,6 +116,7 @@ class CreateRenderlayer(Creator, plugin.MayaCreatorBase):
                 # No existing scene instance node for this layer. Note that
                 # this instance will not have the `instance_node` data yet
                 # until it's been saved/persisted at least once.
+                # TODO: Correctly define the subset name using templates
                 subset_name = "render" + layer.name()
                 instance_data = {
                     "asset": legacy_io.Session["AVALON_ASSET"],
@@ -150,12 +155,10 @@ class CreateRenderlayer(Creator, plugin.MayaCreatorBase):
     def _create_layer_instance_node(self, layer):
 
         # We only collect if a CreateRender instance exists
-        create_render_sets = lib.lsattr("pre_creator_identifier",
-                                        self.identifier)
-        if not create_render_sets:
+        create_render_set = self._get_singleton_node()
+        if not create_render_set:
             raise CreatorError("Creating a renderlayer instance node is not "
                                "allowed if no 'CreateRender' instance exists")
-        create_render_set = create_render_sets[0]
 
         namespace = "_{}".format(self.singleton_node_name)
         namespace = ensure_namespace(namespace)
@@ -215,11 +218,11 @@ class CreateRenderlayer(Creator, plugin.MayaCreatorBase):
         # Instead of removing the single instance or renderlayers we instead
         # remove the CreateRender node this creator relies on to decide whether
         # it should collect anything at all.
-        nodes = lib.lsattr("pre_creator_identifier", self.identifier)
+        nodes = self._get_singleton_node(return_all=True)
         if nodes:
             cmds.delete(nodes)
 
-        # Remove ALL of the instances even if only one gets deleted
+        # Remove ALL the instances even if only one gets deleted
         for instance in list(self.create_context.instances):
             if instance.get("creator_identifier") == self.identifier:
                 self._remove_instance_from_context(instance)
