@@ -592,6 +592,33 @@ def _convert_nuke_project_settings(ayon_settings, output):
         openpype_nuke[key] = ayon_nuke[key]
 
 
+def _convert_hiero_project_settings(ayon_settings, output):
+    if "hiero" not in ayon_settings:
+        return
+
+    ayon_hiero = ayon_settings["hiero"]
+    openpype_hiero = output["hiero"]
+
+    new_gui_filters = {}
+    for item in ayon_hiero.pop("filters"):
+        subvalue = {}
+        key = item["name"]
+        for subitem in item["value"]:
+            subvalue[subitem["name"]] = subitem["value"]
+        new_gui_filters[key] = subvalue
+    ayon_hiero["filters"] = new_gui_filters
+
+    for key in (
+        "create",
+        "filters",
+        "imageio",
+        "load",
+        "publish",
+        "scriptsmenu",
+    ):
+        openpype_hiero[key] = ayon_hiero[key]
+
+
 def _convert_photoshop_project_settings(ayon_settings, output):
     if "photoshop" not in ayon_settings:
         return
@@ -920,7 +947,8 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_flame_project_settings(ayon_settings, output)
     _convert_fusion_project_settings(ayon_settings, output)
     _convert_maya_project_settings(ayon_settings, output)
-    # _convert_nuke_project_settings(ayon_settings, output)
+    _convert_nuke_project_settings(ayon_settings, output)
+    _convert_hiero_project_settings(ayon_settings, output)
     _convert_photoshop_project_settings(ayon_settings, output)
     _convert_tvpaint_project_settings(ayon_settings, output)
     _convert_traypublisher_project_settings(ayon_settings, output)
