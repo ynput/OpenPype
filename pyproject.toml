@@ -71,6 +71,9 @@ pysftp = "^0.2.9"
 dropbox = "^11.20.0"
 aiohttp-middlewares = "^2.0.0"
 opencolorio = "^2.2.0"
+m2r2 = "^0.3.3.post2"
+autoapi = "^2.0.1"
+sphinx-autoapi = "^2.0.1"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^6.0"
