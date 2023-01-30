@@ -94,7 +94,8 @@ class ExtractGLB(publish.Extractor):
                 if ogsfx_path:
                     # if custom ogsfx path is not specified
                     # the log below is the warning for the user
-                    self.log.warning("ogsfx shader file not found in {}".format(ogsfx_path))
+                    self.log.warning("ogsfx shader file "
+                                     "not found in {}".format(ogsfx_path))
 
                 self.log.info("Find the ogsfx shader file in "
                               "default maya directory...")
