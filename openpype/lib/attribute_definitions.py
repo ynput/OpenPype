@@ -465,7 +465,7 @@ class EnumDef(AbstractAttrDef):
         return self.default
 
     def serialize(self):
-        data = super(TextDef, self).serialize()
+        data = super(EnumDef, self).serialize()
         data["items"] = copy.deepcopy(self.items)
         return data
 
