@@ -219,7 +219,7 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
     def update_instances(self, update_list):
         # We only generate the persisting layer data into the scene once
         # we save with the UI on e.g. validate or publish
-        for instance, changes in update_list:
+        for instance, _changes in update_list:
             instance_node = instance.data.get("instance_node")
 
             # Ensure a node to persist the data to exists
