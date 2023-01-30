@@ -17,11 +17,11 @@
 
 import os
 import sys
-from Qt.QtWidgets import QApplication
+# from Qt.QtWidgets import QApplication
 
 openpype_root = os.path.abspath('../..')
 sys.path.insert(0, openpype_root)
-app = QApplication([])
+# app = QApplication([])
 
 """
 repos = os.listdir(os.path.abspath("../../repos"))
@@ -65,7 +65,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
-    'm2r2'
+    'm2r2',
     'autoapi.extension'
 ]
 
@@ -94,7 +94,7 @@ autoapi_options = [
     'show-module-summary'
 ]
 autoapi_add_toctree_entry = True
-autoapi_template_dir = '_autoapi_templates'
+autoapi_template_dir = '_templates/autoapi'
 
 
 # Add any paths that contain templates here, relative to this directory.
