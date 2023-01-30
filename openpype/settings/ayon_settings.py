@@ -341,7 +341,7 @@ def _convert_maya_project_settings(ayon_settings, output):
     if "maya" not in ayon_settings:
         return
     # WARNING NOT FINISHED!!!
-    # TODO implement conversion of 'imageio' and 'create' which are not up
+    # TODO implement conversion of 'imageio' which are not up
     #   to date with v3 settings
     ayon_maya = ayon_settings["maya"]
     openpype_maya = output["maya"]
@@ -447,10 +447,150 @@ def _convert_maya_project_settings(ayon_settings, output):
         openpype_maya[key] = ayon_maya[key]
 
 
+def _convert_nuke_knobs(knobs):
+    new_knobs = []
+    for knob in knobs:
+        knob_type = knob["type"]
+        value = knob[knob_type]
+
+        if knob_type == "boolean":
+            knob_type = "bool"
+
+        new_knob = {
+            "type": knob_type,
+            "name": knob["name"],
+        }
+        new_knobs.append(new_knob)
+
+        if knob_type == "formatable":
+            new_knob["template"] = value["template"]
+            new_knob["to_type"] = value["to_type"]
+            continue
+
+        value_key = "value"
+        if knob_type == "expression":
+            value_key = "expression"
+
+        elif knob_type == "color_gui":
+            value = _convert_color(value)
+
+        elif knob_type == "vector_2d":
+            value = [value["x"], value["y"]]
+
+        elif knob_type == "vector_3d":
+            value = [value["x"], value["y"], value["z"]]
+
+        new_knob[value_key] = value
+    return new_knobs
+
+
 def _convert_nuke_project_settings(ayon_settings, output):
     if "nuke" not in ayon_settings:
         return
-    # TODO implement (nuke's settings are missing on ayon server)
+    # TODO Not converted
+    # - 'scriptsmenu' have 'tags'
+    # - 'dirmap' have 'use_env_var_as_root'
+    # - 'publish/ExtractThumbnail' cannot be converted
+    # - 'imageio/workfile/monitorOutLut' is there but wasn't
+
+    ayon_nuke = ayon_settings["nuke"]
+    openpype_nuke = output["nuke"]
+
+    # --- Scriptsmenu ---
+    # TODO Why 'scriptsmenu' have 'tags'?
+    for item in ayon_nuke["scriptsmenu"]["definition"]:
+        item.pop("tags")
+
+    # --- Dirmap ---
+    dirmap = ayon_nuke.pop("dirmap")
+    # TODO Why has 'use_env_var_as_root'?
+    dirmap.pop("use_env_var_as_root")
+    for src_key, dst_key in (
+        ("source_path", "source-path"),
+        ("destination_path", "destination-path"),
+    ):
+        dirmap["paths"][dst_key] = dirmap["paths"].pop(src_key)
+    ayon_nuke["nuke-dirmap"] = dirmap
+
+    # --- Filters ---
+    new_gui_filters = {}
+    for item in ayon_nuke.pop("filters"):
+        subvalue = {}
+        key = item["name"]
+        for subitem in item["value"]:
+            subvalue[subitem["name"]] = subitem["value"]
+        new_gui_filters[key] = subvalue
+    ayon_nuke["filters"] = new_gui_filters
+
+    # --- Load ---
+    ayon_load = ayon_nuke["load"]
+    ayon_load["LoadClip"]["_representations"] = (
+        ayon_load["LoadClip"].pop("representations_include")
+    )
+    ayon_load["LoadImage"]["_representations"] = (
+        ayon_load["LoadImage"].pop("representations_include")
+    )
+
+    # --- Create ---
+    ayon_create = ayon_nuke["create"]
+    for creator_name in (
+        "CreateWritePrerender",
+        "CreateWriteImage",
+        "CreateWriteRender",
+    ):
+        new_prenodes = {}
+        for prenode in ayon_create[creator_name]["prenodes"]:
+            name = prenode.pop("name")
+            prenode["knobs"] = _convert_nuke_knobs(prenode["knobs"])
+            new_prenodes[name] = prenode
+
+        ayon_create[creator_name]["prenodes"] = new_prenodes
+
+    # --- Publish ---
+    ayon_publish = ayon_nuke["publish"]
+    slate_mapping = ayon_publish["ExtractSlateFrame"]["key_value_mapping"]
+    for key in tuple(slate_mapping.keys()):
+        value = slate_mapping[key]
+        slate_mapping[key] = [value["enabled"], value["template"]]
+
+    ayon_publish["ValidateKnobs"]["knobs"] = json.loads(
+        ayon_publish["ValidateKnobs"]["knobs"]
+    )
+
+    new_review_data_outputs = {}
+    for item in ayon_publish["ExtractReviewDataMov"]["outputs"]:
+        name = item.pop("name")
+        item["reformat_node_config"] = _convert_nuke_knobs(
+            item["reformat_node_config"])
+        new_review_data_outputs[name] = item
+    ayon_publish["ExtractReviewDataMov"]["outputs"] = new_review_data_outputs
+
+    # TODO 'ExtractThumbnail' cannot be converted
+    openpype_publish = openpype_nuke["publish"]
+    ayon_publish["ExtractThumbnail"] = openpype_publish["ExtractThumbnail"]
+
+    # --- ImageIO ---
+    ayon_imageio = ayon_nuke["imageio"]
+    for item in ayon_imageio["nodes"]["requiredNodes"]:
+        item["knobs"] = _convert_nuke_knobs(item["knobs"])
+    for item in ayon_imageio["nodes"]["overrideNodes"]:
+        item["knobs"] = _convert_nuke_knobs(item["knobs"])
+
+    # TODO why is there 'monitorOutLut'
+    ayon_imageio["workfile"].pop("monitorOutLut")
+
+    # Store converted values to openpype values
+    for key in (
+        "scriptsmenu",
+        "nuke-dirmap",
+        "filters",
+        "load",
+        "create",
+        "publish",
+        "workfile_builder",
+        "imageio",
+    ):
+        openpype_nuke[key] = ayon_nuke[key]
 
 
 def _convert_photoshop_project_settings(ayon_settings, output):
