@@ -207,9 +207,9 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
         # Keep an active link with the renderlayer so we can retrieve it
         # later by a physical maya connection instead of relying on the layer
         # name to still exist
-        cmds.addAttr(render_set, longName="renderLayer", at="message")
+        cmds.addAttr(render_set, longName="renderlayer", at="message")
         cmds.connectAttr(layer.name() + ".message",
-                         render_set + ".renderLayer", force=True)
+                         render_set + ".renderlayer", force=True)
 
         # Add the set to the 'CreateRender' set.
         cmds.sets(render_set, forceElement=create_render_set)
