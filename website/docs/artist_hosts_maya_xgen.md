@@ -8,7 +8,7 @@ sidebar_label: Xgen
 
 ### Settings
 
-Go to project settings > Maya > enable "Open Workfile Post Initialization";
+Go to project settings > `Maya` > enable `Open Workfile Post Initialization`;
 
 `project_settings/maya/open_workfile_post_initialization`
 
@@ -26,6 +26,12 @@ Importing XGen Collections...
 # Error: XGen:  Failed to open file: P:/PROJECTS/OP01_CG_demo/shots/sh040/work/Lighting/cg_ball_xgenMain_v035__ball_rigMain_01___collection.xgen  #
 # Error: XGen:  Failed to import collection from file P:/PROJECTS/OP01_CG_demo/shots/sh040/work/Lighting/cg_ball_xgenMain_v035__ball_rigMain_01___collection.xgen  #
 ```
+
+Go to project settings > `Deadline` > `Publish plugins` > `Maya Submit to Deadline` > disable `Use Published scene`;
+
+`project_settings/deadline/publish/MayaSubmitDeadline/use_published`
+
+This is due to temporary workaround while fixing rendering with published scenes.
 
 ## Create
 
