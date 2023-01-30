@@ -10,7 +10,11 @@ import six
 import pyblish.plugin
 import pyblish.api
 
-from openpype.lib import Logger, filter_profiles
+from openpype.lib import (
+    Logger,
+    filter_profiles,
+    StringTemplate
+)
 from openpype.settings import (
     get_project_settings,
     get_system_settings,
@@ -623,12 +627,51 @@ def get_instance_staging_dir(instance):
     Returns:
         str: Path to staging dir of instance.
     """
+    staging_dir = instance.data.get('stagingDir', None)
+    openpype_temp_dir = os.getenv("OPENPYPE_TEMP_DIR")
 
-    staging_dir = instance.data.get("stagingDir")
     if not staging_dir:
-        staging_dir = os.path.normpath(
-            tempfile.mkdtemp(prefix="pyblish_tmp_")
-        )
-        instance.data["stagingDir"] = staging_dir
+        custom_temp_dir = None
+        if openpype_temp_dir:
+            if "{" in openpype_temp_dir:
+                anatomy = instance.context.data["anatomy"]
+                # get anatomy formating data
+                # so template formating is supported
+                anatomy_data = copy.deepcopy(instance.context.data["anatomyData"])
+                anatomy_data["root"] = anatomy.roots
+                """Template path formating is supporting:
+                - optional key formating
+                - available tokens:
+                    - root[work | <root name key>]
+                    - project[name | code]
+                    - asset
+                    - hierarchy
+                    - task
+                    - username
+                    - app
+                """
+                custom_temp_dir = StringTemplate.format_template(
+                    openpype_temp_dir, anatomy_data)
+                custom_temp_dir = os.path.normpath(custom_temp_dir)
+                # create the dir in case it doesnt exists
+                os.makedirs(os.path.dirname(custom_temp_dir))
+            elif os.path.exists(openpype_temp_dir):
+                custom_temp_dir = openpype_temp_dir
+
+
+        if custom_temp_dir:
+            staging_dir = os.path.normpath(
+                tempfile.mkdtemp(
+                    prefix="pyblish_tmp_",
+                    dir=custom_temp_dir
+                )
+            )
+        else:
+            staging_dir = os.path.normpath(
+                tempfile.mkdtemp(prefix="pyblish_tmp_")
+            )
+        instance.data['stagingDir'] = staging_dir
+
+    instance.context.data["cleanupFullPaths"].append(staging_dir)
 
     return staging_dir
