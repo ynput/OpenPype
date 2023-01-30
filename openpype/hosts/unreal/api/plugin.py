@@ -104,7 +104,7 @@ class UnrealBaseCreator(Creator):
         # cache instances if missing
         self.cache_subsets(self.collection_shared_data)
         for instance in self.collection_shared_data[
-            "unreal_cached_subsets"].get(self.identifier, []):
+                "unreal_cached_subsets"].get(self.identifier, []):
             created_instance = CreatedInstance.from_existing(instance, self)
             self._add_instance_to_context(created_instance)
 
@@ -162,7 +162,8 @@ class UnrealAssetCreator(UnrealBaseCreator):
                 selection = []
 
                 if pre_create_data.get("use_selection"):
-                    sel_objects = unreal.EditorUtilityLibrary.get_selected_assets()
+                    utility_lib = unreal.EditorUtilityLibrary
+                    sel_objects = utility_lib.get_selected_assets()
                     selection = [a.get_path_name() for a in sel_objects]
 
                 instance_data["members"] = selection
@@ -211,7 +212,8 @@ class UnrealActorCreator(UnrealBaseCreator):
                 selection = []
 
                 if pre_create_data.get("use_selection"):
-                    sel_objects = unreal.EditorUtilityLibrary.get_selected_actors()
+                    utility_lib = unreal.EditorUtilityLibrary
+                    sel_objects = utility_lib.get_selected_assets()
                     selection = [a.get_path_name() for a in sel_objects]
 
                 instance_data["members"] = selection
