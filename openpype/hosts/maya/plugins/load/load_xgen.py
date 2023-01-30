@@ -87,9 +87,11 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             # any changes to collection, then Xgen does not create an xgd file
             # on save. This gives errors when launching the workfile again due
             # to trying to find the xgd file.
-            xgenm.addCustomAttr(
-                "custom_float_ignore", xgen_palette.replace("|", "")
-            )
+            name = "custom_float_ignore"
+            if name not in xgenm.customAttrs(xgen_palette):
+                xgenm.addCustomAttr(
+                    "custom_float_ignore", xgen_palette
+                )
 
             shapes = cmds.ls(nodes, shapes=True, long=True)
 
