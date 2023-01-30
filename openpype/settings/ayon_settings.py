@@ -487,24 +487,12 @@ def _convert_nuke_knobs(knobs):
 def _convert_nuke_project_settings(ayon_settings, output):
     if "nuke" not in ayon_settings:
         return
-    # TODO Not converted
-    # - 'scriptsmenu' have 'tags'
-    # - 'dirmap' have 'use_env_var_as_root'
-    # - 'publish/ExtractThumbnail' cannot be converted
-    # - 'imageio/workfile/monitorOutLut' is there but wasn't
 
     ayon_nuke = ayon_settings["nuke"]
     openpype_nuke = output["nuke"]
 
-    # --- Scriptsmenu ---
-    # TODO Why 'scriptsmenu' have 'tags'?
-    for item in ayon_nuke["scriptsmenu"]["definition"]:
-        item.pop("tags")
-
     # --- Dirmap ---
     dirmap = ayon_nuke.pop("dirmap")
-    # TODO Why has 'use_env_var_as_root'?
-    dirmap.pop("use_env_var_as_root")
     for src_key, dst_key in (
         ("source_path", "source-path"),
         ("destination_path", "destination-path"),
@@ -565,19 +553,30 @@ def _convert_nuke_project_settings(ayon_settings, output):
         new_review_data_outputs[name] = item
     ayon_publish["ExtractReviewDataMov"]["outputs"] = new_review_data_outputs
 
-    # TODO 'ExtractThumbnail' cannot be converted
-    openpype_publish = openpype_nuke["publish"]
-    ayon_publish["ExtractThumbnail"] = openpype_publish["ExtractThumbnail"]
+    # TODO 'ExtractThumbnail' does not have ideal schema in v3
+    new_thumbnail_nodes = {}
+    for item in ayon_publish["ExtractThumbnail"]["nodes"]:
+        name = item["nodeclass"]
+        value = []
+        for knob in _convert_nuke_knobs(item["knobs"]):
+            knob_name = knob["name"]
+            # This may crash
+            if knob["type"] == "expression":
+                knob_value = knob["expression"]
+            else:
+                knob_value = knob["value"]
+            value.append([knob_name, knob_value])
+        new_thumbnail_nodes[name] = value
+
+    ayon_publish["ExtractThumbnail"]["nodes"] = new_thumbnail_nodes
 
     # --- ImageIO ---
+    # NOTE 'monitorOutLut' is maybe not yet in v3 (ut should be)
     ayon_imageio = ayon_nuke["imageio"]
     for item in ayon_imageio["nodes"]["requiredNodes"]:
         item["knobs"] = _convert_nuke_knobs(item["knobs"])
     for item in ayon_imageio["nodes"]["overrideNodes"]:
         item["knobs"] = _convert_nuke_knobs(item["knobs"])
-
-    # TODO why is there 'monitorOutLut'
-    ayon_imageio["workfile"].pop("monitorOutLut")
 
     # Store converted values to openpype values
     for key in (
