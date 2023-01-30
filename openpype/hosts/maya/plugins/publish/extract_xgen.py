@@ -6,7 +6,9 @@ from maya import cmds
 import xgenm
 
 from openpype.pipeline import publish
-from openpype.hosts.maya.api.lib import maintained_selection, attribute_values
+from openpype.hosts.maya.api.lib import (
+    maintained_selection, attribute_values, write_xgen_file
+)
 from openpype.lib import StringTemplate
 
 
@@ -77,6 +79,18 @@ class ExtractXgenCache(publish.Extractor):
         xgen_path = os.path.join(staging_dir, xgen_filename).replace("\\", "/")
         xgenm.exportPalette(palette, xgen_path)
 
+        data = {
+            "xgDataPath": os.path.join(
+                instance.data["resourcesDir"],
+                "collections",
+                palette.replace(":", "__ns__")
+            ).replace("\\", "/"),
+            "xgProjectPath": os.path.dirname(
+                instance.data["resourcesDir"]
+            ).replace("\\", "/")
+        }
+        write_xgen_file(data, xgen_path)
+
         representation = {
             "name": "xgen",
             "ext": "xgen",
@@ -136,7 +150,7 @@ class ExtractXgenCache(publish.Extractor):
                 destination = os.path.join(
                     instance.data["resourcesDir"],
                     "collections",
-                    os.path.basename(data_path),
+                    palette,
                     source.replace(data_path, "")[1:]
                 )
                 transfers.append((source, destination.replace("\\", "/")))
