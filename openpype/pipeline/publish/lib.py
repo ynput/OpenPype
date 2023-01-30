@@ -640,7 +640,9 @@ def get_instance_staging_dir(instance):
     Returns:
         str: Path to staging dir of instance.
     """
-    staging_dir = instance.data.get('stagingDir', None)
+    staging_dir = instance.data.get('stagingDir')
+    if staging_dir:
+        return staging_dir
     openpype_temp_dir = os.getenv("OPENPYPE_TEMP_DIR")
 
     if not staging_dir:
