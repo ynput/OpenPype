@@ -159,8 +159,9 @@ def test_update_addon_state(printer, sample_addon_info,
     )
     distribution.distribute()
     progress = distribution.get_addons_progress()
-    assert progress["openpype_slack_1.0.0"].state == UpdateState.UPDATE_FAILED, \
-        "Update should failed because of wrong hash"
+    slack_state = progress["openpype_slack_1.0.0"].state
+    assert slack_state == UpdateState.UPDATE_FAILED, (
+        "Update should failed because of wrong hash")
 
     # Fix cache and validate if was updated
     addon_info.hash = orig_hash
@@ -169,13 +170,13 @@ def test_update_addon_state(printer, sample_addon_info,
     )
     distribution.distribute()
     progress = distribution.get_addons_progress()
-    assert progress["openpype_slack_1.0.0"].state == UpdateState.UPDATED, \
-        "Addon should have been updated"
+    assert progress["openpype_slack_1.0.0"].state == UpdateState.UPDATED, (
+        "Addon should have been updated")
 
     # Is UPDATED without calling distribute
     distribution = AyonDistribution(
         temp_folder, temp_folder, addon_downloader, [addon_info]
     )
     progress = distribution.get_addons_progress()
-    assert progress["openpype_slack_1.0.0"] == UpdateState.UPDATED, \
-        "Addon should already exist"
+    assert progress["openpype_slack_1.0.0"] == UpdateState.UPDATED, (
+        "Addon should already exist")
