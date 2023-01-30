@@ -1,7 +1,7 @@
 import collections
 from abc import abstractmethod, abstractproperty
 
-from Qt import QtCore
+from qtpy import QtCore
 
 from openpype.lib.events import Event
 from openpype.pipeline.create import CreatedInstance

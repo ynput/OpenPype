@@ -1,27 +1,383 @@
+import nuke
+import re
 import os
+import sys
+import six
 import random
 import string
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from abc import abstractmethod
 
-import nuke
-
 from openpype.settings import get_current_project_settings
+from openpype.lib import (
+    BoolDef,
+    EnumDef
+)
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
+    CreatorError,
+    Creator as NewCreator,
+    CreatedInstance,
+    legacy_io
 )
 from .lib import (
+    INSTANCE_DATA_KNOB,
     Knobby,
     check_subsetname_exists,
     maintained_selection,
+    get_avalon_knob_data,
     set_avalon_knob_data,
     add_publish_knob,
     get_nuke_imageio_settings,
     set_node_knobs_from_settings,
+    set_node_data,
+    get_node_data,
     get_view_process_node,
-    get_viewer_config_from_string
+    get_viewer_config_from_string,
+    deprecated
 )
+from .pipeline import (
+    list_instances,
+    remove_instance
+)
+
+
+def _collect_and_cache_nodes(creator):
+    key = "openpype.nuke.nodes"
+    if key not in creator.collection_shared_data:
+        instances_by_identifier = defaultdict(list)
+        for item in list_instances():
+            _, instance_data = item
+            identifier = instance_data["creator_identifier"]
+            instances_by_identifier[identifier].append(item)
+        creator.collection_shared_data[key] = instances_by_identifier
+    return creator.collection_shared_data[key]
+
+
+class NukeCreatorError(CreatorError):
+    pass
+
+
+class NukeCreator(NewCreator):
+    selected_nodes = []
+
+    def pass_pre_attributes_to_instance(
+        self,
+        instance_data,
+        pre_create_data,
+        keys=None
+    ):
+        if not keys:
+            keys = pre_create_data.keys()
+
+        creator_attrs = instance_data["creator_attributes"] = {}
+        for pass_key in keys:
+            creator_attrs[pass_key] = pre_create_data[pass_key]
+
+    def add_info_knob(self, node):
+        if "OP_info" in node.knobs().keys():
+            return
+
+        # add info text
+        info_knob = nuke.Text_Knob("OP_info", "")
+        info_knob.setValue("""
+<span style=\"color:#fc0303\">
+<p>This node is maintained by <b>OpenPype Publisher</b>.</p>
+<p>To remove it use Publisher gui.</p>
+</span>
+        """)
+        node.addKnob(info_knob)
+
+    def check_existing_subset(self, subset_name):
+        """Make sure subset name is unique.
+
+        It search within all nodes recursively
+        and checks if subset name is found in
+        any node having instance data knob.
+
+        Arguments:
+            subset_name (str): Subset name
+        """
+
+        for node in nuke.allNodes(recurseGroups=True):
+            # make sure testing node is having instance knob
+            if INSTANCE_DATA_KNOB not in node.knobs().keys():
+                continue
+            node_data = get_node_data(node, INSTANCE_DATA_KNOB)
+
+            if not node_data:
+                # a node has no instance data
+                continue
+
+            # test if subset name is matching
+            if node_data.get("subset") == subset_name:
+                raise NukeCreatorError(
+                    (
+                        "A publish instance for '{}' already exists "
+                        "in nodes! Please change the variant "
+                        "name to ensure unique output."
+                    ).format(subset_name)
+                )
+
+    def create_instance_node(
+        self,
+        node_name,
+        knobs=None,
+        parent=None,
+        node_type=None
+    ):
+        """Create node representing instance.
+
+        Arguments:
+            node_name (str): Name of the new node.
+            knobs (OrderedDict): node knobs name and values
+            parent (str): Name of the parent node.
+            node_type (str, optional): Nuke node Class.
+
+        Returns:
+            nuke.Node: Newly created instance node.
+
+        """
+        node_type = node_type or "NoOp"
+
+        node_knobs = knobs or {}
+
+        # set parent node
+        parent_node = nuke.root()
+        if parent:
+            parent_node = nuke.toNode(parent)
+
+        try:
+            with parent_node:
+                created_node = nuke.createNode(node_type)
+                created_node["name"].setValue(node_name)
+
+                self.add_info_knob(created_node)
+
+                for key, values in node_knobs.items():
+                    if key in created_node.knobs():
+                        created_node["key"].setValue(values)
+        except Exception as _err:
+            raise NukeCreatorError("Creating have failed: {}".format(_err))
+
+        return created_node
+
+    def set_selected_nodes(self, pre_create_data):
+        if pre_create_data.get("use_selection"):
+            self.selected_nodes = nuke.selectedNodes()
+            if self.selected_nodes == []:
+                raise NukeCreatorError("Creator error: No active selection")
+        else:
+            self.selected_nodes = []
+
+    def create(self, subset_name, instance_data, pre_create_data):
+
+        # make sure selected nodes are added
+        self.set_selected_nodes(pre_create_data)
+
+        # make sure subset name is unique
+        self.check_existing_subset(subset_name)
+
+        try:
+            instance_node = self.create_instance_node(
+                subset_name,
+                node_type=instance_data.pop("node_type", None)
+            )
+            instance = CreatedInstance(
+                self.family,
+                subset_name,
+                instance_data,
+                self
+            )
+
+            instance.transient_data["node"] = instance_node
+
+            self._add_instance_to_context(instance)
+
+            set_node_data(
+                instance_node, INSTANCE_DATA_KNOB, instance.data_to_store())
+
+            return instance
+
+        except Exception as er:
+            six.reraise(
+                NukeCreatorError,
+                NukeCreatorError("Creator error: {}".format(er)),
+                sys.exc_info()[2])
+
+    def collect_instances(self):
+        cached_instances = _collect_and_cache_nodes(self)
+        for (node, data) in cached_instances[self.identifier]:
+            created_instance = CreatedInstance.from_existing(
+                data, self
+            )
+            created_instance.transient_data["node"] = node
+            self._add_instance_to_context(created_instance)
+
+    def update_instances(self, update_list):
+        for created_inst, _changes in update_list:
+            instance_node = created_inst.transient_data["node"]
+
+            # in case node is not existing anymore (user erased it manually)
+            try:
+                instance_node.fullName()
+            except ValueError:
+                self.remove_instances([created_inst])
+                continue
+
+            set_node_data(
+                instance_node,
+                INSTANCE_DATA_KNOB,
+                created_inst.data_to_store()
+            )
+
+    def remove_instances(self, instances):
+        for instance in instances:
+            remove_instance(instance)
+            self._remove_instance_from_context(instance)
+
+    def get_pre_create_attr_defs(self):
+        return [
+            BoolDef("use_selection", label="Use selection")
+        ]
+
+    def get_creator_settings(self, project_settings, settings_key=None):
+        if not settings_key:
+            settings_key = self.__class__.__name__
+        return project_settings["nuke"]["create"][settings_key]
+
+
+class NukeWriteCreator(NukeCreator):
+    """Add Publishable Write node"""
+
+    identifier = "create_write"
+    label = "Create Write"
+    family = "write"
+    icon = "sign-out"
+
+    def integrate_links(self, node, outputs=True):
+        # skip if no selection
+        if not self.selected_node:
+            return
+
+        # collect dependencies
+        input_nodes = [self.selected_node]
+        dependent_nodes = self.selected_node.dependent() if outputs else []
+
+        # relinking to collected connections
+        for i, input in enumerate(input_nodes):
+            node.setInput(i, input)
+
+        # make it nicer in graph
+        node.autoplace()
+
+        # relink also dependent nodes
+        for dep_nodes in dependent_nodes:
+            dep_nodes.setInput(0, node)
+
+    def set_selected_nodes(self, pre_create_data):
+        if pre_create_data.get("use_selection"):
+            selected_nodes = nuke.selectedNodes()
+            if selected_nodes == []:
+                raise NukeCreatorError("Creator error: No active selection")
+            elif len(selected_nodes) > 1:
+                NukeCreatorError("Creator error: Select only one camera node")
+            self.selected_node = selected_nodes[0]
+        else:
+            self.selected_node = None
+
+    def get_pre_create_attr_defs(self):
+        attr_defs = [
+            BoolDef("use_selection", label="Use selection"),
+            self._get_render_target_enum()
+        ]
+        return attr_defs
+
+    def get_instance_attr_defs(self):
+        attr_defs = [
+            self._get_render_target_enum(),
+            self._get_reviewable_bool()
+        ]
+        return attr_defs
+
+    def _get_render_target_enum(self):
+        rendering_targets = {
+            "local": "Local machine rendering",
+            "frames": "Use existing frames"
+        }
+        if ("farm_rendering" in self.instance_attributes):
+            rendering_targets["farm"] = "Farm rendering"
+
+        return EnumDef(
+            "render_target",
+            items=rendering_targets,
+            label="Render target"
+        )
+
+    def _get_reviewable_bool(self):
+        return BoolDef(
+            "review",
+            default=("reviewable" in self.instance_attributes),
+            label="Review"
+        )
+
+    def create(self, subset_name, instance_data, pre_create_data):
+        # make sure selected nodes are added
+        self.set_selected_nodes(pre_create_data)
+
+        # make sure subset name is unique
+        self.check_existing_subset(subset_name)
+
+        instance_node = self.create_instance_node(
+            subset_name,
+            instance_data
+        )
+
+        try:
+            instance = CreatedInstance(
+                self.family,
+                subset_name,
+                instance_data,
+                self
+            )
+
+            instance.transient_data["node"] = instance_node
+
+            self._add_instance_to_context(instance)
+
+            set_node_data(
+                instance_node, INSTANCE_DATA_KNOB, instance.data_to_store())
+
+            return instance
+
+        except Exception as er:
+            six.reraise(
+                NukeCreatorError,
+                NukeCreatorError("Creator error: {}".format(er)),
+                sys.exc_info()[2]
+            )
+
+    def apply_settings(
+        self,
+        project_settings,
+        system_settings
+    ):
+        """Method called on initialization of plugin to apply settings."""
+
+        # plugin settings
+        plugin_settings = self.get_creator_settings(project_settings)
+
+        # individual attributes
+        self.instance_attributes = plugin_settings.get(
+            "instance_attributes") or self.instance_attributes
+        self.prenodes = plugin_settings["prenodes"]
+        self.default_variants = plugin_settings.get(
+            "default_variants") or self.default_variants
+        self.temp_rendering_path_template = (
+            plugin_settings.get("temp_rendering_path_template")
+            or self.temp_rendering_path_template
+        )
 
 
 class OpenPypeCreator(LegacyCreator):
@@ -70,6 +426,41 @@ class OpenPypeCreator(LegacyCreator):
         add_publish_knob(instance)
 
         return instance
+
+
+def get_instance_group_node_childs(instance):
+    """Return list of instance group node children
+
+    Args:
+        instance (pyblish.Instance): pyblish instance
+
+    Returns:
+        list: [nuke.Node]
+    """
+    node = instance.data["transientData"]["node"]
+
+    if node.Class() != "Group":
+        return
+
+    # collect child nodes
+    child_nodes = []
+    # iterate all nodes
+    for node in nuke.allNodes(group=node):
+        # add contained nodes to instance's node list
+        child_nodes.append(node)
+
+    return child_nodes
+
+
+def get_colorspace_from_node(node):
+    # Add version data to instance
+    colorspace = node["colorspace"].value()
+
+    # remove default part of the string
+    if "default (" in colorspace:
+        colorspace = re.sub(r"default.\(|\)", "", colorspace)
+
+    return colorspace
 
 
 def get_review_presets_config():
@@ -173,7 +564,6 @@ class ExporterReview(object):
 
     def get_file_info(self):
         if self.collection:
-            self.log.debug("Collection: `{}`".format(self.collection))
             # get path
             self.fname = os.path.basename(self.collection.format(
                 "{head}{padding}{tail}"))
@@ -308,7 +698,6 @@ class ExporterReviewLut(ExporterReview):
         # connect
         self._temp_nodes.append(cms_node)
         self.previous_node = cms_node
-        self.log.debug("CMSTestPattern...   `{}`".format(self._temp_nodes))
 
         if bake_viewer_process:
             # Node View Process
@@ -341,8 +730,6 @@ class ExporterReviewLut(ExporterReview):
         # connect
         gen_lut_node.setInput(0, self.previous_node)
         self._temp_nodes.append(gen_lut_node)
-        self.log.debug("GenerateLUT...   `{}`".format(self._temp_nodes))
-
         # ---------- end nodes creation
 
         # Export lut file
@@ -355,8 +742,6 @@ class ExporterReviewLut(ExporterReview):
 
         # ---------- generate representation data
         self.get_representation_data()
-
-        self.log.debug("Representation...   `{}`".format(self.data))
 
         # ---------- Clean up
         self.clean_nodes()
@@ -427,6 +812,8 @@ class ExporterReviewMov(ExporterReview):
             # create nk path
             path = os.path.splitext(self.path)[0] + ".nk"
             # save file to the path
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
             shutil.copyfile(self.instance.context.data["currentFile"], path)
 
         self.log.info("Nodes exported...")
@@ -581,6 +968,7 @@ class ExporterReviewMov(ExporterReview):
         return self.data
 
 
+@deprecated("openpype.hosts.nuke.api.plugin.NukeWriteCreator")
 class AbstractWriteRender(OpenPypeCreator):
     """Abstract creator to gather similar implementation for Write creators"""
     name = ""
@@ -607,7 +995,6 @@ class AbstractWriteRender(OpenPypeCreator):
 
         self.data = data
         self.nodes = nuke.selectedNodes()
-        self.log.debug("_ self.data: '{}'".format(self.data))
 
     def process(self):
 
@@ -732,3 +1119,149 @@ class AbstractWriteRender(OpenPypeCreator):
             node (nuke.Node): group node with data as Knobs
         """
         pass
+
+
+def convert_to_valid_instaces():
+    """ Check and convert to latest publisher instances
+
+    Also save as new minor version of workfile.
+    """
+    def family_to_identifier(family):
+        mapping = {
+            "render": "create_write_render",
+            "prerender": "create_write_prerender",
+            "still": "create_write_image",
+            "model": "create_model",
+            "camera": "create_camera",
+            "nukenodes": "create_backdrop",
+            "gizmo": "create_gizmo",
+            "source": "create_source"
+
+        }
+        return mapping[family]
+
+    from openpype.hosts.nuke.api import workio
+
+    task_name = legacy_io.Session["AVALON_TASK"]
+
+    # save into new workfile
+    current_file = workio.current_file()
+
+    # add file suffex if not
+    if "_publisherConvert" not in current_file:
+        new_workfile = (
+            current_file[:-3]
+            + "_publisherConvert"
+            + current_file[-3:]
+        )
+    else:
+        new_workfile = current_file
+
+    path = new_workfile.replace("\\", "/")
+    nuke.scriptSaveAs(new_workfile, overwrite=1)
+    nuke.Root()["name"].setValue(path)
+    nuke.Root()["project_directory"].setValue(os.path.dirname(path))
+    nuke.Root().setModified(False)
+
+    _remove_old_knobs(nuke.Root())
+
+    # loop all nodes and convert
+    for node in nuke.allNodes(recurseGroups=True):
+        transfer_data = {
+            "creator_attributes": {}
+        }
+        creator_attr = transfer_data["creator_attributes"]
+
+        if node.Class() in ["Viewer", "Dot"]:
+            continue
+
+        if get_node_data(node, INSTANCE_DATA_KNOB):
+            continue
+
+        # get data from avalon knob
+        avalon_knob_data = get_avalon_knob_data(
+            node, ["avalon:", "ak:"])
+
+        if not avalon_knob_data:
+            continue
+
+        if avalon_knob_data["id"] != "pyblish.avalon.instance":
+            continue
+
+        transfer_data.update({
+            k: v for k, v in avalon_knob_data.items()
+            if k not in ["families", "creator"]
+        })
+
+        transfer_data["task"] = task_name
+
+        family = avalon_knob_data["family"]
+        # establish families
+        families_ak = avalon_knob_data.get("families", [])
+
+        if "suspend_publish" in node.knobs():
+            creator_attr["suspended_publish"] = (
+                node["suspend_publish"].value())
+
+        # get review knob value
+        if "review" in node.knobs():
+            creator_attr["review"] = (
+                node["review"].value())
+
+        if "publish" in node.knobs():
+            transfer_data["active"] = (
+                node["publish"].value())
+
+        # add idetifier
+        transfer_data["creator_identifier"] = family_to_identifier(family)
+
+        # Add all nodes in group instances.
+        if node.Class() == "Group":
+            # only alter families for render family
+            if families_ak and "write" in families_ak.lower():
+                target = node["render"].value()
+                if target == "Use existing frames":
+                    creator_attr["render_target"] = "frames"
+                elif target == "Local":
+                    # Local rendering
+                    creator_attr["render_target"] = "local"
+                elif target == "On farm":
+                    # Farm rendering
+                    creator_attr["render_target"] = "farm"
+
+                if "deadlinePriority" in node.knobs():
+                    transfer_data["farm_priority"] = (
+                        node["deadlinePriority"].value())
+                if "deadlineChunkSize" in node.knobs():
+                    creator_attr["farm_chunk"] = (
+                        node["deadlineChunkSize"].value())
+                if "deadlineConcurrentTasks" in node.knobs():
+                    creator_attr["farm_concurency"] = (
+                        node["deadlineConcurrentTasks"].value())
+
+        _remove_old_knobs(node)
+
+        # add new instance knob with transfer data
+        set_node_data(
+            node, INSTANCE_DATA_KNOB, transfer_data)
+
+    nuke.scriptSave()
+
+
+def _remove_old_knobs(node):
+    remove_knobs = [
+        "review", "publish", "render", "suspend_publish", "warn", "divd",
+        "OpenpypeDataGroup", "OpenpypeDataGroup_End", "deadlinePriority",
+        "deadlineChunkSize", "deadlineConcurrentTasks", "Deadline"
+    ]
+    print(node.name())
+
+    # remove all old knobs
+    for knob in node.allKnobs():
+        try:
+            if knob.name() in remove_knobs:
+                node.removeKnob(knob)
+            elif "avalon" in knob.name():
+                node.removeKnob(knob)
+        except ValueError:
+            pass

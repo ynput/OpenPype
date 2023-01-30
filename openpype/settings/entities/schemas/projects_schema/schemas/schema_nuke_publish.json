@@ -11,8 +11,8 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "PreCollectNukeInstances",
-            "label": "PreCollectNukeInstances",
+            "key": "CollectInstanceData",
+            "label": "CollectInstanceData",
             "is_group": true,
             "children": [
                 {
