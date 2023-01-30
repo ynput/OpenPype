@@ -189,6 +189,6 @@ class FileTransaction(object):
     def _same_paths(self, src, dst):
         # handles same paths but with C:/project vs c:/project
         if os.path.exists(src) and os.path.exists(dst):
-            return os.path.samefile(src, dst)
+            return os.stat(src) == os.stat(dst)
 
         return src == dst

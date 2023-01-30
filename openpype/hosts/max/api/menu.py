@@ -119,7 +119,7 @@ class OpenPypeMenu(object):
 
     def manage_callback(self):
         """Callback to show Scene Manager/Inventory tool."""
-        host_tools.show_subset_manager(parent=self.main_widget)
+        host_tools.show_scene_inventory(parent=self.main_widget)
 
     def library_callback(self):
         """Callback to show Library Loader tool."""
