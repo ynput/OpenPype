@@ -613,8 +613,21 @@ def context_plugin_should_run(plugin, context):
 def get_instance_staging_dir(instance):
     """Unified way how staging dir is stored and created on instances.
 
-    First check if 'stagingDir' is already set in instance data. If there is
-    not create new in tempdir.
+    First check if 'stagingDir' is already set in instance data.
+    In case there already is new tempdir will not be created.
+
+    It also supports `OPENPYPE_TEMP_DIR`, so studio can define own temp shared
+    repository per project or even per more granular context. Template formating
+    is supported also with optional keys. Folder is created in case it doesnt exists.
+
+    Available anatomy formating keys:
+        - root[work | <root name key>]
+        - project[name | code]
+        - asset
+        - hierarchy
+        - task
+        - username
+        - app
 
     Note:
         Staging dir does not have to be necessarily in tempdir so be carefull
@@ -641,7 +654,7 @@ def get_instance_staging_dir(instance):
                 anatomy_data["root"] = anatomy.roots
                 """Template path formating is supporting:
                 - optional key formating
-                - available tokens:
+                - available keys:
                     - root[work | <root name key>]
                     - project[name | code]
                     - asset
