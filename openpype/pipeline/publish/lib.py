@@ -616,11 +616,12 @@ def get_instance_staging_dir(instance):
     First check if 'stagingDir' is already set in instance data.
     In case there already is new tempdir will not be created.
 
-    It also supports `OPENPYPE_TEMP_DIR`, so studio can define own temp shared
-    repository per project or even per more granular context. Template formating
-    is supported also with optional keys. Folder is created in case it doesnt exists.
+    It also supports `OPENPYPE_TEMP_DIR`, so studio can define own temp
+    shared repository per project or even per more granular context.
+    Template formating is supported also with optional keys. Folder is
+    created in case it doesnt exists.
 
-    Available anatomy formating keys:
+    Available anatomy formatting keys:
         - root[work | <root name key>]
         - project[name | code]
         - asset
@@ -643,50 +644,55 @@ def get_instance_staging_dir(instance):
     staging_dir = instance.data.get('stagingDir')
     if staging_dir:
         return staging_dir
+
     openpype_temp_dir = os.getenv("OPENPYPE_TEMP_DIR")
-
-    if not staging_dir:
-        custom_temp_dir = None
-        if openpype_temp_dir:
-            if "{" in openpype_temp_dir:
-                anatomy = instance.context.data["anatomy"]
-                # get anatomy formating data
-                # so template formating is supported
-                anatomy_data = copy.deepcopy(instance.context.data["anatomyData"])
-                anatomy_data["root"] = anatomy.roots
-                """Template path formating is supporting:
-                - optional key formating
-                - available keys:
-                    - root[work | <root name key>]
-                    - project[name | code]
-                    - asset
-                    - hierarchy
-                    - task
-                    - username
-                    - app
-                """
-                custom_temp_dir = StringTemplate.format_template(
-                    openpype_temp_dir, anatomy_data)
-                custom_temp_dir = os.path.normpath(custom_temp_dir)
-                # create the dir in case it doesnt exists
-                os.makedirs(os.path.dirname(custom_temp_dir))
-            elif os.path.exists(openpype_temp_dir):
-                custom_temp_dir = openpype_temp_dir
-
-
-        if custom_temp_dir:
-            staging_dir = os.path.normpath(
-                tempfile.mkdtemp(
-                    prefix="pyblish_tmp_",
-                    dir=custom_temp_dir
-                )
+    custom_temp_dir = None
+    if openpype_temp_dir:
+        if "{" in openpype_temp_dir:
+            custom_temp_dir = _formated_staging_dir(
+                instance, openpype_temp_dir
             )
-        else:
-            staging_dir = os.path.normpath(
-                tempfile.mkdtemp(prefix="pyblish_tmp_")
+        elif os.path.exists(openpype_temp_dir):
+            custom_temp_dir = openpype_temp_dir
+
+
+    if custom_temp_dir:
+        staging_dir = os.path.normpath(
+            tempfile.mkdtemp(
+                prefix="pyblish_tmp_",
+                dir=custom_temp_dir
             )
-        instance.data['stagingDir'] = staging_dir
+        )
+    else:
+        staging_dir = os.path.normpath(
+            tempfile.mkdtemp(prefix="pyblish_tmp_")
+        )
+    instance.data['stagingDir'] = staging_dir
 
     instance.context.data["cleanupFullPaths"].append(staging_dir)
 
     return staging_dir
+
+
+def _formated_staging_dir(instance, openpype_temp_dir):
+    anatomy = instance.context.data["anatomy"]
+    # get anatomy formating data
+    # so template formating is supported
+    anatomy_data = copy.deepcopy(instance.context.data["anatomyData"])
+    anatomy_data["root"] = anatomy.roots
+    """Template path formatting is supporting:
+            - optional key formating
+            - available keys:
+                - root[work | <root name key>]
+                - project[name | code]
+                - asset
+                - hierarchy
+                - task
+                - username
+                - app
+            """
+    result = StringTemplate.format_template(openpype_temp_dir, anatomy_data)
+    result = os.path.normpath(result)
+            # create the dir in case it doesnt exists
+    os.makedirs(os.path.dirname(result))
+    return result
