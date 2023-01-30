@@ -36,7 +36,7 @@ class ValidateVRayDistributedRendering(pyblish.api.InstancePlugin):
         vray_settings = cmds.ls("vraySettings", type="VRaySettingsNode")
         assert vray_settings, "Please ensure a VRay Settings Node is present"
 
-        renderlayer = instance.data['setMembers']
+        renderlayer = instance.data['renderlayer']
 
         if not lib.get_attr_in_layer(self.enabled_attr, layer=renderlayer):
             # If not distributed rendering enabled, ignore..
@@ -51,7 +51,7 @@ class ValidateVRayDistributedRendering(pyblish.api.InstancePlugin):
     @classmethod
     def repair(cls, instance):
 
-        renderlayer = instance.data.get("setMembers")
+        renderlayer = instance.data.get("renderlayer")
         with lib.renderlayer(renderlayer):
             cls.log.info("Enabling Distributed Rendering "
                          "ignore in batch mode..")

@@ -140,7 +140,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
     def repair_renderlayer(cls, instance):
         """Apply frame range in render settings"""
 
-        layer = instance.data["setMembers"]
+        layer = instance.data["renderlayer"]
         context = instance.context
 
         start_attr = "defaultRenderGlobals.startFrame"

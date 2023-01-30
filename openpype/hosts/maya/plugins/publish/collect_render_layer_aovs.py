@@ -50,7 +50,7 @@ class CollectRenderLayerAOVS(pyblish.api.InstancePlugin):
         result = []
 
         # Collect all AOVs / Render Elements
-        layer = instance.data["setMembers"]
+        layer = instance.data["renderlayer"]
         node_type = rp_node_types[renderer]
         render_elements = cmds.ls(type=node_type)
 

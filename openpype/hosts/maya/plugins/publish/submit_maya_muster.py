@@ -288,7 +288,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         comment = context.data.get("comment", "")
         scene = os.path.splitext(filename)[0]
         dirname = os.path.join(workspace, "renders")
-        renderlayer = instance.data['setMembers']       # rs_beauty
+        renderlayer = instance.data['renderlayer']       # rs_beauty
         renderlayer_name = instance.data['subset']      # beauty
         renderglobals = instance.data["renderGlobals"]
         # legacy_layers = renderlayer_globals["UseLegacyRenderLayers"]

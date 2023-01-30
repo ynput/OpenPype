@@ -106,7 +106,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         multipart = False
 
         renderer = instance.data['renderer']
-        layer = instance.data['setMembers']
+        layer = instance.data['renderlayer']
         cameras = instance.data.get("cameras", [])
 
         # Get the node attributes for current renderer
