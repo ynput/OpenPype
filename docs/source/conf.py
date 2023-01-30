@@ -17,18 +17,29 @@
 
 import os
 import sys
-pype_root = os.path.abspath('../..')
-sys.path.insert(0, pype_root)
+from Qt.QtWidgets import QApplication
+
+openpype_root = os.path.abspath('../..')
+sys.path.insert(0, openpype_root)
+app = QApplication([])
+
+"""
 repos = os.listdir(os.path.abspath("../../repos"))
-repos = [os.path.join(pype_root, "repos", repo) for repo in repos]
+repos = [os.path.join(openpype_root, "repos", repo) for repo in repos]
 for repo in repos:
     sys.path.append(repo)
+"""
+
+todo_include_todos = True
+autodoc_mock_imports = ["maya", "pymel", "nuke", "nukestudio", "nukescripts",
+                        "hiero", "bpy", "fusion", "houdini", "hou", "unreal",
+                        "__builtin__", "resolve", "pysync", "DaVinciResolveScript"]
 
 # -- Project information -----------------------------------------------------
 
-project = 'pype'
-copyright = '2019, Orbi Tools'
-author = 'Orbi Tools'
+project = 'OpenPype'
+copyright = '2023 Ynput'
+author = 'Ynput'
 
 # The short X.Y version
 version = ''
@@ -54,17 +65,46 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
-    'recommonmark'
+    'm2r2'
+    'autoapi.extension'
 ]
 
+##############################
+# Autoapi settings
+##############################
+
+autoapi_dirs = ['../../openpype', '../../igniter']
+
+# bypas modules with a lot of python2 content for now
+autoapi_ignore = [
+    "*plugin*",
+    "*hosts*",
+    "*vendor*",
+    "*modules*",
+    "*setup*",
+    "*tools*",
+    "*schemas*",
+    "*website*"
+]
+autoapi_keep_files = True
+autoapi_options = [
+    'members',
+    'undoc-members',
+    'show-inheritance',
+    'show-module-summary'
+]
+autoapi_add_toctree_entry = True
+autoapi_template_dir = '_autoapi_templates'
+
+
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ['templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ['.rst', '.md']
 
 # The master toctree document.
 master_doc = 'index'
@@ -79,7 +119,10 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = [
+    "openpype.hosts.resolve.*",
+    "openpype.tools.*"
+    ]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'friendly'
@@ -104,7 +147,9 @@ html_theme = 'sphinx_rtd_theme'
 # documentation.
 #
 html_theme_options = {
-    'collapse_navigation': False
+    'collapse_navigation': False,
+    'navigation_depth': 5,
+    'titles_only': False
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -153,8 +198,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'pype.tex', 'pype Documentation',
-     'OrbiTools', 'manual'),
+    (master_doc, 'openpype.tex', 'OpenPype Documentation',
+     'Ynput', 'manual'),
 ]
 
 
@@ -163,7 +208,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'pype', 'pype Documentation',
+    (master_doc, 'openpype', 'OpenPype Documentation',
      [author], 1)
 ]
 
@@ -174,8 +219,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'pype', 'pype Documentation',
-     author, 'pype', 'One line description of project.',
+    (master_doc, 'OpenPype', 'OpenPype Documentation',
+     author, 'OpenPype', 'Pipeline for studios',
      'Miscellaneous'),
 ]
 
