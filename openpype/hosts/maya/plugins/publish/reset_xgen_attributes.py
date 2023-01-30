@@ -7,8 +7,8 @@ class ResetXgenAttributes(pyblish.api.InstancePlugin):
     """Reset Xgen attributes."""
 
     label = "Reset Xgen Attributes."
-    # Offset to run after global integrator.
-    order = pyblish.api.IntegratorOrder + 1.0
+    # Offset to run after workfile increment plugin.
+    order = pyblish.api.IntegratorOrder + 10.0
     families = ["workfile"]
 
     def process(self, instance):
@@ -19,3 +19,9 @@ class ResetXgenAttributes(pyblish.api.InstancePlugin):
                     "Setting \"{}\" on \"{}\"".format(value, node_attr)
                 )
                 cmds.setAttr(node_attr, value, type="string")
+
+            cmds.setAttr(palette + "." + "xgExportAsDelta", True)
+
+        if instance.data.get("xgenAttributes", {}):
+            self.log.info("Saving changes.")
+            cmds.file(save=True)
