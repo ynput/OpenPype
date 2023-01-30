@@ -122,108 +122,7 @@ class Creator(LegacyCreator):
 
 
 @six.add_metaclass(ABCMeta)
-class MayaCreator(NewCreator):
-
-    def create(self, subset_name, instance_data, pre_create_data):
-
-        members = list()
-        if pre_create_data.get("use_selection"):
-            members = cmds.ls(selection=True)
-
-        with lib.undo_chunk():
-            instance_node = cmds.sets(members, name=subset_name)
-            instance_data["instance_node"] = instance_node
-            instance = CreatedInstance(
-                self.family,
-                subset_name,
-                instance_data,
-                self)
-            self._add_instance_to_context(instance)
-
-            self.imprint_instance_node(instance_node,
-                                       data=instance.data_to_store())
-            return instance
-
-    def collect_instances(self):
-        self.cache_subsets(self.collection_shared_data)
-        cached_subsets = self.collection_shared_data["maya_cached_subsets"]
-        for node in cached_subsets.get(self.identifier, []):
-            node_data = self.read_instance_node(node)
-
-            # Explicitly re-parse the node name
-            node_data["instance_node"] = node
-
-            created_instance = CreatedInstance.from_existing(node_data, self)
-            self._add_instance_to_context(created_instance)
-
-    def update_instances(self, update_list):
-        for created_inst, _changes in update_list:
-            data = created_inst.data_to_store()
-            node = data.get("instance_node")
-
-            self.imprint_instance_node(node, data)
-
-    def imprint_instance_node(self, node, data):
-
-        # We never store the instance_node as value on the node since
-        # it's the node name itself
-        data.pop("instance_node", None)
-
-        # We store creator attributes at the root level and assume they
-        # will not clash in names with `subset`, `task`, etc. and other
-        # default names. This is just so these attributes in many cases
-        # are still editable in the maya UI by artists.
-        data.update(data.pop("creator_attributes", {}))
-
-        # We know the "publish_attributes" will be complex data of
-        # settings per plugins, we'll store this as a flattened json structure
-        publish_attributes = json.dumps(data.get("publish_attributes", {}))
-        data.pop("publish_attributes", None)    # pop to move to end of dict
-        data["publish_attributes"] = publish_attributes
-
-        # Kill any existing attributes just we can imprint cleanly again
-        for attr in data.keys():
-            if cmds.attributeQuery(attr, node=node, exists=True):
-                cmds.deleteAttr("{}.{}".format(node, attr))
-
-        return imprint(node, data)
-
-    def read_instance_node(self, node):
-        node_data = read(node)
-
-        # Move the relevant attributes into "creator_attributes" that
-        # we flattened originally
-        node_data["creator_attributes"] = {}
-        for key, value in node_data.items():
-            if key not in CREATOR_INSTANCE_ATTRS:
-                node_data["creator_attributes"][key] = value
-
-        publish_attributes = node_data.get("publish_attributes")
-        if publish_attributes:
-            node_data["publish_attributes"] = json.loads(publish_attributes)
-
-        return node_data
-
-    def remove_instances(self, instances):
-        """Remove specified instance from the scene.
-
-        This is only removing `id` parameter so instance is no longer
-        instance, because it might contain valuable data for artist.
-
-        """
-        for instance in instances:
-            node = instance.data.get("instance_node")
-            if node:
-                cmds.delete(node)
-
-            self._remove_instance_from_context(instance)
-
-    def get_pre_create_attr_defs(self):
-        return [
-            BoolDef("use_selection",
-                    label="Use selection",
-                    default=True)
-        ]
+class MayaCreatorBase(object):
 
     @staticmethod
     def cache_subsets(shared_data):
@@ -269,6 +168,111 @@ class MayaCreator(NewCreator):
             shared_data["maya_cached_subsets"] = cache
             shared_data["maya_cached_legacy_subsets"] = cache_legacy
         return shared_data
+
+    def imprint_instance_node(self, node, data):
+
+        # We never store the instance_node as value on the node since
+        # it's the node name itself
+        data.pop("instance_node", None)
+
+        # We store creator attributes at the root level and assume they
+        # will not clash in names with `subset`, `task`, etc. and other
+        # default names. This is just so these attributes in many cases
+        # are still editable in the maya UI by artists.
+        data.update(data.pop("creator_attributes", {}))
+
+        # We know the "publish_attributes" will be complex data of
+        # settings per plugins, we'll store this as a flattened json structure
+        publish_attributes = json.dumps(data.get("publish_attributes", {}))
+        data.pop("publish_attributes", None)    # pop to move to end of dict
+        data["publish_attributes"] = publish_attributes
+
+        # Kill any existing attributes just we can imprint cleanly again
+        for attr in data.keys():
+            if cmds.attributeQuery(attr, node=node, exists=True):
+                cmds.deleteAttr("{}.{}".format(node, attr))
+
+        return imprint(node, data)
+
+    def read_instance_node(self, node):
+        node_data = read(node)
+
+        # Move the relevant attributes into "creator_attributes" that
+        # we flattened originally
+        node_data["creator_attributes"] = {}
+        for key, value in node_data.items():
+            if key not in CREATOR_INSTANCE_ATTRS:
+                node_data["creator_attributes"][key] = value
+
+        publish_attributes = node_data.get("publish_attributes")
+        if publish_attributes:
+            node_data["publish_attributes"] = json.loads(publish_attributes)
+
+        # Explicitly re-parse the node name
+        node_data["instance_node"] = node
+
+        return node_data
+
+
+@six.add_metaclass(ABCMeta)
+class MayaCreator(NewCreator, MayaCreatorBase):
+
+    def create(self, subset_name, instance_data, pre_create_data):
+
+        members = list()
+        if pre_create_data.get("use_selection"):
+            members = cmds.ls(selection=True)
+
+        with lib.undo_chunk():
+            instance_node = cmds.sets(members, name=subset_name)
+            instance_data["instance_node"] = instance_node
+            instance = CreatedInstance(
+                self.family,
+                subset_name,
+                instance_data,
+                self)
+            self._add_instance_to_context(instance)
+
+            self.imprint_instance_node(instance_node,
+                                       data=instance.data_to_store())
+            return instance
+
+    def collect_instances(self):
+        self.cache_subsets(self.collection_shared_data)
+        cached_subsets = self.collection_shared_data["maya_cached_subsets"]
+        for node in cached_subsets.get(self.identifier, []):
+            node_data = self.read_instance_node(node)
+
+            created_instance = CreatedInstance.from_existing(node_data, self)
+            self._add_instance_to_context(created_instance)
+
+    def update_instances(self, update_list):
+        for created_inst, _changes in update_list:
+            data = created_inst.data_to_store()
+            node = data.get("instance_node")
+
+            self.imprint_instance_node(node, data)
+
+    def remove_instances(self, instances):
+        """Remove specified instance from the scene.
+
+        This is only removing `id` parameter so instance is no longer
+        instance, because it might contain valuable data for artist.
+
+        """
+        for instance in instances:
+            node = instance.data.get("instance_node")
+            if node:
+                cmds.delete(node)
+
+            self._remove_instance_from_context(instance)
+
+    def get_pre_create_attr_defs(self):
+        return [
+            BoolDef("use_selection",
+                    label="Use selection",
+                    default=True)
+        ]
 
 
 class Loader(LoaderPlugin):

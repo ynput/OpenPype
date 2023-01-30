@@ -147,52 +147,92 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
         rs = renderSetup.instance()
         layers = rs.getRenderLayers()
         for layer in layers:
-            subset_name = "render" + layer.name()
+            layer_instance_node = self.find_layer_instance_node(layer)
+            if layer_instance_node:
+                data = self.read_instance_node(layer_instance_node)
+                instance = CreatedInstance.from_existing(data, creator=self)
+            else:
+                subset_name = "render" + layer.name()
 
-            instance_data = {
-                "asset": legacy_io.Session["AVALON_ASSET"],
-                "task": legacy_io.Session["AVALON_TASK"],
-                "variant": layer.name(),
-            }
+                instance_data = {
+                    "asset": legacy_io.Session["AVALON_ASSET"],
+                    "task": legacy_io.Session["AVALON_TASK"],
+                    "variant": layer.name(),
+                }
 
-            instance = CreatedInstance(
-                family=self.family,
-                subset_name=subset_name,
-                data=instance_data,
-                creator=self
-            )
+                instance = CreatedInstance(
+                    family=self.family,
+                    subset_name=subset_name,
+                    data=instance_data,
+                    creator=self
+                )
+            instance.transient_data["layer"] = layer
             self._add_instance_to_context(instance)
+
+    def find_layer_instance_node(self, layer):
+        connected_sets = cmds.listConnections(
+            "{}.message".format(layer.name()),
+            source=False,
+            destination=True,
+            type="objectSet"
+        ) or []
+
+        for node in connected_sets:
+            if not cmds.attributeQuery("creator_identifier",
+                                       node=node,
+                                       exists=True):
+                continue
+
+            creator_identifier = cmds.getAttr(node + ".creator_identifier")
+            if creator_identifier == self.identifier:
+                print(f"Found node: {node}")
+                return node
+
+    def _create_layer_instance_node(self, layer):
+
+        # We only collect if a CreateRender instance exists
+        create_render_sets = lib.lsattr("pre_creator_identifier",
+                                        CreateRender.identifier)
+        if not create_render_sets:
+            raise CreatorError("Creating a renderlayer instance node is not "
+                               "allowed if no 'CreateRender' instance exists")
+        create_render_set = create_render_sets[0]
+
+        namespace = "_renderingMain"
+        namespace = ensure_namespace(namespace)
+
+        name = "{}:{}".format(namespace, layer.name())
+        render_set = cmds.sets(name=name, empty=True)
+
+        # Keep an active link with the renderlayer so we can retrieve it
+        # later by a physical maya connection instead of relying on the layer
+        # name to still exist
+        cmds.addAttr(render_set, longName="_renderLayer", at="message")
+        cmds.connectAttr(layer.name() + ".message",
+                         render_set + "._renderLayer", force=True)
+
+        # Add the set to the 'CreateRender' set.
+        cmds.sets(render_set, forceElement=create_render_set)
+
+        return render_set
 
     def update_instances(self, update_list):
         # We only generate the persisting layer data into the scene once
         # we save with the UI on e.g. validate or publish
-        # TODO: Implement this behavior for data persistence
+        for instance, changes in update_list:
+            instance_node = instance.data.get("instance_node")
 
-        # # create namespace with instance
-        # namespace_name = "_{}".format(subset_name)
-        # namespace = ensure_namespace(namespace_name)
-        #
-        # # Pre-process any existing layers
-        # self.log.info("Processing existing layers")
-        # sets = []
-        # for layer in layers:
-        #     set_name = "{}:{}".format(namespace, layer.name())
-        #     self.log.info("  - creating set for {}".format(set_name))
-        #     render_set = cmds.sets(name=set_name, empty=True)
-        #     sets.append(render_set)
-        #
-        # cmds.sets(sets, forceElement=instance_node)
-        #
+            # Ensure a node to persist the data to exists
+            if not instance_node:
+                layer = instance.transient_data["layer"]
+                instance_node = self._create_layer_instance_node(layer)
+                instance.data["instance_node"] = instance_node
+            else:
+                # TODO: Keep name in sync with the actual renderlayer?
+                pass
 
-        # for instance, changes in update_list.items():
-        #     instance_node = instance.data.get("instance_node")
-        #     if not instance_node:
-        #         layer = instance.data.get("layer")
-        #         instance_node = self._create_layer_instance_node(layer)
-        #
-        #     self.imprint_instance_node(instance_node,
-        #                                data=instance.data_to_store())
-        pass
+            self.imprint_instance_node(instance_node,
+                                       data=instance.data_to_store())
 
     def remove_instances(self, instances):
         """Remove specified instance from the scene.
