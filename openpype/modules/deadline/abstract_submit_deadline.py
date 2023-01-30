@@ -700,5 +700,5 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin,
                         True: "Allow List",
                         False: "Deny List",
                     },
-                    default="Deny List")
+                    default=False)
         ]
