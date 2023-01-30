@@ -728,9 +728,9 @@ class AyonDistribution:
         self._dist_finished = False
         self._log = None
         self._addons_info = addons_info
-        self._addons_progress = None
+        self._addons_dist_items = None
         self._dependency_package = -1
-        self._dependency_progress = -1
+        self._dependency_dist_item = -1
 
     @property
     def log(self):
@@ -758,7 +758,7 @@ class AyonDistribution:
             self._dependency_package = get_dependency_package()
         return self._dependency_package
 
-    def _prepare_current_addons_state(self):
+    def _prepare_current_addons_dist_items(self):
         addons_metadata = self.get_addons_metadata()
         output = {}
         for full_name, addon_info in self.addons_info.items():
@@ -801,7 +801,7 @@ class AyonDistribution:
             )
         return output
 
-    def _prepare_dependency_progress(self):
+    def _preapre_dependency_dist_item(self):
         package = self.dependency_package
         if package is None or not package.require_distribution:
             return None
@@ -834,15 +834,15 @@ class AyonDistribution:
             self.log,
         )
 
-    def get_addons_progress(self):
-        if self._addons_progress is None:
-            self._addons_progress = self._prepare_current_addons_state()
-        return self._addons_progress
+    def get_addons_dist_items(self):
+        if self._addons_dist_items is None:
+            self._addons_dist_items = self._prepare_current_addons_dist_items()
+        return self._addons_dist_items
 
-    def get_dependency_progress(self):
-        if self._dependency_progress == -1:
-            self._dependency_progress = self._prepare_dependency_progress()
-        return self._dependency_progress
+    def get_dependency_dist_item(self):
+        if self._dependency_dist_item == -1:
+            self._dependency_dist_item = self._preapre_dependency_dist_item()
+        return self._dependency_dist_item
 
     def get_dependency_metadata_filepath(self):
         return os.path.join(self._dependency_dirpath, "dependency.json")
@@ -928,31 +928,31 @@ class AyonDistribution:
     def finish_distribution(self):
         self._dist_finished = True
         stored_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        dependency_progress = self.get_dependency_progress()
+        dependency_dist_item = self.get_dependency_dist_item()
         if (
-            dependency_progress is not None
-            and dependency_progress.need_distribution
-            and dependency_progress.state == UpdateState.UPDATED
+            dependency_dist_item is not None
+            and dependency_dist_item.need_distribution
+            and dependency_dist_item.state == UpdateState.UPDATED
         ):
             package = self.dependency_package
-            source = dependency_progress.used_source
+            source = dependency_dist_item.used_source
             if source is not None:
                 data = {
                     "source": source,
-                    "file_hash": dependency_progress.file_hash,
+                    "file_hash": dependency_dist_item.file_hash,
                     "distributed_dt": stored_time
                 }
                 self.update_dependency_metadata(package.name, data)
 
         addons_info = {}
-        for full_name, progress in self.get_addons_progress().items():
+        for full_name, dist_item in self.get_addons_dist_items().items():
             if (
-                not progress.need_distribution
-                or progress.state != UpdateState.UPDATED
+                not dist_item.need_distribution
+                or dist_item.state != UpdateState.UPDATED
             ):
                 continue
 
-            source_data = progress.used_source
+            source_data = dist_item.used_source
             if not source_data:
                 continue
             addon_info = self.addons_info[full_name]
@@ -960,7 +960,7 @@ class AyonDistribution:
                 addons_info[addon_info.name] = {}
             addons_info[addon_info.name][addon_info.version] = {
                 "source": source_data,
-                "file_hash": progress.file_hash,
+                "file_hash": dist_item.file_hash,
                 "distributed_dt": stored_time
             }
 
@@ -968,11 +968,11 @@ class AyonDistribution:
 
     def get_all_distribution_items(self):
         output = []
-        dependency_progress = self.get_dependency_progress()
-        if dependency_progress is not None:
-            output.append(dependency_progress)
-        for progress in self.get_addons_progress().values():
-            output.append(progress)
+        dependency_dist_item = self.get_dependency_dist_item()
+        if dependency_dist_item is not None:
+            output.append(dependency_dist_item)
+        for dist_item in self.get_addons_dist_items().values():
+            output.append(dist_item)
         return output
 
     def distribute(self, threaded=False):
@@ -997,15 +997,15 @@ class AyonDistribution:
 
     def validate_distribution(self):
         invalid = []
-        dependency_package = self.get_dependency_progress()
+        dependency_package = self.get_dependency_dist_item()
         if (
             dependency_package is not None
             and dependency_package.state != UpdateState.UPDATED
         ):
             invalid.append("Dependency package")
 
-        for addon_name, progress in self.get_addons_progress().items():
-            if progress.state != UpdateState.UPDATED:
+        for addon_name, dist_item in self.get_addons_dist_items().items():
+            if dist_item.state != UpdateState.UPDATED:
                 invalid.append(addon_name)
 
         if not invalid:
