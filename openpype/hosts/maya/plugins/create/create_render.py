@@ -152,20 +152,22 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
                 data = self.read_instance_node(layer_instance_node)
                 instance = CreatedInstance.from_existing(data, creator=self)
             else:
+                # No existing scene instance node for this layer. Note that
+                # this instance will not have the `instance_node` data yet
+                # until it's been saved/persisted at least once.
                 subset_name = "render" + layer.name()
-
                 instance_data = {
                     "asset": legacy_io.Session["AVALON_ASSET"],
                     "task": legacy_io.Session["AVALON_TASK"],
                     "variant": layer.name(),
                 }
-
                 instance = CreatedInstance(
                     family=self.family,
                     subset_name=subset_name,
                     data=instance_data,
                     creator=self
                 )
+
             instance.transient_data["layer"] = layer
             self._add_instance_to_context(instance)
 
@@ -206,7 +208,7 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
 
         # Keep an active link with the renderlayer so we can retrieve it
         # later by a physical maya connection instead of relying on the layer
-        # name to still exist
+        # name
         cmds.addAttr(render_set, longName="renderlayer", at="message")
         cmds.connectAttr(layer.name() + ".message",
                          render_set + ".renderlayer", force=True)
@@ -222,7 +224,7 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
         for instance, _changes in update_list:
             instance_node = instance.data.get("instance_node")
 
-            # Ensure a node to persist the data to exists
+            # Ensure a node exists to persist the data to
             if not instance_node:
                 layer = instance.transient_data["layer"]
                 instance_node = self._create_layer_instance_node(layer)
