@@ -71,9 +71,6 @@ pysftp = "^0.2.9"
 dropbox = "^11.20.0"
 aiohttp-middlewares = "^2.0.0"
 opencolorio = "^2.2.0"
-m2r2 = "^0.3.3.post2"
-autoapi = "^2.0.1"
-sphinx-autoapi = "^2.0.1"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^6.0"
@@ -90,8 +87,11 @@ pylint = "^2.4.4"
 pytest = "^6.1"
 pytest-cov = "*"
 pytest-print = "*"
-Sphinx = "^6.1"
-sphinx-rtd-theme = "*"
+Sphinx = { version = "^6.1", optional = true }
+m2r2 = { version = "^0.3.3.post2", optional = true }
+sphinx-autoapi = { version = "^2.0.1", optional = true }
+sphinxcontrib-napoleon = { version = "^0.7", optional = true }
+furo = { version = "^2022.12.7", optional = true }
 recommonmark = "*"
 wheel = "*"
 enlighten = "*"  # cool terminal progress bars
@@ -168,3 +168,6 @@ ignore = ["website", "docs", ".git"]
 
 reportMissingImports = true
 reportMissingTypeStubs = false
+
+[tool.poetry.extras]
+docs = ["Sphinx", "furo", "sphinxcontrib-napoleon"]
