@@ -195,12 +195,22 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
         instance, because it might contain valuable data for artist.
 
         """
-        for instance in instances:
-            node = instance.data.get("instance_node")
-            if node:
-                cmds.delete(node)
+        # Instead of removing the single instance or renderlayers we instead
+        # remove the CreateRender node this creator relies on to decide whether
+        # it should collect anything at all.
+        nodes = lib.lsattr("pre_creator_identifier", CreateRender.identifier)
+        if nodes:
+            cmds.delete(nodes)
 
-            self._remove_instance_from_context(instance)
+        # Remove ALL of the instances even if only one gets deleted
+        for instance in list(self.create_context.instances):
+            if instance.get("creator_identifier") == self.identifier:
+                self._remove_instance_from_context(instance)
+
+                # TODO: Remove the stored settings per renderlayer too?
+                # node = instance.data.get("instance_node")
+                # if node:
+                #     cmds.delete(node)
 
     def get_instance_attr_defs(self):
         """Create instance settings."""
