@@ -707,6 +707,8 @@ class AyonDistribution:
         dist_factory (AddonDownloader): Factory which cares about downloading
             of items based on source type.
         addons_info (List[AddonInfo]): List of prepared addons info.
+        dependency_package_info (Union[Dict[str, Any], None]): Dependency
+            package info from server. Defaults to '-1'.
     """
 
     def __init__(
@@ -715,6 +717,7 @@ class AyonDistribution:
         dependency_dirpath=None,
         dist_factory=None,
         addons_info=None,
+        dependency_package_info=-1,
     ):
         self._addons_dirpath = addon_dirpath or get_addons_dir()
         self._dependency_dirpath = dependency_dirpath or get_dependencies_dir()
@@ -729,7 +732,7 @@ class AyonDistribution:
         self._log = None
         self._addons_info = addons_info
         self._addons_dist_items = None
-        self._dependency_package = -1
+        self._dependency_package = dependency_package_info
         self._dependency_dist_item = -1
 
     @property
