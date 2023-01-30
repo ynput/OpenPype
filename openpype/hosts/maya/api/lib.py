@@ -3446,3 +3446,17 @@ def iter_visible_nodes_in_range(nodes, start, end):
 def get_attribute_input(attr):
     connections = cmds.listConnections(attr, plugs=True, destination=False)
     return connections[0] if connections else None
+
+
+def write_xgen_file(data, filepath):
+    lines = []
+    with open(filepath, "r") as f:
+        for line in [line.rstrip() for line in f]:
+            for key, value in data.items():
+                if line.startswith("\t{}".format(key)):
+                    line = "\t{}\t\t{}".format(key, value)
+
+            lines.append(line)
+
+    with open(filepath, "w") as f:
+        f.write("\n".join(lines))
