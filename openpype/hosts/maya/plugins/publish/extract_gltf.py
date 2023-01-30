@@ -91,8 +91,13 @@ class ExtractGLB(publish.Extractor):
             # load the maya2gltf shader
             ogsfx_path = instance.context.data["project_settings"]["maya"]["publish"]["ExtractGLB"]["ogsfx_path"]  # noqa
             if not os.path.exists(ogsfx_path):
+                if ogsfx_path:
+                # Studio settings have a custom ogsfx_path set. If the path is
+                # not specified, this log will warn the user.
+                    self.log.warning("ogsfx shader file not found in {}".format(ogsfx_path))
+
                 self.log.info("Find the ogsfx shader file in "
-                              "default maya directory...")
+                          "default maya directory...")
                 # re-direct to search the ogsfx path in maya_dir
                 ogsfx_path = os.getenv("MAYA_APP_DIR") + ogsfx_path
                 if not os.path.exists(ogsfx_path):
