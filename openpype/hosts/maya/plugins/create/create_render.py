@@ -124,11 +124,13 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
     label = "Renderlayer"
     icon = "eye"
 
-    render_settings = {}
+    enable_all_lights = False
 
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
-        cls.render_settings = project_settings["maya"]["RenderSettings"]
+        render_settings = project_settings["maya"]["RenderSettings"]
+        cls.enable_all_lights = render_settings.get("enable_all_lights",
+                                                    cls.enable_all_lights)
 
     def create(self, instance_data, source_data):
         # A Renderlayer is never explicitly created using the create method.
@@ -267,6 +269,5 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
 
             BoolDef("renderSetupIncludeLights",
                     label="Render Setup Include Lights",
-                    default=self.render_settings.get("enable_all_lights",
-                                                     False))
+                    default=self.enable_all_lights)
         ]
