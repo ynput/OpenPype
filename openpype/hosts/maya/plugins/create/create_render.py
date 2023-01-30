@@ -77,7 +77,13 @@ class CreateRender(Creator):
         if self.render_settings.get("apply_render_settings"):
             lib_rendersettings.RenderSettings().set_default_renderer_settings()
 
-        # TODO: Create default 'Main' renderlayer if no renderlayers exist yet
+        # if no render layers are present, create default one with
+        # asterisk selector
+        rs = renderSetup.instance()
+        if not rs.getRenderLayers():
+            render_layer = rs.createRenderLayer('Main')
+            collection = render_layer.createCollection("defaultCollection")
+            collection.getSelector().setPattern('*')
 
         with lib.undo_chunk():
             node = cmds.sets(empty=True, name=subset_name)
@@ -85,10 +91,14 @@ class CreateRender(Creator):
                 "pre_creator_identifier": self.identifier
             })
 
-            # TODO: Now make it so that RenderLayerCreator 'collect'
-            #       automatically gets triggered to directly see renderlayers
-
-        return
+            # By RenderLayerCreator.create we make it so that the renderlayer
+            # instances directly appear even though it just collects scene
+            # renderlayers. This doesn't actually 'create' any scene contents.
+            self.create_context.create(
+                CreateRenderlayer.identifier,
+                instance_data={},
+                source_data=instance_data
+            )
 
     def collect_instances(self):
         # We never show this instance in the publish UI
@@ -121,32 +131,10 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
         cls.render_settings = project_settings["maya"]["RenderSettings"]
 
     def create(self, instance_data, source_data):
-        # Make sure an instance exists per renderlayer in the scene
-
-        # # create namespace with instance
-        # namespace_name = "_{}".format(subset_name)
-        # namespace = ensure_namespace(namespace_name)
-        #
-        # # Pre-process any existing layers
-        # # TODO: Document why we're processing the layers explicitly?
-        #
-        # self.log.info("Processing existing layers")
-        # sets = []
-        # for layer in layers:
-        #     set_name = "{}:{}".format(namespace, layer.name())
-        #     self.log.info("  - creating set for {}".format(set_name))
-        #     render_set = cmds.sets(name=set_name, empty=True)
-        #     sets.append(render_set)
-        #
-        # cmds.sets(sets, forceElement=instance_node)
-        #
-        # # if no render layers are present, create default one with
-        # # asterisk selector
-        # if not layers:
-        #     render_layer = rs.createRenderLayer('Main')
-        #     collection = render_layer.createCollection("defaultCollection")
-        #     collection.getSelector().setPattern('*')
-        return
+        # A Renderlayer is never explicitly created using the create method.
+        # Instead, renderlayers from the scene are collected. Thus "create"
+        # would only ever be called to say, 'hey, please refresh collect'
+        self.collect_instances()
 
     def collect_instances(self):
 
@@ -177,6 +165,22 @@ class CreateRenderlayer(HiddenCreator, plugin.MayaCreatorBase):
         # We only generate the persisting layer data into the scene once
         # we save with the UI on e.g. validate or publish
         # TODO: Implement this behavior for data persistence
+
+        # # create namespace with instance
+        # namespace_name = "_{}".format(subset_name)
+        # namespace = ensure_namespace(namespace_name)
+        #
+        # # Pre-process any existing layers
+        # self.log.info("Processing existing layers")
+        # sets = []
+        # for layer in layers:
+        #     set_name = "{}:{}".format(namespace, layer.name())
+        #     self.log.info("  - creating set for {}".format(set_name))
+        #     render_set = cmds.sets(name=set_name, empty=True)
+        #     sets.append(render_set)
+        #
+        # cmds.sets(sets, forceElement=instance_node)
+        #
 
         # for instance, changes in update_list.items():
         #     instance_node = instance.data.get("instance_node")
