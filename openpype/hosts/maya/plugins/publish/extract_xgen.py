@@ -51,7 +51,7 @@ class ExtractXgenCache(publish.Extractor):
         with delete_after() as delete_bin:
             duplicate_nodes = []
             # Collect nodes to export.
-            for node, connections in instance.data["xgenConnections"].items():
+            for _, connections in instance.data["xgenConnections"].items():
                 transform_name = connections["transform"].split(".")[0]
 
                 # Duplicate_transform subd patch geometry.
