@@ -57,6 +57,29 @@ def get_children_recursive(
             yield from get_children_recursive(child)
 
 
+def get_all_outliner_children(
+    entity: Union[bpy.types.Collection, bpy.types.Object]
+) -> Set[Union[bpy.types.Collection, bpy.types.Object]]:
+    """Get all outliner children of an outliner entity.
+
+    For a Collection, it is both objects and children collections.
+    For an Object, only objects parented to the given one.
+
+    Args:
+        entity (Union[bpy.types.Collection, bpy.types.Object]): Outliner entity to get children from.
+
+    Returns:
+        Set[Union[bpy.types.Collection, bpy.types.Object]]: All outliner children.
+    """
+    if not entity:
+        return set()
+
+    if hasattr(entity, "all_objects"):
+        return set(entity.children_recursive) | set(entity.all_objects)
+    else:
+        return set(entity.children_recursive)
+
+
 def get_parent_collection(
     entity: Union[bpy.types.Collection, bpy.types.Object],
 ) -> Optional[bpy.types.Collection]:

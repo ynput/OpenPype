@@ -24,10 +24,13 @@ from openpype.client.entities import (
     get_subset_by_id,
     get_version_by_id,
 )
-from openpype.hosts.blender.api.lib import ls
+from openpype.hosts.blender.api.lib import add_datablocks_to_container, ls
+from openpype.hosts.blender.api.properties import OpenpypeContainer
 from openpype.hosts.blender.api.utils import (
     BL_OUTLINER_TYPES,
     BL_TYPE_DATAPATH,
+    get_all_outliner_children,
+    link_to_collection,
 )
 from openpype.pipeline import legacy_io
 from openpype.pipeline.constants import AVALON_INSTANCE_ID
@@ -517,8 +520,8 @@ class SCENE_OT_CreateOpenpypeInstance(
     bl_label = "Create OpenPype Instance"
     bl_options = {"REGISTER", "UNDO"}
 
-    def __init__(self):
-        super().__init__()
+    def invoke(self, context, _event):
+        wm = context.window_manager
 
         # Set assets list
         self.all_assets.clear()
@@ -530,8 +533,6 @@ class SCENE_OT_CreateOpenpypeInstance(
         # Setup all data
         _update_entries_preset(self, bpy.context)
 
-    def invoke(self, context, _event):
-        wm = context.window_manager
         return wm.invoke_props_dialog(self)
 
     def draw(self, context):
@@ -949,13 +950,24 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
     # NOTE cannot use AVALON_PROPERTY because of circular dependency
     # and the refactor is very big, but must be done soon
 
-    @classmethod
-    def poll(cls, context):
-        # Check selected collection is in loaded containers
-        if context.collection is not context.scene.collection:
-            return context.collection.name in {
-                container["objectName"] for container in ls()
-            }
+    def invoke(self, context, _event):
+        wm = context.window_manager
+
+        # Prefill with outliner collection
+        matched_container = context.scene.openpype_containers.get(
+            context.collection.name
+        )
+        if matched_container:
+            self.container_name = matched_container.name
+
+        return wm.invoke_props_dialog(self)
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.prop_search(
+            self, "container_name", context.scene, "openpype_containers"
+        )
 
     def execute(self, context):
         if not self.container_name:
@@ -963,22 +975,57 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
             return {"CANCELLED"}
 
         # Recover required data
-        container_collection = bpy.data.collections.get(self.container_name)
-        avalon_data = container_collection["avalon"]
-        project_name = legacy_io.current_project()
-        version_doc = get_version_by_id(project_name, avalon_data["parent"])
-        subset_doc = get_subset_by_id(project_name, version_doc["parent"])
+        openpype_instances = context.scene.openpype_instances
+        openpype_containers = context.scene.openpype_containers
+        container = openpype_containers.get(self.container_name)
+        avalon_data = container["avalon"]
 
-        # Build and update metadata
-        metadata = {
-            "id": AVALON_INSTANCE_ID,
-            "family": avalon_data["family"],
-            "asset": avalon_data["asset_name"],
-            "subset": subset_doc["name"],
-            "task": legacy_io.Session.get("AVALON_TASK"),
-            "active": True,
-        }
-        container_collection["avalon"] = metadata
+        # Check not from library
+        if container.outliner_entity.override_library:
+            self.report(
+                {"WARNING"},
+                "Overriden entity cannot be converted to instance. Please switch to append.",
+            )
+            return {"CANCELLED"}
+
+        # Get creator name
+        for creator_name, creator_attrs in bpy.context.scene[
+            "openpype_creators"
+        ].items():
+            if creator_attrs["family"] == avalon_data.get("family"):
+                break
+
+        # Create instance
+        bpy.ops.scene.create_openpype_instance(
+            creator_name=creator_name,
+            asset_name=avalon_data["asset_name"],
+            subset_name=avalon_data["name"],
+            datablock_name="",
+            gather_into_collection=isinstance(
+                container.outliner_entity, bpy.types.Collection
+            ),
+        )
+
+        # Add datablocks to instance
+        new_instance = openpype_instances[-1]
+        container_outliner_children = get_all_outliner_children(
+            container.outliner_entity
+        )
+        add_datablocks_to_container(
+            {
+                d_ref.datablock
+                for d_ref in container.datablock_refs
+                if d_ref.datablock != container.outliner_entity
+                and not d_ref.datablock in container_outliner_children
+            },
+            new_instance,
+        )
+
+        # Remove container
+        openpype_containers.remove(
+            openpype_containers.find(self.container_name)
+        )
+
         return {"FINISHED"}
 
 
@@ -990,7 +1037,10 @@ def draw_op_collection_menu(self, context):
     """
     layout = self.layout
     layout.separator()
-    op = layout.operator(
+
+    row = layout.row()
+    row.operator_context = "INVOKE_DEFAULT"
+    op = row.operator(
         SCENE_OT_MakeContainerPublishable.bl_idname,
         text=SCENE_OT_MakeContainerPublishable.bl_label,
     )

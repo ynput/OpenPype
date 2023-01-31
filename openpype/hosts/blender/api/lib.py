@@ -11,6 +11,7 @@ from openpype.hosts.blender.api.properties import OpenpypeContainer
 from openpype.hosts.blender.api.utils import (
     BL_OUTLINER_TYPES,
     assign_loader_to_datablocks,
+    get_all_outliner_children,
     get_instanced_collections,
 )
 from openpype.lib import Logger
@@ -131,9 +132,7 @@ def ls() -> Iterator:
     # Add children and objects of outliner entities to skip
     datablocks_to_skip.update(
         chain.from_iterable(
-            list(d.children_recursive) + list(d.all_objects)
-            if hasattr(d, "all_objects")
-            else d.children_recursive
+            get_all_outliner_children(d)
             for d in container_datablocks
             if isinstance(d, tuple(BL_OUTLINER_TYPES))
         )
