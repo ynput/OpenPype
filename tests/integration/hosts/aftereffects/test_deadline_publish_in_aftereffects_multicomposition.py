@@ -80,7 +80,7 @@ class TestDeadlinePublishInAfterEffectsMultiComposition(AEDeadlinePublishTestCla
         additional_args = {"context.subset": "renderTest_taskMain",
                            "context.ext": "png"}
         failures.append(
-            DBAssert.count_of_types(dbcon, "representation", 1,
+            DBAssert.count_of_types(dbcon, "representation", 2,
                                     additional_args=additional_args))
 
         additional_args = {"context.subset": "renderTest_taskMain",
