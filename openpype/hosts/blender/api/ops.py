@@ -575,13 +575,8 @@ class SCENE_OT_CreateOpenpypeInstance(
                 row.prop(self, "datapath", text="", icon_only=True)
 
         # Checkbox to gather selected element in outliner
-        if {
-            t[0]
-            for t in context.scene["openpype_creators"][self.creator_name][
-                "bl_types"
-            ]
-        } <= {BL_TYPE_DATAPATH.get(t) for t in BL_OUTLINER_TYPES}:
-            layout.prop(self, "gather_into_collection")
+        draw_gather_into_collection(self, context)
+
 
     def execute(self, _context):
         if not self.asset_name:
@@ -689,13 +684,7 @@ class SCENE_OT_AddToOpenpypeInstance(
             row.prop(self, "datapath", text="", icon_only=True)
 
         # Checkbox to gather selected element in outliner
-        if {
-            t[0]
-            for t in context.scene["openpype_creators"][self.creator_name][
-                "bl_types"
-            ]
-        } <= {BL_TYPE_DATAPATH.get(t) for t in BL_OUTLINER_TYPES}:
-            layout.prop(self, "gather_into_collection")
+        draw_gather_into_collection(self, context)
 
     def execute(self, context):
         # Get datablock
@@ -738,6 +727,21 @@ class SCENE_OT_AddToOpenpypeInstance(
         )
 
         return {"FINISHED"}
+
+
+
+def draw_gather_into_collection(self, context):
+    """Draw checkbox to gather selected element in outliner.
+    
+    Only if collections are handled by creator family.
+    """
+    if self.datapath in {BL_TYPE_DATAPATH.get(t) for t in BL_OUTLINER_TYPES} and bpy.types.Collection.__name__ in {
+        t[1]
+        for t in context.scene["openpype_creators"][self.creator_name][
+            "bl_types"
+        ]
+    }:
+        self.layout.prop(self, "gather_into_collection")
 
 
 class SCENE_OT_RemoveFromOpenpypeInstance(

@@ -48,11 +48,7 @@ class ExtractBlend(publish.Extractor):
         # Substitute objects by their collections to avoid data duplication
         collections = set(plugin.get_collections_by_objects(data_blocks))
         if collections:
-            data_blocks = collections | {
-                d
-                for d in data_blocks
-                if isinstance(d, tuple(BL_OUTLINER_TYPES))
-            }
+            data_blocks.update(collections)
 
         # Get images used by datablocks and process resources
         used_images = self._get_used_images(data_blocks)
