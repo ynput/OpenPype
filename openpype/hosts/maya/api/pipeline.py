@@ -1,3 +1,5 @@
+import json
+import base64
 import os
 import errno
 import logging
@@ -148,10 +150,16 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             yield
 
     def get_context_data(self):
-        return {}
+        data = cmds.fileInfo("OpenPypeContext", query=True)
+        if not data:
+            return {}
+        decoded = base64.b64decode(data).decode("utf-8")
+        return json.loads(decoded)
 
     def update_context_data(self, data, changes):
-        return
+        json_str = json.dumps(data)
+        encoded = base64.b64encode(json_str.encode("utf-8"))
+        return cmds.fileInfo("OpenPypeContext", encoded)
 
     def _register_callbacks(self):
         for handler, event in self._op_events.copy().items():
