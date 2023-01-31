@@ -12,16 +12,18 @@ class ResetXgenAttributes(pyblish.api.InstancePlugin):
     families = ["workfile"]
 
     def process(self, instance):
-        for palette, data in instance.data.get("xgenAttributes", {}).items():
+        xgen_attributes = instance.data.get("xgenAttributes", {})
+        if not xgen_attributes :
+            return
+
+        for palette, data in xgen_attributes.items():
             for attr, value in data.items():
                 node_attr = "{}.{}".format(palette, attr)
                 self.log.info(
                     "Setting \"{}\" on \"{}\"".format(value, node_attr)
                 )
                 cmds.setAttr(node_attr, value, type="string")
-
-            cmds.setAttr(palette + "." + "xgExportAsDelta", True)
-
-        if instance.data.get("xgenAttributes", {}):
-            self.log.info("Saving changes.")
-            cmds.file(save=True)
+            cmds.setAttr(palette + ".xgExportAsDelta", True)
+            
+        self.log.info("Saving changes.")
+        cmds.file(save=True)
