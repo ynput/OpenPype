@@ -170,7 +170,7 @@ def convert_v4_project_to_v3(project):
 
     data = project.get("data") or {}
     attribs = project.get("attrib") or {}
-    apps_attr = attribs.pop("applications") or []
+    apps_attr = attribs.pop("applications", None) or []
     applications = [
         {"name": app_name}
         for app_name in apps_attr
