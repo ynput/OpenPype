@@ -149,8 +149,9 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         new_xgen_file = maya_file.replace(extension, ".xgen")
         data_path = ""
         with open(new_xgen_file, "r") as f:
-            for line in [line.rstrip() for line in f]:
+            for line in f:
                 if line.startswith("\txgDataPath"):
+                    line = line.rstrip()
                     data_path = line.split("\t")[-1]
                     break
 
