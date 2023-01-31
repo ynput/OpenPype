@@ -41,6 +41,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     def process(self, context):
         """Collect instances from the current Blender scene."""
         # Create instance from outliner datablocks
+        # TODO is it only conformation code and must be removed?
         for c in [
             collection
             for collection in self.get_collections()
