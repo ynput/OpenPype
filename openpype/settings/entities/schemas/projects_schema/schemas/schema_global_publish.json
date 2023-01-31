@@ -200,8 +200,8 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "ExtractColorTranscode",
-            "label": "ExtractColorTranscode (ImageIO)",
+            "key": "ExtractOIIOTranscode",
+            "label": "Extract OIIO Transcode",
             "checkbox_key": "enabled",
             "is_group": true,
             "children": [
@@ -267,13 +267,23 @@
                                     "type": "dict",
                                     "children": [
                                         {
-                                            "key": "output_extension",
-                                            "label": "Output extension",
+                                            "key": "extension",
+                                            "label": "Extension",
                                             "type": "text"
                                         },
                                         {
-                                            "key": "output_colorspace",
-                                            "label": "Output colorspace",
+                                            "key": "colorspace",
+                                            "label": "Colorspace",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "display",
+                                            "label": "Display",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "view",
+                                            "label": "View",
                                             "type": "text"
                                         },
                                         {

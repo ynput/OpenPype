@@ -1,5 +1,6 @@
 import os
 import copy
+import clique
 
 import pyblish.api
 
@@ -17,7 +18,7 @@ from openpype.lib.transcoding import (
 from openpype.lib.profiles_filtering import filter_profiles
 
 
-class ExtractColorTranscode(publish.Extractor):
+class ExtractOIIOTranscode(publish.Extractor):
     """
     Extractor to convert colors from one colorspace to different.
 
@@ -68,14 +69,14 @@ class ExtractColorTranscode(publish.Extractor):
             if not self._repre_is_valid(repre):
                 continue
 
+            added_representations = False
+
             colorspace_data = repre["colorspaceData"]
             source_colorspace = colorspace_data["colorspace"]
-            config_path = colorspace_data.get("configData", {}).get("path")
-            if not os.path.exists(config_path):
+            config_path = colorspace_data.get("config", {}).get("path")
+            if not config_path or not os.path.exists(config_path):
                 self.log.warning("Config file doesn't exist, skipping")
                 continue
-
-            repre = self._handle_original_repre(repre, profile)
 
             for _, output_def in profile.get("outputs", {}).items():
                 new_repre = copy.deepcopy(repre)
@@ -83,40 +84,55 @@ class ExtractColorTranscode(publish.Extractor):
                 original_staging_dir = new_repre["stagingDir"]
                 new_staging_dir = get_transcode_temp_directory()
                 new_repre["stagingDir"] = new_staging_dir
-                files_to_convert = new_repre["files"]
-                if not isinstance(files_to_convert, list):
-                    files_to_convert = [files_to_convert]
 
-                files_to_delete = copy.deepcopy(files_to_convert)
+                if isinstance(new_repre["files"], list):
+                    files_to_convert = copy.deepcopy(new_repre["files"])
+                else:
+                    files_to_convert = [new_repre["files"]]
 
-                output_extension = output_def["output_extension"]
+                output_extension = output_def["extension"]
                 output_extension = output_extension.replace('.', '')
                 if output_extension:
-                    if new_repre["name"] == new_repre["ext"]:
-                        new_repre["name"] = output_extension
-                    new_repre["ext"] = output_extension
+                    self._rename_in_representation(new_repre,
+                                                   files_to_convert,
+                                                   output_extension)
 
-                target_colorspace = output_def["output_colorspace"]
-                if not target_colorspace:
-                    raise RuntimeError("Target colorspace must be set")
+                target_colorspace = output_def["colorspace"]
+                view = output_def["view"] or colorspace_data.get("view")
+                display = (output_def["display"] or
+                           colorspace_data.get("display"))
+                # both could be already collected by DCC,
+                # but could be overwritten
+                if view:
+                    new_repre["colorspaceData"]["view"] = view
+                if display:
+                    new_repre["colorspaceData"]["display"] = display
 
+                files_to_convert = self._translate_to_sequence(
+                    files_to_convert)
                 for file_name in files_to_convert:
-                    input_filepath = os.path.join(original_staging_dir,
-                                                  file_name)
-                    output_path = self._get_output_file_path(input_filepath,
+                    input_path = os.path.join(original_staging_dir,
+                                              file_name)
+                    output_path = self._get_output_file_path(input_path,
                                                              new_staging_dir,
                                                              output_extension)
                     convert_colorspace(
-                        input_filepath,
+                        input_path,
                         output_path,
                         config_path,
                         source_colorspace,
                         target_colorspace,
+                        view,
+                        display,
                         self.log
                     )
 
-                instance.context.data["cleanupFullPaths"].extend(
-                    files_to_delete)
+                # cleanup temporary transcoded files
+                for file_name in new_repre["files"]:
+                    transcoded_file_path = os.path.join(new_staging_dir,
+                                                        file_name)
+                    instance.context.data["cleanupFullPaths"].append(
+                        transcoded_file_path)
 
                 custom_tags = output_def.get("custom_tags")
                 if custom_tags:
@@ -126,15 +142,69 @@ class ExtractColorTranscode(publish.Extractor):
 
                 # Add additional tags from output definition to representation
                 for tag in output_def["tags"]:
+                    if not new_repre.get("tags"):
+                        new_repre["tags"] = []
                     if tag not in new_repre["tags"]:
                         new_repre["tags"].append(tag)
 
                 instance.data["representations"].append(new_repre)
+                added_representations = True
 
-    def _get_output_file_path(self, input_filepath, output_dir,
+            if added_representations:
+                self._mark_original_repre_for_deletion(repre, profile)
+
+    def _rename_in_representation(self, new_repre, files_to_convert,
+                                  output_extension):
+        """Replace old extension with new one everywhere in representation."""
+        if new_repre["name"] == new_repre["ext"]:
+            new_repre["name"] = output_extension
+        new_repre["ext"] = output_extension
+
+        renamed_files = []
+        for file_name in files_to_convert:
+            file_name, _ = os.path.splitext(file_name)
+            file_name = '{}.{}'.format(file_name,
+                                       output_extension)
+            renamed_files.append(file_name)
+        new_repre["files"] = renamed_files
+
+    def _translate_to_sequence(self, files_to_convert):
+        """Returns original list or list with filename formatted in single
+        sequence format.
+
+        Uses clique to find frame sequence, in this case it merges all frames
+        into sequence format (FRAMESTART-FRAMEEND#) and returns it.
+        If sequence not found, it returns original list
+
+        Args:
+            files_to_convert (list): list of file names
+        Returns:
+            (list) of [file.1001-1010#.exr] or [fileA.exr, fileB.exr]
+        """
+        pattern = [clique.PATTERNS["frames"]]
+        collections, remainder = clique.assemble(
+            files_to_convert, patterns=pattern,
+            assume_padded_when_ambiguous=True)
+
+        if collections:
+            if len(collections) > 1:
+                raise ValueError(
+                    "Too many collections {}".format(collections))
+
+            collection = collections[0]
+            frames = list(collection.indexes)
+            frame_str = "{}-{}#".format(frames[0], frames[-1])
+            file_name = "{}{}{}".format(collection.head, frame_str,
+                                        collection.tail)
+
+            files_to_convert = [file_name]
+
+        return files_to_convert
+
+    def _get_output_file_path(self, input_path, output_dir,
                               output_extension):
         """Create output file name path."""
-        file_name = os.path.basename(input_filepath)
+        file_name = os.path.basename(input_path)
         file_name, input_extension = os.path.splitext(file_name)
         if not output_extension:
             output_extension = input_extension
@@ -199,7 +269,8 @@ class ExtractColorTranscode(publish.Extractor):
 
         return True
 
-    def _handle_original_repre(self, repre, profile):
+    def _mark_original_repre_for_deletion(self, repre, profile):
+        """If new transcoded representation created, delete old."""
         delete_original = profile["delete_original"]
 
         if delete_original:
@@ -210,5 +281,3 @@ class ExtractColorTranscode(publish.Extractor):
                 repre["tags"].remove("review")
             if "delete" not in repre["tags"]:
                 repre["tags"].append("delete")
-
-        return repre

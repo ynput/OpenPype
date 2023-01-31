@@ -1041,52 +1041,59 @@ def convert_ffprobe_fps_to_float(value):
 
 def convert_colorspace(
     input_path,
-    out_filepath,
+    output_path,
     config_path,
     source_colorspace,
     target_colorspace,
+    view=None,
+    display=None,
     logger=None
 ):
-    """Convert source files from one color space to another.
-
-    Filenames of input files are kept so make sure that output directory
-    is not the same directory as input files have.
-    - This way it can handle gaps and can keep input filenames without handling
-        frame template
+    """Convert source file from one color space to another.
 
     Args:
-        input_path (str): Paths that should be converted. It is expected that
-            contains single file or image sequence of samy type.
-        out_filepath (str): Path to directory where output will be rendered.
-            Must not be same as input's directory.
+        input_path (str): Path that should be converted. It is expected that
+            contains single file or image sequence of same type
+            (sequence in format 'file.FRAMESTART-FRAMEEND#.exr', see oiio docs)
+        output_path (str): Path to output filename.
         config_path (str): path to OCIO config file
         source_colorspace (str): ocio valid color space of source files
         target_colorspace (str): ocio valid target color space
+                    if filled, 'view' and 'display' must be empty
+        view (str): name for viewer space (ocio valid)
+            both 'view' and 'display' must be filled (if 'target_colorspace')
+        display (str): name for display-referred reference space (ocio valid)
         logger (logging.Logger): Logger used for logging.
-
+    Raises:
+        ValueError: if misconfigured
     """
     if logger is None:
         logger = logging.getLogger(__name__)
 
-    input_arg = "-i"
     oiio_cmd = [
         get_oiio_tools_path(),
-
+        input_path,
         # Don't add any additional attributes
         "--nosoftwareattrib",
-        "--colorconfig", config_path,
-        "--colorconvert", source_colorspace, target_colorspace
+        "--colorconfig", config_path
     ]
-    # Prepare subprocess arguments
 
-    oiio_cmd.extend([
-        input_arg, input_path,
-    ])
+    if all([target_colorspace, view, display]):
+        raise ValueError("Colorspace and both screen and display"
+                         " cannot be set together."
+                         "Choose colorspace or screen and display")
+    if not target_colorspace and not all([view, display]):
+        raise ValueError("Both screen and display must be set.")
 
-    # Add last argument - path to output
-    oiio_cmd.extend([
-        "-o", out_filepath
-    ])
+    if target_colorspace:
+        oiio_cmd.extend(["--colorconvert",
+                         source_colorspace,
+                         target_colorspace])
+    if view and display:
+        oiio_cmd.extend(["--iscolorspace", source_colorspace])
+        oiio_cmd.extend(["--ociodisplay", display, view])
+
+    oiio_cmd.extend(["-o", output_path])
 
     logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
     run_subprocess(oiio_cmd, logger=logger)

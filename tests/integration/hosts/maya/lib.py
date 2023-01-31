@@ -55,4 +55,3 @@ class MayaLocalPublishTestClass(MayaHostFixtures, PublishTest):
 
 class MayaDeadlinePublishTestClass(MayaHostFixtures, DeadlinePublishTest):
     """Testing class for Deadline publishes."""
-

@@ -639,8 +639,13 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 # that `frameStart` index instead. Thus if that frame start
                 # differs from the collection we want to shift the destination
                 # frame indices from the source collection.
+                # In case source are published in place we need to
+                # skip renumbering
                 repre_frame_start = repre.get("frameStart")
-                if repre_frame_start is not None:
+                if (
+                    "originalBasename" not in template
+                    and repre_frame_start is not None
+                ):
                     index_frame_start = int(repre["frameStart"])
                     # Shift destination sequence to the start frame
                     destination_indexes = [

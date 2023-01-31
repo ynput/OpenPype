@@ -68,7 +68,7 @@
                 "output": []
             }
         },
-        "ExtractColorTranscode": {
+        "ExtractOIIOTranscode": {
             "enabled": true,
             "profiles": []
         },
