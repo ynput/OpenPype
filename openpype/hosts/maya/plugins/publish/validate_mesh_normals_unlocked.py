@@ -20,7 +20,6 @@ class ValidateMeshNormalsUnlocked(pyblish.api.Validator):
     order = ValidateMeshOrder
     hosts = ['maya']
     families = ['model']
-    category = 'geometry'
     label = 'Mesh Normals Unlocked'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
                RepairAction]

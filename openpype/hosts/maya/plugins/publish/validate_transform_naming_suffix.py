@@ -32,7 +32,6 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
     order = ValidateContentsOrder
     hosts = ['maya']
     families = ['model']
-    category = 'cleanup'
     optional = True
     label = 'Suffix Naming Conventions'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
