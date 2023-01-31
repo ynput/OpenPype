@@ -1,4 +1,7 @@
 import os
+import shutil
+import platform
+from pathlib import Path
 from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
 from openpype.hosts.fusion import FUSION_HOST_DIR
 
@@ -17,6 +20,25 @@ class FusionPrelaunch(PreLaunchHook):
     """
     app_groups = ["fusion"]
 
+    def get_profile_source(self):
+        fusion_prefs_path = "Blackmagic Design/Fusion/Profiles/Default/Fusion.prefs"
+        if platform.system() == "Windows":
+            prefs_source = Path(os.getenv("AppData")) / fusion_prefs_path
+        elif platform.system() == "Darwin":
+            prefs_source = Path(os.path.expanduser("~/Library/Application Support/")) / fusion_prefs_path
+        elif platform.system() == "Linux":
+            prefs_source = Path(os.path.expanduser("~/.fusion")) / fusion_prefs_path
+
+        return str(prefs_source)
+
+    def copy_existing_prefs(self, profile_directory: str):
+        dest_folder = os.path.join(profile_directory, "Default")
+        os.makedirs(dest_folder, exist_ok=True)
+        prefs_source = self.get_profile_source()
+        if os.path.exists(prefs_source):
+            shutil.copy(prefs_source, dest_folder)
+            self.log.info(f"successfully copied preferences:\n {prefs_source} to {dest_folder}")
+        
     def execute(self):
         # making sure python 3 is installed at provided path
         # Py 3.3-3.10 for Fusion 18+ or Py 3.6 for Fu 16-17
@@ -50,12 +72,20 @@ class FusionPrelaunch(PreLaunchHook):
         # TODO: Detect Fusion version to only set for specific Fusion build
         self.launch_context.env["FUSION16_PYTHON36_HOME"] = py3_dir
 
-        # Add our Fusion Master Prefs which is the only way to customize
+        # Add custom Fusion Master Prefs and the temporary profile directory variables to customize
         # Fusion to define where it can read custom scripts and tools from
         self.log.info(f"Setting OPENPYPE_FUSION: {FUSION_HOST_DIR}")
         self.launch_context.env["OPENPYPE_FUSION"] = FUSION_HOST_DIR
 
+        profile_dir_var = "FUSION16_PROFILE_DIR"   # used by Fusion 16, 17 and 18
         pref_var = "FUSION16_MasterPrefs"   # used by Fusion 16, 17 and 18
+        profile_dir = os.path.join(FUSION_HOST_DIR, "deploy", "Prefs")
         prefs = os.path.join(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
+
+        # now copy the default Fusion profile to a working directory
+        if not os.path.exists(profile_dir):
+            self.copy_existing_prefs(profile_dir)
+        self.log.info(f"Setting {profile_dir_var}: {profile_dir}")
+        self.launch_context.env[profile_dir_var] = profile_dir
         self.log.info(f"Setting {pref_var}: {prefs}")
         self.launch_context.env[pref_var] = prefs
