@@ -790,6 +790,35 @@ class AssetLoader(Loader):
         else:
             outliner_entity = None
 
+        # Put into container
+        container = self._containerize_datablocks(
+            container_name, datablocks, container=container
+        )
+
+        # Set data to container
+        container.library = bpy.data.libraries.get(libpath.name)
+        container.outliner_entity = outliner_entity
+
+        return container, datablocks
+
+    def _containerize_datablocks(
+        self,
+        container_name: str,
+        datablocks: List[bpy.types.ID],
+        container: OpenpypeContainer = None,
+    ) -> OpenpypeContainer:
+        """Associate datablocks to a container. Create one if needed.
+
+        Args:
+            container_name (str): Name of container to be loaded.
+            datablocks (List[bpy.types.ID]): Datablocks to filter and link to
+                container collection
+            container (OpenpypeContainer): Load into existing container.
+                Defaults to None.
+
+        Returns:
+            OpenpypeContainer: Created container
+        """
         if container:
             # Add datablocks to container
             add_datablocks_to_container(datablocks, container)
@@ -801,11 +830,7 @@ class AssetLoader(Loader):
             # Create container if none providen
             container = create_container(container_name, datablocks)
 
-        # Set data to container
-        container.library = bpy.data.libraries.get(libpath.name)
-        container.outliner_entity = outliner_entity
-
-        return container, datablocks
+        return container
 
     def _load_fbx(self, libpath, container_name):
         """Load fbx process."""
