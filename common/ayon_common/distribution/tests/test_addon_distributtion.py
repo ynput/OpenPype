@@ -162,7 +162,7 @@ def test_update_addon_state(printer, sample_addon_info,
     dist_items = distribution.get_addons_dist_items()
     slack_state = dist_items["openpype_slack_1.0.0"].state
     assert slack_state == UpdateState.UPDATE_FAILED, (
-        "Update should failed because of wrong hash")
+        "Update should have failed because of wrong hash")
 
     # Fix cache and validate if was updated
     addon_info.hash = orig_hash
