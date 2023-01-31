@@ -5,14 +5,16 @@ import copy
 from maya import cmds
 
 import pyblish.api
-from openpype.hosts.maya.api import current_file
 from openpype.hosts.maya.api.lib import extract_alembic
 from openpype.pipeline import publish
 from openpype.lib import StringTemplate
 
 
 class ExtractWorkfileXgen(publish.Extractor):
-    """Extract Workfile Xgen."""
+    """Extract Workfile Xgen.
+
+    When submitting a render, we need to prep Xgen side car files.
+    """
 
     # Offset to run before workfile scene save.
     order = pyblish.api.ExtractorOrder - 0.499
@@ -20,13 +22,65 @@ class ExtractWorkfileXgen(publish.Extractor):
     families = ["workfile"]
     hosts = ["maya"]
 
+    def get_render_max_frame_range(self, context):
+        """Return start to end frame range including all renderlayers in
+        context.
+
+         This will return the full frame range which includes all frames of the
+         renderlayer instances to be published/submitted.
+
+         Args:
+            context (pyblish.api.Context): Current publishing context.
+
+         Returns:
+            tuple or None: Start frame, end frame tuple if any renderlayers
+                found. Otherwise None is returned.
+
+         """
+
+        def _is_active_renderlayer(i):
+            """Return whether instance is active renderlayer"""
+            if not i.data.get("publish", True):
+                return False
+
+            is_renderlayer = (
+                "renderlayer" in i.data.get("families", []) or
+                i.data["family"] == "renderlayer"
+            )
+            return is_renderlayer
+
+        start_frame = None
+        end_frame = None
+        for instance in context:
+            if not _is_active_renderlayer(instance):
+                # Only consider renderlyare instances
+                continue
+
+            render_start_frame = instance.data["frameStart"]
+            render_end_frame = instance.data["frameStart"]
+
+            if start_frame is None:
+                start_frame = render_start_frame
+            else:
+                start_frame = min(start_frame, render_start_frame)
+
+            if end_frame is None:
+                end_frame = render_end_frame
+            else:
+                end_frame = max(end_frame, render_end_frame)
+
+        if start_frame is None or end_frame is None:
+            return
+
+        return start_frame, end_frame
+
     def process(self, instance):
         transfers = []
 
         # Validate there is any palettes in the scene.
         if not cmds.ls(type="xgmPalette"):
             self.log.debug(
-                "No collections found in the scene. Abort Xgen extraction."
+                "No collections found in the scene. Skipping Xgen extraction."
             )
             return
         else:
@@ -34,35 +88,15 @@ class ExtractWorkfileXgen(publish.Extractor):
 
         # Validate to extract only when we are publishing a renderlayer as
         # well.
-        renderlayer = False
-        start_frame = None
-        end_frame = None
-        for i in instance.context:
-            is_renderlayer = (
-                "renderlayer" in i.data.get("families", []) or
-                i.data["family"] == "renderlayer"
-            )
-            if is_renderlayer and i.data["publish"]:
-                renderlayer = True
-
-                if start_frame is None:
-                    start_frame = i.data["frameStart"]
-                if end_frame is None:
-                    end_frame = i.data["frameEnd"]
-
-                if i.data["frameStart"] < start_frame:
-                    start_frame = i.data["frameStart"]
-                if i.data["frameEnd"] > end_frame:
-                    end_frame = i.data["frameEnd"]
-
-                break
-
-        if not renderlayer:
+        render_range = self.get_render_max_frame_range(instance.context)
+        if not render_range:
             self.log.debug(
-                "No publishable renderlayers found in context. Abort Xgen"
+                "No publishable renderlayers found in context. Skipping Xgen"
                 " extraction."
             )
             return
+
+        start_frame, end_frame = render_range
 
         # We decrement start frame and increment end frame so motion blur will
         # render correctly.
@@ -70,8 +104,8 @@ class ExtractWorkfileXgen(publish.Extractor):
         end_frame += 1
 
         # Extract patches alembic.
-        basename, _ = os.path.splitext(current_file())
-        dirname = os.path.dirname(current_file())
+        basename, _ = os.path.splitext(instance.context.data["currentFile"])
+        dirname = os.path.dirname(instance.context.data["currentFile"])
         kwargs = {"attrPrefix": ["xgen"], "stripNamespaces": True}
         alembic_files = []
         for palette in cmds.ls(type="xgmPalette"):
@@ -121,8 +155,7 @@ class ExtractWorkfileXgen(publish.Extractor):
         # Collect Xgen and Delta files.
         xgen_files = []
         sources = []
-        file_path = current_file()
-        current_dir = os.path.dirname(file_path)
+        current_dir = os.path.dirname(instance.context.data["currentFile"])
         attrs = ["xgFileName", "xgBaseFile"]
         for palette in cmds.ls(type="xgmPalette"):
             for attr in attrs:

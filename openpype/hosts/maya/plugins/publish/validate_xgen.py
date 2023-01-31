@@ -4,7 +4,7 @@ import maya.cmds as cmds
 import xgenm
 
 import pyblish.api
-from openpype.pipeline.publish import KnownPublishError
+from openpype.pipeline.publish import PublishValidationError
 
 
 class ValidateXgen(pyblish.api.InstancePlugin):
@@ -20,7 +20,7 @@ class ValidateXgen(pyblish.api.InstancePlugin):
 
         # Only 1 collection/node per instance.
         if len(set_members) != 1:
-            raise KnownPublishError(
+            raise PublishValidationError(
                 "Only one collection per instance is allowed."
                 " Found:\n{}".format(set_members)
             )
@@ -28,7 +28,7 @@ class ValidateXgen(pyblish.api.InstancePlugin):
         # Only xgen palette node is allowed.
         node_type = cmds.nodeType(set_members[0])
         if node_type != "xgmPalette":
-            raise KnownPublishError(
+            raise PublishValidationError(
                 "Only node of type \"xgmPalette\" are allowed. Referred to as"
                 " \"collection\" in the Maya UI."
                 " Node type found: {}".format(node_type)
@@ -50,10 +50,10 @@ class ValidateXgen(pyblish.api.InstancePlugin):
                     except KeyError:
                         inactive_modifiers[description] = [name]
 
-        msg = (
-            "There are inactive modifiers on the collection. "
-            "Please delete these:\n{}".format(
-                json.dumps(inactive_modifiers, indent=4, sort_keys=True)
+        if inactive_modifiers:
+            raise PublishValidationError(
+                "There are inactive modifiers on the collection. "
+                "Please delete these:\n{}".format(
+                    json.dumps(inactive_modifiers, indent=4, sort_keys=True)
+                )
             )
-        )
-        assert not inactive_modifiers, msg

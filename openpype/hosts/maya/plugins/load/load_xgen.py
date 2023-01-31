@@ -173,3 +173,34 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             super().update(container, representation)
 
             xgenm.applyDelta(xgen_palette.replace("|", ""), xgd_file)
+
+        # Update any xgen containers.
+        compound_name = "xgenContainers"
+        import xgenm
+        container_amount = cmds.getAttr(
+            "{}.{}".format(container_node, compound_name), size=True
+        )
+        # loop through all compound children
+        for i in range(container_amount):
+            attr = "{}.{}[{}].container".format(
+                container_node, compound_name, i
+            )
+            objectset = cmds.listConnections(attr)[0]
+            reference_node = cmds.sets(objectset, query=True)[0]
+            palettes = cmds.ls(
+                cmds.referenceQuery(reference_node, nodes=True),
+                type="xgmPalette"
+            )
+            for palette in palettes:
+                for description in xgenm.descriptions(palette):
+                    xgenm.setAttr(
+                        "cacheFileName",
+                        maya_file.replace("\\", "/"),
+                        palette,
+                        description,
+                        "SplinePrimitive"
+                    )
+
+        # Refresh UI and viewport.
+        de = xgenm.xgGlobal.DescriptionEditor
+        de.refresh("Full")

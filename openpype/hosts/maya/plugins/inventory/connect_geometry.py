@@ -1,6 +1,7 @@
 from maya import cmds
 
 from openpype.pipeline import InventoryAction, get_representation_context
+from openpype.hosts.maya.api.lib import get_id
 
 
 class ConnectGeometry(InventoryAction):
@@ -64,12 +65,12 @@ class ConnectGeometry(InventoryAction):
 
         source_data = self.get_container_data(source_object)
         matches = []
-        node_types = []
+        node_types = set()
         for target_container in target_containers:
             target_data = self.get_container_data(
                 target_container["objectName"]
             )
-            node_types.extend(target_data["node_types"])
+            node_types.update(target_data["node_types"])
             for id, transform in target_data["ids"].items():
                 source_match = source_data["ids"].get(id)
                 if source_match:
@@ -99,15 +100,30 @@ class ConnectGeometry(InventoryAction):
             cmds.xgmPreview()
 
     def get_container_data(self, container):
-        data = {"node_types": [], "ids": {}}
+        """Collects data about the container nodes.
+
+        Args:
+            container (dict): Container instance.
+
+        Returns:
+            data (dict):
+                "node_types": All node types in container nodes.
+                "ids": If the node is a mesh, we collect its parent transform
+                    id.
+        """
+        data = {"node_types": set(), "ids": {}}
         ref_node = cmds.sets(container, query=True, nodesOnly=True)[0]
         for node in cmds.referenceQuery(ref_node, nodes=True):
             node_type = cmds.nodeType(node)
-            data["node_types"].append(node_type)
-            if node_type == "mesh":
-                transform = cmds.listRelatives(node, parent=True)[0]
-                id = cmds.getAttr(transform + ".cbId")
-                data["ids"][id] = transform
+            data["node_types"].add(node_type)
+
+            # Only interested in mesh transforms for connecting geometry with
+            # blendshape.
+            if node_type != "mesh":
+                continue
+
+            transform = cmds.listRelatives(node, parent=True)[0]
+            data["ids"][get_id(transform)] = transform
 
         return data
 

@@ -5,6 +5,7 @@ import sys
 import platform
 import uuid
 import math
+import re
 
 import json
 import logging
@@ -3449,14 +3450,31 @@ def get_attribute_input(attr):
 
 
 def write_xgen_file(data, filepath):
+    """Overwrites data in .xgen files.
+
+    Quite naive approach to mainly overwrite "xgDataPath" and "xgProjectPath".
+
+    Args:
+        data (dict): Dictionary of key, value. Key matches with xgen file.
+        For example:
+            {"xgDataPath": "some/path"}
+        filepath (string): Absolute path of .xgen file.
+    """
+    # Generate regex lookup for line to key basically
+    # match any of the keys in `\t{key}\t\t`
+    keys = "|".join(re.escape(key) for key in data.keys())
+    re_keys = re.compile("^\t({})\t\t".format(keys))
+
     lines = []
     with open(filepath, "r") as f:
-        for line in [line.rstrip() for line in f]:
-            for key, value in data.items():
-                if line.startswith("\t{}".format(key)):
-                    line = "\t{}\t\t{}".format(key, value)
+        for line in f:
+            match = re_keys.match(line)
+            if match:
+                key = match.group(1)
+                value = data[key]
+                line = "\t{}\t\t{}\n".format(key, value)
 
             lines.append(line)
 
     with open(filepath, "w") as f:
-        f.write("\n".join(lines))
+        f.writelines(lines)
