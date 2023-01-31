@@ -278,8 +278,18 @@ def _check_and_update_from_ayon_server():
     distribution = AyonDistribution()
     distribution.distribute()
     distribution.validate_distribution()
+
+    python_paths = [
+        path
+        for path in os.getenv("PYTHONPATH", "").split(os.pathsep)
+        if path
+    ]
+
     for path in distribution.get_sys_paths():
         sys.path.insert(0, path)
+        if path not in python_paths:
+            python_paths.append(path)
+    os.environ["PYTHONPATH"] = os.pathsep.join(python_paths)
 
 
 def boot():
