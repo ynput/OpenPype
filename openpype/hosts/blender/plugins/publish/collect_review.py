@@ -31,6 +31,17 @@ class CollectReview(pyblish.api.InstancePlugin):
         camera = cameras[0].name
         self.log.debug(f"camera: {camera}")
 
+        # Collect audio tracks
+        audio_tracks = [
+            {
+                "offset": sequence.frame_start + sequence.frame_offset_start,
+                "filename": sequence.sound.filepath,
+            }
+            for sequence in bpy.context.scene.sequence_editor.sequences
+            if sequence.type == "SOUND" and sequence.volume > 0
+        ]
+        self.log.debug(f"audio: {audio_tracks}")
+
         # get isolate objects list from meshes instance members .
         isolate_objects = [
             obj
@@ -66,6 +77,7 @@ class CollectReview(pyblish.api.InstancePlugin):
                 "frameEnd": instance.context.data["frameEnd"],
                 "fps": instance.context.data["fps"],
                 "isolate": isolate_objects,
+                "audio": audio_tracks,
             })
             instance.data["remove"] = True
 
@@ -80,17 +92,6 @@ class CollectReview(pyblish.api.InstancePlugin):
                 "frameEnd": instance.context.data["frameEnd"],
                 "fps": instance.context.data["fps"],
                 "isolate": isolate_objects,
+                "audio": audio_tracks,
             })
-
             self.log.debug(f"instance data: {instance.data}")
-
-            # TODO : Collect audio
-            audio_tracks = []
-            instance.data["audio"] = []
-            for track in audio_tracks:
-                instance.data["audio"].append(
-                    {
-                        "offset": track.offset.get(),
-                        "filename": track.filename.get(),
-                    }
-                )
