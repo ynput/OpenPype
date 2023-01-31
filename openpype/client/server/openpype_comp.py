@@ -1,6 +1,8 @@
 import collections
 from ayon_api.graphql import GraphQlQuery, FIELD_VALUE, fields_to_dict
 
+from .constants import DEFAULT_FOLDER_FIELDS
+
 
 def folders_tasks_graphql_query(fields):
     query = GraphQlQuery("FoldersQuery")
@@ -133,6 +135,7 @@ def get_folders_with_tasks(
         fields = set(fields)
     else:
         fields = con.get_default_fields_for_type("folder")
+        fields |= DEFAULT_FOLDER_FIELDS
 
     if active is not None:
         fields.add("active")
