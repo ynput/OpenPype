@@ -34,6 +34,26 @@ def _convert_color(color_value):
     return color_value
 
 
+def _convert_host_imageio(host_settings):
+    if "imageio" not in host_settings:
+        return
+
+    # --- imageio ---
+    ayon_imageio = host_settings["imageio"]
+    # TODO remove when fixed on server
+    if "ocio_config" in ayon_imageio["ocio_config"]:
+        ayon_imageio["ocio_config"]["filepath"] = (
+            ayon_imageio["ocio_config"].pop("ocio_config")
+        )
+    # Convert file rules
+    imageio_file_rules = ayon_imageio["file_rules"]
+    new_rules = {}
+    for rule in imageio_file_rules["rules"]:
+        name = rule.pop("name")
+        new_rules[name] = rule
+    imageio_file_rules["rules"] = new_rules
+
+
 def _convert_applications_groups(groups, clear_metadata):
     environment_key = "environment"
     if isinstance(groups, dict):
@@ -230,6 +250,7 @@ def _convert_blender_project_settings(ayon_settings, output):
         return
     ayon_blender = ayon_settings["blender"]
     blender_settings = output["blender"]
+    _convert_host_imageio(ayon_blender)
 
     ayon_workfile_build = ayon_blender["workfile_builder"]
     blender_workfile_build = blender_settings["workfile_builder"]
@@ -256,6 +277,10 @@ def _convert_celaction_project_settings(ayon_settings, output):
         return
     ayon_celaction_publish = ayon_settings["celaction"]["publish"]
     celaction_publish_settings = output["celaction"]["publish"]
+
+    output["celaction"]["imageio"] = _convert_host_imageio(
+        ayon_celaction_publish
+    )
 
     for plugin_name in tuple(celaction_publish_settings.keys()):
         if plugin_name in ayon_celaction_publish:
@@ -308,6 +333,7 @@ def _convert_flame_project_settings(ayon_settings, output):
 
     # 'imageio' changed model
     # - missing subkey 'project' which is in root of 'imageio' model
+    _convert_host_imageio(ayon_flame)
     ayon_imageio_flame = ayon_flame["imageio"]
     if "project" not in ayon_imageio_flame:
         profile_mapping = ayon_imageio_flame.pop("profilesMapping")
@@ -322,7 +348,7 @@ def _convert_fusion_project_settings(ayon_settings, output):
     if "fusion" not in ayon_settings:
         return
     ayon_imageio_fusion = ayon_settings["fusion"]["imageio"]
-    imageio_fusion_settings = output["fusion"]["imageio"]
+
     if "ocioSettings" in ayon_imageio_fusion:
         ayon_ocio_setting = ayon_imageio_fusion.pop("ocioSettings")
         paths = ayon_ocio_setting.pop("ocioPathModel")
@@ -334,15 +360,21 @@ def _convert_fusion_project_settings(ayon_settings, output):
 
         ayon_ocio_setting["configFilePath"] = paths
         ayon_imageio_fusion["ocio"] = ayon_ocio_setting
-    imageio_fusion_settings["ocio"] = ayon_imageio_fusion["ocio"]
+
+    _convert_host_imageio(ayon_imageio_fusion)
+
+    imageio_fusion_settings = output["fusion"]["imageio"]
+    for key in (
+        "oci",
+        "imageio",
+    ):
+        imageio_fusion_settings[key] = ayon_imageio_fusion[key]
 
 
 def _convert_maya_project_settings(ayon_settings, output):
     if "maya" not in ayon_settings:
         return
-    # WARNING NOT FINISHED!!!
-    # TODO implement conversion of 'imageio' which are not up
-    #   to date with v3 settings
+
     ayon_maya = ayon_settings["maya"]
     openpype_maya = output["maya"]
 
@@ -428,6 +460,8 @@ def _convert_maya_project_settings(ayon_settings, output):
     ayon_publish["ExtractCameraAlembic"]["bake_attributes"] = bake_attributes
 
     # --- Publish (END) ---
+
+    _convert_host_imageio(ayon_maya)
 
     same_keys = {
         "imageio",
@@ -572,6 +606,7 @@ def _convert_nuke_project_settings(ayon_settings, output):
 
     # --- ImageIO ---
     # NOTE 'monitorOutLut' is maybe not yet in v3 (ut should be)
+    _convert_host_imageio(ayon_nuke)
     ayon_imageio = ayon_nuke["imageio"]
     for item in ayon_imageio["nodes"]["requiredNodes"]:
         item["knobs"] = _convert_nuke_knobs(item["knobs"])
@@ -608,6 +643,8 @@ def _convert_hiero_project_settings(ayon_settings, output):
         new_gui_filters[key] = subvalue
     ayon_hiero["filters"] = new_gui_filters
 
+    _convert_host_imageio(ayon_hiero)
+
     for key in (
         "create",
         "filters",
@@ -629,7 +666,9 @@ def _convert_photoshop_project_settings(ayon_settings, output):
     if "active" in collect_review:
         collect_review["publish"] = collect_review.pop("active")
 
-    for key in ("create", "publish", "workfile_builder"):
+    _convert_host_imageio(ayon_photoshop)
+
+    for key in ("create", "publish", "workfile_builder", "imageio"):
         photoshop_settings[key] = ayon_photoshop[key]
 
 
@@ -638,10 +677,14 @@ def _convert_tvpaint_project_settings(ayon_settings, output):
         return
     ayon_tvpaint = ayon_settings["tvpaint"]
     tvpaint_settings = output["tvpaint"]
+
+    _convert_host_imageio(ayon_tvpaint)
+
     for key in (
         "stop_timer_on_application_exit",
         "load",
         "workfile_builder",
+        "imageio",
     ):
         tvpaint_settings[key] = ayon_tvpaint[key]
 
@@ -691,6 +734,9 @@ def _convert_traypublisher_project_settings(ayon_settings, output):
     ayon_traypublisher = ayon_settings["traypublisher"]
     traypublisher_settings = output["traypublisher"]
 
+    _convert_host_imageio(ayon_traypublisher)
+    traypublisher_settings["imageio"] = ayon_traypublisher["imageio"]
+
     ayon_editorial_simple = (
         ayon_traypublisher["editorial_creators"]["editorial_simple"]
     )
@@ -730,7 +776,11 @@ def _convert_traypublisher_project_settings(ayon_settings, output):
 def _convert_webpublisher_project_settings(ayon_settings, output):
     if "webpublisher" not in ayon_settings:
         return
-    ayon_publish = ayon_settings["webpublisher"]["publish"]
+
+    ayon_webpublisher = ayon_settings["webpublisher"]
+    _convert_host_imageio(ayon_webpublisher)
+
+    ayon_publish = ayon_webpublisher["publish"]
 
     ayon_collect_files = ayon_publish["CollectPublishedFiles"]
     ayon_collect_files["task_type_to_family"] = {
@@ -738,6 +788,7 @@ def _convert_webpublisher_project_settings(ayon_settings, output):
         for item in ayon_collect_files["task_type_to_family"]
     }
     output["webpublisher"]["publish"] = ayon_publish
+    output["webpublisher"]["imageio"] = ayon_settings["imageio"]
 
 
 def _convert_deadline_project_settings(ayon_settings, output):
@@ -961,7 +1012,6 @@ def convert_project_settings(ayon_settings, default_settings):
 
     _convert_global_project_settings(ayon_settings, output)
     not_available = {
-        "hiero",
         "standalonepublisher",
     }
 
