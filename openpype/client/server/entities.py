@@ -28,7 +28,7 @@ from .conversion_utils import (
 
 def get_projects(active=True, inactive=False, library=None, fields=None):
     if not active and not inactive:
-        return []
+        return
 
     if active and inactive:
         active = None
@@ -190,7 +190,7 @@ def get_assets(
     fields=None
 ):
     if not project_name:
-        return []
+        return
 
     active = True
     if archived:
@@ -461,7 +461,7 @@ def get_representations(
         raise ValueError("OP v4 can't filter by representation context.")
 
     if not archived and not standard:
-        return []
+        return
 
     if archived and not standard:
         active = False
