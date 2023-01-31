@@ -84,6 +84,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_3dsmax"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_maya"
                 },
                 {
