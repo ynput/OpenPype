@@ -648,8 +648,12 @@ class RenderProductsArnold(ARenderProducts):
             preferences = lib.get_color_management_preferences()
             return preferences["view_transform"]
 
+        def _raw():
+            preferences = lib.get_color_management_preferences()
+            return preferences["rendering_space"]
+
         resolved_values = {
-            "Raw": lambda: "Raw",
+            "Raw": _raw,
             "Use View Transform": _view_transform,
             # Default. Same as Maya Preferences.
             "Use Output Transform": lib.get_color_management_output_transform

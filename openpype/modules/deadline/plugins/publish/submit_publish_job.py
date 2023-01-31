@@ -550,10 +550,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "tags": ["review"] if preview else [],
                 "colorspaceData": {
                     "colorspace": colorspace,
-                    "configData": {
+                    "config": {
                         "path": additional_data["colorspaceConfig"],
                         "template": ""
-                    }
+                    },
+                    "display": additional_data["display"],
+                    "view": additional_data["view"]
                 }
             }
 
@@ -916,7 +918,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         additional_data = {
             "renderProducts": instance.data["renderProducts"],
-            "colorspaceConfig": instance.data["colorspaceConfig"]
+            "colorspaceConfig": instance.data["colorspaceConfig"],
+            "display": instance.data["colorspaceDisplay"],
+            "view": instance.data["colorspaceView"]
         }
 
         if isinstance(data.get("expectedFiles")[0], dict):

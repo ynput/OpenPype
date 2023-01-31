@@ -14,7 +14,7 @@ from math import ceil
 from six import string_types
 
 from maya import cmds, mel
-import maya.api.OpenMaya as om
+from maya.api import OpenMaya
 
 from openpype.client import (
     get_project,
@@ -3402,13 +3402,22 @@ def get_color_management_preferences():
         )
     }
 
+    # Split view and display from view_transform. view_transform comes in
+    # format of "{view} ({display})".
+    display = data["view_transform"].split("(")[-1].replace(")", "")
+    data.update({
+        "display": display,
+        "view": data["view_transform"].replace("({})".format(display), "")[:-1]
+    })
+
+    # Get config absolute path.
     path = cmds.colorManagementPrefs(
         query=True, configFilePath=True
     )
 
     # The OCIO config supports a custom <MAYA_RESOURCES> token.
     maya_resources_token = "<MAYA_RESOURCES>"
-    maya_resources_path = om.MGlobal.getAbsolutePathToResources()
+    maya_resources_path = OpenMaya.MGlobal.getAbsolutePathToResources()
     path = path.replace(maya_resources_token, maya_resources_path)
 
     data["config"] = path
