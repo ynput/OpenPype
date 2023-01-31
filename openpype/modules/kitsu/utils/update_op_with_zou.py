@@ -389,6 +389,7 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
             "data": {
                 "root_of": r,
                 "tasks": {},
+                "visualParent": None,
             },
         }
         for r in ["Assets", "Shots"]
