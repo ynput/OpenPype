@@ -445,7 +445,7 @@ def get_imageio_file_rules(project_name, host_name, project_settings=None):
     file_rules = {}
     if frules_global["enabled"]:
         file_rules.update(frules_global["rules"])
-    if frules_host["enabled"]:
+    if frules_host.get("enabled"):
         file_rules.update(frules_host["rules"])
 
     return file_rules
