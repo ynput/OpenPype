@@ -30,6 +30,7 @@ class LocalSourceInfo(SourceInfo):
 class WebSourceInfo(SourceInfo):
     url = attr.ib(default=None)
     headers = attr.ib(default=None)
+    filename = attr.ib(default=None)
 
 
 @attr.s
@@ -82,7 +83,8 @@ class AddonInfo(object):
                 source_addon = WebSourceInfo(
                     type=source_type,
                     url=url,
-                    headers=source.get("headers")
+                    headers=source.get("headers"),
+                    filename=source.get("filename")
                 )
             elif source_type == UrlType.SERVER.value:
                 source_addon = ServerSourceInfo(
