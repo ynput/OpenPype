@@ -47,7 +47,7 @@ class TestDeadlinePublishInAfterEffectsMultiComposition(AEDeadlinePublishTestCla
         print("test_db_asserts")
         failures = []
 
-        failures.append(DBAssert.count_of_types(dbcon, "version", 2))
+        failures.append(DBAssert.count_of_types(dbcon, "version", 3))
 
         failures.append(
             DBAssert.count_of_types(dbcon, "version", 0, name={"$ne": 1}))
