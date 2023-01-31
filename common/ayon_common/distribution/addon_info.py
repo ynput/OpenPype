@@ -39,6 +39,44 @@ class ServerSourceInfo(SourceInfo):
     path = attr.ib(default=None)
 
 
+def convert_source(source):
+    """Create source object from data information.
+
+    Args:
+        source (Dict[str, any]): Information about source.
+
+    Returns:
+        Union[None, SourceInfo]: Object with source information if type is
+            known.
+    """
+
+    source_type = source.get("type")
+    if not source_type:
+        return None
+
+    if source_type == UrlType.FILESYSTEM.value:
+        return LocalSourceInfo(
+            type=source_type,
+            path=source["path"]
+        )
+
+    if source_type == UrlType.HTTP.value:
+        url = source["path"]
+        return WebSourceInfo(
+            type=source_type,
+            url=url,
+            headers=source.get("headers"),
+            filename=source.get("filename")
+        )
+
+    if source_type == UrlType.SERVER.value:
+        return ServerSourceInfo(
+            type=source_type,
+            filename=source.get("filename"),
+            path=source.get("path")
+        )
+
+
 @attr.s
 class VersionData(object):
     version_data = attr.ib(default=None)
@@ -74,30 +112,12 @@ class AddonInfo(object):
         source_info = version_data.get("clientSourceInfo")
         require_distribution = source_info is not None
         for source in (source_info or []):
-            source_type = source.get("type")
-            if source_type == UrlType.FILESYSTEM.value:
-                source_addon = LocalSourceInfo(
-                    type=source_type, path=source["path"])
-            elif source_type == UrlType.HTTP.value:
-                url = source["path"]
-                source_addon = WebSourceInfo(
-                    type=source_type,
-                    url=url,
-                    headers=source.get("headers"),
-                    filename=source.get("filename")
-                )
-            elif source_type == UrlType.SERVER.value:
-                source_addon = ServerSourceInfo(
-                    type=source_type,
-                    filename=source.get("filename"),
-                    path=source.get("path")
-                )
+            addon_source = convert_source(source)
+            if addon_source is not None:
+                sources.append(addon_source)
             else:
-                print(f"Unknown source {source_type}")
                 unknown_sources.append(source)
-                continue
-
-            sources.append(source_addon)
+                print(f"Unknown source {source.get('type')}")
 
         full_name = "{}_{}".format(data["name"], production_version)
         return cls(
@@ -134,29 +154,13 @@ class DependencyItem(object):
         package_sources = package.get("sources")
         require_distribution = package_sources is not None
         for source in (package_sources or []):
-            source_type = source.get("type")
-            if source_type == UrlType.FILESYSTEM.value:
-                source_addon = LocalSourceInfo(
-                    type=source_type, path=source["path"])
-            elif source_type == UrlType.HTTP.value:
-                url = source["path"]
-                source_addon = WebSourceInfo(
-                    type=source_type,
-                    url=url,
-                    headers=source.get("headers")
-                )
-            elif source_type == UrlType.SERVER.value:
-                source_addon = ServerSourceInfo(
-                    type=source_type,
-                    filename=source.get("filename"),
-                    path=source.get("path")
-                )
+            dependency_source = convert_source(source)
+            if dependency_source is not None:
+                sources.append(dependency_source)
             else:
-                print(f"Unknown source {source_type}")
+                print(f"Unknown source {source.get('type')}")
                 unknown_sources.append(source)
-                continue
 
-            sources.append(source_addon)
         addon_list = [f"{name}_{version}"
                       for name, version in
                       package.get("supportedAddons").items()]
