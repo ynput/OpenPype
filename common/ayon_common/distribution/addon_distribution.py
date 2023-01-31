@@ -555,6 +555,26 @@ class DistributionItem:
 
         return self._used_source
 
+    @property
+    def error_message(self):
+        """Reason why distribution item failed.
+
+        Returns:
+            Union[str, None]: Error message.
+        """
+
+        return self._error_msg
+
+    @property
+    def error_detail(self):
+        """Detailed reason why distribution item failed.
+
+        Returns:
+            Union[str, None]: Detailed information (maybe traceback).
+        """
+
+        return self._error_detail
+
     def _distribute(self):
         if not self.sources:
             message = (
