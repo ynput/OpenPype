@@ -47,7 +47,7 @@ This is the core functional area for you as a user. Most of your actions will ta
 ![Menu OpenPype](assets/3dsmax_menu_first_OP.png)
 
 :::note OpenPype Menu
-User should use this menu for Opening / Saving when dealing with work files not standard 3dsmax ```File Menu``` even though still possible.
+User should use this menu exclusively for **Opening/Saving** when dealing with work files not standard ```File Menu``` even though user still being able perform file operations via this menu but prefferably just performing quick saves during work session not saving actual workfile versions.
 :::
 
 ## Working With Scene Files
@@ -61,37 +61,68 @@ In OpenPype menu first go to ```Work Files``` menu item so **Work Files  Window*
 
 You first choose particular asset and assigned task and corresponding workfile you would like to open.
 
-If not any workfile present simply hit ```Save As``` and keep ```Subversion``` empty and hitting ```Ok```.
+If not any workfile present simply hit ```Save As``` and keep ```Subversion``` empty and hit ```Ok```.
 
 ![Save As Dialog](assets/3dsmax_SavingFirstFile_OP.png)
 
-OpenPype correctly names it and add version to the workfile. This basically happens whenever user trigger ```Save As``` action. Resulting into incremental version numbers like ```workfileName_v001``` ```workfileName_v002``` etc. 
+OpenPype correctly names it and add version to the workfile. This basically happens whenever user trigger ```Save As``` action. Resulting into incremental version numbers like 
 
-> There also additional tools for naming like ```Subversion``` in ```Save As``` dialog but we won't dive into it for now.
+```workfileName_v001```
+
+```workfileName_v002```
+
+ etc. 
+
+Basically meaning user is free of guessing what is the correct naming and other neccessities to keep everthing in order and managed.
+
+> Note: user still has also other options for naming like ```Subversion```, ```Artist's Note``` but we won't dive into those now.
+
+Here you can see resulting work file after ```Save As``` action.
 
 ![Save As Dialog](assets/3dsmax_SavingFirstFile2_OP.png)
 
 ## Understanding Context
 
-It is good to be aware that whenever you as a user choose ```asset``` and ```task``` you happen to be in so called **context** meaning that all user actions are in relation with particular ```asset```. This could be quickly seen in host application header and or ```OpenPype Menu``` and its accompanying tools.
+As seen on our example OpenPype created pretty first workfile and named it ```220901_couch_modeling_v001.max``` meaning it sits in the Project ```220901``` being it ```couch``` asset and workfile being ```modeling``` task and obviously ```v001``` telling user its first existing version of this workfile.
+
+It is good to be aware that whenever you as a user choose ```asset``` and ```task``` you happen to be in so called **context** meaning that all user actions are in relation with particular ```asset```. This could be quickly seen in host application header and ```OpenPype Menu``` and its accompanying tools.
 
 ![Workfile Context](assets/3dsmax_context.png)
 
+> Whenever you choose different ```asset``` and its ```task``` in **Work Files window** you are basically changing context to the current asset/task you have chosen.
+
+
+This concludes the basics of working with workfiles in 3dsmax using OpenPype and its tools. Following chapters will cover other aspects like creating multiple assets types and their publishing for later usage in the production.
+
 ---
 
-# *...to be edited for 3dsmax*
+## Creating and Publishing Instances
 
-## ~~Setting scene data~~
+:::warning Important
+Before proceeding further please check [Glossary](artist_concepts.md) and [What Is Publishing?](artist_publish.md) So you have clear idea about terminology.
+:::
 
-3dsmax settings concerning framerate, resolution and frame range are handled
-by OpenPype. If set correctly in OP Project Manager/Ftrack, 3dsmax will automatically set the 
-values for you.
-
-
-## ~~Publishing models~~
 
 ### Intro
 
+Current OpenPype integration (ver 3.15.0) supports only ```PointCache``` and ```Camera``` families now.
+
+**Pointcache** family being basically any geometry outputted as Alembic cache (.abc) format
+
+**Camera** family being 3dsmax Camera object with/without animation outputted as native .max, FBX, Alembic format
+
+
+---
+
+:::note Work in progress
+This part of documentation is still work in progress.
+:::
+
+## ...to be added
+
+
+
+<!-- 
 Publishing models in 3dsmax is pretty straightforward. Create your model as you
 need. You might need to adhere to specifications of your studio that can be different
 between studios and projects but by default your geometry does not need any
@@ -123,6 +154,7 @@ There LODs are conveniently grouped so they don't clutter Inventory view.
 Name your subset like `main_LOD1`. Important part is that `_LOD1`. You can have as many LODs as you need.
 ::: -->
 
+<!--
 Read-only field just under it show final subset name, adding subset field to
 name of the group you have selected.
 
@@ -215,7 +247,9 @@ There you should see your model, named `modelDefault`.
 ### ~~Loading models~~
 
 You can load model with [Loader](artist_tools_loader). Go **OpenPype → Load...**,
-select your rig, right click on it and click **Link model (blend)**.
+select your rig, right click on it and click **Link model (blend)**. 
+
+-->
 
 
 
