@@ -145,6 +145,7 @@ class BackgroundLoader(ImageLoader):
         bkg_img = camera.data.background_images.new()
         bkg_img.image = img
         bkg_img.frame_method = "FIT"
+        bkg_img.display_depth = "FRONT"  # Set to front as default
 
         # Setup image as movie clip if source is "MOVIE"
         # and match frame start and duration with the current scene settings.
