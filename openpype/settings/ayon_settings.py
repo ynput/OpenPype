@@ -67,7 +67,8 @@ def _convert_applications_groups(groups, clear_metadata):
     group_dynamic_labels = {}
     for group in groups:
         group_name = group.pop("name")
-        group_dynamic_labels[group_name] = group.pop("label")
+        if "label" in group:
+            group_dynamic_labels[group_name] = group["label"]
 
         tool_group_envs = group[environment_key]
         if isinstance(tool_group_envs, six.string_types):
@@ -82,6 +83,7 @@ def _convert_applications_groups(groups, clear_metadata):
             if isinstance(variant_envs, six.string_types):
                 variant[environment_key] = json.loads(variant_envs)
             variants[variant_name] = variant
+        group["variants"] = variants
 
         if not clear_metadata:
             group["__dynamic_keys_labels__"] = variant_dynamic_labels
@@ -268,7 +270,7 @@ def _convert_blender_project_settings(ayon_settings, output):
             ayon_publish[dst_key] = model_validators.pop(src_key)
 
     blender_publish = blender_settings["publish"]
-    for key in tuple(blender_publish.keys()):
+    for key in tuple(ayon_publish.keys()):
         blender_publish[key] = ayon_publish[key]
 
 
@@ -347,7 +349,8 @@ def _convert_flame_project_settings(ayon_settings, output):
 def _convert_fusion_project_settings(ayon_settings, output):
     if "fusion" not in ayon_settings:
         return
-    ayon_imageio_fusion = ayon_settings["fusion"]["imageio"]
+    ayon_fusion = ayon_settings["fusion"]
+    ayon_imageio_fusion = ayon_fusion["imageio"]
 
     if "ocioSettings" in ayon_imageio_fusion:
         ayon_ocio_setting = ayon_imageio_fusion.pop("ocioSettings")
@@ -365,10 +368,9 @@ def _convert_fusion_project_settings(ayon_settings, output):
 
     imageio_fusion_settings = output["fusion"]["imageio"]
     for key in (
-        "oci",
         "imageio",
     ):
-        imageio_fusion_settings[key] = ayon_imageio_fusion[key]
+        imageio_fusion_settings[key] = ayon_fusion[key]
 
 
 def _convert_maya_project_settings(ayon_settings, output):
@@ -668,7 +670,12 @@ def _convert_photoshop_project_settings(ayon_settings, output):
 
     _convert_host_imageio(ayon_photoshop)
 
-    for key in ("create", "publish", "workfile_builder", "imageio"):
+    for key in (
+        "create",
+        "publish",
+        "workfile_builder",
+        "imageio",
+    ):
         photoshop_settings[key] = ayon_photoshop[key]
 
 
@@ -960,14 +967,6 @@ def _convert_global_project_settings(ayon_settings, output):
     }
     ayon_create_tool["families_smart_select"] = new_smart_select_families
     global_tools["creator"] = ayon_create_tool
-
-    ayon_workfiles_tool = ayon_tools["Workfiles"]
-    for item in ayon_workfiles_tool["last_workfile_on_startup"]:
-        item["tasks"] = item.pop("task_names")
-
-    for item in ayon_workfiles_tool["open_workfile_tool_on_startup"]:
-        item["tasks"] = item.pop("task_names")
-    global_tools["Workfiles"] = ayon_workfiles_tool
 
     ayon_loader_tool = ayon_tools["loader"]
     for profile in ayon_loader_tool["family_filter_profiles"]:
