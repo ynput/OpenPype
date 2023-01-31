@@ -563,9 +563,7 @@ class Creator(LegacyCreator):
         imprint(op_instance, self.data)
 
         # Process outliner if current creator relates to this types
-        if gather_into_collection and all(
-            t in self.bl_types for t in BL_OUTLINER_TYPES
-        ):
+        if gather_into_collection and bpy.types.Collection in self.bl_types:
             container_collection = self._process_outliner(datablocks, name)
             imprint(container_collection, self.data)
 
