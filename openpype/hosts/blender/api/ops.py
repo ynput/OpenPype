@@ -1202,7 +1202,11 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         # Display workfile out of date warning
         if not context.scene.is_workfile_up_to_date:
             row = layout.row()
-            row.operator(WM_OT_CheckWorkfileUpToDate.bl_idname, text="Your workfile is out of date!", icon="ERROR")
+            row.operator(
+                WM_OT_CheckWorkfileUpToDate.bl_idname,
+                text="Your workfile is out of date!",
+                icon="ERROR",
+            )
             layout.separator()
 
         pcoll = PREVIEW_COLLECTIONS.get("avalon")
