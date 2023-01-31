@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Maya scene units</title>
+<description>## Invalid maya scene units
+
+Detected invalid maya scene units:
+
+{issues}
+
+</description>
+<detail>
+### How to repair?
+
+You can automatically repair the scene units by clicking the Repair action on
+the right.
+
+After that restart publishing with Reload button.
+</detail>
+</error>
+</root>

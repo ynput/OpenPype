@@ -8,6 +8,7 @@ from math import ceil
 from openpype.pipeline.publish import (
     RepairContextAction,
     ValidateSceneOrder,
+    PublishXmlValidationError
 )
 
 
@@ -31,6 +32,29 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
 
     validate_fps = True
 
+    nice_message_format = (
+        "- <b>{setting}</b> must be <b>{required_value}</b>.  "
+        "Your scene is set to <b>{current_value}</b>"
+    )
+    log_message_format = (
+        "Maya scene {setting} must be '{required_value}'. "
+        "Current value is '{current_value}'."
+    )
+
+    def apply_settings(self, project_settings, system_settings):
+        """Apply project settings to creator"""
+        settings = (
+            project_settings["maya"]["publish"]["ValidateMayaUnits"]
+        )
+
+        self.validate_linear_units = settings.get("validate_linear_units",
+                                                  self.validate_linear_units)
+        self.linear_units = settings.get("linear_units", self.linear_units)
+        self.validate_angular_units = settings.get("validate_angular_units",
+                                                   self.validate_angular_units)
+        self.angular_units = settings.get("angular_units", self.angular_units)
+        self.validate_fps = settings.get("validate_fps", self.validate_fps)
+
     def process(self, context):
 
         # Collected units
@@ -45,15 +69,14 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         # now flooring the value?
         fps = float_round(context.data.get('fps'), 2, ceil)
 
-        # TODO repace query with using 'context.data["assetEntity"]'
-        asset_doc = get_current_project_asset()
+        asset_doc = context.data["assetEntity"]
         asset_fps = asset_doc["data"]["fps"]
 
         self.log.info('Units (linear): {0}'.format(linearunits))
         self.log.info('Units (angular): {0}'.format(angularunits))
         self.log.info('Units (time): {0} FPS'.format(fps))
 
-        valid = True
+        invalid = []
 
         # Check if units are correct
         if (
@@ -61,26 +84,43 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
             and linearunits
             and linearunits != self.linear_units
         ):
-            self.log.error("Scene linear units must be {}".format(
-                self.linear_units))
-            valid = False
+            invalid.append({
+                "setting": "Linear units",
+                "required_value": self.linear_units,
+                "current_value": linearunits
+            })
 
         if (
             self.validate_angular_units
             and angularunits
             and angularunits != self.angular_units
         ):
-            self.log.error("Scene angular units must be {}".format(
-                self.angular_units))
-            valid = False
+            invalid.append({
+                "setting": "Angular units",
+                "required_value": self.angular_units,
+                "current_value": angularunits
+            })
 
         if self.validate_fps and fps and fps != asset_fps:
-            self.log.error(
-                "Scene must be {} FPS (now is {})".format(asset_fps, fps))
-            valid = False
+            invalid.append({
+                "setting": "FPS",
+                "required_value": asset_fps,
+                "current_value": fps
+            })
 
-        if not valid:
-            raise RuntimeError("Invalid units set.")
+        if invalid:
+
+            issues = []
+            for data in invalid:
+                self.log.error(self.log_message_format.format(**data))
+                issues.append(self.nice_message_format.format(**data))
+            issues = "\n".join(issues)
+
+            raise PublishXmlValidationError(
+                plugin=self,
+                message="Invalid maya scene units",
+                formatting_data={"issues": issues}
+            )
 
     @classmethod
     def repair(cls, context):
