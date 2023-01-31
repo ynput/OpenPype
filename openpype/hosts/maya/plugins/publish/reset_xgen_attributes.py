@@ -4,7 +4,11 @@ import pyblish.api
 
 
 class ResetXgenAttributes(pyblish.api.InstancePlugin):
-    """Reset Xgen attributes."""
+    """Reset Xgen attributes.
+
+    When the incremental save of the workfile triggers, the Xgen attributes
+    changes so this plugin will change it back to the values before publishing.
+    """
 
     label = "Reset Xgen Attributes."
     # Offset to run after workfile increment plugin.
@@ -13,7 +17,7 @@ class ResetXgenAttributes(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         xgen_attributes = instance.data.get("xgenAttributes", {})
-        if not xgen_attributes :
+        if not xgen_attributes:
             return
 
         for palette, data in xgen_attributes.items():
@@ -24,6 +28,9 @@ class ResetXgenAttributes(pyblish.api.InstancePlugin):
                 )
                 cmds.setAttr(node_attr, value, type="string")
             cmds.setAttr(palette + ".xgExportAsDelta", True)
-            
+
+        # Need to save the scene, cause the attribute changes above does not
+        # mark the scene as modified so user can exit without commiting the
+        # changes.
         self.log.info("Saving changes.")
         cmds.file(save=True)
