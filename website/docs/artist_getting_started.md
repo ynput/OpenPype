@@ -19,19 +19,22 @@ If this is not the case, please contact your administrator to consult on how to 
 If you are working from **home** though, you'll **need to install** it yourself. You should, however, receive the OpenPype installer files from your studio
 admin, supervisor or production, because OpenPype versions and executables might not be compatible between studios.  
 
-Installing OpenPype is possible by Windows installer or by unzipping it anywhere on the disk from downloaded ZIP archive.
+Installing OpenPype is possible by Installer or by unzipping downloaded ZIP archive to any drive location.
 
-For more detailed info about installation on different OS please visit [Installation section](artist_install.md).
+> For more detailed info about installing OpenPype please visit [Installation section](artist_install.md).
 
-There are two ways running OpenPype
+---
 
-first most common one by using OP icon on the Desktop triggering
+You can run OpenPype by desktop "OP" icon (if exists after installing) or by directly executing
 
-**openpype_gui.exe** suitable **for artists**. It runs OpenPype GUI in the OS tray. From there you can run all the available tools. To use any of the features, OpenPype must be running in the tray.
+**openpype_gui.exe** located in the OpenPype folder. This executable being suitable **for artists**.
 
-or alternatively by using
+or alternatively by
 
-**openpype_console.exe** located in the OpenPype folder which is suitable for **TDs/Admin** for debugging and error reporting. This one runs with opened console window where all the necessary info will appear during user's work session. 
+**openpype_console.exe** which is more suitable for **TDs/Admin** for debugging and error reporting. This one runs with opened console window where all the necessary info will appear during user's work session.
+
+> By seeing the "OP" icon in the OS tray user can easily tell OpenPype already running.
+
 
 
 ## First Launch
