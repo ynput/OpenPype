@@ -89,9 +89,7 @@ class ConnectGeometry(InventoryAction):
             return
 
         # Setup live worldspace blendshape connection.
-        for match in matches:
-            source = match[0]
-            target = match[1]
+        for source, target in matches:
             blendshape = cmds.blendShape(source, target)[0]
             cmds.setAttr(blendshape + ".origin", 0)
             cmds.setAttr(blendshape + "." + target.split(":")[-1], 1)
