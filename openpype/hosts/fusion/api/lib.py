@@ -302,10 +302,26 @@ def get_frame_path(path):
     return filename, padding, ext
 
 
+def get_comp_name(comp=None):
+    """Get basename of the comp's filename"""
+    if comp:
+        comp_name = os.path.basename(comp.GetAttrs()["COMPS_FileName"])
+        return comp_name
+
+
+def get_fusion():
+    """Get Fusion instance"""
+    app = getattr(sys.modules["BlackmagicFusion"], "scriptapp", None)
+    if app:
+        fusion = app("Fusion", "localhost")
+        return fusion
+
+
 def get_current_comp():
-    """Hack to get current comp in this session"""
-    fusion = getattr(sys.modules["__main__"], "fusion", None)
-    return fusion.CurrentComp if fusion else None
+    """Get current comp in this session"""
+    fusion = get_fusion()
+    comp = fusion.CurrentComp
+    return comp
 
 
 @contextlib.contextmanager
