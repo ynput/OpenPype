@@ -7,7 +7,7 @@ from common.ayon_common.distribution.addon_distribution import (
     OSAddonDownloader,
     HTTPAddonDownloader,
     AddonInfo,
-    update_addon_state,
+    AyonDistribution,
     UpdateState
 )
 from common.ayon_common.distribution.addon_info import UrlType
@@ -55,7 +55,8 @@ def sample_addon_info():
                  "clientSourceInfo": [
                      {
                          "type": "http",
-                         "url": "https://drive.google.com/file/d/1TcuV8c2OV8CcbPeWi7lxOdqWsEqQNPYy/view?usp=sharing"  # noqa
+                         "path": "https://drive.google.com/file/d/1TcuV8c2OV8CcbPeWi7lxOdqWsEqQNPYy/view?usp=sharing",  # noqa
+                         "filename": "dummy.zip"
                      },
                      {
                          "type": "filesystem",
@@ -152,16 +153,31 @@ def test_update_addon_state(printer, sample_addon_info,
     addon_info = AddonInfo.from_dict(sample_addon_info)
     orig_hash = addon_info.hash
 
+    # Cause crash because of invalid hash
     addon_info.hash = "brokenhash"
-    result = update_addon_state([addon_info], temp_folder, addon_downloader)
-    assert result["openpype_slack_1.0.0"] == UpdateState.FAILED.value, \
-        "Update should failed because of wrong hash"
+    distribution = AyonDistribution(
+        temp_folder, temp_folder, addon_downloader, [addon_info], None
+    )
+    distribution.distribute()
+    dist_items = distribution.get_addons_dist_items()
+    slack_state = dist_items["openpype_slack_1.0.0"].state
+    assert slack_state == UpdateState.UPDATE_FAILED, (
+        "Update should have failed because of wrong hash")
 
+    # Fix cache and validate if was updated
     addon_info.hash = orig_hash
-    result = update_addon_state([addon_info], temp_folder, addon_downloader)
-    assert result["openpype_slack_1.0.0"] == UpdateState.UPDATED.value, \
-        "Addon should have been updated"
+    distribution = AyonDistribution(
+        temp_folder, temp_folder, addon_downloader, [addon_info], None
+    )
+    distribution.distribute()
+    dist_items = distribution.get_addons_dist_items()
+    assert dist_items["openpype_slack_1.0.0"].state == UpdateState.UPDATED, (
+        "Addon should have been updated")
 
-    result = update_addon_state([addon_info], temp_folder, addon_downloader)
-    assert result["openpype_slack_1.0.0"] == UpdateState.EXISTS.value, \
-        "Addon should already exist"
+    # Is UPDATED without calling distribute
+    distribution = AyonDistribution(
+        temp_folder, temp_folder, addon_downloader, [addon_info], None
+    )
+    dist_items = distribution.get_addons_dist_items()
+    assert dist_items["openpype_slack_1.0.0"].state == UpdateState.UPDATED, (
+        "Addon should already exist")

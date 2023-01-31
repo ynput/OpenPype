@@ -185,13 +185,7 @@ from ayon_common.connection.credentials import (
     load_environments,
     set_environments,
 )
-from ayon_common.distribution.addon_distribution import (
-    get_addons_dir,
-    get_dependencies_dir,
-    make_sure_addons_are_updated,
-    make_sure_venv_is_updated,
-    get_default_addon_downloader,
-)
+from ayon_common.distribution.addon_distribution import AyonDistribution
 
 
 def set_global_environments() -> None:
@@ -277,19 +271,11 @@ def _check_and_update_from_ayon_server():
         RuntimeError
     """
 
-    local_addons_dir = get_addons_dir()
-    local_dependencies_dir = get_dependencies_dir()
-
-    default_downloader = get_default_addon_downloader()
-    _print(f">>> Checking addons in {local_addons_dir} ...")
-    make_sure_addons_are_updated(default_downloader, local_addons_dir)
-
-    if local_addons_dir not in sys.path:
-        _print(f"Adding {local_addons_dir} to sys path.")
-        sys.path.insert(0, local_addons_dir)
-
-    _print(f">>> Checking venvs in {local_dependencies_dir} ...")
-    make_sure_venv_is_updated(default_downloader, local_dependencies_dir)
+    distribution = AyonDistribution()
+    distribution.distribute()
+    distribution.validate_distribution()
+    for path in distribution.get_sys_paths():
+        sys.path.insert(0, path)
 
 
 def boot():

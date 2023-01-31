@@ -17,23 +17,64 @@ class MultiPlatformPath(object):
 
 
 @attr.s
-class AddonSource(object):
+class SourceInfo(object):
     type = attr.ib()
 
 
 @attr.s
-class LocalAddonSource(AddonSource):
+class LocalSourceInfo(SourceInfo):
     path = attr.ib(default=attr.Factory(MultiPlatformPath))
 
 
 @attr.s
-class WebAddonSource(AddonSource):
+class WebSourceInfo(SourceInfo):
     url = attr.ib(default=None)
+    headers = attr.ib(default=None)
+    filename = attr.ib(default=None)
 
 
 @attr.s
-class ServerResourceSource(AddonSource):
+class ServerSourceInfo(SourceInfo):
     filename = attr.ib(default=None)
+    path = attr.ib(default=None)
+
+
+def convert_source(source):
+    """Create source object from data information.
+
+    Args:
+        source (Dict[str, any]): Information about source.
+
+    Returns:
+        Union[None, SourceInfo]: Object with source information if type is
+            known.
+    """
+
+    source_type = source.get("type")
+    if not source_type:
+        return None
+
+    if source_type == UrlType.FILESYSTEM.value:
+        return LocalSourceInfo(
+            type=source_type,
+            path=source["path"]
+        )
+
+    if source_type == UrlType.HTTP.value:
+        url = source["path"]
+        return WebSourceInfo(
+            type=source_type,
+            url=url,
+            headers=source.get("headers"),
+            filename=source.get("filename")
+        )
+
+    if source_type == UrlType.SERVER.value:
+        return ServerSourceInfo(
+            type=source_type,
+            filename=source.get("filename"),
+            path=source.get("path")
+        )
 
 
 @attr.s
@@ -48,6 +89,7 @@ class AddonInfo(object):
     version = attr.ib()
     full_name = attr.ib()
     title = attr.ib(default=None)
+    require_distribution = attr.ib(default=False)
     sources = attr.ib(default=attr.Factory(list))
     unknown_sources = attr.ib(default=attr.Factory(list))
     hash = attr.ib(default=None)
@@ -67,36 +109,30 @@ class AddonInfo(object):
         # server payload contains info about all versions
         # active addon must have 'productionVersion' and matching version info
         version_data = data.get("versions", {})[production_version]
-
-        for source in version_data.get("clientSourceInfo", []):
-            source_type = source.get("type")
-            if source_type == UrlType.FILESYSTEM.value:
-                source_addon = LocalAddonSource(
-                    type=source_type, path=source["path"])
-            elif source_type == UrlType.HTTP.value:
-                source_addon = WebAddonSource(
-                    type=source_type, url=source["path"])
-            elif source_type == UrlType.SERVER.value:
-                source_addon = ServerResourceSource(
-                    type=source_type, filename=source["filename"])
+        source_info = version_data.get("clientSourceInfo")
+        require_distribution = source_info is not None
+        for source in (source_info or []):
+            addon_source = convert_source(source)
+            if addon_source is not None:
+                sources.append(addon_source)
             else:
-                print(f"Unknown source {source_type}")
                 unknown_sources.append(source)
-                continue
-
-            sources.append(source_addon)
+                print(f"Unknown source {source.get('type')}")
 
         full_name = "{}_{}".format(data["name"], production_version)
-        return cls(name=data.get("name"),
-                   version=production_version,
-                   full_name=full_name,
-                   sources=sources,
-                   unknown_sources=unknown_sources,
-                   hash=data.get("hash"),
-                   description=data.get("description"),
-                   title=data.get("title"),
-                   license=data.get("license"),
-                   authors=data.get("authors"))
+        return cls(
+            name=data.get("name"),
+            version=production_version,
+            full_name=full_name,
+            require_distribution=require_distribution,
+            sources=sources,
+            unknown_sources=unknown_sources,
+            hash=data.get("hash"),
+            description=data.get("description"),
+            title=data.get("title"),
+            license=data.get("license"),
+            authors=data.get("authors")
+        )
 
 
 @attr.s
@@ -105,6 +141,7 @@ class DependencyItem(object):
     name = attr.ib()
     platform = attr.ib()
     checksum = attr.ib()
+    require_distribution = attr.ib()
     sources = attr.ib(default=attr.Factory(list))
     unknown_sources = attr.ib(default=attr.Factory(list))
     addon_list = attr.ib(default=attr.Factory(list))
@@ -114,31 +151,27 @@ class DependencyItem(object):
     def from_dict(cls, package):
         sources = []
         unknown_sources = []
-        for source in package.get("sources", []):
-            source_type = source.get("type")
-            if source_type == UrlType.FILESYSTEM.value:
-                source_addon = LocalAddonSource(
-                    type=source_type, path=source["path"])
-            elif source_type == UrlType.HTTP.value:
-                source_addon = WebAddonSource(
-                    type=source_type, url=source["url"])
-            elif source_type == UrlType.SERVER.value:
-                source_addon = ServerResourceSource(
-                    type=source_type, filename=source["filename"])
+        package_sources = package.get("sources")
+        require_distribution = package_sources is not None
+        for source in (package_sources or []):
+            dependency_source = convert_source(source)
+            if dependency_source is not None:
+                sources.append(dependency_source)
             else:
-                print(f"Unknown source {source_type}")
+                print(f"Unknown source {source.get('type')}")
                 unknown_sources.append(source)
-                continue
 
-            sources.append(source_addon)
         addon_list = [f"{name}_{version}"
                       for name, version in
                       package.get("supportedAddons").items()]
 
-        return cls(name=package.get("name"),
-                   platform=package.get("platform"),
-                   sources=sources,
-                   unknown_sources=unknown_sources,
-                   checksum=package.get("checksum"),
-                   addon_list=addon_list,
-                   python_modules=package.get("pythonModules"))
+        return cls(
+            name=package.get("name"),
+            platform=package.get("platform"),
+            require_distribution=require_distribution,
+            sources=sources,
+            unknown_sources=unknown_sources,
+            checksum=package.get("checksum"),
+            addon_list=addon_list,
+            python_modules=package.get("pythonModules")
+        )
