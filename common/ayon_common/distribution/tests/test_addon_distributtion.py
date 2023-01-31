@@ -55,7 +55,8 @@ def sample_addon_info():
                  "clientSourceInfo": [
                      {
                          "type": "http",
-                         "path": "https://drive.google.com/file/d/1TcuV8c2OV8CcbPeWi7lxOdqWsEqQNPYy/view?usp=sharing"  # noqa
+                         "path": "https://drive.google.com/file/d/1TcuV8c2OV8CcbPeWi7lxOdqWsEqQNPYy/view?usp=sharing",  # noqa
+                         "filename": "dummy.zip"
                      },
                      {
                          "type": "filesystem",
@@ -178,5 +179,5 @@ def test_update_addon_state(printer, sample_addon_info,
         temp_folder, temp_folder, addon_downloader, [addon_info], None
     )
     dist_items = distribution.get_addons_dist_items()
-    assert dist_items["openpype_slack_1.0.0"] == UpdateState.UPDATED, (
+    assert dist_items["openpype_slack_1.0.0"].state == UpdateState.UPDATED, (
         "Addon should already exist")
