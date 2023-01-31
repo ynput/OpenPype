@@ -465,6 +465,6 @@ def _get_imageio_settings(project_settings, host_name):
     # get image io from global and host_name
     imageio_global = project_settings["global"]["imageio"]
     # host is optional, some might not have any settings
-    imageio_host = project_settings[host_name].get("imageio", {})
+    imageio_host = project_settings.get(host_name, {}).get("imageio", {})
 
     return imageio_global, imageio_host
