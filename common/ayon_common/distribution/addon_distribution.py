@@ -20,7 +20,6 @@ from .addon_info import (
     AddonInfo,
     UrlType,
     DependencyItem,
-    ServerSourceInfo,
 )
 
 
@@ -47,6 +46,7 @@ def get_local_dir(*subdirs):
 
     local_dir = os.path.join(
         appdirs.user_data_dir("openpype", "pypeclub"),
+        # TODO use ayon appdirs instead of openpype
         # appdirs.user_data_dir("ayon", "ynput"),
         *subdirs
     )
@@ -119,11 +119,17 @@ class AddonDownloader:
     def download(cls, source, destination_dir, data, transfer_progress):
         """Returns url to downloaded addon zip file.
 
+        Tranfer progress can be ignored, in that case file transfer won't
+        be shown as 0-100% but as 'running'. First step should be to set
+        destination content size and then add tranferred chunk sizes.
+
         Args:
             source (dict): {type:"http", "url":"https://} ...}
             destination_dir (str): local folder to unzip
             data (dict): More information about download content. Always have
                 'type' key in.
+            transfer_progress (ayon_api.TransferProgress): Progress of
+                tranferred (copy/download) content.
 
         Returns:
             (str) local path to addon zip file
