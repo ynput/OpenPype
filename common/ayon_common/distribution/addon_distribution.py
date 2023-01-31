@@ -769,6 +769,19 @@ class AyonDistribution:
 
     @property
     def addons_info(self):
+        """Information about available addons on server.
+
+        Addons may require distribution of files. For those addons will be
+        created 'DistributionItem' handling distribution itself.
+
+        Todos:
+            Add support for staging versions. Right now is supported only
+                production version.
+
+        Returns:
+            Dict[str, AddonInfo]: Addon info by full name.
+        """
+
         if self._addons_info is None:
             addons_info = {}
             server_addons_info = ayon_api.get_addons_info(details=True)
@@ -783,6 +796,19 @@ class AyonDistribution:
 
     @property
     def dependency_package(self):
+        """Information about dependency package from server.
+
+        Receive and cache dependency package information from server.
+
+        Notes:
+            For testing purposes it is possible to pass dependency package
+                information to '__init__'.
+
+        Returns:
+            Union[None, Dict[str, Any]]: None if server does not have specified
+                dependency package.
+        """
+
         if self._dependency_package == -1:
             self._dependency_package = get_dependency_package()
         return self._dependency_package
@@ -864,19 +890,61 @@ class AyonDistribution:
         )
 
     def get_addons_dist_items(self):
+        """Addon distribution items.
+
+        These items describe source files required by addon to be available on
+        machine. Each item may have 0-n source information from where can be
+        obtained. If file is already available it's state will be 'UPDATED'.
+
+        Returns:
+             Dict[str, DistributionItem]: Distribution items by addon fullname.
+        """
+
         if self._addons_dist_items is None:
             self._addons_dist_items = self._prepare_current_addons_dist_items()
         return self._addons_dist_items
 
     def get_dependency_dist_item(self):
+        """Dependency package distribution item.
+
+        Item describe source files required by server to be available on
+        machine. Item may have 0-n source information from where can be
+        obtained. If file is already available it's state will be 'UPDATED'.
+
+        'None' is returned if server does not have defined any dependency
+        package.
+
+        Returns:
+            Union[None, DistributionItem]: Dependency item or None if server
+                does not have specified any dependency package.
+        """
+
         if self._dependency_dist_item == -1:
             self._dependency_dist_item = self._preapre_dependency_dist_item()
         return self._dependency_dist_item
 
     def get_dependency_metadata_filepath(self):
+        """Path to distribution metadata file.
+
+        Metadata contain information about distributed packages, used source,
+        expected file hash and time when file was distributed.
+
+        Returns:
+            str: Path to a file where dependency package metadata are stored.
+        """
+
         return os.path.join(self._dependency_dirpath, "dependency.json")
 
     def get_addons_metadata_filepath(self):
+        """Path to addons metadata file.
+
+        Metadata contain information about distributed addons, used sources,
+        expected file hashes and time when files were distributed.
+
+        Returns:
+            str: Path to a file where addons metadata are stored.
+        """
+
         return os.path.join(self._addons_dirpath, "addons.json")
 
     def read_metadata_file(self, filepath, default_value=None):
@@ -951,6 +1019,8 @@ class AyonDistribution:
         self.save_metadata_file(filepath, addons_metadata)
 
     def finish_distribution(self):
+        """Store metadata about distributed items."""
+
         self._dist_finished = True
         stored_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         dependency_dist_item = self.get_dependency_dist_item()
@@ -992,6 +1062,17 @@ class AyonDistribution:
         self.update_addons_metadata(addons_info)
 
     def get_all_distribution_items(self):
+        """Distribution items required by server.
+
+        Items contain dependency package item and all addons that are enabled
+        and have distribution requirements.
+
+        Items can be already available on machine.
+
+        Returns:
+            List[DistributionItem]: Distribution items required by server.
+        """
+
         output = []
         dependency_dist_item = self.get_dependency_dist_item()
         if dependency_dist_item is not None:
@@ -1001,6 +1082,17 @@ class AyonDistribution:
         return output
 
     def distribute(self, threaded=False):
+        """Distribute all missing items.
+
+        Method will try to distribute all items that are required by server.
+
+        This method does not handle failed items. To validate the result call
+        'validate_distribution' when this method finishes.
+
+        Args:
+            threaded (bool): Distribute items in threads.
+        """
+
         if self._dist_started:
             raise RuntimeError("Distribution already started")
         self._dist_started = True
@@ -1021,6 +1113,12 @@ class AyonDistribution:
         self.finish_distribution()
 
     def validate_distribution(self):
+        """Check if all required distribution items are distributed.
+
+        Raises:
+            RuntimeError: Any of items is not available.
+        """
+
         invalid = []
         dependency_package = self.get_dependency_dist_item()
         if (
@@ -1041,6 +1139,20 @@ class AyonDistribution:
         ))
 
     def get_sys_paths(self):
+        """Get all paths to python packages that should be added to python.
+
+        These paths lead to addon directories and python dependencies in
+        dependency package.
+
+        Todos:
+            Add dependency package directory to output. ATM is not structure of
+                dependency package 100% defined.
+
+        Returns:
+            List[str]: Paths that should be added to 'sys.path' and
+                'PYTHONPATH'.
+        """
+
         output = []
         for item in self.get_all_distribution_items():
             if item.state != UpdateState.UPDATED:
