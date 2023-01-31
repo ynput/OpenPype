@@ -893,15 +893,11 @@ class AyonDistribution:
             Union[Dict[str, Any], List[Any]]: Value from file.
         """
 
-        if not os.path.exists(filepath):
-            dirpath = os.path.dirname(filepath)
-            if not os.path.exists(dirpath):
-                os.makedirs(dirpath)
+        if default_value is None:
+            default_value = {}
 
-            if default_value is None:
-                default_value = {}
-            with open(filepath, "w") as stream:
-                json.dump(default_value, stream)
+        if not os.path.exists(filepath):
+            return default_value
 
         try:
             with open(filepath, "r") as stream:
