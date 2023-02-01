@@ -21,7 +21,7 @@ class CreateMultiverseUsd(plugin.MayaCreator):
         defs.extend([
             EnumDef("fileFormat",
                     label="File format",
-                    items={key: key for key in ["usd", "usda", "usdz"]},
+                    items=["usd", "usda", "usdz"],
                     default="usd"),
             BoolDef("stripNamespaces",
                     label="Strip Namespaces",
