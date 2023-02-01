@@ -4,6 +4,8 @@ title: Xgen for Maya
 sidebar_label: Xgen
 ---
 
+OpenPype supports Xgen classic with the follow workflow. It eases the otherwise cumbersome issues around Xgen's side car files and hidden behaviour inside Maya. The workflow supports publishing, loading and updating of Xgen collections, along with connecting animation from geometry and (guide) curves.
+
 ## Setup
 
 ### Settings

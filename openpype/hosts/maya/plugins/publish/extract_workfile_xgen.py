@@ -83,8 +83,8 @@ class ExtractWorkfileXgen(publish.Extractor):
                 "No collections found in the scene. Skipping Xgen extraction."
             )
             return
-        else:
-            import xgenm
+
+        import xgenm
 
         # Validate to extract only when we are publishing a renderlayer as
         # well.
