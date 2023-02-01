@@ -14,6 +14,7 @@ class ValidateMayaColorSpace(pyblish.api.InstancePlugin):
     families = ['look']
     hosts = ['maya']
     label = 'Color Management with maketx'
+    optional = True
 
     def process(self, instance):
         ocio_maya = cmds.colorManagementPrefs(q=True,

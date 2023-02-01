@@ -385,6 +385,7 @@ class ExtractLook(publish.Extractor):
 
             source, mode, texture_hash = self._process_texture(
                 filepath,
+                resource,
                 do_maketx,
                 staging=staging_dir,
                 linearize=linearize,
@@ -490,7 +491,7 @@ class ExtractLook(publish.Extractor):
             resources_dir, basename + ext
         )
 
-    def _process_texture(self, filepath, do_maketx, staging, linearize, force):
+    def _process_texture(self, filepath, resource, do_maketx, staging, linearize, force):
         """Process a single texture file on disk for publishing.
         This will:
             1. Check whether it's already published, if so it will do hardlink
@@ -532,11 +533,21 @@ class ExtractLook(publish.Extractor):
                 texture_hash
             ]
             if linearize:
-                self.log.info("tx: converting sRGB -> linear")
-                additional_args.extend(["--colorconvert", "sRGB", "linear"])
-
-            self.log.info("Using nuke-default ocio config instead of maya ocio config!") # noqa
-            self.log.info("The tx conversion is different from the maya tx conversion!") # noqa
+                if cmds.colorManagementPrefs(query=True, cmEnabled=True):
+                    render_colorspace = cmds.colorManagementPrefs(query=True,
+                                                                  renderingSpaceName=True)
+                    color_space_attr = resource["node"] + ".colorSpace"
+                    try:
+                        color_space = cmds.getAttr(color_space_attr)
+                    except ValueError:
+                        # node doesn't have color space attribute
+                        color_space = "Raw"
+                    self.log.info("tx: converting {0} -> {1}".format(color_space,
+                                                                     render_colorspace))
+                    additional_args.extend(["--colorconvert", color_space, render_colorspace])
+                else:
+                    self.log.info("tx: converting sRGB -> linear")
+                    additional_args.extend(["--colorconvert", "sRGB", "Raw"])
 
             config_path = get_ocio_config_path("nuke-default")
             additional_args.extend(["--colorconfig", config_path])
