@@ -69,6 +69,7 @@ def set_op_project(dbcon: AvalonMongoDB, project_id: str):
 
 def update_op_assets(
     dbcon: AvalonMongoDB,
+    gazu_project: dict,
     project_doc: dict,
     entities_list: List[dict],
     asset_doc_ids: Dict[str, dict],
@@ -119,21 +120,20 @@ def update_op_assets(
             # because of zou's legacy design
             frames_duration = int(item.get("nb_frames", 0))
         except (TypeError, ValueError):
-            frames_duration = 0
+            frames_duration = None
         # Frame out, fallback on frame_in + duration or project's value or 1001
         frame_out = item_data.pop("frame_out", None)
         if not frame_out:
-            frame_out = frame_in + frames_duration
-        try:
-            frame_out = int(frame_out)
-        except (TypeError, ValueError):
-            frame_out = 1001
+            if frames_duration:
+                frame_out = frame_in + frames_duration
+            else:
+                frame_out = project_doc["data"].get("frameEnd", 1001)
         item_data["frameEnd"] = frame_out
         # Fps, fallback to project's value or default value (25.0)
         try:
-            fps = float(item_data.get("fps", project_doc["data"].get("fps")))
+            fps = float(item_data.get("fps"))
         except (TypeError, ValueError):
-            fps = 25.0
+            fps = float(gazu_project.get("fps", project_doc["data"].get("fps", 25)))
         item_data["fps"] = fps
 
         # Tasks
@@ -424,7 +424,7 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         [
             UpdateOne({"_id": id}, update)
             for id, update in update_op_assets(
-                dbcon, project_doc, all_entities, zou_ids_and_asset_docs
+                dbcon, project, project_doc, all_entities, zou_ids_and_asset_docs
             )
         ]
     )
