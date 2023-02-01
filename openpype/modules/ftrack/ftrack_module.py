@@ -64,6 +64,16 @@ class FtrackModule(
         self._timers_manager_module = None
 
     def get_ftrack_url(self):
+        """Resolved ftrack url.
+
+        Resolving is trying to fill missing information in url and tried to
+        connect to the server.
+
+        Returns:
+            Union[str, None]: Final variant of url or None if url could not be
+                reached.
+        """
+
         if self._ftrack_url is _URL_NOT_SET:
             self._ftrack_url = resolve_ftrack_url(
                 self._settings_ftrack_url,
