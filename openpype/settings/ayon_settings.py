@@ -454,7 +454,6 @@ def _convert_maya_project_settings(ayon_settings, output):
             for item in validate_rendern_settings[key]
         ]
 
-
     ayon_capture_preset = ayon_publish["ExtractPlayblast"]["capture_preset"]
     display_options = ayon_capture_preset["DisplayOptions"]
     for key in ("background", "backgroundBottom", "backgroundTop"):
