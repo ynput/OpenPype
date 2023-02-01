@@ -17,7 +17,7 @@
 
 import os
 import sys
-# from Qt.QtWidgets import QApplication
+import revitron_sphinx_theme
 
 openpype_root = os.path.abspath('../..')
 sys.path.insert(0, openpype_root)
@@ -65,8 +65,9 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
-    'm2r2',
-    'autoapi.extension'
+    'revitron_sphinx_theme',
+    'autoapi.extension',
+    'myst_parser'
 ]
 
 ##############################
@@ -75,16 +76,17 @@ extensions = [
 
 autoapi_dirs = ['../../openpype', '../../igniter']
 
-# bypas modules with a lot of python2 content for now
+# bypass modules with a lot of python2 content for now
 autoapi_ignore = [
-    "*plugin*",
-    "*hosts*",
     "*vendor*",
-    "*modules*",
-    "*setup*",
-    "*tools*",
     "*schemas*",
-    "*website*"
+    "*startup/*",
+    "*/website*",
+    "*openpype/hooks*",
+    "*openpype/style*",
+    "openpype/tests*",
+    # to many levels of relative import:
+    "*/modules/sync_server/*"
 ]
 autoapi_keep_files = True
 autoapi_options = [
@@ -140,7 +142,7 @@ autosummary_generate = True
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'furo'
+html_theme = 'revitron_sphinx_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -256,3 +258,5 @@ intersphinx_mapping = {
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+myst_gfm_only = True
