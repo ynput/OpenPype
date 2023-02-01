@@ -170,6 +170,19 @@ These options are set on the camera shape when publishing the review. They corre
 
 ![Extract Playblast Settings](assets/maya-admin_extract_playblast_settings_camera_options.png)
 
+
+## Load Plugins
+
+### Reference Loader > Namespace
+Here you can create your own custom naming for the reference loader. <br>
+The custom naming is split into two parts separated by a ":" symbol. The first half is the namespace and the second half is the group name of the reference. If you don't set the namespace or the group name (or both), the default namespace and group name will be applied.
+Here's the different variables you can use: <br>
+Asset name: {asset[name]} <br>
+Asset type: {asset[type]} <br>
+Subset name: {subset[name]} <br>
+Subset family: {subset[data][family]} <br>
+Example: {asset[name]}_{subset[name]}:GRP
+
 ## Custom Menu
 You can add your custom tools menu into Maya by extending definitions in **Maya -> Scripts Menu Definition**.
 ![Custom menu definition](assets/maya-admin_scriptsmenu.png)
