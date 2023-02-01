@@ -32,6 +32,25 @@ class ExtractOIIOTranscode(publish.Extractor):
     - task types
     - task names
     - subset names
+
+    Can produce one or more representations (with different extensions) based
+    on output definition in format:
+        "output_name: {
+            "extension": "png",
+            "colorspace": "ACES - ACEScg",
+            "display": "",
+            "view": "",
+            "tags": [],
+            "custom_tags": []
+        }
+
+    If 'extension' is empty original representation extension is used.
+    'output_name' will be used as name of new representation. In case of value
+        'passthrough' name of original representation will be used.
+
+    'colorspace' denotes target colorspace to be transcoded into. Could be
+    empty if transcoding should be only into display and viewer colorspace.
+    (In that case both 'display' and 'view' must be filled.)
     """
 
     label = "Transcode color spaces"
@@ -78,7 +97,7 @@ class ExtractOIIOTranscode(publish.Extractor):
                 self.log.warning("Config file doesn't exist, skipping")
                 continue
 
-            for _, output_def in profile.get("outputs", {}).items():
+            for output_name, output_def in profile.get("outputs", {}).items():
                 new_repre = copy.deepcopy(repre)
 
                 original_staging_dir = new_repre["stagingDir"]
@@ -92,10 +111,10 @@ class ExtractOIIOTranscode(publish.Extractor):
 
                 output_extension = output_def["extension"]
                 output_extension = output_extension.replace('.', '')
-                if output_extension:
-                    self._rename_in_representation(new_repre,
-                                                   files_to_convert,
-                                                   output_extension)
+                self._rename_in_representation(new_repre,
+                                               files_to_convert,
+                                               output_name,
+                                               output_extension)
 
                 target_colorspace = output_def["colorspace"]
                 view = output_def["view"] or colorspace_data.get("view")
@@ -154,10 +173,22 @@ class ExtractOIIOTranscode(publish.Extractor):
                 self._mark_original_repre_for_deletion(repre, profile)
 
     def _rename_in_representation(self, new_repre, files_to_convert,
-                                  output_extension):
-        """Replace old extension with new one everywhere in representation."""
-        if new_repre["name"] == new_repre["ext"]:
-            new_repre["name"] = output_extension
+                                  output_name, output_extension):
+        """Replace old extension with new one everywhere in representation.
+
+        Args:
+            new_repre (dict)
+            files_to_convert (list): of filenames from repre["files"],
+                standardized to always list
+            output_name (str): key of output definition from Settings,
+                if "<passthrough>" token used, keep original repre name
+            output_extension (str): extension from output definition
+        """
+        if output_name != "passthrough":
+            new_repre["name"] = output_name
+        if not output_extension:
+            return
+
         new_repre["ext"] = output_extension
 
         renamed_files = []
