@@ -135,6 +135,17 @@ def update_op_assets(
         except (TypeError, ValueError):
             fps = float(gazu_project.get("fps", project_doc["data"].get("fps", 25)))
         item_data["fps"] = fps
+        # Resolution, fall back to project default
+        match_res = re.match(r"(\d+)x(\d+)", item_data.get("resolution", gazu_project.get("resolution")))
+        if match_res:
+            item_data["resolutionWidth"] = int(match_res.group(1))
+            item_data["resolutionHeight"] = int(match_res.group(2))
+        else:
+            item_data["resolutionWidth"] = project_doc["data"].get("resolutionWidth")
+            item_data["resolutionHeight"] = project_doc["data"].get("resolutionHeight")
+        # Properties that doesn't fully exist in Kitsu. Guessing the property name
+        # Pixel Aspect Ratio
+        item_data["pixelAspect"] = item_data.get("pixel_aspect", project_doc["data"].get("pixelAspect"))
 
         # Tasks
         tasks_list = []
