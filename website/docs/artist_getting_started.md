@@ -35,7 +35,9 @@ or alternatively by
 
 **openpype_console.exe** which is more suitable for **TDs/Admin** for debugging and error reporting. This one runs with opened console window where all the necessary info will appear during user's work session.
 
-> By seeing the "OP" icon in the OS tray user can easily tell OpenPype already running.
+:::tip Is OpenPype running?
+OpenPype runs in the operating system's tray. If you see the OpenPype icon in the tray you can easily tell OpenPype is currently running.
+:::
 
 
 
