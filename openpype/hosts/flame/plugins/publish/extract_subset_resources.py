@@ -143,6 +143,9 @@ class ExtractSubsetResources(publish.Extractor):
         # create staging dir path
         staging_dir = self.staging_dir(instance)
 
+        # append staging dir for later cleanup
+        instance.context.data["cleanupFullPaths"].append(staging_dir)
+
         # add default preset type for thumbnail and reviewable video
         # update them with settings and override in case the same
         # are found in there

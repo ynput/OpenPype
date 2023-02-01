@@ -616,7 +616,7 @@ def get_instance_staging_dir(instance):
     First check if 'stagingDir' is already set in instance data.
     In case there already is new tempdir will not be created.
 
-    It also supports `OPENPYPE_TEMP_DIR`, so studio can define own temp
+    It also supports `OPENPYPE_TMPDIR`, so studio can define own temp
     shared repository per project or even per more granular context.
     Template formating is supported also with optional keys. Folder is
     created in case it doesnt exists.
@@ -645,16 +645,15 @@ def get_instance_staging_dir(instance):
     if staging_dir:
         return staging_dir
 
-    openpype_temp_dir = os.getenv("OPENPYPE_TEMP_DIR")
+    openpype_temp_dir = os.getenv("OPENPYPE_TMPDIR")
     custom_temp_dir = None
     if openpype_temp_dir:
         if "{" in openpype_temp_dir:
-            custom_temp_dir = _formated_staging_dir(
+            custom_temp_dir = _format_staging_dir(
                 instance, openpype_temp_dir
             )
         elif os.path.exists(openpype_temp_dir):
             custom_temp_dir = openpype_temp_dir
-
 
     if custom_temp_dir:
         staging_dir = os.path.normpath(
@@ -669,30 +668,39 @@ def get_instance_staging_dir(instance):
         )
     instance.data['stagingDir'] = staging_dir
 
-    instance.context.data["cleanupFullPaths"].append(staging_dir)
-
     return staging_dir
 
 
-def _formated_staging_dir(instance, openpype_temp_dir):
+def _format_staging_dir(instance, openpype_temp_dir):
+    """ Formating template
+
+    Template path formatting is supporting:
+    - optional key formating
+    - available keys:
+        - root[work | <root name key>]
+        - project[name | code]
+        - asset
+        - hierarchy
+        - task
+        - username
+        - app
+
+    Args:
+        instance (pyblish.Instance): instance object
+        openpype_temp_dir (str): path string
+
+    Returns:
+        str: formated path
+    """
     anatomy = instance.context.data["anatomy"]
     # get anatomy formating data
     # so template formating is supported
     anatomy_data = copy.deepcopy(instance.context.data["anatomyData"])
     anatomy_data["root"] = anatomy.roots
-    """Template path formatting is supporting:
-            - optional key formating
-            - available keys:
-                - root[work | <root name key>]
-                - project[name | code]
-                - asset
-                - hierarchy
-                - task
-                - username
-                - app
-            """
-    result = StringTemplate.format_template(openpype_temp_dir, anatomy_data)
-    result = os.path.normpath(result)
-            # create the dir in case it doesnt exists
+
+    result = StringTemplate.format_template(
+        openpype_temp_dir, anatomy_data).normalized()
+
+    # create the dir in case it doesnt exists
     os.makedirs(os.path.dirname(result))
     return result
