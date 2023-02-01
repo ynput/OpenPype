@@ -105,7 +105,6 @@ class ExtractWorkfileXgen(publish.Extractor):
 
         # Extract patches alembic.
         path_no_ext, _ = os.path.splitext(instance.context.data["currentFile"])
-        dirname = os.path.dirname(instance.context.data["currentFile"])
         kwargs = {"attrPrefix": ["xgen"], "stripNamespaces": True}
         alembic_files = []
         for palette in cmds.ls(type="xgmPalette"):
@@ -114,11 +113,8 @@ class ExtractWorkfileXgen(publish.Extractor):
                 for name in xgenm.boundGeometry(palette, description):
                     patch_names.append(name)
 
-            alembic_file = os.path.join(
-                dirname,
-                "{}__{}.abc".format(
-                    path_no_ext, palette.replace(":", "__ns__")
-                )
+            alembic_file = "{}__{}.abc".format(
+                path_no_ext, palette.replace(":", "__ns__")
             )
             extract_alembic(
                 alembic_file,
