@@ -225,10 +225,22 @@ class ExtractOIIOTranscode(publish.Extractor):
         new_repre["files"] = renamed_files
 
     def _rename_in_representation(self, new_repre, files_to_convert,
-                                  output_extension):
-        """Replace old extension with new one everywhere in representation."""
-        if new_repre["name"] == new_repre["ext"]:
-            new_repre["name"] = output_extension
+                                  output_name, output_extension):
+        """Replace old extension with new one everywhere in representation.
+
+        Args:
+            new_repre (dict)
+            files_to_convert (list): of filenames from repre["files"],
+                standardized to always list
+            output_name (str): key of output definition from Settings,
+                if "<passthrough>" token used, keep original repre name
+            output_extension (str): extension from output definition
+        """
+        if output_name != "passthrough":
+            new_repre["name"] = output_name
+        if not output_extension:
+            return
+
         new_repre["ext"] = output_extension
 
         renamed_files = []
