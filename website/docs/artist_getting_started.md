@@ -44,7 +44,7 @@ OpenPype runs in the operating system's tray. If you see the OpenPype icon in th
 ## First Launch
 
 
-When you first start OpenPype, you will be asked to fill in some basic informations.
+When you first start OpenPype, you will be asked to fill in some basic information.
 
 ### MongoDB
 
