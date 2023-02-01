@@ -100,7 +100,7 @@ class ShowInKitsu(LauncherAction):
             kitsu_url = kitsu_url[:-len("/api")]
 
         sub_url = f"/productions/{project_id}"
-        asset_type_url = "Shots" if asset_type in shots_url else "Assets"
+        asset_type_url = "shots" if asset_type in shots_url else "assets"
 
         if task_id:
             # Go to task page
