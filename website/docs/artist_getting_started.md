@@ -71,7 +71,7 @@ This path is usually taken from the database directly, so you shouldn't need it.
 
 ## Updates
 
-If you're connected to your Studio, OpenPype will check for, and install updates automatically every time you run it. That's why during the first start, it will go through a quick update installation process, even though you might have just installed it. 
+If you're connected to your Studio, OpenPype will check for, and install updates automatically every time you run it. That's why during the first start it can go through a quick update installation process, even though you might have just installed it. 
 
 
 ## Advanced Usage
