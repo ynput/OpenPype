@@ -104,7 +104,7 @@ class ExtractWorkfileXgen(publish.Extractor):
         end_frame += 1
 
         # Extract patches alembic.
-        basename, _ = os.path.splitext(instance.context.data["currentFile"])
+        path_no_ext, _ = os.path.splitext(instance.context.data["currentFile"])
         dirname = os.path.dirname(instance.context.data["currentFile"])
         kwargs = {"attrPrefix": ["xgen"], "stripNamespaces": True}
         alembic_files = []
@@ -116,7 +116,9 @@ class ExtractWorkfileXgen(publish.Extractor):
 
             alembic_file = os.path.join(
                 dirname,
-                "{}__{}.abc".format(basename, palette.replace(":", "__ns__"))
+                "{}__{}.abc".format(
+                    path_no_ext, palette.replace(":", "__ns__")
+                )
             )
             extract_alembic(
                 alembic_file,
@@ -138,7 +140,9 @@ class ExtractWorkfileXgen(publish.Extractor):
         for source in alembic_files:
             destination = os.path.join(
                 os.path.dirname(instance.data["resourcesDir"]),
-                os.path.basename(source.replace(basename, published_basename))
+                os.path.basename(
+                    source.replace(path_no_ext, published_basename)
+                )
             )
             transfers.append((source, destination))
 
