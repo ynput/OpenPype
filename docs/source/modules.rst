@@ -5,4 +5,4 @@ igniter
    :maxdepth: 6
 
    igniter
-   pype
+   openpype
