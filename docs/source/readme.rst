@@ -1,2 +1,2 @@
-.. title:: Pype Readme
+.. title:: OpenPype Readme
 .. include:: ../../README.md
