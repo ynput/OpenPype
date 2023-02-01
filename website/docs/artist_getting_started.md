@@ -63,7 +63,7 @@ asks for it, just put it in the corresponding text field and press `install` but
 ### OpenPype Version Repository
 
 Sometimes your Studio might also ask you to fill in the path to its version
-repository. This is a location where OpenPype will be looking for when checking
+repository. This is a location where OpenPype will search for the latest versions, check
 if it's up to date and where updates are installed from automatically. 
 
 This path is usually taken from the database directly, so you shouldn't need it. 
