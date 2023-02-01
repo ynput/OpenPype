@@ -197,6 +197,10 @@ class MayaCreatorBase(object):
     def read_instance_node(self, node):
         node_data = read(node)
 
+        # Never care about a cbId attribute on the object set
+        # being read as 'data'
+        node_data.pop("cbId", None)
+
         # Move the relevant attributes into "creator_attributes" that
         # we flattened originally
         node_data["creator_attributes"] = {}
