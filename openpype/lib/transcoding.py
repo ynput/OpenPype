@@ -1054,8 +1054,11 @@ def convert_colorspace(
     Args:
         input_path (str): Path that should be converted. It is expected that
             contains single file or image sequence of same type
-            (sequence in format 'file.FRAMESTART-FRAMEEND#.exr', see oiio docs)
+            (sequence in format 'file.FRAMESTART-FRAMEEND#.ext', see oiio docs,
+            eg `big.1-3#.tif`)
         output_path (str): Path to output filename.
+            (must follow format of 'input_path', eg. single file or
+             sequence in 'file.FRAMESTART-FRAMEEND#.ext', `output.1-3#.tif`)
         config_path (str): path to OCIO config file
         source_colorspace (str): ocio valid color space of source files
         target_colorspace (str): ocio valid target color space
