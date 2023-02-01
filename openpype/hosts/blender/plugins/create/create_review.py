@@ -2,13 +2,13 @@
 from typing import List
 
 import bpy
-from openpype import plugin
+from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.properties import OpenpypeInstance
 
-from openpype.hosts.blender.plugins.create.create_camera import CreateCamera
+from openpype.hosts.blender.plugins.create.create_camera import _get_camera_from_datablocks
 
 
-class CreateReview(CreateCamera):
+class CreateReview(plugin.Creator):
     """Review is basically a camera with different integration."""
 
     name = "reviewDefault"
@@ -30,7 +30,7 @@ class CreateReview(CreateCamera):
 
         # Create camera if doesn't exist
         datablocks = datablocks or []
-        camera = self._get_camera_from_datablocks(datablocks)
+        camera = _get_camera_from_datablocks(datablocks)
         if not camera:
             camera = bpy.data.cameras.new(instance_name)
             camera_obj = bpy.data.objects.new(instance_name, camera)
