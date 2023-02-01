@@ -48,8 +48,8 @@ When you first start OpenPype, you will be asked to fill in some basic informati
 
 ### MongoDB
 
-In most cases that will only be your studio MongoDB Address.
-It's a URL that you should have received from your Studio admin and most often will look like this 
+In most cases you will only have to supply the MongoDB Address.
+It's the database URL you should have received from your Studio admin and often will look like this 
 
 `mongodb://username:passwword@mongo.mystudiodomain.com:12345`
 
