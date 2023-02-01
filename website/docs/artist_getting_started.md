@@ -21,7 +21,9 @@ admin, supervisor or production, because OpenPype versions and executables might
 
 Installing OpenPype is possible by Installer or by unzipping downloaded ZIP archive to any drive location.
 
-> For more detailed info about installing OpenPype please visit [Installation section](artist_install.md).
+:::tip Using the OpenPype Installer
+See the [Installation section](artist_install.md) for more information on how to use the OpenPype Installer
+:::
 
 ---
 
