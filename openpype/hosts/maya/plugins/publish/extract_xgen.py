@@ -12,7 +12,7 @@ from openpype.hosts.maya.api.lib import (
 from openpype.lib import StringTemplate
 
 
-class ExtractXgenCache(publish.Extractor):
+class ExtractXgen(publish.Extractor):
     """Extract Xgen
 
     Workflow:
