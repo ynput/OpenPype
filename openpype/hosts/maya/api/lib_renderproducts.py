@@ -1354,7 +1354,12 @@ class RenderProductsMayaHardware(ARenderProducts):
 
         products = []
         for cam in self.get_renderable_cameras():
-            product = RenderProduct(productName="beauty", ext=ext, camera=cam)
+            product = RenderProduct(
+                productName="beauty",
+                ext=ext,
+                camera=cam,
+                colorspace=lib.get_color_management_output_transform()
+            )
             products.append(product)
 
         return products

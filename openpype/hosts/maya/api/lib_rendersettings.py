@@ -23,7 +23,8 @@ class RenderSettings(object):
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
         'renderman': 'rmanGlobals.imageFileFormat',
-        'redshift': 'defaultRenderGlobals.imageFilePrefix'
+        'redshift': 'defaultRenderGlobals.imageFilePrefix',
+        'mayahardware2': 'defaultRenderGlobals.imageFilePrefix'
     }
 
     _image_prefixes = {
