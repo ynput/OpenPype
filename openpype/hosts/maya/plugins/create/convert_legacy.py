@@ -43,7 +43,7 @@ class LegacyConverted(SubsetConvertorPlugin,
         # from family to identifier
         family_to_id = {}
         for identifier, creator in self.create_context.manual_creators.items():
-            family = getattr(creator, "family")
+            family = getattr(creator, "family", None)
             if not family:
                 continue
 
