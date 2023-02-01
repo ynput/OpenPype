@@ -299,7 +299,7 @@ class PypeCommands:
         if pyargs:
             args.extend(["--pyargs", pyargs])
 
-        if persist:
+        if test_data_folder:
             args.extend(["--test_data_folder", test_data_folder])
 
         if persist:

@@ -31,8 +31,6 @@ class ValidateSceneSetWorkspace(pyblish.api.ContextPlugin):
 
     order = ValidatePipelineOrder
     hosts = ['maya']
-    category = 'scene'
-    version = (0, 1, 0)
     label = 'Maya Workspace Set'
 
     def process(self, context):

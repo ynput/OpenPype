@@ -1,5 +1,13 @@
 {
     "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        },
         "colorManagementPreference_v2": {
             "enabled": true,
             "configFilePath": {
@@ -85,6 +93,16 @@
             "force_combine": true,
             "aov_list": [],
             "additional_options": []
+        },
+        "renderman_renderer": {
+            "image_prefix": "<layer>{aov_separator}<aov>.<f4>.<ext>",
+            "image_dir": "<scene>/<layer>",
+            "display_filters": [],
+            "imageDisplay_dir": "<imagedir>/<layer>{aov_separator}imageDisplayFilter.<f4>.<ext>",
+            "sample_filters": [],
+            "cryptomatte_dir": "<imagedir>/<layer>{aov_separator}cryptomatte.<f4>.<ext>",
+            "watermark_dir": "<imagedir>/<layer>{aov_separator}watermarkFilter.<f4>.<ext>",
+            "additional_options": []
         }
     },
     "create": {
@@ -158,24 +176,6 @@
                 "Main"
             ]
         },
-        "CreateMultiverseUsd": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateMultiverseUsdComp": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateMultiverseUsdOver": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
         "CreateAss": {
             "enabled": true,
             "defaults": [
@@ -195,6 +195,24 @@
             "maskFilter": false,
             "maskColor_manager": false,
             "maskOperator": false
+        },
+        "CreateMultiverseUsd": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateMultiverseUsdComp": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateMultiverseUsdOver": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
         },
         "CreateAssembly": {
             "enabled": true,
@@ -337,6 +355,45 @@
             "families": [
                 "rig"
             ]
+        },
+        "ValidatePluginPathAttributes": {
+            "enabled": true,
+            "optional": false,
+            "active": true,
+            "attribute": {
+                "AlembicNode": "abc_File",
+                "VRayProxy": "fileName",
+                "RenderManArchive": "filename",
+                "pgYetiMaya": "cacheFileName",
+                "aiStandIn": "dso",
+                "RedshiftSprite": "tex0",
+                "RedshiftBokeh": "dofBokehImage",
+                "RedshiftCameraMap": "tex0",
+                "RedshiftEnvironment": "tex2",
+                "RedshiftDomeLight": "tex1",
+                "RedshiftIESLight": "profile",
+                "RedshiftLightGobo": "tex0",
+                "RedshiftNormalMap": "tex0",
+                "RedshiftProxyMesh": "fileName",
+                "RedshiftVolumeShape": "fileName",
+                "VRayTexGLSL": "fileName",
+                "VRayMtlGLSL": "fileName",
+                "VRayVRmatMtl": "fileName",
+                "VRayPtex": "ptexFile",
+                "VRayLightIESShape": "iesFile",
+                "VRayMesh": "materialAssignmentsFile",
+                "VRayMtlOSL": "fileName",
+                "VRayTexOSL": "fileName",
+                "VRayTexOCIO": "ocioConfigFile",
+                "VRaySettingsNode": "pmap_autoSaveFile2",
+                "VRayScannedMtl": "file",
+                "VRayScene": "parameterOverrideFilePath",
+                "VRayMtlMDL": "filename",
+                "VRaySimbiont": "file",
+                "dlOpenVDBShape": "filename",
+                "pgYetiMayaShape": "liveABCFilename",
+                "gpuCache": "cacheFileName"
+            }
         },
         "ValidateRenderSettings": {
             "arnold_render_attributes": [],

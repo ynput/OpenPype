@@ -16,7 +16,7 @@ travelled only very slightly with the cursor.
 """
 
 import copy
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 
 class FlickData(object):
