@@ -510,7 +510,10 @@ def resolve_ftrack_url(url, logger=None):
         url = "https://" + url
 
     ftrack_url = None
-    if not url.endswith("ftrackapp.com"):
+    if url and _check_ftrack_url(url):
+        ftrack_url = url
+
+    if not ftrack_url and not url.endswith("ftrackapp.com"):
         ftrackapp_url = url + ".ftrackapp.com"
         if _check_ftrack_url(ftrackapp_url):
             ftrack_url = ftrackapp_url
