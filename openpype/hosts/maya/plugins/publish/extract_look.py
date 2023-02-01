@@ -491,7 +491,8 @@ class ExtractLook(publish.Extractor):
             resources_dir, basename + ext
         )
 
-    def _process_texture(self, filepath, resource, do_maketx, staging, linearize, force):
+    def _process_texture(self, filepath, resource,
+                         do_maketx, staging, linearize, force):
         """Process a single texture file on disk for publishing.
         This will:
             1. Check whether it's already published, if so it will do hardlink
@@ -534,17 +535,17 @@ class ExtractLook(publish.Extractor):
             ]
             if linearize:
                 if cmds.colorManagementPrefs(query=True, cmEnabled=True):
-                    render_colorspace = cmds.colorManagementPrefs(query=True,
-                                                                  renderingSpaceName=True)
+                    render_colorspace = cmds.colorManagementPrefs(query=True, renderingSpaceName=True)  # noqa
                     color_space_attr = resource["node"] + ".colorSpace"
                     try:
                         color_space = cmds.getAttr(color_space_attr)
                     except ValueError:
                         # node doesn't have color space attribute
                         color_space = "Raw"
-                    self.log.info("tx: converting {0} -> {1}".format(color_space,
-                                                                     render_colorspace))
-                    additional_args.extend(["--colorconvert", color_space, render_colorspace])
+                    self.log.info("tx: converting {0} -> {1}".format(color_space, render_colorspace))  # noqa
+                    additional_args.extend(["--colorconvert",
+                                            color_space,
+                                            render_colorspace])
                 else:
                     self.log.info("tx: converting sRGB -> linear")
                     additional_args.extend(["--colorconvert", "sRGB", "Raw"])
