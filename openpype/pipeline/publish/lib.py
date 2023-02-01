@@ -649,11 +649,20 @@ def get_instance_staging_dir(instance):
     custom_temp_dir = None
     if openpype_temp_dir:
         if "{" in openpype_temp_dir:
+            # path is anatomy template
             custom_temp_dir = _format_staging_dir(
                 instance, openpype_temp_dir
             )
-        elif os.path.exists(openpype_temp_dir):
+        else:
+            # path is absolute
             custom_temp_dir = openpype_temp_dir
+
+            if not os.path.exists(custom_temp_dir):
+                try:
+                    # create it if it doesnt exists
+                    os.makedirs(custom_temp_dir)
+                except IOError as error:
+                    raise IOError("Path couldn't be created: {}".format(error))
 
     if custom_temp_dir:
         staging_dir = os.path.normpath(
