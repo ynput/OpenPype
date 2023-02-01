@@ -207,7 +207,7 @@ class ExtractOIIOTranscode(publish.Extractor):
         file_name = os.path.basename(input_path)
         file_name, input_extension = os.path.splitext(file_name)
         if not output_extension:
-            output_extension = input_extension
+            output_extension = input_extension.replace(".", "")
         new_file_name = '{}.{}'.format(file_name,
                                        output_extension)
         return os.path.join(output_dir, new_file_name)
