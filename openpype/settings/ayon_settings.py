@@ -440,6 +440,21 @@ def _convert_maya_project_settings(ayon_settings, output):
     )
 
     # Extract playblast capture settings
+    validate_rendern_settings = ayon_publish["ValidateRenderSettings"]
+    for key in (
+        "arnold_render_attributes",
+        "vray_render_attributes",
+        "redshift_render_attributes",
+        "renderman_render_attributes",
+    ):
+        if key not in validate_rendern_settings:
+            continue
+        validate_rendern_settings[key] = [
+            [item["type"], item["value"]]
+            for item in validate_rendern_settings[key]
+        ]
+
+
     ayon_capture_preset = ayon_publish["ExtractPlayblast"]["capture_preset"]
     display_options = ayon_capture_preset["DisplayOptions"]
     for key in ("background", "backgroundBottom", "backgroundTop"):
@@ -462,6 +477,13 @@ def _convert_maya_project_settings(ayon_settings, output):
     ayon_publish["ExtractCameraAlembic"]["bake_attributes"] = bake_attributes
 
     # --- Publish (END) ---
+    for renderer_settings in ayon_maya["RenderSettings"].values():
+        if "additional_options" not in renderer_settings:
+            continue
+        renderer_settings["additional_options"] = [
+            [item["attribute"], item["value"]]
+            for item in renderer_settings["additional_options"]
+        ]
 
     _convert_host_imageio(ayon_maya)
 
