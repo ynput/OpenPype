@@ -125,7 +125,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         except ValueError:
             family = "model"
 
-        group_name = "{}GRP".format(namespace)
+        group_name = "{}_GRP".format(namespace)
         # True by default to keep legacy behaviours
         attach_to_root = options.get("attach_to_root", True)
 
