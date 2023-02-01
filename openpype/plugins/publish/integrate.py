@@ -534,6 +534,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         template_data["representation"] = repre["name"]
         template_data["ext"] = repre["ext"]
 
+        # allow overwriting existing version
+        template_data["version"] = version["name"]
+
         # add template data for colorspaceData
         if repre.get("colorspaceData"):
             colorspace = repre["colorspaceData"]["colorspace"]
