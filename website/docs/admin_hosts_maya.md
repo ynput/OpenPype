@@ -6,7 +6,7 @@ sidebar_label: Maya
 
 ## Publish Plugins
 
-### Render Settings Validator 
+### Render Settings Validator
 
 `ValidateRenderSettings`
 
@@ -51,7 +51,7 @@ just one instance of this node type but if that is not so, validator will go thr
 instances and check the value there. Node type for **VRay** settings is `VRaySettingsNode`, for **Renderman**
 it is `rmanGlobals`, for **Redshift** it is `RedshiftOptions`.
 
-### Model Name Validator 
+### Model Name Validator
 
 `ValidateRenderSettings`
 
@@ -95,7 +95,7 @@ You can set various aspects of scene submission to farm with per-project setting
 
  - **Optional** will mark sumission plugin optional
  - **Active** will enable/disable plugin
- - **Tile Assembler Plugin** will set what should be used to assemble tiles on Deadline. Either **Open Image IO** will be used 
+ - **Tile Assembler Plugin** will set what should be used to assemble tiles on Deadline. Either **Open Image IO** will be used
 or Deadlines **Draft Tile Assembler**.
  - **Use Published scene** enable to render from published scene instead of scene in work area. Rendering from published files is much safer.
  - **Use Asset dependencies** will mark job pending on farm until asset dependencies are fulfilled - for example Deadline will wait for scene file to be synced to cloud, etc.
@@ -106,6 +106,18 @@ or Deadlines **Draft Tile Assembler**.
  - **Scene patches** - configure mechanism to add additional lines to published Maya Ascii scene files before they are used for rendering.
 This is useful to fix some specific renderer glitches and advanced hacking of Maya Scene files. `Patch name` is label for patch for easier orientation.
 `Patch regex` is regex used to find line in file, after `Patch line` string is inserted. Note that you need to add line ending.
+
+## Load Plugins
+
+### Reference Loader > Namespace
+Here you can create your own custom naming for the reference loader. <br>
+The custom naming is split into two parts separated by a ":" symbol. The first half is the namespace and the second half is the group name of the reference. If you don't set the namespace or the group name (or both), the default namespace and group name will be applied.
+Here's the different variables you can use: <br>
+Asset name: {asset[name]} <br>
+Asset type: {asset[type]} <br>
+Subset name: {subset[name]} <br>
+Subset family: {subset[data][family]} <br>
+Example: {asset[name]}_{subset[name]}:GRP
 
 ## Custom Menu
 You can add your custom tools menu into Maya by extending definitions in **Maya -> Scripts Menu Definition**.
