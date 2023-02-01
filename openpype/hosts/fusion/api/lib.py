@@ -305,16 +305,13 @@ def get_frame_path(path):
 def get_comp_name(comp=None):
     """Get basename of the comp's filename"""
     if comp:
-        comp_name = os.path.basename(comp.GetAttrs()["COMPS_FileName"])
-        return comp_name
+        return comp.GetAttrs()["COMPS_Name"]
 
 
 def get_fusion():
     """Get Fusion instance"""
-    app = getattr(sys.modules["BlackmagicFusion"], "scriptapp", None)
-    if app:
-        fusion = app("Fusion", "localhost")
-        return fusion
+    fusion = getattr(sys.modules["__main__"], "fusion", None)
+    return fusion
 
 
 def get_current_comp():
