@@ -113,7 +113,7 @@ class HoudiniCreatorBase(object):
             Dict[str, Any]: Shared data dictionary.
 
         """
-        if shared_data.get("houdini_cached_subsets") is not None:
+        if shared_data.get("houdini_cached_subsets") is None:
             cache = dict()
             cache_legacy = dict()
 
