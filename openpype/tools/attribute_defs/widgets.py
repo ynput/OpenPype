@@ -1,10 +1,10 @@
 import uuid
 import copy
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from openpype.lib.attribute_definitions import (
-    AbtractAttrDef,
+    AbstractAttrDef,
     UnknownDef,
     HiddenDef,
     NumberDef,
@@ -33,9 +33,9 @@ def create_widget_for_attr_def(attr_def, parent=None):
 
 
 def _create_widget_for_attr_def(attr_def, parent=None):
-    if not isinstance(attr_def, AbtractAttrDef):
+    if not isinstance(attr_def, AbstractAttrDef):
         raise TypeError("Unexpected type \"{}\" expected \"{}\"".format(
-            str(type(attr_def)), AbtractAttrDef
+            str(type(attr_def)), AbstractAttrDef
         ))
 
     if isinstance(attr_def, NumberDef):

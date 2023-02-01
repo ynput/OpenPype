@@ -534,6 +534,18 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         template_data["representation"] = repre["name"]
         template_data["ext"] = repre["ext"]
 
+        # allow overwriting existing version
+        template_data["version"] = version["name"]
+
+        # add template data for colorspaceData
+        if repre.get("colorspaceData"):
+            colorspace = repre["colorspaceData"]["colorspace"]
+            # replace spaces with underscores
+            # pipeline.colorspace.parse_colorspace_from_filepath
+            # is checking it with underscores too
+            colorspace = colorspace.replace(" ", "_")
+            template_data["colorspace"] = colorspace
+
         stagingdir = repre.get("stagingDir")
         if not stagingdir:
             # Fall back to instance staging dir if not explicitly
@@ -755,6 +767,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         #       and the actual representation entity for the database
         data = repre.get("data", {})
         data.update({"path": published_path, "template": template})
+
+        # add colorspace data if any exists on representation
+        if repre.get("colorspaceData"):
+            data["colorspaceData"] = repre["colorspaceData"]
+
         repre_doc = new_representation_doc(
             repre["name"], version["_id"], repre_context, data, repre_id
         )

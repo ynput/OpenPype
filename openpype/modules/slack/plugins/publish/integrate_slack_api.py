@@ -39,6 +39,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         token = instance.data["slack_token"]
         if additional_message:
             message = "{} \n".format(additional_message)
+        users = groups = None
         for message_profile in instance.data["slack_channel_message_profiles"]:
             message += self._get_filled_message(message_profile["message"],
                                                 instance,
@@ -60,8 +61,18 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                 else:
                     client = SlackPython3Operations(token, self.log)
 
-                users, groups = client.get_users_and_groups()
-                message = self._translate_users(message, users, groups)
+                if "@" in message:
+                    cache_key = "__cache_slack_ids"
+                    slack_ids = instance.context.data.get(cache_key, None)
+                    if slack_ids is None:
+                        users, groups = client.get_users_and_groups()
+                        instance.context.data[cache_key] = {}
+                        instance.context.data[cache_key]["users"] = users
+                        instance.context.data[cache_key]["groups"] = groups
+                    else:
+                        users = slack_ids["users"]
+                        groups = slack_ids["groups"]
+                    message = self._translate_users(message, users, groups)
 
                 msg_id, file_ids = client.send_message(channel,
                                                        message,
@@ -212,7 +223,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
 
     def _translate_users(self, message, users, groups):
         """Replace all occurences of @mentions with proper <@name> format."""
-        matches = re.findall(r"(?<!<)@[^ ]+", message)
+        matches = re.findall(r"(?<!<)@\S+", message)
         in_quotes = re.findall(r"(?<!<)(['\"])(@[^'\"]+)", message)
         for item in in_quotes:
             matches.append(item[1])
