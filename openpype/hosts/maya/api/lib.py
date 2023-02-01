@@ -5,6 +5,7 @@ import sys
 import platform
 import uuid
 import math
+import re
 
 import json
 import logging
@@ -3404,10 +3405,11 @@ def get_color_management_preferences():
 
     # Split view and display from view_transform. view_transform comes in
     # format of "{view} ({display})".
-    display = data["view_transform"].split("(")[-1].replace(")", "")
+    regex = re.compile(r"^(?P<view>.+) \((?P<display>.+)\)$")
+    match = regex.match(data["view_transform"])
     data.update({
-        "display": display,
-        "view": data["view_transform"].replace("({})".format(display), "")[:-1]
+        "display": match.group("display"),
+        "view": match.group("view")
     })
 
     # Get config absolute path.
