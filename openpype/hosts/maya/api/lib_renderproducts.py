@@ -841,9 +841,13 @@ class RenderProductsVray(ARenderProducts):
         if not dont_save_rgb:
             for camera in cameras:
                 products.append(
-                    RenderProduct(productName="",
-                                  ext=default_ext,
-                                  camera=camera))
+                    RenderProduct(
+                        productName="",
+                        ext=default_ext,
+                        camera=camera,
+                        colorspace=lib.get_color_management_output_transform()
+                    )
+                )
 
         # separate alpha file
         separate_alpha = self._get_attr("vraySettings.separateAlpha")
@@ -895,10 +899,13 @@ class RenderProductsVray(ARenderProducts):
 
             aov_name = self._get_vray_aov_name(aov)
             for camera in cameras:
-                product = RenderProduct(productName=aov_name,
-                                        ext=default_ext,
-                                        aov=aov,
-                                        camera=camera)
+                product = RenderProduct(
+                    productName=aov_name,
+                    ext=default_ext,
+                    aov=aov,
+                    camera=camera,
+                    colorspace=lib.get_color_management_output_transform()
+                )
                 products.append(product)
 
         return products
