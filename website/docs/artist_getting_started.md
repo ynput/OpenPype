@@ -27,7 +27,7 @@ See the [Installation section](artist_install.md) for more information on how to
 
 ---
 
-You can run OpenPype by desktop "OP" icon (if exists after installing) or by directly executing
+You can run OpenPype by desktop "OP" icon (if it exists after installing) or by directly executing
 
 **openpype_gui.exe** located in the OpenPype folder. This executable being suitable **for artists**.
 
