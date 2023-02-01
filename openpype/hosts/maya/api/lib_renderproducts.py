@@ -1132,6 +1132,7 @@ class RenderProductsRenderman(ARenderProducts):
     """
 
     renderer = "renderman"
+    unmerged_aovs = {"PxrCryptomatte"}
 
     def get_render_products(self):
         """Get all AOVs.
@@ -1181,6 +1182,17 @@ class RenderProductsRenderman(ARenderProducts):
             if not display_types.get(display["driverNode"]["type"]):
                 continue
 
+            has_cryptomatte = cmds.ls(type=self.unmerged_aovs)
+            matte_enabled = False
+            if has_cryptomatte:
+                for cryptomatte in has_cryptomatte:
+                    cryptomatte_aov = cryptomatte
+                    matte_name = "cryptomatte"
+                    rman_globals = cmds.listConnections(cryptomatte +
+                                                        ".message")
+                    if rman_globals:
+                        matte_enabled = True
+
             aov_name = name
             if aov_name == "rmanDefaultDisplay":
                 aov_name = "beauty"
@@ -1199,6 +1211,15 @@ class RenderProductsRenderman(ARenderProducts):
                         camera=camera,
                         multipart=True
                     )
+
+                    if has_cryptomatte and matte_enabled:
+                        cryptomatte = RenderProduct(
+                            productName=matte_name,
+                            aov=cryptomatte_aov,
+                            ext=extensions,
+                            camera=camera,
+                            multipart=True
+                        )
                 else:
                     # this code should handle the case where no multipart
                     # capable format is selected. But since it involves
@@ -1217,6 +1238,9 @@ class RenderProductsRenderman(ARenderProducts):
                         "Only exr, deep exr and tiff formats are supported.")
 
                 products.append(product)
+
+                if has_cryptomatte and matte_enabled:
+                    products.append(cryptomatte)
 
         return products
 

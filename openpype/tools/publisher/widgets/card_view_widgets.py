@@ -23,7 +23,7 @@ Only one item can be selected at a time.
 import re
 import collections
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from openpype.widgets.nice_checkbox import NiceCheckbox
 

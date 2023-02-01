@@ -165,7 +165,7 @@ class DropboxHandler(AbstractProvider):
         Returns:
             (boolean)
         """
-        return self.presets["enabled"] and self.dbx is not None
+        return self.presets.get("enabled") and self.dbx is not None
 
     @classmethod
     def get_configurable_items(cls):

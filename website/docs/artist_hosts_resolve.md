@@ -16,18 +16,18 @@ Before you are able to start with OpenPype tools in DaVinci Resolve, installatio
 
 ## OpenPype global tools
 
--   [Work Files](artist_tools.md#workfiles)
--   [Create](artist_tools.md#creator)
--   [Load](artist_tools.md#loader)
--   [Manage (Inventory)](artist_tools.md#inventory)
--   [Publish](artist_tools.md#publisher)
+-   [Work Files](artist_tools_workfiles)
+-   [Create](artist_tools_creator)
+-   [Load](artist_tools_loader)
+-   [Manage (Inventory)](artist_tools_inventory)
+-   [Publish](artist_tools_publisher)
 
 
 <div class="row markdown">
 
 ## Creating Shots from timeline items
 
-Before a clip can be published with [Publisher](artist_tools.md#publisher) timeline item has to be marked with OpenPype metadata markers. This way it is converted to a publishable subset.
+Before a clip can be published with [Publisher](artist_tools_publisher) timeline item has to be marked with OpenPype metadata markers. This way it is converted to a publishable subset.
 
 Lets do it step by step.
 

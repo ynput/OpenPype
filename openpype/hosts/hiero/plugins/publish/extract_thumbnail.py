@@ -41,7 +41,7 @@ class ExtractThumnail(publish.Extractor):
             track_item_name, thumb_frame, ".png")
         thumb_path = os.path.join(staging_dir, thumb_file)
 
-        thumbnail = track_item.thumbnail(thumb_frame).save(
+        thumbnail = track_item.thumbnail(thumb_frame, "colour").save(
             thumb_path,
             format='png'
         )

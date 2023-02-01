@@ -65,7 +65,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         published_repres = instance.data.get("published_representations")
         if not published_repres:
             self.log.debug(
-                "*** There are not published representations on the instance."
+                "*** There are no published representations on the instance."
             )
             return
 

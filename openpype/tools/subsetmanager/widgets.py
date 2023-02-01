@@ -1,5 +1,5 @@
 import json
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 
 class InstanceDetail(QtWidgets.QWidget):

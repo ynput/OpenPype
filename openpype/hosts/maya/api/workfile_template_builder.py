@@ -28,7 +28,7 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
 
         Args:
             path (str): A path to current template (usually given by
-            get_template_path implementation)
+            get_template_preset implementation)
 
         Returns:
             bool: Wether the template was succesfully imported or not
@@ -240,7 +240,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         cmds.setAttr(node + ".hiddenInOutliner", True)
 
     def load_succeed(self, placeholder, container):
-        self._parent_in_hierarhchy(placeholder, container)
+        self._parent_in_hierarchy(placeholder, container)
 
     def _parent_in_hierarchy(self, placeholder, container):
         """Parent loaded container to placeholder's parent.
