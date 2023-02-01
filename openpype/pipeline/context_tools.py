@@ -11,6 +11,7 @@ import pyblish.api
 from pyblish.lib import MessageHandler
 
 import openpype
+from openpype.host import HostBase
 from openpype.client import (
     get_project,
     get_asset_by_id,
@@ -317,7 +318,7 @@ def get_current_host_name():
     """
 
     host = registered_host()
-    if host is not None and hasattr(host, "name"):
+    if isinstance(host, HostBase):
         return host.name
     return os.environ.get("AVALON_APP")
 
@@ -332,28 +333,28 @@ def get_global_context():
 
 def get_current_context():
     host = registered_host()
-    if host is not None and hasattr(host, "get_current_context"):
+    if isinstance(host, HostBase):
         return host.get_current_context()
     return get_global_context()
 
 
 def get_current_project_name():
     host = registered_host()
-    if host is not None and hasattr(host, "get_current_project_name"):
+    if isinstance(host, HostBase):
         return host.get_current_project_name()
     return get_global_context()["project_name"]
 
 
 def get_current_asset_name():
     host = registered_host()
-    if host is not None and hasattr(host, "get_current_asset_name"):
+    if isinstance(host, HostBase):
         return host.get_current_asset_name()
     return get_global_context()["asset_name"]
 
 
 def get_current_task_name():
     host = registered_host()
-    if host is not None and hasattr(host, "get_current_task_name"):
+    if isinstance(host, HostBase):
         return host.get_current_task_name()
     return get_global_context()["task_name"]
 
