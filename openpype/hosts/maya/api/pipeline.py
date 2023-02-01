@@ -683,10 +683,12 @@ def before_workfile_save(event):
 
 def after_workfile_save(event):
     workfile_name = event["filename"]
-    if handle_workfile_locks():
-        if workfile_name:
-            if not is_workfile_locked(workfile_name):
-                create_workfile_lock(workfile_name)
+    if (
+        handle_workfile_locks()
+        and workfile_name
+        and not is_workfile_locked(workfile_name)
+    ):
+        create_workfile_lock(workfile_name)
 
 
 class MayaDirmap(HostDirmap):
