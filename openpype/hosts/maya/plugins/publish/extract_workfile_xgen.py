@@ -208,7 +208,7 @@ class ExtractWorkfileXgen(publish.Extractor):
             project_path = xgenm.getAttr("xgProjectPath", palette)
             data_path = xgenm.getAttr("xgDataPath", palette)
             data_path = data_path.replace("${PROJECT}", project_path)
-            for path in data_path.split(os.pathsep):
+            for path in data_path.split(";"):
                 for root, _, files in os.walk(path):
                     for f in files:
                         source = os.path.join(root, f)

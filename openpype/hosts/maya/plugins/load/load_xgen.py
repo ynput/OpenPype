@@ -73,9 +73,8 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             # to ensure paths are setup correctly.
             project_path = os.path.dirname(current_file()).replace("\\", "/")
             xgenm.setAttr("xgProjectPath", project_path, xgen_palette)
-            data_path = "${{PROJECT}}xgen/collections/{}{}{}".format(
+            data_path = "${{PROJECT}}xgen/collections/{};{}".format(
                 xgen_palette.replace(":", "__ns__"),
-                os.pathsep,
                 xgenm.getAttr("xgDataPath", xgen_palette)
             )
             xgenm.setAttr("xgDataPath", data_path, xgen_palette)
@@ -156,9 +155,8 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                     break
 
         project_path = os.path.dirname(current_file()).replace("\\", "/")
-        data_path = "${{PROJECT}}xgen/collections/{}{}{}".format(
+        data_path = "${{PROJECT}}xgen/collections/{};{}".format(
             xgen_palette.replace(":", "__ns__"),
-            os.pathsep,
             data_path
         )
         data = {"xgProjectPath": project_path, "xgDataPath": data_path}
