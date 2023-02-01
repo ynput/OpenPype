@@ -73,8 +73,19 @@ class FtrackModule(
 
     ftrack_url = property(get_ftrack_url)
 
+    @property
+    def settings_ftrack_url(self):
+        """Ftrack url from settings in a format as it is.
+
+        Returns:
+            str: Ftrack url from settings.
+        """
+
+        return self._settings_ftrack_url
+
     def get_global_environments(self):
         """Ftrack's global environments."""
+
         return {
             "FTRACK_SERVER": self.ftrack_url
         }
