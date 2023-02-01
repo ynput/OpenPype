@@ -514,6 +514,9 @@ def check_lock_on_current_file():
 
     # add the lock file when opening the file
     filepath = current_file()
+    # Skip if current file is 'untitled'
+    if not filepath:
+        return
 
     if is_workfile_locked(filepath):
         # add lockfile dialog
