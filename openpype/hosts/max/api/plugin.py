@@ -83,7 +83,7 @@ class MaxCreator(Creator, MaxCreatorBase):
 
             new_values = {
                 key: changes[key].new_value
-                for key in changes
+                for key in changes.changed_keys
             }
             imprint(
                 instance_node,
