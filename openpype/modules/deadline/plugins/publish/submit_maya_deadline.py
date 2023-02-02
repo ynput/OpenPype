@@ -753,7 +753,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             for file in exp:
                 yield file
 
-    def _get_strict_checking(self, plugin_info, instance):
+    def _get_strict_checking(self, instance):
         """Find profile to disable Strict Error Checking
 
         Args:
