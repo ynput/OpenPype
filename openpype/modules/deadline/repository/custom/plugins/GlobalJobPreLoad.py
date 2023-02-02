@@ -157,7 +157,7 @@ def get_openpype_version_from_path(path, build=True):
 
     # fix path for application bundle on macos
     if platform.system().lower() == "darwin":
-        path = os.path.join(path, "Contents", "MacOS", "lib", "Python")
+        path = os.path.join(path, "MacOS")
 
     version_file = os.path.join(path, "openpype", "version.py")
     if not os.path.isfile(version_file):
