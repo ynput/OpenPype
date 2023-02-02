@@ -5,8 +5,7 @@ from openpype.hosts.unreal.api.pipeline import (
     get_subsequences
 )
 from openpype.hosts.unreal.api.plugin import (
-    UnrealAssetCreator,
-    OpenPypeCreatorError
+    UnrealAssetCreator
 )
 from openpype.lib import UILabelDef
 
