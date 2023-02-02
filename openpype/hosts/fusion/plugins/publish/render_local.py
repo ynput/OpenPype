@@ -33,7 +33,7 @@ class Fusionlocal(pyblish.api.InstancePlugin):
         basename = os.path.basename(path)
         head, ext = os.path.splitext(basename)
         files = [
-            f"{head}{frame}{ext}" for frame in range(frame_start, frame_end+1)
+            f"{head}{str(frame).zfill(4)}{ext}" for frame in range(frame_start, frame_end+1)
         ]
         repre = {
             'name': ext[1:],
