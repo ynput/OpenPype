@@ -776,6 +776,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                                   logger=self.log)
 
         if profile:
+            self.log.debug("Disabling Strict Error Checking")
             strict_checking = 0
 
         return strict_checking
