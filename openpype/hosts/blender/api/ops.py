@@ -947,6 +947,11 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
         name="Container to make publishable"
     )
 
+    convert_to_current_asset: bpy.props.BoolProperty(
+        name="Convert container to current OpenPype asset",
+        description="It changes the asset but keeps the subset name"
+    )
+
     # NOTE cannot use AVALON_PROPERTY because of circular dependency
     # and the refactor is very big, but must be done soon
 
@@ -968,6 +973,7 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
         layout.prop_search(
             self, "container_name", context.scene, "openpype_containers"
         )
+        layout.prop(self, "convert_to_current_asset")
 
     def execute(self, context):
         if not self.container_name:
@@ -996,15 +1002,32 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
                 break
 
         # Create instance
-        bpy.ops.scene.create_openpype_instance(
-            creator_name=creator_name,
-            asset_name=avalon_data["asset_name"],
-            subset_name=avalon_data["name"],
-            datablock_name="",
-            gather_into_collection=isinstance(
+        create_args = {
+            "creator_name": creator_name,
+            "asset_name": legacy_io.Session["AVALON_ASSET"]
+            if self.convert_to_current_asset
+            else avalon_data["asset_name"],
+            "subset_name": avalon_data["name"],
+            "gather_into_collection": isinstance(
                 container.outliner_entity, bpy.types.Collection
             ),
-        )
+        }
+        if container.outliner_entity:
+            # For collection, allow renaming
+            if isinstance(container.outliner_entity, bpy.types.Collection):
+                # TODO may not be a good design because this value is from source workfile...
+                container.outliner_entity.is_openpype_instance = False
+
+            create_args.update(
+                {
+                    "datapath": BL_TYPE_DATAPATH.get(
+                        type(container.outliner_entity)
+                    ),
+                    "datablock_name": container.outliner_entity.name,
+                }
+            )
+
+        bpy.ops.scene.create_openpype_instance(**create_args)
 
         # Add datablocks to instance
         new_instance = openpype_instances[-1]
