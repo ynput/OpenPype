@@ -34,6 +34,8 @@ class CreateLook(UnrealAssetCreator):
         folder_name = create_folder(look_directory, subset_name)
         path = f"{look_directory}/{folder_name}"
 
+        instance_data["look"] = path
+
         # Create a new cube static mesh
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
         cube = ar.get_asset_by_object_path("/Engine/BasicShapes/Cube.Cube")
@@ -42,7 +44,7 @@ class CreateLook(UnrealAssetCreator):
         original_mesh = ar.get_asset_by_object_path(selected_asset).get_asset()
         materials = original_mesh.get_editor_property('static_materials')
 
-        instance_data["members"] = []
+        pre_create_data["members"] = []
 
         # Add the materials to the cube
         for material in materials:
@@ -58,7 +60,7 @@ class CreateLook(UnrealAssetCreator):
             unreal_object.add_material(
                 material.get_editor_property('material_interface'))
 
-            instance_data["members"].append(object_path)
+            pre_create_data["members"].append(object_path)
 
             unreal.EditorAssetLibrary.save_asset(object_path)
 
