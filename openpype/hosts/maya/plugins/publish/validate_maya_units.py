@@ -33,18 +33,11 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         linearunits = context.data.get('linearUnits')
         angularunits = context.data.get('angularUnits')
 
-        # TODO(antirotor): This is hack as for framerates having multiple
-        # decimal places. FTrack is ceiling decimal values on
-        # fps to two decimal places but Maya 2019+ is reporting those fps
-        # with much higher resolution. As we currently cannot fix Ftrack
-        # rounding, we have to round those numbers coming from Maya.
-        # NOTE: this must be revisited yet again as it seems that Ftrack is
-        # now flooring the value?
-        fps = mayalib.float_round(context.data.get('fps'), 2, ceil)
+        fps = context.data.get('fps')
 
         # TODO repace query with using 'context.data["assetEntity"]'
         asset_doc = get_current_project_asset()
-        asset_fps = asset_doc["data"]["fps"]
+        asset_fps = mayalib.convert_to_maya_fps(asset_doc["data"]["fps"])
 
         self.log.info('Units (linear): {0}'.format(linearunits))
         self.log.info('Units (angular): {0}'.format(angularunits))
