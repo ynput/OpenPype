@@ -410,14 +410,23 @@ class Creator(LegacyCreator):
     def _filter_outliner_datablocks(
         datablocks: List,
     ) -> Tuple[Set[bpy.types.Collection], Set[bpy.types.Object]]:
+        """Filter datablocks to return in two sets collections and objects.
+
+        Args:
+            datablocks (List): Datablocks to filter.
+
+        Returns:
+            Tuple[Set[bpy.types.Collection], Set[bpy.types.Object]]:
+                (collections, objects)
+        """
         collections = set()
         objects = set()
         for block in datablocks:
             # Collections
-            if type(block) is bpy.types.Collection:
+            if isinstance(block, bpy.types.Collection):
                 collections.add(block)
             # Objects
-            elif type(block) is bpy.types.Object:
+            elif isinstance(block, bpy.types.Object):
                 objects.add(block)
         return collections, objects
 
@@ -484,7 +493,6 @@ class Creator(LegacyCreator):
             ) and not collections_as_list[0].is_openpype_instance:
                 container_collection = collections_as_list[0]
                 container_collection.name = collection_name  # Rename
-                collections.clear()  # Remove it from collections to link
             else:
                 container_collection = bpy.data.collections.new(
                     collection_name
@@ -493,6 +501,10 @@ class Creator(LegacyCreator):
                     container_collection
                 )
             container_collection.is_openpype_instance = True
+
+        # Remove container collection from collections to link
+        if container_collection in collections:
+            collections.remove(container_collection)
 
         # Set color tag
         if self.color_tag and hasattr(container_collection, "color_tag"):
