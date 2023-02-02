@@ -12,7 +12,6 @@ class CollectMayaWorkspace(pyblish.api.ContextPlugin):
     label = "Maya Workspace"
 
     hosts = ['maya']
-    version = (0, 1, 0)
 
     def process(self, context):
         workspace = cmds.workspace(rootDirectory=True, query=True)
