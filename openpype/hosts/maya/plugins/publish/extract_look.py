@@ -16,6 +16,7 @@ import pyblish.api
 from openpype.lib import source_hash, run_subprocess
 from openpype.pipeline import legacy_io, publish
 from openpype.hosts.maya.api import lib
+from openpype.hosts.maya.api.lib import imageInfo, guess_colorspace
 
 # Modes for transfer
 COPY = 1
@@ -541,16 +542,25 @@ class ExtractLook(publish.Extractor):
                         color_space = cmds.getAttr(color_space_attr)
                     except ValueError:
                         # node doesn't have color space attribute
-                        color_space = "Raw"
+                        img_info = imageInfo(filepath)
+                        color_space = guess_colorspace(img_info)
                     self.log.info("tx: converting {0} -> {1}".format(color_space, render_colorspace))  # noqa
                     additional_args.extend(["--colorconvert",
                                             color_space,
                                             render_colorspace])
                 else:
-                    self.log.info("tx: converting sRGB -> linear")
-                    additional_args.extend(["--colorconvert", "sRGB", "Raw"])
+                    img_info = imageInfo(filepath)
+                    color_space = guess_colorspace(img_info)
+                    if color_space == "sRGB":
+                        self.log.info("tx: converting sRGB -> linear")
+                        additional_args.extend(["--colorconvert", "sRGB", "Raw"])
+                    else:
+                        self.log.info("tx: texture's colorspace is already linear")
 
-            config_path = get_ocio_config_path("nuke-default")
+
+            config_path = cmds.colorManagementPrefs(query=True, configFilePath=True)
+            if not os.path.exists(config_path):
+                raise RuntimeError("No OCIO config path found!")
             additional_args.extend(["--colorconfig", config_path])
             # Ensure folder exists
             if not os.path.exists(os.path.dirname(converted)):

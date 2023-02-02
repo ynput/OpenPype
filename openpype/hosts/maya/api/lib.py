@@ -15,6 +15,7 @@ from six import string_types
 
 from maya import cmds, mel
 import maya.api.OpenMaya as om
+from arnold import *
 
 from openpype.client import (
     get_project,
@@ -3379,3 +3380,40 @@ def iter_visible_nodes_in_range(nodes, start, end):
 def get_attribute_input(attr):
     connections = cmds.listConnections(attr, plugs=True, destination=False)
     return connections[0] if connections else None
+
+
+# Reference from Arnold
+# Get Image Information for colorspace
+def imageInfo(filepath):
+    """Take reference from makeTx.py
+    ImageInfo(filename): Get Image Information
+    AiTextureGetFormat(filename): Get Texture Format
+    AiTextureGetBitDepth(filename): Get Texture Bit Depth
+    """
+    # Get Texture Information
+    img_info = {}
+    img_info['filename'] = filepath
+    if os.path.isfile(filepath):
+        img_info['bit_depth'] = AiTextureGetBitDepth(filepath)
+        img_info['format'] = AiTextureGetFormat(filepath)
+    else:
+        img_info['bit_depth'] = 8
+        img_info['format'] = "unknown"
+    return img_info
+
+def guess_colorspace(img_info):
+    ''' Take reference from makeTx.py
+    Guess the colorspace of the input image filename.
+    @return: a string suitable for the --colorconvert option of maketx (linear, sRGB, Rec709)
+    '''
+    try:
+        if img_info['bit_depth'] <= 16 and img_info['format'] in (AI_TYPE_BYTE, AI_TYPE_INT, AI_TYPE_UINT):
+            return 'sRGB'
+        else:
+            return 'linear'
+
+        # now discard the image file as AiTextureGetFormat has loaded it
+        AiTextureInvalidate(img_info['filename'])
+    except:
+        print('[maketx] Error: Could not guess colorspace for "%s"' % img_info['filename'])
+        return 'linear'
