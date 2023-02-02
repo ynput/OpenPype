@@ -272,7 +272,8 @@ def get_requested_openpype_executable(
     # Deadline decide.
     exe_list = [
         os.path.join(version_dir, "openpype_console.exe"),
-        os.path.join(version_dir, "openpype_console")
+        os.path.join(version_dir, "openpype_console"),
+        os.path.join(version_dir, "MacOS", "openpype_console")
     ]
     return FileUtils.SearchFileList(";".join(exe_list))
 
