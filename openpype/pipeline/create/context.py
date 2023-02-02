@@ -201,45 +201,53 @@ class TrackChangesItem(object):
 
     ```
     # Example of possible usages
-    old_value = {
-        "key_1": "value_1",
-        "key_2": {
-            "key_sub_1": 1,
-            "key_sub_2": {
-                "enabled": True
-            }
-        },
-        "key_3": "value_2"
-    }
+    >>> old_value = {
+    ...     "key_1": "value_1",
+    ...     "key_2": {
+    ...         "key_sub_1": 1,
+    ...         "key_sub_2": {
+    ...             "enabled": True
+    ...         }
+    ...     },
+    ...     "key_3": "value_2"
+    ... }
+    >>> new_value = {
+    ...     "key_1": "value_1",
+    ...     "key_2": {
+    ...         "key_sub_2": {
+    ...             "enabled": False
+    ...         },
+    ...         "key_sub_3": 3
+    ...     },
+    ...     "key_3": "value_3"
+    ... }
 
-    new_value = {
-        "key_1": "value_1",
-        "key_2": {
-            "key_sub_2": {
-                "enabled": False
-            },
-            "key_sub_3": 3
-        },
-        "key_3": "value_3"
-    }
+    >>> changes = TrackChangesItem(old_value, new_value)
+    >>> changes.changed
+    True
 
-    changes = TrackChangesItem(old_value, new_value)
-    print(changes.changed)
-    >>> True
-    print(changes.changed_keys)
-    >>> {"key_2", "key_3"}
-    print(changes["key_2"]["key_sub_2"]["enabled"].changed)
-    >>> True
-    print(changes["key_2"].removed_keys)
-    >>> {"key_sub_1"}
-    print(changes["key_2"].available_keys)
-    >>> {"key_sub_1", "key_sub_2", "key_sub_3"}
-    print(changes.new_value == new_value)
-    >>> True
+    >>> changes["key_2"]["key_sub_1"].new_value is None
+    True
 
+    >>> list(sorted(changes.changed_keys))
+    ['key_2', 'key_3']
+
+    >>> changes["key_2"]["key_sub_2"]["enabled"].changed
+    True
+
+    >>> changes["key_2"].removed_keys
+    {'key_sub_1'}
+
+    >>> list(sorted(changes["key_2"].available_keys))
+    ['key_sub_1', 'key_sub_2', 'key_sub_3']
+
+    >>> changes.new_value == new_value
+    True
+
+    # Get only changed values
     only_changed_new_values = {
         key: changes[key].new_value
-        for key in changes
+        for key in changes.changed_keys
     }
     ```
 
