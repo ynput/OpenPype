@@ -33,7 +33,8 @@
             "limit": [],
             "jobInfo": {},
             "pluginInfo": {},
-            "scene_patches": []
+            "scene_patches": [],
+            "disable_strict_check_profiles": []
         },
         "NukeSubmitDeadline": {
             "enabled": true,
