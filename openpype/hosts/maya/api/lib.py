@@ -3382,11 +3382,9 @@ def get_attribute_input(attr):
     return connections[0] if connections else None
 
 
-# Reference from Arnold
-# Get Image Information for colorspace
 def imageInfo(filepath):
-    """Take reference from makeTx.py
-    ImageInfo(filename): Get Image Information
+    """Take reference from makeTx.py in Arnold
+    ImageInfo(filename): Get Image Information for colorspace
     AiTextureGetFormat(filename): Get Texture Format
     AiTextureGetBitDepth(filename): Get Texture Bit Depth
     """
