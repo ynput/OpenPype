@@ -63,7 +63,6 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
     'revitron_sphinx_theme',
     'autoapi.extension',
@@ -100,7 +99,7 @@ autoapi_template_dir = '_templates/autoapi'
 
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['templates']
+templates_path = ['_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -149,10 +148,15 @@ html_theme = 'revitron_sphinx_theme'
 # documentation.
 #
 html_theme_options = {
-    'collapse_navigation': False,
-    'navigation_depth': 5,
-    'titles_only': False
+    'collapse_navigation': True,
+    'sticky_navigation': True,
+    'navigation_depth': 4,
+    'includehidden': True,
+    'titles_only': False,
+    'github_url': '',
 }
+html_logo = '_static/AYON_tight_G.svg'
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
