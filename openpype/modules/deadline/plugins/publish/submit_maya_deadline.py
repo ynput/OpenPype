@@ -466,13 +466,16 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                     instance.data.get("resolutionHeight")), file=cf)
 
             with open(config_file, "a") as cf:
+                # Need to reverse the order of the y tiles, because image
+                # coordinates are calculated from bottom left corner.
                 tiles = _format_tiles(
                     file, 0,
                     instance.data.get("tilesX"),
                     instance.data.get("tilesY"),
                     instance.data.get("resolutionWidth"),
                     instance.data.get("resolutionHeight"),
-                    payload_plugin_info["OutputFilePrefix"]
+                    payload_plugin_info["OutputFilePrefix"],
+                    reversed_y=True
                 )[1]
                 for k, v in sorted(tiles.items()):
                     print("{}={}".format(k, v), file=cf)
@@ -752,8 +755,15 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
 
 def _format_tiles(
-        filename, index, tiles_x, tiles_y,
-        width, height, prefix):
+        filename,
+        index,
+        tiles_x,
+        tiles_y,
+        width,
+        height,
+        prefix,
+        reversed_y=False
+):
     """Generate tile entries for Deadline tile job.
 
     Returns two dictionaries - one that can be directly used in Deadline
@@ -790,6 +800,7 @@ def _format_tiles(
         width (int): Width resolution of final image.
         height (int):  Height resolution of final image.
         prefix (str): Image prefix.
+        reversed_y (bool): Reverses the order of the y tiles.
 
     Returns:
         (dict, dict): Tuple of two dictionaries - first can be used to
@@ -812,12 +823,16 @@ def _format_tiles(
     cfg["TilesCropped"] = "False"
 
     tile = 0
+    range_y = range(1, tiles_y + 1)
+    reversed_y_range = list(reversed(range_y))
     for tile_x in range(1, tiles_x + 1):
-        for tile_y in reversed(range(1, tiles_y + 1)):
+        for i, tile_y in enumerate(range_y):
+            tile_y_index = tile_y
+            if reversed_y:
+                tile_y_index = reversed_y_range[i]
+
             tile_prefix = "_tile_{}x{}_{}x{}_".format(
-                tile_x, tile_y,
-                tiles_x,
-                tiles_y
+                tile_x, tile_y_index, tiles_x, tiles_y
             )
 
             new_filename = "{}/{}{}".format(
@@ -832,11 +847,14 @@ def _format_tiles(
             right = (tile_x * w_space) - 1
 
             # Job info
-            out["JobInfo"]["OutputFilename{}Tile{}".format(index, tile)] = new_filename  # noqa: E501
+            key = "OutputFilename{}Tile{}".format(index, tile)
+            out["JobInfo"][key] = new_filename
 
             # Plugin Info
-            out["PluginInfo"]["RegionPrefix{}".format(str(tile))] = \
-                "/{}".format(tile_prefix).join(prefix.rsplit("/", 1))
+            key = "RegionPrefix{}".format(str(tile))
+            out["PluginInfo"][key] = "/{}".format(
+                tile_prefix
+            ).join(prefix.rsplit("/", 1))
             out["PluginInfo"]["RegionTop{}".format(tile)] = top
             out["PluginInfo"]["RegionBottom{}".format(tile)] = bottom
             out["PluginInfo"]["RegionLeft{}".format(tile)] = left
