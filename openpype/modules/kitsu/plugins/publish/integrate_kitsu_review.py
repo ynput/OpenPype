@@ -8,7 +8,7 @@ class IntegrateKitsuReview(pyblish.api.InstancePlugin):
 
     order = pyblish.api.IntegratorOrder + 0.01
     label = "Kitsu Review"
-    # families = ["kitsu"]
+    families = ["render", "kitsu"]
     optional = True
 
     def process(self, instance):
