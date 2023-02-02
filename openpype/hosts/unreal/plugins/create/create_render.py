@@ -7,6 +7,7 @@ from openpype.hosts.unreal.api.pipeline import (
 from openpype.hosts.unreal.api.plugin import (
     UnrealAssetCreator,
 )
+from openpype.lib import UILabelDef
 
 
 class CreateRender(UnrealAssetCreator):
@@ -129,3 +130,8 @@ class CreateRender(UnrealAssetCreator):
                 subset_name,
                 instance_data,
                 pre_create_data)
+
+    def get_pre_create_attr_defs(self):
+        return [
+            UILabelDef("Select the sequence to render.")
+        ]
