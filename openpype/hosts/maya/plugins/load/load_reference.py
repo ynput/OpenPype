@@ -36,7 +36,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     # Name of creator class that will be used to create animation instance
     animation_creator_name = "CreateAnimation"
 
-    def process_reference(self, context, name, namespace, options):
+    def process_reference(self, context, name, namespace, options, group_name=None):  # noqa
         import maya.cmds as cmds
         import pymel.core as pm
 
@@ -45,7 +45,8 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         except ValueError:
             family = "model"
 
-        group_name = "{}_GRP".format(namespace)
+        if not group_name:
+            group_name = "{}:_GRP".format(namespace)
         # True by default to keep legacy behaviours
         attach_to_root = options.get("attach_to_root", True)
 
