@@ -143,15 +143,36 @@ class ReferenceLoader(Loader):
         assert os.path.exists(self.fname), "%s does not exist." % self.fname
 
         asset = context['asset']
+        subset = context['subset']
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])
         loaded_containers = []
 
         count = options.get("count") or 1
         for c in range(0, count):
             namespace = namespace or lib.unique_namespace(
-                "{}:{}_".format(asset["name"], context["subset"]["name"]),
+                "{}_{}_".format(asset["name"], context["subset"]["name"]),
                 prefix="_" if asset["name"][0].isdigit() else "",
                 suffix="_",
             )
+
+            custom_naming = settings['maya']['load']['reference_loader']['naming']  # noqa
+            group_name = None
+
+            if custom_naming:
+                custom_naming = custom_naming.format(
+                    asset=asset,
+                    subset=subset
+                )
+                if ':' in custom_naming:
+                    if custom_naming[0] == ':':
+                        group_name = "{}{}".format(namespace, custom_naming)
+                    elif custom_naming[-1] == ':':
+                        namespace = custom_naming.split(':')[0]
+                    else:
+                        namespace = custom_naming.split(':')[0]
+                        group_name = custom_naming
+                else:
+                    namespace = custom_naming
 
             # Offset loaded subset
             if "offset" in options:
@@ -164,7 +185,8 @@ class ReferenceLoader(Loader):
                 context=context,
                 name=name,
                 namespace=namespace,
-                options=options
+                options=options,
+                group_name=group_name
             )
 
             # Only containerize if any nodes were loaded by the Loader
