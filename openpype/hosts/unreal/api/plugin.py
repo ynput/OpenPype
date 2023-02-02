@@ -14,7 +14,10 @@ from .pipeline import (
     lsinst,
     UNREAL_VERSION
 )
-from openpype.lib import BoolDef
+from openpype.lib import (
+    BoolDef,
+    UILabelDef
+)
 from openpype.pipeline import (
     Creator,
     LoaderPlugin,
@@ -143,11 +146,6 @@ class UnrealBaseCreator(Creator):
 
             self._remove_instance_from_context(instance)
 
-    def get_pre_create_attr_defs(self):
-        return [
-            BoolDef("use_selection", label="Use selection", default=True)
-        ]
-
 
 @six.add_metaclass(ABCMeta)
 class UnrealAssetCreator(UnrealBaseCreator):
@@ -186,6 +184,11 @@ class UnrealAssetCreator(UnrealBaseCreator):
                 OpenPypeCreatorError,
                 OpenPypeCreatorError(f"Creator error: {er}"),
                 sys.exc_info()[2])
+
+    def get_pre_create_attr_defs(self):
+        return [
+            BoolDef("use_selection", label="Use selection", default=True)
+        ]
 
 
 @six.add_metaclass(ABCMeta)
@@ -238,6 +241,11 @@ class UnrealActorCreator(UnrealBaseCreator):
                 OpenPypeCreatorError,
                 OpenPypeCreatorError(f"Creator error: {er}"),
                 sys.exc_info()[2])
+
+    def get_pre_create_attr_defs(self):
+        return [
+            UILabelDef("Select actors to create instance from them.")
+        ]
 
 
 class Loader(LoaderPlugin, ABC):
