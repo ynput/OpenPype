@@ -135,7 +135,8 @@
                             "ext": "mp4",
                             "tags": [
                                 "burnin",
-                                "ftrackreview"
+                                "ftrackreview",
+                                "kitsureview"
                             ],
                             "burnins": [],
                             "ffmpeg_args": {
