@@ -302,14 +302,8 @@ def get_frame_path(path):
     return filename, padding, ext
 
 
-def get_comp_name(comp=None):
-    """Get basename of the comp's filename"""
-    if comp:
-        return comp.GetAttrs()["COMPS_Name"]
-
-
 def get_fusion():
-    """Get Fusion instance"""
+    """Get current Fusion instance"""
     fusion = getattr(sys.modules["__main__"], "fusion", None)
     return fusion
 
@@ -317,8 +311,16 @@ def get_fusion():
 def get_current_comp():
     """Get current comp in this session"""
     fusion = get_fusion()
-    comp = fusion.CurrentComp
-    return comp
+    if fusion:
+        comp = fusion.CurrentComp
+        return comp
+
+
+def get_comp_filename():
+    """Get comp's Filename"""
+    comp = get_current_comp()
+    if comp:
+        return comp.GetAttrs()["COMPS_FileName"]
 
 
 @contextlib.contextmanager

@@ -2,7 +2,7 @@
 import sys
 import os
 
-from .lib import get_fusion, get_current_comp
+from .lib import get_fusion, get_current_comp, get_comp_filename
 
 
 def file_extensions():
@@ -25,12 +25,8 @@ def open_file(filepath):
 
 
 def current_file():
-    comp = get_current_comp()
-    current_filepath = comp.GetAttrs()["COMPS_FileName"]
-    if not current_filepath:
-        return None
-
-    return current_filepath
+    current_filepath = get_comp_filename()
+    return current_filepath or None
 
 
 def work_root(session):
