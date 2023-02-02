@@ -6,6 +6,7 @@ from openpype.hosts.unreal.api.pipeline import (
 )
 from openpype.hosts.unreal.api.plugin import (
     UnrealAssetCreator,
+    OpenPypeCreatorError
 )
 from openpype.lib import UILabelDef
 
@@ -21,13 +22,13 @@ class CreateRender(UnrealAssetCreator):
     def create(self, subset_name, instance_data, pre_create_data):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
-        if pre_create_data.get("use_selection"):
-            sel_objects = unreal.EditorUtilityLibrary.get_selected_assets()
-            selection = [
-                a.get_path_name() for a in sel_objects
-                if a.get_class().get_name() == "LevelSequence"]
-        else:
-            selection = [instance_data['sequence']]
+        sel_objects = unreal.EditorUtilityLibrary.get_selected_assets()
+        selection = [
+            a.get_path_name() for a in sel_objects
+            if a.get_class().get_name() == "LevelSequence"]
+
+        if len(selection) == 0:
+            raise RuntimeError("Please select at least one Level Sequence.")
 
         seq_data = None
 
