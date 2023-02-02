@@ -553,12 +553,15 @@ class ExtractLook(publish.Extractor):
                     color_space = guess_colorspace(img_info)
                     if color_space == "sRGB":
                         self.log.info("tx: converting sRGB -> linear")
-                        additional_args.extend(["--colorconvert", "sRGB", "Raw"])
+                        additional_args.extend(["--colorconvert",
+                                                "sRGB",
+                                                "Raw"])
                     else:
-                        self.log.info("tx: texture's colorspace is already linear")
+                        self.log.info("tx: texture's colorspace "
+                                      "is already linear")
 
-
-            config_path = cmds.colorManagementPrefs(query=True, configFilePath=True)
+            config_path = cmds.colorManagementPrefs(query=True,
+                                                    configFilePath=True)
             if not os.path.exists(config_path):
                 raise RuntimeError("No OCIO config path found!")
             additional_args.extend(["--colorconfig", config_path])
