@@ -218,8 +218,8 @@ def get_requested_openpype_executable(
     requested_version_obj = OpenPypeVersion.from_string(requested_version)
     if not requested_version_obj:
         print((
-            ">>> Requested version does not match version regex \"{}\""
-        ).format(VERSION_REGEX))
+            ">>> Requested version '{}' does not match version regex '{}'"
+        ).format(requested_version, VERSION_REGEX))
         return None
 
     print((
