@@ -771,7 +771,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "task_types": task_data.get("type"),
             "subsets": instance.data["subset"]
         }
-        profile = filter_profiles(self.profiles, key_values,
+        profile = filter_profiles(self.disable_strict_check_profiles,
+                                  key_values,
                                   logger=self.log)
 
         if profile:
