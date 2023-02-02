@@ -1488,6 +1488,27 @@ files = [
 ]
 
 [[package]]
+name = "linkify-it-py"
+version = "2.0.0"
+description = "Links recognition library with FULL unicode support."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "linkify-it-py-2.0.0.tar.gz", hash = "sha256:476464480906bed8b2fa3813bf55566282e55214ad7e41b7d1c2b564666caf2f"},
+    {file = "linkify_it_py-2.0.0-py3-none-any.whl", hash = "sha256:1bff43823e24e507a099e328fc54696124423dd6320c75a9da45b4b754b748ad"},
+]
+
+[package.dependencies]
+uc-micro-py = "*"
+
+[package.extras]
+benchmark = ["pytest", "pytest-benchmark"]
+dev = ["black", "flake8", "isort", "pre-commit"]
+doc = ["myst-parser", "sphinx", "sphinx-book-theme"]
+test = ["coverage", "pytest", "pytest-cov"]
+
+[[package]]
 name = "log4mongo"
 version = "1.7.0"
 description = "mongo database handler for python logging"
@@ -2250,20 +2271,21 @@ files = [
 
 [[package]]
 name = "pydocstyle"
-version = "3.0.0"
+version = "6.3.0"
 description = "Python docstring style checker"
-category = "dev"
+category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">=3.6"
 files = [
-    {file = "pydocstyle-3.0.0-py2-none-any.whl", hash = "sha256:2258f9b0df68b97bf3a6c29003edc5238ff8879f1efb6f1999988d934e432bd8"},
-    {file = "pydocstyle-3.0.0-py3-none-any.whl", hash = "sha256:ed79d4ec5e92655eccc21eb0c6cf512e69512b4a97d215ace46d17e4990f2039"},
-    {file = "pydocstyle-3.0.0.tar.gz", hash = "sha256:5741c85e408f9e0ddf873611085e819b809fca90b619f5fd7f34bd4959da3dd4"},
+    {file = "pydocstyle-6.3.0-py3-none-any.whl", hash = "sha256:118762d452a49d6b05e194ef344a55822987a462831ade91ec5c06fd2169d019"},
+    {file = "pydocstyle-6.3.0.tar.gz", hash = "sha256:7ce43f0c0ac87b07494eb9c0b462c0b73e6ff276807f204d6b53edc72b7e44e1"},
 ]
 
 [package.dependencies]
-six = "*"
-snowballstemmer = "*"
+snowballstemmer = ">=2.2.0"
+
+[package.extras]
+toml = ["tomli (>=1.2.3)"]
 
 [[package]]
 name = "pyflakes"
@@ -3333,6 +3355,21 @@ files = [
 ]
 
 [[package]]
+name = "uc-micro-py"
+version = "1.0.1"
+description = "Micro subset of unicode data files for linkify-it-py projects."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "uc-micro-py-1.0.1.tar.gz", hash = "sha256:b7cdf4ea79433043ddfe2c82210208f26f7962c0cfbe3bacb05ee879a7fdb596"},
+    {file = "uc_micro_py-1.0.1-py3-none-any.whl", hash = "sha256:316cfb8b6862a0f1d03540f0ae6e7b033ff1fa0ddbe60c12cbe0d4cec846a69f"},
+]
+
+[package.extras]
+test = ["coverage", "pytest", "pytest-cov"]
+
+[[package]]
 name = "unidecode"
 version = "1.3.6"
 description = "ASCII transliterations of Unicode text"
@@ -3641,4 +3678,4 @@ docs = []
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9.1,<3.10"
-content-hash = "2ec929512a99e5e7a16f46bc255171beabc41bba84e448e5312d7cd508a80de7"
+content-hash = "47518c544a90cdb3e99e83533557515d0d47079ac4461708ce71ab3ce97b9987"
