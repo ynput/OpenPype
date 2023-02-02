@@ -1220,7 +1220,8 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
         asset_task_combinations = []
         for instance in instances:
-            if instance.creator is None:
+            # NOTE I'm not sure how this can even happen?
+            if instance.creator_identifier is None:
                 editable = False
 
             variants.add(instance.get("variant") or self.unknown_value)

@@ -8,7 +8,7 @@ from openpype.style import (
     get_objected_colors,
     get_style_image_path
 )
-from openpype.lib.attribute_definitions import AbtractAttrDef
+from openpype.lib.attribute_definitions import AbstractAttrDef
 
 log = logging.getLogger(__name__)
 
@@ -406,7 +406,7 @@ class OptionalAction(QtWidgets.QWidgetAction):
 
     def set_option_tip(self, options):
         sep = "\n\n"
-        if not options or not isinstance(options[0], AbtractAttrDef):
+        if not options or not isinstance(options[0], AbstractAttrDef):
             mak = (lambda opt: opt["name"] + " :\n    " + opt["help"])
             self.option_tip = sep.join(mak(opt) for opt in options)
             return
