@@ -525,7 +525,6 @@ class AbstractTemplateBuilder(object):
             placeholder.scene_identifier: placeholder
             for placeholder in placeholders
         }
-
         all_processed = len(placeholders) == 0
         # Counter is checked at the ned of a loop so the loop happens at least
         #   once.
@@ -566,7 +565,8 @@ class AbstractTemplateBuilder(object):
 
                 placeholder.set_finished()
 
-            # self.clear_shared_populate_data()
+            # Clear shared data before getting new placeholders
+            self.clear_shared_populate_data()
 
             iter_counter += 1
             if iter_counter >= level_limit:
@@ -1003,7 +1003,7 @@ class PlaceholderItem(object):
         return self._log
 
     def __repr__(self):
-        return "< {} {} >".format(self.__class__.__name__, self.data['family'])
+        return "< {} {} >".format(self.__class__.__name__, self.name)
 
     @property
     def order(self):
