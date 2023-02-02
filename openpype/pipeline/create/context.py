@@ -13,6 +13,11 @@ from openpype.settings import (
     get_system_settings,
     get_project_settings
 )
+from openpype.lib.attribute_definitions import (
+    UnknownDef,
+    serialize_attr_defs,
+    deserialize_attr_defs,
+)
 from openpype.host import IPublishHost
 from openpype.pipeline import legacy_io
 from openpype.pipeline.mongodb import (
@@ -28,6 +33,7 @@ from .creator_plugins import (
     CreatorError,
 )
 
+# Changes of instances and context are send as tuple of 2 information
 UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
 
 
@@ -153,7 +159,7 @@ class CreatorsRemoveFailed(CreatorsOperationFailed):
 
 class CreatorsCreateFailed(CreatorsOperationFailed):
     def __init__(self, failed_info):
-        msg = "Faled to create instances"
+        msg = "Failed to create instances"
         super(CreatorsCreateFailed, self).__init__(
             msg, failed_info
         )
@@ -329,14 +335,12 @@ class AttributeValues(object):
     Has dictionary like methods. Not all of them are allowed all the time.
 
     Args:
-        attr_defs(AbtractAttrDef): Defintions of value type and properties.
+        attr_defs(AbstractAttrDef): Defintions of value type and properties.
         values(dict): Values after possible conversion.
         origin_data(dict): Values loaded from host before conversion.
     """
 
     def __init__(self, attr_defs, values, origin_data=None):
-        from openpype.lib.attribute_definitions import UnknownDef
-
         if origin_data is None:
             origin_data = copy.deepcopy(values)
         self._origin_data = origin_data
@@ -409,15 +413,25 @@ class AttributeValues(object):
 
     @property
     def attr_defs(self):
-        """Pointer to attribute definitions."""
-        return self._attr_defs
+        """Pointer to attribute definitions.
+
+        Returns:
+            List[AbstractAttrDef]: Attribute definitions.
+        """
+
+        return list(self._attr_defs)
 
     @property
     def origin_data(self):
         return copy.deepcopy(self._origin_data)
 
     def data_to_store(self):
-        """Create new dictionary with data to store."""
+        """Create new dictionary with data to store.
+
+        Returns:
+            Dict[str, Any]: Attribute values that should be stored.
+        """
+
         output = {}
         for key in self._data:
             output[key] = self[key]
@@ -426,6 +440,15 @@ class AttributeValues(object):
             if key not in output:
                 output[key] = attr_def.default
         return output
+
+    def get_serialized_attr_defs(self):
+        """Serialize attribute definitions to json serializable types.
+
+        Returns:
+            List[Dict[str, Any]]: Serialized attribute definitions.
+        """
+
+        return serialize_attr_defs(self._attr_defs)
 
 
 class CreatorAttributeValues(AttributeValues):
@@ -464,13 +487,14 @@ class PublishAttributes:
     """Wrapper for publish plugin attribute definitions.
 
     Cares about handling attribute definitions of multiple publish plugins.
+    Keep information about attribute definitions and their values.
 
     Args:
         parent(CreatedInstance, CreateContext): Parent for which will be
             data stored and from which are data loaded.
         origin_data(dict): Loaded data by plugin class name.
-        attr_plugins(list): List of publish plugins that may have defined
-            attribute definitions.
+        attr_plugins(Union[List[pyblish.api.Plugin], None]): List of publish
+            plugins that may have defined attribute definitions.
     """
 
     def __init__(self, parent, origin_data, attr_plugins=None):
@@ -584,6 +608,42 @@ class PublishAttributes:
                     self, [], value, value
                 )
 
+    def serialize_attributes(self):
+        return {
+            "attr_defs": {
+                plugin_name: attrs_value.get_serialized_attr_defs()
+                for plugin_name, attrs_value in self._data.items()
+            },
+            "plugin_names_order": self._plugin_names_order,
+            "missing_plugins": self._missing_plugins
+        }
+
+    def deserialize_attributes(self, data):
+        self._plugin_names_order = data["plugin_names_order"]
+        self._missing_plugins = data["missing_plugins"]
+
+        attr_defs = deserialize_attr_defs(data["attr_defs"])
+
+        origin_data = self._origin_data
+        data = self._data
+        self._data = {}
+
+        added_keys = set()
+        for plugin_name, attr_defs_data in attr_defs.items():
+            attr_defs = deserialize_attr_defs(attr_defs_data)
+            value = data.get(plugin_name) or {}
+            orig_value = copy.deepcopy(origin_data.get(plugin_name) or {})
+            self._data[plugin_name] = PublishAttributeValues(
+                self, attr_defs, value, orig_value
+            )
+
+        for key, value in data.items():
+            if key not in added_keys:
+                self._missing_plugins.append(key)
+                self._data[key] = PublishAttributeValues(
+                    self, [], value, value
+                )
+
 
 class CreatedInstance:
     """Instance entity with data that will be stored to workfile.
@@ -592,15 +652,22 @@ class CreatedInstance:
     about instance like "asset" and "task" and all data used for filling subset
     name as creators may have custom data for subset name filling.
 
+    Notes:
+        Object have 2 possible initialization. One using 'creator' object which
+            is recommended for api usage. Second by passing information about
+            creator.
+
     Args:
-        family(str): Name of family that will be created.
-        subset_name(str): Name of subset that will be created.
-        data(dict): Data used for filling subset name or override data from
-            already existing instance.
-        creator(BaseCreator): Creator responsible for instance.
-        host(ModuleType): Host implementation loaded with
-            `openpype.pipeline.registered_host`.
-        new(bool): Is instance new.
+        family (str): Name of family that will be created.
+        subset_name (str): Name of subset that will be created.
+        data (Dict[str, Any]): Data used for filling subset name or override
+            data from already existing instance.
+        creator (Union[BaseCreator, None]): Creator responsible for instance.
+        creator_identifier (str): Identifier of creator plugin.
+        creator_label (str): Creator plugin label.
+        group_label (str): Default group label from creator plugin.
+        creator_attr_defs (List[AbstractAttrDef]): Attribute definitions from
+            creator.
     """
 
     # Keys that can't be changed or removed from data after loading using
@@ -617,9 +684,24 @@ class CreatedInstance:
     )
 
     def __init__(
-        self, family, subset_name, data, creator, new=True
+        self,
+        family,
+        subset_name,
+        data,
+        creator=None,
+        creator_identifier=None,
+        creator_label=None,
+        group_label=None,
+        creator_attr_defs=None,
     ):
-        self.creator = creator
+        if creator is not None:
+            creator_identifier = creator.identifier
+            group_label = creator.get_group_label()
+            creator_label = creator.label
+            creator_attr_defs = creator.get_instance_attr_defs()
+
+        self._creator_label = creator_label
+        self._group_label = group_label or creator_identifier
 
         # Instance members may have actions on them
         # TODO implement members logic
@@ -649,7 +731,7 @@ class CreatedInstance:
         self._data["family"] = family
         self._data["subset"] = subset_name
         self._data["active"] = data.get("active", True)
-        self._data["creator_identifier"] = creator.identifier
+        self._data["creator_identifier"] = creator_identifier
 
         # Pop from source data all keys that are defined in `_data` before
         #   this moment and through their values away
@@ -663,10 +745,12 @@ class CreatedInstance:
         # Stored creator specific attribute values
         # {key: value}
         creator_values = copy.deepcopy(orig_creator_attributes)
-        creator_attr_defs = creator.get_instance_attr_defs()
 
         self._data["creator_attributes"] = CreatorAttributeValues(
-            self, creator_attr_defs, creator_values, orig_creator_attributes
+            self,
+            list(creator_attr_defs),
+            creator_values,
+            orig_creator_attributes
         )
 
         # Stored publish specific attribute values
@@ -751,7 +835,7 @@ class CreatedInstance:
         label = self._data.get("group")
         if label:
             return label
-        return self.creator.get_group_label()
+        return self._group_label
 
     @property
     def origin_data(self):
@@ -759,60 +843,19 @@ class CreatedInstance:
 
     @property
     def creator_identifier(self):
-        return self.creator.identifier
+        return self._data["creator_identifier"]
 
     @property
     def creator_label(self):
-        return self.creator.label or self.creator_identifier
-
-    @property
-    def create_context(self):
-        return self.creator.create_context
-
-    @property
-    def host(self):
-        return self.create_context.host
-
-    @property
-    def has_set_asset(self):
-        """Asset name is set in data."""
-        return "asset" in self._data
-
-    @property
-    def has_set_task(self):
-        """Task name is set in data."""
-        return "task" in self._data
-
-    @property
-    def has_valid_context(self):
-        """Context data are valid for publishing."""
-        return self.has_valid_asset and self.has_valid_task
-
-    @property
-    def has_valid_asset(self):
-        """Asset set in context exists in project."""
-        if not self.has_set_asset:
-            return False
-        return self._asset_is_valid
-
-    @property
-    def has_valid_task(self):
-        """Task set in context exists in project."""
-        if not self.has_set_task:
-            return False
-        return self._task_is_valid
-
-    def set_asset_invalid(self, invalid):
-        # TODO replace with `set_asset_name`
-        self._asset_is_valid = not invalid
-
-    def set_task_invalid(self, invalid):
-        # TODO replace with `set_task_name`
-        self._task_is_valid = not invalid
+        return self._creator_label or self.creator_identifier
 
     @property
     def id(self):
-        """Instance identifier."""
+        """Instance identifier.
+
+        Returns:
+            str: UUID of instance.
+        """
 
         return self._data["instance_id"]
 
@@ -821,6 +864,10 @@ class CreatedInstance:
         """Legacy access to data.
 
         Access to data is needed to modify values.
+
+        Returns:
+            CreatedInstance: Object can be used as dictionary but with
+                validations of immutable keys.
         """
 
         return self
@@ -875,6 +922,12 @@ class CreatedInstance:
 
     @property
     def creator_attribute_defs(self):
+        """Attribute defintions defined by creator plugin.
+
+        Returns:
+              List[AbstractAttrDef]: Attribute defitions.
+        """
+
         return self.creator_attributes.attr_defs
 
     @property
@@ -886,7 +939,7 @@ class CreatedInstance:
 
         It is possible to recreate the instance using these data.
 
-        Todo:
+        Todos:
             We probably don't need OrderedDict. When data are loaded they
                 are not ordered anymore.
 
@@ -907,7 +960,15 @@ class CreatedInstance:
 
     @classmethod
     def from_existing(cls, instance_data, creator):
-        """Convert instance data from workfile to CreatedInstance."""
+        """Convert instance data from workfile to CreatedInstance.
+
+        Args:
+            instance_data (Dict[str, Any]): Data in a structure ready for
+                'CreatedInstance' object.
+            creator (Creator): Creator plugin which is creating the instance
+                of for which the instance belong.
+        """
+
         instance_data = copy.deepcopy(instance_data)
 
         family = instance_data.get("family", None)
@@ -916,26 +977,49 @@ class CreatedInstance:
         subset_name = instance_data.get("subset", None)
 
         return cls(
-            family, subset_name, instance_data, creator, new=False
+            family, subset_name, instance_data, creator
         )
 
     def set_publish_plugins(self, attr_plugins):
+        """Set publish plugins with attribute definitions.
+
+        This method should be called only from 'CreateContext'.
+
+        Args:
+            attr_plugins (List[pyblish.api.Plugin]): Pyblish plugins which
+                inherit from 'OpenPypePyblishPluginMixin' and may contain
+                attribute definitions.
+        """
+
         self.publish_attributes.set_publish_plugins(attr_plugins)
 
     def add_members(self, members):
         """Currently unused method."""
+
         for member in members:
             if member not in self._members:
                 self._members.append(member)
 
     def serialize_for_remote(self):
+        """Serialize object into data to be possible recreated object.
+
+        Returns:
+            Dict[str, Any]: Serialized data.
+        """
+
+        creator_attr_defs = self.creator_attributes.get_serialized_attr_defs()
+        publish_attributes = self.publish_attributes.serialize_attributes()
         return {
             "data": self.data_to_store(),
-            "orig_data": copy.deepcopy(self._orig_data)
+            "orig_data": copy.deepcopy(self._orig_data),
+            "creator_attr_defs": creator_attr_defs,
+            "publish_attributes": publish_attributes,
+            "creator_label": self._creator_label,
+            "group_label": self._group_label,
         }
 
     @classmethod
-    def deserialize_on_remote(cls, serialized_data, creator_items):
+    def deserialize_on_remote(cls, serialized_data):
         """Convert instance data to CreatedInstance.
 
         This is fake instance in remote process e.g. in UI process. The creator
@@ -945,26 +1029,77 @@ class CreatedInstance:
         Args:
             serialized_data (Dict[str, Any]): Serialized data for remote
                 recreating. Should contain 'data' and 'orig_data'.
-            creator_items (Dict[str, Any]): Mapping of creator identifier and
-                objects that behave like a creator for most of attribute
-                access.
         """
 
         instance_data = copy.deepcopy(serialized_data["data"])
         creator_identifier = instance_data["creator_identifier"]
-        creator_item = creator_items[creator_identifier]
 
-        family = instance_data.get("family", None)
-        if family is None:
-            family = creator_item.family
+        family = instance_data["family"]
         subset_name = instance_data.get("subset", None)
 
+        creator_label = serialized_data["creator_label"]
+        group_label = serialized_data["group_label"]
+        creator_attr_defs = deserialize_attr_defs(
+            serialized_data["creator_attr_defs"]
+        )
+        publish_attributes = serialized_data["publish_attributes"]
+
         obj = cls(
-            family, subset_name, instance_data, creator_item, new=False
+            family,
+            subset_name,
+            instance_data,
+            creator_identifier=creator_identifier,
+            creator_label=creator_label,
+            group_label=group_label,
+            creator_attributes=creator_attr_defs
         )
         obj._orig_data = serialized_data["orig_data"]
+        obj.publish_attributes.deserialize_attributes(publish_attributes)
 
         return obj
+
+    # Context validation related methods/properties
+    @property
+    def has_set_asset(self):
+        """Asset name is set in data."""
+
+        return "asset" in self._data
+
+    @property
+    def has_set_task(self):
+        """Task name is set in data."""
+
+        return "task" in self._data
+
+    @property
+    def has_valid_context(self):
+        """Context data are valid for publishing."""
+
+        return self.has_valid_asset and self.has_valid_task
+
+    @property
+    def has_valid_asset(self):
+        """Asset set in context exists in project."""
+
+        if not self.has_set_asset:
+            return False
+        return self._asset_is_valid
+
+    @property
+    def has_valid_task(self):
+        """Task set in context exists in project."""
+
+        if not self.has_set_task:
+            return False
+        return self._task_is_valid
+
+    def set_asset_invalid(self, invalid):
+        # TODO replace with `set_asset_name`
+        self._asset_is_valid = not invalid
+
+    def set_task_invalid(self, invalid):
+        # TODO replace with `set_task_name`
+        self._task_is_valid = not invalid
 
 
 class ConvertorItem(object):
@@ -1003,6 +1138,10 @@ class CreateContext:
 
     Context itself also can store data related to whole creation (workfile).
     - those are mainly for Context publish plugins
+
+    Todos:
+        Don't use 'AvalonMongoDB'. It's used only to keep track about current
+            context which should be handled by host.
 
     Args:
         host(ModuleType): Host implementation which handles implementation and
@@ -1404,7 +1543,7 @@ class CreateContext:
         self._instances_by_id[instance.id] = instance
         # Prepare publish plugin attributes and set it on instance
         attr_plugins = self._get_publish_plugins_with_attr_for_family(
-            instance.creator.family
+            instance.family
         )
         instance.set_publish_plugins(attr_plugins)
 

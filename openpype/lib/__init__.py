@@ -30,7 +30,7 @@ from .vendor_bin_utils import (
 )
 
 from .attribute_definitions import (
-    AbtractAttrDef,
+    AbstractAttrDef,
 
     UIDef,
     UISeparatorDef,
@@ -246,7 +246,7 @@ __all__ = [
     "get_ffmpeg_tool_path",
     "is_oiio_supported",
 
-    "AbtractAttrDef",
+    "AbstractAttrDef",
 
     "UIDef",
     "UISeparatorDef",
