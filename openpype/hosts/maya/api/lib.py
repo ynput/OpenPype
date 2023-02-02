@@ -3402,6 +3402,7 @@ def imageInfo(filepath):
         img_info['format'] = "unknown"
     return img_info
 
+
 def guess_colorspace(img_info):
     ''' Take reference from makeTx.py
     Guess the colorspace of the input image filename.
