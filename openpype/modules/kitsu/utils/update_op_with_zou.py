@@ -146,6 +146,14 @@ def update_op_assets(
         # Properties that doesn't fully exist in Kitsu. Guessing the property name
         # Pixel Aspect Ratio
         item_data["pixelAspect"] = item_data.get("pixel_aspect", project_doc["data"].get("pixelAspect"))
+        # Handle Start
+        item_data["handleStart"] = item_data.get("handle_start", project_doc["data"].get("handleStart"))
+        # Handle End
+        item_data["handleEnd"] = item_data.get("handle_end", project_doc["data"].get("handleEnd"))
+        # Clip In
+        item_data["clipIn"] = item_data.get("clip_in", project_doc["data"].get("clipIn"))
+        # Clip Out
+        item_data["clipOut"] = item_data.get("clip_out", project_doc["data"].get("clipOut"))
 
         # Tasks
         tasks_list = []
