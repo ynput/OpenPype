@@ -47,7 +47,7 @@ def create_qcolor(*args):
         *args (tuple): It is possible to pass initialization arguments for
             Qcolor.
     """
-    from Qt import QtGui
+    from qtpy import QtGui
 
     return QtGui.QColor(*args)
 

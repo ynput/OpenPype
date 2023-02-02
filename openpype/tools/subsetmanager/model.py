@@ -1,6 +1,6 @@
 import uuid
 
-from Qt import QtCore, QtGui
+from qtpy import QtCore, QtGui
 
 from openpype.pipeline import registered_host
 

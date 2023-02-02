@@ -51,7 +51,7 @@ class ExtractAlembic(publish.Extractor):
     order = pyblish.api.ExtractorOrder
     label = "Extract Pointcache"
     hosts = ["max"]
-    families = ["pointcache", "camera"]
+    families = ["pointcache"]
 
     def process(self, instance):
         start = float(instance.data.get("frameStartHandle", 1))

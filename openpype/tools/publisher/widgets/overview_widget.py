@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from .border_label_widget import BorderedLabelWidget
 
@@ -172,7 +172,7 @@ class OverviewWidget(QtWidgets.QFrame):
         self._current_state = new_state
 
         anim_is_running = (
-            self._change_anim.state() == self._change_anim.Running
+            self._change_anim.state() == QtCore.QAbstractAnimation.Running
         )
         if not animate:
             self._change_visibility_for_state()
@@ -184,9 +184,9 @@ class OverviewWidget(QtWidgets.QFrame):
             self._max_widget_width = self._subset_views_widget.maximumWidth()
 
         if new_state == "create":
-            direction = self._change_anim.Backward
+            direction = QtCore.QAbstractAnimation.Backward
         else:
-            direction = self._change_anim.Forward
+            direction = QtCore.QAbstractAnimation.Forward
         self._change_anim.setDirection(direction)
 
         if not anim_is_running:

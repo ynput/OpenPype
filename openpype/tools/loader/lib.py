@@ -1,8 +1,8 @@
 import inspect
-from Qt import QtGui
+from qtpy import QtGui
 import qtawesome
 
-from openpype.lib.attribute_definitions import AbtractAttrDef
+from openpype.lib.attribute_definitions import AbstractAttrDef
 from openpype.tools.attribute_defs import AttributeDefinitionsDialog
 from openpype.tools.utils.widgets import (
     OptionalAction,
@@ -43,7 +43,7 @@ def get_options(action, loader, parent, repre_contexts):
     if not getattr(action, "optioned", False) or not loader_options:
         return options
 
-    if isinstance(loader_options[0], AbtractAttrDef):
+    if isinstance(loader_options[0], AbstractAttrDef):
         qargparse_options = False
         dialog = AttributeDefinitionsDialog(loader_options, parent)
     else:
