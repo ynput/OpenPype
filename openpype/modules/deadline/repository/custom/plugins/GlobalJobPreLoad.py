@@ -189,6 +189,12 @@ def get_openpype_executable():
     exe_list = config.GetConfigEntryWithDefault("OpenPypeExecutable", "")
     dir_list = config.GetConfigEntryWithDefault(
         "OpenPypeInstallationDirs", "")
+
+    # clean '\ ' for MacOS pasting
+    if exe_list:
+        exe_list = exe_list.replace("\\ ", " ")
+    if dir_list:
+        dir_list = dir_list.replace("\\ ", " ")
     return exe_list, dir_list
 
 
