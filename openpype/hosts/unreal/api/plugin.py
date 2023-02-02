@@ -80,7 +80,7 @@ class UnrealBaseCreator(Creator):
     def create(self, subset_name, instance_data, pre_create_data):
         try:
             instance_name = f"{subset_name}{self.suffix}"
-            create_publish_instance(instance_name, self.root)
+            pub_instance = create_publish_instance(instance_name, self.root)
 
             instance_data["subset"] = subset_name
             instance_data["instance_path"] = f"{self.root}/{instance_name}"
@@ -91,6 +91,15 @@ class UnrealBaseCreator(Creator):
                 instance_data,
                 self)
             self._add_instance_to_context(instance)
+
+            pub_instance.set_editor_property('add_external_assets', True)
+            assets = pub_instance.get_editor_property('asset_data_external')
+
+            ar = unreal.AssetRegistryHelpers.get_asset_registry()
+
+            for member in pre_create_data.get("members", []):
+                obj = ar.get_asset_by_object_path(member).get_asset()
+                assets.add(obj)
 
             imprint(f"{self.root}/{instance_name}", instance_data)
 
@@ -158,15 +167,14 @@ class UnrealAssetCreator(UnrealBaseCreator):
         try:
             # Check if instance data has members, filled by the plugin.
             # If not, use selection.
-            if not instance_data.get("members"):
-                selection = []
+            if not pre_create_data.get("members"):
+                pre_create_data["members"] = []
 
                 if pre_create_data.get("use_selection"):
-                    utility_lib = unreal.EditorUtilityLibrary
-                    sel_objects = utility_lib.get_selected_assets()
-                    selection = [a.get_path_name() for a in sel_objects]
-
-                instance_data["members"] = selection
+                    utilib = unreal.EditorUtilityLibrary
+                    sel_objects = utilib.get_selected_assets()
+                    pre_create_data["members"] = [
+                        a.get_path_name() for a in sel_objects]
 
             super(UnrealAssetCreator, self).create(
                 subset_name,
