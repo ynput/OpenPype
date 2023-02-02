@@ -35,7 +35,7 @@ class OpenPypeVersion:
         self.prerelease = prerelease
 
         is_valid = True
-        if not major or not minor or not patch:
+        if major is None or minor is None or patch is None:
             is_valid = False
         self.is_valid = is_valid
 
