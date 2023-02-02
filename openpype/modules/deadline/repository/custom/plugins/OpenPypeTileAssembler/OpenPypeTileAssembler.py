@@ -19,7 +19,7 @@ from Deadline.Scripting import (
 version_major = 1
 version_minor = 0
 version_patch = 0
-version_string = ".".join([version_major, version_minor, version_patch])
+version_string = "{}.{}.{}".format(version_major, version_minor, version_patch)
 STRING_TAGS = {
     "format"
 }
@@ -268,7 +268,7 @@ class OpenPypeTileAssembler(DeadlinePlugin):
 
     def initialize_process(self):
         """Initialization."""
-        print("Plugin version: {}".format(version_string))
+        self.LogInfo("Plugin version: {}".format(version_string))
         self.SingleFramesOnly = True
         self.StdoutHandling = True
         self.renderer = self.GetPluginInfoEntryWithDefault(
