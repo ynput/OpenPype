@@ -410,8 +410,10 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         assembly_job_info.Name += " - Tile Assembly Job"
         assembly_job_info.Frames = 1
         assembly_job_info.MachineLimit = 1
-        assembly_job_info.Priority = instance.data.get("tile_priority",
-                                                       self.tile_priority)
+        assembly_job_info.Priority = instance.data.get(
+            "tile_priority", self.tile_priority
+        )
+        assembly_job_info.TileJob = False
 
         assembly_plugin_info = {
             "CleanupTiles": 1,
@@ -438,13 +440,11 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             frame_assembly_job_info.JobDependencies = tile_job_id
 
             # write assembly job config files
-            now = datetime.now()
-
             config_file = os.path.join(
                 output_dir,
                 "{}_config_{}.txt".format(
                     os.path.splitext(file)[0],
-                    now.strftime("%Y_%m_%d_%H_%M_%S")
+                    datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
                 )
             )
             try:
@@ -455,6 +455,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 self.log.warning("Path is unreachable: "
                                  "`{}`".format(output_dir))
 
+            assembly_plugin_info["ConfigFile"] = config_file
+
             with open(config_file, "w") as cf:
                 print("TileCount={}".format(tiles_count), file=cf)
                 print("ImageFileName={}".format(file), file=cf)
@@ -463,6 +465,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 print("ImageHeight={}".format(
                     instance.data.get("resolutionHeight")), file=cf)
 
+            with open(config_file, "a") as cf:
                 tiles = _format_tiles(
                     file, 0,
                     instance.data.get("tilesX"),
@@ -474,14 +477,12 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 for k, v in sorted(tiles.items()):
                     print("{}={}".format(k, v), file=cf)
 
-            payload = self.assemble_payload(
-                job_info=frame_assembly_job_info,
-                plugin_info=assembly_plugin_info.copy(),
-                # todo: aux file transfers don't work with deadline webservice
-                # add config file as job auxFile
-                # aux_files=[config_file]
+            assembly_payloads.append(
+                self.assemble_payload(
+                    job_info=frame_assembly_job_info,
+                    plugin_info=assembly_plugin_info.copy(),
+                )
             )
-            assembly_payloads.append(payload)
 
         # Submit assembly jobs
         assembly_job_ids = []
@@ -491,6 +492,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 "submitting assembly job {} of {}".format(i + 1,
                                                           num_assemblies)
             )
+            self.log.info(payload)
             assembly_job_id = self.submit(payload)
             assembly_job_ids.append(assembly_job_id)
 
