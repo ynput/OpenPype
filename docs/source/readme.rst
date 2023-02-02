@@ -1,2 +1,6 @@
-.. title:: OpenPype Readme
+===============
+OpenPype Readme
+===============
+
 .. include:: ../../README.md
+   :parser: myst_parser.sphinx_

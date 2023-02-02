@@ -4,11 +4,12 @@
    contain the root `toctree` directive.
 
 Welcome to OpenPype's API documentation!
-================================
+========================================
 
 .. toctree::
-   readme
-   openpype
+
+   Readme <readme.rst>
+
 
 Indices and tables
 ==================
