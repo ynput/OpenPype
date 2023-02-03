@@ -8,7 +8,7 @@ class IntegrateKitsuReview(pyblish.api.InstancePlugin):
 
     order = pyblish.api.IntegratorOrder + 0.01
     label = "Kitsu Review"
-    # families = ["kitsu"]
+    families = ["render", "kitsu"]
     optional = True
 
     def process(self, instance):
@@ -27,7 +27,7 @@ class IntegrateKitsuReview(pyblish.api.InstancePlugin):
         # Add review representations as preview of comment
         for representation in instance.data.get("representations", []):
             # Skip if not tagged as review
-            if "review" not in representation.get("tags", []):
+            if "kitsureview" not in representation.get("tags", []):
                 continue
 
             review_path = representation.get("published_path")

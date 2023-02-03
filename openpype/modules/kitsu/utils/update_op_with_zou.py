@@ -69,6 +69,7 @@ def set_op_project(dbcon: AvalonMongoDB, project_id: str):
 
 def update_op_assets(
     dbcon: AvalonMongoDB,
+    gazu_project: dict,
     project_doc: dict,
     entities_list: List[dict],
     asset_doc_ids: Dict[str, dict],
@@ -119,22 +120,51 @@ def update_op_assets(
             # because of zou's legacy design
             frames_duration = int(item.get("nb_frames", 0))
         except (TypeError, ValueError):
-            frames_duration = 0
+            frames_duration = None
         # Frame out, fallback on frame_in + duration or project's value or 1001
         frame_out = item_data.pop("frame_out", None)
         if not frame_out:
-            frame_out = frame_in + frames_duration
-        try:
-            frame_out = int(frame_out)
-        except (TypeError, ValueError):
-            frame_out = 1001
+            if frames_duration:
+                frame_out = frame_in + frames_duration
+            else:
+                frame_out = project_doc["data"].get("frameEnd", 1001)
         item_data["frameEnd"] = frame_out
         # Fps, fallback to project's value or default value (25.0)
         try:
-            fps = float(item_data.get("fps", project_doc["data"].get("fps")))
+            fps = float(item_data.get("fps"))
         except (TypeError, ValueError):
-            fps = 25.0
+            fps = float(gazu_project.get(
+                "fps", project_doc["data"].get("fps", 25)))
         item_data["fps"] = fps
+        # Resolution, fall back to project default
+        match_res = re.match(
+            r"(\d+)x(\d+)",
+            item_data.get("resolution", gazu_project.get("resolution"))
+        )
+        if match_res:
+            item_data["resolutionWidth"] = int(match_res.group(1))
+            item_data["resolutionHeight"] = int(match_res.group(2))
+        else:
+            item_data["resolutionWidth"] = project_doc["data"].get(
+                "resolutionWidth")
+            item_data["resolutionHeight"] = project_doc["data"].get(
+                "resolutionHeight")
+        # Properties that doesn't fully exist in Kitsu. Guessing the property name
+        # Pixel Aspect Ratio
+        item_data["pixelAspect"] = item_data.get(
+            "pixel_aspect", project_doc["data"].get("pixelAspect"))
+        # Handle Start
+        item_data["handleStart"] = item_data.get(
+            "handle_start", project_doc["data"].get("handleStart"))
+        # Handle End
+        item_data["handleEnd"] = item_data.get(
+            "handle_end", project_doc["data"].get("handleEnd"))
+        # Clip In
+        item_data["clipIn"] = item_data.get(
+            "clip_in", project_doc["data"].get("clipIn"))
+        # Clip Out
+        item_data["clipOut"] = item_data.get(
+            "clip_out", project_doc["data"].get("clipOut"))
 
         # Tasks
         tasks_list = []
@@ -389,6 +419,8 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
             "data": {
                 "root_of": r,
                 "tasks": {},
+                "visualParent": None,
+                "parents": [],
             },
         }
         for r in ["Assets", "Shots"]
@@ -423,7 +455,7 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         [
             UpdateOne({"_id": id}, update)
             for id, update in update_op_assets(
-                dbcon, project_doc, all_entities, zou_ids_and_asset_docs
+                dbcon, project, project_doc, all_entities, zou_ids_and_asset_docs
             )
         ]
     )
