@@ -35,7 +35,6 @@ from openpype.pipeline import legacy_io
 from openpype.hosts.maya.api.lib_rendersettings import RenderSettings
 from openpype.hosts.maya.api.lib import get_attr_in_layer
 
-from openpype.lib.profiles_filtering import filter_profiles
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 from openpype.tests.lib import is_in_tests
