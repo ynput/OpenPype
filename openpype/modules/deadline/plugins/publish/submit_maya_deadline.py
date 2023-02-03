@@ -484,6 +484,9 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 self.assemble_payload(
                     job_info=frame_assembly_job_info,
                     plugin_info=assembly_plugin_info.copy(),
+                    # This would fail if the client machine and webserice are
+                    # using different storage paths.
+                    aux_files=[config_file]
                 )
             )
 
