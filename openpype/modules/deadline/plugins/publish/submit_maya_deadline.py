@@ -65,7 +65,7 @@ class MayaPluginInfo(object):
     # Include all lights flag
     RenderSetupIncludeLights = attr.ib(
         default="1", validator=_validate_deadline_bool_value)
-    StrictErrorChecking = attr.ib(default="1")
+    StrictErrorChecking = attr.ib(default=True)
 
 
 @attr.s
@@ -222,7 +222,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "renderSetupIncludeLights", default_rs_include_lights)
         if rs_include_lights not in {"1", "0", True, False}:
             rs_include_lights = default_rs_include_lights
-        strict_checking = self._get_strict_checking(instance)
+        strict_error_checking = instance.data.get("strict_error_checking",
+                                                  True)
         plugin_info = MayaPluginInfo(
             SceneFile=self.scene_path,
             Version=cmds.about(version=True),
@@ -231,7 +232,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             RenderSetupIncludeLights=rs_include_lights,  # noqa
             ProjectPath=context.data["workspaceDir"],
             UsingRenderLayers=True,
-            StrictErrorChecking=strict_checking
+            StrictErrorChecking=strict_error_checking
         )
 
         plugin_payload = attr.asdict(plugin_info)
@@ -752,34 +753,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         else:
             for file in exp:
                 yield file
-
-    def _get_strict_checking(self, instance):
-        """Find profile to disable Strict Error Checking
-
-        Args:
-            instance (dict)
-        Returns:
-            (int) - 1 if Strict (DL default), 0 for disabled Strict
-        """
-        strict_checking = 1
-        if not self.disable_strict_check_profiles:
-            return strict_checking
-
-        task_data = instance.data["anatomyData"].get("task", {})
-        key_values = {
-            "task_names": task_data.get("name"),
-            "task_types": task_data.get("type"),
-            "subsets": instance.data["subset"]
-        }
-        profile = filter_profiles(self.disable_strict_check_profiles,
-                                  key_values,
-                                  logger=self.log)
-
-        if profile:
-            self.log.debug("Disabling Strict Error Checking")
-            strict_checking = 0
-
-        return strict_checking
 
 
 def _format_tiles(
