@@ -21,6 +21,12 @@ class Fusionlocal(pyblish.api.InstancePlugin):
         # This plug-in runs only once and thus assumes all instances
         # currently will render the same frame range
         context = instance.context
+        key = f"__hasRun{self.__class__.__name__}"
+        if context.data.get(key, False):
+            return
+
+        context.data[key] = True
+
         self.render_once(context)
 
         frame_start = context.data["frameStartHandle"]
@@ -53,12 +59,6 @@ class Fusionlocal(pyblish.api.InstancePlugin):
 
     def render_once(self, context):
         """Render context comp only once, even with more render instances"""
-
-        key = f'__hasRun{self.__class__.__name__}'
-        if context.data.get(key, False):
-            return
-
-        context.data[key] = True
 
         current_comp = context.data["currentComp"]
         frame_start = context.data["frameStartHandle"]
