@@ -235,15 +235,27 @@ def create_unreal_project(project_name: str,
     if dev_mode or preset["dev_mode"]:
         commandlet_cmd.append('-GenerateCode')
 
-    subprocess.run(commandlet_cmd)
+    gen_process = subprocess.Popen(commandlet_cmd,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
 
-    with open(project_file, mode="r+") as pf:
+    for line in gen_process.stdout:
+        print(line.decode(), end='')
+    gen_process.stdout.close()
+    return_code = gen_process.wait()
+
+    if return_code and return_code != 0:
+        raise RuntimeError(f'Failed to generate \'{project_name}\' project! Exited with return code {return_code}')
+
+    print("--- Project has been generated successfully.")
+
+    with open(project_file.as_posix(), mode="r+") as pf:
         pf_json = json.load(pf)
         pf_json["EngineAssociation"] = _get_build_id(engine_path, ue_version)
         pf.seek(0)
         json.dump(pf_json, pf, indent=4)
         pf.truncate()
-        print(f'--- Engine ID has been writen into the project file')
+        print(f'--- Engine ID has been written into the project file')
 
     if dev_mode or preset["dev_mode"]:
         u_build_tool = get_path_to_ubt(engine_path, ue_version)
