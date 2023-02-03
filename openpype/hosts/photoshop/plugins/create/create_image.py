@@ -13,7 +13,11 @@ from openpype.hosts.photoshop.api.pipeline import cache_and_get_instances
 
 
 class ImageCreator(Creator):
-    """Creates image instance for publishing."""
+    """Creates image instance for publishing.
+
+    Result of 'image' instance is image of all visible layers, or image(s) of
+    selected layers.
+    """
     identifier = "image"
     label = "Image"
     family = "image"
@@ -59,9 +63,10 @@ class ImageCreator(Creator):
             try:
                 group = stub.group_selected_layers(subset_name_from_ui)
             except:
-                raise ValueError("Cannot group locked Bakcground layer!")
+                raise ValueError("Cannot group locked Background layer!")
             groups_to_create.append(group)
 
+        # create empty group if nothing selected
         if not groups_to_create and not top_layers_to_wrap:
             group = stub.create_group(subset_name_from_ui)
             groups_to_create.append(group)
@@ -148,7 +153,34 @@ class ImageCreator(Creator):
         return output
 
     def get_detail_description(self):
-        return """Creator for Image instances"""
+        return """Creator for Image instances
+
+        Main publishable item in Photoshop will be of `image` family. Result of
+        this item (instance) is picture that could be loaded and used
+        in another DCCs (for example as single layer in composition in
+        AfterEffects, reference in Maya etc).
+
+        There are couple of options what to publish:
+        - separate image per selected layer (or group of layers)
+        - one image for all selected layers
+        - all visible layers (groups) flattened into single image
+
+        In most cases you would like to keep `Create only for selected`
+        toggled on and select what you would like to publish.
+        Toggling this option off will allow you to create instance for all
+        visible layers without a need to select them explicitly.
+
+        Use 'Create separate instance for each selected' to create separate
+        images per selected layer (group of layers).
+
+        'Use layer name in subset' will explicitly add layer name into subset
+        name. Position of this name is configurable in
+        `project_settings/global/tools/creator/subset_name_profiles`.
+        If layer placeholder ({layer}) is not used in `subset_name_profiles`
+        but layer name should be used (set explicitly in UI or implicitly if
+        multiple images should be created), it is added in capitalized form
+        as a suffix to subset name.
+        """
 
     def _handle_legacy(self, instance_data):
         """Converts old instances to new format."""
