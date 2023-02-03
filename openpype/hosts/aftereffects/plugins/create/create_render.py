@@ -15,6 +15,11 @@ from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 
 
 class RenderCreator(Creator):
+    """Creates 'render' instance for publishing.
+
+    Result of 'render' instance is video or sequence of images for particular
+    composition based of configuration in its RenderQueue.
+    """
     identifier = "render"
     label = "Render"
     family = "render"
@@ -140,7 +145,32 @@ class RenderCreator(Creator):
         return output
 
     def get_detail_description(self):
-        return """Creator for Render instances"""
+        return """Creator for Render instances
+        
+        Main publishable item in AfterEffects will be of `render` family. 
+        Result of this item (instance) is picture sequence or video that could 
+        be a final delivery product or loaded and used in another DCCs.
+        
+        Select single composition and create instance of 'render' family or 
+        turn off 'Use selection' to create instance for all compositions.
+        
+        'Use composition name in subset' allows to explicitly add composition
+        name into created subset name.
+        
+        Position of composition name could be set in 
+        `project_settings/global/tools/creator/subset_name_profiles` with some
+        form of '{composition}' placeholder.
+        
+        Composition name will be used implicitly if multiple composition should
+        be handled at same time.
+        
+        If {composition} placeholder is not us 'subset_name_profiles' 
+        composition name will be capitalized and set at the end of subset name
+        if necessary.
+        
+        If composition name should be used, it will be cleaned up of characters
+        that would cause an issue in published file names.
+        """
 
     def get_dynamic_data(self, variant, task_name, asset_doc,
                          project_name, host_name, instance):
