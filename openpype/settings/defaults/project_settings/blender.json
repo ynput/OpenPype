@@ -97,6 +97,11 @@
             "optional": true,
             "active": false
         },
+        "ExtractAnimationABC": {
+            "enabled": true,
+            "optional": true,
+            "active": false
+        },
         "ExtractCamera": {
             "enabled": true,
             "optional": true,

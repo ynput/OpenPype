@@ -145,6 +145,10 @@
                     "label": "Extract Animation as FBX"
                 },
                 {
+                    "key": "ExtractAnimationABC",
+                    "label": "Extract Animation as ABC"
+                },
+                {
                     "key": "ExtractCamera",
                     "label": "Extract FBX Camera as FBX"
                 },
