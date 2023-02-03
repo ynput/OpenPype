@@ -11,6 +11,7 @@ from openpype.pipeline import (
 )
 from openpype.hosts.aftereffects.api.pipeline import cache_and_get_instances
 from openpype.lib import prepare_template_data
+from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 
 
 class RenderCreator(Creator):
@@ -82,10 +83,19 @@ class RenderCreator(Creator):
                 "if 'useSelection' or create at least "
                 "one composition."
             )
-
+        use_composition_name = (pre_create_data.get("use_composition_name") or
+                                len(comps) > 1)
         for comp in comps:
-            if pre_create_data.get("use_composition_name"):
-                composition_name = comp.name
+            if use_composition_name:
+                if "{composition}" not in subset_name.lower():
+                    subset_name += "{Composition}"
+
+                composition_name = re.sub(
+                    "[^{}]+".format(SUBSET_NAME_ALLOWED_SYMBOLS),
+                    "",
+                    comp.name
+                )
+
                 dynamic_fill = prepare_template_data({"composition":
                                                       composition_name})
                 subset_name = subset_name_from_ui.format(**dynamic_fill)
