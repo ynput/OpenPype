@@ -73,13 +73,16 @@ class ImageCreator(Creator):
             groups_to_create.append(group)
 
         layer_name = ''
-        creating_multiple_groups = len(groups_to_create) > 1
+        # use artist chosen option OR force layer if more subsets are created
+        # to differentiate them
+        use_layer_name = (pre_create_data.get("use_layer_name") or
+                          len(groups_to_create) > 1)
         for group in groups_to_create:
             subset_name = subset_name_from_ui  # reset to name from creator UI
             layer_names_in_hierarchy = []
             created_group_name = self._clean_highlights(stub, group.name)
 
-            if creating_multiple_groups:
+            if use_layer_name:
                 layer_name = re.sub(
                     "[^{}]+".format(SUBSET_NAME_ALLOWED_SYMBOLS),
                     "",
@@ -137,7 +140,10 @@ class ImageCreator(Creator):
                     label="Create only for selected"),
             BoolDef("create_multiple",
                     default=True,
-                    label="Create separate instance for each selected")
+                    label="Create separate instance for each selected"),
+            BoolDef("use_layer_name",
+                    default=False,
+                    label="Use layer name in subset")
         ]
         return output
 
