@@ -26,18 +26,18 @@ class FusionPrelaunch(PreLaunchHook):
         return os.getenv(f"FUSION{self.PROFILE_NUMBER}_PROFILE", "Default")
 
     def get_profile_source(self) -> Path:
+        fusion_profile = self.get_fusion_profile()
         fusion_var_prefs_dir = os.getenv(f"FUSION{self.PROFILE_NUMBER}_PROFILE_DIR")
 
         # if FUSION16_PROFILE_DIR variable exists, return the profile filepath
         if fusion_var_prefs_dir and Path(fusion_var_prefs_dir).is_dir():
-            fusion_profile = self.get_fusion_profile()
             fusion_prefs_dir = Path(fusion_var_prefs_dir, fusion_profile)
             self.log.info(f"Local Fusion prefs environment is set to {fusion_prefs_dir}")
             fusion_prefs_filepath = fusion_prefs_dir / "Fusion.prefs"
             return fusion_prefs_filepath
         
         # otherwise get the profile from default prefs location 
-        fusion_prefs_path = f"Blackmagic Design/Fusion/Profiles/{fusion_var_prefs_dir}/Fusion.prefs"
+        fusion_prefs_path = f"Blackmagic Design/Fusion/Profiles/{fusion_profile}/Fusion.prefs"
         if platform.system() == "Windows":
             prefs_source = Path(os.getenv("AppData")) / fusion_prefs_path
         elif platform.system() == "Darwin":
