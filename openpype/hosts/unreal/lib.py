@@ -229,7 +229,7 @@ def create_unreal_project(project_name: str,
     print("--- Generating a new project ...")
     commandlet_cmd = [f'{ue_editor_exe.as_posix()}',
                       f'{cmdlet_project.as_posix()}',
-                      f'-run=OPGenerateProject',
+                      f'-run=OPGenerateProjec',
                       f'{project_file.resolve().as_posix()}']
 
     if dev_mode or preset["dev_mode"]:
@@ -245,7 +245,8 @@ def create_unreal_project(project_name: str,
     return_code = gen_process.wait()
 
     if return_code and return_code != 0:
-        raise RuntimeError(f'Failed to generate \'{project_name}\' project! Exited with return code {return_code}')
+        raise RuntimeError(f'Failed to generate \'{project_name}\' project! '
+                           f'Exited with return code {return_code}')
 
     print("--- Project has been generated successfully.")
 
