@@ -89,10 +89,10 @@ pylint = "^2.4.4"
 pytest = "^6.1"
 pytest-cov = "*"
 pytest-print = "*"
-Sphinx = { version = "^5.3", optional = true }
-m2r2 = { version = "^0.3.3.post2", optional = true }
-sphinx-autoapi = { version = "^2.0.1", optional = true }
-sphinxcontrib-napoleon = { version = "^0.7", optional = true }
+Sphinx = "^5.3"
+m2r2 = "^0.3.3.post2"
+sphinx-autoapi = "^2.0.1"
+sphinxcontrib-napoleon = "^0.7"
 revitron-sphinx-theme = { git = "https://github.com/revitron/revitron-sphinx-theme.git", branch = "master" }
 recommonmark = "*"
 wheel = "*"
