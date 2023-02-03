@@ -34,7 +34,7 @@
             "jobInfo": {},
             "pluginInfo": {},
             "scene_patches": [],
-            "disable_strict_check_profiles": []
+            "strict_error_checking": true
         },
         "NukeSubmitDeadline": {
             "enabled": true,
