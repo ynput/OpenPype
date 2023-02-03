@@ -1,4 +1,5 @@
 import os
+import re
 import logging
 import platform
 
@@ -168,24 +169,16 @@ def get_or_create_tool(tool_definition, shelf):
         (tool for tool in existing_tools if tool.label() == tool_label),
         None
     )
+
+    with open(script_path) as stream:
+        script = stream.read()
+
+    tool_definition["script"] = script
+
     if existing_tool:
-        tool_definition.pop('name', None)
-        tool_definition.pop('label', None)
+        tool_definition.pop("label", None)
         existing_tool.setData(**tool_definition)
         return existing_tool
 
-    tool_name = tool_label.replace(' ', '_').lower()
-
-    if not os.path.exists(tool_definition['script']):
-        log.warning(
-            "This path doesn't exist - {}".format(tool_definition['script'])
-        )
-        return
-
-    with open(tool_definition['script']) as f:
-        script = f.read()
-        tool_definition.update({'script': script})
-
-    new_tool = hou.shelves.newTool(name=tool_name, **tool_definition)
-
-    return new_tool
+    tool_name = re.sub(r"[^\w\d]+", "_", tool_label).lower()
+    return hou.shelves.newTool(name=tool_name, **tool_definition)
