@@ -158,6 +158,11 @@ def get_or_create_tool(tool_definition, shelf):
         log.warning("Skipped shelf without label")
         return
 
+    script_path = tool_definition["script"]
+    if not script_path or not os.path.exists(script_path):
+        log.warning("This path doesn't exist - {}".format(script_path))
+        return
+
     existing_tools = shelf.tools()
     existing_tool = next(
         (tool for tool in existing_tools if tool.label() == tool_label),
