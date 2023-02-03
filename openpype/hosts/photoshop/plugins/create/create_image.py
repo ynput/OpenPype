@@ -23,21 +23,6 @@ class ImageCreator(Creator):
     family = "image"
     description = "Image creator"
 
-    def collect_instances(self):
-        for instance_data in cache_and_get_instances(self):
-            # legacy instances have family=='image'
-            creator_id = (instance_data.get("creator_identifier") or
-                          instance_data.get("family"))
-
-            if creator_id == self.identifier:
-                instance_data = self._handle_legacy(instance_data)
-                layer = api.stub().get_layer(instance_data["members"][0])
-                instance_data["layer"] = layer
-                instance = CreatedInstance.from_existing(
-                    instance_data, self
-                )
-                self._add_instance_to_context(instance)
-
     def create(self, subset_name_from_ui, data, pre_create_data):
         groups_to_create = []
         top_layers_to_wrap = []
@@ -119,6 +104,21 @@ class ImageCreator(Creator):
             if not create_empty_group:
                 stub.rename_layer(group.id,
                                   stub.PUBLISH_ICON + created_group_name)
+
+    def collect_instances(self):
+        for instance_data in cache_and_get_instances(self):
+            # legacy instances have family=='image'
+            creator_id = (instance_data.get("creator_identifier") or
+                          instance_data.get("family"))
+
+            if creator_id == self.identifier:
+                instance_data = self._handle_legacy(instance_data)
+                layer = api.stub().get_layer(instance_data["members"][0])
+                instance_data["layer"] = layer
+                instance = CreatedInstance.from_existing(
+                    instance_data, self
+                )
+                self._add_instance_to_context(instance)
 
     def update_instances(self, update_list):
         self.log.debug("update_list:: {}".format(update_list))
