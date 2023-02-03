@@ -732,9 +732,16 @@ class VersionTextEdit(QtWidgets.QTextEdit):
         created = datetime.datetime.strptime(created, "%Y%m%dT%H%M%SZ")
         created = datetime.datetime.strftime(created, "%b %d %Y %H:%M")
 
-        comment = version_doc["data"].get("comment", None) or "No comment"
+        comment = version_doc["data"].get("comment") or "No comment"
+        source = version_doc["data"].get("source")
+        # Try format source using anatomy roots
+        # - catch and ignore crashes if fails since 'source' can be 'None' or
+        #       arbitrary value with different formatting keys
+        try:
+            source = source.format(root=self.anatomy.roots)
+        except BaseException:
+            pass
 
-        source = version_doc["data"].get("source", None)
         source_label = source if source else "No source"
 
         # Store source and raw data
@@ -795,9 +802,8 @@ class VersionTextEdit(QtWidgets.QTextEdit):
         if not source:
             return
 
-        path = source.format(root=self.anatomy.roots)
         clipboard = QtWidgets.QApplication.clipboard()
-        clipboard.setText(path)
+        clipboard.setText(source)
 
     def on_copy_raw(self):
         """Copy raw version data to clipboard
