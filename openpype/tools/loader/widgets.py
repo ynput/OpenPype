@@ -681,6 +681,19 @@ class VersionTextEdit(QtWidgets.QTextEdit):
         # Reset
         self.set_version(None)
 
+    @property
+    def anatomy(self):
+        project_name = self.dbcon.active_project()
+        if (
+            self._anatomy is not None
+            and self._anatomy.project_name != project_name
+        ):
+            self._anatomy = None
+
+        if self._anatomy is None and project_name:
+            self._anatomy = Anatomy(project_name)
+        return self._anatomy
+
     def set_version(self, version_doc=None, version_id=None):
         # TODO expect only filling data (do not query them here!)
         if not version_doc and not version_id:
@@ -778,15 +791,11 @@ class VersionTextEdit(QtWidgets.QTextEdit):
 
     def on_copy_source(self):
         """Copy formatted source path to clipboard"""
-        source = self.data.get("source", None)
+        source = self.data.get("source")
         if not source:
             return
 
-        project_name = self.dbcon.current_project()
-        if self._anatomy is None or self._anatomy.project_name != project_name:
-            self._anatomy = Anatomy(project_name)
-
-        path = source.format(root=self._anatomy.roots)
+        path = source.format(root=self.anatomy.roots)
         clipboard = QtWidgets.QApplication.clipboard()
         clipboard.setText(path)
 
