@@ -23,9 +23,14 @@ class ExtractBlendAnimation(ExtractBlend):
         # Keep animation assignations for auto reassign at loading
         for datablock in instance:
             if isinstance(datablock, bpy.types.Object):
+                # Skip if object not animated
+                if not datablock.animation_data:
+                    continue
+
                 action = datablock.animation_data.action
             else:
                 action = datablock
+            # TODO could be optimized with user_map
             action["users"] = [
                 o.name
                 for o in bpy.data.objects
