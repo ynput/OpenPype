@@ -138,7 +138,9 @@ def update_op_assets(
         item_data["fps"] = fps
         # Resolution, fall back to project default
         match_res = re.match(
-            r"(\d+)x(\d+)", item_data.get("resolution", gazu_project.get("resolution")))
+            r"(\d+)x(\d+)",
+            item_data.get("resolution", gazu_project.get("resolution"))
+        )
         if match_res:
             item_data["resolutionWidth"] = int(match_res.group(1))
             item_data["resolutionHeight"] = int(match_res.group(2))
