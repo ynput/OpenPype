@@ -34,45 +34,6 @@ class RenderCreator(Creator):
                                                   ["RenderCreator"]
                                                   ["defaults"])
 
-    def get_icon(self):
-        return resources.get_openpype_splash_filepath()
-
-    def collect_instances(self):
-        for instance_data in cache_and_get_instances(self):
-            # legacy instances have family=='render' or 'renderLocal', use them
-            creator_id = (instance_data.get("creator_identifier") or
-                          instance_data.get("family", '').replace("Local", ''))
-            if creator_id == self.identifier:
-                instance_data = self._handle_legacy(instance_data)
-                instance = CreatedInstance.from_existing(
-                    instance_data, self
-                )
-                self._add_instance_to_context(instance)
-
-    def update_instances(self, update_list):
-        for created_inst, _changes in update_list:
-            api.get_stub().imprint(created_inst.get("instance_id"),
-                                   created_inst.data_to_store())
-            subset_change = _changes.get("subset")
-            if subset_change:
-                api.get_stub().rename_item(created_inst.data["members"][0],
-                                           subset_change[1])
-
-    def remove_instances(self, instances):
-        for instance in instances:
-            self._remove_instance_from_context(instance)
-            self.host.remove_instance(instance)
-
-            subset = instance.data["subset"]
-            comp_id = instance.data["members"][0]
-            comp = api.get_stub().get_item(comp_id)
-            if comp:
-                new_comp_name = comp.name.replace(subset, '')
-                if not new_comp_name:
-                    new_comp_name = "dummyCompName"
-                api.get_stub().rename_item(comp_id,
-                                           new_comp_name)
-
     def create(self, subset_name_from_ui, data, pre_create_data):
         stub = api.get_stub()  # only after After Effects is up
         if pre_create_data.get("use_selection"):
@@ -143,6 +104,45 @@ class RenderCreator(Creator):
             BoolDef("farm", label="Render on farm")
         ]
         return output
+
+    def get_icon(self):
+        return resources.get_openpype_splash_filepath()
+
+    def collect_instances(self):
+        for instance_data in cache_and_get_instances(self):
+            # legacy instances have family=='render' or 'renderLocal', use them
+            creator_id = (instance_data.get("creator_identifier") or
+                          instance_data.get("family", '').replace("Local", ''))
+            if creator_id == self.identifier:
+                instance_data = self._handle_legacy(instance_data)
+                instance = CreatedInstance.from_existing(
+                    instance_data, self
+                )
+                self._add_instance_to_context(instance)
+
+    def update_instances(self, update_list):
+        for created_inst, _changes in update_list:
+            api.get_stub().imprint(created_inst.get("instance_id"),
+                                   created_inst.data_to_store())
+            subset_change = _changes.get("subset")
+            if subset_change:
+                api.get_stub().rename_item(created_inst.data["members"][0],
+                                           subset_change[1])
+
+    def remove_instances(self, instances):
+        for instance in instances:
+            self._remove_instance_from_context(instance)
+            self.host.remove_instance(instance)
+
+            subset = instance.data["subset"]
+            comp_id = instance.data["members"][0]
+            comp = api.get_stub().get_item(comp_id)
+            if comp:
+                new_comp_name = comp.name.replace(subset, '')
+                if not new_comp_name:
+                    new_comp_name = "dummyCompName"
+                api.get_stub().rename_item(comp_id,
+                                           new_comp_name)
 
     def get_detail_description(self):
         return """Creator for Render instances
