@@ -92,8 +92,8 @@ class RenderCreator(Creator):
                                 len(comps) > 1)
         for comp in comps:
             if use_composition_name:
-                if "{composition}" not in subset_name.lower():
-                    subset_name += "{Composition}"
+                if "{composition}" not in subset_name_from_ui.lower():
+                    subset_name_from_ui += "{Composition}"
 
                 composition_name = re.sub(
                     "[^{}]+".format(SUBSET_NAME_ALLOWED_SYMBOLS),
