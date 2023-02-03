@@ -133,27 +133,36 @@ def update_op_assets(
         try:
             fps = float(item_data.get("fps"))
         except (TypeError, ValueError):
-            fps = float(gazu_project.get("fps", project_doc["data"].get("fps", 25)))
+            fps = float(gazu_project.get(
+                "fps", project_doc["data"].get("fps", 25)))
         item_data["fps"] = fps
         # Resolution, fall back to project default
-        match_res = re.match(r"(\d+)x(\d+)", item_data.get("resolution", gazu_project.get("resolution")))
+        match_res = re.match(
+            r"(\d+)x(\d+)", item_data.get("resolution", gazu_project.get("resolution")))
         if match_res:
             item_data["resolutionWidth"] = int(match_res.group(1))
             item_data["resolutionHeight"] = int(match_res.group(2))
         else:
-            item_data["resolutionWidth"] = project_doc["data"].get("resolutionWidth")
-            item_data["resolutionHeight"] = project_doc["data"].get("resolutionHeight")
+            item_data["resolutionWidth"] = project_doc["data"].get(
+                "resolutionWidth")
+            item_data["resolutionHeight"] = project_doc["data"].get(
+                "resolutionHeight")
         # Properties that doesn't fully exist in Kitsu. Guessing the property name
         # Pixel Aspect Ratio
-        item_data["pixelAspect"] = item_data.get("pixel_aspect", project_doc["data"].get("pixelAspect"))
+        item_data["pixelAspect"] = item_data.get(
+            "pixel_aspect", project_doc["data"].get("pixelAspect"))
         # Handle Start
-        item_data["handleStart"] = item_data.get("handle_start", project_doc["data"].get("handleStart"))
+        item_data["handleStart"] = item_data.get(
+            "handle_start", project_doc["data"].get("handleStart"))
         # Handle End
-        item_data["handleEnd"] = item_data.get("handle_end", project_doc["data"].get("handleEnd"))
+        item_data["handleEnd"] = item_data.get(
+            "handle_end", project_doc["data"].get("handleEnd"))
         # Clip In
-        item_data["clipIn"] = item_data.get("clip_in", project_doc["data"].get("clipIn"))
+        item_data["clipIn"] = item_data.get(
+            "clip_in", project_doc["data"].get("clipIn"))
         # Clip Out
-        item_data["clipOut"] = item_data.get("clip_out", project_doc["data"].get("clipOut"))
+        item_data["clipOut"] = item_data.get(
+            "clip_out", project_doc["data"].get("clipOut"))
 
         # Tasks
         tasks_list = []
