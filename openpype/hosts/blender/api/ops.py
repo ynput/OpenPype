@@ -741,7 +741,7 @@ def draw_gather_into_collection(self, context):
         for t in context.scene["openpype_creators"][self.creator_name][
             "bl_types"
         ]
-    }:
+    } or self.use_selection:
         self.layout.prop(self, "gather_into_collection")
 
 
