@@ -152,9 +152,13 @@ def get_or_create_tool(tool_definition, shelf):
     Returns:
         hou.Tool: The tool updated or the new one
     """
-    existing_tools = shelf.tools()
-    tool_label = tool_definition.get('label')
 
+    tool_label = tool_definition.get("label")
+    if not tool_label:
+        log.warning("Skipped shelf without label")
+        return
+
+    existing_tools = shelf.tools()
     existing_tool = next(
         (tool for tool in existing_tools if tool.label() == tool_label),
         None
