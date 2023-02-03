@@ -66,7 +66,7 @@ def generate_shelves():
                 )
                 continue
 
-            mandatory_attributes = {'name', 'script'}
+            mandatory_attributes = {'label', 'script'}
             for tool_definition in shelf_definition.get('tools_list'):
                 # We verify that the name and script attibutes of the tool
                 # are set
