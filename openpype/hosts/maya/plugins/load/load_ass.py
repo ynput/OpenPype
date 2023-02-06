@@ -1,6 +1,9 @@
 import os
 import clique
 
+import maya.cmds as cmds
+import mtoa.ui.arnoldmenu
+
 from openpype.settings import get_project_settings
 from openpype.pipeline import (
     load,
@@ -15,6 +18,15 @@ from openpype.hosts.maya.api.lib import (
 from openpype.hosts.maya.api.pipeline import containerise
 
 
+def is_sequence(files):
+    sequence = False
+    collections, remainder = clique.assemble(files)
+    if collections:
+        sequence = True
+
+    return sequence
+
+
 class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     """Load Arnold Proxy as reference"""
 
@@ -27,16 +39,12 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     color = "orange"
 
     def process_reference(self, context, name, namespace, options):
-
-        import maya.cmds as cmds
-        import pymel.core as pm
-
         version = context['version']
         version_data = version.get("data", {})
 
         self.log.info("version_data: {}\n".format(version_data))
 
-        frameStart = version_data.get("frameStart", None)
+        frame_start = version_data.get("frame_start", None)
 
         try:
             family = context["representation"]["context"]["family"]
@@ -49,7 +57,7 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             path = self.fname
             proxyPath_base = os.path.splitext(path)[0]
 
-            if frameStart is not None:
+            if frame_start is not None:
                 proxyPath_base = os.path.splitext(proxyPath_base)[0]
 
                 publish_folder = os.path.split(path)[0]
@@ -63,11 +71,13 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
                     path = os.path.join(publish_folder, filename)
 
-            proxyPath = proxyPath_base + ".ma"
+            proxyPath = proxyPath_base + ".ass"
 
             project_name = context["project"]["name"]
-            file_url = self.prepare_root_value(proxyPath,
-                                               project_name)
+            file_url = self.prepare_root_value(
+                proxyPath, project_name
+            )
+            self.log.info(file_url)
 
             nodes = cmds.file(file_url,
                               namespace=namespace,
@@ -80,7 +90,7 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                               translate=True, scale=True)
 
             # Set attributes
-            proxyShape = pm.ls(nodes, type="mesh")[0]
+            proxyShape = cmds.ls(nodes, type="mesh")[0]
 
             proxyShape.aiTranslator.set('procedural')
             proxyShape.dso.set(path)
@@ -92,10 +102,11 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             c = colors.get(family)
             if c is not None:
                 cmds.setAttr(groupName + ".useOutlinerColor", 1)
-                cmds.setAttr(groupName + ".outlinerColor",
-                    (float(c[0])/255),
-                    (float(c[1])/255),
-                    (float(c[2])/255)
+                cmds.setAttr(
+                    groupName + ".outlinerColor",
+                    (float(c[0]) / 255),
+                    (float(c[1]) / 255),
+                    (float(c[2]) / 255)
                 )
 
         self[:] = nodes
@@ -106,18 +117,11 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         self.update(container, representation)
 
     def update(self, container, representation):
-        from maya import cmds
-        import pymel.core as pm
-
         node = container["objectName"]
 
         representation["context"].pop("frame", None)
         path = get_representation_path(representation)
-        print(path)
-        # path = self.fname
-        print(self.fname)
         proxyPath = os.path.splitext(path)[0] + ".ma"
-        print(proxyPath)
 
         # Get reference node from container members
         members = cmds.sets(node, query=True, nodesOnly=True)
@@ -186,17 +190,10 @@ class AssStandinLoader(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name, namespace, options):
-
-        import maya.cmds as cmds
-        import mtoa.ui.arnoldmenu
-        import pymel.core as pm
-
         version = context['version']
         version_data = version.get("data", {})
 
         self.log.info("version_data: {}\n".format(version_data))
-
-        frameStart = version_data.get("frameStart", None)
 
         asset = context['asset']['name']
         namespace = namespace or unique_namespace(
@@ -205,36 +202,34 @@ class AssStandinLoader(load.LoaderPlugin):
             suffix="_",
         )
 
-        # cmds.loadPlugin("gpuCache", quiet=True)
-
         # Root group
         label = "{}:{}".format(namespace, name)
-        root = pm.group(name=label, empty=True)
+        root = cmds.group(name=label, empty=True)
 
         settings = get_project_settings(os.environ['AVALON_PROJECT'])
         colors = settings['maya']['load']['colors']
 
-        c = colors.get('ass')
-        if c is not None:
-            cmds.setAttr(root + ".useOutlinerColor", 1)
-            cmds.setAttr(root + ".outlinerColor",
-                         c[0], c[1], c[2])
+        color = colors.get('ass')
+        if color is not None:
+            cmds.setAttr(root + ".useOutlinerColor", True)
+            cmds.setAttr(
+                root + ".outlinerColor", color[0], color[1], color[2]
+            )
 
         # Create transform with shape
         transform_name = label + "_ASS"
-        # transform = pm.createNode("transform", name=transform_name,
-        #                             parent=root)
 
-        standinShape = pm.PyNode(mtoa.ui.arnoldmenu.createStandIn())
-        standin = standinShape.getParent()
-        standin.rename(transform_name)
+        standinShape = mtoa.ui.arnoldmenu.createStandIn()
+        standin = cmds.listRelatives(standinShape, parent=True)[0]
+        standin = cmds.rename(standin, transform_name)
+        standinShape = cmds.listRelatives(standin, shapes=True)[0]
 
-        pm.parent(standin, root)
+        cmds.parent(standin, root)
 
         # Set the standin filepath
-        standinShape.dso.set(self.fname)
-        if frameStart is not None:
-            standinShape.useFrameExtension.set(1)
+        cmds.setAttr(standinShape + ".dso", self.fname, type="string")
+        sequence = is_sequence(os.listdir(os.path.dirname(self.fname)))
+        cmds.setAttr(standinShape + ".useFrameExtension", sequence)
 
         nodes = [root, standin]
         self[:] = nodes
@@ -247,31 +242,27 @@ class AssStandinLoader(load.LoaderPlugin):
             loader=self.__class__.__name__)
 
     def update(self, container, representation):
-
-        import pymel.core as pm
-
-        path = get_representation_path(representation)
-
-        files_in_path = os.listdir(os.path.split(path)[0])
-        sequence = 0
-        collections, remainder = clique.assemble(files_in_path)
-        if collections:
-            sequence = 1
-
         # Update the standin
         standins = list()
-        members = pm.sets(container['objectName'], query=True)
+        members = cmds.sets(container['objectName'], query=True)
         for member in members:
-            shape = member.getShape()
-            if (shape and shape.type() == "aiStandIn"):
-                standins.append(shape)
+            shapes = cmds.listRelatives(member, shapes=True)
+            if not shapes:
+                continue
+            if cmds.nodeType(shapes[0]) == "aiStandIn":
+                standins.append(shapes[0])
 
+        path = get_representation_path(representation)
+        sequence = is_sequence(os.listdir(os.path.dirname(path)))
         for standin in standins:
-            standin.dso.set(path)
-            standin.useFrameExtension.set(sequence)
+            cmds.setAttr(standin + ".dso", path, type="string")
+            cmds.setAttr(standin + ".useFrameExtension", sequence)
 
-        container = pm.PyNode(container["objectName"])
-        container.representation.set(str(representation["_id"]))
+        cmds.setAttr(
+            container["objectName"] + ".representation",
+            str(representation["_id"]),
+            type="string"
+        )
 
     def switch(self, container, representation):
         self.update(container, representation)
