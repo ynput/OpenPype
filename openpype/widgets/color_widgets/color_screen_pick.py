@@ -1,5 +1,5 @@
-import Qt
-from Qt import QtWidgets, QtCore, QtGui
+import qtpy
+from qtpy import QtWidgets, QtCore, QtGui
 
 
 class PickScreenColorWidget(QtWidgets.QWidget):
@@ -78,7 +78,7 @@ class PickLabel(QtWidgets.QLabel):
             QtWidgets.QApplication.desktop().winId(),
             geo.x(), geo.y(), geo.width(), geo.height()
         )
-        if Qt.__binding__ in ("PyQt4", "PySide"):
+        if qtpy.API in ("pyqt4", "pyside"):
             pix = QtGui.QPixmap.grabWindow(*args)
         else:
             pix = screen_obj.grabWindow(*args)

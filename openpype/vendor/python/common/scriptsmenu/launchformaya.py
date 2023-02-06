@@ -4,7 +4,7 @@ import maya.cmds as cmds
 import maya.mel as mel
 
 import scriptsmenu
-from .vendor.Qt import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets
 
 log = logging.getLogger(__name__)
 

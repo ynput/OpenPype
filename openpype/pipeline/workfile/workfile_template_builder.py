@@ -239,6 +239,8 @@ class AbstractTemplateBuilder(object):
         if self._creators_by_name is None:
             self._creators_by_name = {}
             for creator in discover_legacy_creator_plugins():
+                if not creator.enabled:
+                    continue
                 creator_name = creator.__name__
                 if creator_name in self._creators_by_name:
                     raise KeyError(
@@ -840,7 +842,8 @@ class PlaceholderPlugin(object):
         """Placeholder options for data showed.
 
         Returns:
-            List[AbtractAttrDef]: Attribute definitions of placeholder options.
+            List[AbstractAttrDef]: Attribute definitions of
+                placeholder options.
         """
 
         return []
@@ -1141,17 +1144,17 @@ class PlaceholderLoadMixin(object):
                 as defaults for attributes.
 
         Returns:
-            List[AbtractAttrDef]: Attribute definitions common for load
+            List[AbstractAttrDef]: Attribute definitions common for load
                 plugins.
         """
 
         loaders_by_name = self.builder.get_loaders_by_name()
         loader_items = [
-            (loader_name, loader.label or loader_name)
+            {"value": loader_name, "label": loader.label or loader_name}
             for loader_name, loader in loaders_by_name.items()
         ]
 
-        loader_items = list(sorted(loader_items, key=lambda i: i[1]))
+        loader_items = list(sorted(loader_items, key=lambda i: i["label"]))
         options = options or {}
         return [
             attribute_definitions.UISeparatorDef(),
@@ -1163,9 +1166,9 @@ class PlaceholderLoadMixin(object):
                 label="Asset Builder Type",
                 default=options.get("builder_type"),
                 items=[
-                    ("context_asset", "Current asset"),
-                    ("linked_asset", "Linked assets"),
-                    ("all_assets", "All assets")
+                    {"label": "Current asset", "value": "context_asset"},
+                    {"label": "Linked assets", "value": "linked_asset"},
+                    {"label": "All assets", "value": "all_assets"},
                 ],
                 tooltip=(
                     "Asset Builder Type\n"
@@ -1511,7 +1514,7 @@ class PlaceholderCreateMixin(object):
                 as defaults for attributes.
 
         Returns:
-            List[AbtractAttrDef]: Attribute definitions common for create
+            List[AbstractAttrDef]: Attribute definitions common for create
                 plugins.
         """
 

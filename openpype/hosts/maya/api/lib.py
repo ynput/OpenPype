@@ -254,11 +254,6 @@ def read(node):
     return data
 
 
-def _get_mel_global(name):
-    """Return the value of a mel global variable"""
-    return mel.eval("$%s = $%s;" % (name, name))
-
-
 def matrix_equals(a, b, tolerance=1e-10):
     """
     Compares two matrices with an imperfection tolerance
@@ -287,73 +282,6 @@ def pairwise(iterable):
 
     a = iter(iterable)
     return zip(a, a)
-
-
-def export_alembic(nodes,
-                   file,
-                   frame_range=None,
-                   write_uv=True,
-                   write_visibility=True,
-                   attribute_prefix=None):
-    """Wrap native MEL command with limited set of arguments
-
-    Arguments:
-        nodes (list): Long names of nodes to cache
-
-        file (str): Absolute path to output destination
-
-        frame_range (tuple, optional): Start- and end-frame of cache,
-            default to current animation range.
-
-        write_uv (bool, optional): Whether or not to include UVs,
-            default to True
-
-        write_visibility (bool, optional): Turn on to store the visibility
-        state of objects in the Alembic file. Otherwise, all objects are
-        considered visible, default to True
-
-        attribute_prefix (str, optional): Include all user-defined
-            attributes with this prefix.
-
-    """
-
-    if frame_range is None:
-        frame_range = (
-            cmds.playbackOptions(query=True, ast=True),
-            cmds.playbackOptions(query=True, aet=True)
-        )
-
-    options = [
-        ("file", file),
-        ("frameRange", "%s %s" % frame_range),
-    ] + [("root", mesh) for mesh in nodes]
-
-    if isinstance(attribute_prefix, string_types):
-        # Include all attributes prefixed with "mb"
-        # TODO(marcus): This would be a good candidate for
-        #   external registration, so that the developer
-        #   doesn't have to edit this function to modify
-        #   the behavior of Alembic export.
-        options.append(("attrPrefix", str(attribute_prefix)))
-
-    if write_uv:
-        options.append(("uvWrite", ""))
-
-    if write_visibility:
-        options.append(("writeVisibility", ""))
-
-    # Generate MEL command
-    mel_args = list()
-    for key, value in options:
-        mel_args.append("-{0} {1}".format(key, value))
-
-    mel_args_string = " ".join(mel_args)
-    mel_cmd = "AbcExport -j \"{0}\"".format(mel_args_string)
-
-    # For debuggability, put the string passed to MEL in the Script editor.
-    print("mel.eval('%s')" % mel_cmd)
-
-    return mel.eval(mel_cmd)
 
 
 def collect_animation_data(fps=False):
@@ -691,13 +619,13 @@ class delete_after(object):
             cmds.delete(self._nodes)
 
 
+def get_current_renderlayer():
+    return cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)
+
+
 def get_renderer(layer):
     with renderlayer(layer):
         return cmds.getAttr("defaultRenderGlobals.currentRenderer")
-
-
-def get_current_renderlayer():
-    return cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)
 
 
 @contextlib.contextmanager
@@ -1438,27 +1366,6 @@ def set_id(node, unique_id, overwrite=False):
     if not exists or overwrite:
         attr = "{0}.cbId".format(node)
         cmds.setAttr(attr, unique_id, type="string")
-
-
-# endregion ID
-def get_reference_node(path):
-    """
-    Get the reference node when the path is found being used in a reference
-    Args:
-        path (str): the file path to check
-
-    Returns:
-        node (str): name of the reference node in question
-    """
-    try:
-        node = cmds.file(path, query=True, referenceNode=True)
-    except RuntimeError:
-        log.debug('File is not referenced : "{}"'.format(path))
-        return
-
-    reference_path = cmds.referenceQuery(path, filename=True)
-    if os.path.normpath(path) == os.path.normpath(reference_path):
-        return node
 
 
 def set_attribute(attribute, value, node):
