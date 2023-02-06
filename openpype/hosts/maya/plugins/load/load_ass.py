@@ -27,6 +27,18 @@ def is_sequence(files):
     return sequence
 
 
+def set_color(node, context):
+    project_name = context["project"]["name"]
+    settings = get_project_settings(project_name)
+    colors = settings['maya']['load']['colors']
+    color = colors.get('ass')
+    if color is not None:
+        cmds.setAttr(node + ".useOutlinerColor", True)
+        cmds.setAttr(
+            node + ".outlinerColor", color[0], color[1], color[2]
+        )
+
+
 class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     """Load Arnold Proxy as reference"""
 
@@ -46,19 +58,14 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
         frame_start = version_data.get("frame_start", None)
 
-        try:
-            family = context["representation"]["context"]["family"]
-        except ValueError:
-            family = "ass"
-
         with maintained_selection():
 
             groupName = "{}:{}".format(namespace, name)
             path = self.fname
-            proxyPath_base = os.path.splitext(path)[0]
+            proxy_path_base = os.path.splitext(path)[0]
 
             if frame_start is not None:
-                proxyPath_base = os.path.splitext(proxyPath_base)[0]
+                proxy_path_base = os.path.splitext(proxy_path_base)[0]
 
                 publish_folder = os.path.split(path)[0]
                 files_in_folder = os.listdir(publish_folder)
@@ -71,43 +78,33 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
                     path = os.path.join(publish_folder, filename)
 
-            proxyPath = proxyPath_base + ".ass"
+            proxy_path = proxy_path_base + ".ma"
+            msg = proxy_path + " does not exist."
+            assert os.path.exists(proxy_path), msg
 
-            project_name = context["project"]["name"]
-            file_url = self.prepare_root_value(
-                proxyPath, project_name
+            nodes = cmds.file(
+                proxy_path,
+                namespace=namespace,
+                reference=True,
+                returnNewNodes=True,
+                groupReference=True,
+                groupName=groupName
             )
-            self.log.info(file_url)
 
-            nodes = cmds.file(file_url,
-                              namespace=namespace,
-                              reference=True,
-                              returnNewNodes=True,
-                              groupReference=True,
-                              groupName=groupName)
-
-            cmds.makeIdentity(groupName, apply=False, rotate=True,
-                              translate=True, scale=True)
+            cmds.makeIdentity(
+                groupName, apply=False, rotate=True, translate=True, scale=True
+            )
 
             # Set attributes
-            proxyShape = cmds.ls(nodes, type="mesh")[0]
+            proxy_shape = cmds.ls(nodes, type="mesh")[0]
 
-            proxyShape.aiTranslator.set('procedural')
-            proxyShape.dso.set(path)
-            proxyShape.aiOverrideShaders.set(0)
+            cmds.setAttr(
+                proxy_shape + ".aiTranslator", "procedural", type="string"
+            )
+            cmds.setAttr(proxy_shape + ".dso", self.fname, type="string")
+            cmds.setAttr(proxy_shape + ".aiOverrideShaders", 0)
 
-            settings = get_project_settings(project_name)
-            colors = settings['maya']['load']['colors']
-
-            c = colors.get(family)
-            if c is not None:
-                cmds.setAttr(groupName + ".useOutlinerColor", 1)
-                cmds.setAttr(
-                    groupName + ".outlinerColor",
-                    (float(c[0]) / 255),
-                    (float(c[1]) / 255),
-                    (float(c[2]) / 255)
-                )
+            set_color(groupName, context)
 
         self[:] = nodes
 
@@ -121,16 +118,16 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
         representation["context"].pop("frame", None)
         path = get_representation_path(representation)
-        proxyPath = os.path.splitext(path)[0] + ".ma"
+        proxy_path = os.path.splitext(path)[0] + ".ma"
 
         # Get reference node from container members
         members = cmds.sets(node, query=True, nodesOnly=True)
         reference_node = get_reference_node(members)
 
-        assert os.path.exists(proxyPath), "%s does not exist." % proxyPath
+        assert os.path.exists(proxy_path), "%s does not exist." % proxy_path
 
         try:
-            file_url = self.prepare_root_value(proxyPath,
+            file_url = self.prepare_root_value(proxy_path,
                                                representation["context"]
                                                              ["project"]
                                                              ["name"])
@@ -140,11 +137,13 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                                 returnNewNodes=True)
 
             # Set attributes
-            proxyShape = pm.ls(content, type="mesh")[0]
+            proxy_shape = cmds.ls(content, type="mesh")[0]
 
-            proxyShape.aiTranslator.set('procedural')
-            proxyShape.dso.set(path)
-            proxyShape.aiOverrideShaders.set(0)
+            cmds.setAttr(
+                proxy_shape + ".aiTranslator", "procedural", type="string"
+            )
+            cmds.setAttr(proxy_shape + ".dso", self.fname, type="string")
+            cmds.setAttr(proxy_shape + ".aiOverrideShaders", 0)
 
         except RuntimeError as exc:
             # When changing a reference to a file that has load errors the
@@ -206,15 +205,7 @@ class AssStandinLoader(load.LoaderPlugin):
         label = "{}:{}".format(namespace, name)
         root = cmds.group(name=label, empty=True)
 
-        settings = get_project_settings(os.environ['AVALON_PROJECT'])
-        colors = settings['maya']['load']['colors']
-
-        color = colors.get('ass')
-        if color is not None:
-            cmds.setAttr(root + ".useOutlinerColor", True)
-            cmds.setAttr(
-                root + ".outlinerColor", color[0], color[1], color[2]
-            )
+        set_color(root, context)
 
         # Create transform with shape
         transform_name = label + "_ASS"
