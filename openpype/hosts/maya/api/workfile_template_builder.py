@@ -2,7 +2,7 @@ import json
 
 from maya import cmds
 
-from openpype.pipeline import registered_host
+from openpype.pipeline import registered_host, legacy_io
 from openpype.pipeline.workfile.workfile_template_builder import (
     TemplateAlreadyImported,
     AbstractTemplateBuilder,
@@ -41,9 +41,25 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
             ))
 
         cmds.sets(name=PLACEHOLDER_SET, empty=True)
-        cmds.file(path, i=True, returnNewNodes=True)
+        new_nodes = cmds.file(path, i=True, returnNewNodes=True)
 
         cmds.setAttr(PLACEHOLDER_SET + ".hiddenInOutliner", True)
+
+        imported_sets = cmds.ls(new_nodes, set=True)
+        if not imported_sets:
+            return True
+
+        # update imported sets information
+        for node in imported_sets:
+            if not cmds.attributeQuery("id", node=node, exists=True):
+                continue
+            if cmds.getAttr("{}.id".format(node)) != "pyblish.avalon.instance":
+                continue
+            if not cmds.attributeQuery("asset", node=node, exists=True):
+                continue
+            asset = legacy_io.Session["AVALON_ASSET"]
+
+            cmds.setAttr("{}.asset".format(node), asset, type="string")
 
         return True
 
