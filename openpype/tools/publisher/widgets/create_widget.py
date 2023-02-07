@@ -91,6 +91,15 @@ class CreatorShortDescWidget(QtWidgets.QWidget):
         self._description_label.setText(description)
 
 
+class CreatorsProxyModel(QtCore.QSortFilterProxyModel):
+    def lessThan(self, left, right):
+        l_show_order = left.data(CREATOR_SORT_ROLE)
+        r_show_order = right.data(CREATOR_SORT_ROLE)
+        if l_show_order == r_show_order:
+            return super(CreatorsProxyModel, self).lessThan(left, right)
+        return l_show_order < r_show_order
+
+
 class CreateWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent=None):
         super(CreateWidget, self).__init__(parent)
@@ -142,7 +151,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         creators_view = QtWidgets.QListView(creators_view_widget)
         creators_model = QtGui.QStandardItemModel()
-        creators_sort_model = QtCore.QSortFilterProxyModel()
+        creators_sort_model = CreatorsProxyModel()
         creators_sort_model.setSourceModel(creators_model)
         creators_view.setModel(creators_sort_model)
 
