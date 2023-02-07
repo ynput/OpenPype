@@ -252,12 +252,13 @@ class TrackChangesItem(object):
     ```
 
     Args:
-        old_value (Any): Previous value.
+        old_value (Any): Old value.
         new_value (Any): New value.
     """
 
     def __init__(self, old_value, new_value):
         self._changed = old_value != new_value
+        # Resolve if value is '_EMPTY_VALUE' after comparison of the values
         if old_value is _EMPTY_VALUE:
             old_value = None
         if new_value is _EMPTY_VALUE:
@@ -412,7 +413,7 @@ class TrackChangesItem(object):
         """All keys that are available in old and new value.
 
         Empty set is returned if both old and new value are not a dict.
-        Output it is Union of 'old_keys' and 'new_keys'.
+        Output is Union of 'old_keys' and 'new_keys'.
 
         Returns:
             Set[str]: All keys from old and new value.
