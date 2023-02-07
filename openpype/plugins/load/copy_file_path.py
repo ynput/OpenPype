@@ -19,7 +19,7 @@ class CopyFilePath(load.LoaderPlugin):
 
     @staticmethod
     def copy_path_to_clipboard(path):
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
 
         clipboard = QtWidgets.QApplication.clipboard()
         assert clipboard, "Must have running QApplication instance"
