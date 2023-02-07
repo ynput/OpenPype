@@ -104,7 +104,7 @@ class ArnoldStandinLoader(load.LoaderPlugin):
                 return start_index
             start_index += 1
 
-    def _setup_proxy(self, shape, path):
+    def _get_proxy_path(self, path):
         basename_split = os.path.basename(path).split(".")
         proxy_basename = (
             basename_split[0] + "_proxy." + ".".join(basename_split[1:])
@@ -112,10 +112,14 @@ class ArnoldStandinLoader(load.LoaderPlugin):
         proxy_path = "/".join(
             [os.path.dirname(path), "resources", proxy_basename]
         )
+        return proxy_basename, proxy_path
+
+    def _setup_proxy(self, shape, path):
+        proxy_basename, proxy_path = self._get_proxy_path(path)
 
         if not os.path.exists(proxy_path):
             self.log.error("Proxy files do not exist. Skipping proxy setup.")
-            return path
+            return os.path.basename(path), path
 
         options_node = "defaultArnoldRenderOptions"
         merge_operator = get_attribute_input(options_node + ".operator")
@@ -156,20 +160,33 @@ class ArnoldStandinLoader(load.LoaderPlugin):
 
     def update(self, container, representation):
         # Update the standin
-        standins = list()
         members = cmds.sets(container['objectName'], query=True)
         for member in members:
+            if cmds.nodeType(member) == "aiStringReplace":
+                string_replace_operator = member
+
             shapes = cmds.listRelatives(member, shapes=True)
             if not shapes:
                 continue
             if cmds.nodeType(shapes[0]) == "aiStandIn":
-                standins.append(shapes[0])
+                standin = shapes[0]
 
         path = get_representation_path(representation)
+        proxy_basename, proxy_path = self._get_proxy_path(path)
+        cmds.setAttr(
+            string_replace_operator + ".match",
+            "resources/" + proxy_basename,
+            type="string"
+        )
+        cmds.setAttr(
+            string_replace_operator + ".replace",
+            os.path.basename(path),
+            type="string"
+        )
+        cmds.setAttr(standin + ".dso", proxy_path, type="string")
+
         sequence = is_sequence(os.listdir(os.path.dirname(path)))
-        for standin in standins:
-            cmds.setAttr(standin + ".dso", path, type="string")
-            cmds.setAttr(standin + ".useFrameExtension", sequence)
+        cmds.setAttr(standin + ".useFrameExtension", sequence)
 
         cmds.setAttr(
             container["objectName"] + ".representation",
