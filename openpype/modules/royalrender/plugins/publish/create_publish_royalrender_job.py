@@ -6,6 +6,10 @@ from openpype.pipeline import legacy_io
 import requests
 import os
 
+from openpype.modules.royalrender.rr_job import RRJob, RREnvList
+from openpype.pipeline.publish import KnownPublishError
+from openpype.modules.royalrender.api import Api as rrApi
+
 
 class CreatePublishRoyalRenderJob(InstancePlugin):
     label = "Create publish job in RR"
@@ -45,14 +49,12 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             ).format(source))
         return source
 
-    def _submit_post_job(self, instance, job, instances):
+    def get_job(self, instance, job, instances):
         """Submit publish job to RoyalRender."""
         data = instance.data.copy()
         subset = data["subset"]
         job_name = "Publish - {subset}".format(subset=subset)
 
-        # instance.data.get("subset") != instances[0]["subset"]
-        # 'Main' vs 'renderMain'
         override_version = None
         instance_version = instance.data.get("version")  # take this if exists
         if instance_version != 1:
@@ -62,6 +64,8 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             deepcopy(instance.data["anatomyData"]),
             instance.data.get("asset"),
             instances[0]["subset"],
+            # TODO: this shouldn't be hardcoded and is in fact settable by
+            #       Settings.
             'render',
             override_version
         )
@@ -71,7 +75,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
         metadata_path, roothless_metadata_path = \
             self._create_metadata_path(instance)
 
-        environment = {
+        environment = RREnvList({
             "AVALON_PROJECT": legacy_io.Session["AVALON_PROJECT"],
             "AVALON_ASSET": legacy_io.Session["AVALON_ASSET"],
             "AVALON_TASK": legacy_io.Session["AVALON_TASK"],
@@ -80,7 +84,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             "OPENPYPE_RENDER_JOB": "0",
             "OPENPYPE_REMOTE_JOB": "0",
             "OPENPYPE_LOG_NO_COLORS": "1"
-        }
+        })
 
         # add environments from self.environ_keys
         for env_key in self.environ_keys:
@@ -88,7 +92,16 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
                 environment[env_key] = os.environ[env_key]
 
         # pass environment keys from self.environ_job_filter
-        job_environ = job["Props"].get("Env", {})
+        # and collect all pre_ids to wait for
+        job_environ = {}
+        jobs_pre_ids = []
+        for job in instance["rrJobs"]:  # type: RRJob
+            if job.rrEnvList:
+                job_environ.update(
+                    dict(RREnvList.parse(job.rrEnvList))
+                )
+            jobs_pre_ids.append(job.PreID)
+
         for env_j_key in self.environ_job_filter:
             if job_environ.get(env_j_key):
                 environment[env_j_key] = job_environ[env_j_key]
@@ -99,7 +112,7 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             if mongo_url:
                 environment["OPENPYPE_MONGO"] = mongo_url
 
-        priority = self.deadline_priority or instance.data.get("priority", 50)
+        priority = self.priority or instance.data.get("priority", 50)
 
         args = [
             "--headless",
@@ -109,66 +122,37 @@ class CreatePublishRoyalRenderJob(InstancePlugin):
             "--targets", "farm"
         ]
 
-        # Generate the payload for Deadline submission
-        payload = {
-            "JobInfo": {
-                "Plugin": self.deadline_plugin,
-                "BatchName": job["Props"]["Batch"],
-                "Name": job_name,
-                "UserName": job["Props"]["User"],
-                "Comment": instance.context.data.get("comment", ""),
-
-                "Department": self.deadline_department,
-                "ChunkSize": self.deadline_chunk_size,
-                "Priority": priority,
-
-                "Group": self.deadline_group,
-                "Pool": instance.data.get("primaryPool"),
-                "SecondaryPool": instance.data.get("secondaryPool"),
-
-                "OutputDirectory0": output_dir
-            },
-            "PluginInfo": {
-                "Version": self.plugin_pype_version,
-                "Arguments": " ".join(args),
-                "SingleFrameOnly": "True",
-            },
-            # Mandatory for Deadline, may be empty
-            "AuxFiles": [],
-        }
+        job = RRJob(
+            Software="Execute",
+            Renderer="Once",
+            # path to OpenPype
+            SeqStart=1,
+            SeqEnd=1,
+            SeqStep=1,
+            SeqFileOffset=0,
+            Version="1.0",
+            SceneName="",
+            IsActive=True,
+            ImageFilename="execOnce.file",
+            ImageDir="<SceneFolder>",
+            ImageExtension="",
+            ImagePreNumberLetter="",
+            SceneOS=RRJob.get_rr_platform(),
+            rrEnvList=environment.serialize(),
+            Priority=priority
+        )
 
         # add assembly jobs as dependencies
         if instance.data.get("tileRendering"):
             self.log.info("Adding tile assembly jobs as dependencies...")
-            job_index = 0
-            for assembly_id in instance.data.get("assemblySubmissionJobs"):
-                payload["JobInfo"]["JobDependency{}".format(job_index)] = assembly_id  # noqa: E501
-                job_index += 1
+            job.WaitForPreIDs += instance.data.get("assemblySubmissionJobs")
         elif instance.data.get("bakingSubmissionJobs"):
             self.log.info("Adding baking submission jobs as dependencies...")
-            job_index = 0
-            for assembly_id in instance.data["bakingSubmissionJobs"]:
-                payload["JobInfo"]["JobDependency{}".format(job_index)] = assembly_id  # noqa: E501
-                job_index += 1
+            job.WaitForPreIDs += instance.data["bakingSubmissionJobs"]
         else:
-            payload["JobInfo"]["JobDependency0"] = job["_id"]
+            job.WaitForPreIDs += jobs_pre_ids
 
-        if instance.data.get("suspend_publish"):
-            payload["JobInfo"]["InitialStatus"] = "Suspended"
-
-        for index, (key_, value_) in enumerate(environment.items()):
-            payload["JobInfo"].update(
-                {
-                    "EnvironmentKeyValue%d"
-                    % index: "{key}={value}".format(
-                        key=key_, value=value_
-                    )
-                }
-            )
-        # remove secondary pool
-        payload["JobInfo"].pop("SecondaryPool", None)
-
-        self.log.info("Submitting Deadline job ...")
+        self.log.info("Creating RoyalRender Publish job ...")
 
         url = "{}/api/jobs".format(self.deadline_url)
         response = requests.post(url, json=payload, timeout=10)

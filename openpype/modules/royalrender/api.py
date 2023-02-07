@@ -20,19 +20,19 @@ class Api:
         self._rr_path = rr_path
         os.environ["RR_ROOT"] = rr_path
 
-    def _get_rr_bin_path(self, tool_name=None, rr_root=None):
+    @staticmethod
+    def get_rr_bin_path(rr_root, tool_name=None):
         # type: (str, str) -> str
         """Get path to RR bin folder.
 
         Args:
             tool_name (str): Name of RR executable you want.
-            rr_root (str, Optional): Custom RR root if needed.
+            rr_root (str): Custom RR root if needed.
 
         Returns:
             str: Path to the tool based on current platform.
 
         """
-        rr_root = rr_root or self._rr_path
         is_64bit_python = sys.maxsize > 2 ** 32
 
         rr_bin_parts = [rr_root, "bin"]
@@ -65,7 +65,7 @@ class Api:
         # type: () -> None
         """Set RR modules for Python."""
         # default for linux
-        rr_bin = self._get_rr_bin_path()
+        rr_bin = self.get_rr_bin_path(self._rr_path)
         rr_module_path = os.path.join(rr_bin, "lx64/lib")
 
         if sys.platform.lower() == "win32":
@@ -109,7 +109,8 @@ class Api:
 
     def _submit_using_console(self, job_file):
         # type: (SubmitFile) -> None
-        rr_start_local = self._get_rr_bin_path("rrStartLocal")
+        rr_start_local = self.get_rr_bin_path(
+            self._rr_path, "rrStartLocal")
 
         self.log.info("rr_console: {}".format(rr_start_local))
 

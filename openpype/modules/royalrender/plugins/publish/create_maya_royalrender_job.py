@@ -32,7 +32,6 @@ class CreateMayaRoyalRenderJob(InstancePlugin):
 
         Returns:
             RRJob: RoyalRender job payload.
-
         """
         def get_rr_platform():
             if sys.platform.lower() in ["win32", "win64"]:
