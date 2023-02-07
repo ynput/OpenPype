@@ -832,7 +832,8 @@ class CreatorItem:
         default_variants,
         create_allow_context_change,
         create_allow_thumbnail,
-        pre_create_attributes_defs
+        show_order,
+        pre_create_attributes_defs,
     ):
         self.identifier = identifier
         self.creator_type = creator_type
@@ -846,6 +847,7 @@ class CreatorItem:
         self.default_variants = default_variants
         self.create_allow_context_change = create_allow_context_change
         self.create_allow_thumbnail = create_allow_thumbnail
+        self.show_order = show_order
         self.pre_create_attributes_defs = pre_create_attributes_defs
 
     def get_group_label(self):
@@ -869,6 +871,7 @@ class CreatorItem:
         pre_create_attr_defs = None
         create_allow_context_change = None
         create_allow_thumbnail = None
+        show_order = creator.order
         if creator_type is CreatorTypes.artist:
             description = creator.get_description()
             detail_description = creator.get_detail_description()
@@ -877,6 +880,7 @@ class CreatorItem:
             pre_create_attr_defs = creator.get_pre_create_attr_defs()
             create_allow_context_change = creator.create_allow_context_change
             create_allow_thumbnail = creator.create_allow_thumbnail
+            show_order = creator.show_order
 
         identifier = creator.identifier
         return cls(
@@ -892,7 +896,8 @@ class CreatorItem:
             default_variants,
             create_allow_context_change,
             create_allow_thumbnail,
-            pre_create_attr_defs
+            show_order,
+            pre_create_attr_defs,
         )
 
     def to_data(self):
@@ -915,6 +920,7 @@ class CreatorItem:
             "default_variants": self.default_variants,
             "create_allow_context_change": self.create_allow_context_change,
             "create_allow_thumbnail": self.create_allow_thumbnail,
+            "show_order": self.show_order,
             "pre_create_attributes_defs": pre_create_attributes_defs,
         }
 
