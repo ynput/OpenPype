@@ -5,6 +5,6 @@ deploy:
     - cw-pvc
   script:
     - >
-      rsync -R --chown=nobody:nogroup --chmod=777 --dry-run $CI_PROJECT_DIR/openpype/modules/deadline/repositorycustom/plugins /deadline/custom
+      rsync -R --chown=nobody:nogroup --chmod=777 --dry-run $CI_PROJECT_DIR/openpype/modules/deadline/repository/custom/plugins /deadline/custom
 #rules:
 #    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
