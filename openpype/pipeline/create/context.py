@@ -1630,6 +1630,9 @@ class CreateContext:
                 )
             ])
 
+    def _remove_instance(self, instance):
+        self._instances_by_id.pop(instance.id, None)
+
     def creator_removed_instance(self, instance):
         """When creator removes instance context should be acknowledged.
 
@@ -1641,7 +1644,7 @@ class CreateContext:
                 from scene metadata.
         """
 
-        self._instances_by_id.pop(instance.id, None)
+        self._remove_instance(instance)
 
     def add_convertor_item(self, convertor_identifier, label):
         self.convertor_items_by_id[convertor_identifier] = ConvertorItem(
