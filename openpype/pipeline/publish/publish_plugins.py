@@ -118,7 +118,7 @@ class OpenPypePyblishPluginMixin:
 
         Attributes available for all families in plugin's `families` attribute.
         Returns:
-            list<AbtractAttrDef>: Attribute definitions for plugin.
+            list<AbstractAttrDef>: Attribute definitions for plugin.
         """
 
         return []
