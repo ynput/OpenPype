@@ -1237,6 +1237,37 @@ class CreateContext:
         """Access to global publish attributes."""
         return self._publish_attributes
 
+    def get_sorted_creators(self, identifiers=None):
+        """Sorted creators by 'order' attribute.
+
+        Returns:
+            List[BaseCreator]: Sorted creator plugins by 'order' value.
+        """
+
+        if identifiers is not None:
+            identifiers = set(identifiers)
+            creators = [
+                creator
+                for identifier, creator in self.creators.items()
+                if identifier in identifiers
+            ]
+        else:
+            creators = self.creators.values()
+
+        return sorted(
+            creators, key=lambda creator: creator.order
+        )
+
+    @property
+    def sorted_creators(self):
+        return self.get_sorted_creators()
+
+    @property
+    def sorted_autocreators(self):
+        return sorted(
+            self.autocreators.values(), key=lambda creator: creator.order
+        )
+
     @classmethod
     def get_host_misssing_methods(cls, host):
         """Collect missing methods from host.
