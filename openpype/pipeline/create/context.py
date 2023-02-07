@@ -1240,6 +1240,10 @@ class CreateContext:
     def get_sorted_creators(self, identifiers=None):
         """Sorted creators by 'order' attribute.
 
+        Args:
+            identifiers (Iterable[str]): Filter creators by identifiers. All
+                creators are returned if 'None' is passed.
+
         Returns:
             List[BaseCreator]: Sorted creator plugins by 'order' value.
         """
@@ -1260,10 +1264,22 @@ class CreateContext:
 
     @property
     def sorted_creators(self):
+        """Sorted creators by 'order' attribute.
+
+        Returns:
+            List[BaseCreator]: Sorted creator plugins by 'order' value.
+        """
+
         return self.get_sorted_creators()
 
     @property
     def sorted_autocreators(self):
+        """Sorted auto-creators by 'order' attribute.
+
+        Returns:
+            List[AutoCreator]: Sorted plugins by 'order' value.
+        """
+
         return sorted(
             self.autocreators.values(), key=lambda creator: creator.order
         )
