@@ -79,7 +79,10 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                     path = os.path.join(publish_folder, filename)
 
             proxy_path = proxy_path_base + ".ma"
-            msg = proxy_path + " does not exist."
+            msg = (
+                proxy_path + " does not exist.\nThere are most likely no " +
+                "proxy shapes in the \"proxy_SET\" when publishing."
+            )
             assert os.path.exists(proxy_path), msg
 
             nodes = cmds.file(
