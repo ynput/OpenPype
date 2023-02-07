@@ -1508,9 +1508,6 @@ class BasePublisherController(AbstractPublisherController):
     def _reset_attributes(self):
         """Reset most of attributes that can be reset."""
 
-        # Reset creator items
-        self._creator_items = None
-
         self.publish_is_running = False
         self.publish_has_validated = False
         self.publish_has_crashed = False
@@ -1766,6 +1763,8 @@ class PublisherController(BasePublisherController):
         self._resetting_plugins = True
 
         self._create_context.reset_plugins()
+        # Reset creator items
+        self._creator_items = None
 
         self._resetting_plugins = False
 
