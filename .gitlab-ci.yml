@@ -7,5 +7,5 @@ deploy:
       rsync -rltvh $CI_PROJECT_DIR/openpype/modules/deadline/repository/custom/plugins/GlobalJobPreLoad.py /deadline/custom/plugins/GlobalJobPreLoad.py &&
       chmod -R 777 /deadline/custom/plugins &&
       chown -R nobody:nogroup /deadline/custom/plugins
-rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  rules:
+      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
