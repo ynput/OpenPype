@@ -9,12 +9,7 @@ from openpype.pipeline import (
     load,
     get_representation_path
 )
-import openpype.hosts.maya.api.plugin
-from openpype.hosts.maya.api.plugin import get_reference_node
-from openpype.hosts.maya.api.lib import (
-    maintained_selection,
-    unique_namespace
-)
+from openpype.hosts.maya.api.lib import unique_namespace
 from openpype.hosts.maya.api.pipeline import containerise
 
 
@@ -39,193 +34,13 @@ def set_color(node, context):
         )
 
 
-class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
-    """Load Arnold Proxy as reference"""
+class ArnoldStandinLoader(load.LoaderPlugin):
+    """Load file as Arnold standin"""
 
     families = ["ass"]
     representations = ["ass"]
 
-    label = "Reference .ASS standin with Proxy"
-    order = -10
-    icon = "code-fork"
-    color = "orange"
-
-    def process_reference(self, context, name, namespace, options):
-        version = context['version']
-        version_data = version.get("data", {})
-
-        self.log.info("version_data: {}\n".format(version_data))
-
-        frame_start = version_data.get("frame_start", None)
-
-        with maintained_selection():
-
-            group_name = "{}:{}".format(namespace, name)
-            path = self.fname
-            proxy_path_base = os.path.splitext(path)[0]
-
-            if frame_start is not None:
-                proxy_path_base = os.path.splitext(proxy_path_base)[0]
-
-                publish_folder = os.path.split(path)[0]
-                files_in_folder = os.listdir(publish_folder)
-                collections, remainder = clique.assemble(files_in_folder)
-
-                if collections:
-                    hashes = collections[0].padding * '#'
-                    coll = collections[0].format('{head}[index]{tail}')
-                    filename = coll.replace('[index]', hashes)
-
-                    path = os.path.join(publish_folder, filename)
-
-            proxy_path = proxy_path_base + ".ma"
-            msg = (
-                proxy_path + " does not exist.\nThere are most likely no " +
-                "proxy shapes in the \"proxy_SET\" when publishing."
-            )
-            assert os.path.exists(proxy_path), msg
-
-            nodes = cmds.file(
-                proxy_path,
-                namespace=namespace,
-                reference=True,
-                returnNewNodes=True,
-                groupReference=True,
-                groupName=group_name
-            )
-
-            # Reset group to world zero.
-            transform_data = {}
-            for node in nodes:
-                if cmds.nodeType(node) != "transform":
-                    continue
-
-                transform_data[node] = {}
-                attrs = ["translate", "rotate", "scale"]
-                parameters = ["X", "Y", "Z"]
-                for attr in attrs:
-                    for parameter in parameters:
-                        transform_data[node][attr + parameter] = cmds.getAttr(
-                            "{}.{}{}".format(node, attr, parameter)
-                        )
-
-            cmds.makeIdentity(
-                group_name,
-                apply=False,
-                rotate=True,
-                translate=True,
-                scale=True
-            )
-
-            for node, data in transform_data.items():
-                for attr, value in data.items():
-                    cmds.setAttr("{}.{}".format(node, attr), value)
-
-            # Set attributes
-            proxy_shape = cmds.ls(nodes, type="mesh")[0]
-
-            cmds.setAttr(
-                proxy_shape + ".aiTranslator", "procedural", type="string"
-            )
-            cmds.setAttr(proxy_shape + ".dso", self.fname, type="string")
-            cmds.setAttr(proxy_shape + ".aiOverrideShaders", 0)
-
-            # Hides all other meshes at render time.
-            remaining_meshes = cmds.ls(nodes, type="mesh")
-            remaining_meshes.remove(proxy_shape)
-            for node in remaining_meshes:
-                cmds.setAttr(
-                    node + ".aiTranslator", "procedural", type="string"
-                )
-
-            set_color(group_name, context)
-
-        self[:] = nodes
-
-        return nodes
-
-    def switch(self, container, representation):
-        self.update(container, representation)
-
-    def update(self, container, representation):
-        container_node = container["objectName"]
-
-        representation["context"].pop("frame", None)
-        path = get_representation_path(representation)
-        proxy_path = os.path.splitext(path)[0] + ".ma"
-
-        # Get reference node from container members
-        members = cmds.sets(container_node, query=True, nodesOnly=True)
-        reference_node = get_reference_node(members)
-
-        assert os.path.exists(proxy_path), "%s does not exist." % proxy_path
-
-        try:
-            file_url = self.prepare_root_value(proxy_path,
-                                               representation["context"]
-                                                             ["project"]
-                                                             ["name"])
-            content = cmds.file(file_url,
-                                loadReference=reference_node,
-                                type="mayaAscii",
-                                returnNewNodes=True)
-
-            # Set attributes
-            proxy_shape = cmds.ls(content, type="mesh")[0]
-
-            cmds.setAttr(
-                proxy_shape + ".aiTranslator", "procedural", type="string"
-            )
-            cmds.setAttr(proxy_shape + ".dso", self.fname, type="string")
-            cmds.setAttr(proxy_shape + ".aiOverrideShaders", 0)
-
-        except RuntimeError as exc:
-            # When changing a reference to a file that has load errors the
-            # command will raise an error even if the file is still loaded
-            # correctly (e.g. when raising errors on Arnold attributes)
-            # When the file is loaded and has content, we consider it's fine.
-            if not cmds.referenceQuery(reference_node, isLoaded=True):
-                raise
-
-            content = cmds.referenceQuery(reference_node,
-                                          nodes=True,
-                                          dagPath=True)
-            if not content:
-                raise
-
-            self.log.warning("Ignoring file read error:\n%s", exc)
-
-        # Hides all other meshes at render time.
-        remaining_meshes = cmds.ls(content, type="mesh")
-        remaining_meshes.remove(proxy_shape)
-        for node in remaining_meshes:
-            cmds.setAttr(
-                node + ".aiTranslator", "procedural", type="string"
-            )
-
-        # Add new nodes of the reference to the container
-        cmds.sets(content, forceElement=container_node)
-
-        # Remove any placeHolderList attribute entries from the set that
-        # are remaining from nodes being removed from the referenced file.
-        members = cmds.sets(container_node, query=True)
-        invalid = [x for x in members if ".placeHolderList" in x]
-        if invalid:
-            cmds.sets(invalid, remove=container_node)
-
-        # Update metadata
-        cmds.setAttr("{}.representation".format(container_node),
-                     str(representation["_id"]),
-                     type="string")
-
-
-class AssStandinLoader(load.LoaderPlugin):
-    """Load .ASS file as standin"""
-
-    families = ["ass"]
-    representations = ["ass"]
-
-    label = "Load .ASS file as standin"
+    label = "Load file as Arnold standin"
     order = -5
     icon = "code-fork"
     color = "orange"
@@ -250,7 +65,7 @@ class AssStandinLoader(load.LoaderPlugin):
         set_color(root, context)
 
         # Create transform with shape
-        transform_name = label + "_ASS"
+        transform_name = label + "_standin"
 
         standinShape = mtoa.ui.arnoldmenu.createStandIn()
         standin = cmds.listRelatives(standinShape, parent=True)[0]
