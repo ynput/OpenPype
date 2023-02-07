@@ -1,5 +1,4 @@
 from maya import cmds
-from openpype.pipeline.publish import KnownPublishError
 
 import pyblish.api
 
@@ -25,9 +24,6 @@ class CollectAssData(pyblish.api.InstancePlugin):
                 instance.data['setMembers'] = members
                 self.log.debug('content members: {}'.format(members))
             elif objset.startswith("proxy_SET"):
-                if len(members) != 1:
-                    msg = "You have multiple proxy meshes, please only use one"
-                    raise KnownPublishError(msg)
                 instance.data['proxy'] = members
                 self.log.debug('proxy members: {}'.format(members))
 

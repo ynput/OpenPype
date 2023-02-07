@@ -60,7 +60,7 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
         with maintained_selection():
 
-            groupName = "{}:{}".format(namespace, name)
+            group_name = "{}:{}".format(namespace, name)
             path = self.fname
             proxy_path_base = os.path.splitext(path)[0]
 
@@ -91,12 +91,35 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 reference=True,
                 returnNewNodes=True,
                 groupReference=True,
-                groupName=groupName
+                groupName=group_name
             )
 
+            # Reset group to world zero.
+            transform_data = {}
+            for node in nodes:
+                if cmds.nodeType(node) != "transform":
+                    continue
+
+                transform_data[node] = {}
+                attrs = ["translate", "rotate", "scale"]
+                parameters = ["X", "Y", "Z"]
+                for attr in attrs:
+                    for parameter in parameters:
+                        transform_data[node][attr + parameter] = cmds.getAttr(
+                            "{}.{}{}".format(node, attr, parameter)
+                        )
+
             cmds.makeIdentity(
-                groupName, apply=False, rotate=True, translate=True, scale=True
+                group_name,
+                apply=False,
+                rotate=True,
+                translate=True,
+                scale=True
             )
+
+            for node, data in transform_data.items():
+                for attr, value in data.items():
+                    cmds.setAttr("{}.{}".format(node, attr), value)
 
             # Set attributes
             proxy_shape = cmds.ls(nodes, type="mesh")[0]
@@ -107,7 +130,15 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             cmds.setAttr(proxy_shape + ".dso", self.fname, type="string")
             cmds.setAttr(proxy_shape + ".aiOverrideShaders", 0)
 
-            set_color(groupName, context)
+            # Hides all other meshes at render time.
+            remaining_meshes = cmds.ls(nodes, type="mesh")
+            remaining_meshes.remove(proxy_shape)
+            for node in remaining_meshes:
+                cmds.setAttr(
+                    node + ".aiTranslator", "procedural", type="string"
+                )
+
+            set_color(group_name, context)
 
         self[:] = nodes
 
