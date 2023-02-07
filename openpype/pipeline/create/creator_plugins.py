@@ -497,6 +497,17 @@ class Creator(BaseCreator):
     # - similar to instance attribute definitions
     pre_create_attr_defs = []
 
+    @property
+    def show_order(self):
+        """Order in which is creator shown in UI.
+
+        Returns:
+            int: Order in which is creator shown (less == earlier). By default
+                is using Creator's 'order' or processing.
+        """
+
+        return self.order
+
     @abstractmethod
     def create(self, subset_name, instance_data, pre_create_data):
         """Create new instance and store it.
