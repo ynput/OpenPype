@@ -148,14 +148,14 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         self.update(container, representation)
 
     def update(self, container, representation):
-        node = container["objectName"]
+        container_node = container["objectName"]
 
         representation["context"].pop("frame", None)
         path = get_representation_path(representation)
         proxy_path = os.path.splitext(path)[0] + ".ma"
 
         # Get reference node from container members
-        members = cmds.sets(node, query=True, nodesOnly=True)
+        members = cmds.sets(container_node, query=True, nodesOnly=True)
         reference_node = get_reference_node(members)
 
         assert os.path.exists(proxy_path), "%s does not exist." % proxy_path
@@ -195,18 +195,26 @@ class AssProxyLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 
             self.log.warning("Ignoring file read error:\n%s", exc)
 
+        # Hides all other meshes at render time.
+        remaining_meshes = cmds.ls(content, type="mesh")
+        remaining_meshes.remove(proxy_shape)
+        for node in remaining_meshes:
+            cmds.setAttr(
+                node + ".aiTranslator", "procedural", type="string"
+            )
+
         # Add new nodes of the reference to the container
-        cmds.sets(content, forceElement=node)
+        cmds.sets(content, forceElement=container_node)
 
         # Remove any placeHolderList attribute entries from the set that
         # are remaining from nodes being removed from the referenced file.
-        members = cmds.sets(node, query=True)
+        members = cmds.sets(container_node, query=True)
         invalid = [x for x in members if ".placeHolderList" in x]
         if invalid:
-            cmds.sets(invalid, remove=node)
+            cmds.sets(invalid, remove=container_node)
 
         # Update metadata
-        cmds.setAttr("{}.representation".format(node),
+        cmds.setAttr("{}.representation".format(container_node),
                      str(representation["_id"]),
                      type="string")
 
