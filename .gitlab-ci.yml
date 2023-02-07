@@ -1,0 +1,10 @@
+deploy:
+  variables:
+    PLUGIN_PATH: /deadline/
+  tags:
+    - cw-pvc
+  script:
+    - >
+      rsync -R --chown=nobody:nogroup --chmod=777 --dry-run $CI_PROJECT_DIR/openpype/modules/deadline/repositorycustom/plugins /deadline/custom
+#rules:
+#    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
