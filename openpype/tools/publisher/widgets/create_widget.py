@@ -104,8 +104,6 @@ class CreateWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent=None):
         super(CreateWidget, self).__init__(parent)
 
-        self.setWindowTitle("Create new instance")
-
         self._controller = controller
 
         self._asset_name = None
