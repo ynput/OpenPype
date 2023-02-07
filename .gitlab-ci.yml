@@ -3,9 +3,6 @@ deploy:
     - cw-pvc
   script:
     - >
-      rsync -rltvh --delete $CI_PROJECT_DIR/openpype/modules/deadline/repository/custom/plugins/* /deadline/custom/plugins/ &&
-      rsync -rltvh $CI_PROJECT_DIR/openpype/modules/deadline/repository/custom/plugins/GlobalJobPreLoad.py /deadline/custom/plugins/GlobalJobPreLoad.py &&
-      chmod -R 777 /deadline/custom/plugins &&
-      chown -R nobody:nogroup /deadline/custom/plugins
-  rules:
-      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      rsync -rltvhpog --chmod=777 --chown=nobody:nogroup --delete $CI_PROJECT_DIR/openpype/modules/deadline/repository/custom/plugins/* /deadline/custom/plugins/
+#  rules:
+#      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
