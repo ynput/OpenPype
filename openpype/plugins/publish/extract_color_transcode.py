@@ -177,6 +177,11 @@ class ExtractOIIOTranscode(publish.Extractor):
                 self._mark_original_repre_for_deletion(repre, profile,
                                                        added_review)
 
+        for repre in tuple(instance.data["representations"]):
+            tags = repre.get("tags") or []
+            if "delete" in tags and "thumbnail" not in tags:
+                instance.data["representations"].remove(repre)
+
     def _rename_in_representation(self, new_repre, files_to_convert,
                                   output_name, output_extension):
         """Replace old extension with new one everywhere in representation.
