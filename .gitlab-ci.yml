@@ -4,5 +4,5 @@ deploy:
   script:
     - >
       rsync -rltvhpog --chmod=777 --chown=nobody:nogroup --delete $CI_PROJECT_DIR/openpype/modules/deadline/repository/custom/plugins/* /deadline/custom/plugins/
-#  rules:
-#      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  rules:
+      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
