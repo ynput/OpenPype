@@ -47,7 +47,7 @@ class RenderCreator(Creator):
         for created_inst, _changes in update_list:
             api.get_stub().imprint(created_inst.get("instance_id"),
                                    created_inst.data_to_store())
-            subset_change = _changes["subset"]
+            subset_change = _changes.get("subset")
             if subset_change:
                 api.get_stub().rename_item(created_inst.data["members"][0],
                                            subset_change.new_value)
