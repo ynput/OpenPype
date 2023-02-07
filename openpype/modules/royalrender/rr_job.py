@@ -1,11 +1,29 @@
 # -*- coding: utf-8 -*-
 """Python wrapper for RoyalRender XML job file."""
+import sys
 from xml.dom import minidom as md
 import attr
 from collections import namedtuple, OrderedDict
 
 
 CustomAttribute = namedtuple("CustomAttribute", ["name", "value"])
+
+
+class RREnvList(dict):
+    def serialize(self):
+        # <rrEnvList>VariableA=ValueA~~~VariableB=ValueB</rrEnvList>
+        return "~~~".join(
+            ["{}={}".format(k, v) for k, v in sorted(self.items())])
+
+    @staticmethod
+    def parse(data):
+        # type: (str) -> RREnvList
+        """Parse rrEnvList string and return it as RREnvList object."""
+        out = RREnvList()
+        for var in data.split("~~~"):
+            k, v = data.split("=")
+            out[k] = v
+        return out
 
 
 @attr.s
@@ -108,7 +126,7 @@ class RRJob:
     # jobs send from this machine. If a job with the PreID was found, then
     # this jobs waits for the other job. Note: This flag can be used multiple
     # times to wait for multiple jobs.
-    WaitForPreID = attr.ib(default=None)  # type: int
+    WaitForPreIDs = attr.ib(factory=list)  # type: list
 
     # List of submitter options per job
     # list item must be of `SubmitterParameter` type
@@ -137,6 +155,21 @@ class RRJob:
     Priority = attr.ib(default=50)  # type: int
     TotalFrames = attr.ib(default=None)  # type: int
     Tiled = attr.ib(default=None)  # type: str
+
+    # Environment
+    # only used in RR 8.3 and newer
+    rrEnvList = attr.ib(default=None)  # type: str
+
+    @staticmethod
+    def get_rr_platform():
+        # type: () -> str
+        """Returns name of platform used in rr jobs."""
+        if sys.platform.lower() in ["win32", "win64"]:
+            return "windows"
+        elif sys.platform.lower() == "darwin":
+            return "mac"
+        else:
+            return "linux"
 
 
 class SubmitterParameter:
@@ -242,6 +275,8 @@ class SubmitFile:
                 job, dict_factory=OrderedDict, filter=filter_data)
             serialized_job.pop("CustomAttributes")
             serialized_job.pop("SubmitterParameters")
+            # we are handling `WaitForPreIDs` separately.
+            wait_pre_ids = serialized_job.pop("WaitForPreIDs", [])
 
             for custom_attr in job_custom_attributes:  # type: CustomAttribute
                 serialized_job["Custom{}".format(
@@ -253,6 +288,15 @@ class SubmitFile:
                     root.createTextNode(str(value))
                 )
                 xml_job.appendChild(xml_attr)
+
+            # WaitForPreID - can be used multiple times
+            for pre_id in wait_pre_ids:
+                xml_attr = root.createElement("WaitForPreID")
+                xml_attr.appendChild(
+                    root.createTextNode(str(pre_id))
+                )
+                xml_job.appendChild(xml_attr)
+
             job_file.appendChild(xml_job)
 
         return root.toprettyxml(indent="\t")
