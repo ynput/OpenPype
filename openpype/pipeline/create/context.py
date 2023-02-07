@@ -1935,6 +1935,12 @@ class CreateContext:
             identifier = instance.creator_identifier
             instances_by_identifier[identifier].append(instance)
 
+        # Just remove instances from context if creator is not available
+        missing_creators = set(instances_by_identifier) - set(self.creators)
+        for identifier in missing_creators:
+            for instance in instances_by_identifier[identifier]:
+                self._remove_instance(instance)
+
         error_message = "Instances removement of creator \"{}\" failed. {}"
         failed_info = []
         # Remove instances by creator plugin order
@@ -2046,7 +2052,7 @@ class CreateContext:
             convertor.convert()
 
     def run_convertors(self, convertor_identifiers):
-        """Run convertor plugins by idenfitifiers.
+        """Run convertor plugins by identifiers.
 
         Conversion is skipped if convertor is not available. It is recommended
         to trigger reset after conversion to reload instances.
