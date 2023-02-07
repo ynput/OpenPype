@@ -89,6 +89,7 @@ class ExtractOIIOTranscode(publish.Extractor):
                 continue
 
             added_representations = False
+            added_review = False
 
             colorspace_data = repre["colorspaceData"]
             source_colorspace = colorspace_data["colorspace"]
@@ -166,11 +167,15 @@ class ExtractOIIOTranscode(publish.Extractor):
                     if tag not in new_repre["tags"]:
                         new_repre["tags"].append(tag)
 
+                    if tag == "review":
+                        added_review = True
+
                 instance.data["representations"].append(new_repre)
                 added_representations = True
 
             if added_representations:
-                self._mark_original_repre_for_deletion(repre, profile)
+                self._mark_original_repre_for_deletion(repre, profile,
+                                                       added_review)
 
     def _rename_in_representation(self, new_repre, files_to_convert,
                                   output_name, output_extension):
@@ -300,15 +305,16 @@ class ExtractOIIOTranscode(publish.Extractor):
 
         return True
 
-    def _mark_original_repre_for_deletion(self, repre, profile):
+    def _mark_original_repre_for_deletion(self, repre, profile, added_review):
         """If new transcoded representation created, delete old."""
+        if not repre.get("tags"):
+            repre["tags"] = []
+
         delete_original = profile["delete_original"]
 
         if delete_original:
-            if not repre.get("tags"):
-                repre["tags"] = []
-
-            if "review" in repre["tags"]:
-                repre["tags"].remove("review")
             if "delete" not in repre["tags"]:
                 repre["tags"].append("delete")
+
+        if added_review and "review" in repre["tags"]:
+            repre["tags"].remove("review")
