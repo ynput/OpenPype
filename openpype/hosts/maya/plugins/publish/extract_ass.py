@@ -1,16 +1,18 @@
 import os
+import copy
 
 from maya import cmds
 import arnold
 
 from openpype.pipeline import publish
 from openpype.hosts.maya.api.lib import maintained_selection, attribute_values
+from openpype.lib import StringTemplate
 
 
-class ExtractAssStandin(publish.Extractor):
-    """Extract the content of the instance to a ass file"""
+class ExtractArnoldSceneSource(publish.Extractor):
+    """Extract the content of the instance to an Arnold Scene Source file."""
 
-    label = "Arnold Scene Source (.ass)"
+    label = "Arnold Scene Source"
     hosts = ["maya"]
     families = ["ass"]
     asciiAss = False
@@ -18,7 +20,6 @@ class ExtractAssStandin(publish.Extractor):
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
         filename = "{}.ass".format(instance.name)
-        filenames = []
         file_path = os.path.join(staging_dir, filename)
 
         # Mask
@@ -42,7 +43,7 @@ class ExtractAssStandin(publish.Extractor):
                 mask = mask ^ node_types[key]
 
         # Motion blur
-        values = {
+        attribute_data = {
             "defaultArnoldRenderOptions.motion_blur_enable": instance.data.get(
                 "motionBlur", True
             ),
@@ -70,13 +71,65 @@ class ExtractAssStandin(publish.Extractor):
             "mask": mask
         }
 
-        self.log.info("Writing: '%s'" % file_path)
-        with attribute_values(values):
+        filenames = self._extract(
+            instance.data["setMembers"], attribute_data, kwargs
+        )
+
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
+
+        representation = {
+            "name": "ass",
+            "ext": "ass",
+            "files": filenames if len(filenames) > 1 else filenames[0],
+            "stagingDir": staging_dir,
+            "frameStart": kwargs["startFrame"]
+        }
+
+        instance.data["representations"].append(representation)
+
+        self.log.info(
+            "Extracted instance {} to: {}".format(instance.name, staging_dir)
+        )
+
+        # Extract proxy.
+        kwargs["filename"] = file_path.replace(".ass", "_proxy.ass")
+        filenames = self._extract(
+            instance.data["proxy"], attribute_data, kwargs
+        )
+
+        template_data = copy.deepcopy(instance.data["anatomyData"])
+        template_data.update({"ext": "ass"})
+        templates = instance.context.data["anatomy"].templates["publish"]
+        published_filename_without_extension = StringTemplate(
+            templates["file"]
+        ).format(template_data).replace(".ass", "_proxy")
+        transfers = []
+        for filename in filenames:
+            source = os.path.join(staging_dir, filename)
+            destination = os.path.join(
+                instance.data["resourcesDir"],
+                filename.replace(
+                    filename.split(".")[0],
+                    published_filename_without_extension
+                )
+            )
+            transfers.append((source, destination))
+
+        for source, destination in transfers:
+            self.log.debug("Transfer: {} > {}".format(source, destination))
+
+        instance.data["transfers"] = transfers
+
+    def _extract(self, nodes, attribute_data, kwargs):
+        self.log.info("Writing: " + kwargs["filename"])
+        filenames = []
+        with attribute_values(attribute_data):
             with maintained_selection():
                 self.log.info(
-                    "Writing: {}".format(instance.data["setMembers"])
+                    "Writing: {}".format(nodes)
                 )
-                cmds.select(instance.data["setMembers"], noExpand=True)
+                cmds.select(nodes, noExpand=True)
 
                 self.log.info(
                     "Extracting ass sequence with: {}".format(kwargs)
@@ -89,18 +142,4 @@ class ExtractAssStandin(publish.Extractor):
 
                 self.log.info("Exported: {}".format(filenames))
 
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
-
-        representation = {
-            'name': 'ass',
-            'ext': 'ass',
-            'files': filenames if len(filenames) > 1 else filenames[0],
-            "stagingDir": staging_dir,
-            'frameStart': kwargs["startFrame"]
-        }
-
-        instance.data["representations"].append(representation)
-
-        self.log.info("Extracted instance '%s' to: %s"
-                      % (instance.name, staging_dir))
+        return filenames
