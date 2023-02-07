@@ -75,7 +75,9 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             cmds.parent(standin, root)
 
             # Set the standin filepath
-            dso_path, operator = self._setup_proxy(standinShape, self.fname)
+            dso_path, operator = self._setup_proxy(
+                standinShape, self.fname, namespace
+            )
             cmds.setAttr(standinShape + ".dso", dso_path, type="string")
             sequence = is_sequence(os.listdir(os.path.dirname(self.fname)))
             cmds.setAttr(standinShape + ".useFrameExtension", sequence)
@@ -114,7 +116,7 @@ class ArnoldStandinLoader(load.LoaderPlugin):
         )
         return proxy_basename, proxy_path
 
-    def _setup_proxy(self, shape, path):
+    def _setup_proxy(self, shape, path, namespace):
         proxy_basename, proxy_path = self._get_proxy_path(path)
 
         if not os.path.exists(proxy_path):
@@ -131,7 +133,9 @@ class ArnoldStandinLoader(load.LoaderPlugin):
 
         merge_operator = merge_operator.split(".")[0]
 
-        string_replace_operator = cmds.createNode("aiStringReplace")
+        string_replace_operator = cmds.createNode(
+            "aiStringReplace", name=namespace + ":string_replace_operator"
+        )
         cmds.setAttr(
             string_replace_operator + ".selection",
             "*.(@node=='procedural')",
@@ -198,7 +202,6 @@ class ArnoldStandinLoader(load.LoaderPlugin):
         self.update(container, representation)
 
     def remove(self, container):
-        import maya.cmds as cmds
         members = cmds.sets(container['objectName'], query=True)
         cmds.lockNode(members, lock=False)
         cmds.delete([container['objectName']] + members)
