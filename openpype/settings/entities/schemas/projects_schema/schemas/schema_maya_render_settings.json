@@ -510,6 +510,20 @@
                 }
             }
           ]
-      }
+        },
+        {
+          "type": "dict",
+          "collapsible": true,
+          "key": "3delight_renderer",
+          "label": "3delight Renderer",
+          "is_group": true,
+          "children": [
+            {
+              "key": "image_prefix",
+              "label": "Image prefix template",
+              "type": "text"
+            }
+          ]
+        }
     ]
 }

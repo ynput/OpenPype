@@ -416,7 +416,8 @@ class RenderSettings(object):
         "defaultRenderGlobals.preMel", which will help us work this out. We
         wouldn't do this ... "hack" if deadline allowed us to insert commands
         into its MayaBatch stuff, or, if it allowed setting up renderers in a
-        sensible way.
+        sensible way. This is also copying start and end frame from the Maya
+        to the node specific attributes.
         """
 
         # We need the DOTALL since the regex will now match across newlines.

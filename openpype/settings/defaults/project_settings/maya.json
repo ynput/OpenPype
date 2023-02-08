@@ -104,6 +104,9 @@
             "cryptomatte_dir": "<imagedir>/<layer>{aov_separator}cryptomatte.<f4>.<ext>",
             "watermark_dir": "<imagedir>/<layer>{aov_separator}watermarkFilter.<f4>.<ext>",
             "additional_options": []
+        },
+        "3delight_renderer": {
+            "image_prefix": "3delight/<scene>/image/<scene>_<pass>_#.<ext>"
         }
     },
     "create": {
