@@ -138,9 +138,10 @@ class ArnoldStandinLoader(load.LoaderPlugin):
         string_replace_operator = cmds.createNode(
             "aiStringReplace", name=namespace + ":string_replace_operator"
         )
+        node_type = "alembic" if path.endswith(".abc") else "procedural"
         cmds.setAttr(
             string_replace_operator + ".selection",
-            "*.(@node=='procedural')",
+            "*.(@node=='{}')".format(node_type),
             type="string"
         )
         cmds.setAttr(
