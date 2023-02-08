@@ -106,10 +106,8 @@ def get_last_username_by_url(url, data=None):
     if data is None:
         data = get_servers_info_data()
 
-    urls = data.get("urls")
-    if urls:
-        url_info = urls.get(url)
-        if url_info:
+    if urls := data.get("urls"):
+        if url_info := urls.get(url):
             return url_info.get("username")
     return None
 
