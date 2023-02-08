@@ -5,7 +5,8 @@ from openpype.lib import BoolDef
 from openpype.pipeline import (
     Creator,
     CreatedInstance,
-    legacy_io
+    legacy_io,
+    CreatorError
 )
 from openpype.lib import prepare_template_data
 from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
