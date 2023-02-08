@@ -7,7 +7,7 @@ import os
 import sys
 import site
 import traceback
-
+import contextlib
 
 # Enabled logging debug mode when "--debug" is passed
 if "--verbose" in sys.argv:
@@ -232,10 +232,8 @@ def set_addons_environments():
 
     modules_manager = ModulesManager()
 
-    module_envs = modules_manager.collect_global_environments()
-
     # Merge environments with current environments and update values
-    if module_envs:
+    if module_envs := modules_manager.collect_global_environments():
         parsed_envs = acre.parse(module_envs)
         env = acre.merge(parsed_envs, dict(os.environ))
         os.environ.clear()
@@ -315,12 +313,8 @@ def boot():
     ]
 
     for module_name in modules_to_del:
-        try:
+        with contextlib.supress(AttributeError, KeyError):
             del sys.modules[module_name]
-        except AttributeError:
-            pass
-        except KeyError:
-            pass
 
     from openpype import cli
     from openpype.lib import terminal as t
@@ -337,11 +331,8 @@ def boot():
         info.insert(0, f">>> Using AYON from [ {AYON_ROOT} ]")
 
         t_width = 20
-        try:
+        with contextlib.supress(ValueError, OSError):
             t_width = os.get_terminal_size().columns - 2
-        except (ValueError, OSError):
-            # running without terminal
-            pass
 
         _header = f"*** AYON [{__version__}] "
         info.insert(0, _header + "-" * (t_width - len(_header)))
