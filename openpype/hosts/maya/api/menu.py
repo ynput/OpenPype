@@ -50,7 +50,6 @@ def install():
             parent="MayaWindow"
         )
 
-        renderer = cmds.getAttr('defaultRenderGlobals.currentRenderer').lower()
         # Create context menu
         context_label = "{}, {}".format(
             legacy_io.Session["AVALON_ASSET"],
