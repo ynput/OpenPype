@@ -50,7 +50,7 @@ class RenderCreator(Creator):
             subset_change = _changes.get("subset")
             if subset_change:
                 api.get_stub().rename_item(created_inst.data["members"][0],
-                                           subset_change[1])
+                                           subset_change.new_value)
 
     def remove_instances(self, instances):
         for instance in instances:
