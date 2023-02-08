@@ -34,7 +34,7 @@ class RenderProducts(object):
         startFrame = context["data"].get("frameStart")
         endFrame = context["data"].get("frameEnd") + 1
 
-        img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]
+        img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa
         full_render_list = self.beauty_render_product(output_file,
                                                       startFrame,
                                                       endFrame,
@@ -52,7 +52,7 @@ class RenderProducts(object):
             renderer == "V_Ray_GPU_6_Hotfix_3" or
             renderer == "Default_Scanline_Renderer" or
             renderer == "Quicksilver_Hardware_Renderer"
-            ):
+           ):
             render_elem_list = self.render_elements_product(output_file,
                                                             startFrame,
                                                             endFrame,
@@ -64,13 +64,14 @@ class RenderProducts(object):
         if renderer == "Arnold":
             return full_render_list
 
-
     def beauty_render_product(self, folder, startFrame, endFrame, fmt):
         # get the beauty
         beauty_frame_range = list()
 
         for f in range(startFrame, endFrame):
-            beauty = "{0}.{1}.{2}".format(folder, str(f), fmt)
+            beauty = "{0}.{1}.{2}".format(folder,
+                                          str(f),
+                                          fmt)
             beauty = beauty.replace("\\", "/")
             beauty_frame_range.append(beauty)
 
@@ -83,7 +84,7 @@ class RenderProducts(object):
 
         render_elem = rt.maxOps.GetCurRenderElementMgr()
         render_elem_num = render_elem.NumRenderElements()
-            # get render elements from the renders
+        # get render elements from the renders
         for i in range(render_elem_num):
             renderlayer_name = render_elem.GetRenderElement(i)
             target, renderpass = str(renderlayer_name).split(":")
@@ -91,7 +92,9 @@ class RenderProducts(object):
             render_dir = os.path.join(folder, renderpass)
             if renderlayer_name.enabled:
                 for f in range(startFrame, endFrame):
-                    render_element = "{0}.{1}.{2}".format(render_dir, str(f), fmt)
+                    render_element = "{0}.{1}.{2}".format(render_dir,
+                                                          str(f),
+                                                          fmt)
                     render_element = render_element.replace("\\", "/")
                     render_dirname.append(render_element)
 

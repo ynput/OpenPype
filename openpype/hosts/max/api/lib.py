@@ -130,8 +130,7 @@ def get_current_renderer():
 def get_default_render_folder(project_setting=None):
     return (project_setting["max"]
                            ["RenderSettings"]
-                           ["default_render_image_folder"]
-    )
+                           ["default_render_image_folder"])
 
 
 def set_framerange(startFrame, endFrame):
@@ -147,9 +146,8 @@ def set_framerange(startFrame, endFrame):
 
     4 -User specified Frame pickup string (for example "1,3,5-12").
     """
-        # hard-code, there should be a custom setting for this
+    # hard-code, there should be a custom setting for this
     rt.rendTimeType = 4
     if startFrame is not None and endFrame is not None:
         frameRange = "{0}-{1}".format(startFrame, endFrame)
     rt.rendPickupFrames = frameRange
-

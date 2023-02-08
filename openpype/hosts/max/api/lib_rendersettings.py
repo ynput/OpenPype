@@ -41,7 +41,6 @@ class RenderSettings(object):
             if not found:
                 raise RuntimeError("Camera not found")
 
-
     def set_renderoutput(self, container):
         folder = rt.maxFilePath
         # hard-coded, should be customized in the setting
@@ -66,7 +65,7 @@ class RenderSettings(object):
         renderer_class = get_current_renderer()
         renderer = str(renderer_class).split(":")[0]
 
-        img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]
+        img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa
         output = os.path.join(output_dir, container)
         try:
             aov_separator = self._aov_chars[(
@@ -77,7 +76,8 @@ class RenderSettings(object):
         except KeyError:
             aov_separator = "."
         outputFilename = "{0}.{1}".format(output, img_fmt)
-        outputFilename = outputFilename.replace("{aov_separator}", aov_separator)
+        outputFilename = outputFilename.replace("{aov_separator}",
+                                                aov_separator)
         rt.rendOutputFilename = outputFilename
         if renderer == "VUE_File_Renderer":
             return
@@ -92,11 +92,10 @@ class RenderSettings(object):
             renderer == "V_Ray_GPU_6_Hotfix_3" or
             renderer == "Default_Scanline_Renderer" or
             renderer == "Quicksilver_Hardware_Renderer"
-            ):
+           ):
             self.render_element_layer(output, width, height, img_fmt)
 
-        rt.rendSaveFile= True
-
+        rt.rendSaveFile = True
 
     def render_element_layer(self, dir, width, height, ext):
         """For Renderers with render elements"""
@@ -115,11 +114,12 @@ class RenderSettings(object):
             try:
                 aov_separator = self._aov_chars[(
                     self._project_settings["maya"]
-                                        ["RenderSettings"]
-                                        ["aov_separator"]
+                                          ["RenderSettings"]
+                                          ["aov_separator"]
                 )]
             except KeyError:
                 aov_separator = "."
 
-            aov_name = aov_name.replace("{aov_separator}", aov_separator)
+            aov_name = aov_name.replace("{aov_separator}",
+                                        aov_separator)
             render_elem.SetRenderElementFileName(i, aov_name)
