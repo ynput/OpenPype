@@ -2,6 +2,8 @@ import os
 import json
 import platform
 import datetime
+import contextlib
+from typing import Optional, Union, Any
 
 import appdirs
 import ayon_api
@@ -38,11 +40,22 @@ class ChangeUserResult:
 
 def _get_servers_path():
     return os.path.join(
-        appdirs.user_data_dir("ayon", "ynput"), "used_servers.json"
+        appdirs.user_data_dir("ayon", "ynput"),
+        "used_servers.json"
     )
 
 
 def get_servers_info_data():
+    """Metadata about used server on this machine.
+
+    Store data about all used server urls, last used url and user username for
+    the url. Using this metadata we can remember which username was used per
+    url if token stored in keyring loose lifetime.
+
+    Returns:
+        dict[str, Any]: Information about servers.
+    """
+
     data = {}
     servers_info_path = _get_servers_path()
     if not os.path.exists(servers_info_path):
@@ -50,19 +63,25 @@ def get_servers_info_data():
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
 
-        with open(servers_info_path, "w") as stream:
-            json.dump(data, stream)
         return data
 
     with open(servers_info_path, "r") as stream:
-        try:
+        with contextlib.suppress(BaseException):
             data = json.load(stream)
-        except BaseException:
-            pass
     return data
 
 
-def add_server(url, username):
+def add_server(url: str, username: str):
+    """Add server to server info metadata.
+
+    This function will also mark the url as last used url on the machine so on
+    next launch will be used.
+
+    Args:
+        url (str): Server url.
+        username (str): Name of user used to log in.
+    """
+
     servers_info_path = _get_servers_path()
     data = get_servers_info_data()
     data["last_server"] = url
@@ -77,7 +96,16 @@ def add_server(url, username):
         json.dump(data, stream)
 
 
-def remove_server(url):
+def remove_server(url: str):
+    """Remove server url from servers information.
+
+    This should be used on logout to completelly loose information about server
+    on the machine.
+
+    Args:
+        url (str): Server url.
+    """
+
     if not url:
         return
 
@@ -93,13 +121,37 @@ def remove_server(url):
         json.dump(data, stream)
 
 
-def get_last_server(data=None):
+def get_last_server(
+    data: Optional[dict[str, Any]] = None
+) -> Union[str, None]:
+    """Last server used to log in on this machine.
+
+    Args:
+        data (Optional[dict[str, Any]]): Prepared server information data.
+
+    Returns:
+        Union[str, None]: Last used server url.
+    """
+
     if data is None:
         data = get_servers_info_data()
     return data.get("last_server")
 
 
-def get_last_username_by_url(url, data=None):
+def get_last_username_by_url(
+    url: str,
+    data: Optional[dict[str, Any]] = None
+) -> Union[str, None]:
+    """Get last username which was used for passed url.
+
+    Args:
+        url (str): Server url.
+        data (Optional[dict[str, Any]]): Servers info.
+
+    Returns:
+         Union[str, None]: Username.
+    """
+
     if not url:
         return None
 
@@ -113,6 +165,12 @@ def get_last_username_by_url(url, data=None):
 
 
 def get_last_server_with_username():
+    """Receive last server and username used in last connection.
+
+    Returns:
+        tuple[Union[str, None], Union[str, None]]: Url and username.
+    """
+
     data = get_servers_info_data()
     url = get_last_server(data)
     username = get_last_username_by_url(url)
@@ -127,10 +185,10 @@ class TokenKeyring:
         try:
             import keyring
 
-        except Exception:
+        except Exception as exc:
             raise NotImplementedError(
                 "Python module `keyring` is not available."
-            )
+            ) from exc
 
         # hack for cx_freeze and Windows keyring backend
         if platform.system().lower() == "windows":
@@ -139,7 +197,7 @@ class TokenKeyring:
             keyring.set_keyring(Windows.WinVaultKeyring())
 
         self._url = url
-        self._keyring_key = "AYON/{}".format(url)
+        self._keyring_key = f"AYON/{url}"
 
     def get_value(self):
         import keyring
@@ -153,21 +211,48 @@ class TokenKeyring:
             keyring.set_password(self._keyring_key, self.username_key, value)
             return
 
-        try:
+        with contextlib.suppress(keyring.errors.PasswordDeleteError):
             keyring.delete_password(self._keyring_key, self.username_key)
-        except keyring.errors.PasswordDeleteError:
-            pass
 
 
-def load_token(url):
+def load_token(url: str) -> Union[str, None]:
+    """Get token for url from keyring.
+
+    Args:
+        url (str): Server url.
+
+    Returns:
+        Union[str, None]: Token for passed url available in keyring.
+    """
+
     return TokenKeyring(url).get_value()
 
 
-def store_token(url, token):
+def store_token(url: str, token: str):
+    """Store token by url to keyring.
+
+    Args:
+        url (str): Server url.
+        token (str): User token to server.
+    """
+
     TokenKeyring(url).set_value(token)
 
 
-def ask_to_login_ui(url=None):
+def ask_to_login_ui(url: Optional[str] = None) -> tuple[str, str, str]:
+    """Ask user to login using UI.
+
+    This should be used only when user is not yet logged in at all or available
+    credentials are invalid. To change credentials use 'change_user_ui'
+    function.
+
+    Args:
+        url (Optional[str]): Server url that could be prefilled in UI.
+
+    Returns:
+        tuple[str, str, str]: Url, user's token and username.
+    """
+
     from .ui import ask_to_login
 
     if url is None:
@@ -176,11 +261,15 @@ def ask_to_login_ui(url=None):
     return ask_to_login(url, username)
 
 
-def change_user_ui():
-    """
+def change_user_ui() -> ChangeUserResult:
+    """Change user using UI.
+
+    Show UI to user where he can change credentials or url. Output will contain
+    all information about old/new values of url, username, api key. If user
+    confirmed or declined values.
 
     Returns:
-         Tuple[Union[bool, None], : True if user logged out
+         ChangeUserResult: Information about user change.
     """
 
     from .ui import change_user
@@ -207,7 +296,25 @@ def change_user_ui():
     return output
 
 
-def change_token(url, token, username=None, old_url=None):
+def change_token(
+    url: str,
+    token: str,
+    username: Optional[str] = None,
+    old_url: Optional[str] = None
+):
+    """Change url and token in currently running session.
+
+    Function can also change server url, in that case are previous credentials
+    NOT removed from cache.
+
+    Args:
+        url (str): Url to server.
+        token (str): New token to be used for url connection.
+        username (Optional[str]): Username of logged user.
+        old_url (Optional[str]): Previous url. Value from 'get_last_server'
+            is used if not entered.
+    """
+
     if old_url is None:
         old_url = get_last_server()
     if old_url and old_url == url:
@@ -219,16 +326,32 @@ def change_token(url, token, username=None, old_url=None):
     ayon_api.change_token(url, token)
 
 
-def remove_url_cache(url):
+def remove_url_cache(url: str):
+    """Clear cache for server url.
+
+    Args:
+        url (str): Server url which is removed from cache.
+    """
+
     store_token(url, None)
 
 
-def remove_token_cache(url, token):
+def remove_token_cache(url: str, token: str):
+    """Remove token from local cache of url.
+
+    Is skipped if cached token under the passed url is not the same
+    as passed token.
+
+    Args:
+        url (str): Url to server.
+        token (str): Token to be removed from url cache.
+    """
+
     if load_token(url) == token:
         remove_url_cache(url)
 
 
-def logout(url, token):
+def logout(url: str, token: str):
     """Logout from server and throw token away.
 
     Args:
@@ -253,9 +376,9 @@ def load_environments():
     changed. If environemnt is not filled then last server stored in appdirs
     is used.
 
-    Token is skipped if url is not available. Otherwise is also checked from
-    env and if is not available then uses 'load_token' to try get token based
-    on server url.
+    Token is skipped if url is not available. Otherwise, is also checked from
+    env and if is not available then uses 'load_token' to try to get token
+    based on server url.
     """
 
     server_url = os.environ.get("AYON_SERVER_URL")
@@ -272,7 +395,7 @@ def load_environments():
             os.environ["AYON_TOKEN"] = token
 
 
-def set_environments(url, token):
+def set_environments(url: str, token: str):
     """Change url and token environemnts in currently running process.
 
     Args:
@@ -283,7 +406,7 @@ def set_environments(url, token):
     ayon_api.set_environments(url, token)
 
 
-def need_server_or_login():
+def need_server_or_login() -> bool:
     """Check if server url or login to the server are needed.
 
     It is recommended to call 'load_environments' on startup before this check.
