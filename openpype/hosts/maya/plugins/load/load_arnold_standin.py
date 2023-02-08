@@ -25,12 +25,12 @@ def is_sequence(files):
 
 
 class ArnoldStandinLoader(load.LoaderPlugin):
-    """Load file as Arnold standin"""
+    """Load as Arnold standin"""
 
-    families = ["ass"]
-    representations = ["ass"]
+    families = ["ass", "animation", "model", "proxyAbc", "pointcache"]
+    representations = ["ass", "abc"]
 
-    label = "Load file as Arnold standin"
+    label = "Load as Arnold standin"
     order = -5
     icon = "code-fork"
     color = "orange"
@@ -75,14 +75,16 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             cmds.parent(standin, root)
 
             # Set the standin filepath
-            dso_path, operator = self._setup_proxy(
+            path, operator = self._setup_proxy(
                 standinShape, self.fname, namespace
             )
-            cmds.setAttr(standinShape + ".dso", dso_path, type="string")
+            cmds.setAttr(standinShape + ".dso", path, type="string")
             sequence = is_sequence(os.listdir(os.path.dirname(self.fname)))
             cmds.setAttr(standinShape + ".useFrameExtension", sequence)
 
-        nodes = [root, standin, operator]
+        nodes = [root, standin]
+        if operator is not None:
+            nodes.append(operator)
         self[:] = nodes
 
         return containerise(
@@ -121,7 +123,7 @@ class ArnoldStandinLoader(load.LoaderPlugin):
 
         if not os.path.exists(proxy_path):
             self.log.error("Proxy files do not exist. Skipping proxy setup.")
-            return os.path.basename(path), path
+            return path, None
 
         options_node = "defaultArnoldRenderOptions"
         merge_operator = get_attribute_input(options_node + ".operator")
