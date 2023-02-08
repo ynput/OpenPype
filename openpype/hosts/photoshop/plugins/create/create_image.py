@@ -48,7 +48,7 @@ class ImageCreator(Creator):
             try:
                 group = stub.group_selected_layers(subset_name_from_ui)
             except:
-                raise ValueError("Cannot group locked Background layer!")
+                raise CreatorError("Cannot group locked Background layer!")
             groups_to_create.append(group)
 
         # create empty group if nothing selected
