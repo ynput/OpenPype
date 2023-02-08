@@ -27,7 +27,7 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
         filename = os.path.basename(filepath)
         comment = context.data.get("comment", "")
         deadline_user = context.data.get("deadlineUser", getpass.getuser())
-        jobname ="{0} - {1}".format(filename, instance.name)
+        jobname = "{0} - {1}".format(filename, instance.name)
 
         # StartFrame to EndFrame
         frames = "{start}-{end}".format(
@@ -50,14 +50,14 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
                 "Pool": instance.data.get("primaryPool"),
                 "secondaryPool": instance.data.get("secondaryPool"),
                 "Frames": frames,
-                "ChunkSize" : instance.data.get("chunkSize", 10),
+                "ChunkSize": instance.data.get("chunkSize", 10),
                 "Comment": comment
             },
             "PluginInfo": {
                 # Input
                 "SceneFile": instance.data["source"],
                 "Version": "2023",
-                "SaveFile" : True,
+                "SaveFile": True,
                 # Mandatory for Deadline
                 # Houdini version without patch number
 
@@ -67,7 +67,7 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
             # Mandatory for Deadline, may be empty
             "AuxFiles": []
         }
-                # Include critical environment variables with submission + api.Session
+        # Include critical environment variables with submission + api.Session
         keys = [
             # Submit along the current Avalon tool setup that we launched
             # this application with so the Render Slave can build its own

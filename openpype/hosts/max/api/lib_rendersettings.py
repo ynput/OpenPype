@@ -35,9 +35,9 @@ class RenderSettings(object):
             # to avoid Attribute Error from pymxs wrapper
             found = False
             if rt.classOf(sel) in rt.Camera.classes:
-                    found = True
-                    rt.viewport.setCamera(sel)
-                    break
+                found = True
+                rt.viewport.setCamera(sel)
+                break
             if not found:
                 raise RuntimeError("Camera not found")
 

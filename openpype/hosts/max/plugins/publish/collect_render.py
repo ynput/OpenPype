@@ -53,7 +53,8 @@ class CollectRender(pyblish.api.InstancePlugin):
         if renderer_name == "Arnold":
             plugin = "arnold"
 
-       # https://forums.autodesk.com/t5/3ds-max-programming/pymxs-quickrender-animation-range/td-p/11216183
+       # https://forums.autodesk.com/t5/3ds-max-programming/
+       # pymxs-quickrender-animation-range/td-p/11216183
 
         data = {
             "subset": instance.name,
