@@ -184,7 +184,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             self.log.info("multipart: {}".format(
                 multipart))
             assert exp_files, "no file names were generated, this is bug"
-            self.log.info(exp_files)
 
             # if we want to attach render to subset, check if we have AOV's
             # in expectedFiles. If so, raise error as we cannot attach AOV
@@ -320,7 +319,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     "renderSetupIncludeLights"
                 )
             }
-
             # Collect Deadline url if Deadline module is enabled
             deadline_settings = (
                 context.data["system_settings"]["modules"]["deadline"]
