@@ -1432,6 +1432,53 @@ class CreateContext:
         """Access to global publish attributes."""
         return self._publish_attributes
 
+    def get_sorted_creators(self, identifiers=None):
+        """Sorted creators by 'order' attribute.
+
+        Args:
+            identifiers (Iterable[str]): Filter creators by identifiers. All
+                creators are returned if 'None' is passed.
+
+        Returns:
+            List[BaseCreator]: Sorted creator plugins by 'order' value.
+        """
+
+        if identifiers is not None:
+            identifiers = set(identifiers)
+            creators = [
+                creator
+                for identifier, creator in self.creators.items()
+                if identifier in identifiers
+            ]
+        else:
+            creators = self.creators.values()
+
+        return sorted(
+            creators, key=lambda creator: creator.order
+        )
+
+    @property
+    def sorted_creators(self):
+        """Sorted creators by 'order' attribute.
+
+        Returns:
+            List[BaseCreator]: Sorted creator plugins by 'order' value.
+        """
+
+        return self.get_sorted_creators()
+
+    @property
+    def sorted_autocreators(self):
+        """Sorted auto-creators by 'order' attribute.
+
+        Returns:
+            List[AutoCreator]: Sorted plugins by 'order' value.
+        """
+
+        return sorted(
+            self.autocreators.values(), key=lambda creator: creator.order
+        )
+
     @classmethod
     def get_host_misssing_methods(cls, host):
         """Collect missing methods from host.
@@ -1793,6 +1840,9 @@ class CreateContext:
                 )
             ])
 
+    def _remove_instance(self, instance):
+        self._instances_by_id.pop(instance.id, None)
+
     def creator_removed_instance(self, instance):
         """When creator removes instance context should be acknowledged.
 
@@ -1804,7 +1854,7 @@ class CreateContext:
                 from scene metadata.
         """
 
-        self._instances_by_id.pop(instance.id, None)
+        self._remove_instance(instance)
 
     def add_convertor_item(self, convertor_identifier, label):
         self.convertor_items_by_id[convertor_identifier] = ConvertorItem(
@@ -1848,7 +1898,7 @@ class CreateContext:
         # Collect instances
         error_message = "Collection of instances for creator {} failed. {}"
         failed_info = []
-        for creator in self.creators.values():
+        for creator in self.sorted_creators:
             label = creator.label
             identifier = creator.identifier
             failed = False
@@ -1920,7 +1970,8 @@ class CreateContext:
 
         error_message = "Failed to run AutoCreator with identifier \"{}\". {}"
         failed_info = []
-        for identifier, creator in self.autocreators.items():
+        for creator in self.sorted_autocreators:
+            identifier = creator.identifier
             label = creator.label
             failed = False
             add_traceback = False
@@ -2025,19 +2076,26 @@ class CreateContext:
         """Save instance specific values."""
         instances_by_identifier = collections.defaultdict(list)
         for instance in self._instances_by_id.values():
+            instance_changes = instance.changes()
+            if not instance_changes:
+                continue
+
             identifier = instance.creator_identifier
-            instances_by_identifier[identifier].append(instance)
+            instances_by_identifier[identifier].append(
+                UpdateData(instance, instance_changes)
+            )
+
+        if not instances_by_identifier:
+            return
 
         error_message = "Instances update of creator \"{}\" failed. {}"
         failed_info = []
-        for identifier, creator_instances in instances_by_identifier.items():
-            update_list = []
-            for instance in creator_instances:
-                instance_changes = instance.changes()
-                if instance_changes:
-                    update_list.append(UpdateData(instance, instance_changes))
 
-            creator = self.creators[identifier]
+        for creator in self.get_sorted_creators(
+            instances_by_identifier.keys()
+        ):
+            identifier = creator.identifier
+            update_list = instances_by_identifier[identifier]
             if not update_list:
                 continue
 
@@ -2073,9 +2131,13 @@ class CreateContext:
     def remove_instances(self, instances):
         """Remove instances from context.
 
+        All instances that don't have creator identifier leading to existing
+            creator are just removed from context.
+
         Args:
-            instances(list<CreatedInstance>): Instances that should be removed
-                from context.
+            instances(List[CreatedInstance]): Instances that should be removed.
+                Remove logic is done using creator, which may require to
+                do other cleanup than just remove instance from context.
         """
 
         instances_by_identifier = collections.defaultdict(list)
@@ -2083,10 +2145,21 @@ class CreateContext:
             identifier = instance.creator_identifier
             instances_by_identifier[identifier].append(instance)
 
+        # Just remove instances from context if creator is not available
+        missing_creators = set(instances_by_identifier) - set(self.creators)
+        for identifier in missing_creators:
+            for instance in instances_by_identifier[identifier]:
+                self._remove_instance(instance)
+
         error_message = "Instances removement of creator \"{}\" failed. {}"
         failed_info = []
-        for identifier, creator_instances in instances_by_identifier.items():
-            creator = self.creators.get(identifier)
+        # Remove instances by creator plugin order
+        for creator in self.get_sorted_creators(
+            instances_by_identifier.keys()
+        ):
+            identifier = creator.identifier
+            creator_instances = instances_by_identifier[identifier]
+
             label = creator.label
             failed = False
             add_traceback = False
@@ -2129,6 +2202,7 @@ class CreateContext:
             family(str): Instance family for which should be attribute
                 definitions returned.
         """
+
         if family not in self._attr_plugins_by_family:
             import pyblish.logic
 
@@ -2144,7 +2218,13 @@ class CreateContext:
         return self._attr_plugins_by_family[family]
 
     def _get_publish_plugins_with_attr_for_context(self):
-        """Publish plugins attributes for Context plugins."""
+        """Publish plugins attributes for Context plugins.
+
+        Returns:
+            List[pyblish.api.Plugin]: Publish plugins that have attribute
+                definitions for context.
+        """
+
         plugins = []
         for plugin in self.plugins_with_defs:
             if not plugin.__instanceEnabled__:
@@ -2169,7 +2249,7 @@ class CreateContext:
         return self._collection_shared_data
 
     def run_convertor(self, convertor_identifier):
-        """Run convertor plugin by it's idenfitifier.
+        """Run convertor plugin by identifier.
 
         Conversion is skipped if convertor is not available.
 
@@ -2182,7 +2262,7 @@ class CreateContext:
             convertor.convert()
 
     def run_convertors(self, convertor_identifiers):
-        """Run convertor plugins by idenfitifiers.
+        """Run convertor plugins by identifiers.
 
         Conversion is skipped if convertor is not available. It is recommended
         to trigger reset after conversion to reload instances.
