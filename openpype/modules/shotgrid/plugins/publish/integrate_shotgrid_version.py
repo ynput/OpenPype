@@ -1,5 +1,6 @@
-import os
 import pyblish.api
+
+from openpype.plugins.publish.integrate import get_representation_path
 
 
 class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
@@ -17,15 +18,37 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
 
         # TODO: Use path template solver to build version code from settings
         anatomy = instance.data.get("anatomyData", {})
-        code = "_".join(
-            [
-                anatomy["project"]["code"],
-                anatomy["parent"],
-                anatomy["asset"],
-                anatomy["task"]["name"],
-                "v{:03}".format(int(anatomy["version"])),
-            ]
-        )
+        ### Starts Alkemy-X Override ###
+        # code = "_".join(
+        #     [
+        #         anatomy["project"]["code"],
+        #         anatomy["parent"],
+        #         anatomy["asset"],
+        #         anatomy["task"]["name"],
+        #         "v{:03}".format(int(anatomy["version"])),
+        #     ]
+        # )
+        # Initial editorial Shotgrid versions don't need task in name
+        if anatomy["app"] == "hiero":
+            code = "_".join(
+                [
+                    anatomy["project"]["code"],
+                    anatomy["parent"],
+                    anatomy["asset"],
+                    "v{:03}".format(int(anatomy["version"])),
+                ]
+            )
+        else:
+            code = "_".join(
+                [
+                    anatomy["project"]["code"],
+                    anatomy["parent"],
+                    anatomy["asset"],
+                    anatomy["task"]["name"],
+                    "v{:03}".format(int(anatomy["version"])),
+                ]
+            )
+        ### Ends Alkemy-X Override ###
 
         version = self._find_existing_version(code, context)
 
@@ -41,8 +64,9 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
             data_to_update["sg_status_list"] = status
 
         for representation in instance.data.get("representations", []):
-            local_path = representation.get("published_path")
-            code = os.path.basename(local_path)
+            # Get representation path from published_path or create it from stagingDir if not existent
+            local_path = get_representation_path(instance, representation, False)
+            self.log.info("Local path: %s", local_path)
 
             if "shotgridreview" in representation.get("tags", []):
 

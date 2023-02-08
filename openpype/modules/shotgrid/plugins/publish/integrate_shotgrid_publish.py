@@ -1,6 +1,8 @@
 import os
 import pyblish.api
 
+from openpype.plugins.publish.integrate import get_representation_path
+
 
 class IntegrateShotgridPublish(pyblish.api.InstancePlugin):
     """
@@ -22,7 +24,7 @@ class IntegrateShotgridPublish(pyblish.api.InstancePlugin):
 
         for representation in instance.data.get("representations", []):
 
-            local_path = representation.get("published_path")
+            local_path = get_representation_path(instance, representation, False)
             code = os.path.basename(local_path)
 
             if representation.get("tags", []):
