@@ -417,7 +417,11 @@ class RenderSettings(object):
         wouldn't do this ... "hack" if deadline allowed us to insert commands
         into its MayaBatch stuff, or, if it allowed setting up renderers in a
         sensible way. This is also copying start and end frame from the Maya
-        to the node specific attributes.
+        to the node specific attributes, because otherwise it would only use
+        currentFrame.
+        
+        TODO: This needs some attention when Dealing with other
+              farms probably.
         """
 
         # We need the DOTALL since the regex will now match across newlines.
