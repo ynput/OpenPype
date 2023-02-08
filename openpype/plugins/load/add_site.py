@@ -40,16 +40,29 @@ class AddSyncSite(load.LoaderPlugin):
         return self._sync_server
 
     def load(self, context, name=None, namespace=None, data=None):
+        """"Adds site skeleton information on representation_id
+
+        Looks for loaded containers for workfile, adds them site skeleton too
+        (eg. they should be downloaded too).
+        Handles hero versions (for representation_id and referenced subsets)
+        Args:
+            context (dict):
+            name (str):
+            namespace (str):
+            data (dict): expects {"site_name": SITE_NAME_TO_ADD}
+        """
         # self.log wont propagate
         print("Adding {} to representation: {}".format(
               data["site_name"], data["_id"]))
-        family = context["representation"]["context"]["family"]
-        project_name = data["project_name"]
-        repre_id = data["_id"]
+        project_name = context["project"]["name"]
+        repre_doc = context["representation"]
+        family = repre_doc["context"]["family"]
+        repre_id = [repre_doc["_id"]]
         site_name = data["site_name"]
 
         representation_ids = self._add_hero_representation_ids(project_name,
-                                                               repre_id)
+                                                               repre_id,
+                                                               repre_doc)
 
         for repre_id in representation_ids:
             self.sync_server.add_site(project_name, repre_id, site_name,
@@ -79,20 +92,24 @@ class AddSyncSite(load.LoaderPlugin):
         """No real file loading"""
         return ""
 
-    def _add_hero_representation_ids(self, project_name, repre_id):
+    def _add_hero_representation_ids(self, project_name, repre_id,
+                                     repre_doc=None):
         """Find hero version if exists for repre_id.
 
         Args:
             project_name (str)
             repre_id (ObjectId)
+            repre_doc (dict): repre document for 'repre_id', might be collected
+                previously
         Returns:
             (list): at least [repre_id] if no hero version found
         """
         representation_ids = [repre_id]
 
-        repre_doc = get_representation_by_id(
-            project_name, repre_id, fields=["_id", "parent", "name"]
-        )
+        if not repre_doc:
+            repre_doc = get_representation_by_id(
+                project_name, repre_id, fields=["_id", "parent", "name"]
+            )
 
         version_doc = get_version_by_id(project_name, repre_doc["parent"])
         if version_doc["type"] != "hero_version":
