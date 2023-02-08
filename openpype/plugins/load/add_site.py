@@ -44,7 +44,6 @@ class AddSyncSite(load.LoaderPlugin):
 
         Looks for loaded containers for workfile, adds them site skeleton too
         (eg. they should be downloaded too).
-        Handles hero versions (for representation_id and referenced subsets)
         Args:
             context (dict):
             name (str):
@@ -60,13 +59,8 @@ class AddSyncSite(load.LoaderPlugin):
         repre_id = [repre_doc["_id"]]
         site_name = data["site_name"]
 
-        representation_ids = self._add_hero_representation_ids(project_name,
-                                                               repre_id,
-                                                               repre_doc)
-
-        for repre_id in representation_ids:
-            self.sync_server.add_site(project_name, repre_id, site_name,
-                                      force=True)
+        self.sync_server.add_site(project_name, repre_id, site_name,
+                                  force=True)
 
         if family == "workfile":
             links = get_linked_representation_id(
@@ -76,12 +70,9 @@ class AddSyncSite(load.LoaderPlugin):
             )
             for link_repre_id in links:
                 try:
-                    representation_ids = self._add_hero_representation_ids(
-                        project_name, link_repre_id)
-                    for repre_id in representation_ids:
-                        self.sync_server.add_site(project_name, repre_id,
-                                                  site_name,
-                                                  force=False)
+                    self.sync_server.add_site(project_name, link_repre_id,
+                                              site_name,
+                                              force=False)
                 except SiteAlreadyPresentError:
                     # do not add/reset working site for references
                     self.log.debug("Site present", exc_info=True)
@@ -92,24 +83,20 @@ class AddSyncSite(load.LoaderPlugin):
         """No real file loading"""
         return ""
 
-    def _add_hero_representation_ids(self, project_name, repre_id,
-                                     repre_doc=None):
+    def _add_hero_representation_ids(self, project_name, repre_id):
         """Find hero version if exists for repre_id.
 
         Args:
             project_name (str)
             repre_id (ObjectId)
-            repre_doc (dict): repre document for 'repre_id', might be collected
-                previously
         Returns:
             (list): at least [repre_id] if no hero version found
         """
         representation_ids = [repre_id]
 
-        if not repre_doc:
-            repre_doc = get_representation_by_id(
-                project_name, repre_id, fields=["_id", "parent", "name"]
-            )
+        repre_doc = get_representation_by_id(
+            project_name, repre_id, fields=["_id", "parent", "name"]
+        )
 
         version_doc = get_version_by_id(project_name, repre_doc["parent"])
         if version_doc["type"] != "hero_version":
