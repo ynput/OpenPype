@@ -3,6 +3,7 @@ import json
 import copy
 import pyblish.api
 
+from openpype.pipeline.publish import get_publish_repre_path
 from openpype.lib.openpype_version import get_openpype_version
 from openpype.lib.transcoding import (
     get_ffprobe_streams,
@@ -10,7 +11,6 @@ from openpype.lib.transcoding import (
 )
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.lib.transcoding import VIDEO_EXTENSIONS
-from openpype.plugins.publish.integrate import get_representation_path
 
 
 class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
@@ -154,7 +154,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
         if not review_representations or has_movie_review:
             for repre in thumbnail_representations:
-                repre_path = get_representation_path(instance, repre, False)
+                repre_path = get_publish_repre_path(instance, repre, False)
                 if not repre_path:
                     self.log.warning(
                         "Published path is not set and source was removed."
@@ -211,7 +211,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                                "from {}".format(repre))
                 continue
 
-            repre_path = get_representation_path(instance, repre, False)
+            repre_path = get_publish_repre_path(instance, repre, False)
             if not repre_path:
                 self.log.warning(
                     "Published path is not set and source was removed."
@@ -325,7 +325,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
         # Add others representations as component
         for repre in other_representations:
-            published_path = get_representation_path(instance, repre, True)
+            published_path = get_publish_repre_path(instance, repre, True)
             if not published_path:
                 continue
             # Create copy of base comp item and append it

@@ -1,6 +1,6 @@
 import pyblish.api
 
-from openpype.plugins.publish.integrate import get_representation_path
+from openpype.pipeline.publish import get_publish_repre_path
 
 
 class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
@@ -42,7 +42,7 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
             data_to_update["sg_status_list"] = status
 
         for representation in instance.data.get("representations", []):
-            local_path = get_representation_path(
+            local_path = get_publish_repre_path(
                 instance, representation, False
             )
 
