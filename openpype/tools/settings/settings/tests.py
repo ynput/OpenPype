@@ -54,7 +54,7 @@ class AddibleComboBox(QtWidgets.QComboBox):
         super(AddibleComboBox, self).__init__(parent)
 
         self.setEditable(True)
-        # self.setInsertPolicy(self.NoInsert)
+        # self.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
 
         self.lineEdit().setPlaceholderText(placeholder)
         # self.lineEdit().returnPressed.connect(self.on_return_pressed)

@@ -1,6 +1,6 @@
 import collections
 import logging
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 import qtawesome
 from bson.objectid import ObjectId
 

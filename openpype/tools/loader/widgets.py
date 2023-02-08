@@ -5,7 +5,7 @@ import pprint
 import traceback
 import collections
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.client import (
     get_subset_families,
@@ -29,12 +29,14 @@ from openpype.pipeline.load import (
     load_with_repre_context,
     load_with_subset_context,
     load_with_subset_contexts,
+    LoadError,
     IncompatibleLoaderError,
 )
 from openpype.tools.utils import (
     ErrorMessageBox,
     lib as tools_lib
 )
+from openpype.tools.utils.lib import checkstate_int_to_enum
 from openpype.tools.utils.delegates import (
     VersionDelegate,
     PrettyTimeDelegate
@@ -46,6 +48,12 @@ from openpype.tools.utils.widgets import (
 from openpype.tools.utils.views import (
     TreeViewSpinner,
     DeselectableTreeView
+)
+from openpype.tools.utils.constants import (
+    LOCAL_PROVIDER_ROLE,
+    REMOTE_PROVIDER_ROLE,
+    LOCAL_AVAILABILITY_ROLE,
+    REMOTE_AVAILABILITY_ROLE,
 )
 from openpype.tools.assetlinks.widgets import SimpleLinkView
 
@@ -59,13 +67,6 @@ from .model import (
 )
 from . import lib
 from .delegates import LoadedInSceneDelegate
-
-from openpype.tools.utils.constants import (
-    LOCAL_PROVIDER_ROLE,
-    REMOTE_PROVIDER_ROLE,
-    LOCAL_AVAILABILITY_ROLE,
-    REMOTE_AVAILABILITY_ROLE
-)
 
 
 class OverlayFrame(QtWidgets.QFrame):
@@ -264,8 +265,8 @@ class SubsetWidget(QtWidgets.QWidget):
 
         group_checkbox.stateChanged.connect(self.set_grouping)
 
-        subset_filter.textChanged.connect(proxy.setFilterRegExp)
-        subset_filter.textChanged.connect(view.expandAll)
+        subset_filter.textChanged.connect(self._subset_changed)
+
         model.refreshed.connect(self.refreshed)
 
         self.proxy = proxy
@@ -292,6 +293,13 @@ class SubsetWidget(QtWidgets.QWidget):
         with tools_lib.preserve_selection(tree_view=self.view,
                                           current_index=False):
             self.model.set_grouping(state)
+
+    def _subset_changed(self, text):
+        if hasattr(self.proxy, "setFilterRegularExpression"):
+            self.proxy.setFilterRegularExpression(text)
+        else:
+            self.proxy.setFilterRegExp(text)
+        self.view.expandAll()
 
     def set_loading_state(self, loading, empty):
         view = self.view
@@ -451,6 +459,8 @@ class SubsetWidget(QtWidgets.QWidget):
         repre_loaders = []
         subset_loaders = []
         for loader in available_loaders:
+            if not loader.enabled:
+                continue
             # Skip if its a SubsetLoader.
             if issubclass(loader, SubsetLoaderPlugin):
                 subset_loaders.append(loader)
@@ -1059,7 +1069,10 @@ class FamilyListView(QtWidgets.QListView):
         checked_families = []
         for row in range(model.rowCount()):
             index = model.index(row, 0)
-            if index.data(QtCore.Qt.CheckStateRole) == QtCore.Qt.Checked:
+            checked = checkstate_int_to_enum(
+                index.data(QtCore.Qt.CheckStateRole)
+            )
+            if checked == QtCore.Qt.Checked:
                 family = index.data(QtCore.Qt.DisplayRole)
                 checked_families.append(family)
 
@@ -1093,13 +1106,15 @@ class FamilyListView(QtWidgets.QListView):
         self.blockSignals(True)
 
         for index in indexes:
-            index_state = index.data(QtCore.Qt.CheckStateRole)
+            index_state = checkstate_int_to_enum(
+                index.data(QtCore.Qt.CheckStateRole)
+            )
             if index_state == state:
                 continue
 
             new_state = state
             if new_state is None:
-                if index_state == QtCore.Qt.Checked:
+                if index_state in QtCore.Qt.Checked:
                     new_state = QtCore.Qt.Unchecked
                 else:
                     new_state = QtCore.Qt.Checked
@@ -1352,6 +1367,8 @@ class RepresentationWidget(QtWidgets.QWidget):
 
         filtered_loaders = []
         for loader in available_loaders:
+            if not loader.enabled:
+                continue
             # Skip subset loaders
             if issubclass(loader, SubsetLoaderPlugin):
                 continue
@@ -1577,6 +1594,7 @@ def _load_representations_by_loader(loader, repre_contexts,
                 repre_context,
                 options=options
             )
+
         except IncompatibleLoaderError as exc:
             print(exc)
             error_info.append((
@@ -1588,10 +1606,13 @@ def _load_representations_by_loader(loader, repre_contexts,
             ))
 
         except Exception as exc:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            formatted_traceback = "".join(traceback.format_exception(
-                exc_type, exc_value, exc_traceback
-            ))
+            formatted_traceback = None
+            if not isinstance(exc, LoadError):
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                formatted_traceback = "".join(traceback.format_exception(
+                    exc_type, exc_value, exc_traceback
+                ))
+
             error_info.append((
                 str(exc),
                 formatted_traceback,
@@ -1616,7 +1637,7 @@ def _load_subsets_by_loader(loader, subset_contexts, options,
     error_info = []
 
     if options is None:  # not load when cancelled
-        return
+        return error_info
 
     if loader.is_multiple_contexts_compatible:
         subset_names = []
@@ -1631,13 +1652,14 @@ def _load_subsets_by_loader(loader, subset_contexts, options,
                 subset_contexts,
                 options=options
             )
+
         except Exception as exc:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            formatted_traceback = "".join(
-                traceback.format_exception(
+            formatted_traceback = None
+            if not isinstance(exc, LoadError):
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                formatted_traceback = "".join(traceback.format_exception(
                     exc_type, exc_value, exc_traceback
-                )
-            )
+                ))
             error_info.append((
                 str(exc),
                 formatted_traceback,
@@ -1657,13 +1679,15 @@ def _load_subsets_by_loader(loader, subset_contexts, options,
                     subset_context,
                     options=options
                 )
+
             except Exception as exc:
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                formatted_traceback = "\n".join(
-                    traceback.format_exception(
+                formatted_traceback = None
+                if not isinstance(exc, LoadError):
+                    exc_type, exc_value, exc_traceback = sys.exc_info()
+                    formatted_traceback = "".join(traceback.format_exception(
                         exc_type, exc_value, exc_traceback
-                    )
-                )
+                    ))
+
                 error_info.append((
                     str(exc),
                     formatted_traceback,

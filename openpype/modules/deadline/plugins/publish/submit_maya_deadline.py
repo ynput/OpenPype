@@ -37,6 +37,7 @@ from openpype.hosts.maya.api.lib import get_attr_in_layer
 
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+from openpype.tests.lib import is_in_tests
 
 
 def _validate_deadline_bool_value(instance, attribute, value):
@@ -63,6 +64,7 @@ class MayaPluginInfo(object):
     # Include all lights flag
     RenderSetupIncludeLights = attr.ib(
         default="1", validator=_validate_deadline_bool_value)
+    StrictErrorChecking = attr.ib(default=True)
 
 
 @attr.s
@@ -121,6 +123,9 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         src_filepath = context.data["currentFile"]
         src_filename = os.path.basename(src_filepath)
 
+        if is_in_tests():
+            src_filename += datetime.now().strftime("%d%m%Y%H%M%S")
+
         job_info.Name = "%s - %s" % (src_filename, instance.name)
         job_info.BatchName = src_filename
         job_info.Plugin = instance.data.get("mayaRenderPlugin", "MayaBatch")
@@ -161,7 +166,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "AVALON_TASK",
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
-            "OPENPYPE_VERSION"
+            "OPENPYPE_VERSION",
+            "IS_TEST"
         ]
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):
@@ -214,6 +220,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "renderSetupIncludeLights", default_rs_include_lights)
         if rs_include_lights not in {"1", "0", True, False}:
             rs_include_lights = default_rs_include_lights
+        strict_error_checking = instance.data.get("strict_error_checking",
+                                                  True)
         plugin_info = MayaPluginInfo(
             SceneFile=self.scene_path,
             Version=cmds.about(version=True),
@@ -222,6 +230,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             RenderSetupIncludeLights=rs_include_lights,  # noqa
             ProjectPath=context.data["workspaceDir"],
             UsingRenderLayers=True,
+            StrictErrorChecking=strict_error_checking
         )
 
         plugin_payload = attr.asdict(plugin_info)

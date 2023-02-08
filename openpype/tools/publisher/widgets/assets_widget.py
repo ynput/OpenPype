@@ -1,6 +1,6 @@
 import collections
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.tools.utils import (
     PlaceholderLineEdit,
@@ -86,9 +86,9 @@ class CreateWidgetAssetsWidget(SingleSelectAssetsWidget):
 
 
 class AssetsHierarchyModel(QtGui.QStandardItemModel):
-    """Assets hiearrchy model.
+    """Assets hierarchy model.
 
-    For selecting asset for which should beinstance created.
+    For selecting asset for which an instance should be created.
 
     Uses controller to load asset hierarchy. All asset documents are stored by
     their parents.
@@ -193,7 +193,7 @@ class AssetsDialog(QtWidgets.QDialog):
         asset_view.setModel(proxy_model)
         asset_view.setHeaderHidden(True)
         asset_view.setFrameShape(QtWidgets.QFrame.NoFrame)
-        asset_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
+        asset_view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         asset_view.setAlternatingRowColors(True)
         asset_view.setSelectionBehavior(QtWidgets.QTreeView.SelectRows)
         asset_view.setAllColumnsShowFocus(True)

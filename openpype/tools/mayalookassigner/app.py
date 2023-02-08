@@ -2,7 +2,7 @@ import sys
 import time
 import logging
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from openpype.client import get_last_version_by_subset_id
 from openpype import style

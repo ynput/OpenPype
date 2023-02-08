@@ -107,7 +107,11 @@ class SubsetConvertorPlugin(object):
 
     @property
     def create_context(self):
-        """Quick access to create context."""
+        """Quick access to create context.
+
+        Returns:
+            CreateContext: Context which initialized the plugin.
+        """
 
         return self._create_context
 
@@ -156,6 +160,10 @@ class BaseCreator:
     group_label = None
     # Cached group label after first call 'get_group_label'
     _cached_group_label = None
+
+    # Order in which will be plugin executed (collect & update instances)
+    #   less == earlier -> Order '90' will be processed before '100'
+    order = 100
 
     # Variable to store logger
     _log = None
@@ -425,8 +433,8 @@ class BaseCreator:
         keys/values when plugin attributes change.
 
         Returns:
-            List[AbtractAttrDef]: Attribute definitions that can be tweaked for
-                created instance.
+            List[AbstractAttrDef]: Attribute definitions that can be tweaked
+                for created instance.
         """
 
         return self.instance_attr_defs
@@ -488,6 +496,17 @@ class Creator(BaseCreator):
     # Precreate attribute definitions showed before creation
     # - similar to instance attribute definitions
     pre_create_attr_defs = []
+
+    @property
+    def show_order(self):
+        """Order in which is creator shown in UI.
+
+        Returns:
+            int: Order in which is creator shown (less == earlier). By default
+                is using Creator's 'order' or processing.
+        """
+
+        return self.order
 
     @abstractmethod
     def create(self, subset_name, instance_data, pre_create_data):
@@ -563,8 +582,8 @@ class Creator(BaseCreator):
             updating keys/values when plugin attributes change.
 
         Returns:
-            List[AbtractAttrDef]: Attribute definitions that can be tweaked for
-                created instance.
+            List[AbstractAttrDef]: Attribute definitions that can be tweaked
+                for created instance.
         """
         return self.pre_create_attr_defs
 

@@ -13,6 +13,11 @@ from openpype.settings import (
     get_system_settings,
     get_project_settings
 )
+from openpype.lib.attribute_definitions import (
+    UnknownDef,
+    serialize_attr_defs,
+    deserialize_attr_defs,
+)
 from openpype.host import IPublishHost
 from openpype.pipeline import legacy_io
 from openpype.pipeline.mongodb import (
@@ -28,6 +33,7 @@ from .creator_plugins import (
     CreatorError,
 )
 
+# Changes of instances and context are send as tuple of 2 information
 UpdateData = collections.namedtuple("UpdateData", ["instance", "changes"])
 
 
@@ -153,7 +159,7 @@ class CreatorsRemoveFailed(CreatorsOperationFailed):
 
 class CreatorsCreateFailed(CreatorsOperationFailed):
     def __init__(self, failed_info):
-        msg = "Faled to create instances"
+        msg = "Failed to create instances"
         super(CreatorsCreateFailed, self).__init__(
             msg, failed_info
         )
@@ -175,6 +181,319 @@ def prepare_failed_creator_operation_info(
         "message": str(exc_value),
         "traceback": formatted_traceback
     }
+
+
+_EMPTY_VALUE = object()
+
+
+class TrackChangesItem(object):
+    """Helper object to track changes in data.
+
+    Has access to full old and new data and will create deep copy of them,
+    so it is not needed to create copy before passed in.
+
+    Can work as a dictionary if old or new value is a dictionary. In
+    that case received object is another object of 'TrackChangesItem'.
+
+    Goal is to be able to get old or new value as was or only changed values
+    or get information about removed/changed keys, and all of that on
+    any "dictionary level".
+
+    ```
+    # Example of possible usages
+    >>> old_value = {
+    ...     "key_1": "value_1",
+    ...     "key_2": {
+    ...         "key_sub_1": 1,
+    ...         "key_sub_2": {
+    ...             "enabled": True
+    ...         }
+    ...     },
+    ...     "key_3": "value_2"
+    ... }
+    >>> new_value = {
+    ...     "key_1": "value_1",
+    ...     "key_2": {
+    ...         "key_sub_2": {
+    ...             "enabled": False
+    ...         },
+    ...         "key_sub_3": 3
+    ...     },
+    ...     "key_3": "value_3"
+    ... }
+
+    >>> changes = TrackChangesItem(old_value, new_value)
+    >>> changes.changed
+    True
+
+    >>> changes["key_2"]["key_sub_1"].new_value is None
+    True
+
+    >>> list(sorted(changes.changed_keys))
+    ['key_2', 'key_3']
+
+    >>> changes["key_2"]["key_sub_2"]["enabled"].changed
+    True
+
+    >>> changes["key_2"].removed_keys
+    {'key_sub_1'}
+
+    >>> list(sorted(changes["key_2"].available_keys))
+    ['key_sub_1', 'key_sub_2', 'key_sub_3']
+
+    >>> changes.new_value == new_value
+    True
+
+    # Get only changed values
+    only_changed_new_values = {
+        key: changes[key].new_value
+        for key in changes.changed_keys
+    }
+    ```
+
+    Args:
+        old_value (Any): Old value.
+        new_value (Any): New value.
+    """
+
+    def __init__(self, old_value, new_value):
+        self._changed = old_value != new_value
+        # Resolve if value is '_EMPTY_VALUE' after comparison of the values
+        if old_value is _EMPTY_VALUE:
+            old_value = None
+        if new_value is _EMPTY_VALUE:
+            new_value = None
+        self._old_value = copy.deepcopy(old_value)
+        self._new_value = copy.deepcopy(new_value)
+
+        self._old_is_dict = isinstance(old_value, dict)
+        self._new_is_dict = isinstance(new_value, dict)
+
+        self._old_keys = None
+        self._new_keys = None
+        self._available_keys = None
+        self._removed_keys = None
+
+        self._changed_keys = None
+
+        self._sub_items = None
+
+    def __getitem__(self, key):
+        """Getter looks into subitems if object is dictionary."""
+
+        if self._sub_items is None:
+            self._prepare_sub_items()
+        return self._sub_items[key]
+
+    def __bool__(self):
+        """Boolean of object is if old and new value are the same."""
+
+        return self._changed
+
+    def get(self, key, default=None):
+        """Try to get sub item."""
+
+        if self._sub_items is None:
+            self._prepare_sub_items()
+        return self._sub_items.get(key, default)
+
+    @property
+    def old_value(self):
+        """Get copy of old value.
+
+        Returns:
+            Any: Whatever old value was.
+        """
+
+        return copy.deepcopy(self._old_value)
+
+    @property
+    def new_value(self):
+        """Get copy of new value.
+
+        Returns:
+            Any: Whatever new value was.
+        """
+
+        return copy.deepcopy(self._new_value)
+
+    @property
+    def changed(self):
+        """Value changed.
+
+        Returns:
+            bool: If data changed.
+        """
+
+        return self._changed
+
+    @property
+    def is_dict(self):
+        """Object can be used as dictionary.
+
+        Returns:
+            bool: When can be used that way.
+        """
+
+        return self._old_is_dict or self._new_is_dict
+
+    @property
+    def changes(self):
+        """Get changes in raw data.
+
+        This method should be used only if 'is_dict' value is 'True'.
+
+        Returns:
+            Dict[str, Tuple[Any, Any]]: Changes are by key in tuple
+                (<old value>, <new value>). If 'is_dict' is 'False' then
+                output is always empty dictionary.
+        """
+
+        output = {}
+        if not self.is_dict:
+            return output
+
+        old_value = self.old_value
+        new_value = self.new_value
+        for key in self.changed_keys:
+            _old = None
+            _new = None
+            if self._old_is_dict:
+                _old = old_value.get(key)
+            if self._new_is_dict:
+                _new = new_value.get(key)
+            output[key] = (_old, _new)
+        return output
+
+    # Methods/properties that can be used when 'is_dict' is 'True'
+    @property
+    def old_keys(self):
+        """Keys from old value.
+
+        Empty set is returned if old value is not a dict.
+
+        Returns:
+            Set[str]: Keys from old value.
+        """
+
+        if self._old_keys is None:
+            self._prepare_keys()
+        return set(self._old_keys)
+
+    @property
+    def new_keys(self):
+        """Keys from new value.
+
+        Empty set is returned if old value is not a dict.
+
+        Returns:
+            Set[str]: Keys from new value.
+        """
+
+        if self._new_keys is None:
+            self._prepare_keys()
+        return set(self._new_keys)
+
+    @property
+    def changed_keys(self):
+        """Keys that has changed from old to new value.
+
+        Empty set is returned if both old and new value are not a dict.
+
+        Returns:
+            Set[str]: Keys of changed keys.
+        """
+
+        if self._changed_keys is None:
+            self._prepare_sub_items()
+        return set(self._changed_keys)
+
+    @property
+    def available_keys(self):
+        """All keys that are available in old and new value.
+
+        Empty set is returned if both old and new value are not a dict.
+        Output is Union of 'old_keys' and 'new_keys'.
+
+        Returns:
+            Set[str]: All keys from old and new value.
+        """
+
+        if self._available_keys is None:
+            self._prepare_keys()
+        return set(self._available_keys)
+
+    @property
+    def removed_keys(self):
+        """Key that are not available in new value but were in old value.
+
+        Returns:
+            Set[str]: All removed keys.
+        """
+
+        if self._removed_keys is None:
+            self._prepare_sub_items()
+        return set(self._removed_keys)
+
+    def _prepare_keys(self):
+        old_keys = set()
+        new_keys = set()
+        if self._old_is_dict and self._new_is_dict:
+            old_keys = set(self._old_value.keys())
+            new_keys = set(self._new_value.keys())
+
+        elif self._old_is_dict:
+            old_keys = set(self._old_value.keys())
+
+        elif self._new_is_dict:
+            new_keys = set(self._new_value.keys())
+
+        self._old_keys = old_keys
+        self._new_keys = new_keys
+        self._available_keys = old_keys | new_keys
+        self._removed_keys = old_keys - new_keys
+
+    def _prepare_sub_items(self):
+        sub_items = {}
+        changed_keys = set()
+
+        old_keys = self.old_keys
+        new_keys = self.new_keys
+        new_value = self.new_value
+        old_value = self.old_value
+        if self._old_is_dict and self._new_is_dict:
+            for key in self.available_keys:
+                item = TrackChangesItem(
+                    old_value.get(key), new_value.get(key)
+                )
+                sub_items[key] = item
+                if item.changed or key not in old_keys or key not in new_keys:
+                    changed_keys.add(key)
+
+        elif self._old_is_dict:
+            old_keys = set(old_value.keys())
+            available_keys = set(old_keys)
+            changed_keys = set(available_keys)
+            for key in available_keys:
+                # NOTE Use '_EMPTY_VALUE' because old value could be 'None'
+                #   which would result in "unchanged" item
+                sub_items[key] = TrackChangesItem(
+                    old_value.get(key), _EMPTY_VALUE
+                )
+
+        elif self._new_is_dict:
+            new_keys = set(new_value.keys())
+            available_keys = set(new_keys)
+            changed_keys = set(available_keys)
+            for key in available_keys:
+                # NOTE Use '_EMPTY_VALUE' because new value could be 'None'
+                #   which would result in "unchanged" item
+                sub_items[key] = TrackChangesItem(
+                    _EMPTY_VALUE, new_value.get(key)
+                )
+
+        self._sub_items = sub_items
+        self._changed_keys = changed_keys
 
 
 class InstanceMember:
@@ -208,14 +527,12 @@ class AttributeValues(object):
     Has dictionary like methods. Not all of them are allowed all the time.
 
     Args:
-        attr_defs(AbtractAttrDef): Defintions of value type and properties.
+        attr_defs(AbstractAttrDef): Defintions of value type and properties.
         values(dict): Values after possible conversion.
         origin_data(dict): Values loaded from host before conversion.
     """
 
     def __init__(self, attr_defs, values, origin_data=None):
-        from openpype.lib.attribute_definitions import UnknownDef
-
         if origin_data is None:
             origin_data = copy.deepcopy(values)
         self._origin_data = origin_data
@@ -288,11 +605,25 @@ class AttributeValues(object):
 
     @property
     def attr_defs(self):
-        """Pointer to attribute definitions."""
-        return self._attr_defs
+        """Pointer to attribute definitions.
+
+        Returns:
+            List[AbstractAttrDef]: Attribute definitions.
+        """
+
+        return list(self._attr_defs)
+
+    @property
+    def origin_data(self):
+        return copy.deepcopy(self._origin_data)
 
     def data_to_store(self):
-        """Create new dictionary with data to store."""
+        """Create new dictionary with data to store.
+
+        Returns:
+            Dict[str, Any]: Attribute values that should be stored.
+        """
+
         output = {}
         for key in self._data:
             output[key] = self[key]
@@ -302,28 +633,14 @@ class AttributeValues(object):
                 output[key] = attr_def.default
         return output
 
-    @staticmethod
-    def calculate_changes(new_data, old_data):
-        """Calculate changes of 2 dictionary objects."""
-        changes = {}
-        for key, new_value in new_data.items():
-            old_value = old_data.get(key)
-            if old_value != new_value:
-                changes[key] = (old_value, new_value)
-        return changes
+    def get_serialized_attr_defs(self):
+        """Serialize attribute definitions to json serializable types.
 
-    def changes(self):
-        return self.calculate_changes(self._data, self._origin_data)
+        Returns:
+            List[Dict[str, Any]]: Serialized attribute definitions.
+        """
 
-    def apply_changes(self, changes):
-        for key, item in changes.items():
-            old_value, new_value = item
-            if new_value is None:
-                if key in self:
-                    self.pop(key)
-
-            elif self.get(key) != new_value:
-                self[key] = new_value
+        return serialize_attr_defs(self._attr_defs)
 
 
 class CreatorAttributeValues(AttributeValues):
@@ -362,13 +679,14 @@ class PublishAttributes:
     """Wrapper for publish plugin attribute definitions.
 
     Cares about handling attribute definitions of multiple publish plugins.
+    Keep information about attribute definitions and their values.
 
     Args:
         parent(CreatedInstance, CreateContext): Parent for which will be
             data stored and from which are data loaded.
         origin_data(dict): Loaded data by plugin class name.
-        attr_plugins(list): List of publish plugins that may have defined
-            attribute definitions.
+        attr_plugins(Union[List[pyblish.api.Plugin], None]): List of publish
+            plugins that may have defined attribute definitions.
     """
 
     def __init__(self, parent, origin_data, attr_plugins=None):
@@ -442,36 +760,9 @@ class PublishAttributes:
             output[key] = attr_value.data_to_store()
         return output
 
-    def changes(self):
-        """Return changes per each key."""
-
-        changes = {}
-        for key, attr_val in self._data.items():
-            attr_changes = attr_val.changes()
-            if attr_changes:
-                if key not in changes:
-                    changes[key] = {}
-                changes[key].update(attr_val)
-
-        for key, value in self._origin_data.items():
-            if key not in self._data:
-                changes[key] = (value, None)
-        return changes
-
-    def apply_changes(self, changes):
-        for key, item in changes.items():
-            if isinstance(item, dict):
-                self._data[key].apply_changes(item)
-                continue
-
-            old_value, new_value = item
-            if new_value is not None:
-                raise ValueError(
-                    "Unexpected type \"{}\" expected None".format(
-                        str(type(new_value))
-                    )
-                )
-            self.pop(key)
+    @property
+    def origin_data(self):
+        return copy.deepcopy(self._origin_data)
 
     def set_publish_plugins(self, attr_plugins):
         """Set publish plugins attribute definitions."""
@@ -509,6 +800,42 @@ class PublishAttributes:
                     self, [], value, value
                 )
 
+    def serialize_attributes(self):
+        return {
+            "attr_defs": {
+                plugin_name: attrs_value.get_serialized_attr_defs()
+                for plugin_name, attrs_value in self._data.items()
+            },
+            "plugin_names_order": self._plugin_names_order,
+            "missing_plugins": self._missing_plugins
+        }
+
+    def deserialize_attributes(self, data):
+        self._plugin_names_order = data["plugin_names_order"]
+        self._missing_plugins = data["missing_plugins"]
+
+        attr_defs = deserialize_attr_defs(data["attr_defs"])
+
+        origin_data = self._origin_data
+        data = self._data
+        self._data = {}
+
+        added_keys = set()
+        for plugin_name, attr_defs_data in attr_defs.items():
+            attr_defs = deserialize_attr_defs(attr_defs_data)
+            value = data.get(plugin_name) or {}
+            orig_value = copy.deepcopy(origin_data.get(plugin_name) or {})
+            self._data[plugin_name] = PublishAttributeValues(
+                self, attr_defs, value, orig_value
+            )
+
+        for key, value in data.items():
+            if key not in added_keys:
+                self._missing_plugins.append(key)
+                self._data[key] = PublishAttributeValues(
+                    self, [], value, value
+                )
+
 
 class CreatedInstance:
     """Instance entity with data that will be stored to workfile.
@@ -517,15 +844,22 @@ class CreatedInstance:
     about instance like "asset" and "task" and all data used for filling subset
     name as creators may have custom data for subset name filling.
 
+    Notes:
+        Object have 2 possible initialization. One using 'creator' object which
+            is recommended for api usage. Second by passing information about
+            creator.
+
     Args:
-        family(str): Name of family that will be created.
-        subset_name(str): Name of subset that will be created.
-        data(dict): Data used for filling subset name or override data from
-            already existing instance.
-        creator(BaseCreator): Creator responsible for instance.
-        host(ModuleType): Host implementation loaded with
-            `openpype.pipeline.registered_host`.
-        new(bool): Is instance new.
+        family (str): Name of family that will be created.
+        subset_name (str): Name of subset that will be created.
+        data (Dict[str, Any]): Data used for filling subset name or override
+            data from already existing instance.
+        creator (Union[BaseCreator, None]): Creator responsible for instance.
+        creator_identifier (str): Identifier of creator plugin.
+        creator_label (str): Creator plugin label.
+        group_label (str): Default group label from creator plugin.
+        creator_attr_defs (List[AbstractAttrDef]): Attribute definitions from
+            creator.
     """
 
     # Keys that can't be changed or removed from data after loading using
@@ -542,9 +876,24 @@ class CreatedInstance:
     )
 
     def __init__(
-        self, family, subset_name, data, creator, new=True
+        self,
+        family,
+        subset_name,
+        data,
+        creator=None,
+        creator_identifier=None,
+        creator_label=None,
+        group_label=None,
+        creator_attr_defs=None,
     ):
-        self.creator = creator
+        if creator is not None:
+            creator_identifier = creator.identifier
+            group_label = creator.get_group_label()
+            creator_label = creator.label
+            creator_attr_defs = creator.get_instance_attr_defs()
+
+        self._creator_label = creator_label
+        self._group_label = group_label or creator_identifier
 
         # Instance members may have actions on them
         # TODO implement members logic
@@ -574,7 +923,7 @@ class CreatedInstance:
         self._data["family"] = family
         self._data["subset"] = subset_name
         self._data["active"] = data.get("active", True)
-        self._data["creator_identifier"] = creator.identifier
+        self._data["creator_identifier"] = creator_identifier
 
         # Pop from source data all keys that are defined in `_data` before
         #   this moment and through their values away
@@ -588,10 +937,12 @@ class CreatedInstance:
         # Stored creator specific attribute values
         # {key: value}
         creator_values = copy.deepcopy(orig_creator_attributes)
-        creator_attr_defs = creator.get_instance_attr_defs()
 
         self._data["creator_attributes"] = CreatorAttributeValues(
-            self, creator_attr_defs, creator_values, orig_creator_attributes
+            self,
+            list(creator_attr_defs),
+            creator_values,
+            orig_creator_attributes
         )
 
         # Stored publish specific attribute values
@@ -676,64 +1027,27 @@ class CreatedInstance:
         label = self._data.get("group")
         if label:
             return label
-        return self.creator.get_group_label()
+        return self._group_label
+
+    @property
+    def origin_data(self):
+        return copy.deepcopy(self._orig_data)
 
     @property
     def creator_identifier(self):
-        return self.creator.identifier
+        return self._data["creator_identifier"]
 
     @property
     def creator_label(self):
-        return self.creator.label or self.creator_identifier
-
-    @property
-    def create_context(self):
-        return self.creator.create_context
-
-    @property
-    def host(self):
-        return self.create_context.host
-
-    @property
-    def has_set_asset(self):
-        """Asset name is set in data."""
-        return "asset" in self._data
-
-    @property
-    def has_set_task(self):
-        """Task name is set in data."""
-        return "task" in self._data
-
-    @property
-    def has_valid_context(self):
-        """Context data are valid for publishing."""
-        return self.has_valid_asset and self.has_valid_task
-
-    @property
-    def has_valid_asset(self):
-        """Asset set in context exists in project."""
-        if not self.has_set_asset:
-            return False
-        return self._asset_is_valid
-
-    @property
-    def has_valid_task(self):
-        """Task set in context exists in project."""
-        if not self.has_set_task:
-            return False
-        return self._task_is_valid
-
-    def set_asset_invalid(self, invalid):
-        # TODO replace with `set_asset_name`
-        self._asset_is_valid = not invalid
-
-    def set_task_invalid(self, invalid):
-        # TODO replace with `set_task_name`
-        self._task_is_valid = not invalid
+        return self._creator_label or self.creator_identifier
 
     @property
     def id(self):
-        """Instance identifier."""
+        """Instance identifier.
+
+        Returns:
+            str: UUID of instance.
+        """
 
         return self._data["instance_id"]
 
@@ -742,6 +1056,10 @@ class CreatedInstance:
         """Legacy access to data.
 
         Access to data is needed to modify values.
+
+        Returns:
+            CreatedInstance: Object can be used as dictionary but with
+                validations of immutable keys.
         """
 
         return self
@@ -769,29 +1087,7 @@ class CreatedInstance:
     def changes(self):
         """Calculate and return changes."""
 
-        changes = {}
-        new_keys = set()
-        for key, new_value in self._data.items():
-            new_keys.add(key)
-            if key in ("creator_attributes", "publish_attributes"):
-                continue
-
-            old_value = self._orig_data.get(key)
-            if old_value != new_value:
-                changes[key] = (old_value, new_value)
-
-        creator_attr_changes = self.creator_attributes.changes()
-        if creator_attr_changes:
-            changes["creator_attributes"] = creator_attr_changes
-
-        publish_attr_changes = self.publish_attributes.changes()
-        if publish_attr_changes:
-            changes["publish_attributes"] = publish_attr_changes
-
-        for key, old_value in self._orig_data.items():
-            if key not in new_keys:
-                changes[key] = (old_value, None)
-        return changes
+        return TrackChangesItem(self._orig_data, self.data_to_store())
 
     def mark_as_stored(self):
         """Should be called when instance data are stored.
@@ -818,6 +1114,12 @@ class CreatedInstance:
 
     @property
     def creator_attribute_defs(self):
+        """Attribute defintions defined by creator plugin.
+
+        Returns:
+              List[AbstractAttrDef]: Attribute defitions.
+        """
+
         return self.creator_attributes.attr_defs
 
     @property
@@ -829,7 +1131,7 @@ class CreatedInstance:
 
         It is possible to recreate the instance using these data.
 
-        Todo:
+        Todos:
             We probably don't need OrderedDict. When data are loaded they
                 are not ordered anymore.
 
@@ -850,7 +1152,15 @@ class CreatedInstance:
 
     @classmethod
     def from_existing(cls, instance_data, creator):
-        """Convert instance data from workfile to CreatedInstance."""
+        """Convert instance data from workfile to CreatedInstance.
+
+        Args:
+            instance_data (Dict[str, Any]): Data in a structure ready for
+                'CreatedInstance' object.
+            creator (Creator): Creator plugin which is creating the instance
+                of for which the instance belong.
+        """
+
         instance_data = copy.deepcopy(instance_data)
 
         family = instance_data.get("family", None)
@@ -859,26 +1169,49 @@ class CreatedInstance:
         subset_name = instance_data.get("subset", None)
 
         return cls(
-            family, subset_name, instance_data, creator, new=False
+            family, subset_name, instance_data, creator
         )
 
     def set_publish_plugins(self, attr_plugins):
+        """Set publish plugins with attribute definitions.
+
+        This method should be called only from 'CreateContext'.
+
+        Args:
+            attr_plugins (List[pyblish.api.Plugin]): Pyblish plugins which
+                inherit from 'OpenPypePyblishPluginMixin' and may contain
+                attribute definitions.
+        """
+
         self.publish_attributes.set_publish_plugins(attr_plugins)
 
     def add_members(self, members):
         """Currently unused method."""
+
         for member in members:
             if member not in self._members:
                 self._members.append(member)
 
     def serialize_for_remote(self):
+        """Serialize object into data to be possible recreated object.
+
+        Returns:
+            Dict[str, Any]: Serialized data.
+        """
+
+        creator_attr_defs = self.creator_attributes.get_serialized_attr_defs()
+        publish_attributes = self.publish_attributes.serialize_attributes()
         return {
             "data": self.data_to_store(),
-            "orig_data": copy.deepcopy(self._orig_data)
+            "orig_data": copy.deepcopy(self._orig_data),
+            "creator_attr_defs": creator_attr_defs,
+            "publish_attributes": publish_attributes,
+            "creator_label": self._creator_label,
+            "group_label": self._group_label,
         }
 
     @classmethod
-    def deserialize_on_remote(cls, serialized_data, creator_items):
+    def deserialize_on_remote(cls, serialized_data):
         """Convert instance data to CreatedInstance.
 
         This is fake instance in remote process e.g. in UI process. The creator
@@ -888,79 +1221,77 @@ class CreatedInstance:
         Args:
             serialized_data (Dict[str, Any]): Serialized data for remote
                 recreating. Should contain 'data' and 'orig_data'.
-            creator_items (Dict[str, Any]): Mapping of creator identifier and
-                objects that behave like a creator for most of attribute
-                access.
         """
 
         instance_data = copy.deepcopy(serialized_data["data"])
         creator_identifier = instance_data["creator_identifier"]
-        creator_item = creator_items[creator_identifier]
 
-        family = instance_data.get("family", None)
-        if family is None:
-            family = creator_item.family
+        family = instance_data["family"]
         subset_name = instance_data.get("subset", None)
 
+        creator_label = serialized_data["creator_label"]
+        group_label = serialized_data["group_label"]
+        creator_attr_defs = deserialize_attr_defs(
+            serialized_data["creator_attr_defs"]
+        )
+        publish_attributes = serialized_data["publish_attributes"]
+
         obj = cls(
-            family, subset_name, instance_data, creator_item, new=False
+            family,
+            subset_name,
+            instance_data,
+            creator_identifier=creator_identifier,
+            creator_label=creator_label,
+            group_label=group_label,
+            creator_attributes=creator_attr_defs
         )
         obj._orig_data = serialized_data["orig_data"]
+        obj.publish_attributes.deserialize_attributes(publish_attributes)
 
         return obj
 
-    def remote_changes(self):
-        """Prepare serializable changes on remote side.
+    # Context validation related methods/properties
+    @property
+    def has_set_asset(self):
+        """Asset name is set in data."""
 
-        Returns:
-            Dict[str, Any]: Prepared changes that can be send to client side.
-        """
+        return "asset" in self._data
 
-        return {
-            "changes": self.changes(),
-            "asset_is_valid": self._asset_is_valid,
-            "task_is_valid": self._task_is_valid,
-        }
+    @property
+    def has_set_task(self):
+        """Task name is set in data."""
 
-    def update_from_remote(self, remote_changes):
-        """Apply changes from remote side on client side.
+        return "task" in self._data
 
-        Args:
-            remote_changes (Dict[str, Any]): Changes created on remote side.
-        """
+    @property
+    def has_valid_context(self):
+        """Context data are valid for publishing."""
 
-        self._asset_is_valid = remote_changes["asset_is_valid"]
-        self._task_is_valid = remote_changes["task_is_valid"]
+        return self.has_valid_asset and self.has_valid_task
 
-        changes = remote_changes["changes"]
-        creator_attributes = changes.pop("creator_attributes", None) or {}
-        publish_attributes = changes.pop("publish_attributes", None) or {}
-        if changes:
-            self.apply_changes(changes)
+    @property
+    def has_valid_asset(self):
+        """Asset set in context exists in project."""
 
-        if creator_attributes:
-            self.creator_attributes.apply_changes(creator_attributes)
+        if not self.has_set_asset:
+            return False
+        return self._asset_is_valid
 
-        if publish_attributes:
-            self.publish_attributes.apply_changes(publish_attributes)
+    @property
+    def has_valid_task(self):
+        """Task set in context exists in project."""
 
-    def apply_changes(self, changes):
-        """Apply changes created via 'changes'.
+        if not self.has_set_task:
+            return False
+        return self._task_is_valid
 
-        Args:
-            Dict[str, Tuple[Any, Any]]: Instance changes to apply. Same values
-                are kept untouched.
-        """
+    def set_asset_invalid(self, invalid):
+        # TODO replace with `set_asset_name`
+        self._asset_is_valid = not invalid
 
-        for key, item in changes.items():
-            old_value, new_value = item
-            if new_value is None:
-                if key in self:
-                    self.pop(key)
-            else:
-                current_value = self.get(key)
-                if current_value != new_value:
-                    self[key] = new_value
+    def set_task_invalid(self, invalid):
+        # TODO replace with `set_task_name`
+        self._task_is_valid = not invalid
 
 
 class ConvertorItem(object):
@@ -999,6 +1330,10 @@ class CreateContext:
 
     Context itself also can store data related to whole creation (workfile).
     - those are mainly for Context publish plugins
+
+    Todos:
+        Don't use 'AvalonMongoDB'. It's used only to keep track about current
+            context which should be handled by host.
 
     Args:
         host(ModuleType): Host implementation which handles implementation and
@@ -1096,6 +1431,53 @@ class CreateContext:
     def publish_attributes(self):
         """Access to global publish attributes."""
         return self._publish_attributes
+
+    def get_sorted_creators(self, identifiers=None):
+        """Sorted creators by 'order' attribute.
+
+        Args:
+            identifiers (Iterable[str]): Filter creators by identifiers. All
+                creators are returned if 'None' is passed.
+
+        Returns:
+            List[BaseCreator]: Sorted creator plugins by 'order' value.
+        """
+
+        if identifiers is not None:
+            identifiers = set(identifiers)
+            creators = [
+                creator
+                for identifier, creator in self.creators.items()
+                if identifier in identifiers
+            ]
+        else:
+            creators = self.creators.values()
+
+        return sorted(
+            creators, key=lambda creator: creator.order
+        )
+
+    @property
+    def sorted_creators(self):
+        """Sorted creators by 'order' attribute.
+
+        Returns:
+            List[BaseCreator]: Sorted creator plugins by 'order' value.
+        """
+
+        return self.get_sorted_creators()
+
+    @property
+    def sorted_autocreators(self):
+        """Sorted auto-creators by 'order' attribute.
+
+        Returns:
+            List[AutoCreator]: Sorted plugins by 'order' value.
+        """
+
+        return sorted(
+            self.autocreators.values(), key=lambda creator: creator.order
+        )
 
     @classmethod
     def get_host_misssing_methods(cls, host):
@@ -1375,11 +1757,10 @@ class CreateContext:
 
     def context_data_changes(self):
         """Changes of attributes."""
-        changes = {}
-        publish_attribute_changes = self._publish_attributes.changes()
-        if publish_attribute_changes:
-            changes["publish_attributes"] = publish_attribute_changes
-        return changes
+
+        return TrackChangesItem(
+            self._original_context_data, self.context_data_to_store()
+        )
 
     def creator_adds_instance(self, instance):
         """Creator adds new instance to context.
@@ -1402,7 +1783,7 @@ class CreateContext:
         self._instances_by_id[instance.id] = instance
         # Prepare publish plugin attributes and set it on instance
         attr_plugins = self._get_publish_plugins_with_attr_for_family(
-            instance.creator.family
+            instance.family
         )
         instance.set_publish_plugins(attr_plugins)
 
@@ -1459,6 +1840,9 @@ class CreateContext:
                 )
             ])
 
+    def _remove_instance(self, instance):
+        self._instances_by_id.pop(instance.id, None)
+
     def creator_removed_instance(self, instance):
         """When creator removes instance context should be acknowledged.
 
@@ -1470,7 +1854,7 @@ class CreateContext:
                 from scene metadata.
         """
 
-        self._instances_by_id.pop(instance.id, None)
+        self._remove_instance(instance)
 
     def add_convertor_item(self, convertor_identifier, label):
         self.convertor_items_by_id[convertor_identifier] = ConvertorItem(
@@ -1514,7 +1898,7 @@ class CreateContext:
         # Collect instances
         error_message = "Collection of instances for creator {} failed. {}"
         failed_info = []
-        for creator in self.creators.values():
+        for creator in self.sorted_creators:
             label = creator.label
             identifier = creator.identifier
             failed = False
@@ -1586,7 +1970,8 @@ class CreateContext:
 
         error_message = "Failed to run AutoCreator with identifier \"{}\". {}"
         failed_info = []
-        for identifier, creator in self.autocreators.items():
+        for creator in self.sorted_autocreators:
+            identifier = creator.identifier
             label = creator.label
             failed = False
             add_traceback = False
@@ -1691,19 +2076,26 @@ class CreateContext:
         """Save instance specific values."""
         instances_by_identifier = collections.defaultdict(list)
         for instance in self._instances_by_id.values():
+            instance_changes = instance.changes()
+            if not instance_changes:
+                continue
+
             identifier = instance.creator_identifier
-            instances_by_identifier[identifier].append(instance)
+            instances_by_identifier[identifier].append(
+                UpdateData(instance, instance_changes)
+            )
+
+        if not instances_by_identifier:
+            return
 
         error_message = "Instances update of creator \"{}\" failed. {}"
         failed_info = []
-        for identifier, creator_instances in instances_by_identifier.items():
-            update_list = []
-            for instance in creator_instances:
-                instance_changes = instance.changes()
-                if instance_changes:
-                    update_list.append(UpdateData(instance, instance_changes))
 
-            creator = self.creators[identifier]
+        for creator in self.get_sorted_creators(
+            instances_by_identifier.keys()
+        ):
+            identifier = creator.identifier
+            update_list = instances_by_identifier[identifier]
             if not update_list:
                 continue
 
@@ -1739,9 +2131,13 @@ class CreateContext:
     def remove_instances(self, instances):
         """Remove instances from context.
 
+        All instances that don't have creator identifier leading to existing
+            creator are just removed from context.
+
         Args:
-            instances(list<CreatedInstance>): Instances that should be removed
-                from context.
+            instances(List[CreatedInstance]): Instances that should be removed.
+                Remove logic is done using creator, which may require to
+                do other cleanup than just remove instance from context.
         """
 
         instances_by_identifier = collections.defaultdict(list)
@@ -1749,10 +2145,21 @@ class CreateContext:
             identifier = instance.creator_identifier
             instances_by_identifier[identifier].append(instance)
 
+        # Just remove instances from context if creator is not available
+        missing_creators = set(instances_by_identifier) - set(self.creators)
+        for identifier in missing_creators:
+            for instance in instances_by_identifier[identifier]:
+                self._remove_instance(instance)
+
         error_message = "Instances removement of creator \"{}\" failed. {}"
         failed_info = []
-        for identifier, creator_instances in instances_by_identifier.items():
-            creator = self.creators.get(identifier)
+        # Remove instances by creator plugin order
+        for creator in self.get_sorted_creators(
+            instances_by_identifier.keys()
+        ):
+            identifier = creator.identifier
+            creator_instances = instances_by_identifier[identifier]
+
             label = creator.label
             failed = False
             add_traceback = False
@@ -1795,6 +2202,7 @@ class CreateContext:
             family(str): Instance family for which should be attribute
                 definitions returned.
         """
+
         if family not in self._attr_plugins_by_family:
             import pyblish.logic
 
@@ -1810,7 +2218,13 @@ class CreateContext:
         return self._attr_plugins_by_family[family]
 
     def _get_publish_plugins_with_attr_for_context(self):
-        """Publish plugins attributes for Context plugins."""
+        """Publish plugins attributes for Context plugins.
+
+        Returns:
+            List[pyblish.api.Plugin]: Publish plugins that have attribute
+                definitions for context.
+        """
+
         plugins = []
         for plugin in self.plugins_with_defs:
             if not plugin.__instanceEnabled__:
@@ -1835,7 +2249,7 @@ class CreateContext:
         return self._collection_shared_data
 
     def run_convertor(self, convertor_identifier):
-        """Run convertor plugin by it's idenfitifier.
+        """Run convertor plugin by identifier.
 
         Conversion is skipped if convertor is not available.
 
@@ -1848,7 +2262,7 @@ class CreateContext:
             convertor.convert()
 
     def run_convertors(self, convertor_identifiers):
-        """Run convertor plugins by idenfitifiers.
+        """Run convertor plugins by identifiers.
 
         Conversion is skipped if convertor is not available. It is recommended
         to trigger reset after conversion to reload instances.

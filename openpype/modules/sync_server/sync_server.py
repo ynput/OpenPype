@@ -284,9 +284,6 @@ class SyncServerThread(threading.Thread):
                     # building folder tree structure in memory
                     # call only if needed, eg. DO_UPLOAD or DO_DOWNLOAD
                     for sync in sync_repres:
-                        if self.module.\
-                                is_representation_paused(sync['_id']):
-                            continue
                         if limit <= 0:
                             continue
                         files = sync.get("files") or []
