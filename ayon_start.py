@@ -42,7 +42,7 @@ if "--verbose" in sys.argv:
         log_level = 50
 
     if log_level is None:
-        raise RuntimeError((
+        raise ValueError((
             "Unexpected value after \"--verbose\" "
             f"argument \"{value}\". {expected_values}"
         ))
