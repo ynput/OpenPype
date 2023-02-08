@@ -51,13 +51,13 @@ class AddSyncSite(load.LoaderPlugin):
             data (dict): expects {"site_name": SITE_NAME_TO_ADD}
         """
         # self.log wont propagate
-        print("Adding {} to representation: {}".format(
-              data["site_name"], data["_id"]))
         project_name = context["project"]["name"]
         repre_doc = context["representation"]
         family = repre_doc["context"]["family"]
-        repre_id = [repre_doc["_id"]]
+        repre_id = repre_doc["_id"]
         site_name = data["site_name"]
+        print("Adding {} to representation: {}".format(
+              data["site_name"], repre_id))
 
         self.sync_server.add_site(project_name, repre_id, site_name,
                                   force=True)
@@ -70,6 +70,8 @@ class AddSyncSite(load.LoaderPlugin):
             )
             for link_repre_id in links:
                 try:
+                    print("Adding {} to linked representation: {}".format(
+                        data["site_name"], link_repre_id))
                     self.sync_server.add_site(project_name, link_repre_id,
                                               site_name,
                                               force=False)
