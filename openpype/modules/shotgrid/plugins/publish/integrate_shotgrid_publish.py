@@ -24,7 +24,9 @@ class IntegrateShotgridPublish(pyblish.api.InstancePlugin):
 
         for representation in instance.data.get("representations", []):
 
-            local_path = get_representation_path(instance, representation, False)
+            local_path = get_representation_path(
+                instance, representation, False
+            )
             code = os.path.basename(local_path)
 
             if representation.get("tags", []):
