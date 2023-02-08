@@ -105,7 +105,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
     jobInfo = {}
     pluginInfo = {}
     group = "none"
-    disable_strict_check_profiles = []
 
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="MayaBatch")
