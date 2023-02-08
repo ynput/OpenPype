@@ -3,16 +3,16 @@ from maya import cmds
 import pyblish.api
 
 
-class CollectAssData(pyblish.api.InstancePlugin):
-    """Collect Ass data."""
+class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
+    """Collect Arnold Scene Source data."""
 
     # Offset to be after renderable camera collection.
     order = pyblish.api.CollectorOrder + 0.2
-    label = 'Collect Ass'
+    label = "Collect Arnold Scene Source"
     families = ["ass"]
 
     def process(self, instance):
-        objsets = instance.data['setMembers']
+        objsets = instance.data["setMembers"]
 
         for objset in objsets:
             objset = str(objset)
@@ -21,11 +21,11 @@ class CollectAssData(pyblish.api.InstancePlugin):
                 self.log.warning("Skipped empty instance: \"%s\" " % objset)
                 continue
             if "content_SET" in objset:
-                instance.data['setMembers'] = members
-                self.log.debug('content members: {}'.format(members))
+                instance.data["setMembers"] = members
+                self.log.debug("content members: {}".format(members))
             elif objset.startswith("proxy_SET"):
-                instance.data['proxy'] = members
-                self.log.debug('proxy members: {}'.format(members))
+                instance.data["proxy"] = members
+                self.log.debug("proxy members: {}".format(members))
 
         # Use camera in object set if present else default to render globals
         # camera.
