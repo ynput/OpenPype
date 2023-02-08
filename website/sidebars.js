@@ -44,6 +44,7 @@ module.exports = {
                         "artist_hosts_maya_multiverse",
                         "artist_hosts_maya_yeti",
                         "artist_hosts_maya_xgen",
+                        "artist_hosts_maya_arnold",
                         "artist_hosts_maya_vray",
                         "artist_hosts_maya_redshift",
                     ],
