@@ -5,7 +5,6 @@ from openpype.lib import BoolDef
 from openpype.pipeline import (
     Creator,
     CreatedInstance,
-    legacy_io,
     CreatorError
 )
 from openpype.lib import prepare_template_data
