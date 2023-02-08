@@ -1,8 +1,33 @@
-deploy:
+stages:
+  - build
+#  - deploy
+
+build-binaries:
   tags:
     - cw-pvc
+  stage: build
+  variables:
+    BUILD_VERSION: "exe.linux-x86_64-3.9"
   script:
-    - >
-      rsync -rltvhpog --chmod=777 --chown=nobody:nogroup --delete $CI_PROJECT_DIR/openpype/modules/deadline/repository/custom/plugins/* /deadline/custom/plugins/
-  rules:
-      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - ./tools/docker_build.sh
+    - >-
+      version_command="import os;exec(open(os.path.join('$openpype_root', 'openpype', 'version.py')).read());print(__version__);" &&
+      openpype_version="$(python3 <<< ${version_command})" &&
+      tar -czvf ./build/openpype-${BUILD_VERSION}.tar.gz ./build/${BUILD_VERSION} &&
+      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./build/openpype-${BUILD_VERSION}.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/openpype/${openpype_version}/openpype-${BUILD_VERSION}.tar.gz"
+
+
+#deploy-to-deadline:
+#  stage: deploy
+#  tags:
+#    - cw-pvc
+#  script:
+#    - >
+#      rsync -rltvhpog --chmod=777 --chown=nobody:nogroup --delete $CI_PROJECT_DIR/openpype/modules/deadline/repository/custom/plugins/* /deadline/custom/plugins/
+#  rules:
+#      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+#download:
+#  stage: download
+#  script:
+#    - 'wget --header="JOB-TOKEN: $CI_JOB_TOKEN" ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/my_package/0.0.1/file.txt'
