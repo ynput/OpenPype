@@ -20,10 +20,10 @@ class CollectArnoldSceneSource(pyblish.api.InstancePlugin):
             if members is None:
                 self.log.warning("Skipped empty instance: \"%s\" " % objset)
                 continue
-            if "content_SET" in objset:
+            if objset.endswith("content_SET"):
                 instance.data["setMembers"] = members
                 self.log.debug("content members: {}".format(members))
-            elif objset.startswith("proxy_SET"):
+            elif objset.endswith("proxy_SET"):
                 instance.data["proxy"] = members
                 self.log.debug("proxy members: {}".format(members))
 
