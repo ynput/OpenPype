@@ -101,5 +101,5 @@ class RenderProducts(object):
         return render_dirname
 
     def image_format(self):
-        img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]
+        img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa
         return img_fmt
