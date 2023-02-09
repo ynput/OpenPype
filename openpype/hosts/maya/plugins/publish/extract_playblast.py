@@ -1,4 +1,5 @@
 import os
+import json
 
 import clique
 import capture
@@ -44,10 +45,6 @@ class ExtractPlayblast(publish.Extractor):
         # get cameras
         camera = instance.data['review_camera']
 
-        override_viewport_options = (
-            self.capture_preset['Viewport Options']
-                               ['override_viewport_options']
-        )
         preset = lib.load_capture_preset(data=self.capture_preset)
         # Grab capture presets from the project settings
         capture_presets = self.capture_preset
@@ -119,6 +116,9 @@ class ExtractPlayblast(publish.Extractor):
         pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
         cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), False)
 
+        override_viewport_options = (
+            capture_presets['Viewport Options']['override_viewport_options']
+        )
         with lib.maintained_time():
             filename = preset.get("filename", "%TEMP%")
 
@@ -127,15 +127,20 @@ class ExtractPlayblast(publish.Extractor):
             # playblast and viewer
             preset['viewer'] = False
 
-            self.log.info('using viewport preset: {}'.format(preset))
-
             # Update preset with current panel setting
             # if override_viewport_options is turned off
             panel = cmds.getPanel(withFocus=True) or ""
             if not override_viewport_options and "modelPanel" in panel:
                 panel_preset = capture.parse_active_view()
+                panel_preset.pop("camera")
                 preset.update(panel_preset)
                 cmds.setFocus(panel)
+
+            self.log.info(
+                "Using preset:\n{}".format(
+                    json.dumps(preset, sort_keys=True, indent=4)
+                )
+            )
 
             path = capture.capture(log=self.log, **preset)
 
