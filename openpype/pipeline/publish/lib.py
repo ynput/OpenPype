@@ -19,7 +19,7 @@ from openpype.settings import (
     get_system_settings,
 )
 from openpype.pipeline import (
-    tempdir
+    temporarydir
 )
 
 from .contants import (
@@ -626,11 +626,6 @@ def get_instance_staging_dir(instance):
     Available anatomy formatting keys:
         - root[work | <root name key>]
         - project[name | code]
-        - asset
-        - hierarchy
-        - task
-        - username
-        - app
 
     Note:
         Staging dir does not have to be necessarily in tempdir so be carefull
@@ -648,10 +643,16 @@ def get_instance_staging_dir(instance):
         return staging_dir
 
     anatomy_data = instance.data.get("anatomy_data")
-    project_name =
+    anatomy = instance.data.get("anatomy")
+
+    if anatomy_data:
+        project_name = anatomy_data["project"]["name"]
+    else:
+        project_name = os.getenv("AVALON_PROJECT")
+
     # get customized tempdir path from `OPENPYPE_TEMPDIR` env var
-    custom_temp_dir = tempdir.create_custom_tempdir(
-        instance.data["anatomy_data"]["project"]["name"]
+    custom_temp_dir = temporarydir.create_custom_tempdir(
+        project_name, anatomy=anatomy, formating_data=anatomy_data
     )
 
     if custom_temp_dir:

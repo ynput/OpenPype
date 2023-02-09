@@ -1,9 +1,11 @@
-import os
+"""
+Temporary folder operations
+"""
 
-from openpype.lib import (
-    Anatomy,
-    StringTemplate
-)
+import os
+from openpype.lib import StringTemplate
+from openpype.pipeline import Anatomy
+
 
 def create_custom_tempdir(project_name, anatomy=None, formating_data=None):
     """ Create custom tempdir
@@ -15,11 +17,12 @@ def create_custom_tempdir(project_name, anatomy=None, formating_data=None):
         - project[name | code]
 
     Args:
-        instance (pyblish.Instance): instance object
-        openpype_temp_dir (str): path string
+        project_name (str): name of project
+        anatomy (openpype.pipeline.Anatomy): Anatomy object
+        formating_data (dict): formating data used for filling template.
 
     Returns:
-        str: formated path
+        bool | str: formated path or None
     """
     openpype_tempdir = os.getenv("OPENPYPE_TMPDIR")
     if not openpype_tempdir:
