@@ -112,7 +112,9 @@ common_python_vendor = os.path.join(
     "python",
     "common"
 )
-for path in (AYON_ROOT, common_python_vendor):
+# Add tools dir to sys path for pyblish UI discovery
+tools_dir = os.path.join(AYON_ROOT, "openpype", "tools")
+for path in (AYON_ROOT, common_python_vendor, tools_dir):
     while path in _python_paths:
         _python_paths.remove(path)
 
@@ -133,6 +135,8 @@ os.environ["AYON_ROOT"] = AYON_ROOT
 os.environ["OPENPYPE_ROOT"] = AYON_ROOT
 os.environ["OPENPYPE_REPOS_ROOT"] = AYON_ROOT
 os.environ["AVALON_LABEL"] = "AYON"
+# Set name of pyblish UI import
+os.environ["PYBLISH_GUI"] = "pyblish_pype"
 
 import blessed  # noqa: E402
 import certifi  # noqa: E402
