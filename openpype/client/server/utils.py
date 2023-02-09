@@ -8,6 +8,48 @@ def create_entity_id():
 
 
 def prepare_attribute_changes(old_entity, new_entity, replace=False):
+    """Prepare changes of attributes on entities.
+
+    Compare 'attrib' of old and new entity data to prepare only changed
+    values that should be sent to server for update.
+
+    Example:
+        >>> # Limited entity data to 'attrib'
+        >>> old_entity = {
+        ...     "attrib": {"attr_1": 1, "attr_2": "MyString", "attr_3": True}
+        ... }
+        >>> new_entity = {
+        ...     "attrib": {"attr_1": 2, "attr_3": True, "attr_4": 3}
+        ... }
+        >>> # Changes if replacement should not happen
+        >>> expected_changes = {
+        ...   "attr_1": 2,
+        ...   "attr_4": 3
+        ... }
+        >>> changes = prepare_attribute_changes(old_entity, new_entity)
+        >>> changes == expected_changes
+        True
+
+        >>> # Changes if replacement should happen
+        >>> expected_changes_replace = {
+        ...   "attr_1": 2,
+        ...   "attr_2": REMOVED_VALUE,
+        ...   "attr_4": 3
+        ... }
+        >>> changes_replace = prepare_attribute_changes(
+        ...     old_entity, new_entity, True)
+        >>> changes_replace == expected_changes_replace
+        True
+
+    Args:
+        old_entity (dict[str, Any]): Data of entity queried from server.
+        new_entity (dict[str, Any]): Entity data with applied changes.
+        replace (bool): New entity should fully replace all old entity values.
+
+    Returns:
+        Dict[str, Any]: Values from new entity only if value has changed.
+    """
+
     attrib_changes = {}
     new_attrib = new_entity.get("attrib")
     old_attrib = old_entity.get("attrib")
@@ -33,7 +75,19 @@ def prepare_attribute_changes(old_entity, new_entity, replace=False):
 
 
 def prepare_entity_changes(old_entity, new_entity, replace=False):
-    """Prepare changes of v4 entities."""
+    """Prepare changes of AYON entities.
+
+    Compare old and new entity to filter values from new data that changed.
+
+    Args:
+        old_entity (dict[str, Any]): Data of entity queried from server.
+        new_entity (dict[str, Any]): Entity data with applied changes.
+        replace (bool): All attributes should be replaced by new values. So
+            all attribute values that are not on new entity will be removed.
+
+    Returns:
+        Dict[str, Any]: Only values from new entity that changed.
+    """
 
     changes = {}
     for key, new_value in new_entity.items():
