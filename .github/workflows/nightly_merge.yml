@@ -26,4 +26,4 @@ jobs:
       uses: benc-uk/workflow-dispatch@v1
       with:
         workflow: Nightly Prerelease
-        token: ${{ secrets.ADMIN_TOKEN }}
+        token: ${{ secrets.YNPUT_BOT_TOKEN }}
