@@ -5,14 +5,16 @@ from maya import cmds
 import arnold
 
 from openpype.pipeline import publish
-from openpype.hosts.maya.api.lib import maintained_selection, attribute_values
+from openpype.hosts.maya.api.lib import (
+    maintained_selection, attribute_values, delete_after
+)
 from openpype.lib import StringTemplate
 
 
 class ExtractArnoldSceneSource(publish.Extractor):
     """Extract the content of the instance to an Arnold Scene Source file."""
 
-    label = "Arnold Scene Source"
+    label = "Extract Arnold Scene Source"
     hosts = ["maya"]
     families = ["ass"]
     asciiAss = False
@@ -124,22 +126,43 @@ class ExtractArnoldSceneSource(publish.Extractor):
     def _extract(self, nodes, attribute_data, kwargs):
         self.log.info("Writing: " + kwargs["filename"])
         filenames = []
-        with attribute_values(attribute_data):
-            with maintained_selection():
-                self.log.info(
-                    "Writing: {}".format(nodes)
+        # Duplicating nodes so they are direct children of the world. This
+        # makes the hierarchy of any exported ass file the same.
+        with delete_after() as delete_bin:
+            duplicate_nodes = []
+            for node in nodes:
+                duplicate_transform = cmds.duplicate(node)[0]
+                delete_bin.append(duplicate_transform)
+
+                # Discard the children.
+                shapes = cmds.listRelatives(duplicate_transform, shapes=True)
+                children = cmds.listRelatives(
+                    duplicate_transform, children=True
                 )
-                cmds.select(nodes, noExpand=True)
+                cmds.delete(set(children) - set(shapes))
 
-                self.log.info(
-                    "Extracting ass sequence with: {}".format(kwargs)
-                )
+                duplicate_transform = cmds.parent(
+                    duplicate_transform, world=True
+                )[0]
 
-                exported_files = cmds.arnoldExportAss(**kwargs)
+                duplicate_nodes.append(duplicate_transform)
 
-                for file in exported_files:
-                    filenames.append(os.path.split(file)[1])
+            with attribute_values(attribute_data):
+                with maintained_selection():
+                    self.log.info(
+                        "Writing: {}".format(duplicate_nodes)
+                    )
+                    cmds.select(duplicate_nodes, noExpand=True)
 
-                self.log.info("Exported: {}".format(filenames))
+                    self.log.info(
+                        "Extracting ass sequence with: {}".format(kwargs)
+                    )
+
+                    exported_files = cmds.arnoldExportAss(**kwargs)
+
+                    for file in exported_files:
+                        filenames.append(os.path.split(file)[1])
+
+                    self.log.info("Exported: {}".format(filenames))
 
         return filenames
