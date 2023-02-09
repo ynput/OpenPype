@@ -2017,9 +2017,10 @@ class PublisherController(BasePublisherController):
 
         success = True
         try:
-            self._create_context.raw_create(
+            self._create_context.create_with_unified_error(
                 creator_identifier, subset_name, instance_data, options
             )
+
         except CreatorsOperationFailed as exc:
             success = False
             self._emit_event(

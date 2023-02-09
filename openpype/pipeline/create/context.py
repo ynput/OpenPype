@@ -1576,6 +1576,31 @@ class CreateContext:
                 identifier, label, exc_info, add_traceback
             )
         return result, fail_info
+
+    def create_with_unified_error(self, identifier, *args, **kwargs):
+        """Trigger create but raise only one error if anything fails.
+
+        Added to raise unified exception. Capture any possible issues and
+        reraise it with unified information.
+
+        Args:
+            identifier (str): Identifier of creator.
+            *args (Tuple[Any]): Arguments for create method.
+            **kwargs (Dict[Any, Any]): Keyword argument for create method.
+
+        Raises:
+            CreatorsCreateFailed: When creation fails due to any possible
+                reason. If anything goes wrong this is only possible exception
+                the method should raise.
+        """
+
+        result, fail_info = self._create_with_unified_error(
+            identifier, None, *args, **kwargs
+        )
+        if fail_info is not None:
+            raise CreatorsCreateFailed([fail_info])
+        return result
+
     def creator_removed_instance(self, instance):
         """When creator removes instance context should be acknowledged.
 
