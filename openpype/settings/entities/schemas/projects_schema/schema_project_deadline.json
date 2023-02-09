@@ -195,6 +195,12 @@
                                 ]
 
                             }
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "strict_error_checking",
+                            "label": "Strict Error Checking",
+                            "default": true
                         }
                     ]
                 },
