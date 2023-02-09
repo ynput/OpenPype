@@ -1098,9 +1098,8 @@ class AssetLoader(Loader):
             Tuple[OpenpypeContainer, List[bpy.types.ID]]:
                 (Container, Datablocks)
         """
-        object_name = container_metadata["objectName"]
         container = self._get_scene_container(container_metadata)
-        assert container, f"The asset is not loaded: {object_name}"
+        assert container, f"The asset is not loaded: {container_metadata.get('objectName')}"
 
         new_libpath = Path(get_representation_path(representation))
         assert (
@@ -1201,16 +1200,26 @@ class AssetLoader(Loader):
                 parent_collection = get_parent_collection(
                     container.outliner_entity
                 )
+                unlink_from_collection(
+                    container.outliner_entity, parent_collection
+                )
             else:
                 parent_collection = None
 
             # Keep current datablocks
             old_datablocks = {
-                d_ref.datablock for d_ref in container.datablock_refs
+                d_ref.datablock
+                for d_ref in container.datablock_refs
+                if d_ref.datablock
             }
 
             # Clear container datablocks
             container.datablock_refs.clear()
+
+            # Rename old datablocks
+            for old_datablock in old_datablocks:
+                old_datablock["original_name"] = old_datablock.name
+                old_datablock.name += ".old"
 
             # Load new into same container
             container, datablocks = load_func(
@@ -1226,7 +1235,7 @@ class AssetLoader(Loader):
                     (
                         d
                         for d in datablocks
-                        if old_datablock.name.rstrip(f".{digits}")
+                        if old_datablock["original_name"].rstrip(f".{digits}")
                         == d.name.rstrip(f".{digits}")
                     ),
                     None,
@@ -1234,20 +1243,16 @@ class AssetLoader(Loader):
 
                 # Replace old by new datablock and keep the original name.
                 if new_datablock:
-                    original_datablock_name = old_datablock.name
-                    old_datablock.name += ".old"
-                    new_datablock.name = original_datablock_name
+                    new_datablock.name = old_datablock["original_name"]
                     old_datablock.user_remap(new_datablock)
 
             # Restore parent collection if existing
             if parent_collection:
                 unlink_from_collection(
-                    container.outliner_entity,
-                    bpy.context.scene.collection
+                    container.outliner_entity, bpy.context.scene.collection
                 )
                 link_to_collection(
-                    container.outliner_entity,
-                    parent_collection
+                    container.outliner_entity, parent_collection
                 )
 
         # Clear and purge useless datablocks.
@@ -1275,9 +1280,8 @@ class AssetLoader(Loader):
             Tuple[OpenpypeContainer, List[bpy.types.ID]]:
                 (Container, List of loaded datablocks)
         """
-        object_name = container_metadata["objectName"]
         container = self._get_scene_container(container_metadata)
-        assert container, f"The asset is not loaded: {object_name}"
+        assert container, f"The asset is not loaded: {container_metadata.get('objectName')}"
 
         new_libpath = Path(get_representation_path(representation))
         assert (

@@ -232,19 +232,18 @@ def assign_loader_to_datablocks(datablocks: List[bpy.types.ID]):
             "representation": {"name": "blend"},
         }
         loaders = loaders_from_repre_context(all_loaders, context)
-
-        if datablock.library:
+        if datablock.library or datablock.override_library:
             # Instance loader, an instance in OP is necessarily a link
             if datablock in all_instanced_collections:
-                datablock[AVALON_PROPERTY]["loader"] = get_loader_name(
-                    loaders, "Instance"
-                )
+                loader_name = get_loader_name(loaders, "Instance")
             # Link loader
             else:
-                datablock[AVALON_PROPERTY]["loader"] = get_loader_name(
-                    loaders, "Link"
-                )
+                loader_name = get_loader_name(loaders, "Link")
         else:  # Append loader
-            datablock[AVALON_PROPERTY]["loader"] = get_loader_name(
-                loaders, "Append"
-            )
+            loader_name = get_loader_name(loaders, "Append")
+        datablock[AVALON_PROPERTY]["loader"] = loader_name
+
+        # Set to related container
+        container = bpy.context.scene.openpype_containers.get(datablock.name)
+        if container and container.get(AVALON_PROPERTY):
+            container[AVALON_PROPERTY]["loader"] = loader_name

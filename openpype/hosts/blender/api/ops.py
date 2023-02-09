@@ -21,19 +21,16 @@ from openpype import style
 from openpype.client.entities import (
     get_asset_by_name,
     get_assets,
-    get_subset_by_id,
-    get_version_by_id,
 )
-from openpype.hosts.blender.api.lib import add_datablocks_to_container, ls
-from openpype.hosts.blender.api.properties import OpenpypeContainer
+from openpype.hosts.blender.api.lib import add_datablocks_to_container, update_scene_containers_from_outliner
 from openpype.hosts.blender.api.utils import (
     BL_OUTLINER_TYPES,
     BL_TYPE_DATAPATH,
     get_all_outliner_children,
+    get_parent_collection,
     link_to_collection,
 )
 from openpype.pipeline import legacy_io
-from openpype.pipeline.constants import AVALON_INSTANCE_ID
 from openpype.pipeline.create.creator_plugins import (
     discover_legacy_creator_plugins,
     get_legacy_creator_by_name,
@@ -1052,6 +1049,75 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class SCENE_OT_ExposeContainerContent(bpy.types.Operator):
+    """Container's content is exposed to be accessible in scene inventory.\n"""
+    """It breaks the possibility to update the target container later"""
+
+    bl_idname = "scene.expose_container_content"
+    bl_label = "Expose Container's Content"
+
+    container_name: bpy.props.StringProperty(name="Container to expose")
+
+    # NOTE cannot use AVALON_PROPERTY because of circular dependency
+    # and the refactor is very big, but must be done soon
+
+    def invoke(self, context, _event):
+        wm = context.window_manager
+
+        # Prefill with outliner collection
+        matched_container = context.scene.openpype_containers.get(
+            context.collection.name
+        )
+        if matched_container:
+            self.container_name = matched_container.name
+
+        return wm.invoke_props_dialog(self)
+
+    def draw(self, context):
+        layout = self.layout
+
+        layout.prop_search(
+            self, "container_name", context.scene, "openpype_containers"
+        )
+
+    def execute(self, context):
+        if not self.container_name:
+            self.report({"WARNING"}, "No container to make publishable...")
+            return {"CANCELLED"}
+
+        # Recover required data
+        openpype_containers = context.scene.openpype_containers
+        container = openpype_containers.get(self.container_name)
+
+        # In collection, convert to basic
+        parent_collection = get_parent_collection(container.outliner_entity)
+        if isinstance(container.outliner_entity, bpy.types.Collection):
+            container.outliner_entity.name += ".old"
+            if isinstance(container.outliner_entity, bpy.types.Collection):
+                substitute_collection = bpy.data.collections.new(
+                    self.container_name
+                )
+                parent_collection.children.link(substitute_collection)
+                link_to_collection(
+                    container.outliner_entity.children, substitute_collection
+                )
+
+        # Unlink entity from scene
+        link_to_collection(
+            container.outliner_entity.objects, parent_collection
+        )
+        parent_collection.children.unlink(container.outliner_entity)
+        container.outliner_entity.use_fake_user = False
+
+        # Remove old container
+        openpype_containers.remove(openpype_containers.find(container.name))
+
+        # Update containers list
+        update_scene_containers_from_outliner()
+
+        return {"FINISHED"}
+
+
 def draw_op_collection_menu(self, context):
     """Draw OpenPype collection context menu.
 
@@ -1061,11 +1127,19 @@ def draw_op_collection_menu(self, context):
     layout = self.layout
     layout.separator()
 
-    row = layout.row()
-    row.operator_context = "INVOKE_DEFAULT"
-    op = row.operator(
+    # Make container publishable
+    layout.operator_context = "INVOKE_DEFAULT"
+    op = layout.operator(
         SCENE_OT_MakeContainerPublishable.bl_idname,
         text=SCENE_OT_MakeContainerPublishable.bl_label,
+    )
+    op.container_name = context.collection.name
+
+    # Expose container
+    layout.operator_context = "EXEC_DEFAULT"
+    op = layout.operator(
+        SCENE_OT_ExposeContainerContent.bl_idname,
+        text=SCENE_OT_ExposeContainerContent.bl_label,
     )
     op.container_name = context.collection.name
 
@@ -1095,6 +1169,7 @@ classes = [
     LaunchWorkFiles,
     TOPBAR_MT_avalon,
     SCENE_OT_MakeContainerPublishable,
+    SCENE_OT_ExposeContainerContent,
     SCENE_OT_CreateOpenpypeInstance,
     SCENE_OT_RemoveOpenpypeInstance,
     SCENE_OT_AddToOpenpypeInstance,

@@ -90,13 +90,14 @@ def parse_container(
 
     return data
 
+def update_scene_containers_from_outliner()->List[OpenpypeContainer]:
+    """Update containers in scene from outliner entities.
 
-def ls() -> Iterator:
-    """List containers from active Blender scene.
+    For example, if a loaded collection has been duplicated using the outliner
+    a container will be created with this collection.
 
-    This is the host-equivalent of api.ls(), but instead of listing assets on
-    disk, it lists assets already loaded in Blender; once loaded they are
-    called containers.
+    Returns:
+        List[OpenpypeContainer]: Created containers
     """
     openpype_containers = bpy.context.scene.openpype_containers
     scene_collection = bpy.context.scene.collection
@@ -142,6 +143,7 @@ def ls() -> Iterator:
     assign_loader_to_datablocks(container_datablocks)
 
     # Create containers from container datablocks
+    created_containers = set()
     for entity in container_datablocks:
         if entity in datablocks_to_skip:
             continue
@@ -172,11 +174,15 @@ def ls() -> Iterator:
             and entity.instance_collection
             else entity
         ).get(pipeline.AVALON_PROPERTY)
+        # Keep objectName for update/switch
+        metadata['objectName'] = container.name 
         container[pipeline.AVALON_PROPERTY] = metadata
         container.library = entity.library
         if isinstance(entity, tuple(BL_OUTLINER_TYPES)):
             container.outliner_entity = entity
-        # TODO Current
+
+        # Keep created container
+        created_containers.add(container)
 
     # Clear containers when data has been deleted from the outliner
     for container in reversed(openpype_containers):
@@ -186,8 +192,23 @@ def ls() -> Iterator:
                 openpype_containers.find(container.name)
             )
 
+    return created_containers
+
+
+def ls() -> Iterator:
+    """List containers from active Blender scene.
+
+    This is the host-equivalent of api.ls(), but instead of listing assets on
+    disk, it lists assets already loaded in Blender; once loaded they are
+    called containers.
+    """
+    update_scene_containers_from_outliner()
+
     # Parse containers
-    return [parse_container(container) for container in openpype_containers]
+    return [
+        parse_container(container)
+        for container in bpy.context.scene.openpype_containers
+    ]
 
 
 def load_scripts(paths):
