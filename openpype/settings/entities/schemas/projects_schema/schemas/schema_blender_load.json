@@ -58,6 +58,34 @@
                     "maximum": 1000
                 }
             ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "LinkSetdressLoader",
+            "label": "Link Setdress Loader",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "AppendSetdressLoader",
+            "label": "Append Setdress Loader",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
         }
     ]
 }
