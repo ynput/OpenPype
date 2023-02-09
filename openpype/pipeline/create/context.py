@@ -1439,59 +1439,6 @@ class CreateContext:
             )
         return creator
 
-    def raw_create(self, identifier, *args, **kwargs):
-        """Wrapper for creators to trigger 'create' method.
-
-        Different types of creators may expect different arguments thus the
-        hints for args are blind.
-
-        Args:
-            identifier (str): Creator's identifier.
-            *args (Tuple[Any]): Arguments for create method.
-            **kwargs (Dict[Any, Any]): Keyword argument for create method.
-
-        Raises:
-            CreatorsCreateFailed: When creation fails.
-        """
-
-        error_message = "Failed to run Creator with identifier \"{}\". {}"
-        creator = self.creators.get(identifier)
-        label = getattr(creator, "label", None)
-        failed = False
-        add_traceback = False
-        exc_info = None
-        result = None
-        try:
-            # Fake CreatorError (Could be maybe specific exception?)
-            if creator is None:
-                raise CreatorError(
-                    "Creator {} was not found".format(identifier)
-                )
-
-            result = creator.create(*args, **kwargs)
-
-        except CreatorError:
-            failed = True
-            exc_info = sys.exc_info()
-            self.log.warning(error_message.format(identifier, exc_info[1]))
-
-        except:
-            failed = True
-            add_traceback = True
-            exc_info = sys.exc_info()
-            self.log.warning(
-                error_message.format(identifier, ""),
-                exc_info=True
-            )
-
-        if failed:
-            raise CreatorsCreateFailed([
-                prepare_failed_creator_operation_info(
-                    identifier, label, exc_info, add_traceback
-                )
-            ])
-        return result
-
     def create(
         self,
         creator_identifier,
