@@ -634,7 +634,7 @@ def get_instance_staging_dir(instance):
     return staging_dir
 
 
-def get_publish_repre_path(instance, repre, only_published):
+def get_publish_repre_path(instance, repre, only_published=False):
     """Get representation path that can be used for integration.
 
     When 'only_published' is set to true the validation of path is not
