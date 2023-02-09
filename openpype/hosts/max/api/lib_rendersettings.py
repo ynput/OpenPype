@@ -75,7 +75,7 @@ class RenderSettings(object):
             )]
         except KeyError:
             aov_separator = "."
-        outputFilename = "{0}.{1}".format(output, img_fmt)
+        outputFilename = "{0}..{1}".format(output, img_fmt)
         outputFilename = outputFilename.replace("{aov_separator}",
                                                 aov_separator)
         rt.rendOutputFilename = outputFilename
@@ -122,7 +122,7 @@ class RenderSettings(object):
             renderlayer_name = render_elem.GetRenderElement(i)
             target, renderpass = str(renderlayer_name).split(":")
             render_element = os.path.join(dir, renderpass)
-            aov_name = "{0}.{1}".format(render_element, ext)
+            aov_name = "{0}..{1}".format(render_element, ext)
             try:
                 aov_separator = self._aov_chars[(
                     self._project_settings["maya"]
