@@ -477,7 +477,10 @@ def _convert_maya_project_settings(ayon_settings, output):
 
     # --- Publish (END) ---
     for renderer_settings in ayon_maya["RenderSettings"].values():
-        if "additional_options" not in renderer_settings:
+        if (
+            not isinstance(renderer_settings, dict)
+            or "additional_options" not in renderer_settings
+        ):
             continue
         renderer_settings["additional_options"] = [
             [item["attribute"], item["value"]]
