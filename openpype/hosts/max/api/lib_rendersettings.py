@@ -121,6 +121,5 @@ class RenderSettings(object):
         for i in range(render_elem_num):
             renderlayer_name = render_elem.GetRenderElement(i)
             target, renderpass = str(renderlayer_name).split(":")
-            render_element = os.path.join(dir, renderpass)
-            aov_name = "{0}..{1}".format(render_element, ext)
+            aov_name = "{0}_{1}..{2}".format(dir, renderpass, ext)
             render_elem.SetRenderElementFileName(i, aov_name)
