@@ -83,7 +83,7 @@ class RenderSettings(object):
             return
         # TODO: Finish the arnold render setup
         if renderer == "Arnold":
-            return
+            self.arnold_setup()
 
         if (
             renderer == "ART_Renderer" or
@@ -96,6 +96,18 @@ class RenderSettings(object):
             self.render_element_layer(output, width, height, img_fmt)
 
         rt.rendSaveFile = True
+
+    def arnold_setup(self):
+        # get Arnold RenderView run in the background
+        # for setting up renderable camera
+        arv = rt.MAXToAOps.ArnoldRenderView()
+        render_camera = rt.viewport.GetCamera()
+        arv.setOption("Camera", str(render_camera))
+
+        aovmgr = rt.renderers.current.AOVManager
+        aovmgr.drivers = "#()"
+
+        arv.close()
 
     def render_element_layer(self, dir, width, height, ext):
         """For Renderers with render elements"""

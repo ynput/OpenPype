@@ -35,7 +35,6 @@
                   "multiselection": false,
                   "defaults": "exr",
                   "enum_items": [
-                    {"avi": "avi"},
                     {"bmp": "bmp"},
                     {"exr":  "exr"},
                     {"tif":  "tif"},
