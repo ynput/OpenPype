@@ -5,7 +5,6 @@ import pyblish.api
 
 from pymxs import runtime as rt
 from openpype.pipeline import legacy_io
-from openpype.hosts.max.api.lib import get_current_renderer
 from openpype.hosts.max.api.lib_renderproducts import RenderProducts
 
 
