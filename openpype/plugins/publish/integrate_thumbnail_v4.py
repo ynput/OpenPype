@@ -48,7 +48,7 @@ class IntegrateThumbnailsv4(pyblish.api.ContextPlugin):
 
         project_name = context.data["projectName"]
 
-        # Collect verion ids from all filtered instance
+        # Collect version ids from all filtered instance
         version_ids = {
             instance_items.version_id
             for instance_items in filtered_instance_items
@@ -73,9 +73,10 @@ class IntegrateThumbnailsv4(pyblish.api.ContextPlugin):
 
     def _prepare_instances(self, context):
         context_thumbnail_path = context.get("thumbnailPath")
-        valid_context_thumbnail = False
-        if context_thumbnail_path and os.path.exists(context_thumbnail_path):
-            valid_context_thumbnail = True
+        valid_context_thumbnail = bool(
+            context_thumbnail_path
+            and os.path.exists(context_thumbnail_path)
+        )
 
         filtered_instances = []
         for instance in context:

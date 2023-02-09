@@ -381,17 +381,14 @@ def load_environments():
     based on server url.
     """
 
-    server_url = os.environ.get("AYON_SERVER_URL")
-    if not server_url:
+    if not os.environ.get("AYON_SERVER_URL"):
         server_url = get_last_server()
         if not server_url:
             return
         os.environ["AYON_SERVER_URL"] = server_url
 
-    token = os.environ.get("AYON_TOKEN")
-    if not token:
-        token = load_token(server_url)
-        if token:
+    if not os.environ.get("AYON_TOKEN"):
+        if token := load_token(server_url):
             os.environ["AYON_TOKEN"] = token
 
 
