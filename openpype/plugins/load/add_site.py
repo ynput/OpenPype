@@ -2,12 +2,6 @@ from openpype.client import get_linked_representation_id
 from openpype.modules import ModulesManager
 from openpype.pipeline import load
 from openpype.modules.sync_server.utils import SiteAlreadyPresentError
-from openpype.client.entities import (
-    get_hero_version_by_subset_id,
-    get_representation_by_id,
-    get_version_by_id,
-    get_representation_by_name
-)
 
 
 class AddSyncSite(load.LoaderPlugin):
@@ -84,35 +78,3 @@ class AddSyncSite(load.LoaderPlugin):
     def filepath_from_context(self, context):
         """No real file loading"""
         return ""
-
-    def _add_hero_representation_ids(self, project_name, repre_id):
-        """Find hero version if exists for repre_id.
-
-        Args:
-            project_name (str)
-            repre_id (ObjectId)
-        Returns:
-            (list): at least [repre_id] if no hero version found
-        """
-        representation_ids = [repre_id]
-
-        repre_doc = get_representation_by_id(
-            project_name, repre_id, fields=["_id", "parent", "name"]
-        )
-
-        version_doc = get_version_by_id(project_name, repre_doc["parent"])
-        if version_doc["type"] != "hero_version":
-            hero_version = get_hero_version_by_subset_id(
-                project_name, version_doc["parent"],
-                fields=["_id", "version_id"]
-            )
-            if (hero_version and
-                    hero_version["version_id"] == version_doc["_id"]):
-                hero_repre_doc = get_representation_by_name(
-                    project_name,
-                    repre_doc["name"],
-                    hero_version["_id"]
-                )
-                representation_ids.append(hero_repre_doc["_id"])
-
-        return representation_ids
