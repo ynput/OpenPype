@@ -126,7 +126,7 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
 
         # E.g. http://192.168.0.1:8082/api/jobs
         url = "{}/api/jobs".format(deadline_url)
-        response = requests.post(url, json=payload, verify=False)
+        response = requests.post(url, json=payload)
         if not response.ok:
             raise Exception(response.text)
         # Store output dir for unified publisher (filesequence)

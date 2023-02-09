@@ -39,8 +39,8 @@ class CollectRender(pyblish.api.InstancePlugin):
             or renderer_name == "Quicksilver_Hardware_Renderer"):
             plugin = "3dsmax"
 
-        if (renderer_name == "V_Ray_6_Hotfix_3" or
-            renderer_name == "V_Ray_GPU_6_Hotfix_3"):
+        if (renderer_name == "V_Ray_6_Hotfix_3"
+            or renderer_name == "V_Ray_GPU_6_Hotfix_3"):
             plugin = "Vray"
 
         if renderer_name == "Redshift Renderer":

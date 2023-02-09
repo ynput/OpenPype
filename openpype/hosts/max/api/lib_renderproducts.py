@@ -45,12 +45,12 @@ class RenderProducts(object):
         if renderer == "VUE_File_Renderer":
             return full_render_list
 
-        if (renderer == "ART_Renderer" or
-            renderer == "Redshift Renderer" or
-            renderer == "V_Ray_6_Hotfix_3" or
-            renderer == "V_Ray_GPU_6_Hotfix_3" or
-            renderer == "Default_Scanline_Renderer" or
-            renderer == "Quicksilver_Hardware_Renderer"):
+        if (renderer == "ART_Renderer"
+            or renderer == "Redshift Renderer"
+            or renderer == "V_Ray_6_Hotfix_3"
+            or renderer == "V_Ray_GPU_6_Hotfix_3"
+            or renderer == "Default_Scanline_Renderer"
+            or renderer == "Quicksilver_Hardware_Renderer"):
             render_elem_list = self.render_elements_product(output_file,
                                                             startFrame,
                                                             endFrame,
