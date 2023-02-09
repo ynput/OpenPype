@@ -54,6 +54,7 @@ class CreateRender(plugin.Creator):
         tileRendering (bool): Instance is set to tile rendering mode. We
             won't submit actual render, but we'll make publish job to wait
             for Tile Assembly job done and then publish.
+        strict_error_checking (bool): Enable/disable error checking on DL
 
     See Also:
         https://pype.club/docs/artist_hosts_maya#creating-basic-render-setup
@@ -271,6 +272,9 @@ class CreateRender(plugin.Creator):
             secondary_pool = pool_setting["secondary_pool"]
             self.data["secondaryPool"] = self._set_default_pool(pool_names,
                                                                 secondary_pool)
+            strict_error_checking = maya_submit_dl.get("strict_error_checking",
+                                                       True)
+            self.data["strict_error_checking"] = strict_error_checking
 
         if muster_enabled:
             self.log.info(">>> Loading Muster credentials ...")
