@@ -313,7 +313,7 @@ def boot():
     ]
 
     for module_name in modules_to_del:
-        with contextlib.supress(AttributeError, KeyError):
+        with contextlib.suppress(AttributeError, KeyError):
             del sys.modules[module_name]
 
     from openpype import cli
@@ -331,7 +331,7 @@ def boot():
         info.insert(0, f">>> Using AYON from [ {AYON_ROOT} ]")
 
         t_width = 20
-        with contextlib.supress(ValueError, OSError):
+        with contextlib.suppress(ValueError, OSError):
             t_width = os.get_terminal_size().columns - 2
 
         _header = f"*** AYON [{__version__}] "

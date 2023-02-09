@@ -60,11 +60,11 @@ def get_folders_with_tasks(
     """Query folders with tasks from server.
 
     This is for v4 compatibility where tasks were stored on assets. This is
-    inefficient way how folders and tasks are queried so it was added only
+    an inefficient way how folders and tasks are queried so it was added only
     as compatibility function.
 
     Todos:
-        Folder name won't be unique identifier so we should add folder path
+        Folder name won't be unique identifier, so we should add folder path
             filtering.
 
     Notes:
