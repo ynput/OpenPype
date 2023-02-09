@@ -41,6 +41,9 @@ class ExtractBlend(publish.Extractor):
         # Perform extraction
         self.log.info("Performing extraction..")
 
+        # Set object mode
+        bpy.ops.object.mode_set()
+
         plugin.deselect_all()
 
         data_blocks = set(instance)
