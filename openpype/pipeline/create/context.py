@@ -1415,6 +1415,30 @@ class CreateContext:
         with self.bulk_instances_collection():
             self._bulk_instances_to_process.append(instance)
 
+    def _get_creator_in_create(self, identifier):
+        """Creator by identifier with unified error.
+
+        Helper method to get creator by identifier with same error when creator
+        is not available.
+
+        Args:
+            identifier (str): Identifier of creator plugin.
+
+        Returns:
+            BaseCreator: Creator found by identifier.
+
+        Raises:
+            CreatorError: When identifier is not known.
+        """
+
+        creator = self.creators.get(identifier)
+        # Fake CreatorError (Could be maybe specific exception?)
+        if creator is None:
+            raise CreatorError(
+                "Creator {} was not found".format(identifier)
+            )
+        return creator
+
     def raw_create(self, identifier, *args, **kwargs):
         """Wrapper for creators to trigger 'create' method.
 
@@ -1497,14 +1521,9 @@ class CreateContext:
 
         Raises:
             CreatorError: If creator was not found or asset is empty.
-            CreatorsCreateFailed: When creation fails.
         """
 
-        creator = self.creators.get(creator_identifier)
-        if creator is None:
-            raise CreatorError(
-                "Creator {} was not found".format(creator_identifier)
-            )
+        creator = self._get_creator_in_create(creator_identifier)
 
         project_name = self.project_name
         if asset_doc is None:
@@ -1531,8 +1550,7 @@ class CreateContext:
             "task": task_name,
             "variant": variant
         }
-        return self.raw_create(
-            creator_identifier,
+        return creator.create(
             subset_name,
             instance_data,
             pre_create_data
