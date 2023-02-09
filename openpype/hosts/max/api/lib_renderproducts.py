@@ -91,7 +91,7 @@ class RenderProducts(object):
 
             if renderlayer_name.enabled:
                 for f in range(startFrame, endFrame):
-                    render_element = "{0}_{1}..{2}.{2}".format(folder,
+                    render_element = "{0}_{1}..{2}.{3}".format(folder,
                                                                renderpass,
                                                                str(f),
                                                                fmt)
