@@ -31,8 +31,6 @@ class CollectRender(pyblish.api.InstancePlugin):
         folder = folder.replace("\\", "/")
 
         imgFormat = RenderProducts().image_format()
-        renderer_class = get_current_renderer()
-        renderer_name = str(renderer_class).split(":")[0]
         # setup the plugin as 3dsmax for the internal renderer
         data = {
             "subset": instance.name,
