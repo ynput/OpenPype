@@ -12,12 +12,14 @@ import pyblish.api
 
 from openpype.lib import (
     Logger,
-    filter_profiles,
-    StringTemplate
+    filter_profiles
 )
 from openpype.settings import (
     get_project_settings,
     get_system_settings,
+)
+from openpype.pipeline import (
+    tempdir
 )
 
 from .contants import (
@@ -645,24 +647,12 @@ def get_instance_staging_dir(instance):
     if staging_dir:
         return staging_dir
 
-    openpype_temp_dir = os.getenv("OPENPYPE_TMPDIR")
-    custom_temp_dir = None
-    if openpype_temp_dir:
-        if "{" in openpype_temp_dir:
-            # path is anatomy template
-            custom_temp_dir = _format_staging_dir(
-                instance, openpype_temp_dir
-            )
-        else:
-            # path is absolute
-            custom_temp_dir = openpype_temp_dir
-
-            if not os.path.exists(custom_temp_dir):
-                try:
-                    # create it if it doesnt exists
-                    os.makedirs(custom_temp_dir)
-                except IOError as error:
-                    raise IOError("Path couldn't be created: {}".format(error))
+    anatomy_data = instance.data.get("anatomy_data")
+    project_name =
+    # get customized tempdir path from `OPENPYPE_TEMPDIR` env var
+    custom_temp_dir = tempdir.create_custom_tempdir(
+        instance.data["anatomy_data"]["project"]["name"]
+    )
 
     if custom_temp_dir:
         staging_dir = os.path.normpath(
@@ -678,38 +668,3 @@ def get_instance_staging_dir(instance):
     instance.data['stagingDir'] = staging_dir
 
     return staging_dir
-
-
-def _format_staging_dir(instance, openpype_temp_dir):
-    """ Formating template
-
-    Template path formatting is supporting:
-    - optional key formating
-    - available keys:
-        - root[work | <root name key>]
-        - project[name | code]
-        - asset
-        - hierarchy
-        - task
-        - username
-        - app
-
-    Args:
-        instance (pyblish.Instance): instance object
-        openpype_temp_dir (str): path string
-
-    Returns:
-        str: formated path
-    """
-    anatomy = instance.context.data["anatomy"]
-    # get anatomy formating data
-    # so template formating is supported
-    anatomy_data = copy.deepcopy(instance.context.data["anatomyData"])
-    anatomy_data["root"] = anatomy.roots
-
-    result = StringTemplate.format_template(
-        openpype_temp_dir, anatomy_data).normalized()
-
-    # create the dir in case it doesnt exists
-    os.makedirs(os.path.dirname(result))
-    return result
