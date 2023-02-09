@@ -7,7 +7,9 @@ def get_linked_asset_ids(project_name, asset_doc=None, asset_id=None):
         Asset links now works only from asset to assets.
 
     Args:
+        project_name (str): Project where to look for asset.
         asset_doc (dict): Asset document from DB.
+        asset_id (str): Asset id to find its document.
 
     Returns:
         List[Union[ObjectId, str]]: Asset ids of input links.
