@@ -100,19 +100,8 @@ def get_dependencies_dir():
     return dependencies_dir
 
 
-class AddonDownloader(metaclass=ABCMeta):
+class SourceDownloader(metaclass=ABCMeta):
     log = logging.getLogger(__name__)
-
-    def __init__(self):
-        self._downloaders = {}
-
-    def register_format(self, downloader_type, downloader):
-        self._downloaders[downloader_type.value] = downloader
-
-    def get_downloader(self, downloader_type):
-        if downloader := self._downloaders.get(downloader_type):
-            return downloader()
-        raise ValueError(f"{downloader_type} not implemented")
 
     @classmethod
     @abstractmethod
@@ -181,7 +170,41 @@ class AddonDownloader(metaclass=ABCMeta):
         os.remove(addon_zip_path)
 
 
-class OSAddonDownloader(AddonDownloader):
+class DownloadFactory:
+    def __init__(self):
+        self._downloaders = {}
+
+    def register_format(self, downloader_type, downloader):
+        """Register downloader for download type.
+
+        Args:
+            downloader_type (UrlType): Type of source.
+            downloader (SourceDownloader): Downloader which cares about
+                download, hash check and unzipping.
+        """
+
+        self._downloaders[downloader_type.value] = downloader
+
+    def get_downloader(self, downloader_type):
+        """Registered downloader for type.
+
+        Args:
+            downloader_type (UrlType): Type of source.
+
+        Returns:
+            SourceDownloader: Downloader object which should care about file
+                distribution.
+
+        Raises:
+            ValueError: If type does not have registered downloader.
+        """
+
+        if downloader := self._downloaders.get(downloader_type):
+            return downloader()
+        raise ValueError(f"{downloader_type} not implemented")
+
+
+class OSDownloader(SourceDownloader):
     @classmethod
     def download(cls, source, destination_dir, data, transfer_progress):
         # OS doesn't need to download, unzip directly
@@ -196,7 +219,7 @@ class OSAddonDownloader(AddonDownloader):
         pass
 
 
-class HTTPAddonDownloader(AddonDownloader):
+class HTTPDownloader(SourceDownloader):
     CHUNK_SIZE = 100000
 
     @staticmethod
@@ -237,7 +260,7 @@ class HTTPAddonDownloader(AddonDownloader):
             os.remove(filepath)
 
 
-class AyonServerDownloader(AddonDownloader):
+class AyonServerDownloader(SourceDownloader):
     """Downloads static resource file from v4 Server.
 
     Expects filled env var AYON_SERVER_URL.
@@ -475,7 +498,7 @@ class DistributionItem:
         unzip_dirpath (str): Path to directory where zip is downloaded.
         download_dirpath (str): Path to directory where file is unzipped.
         file_hash (str): Hash of file for validation.
-        factory (AddonDownloader): Downloaders factory object.
+        factory (DownloadFactory): Downloaders factory object.
         sources (List[SourceInfo]): Possible sources to receive the
             distribution item.
         downloader_data (Dict[str, Any]): More information for downloaders.
@@ -729,7 +752,7 @@ class AyonDistribution:
     Args:
         addon_dirpath (str): Where addons will be stored.
         dependency_dirpath (str): Where dependencies will be stored.
-        dist_factory (AddonDownloader): Factory which cares about downloading
+        dist_factory (DownloadFactory): Factory which cares about downloading
             of items based on source type.
         addons_info (List[AddonInfo]): List of prepared addons info.
         dependency_package_info (Union[Dict[str, Any], None]): Dependency
@@ -747,7 +770,7 @@ class AyonDistribution:
         self._addons_dirpath = addon_dirpath or get_addons_dir()
         self._dependency_dirpath = dependency_dirpath or get_dependencies_dir()
         self._dist_factory = (
-            dist_factory or get_default_addon_downloader()
+            dist_factory or get_default_download_factory()
         )
 
         if isinstance(addons_info, list):
@@ -1159,12 +1182,12 @@ class AyonDistribution:
         return output
 
 
-def get_default_addon_downloader():
-    addon_downloader = AddonDownloader()
-    addon_downloader.register_format(UrlType.FILESYSTEM, OSAddonDownloader)
-    addon_downloader.register_format(UrlType.HTTP, HTTPAddonDownloader)
-    addon_downloader.register_format(UrlType.SERVER, AyonServerDownloader)
-    return addon_downloader
+def get_default_download_factory():
+    download_factory = DownloadFactory()
+    download_factory.register_format(UrlType.FILESYSTEM, OSDownloader)
+    download_factory.register_format(UrlType.HTTP, HTTPDownloader)
+    download_factory.register_format(UrlType.SERVER, AyonServerDownloader)
+    return download_factory
 
 
 def cli(*args):
