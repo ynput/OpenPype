@@ -72,6 +72,7 @@ def get_folders_with_tasks(
 
     Args:
         con (ServerAPIBase): Connection to server.
+        project_name (str): Name of project where folders are.
         folder_ids (Iterable[str]): Folder ids to filter.
         folder_paths (Iterable[str]): Folder paths used for filtering.
         folder_names (Iterable[str]): Folder names used for filtering.
