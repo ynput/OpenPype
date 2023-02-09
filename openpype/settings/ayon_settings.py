@@ -838,7 +838,7 @@ def _convert_webpublisher_project_settings(ayon_settings, output):
         for item in ayon_collect_files["task_type_to_family"]
     }
     output["webpublisher"]["publish"] = ayon_publish
-    output["webpublisher"]["imageio"] = ayon_settings["imageio"]
+    output["webpublisher"]["imageio"] = ayon_webpublisher["imageio"]
 
 
 def _convert_deadline_project_settings(ayon_settings, output):
@@ -930,7 +930,7 @@ def _convert_slack_project_settings(ayon_settings, output):
 
     ayon_slack = ayon_settings["slack"]
     slack_settings = output["slack"]
-    ayon_slack.pop("enabled")
+    ayon_slack.pop("enabled", None)
     for profile in ayon_slack["publish"]["CollectSlackFamilies"]["profiles"]:
         profile["tasks"] = profile.pop("task_names")
         profile["subsets"] = profile.pop("subset_names")
