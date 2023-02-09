@@ -11,6 +11,7 @@ import logging
 import platform
 import shutil
 import threading
+from abc import ABCMeta
 
 import appdirs
 import ayon_api
@@ -42,7 +43,7 @@ def get_local_dir(*subdirs):
     """
 
     if not subdirs:
-        raise RuntimeError("Must fill dir_name if nothing else provided!")
+        raise ValueError("Must fill dir_name if nothing else provided!")
 
     local_dir = os.path.join(
         appdirs.user_data_dir("openpype", "pypeclub"),
@@ -99,7 +100,7 @@ def get_dependencies_dir():
     return dependencies_dir
 
 
-class AddonDownloader:
+class AddonDownloader(metaclass=ABCMeta):
     log = logging.getLogger(__name__)
 
     def __init__(self):
@@ -109,10 +110,9 @@ class AddonDownloader:
         self._downloaders[downloader_type.value] = downloader
 
     def get_downloader(self, downloader_type):
-        downloader = self._downloaders.get(downloader_type)
-        if not downloader:
-            raise ValueError(f"{downloader_type} not implemented")
-        return downloader()
+        if downloader := self._downloaders.get(downloader_type):
+            return downloader()
+        raise ValueError(f"{downloader_type} not implemented")
 
     @classmethod
     @abstractmethod
@@ -121,7 +121,7 @@ class AddonDownloader:
 
         Tranfer progress can be ignored, in that case file transfer won't
         be shown as 0-100% but as 'running'. First step should be to set
-        destination content size and then add tranferred chunk sizes.
+        destination content size and then add transferred chunk sizes.
 
         Args:
             source (dict): {type:"http", "url":"https://} ...}
@@ -129,7 +129,7 @@ class AddonDownloader:
             data (dict): More information about download content. Always have
                 'type' key in.
             transfer_progress (ayon_api.TransferProgress): Progress of
-                tranferred (copy/download) content.
+                transferred (copy/download) content.
 
         Returns:
             (str) local path to addon zip file
@@ -153,8 +153,9 @@ class AddonDownloader:
         """Compares 'hash' of downloaded 'addon_url' file.
 
         Args:
-            addon_path (str): local path to addon zip file
-            addon_hash (str): sha256 hash of zip file
+            addon_path (str): Local path to addon file.
+            addon_hash (str): Hash of downloaded file.
+            hash_type (str): Type of hash.
 
         Raises:
             ValueError if hashes doesn't match
@@ -173,7 +174,7 @@ class AddonDownloader:
 
         Args:
             addon_zip_path (str): local path to addon zip file
-            destination (str): local folder to unzip
+            destination_dir (str): local folder to unzip
         """
 
         RemoteFileHandler.unzip(addon_zip_path, destination_dir)
@@ -183,10 +184,10 @@ class AddonDownloader:
 class OSAddonDownloader(AddonDownloader):
     @classmethod
     def download(cls, source, destination_dir, data, transfer_progress):
-        # OS doesnt need to download, unzip directly
+        # OS doesn't need to download, unzip directly
         addon_url = source["path"].get(platform.system().lower())
         if not os.path.exists(addon_url):
-            raise ValueError("{} is not accessible".format(addon_url))
+            raise ValueError(f"{addon_url} is not accessible")
         return addon_url
 
     @classmethod
@@ -207,7 +208,7 @@ class HTTPAddonDownloader(AddonDownloader):
             basename, ext = os.path.splitext(filename)
             allowed_exts = set(RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS)
             if ext.replace(".", "") not in allowed_exts:
-                filename = basename + ".zip"
+                filename = f"{basename}.zip"
         return filename
 
     @classmethod
@@ -408,13 +409,11 @@ class DistributeTransferProgress:
             bool: Transfer is in progress.
         """
 
-        if (
-            not self._started
-            or self._failed
-            or self._hash_check_finished
-        ):
-            return False
-        return True
+        return bool(
+            self._started
+            and not self._failed
+            and not self._hash_check_finished
+        )
 
     @property
     def transfer_progress(self):
@@ -839,9 +838,6 @@ class AyonDistribution:
                 "name": addon_info.name,
                 "version": addon_info.version
             }
-            sources = []
-            for source in addon_info.sources:
-                sources.append(source)
 
             output[full_name] = DistributionItem(
                 state,
@@ -849,7 +845,7 @@ class AyonDistribution:
                 addon_dest,
                 addon_info.hash,
                 self._dist_factory,
-                sources,
+                list(addon_info.sources),
                 downloader_data,
                 full_name,
                 self.log

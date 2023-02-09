@@ -398,7 +398,7 @@ class ServerLoginWindow(QtWidgets.QDialog):
 
         Returns:
             Union[Tuple[str, str], Tuple[None, None]]: Url and token used for
-                login if was successfull otherwise are both set to None.
+                login if was successful otherwise are both set to None.
         """
         return self._result
 
@@ -478,7 +478,7 @@ class ServerLoginWindow(QtWidgets.QDialog):
         self._login()
 
     def _validate_url(self):
-        """Use url from input, try connect and change window state on success.
+        """Use url from input to connect and change window state on success.
 
         Todos:
             Threaded check.
@@ -490,9 +490,8 @@ class ServerLoginWindow(QtWidgets.QDialog):
             valid_url = validate_url(url)
 
         except UrlError as exc:
-            parts = ["<b>{}</b>".format(exc.title)]
-            for hint in exc.hints:
-                parts.append("- {}".format(hint))
+            parts = [f"<b>{exc.title}</b>"]
+            parts.extend(f"- {hint}" for hint in exc.hints)
             self._set_message("<br/>".join(parts))
 
         except KeyboardInterrupt:
@@ -559,9 +558,9 @@ class ServerLoginWindow(QtWidgets.QDialog):
 
     def _set_input_valid_state(self, widget, valid):
         state = ""
-        if valid:
+        if valid is True:
             state = "valid"
-        elif not valid:
+        elif valid is False:
             state = "invalid"
         set_style_property(widget, "state", state)
 
@@ -640,8 +639,8 @@ def ask_to_login(url=None, username=None):
         url (str): Server url that will be prefilled in dialog.
 
     Returns:
-        Tuple[str, str]: Returns Url and user's token. Url can be changed
-            during dialog lifetime that's why the url is returned.
+        tuple[str, str, str]: Returns Url, user's token and username. Url can
+            be changed during dialog lifetime that's why the url is returned.
     """
 
     app_instance = QtWidgets.QApplication.instance()

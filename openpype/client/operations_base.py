@@ -10,7 +10,7 @@ REMOVED_VALUE = object()
 class AbstractOperation(object):
     """Base operation class.
 
-    Opration represent a call into database. The call can create, change or
+    Operation represent a call into database. The call can create, change or
     remove data.
 
     Args:
@@ -45,7 +45,7 @@ class AbstractOperation(object):
         pass
 
     def to_data(self):
-        """Convert opration to data that can be converted to json or others.
+        """Convert operation to data that can be converted to json or others.
 
         Warning:
             Current state returns ObjectId objects which cannot be parsed by
@@ -64,7 +64,7 @@ class AbstractOperation(object):
 
 
 class CreateOperation(AbstractOperation):
-    """Opeartion to create an entity.
+    """Operation to create an entity.
 
     Args:
         project_name (str): On which project operation will happen.
@@ -111,7 +111,7 @@ class CreateOperation(AbstractOperation):
 
 
 class UpdateOperation(AbstractOperation):
-    """Opeartion to update an entity.
+    """Operation to update an entity.
 
     Args:
         project_name (str): On which project operation will happen.
@@ -155,7 +155,7 @@ class UpdateOperation(AbstractOperation):
 
 
 class DeleteOperation(AbstractOperation):
-    """Opeartion to delete an entity.
+    """Operation to delete an entity.
 
     Args:
         project_name (str): On which project operation will happen.
@@ -184,15 +184,10 @@ class DeleteOperation(AbstractOperation):
 class BaseOperationsSession(object):
     """Session storing operations that should happen in an order.
 
-    At this moment does not handle anything special can be sonsidered as
+    At this moment does not handle anything special can be considered as
     stupid list of operations that will happen after each other. If creation
     of same entity is there multiple times it's handled in any way and document
     values are not validated.
-
-    All operations must be related to single project.
-
-    Args:
-        project_name (str): Project name to which are operations related.
     """
 
     def __init__(self):
