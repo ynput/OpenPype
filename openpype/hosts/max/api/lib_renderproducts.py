@@ -88,7 +88,7 @@ class RenderProducts(object):
         for i in range(render_elem_num):
             renderlayer_name = render_elem.GetRenderElement(i)
             target, renderpass = str(renderlayer_name).split(":")
-            render_name = os.path.join(dir, renderpass)
+            render_name = os.path.join(folder, renderpass)
             if renderlayer_name.enabled:
                 for f in range(startFrame, endFrame):
                     render_element = "{0}.{1}.{2}".format(render_name,
