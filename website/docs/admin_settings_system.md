@@ -14,39 +14,18 @@ Settings applicable to the full studio.
 ![general_settings](assets/settings/settings_system_general.png)
 
 ### Studio Name
- - Full name of the studio (can be used as variable on some places)
+Full name of the studio (can be used as variable on some places)
 
 ### Studio Code
- - Studio acronym or a short code (can be used as variable on some places)
+Studio acronym or a short code (can be used as variable on some places)
 
 ### Admin Password
- - After setting admin password, normal user won't have access to OpenPype settings
+After setting admin password, normal user won't have access to OpenPype settings
 and Project Manager GUI. Please keep in mind that this is a studio wide password and it is meant purely
 as a simple barrier to prevent artists from accidental setting changes.
 
 ### Environment
- - Globally applied environment variables that will be appended to any OpenPype process in the studio.
- - OpenPype is using some keys to configure some tools. Here are some:
-
-#### OPENPYPE_TMPDIR:
- - Custom staging dir directory
- - Supports anatomy keys formating. ex `{root[work]}/{project[name]}/temp`
- - supported formating keys:
-    - root[work]
-    - project[name | code]
-    - asset
-    - hierarchy
-    - task
-    - username
-    - app
-
-#### OPENPYPE_DEBUG
- - setting logger to debug mode
- - example value: "1" (to activate)
-
-#### OPENPYPE_LOG_LEVEL
- - stringified numeric value of log level. [Here for more info](https://docs.python.org/3/library/logging.html#logging-levels)
- - example value: "10"
+Globally applied environment variables that will be appended to any OpenPype process in the studio.
 
 ### Disk mapping
 - Platform dependent configuration for mapping of virtual disk(s) on an artist's OpenPype machines before OP starts up.
