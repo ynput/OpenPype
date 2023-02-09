@@ -7,8 +7,6 @@ import copy
 
 from openpype import AYON_SERVER_ENABLED
 
-# AYON_SERVER_ENABLED = False
-
 from .exceptions import (
     SaveWarningExc
 )
