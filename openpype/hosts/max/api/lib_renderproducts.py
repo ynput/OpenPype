@@ -51,8 +51,7 @@ class RenderProducts(object):
             renderer == "V_Ray_6_Hotfix_3" or
             renderer == "V_Ray_GPU_6_Hotfix_3" or
             renderer == "Default_Scanline_Renderer" or
-            renderer == "Quicksilver_Hardware_Renderer"
-           ):
+            renderer == "Quicksilver_Hardware_Renderer"):
             render_elem_list = self.render_elements_product(output_file,
                                                             startFrame,
                                                             endFrame,
