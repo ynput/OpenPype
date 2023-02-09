@@ -1,8 +1,4 @@
-import os
-import types
-
 import maya.cmds as cmds
-from mtoa.core import createOptions
 
 import pyblish.api
 from openpype.pipeline.publish import (
