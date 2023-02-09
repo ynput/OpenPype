@@ -146,6 +146,9 @@ class AttributeDefinitionsWidget(QtWidgets.QWidget):
 
             if attr_def.label:
                 label_widget = QtWidgets.QLabel(attr_def.label, self)
+                tooltip = attr_def.tooltip
+                if tooltip:
+                    label_widget.setToolTip(tooltip)
                 layout.addWidget(
                     label_widget, row, 0, 1, expand_cols
                 )
