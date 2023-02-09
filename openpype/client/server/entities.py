@@ -648,7 +648,7 @@ def get_workfile_info(
     fields = workfile_info_fields_v3_to_v4(fields)
 
     for workfile_info in con.get_workfiles_info(
-        project_name, task_ids=task["id"], fields=fields
+        project_name, task_ids=[task["id"]], fields=fields
     ):
         if workfile_info["name"] == filename:
             return convert_v4_workfile_info_to_v3(workfile_info, task)
