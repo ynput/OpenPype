@@ -98,9 +98,8 @@ def project_fields_v3_to_v4(fields, con):
                     "attrib.{}".format(attr)
                     for attr in project_attribs
                 }
-            continue
 
-        if field.startswith("data"):
+        elif field.startswith("data"):
             field_parts = field.split(".")
             field_parts.pop(0)
             data_key = ".".join(field_parts)
