@@ -45,10 +45,6 @@
                         {
                             "key": "ValidateTransformZero",
                             "label": "Validate Transform Zero"
-                        },
-                        {
-                            "key": "ValidateNoColonsInName",
-                            "label": "Validate No Colons In Name"
                         }
                     ]
                 }
