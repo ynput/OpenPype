@@ -12,7 +12,7 @@ def _convert_color(color_value):
         color_value_len = len(color_value)
         _color_value = []
         for idx in range(color_value_len // 2):
-            _color_value.append(int(color_value[idx:idx+2], 16))
+            _color_value.append(int(color_value[idx:idx + 2], 16))
         for _ in range(4 - len(_color_value)):
             _color_value.append(255)
         return _color_value
@@ -796,7 +796,10 @@ def _convert_traypublisher_project_settings(ayon_settings, output):
     shot_add_tasks = ayon_editorial_simple["shot_add_tasks"]
     if isinstance(shot_add_tasks, dict):
         shot_add_tasks = []
-    new_shot_add_tasks = {item["name"]: item["task_type"] for item in shot_add_tasks}
+    new_shot_add_tasks = {
+        item["name"]: item["task_type"]
+        for item in shot_add_tasks
+    }
     ayon_editorial_simple["shot_add_tasks"] = new_shot_add_tasks
 
     traypublisher_settings["editorial_creators"][
@@ -1004,6 +1007,8 @@ def _convert_global_project_settings(ayon_settings, output):
 
 
 def convert_project_settings(ayon_settings, default_settings):
+    # Missing settings
+    # - standalonepublisher
     output = copy.deepcopy(default_settings)
     exact_match = {
         "aftereffects",
@@ -1034,9 +1039,6 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_slack_project_settings(ayon_settings, output)
 
     _convert_global_project_settings(ayon_settings, output)
-    not_available = {
-        "standalonepublisher",
-    }
 
     return output
 
