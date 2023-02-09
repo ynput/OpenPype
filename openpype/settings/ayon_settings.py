@@ -1,3 +1,19 @@
+"""Helper functionality to convert AYON settings to OpenPype v3 settings.
+
+The settings are converted, so we can use v3 code with AYON settings. Once
+the code of and addon is converted to full AYON addon which expect AYON
+settings the conversion function can be removed.
+
+The conversion is hardcoded -> there is no other way how to achieve the result.
+
+Main entrypoints are functions:
+- convert_project_settings - convert settings to project settings
+- convert_system_settings - convert settings to system settings
+# Both getters cache values
+- get_ayon_project_settings - replacement for 'get_project_settings'
+- get_ayon_system_settings - replacement for 'get_system_settings'
+"""
+
 import json
 import copy
 import time
