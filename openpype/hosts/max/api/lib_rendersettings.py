@@ -121,16 +121,7 @@ class RenderSettings(object):
         for i in range(render_elem_num):
             renderlayer_name = render_elem.GetRenderElement(i)
             target, renderpass = str(renderlayer_name).split(":")
-            aov_name = "{0}_{1}..{2}".format(dir, renderpass, ext)
-            try:
-                aov_separator = self._aov_chars[(
-                    self._project_settings["maya"]
-                                          ["RenderSettings"]
-                                          ["aov_separator"]
-                )]
-            except KeyError:
-                aov_separator = "."
-
-            aov_name = aov_name.replace("{aov_separator}",
-                                        aov_separator)
+            render_element = os.path.join(dir, renderpass)
+            dir = dir.replace(".", " ")
+            aov_name = "{0}..{1}".format(render_element, ext)
             render_elem.SetRenderElementFileName(i, aov_name)
