@@ -85,12 +85,14 @@ class RenderSettings(object):
         if renderer == "Arnold":
             return
 
-        if (renderer == "ART_Renderer"
-            or renderer == "Redshift Renderer"
-            or renderer == "V_Ray_6_Hotfix_3"
-            or renderer == "V_Ray_GPU_6_Hotfix_3"
-            or renderer == "Default_Scanline_Renderer"
-            or renderer == "Quicksilver_Hardware_Renderer"):
+        if (
+            renderer == "ART_Renderer" or
+            renderer == "Redshift Renderer" or
+            renderer == "V_Ray_6_Hotfix_3" or
+            renderer == "V_Ray_GPU_6_Hotfix_3" or
+            renderer == "Default_Scanline_Renderer" or
+            renderer == "Quicksilver_Hardware_Renderer"
+        ):
             self.render_element_layer(output, width, height, img_fmt)
 
         rt.rendSaveFile = True

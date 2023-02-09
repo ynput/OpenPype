@@ -34,13 +34,17 @@ class CollectRender(pyblish.api.InstancePlugin):
         renderer_class = get_current_renderer()
         renderer_name = str(renderer_class).split(":")[0]
         # setup the plugin as 3dsmax for the internal renderer
-        if (renderer_name == "ART_Renderer"
-            or renderer_name == "Default_Scanline_Renderer"
-            or renderer_name == "Quicksilver_Hardware_Renderer"):
+        if (
+            renderer_name == "ART_Renderer" or
+            renderer_name == "Default_Scanline_Renderer" or
+            renderer_name == "Quicksilver_Hardware_Renderer"
+        ):
             plugin = "3dsmax"
 
-        if (renderer_name == "V_Ray_6_Hotfix_3"
-            or renderer_name == "V_Ray_GPU_6_Hotfix_3"):
+        if (
+            renderer_name == "V_Ray_6_Hotfix_3" or
+            renderer_name == "V_Ray_GPU_6_Hotfix_3"
+        ):
             plugin = "Vray"
 
         if renderer_name == "Redshift Renderer":
