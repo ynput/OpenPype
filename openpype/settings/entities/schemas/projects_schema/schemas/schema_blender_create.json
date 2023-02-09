@@ -1,0 +1,22 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "create",
+    "label": "Creator plugins",
+    "children": [
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateSetdress",
+            "label": "Setdress Creator",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        }
+    ]
+}

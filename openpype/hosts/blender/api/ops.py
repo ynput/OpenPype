@@ -1147,9 +1147,13 @@ def draw_op_collection_menu(self, context):
 @persistent
 def discover_creators_handler(_):
     """Store creators parameters in scene for optimization."""
-    plugins = discover_legacy_creator_plugins()
+    enabled_plugins = [
+        cls
+        for cls in discover_legacy_creator_plugins()
+        if cls.enabled
+    ]
     bpy.context.scene["openpype_creators"] = {}
-    for creator in plugins:
+    for creator in enabled_plugins:
         bpy.context.scene["openpype_creators"][creator.__name__] = {
             "label": creator.label,
             "defaults": creator.defaults,
