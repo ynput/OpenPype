@@ -60,6 +60,7 @@ class BaseAnatomy(object):
     def __init__(self, project_doc, local_settings, site_name):
         project_name = project_doc["name"]
         self.project_name = project_name
+        self.project_code = project_doc["data"]["code"]
 
         if (site_name and
                 site_name not in ["studio", "local", get_local_site_id()]):
