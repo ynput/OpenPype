@@ -92,9 +92,10 @@ class RenderProducts(object):
             render_dir = os.path.join(folder, renderpass)
             if renderlayer_name.enabled:
                 for f in range(startFrame, endFrame):
-                    render_element = "{0}.{1}.{2}".format(render_dir,
-                                                          str(f),
-                                                          fmt)
+                    render_element = "{0}_{1}..{2}.{2}".format(folder,
+                                                               renderpass,
+                                                               str(f),
+                                                               fmt)
                     render_element = render_element.replace("\\", "/")
                     render_dirname.append(render_element)
 
