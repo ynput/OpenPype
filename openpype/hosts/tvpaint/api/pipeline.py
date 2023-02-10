@@ -18,6 +18,7 @@ from openpype.pipeline import (
     register_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
+from openpype.pipeline.context_tools import get_global_context
 
 from .lib import (
     execute_george,
@@ -94,6 +95,40 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         register_event_callback("application.launched", self.initial_launch)
         register_event_callback("application.exit", self.application_exit)
 
+    def get_current_project_name(self):
+        """
+        Returns:
+            Union[str, None]: Current project name.
+        """
+
+        return self.get_current_context().get("project_name")
+
+    def get_current_asset_name(self):
+        """
+        Returns:
+            Union[str, None]: Current asset name.
+        """
+
+        return self.get_current_context().get("asset_name")
+
+    def get_current_task_name(self):
+        """
+        Returns:
+            Union[str, None]: Current task name.
+        """
+
+        return self.get_current_context().get("task_name")
+
+    def get_current_context(self):
+        context = get_current_workfile_context()
+        if not context:
+            return get_global_context()
+
+        return {
+            "project_name": context["project"],
+            "asset_name": context.get("asset"),
+            "task_name": context.get("task")
+        }
 
     # --- Create ---
     def get_context_data(self):
