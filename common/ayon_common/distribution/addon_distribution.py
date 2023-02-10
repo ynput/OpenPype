@@ -13,9 +13,9 @@ import shutil
 import threading
 from abc import ABCMeta
 
-import appdirs
 import ayon_api
 
+from ayon_common.utils import get_ayon_appdirs
 from .file_handler import RemoteFileHandler
 from .addon_info import (
     AddonInfo,
@@ -45,12 +45,7 @@ def get_local_dir(*subdirs):
     if not subdirs:
         raise ValueError("Must fill dir_name if nothing else provided!")
 
-    local_dir = os.path.join(
-        appdirs.user_data_dir("openpype", "pypeclub"),
-        # TODO use ayon appdirs instead of openpype
-        # appdirs.user_data_dir("ayon", "ynput"),
-        *subdirs
-    )
+    local_dir = get_ayon_appdirs(*subdirs)
     if not os.path.isdir(local_dir):
         try:
             os.makedirs(local_dir)
