@@ -506,6 +506,43 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         return version_doc
 
+    def _validate_repre_files(self, files, is_sequence_representation):
+        """Validate representation files before transfer preparation.
+
+        Check if files contain only filenames instead of full paths and check
+        if sequence don't contain more than one sequence or has remainders.
+
+        Args:
+            files (Union[str, List[str]]): Files from representation.
+            is_sequence_representation (bool): Files are for sequence.
+
+        Raises:
+            KnownPublishError: If validations don't pass.
+        """
+
+        if not files:
+            return
+
+        if not is_sequence_representation:
+            files = [files]
+
+        if any(os.path.isabs(fname) for fname in files):
+            raise KnownPublishError("Given file names contain full paths")
+
+        if not is_sequence_representation:
+            return
+
+        src_collections, remainders = clique.assemble(files)
+        if len(files) < 2 or len(src_collections) != 1 or remainders:
+            raise KnownPublishError((
+                "Files of representation does not contain proper"
+                " sequence files.\nCollected collections: {}"
+                "\nCollected remainders: {}"
+            ).format(
+                ", ".join([str(col) for col in src_collections]),
+                ", ".join([str(rem) for rem in remainders])
+            ))
+
     def prepare_representation(self, repre,
                                template_name,
                                existing_repres_by_name,
@@ -606,21 +643,14 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             template_data["originalDirname"] = without_root
 
         is_sequence_representation = isinstance(files, (list, tuple))
+        self._validate_repre_files(files, is_sequence_representation)
+
         if is_sequence_representation:
             # Collection of files (sequence)
             if any(os.path.isabs(fname) for fname in files):
                 raise KnownPublishError("Given file names contain full paths")
 
             src_collections, remainders = clique.assemble(files)
-            if len(files) < 2 or len(src_collections) != 1 or remainders:
-                raise KnownPublishError((
-                    "Files of representation does not contain proper"
-                    " sequence files.\nCollected collections: {}"
-                    "\nCollected remainders: {}"
-                ).format(
-                    ", ".join([str(col) for col in src_collections]),
-                    ", ".join([str(rem) for rem in remainders])
-                ))
 
             src_collection = src_collections[0]
             template_data["originalBasename"] = src_collection.head[:-1]
@@ -705,14 +735,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         else:
             # Single file
-            fname = files
-            if os.path.isabs(fname):
-                self.log.error(
-                    "Filename in representation is filepath {}".format(fname)
-                )
-                raise KnownPublishError(
-                    "This is a bug. Representation file name is full path"
-                )
             template_data["originalBasename"], _ = os.path.splitext(fname)
             # Manage anatomy template data
             template_data.pop("frame", None)
