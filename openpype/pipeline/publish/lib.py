@@ -648,7 +648,7 @@ def get_instance_staging_dir(instance):
     if anatomy_data:
         project_name = anatomy_data["project"]["name"]
     else:
-        project_name = os.getenv("AVALON_PROJECT")
+        project_name = instance.context.data["projectName"]
 
     # get customized tempdir path from `OPENPYPE_TMPDIR` env var
     custom_temp_dir = tempdir.create_custom_tempdir(
