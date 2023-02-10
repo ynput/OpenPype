@@ -1,0 +1,63 @@
+from openpype.client import get_asset_by_name
+from openpype.pipeline import CreatedInstance
+from openpype.hosts.tvpaint.api.plugin import TVPaintAutoCreator
+
+
+class TVPaintWorkfileCreator(TVPaintAutoCreator):
+    family = "workfile"
+    identifier = "workfile"
+
+    default_variant = "Main"
+
+    def create(self):
+        existing_instance = None
+        for instance in self.create_context.instances:
+            if instance.creator_identifier == self.identifier:
+                existing_instance = instance
+                break
+
+        context = self.host.get_current_context()
+        host_name = self.host.name
+        project_name = context["project_name"]
+        asset_name = context["asset_name"]
+        task_name = context["task_name"]
+
+        if existing_instance is None:
+            asset_doc = get_asset_by_name(project_name, asset_name)
+            subset_name = self.get_subset_name(
+                self.default_variant,
+                task_name,
+                asset_doc,
+                project_name,
+                host_name
+            )
+            data = {
+                "asset": asset_name,
+                "task": task_name,
+                "variant": self.default_variant
+            }
+
+            new_instance = CreatedInstance(
+                self.family, subset_name, data, self
+            )
+            instances_data = self.host.list_instances()
+            instances_data.append(new_instance.data_to_store())
+            self.host.write_instances(instances_data)
+            self._add_instance_to_context(new_instance)
+
+        elif (
+            existing_instance["asset"] != asset_name
+            or existing_instance["task"] != task_name
+        ):
+            asset_doc = get_asset_by_name(project_name, asset_name)
+            subset_name = self.get_subset_name(
+                existing_instance["variant"],
+                task_name,
+                asset_doc,
+                project_name,
+                host_name,
+                existing_instance
+            )
+            existing_instance["asset"] = asset_name
+            existing_instance["task"] = task_name
+            existing_instance["subset"] = subset_name
