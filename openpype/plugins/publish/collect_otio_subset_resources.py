@@ -14,15 +14,40 @@ from openpype.pipeline.editorial import (
     range_from_frames,
     make_sequence_collection
 )
-
+from openpype.pipeline.publish import (
+    get_publish_template_name
+)
 
 class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
     """Get Resources for a subset version"""
 
     label = "Collect OTIO Subset Resources"
-    order = pyblish.api.CollectorOrder - 0.077
+    order = pyblish.api.CollectorOrder + 0.0021
     families = ["clip"]
     hosts = ["resolve", "hiero", "flame"]
+
+    def get_template_name(self, instance):
+        """Return anatomy template name to use for integration"""
+
+        # Anatomy data is pre-filled by Collectors
+        context = instance.context
+        project_name = context.data["projectName"]
+
+        # Task can be optional in anatomy data
+        host_name = context.data["hostName"]
+        family = instance.data["family"]
+        anatomy_data = instance.context.data["anatomyData"]
+        task_info = anatomy_data.get("task") or {}
+
+        return get_publish_template_name(
+            project_name,
+            host_name,
+            family,
+            task_name=task_info.get("name"),
+            task_type=task_info.get("type"),
+            project_settings=context.data["project_settings"],
+            logger=self.log
+        )
 
     def process(self, instance):
 
@@ -34,6 +59,13 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
 
         if not instance.data.get("versionData"):
             instance.data["versionData"] = {}
+
+        template_name = self.get_template_name(instance)
+        anatomy = instance.context.data["anatomy"]
+        publish_template_category = anatomy.templates[template_name]
+        template = os.path.normpath(publish_template_category["path"])
+        self.log.debug(
+            ">> template: {}".format(template))
 
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
@@ -83,6 +115,10 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
         # create frame start and end
         frame_start = instance.data["frameStart"]
         frame_end = frame_start + (media_out - media_in)
+
+        if "{originalDirname}" in template:
+            frame_start = media_in
+            frame_end = media_out
 
         # add to version data start and end range data
         # for loader plugins to be correctly displayed and loaded
@@ -153,7 +189,6 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
             repre = self._create_representation(
                 frame_start, frame_end, collection=collection)
 
-            instance.data["originalBasename"] = collection.format("{head}")
         else:
             _trim = False
             dirname, filename = os.path.split(media_ref.target_url)
@@ -167,8 +202,6 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
             self.log.debug(filename)
             repre = self._create_representation(
                 frame_start, frame_end, file=filename, trim=_trim)
-
-            instance.data["originalBasename"] = os.path.splitext(filename)[0]
 
         instance.data["originalDirname"] = self.staging_dir
 
