@@ -207,7 +207,7 @@
             "children": [
                 {
                     "type": "label",
-                    "label": "Configure output format(s) and color spaces for matching representations. Empty 'Output extension' denotes keeping source extension."
+                    "label": "Configure Output Definition(s) for new representation(s). \nEmpty 'Extension' denotes keeping source extension. \nName(key) of output definition will be used as new representation name \nunless 'passthrough' value is used to keep existing name. \nFill either 'Colorspace' (for target colorspace) or \nboth 'Display' and 'View' (for display and viewer colorspaces)."
                 },
                 {
                     "type": "boolean",
