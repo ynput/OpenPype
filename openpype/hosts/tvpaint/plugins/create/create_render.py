@@ -29,6 +29,9 @@ Todos:
     Add option to extract marked layers and passes as json output format for
         AfterEffects.
 """
+
+import collections
+
 from openpype.lib import (
     prepare_template_data,
     EnumDef,
@@ -211,6 +214,51 @@ class CreateRenderlayer(TVPaintCreator):
                 default=self.mark_for_review
             )
         ]
+
+    def update_instances(self, update_list):
+        self._update_renderpass_groups()
+
+        super().update_instances(update_list)
+
+    def _update_renderpass_groups(self):
+        render_layer_instances = {}
+        render_pass_instances = collections.defaultdict(list)
+
+        for instance in  self.create_context.instances:
+            if instance.creator_identifier == CreateRenderPass.identifier:
+                render_layer_id = (
+                    instance["creator_attributes"]["render_layer_instance_id"]
+                )
+                render_pass_instances[render_layer_id].append(instance)
+            elif instance.creator_identifier == self.identifier:
+                render_layer_instances[instance.id] = instance
+
+        if not render_pass_instances or not render_layer_instances:
+            return
+
+        layers_data = get_layers_data()
+        layers_by_name = collections.defaultdict(list)
+        for layer in layers_data:
+            layers_by_name[layer["name"]].append(layer)
+
+        george_lines = []
+        for render_layer_id, instances in render_pass_instances.items():
+            render_layer_inst = render_layer_instances.get(render_layer_id)
+            if render_layer_inst is None:
+                continue
+            group_id = render_layer_inst["creator_attributes"]["group_id"]
+            layer_names = set()
+            for instance in instances:
+                layer_names |= set(instance["layer_names"])
+
+            for layer_name in layer_names:
+                george_lines.extend(
+                    f"tv_layercolor \"set\" {layer['layer_id']} {group_id}"
+                    for layer in layers_by_name[layer_name]
+                    if layer["group_id"] != group_id
+                )
+        if george_lines:
+            execute_george_through_file("\n".join(george_lines))
 
 
 class CreateRenderPass(TVPaintCreator):
