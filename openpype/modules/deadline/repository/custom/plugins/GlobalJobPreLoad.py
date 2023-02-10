@@ -35,7 +35,7 @@ class OpenPypeVersion:
         self.prerelease = prerelease
 
         is_valid = True
-        if not major or not minor or not patch:
+        if major is None or minor is None or patch is None:
             is_valid = False
         self.is_valid = is_valid
 
@@ -157,7 +157,7 @@ def get_openpype_version_from_path(path, build=True):
 
     # fix path for application bundle on macos
     if platform.system().lower() == "darwin":
-        path = os.path.join(path, "Contents", "MacOS", "lib", "Python")
+        path = os.path.join(path, "MacOS")
 
     version_file = os.path.join(path, "openpype", "version.py")
     if not os.path.isfile(version_file):
@@ -189,6 +189,11 @@ def get_openpype_executable():
     exe_list = config.GetConfigEntryWithDefault("OpenPypeExecutable", "")
     dir_list = config.GetConfigEntryWithDefault(
         "OpenPypeInstallationDirs", "")
+
+    # clean '\ ' for MacOS pasting
+    if platform.system().lower() == "darwin":
+        exe_list = exe_list.replace("\\ ", " ")
+        dir_list = dir_list.replace("\\ ", " ")
     return exe_list, dir_list
 
 
@@ -220,8 +225,8 @@ def get_requested_openpype_executable(
     requested_version_obj = OpenPypeVersion.from_string(requested_version)
     if not requested_version_obj:
         print((
-            ">>> Requested version does not match version regex \"{}\""
-        ).format(VERSION_REGEX))
+            ">>> Requested version '{}' does not match version regex '{}'"
+        ).format(requested_version, VERSION_REGEX))
         return None
 
     print((
@@ -274,7 +279,8 @@ def get_requested_openpype_executable(
     # Deadline decide.
     exe_list = [
         os.path.join(version_dir, "openpype_console.exe"),
-        os.path.join(version_dir, "openpype_console")
+        os.path.join(version_dir, "openpype_console"),
+        os.path.join(version_dir, "MacOS", "openpype_console")
     ]
     return FileUtils.SearchFileList(";".join(exe_list))
 
