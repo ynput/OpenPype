@@ -19,14 +19,12 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
 
         # Get all needed names
         project_name = context.data.get("projectName")
-        asset_name = context.data.get("asset")
-        task_name = context.data.get("task")
+        asset_name = None
+        task_name = None
         # If asset and task name doesn't exist in context, look in instance
         for instance in context:
-            if not asset_name:
-                asset_name = instance.data.get("asset")
-            if not task_name:
-                task_name = instance.data.get("task")
+            asset_name = instance.data.get("asset")
+            task_name = instance.data.get("task")
 
         # Get all assets of the local project
         asset_docs = {
