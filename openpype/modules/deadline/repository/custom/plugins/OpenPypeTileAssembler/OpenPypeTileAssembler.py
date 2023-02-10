@@ -204,10 +204,10 @@ def info_about_input(oiiotool_path, filepath):
     _stdout, _stderr = popen.communicate()
     output = ""
     if _stdout:
-        output += _stdout.decode("utf-8")
+        output += _stdout.decode("utf-8", errors="backslashreplace")
 
     if _stderr:
-        output += _stderr.decode("utf-8")
+        output += _stderr.decode("utf-8", errors="backslashreplace")
 
     output = output.replace("\r\n", "\n")
     xml_started = False
