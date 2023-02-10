@@ -33,6 +33,7 @@ from openpype.lib import (
     prepare_template_data,
     EnumDef,
     TextDef,
+    BoolDef,
 )
 from openpype.pipeline.create import (
     CreatedInstance,
@@ -48,6 +49,7 @@ from openpype.hosts.tvpaint.api.lib import (
 
 class CreateRenderlayer(TVPaintCreator):
     """Mark layer group as one instance."""
+
     label = "Render Layer"
     family = "render"
     subset_template_family_filter = "renderLayer"
@@ -63,6 +65,7 @@ class CreateRenderlayer(TVPaintCreator):
 
     # Settings
     render_pass = "beauty"
+    mark_for_review = True
 
     def get_dynamic_data(
         self, variant, task_name, asset_doc, project_name, host_name, instance
@@ -116,7 +119,12 @@ class CreateRenderlayer(TVPaintCreator):
         self.log.debug(f"Selected group id is \"{group_id}\".")
         if "creator_attributes" not in instance_data:
             instance_data["creator_attributes"] = {}
-        instance_data["creator_attributes"]["group_id"] = group_id
+        creator_attributes = instance_data["creator_attributes"]
+        mark_for_review = pre_create_data.get("mark_for_review")
+        if mark_for_review is None:
+            mark_for_review = self.mark_for_review
+        creator_attributes["group_id"] = group_id
+        creator_attributes["mark_for_review"] = mark_for_review
 
         self.log.info(f"Subset name is {subset_name}")
         new_instance = CreatedInstance(
@@ -174,6 +182,11 @@ class CreateRenderlayer(TVPaintCreator):
                 "group_name",
                 label="New group name",
                 placeholder="< Keep unchanged >"
+            ),
+            BoolDef(
+                "mark_for_review",
+                label="Review",
+                default=self.mark_for_review
             )
         ]
 
@@ -191,6 +204,11 @@ class CreateRenderlayer(TVPaintCreator):
                 "group_id",
                 label="Group",
                 items=groups_enum
+            ),
+            BoolDef(
+                "mark_for_review",
+                label="Review",
+                default=self.mark_for_review
             )
         ]
 
@@ -203,6 +221,9 @@ class CreateRenderPass(TVPaintCreator):
     label = "Render Pass"
 
     order = CreateRenderlayer.order + 10
+
+    # Settings
+    mark_for_review = True
 
     def get_dynamic_data(
         self, variant, task_name, asset_doc, project_name, host_name, instance
@@ -269,6 +290,18 @@ class CreateRenderPass(TVPaintCreator):
         )
         self.log.info(f"New subset name is \"{new_subset_name}\".")
         instance_data["layer_names"] = list(selected_layer_names)
+        if "creator_attributes" not in instance_data:
+            instance_data["creator_attribtues"] = {}
+
+        creator_attributes = instance_data["creator_attribtues"]
+        mark_for_review = pre_create_data.get("mark_for_review")
+        if mark_for_review is None:
+            mark_for_review = self.mark_for_review
+        creator_attributes["mark_for_review"] = mark_for_review
+        creator_attributes["render_layer_instance_id"] = (
+            render_layer_instance_id
+        )
+
         new_instance = CreatedInstance(
             self.family,
             subset_name,
@@ -321,7 +354,7 @@ class CreateRenderPass(TVPaintCreator):
     def get_pre_create_attr_defs(self):
         render_layers = []
         for instance in self.create_context.instances:
-            if instance.creator_identifier == "render.layer":
+            if instance.creator_identifier == CreateRenderlayer.identifier:
                 render_layers.append({
                     "value": instance.id,
                     "label": instance.label
@@ -335,6 +368,13 @@ class CreateRenderPass(TVPaintCreator):
                 "render_layer_instance_id",
                 label="Render Layer",
                 items=render_layers
+            ),
+            BoolDef(
+                "mark_for_review",
+                label="Review",
+                default=self.mark_for_review
             )
         ]
 
+    def get_instance_attr_defs(self):
+        return self.get_pre_create_attr_defs()
