@@ -645,7 +645,8 @@ def get_instance_staging_dir(instance):
     anatomy = instance.context.data.get("anatomy")
 
     # get customized tempdir path from `OPENPYPE_TMPDIR` env var
-    custom_temp_dir = tempdir.create_custom_tempdir(anatomy)
+    custom_temp_dir = tempdir.create_custom_tempdir(
+        anatomy.project_name, anatomy)
 
     if custom_temp_dir:
         staging_dir = os.path.normpath(
