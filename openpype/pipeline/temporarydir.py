@@ -38,10 +38,9 @@ def create_custom_tempdir(project_name, anatomy=None, formating_data=None):
         }
         if formating_data is None:
             # We still don't have `project_code` on Anatomy...
-            project_doc = anatomy.get_project_doc_from_cache(project_name)
             data["project"] = {
                 "name": project_name,
-                "code": project_doc["data"]["code"],
+                "code": anatomy.project_code,
             }
         else:
             data["project"] = formating_data["project"]
