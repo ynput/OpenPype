@@ -95,7 +95,7 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
         frame_end = frame_start + (media_out - media_in)
 
         # Fit start /end frame to media in /out
-        if "{originalDirname}" in template:
+        if "{originalBasename}" in template:
             frame_start = media_in
             frame_end = media_out
 
