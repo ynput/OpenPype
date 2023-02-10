@@ -175,11 +175,7 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def save_workfile(self, filepath=None):
         if not filepath:
             filepath = self.get_current_workfile()
-        context = {
-            "project": legacy_io.Session["AVALON_PROJECT"],
-            "asset": legacy_io.Session["AVALON_ASSET"],
-            "task": legacy_io.Session["AVALON_TASK"]
-        }
+        context = get_global_context()
         save_current_workfile_context(context)
 
         # Execute george script to save workfile.
