@@ -701,7 +701,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             src_collections, remainders = clique.assemble(files)
 
             src_collection = src_collections[0]
-            template_data["originalBasename"] = src_collection.head[:-1]
             destination_indexes = list(src_collection.indexes)
             # Use last frame for minimum padding
             #   - that should cover both 'udim' and 'frame' minimum padding
@@ -723,11 +722,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 # In case source are published in place we need to
                 # skip renumbering
                 repre_frame_start = repre.get("frameStart")
-                if (
-                    "originalBasename" not in template
-                    and repre_frame_start is not None
-                ):
-                    index_frame_start = int(repre["frameStart"])
+                if repre_frame_start is not None:
+                    index_frame_start = int(repre_frame_start)
                     # Shift destination sequence to the start frame
                     destination_indexes = [
                         index_frame_start + idx
@@ -783,7 +779,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         else:
             # Single file
-            template_data["originalBasename"], _ = os.path.splitext(fname)
             # Manage anatomy template data
             template_data.pop("frame", None)
             if is_udim:
@@ -795,7 +790,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             dst = os.path.normpath(template_filled)
 
             # Single file transfer
-            src = os.path.join(stagingdir, fname)
+            src = os.path.join(stagingdir, files)
             transfers = [(src, dst)]
 
         # todo: Are we sure the assumption each representation
