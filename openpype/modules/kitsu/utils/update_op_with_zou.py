@@ -5,10 +5,6 @@ from typing import Dict, List
 
 from pymongo import DeleteOne, UpdateOne
 import gazu
-from gazu.task import (
-    all_tasks_for_asset,
-    all_tasks_for_shot,
-)
 
 from openpype.client import (
     get_project,
@@ -18,7 +14,6 @@ from openpype.client import (
     create_project,
 )
 from openpype.pipeline import AvalonMongoDB
-from openpype.settings import get_project_settings
 from openpype.modules.kitsu.utils.credentials import validate_credentials
 
 from openpype.lib import Logger
@@ -85,8 +80,10 @@ def update_op_assets(
     Returns:
         List[Dict[str, dict]]: List of (doc_id, update_dict) tuples
     """
+    if not project_doc:
+        return
+
     project_name = project_doc["name"]
-    project_module_settings = get_project_settings(project_name)["kitsu"]
 
     assets_with_update = []
     for item in entities_list:
@@ -170,9 +167,9 @@ def update_op_assets(
         tasks_list = []
         item_type = item["type"]
         if item_type == "Asset":
-            tasks_list = all_tasks_for_asset(item)
+            tasks_list = gazu.task.all_tasks_for_asset(item)
         elif item_type == "Shot":
-            tasks_list = all_tasks_for_shot(item)
+            tasks_list = gazu.task.all_tasks_for_shot(item)
         item_data["tasks"] = {
             t["task_type_name"]: {"type": t["task_type_name"], "zou": t}
             for t in tasks_list
@@ -207,7 +204,7 @@ def update_op_assets(
 
         # Root parent folder if exist
         visual_parent_doc_id = (
-            asset_doc_ids[parent_zou_id]["_id"] if parent_zou_id else None
+            asset_doc_ids[parent_zou_id].get("_id") if parent_zou_id else None
         )
         if visual_parent_doc_id is None:
             # Find root folder doc ("Assets" or "Shots")
@@ -282,7 +279,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     project_name = project["name"]
     project_doc = get_project(project_name)
     if not project_doc:
-        log.info(f"Creating project '{project_name}'")
+        log.info(f"Project created: {project_name}")
         project_doc = create_project(project_name, project_name)
 
     # Project data and tasks
