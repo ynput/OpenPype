@@ -645,11 +645,59 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         is_sequence_representation = isinstance(files, (list, tuple))
         self._validate_repre_files(files, is_sequence_representation)
 
-        if is_sequence_representation:
-            # Collection of files (sequence)
-            if any(os.path.isabs(fname) for fname in files):
-                raise KnownPublishError("Given file names contain full paths")
+        # Output variables of conditions below:
+        # - transfers (List[Tuple[str, str]]): src -> dst filepaths to copy
+        # - repre_context (Dict[str, Any]): context data used to fill template
+        # - template_data (Dict[str, Any]): source data used to fill template
+        #   - to add required data to 'repre_context' not used for
+        #       formatting
+        # - anatomy_filled (Dict[str, Any]): filled anatomy of last file
+        #   - to fill 'publishDir' on instance.data -> not ideal
 
+        # Treat template with 'orignalBasename' in special way
+        if "{originalBasename}" in template:
+            # Remove 'frame' from template data
+            template_data.pop("frame", None)
+
+            # Find out first frame string value
+            first_index_padded = None
+            if not is_udim and is_sequence_representation:
+                col = clique.assemble(files)[0][0]
+                sorted_frames = tuple(sorted(col.indexes))
+                # First frame used for end value
+                first_frame = sorted_frames[0]
+                # Get last frame for padding
+                last_frame = sorted_frames[-1]
+                # Use padding from collection of length of last frame as string
+                padding = max(col.padding, len(str(last_frame)))
+                first_index_padded = get_frame_padded(
+                    frame=first_frame,
+                    padding=padding
+                )
+
+            # Convert files to list for single file as remaining part is only
+            #   transfers creation (iteration over files)
+            if not is_sequence_representation:
+                files = [files]
+
+            repre_context = None
+            transfers = []
+            for src_file_name in files:
+                template_data["originalBasename"], _ = os.path.splitext(
+                    src_file_name)
+
+                anatomy_filled = anatomy.format(template_data)
+                dst = anatomy_filled[template_name]["path"]
+                src = os.path.join(stagingdir, src_file_name)
+                transfers.append((src, dst))
+                if repre_context is None:
+                    repre_context = dst.used_values
+
+            if not is_udim and first_index_padded is not None:
+                repre_context["frame"] = first_index_padded
+
+        elif is_sequence_representation:
+            # Collection of files (sequence)
             src_collections, remainders = clique.assemble(files)
 
             src_collection = src_collections[0]
