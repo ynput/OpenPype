@@ -4,7 +4,6 @@ from typing import List, Set, Tuple
 
 import bpy
 import openpype.api
-from openpype.hosts.blender.api.utils import BL_OUTLINER_TYPES
 
 from openpype.pipeline import (
     legacy_io,
@@ -42,7 +41,11 @@ class ExtractBlend(publish.Extractor):
         self.log.info("Performing extraction..")
 
         # Set object mode
-        bpy.ops.object.mode_set()
+        with plugin.context_override(
+            active=bpy.context.scene.objects[0],
+            selected=bpy.context.scene.objects,
+        ):
+            bpy.ops.object.mode_set()
 
         plugin.deselect_all()
 
