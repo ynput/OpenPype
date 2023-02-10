@@ -8,6 +8,7 @@ import pyblish.api
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    PublishValidationError
 )
 
 
@@ -35,7 +36,9 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
                 "defaultArnoldRenderOptions.pspath"
             )
         except ValueError:
-            assert False, ("Default Arnold options has not been created yet.")
+            raise PublishValidationError(
+                "Default Arnold options has not been created yet."
+            )
 
         scene_dir, scene_basename = os.path.split(cmds.file(q=True, loc=True))
         scene_name, _ = os.path.splitext(scene_basename)
