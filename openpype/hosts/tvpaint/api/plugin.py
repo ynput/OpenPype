@@ -6,9 +6,134 @@ from openpype.pipeline import (
     LoaderPlugin,
     registered_host,
 )
+from openpype.pipeline.create import (
+    CreatedInstance,
+    get_subset_name,
+    AutoCreator,
+    Creator as NewCreator,
+)
+from openpype.pipeline.create.creator_plugins import cache_and_get_instances
 
 from .lib import get_layers_data
 from .pipeline import get_current_workfile_context
+
+
+SHARED_DATA_KEY = "openpype.tvpaint.instances"
+
+
+def _collect_instances(creator):
+    instances_by_identifier = cache_and_get_instances(
+        creator, SHARED_DATA_KEY, creator.host.list_instances
+    )
+    for instance_data in instances_by_identifier[creator.identifier]:
+        instance = CreatedInstance.from_existing(instance_data, creator)
+        creator._add_instance_to_context(instance)
+
+
+def _update_instances(creator, update_list):
+    if not update_list:
+        return
+
+    cur_instances = creator.host.list_instances()
+    cur_instances_by_id = {}
+    for instance_data in cur_instances:
+        instance_id = instance_data.get("instance_id")
+        if instance_id:
+            cur_instances_by_id[instance_id] = instance_data
+
+    for instance, changes in update_list:
+        instance_data = instance.data_to_store()
+        cur_instance_data = cur_instances_by_id.get(instance.id)
+        if cur_instance_data is None:
+            cur_instances.append(instance_data)
+            continue
+        for key in set(cur_instance_data) - set(instance_data):
+            instance_data.pop(key)
+        instance_data.update(cur_instance_data)
+    creator.host.write_instances(cur_instances)
+
+
+class TVPaintCreator(NewCreator):
+    @property
+    def subset_template_family(self):
+        return self.family
+
+    def collect_instances(self):
+        _collect_instances(self)
+
+    def update_instances(self, update_list):
+        _update_instances(self, update_list)
+
+    def remove_instances(self, instances):
+        ids_to_remove = {
+            instance.id
+            for instance in instances
+        }
+        cur_instances = self.host.list_instances()
+        changed = False
+        new_instances = []
+        for instance_data in cur_instances:
+            if instance_data.get("instance_id") in ids_to_remove:
+                changed = True
+            else:
+                new_instances.append(instance_data)
+
+        if changed:
+            self.host.write_instances(new_instances)
+
+        for instance in instances:
+            self._remove_instance_from_context(instance)
+
+    def get_dynamic_data(self, *args, **kwargs):
+        # Change asset and name by current workfile context
+        # TODO use context from 'create_context'
+        workfile_context = self.host.get_current_context()
+        asset_name = workfile_context.get("asset")
+        task_name = workfile_context.get("task")
+        output = {}
+        if asset_name:
+            output["asset"] = asset_name
+            if task_name:
+                output["task"] = task_name
+        return output
+
+    def get_subset_name(
+        self,
+        variant,
+        task_name,
+        asset_doc,
+        project_name,
+        host_name=None,
+        instance=None
+    ):
+        dynamic_data = self.get_dynamic_data(
+            variant, task_name, asset_doc, project_name, host_name, instance
+        )
+
+        return get_subset_name(
+            self.subset_template_family,
+            variant,
+            task_name,
+            asset_doc,
+            project_name,
+            host_name,
+            dynamic_data=dynamic_data,
+            project_settings=self.project_settings
+        )
+
+    def _store_new_instance(self, new_instance):
+        instances_data = self.host.list_instances()
+        instances_data.append(new_instance.data_to_store())
+        self.host.write_instances(instances_data)
+        self._add_instance_to_context(new_instance)
+
+
+class TVPaintAutoCreator(AutoCreator):
+    def collect_instances(self):
+        _collect_instances(self)
+
+    def update_instances(self, update_list):
+        _update_instances(self, update_list)
 
 
 class Creator(LegacyCreator):
