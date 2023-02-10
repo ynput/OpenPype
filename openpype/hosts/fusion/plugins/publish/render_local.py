@@ -55,7 +55,7 @@ class Fusionlocal(pyblish.api.InstancePlugin):
         # review representation
         repre_preview = repre.copy()
         repre_preview["name"] = repre_preview["ext"] = "mp4"
-        repre_preview["tags"] = ["review",  "ftrackreview", "delete"]
+        repre_preview["tags"] = ["review", "ftrackreview", "delete"]
         instance.data["representations"].append(repre_preview)
 
     def render_once(self, context):
