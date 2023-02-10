@@ -13,14 +13,13 @@ deploy-minor:
   tags:
     - cw-pvc
   stage: deploy
-  before_script:
-    - version_command="import os;exec(open(os.path.join('$openpype_root', 'openpype', 'version.py')).read());print(__version__);"
-    - export OPENPYPE_VERSION="$(python3 <<< ${version_command})" 
   script:
     - ./tools/docker_build.sh centos7
-  after_script:
-    - tar -czvf ./build/openpype-${OPENPYPE_VERSION}.tar.gz ./build/${OPENPYPE_VERSION}
-    - curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./build/openpype-${OPENPYPE_VERSION}.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/openpype/${OPENPYPE_VERSION}/openpype-${OPENPYPE_VERSION}.tar.gz"
+    - >-
+      version_command="import os;exec(open(os.path.join('$openpype_root', 'openpype', 'version.py')).read());print(__version__);" &&
+      openpype_version="$(python3 <<< ${version_command})" &&
+      tar -czvf ./build/openpype-${BUILD_VERSION}.tar.gz ./build/${BUILD_VERSION} &&
+      curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./build/openpype-${BUILD_VERSION}.tar.gz "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/openpype/${openpype_version}/openpype-${BUILD_VERSION}.tar.gz"
   when: manual
 
 deploy-to-deadline-repo:
