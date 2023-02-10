@@ -19,7 +19,7 @@ from openpype.settings import (
     get_system_settings,
 )
 from openpype.pipeline import (
-    temporarydir
+    tempdir
 )
 
 from .contants import (
@@ -651,7 +651,7 @@ def get_instance_staging_dir(instance):
         project_name = os.getenv("AVALON_PROJECT")
 
     # get customized tempdir path from `OPENPYPE_TMPDIR` env var
-    custom_temp_dir = temporarydir.create_custom_tempdir(
+    custom_temp_dir = tempdir.create_custom_tempdir(
         project_name, anatomy=anatomy, formating_data=anatomy_data
     )
 
