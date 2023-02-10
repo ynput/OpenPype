@@ -2,7 +2,7 @@
 Bugs:
     * Error when adding task type to anything that isn't Shot or Assets
     * Assets don't get added under an episode if TV show
-    * Assets added under Main Pack throws error. Can't get the name of Main Pack?
+    * Assets added under Main Pack throws error. No Main Pack name in dict
 
 Features ToDo:
     * Select in settings what types you wish to sync
@@ -130,7 +130,7 @@ class Listener:
         self._update_project(data)
 
         # Print message
-        ## Happens in write_project_to_op()
+        # - Happens in write_project_to_op()
 
     def _update_project(self, data):
         """Update project into OP DB."""
