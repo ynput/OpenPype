@@ -1,3 +1,34 @@
+"""Render Layer and Passes creators.
+
+Render layer is main part which is represented by group in TVPaint. All TVPaint
+layers marked with that group color are part of the render layer. To be more
+specific about some parts of layer it is possible to create sub-sets of layer
+which are named passes. Render pass consist of layers in same color group as
+render layer but define more specific part.
+
+For example render layer could be 'Bob' which consist of 5 TVPaint layers.
+- Bob has 'head' which consist of 2 TVPaint layers -> Render pass 'head'
+- Bob has 'body' which consist of 1 TVPaint layer -> Render pass 'body'
+- Bob has 'arm' which consist of 1 TVPaint layer -> Render pass 'arm'
+- Last layer does not belong to render pass at all
+
+Bob will be rendered as 'beauty' of bob (all visible layers in group).
+His head will be rendered too but without any other parts. The same for body
+and arm.
+
+What is this good for? Compositing has more power how the renders are used.
+Can do transforms on each render pass without need to modify a re-render them
+using TVPaint.
+
+The workflow may hit issues when there are used other blending modes than
+default 'color' blend more. In that case it is not recommended to use this
+workflow at all as other blend modes may affect all layers in clip which can't
+be done.
+
+Todos:
+    Add option to extract marked layers and passes as json output format for
+        AfterEffects.
+"""
 from openpype.lib import (
     prepare_template_data,
     EnumDef,
