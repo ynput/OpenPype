@@ -94,17 +94,13 @@ class ArnoldStandinLoader(load.LoaderPlugin):
 
     def get_next_free_multi_index(self, attr_name):
         """Find the next unconnected multi index at the input attribute."""
-
-        start_index = 0
-        # Assume a max of 10 million connections
-        while start_index < 10000000:
+        for index in range(10000000):
             connection_info = cmds.connectionInfo(
-                "{}[{}]".format(attr_name, start_index),
+                "{}[{}]".format(attr_name, index),
                 sourceFromDestination=True
             )
             if len(connection_info or []) == 0:
-                return start_index
-            start_index += 1
+                return index
 
     def _get_proxy_path(self, path):
         basename_split = os.path.basename(path).split(".")
