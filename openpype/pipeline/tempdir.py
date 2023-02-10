@@ -7,7 +7,7 @@ from openpype.lib import StringTemplate
 from openpype.pipeline import Anatomy
 
 
-def create_custom_tempdir(project_name, anatomy=None, formating_data=None):
+def create_custom_tempdir(anatomy=None):
     """ Create custom tempdir
 
     Template path formatting is supporting:
@@ -17,9 +17,7 @@ def create_custom_tempdir(project_name, anatomy=None, formating_data=None):
         - project[name | code]
 
     Args:
-        project_name (str): name of project
         anatomy (openpype.pipeline.Anatomy): Anatomy object
-        formating_data (dict): formating data used for filling template.
 
     Returns:
         bool | str: formated path or None
@@ -31,20 +29,15 @@ def create_custom_tempdir(project_name, anatomy=None, formating_data=None):
     custom_tempdir = None
     if "{" in openpype_tempdir:
         if anatomy is None:
-            anatomy = Anatomy(project_name)
+            anatomy = Anatomy()
         # create base formate data
         data = {
-            "root": anatomy.roots
-        }
-        if formating_data is None:
-            # We still don't have `project_code` on Anatomy...
-            data["project"] = {
-                "name": project_name,
+            "root": anatomy.roots,
+            "project": {
+                "name": anatomy.project_name,
                 "code": anatomy.project_code,
             }
-        else:
-            data["project"] = formating_data["project"]
-
+        }
         # path is anatomy template
         custom_tempdir = StringTemplate.format_template(
             openpype_tempdir, data).normalized()
