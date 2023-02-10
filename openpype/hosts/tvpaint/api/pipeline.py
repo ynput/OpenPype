@@ -102,6 +102,35 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def update_context_data(self, data, changes):
         return write_workfile_metadata(SECTION_NAME_CREATE_CONTEXT, data)
 
+    def list_instances(self):
+        """List all created instances from current workfile."""
+        return list_instances()
+
+    def write_instances(self, data):
+        return write_instances(data)
+
+    # --- Legacy Create ---
+    def remove_instance(self, instance):
+        """Remove instance from current workfile metadata.
+
+        Implementation for Subset manager tool.
+        """
+
+        current_instances = get_workfile_metadata(SECTION_NAME_INSTANCES)
+        instance_id = instance.get("uuid")
+        found_idx = None
+        if instance_id:
+            for idx, _inst in enumerate(current_instances):
+                if _inst["uuid"] == instance_id:
+                    found_idx = idx
+                    break
+
+        if found_idx is None:
+            return
+        current_instances.pop(found_idx)
+        write_instances(current_instances)
+
+    # --- Workfile ---
     def open_workfile(self, filepath):
         george_script = "tv_LoadProject '\"'\"{}\"'\"'".format(
             filepath.replace("\\", "/")
@@ -134,6 +163,7 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def get_workfile_extensions(self):
         return [".tvpp"]
 
+    # --- Load ---
     def get_containers(self):
         return get_containers()
 
@@ -147,26 +177,6 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         log.info("Setting up project...")
         set_context_settings()
-
-    def remove_instance(self, instance):
-        """Remove instance from current workfile metadata.
-
-        Implementation for Subset manager tool.
-        """
-
-        current_instances = get_workfile_metadata(SECTION_NAME_INSTANCES)
-        instance_id = instance.get("uuid")
-        found_idx = None
-        if instance_id:
-            for idx, _inst in enumerate(current_instances):
-                if _inst["uuid"] == instance_id:
-                    found_idx = idx
-                    break
-
-        if found_idx is None:
-            return
-        current_instances.pop(found_idx)
-        write_instances(current_instances)
 
     def application_exit(self):
         """Logic related to TimerManager.
@@ -186,6 +196,7 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         rest_api_url = "{}/timers_manager/stop_timer".format(webserver_url)
         requests.post(rest_api_url)
 
+    # --- Legacy Publish ---
     def on_instance_toggle(self, instance, old_value, new_value):
         """Update instance data in workfile on publish toggle."""
         # Review may not have real instance in wokrfile metadata
@@ -196,7 +207,7 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         found_idx = None
         current_instances = list_instances()
         for idx, workfile_instance in enumerate(current_instances):
-            if workfile_instance["uuid"] == instance_id:
+            if workfile_instance.get("uuid") == instance_id:
                 found_idx = idx
                 break
 
@@ -206,13 +217,6 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         if "active" in current_instances[found_idx]:
             current_instances[found_idx]["active"] = new_value
             self.write_instances(current_instances)
-
-    def list_instances(self):
-        """List all created instances from current workfile."""
-        return list_instances()
-
-    def write_instances(self, data):
-        return write_instances(data)
 
 
 def containerise(
