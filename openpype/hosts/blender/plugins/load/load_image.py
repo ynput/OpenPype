@@ -117,7 +117,8 @@ class BackgroundLoader(ImageLoader):
 
         # First try, catching camera with current active object.
         if (
-            bpy.context.active_object
+            hasattr(bpy.context, "active_object")
+            and bpy.context.active_object
             and bpy.context.active_object.type == "CAMERA"
         ):
             camera = bpy.context.active_object
