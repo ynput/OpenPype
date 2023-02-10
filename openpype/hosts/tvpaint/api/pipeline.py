@@ -29,6 +29,7 @@ log = logging.getLogger(__name__)
 
 METADATA_SECTION = "avalon"
 SECTION_NAME_CONTEXT = "context"
+SECTION_NAME_CREATE_CONTEXT = "create_context"
 SECTION_NAME_INSTANCES = "instances"
 SECTION_NAME_CONTAINERS = "containers"
 # Maximum length of metadata chunk string
@@ -92,6 +93,14 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         register_event_callback("application.launched", self.initial_launch)
         register_event_callback("application.exit", self.application_exit)
+
+
+    # --- Create ---
+    def get_context_data(self):
+        return get_workfile_metadata(SECTION_NAME_CREATE_CONTEXT, {})
+
+    def update_context_data(self, data, changes):
+        return write_workfile_metadata(SECTION_NAME_CREATE_CONTEXT, data)
 
     def open_workfile(self, filepath):
         george_script = "tv_LoadProject '\"'\"{}\"'\"'".format(
