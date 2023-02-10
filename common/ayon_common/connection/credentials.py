@@ -1,3 +1,5 @@
+""""""
+
 import os
 import json
 import platform
@@ -5,15 +7,15 @@ import datetime
 import contextlib
 from typing import Optional, Union, Any
 
-import appdirs
 import ayon_api
-
 from ayon_api.exceptions import UrlError
 from ayon_api.utils import (
     validate_url,
     is_token_valid,
     logout_from_server,
 )
+
+from ayon_common.utils import get_ayon_appdirs
 
 
 class ChangeUserResult:
@@ -39,10 +41,7 @@ class ChangeUserResult:
 
 
 def _get_servers_path():
-    return os.path.join(
-        appdirs.user_data_dir("ayon", "ynput"),
-        "used_servers.json"
-    )
+    return get_ayon_appdirs("used_servers.json")
 
 
 def get_servers_info_data():
