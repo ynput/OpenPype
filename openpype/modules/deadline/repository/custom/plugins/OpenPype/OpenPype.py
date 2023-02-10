@@ -73,7 +73,7 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
         """
         # fix path for application bundle on macos
         if platform.system().lower() == "darwin":
-            path = os.path.join(path, "Contents", "MacOS", "lib", "Python")
+            path = os.path.join(path, "MacOS")
 
         version_file = os.path.join(path, "openpype", "version.py")
         if not os.path.isfile(version_file):
@@ -107,8 +107,11 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
                 "Scanning for compatible requested "
                 f"version {requested_version}"))
             dir_list = self.GetConfigEntry("OpenPypeInstallationDirs")
+            # clean '\ ' for MacOS pasting
+            if platform.system().lower() == "darwin":
+                dir_list = dir_list.replace("\\ ", " ")
             install_dir = DirectoryUtils.SearchDirectoryList(dir_list)
-            if dir:
+            if install_dir:
                 sub_dirs = [
                     f.path for f in os.scandir(install_dir)
                     if f.is_dir()
@@ -120,6 +123,9 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
                     openpype_versions.append((version, subdir))
 
         exe_list = self.GetConfigEntry("OpenPypeExecutable")
+        # clean '\ ' for MacOS pasting
+        if platform.system().lower() == "darwin":
+            exe_list = exe_list.replace("\\ ", " ")
         exe = FileUtils.SearchFileList(exe_list)
         if openpype_versions:
             # if looking for requested compatible version,
@@ -161,7 +167,9 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
                 os.path.join(
                     compatible_versions[-1][1], "openpype_console.exe"),
                 os.path.join(
-                    compatible_versions[-1][1], "openpype_console")
+                    compatible_versions[-1][1], "openpype_console"),
+                os.path.join(
+                    compatible_versions[-1][1], "MacOS", "openpype_console")
             ]
             exe = FileUtils.SearchFileList(";".join(exe_list))
 
