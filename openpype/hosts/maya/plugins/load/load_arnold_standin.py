@@ -107,9 +107,7 @@ class ArnoldStandinLoader(load.LoaderPlugin):
         proxy_basename = (
             basename_split[0] + "_proxy." + ".".join(basename_split[1:])
         )
-        proxy_path = "/".join(
-            [os.path.dirname(path), "resources", proxy_basename]
-        )
+        proxy_path = "/".join([os.path.dirname(path), proxy_basename])
         return proxy_basename, proxy_path
 
     def _setup_proxy(self, shape, path, namespace):
@@ -136,7 +134,7 @@ class ArnoldStandinLoader(load.LoaderPlugin):
         )
         cmds.setAttr(
             string_replace_operator + ".match",
-            "resources/" + proxy_basename,
+            proxy_basename,
             type="string"
         )
         cmds.setAttr(

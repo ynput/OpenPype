@@ -1,5 +1,4 @@
 import os
-import copy
 
 from maya import cmds
 import arnold
@@ -8,7 +7,6 @@ from openpype.pipeline import publish
 from openpype.hosts.maya.api.lib import (
     maintained_selection, attribute_values, delete_after
 )
-from openpype.lib import StringTemplate
 
 
 class ExtractArnoldSceneSource(publish.Extractor):
@@ -103,28 +101,16 @@ class ExtractArnoldSceneSource(publish.Extractor):
             instance.data["proxy"], attribute_data, kwargs
         )
 
-        template_data = copy.deepcopy(instance.data["anatomyData"])
-        template_data.update({"ext": "ass"})
-        templates = instance.context.data["anatomy"].templates["publish"]
-        published_filename_without_extension = StringTemplate(
-            templates["file"]
-        ).format(template_data).replace(".ass", "_proxy")
-        transfers = []
-        for filename in filenames:
-            source = os.path.join(staging_dir, filename)
-            destination = os.path.join(
-                instance.data["resourcesDir"],
-                filename.replace(
-                    filename.split(".")[0],
-                    published_filename_without_extension
-                )
-            )
-            transfers.append((source, destination))
+        representation = {
+            "name": "proxy",
+            "ext": "ass",
+            "files": filenames if len(filenames) > 1 else filenames[0],
+            "stagingDir": staging_dir,
+            "frameStart": kwargs["startFrame"],
+            "outputName": "proxy"
+        }
 
-        for source, destination in transfers:
-            self.log.debug("Transfer: {} > {}".format(source, destination))
-
-        instance.data["transfers"] = transfers
+        instance.data["representations"].append(representation)
 
     def _extract(self, nodes, attribute_data, kwargs):
         self.log.info("Writing: " + kwargs["filename"])
