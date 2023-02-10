@@ -9,6 +9,9 @@ from openpype.pipeline.publish import (
 class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
     """Validate Arnold Scene Source.
 
+    We require at least 1 root node/parent for the meshes. This is to ensure we
+    can duplicate the nodes and preserve the names.
+
     If using proxies we need the nodes to share the same names and not be
     parent to the world. This ends up needing at least two groups with content
     nodes and proxy nodes in another.
@@ -39,9 +42,6 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
         return ungrouped_nodes, nodes_by_name, parents
 
     def process(self, instance):
-        if not instance.data["proxy"]:
-            return
-
         ungrouped_nodes = []
 
         nodes, content_nodes_by_name, content_parents = self._get_nodes_data(
@@ -50,7 +50,7 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
         ungrouped_nodes.extend(nodes)
 
         nodes, proxy_nodes_by_name, proxy_parents = self._get_nodes_data(
-            instance.data["proxy"]
+            instance.data.get("proxy", [])
         )
         ungrouped_nodes.extend(nodes)
 
@@ -60,6 +60,10 @@ class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
                 "Found nodes parented to the world: {}\n"
                 "All nodes need to be grouped.".format(ungrouped_nodes)
             )
+
+        # Proxy validation.
+        if not instance.data.get("proxy", []):
+            return
 
         # Validate for content and proxy nodes amount being the same.
         if len(instance.data["setMembers"]) != len(instance.data["proxy"]):

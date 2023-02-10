@@ -53,10 +53,8 @@ class ArnoldStandinLoader(load.LoaderPlugin):
         root = cmds.group(name=label, empty=True)
 
         # Set color.
-        project_name = context["project"]["name"]
-        settings = get_project_settings(project_name)
-        colors = settings['maya']['load']['colors']
-        color = colors.get('ass')
+        settings = get_project_settings(context["project"]["name"])
+        color = settings['maya']['load']['colors'].get('ass')
         if color is not None:
             cmds.setAttr(root + ".useOutlinerColor", True)
             cmds.setAttr(
@@ -121,10 +119,6 @@ class ArnoldStandinLoader(load.LoaderPlugin):
     def _setup_proxy(self, shape, path, namespace):
         proxy_basename, proxy_path = self._get_proxy_path(path)
 
-        if not os.path.exists(proxy_path):
-            self.log.error("Proxy files do not exist. Skipping proxy setup.")
-            return path, None
-
         options_node = "defaultArnoldRenderOptions"
         merge_operator = get_attribute_input(options_node + ".operator")
         if merge_operator is None:
@@ -163,6 +157,12 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             )
         )
 
+        # We setup the string operator no matter whether there is a proxy or
+        # not. This makes it easier to update since the string operator will
+        # always be created. Return original path to use for standin.
+        if not os.path.exists(proxy_path):
+            return path, string_replace_operator
+
         return proxy_path, string_replace_operator
 
     def update(self, container, representation):
@@ -180,6 +180,9 @@ class ArnoldStandinLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         proxy_basename, proxy_path = self._get_proxy_path(path)
+
+        # Whether there is proxy or so, we still update the string operator.
+        # If no proxy exists, the string operator wont replace anything.
         cmds.setAttr(
             string_replace_operator + ".match",
             "resources/" + proxy_basename,
@@ -190,7 +193,11 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             os.path.basename(path),
             type="string"
         )
-        cmds.setAttr(standin + ".dso", proxy_path, type="string")
+
+        dso_path = path
+        if os.path.exists(proxy_path):
+            dso_path = proxy_path
+        cmds.setAttr(standin + ".dso", dso_path, type="string")
 
         sequence = is_sequence(os.listdir(os.path.dirname(path)))
         cmds.setAttr(standin + ".useFrameExtension", sequence)

@@ -95,6 +95,9 @@ class ExtractArnoldSceneSource(publish.Extractor):
         )
 
         # Extract proxy.
+        if not instance.data.get("proxy", []):
+            return
+
         kwargs["filename"] = file_path.replace(".ass", "_proxy.ass")
         filenames = self._extract(
             instance.data["proxy"], attribute_data, kwargs
@@ -132,7 +135,6 @@ class ExtractArnoldSceneSource(publish.Extractor):
             duplicate_nodes = []
             for node in nodes:
                 duplicate_transform = cmds.duplicate(node)[0]
-                delete_bin.append(duplicate_transform)
 
                 # Discard the children.
                 shapes = cmds.listRelatives(duplicate_transform, shapes=True)
@@ -145,7 +147,11 @@ class ExtractArnoldSceneSource(publish.Extractor):
                     duplicate_transform, world=True
                 )[0]
 
+                cmds.rename(duplicate_transform, node.split("|")[-1])
+                duplicate_transform = "|" + node.split("|")[-1]
+
                 duplicate_nodes.append(duplicate_transform)
+                delete_bin.append(duplicate_transform)
 
             with attribute_values(attribute_data):
                 with maintained_selection():
