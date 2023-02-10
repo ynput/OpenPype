@@ -55,7 +55,7 @@ def _update_instances(creator, update_list):
 
 class TVPaintCreator(NewCreator):
     @property
-    def subset_template_family(self):
+    def subset_template_family_filter(self):
         return self.family
 
     def collect_instances(self):
@@ -111,14 +111,15 @@ class TVPaintCreator(NewCreator):
         )
 
         return get_subset_name(
-            self.subset_template_family,
+            self.family,
             variant,
             task_name,
             asset_doc,
             project_name,
             host_name,
             dynamic_data=dynamic_data,
-            project_settings=self.project_settings
+            project_settings=self.project_settings,
+            family_filter=self.subset_template_family_filter
         )
 
     def _store_new_instance(self, new_instance):

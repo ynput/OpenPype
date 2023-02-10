@@ -19,7 +19,7 @@ class CreateRenderlayer(TVPaintCreator):
     """Mark layer group as one instance."""
     label = "Render Layer"
     family = "render"
-    subset_template_family = "renderLayer"
+    subset_template_family_filter = "renderLayer"
     identifier = "render.layer"
     icon = "fa.cube"
 
@@ -167,7 +167,7 @@ class CreateRenderlayer(TVPaintCreator):
 class CreateRenderPass(TVPaintCreator):
     icon = "fa.cube"
     family = "render"
-    subset_template_family = "renderPass"
+    subset_template_family_filter = "renderPass"
     identifier = "render.pass"
     label = "Render Pass"
 
