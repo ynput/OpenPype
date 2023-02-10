@@ -292,7 +292,7 @@ class FillWorkfileAttributeAction(BaseAction):
                     system_settings
                 )
                 # Use version 1 for each workfile
-                workfile_data["version"] = 1
+                workfile_data["version"] = 0
                 workfile_data["ext"] = extension
 
                 task_type = workfile_data["task"]["type"]

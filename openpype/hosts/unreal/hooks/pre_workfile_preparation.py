@@ -43,7 +43,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
         task_type = workdir_data.get("task", {}).get("type")
 
         # QUESTION raise exception if version is part of filename template?
-        workdir_data["version"] = 1
+        workdir_data["version"] = 0
         workdir_data["ext"] = "uproject"
 
         # Get workfile template key for current context

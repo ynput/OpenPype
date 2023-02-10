@@ -420,7 +420,7 @@ class SaveAsDialog(QtWidgets.QDialog):
             )[1]
 
             if version is None:
-                version = 1
+                version = 0
             else:
                 version += 1
 

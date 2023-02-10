@@ -35,7 +35,7 @@ def _format_version_folder(folder):
         str: new version folder name
     """
 
-    new_version = 1
+    new_version = 0
     if os.path.isdir(folder):
         re_version = re.compile("v\d+$")
         versions = [i for i in os.listdir(folder) if os.path.isdir(i)

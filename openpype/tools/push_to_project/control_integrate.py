@@ -940,7 +940,7 @@ class ProjectPushItemProcess:
             last_version_doc = get_last_version_by_subset_id(
                 project_name, subset_id
             )
-            version = 1
+            version = 0
             if last_version_doc:
                 version += int(last_version_doc["name"])
 
@@ -970,7 +970,7 @@ class ProjectPushItemProcess:
             last_version_doc = get_last_version_by_subset_id(
                 project_name, subset_id
             )
-            version = 1
+            version = 0
             if last_version_doc:
                 version += int(last_version_doc["name"])
 

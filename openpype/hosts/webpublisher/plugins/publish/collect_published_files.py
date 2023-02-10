@@ -279,7 +279,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             asset_doc["_id"],
             fields=["name"]
         )
-        version = 1
+        version = 0
         if version_doc:
             version += int(version_doc["name"])
         return version

@@ -47,7 +47,7 @@ class CollectPublishedVersion(pyblish.api.ContextPlugin):
         version_doc = get_last_version_by_subset_name(project_name,
                                                       workfile_subset_name,
                                                       asset_id)
-        version_int = 1
+        version_int = 0
         if version_doc:
             version_int += int(version_doc["name"])
 

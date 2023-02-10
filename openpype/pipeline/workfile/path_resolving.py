@@ -316,7 +316,7 @@ def get_last_workfile(
     )
     if filename is None:
         data = copy.deepcopy(fill_data)
-        data["version"] = 1
+        data["version"] = 0
         data.pop("comment", None)
         if not data.get("ext"):
             data["ext"] = extensions[0]
