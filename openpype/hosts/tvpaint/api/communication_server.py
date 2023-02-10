@@ -344,7 +344,7 @@ class QtTVPaintRpc(BaseTVPaintRpc):
 
     async def publish_tool(self):
         log.info("Triggering Publish tool")
-        item = MainThreadItem(self.tools_helper.show_publish)
+        item = MainThreadItem(self.tools_helper.show_publisher_tool)
         self._execute_in_main_thread(item)
         return
 
@@ -875,10 +875,6 @@ class QtCommunicator(BaseCommunicator):
                 "callback": "library_loader_tool",
                 "label": "Library",
                 "help": "Open library loader tool"
-            }, {
-                "callback": "subset_manager_tool",
-                "label": "Subset Manager",
-                "help": "Open subset manager tool"
             }, {
                 "callback": "experimental_tools",
                 "label": "Experimental tools",
