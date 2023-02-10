@@ -167,7 +167,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         instance_publish_dir = os.path.normpath(
             instance.data["publishDir"]
         )
-        other_file_paths_mapping = []
+        other_file_paths_mapping = set()
         for file_path in all_copied_files:
             # Check if it is from publishDir
             if not file_path.startswith(instance_publish_dir):
@@ -179,7 +179,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             dst_filepath = file_path.replace(
                 instance_publish_dir, hero_publish_dir
             )
-            other_file_paths_mapping.append((file_path, dst_filepath))
+            other_file_paths_mapping.add((file_path, dst_filepath))
 
         # Current version
         old_version, old_repres = self.current_hero_ents(
@@ -290,7 +290,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     " possible to replace current hero files."
                 ))
         try:
-            src_to_dst_file_paths = []
+            src_to_dst_file_paths = set()
             for repre_info in published_repres.values():
 
                 # Skip if new repre does not have published repre files
@@ -325,7 +325,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
 
                 # Prepare paths of source and destination files
                 if len(published_files) == 1:
-                    src_to_dst_file_paths.append(
+                    src_to_dst_file_paths.add(
                         (published_files[0], template_filled)
                     )
                 else:
@@ -356,7 +356,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     dst_col.indexes.clear()
                     dst_col.indexes.update(src_col.indexes)
                     for src_file, dst_file in zip(src_col, dst_col):
-                        src_to_dst_file_paths.append(
+                        src_to_dst_file_paths.add(
                             (src_file, dst_file)
                         )
 
