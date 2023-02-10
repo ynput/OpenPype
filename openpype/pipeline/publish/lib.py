@@ -650,7 +650,7 @@ def get_instance_staging_dir(instance):
     else:
         project_name = os.getenv("AVALON_PROJECT")
 
-    # get customized tempdir path from `OPENPYPE_TEMPDIR` env var
+    # get customized tempdir path from `OPENPYPE_TMPDIR` env var
     custom_temp_dir = temporarydir.create_custom_tempdir(
         project_name, anatomy=anatomy, formating_data=anatomy_data
     )
