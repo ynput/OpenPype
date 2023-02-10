@@ -643,7 +643,7 @@ def get_instance_staging_dir(instance):
         return staging_dir
 
     anatomy_data = instance.data.get("anatomy_data")
-    anatomy = instance.data.get("anatomy")
+    anatomy = instance.context.data.get("anatomy")
 
     if anatomy_data:
         project_name = anatomy_data["project"]["name"]
