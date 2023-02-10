@@ -220,8 +220,21 @@ class LoadClip(plugin.NukeLoader):
             dict: altered representation data
         """
         representation = deepcopy(representation)
-        frame = representation["context"]["frame"]
-        representation["context"]["frame"] = "#" * len(str(frame))
+        context = representation["context"]
+        template = representation["data"]["template"]
+        frame = context["frame"]
+        hashed_frame = "#" * len(str(frame))
+
+        if (
+            "{originalBasename}" in template
+            and "frame" in context
+        ):
+            origin_basename = context["originalBasename"]
+            context["originalBasename"] = origin_basename.replace(
+                frame, hashed_frame
+            )
+
+        representation["context"]["frame"] = hashed_frame
         return representation
 
     def update(self, container, representation):
