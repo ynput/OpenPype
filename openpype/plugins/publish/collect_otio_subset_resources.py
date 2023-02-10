@@ -26,28 +26,6 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
     families = ["clip"]
     hosts = ["resolve", "hiero", "flame"]
 
-    def get_template_name(self, instance):
-        """Return anatomy template name to use for integration"""
-
-        # Anatomy data is pre-filled by Collectors
-        context = instance.context
-        project_name = context.data["projectName"]
-
-        # Task can be optional in anatomy data
-        host_name = context.data["hostName"]
-        family = instance.data["family"]
-        anatomy_data = instance.context.data["anatomyData"]
-        task_info = anatomy_data.get("task") or {}
-
-        return get_publish_template_name(
-            project_name,
-            host_name,
-            family,
-            task_name=task_info.get("name"),
-            task_type=task_info.get("type"),
-            project_settings=context.data["project_settings"],
-            logger=self.log
-        )
 
     def process(self, instance):
 
@@ -116,6 +94,7 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
         frame_start = instance.data["frameStart"]
         frame_end = frame_start + (media_out - media_in)
 
+        # Fit start /end frame to media in /out
         if "{originalDirname}" in template:
             frame_start = media_in
             frame_end = media_out
@@ -258,3 +237,26 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
         if kwargs.get("trim") is True:
             representation_data["tags"] = ["trim"]
         return representation_data
+
+    def get_template_name(self, instance):
+        """Return anatomy template name to use for integration"""
+
+        # Anatomy data is pre-filled by Collectors
+        context = instance.context
+        project_name = context.data["projectName"]
+
+        # Task can be optional in anatomy data
+        host_name = context.data["hostName"]
+        family = instance.data["family"]
+        anatomy_data = instance.context.data["anatomyData"]
+        task_info = anatomy_data.get("task") or {}
+
+        return get_publish_template_name(
+            project_name,
+            host_name,
+            family,
+            task_name=task_info.get("name"),
+            task_type=task_info.get("type"),
+            project_settings=context.data["project_settings"],
+            logger=self.log
+        )
