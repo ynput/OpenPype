@@ -14,7 +14,7 @@ deploy-minor:
     - cw-pvc
   stage: deploy
   before_script:
-    - version_command="import os;exec(open(os.path.join('$openpype_root', 'openpype', 'version.py')).read());print(__version__);" &&
+    - version_command="import os;exec(open(os.path.join('$openpype_root', 'openpype', 'version.py')).read());print(__version__);"
     - export OPENPYPE_VERSION="$(python3 <<< ${version_command})" 
   script:
     - ./tools/docker_build.sh centos7
