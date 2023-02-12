@@ -16,7 +16,11 @@ from openpype.lib.attribute_definitions import (
     UISeparatorDef,
     UILabelDef
 )
-from openpype.tools.utils import CustomTextComboBox
+from openpype.tools.utils import (
+    CustomTextComboBox,
+    FocusSpinBox,
+    FocusDoubleSpinBox,
+)
 from openpype.widgets.nice_checkbox import NiceCheckbox
 
 from .files_widget import FilesWidget
@@ -142,6 +146,9 @@ class AttributeDefinitionsWidget(QtWidgets.QWidget):
 
             if attr_def.label:
                 label_widget = QtWidgets.QLabel(attr_def.label, self)
+                tooltip = attr_def.tooltip
+                if tooltip:
+                    label_widget.setToolTip(tooltip)
                 layout.addWidget(
                     label_widget, row, 0, 1, expand_cols
                 )
@@ -243,10 +250,10 @@ class NumberAttrWidget(_BaseAttrDefWidget):
     def _ui_init(self):
         decimals = self.attr_def.decimals
         if decimals > 0:
-            input_widget = QtWidgets.QDoubleSpinBox(self)
+            input_widget = FocusDoubleSpinBox(self)
             input_widget.setDecimals(decimals)
         else:
-            input_widget = QtWidgets.QSpinBox(self)
+            input_widget = FocusSpinBox(self)
 
         if self.attr_def.tooltip:
             input_widget.setToolTip(self.attr_def.tooltip)
