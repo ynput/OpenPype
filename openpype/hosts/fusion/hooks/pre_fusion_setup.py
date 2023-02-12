@@ -28,8 +28,7 @@ class FusionPrelaunch(PreLaunchHook):
 
     def get_profile_source(self) -> Path:
         """Get the Fusion preferences (profile) location.
-        Check https://www.steakunderwater.com/VFXPedia/96.0.243.189/indexad6a.html?title=Per-User_Preferences_and_Paths#Setting_the_profile_directory
-        for reference.
+        Check https://www.steakunderwater.com/VFXPedia/96.0.243.189/indexad6a.html?title=Per-User_Preferences_and_Paths for reference.
         """
         fusion_profile = self.get_fusion_profile_name()
         fusion_var_prefs_dir = os.getenv(f"FUSION{self.PROFILE_NUMBER}_PROFILE_DIR")
@@ -53,7 +52,7 @@ class FusionPrelaunch(PreLaunchHook):
         return prefs_source
 
     def get_copy_fusion_prefs_settings(self):
-        """Git copy prefserences options from the global application settings"""
+        """Get copy prefserences options from the global application settings"""
         copy_status = copy_path = None
         try:
             copy_status, copy_path, force_sync = get_system_settings()["applications"]["fusion"][
