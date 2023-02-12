@@ -79,8 +79,8 @@ class CollectSlateGlobal(pyblish.api.InstancePlugin):
                 "label": "",
                 "value": ""
             }
-            slate_data["comment"] = "-"
-            slate_data["scope"] = "-"
+            slate_data["comment"] = ""
+            slate_data["scope"] = ""
 
             if "customData" in instance.data:
                 slate_data.update(instance.data["customData"])
