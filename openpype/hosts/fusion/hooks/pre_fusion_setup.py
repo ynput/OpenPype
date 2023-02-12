@@ -61,7 +61,7 @@ class FusionPrelaunch(PreLaunchHook):
         except ValueError:
             self.log.error('Copy prefs settings not found')
         finally:
-            return copy_status, copy_path, force_sync
+            return copy_status, Path(copy_path).expanduser(), force_sync
 
     def copy_existing_prefs(self, copy_from: Path, copy_to: Path, force_sync: bool) -> None:
         """On the first Fusion launch copy the Fusion profile to the working directory.
@@ -124,12 +124,11 @@ class FusionPrelaunch(PreLaunchHook):
         copy_status, openpype_fusion_profile_dir, force_sync = self.get_copy_fusion_prefs_settings()
         if copy_status:
             prefs_source = self.get_profile_source()
-            openpype_fusion_profile_dir = Path(openpype_fusion_profile_dir).expanduser()
             self.copy_existing_prefs(prefs_source, openpype_fusion_profile_dir, force_sync)
         fusion_profile_dir_variable = f"FUSION{self.PROFILE_NUMBER}_PROFILE_DIR"
-        pref_var = f"FUSION{self.PROFILE_NUMBER}_MasterPrefs"
+        master_prefs_variable = f"FUSION{self.PROFILE_NUMBER}_MasterPrefs"
         openpype_master_prefs = Path(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
         self.log.info(f"Setting {fusion_profile_dir_variable}: {openpype_fusion_profile_dir}")
         self.launch_context.env[fusion_profile_dir_variable] = str(openpype_fusion_profile_dir)
-        self.log.info(f"Setting {pref_var}: {openpype_master_prefs}")
-        self.launch_context.env[pref_var] = str(openpype_master_prefs)
+        self.log.info(f"Setting {master_prefs_variable}: {openpype_master_prefs}")
+        self.launch_context.env[master_prefs_variable] = str(openpype_master_prefs)
