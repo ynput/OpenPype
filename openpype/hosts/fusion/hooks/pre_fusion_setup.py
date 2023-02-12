@@ -4,6 +4,7 @@ import platform
 from pathlib import Path
 from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
 from openpype.hosts.fusion import FUSION_HOST_DIR
+from openpype.settings import get_system_settings
 
 
 class FusionPrelaunch(PreLaunchHook):
@@ -19,14 +20,18 @@ class FusionPrelaunch(PreLaunchHook):
 
     """
     app_groups = ["fusion"]
-    OPENPYPE_FUSION_PROFILE_DIR = "~/.openpype/hosts/fusion/prefs"
     PROFILE_NUMBER = 16
 
-    def get_fusion_profile(self) -> str:
+    def get_fusion_profile_name(self) -> str:
+        """usually set to 'Default', unless FUSION16_PROFILE is set"""
         return os.getenv(f"FUSION{self.PROFILE_NUMBER}_PROFILE", "Default")
 
     def get_profile_source(self) -> Path:
-        fusion_profile = self.get_fusion_profile()
+        """Get the Fusion preferences (profile) location.
+        Check https://www.steakunderwater.com/VFXPedia/96.0.243.189/indexad6a.html?title=Per-User_Preferences_and_Paths#Setting_the_profile_directory
+        for reference.
+        """
+        fusion_profile = self.get_fusion_profile_name()
         fusion_var_prefs_dir = os.getenv(f"FUSION{self.PROFILE_NUMBER}_PROFILE_DIR")
 
         # if FUSION16_PROFILE_DIR variable exists, return the profile filepath
@@ -44,11 +49,32 @@ class FusionPrelaunch(PreLaunchHook):
             prefs_source = Path("~/Library/Application Support/", fusion_prefs_path).expanduser()
         elif platform.system() == "Linux":
             prefs_source = Path("~/.fusion", fusion_prefs_path).expanduser()
-            
+        self.log.info(f"Got Fusion prefs file: {prefs_source}")
         return prefs_source
 
-    def copy_existing_prefs(self, copy_from: Path, copy_to: Path) -> None:
-        dest_folder = copy_to / self.get_fusion_profile()
+    def get_copy_fusion_prefs_settings(self):
+        """Git copy prefserences options from the global application settings"""
+        copy_status = copy_path = None
+        try:
+            copy_status, copy_path, force_sync = get_system_settings()["applications"]["fusion"][
+            "copy_fusion_settings"].values()            
+        except ValueError:
+            self.log.error('Copy prefs settings not found')
+        finally:
+            return copy_status, copy_path, force_sync
+
+    def copy_existing_prefs(self, copy_from: Path, copy_to: Path, force_sync: bool) -> None:
+        """On the first Fusion launch copy the Fusion profile to the working directory.
+        If the Openpype profile folder exists, skip copying, unless Force sync is checked.
+        If the prefs were not copied on the first launch, clean Fusion profile 
+        will be created in openpype_fusion_profile_dir.
+        """
+        if copy_to.exists() and not force_sync:
+            self.log.info("Local Fusion preferences folder exists, skipping profile copy")
+            return
+        self.log.info(f"Starting copying Fusion preferences")
+        self.log.info(f"force_sync option is set to {force_sync}")
+        dest_folder = copy_to / self.get_fusion_profile_name()
         dest_folder.mkdir(exist_ok=True, parents=True)        
         if not copy_from.exists():
             self.log.warning(f"Fusion preferences file not found in {copy_from}")
@@ -88,25 +114,22 @@ class FusionPrelaunch(PreLaunchHook):
         # Fusion 16 and 17 use FUSION16_PYTHON36_HOME instead of
         # FUSION_PYTHON3_HOME and will only work with a Python 3.6 version
         # TODO: Detect Fusion version to only set for specific Fusion build
-        self.launch_context.env["FUSION16_PYTHON36_HOME"] = py3_dir
+        self.launch_context.env[f"FUSION{self.PROFILE_NUMBER}_PYTHON36_HOME"] = py3_dir
 
-        # Add custom Fusion Master Prefs and the temporary profile directory variables to customize
-        # Fusion to define where it can read custom scripts and tools from
+        # Add custom Fusion Master Prefs and the temporary profile directory variables
+        # to customize Fusion to define where it can read custom scripts and tools from
         self.log.info(f"Setting OPENPYPE_FUSION: {FUSION_HOST_DIR}")
         self.launch_context.env["OPENPYPE_FUSION"] = FUSION_HOST_DIR
 
-        profile_dir_var = "FUSION16_PROFILE_DIR"   # used by Fusion 16, 17 and 18
-        pref_var = "FUSION16_MasterPrefs"   # used by Fusion 16, 17 and 18
-        op_profile_dir = Path(self.OPENPYPE_FUSION_PROFILE_DIR).expanduser()
-        op_master_prefs = Path(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
-        prefs_source = self.get_profile_source()
-        self.log.info(f"Got Fusion prefs file: {prefs_source}")
-
-        # now copy the default Fusion profile to a working directory
-        # only if the openpype profile folder does not exist
-        if not op_profile_dir.exists():
-            self.copy_existing_prefs(prefs_source, op_profile_dir)
-        self.log.info(f"Setting {profile_dir_var}: {op_profile_dir}")
-        self.launch_context.env[profile_dir_var] = str(op_profile_dir)
-        self.log.info(f"Setting {pref_var}: {op_master_prefs}")
-        self.launch_context.env[pref_var] = str(op_master_prefs)
+        copy_status, openpype_fusion_profile_dir, force_sync = self.get_copy_fusion_prefs_settings()
+        if copy_status:
+            prefs_source = self.get_profile_source()
+            openpype_fusion_profile_dir = Path(openpype_fusion_profile_dir).expanduser()
+            self.copy_existing_prefs(prefs_source, openpype_fusion_profile_dir, force_sync)
+        fusion_profile_dir_variable = f"FUSION{self.PROFILE_NUMBER}_PROFILE_DIR"
+        pref_var = f"FUSION{self.PROFILE_NUMBER}_MasterPrefs"
+        openpype_master_prefs = Path(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
+        self.log.info(f"Setting {fusion_profile_dir_variable}: {openpype_fusion_profile_dir}")
+        self.launch_context.env[fusion_profile_dir_variable] = str(openpype_fusion_profile_dir)
+        self.log.info(f"Setting {pref_var}: {openpype_master_prefs}")
+        self.launch_context.env[pref_var] = str(openpype_master_prefs)

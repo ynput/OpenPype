@@ -837,7 +837,8 @@
         },
         "copy_fusion_settings": {
             "copy_prefs": false,
-            "prefs_path": "~/.openpype/hosts/fusion/prefs"
+            "prefs_path": "~/.openpype/hosts/fusion/prefs",
+            "force_sync": false
         },
         "variants": {
             "18": {
