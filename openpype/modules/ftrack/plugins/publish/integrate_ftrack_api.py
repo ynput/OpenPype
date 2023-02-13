@@ -436,7 +436,6 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 session, version, asset_id
             )
 
- 
         if status_name:
             status_id = status_ids_by_name.get(status_name.lower())
             if not status_id:
