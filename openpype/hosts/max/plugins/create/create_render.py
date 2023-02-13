@@ -20,6 +20,8 @@ class CreateRender(plugin.MaxCreator):
             pre_create_data)  # type: CreatedInstance
         container_name = instance.data.get("instance_node")
         container = rt.getNodeByName(container_name)
+        # chuckSize for submitting render
+        instance_data["chunkSize"] = 10
         # TODO: Disable "Add to Containers?" Panel
         # parent the selected cameras into the container
         for obj in sel_obj:
