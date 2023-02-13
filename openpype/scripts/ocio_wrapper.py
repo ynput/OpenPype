@@ -161,7 +161,7 @@ def _get_views_data(config_path):
     for display in config.getDisplays():
         for view in config.getViews(display):
             colorspace = config.getDisplayViewColorSpaceName(display, view)
-            # Special token. See https://opencolorio.readthedocs.io/en/latest/guides/authoring/authoring.html#shared-views
+            # Special token. See https://opencolorio.readthedocs.io/en/latest/guides/authoring/authoring.html#shared-views # noqa
             if colorspace == "<USE_DISPLAY_NAME>":
                 colorspace = display
 
