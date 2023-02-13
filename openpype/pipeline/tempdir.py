@@ -11,7 +11,7 @@ def create_custom_tempdir(project_name, anatomy=None):
     """ Create custom tempdir
 
     Template path formatting is supporting:
-    - optional key formating
+    - optional key formatting
     - available keys:
         - root[work | <root name key>]
         - project[name | code]
