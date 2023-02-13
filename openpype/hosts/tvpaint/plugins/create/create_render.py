@@ -273,6 +273,35 @@ class CreateRenderPass(TVPaintCreator):
     # Settings
     mark_for_review = True
 
+    def collect_instances(self):
+        instances_by_identifier = self._cache_and_get_instances()
+        render_layers = {
+            instance_data["instance_id"]: {
+                "variant": instance_data["variant"],
+                "template_data": prepare_template_data({
+                    "renderlayer": instance_data["variant"]
+                })
+            }
+            for instance_data in (
+                instances_by_identifier[CreateRenderlayer.identifier]
+            )
+        }
+
+        for instance_data in instances_by_identifier[self.identifier]:
+            render_layer_instance_id = (
+                instance_data
+                .get("creator_attributes", {})
+                .get("render_layer_instance_id")
+            )
+            render_layer_info = render_layers.get(render_layer_instance_id)
+            self.update_instance_labels(
+                instance_data,
+                render_layer_info["variant"],
+                render_layer_info["template_data"]
+            )
+            instance = CreatedInstance.from_existing(instance_data, self)
+            self._add_instance_to_context(instance)
+
     def get_dynamic_data(
         self, variant, task_name, asset_doc, project_name, host_name, instance
     ):
@@ -282,6 +311,29 @@ class CreateRenderPass(TVPaintCreator):
         dynamic_data["renderpass"] = variant
         dynamic_data["renderlayer"] = "{renderlayer}"
         return dynamic_data
+
+    def update_instance_labels(
+        self, instance, render_layer_variant, render_layer_data=None
+    ):
+        old_label = instance.get("label")
+        old_group = instance.get("group")
+        new_label = None
+        new_group = None
+        if render_layer_variant is not None:
+            if render_layer_data is None:
+                render_layer_data = prepare_template_data({
+                    "renderlayer": render_layer_variant
+                })
+            try:
+                new_label = instance["subset"].format(**render_layer_data)
+            except (KeyError, ValueError):
+                pass
+
+            new_group = f"{self.get_group_label()} ({render_layer_variant})"
+
+        instance["label"] = new_label
+        instance["group"] = new_group
+        return old_group != new_group or old_label != new_label
 
     def create(self, subset_name, instance_data, pre_create_data):
         render_layer_instance_id = pre_create_data.get(
@@ -337,6 +389,8 @@ class CreateRenderPass(TVPaintCreator):
             **prepare_template_data(subset_name_fill_data)
         )
         self.log.info(f"New subset name is \"{new_subset_name}\".")
+        instance_data["label"] = new_subset_name
+        instance_data["group"] = f"{self.get_group_label()} ({render_layer})"
         instance_data["layer_names"] = list(selected_layer_names)
         if "creator_attributes" not in instance_data:
             instance_data["creator_attribtues"] = {}
@@ -400,14 +454,14 @@ class CreateRenderPass(TVPaintCreator):
         ]
 
     def get_pre_create_attr_defs(self):
-        render_layers = []
-        for instance in self.create_context.instances:
-            if instance.creator_identifier == CreateRenderlayer.identifier:
-                render_layers.append({
-                    "value": instance.id,
-                    "label": instance.label
-                })
-
+        render_layers = [
+            {
+                "value": instance.id,
+                "label": instance.label
+            }
+            for instance in self.create_context.instances
+            if instance.creator_identifier == CreateRenderlayer.identifier
+        ]
         if not render_layers:
             render_layers.append({"value": None, "label": "N/A"})
 
