@@ -21,7 +21,7 @@ def create_custom_tempdir(project_name, anatomy=None):
         anatomy (openpype.pipeline.Anatomy)[optional]: Anatomy object
 
     Returns:
-        str | None: formated path or None
+        str | None: formatted path or None
     """
     openpype_tempdir = os.getenv("OPENPYPE_TMPDIR")
     if not openpype_tempdir:
