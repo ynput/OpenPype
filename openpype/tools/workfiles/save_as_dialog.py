@@ -218,7 +218,7 @@ class SaveAsDialog(QtWidgets.QDialog):
 
         # Version number input
         version_input = QtWidgets.QSpinBox(version_widget)
-        version_input.setMinimum(1)
+        version_input.setMinimum(0)
         version_input.setMaximum(9999)
 
         # Last version checkbox
