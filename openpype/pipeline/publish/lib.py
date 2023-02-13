@@ -620,7 +620,7 @@ def get_instance_staging_dir(instance):
 
     It also supports `OPENPYPE_TMPDIR`, so studio can define own temp
     shared repository per project or even per more granular context.
-    Template formating is supported also with optional keys. Folder is
+    Template formatting is supported also with optional keys. Folder is
     created in case it doesnt exists.
 
     Available anatomy formatting keys:
