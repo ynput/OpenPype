@@ -21,48 +21,52 @@ from .pipeline import get_current_workfile_context
 SHARED_DATA_KEY = "openpype.tvpaint.instances"
 
 
-def _collect_instances(creator):
-    instances_by_identifier = cache_and_get_instances(
-        creator, SHARED_DATA_KEY, creator.host.list_instances
-    )
-    for instance_data in instances_by_identifier[creator.identifier]:
-        instance = CreatedInstance.from_existing(instance_data, creator)
-        creator._add_instance_to_context(instance)
+class TVPaintCreatorCommon:
+    def _cache_and_get_instances(self):
+        return cache_and_get_instances(
+            self, SHARED_DATA_KEY, self.host.list_instances
+        )
+
+    def _collect_create_instances(self):
+        instances_by_identifier = self._cache_and_get_instances()
+        for instance_data in instances_by_identifier[self.identifier]:
+            instance = CreatedInstance.from_existing(instance_data, self)
+            self._add_instance_to_context(instance)
 
 
-def _update_instances(creator, update_list):
-    if not update_list:
-        return
+    def _update_create_instances(self, update_list):
+        if not update_list:
+            return
 
-    cur_instances = creator.host.list_instances()
-    cur_instances_by_id = {}
-    for instance_data in cur_instances:
-        instance_id = instance_data.get("instance_id")
-        if instance_id:
-            cur_instances_by_id[instance_id] = instance_data
+        cur_instances = self.host.list_instances()
+        cur_instances_by_id = {}
+        for instance_data in cur_instances:
+            instance_id = instance_data.get("instance_id")
+            if instance_id:
+                cur_instances_by_id[instance_id] = instance_data
 
-    for instance, changes in update_list:
-        instance_data = instance.data_to_store()
-        cur_instance_data = cur_instances_by_id.get(instance.id)
-        if cur_instance_data is None:
-            cur_instances.append(instance_data)
-            continue
-        for key in set(cur_instance_data) - set(instance_data):
-            instance_data.pop(key)
-        instance_data.update(cur_instance_data)
-    creator.host.write_instances(cur_instances)
+        for instance, changes in update_list:
+            instance_data = changes.new_value
+            cur_instance_data = cur_instances_by_id.get(instance.id)
+            if cur_instance_data is None:
+                cur_instances.append(instance_data)
+                continue
+            for key in set(cur_instance_data) - set(instance_data):
+                cur_instance_data.pop(key)
+            cur_instance_data.update(instance_data)
+        self.host.write_instances(cur_instances)
 
 
-class TVPaintCreator(NewCreator):
+class TVPaintCreator(NewCreator, TVPaintCreatorCommon):
     @property
     def subset_template_family_filter(self):
         return self.family
 
     def collect_instances(self):
-        _collect_instances(self)
+        self._collect_create_instances()
 
     def update_instances(self, update_list):
-        _update_instances(self, update_list)
+        self._update_create_instances(update_list)
 
     def remove_instances(self, instances):
         ids_to_remove = {
@@ -129,12 +133,12 @@ class TVPaintCreator(NewCreator):
         self._add_instance_to_context(new_instance)
 
 
-class TVPaintAutoCreator(AutoCreator):
+class TVPaintAutoCreator(AutoCreator, TVPaintCreatorCommon):
     def collect_instances(self):
-        _collect_instances(self)
+        self._collect_create_instances()
 
     def update_instances(self, update_list):
-        _update_instances(self, update_list)
+        self._update_create_instances(update_list)
 
 
 class Creator(LegacyCreator):
