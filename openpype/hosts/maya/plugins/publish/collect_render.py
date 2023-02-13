@@ -185,6 +185,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 multipart))
             assert exp_files, "no file names were generated, this is bug"
             self.log.info(exp_files)
+
             # if we want to attach render to subset, check if we have AOV's
             # in expectedFiles. If so, raise error as we cannot attach AOV
             # (considered to be subset on its own) to another subset
