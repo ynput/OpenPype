@@ -46,6 +46,7 @@ import attr
 
 from . import lib
 from . import lib_rendersetup
+from openpype.pipeline.colorspace import get_ocio_config_views
 
 from maya import cmds, mel
 
@@ -646,7 +647,11 @@ class RenderProductsArnold(ARenderProducts):
 
         def _view_transform():
             preferences = lib.get_color_management_preferences()
-            return preferences["view_transform"]
+            views_data = get_ocio_config_views(preferences["config"])
+            view_data = views_data[
+                "{}/{}".format(preferences["display"], preferences["view"])
+            ]
+            return view_data["colorspace"]
 
         def _raw():
             preferences = lib.get_color_management_preferences()
