@@ -47,7 +47,7 @@ class RenderProducts(object):
 
         if (
             renderer == "ART_Renderer" or
-            renderer == "Redshift Renderer" or
+            renderer == "Redshift_Renderer" or
             renderer == "V_Ray_6_Hotfix_3" or
             renderer == "V_Ray_GPU_6_Hotfix_3" or
             renderer == "Default_Scanline_Renderer" or
@@ -59,10 +59,19 @@ class RenderProducts(object):
                                                             img_fmt)
             for render_elem in render_elem_list:
                 full_render_list.append(render_elem)
+
             return full_render_list
 
         if renderer == "Arnold":
+            aov_list = self.arnold_render_product(output_file,
+                                                  startFrame,
+                                                  endFrame,
+                                                  img_fmt)
+            if aov_list:
+                for aov in aov_list:
+                    full_render_list.append(aov)
             return full_render_list
+
 
     def beauty_render_product(self, folder, startFrame, endFrame, fmt):
         # get the beauty
@@ -78,6 +87,31 @@ class RenderProducts(object):
         return beauty_frame_range
 
     # TODO: Get the arnold render product
+    def arnold_render_product(self, folder, startFrame, endFrame, fmt):
+        """Get all the Arnold AOVs"""
+        aovs = list()
+
+        amw = rt.MaxtoAOps.AOVsManagerWindow()
+        aov_mgr = rt.renderers.current.AOVManager
+        # Check if there is any aov group set in AOV manager
+        aov_group_num = len(aov_mgr.drivers)
+        if aov_group_num < 1:
+            return
+        for i in range(aov_group_num):
+            # get the specific AOV group
+            for aov in aov_mgr.drivers[i].aov_list:
+                for f in range(startFrame, endFrame):
+                    render_element = "{0}_{1}.{2}.{3}".format(folder,
+                                                              str(aov.name),
+                                                              str(f),
+                                                              fmt)
+                    render_element = render_element.replace("\\", "/")
+                    aovs.append(render_element)
+        # close the AOVs manager window
+        amw.close()
+
+        return aovs
+
     def render_elements_product(self, folder, startFrame, endFrame, fmt):
         """Get all the render element output files. """
         render_dirname = list()

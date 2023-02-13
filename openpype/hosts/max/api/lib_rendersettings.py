@@ -87,7 +87,7 @@ class RenderSettings(object):
 
         if (
             renderer == "ART_Renderer" or
-            renderer == "Redshift Renderer" or
+            renderer == "Redshift_Renderer" or
             renderer == "V_Ray_6_Hotfix_3" or
             renderer == "V_Ray_GPU_6_Hotfix_3" or
             renderer == "Default_Scanline_Renderer" or
@@ -104,9 +104,25 @@ class RenderSettings(object):
         render_camera = rt.viewport.GetCamera()
         arv.setOption("Camera", str(render_camera))
 
-        aovmgr = rt.renderers.current.AOVManager
-        aovmgr.drivers = "#()"
+        # TODO: add AOVs and extension
+        img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa
+        setup_cmd = (
+            f"""
+        amw = MaxtoAOps.AOVsManagerWindow()
+        amw.close()
+        aovmgr = renderers.current.AOVManager
+        aovmgr.drivers = #()
+        img_fmt = "{img_fmt}"
+        if img_fmt == "png" then driver = ArnoldPNGDriver()
+        if img_fmt == "jpg" then driver = ArnoldJPEGDriver()
+        if img_fmt == "exr" then driver = ArnoldEXRDriver()
+        if img_fmt == "tif" then driver = ArnoldTIFFDriver()
+        if img_fmt == "tiff" then driver = ArnoldTIFFDriver()
+        append aovmgr.drivers driver
+        aovmgr.drivers[1].aov_list = #()
+            """)
 
+        rt.execute(setup_cmd)
         arv.close()
 
     def render_element_layer(self, dir, width, height, ext):
