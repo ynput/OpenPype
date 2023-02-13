@@ -601,7 +601,7 @@ def context_plugin_should_run(plugin, context):
 
     Args:
         plugin (pyblish.api.Plugin): Plugin with filters.
-        context (pyblish.api.Context): Pyblish context with insances.
+        context (pyblish.api.Context): Pyblish context with instances.
 
     Returns:
         bool: Context plugin should run based on valid instances.
@@ -621,7 +621,7 @@ def get_instance_staging_dir(instance):
     It also supports `OPENPYPE_TMPDIR`, so studio can define own temp
     shared repository per project or even per more granular context.
     Template formatting is supported also with optional keys. Folder is
-    created in case it doesnt exists.
+    created in case it doesn't exists.
 
     Available anatomy formatting keys:
         - root[work | <root name key>]
@@ -629,7 +629,7 @@ def get_instance_staging_dir(instance):
 
     Note:
         Staging dir does not have to be necessarily in tempdir so be careful
-            about it's usage.
+        about its usage.
 
     Args:
         instance (pyblish.lib.Instance): Instance for which we want to get
