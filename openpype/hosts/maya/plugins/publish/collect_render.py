@@ -320,7 +320,10 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 ),
                 "colorspaceConfig": colorspace_data["config"],
                 "colorspaceDisplay": colorspace_data["display"],
-                "colorspaceView": colorspace_data["view"]
+                "colorspaceView": colorspace_data["view"],
+                "strict_error_checking": render_instance.data.get(
+                    "strict_error_checking"
+                )
             }
 
             # Collect Deadline url if Deadline module is enabled
