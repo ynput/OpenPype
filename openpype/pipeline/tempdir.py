@@ -47,7 +47,7 @@ def create_custom_tempdir(project_name, anatomy=None):
         # path is absolute
         custom_tempdir = openpype_tempdir
 
-    # create he dir path if it doesnt exists
+    # create the dir path if it doesn't exists
     if not os.path.exists(custom_tempdir):
         try:
             # create it if it doesnt exists
