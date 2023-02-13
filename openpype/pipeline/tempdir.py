@@ -53,6 +53,6 @@ def create_custom_tempdir(project_name, anatomy=None):
             # create it if it doesnt exists
             os.makedirs(custom_tempdir)
         except IOError as error:
-            raise IOError("Path couldn't be created: {}".format(error))
+            raise IOError("Path couldn't be created: {}".format(error)) from error
 
     return custom_tempdir
