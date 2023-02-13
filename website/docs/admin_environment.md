@@ -9,8 +9,8 @@ import TabItem from '@theme/TabItem';
 
 ## OPENPYPE_TMPDIR:
  - Custom staging dir directory
- - Supports anatomy keys formating. ex `{root[work]}/{project[name]}/temp`
- - supported formating keys:
+ - Supports anatomy keys formatting. ex `{root[work]}/{project[name]}/temp`
+ - supported formatting keys:
     - root[work]
     - project[name | code]
 
