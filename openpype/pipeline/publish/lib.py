@@ -628,7 +628,7 @@ def get_instance_staging_dir(instance):
         - project[name | code]
 
     Note:
-        Staging dir does not have to be necessarily in tempdir so be carefull
+        Staging dir does not have to be necessarily in tempdir so be careful
             about it's usage.
 
     Args:
