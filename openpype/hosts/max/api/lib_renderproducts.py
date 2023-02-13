@@ -72,7 +72,6 @@ class RenderProducts(object):
                     full_render_list.append(aov)
             return full_render_list
 
-
     def beauty_render_product(self, folder, startFrame, endFrame, fmt):
         # get the beauty
         beauty_frame_range = list()
