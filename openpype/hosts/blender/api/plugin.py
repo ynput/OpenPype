@@ -1246,6 +1246,17 @@ class AssetLoader(Loader):
                     new_datablock.name = old_datablock["original_name"]
                     old_datablock.user_remap(new_datablock)
 
+                    # Ensure action relink
+                    if (
+                        hasattr(old_datablock, "animation_data")
+                        and old_datablock.animation_data
+                    ):
+                        if not new_datablock.animation_data:
+                            new_datablock.animation_data_create()
+                        new_datablock.animation_data.action = (
+                            old_datablock.animation_data.action
+                        )
+
             # Restore parent collection if existing
             if parent_collection:
                 unlink_from_collection(
