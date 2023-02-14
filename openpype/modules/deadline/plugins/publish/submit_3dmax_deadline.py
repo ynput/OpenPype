@@ -20,6 +20,12 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
     hosts = ["max"]
     families = ["maxrender"]
     targets = ["local"]
+    use_published = True
+    priority = 50
+    chunk_size = 1
+    group = None
+    deadline_pool = None
+    deadline_pool_secondary = None
 
     def process(self, instance):
         context = instance.context
@@ -34,6 +40,24 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
             start=int(instance.data["frameStart"]),
             end=int(instance.data["frameEnd"])
         )
+        if self.use_published:
+            for item in context:
+                if "workfile" in item.data["families"]:
+                    msg = "Workfile (scene) must be published along"
+                    assert item.data["publish"] is True, msg
+
+                    template_data = item.data.get("anatomyData")
+                    rep = item.data.get("representations")[0].get("name")
+                    template_data["representation"] = rep
+                    template_data["ext"] = rep
+                    template_data["comment"] = None
+                    anatomy_filled = context.data["anatomy"].format(template_data)
+                    template_filled = anatomy_filled["publish"]["path"]
+                    filepath = os.path.normpath(template_filled)
+
+                    self.log.info(
+                        "Using published scene for render {}".format(filepath)
+                    )
 
         payload = {
             "JobInfo": {
@@ -47,15 +71,17 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
                 "UserName": deadline_user,
 
                 "Plugin": instance.data["plugin"],
-                "Pool": instance.data.get("primaryPool"),
-                "secondaryPool": instance.data.get("secondaryPool"),
+                "Group": self.group,
+                "Pool": self.deadline_pool,
+                "secondaryPool": self.deadline_pool_secondary,
                 "Frames": frames,
-                "ChunkSize": instance.data.get("chunkSize", 10),
+                "ChunkSize": self.chunk_size,
+                "Priority": instance.data.get("priority", self.priority),
                 "Comment": comment
             },
             "PluginInfo": {
                 # Input
-                "SceneFile": instance.data["source"],
+                "SceneFile": filepath,
                 "Version": "2023",
                 "SaveFile": True,
                 # Mandatory for Deadline
@@ -94,7 +120,7 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
         # frames from Deadline Monitor
         output_data = {}
         # need to be fixed
-        for i, filepath in enumerate(instance.data["files"]):
+        for i, filepath in enumerate(instance.data["expectedFiles"]):
             dirname = os.path.dirname(filepath)
             fname = os.path.basename(filepath)
             output_data["OutputDirectory%d" % i] = dirname.replace("\\", "/")
@@ -129,9 +155,10 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
         response = requests.post(url, json=payload)
         if not response.ok:
             raise Exception(response.text)
-        # Store output dir for unified publisher (filesequence)
-        expected_files = instance.data["files"]
+        # Store output dir for unified publisher (expectedFilesequence)
+        expected_files = instance.data["expectedFiles"]
         self.log.info("exp:{}".format(expected_files))
         output_dir = os.path.dirname(expected_files[0])
+        instance.data["toBeRenderedOn"] = "deadline"
         instance.data["outputDir"] = output_dir
         instance.data["deadlineSubmissionJob"] = response.json()
