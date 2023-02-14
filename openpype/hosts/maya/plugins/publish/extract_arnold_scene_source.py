@@ -139,6 +139,30 @@ class ExtractArnoldSceneSource(publish.Extractor):
                 duplicate_nodes.append(duplicate_transform)
                 delete_bin.append(duplicate_transform)
 
+                # Copy cbId from original to mtoa_constant.
+                attr_name = "mtoa_constant_cbId"
+                duplicate_shapes = cmds.listRelatives(
+                    duplicate_transform, shapes=True
+                )
+                original_shapes = cmds.listRelatives(node, shapes=True)
+                for duplicate_shape in duplicate_shapes:
+                    duplicate_path = (
+                        duplicate_transform + "|" + duplicate_shape
+                    )
+                    for original_shape in original_shapes:
+                        original_path = node + "|" + original_shape
+                        if duplicate_shape == original_shape:
+                            cmds.addAttr(
+                                duplicate_path,
+                                longName=attr_name,
+                                dataType="string"
+                            )
+                            cmds.setAttr(
+                                duplicate_path + "." + attr_name,
+                                cmds.getAttr(original_path + ".cbId"),
+                                type="string"
+                            )
+
             with attribute_values(attribute_data):
                 with maintained_selection():
                     self.log.info(
