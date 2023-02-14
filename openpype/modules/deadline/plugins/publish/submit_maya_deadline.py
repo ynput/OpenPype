@@ -64,6 +64,7 @@ class MayaPluginInfo(object):
     # Include all lights flag
     RenderSetupIncludeLights = attr.ib(
         default="1", validator=_validate_deadline_bool_value)
+    StrictErrorChecking = attr.ib(default=True)
 
 
 @attr.s
@@ -219,6 +220,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "renderSetupIncludeLights", default_rs_include_lights)
         if rs_include_lights not in {"1", "0", True, False}:
             rs_include_lights = default_rs_include_lights
+        strict_error_checking = instance.data.get("strict_error_checking",
+                                                  True)
         plugin_info = MayaPluginInfo(
             SceneFile=self.scene_path,
             Version=cmds.about(version=True),
@@ -227,6 +230,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             RenderSetupIncludeLights=rs_include_lights,  # noqa
             ProjectPath=context.data["workspaceDir"],
             UsingRenderLayers=True,
+            StrictErrorChecking=strict_error_checking
         )
 
         plugin_payload = attr.asdict(plugin_info)

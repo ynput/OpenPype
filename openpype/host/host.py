@@ -123,7 +123,7 @@ class HostBase(object):
             Union[str, None]: Current task name.
         """
 
-        return os.environ.get("AVALON_ASSET")
+        return os.environ.get("AVALON_TASK")
 
     def get_current_context(self):
         """Get current context information.
