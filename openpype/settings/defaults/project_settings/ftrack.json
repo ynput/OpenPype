@@ -324,8 +324,7 @@
                         "animation",
                         "look",
                         "rig",
-                        "camera",
-                        "renderlayer"
+                        "camera"
                     ],
                     "task_types": [],
                     "tasks": [],
