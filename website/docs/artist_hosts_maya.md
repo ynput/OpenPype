@@ -617,3 +617,20 @@ about customizing review process refer to [admin section](project_settings/setti
 
 If you don't move `modelMain` into `reviewMain`, review will be generated but it will
 be published as separate entity.
+
+
+## Inventory Actions
+
+### Connect Geometry
+
+This action will connect geometries between containers.
+
+#### Usage
+
+Select 1 container of type `animation` or `pointcache`, then 1+ container of any type.
+
+#### Details
+
+The action searches the selected containers for 1 animation container of type `animation` or `pointcache`. This animation container will be connected to the rest of the selected containers. Matching geometries between containers is done by comparing the attribute `cbId`.
+
+The connection between geometries is done with a live blendshape.
