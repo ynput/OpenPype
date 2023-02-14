@@ -6,7 +6,10 @@ from openpype.client.entities import (
     get_asset_by_name,
     get_subset_by_name,
 )
-from openpype.hosts.blender.api.pipeline import metadata_update
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_PROPERTY,
+    metadata_update,
+)
 from openpype.pipeline import legacy_io
 from openpype.pipeline.constants import AVALON_CONTAINER_ID
 
@@ -50,7 +53,11 @@ if __name__ == "__main__":
     for datapath in args.datapaths:
         for datablock_name in args.datablocks:
             datablock = getattr(bpy.data, datapath).get(datablock_name)
-            if not datablock or datablock in containerized_datablocks:
+            if (
+                not datablock
+                or datablock in containerized_datablocks
+                or datablock.get(AVALON_PROPERTY, {}).get("representation")
+            ):
                 continue
 
             # Get docs

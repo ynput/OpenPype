@@ -6,6 +6,7 @@ import bpy
 
 import pyblish.api
 from openpype.hosts.blender.api.utils import (
+    BL_OUTLINER_TYPES,
     BL_TYPE_DATAPATH,
 )
 from openpype.pipeline import AVALON_CONTAINER_ID, AVALON_INSTANCE_ID
@@ -100,8 +101,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Add datablocks used by the main datablocks
             non_outliner_datacols = set(
                 chain.from_iterable(
-                    getattr(bpy.data, t)
-                    for t in BL_TYPE_DATAPATH.values()
+                    getattr(bpy.data, datacol)
+                    for bl_type, datacol in BL_TYPE_DATAPATH.items()
+                    if bl_type not in BL_OUTLINER_TYPES
                 )
             )
             members.update(
@@ -114,10 +116,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 }
             )
 
-            # Add instance holder as first item
-            members = list(members)
-
-            instance[:] = members
+            # Fill instance with members
+            instance[:] = list(members)
             self.log.debug(json.dumps(instance.data, indent=4))
             for obj in instance:
                 self.log.debug(obj)
