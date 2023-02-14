@@ -1,6 +1,8 @@
+from itertools import chain
 import bpy
 
 import pyblish.api
+from openpype.hosts.blender.api.utils import get_all_outliner_children
 from openpype.pipeline import legacy_io
 
 
@@ -18,10 +20,17 @@ class CollectReview(pyblish.api.InstancePlugin):
         self.log.debug(f"instance: {instance}")
 
         # get cameras
+        # TODO could be substituted by _get_camera_from_datablocks
+        # in openpype/hosts/blender/plugins/create/create_camera.py
+        outliner_children = set(
+            chain.from_iterable(
+                get_all_outliner_children(d) for d in instance
+            )
+        )
         cameras = [
-            obj
-            for obj in instance
-            if isinstance(obj, bpy.types.Object) and obj.type == "CAMERA"
+                c
+                for c in outliner_children | set(instance)
+                if isinstance(c, bpy.types.Object) and c.type == "CAMERA"
         ]
 
         assert cameras, "No camera found in review collection"
