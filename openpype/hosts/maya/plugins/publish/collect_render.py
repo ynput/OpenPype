@@ -320,7 +320,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     "renderSetupIncludeLights"
                 ),
                 "strict_error_checking": render_instance.data.get(
-                    "strict_error_checking")
+                    "strict_error_checking", False
+                )
             }
 
             # Collect Deadline url if Deadline module is enabled
