@@ -17,6 +17,7 @@ from openpype.lib.attribute_definitions import (
     UnknownDef,
     serialize_attr_defs,
     deserialize_attr_defs,
+    get_default_values,
 )
 from openpype.host import IPublishHost
 from openpype.pipeline import legacy_io
@@ -1866,6 +1867,13 @@ class CreateContext:
         if pre_create_data is None:
             pre_create_data = {}
 
+        precreate_attr_defs = creator.get_pre_create_attr_defs() or []
+        # Create default values of precreate data
+        _pre_create_data = get_default_values(precreate_attr_defs)
+        # Update passed precreate data to default values
+        # TODO validate types
+        _pre_create_data.update(pre_create_data)
+
         subset_name = creator.get_subset_name(
             variant,
             task_name,
@@ -1881,7 +1889,7 @@ class CreateContext:
         return creator.create(
             subset_name,
             instance_data,
-            pre_create_data
+            _pre_create_data
         )
 
     def _create_with_unified_error(
