@@ -51,7 +51,8 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
                     template_data["representation"] = rep
                     template_data["ext"] = rep
                     template_data["comment"] = None
-                    anatomy_filled = context.data["anatomy"].format(template_data)
+                    anatomy_data = context.data["anatomy"]
+                    anatomy_filled = anatomy_data.format(template_data)
                     template_filled = anatomy_filled["publish"]["path"]
                     filepath = os.path.normpath(template_filled)
 

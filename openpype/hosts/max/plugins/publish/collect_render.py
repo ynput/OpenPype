@@ -8,6 +8,7 @@ from openpype.pipeline import legacy_io
 from openpype.hosts.max.api.lib_renderproducts import RenderProducts
 from openpype.client import get_last_version_by_subset_name
 
+
 class CollectRender(pyblish.api.InstancePlugin):
     """Collect Render for Deadline"""
 
