@@ -340,13 +340,11 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
 
         _stdout, _stderr = proc.communicate()
         if _stdout:
-            for line in _stdout.split(b"\r\n"):
-                print(line.decode("utf-8"))
+            print(_stdout.decode("utf-8", errors="backslashreplace"))
 
         # This will probably never happen as ffmpeg use stdout
         if _stderr:
-            for line in _stderr.split(b"\r\n"):
-                print(line.decode("utf-8"))
+            print(_stderr.decode("utf-8", errors="backslashreplace"))
 
         if proc.returncode != 0:
             raise RuntimeError(
