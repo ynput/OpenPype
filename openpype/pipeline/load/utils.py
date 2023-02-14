@@ -28,7 +28,6 @@ from openpype.lib import (
     TemplateUnsolved,
 )
 from openpype.pipeline import (
-    schema,
     legacy_io,
     Anatomy,
 )
@@ -643,7 +642,10 @@ def get_representation_path(representation, root=None, dbcon=None):
 
     def path_from_config():
         try:
-            version_, subset, asset, project = dbcon.parenthood(representation)
+            project_name = dbcon.active_project()
+            version_, subset, asset, project = get_representation_parents(
+                project_name, representation
+            )
         except ValueError:
             log.debug(
                 "Representation %s wasn't found in database, "
