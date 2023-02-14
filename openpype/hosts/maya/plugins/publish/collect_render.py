@@ -319,7 +319,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     "renderSetupIncludeLights"
                 ),
                 "strict_error_checking": render_instance.data.get(
-                    "strict_error_checking", False
+                    "strict_error_checking", True
                 )
             }
 
