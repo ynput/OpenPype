@@ -121,7 +121,6 @@ class ExtractBlend(publish.Extractor):
         bpy.data.libraries.write(
             filepath.as_posix(),
             datablocks,
-            path_remap="ABSOLUTE",
             fake_user=True,
             compress=get_compress_setting(),
         )
@@ -169,8 +168,8 @@ class ExtractBlend(publish.Extractor):
             if img.source in {"FILE", "SEQUENCE", "MOVIE"}
             and not img.packed_file
         }:
-            # Check image is not internal
-            if not image.filepath:
+            # Skip image from library or internal
+            if image.library or not image.filepath:
                 continue
 
             # Get source and destination paths
