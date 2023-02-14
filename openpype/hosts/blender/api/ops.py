@@ -978,18 +978,17 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
             return {"CANCELLED"}
 
         # Recover required data
-        openpype_instances = context.scene.openpype_instances
         openpype_containers = context.scene.openpype_containers
         container = openpype_containers.get(self.container_name)
-        avalon_data = container["avalon"]
+        avalon_data = dict(container["avalon"])
 
-        # Check not from library
-        if container.outliner_entity.override_library:
-            self.report(
-                {"WARNING"},
-                "Overriden entity cannot be converted to instance. Please switch to append.",
-            )
-            return {"CANCELLED"}
+        # Expose container content and get neutral outliner entity
+        bpy.ops.scene.expose_container_content(
+            container_name=self.container_name
+        )
+        outliner_entity = bpy.data.collections.get(
+            self.container_name
+        ) or bpy.data.objects.get(self.container_name)
 
         # Get creator name
         for creator_name, creator_attrs in bpy.context.scene[
@@ -1006,45 +1005,26 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
             else avalon_data["asset_name"],
             "subset_name": avalon_data["name"],
             "gather_into_collection": isinstance(
-                container.outliner_entity, bpy.types.Collection
+                outliner_entity, bpy.types.Collection
             ),
         }
-        if container.outliner_entity:
+        if outliner_entity:
             # For collection, allow renaming
-            if isinstance(container.outliner_entity, bpy.types.Collection):
+            if isinstance(outliner_entity, bpy.types.Collection):
                 # TODO may not be a good design because this value is from source workfile...
-                container.outliner_entity.is_openpype_instance = False
+                outliner_entity.is_openpype_instance = False
 
             create_args.update(
                 {
                     "datapath": BL_TYPE_DATAPATH.get(
-                        type(container.outliner_entity)
+                        type(outliner_entity)
                     ),
-                    "datablock_name": container.outliner_entity.name,
+                    "datablock_name": outliner_entity.name,
                 }
             )
 
+        # Create new instance
         bpy.ops.scene.create_openpype_instance(**create_args)
-
-        # Add datablocks to instance
-        new_instance = openpype_instances[-1]
-        container_outliner_children = get_all_outliner_children(
-            container.outliner_entity
-        )
-        add_datablocks_to_container(
-            {
-                d_ref.datablock
-                for d_ref in container.datablock_refs
-                if d_ref.datablock != container.outliner_entity
-                and not d_ref.datablock in container_outliner_children
-            },
-            new_instance,
-        )
-
-        # Remove container
-        openpype_containers.remove(
-            openpype_containers.find(self.container_name)
-        )
 
         return {"FINISHED"}
 
