@@ -49,7 +49,7 @@ class CollectPublishedVersion(pyblish.api.ContextPlugin):
                                                       asset_id)
         version_int = 0
         if version_doc:
-            version_int += int(version_doc["name"])
+            version_int += int(version_doc["name"]) + 1
 
         self.log.debug(f"Setting {version_int} to context.")
         context.data["version"] = version_int

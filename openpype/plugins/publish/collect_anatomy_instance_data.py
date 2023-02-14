@@ -217,7 +217,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 # use latest version (+1) if already any exist
                 latest_version = instance.data["latestVersion"]
                 if latest_version is not None:
-                    version_number += int(latest_version)
+                    version_number += int(latest_version) + 1
 
             anatomy_updates = {
                 "asset": instance.data["asset"],
