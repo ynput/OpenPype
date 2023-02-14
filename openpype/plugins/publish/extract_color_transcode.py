@@ -161,14 +161,16 @@ class ExtractOIIOTranscode(publish.Extractor):
                     new_repre["custom_tags"].extend(custom_tags)
 
                 # Add additional tags from output definition to representation
+                if not new_repre.get("tags"):
+                    new_repre["tags"] = []
                 for tag in output_def["tags"]:
-                    if not new_repre.get("tags"):
-                        new_repre["tags"] = []
                     if tag not in new_repre["tags"]:
                         new_repre["tags"].append(tag)
 
                     if tag == "review":
                         added_review = True
+
+                new_repre["tags"].append("newly_added")
 
                 instance.data["representations"].append(new_repre)
                 added_representations = True
@@ -179,6 +181,12 @@ class ExtractOIIOTranscode(publish.Extractor):
 
         for repre in tuple(instance.data["representations"]):
             tags = repre.get("tags") or []
+            # TODO implement better way, for now do not delete new repre
+            # new repre might have 'delete' tag to removed, but it first must
+            # be there for review to be created
+            if "newly_added" in tags:
+                tags.remove("newly_added")
+                continue
             if "delete" in tags and "thumbnail" not in tags:
                 instance.data["representations"].remove(repre)
 
