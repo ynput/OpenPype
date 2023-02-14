@@ -22,7 +22,7 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
     """Get Resources for a subset version"""
 
     label = "Collect OTIO Subset Resources"
-    order = pyblish.api.CollectorOrder + 0.0021
+    order = pyblish.api.CollectorOrder + 0.491
     families = ["clip"]
     hosts = ["resolve", "hiero", "flame"]
 
@@ -50,9 +50,9 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
 
         # get basic variables
         otio_clip = instance.data["otioClip"]
-        otio_avalable_range = otio_clip.available_range()
-        media_fps = otio_avalable_range.start_time.rate
-        available_duration = otio_avalable_range.duration.value
+        otio_available_range = otio_clip.available_range()
+        media_fps = otio_available_range.start_time.rate
+        available_duration = otio_available_range.duration.value
 
         # get available range trimmed with processed retimes
         retimed_attributes = get_media_range_with_retimes(
@@ -248,7 +248,7 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
         # Task can be optional in anatomy data
         host_name = context.data["hostName"]
         family = instance.data["family"]
-        anatomy_data = instance.context.data["anatomyData"]
+        anatomy_data = instance.data["anatomyData"]
         task_info = anatomy_data.get("task") or {}
 
         return get_publish_template_name(
