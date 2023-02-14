@@ -1054,7 +1054,7 @@ class SCENE_OT_ExposeContainerContent(bpy.types.Operator):
     """It breaks the possibility to update the target container later"""
 
     bl_idname = "scene.expose_container_content"
-    bl_label = "Expose Container's Content"
+    bl_label = "Expose Container Content"
 
     container_name: bpy.props.StringProperty(name="Container to expose")
 
