@@ -552,7 +552,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     "colorspace": colorspace,
                     "config": {
                         "path": additional_data["colorspaceConfig"],
-                        "template": ""
+                        "template": additional_data["colorspaceTemplate"]
                     },
                     "display": additional_data["display"],
                     "view": additional_data["view"]
@@ -920,7 +920,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "renderProducts": instance.data["renderProducts"],
             "colorspaceConfig": instance.data["colorspaceConfig"],
             "display": instance.data["colorspaceDisplay"],
-            "view": instance.data["colorspaceView"]
+            "view": instance.data["colorspaceView"],
+            "colorspaceTemplate": instance.data["colorspaceConfig"].replace(
+                context.data["anatomy"].roots["work"], "{root[work]}"
+            )
         }
 
         if isinstance(data.get("expectedFiles")[0], dict):
