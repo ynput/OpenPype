@@ -380,7 +380,8 @@ def load_environments():
     based on server url.
     """
 
-    if not os.environ.get("AYON_SERVER_URL"):
+    server_url = os.environ.get("AYON_SERVER_URL")
+    if not server_url:
         server_url = get_last_server()
         if not server_url:
             return
