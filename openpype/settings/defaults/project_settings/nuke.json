@@ -1,7 +1,6 @@
 {
     "general": {
         "menu": {
-            "create": "ctrl+alt+c",
             "publish": "ctrl+alt+p",
             "load": "ctrl+alt+l",
             "manage": "ctrl+alt+m",
@@ -246,6 +245,7 @@
                             "sourcetype": "python",
                             "title": "Gizmo Note",
                             "command": "nuke.nodes.StickyNote(label='You can create your own toolbar menu in the Nuke GizmoMenu of OpenPype')",
+                            "icon": "",
                             "shortcut": ""
                         }
                     ]
