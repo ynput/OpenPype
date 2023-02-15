@@ -1884,7 +1884,7 @@ class CreateContext:
         instance_data = {
             "asset": asset_doc["name"],
             "task": task_name,
-            "family": self.family,
+            "family": creator.family,
             "variant": variant
         }
         return creator.create(
