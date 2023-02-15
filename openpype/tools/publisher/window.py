@@ -647,10 +647,7 @@ class PublisherWindow(QtWidgets.QDialog):
         #   otherwise 'create' is used
         # - this happens only on first show
         if first_reset:
-            if self._overview_widget.has_items():
-                self._go_to_publish_tab()
-            else:
-                self._go_to_create_tab()
+            self._go_to_create_tab()
 
         elif (
             not self._is_on_create_tab()
