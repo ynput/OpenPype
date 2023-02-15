@@ -73,8 +73,11 @@ def get_all_outliner_children(
     """
     if not entity:
         return set()
-
-    if hasattr(entity, "all_objects"):
+    elif not isinstance(entity, tuple(BL_OUTLINER_TYPES)):
+        raise TypeError(
+            f"{entity} is not an accepted outliner type: {BL_OUTLINER_TYPES}"
+        )
+    elif hasattr(entity, "all_objects"):
         return set(entity.children_recursive) | set(entity.all_objects)
     else:
         return set(entity.children_recursive)
