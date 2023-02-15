@@ -147,27 +147,6 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def write_instances(self, data):
         return write_instances(data)
 
-    # --- Legacy Create ---
-    def remove_instance(self, instance):
-        """Remove instance from current workfile metadata.
-
-        Implementation for Subset manager tool.
-        """
-
-        current_instances = get_workfile_metadata(SECTION_NAME_INSTANCES)
-        instance_id = instance.get("uuid")
-        found_idx = None
-        if instance_id:
-            for idx, _inst in enumerate(current_instances):
-                if _inst["uuid"] == instance_id:
-                    found_idx = idx
-                    break
-
-        if found_idx is None:
-            return
-        current_instances.pop(found_idx)
-        write_instances(current_instances)
-
     # --- Workfile ---
     def open_workfile(self, filepath):
         george_script = "tv_LoadProject '\"'\"{}\"'\"'".format(
@@ -515,17 +494,19 @@ def set_context_settings(asset_doc=None):
     Change fps, resolution and frame start/end.
     """
 
-    project_name = legacy_io.active_project()
-    if asset_doc is None:
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-        # Use current session asset if not passed
-        asset_doc = get_asset_by_name(project_name, asset_name)
+    width_key = "resolutionWidth"
+    height_key = "resolutionHeight"
 
-    project_doc = get_project(project_name)
+    width = asset_doc["data"].get(width_key)
+    height = asset_doc["data"].get(height_key)
+    if width is None or height is None:
+        print("Resolution was not found!")
+    else:
+        execute_george(
+            "tv_resizepage {} {} 0".format(width, height)
+        )
 
     framerate = asset_doc["data"].get("fps")
-    if framerate is None:
-        framerate = project_doc["data"].get("fps")
 
     if framerate is not None:
         execute_george(
@@ -533,22 +514,6 @@ def set_context_settings(asset_doc=None):
         )
     else:
         print("Framerate was not found!")
-
-    width_key = "resolutionWidth"
-    height_key = "resolutionHeight"
-
-    width = asset_doc["data"].get(width_key)
-    height = asset_doc["data"].get(height_key)
-    if width is None or height is None:
-        width = project_doc["data"].get(width_key)
-        height = project_doc["data"].get(height_key)
-
-    if width is None or height is None:
-        print("Resolution was not found!")
-    else:
-        execute_george(
-            "tv_resizepage {} {} 0".format(width, height)
-        )
 
     frame_start = asset_doc["data"].get("frameStart")
     frame_end = asset_doc["data"].get("frameEnd")
