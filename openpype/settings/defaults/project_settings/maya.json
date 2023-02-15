@@ -406,7 +406,7 @@
             "optional": false,
             "active": true
         },
-        "ValidateGLTFTexturesNames": {
+        "ValidateGLSLMaterial": {
             "enabled": false,
             "optional": false,
             "active": true

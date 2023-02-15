@@ -409,8 +409,8 @@
                     "label": "Validate Current Render Layer Has Renderable Camera"
                 },
                 {
-                    "key": "ValidateGLTFTexturesNames",
-                    "label": "Validate GLTF Textures Names"
+                    "key": "ValidateGLSLMaterial",
+                    "label": "Validate GLSL Material"
                 },
                 {
                     "key": "ValidateRenderImageRule",
@@ -426,7 +426,7 @@
                 },
                 {
                     "key": "ValidateRenderLayerAOVs",
-                    "label": "Validate Render Passes / AOVs Are Registered"
+                    "label": "Validate Render Passes / AOVs Are Regigistered"
                 },
                 {
                     "key": "ValidateStepSize",
