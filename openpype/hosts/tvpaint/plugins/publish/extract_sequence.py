@@ -6,6 +6,7 @@ from PIL import Image
 
 import pyblish.api
 
+from openpype.pipeline.publish import KnownPublishError
 from openpype.hosts.tvpaint.api.lib import (
     execute_george,
     execute_george_through_file,
@@ -24,8 +25,7 @@ from openpype.hosts.tvpaint.lib import (
 class ExtractSequence(pyblish.api.Extractor):
     label = "Extract Sequence"
     hosts = ["tvpaint"]
-    families = ["review", "renderPass", "renderLayer", "renderScene"]
-    families_to_review = ["review"]
+    families = ["review", "render"]
 
     # Modifiable with settings
     review_bg = [255, 255, 255, 255]
@@ -136,7 +136,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
         # Fill tags and new families from project settings
         tags = []
-        if family_lowered in self.families_to_review:
+        if family_lowered == "review":
             tags.append("review")
 
         # Sequence of one frame
@@ -161,10 +161,6 @@ class ExtractSequence(pyblish.api.Extractor):
         self.log.debug("Creating new representation: {}".format(new_repre))
 
         instance.data["representations"].append(new_repre)
-
-        if family_lowered in ("renderpass", "renderlayer", "renderscene"):
-            # Change family to render
-            instance.data["family"] = "render"
 
         if not thumbnail_fullpath:
             return
@@ -259,7 +255,7 @@ class ExtractSequence(pyblish.api.Extractor):
             output_filepaths_by_frame_idx[frame_idx] = filepath
 
             if not os.path.exists(filepath):
-                raise AssertionError(
+                raise KnownPublishError(
                     "Output was not rendered. File was not found {}".format(
                         filepath
                     )
