@@ -83,7 +83,7 @@ class ExtractOIIOTranscode(publish.Extractor):
             return
 
         new_representations = []
-        repres = instance.data.get("representations") or []
+        repres = instance.data["representations"]
         for idx, repre in enumerate(list(repres)):
             self.log.debug("repre ({}): `{}`".format(idx + 1, repre["name"]))
             if not self._repre_is_valid(repre):
