@@ -1573,20 +1573,19 @@ class PublisherController(BasePublisherController):
     Handle both creation and publishing parts.
 
     Args:
-        dbcon (AvalonMongoDB): Connection to mongo with context.
         headless (bool): Headless publishing. ATM not implemented or used.
     """
 
     _log = None
 
-    def __init__(self, dbcon=None, headless=False):
+    def __init__(self, headless=False):
         super(PublisherController, self).__init__()
 
         self._host = registered_host()
         self._headless = headless
 
         self._create_context = CreateContext(
-            self._host, dbcon, headless=headless, reset=False
+            self._host, headless=headless, reset=False
         )
 
         self._publish_plugins_proxy = None
@@ -1740,7 +1739,7 @@ class PublisherController(BasePublisherController):
         self._create_context.reset_preparation()
 
         # Reset avalon context
-        self._create_context.reset_avalon_context()
+        self._create_context.reset_current_context()
 
         self._asset_docs_cache.reset()
 
@@ -2004,9 +2003,10 @@ class PublisherController(BasePublisherController):
 
         success = True
         try:
-            self._create_context.create(
+            self._create_context.create_with_unified_error(
                 creator_identifier, subset_name, instance_data, options
             )
+
         except CreatorsOperationFailed as exc:
             success = False
             self._emit_event(
