@@ -1,6 +1,8 @@
 import os
 import pyblish.api
 
+from openpype.pipeline.publish import get_publish_repre_path
+
 
 class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
     """Integrate Shotgrid Version"""
@@ -63,8 +65,9 @@ class IntegrateShotgridVersion(pyblish.api.InstancePlugin):
             data_to_update["sg_status_list"] = status
 
         for representation in instance.data.get("representations", []):
-            local_path = representation.get("published_path")
-            code = os.path.basename(local_path)
+            local_path = get_publish_repre_path(
+                instance, representation, False
+            )
 
             if "shotgridreview" in representation.get("tags", []):
 
