@@ -6,6 +6,7 @@ from openpype.hosts.tvpaint.api.plugin import TVPaintAutoCreator
 class TVPaintWorkfileCreator(TVPaintAutoCreator):
     family = "workfile"
     identifier = "workfile"
+    label = "Workfile"
 
     default_variant = "Main"
 
