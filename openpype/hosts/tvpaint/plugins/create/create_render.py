@@ -112,7 +112,7 @@ class CreateRenderlayer(TVPaintCreator):
 
     # Settings
     # - Default render pass name for beauty
-    render_pass = "beauty"
+    default_pass_name = "beauty"
     # - Mark by default instance for review
     mark_for_review = True
 
@@ -122,7 +122,7 @@ class CreateRenderlayer(TVPaintCreator):
         dynamic_data = super().get_dynamic_data(
             variant, task_name, asset_doc, project_name, host_name, instance
         )
-        dynamic_data["renderpass"] = self.render_pass
+        dynamic_data["renderpass"] = self.default_pass_name
         dynamic_data["renderlayer"] = variant
         return dynamic_data
 
@@ -543,9 +543,9 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
     icon = "fa.file-image-o"
 
     # Settings
-    default_variant = "Main"
     default_pass_name = "beauty"
     mark_for_review = True
+    active_on_create = False
 
     def get_dynamic_data(self, variant, *args, **kwargs):
         dynamic_data = super().get_dynamic_data(variant, *args, **kwargs)
@@ -581,6 +581,8 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
                 self.default_pass_name
             )
         }
+        if not self.active_on_create:
+            data["active"] = False
 
         new_instance = CreatedInstance(
             self.family, subset_name, data, self

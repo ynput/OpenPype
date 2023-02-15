@@ -9,6 +9,8 @@ class TVPaintWorkfileCreator(TVPaintAutoCreator):
     label = "Workfile"
     icon = "fa.file-o"
 
+    # Settings
+    active_on_create = True
     default_variant = "Main"
 
     def create(self):
@@ -38,6 +40,8 @@ class TVPaintWorkfileCreator(TVPaintAutoCreator):
                 "task": task_name,
                 "variant": self.default_variant
             }
+            if not self.active_on_create:
+                data["active"] = False
 
             new_instance = CreatedInstance(
                 self.family, subset_name, data, self
