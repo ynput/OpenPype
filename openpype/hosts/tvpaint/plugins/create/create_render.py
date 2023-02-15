@@ -228,7 +228,7 @@ class CreateRenderlayer(TVPaintCreator):
         render_layer_instances = {}
         render_pass_instances = collections.defaultdict(list)
 
-        for instance in  self.create_context.instances:
+        for instance in self.create_context.instances:
             if instance.creator_identifier == CreateRenderPass.identifier:
                 render_layer_id = (
                     instance["creator_attributes"]["render_layer_instance_id"]
