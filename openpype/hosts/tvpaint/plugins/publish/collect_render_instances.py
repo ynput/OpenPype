@@ -18,6 +18,9 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
         elif creator_identifier == "render.pass":
             self._collect_data_for_render_pass(instance)
 
+        elif creator_identifier == "render.scene":
+            self._collect_data_for_render_scene(instance)
+
         else:
             if creator_identifier == "scene.review":
                 self._collect_data_for_review(instance)
@@ -79,6 +82,25 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
         subset_name = instance.data["subset"]
         instance.data["subset"] = subset_name.format(
             **prepare_template_data({"renderlayer": render_layer_name})
+        )
+
+    def _collect_data_for_render_scene(self, instance):
+        instance.data["families"].append("renderScene")
+
+        creator_attributes = instance.data["creator_attributes"]
+        if creator_attributes["mark_for_review"]:
+            instance.data["families"].append("review")
+
+        instance.data["layers"] = copy.deepcopy(
+            instance.context.data["layersData"]
+        )
+
+        render_pass_name = (
+            instance.data["creator_attributes"]["render_pass_name"]
+        )
+        subset_name = instance.data["subset"]
+        instance.data["subset"] = subset_name.format(
+            **prepare_template_data({"renderpass": render_pass_name})
         )
 
     def _collect_data_for_review(self, instance):

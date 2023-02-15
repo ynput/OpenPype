@@ -32,6 +32,7 @@ Todos:
 
 import collections
 
+from openpype.client import get_asset_by_name
 from openpype.lib import (
     prepare_template_data,
     EnumDef,
@@ -42,7 +43,10 @@ from openpype.pipeline.create import (
     CreatedInstance,
     CreatorError,
 )
-from openpype.hosts.tvpaint.api.plugin import TVPaintCreator
+from openpype.hosts.tvpaint.api.plugin import (
+    TVPaintCreator,
+    TVPaintAutoCreator,
+)
 from openpype.hosts.tvpaint.api.lib import (
     get_layers_data,
     get_groups_data,
@@ -480,3 +484,122 @@ class CreateRenderPass(TVPaintCreator):
 
     def get_instance_attr_defs(self):
         return self.get_pre_create_attr_defs()
+
+
+class TVPaintSceneRenderCreator(TVPaintAutoCreator):
+    family = "render"
+    subset_template_family_filter = "renderScene"
+    identifier = "render.scene"
+    label = "Scene Render"
+
+    # Settings
+    default_variant = "Main"
+    default_pass_name = "beauty"
+    mark_for_review = True
+
+    def get_dynamic_data(self, variant, *args, **kwargs):
+        dynamic_data = super().get_dynamic_data(variant, *args, **kwargs)
+        dynamic_data["renderpass"] = "{renderpass}"
+        dynamic_data["renderlayer"] = variant
+        return dynamic_data
+
+    def _create_new_instance(self):
+        context = self.host.get_current_context()
+        host_name = self.host.name
+        project_name = context["project_name"]
+        asset_name = context["asset_name"]
+        task_name = context["task_name"]
+
+        asset_doc = get_asset_by_name(project_name, asset_name)
+        subset_name = self.get_subset_name(
+            self.default_variant,
+            task_name,
+            asset_doc,
+            project_name,
+            host_name
+        )
+        data = {
+            "asset": asset_name,
+            "task": task_name,
+            "variant": self.default_variant,
+            "creator_attributes": {
+                "render_pass_name": self.default_pass_name,
+                "mark_for_review": True
+            },
+            "label": self._get_label(
+                subset_name,
+                self.default_pass_name
+            )
+        }
+
+        new_instance = CreatedInstance(
+            self.family, subset_name, data, self
+        )
+        instances_data = self.host.list_instances()
+        instances_data.append(new_instance.data_to_store())
+        self.host.write_instances(instances_data)
+        self._add_instance_to_context(new_instance)
+        return new_instance
+
+    def create(self):
+        existing_instance = None
+        for instance in self.create_context.instances:
+            if instance.creator_identifier == self.identifier:
+                existing_instance = instance
+                break
+
+        if existing_instance is None:
+            return self._create_new_instance()
+
+        context = self.host.get_current_context()
+        host_name = self.host.name
+        project_name = context["project_name"]
+        asset_name = context["asset_name"]
+        task_name = context["task_name"]
+
+        if (
+            existing_instance["asset"] != asset_name
+            or existing_instance["task"] != task_name
+        ):
+            asset_doc = get_asset_by_name(project_name, asset_name)
+            subset_name = self.get_subset_name(
+                existing_instance["variant"],
+                task_name,
+                asset_doc,
+                project_name,
+                host_name,
+                existing_instance
+            )
+            existing_instance["asset"] = asset_name
+            existing_instance["task"] = task_name
+            existing_instance["subset"] = subset_name
+
+        existing_instance["label"] = self._get_label(
+            existing_instance["subset"],
+            existing_instance["creator_attributes"]["render_pass_name"]
+        )
+
+
+
+    def _get_label(self, subset_name, render_layer_name):
+        return subset_name.format(**prepare_template_data({
+            "renderlayer": render_layer_name
+        }))
+
+    def get_instance_attr_defs(self):
+        return [
+            TextDef(
+                "render_pass_name",
+                label="Pass Name",
+                default=self.default_pass_name,
+                tooltip=(
+                    "Value is calculated during publishing and UI will update"
+                    " label after refresh."
+                )
+            ),
+            BoolDef(
+                "mark_for_review",
+                label="Review",
+                default=self.mark_for_review
+            )
+        ]
