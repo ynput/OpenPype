@@ -128,6 +128,9 @@ class ExtractOIIOTranscode(publish.Extractor):
                 if display:
                     new_repre["colorspaceData"]["display"] = display
 
+                additional_command_args = (output_def["oiiotool_args"]
+                                           ["additional_command_args"])
+
                 files_to_convert = self._translate_to_sequence(
                     files_to_convert)
                 for file_name in files_to_convert:
@@ -144,6 +147,7 @@ class ExtractOIIOTranscode(publish.Extractor):
                         target_colorspace,
                         view,
                         display,
+                        additional_command_args,
                         self.log
                     )
 
