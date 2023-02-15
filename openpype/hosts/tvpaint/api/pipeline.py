@@ -124,8 +124,11 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         if not context:
             return get_global_context()
 
+        if "project_name" in context:
+            return context
+        # This is legacy way how context was stored
         return {
-            "project_name": context["project"],
+            "project_name": context.get("project"),
             "asset_name": context.get("asset"),
             "task_name": context.get("task")
         }
