@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import ast
 import collections
 import sys
 import six
@@ -89,7 +90,9 @@ class UnrealBaseCreator(Creator):
                 obj = ar.get_asset_by_object_path(member).get_asset()
                 assets.add(obj)
 
-            imprint(f"{self.root}/{instance_name}", instance_data)
+            imprint(f"{self.root}/{instance_name}", instance.data_to_store())
+
+            return instance
 
         except Exception as er:
             six.reraise(
@@ -102,6 +105,11 @@ class UnrealBaseCreator(Creator):
         self.cache_subsets(self.collection_shared_data)
         for instance in self.collection_shared_data[
                 "unreal_cached_subsets"].get(self.identifier, []):
+            # Unreal saves metadata as string, so we need to convert it back
+            instance['creator_attributes'] = ast.literal_eval(
+                instance.get('creator_attributes', '{}'))
+            instance['publish_attributes'] = ast.literal_eval(
+                instance.get('publish_attributes', '{}'))
             created_instance = CreatedInstance.from_existing(instance, self)
             self._add_instance_to_context(created_instance)
 
