@@ -185,7 +185,15 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             return
 
         log.info("Setting up project...")
-        set_context_settings()
+        global_context = get_global_context()
+        project_name = global_context.get("project_name")
+        asset_name = global_context.get("aset_name")
+        if not project_name or not asset_name:
+            return
+
+        asset_doc = get_asset_by_name(project_name, asset_name)
+
+        set_context_settings(project_name, asset_doc)
 
     def application_exit(self):
         """Logic related to TimerManager.
@@ -462,7 +470,7 @@ def get_containers():
     return output
 
 
-def set_context_settings(asset_doc=None):
+def set_context_settings(project_name, asset_doc):
     """Set workfile settings by asset document data.
 
     Change fps, resolution and frame start/end.
