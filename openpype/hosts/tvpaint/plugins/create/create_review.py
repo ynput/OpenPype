@@ -7,6 +7,7 @@ class TVPaintReviewCreator(TVPaintAutoCreator):
     family = "review"
     identifier = "scene.review"
     label = "Review"
+    icon = "ei.video"
 
     default_variant = "Main"
 

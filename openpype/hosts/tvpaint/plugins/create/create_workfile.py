@@ -7,6 +7,7 @@ class TVPaintWorkfileCreator(TVPaintAutoCreator):
     family = "workfile"
     identifier = "workfile"
     label = "Workfile"
+    icon = "fa.file-o"
 
     default_variant = "Main"
 

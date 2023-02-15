@@ -61,7 +61,7 @@ class CreateRenderlayer(TVPaintCreator):
     family = "render"
     subset_template_family_filter = "renderLayer"
     identifier = "render.layer"
-    icon = "fa.cube"
+    icon = "fa5.images"
 
     # George script to change color group
     rename_script_template = (
@@ -266,11 +266,11 @@ class CreateRenderlayer(TVPaintCreator):
 
 
 class CreateRenderPass(TVPaintCreator):
-    icon = "fa.cube"
     family = "render"
     subset_template_family_filter = "renderPass"
     identifier = "render.pass"
     label = "Render Pass"
+    icon = "fa5.image"
 
     order = CreateRenderlayer.order + 10
 
@@ -496,6 +496,7 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
     subset_template_family_filter = "renderScene"
     identifier = "render.scene"
     label = "Scene Render"
+    icon = "fa.file-image-o"
 
     # Settings
     default_variant = "Main"
