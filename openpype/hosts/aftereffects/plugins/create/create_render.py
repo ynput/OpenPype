@@ -6,8 +6,7 @@ from openpype.hosts.aftereffects import api
 from openpype.pipeline import (
     Creator,
     CreatedInstance,
-    CreatorError,
-    legacy_io,
+    CreatorError
 )
 from openpype.hosts.aftereffects.api.pipeline import cache_and_get_instances
 from openpype.lib import prepare_template_data
@@ -195,7 +194,7 @@ class RenderCreator(Creator):
             instance_data.pop("uuid")
 
         if not instance_data.get("task"):
-            instance_data["task"] = legacy_io.Session.get("AVALON_TASK")
+            instance_data["task"] = self.create_context.get_current_task_name()
 
         if not instance_data.get("creator_attributes"):
             is_old_farm = instance_data["family"] != "renderLocal"
