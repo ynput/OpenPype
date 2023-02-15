@@ -76,7 +76,7 @@ class UnrealHost(HostBase, ILoadHost, IPublishHost):
         if not os.path.isfile(op_ctx):
             return {}
         with open(op_ctx, "r") as fp:
-            data = eval(json.load(fp))
+            data = json.load(fp)
         return data
 
 
