@@ -1,21 +1,15 @@
 import re
-import uuid
 
-from openpype.pipeline import (
-    LegacyCreator,
-    LoaderPlugin,
-    registered_host,
-)
+from openpype.pipeline import LoaderPlugin
 from openpype.pipeline.create import (
     CreatedInstance,
     get_subset_name,
     AutoCreator,
-    Creator as NewCreator,
+    Creator,
 )
 from openpype.pipeline.create.creator_plugins import cache_and_get_instances
 
 from .lib import get_layers_data
-from .pipeline import get_current_workfile_context
 
 
 SHARED_DATA_KEY = "openpype.tvpaint.instances"
@@ -86,7 +80,7 @@ class TVPaintCreatorCommon:
         )
 
 
-class TVPaintCreator(NewCreator, TVPaintCreatorCommon):
+class TVPaintCreator(Creator, TVPaintCreatorCommon):
     def collect_instances(self):
         self._collect_create_instances()
 
@@ -145,41 +139,6 @@ class TVPaintAutoCreator(AutoCreator, TVPaintCreatorCommon):
 
     def get_subset_name(self, *args, **kwargs):
         return self._custom_get_subset_name(*args, **kwargs)
-
-
-class Creator(LegacyCreator):
-    def __init__(self, *args, **kwargs):
-        super(Creator, self).__init__(*args, **kwargs)
-        # Add unified identifier created with `uuid` module
-        self.data["uuid"] = str(uuid.uuid4())
-
-    @classmethod
-    def get_dynamic_data(cls, *args, **kwargs):
-        dynamic_data = super(Creator, cls).get_dynamic_data(*args, **kwargs)
-
-        # Change asset and name by current workfile context
-        workfile_context = get_current_workfile_context()
-        asset_name = workfile_context.get("asset")
-        task_name = workfile_context.get("task")
-        if "asset" not in dynamic_data and asset_name:
-            dynamic_data["asset"] = asset_name
-
-        if "task" not in dynamic_data and task_name:
-            dynamic_data["task"] = task_name
-        return dynamic_data
-
-    def write_instances(self, data):
-        self.log.debug(
-            "Storing instance data to workfile. {}".format(str(data))
-        )
-        host = registered_host()
-        return host.write_instances(data)
-
-    def process(self):
-        host = registered_host()
-        data = host.list_instances()
-        data.append(self.data)
-        self.write_instances(data)
 
 
 class Loader(LoaderPlugin):
