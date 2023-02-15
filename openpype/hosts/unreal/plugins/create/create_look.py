@@ -7,6 +7,7 @@ from openpype.hosts.unreal.api.pipeline import (
 from openpype.hosts.unreal.api.plugin import (
     UnrealAssetCreator
 )
+from openpype.lib import UILabelDef
 
 
 class CreateLook(UnrealAssetCreator):
@@ -18,10 +19,10 @@ class CreateLook(UnrealAssetCreator):
     icon = "paint-brush"
 
     def create(self, subset_name, instance_data, pre_create_data):
-        selection = []
-        if pre_create_data.get("use_selection"):
-            sel_objects = unreal.EditorUtilityLibrary.get_selected_assets()
-            selection = [a.get_path_name() for a in sel_objects]
+        # We need to set this to True for the parent class to work
+        pre_create_data["use_selection"] = True
+        sel_objects = unreal.EditorUtilityLibrary.get_selected_assets()
+        selection = [a.get_path_name() for a in sel_objects]
 
         if len(selection) != 1:
             raise RuntimeError("Please select only one asset.")
@@ -68,3 +69,8 @@ class CreateLook(UnrealAssetCreator):
             subset_name,
             instance_data,
             pre_create_data)
+
+    def get_pre_create_attr_defs(self):
+        return [
+            UILabelDef("Select the asset from which to create the look.")
+        ]
