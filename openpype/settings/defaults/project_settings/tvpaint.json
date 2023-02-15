@@ -32,7 +32,7 @@
         },
         "create_render_layer": {
             "mark_for_review": true,
-            "render_pass_name": "beauty",
+            "default_pass_name": "beauty",
             "default_variant": "Main",
             "default_variants": []
         },

@@ -151,7 +151,7 @@
                         },
                         {
                             "type": "text",
-                            "key": "render_pass_name",
+                            "key": "default_pass_name",
                             "label": "Default beauty pass"
                         },
                         {

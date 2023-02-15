@@ -116,6 +116,15 @@ class CreateRenderlayer(TVPaintCreator):
     # - Mark by default instance for review
     mark_for_review = True
 
+    def apply_settings(self, project_settings, system_settings):
+        plugin_settings = (
+            project_settings["tvpain"]["create"]["create_render_layer"]
+        )
+        self.default_variant = plugin_settings["default_variant"]
+        self.default_variants = plugin_settings["default_variants"]
+        self.default_pass_name = plugin_settings["default_pass_name"]
+        self.mark_for_review = plugin_settings["mark_for_review"]
+
     def get_dynamic_data(
         self, variant, task_name, asset_doc, project_name, host_name, instance
     ):
@@ -320,6 +329,14 @@ class CreateRenderPass(TVPaintCreator):
 
     # Settings
     mark_for_review = True
+
+    def apply_settings(self, project_settings, system_settings):
+        plugin_settings = (
+            project_settings["tvpain"]["create"]["create_render_pass"]
+        )
+        self.default_variant = plugin_settings["default_variant"]
+        self.default_variants = plugin_settings["default_variants"]
+        self.mark_for_review = plugin_settings["mark_for_review"]
 
     def collect_instances(self):
         instances_by_identifier = self._cache_and_get_instances()
@@ -546,6 +563,16 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
     default_pass_name = "beauty"
     mark_for_review = True
     active_on_create = False
+
+    def apply_settings(self, project_settings, system_settings):
+        plugin_settings = (
+            project_settings["tvpain"]["create"]["create_render_scene"]
+        )
+        self.default_variant = plugin_settings["default_variant"]
+        self.default_variants = plugin_settings["default_variants"]
+        self.mark_for_review = plugin_settings["mark_for_review"]
+        self.active_on_create = plugin_settings["active_on_create"]
+        self.default_pass_name = plugin_settings["default_pass_name"]
 
     def get_dynamic_data(self, variant, *args, **kwargs):
         dynamic_data = super().get_dynamic_data(variant, *args, **kwargs)
