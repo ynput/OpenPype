@@ -10,4 +10,4 @@ class CreateCamera(UnrealActorCreator):
     identifier = "io.openpype.creators.unreal.camera"
     label = "Camera"
     family = "camera"
-    icon = "camera"
+    icon = "fa.camera"

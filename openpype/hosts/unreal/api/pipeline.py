@@ -69,9 +69,6 @@ class UnrealHost(HostBase, ILoadHost, IPublishHost):
         op_ctx = content_path + CONTEXT_CONTAINER
         with open(op_ctx, "w+") as f:
             json.dump(data, f)
-        with open(op_ctx, "r") as fp:
-            test = eval(json.load(fp))
-        unreal.log_warning(test)
 
     def get_context_data(self):
         content_path = unreal.Paths.project_content_dir()

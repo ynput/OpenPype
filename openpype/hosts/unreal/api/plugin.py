@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
+import collections
 import sys
 import six
-from abc import (
-    ABC,
-    ABCMeta,
-)
+from abc import ABC
 
 import unreal
 
@@ -26,11 +24,6 @@ from openpype.pipeline import (
 )
 
 
-class OpenPypeCreatorError(CreatorError):
-    pass
-
-
-@six.add_metaclass(ABCMeta)
 class UnrealBaseCreator(Creator):
     """Base class for Unreal creator plugins."""
     root = "/Game/OpenPype/PublishInstances"
@@ -56,28 +49,20 @@ class UnrealBaseCreator(Creator):
 
         """
         if shared_data.get("unreal_cached_subsets") is None:
-            shared_data["unreal_cached_subsets"] = {}
-            if shared_data.get("unreal_cached_legacy_subsets") is None:
-                shared_data["unreal_cached_legacy_subsets"] = {}
-            cached_instances = lsinst()
-            for i in cached_instances:
-                if not i.get("creator_identifier"):
-                    # we have legacy instance
-                    family = i.get("family")
-                    if (family not in
-                            shared_data["unreal_cached_legacy_subsets"]):
-                        shared_data[
-                            "unreal_cached_legacy_subsets"][family] = [i]
-                    else:
-                        shared_data[
-                            "unreal_cached_legacy_subsets"][family].append(i)
-                    continue
-
-                creator_id = i.get("creator_identifier")
-                if creator_id not in shared_data["unreal_cached_subsets"]:
-                    shared_data["unreal_cached_subsets"][creator_id] = [i]
+            unreal_cached_subsets = collections.defaultdict(list)
+            unreal_cached_legacy_subsets = collections.defaultdict(list)
+            for instance in lsinst():
+                creator_id = instance.get("creator_identifier")
+                if creator_id:
+                    unreal_cached_subsets[creator_id].append(instance)
                 else:
-                    shared_data["unreal_cached_subsets"][creator_id].append(i)
+                    family = instance.get("family")
+                    unreal_cached_legacy_subsets[family].append(instance)
+
+            shared_data["unreal_cached_subsets"] = unreal_cached_subsets
+            shared_data["unreal_cached_legacy_subsets"] = (
+                unreal_cached_legacy_subsets
+            )
         return shared_data
 
     def create(self, subset_name, instance_data, pre_create_data):
@@ -108,8 +93,8 @@ class UnrealBaseCreator(Creator):
 
         except Exception as er:
             six.reraise(
-                OpenPypeCreatorError,
-                OpenPypeCreatorError(f"Creator error: {er}"),
+                CreatorError,
+                CreatorError(f"Creator error: {er}"),
                 sys.exc_info()[2])
 
     def collect_instances(self):
@@ -121,17 +106,17 @@ class UnrealBaseCreator(Creator):
             self._add_instance_to_context(created_instance)
 
     def update_instances(self, update_list):
-        unreal.log_warning(f"Update instances: {update_list}")
-        for created_inst, _changes in update_list:
+        for created_inst, changes in update_list:
             instance_node = created_inst.get("instance_path", "")
 
             if not instance_node:
                 unreal.log_warning(
                     f"Instance node not found for {created_inst}")
+                continue
 
             new_values = {
-                key: new_value
-                for key, (_old_value, new_value) in _changes.items()
+                key: changes[key].new_value
+                for key in changes.changed_keys
             }
             imprint(
                 instance_node,
@@ -147,7 +132,6 @@ class UnrealBaseCreator(Creator):
             self._remove_instance_from_context(instance)
 
 
-@six.add_metaclass(ABCMeta)
 class UnrealAssetCreator(UnrealBaseCreator):
     """Base class for Unreal creator plugins based on assets."""
 
@@ -181,8 +165,8 @@ class UnrealAssetCreator(UnrealBaseCreator):
 
         except Exception as er:
             six.reraise(
-                OpenPypeCreatorError,
-                OpenPypeCreatorError(f"Creator error: {er}"),
+                CreatorError,
+                CreatorError(f"Creator error: {er}"),
                 sys.exc_info()[2])
 
     def get_pre_create_attr_defs(self):
@@ -191,7 +175,6 @@ class UnrealAssetCreator(UnrealBaseCreator):
         ]
 
 
-@six.add_metaclass(ABCMeta)
 class UnrealActorCreator(UnrealBaseCreator):
     """Base class for Unreal creator plugins based on actors."""
 
@@ -214,7 +197,7 @@ class UnrealActorCreator(UnrealBaseCreator):
 
             # Check if the level is saved
             if world.get_path_name().startswith("/Temp/"):
-                raise OpenPypeCreatorError(
+                raise CreatorError(
                     "Level must be saved before creating instances.")
 
             # Check if instance data has members, filled by the plugin.
@@ -238,8 +221,8 @@ class UnrealActorCreator(UnrealBaseCreator):
 
         except Exception as er:
             six.reraise(
-                OpenPypeCreatorError,
-                OpenPypeCreatorError(f"Creator error: {er}"),
+                CreatorError,
+                CreatorError(f"Creator error: {er}"),
                 sys.exc_info()[2])
 
     def get_pre_create_attr_defs(self):
