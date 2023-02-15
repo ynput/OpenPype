@@ -11,7 +11,6 @@ from Deadline.Scripting import (
     RepositoryUtils,
     FileUtils,
     DirectoryUtils,
-    ProcessUtils,
 )
 
 VERSION_REGEX = re.compile(
@@ -361,14 +360,14 @@ def inject_openpype_environment(deadlinePlugin):
         args_str = subprocess.list2cmdline(args)
         print(">>> Executing: {} {}".format(exe, args_str))
 
-        my_env = {**os.environ}
-        my_env["OPENPYPE_MONGO"] = job.GetJobEnvironmentKeyValue(
+        current_env = {**os.environ}
+        current_env["OPENPYPE_MONGO"] = job.GetJobEnvironmentKeyValue(
             'OPENPYPE_MONGO'
         )
 
-        process = subprocess.Popen([exe] + args, env=my_env)
+        process = subprocess.Popen([exe] + args, env=current_env)
+        process.communicate()
 
-        output = process.communicate()[0]
         if process.returncode != 0:
             raise RuntimeError(
                 "Failed to run OpenPype process to extract environments."
