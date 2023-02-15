@@ -82,6 +82,7 @@ class ExtractOIIOTranscode(publish.Extractor):
         if not profile:
             return
 
+        new_representations = []
         repres = instance.data.get("representations") or []
         for idx, repre in enumerate(list(repres)):
             self.log.debug("repre ({}): `{}`".format(idx + 1, repre["name"]))
@@ -174,9 +175,7 @@ class ExtractOIIOTranscode(publish.Extractor):
                     if tag == "review":
                         added_review = True
 
-                new_repre["tags"].append("newly_added")
-
-                instance.data["representations"].append(new_repre)
+                new_representations.append(new_repre)
                 added_representations = True
 
             if added_representations:
@@ -185,14 +184,10 @@ class ExtractOIIOTranscode(publish.Extractor):
 
         for repre in tuple(instance.data["representations"]):
             tags = repre.get("tags") or []
-            # TODO implement better way, for now do not delete new repre
-            # new repre might have 'delete' tag to removed, but it first must
-            # be there for review to be created
-            if "newly_added" in tags:
-                tags.remove("newly_added")
-                continue
             if "delete" in tags and "thumbnail" not in tags:
                 instance.data["representations"].remove(repre)
+
+        instance.data["representations"].extend(new_representations)
 
     def _rename_in_representation(self, new_repre, files_to_convert,
                                   output_name, output_extension):
