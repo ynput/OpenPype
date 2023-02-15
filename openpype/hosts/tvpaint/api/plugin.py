@@ -22,6 +22,10 @@ SHARED_DATA_KEY = "openpype.tvpaint.instances"
 
 
 class TVPaintCreatorCommon:
+    @property
+    def subset_template_family_filter(self):
+        return self.family
+
     def _cache_and_get_instances(self):
         return cache_and_get_instances(
             self, SHARED_DATA_KEY, self.host.list_instances
@@ -56,12 +60,33 @@ class TVPaintCreatorCommon:
             cur_instance_data.update(instance_data)
         self.host.write_instances(cur_instances)
 
+    def _custom_get_subset_name(
+        self,
+        variant,
+        task_name,
+        asset_doc,
+        project_name,
+        host_name=None,
+        instance=None
+    ):
+        dynamic_data = self.get_dynamic_data(
+            variant, task_name, asset_doc, project_name, host_name, instance
+        )
+
+        return get_subset_name(
+            self.family,
+            variant,
+            task_name,
+            asset_doc,
+            project_name,
+            host_name,
+            dynamic_data=dynamic_data,
+            project_settings=self.project_settings,
+            family_filter=self.subset_template_family_filter
+        )
+
 
 class TVPaintCreator(NewCreator, TVPaintCreatorCommon):
-    @property
-    def subset_template_family_filter(self):
-        return self.family
-
     def collect_instances(self):
         self._collect_create_instances()
 
@@ -101,30 +126,8 @@ class TVPaintCreator(NewCreator, TVPaintCreatorCommon):
                 output["task"] = task_name
         return output
 
-    def get_subset_name(
-        self,
-        variant,
-        task_name,
-        asset_doc,
-        project_name,
-        host_name=None,
-        instance=None
-    ):
-        dynamic_data = self.get_dynamic_data(
-            variant, task_name, asset_doc, project_name, host_name, instance
-        )
-
-        return get_subset_name(
-            self.family,
-            variant,
-            task_name,
-            asset_doc,
-            project_name,
-            host_name,
-            dynamic_data=dynamic_data,
-            project_settings=self.project_settings,
-            family_filter=self.subset_template_family_filter
-        )
+    def get_subset_name(self, *args, **kwargs):
+        return self._custom_get_subset_name(*args, **kwargs)
 
     def _store_new_instance(self, new_instance):
         instances_data = self.host.list_instances()
@@ -139,6 +142,9 @@ class TVPaintAutoCreator(AutoCreator, TVPaintCreatorCommon):
 
     def update_instances(self, update_list):
         self._update_create_instances(update_list)
+
+    def get_subset_name(self, *args, **kwargs):
+        return self._custom_get_subset_name(*args, **kwargs)
 
 
 class Creator(LegacyCreator):
