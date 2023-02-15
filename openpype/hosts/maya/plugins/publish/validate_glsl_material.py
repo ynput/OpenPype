@@ -93,7 +93,7 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                     # if custom ogsfx path is not specified
                     # the log below is the warning for the user
                     cls.log.warning("ogsfx shader file "
-                                     "not found in {}".format(ogsfx_path))
+                                    "not found in {}".format(ogsfx_path))
 
                 cls.log.info("Find the ogsfx shader file in "
                              "default maya directory...")
