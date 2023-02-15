@@ -9,6 +9,14 @@ from openpype.hosts.tvpaint.api.lib import get_groups_data
 
 
 class TVPaintLegacyConverted(SubsetConvertorPlugin):
+    """Conversion of legacy instances in scene to new creators.
+
+    This convertor handles only instances created by core creators.
+
+    All instances that would be created using auto-creators are removed as at
+    the moment of finding them would there already be existing instances.
+    """
+
     identifier = "tvpaint.legacy.converter"
 
     def find_instances(self):
@@ -68,6 +76,7 @@ class TVPaintLegacyConverted(SubsetConvertorPlugin):
         if not render_layers:
             return
 
+        # Look for possible existing render layers in scene
         render_layers_by_group_id = {}
         for instance in current_instances:
             if instance.get("creator_identifier") == "render.layer":
@@ -80,22 +89,30 @@ class TVPaintLegacyConverted(SubsetConvertorPlugin):
         }
         for render_layer in render_layers:
             group_id = render_layer.pop("group_id")
+            # Just remove legacy instance if group is already occupied
             if group_id in render_layers_by_group_id:
                 render_layer["keep"] = False
                 continue
+            # Add identifier
             render_layer["creator_identifier"] = "render.layer"
+            # Change 'uuid' to 'instance_id'
             render_layer["instance_id"] = render_layer.pop("uuid")
+            # Fill creator attributes
             render_layer["creator_attributes"] = {
                 "group_id": group_id
             }
             render_layer["family"] = "render"
             group = groups_by_id[group_id]
+            # Use group name for variant
             group["variant"] = group["name"]
 
     def _convert_render_passes(self, render_passes, current_instances):
         if not render_passes:
             return
 
+        # Render passes must have available render layers so we look for render
+        #   layers first
+        # - '_convert_render_layers' must be called before this method
         render_layers_by_group_id = {}
         for instance in current_instances:
             if instance.get("creator_identifier") == "render.layer":
@@ -119,6 +136,7 @@ class TVPaintLegacyConverted(SubsetConvertorPlugin):
             render_pass["variant"] = render_pass.pop("pass")
             render_pass.pop("renderlayer")
 
+    # Rest of instances are just marked for deletion
     def _convert_render_scenes(self, render_scenes, current_instances):
         for render_scene in render_scenes:
             render_scene["keep"] = False

@@ -25,6 +25,10 @@ default 'color' blend more. In that case it is not recommended to use this
 workflow at all as other blend modes may affect all layers in clip which can't
 be done.
 
+There is special case for simple publishing of scene which is called
+'render.scene'. That will use all visible layers and render them as one big
+sequence.
+
 Todos:
     Add option to extract marked layers and passes as json output format for
         AfterEffects.
@@ -53,9 +57,42 @@ from openpype.hosts.tvpaint.api.lib import (
     execute_george_through_file,
 )
 
+RENDER_LAYER_DETAILED_DESCRIPTIONS = (
+"""Render Layer is "a group of TVPaint layers"
+
+Be aware Render Layer <b>is not</b> TVPaint layer.
+
+All TVPaint layers in the scene with the color group id are rendered in the
+beauty pass. To create sub passes use Render Layer creator which is
+dependent on existence of render layer instance.
+
+The group can represent an asset (tree) or different part of scene that consist
+of one or more TVPaint layers that can be used as single item during
+compositing (for example).
+
+In some cases may be needed to have sub parts of the layer. For example 'Bob'
+could be Render Layer which has 'Arm', 'Head' and 'Body' as Render Passes. 
+"""
+)
+
+
+RENDER_PASS_DETAILED_DESCRIPTIONS = (
+"""Render Pass is sub part of Rende Layer.
+
+Render Pass can consist of one or more TVPaint layers. Render Layers must
+belong to a Render Layer. Marker TVPaint layers will change it's group color
+to match group color of Render Layer. 
+"""
+)
+
 
 class CreateRenderlayer(TVPaintCreator):
-    """Mark layer group as one instance."""
+    """Mark layer group as Render layer instance.
+
+    All TVPaint layers in the scene with the color group id are rendered in the
+    beauty pass. To create sub passes use Render Layer creator which is
+    dependent on existence of render layer instance.
+    """
 
     label = "Render Layer"
     family = "render"
@@ -68,10 +105,15 @@ class CreateRenderlayer(TVPaintCreator):
         "tv_layercolor \"setcolor\""
         " {clip_id} {group_id} {r} {g} {b} \"{name}\""
     )
+    # Order to be executed before Render Pass creator
     order = 90
+    description = "Mark TVPaint color group as one Render Layer."
+    detailed_description = RENDER_LAYER_DETAILED_DESCRIPTIONS
 
     # Settings
+    # - Default render pass name for beauty
     render_pass = "beauty"
+    # - Mark by default instance for review
     mark_for_review = True
 
     def get_dynamic_data(
@@ -271,6 +313,8 @@ class CreateRenderPass(TVPaintCreator):
     identifier = "render.pass"
     label = "Render Pass"
     icon = "fa5.image"
+    description = "Mark selected TVPaint layers as pass of Render Layer."
+    detailed_description = RENDER_PASS_DETAILED_DESCRIPTIONS
 
     order = CreateRenderlayer.order + 10
 
