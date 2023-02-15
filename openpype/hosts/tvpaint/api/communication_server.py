@@ -309,8 +309,6 @@ class QtTVPaintRpc(BaseTVPaintRpc):
         self.add_methods(
             (route_name, self.workfiles_tool),
             (route_name, self.loader_tool),
-            (route_name, self.creator_tool),
-            (route_name, self.subset_manager_tool),
             (route_name, self.publish_tool),
             (route_name, self.scene_inventory_tool),
             (route_name, self.library_loader_tool),
@@ -328,18 +326,6 @@ class QtTVPaintRpc(BaseTVPaintRpc):
         log.info("Triggering Loader tool")
         item = MainThreadItem(self.tools_helper.show_loader)
         self._execute_in_main_thread(item)
-        return
-
-    async def creator_tool(self):
-        log.info("Triggering Creator tool")
-        item = MainThreadItem(self.tools_helper.show_creator)
-        await self._async_execute_in_main_thread(item, wait=False)
-
-    async def subset_manager_tool(self):
-        log.info("Triggering Subset Manager tool")
-        item = MainThreadItem(self.tools_helper.show_subset_manager)
-        # Do not wait for result of callback
-        self._execute_in_main_thread(item, wait=False)
         return
 
     async def publish_tool(self):
@@ -859,10 +845,6 @@ class QtCommunicator(BaseCommunicator):
                 "callback": "loader_tool",
                 "label": "Load",
                 "help": "Open loader tool"
-            }, {
-                "callback": "creator_tool",
-                "label": "Create",
-                "help": "Open creator tool"
             }, {
                 "callback": "scene_inventory_tool",
                 "label": "Scene inventory",
