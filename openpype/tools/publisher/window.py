@@ -566,11 +566,11 @@ class PublisherWindow(QtWidgets.QDialog):
     def _go_to_publish_tab(self):
         self._set_current_tab("publish")
 
-    def _go_to_details_tab(self):
-        self._set_current_tab("details")
-
     def _go_to_report_tab(self):
         self._set_current_tab("report")
+
+    def _go_to_details_tab(self):
+        self._set_current_tab("details")
 
     def _is_on_create_tab(self):
         return self._is_current_tab("create")
@@ -578,11 +578,11 @@ class PublisherWindow(QtWidgets.QDialog):
     def _is_on_publish_tab(self):
         return self._is_current_tab("publish")
 
-    def _is_on_details_tab(self):
-        return self._is_current_tab("details")
-
     def _is_on_report_tab(self):
         return self._is_current_tab("report")
+
+    def _is_on_details_tab(self):
+        return self._is_current_tab("details")
 
     def _set_publish_overlay_visibility(self, visible):
         if visible:
