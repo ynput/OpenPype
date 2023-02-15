@@ -30,7 +30,6 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
             raise RuntimeError("Non GLSL Shader found: "
                                "{0}".format(invalid))
 
-
     def get_material_from_shapes(self, instance):
         shapes = cmds.ls(instance, type="mesh", long=True)
         for shape in shapes:
@@ -97,7 +96,7 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                                      "not found in {}".format(ogsfx_path))
 
                 cls.log.info("Find the ogsfx shader file in "
-                              "default maya directory...")
+                             "default maya directory...")
                 # re-direct to search the ogsfx path in maya_dir
                 ogsfx_path = os.getenv("MAYA_APP_DIR") + ogsfx_path
                 if not os.path.exists(ogsfx_path):
@@ -122,7 +121,8 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                 if main_shader:
                     for shader in main_shader:
                         # get the file textures related to the PBS Shader
-                        albedo = cmds.listConnections(shader + ".TEX_color_map")
+                        albedo = cmds.listConnections(shader +
+                                                      ".TEX_color_map")
                         if albedo:
                             dif_output = albedo[0] + ".outColor"
                             # get the glsl_shader input
@@ -132,7 +132,7 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
 
                         # connect orm map if there is one
                         orm_packed = cmds.listConnections(shader +
-                                                        ".TEX_ao_map")
+                                                          ".TEX_ao_map")
                         if orm_packed:
                             orm_output = orm_packed[0] + ".outColor"
 
@@ -145,7 +145,8 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                             cmds.connectAttr(orm_output, rough)
 
                         # connect nrm map if there is one
-                        nrm = cmds.listConnections(shader + ".TEX_normal_map")
+                        nrm = cmds.listConnections(shader +
+                                                   ".TEX_normal_map")
                         if nrm:
                             nrm_output = nrm[0] + ".outColor"
                             glsl_nrm = glsl + ".u_NormalTexture"
