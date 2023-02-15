@@ -71,7 +71,7 @@ of one or more TVPaint layers that can be used as single item during
 compositing (for example).
 
 In some cases may be needed to have sub parts of the layer. For example 'Bob'
-could be Render Layer which has 'Arm', 'Head' and 'Body' as Render Passes. 
+could be Render Layer which has 'Arm', 'Head' and 'Body' as Render Passes.
 """
 )
 
@@ -81,7 +81,7 @@ RENDER_PASS_DETAILED_DESCRIPTIONS = (
 
 Render Pass can consist of one or more TVPaint layers. Render Layers must
 belong to a Render Layer. Marker TVPaint layers will change it's group color
-to match group color of Render Layer. 
+to match group color of Render Layer.
 """
 )
 
