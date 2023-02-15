@@ -579,9 +579,9 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
             existing_instance["creator_attributes"]["render_pass_name"]
         )
 
-    def _get_label(self, subset_name, render_layer_name):
+    def _get_label(self, subset_name, render_pass_name):
         return subset_name.format(**prepare_template_data({
-            "renderlayer": render_layer_name
+            "renderpass": render_pass_name
         }))
 
     def get_instance_attr_defs(self):
