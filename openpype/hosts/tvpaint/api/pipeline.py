@@ -87,10 +87,6 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         registered_callbacks = (
             pyblish.api.registered_callbacks().get("instanceToggled") or []
         )
-        if self.on_instance_toggle not in registered_callbacks:
-            pyblish.api.register_callback(
-                "instanceToggled", self.on_instance_toggle
-            )
 
         register_event_callback("application.launched", self.initial_launch)
         register_event_callback("application.exit", self.application_exit)
@@ -208,28 +204,6 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
         rest_api_url = "{}/timers_manager/stop_timer".format(webserver_url)
         requests.post(rest_api_url)
-
-    # --- Legacy Publish ---
-    def on_instance_toggle(self, instance, old_value, new_value):
-        """Update instance data in workfile on publish toggle."""
-        # Review may not have real instance in wokrfile metadata
-        if not instance.data.get("uuid"):
-            return
-
-        instance_id = instance.data["uuid"]
-        found_idx = None
-        current_instances = list_instances()
-        for idx, workfile_instance in enumerate(current_instances):
-            if workfile_instance.get("uuid") == instance_id:
-                found_idx = idx
-                break
-
-        if found_idx is None:
-            return
-
-        if "active" in current_instances[found_idx]:
-            current_instances[found_idx]["active"] = new_value
-            self.write_instances(current_instances)
 
 
 def containerise(
