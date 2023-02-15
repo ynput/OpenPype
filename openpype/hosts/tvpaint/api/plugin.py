@@ -31,7 +31,6 @@ class TVPaintCreatorCommon:
             instance = CreatedInstance.from_existing(instance_data, self)
             self._add_instance_to_context(instance)
 
-
     def _update_create_instances(self, update_list):
         if not update_list:
             return
@@ -109,10 +108,9 @@ class TVPaintCreator(Creator, TVPaintCreatorCommon):
 
     def get_dynamic_data(self, *args, **kwargs):
         # Change asset and name by current workfile context
-        # TODO use context from 'create_context'
-        workfile_context = self.host.get_current_context()
-        asset_name = workfile_context.get("asset")
-        task_name = workfile_context.get("task")
+        create_context = self.create_context
+        asset_name = create_context.get_current_asset_name()
+        task_name = create_context.get_current_task_name()
         output = {}
         if asset_name:
             output["asset"] = asset_name

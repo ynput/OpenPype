@@ -504,11 +504,11 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
         return dynamic_data
 
     def _create_new_instance(self):
-        context = self.host.get_current_context()
-        host_name = self.host.name
-        project_name = context["project_name"]
-        asset_name = context["asset_name"]
-        task_name = context["task_name"]
+        create_context = self.create_context
+        host_name = create_context.host_name
+        project_name = create_context.get_current_project_name()
+        asset_name = create_context.get_current_asset_name()
+        task_name = create_context.get_current_task_name()
 
         asset_doc = get_asset_by_name(project_name, asset_name)
         subset_name = self.get_subset_name(
@@ -551,11 +551,11 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
         if existing_instance is None:
             return self._create_new_instance()
 
-        context = self.host.get_current_context()
-        host_name = self.host.name
-        project_name = context["project_name"]
-        asset_name = context["asset_name"]
-        task_name = context["task_name"]
+        create_context = self.create_context
+        host_name = create_context.host_name
+        project_name = create_context.get_current_project_name()
+        asset_name = create_context.get_current_asset_name()
+        task_name = create_context.get_current_task_name()
 
         if (
             existing_instance["asset"] != asset_name
