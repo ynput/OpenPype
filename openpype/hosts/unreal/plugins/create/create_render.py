@@ -2,12 +2,17 @@
 import unreal
 
 from openpype.hosts.unreal.api.pipeline import (
-    get_subsequences
+    UNREAL_VERSION,
+    create_folder,
+    get_subsequences,
 )
 from openpype.hosts.unreal.api.plugin import (
     UnrealAssetCreator
 )
-from openpype.lib import UILabelDef
+from openpype.lib import (
+    BoolDef,
+    UILabelDef
+)
 
 
 class CreateRender(UnrealAssetCreator):
@@ -18,7 +23,88 @@ class CreateRender(UnrealAssetCreator):
     family = "render"
     icon = "eye"
 
-    def create(self, subset_name, instance_data, pre_create_data):
+    def create_instance(
+            self, instance_data, subset_name, pre_create_data,
+            selected_asset_path, master_seq, master_lvl, seq_data
+    ):
+        instance_data["members"] = [selected_asset_path]
+        instance_data["sequence"] = selected_asset_path
+        instance_data["master_sequence"] = master_seq
+        instance_data["master_level"] = master_lvl
+        instance_data["output"] = seq_data.get('output')
+        instance_data["frameStart"] = seq_data.get('frame_range')[0]
+        instance_data["frameEnd"] = seq_data.get('frame_range')[1]
+
+        super(CreateRender, self).create(
+            subset_name,
+            instance_data,
+            pre_create_data)
+
+    def create_with_new_sequence(
+            self, subset_name, instance_data, pre_create_data
+    ):
+        # If the option to create a new level sequence is selected,
+        # create a new level sequence and a master level.
+
+        root = f"/Game/OpenPype/Sequences"
+
+        # Create a new folder for the sequence in root
+        sequence_dir_name = create_folder(root, subset_name)
+        sequence_dir = f"{root}/{sequence_dir_name}"
+
+        unreal.log_warning(f"sequence_dir: {sequence_dir}")
+
+        # Create the level sequence
+        asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+        seq = asset_tools.create_asset(
+            asset_name=subset_name,
+            package_path=sequence_dir,
+            asset_class=unreal.LevelSequence,
+            factory=unreal.LevelSequenceFactoryNew())
+        unreal.EditorAssetLibrary.save_asset(seq.get_path_name())
+
+        # Create the master level
+        prev_level = None
+        if UNREAL_VERSION.major >= 5:
+            curr_level = unreal.LevelEditorSubsystem().get_current_level()
+        else:
+            world = unreal.EditorLevelLibrary.get_editor_world()
+            levels = unreal.EditorLevelUtils.get_levels(world)
+            curr_level = levels[0] if len(levels) else None
+            if not curr_level:
+                raise RuntimeError("No level loaded.")
+        curr_level_path = curr_level.get_outer().get_path_name()
+
+        # If the level path does not start with "/Game/", the current
+        # level is a temporary, unsaved level.
+        if curr_level_path.startswith("/Game/"):
+            prev_level = curr_level_path
+            if UNREAL_VERSION.major >= 5:
+                unreal.LevelEditorSubsystem().save_current_level()
+            else:
+                unreal.EditorLevelLibrary.save_current_level()
+
+        ml_path = f"{sequence_dir}/{subset_name}_MasterLevel"
+
+        if UNREAL_VERSION.major >= 5:
+            unreal.LevelEditorSubsystem().new_level(ml_path)
+        else:
+            unreal.EditorLevelLibrary.new_level(ml_path)
+
+        seq_data = {
+            "sequence": seq,
+            "output": f"{seq.get_name()}",
+            "frame_range": (
+                seq.get_playback_start(),
+                seq.get_playback_end())}
+
+        self.create_instance(
+            instance_data, subset_name, pre_create_data,
+            seq.get_path_name(), seq.get_path_name(), ml_path, seq_data)
+
+    def create_from_existing_sequence(
+            self, subset_name, instance_data, pre_create_data
+    ):
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
         sel_objects = unreal.EditorUtilityLibrary.get_selected_assets()
@@ -118,20 +204,30 @@ class CreateRender(UnrealAssetCreator):
                     "sub-sequence of the master sequence.")
                 continue
 
-            instance_data["members"] = [selected_asset_path]
-            instance_data["sequence"] = selected_asset_path
-            instance_data["master_sequence"] = master_seq
-            instance_data["master_level"] = master_lvl
-            instance_data["output"] = seq_data.get('output')
-            instance_data["frameStart"] = seq_data.get('frame_range')[0]
-            instance_data["frameEnd"] = seq_data.get('frame_range')[1]
+            self.create_instance(
+                instance_data, subset_name, pre_create_data,
+                selected_asset_path, master_seq, master_lvl, seq_data)
 
-            super(CreateRender, self).create(
-                subset_name,
-                instance_data,
-                pre_create_data)
+    def create(self, subset_name, instance_data, pre_create_data):
+        if pre_create_data.get("create_seq"):
+            self.create_with_new_sequence(
+                subset_name, instance_data, pre_create_data)
+        else:
+            self.create_from_existing_sequence(
+                subset_name, instance_data, pre_create_data)
 
     def get_pre_create_attr_defs(self):
         return [
-            UILabelDef("Select the sequence to render.")
+            UILabelDef(
+                "Select a Level Sequence to render or create a new one."
+            ),
+            BoolDef(
+                "create_seq",
+                label="Create a new Level Sequence",
+                default=False
+            ),
+            UILabelDef(
+                "WARNING: If you create a new Level Sequence, the current "
+                "level will be saved and a new Master Level will be created."
+            )
         ]
