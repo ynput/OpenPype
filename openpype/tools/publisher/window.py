@@ -649,11 +649,8 @@ class PublisherWindow(QtWidgets.QDialog):
         if first_reset:
             self._go_to_create_tab()
 
-        elif (
-            not self._is_on_create_tab()
-            and not self._is_on_publish_tab()
-        ):
-            # If current tab is not 'Create' or 'Publish' go to 'Publish'
+        elif self._is_on_report_tab():
+            # Go to 'Publish' tab if is on 'Details' tab
             #   - this can happen when publishing started and was reset
             #       at that moment it doesn't make sense to stay at publish
             #       specific tabs.
