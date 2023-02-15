@@ -389,11 +389,16 @@ class CreateRenderPass(TVPaintCreator):
         subset_name_fill_data = {"renderlayer": render_layer}
 
         # Format dynamic keys in subset name
-        new_subset_name = subset_name.format(
-            **prepare_template_data(subset_name_fill_data)
-        )
-        self.log.info(f"New subset name is \"{new_subset_name}\".")
-        instance_data["label"] = new_subset_name
+        label = subset_name
+        try:
+            label = label.format(
+                **prepare_template_data(subset_name_fill_data)
+            )
+        except (KeyError, ValueError):
+            pass
+
+        self.log.info(f"New subset name is \"{label}\".")
+        instance_data["label"] = label
         instance_data["group"] = f"{self.get_group_label()} ({render_layer})"
         instance_data["layer_names"] = list(selected_layer_names)
         if "creator_attributes" not in instance_data:
@@ -580,9 +585,14 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
         )
 
     def _get_label(self, subset_name, render_pass_name):
-        return subset_name.format(**prepare_template_data({
-            "renderpass": render_pass_name
-        }))
+        try:
+            subset_name = subset_name.format(**prepare_template_data({
+                "renderpass": render_pass_name
+            }))
+        except (KeyError, ValueError):
+            pass
+
+        return subset_name
 
     def get_instance_attr_defs(self):
         return [
