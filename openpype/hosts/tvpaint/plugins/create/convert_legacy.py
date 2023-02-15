@@ -12,14 +12,11 @@ class TVPaintLegacyConverted(SubsetConvertorPlugin):
     identifier = "tvpaint.legacy.converter"
 
     def find_instances(self):
-        instances = cache_and_get_instances(
+        instances_by_identifier = cache_and_get_instances(
             self, SHARED_DATA_KEY, self.host.list_instances
         )
-
-        for instance in instances:
-            if instance.get("creator_identifier") is None:
-                self.add_convertor_item("Convert legacy instances")
-                return
+        if instances_by_identifier[None]:
+            self.add_convertor_item("Convert legacy instances")
 
     def convert(self):
         current_instances = self.host.list_instances()
