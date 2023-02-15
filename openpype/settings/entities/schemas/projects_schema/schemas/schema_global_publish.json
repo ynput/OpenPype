@@ -287,6 +287,20 @@
                                             "type": "text"
                                         },
                                         {
+                                            "key": "oiiotool_args",
+                                            "label": "OIIOtool arguments",
+                                            "type": "dict",
+                                            "highlight_content": true,
+                                            "children": [
+                                                {
+                                                    "key": "additional_command_args",
+                                                    "label": "Additional command line arguments",
+                                                    "type": "list",
+                                                    "object_type": "text"
+                                                }
+                                            ]
+                                        },
+                                        {
                                             "type": "schema",
                                             "name": "schema_representation_tags"
                                         },
