@@ -1,6 +1,7 @@
 from collections import defaultdict
 import logging
 import os
+import re
 
 import maya.cmds as cmds
 
@@ -13,6 +14,7 @@ from openpype.pipeline import (
 from openpype.hosts.maya.api import lib
 
 from .vray_proxies import get_alembic_ids_cache
+from . import arnold_standin
 
 log = logging.getLogger(__name__)
 
@@ -107,6 +109,7 @@ def create_asset_id_hash(nodes):
     """
     node_id_hash = defaultdict(list)
     for node in nodes:
+        shapes = cmds.ls(cmds.listRelatives(node, shapes=True), long=True)
         # iterate over content of reference node
         if cmds.nodeType(node) == "reference":
             ref_hashes = create_asset_id_hash(
@@ -122,7 +125,12 @@ def create_asset_id_hash(nodes):
                 pid = k.split(":")[0]
                 if node not in node_id_hash[pid]:
                     node_id_hash[pid].append(node)
-
+        elif shapes and cmds.nodeType(shapes[0]) == "aiStandIn":
+            path = arnold_standin.get_standin_path(shapes[0])
+            for id, _ in arnold_standin.get_cbid_by_node(path).items():
+                pid = id.split(":")[0]
+                if shapes[0] not in node_id_hash[pid]:
+                    node_id_hash[pid].append(shapes[0])
         else:
             value = lib.get_id(node)
             if value is None:
