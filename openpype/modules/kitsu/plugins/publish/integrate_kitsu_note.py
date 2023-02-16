@@ -22,10 +22,13 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
         self.log.debug("Comment is `{}`".format(publish_comment))
 
         for instance in context:
+            kitsu_task = instance.data.get("kitsu_task")
+            if kitsu_task is None:
+                continue
 
             # Get note status, by default uses the task status for the note
             # if it is not specified in the configuration
-            note_status = instance.data["kitsu_task"]["task_status"]["id"]
+            note_status = kitsu_task["task_status"]["id"]
 
             if self.set_status_note:
                 kitsu_status = gazu.task.get_task_status_by_short_name(
@@ -41,7 +44,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
                     )
 
             # Add comment to kitsu task
-            task = instance.data["kitsu_task"]["id"]
+            task = kitsu_task["id"]
             self.log.debug(
                 "Add new note in taks id {}".format(task)
             )
