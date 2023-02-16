@@ -1,24 +1,14 @@
 import os
 import re
 from collections import defaultdict
-import json
 import logging
 
 from maya import cmds
 
-from openpype.pipeline import (
-    legacy_io,
-    get_representation_path,
-    registered_host,
-    discover_loader_plugins,
-    loaders_from_representation,
-    load_container
-)
-from openpype.client import (
-    get_representation_by_name,
-    get_last_version_by_subset_name
-)
-from openpype.hosts.maya.api import lib
+from openpype.pipeline import legacy_io
+from openpype.client import get_last_version_by_subset_name
+from openpype.hosts.maya import api
+from . import lib
 
 
 log = logging.getLogger(__name__)
@@ -171,50 +161,8 @@ def assign_look(standin, subset):
             ))
             continue
 
-        # Relationships.
-        json_representation = get_representation_by_name(
-            project_name, representation_name="json", version_id=version["_id"]
-        )
-
-        # Load relationships
-        shader_relation = get_representation_path(json_representation)
-        with open(shader_relation, "r") as f:
-            relationships = json.load(f)
-
-        # Load look.
-        # Get representations of shader file and relationships
-        look_representation = get_representation_by_name(
-            project_name, representation_name="ma", version_id=version["_id"]
-        )
-
-        # See if representation is already loaded, if so reuse it.
-        host = registered_host()
-        representation_id = str(look_representation['_id'])
-        for container in host.ls():
-            if (container['loader'] == "LookLoader" and
-                    container['representation'] == representation_id):
-                log.info("Reusing loaded look ...")
-                container_node = container['objectName']
-                break
-        else:
-            log.info("Using look for the first time ...")
-
-            # Load file
-            all_loaders = discover_loader_plugins()
-            loaders = loaders_from_representation(
-                all_loaders, representation_id
-            )
-            loader = next(
-                (i for i in loaders if i.__name__ == "LookLoader"), None)
-            if loader is None:
-                raise RuntimeError("Could not find LookLoader, this is a bug")
-
-            # Reference the look file
-            with lib.maintained_selection():
-                container_node = load_container(loader, look_representation)
-
-        # Get container members
-        shader_nodes = lib.get_container_members(container_node)
+        relationships = lib.get_look_relationships(version["_id"])
+        shader_nodes, container_node = lib.load_look(version["_id"])
         namespace = shader_nodes[0].split(":")[0]
 
         # Get only the node ids and paths related to this asset
@@ -223,7 +171,7 @@ def assign_look(standin, subset):
             node_id: nodes_by_id[node_id] for node_id in node_ids
         }
         edits = list(
-            lib.iter_shader_edits(
+            api.lib.iter_shader_edits(
                 relationships, shader_nodes, asset_nodes_by_id
             )
         )
@@ -310,7 +258,7 @@ def assign_look(standin, subset):
             if not assignments:
                 continue
 
-            with lib.maintained_selection():
+            with api.lib.maintained_selection():
                 operator = cmds.createNode("aiSetParameter")
                 operator = cmds.rename(operator, namespace + ":" + operator)
 
