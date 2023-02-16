@@ -8,6 +8,9 @@ import inspect
 from uuid import uuid4
 from contextlib import contextmanager
 
+import pyblish.logic
+import pyblish.api
+
 from openpype.client import get_assets, get_asset_by_name
 from openpype.settings import (
     get_system_settings,
@@ -1619,8 +1622,6 @@ class CreateContext:
         self._reset_convertor_plugins()
 
     def _reset_publish_plugins(self, discover_publish_plugins):
-        import pyblish.logic
-
         from openpype.pipeline import OpenPypePyblishPluginMixin
         from openpype.pipeline.publish import (
             publish_plugins_discover
@@ -1629,7 +1630,7 @@ class CreateContext:
         # Reset publish plugins
         self._attr_plugins_by_family = {}
 
-        discover_result = DiscoverResult()
+        discover_result = DiscoverResult(pyblish.api.Plugin)
         plugins_with_defs = []
         plugins_by_targets = []
         plugins_mismatch_targets = []

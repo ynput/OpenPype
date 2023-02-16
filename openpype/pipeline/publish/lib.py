@@ -270,7 +270,7 @@ def publish_plugins_discover(paths=None):
     """
 
     # The only difference with `pyblish.api.discover`
-    result = DiscoverResult()
+    result = DiscoverResult(pyblish.api.Plugin)
 
     plugins = dict()
     plugin_names = []
