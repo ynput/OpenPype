@@ -11,7 +11,7 @@ from openpype.hosts.unreal.api.plugin import (
 )
 from openpype.lib import (
     BoolDef,
-    UILabelDef
+    NumberDef
 )
 
 
@@ -61,6 +61,10 @@ class CreateRender(UnrealAssetCreator):
             package_path=sequence_dir,
             asset_class=unreal.LevelSequence,
             factory=unreal.LevelSequenceFactoryNew())
+
+        seq.set_playback_start(pre_create_data.get("start_frame"))
+        seq.set_playback_end(pre_create_data.get("end_frame"))
+
         unreal.EditorAssetLibrary.save_asset(seq.get_path_name())
 
         # Create the master level
@@ -229,5 +233,19 @@ class CreateRender(UnrealAssetCreator):
             UILabelDef(
                 "WARNING: If you create a new Level Sequence, the current "
                 "level will be saved and a new Master Level will be created."
-            )
+            ),
+            NumberDef(
+                "start_frame",
+                label="Start Frame",
+                default=0,
+                minimum=-999999,
+                maximum=999999
+            ),
+            NumberDef(
+                "end_frame",
+                label="Start Frame",
+                default=150,
+                minimum=-999999,
+                maximum=999999
+            ),
         ]
