@@ -87,6 +87,7 @@ module.exports = {
             type: "category",
             label: "Configuration",
             items: [
+                "admin_environment",
                 "admin_settings",
                 "admin_settings_system",
                 "admin_settings_project_anatomy",

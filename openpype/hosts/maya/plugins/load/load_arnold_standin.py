@@ -65,20 +65,20 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             # Create transform with shape
             transform_name = label + "_standin"
 
-            standinShape = mtoa.ui.arnoldmenu.createStandIn()
-            standin = cmds.listRelatives(standinShape, parent=True)[0]
+            standin_shape = mtoa.ui.arnoldmenu.createStandIn()
+            standin = cmds.listRelatives(standin_shape, parent=True)[0]
             standin = cmds.rename(standin, transform_name)
-            standinShape = cmds.listRelatives(standin, shapes=True)[0]
+            standin_shape = cmds.listRelatives(standin, shapes=True)[0]
 
             cmds.parent(standin, root)
 
             # Set the standin filepath
             path, operator = self._setup_proxy(
-                standinShape, self.fname, namespace
+                standin_shape, self.fname, namespace
             )
-            cmds.setAttr(standinShape + ".dso", path, type="string")
+            cmds.setAttr(standin_shape + ".dso", path, type="string")
             sequence = is_sequence(os.listdir(os.path.dirname(self.fname)))
-            cmds.setAttr(standinShape + ".useFrameExtension", sequence)
+            cmds.setAttr(standin_shape + ".useFrameExtension", sequence)
 
         nodes = [root, standin]
         if operator is not None:
