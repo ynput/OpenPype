@@ -179,7 +179,7 @@ class ArnoldStandinLoader(load.LoaderPlugin):
         # If no proxy exists, the string operator wont replace anything.
         cmds.setAttr(
             string_replace_operator + ".match",
-            "resources/" + proxy_basename,
+            proxy_basename,
             type="string"
         )
         cmds.setAttr(
