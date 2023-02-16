@@ -50,6 +50,7 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
             return True
 
         # update imported sets information
+        asset_name = get_current_asset_name()
         for node in imported_sets:
             if not cmds.attributeQuery("id", node=node, exists=True):
                 continue
@@ -57,9 +58,9 @@ class MayaTemplateBuilder(AbstractTemplateBuilder):
                 continue
             if not cmds.attributeQuery("asset", node=node, exists=True):
                 continue
-            asset = legacy_io.Session["AVALON_ASSET"]
 
-            cmds.setAttr("{}.asset".format(node), asset, type="string")
+            cmds.setAttr(
+                "{}.asset".format(node), asset_name, type="string")
 
         return True
 
