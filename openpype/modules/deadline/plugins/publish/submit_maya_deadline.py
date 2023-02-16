@@ -440,6 +440,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             frame_assembly_job_info.ExtraInfo[0] = file_hash
             frame_assembly_job_info.ExtraInfo[1] = file
             frame_assembly_job_info.JobDependencies = tile_job_id
+            frame_assembly_job_info.Frames = frame
 
             # write assembly job config files
             now = datetime.now()
