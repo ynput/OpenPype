@@ -13,7 +13,9 @@ class TVPaintWorkfileCreator(TVPaintAutoCreator):
     active_on_create = True
 
     def apply_settings(self, project_settings, system_settings):
-        plugin_settings = project_settings["tvpain"]["create"]["create_workfile"]
+        plugin_settings = (
+            project_settings["tvpaint"]["create"]["create_workfile"]
+        )
         self.default_variant = plugin_settings["default_variant"]
         self.default_variants = plugin_settings["default_variants"]
         self.active_on_create = plugin_settings["active_on_create"]

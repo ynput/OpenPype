@@ -118,7 +118,7 @@ class CreateRenderlayer(TVPaintCreator):
 
     def apply_settings(self, project_settings, system_settings):
         plugin_settings = (
-            project_settings["tvpain"]["create"]["create_render_layer"]
+            project_settings["tvpaint"]["create"]["create_render_layer"]
         )
         self.default_variant = plugin_settings["default_variant"]
         self.default_variants = plugin_settings["default_variants"]
@@ -332,7 +332,7 @@ class CreateRenderPass(TVPaintCreator):
 
     def apply_settings(self, project_settings, system_settings):
         plugin_settings = (
-            project_settings["tvpain"]["create"]["create_render_pass"]
+            project_settings["tvpaint"]["create"]["create_render_pass"]
         )
         self.default_variant = plugin_settings["default_variant"]
         self.default_variants = plugin_settings["default_variants"]
@@ -566,7 +566,7 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
 
     def apply_settings(self, project_settings, system_settings):
         plugin_settings = (
-            project_settings["tvpain"]["create"]["create_render_scene"]
+            project_settings["tvpaint"]["create"]["create_render_scene"]
         )
         self.default_variant = plugin_settings["default_variant"]
         self.default_variants = plugin_settings["default_variants"]

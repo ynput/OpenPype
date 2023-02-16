@@ -10,7 +10,9 @@ class TVPaintReviewCreator(TVPaintAutoCreator):
     icon = "ei.video"
 
     def apply_settings(self, project_settings, system_settings):
-        plugin_settings = project_settings["tvpain"]["create"]["create_review"]
+        plugin_settings = (
+            project_settings["tvpaint"]["create"]["create_review"]
+        )
         self.default_variant = plugin_settings["default_variant"]
         self.default_variants = plugin_settings["default_variants"]
 
