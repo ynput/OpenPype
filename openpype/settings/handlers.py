@@ -236,6 +236,18 @@ class SettingsHandler(object):
         pass
 
     @abstractmethod
+    def save_change_log(self, project_name, changes, settings_type):
+        """Stores changes to settings to separate logging collection.
+        
+        Args:
+            project_name(str, null): Project name for which overrides are
+                or None for global settings.
+            changes(dict): Data of project overrides with override metadata.
+            settings_type (str): system|project|anatomy
+        """
+        pass
+
+    @abstractmethod
     def get_studio_system_settings_overrides(self, return_version):
         """Studio overrides of system settings."""
         pass
@@ -912,6 +924,28 @@ class MongoSettingsHandler(SettingsHandler):
                 data[new_key] = _value
 
         return data
+
+    def save_change_log(self, project_name, changes, settings_type):
+        """Log all settings changes to separate collection"""
+        if not changes:
+            return
+
+        from openpype.lib import get_local_site_id
+
+        if settings_type == "project" and not project_name:
+            project_name = "default"
+
+        document = {
+            "user": get_local_site_id(),
+            "date_created": datetime.datetime.now(),
+            "project": project_name,
+            "settings_type": settings_type,
+            "changes": changes
+        }
+        collection_name = "settings_log"
+        collection = (self.settings_collection[self.database_name]
+                                              [collection_name])
+        collection.insert_one(document)
 
     def _save_project_anatomy_data(self, project_name, data_cache):
         # Create copy of data as they will be modified during save
