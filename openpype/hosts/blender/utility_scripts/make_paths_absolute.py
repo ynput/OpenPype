@@ -42,7 +42,7 @@ if __name__ == "__main__":
                     ).resolve()
                 )
                 datablock.reload()
-            except RuntimeError as e:
+            except (RuntimeError, ReferenceError) as e:
                 log.error(e)
     else:
         bpy.ops.file.make_paths_absolute()
