@@ -58,7 +58,7 @@ from openpype.hosts.tvpaint.api.lib import (
 )
 
 RENDER_LAYER_DETAILED_DESCRIPTIONS = (
-"""Render Layer is "a group of TVPaint layers"
+    """Render Layer is "a group of TVPaint layers"
 
 Be aware Render Layer <b>is not</b> TVPaint layer.
 
@@ -77,7 +77,7 @@ could be Render Layer which has 'Arm', 'Head' and 'Body' as Render Passes.
 
 
 RENDER_PASS_DETAILED_DESCRIPTIONS = (
-"""Render Pass is sub part of Rende Layer.
+    """Render Pass is sub part of Render Layer.
 
 Render Pass can consist of one or more TVPaint layers. Render Layers must
 belong to a Render Layer. Marker TVPaint layers will change it's group color
