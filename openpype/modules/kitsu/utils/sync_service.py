@@ -162,7 +162,7 @@ class Listener:
             self.dbcon.database[project_name].drop()
 
             # Print message
-            log.info(f"Project deleted: {project_name}")
+            log.info("Project deleted: {}".format(project_name))
 
     # == Asset ==
     def _new_asset(self, data):
@@ -477,7 +477,7 @@ class Listener:
 
         # Find asset doc
         episode = None
-        ep_id = task['episode_id']
+        ep_id = task.get('episode_id')
         if ep_id and ep_id != "":
             episode = gazu.asset.get_episode(ep_id)
 
@@ -487,25 +487,26 @@ class Listener:
         parent_name = parent_name + \
             task['sequence']['name'] + "_" + task['entity']['name']
 
-        asset_doc = get_asset_by_name(project_name, parent_name)
-
         # Update asset tasks with new one
-        asset_tasks = asset_doc['data'].get("tasks")
-        task_type_name = task['task_type']['name']
-        asset_tasks[task_type_name] = {"type": task_type_name, "zou": task}
-        self.dbcon.update_one(
-            {"_id": asset_doc['_id']}, {"$set": {"data.tasks": asset_tasks}}
-        )
+        asset_doc = get_asset_by_name(project_name, parent_name)
+        if asset_doc:
+            asset_tasks = asset_doc['data'].get("tasks")
+            task_type_name = task['task_type']['name']
+            asset_tasks[task_type_name] = {"type": task_type_name, "zou": task}
+            self.dbcon.update_one(
+                {"_id": asset_doc['_id']},
+                {"$set": {"data.tasks": asset_tasks}}
+            )
 
-        # Print message
-        msg = "Task created: "
-        msg = msg + f"{task['project']['name']} - "
-        if episode is not None:
-            msg = msg + f"{episode['name']}_"
-        msg = msg + f"{task['sequence']['name']}_"
-        msg = msg + f"{task['entity']['name']} - "
-        msg = msg + f"{task['task_type']['name']}"
-        log.info(msg)
+            # Print message
+            msg = "Task created: "
+            msg = msg + f"{task['project']['name']} - "
+            if episode is not None:
+                msg = msg + f"{episode['name']}_"
+            msg = msg + f"{task['sequence']['name']}_"
+            msg = msg + f"{task['entity']['name']} - "
+            msg = msg + f"{task['task_type']['name']}"
+            log.info(msg)
 
     def _update_task(self, data):
         """Update task into OP DB."""

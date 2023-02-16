@@ -111,18 +111,18 @@ def update_op_assets(
         except (TypeError, ValueError):
             frame_in = 1001
         item_data["frameStart"] = frame_in
-        # Frames duration, fallback on 0
+        # Frames duration, fallback on 1
         try:
             # NOTE nb_frames is stored directly in item
             # because of zou's legacy design
-            frames_duration = int(item.get("nb_frames", 0))
+            frames_duration = int(item.get("nb_frames", 1))
         except (TypeError, ValueError):
             frames_duration = None
         # Frame out, fallback on frame_in + duration or project's value or 1001
         frame_out = item_data.pop("frame_out", None)
         if not frame_out:
             if frames_duration:
-                frame_out = frame_in + frames_duration
+                frame_out = frame_in + frames_duration - 1
             else:
                 frame_out = project_doc["data"].get("frameEnd", 1001)
         item_data["frameEnd"] = frame_out
@@ -279,7 +279,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     project_name = project["name"]
     project_doc = get_project(project_name)
     if not project_doc:
-        log.info(f"Project created: {project_name}")
+        log.info("Project created: {}".format(project_name))
         project_doc = create_project(project_name, project_name)
 
     # Project data and tasks
@@ -373,7 +373,7 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     if not project:
         project = gazu.project.get_project_by_name(project["name"])
 
-    log.info(f"Synchronizing {project['name']}...")
+    log.info("Synchronizing {}...".format(project['name']))
 
     # Get all assets from zou
     all_assets = gazu.asset.all_assets_for_project(project)

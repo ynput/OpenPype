@@ -61,7 +61,7 @@ def sync_zou_from_op_project(
         project_doc = get_project(project_name)
 
     # Get all entities from zou
-    print(f"Synchronizing {project_name}...")
+    print("Synchronizing {}...".format(project_name))
     zou_project = gazu.project.get_project_by_name(project_name)
 
     # Create project
@@ -174,7 +174,8 @@ def sync_zou_from_op_project(
                 doc["name"],
                 frame_in=doc["data"]["frameStart"],
                 frame_out=doc["data"]["frameEnd"],
-                nb_frames=doc["data"]["frameEnd"] - doc["data"]["frameStart"],
+                nb_frames=(
+                    doc["data"]["frameEnd"] - doc["data"]["frameStart"] + 1),
             )
 
         elif match.group(2):  # Sequence
@@ -229,7 +230,7 @@ def sync_zou_from_op_project(
                             "frame_in": frame_in,
                             "frame_out": frame_out,
                         },
-                        "nb_frames": frame_out - frame_in,
+                        "nb_frames": frame_out - frame_in + 1,
                     }
                 )
             entity = gazu.raw.update("entities", zou_id, entity_data)
@@ -258,7 +259,7 @@ def sync_zou_from_op_project(
         for asset_doc in asset_docs.values()
     }
     for entity_id in deleted_entities:
-        gazu.raw.delete(f"data/entities/{entity_id}")
+        gazu.raw.delete("data/entities/{}".format(entity_id))
 
     # Write into DB
     if bulk_writes:

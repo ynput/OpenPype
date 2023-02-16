@@ -32,12 +32,12 @@ class ShowInKitsu(LauncherAction):
         project = get_project(project_name=project_name,
                               fields=["data.zou_id"])
         if not project:
-            raise RuntimeError(f"Project {project_name} not found.")
+            raise RuntimeError("Project {} not found.".format(project_name))
 
         project_zou_id = project["data"].get("zou_id")
         if not project_zou_id:
-            raise RuntimeError(f"Project {project_name} has no "
-                               f"connected kitsu id.")
+            raise RuntimeError(
+                "Project {} has no connected kitsu id.".format(project_name))
 
         asset_zou_name = None
         asset_zou_id = None
@@ -48,7 +48,7 @@ class ShowInKitsu(LauncherAction):
             asset_zou_name = asset_name
             asset_fields = ["data.zou.id", "data.zou.type"]
             if task_name:
-                asset_fields.append(f"data.tasks.{task_name}.zou.id")
+                asset_fields.append("data.tasks.{}.zou.id".format(task_name))
 
             asset = get_asset_by_name(project_name,
                                       asset_name=asset_name,
@@ -67,7 +67,8 @@ class ShowInKitsu(LauncherAction):
                 task_data = asset["data"]["tasks"][task_name]
                 task_zou_data = task_data.get("zou", {})
                 if not task_zou_data:
-                    self.log.debug(f"No zou task data for task: {task_name}")
+                    self.log.debug(
+                        "No zou task data for task: {}".format(task_name))
                 task_zou_id = task_zou_data["id"]
 
         # Define URL
@@ -78,7 +79,7 @@ class ShowInKitsu(LauncherAction):
                            task_id=task_zou_id)
 
         # Open URL in webbrowser
-        self.log.info(f"Opening URL: {url}")
+        self.log.info("Opening URL: {}".format(url))
         webbrowser.open(url,
                         # Try in new tab
                         new=2)
