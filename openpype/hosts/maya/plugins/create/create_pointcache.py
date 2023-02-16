@@ -1,3 +1,5 @@
+from maya import cmds
+
 from openpype.hosts.maya.api import (
     lib,
     plugin
@@ -37,3 +39,9 @@ class CreatePointCache(plugin.Creator):
         # Default to not send to farm.
         self.data["farm"] = False
         self.data["priority"] = 50
+
+    def process(self):
+        instance = super(CreatePointCache, self).process()
+
+        assProxy = cmds.sets(name=instance + "_proxy_SET", empty=True)
+        cmds.sets(assProxy, forceElement=instance)

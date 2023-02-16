@@ -42,7 +42,6 @@ Provides:
 import re
 import os
 import platform
-import json
 
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
@@ -320,7 +319,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     "renderSetupIncludeLights"
                 ),
                 "strict_error_checking": render_instance.data.get(
-                    "strict_error_checking")
+                    "strict_error_checking", True
+                )
             }
 
             # Collect Deadline url if Deadline module is enabled
