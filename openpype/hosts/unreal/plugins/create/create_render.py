@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from pathlib import Path
+
 import unreal
 
 from openpype.hosts.unreal.api.pipeline import (
@@ -10,6 +12,8 @@ from openpype.hosts.unreal.api.plugin import (
     UnrealAssetCreator
 )
 from openpype.lib import (
+    UILabelDef,
+    UISeparatorDef,
     BoolDef,
     NumberDef
 )
@@ -68,7 +72,6 @@ class CreateRender(UnrealAssetCreator):
         unreal.EditorAssetLibrary.save_asset(seq.get_path_name())
 
         # Create the master level
-        prev_level = None
         if UNREAL_VERSION.major >= 5:
             curr_level = unreal.LevelEditorSubsystem().get_current_level()
         else:
@@ -82,7 +85,6 @@ class CreateRender(UnrealAssetCreator):
         # If the level path does not start with "/Game/", the current
         # level is a temporary, unsaved level.
         if curr_level_path.startswith("/Game/"):
-            prev_level = curr_level_path
             if UNREAL_VERSION.major >= 5:
                 unreal.LevelEditorSubsystem().save_current_level()
             else:
@@ -131,25 +133,31 @@ class CreateRender(UnrealAssetCreator):
                     f"Skipping {selected_asset.get_name()}. It isn't a Level "
                     "Sequence.")
 
-            # The asset name is the the third element of the path which
-            # contains the map.
-            # To take the asset name, we remove from the path the prefix
-            # "/Game/OpenPype/" and then we split the path by "/".
-            sel_path = selected_asset_path
-            asset_name = sel_path.replace("/Game/OpenPype/", "").split("/")[0]
+            if pre_create_data.get("use_hierarchy"):
+                # The asset name is the the third element of the path which
+                # contains the map.
+                # To take the asset name, we remove from the path the prefix
+                # "/Game/OpenPype/" and then we split the path by "/".
+                sel_path = selected_asset_path
+                asset_name = sel_path.replace(
+                    "/Game/OpenPype/", "").split("/")[0]
+
+                search_path = f"/Game/OpenPype/{asset_name}"
+            else:
+                search_path = Path(selected_asset_path).parent.as_posix()
 
             # Get the master sequence and the master level.
             # There should be only one sequence and one level in the directory.
             ar_filter = unreal.ARFilter(
                 class_names=["LevelSequence"],
-                package_paths=[f"/Game/OpenPype/{asset_name}"],
+                package_paths=[search_path],
                 recursive_paths=False)
             sequences = ar.get_assets(ar_filter)
             master_seq = sequences[0].get_asset().get_path_name()
             master_seq_obj = sequences[0].get_asset()
             ar_filter = unreal.ARFilter(
                 class_names=["World"],
-                package_paths=[f"/Game/OpenPype/{asset_name}"],
+                package_paths=[search_path],
                 recursive_paths=False)
             levels = ar.get_assets(ar_filter)
             master_lvl = levels[0].get_asset().get_path_name()
@@ -168,7 +176,8 @@ class CreateRender(UnrealAssetCreator):
                     master_seq_obj.get_playback_start(),
                     master_seq_obj.get_playback_end())}
 
-            if selected_asset_path == master_seq:
+            if (selected_asset_path == master_seq or
+                    pre_create_data.get("use_hierarchy")):
                 seq_data = master_seq_data
             else:
                 seq_data_list = [master_seq_data]
@@ -231,7 +240,7 @@ class CreateRender(UnrealAssetCreator):
                 default=False
             ),
             UILabelDef(
-                "WARNING: If you create a new Level Sequence, the current "
+                "WARNING: If you create a new Level Sequence, the current\n"
                 "level will be saved and a new Master Level will be created."
             ),
             NumberDef(
@@ -247,5 +256,15 @@ class CreateRender(UnrealAssetCreator):
                 default=150,
                 minimum=-999999,
                 maximum=999999
+            ),
+            UISeparatorDef(),
+            UILabelDef(
+                "The following settings are valid only if you are not\n"
+                "creating a new sequence."
+            ),
+            BoolDef(
+                "use_hierarchy",
+                label="Use Hierarchy",
+                default=False
             ),
         ]
