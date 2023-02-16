@@ -24,6 +24,12 @@ from openpype.hosts.maya.api import lib
 log = logging.getLogger(__name__)
 
 
+ATTRIBUTE_MAPPING = {
+    "aiSubdivType": "subdiv_type",
+    "aiSubdivIterations": "subdiv_iterations"
+}
+
+
 def get_cbid_by_node(path):
     """Get cbid from Arnold Scene Source.
 
@@ -146,6 +152,7 @@ def assign_look(standin, subset):
 
         # Get container members
         shader_nodes = lib.get_container_members(container_node)
+        namespace = shader_nodes[0].split(":")[0]
 
         # Get only the node ids and paths related to this asset
         # And get the shader edits the look supplies
@@ -159,31 +166,49 @@ def assign_look(standin, subset):
         )
 
         # Create assignments
-        assignments = {}
+        node_assignments = {}
         for edit in edits:
+            for node in edit["nodes"]:
+                if node not in node_assignments:
+                    node_assignments[node] = []
+
             if edit["action"] == "assign":
-                nodes = edit["nodes"]
-                shader = edit["shader"]
-                if not cmds.ls(shader, type="shadingEngine"):
-                    log.info("Skipping non-shader: %s" % shader)
+                if not cmds.ls(edit["shader"], type="shadingEngine"):
+                    log.info("Skipping non-shader: %s" % edit["shader"])
                     continue
 
                 inputs = cmds.listConnections(
-                    shader + ".surfaceShader", source=True)
+                    edit["shader"] + ".surfaceShader", source=True)
                 if not inputs:
-                    log.info("Shading engine missing material: %s" % shader)
+                    log.info(
+                        "Shading engine missing material: %s" % edit["shader"]
+                    )
 
                 # Strip off component assignments
-                for i, node in enumerate(nodes):
+                for i, node in enumerate(edit["nodes"]):
                     if "." in node:
                         log.warning(
                             ("Converting face assignment to full object "
                              "assignment. This conversion can be lossy: "
                              "{}").format(node))
-                        nodes[i] = node.split(".")[0]
+                        edit["nodes"][i] = node.split(".")[0]
 
-                material = inputs[0]
-                assignments[material] = nodes
+                assignment = "shader='{}'".format(inputs[0])
+                for node in edit["nodes"]:
+                    node_assignments[node].append(assignment)
+
+            if edit["action"] == "setattr":
+                for attr, value in edit["attributes"].items():
+                    if attr not in ATTRIBUTE_MAPPING:
+                        log.warning(
+                            "Skipping setting attribute {} on {} because it is"
+                            " not recognized.".format(attr, edit["nodes"])
+                        )
+                        continue
+
+                    assignment = "{}={}".format(ATTRIBUTE_MAPPING[attr], value)
+                    for node in edit["nodes"]:
+                        node_assignments[node].append(assignment)
 
         # Assign shader
         # Clear all current shader assignments
@@ -194,32 +219,26 @@ def assign_look(standin, subset):
 
         # Create new assignment overrides
         index = 0
-        for material, paths in assignments.items():
-            for path in paths:
+        for node, assignments in node_assignments.items():
+            if not assignments:
+                continue
+
+            with lib.maintained_selection():
                 operator = cmds.createNode("aiSetParameter")
-                cmds.setAttr(operator + ".selection", path, type="string")
-                operator_assignments = {
-                    "shader": {
-                        "value": material,
-                        "index": 0,
-                        "enabled": True
-                    }
-                }
-                for assignee, data in operator_assignments.items():
-                    cmds.setAttr(
-                        "{}.assignment[{}]".format(operator, data["index"]),
-                        "{}='{}'".format(assignee, data["value"]),
-                        type="string"
-                    )
-                    cmds.setAttr(
-                        "{}.enableAssignment[{}]".format(
-                            operator, data["index"]
-                        ),
-                        data["enabled"]
-                    )
+                operator = cmds.rename(operator, namespace + ":" + operator)
+
+            cmds.setAttr(operator + ".selection", node, type="string")
+            for i, assignment in enumerate(assignments):
+                cmds.setAttr(
+                    "{}.assignment[{}]".format(operator, i),
+                    assignment,
+                    type="string"
+                )
 
                 cmds.connectAttr(
                     operator + ".out", "{}[{}]".format(plug, index)
                 )
 
                 index += 1
+
+            cmds.sets(operator, edit=True, addElement=container_node[0])
