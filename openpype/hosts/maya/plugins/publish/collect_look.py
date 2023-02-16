@@ -556,7 +556,7 @@ class CollectLook(pyblish.api.InstancePlugin):
                     continue
                 if cmds.getAttr(attribute, type=True) == "message":
                     continue
-                node_attributes[attr] = cmds.getAttr(attribute)
+                node_attributes[attr] = cmds.getAttr(attribute, asString=True)
             # Only include if there are any properties we care about
             if not node_attributes:
                 continue

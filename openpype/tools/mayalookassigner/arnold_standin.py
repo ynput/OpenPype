@@ -206,7 +206,11 @@ def assign_look(standin, subset):
                         )
                         continue
 
+                    if isinstance(value, str):
+                        value = "'{}'".format(value)
+
                     assignment = "{}={}".format(ATTRIBUTE_MAPPING[attr], value)
+
                     for node in edit["nodes"]:
                         node_assignments[node].append(assignment)
 
