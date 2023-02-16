@@ -13,9 +13,8 @@ class IntegrateKitsuReview(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        context = instance.context
-        task = context.data["kitsu_task"]
-        comment = context.data.get("kitsu_comment")
+        task = instance.data["kitsu_task"]["id"]
+        comment = instance.data["kitsu_comment"]["id"]
 
         # Check comment has been created
         if not comment:
@@ -29,7 +28,6 @@ class IntegrateKitsuReview(pyblish.api.InstancePlugin):
             # Skip if not tagged as review
             if "kitsureview" not in representation.get("tags", []):
                 continue
-
             review_path = representation.get("published_path")
             self.log.debug("Found review at: {}".format(review_path))
 
