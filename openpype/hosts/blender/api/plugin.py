@@ -20,6 +20,7 @@ from openpype.hosts.blender.api.utils import (
     BL_OUTLINER_TYPES,
     BL_TYPE_DATAPATH,
     BL_TYPE_ICON,
+    build_op_basename,
     get_children_recursive,
     get_parent_collection,
     link_to_collection,
@@ -49,17 +50,6 @@ from .pipeline import metadata_update, AVALON_PROPERTY
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
 
 log = Logger.get_logger(__name__)
-
-
-def build_op_basename(
-    asset: str, subset: str, namespace: Optional[str] = None
-) -> str:
-    """Return a consistent name for an asset."""
-    name = f"{asset}"
-    if namespace:
-        name = f"{name}_{namespace}"
-    name = f"{name}_{subset}"
-    return name
 
 
 def get_unique_number(

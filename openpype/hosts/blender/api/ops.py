@@ -1,6 +1,7 @@
 """Blender operators and menus for use with Avalon."""
 
 import os
+from string import digits
 import sys
 import platform
 import time
@@ -26,6 +27,7 @@ from openpype.hosts.blender.api.lib import add_datablocks_to_container, update_s
 from openpype.hosts.blender.api.utils import (
     BL_OUTLINER_TYPES,
     BL_TYPE_DATAPATH,
+    build_op_basename,
     get_all_outliner_children,
     get_parent_collection,
     link_to_collection,
@@ -507,6 +509,13 @@ class ManageOpenpypeInstance:
         description="Gather outliner entities when added to instance under single collection",
     )
 
+    def draw_variant_name(self):
+        """Draw variant name with defaults selection list."""
+        # Variant with defaults list
+        sublayout = self.layout.row(align=True)
+        sublayout.prop(self, "variant_name")
+        sublayout.prop(self, "variant_default", icon_only=True)
+
 
 class SCENE_OT_CreateOpenpypeInstance(
     ManageOpenpypeInstance, bpy.types.Operator
@@ -539,9 +548,7 @@ class SCENE_OT_CreateOpenpypeInstance(
         layout.prop_search(self, "asset_name", self, "all_assets")
 
         # Variant with defaults list
-        sublayout = layout.row(align=True)
-        sublayout.prop(self, "variant_name")
-        sublayout.prop(self, "variant_default", icon_only=True)
+        self.draw_variant_name()
 
         # Subset name preview
         sublayout = layout.row()
@@ -727,7 +734,6 @@ class SCENE_OT_AddToOpenpypeInstance(
         return {"FINISHED"}
 
 
-
 def draw_gather_into_collection(self, context):
     """Draw checkbox to gather selected element in outliner.
     
@@ -771,6 +777,107 @@ class SCENE_OT_RemoveFromOpenpypeInstance(
             )
 
         return {"FINISHED"}
+
+
+class SCENE_OT_DuplicateOpenpypeInstance(
+    ManageOpenpypeInstance, bpy.types.Operator
+):
+    """Duplicate OpenPype instance"""
+
+    bl_idname = "scene.duplicate_openpype_instance"
+    bl_label = "Duplicate OpenPype Instance"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.scene.openpype_instance_active_index >= 0
+
+    def invoke(self, context, _event):
+        wm = context.window_manager
+
+        # Get active instance
+        op_instances = context.scene.openpype_instances
+        active_instance = op_instances[
+            context.scene.openpype_instance_active_index
+        ]
+
+        # Guess basename and extension
+        split_name = active_instance.name.rsplit(".", 1)
+        if len(split_name) > 1 and split_name[1].isdigit():
+            basename, number = split_name
+            extension_i = int(number) + 1
+        else:
+            basename = split_name[0]
+            extension_i = 1
+
+        # Increment extension based on existing ones
+        while op_instances.get(f"{basename}.{str(extension_i).zfill(3)}"):
+            extension_i += 1
+        else:
+            extension = str(extension_i).zfill(3)
+
+        # Prefill variant name
+        subset_basename = (
+            active_instance["avalon"]["subset"]
+            .rstrip(f".{digits}")
+            .replace(active_instance["avalon"]["family"], "")
+        )
+        self.variant_name = f"{subset_basename}.{extension}"
+
+        return wm.invoke_props_dialog(self)
+
+    def draw(self, _context):
+        # Variant with defaults list
+        self.draw_variant_name()
+
+    def execute(self, context):
+        op_instances = context.scene.openpype_instances
+
+        # Get active instance
+        active_instance = op_instances[
+            context.scene.openpype_instance_active_index
+        ]
+
+        # Build subset name
+        project_name = legacy_io.active_project()
+        asset_name = active_instance["avalon"]["asset"]
+        subset_name = get_subset_name(
+            active_instance["avalon"]["family"],
+            self.variant_name,
+            legacy_io.Session["AVALON_TASK"],
+            get_asset_by_name(project_name, asset_name, fields=["_id"]),
+            project_name,
+        )
+
+        # Check name
+        new_instance_name = build_op_basename(asset_name, subset_name)
+        if active_instance.name == new_instance_name:
+            self.report(
+                {"ERROR"},
+                f"Duplicate instance cannot have same name as original: {new_instance_name}",
+            )
+            return {"CANCELLED"}
+
+        # Create new instance
+        new_instance = op_instances.add()
+        new_instance.name = new_instance_name
+
+        # Apply metadata
+        # NOTE hardcoded because strange behaviour with .items()
+        for k in ["avalon", "creator_name", "icons"]:
+            new_instance[k] = active_instance.get(k)
+
+        # Update subset name
+        new_instance["avalon"]["subset"] = subset_name
+
+        # Assign datablocks
+        add_datablocks_to_container(
+            (d_ref.datablock for d_ref in active_instance.datablock_refs),
+            new_instance,
+        )
+
+        return {"FINISHED"}
+
 
 class SCENE_OT_MoveOpenpypeInstance(bpy.types.Operator):
     bl_idname = "scene.move_openpype_instance"
@@ -1159,6 +1266,7 @@ classes = [
     SCENE_OT_RemoveOpenpypeInstance,
     SCENE_OT_AddToOpenpypeInstance,
     SCENE_OT_RemoveFromOpenpypeInstance,
+    SCENE_OT_DuplicateOpenpypeInstance,
     SCENE_OT_MoveOpenpypeInstance,
     SCENE_OT_MoveOpenpypeInstanceDatablock,
 ]

@@ -1,5 +1,5 @@
 import bpy
-from bpy.types import UIList
+from bpy.types import Menu, UIList
 from openpype.hosts.blender.api.utils import BL_TYPE_DATAPATH, BL_TYPE_ICON
 
 
@@ -68,6 +68,16 @@ class SCENE_UL_OpenpypeDatablocks(UIList):
         row.label(text=item.name, icon=icon)
 
 
+
+class SCENE_MT_openpype_instances_context_menu(Menu):
+    bl_label = "Vertex Group Specials"
+
+    def draw(self, _context):
+        layout = self.layout
+
+        layout.operator("scene.duplicate_openpype_instance", icon='DUPLICATE')
+
+
 class SCENE_PT_OpenpypeInstancesManager(bpy.types.Panel):
     bl_label = "OpenPype Instances Manager"
     bl_space_type = "PROPERTIES"
@@ -82,7 +92,7 @@ class SCENE_PT_OpenpypeInstancesManager(bpy.types.Panel):
             layout.operator("scene.create_openpype_instance", icon="ADD")
             return
 
-        row = layout.row(align=True)
+        row = layout.row()
         ob = context.scene
 
         # List of OpenPype instances
@@ -105,6 +115,10 @@ class SCENE_PT_OpenpypeInstancesManager(bpy.types.Panel):
         col.operator(
             "scene.remove_openpype_instance", icon="REMOVE", text=""
         ).instance_name = active_instance.name
+
+        col.separator()
+
+        col.menu("SCENE_MT_openpype_instances_context_menu", icon='DOWNARROW_HLT', text="")
 
         col.separator()
 
@@ -202,6 +216,7 @@ classes = (
     SCENE_PT_OpenpypeDatablocksManager,
     SCENE_UL_OpenpypeInstances,
     SCENE_UL_OpenpypeDatablocks,
+    SCENE_MT_openpype_instances_context_menu,
 )
 
 register, unregister = bpy.utils.register_classes_factory(classes)
