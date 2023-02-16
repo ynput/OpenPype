@@ -300,6 +300,39 @@ class ReferenceLoader(Loader):
                      str(representation["_id"]),
                      type="string")
 
+        # When an animation or pointcache gets connected to an Xgen container,
+        # the compound attribute "xgenContainers" gets created. When animation
+        # containers gets updated we also need to update the cacheFileName on
+        # the Xgen collection.
+        compound_name = "xgenContainers"
+        if cmds.objExists("{}.{}".format(node, compound_name)):
+            import xgenm
+            container_amount = cmds.getAttr(
+                "{}.{}".format(node, compound_name), size=True
+            )
+            # loop through all compound children
+            for i in range(container_amount):
+                attr = "{}.{}[{}].container".format(node, compound_name, i)
+                objectset = cmds.listConnections(attr)[0]
+                reference_node = cmds.sets(objectset, query=True)[0]
+                palettes = cmds.ls(
+                    cmds.referenceQuery(reference_node, nodes=True),
+                    type="xgmPalette"
+                )
+                for palette in palettes:
+                    for description in xgenm.descriptions(palette):
+                        xgenm.setAttr(
+                            "cacheFileName",
+                            path.replace("\\", "/"),
+                            palette,
+                            description,
+                            "SplinePrimitive"
+                        )
+
+            # Refresh UI and viewport.
+            de = xgenm.xgGlobal.DescriptionEditor
+            de.refresh("Full")
+
     def remove(self, container):
         """Remove an existing `container` from Maya scene
 
