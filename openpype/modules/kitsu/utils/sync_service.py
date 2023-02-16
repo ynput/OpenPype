@@ -477,7 +477,7 @@ class Listener:
 
         # Find asset doc
         episode = None
-        ep_id = task['episode_id']
+        ep_id = task.get('episode_id')
         if ep_id and ep_id != "":
             episode = gazu.asset.get_episode(ep_id)
 
