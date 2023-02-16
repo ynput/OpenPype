@@ -135,7 +135,7 @@ class ExtractAlembic(publish.Extractor):
         representation = {
             "name": "proxy",
             "ext": "abc",
-            "files": path,
+            "files": os.path.basename(path),
             "stagingDir": dirname,
             "outputName": "proxy"
         }
