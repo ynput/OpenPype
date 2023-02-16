@@ -605,12 +605,12 @@ class AutoCreator(BaseCreator):
         pass
 
 
-def discover_creator_plugins():
-    return discover(BaseCreator)
+def discover_creator_plugins(*args, **kwargs):
+    return discover(BaseCreator, *args, **kwargs)
 
 
-def discover_convertor_plugins():
-    return discover(SubsetConvertorPlugin)
+def discover_convertor_plugins(*args, **kwargs):
+    return discover(SubsetConvertorPlugin, *args, **kwargs)
 
 
 def discover_legacy_creator_plugins():
