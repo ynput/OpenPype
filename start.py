@@ -348,8 +348,15 @@ def run_disk_mapping_commands(settings):
 
     mappings = disk_mapping.get(low_platform) or []
     for source, destination in mappings:
-        destination = destination.rstrip('/')
-        source = source.rstrip('/')
+        if low_platform == "windows":
+            destination = destination.replace("/", "\\").rstrip("\\")
+            source = source.replace("/", "\\").rstrip("\\")
+            # Add slash after ':' ('G:' -> 'G:\')
+            if destination.endswith(":"):
+                destination += "\\"
+        else:
+            destination = destination.rstrip("/")
+            source = source.rstrip("/")
 
         if low_platform == "darwin":
             scr = f'do shell script "ln -s {source} {destination}" with administrator privileges'  # noqa
