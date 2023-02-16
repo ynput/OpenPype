@@ -169,6 +169,8 @@ class PublishReport:
 
     def __init__(self, controller):
         self.controller = controller
+        self._create_discover_result = None
+        self._convert_discover_result = None
         self._publish_discover_result = None
         self._plugin_data = []
         self._plugin_data_with_plugin = []
@@ -181,6 +183,10 @@ class PublishReport:
     def reset(self, context, create_context):
         """Reset report and clear all data."""
 
+        self._create_discover_result = create_context.creator_discover_result
+        self._convert_discover_result = (
+            create_context.convertor_discover_result
+        )
         self._publish_discover_result = create_context.publish_discover_result
         self._plugin_data = []
         self._plugin_data_with_plugin = []
@@ -293,9 +299,19 @@ class PublishReport:
                 if plugin not in self._stored_plugins:
                     plugins_data.append(self._create_plugin_data_item(plugin))
 
-        crashed_file_paths = {}
+        reports = []
+        if self._create_discover_result is not None:
+            reports.append(self._create_discover_result)
+
+        if self._convert_discover_result is not None:
+            reports.append(self._convert_discover_result)
+
         if self._publish_discover_result is not None:
-            items = self._publish_discover_result.crashed_file_paths.items()
+            reports.append(self._publish_discover_result)
+
+        crashed_file_paths = {}
+        for report in reports:
+            items = report.crashed_file_paths.items()
             for filepath, exc_info in items:
                 crashed_file_paths[filepath] = "".join(
                     traceback.format_exception(*exc_info)
@@ -1573,20 +1589,19 @@ class PublisherController(BasePublisherController):
     Handle both creation and publishing parts.
 
     Args:
-        dbcon (AvalonMongoDB): Connection to mongo with context.
         headless (bool): Headless publishing. ATM not implemented or used.
     """
 
     _log = None
 
-    def __init__(self, dbcon=None, headless=False):
+    def __init__(self, headless=False):
         super(PublisherController, self).__init__()
 
         self._host = registered_host()
         self._headless = headless
 
         self._create_context = CreateContext(
-            self._host, dbcon, headless=headless, reset=False
+            self._host, headless=headless, reset=False
         )
 
         self._publish_plugins_proxy = None
@@ -1740,7 +1755,7 @@ class PublisherController(BasePublisherController):
         self._create_context.reset_preparation()
 
         # Reset avalon context
-        self._create_context.reset_avalon_context()
+        self._create_context.reset_current_context()
 
         self._asset_docs_cache.reset()
 
@@ -2004,9 +2019,10 @@ class PublisherController(BasePublisherController):
 
         success = True
         try:
-            self._create_context.create(
+            self._create_context.create_with_unified_error(
                 creator_identifier, subset_name, instance_data, options
             )
+
         except CreatorsOperationFailed as exc:
             success = False
             self._emit_event(

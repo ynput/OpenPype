@@ -25,7 +25,6 @@ from .publish_plugins import (
 from .lib import (
     get_publish_template_name,
 
-    DiscoverResult,
     publish_plugins_discover,
     load_help_content_from_plugin,
     load_help_content_from_filepath,
@@ -69,7 +68,6 @@ __all__ = (
 
     "get_publish_template_name",
 
-    "DiscoverResult",
     "publish_plugins_discover",
     "load_help_content_from_plugin",
     "load_help_content_from_filepath",
