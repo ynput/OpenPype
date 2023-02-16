@@ -22,13 +22,13 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
 
             zou_asset_data = asset_doc["data"].get("zou")
             if not zou_asset_data:
-                raise AssertionError("Zou asset data not found in OpenPype!")
+                raise ValueError("Zou asset data not found in OpenPype!")
 
             if kitsu_project is None:
                 kitsu_project = gazu.project.get_project(
                     zou_asset_data["project_id"])
                 if not kitsu_project:
-                    raise AssertionError("Project not found in kitsu!")
+                    raise ValueError("Project not found in kitsu!")
 
             entity_type = zou_asset_data["type"]
             kitsu_id = zou_asset_data["id"]
@@ -41,7 +41,7 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
                 kitsu_entities_by_id[kitsu_id] = kitsu_entity
 
             if not kitsu_entity:
-                raise AssertionError(
+                raise ValueError(
                     "{} not found in kitsu!".format(entity_type))
             instance.data["kitsu_entity"] = kitsu_entity
 
@@ -53,7 +53,7 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
             if not zou_task_data:
                 kitsu_task_type = gazu.task.get_task_type_by_name(task_name)
                 if not kitsu_task_type:
-                    raise AssertionError(
+                    raise ValueError(
                         "Task type {} not found in Kitsu!".format(task_name)
                     )
                 continue
@@ -64,7 +64,7 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
                 kitsu_entities_by_id[kitsu_task_id] = kitsu_task
 
             if not kitsu_task:
-                raise AssertionError("Task not found in kitsu!")
+                raise ValueError("Task not found in kitsu!")
             instance.data["kitsu_task"] = kitsu_task
             self.log.debug("Collect kitsu task: {}".format(kitsu_task))
 
