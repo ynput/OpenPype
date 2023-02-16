@@ -20,6 +20,9 @@ class ExtractBlendAnimation(ExtractBlend):
         # Perform extraction
         self.log.info("Performing extraction...")
 
+        # Deactivate preview range
+        bpy.context.scene.use_preview_range = False
+
         # Keep animation assignations for auto reassign at loading
         for datablock in instance:
             if isinstance(datablock, bpy.types.Object):
