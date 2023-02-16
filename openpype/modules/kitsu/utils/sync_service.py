@@ -162,7 +162,7 @@ class Listener:
             self.dbcon.database[project_name].drop()
 
             # Print message
-            log.info(f"Project deleted: {project_name}")
+            log.info("Project deleted: {}".format(project_name))
 
     # == Asset ==
     def _new_asset(self, data):
