@@ -37,7 +37,7 @@ class TrayPublisherHost(HostBase, IPublishHost):
         return HostContext.get_context_data()
 
     def update_context_data(self, data, changes):
-        HostContext.save_context_data(data, changes)
+        HostContext.save_context_data(data)
 
     def set_project_name(self, project_name):
         # TODO Deregister project specific plugins and register new project
