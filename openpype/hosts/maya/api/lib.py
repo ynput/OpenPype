@@ -3422,7 +3422,7 @@ def convert_to_maya_fps(fps):
         min_difference = min(differences)
         min_index = differences.index(min_difference)
         supported_framerate = float_framerates[min_index]
-        if round(min_difference) != 0:
+        if min_difference > 0.1:
             raise ValueError(
                 "Framerate \"{}\" strays too far from any supported framerate"
                 " in Maya. Closest supported framerate is \"{}\"".format(
