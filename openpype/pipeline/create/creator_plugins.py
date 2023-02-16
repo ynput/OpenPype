@@ -153,6 +153,12 @@ class BaseCreator:
     Single object should be used for multiple instances instead of single
     instance per one creator object. Do not store temp data or mid-process data
     to `self` if it's not Plugin specific.
+
+    Args:
+        project_settings (Dict[str, Any]): Project settings.
+        system_settings (Dict[str, Any]): System settings.
+        create_context (CreateContext): Context which initialized creator.
+        headless (bool): Running in headless mode.
     """
 
     # Label shown in UI
