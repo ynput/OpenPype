@@ -25,9 +25,47 @@ log = logging.getLogger(__name__)
 
 
 ATTRIBUTE_MAPPING = {
+    "primaryVisibility": "visibility",  # Camera
+    "castsShadows": "visibility",  # Shadow
+    "receiveShadows": "receive_shadows",
+    "aiSelfShadows": "self_shadows",
+    "aiOpaque": "opaque",
+    "aiMatte": "matte",
+    "aiVisibleInDiffuseTransmission": "visibility",
+    "aiVisibleInSpecularTransmission": "visibility",
+    "aiVisibleInVolume": "visibility",
+    "aiVisibleInDiffuseReflection": "visibility",
+    "aiVisibleInSpecularReflection": "visibility",
+    "aiSubdivUvSmoothing": "subdiv_uv_smoothing",
+    "aiDispHeight": "disp_height",
+    "aiDispPadding": "disp_padding",
+    "aiDispZeroValue": "disp_zero_value",
+    "aiStepSize": "step_size",
+    "aiVolumePadding": "volume_padding",
     "aiSubdivType": "subdiv_type",
     "aiSubdivIterations": "subdiv_iterations"
 }
+
+
+def calculate_visibility_mask(attributes):
+    # https://arnoldsupport.com/2018/11/21/backdoor-setting-visibility/
+    mapping = {
+        "primaryVisibility": 1,  # Camera
+        "castsShadows": 2,  # Shadow
+        "aiVisibleInDiffuseTransmission": 4,
+        "aiVisibleInSpecularTransmission": 8,
+        "aiVisibleInVolume": 16,
+        "aiVisibleInDiffuseReflection": 32,
+        "aiVisibleInSpecularReflection": 64
+    }
+    mask = 255
+    for attr, value in mapping.items():
+        if attributes.get(attr, True):
+            continue
+
+        mask -= value
+
+    return mask
 
 
 def get_cbid_by_node(path):
@@ -216,6 +254,7 @@ def assign_look(standin, subset):
                 )
 
             if edit["action"] == "setattr":
+                visibility = False
                 for attr, value in edit["attributes"].items():
                     if attr not in ATTRIBUTE_MAPPING:
                         log.warning(
@@ -227,7 +266,33 @@ def assign_look(standin, subset):
                     if isinstance(value, str):
                         value = "'{}'".format(value)
 
+                    if ATTRIBUTE_MAPPING[attr] == "visibility":
+                        visibility = True
+                        continue
+
                     assignment = "{}={}".format(ATTRIBUTE_MAPPING[attr], value)
+
+                    for node in edit["nodes"]:
+                        node_assignments[node].append(assignment)
+
+                if visibility:
+                    # https://arnoldsupport.com/2018/11/21/backdoor-setting-visibility/
+                    mapping = {
+                        "primaryVisibility": 1,  # Camera
+                        "castsShadows": 2,  # Shadow
+                        "aiVisibleInDiffuseTransmission": 4,
+                        "aiVisibleInSpecularTransmission": 8,
+                        "aiVisibleInVolume": 16,
+                        "aiVisibleInDiffuseReflection": 32,
+                        "aiVisibleInSpecularReflection": 64
+                    }
+                    mask = 255
+                    for attr, value in mapping.items():
+                        if edit["attributes"].get(attr, True):
+                            continue
+                        mask -= value
+
+                    assignment = "visibility={}".format(mask)
 
                     for node in edit["nodes"]:
                         node_assignments[node].append(assignment)
