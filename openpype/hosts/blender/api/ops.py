@@ -758,7 +758,8 @@ class SCENE_OT_RemoveFromOpenpypeInstance(
         # Remove from datablocks and restore original fake user state
         d_ref_index = op_instance.datablock_refs.find(self.datablock_name)
         d_ref = op_instance.datablock_refs[d_ref_index]
-        d_ref.datablock.use_fake_user = d_ref.keep_fake_user
+        if d_ref.datablock:
+            d_ref.datablock.use_fake_user = d_ref.keep_fake_user
         op_instance.datablock_refs.remove(d_ref_index)
 
         # Ensure active index is not out of range after deletion
