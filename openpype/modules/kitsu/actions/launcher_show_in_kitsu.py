@@ -67,7 +67,8 @@ class ShowInKitsu(LauncherAction):
                 task_data = asset["data"]["tasks"][task_name]
                 task_zou_data = task_data.get("zou", {})
                 if not task_zou_data:
-                    self.log.debug("No zou task data for task: {}".format(task_name))
+                    self.log.debug(
+                        "No zou task data for task: {}".format(task_name))
                 task_zou_id = task_zou_data["id"]
 
         # Define URL

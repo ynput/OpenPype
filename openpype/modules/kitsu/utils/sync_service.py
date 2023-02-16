@@ -494,7 +494,8 @@ class Listener:
             task_type_name = task['task_type']['name']
             asset_tasks[task_type_name] = {"type": task_type_name, "zou": task}
             self.dbcon.update_one(
-                {"_id": asset_doc['_id']}, {"$set": {"data.tasks": asset_tasks}}
+                {"_id": asset_doc['_id']},
+                {"$set": {"data.tasks": asset_tasks}}
             )
 
             # Print message
