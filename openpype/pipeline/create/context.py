@@ -1379,6 +1379,8 @@ class CreateContext:
         # Instances by their ID
         self._instances_by_id = {}
 
+        self.creator_discover_result = None
+        self.convertor_discover_result = None
         # Discovered creators
         self.creators = {}
         # Prepare categories of creators
@@ -1666,7 +1668,9 @@ class CreateContext:
         creators = {}
         autocreators = {}
         manual_creators = {}
-        for creator_class in discover_creator_plugins():
+        report = discover_creator_plugins(return_report=True)
+        self.creator_discover_result = report
+        for creator_class in report.plugins:
             if inspect.isabstract(creator_class):
                 self.log.info(
                     "Skipping abstract Creator {}".format(str(creator_class))
@@ -1711,7 +1715,9 @@ class CreateContext:
 
     def _reset_convertor_plugins(self):
         convertors_plugins = {}
-        for convertor_class in discover_convertor_plugins():
+        report = discover_convertor_plugins(return_report=True)
+        self.convertor_discover_result = report
+        for convertor_class in report.plugins:
             if inspect.isabstract(convertor_class):
                 self.log.info(
                     "Skipping abstract Creator {}".format(str(convertor_class))
