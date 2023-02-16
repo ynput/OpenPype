@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
-import os
-
 import gazu
 import pyblish.api
-
-from openpype.client import (
-    get_assets,
-)
 
 
 class CollectKitsuEntities(pyblish.api.ContextPlugin):
@@ -17,67 +11,61 @@ class CollectKitsuEntities(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
-        # Get all needed names
-        project_name = context.data.get("projectName")
-        asset_name = None
-        task_name = None
-        # If asset and task name doesn't exist in context, look in instance
+        kitsu_project = None
+
+        kitsu_entities_by_id = {}
         for instance in context:
-            asset_name = instance.data.get("asset")
+            asset_doc = instance.data.get("assetEntity")
             task_name = instance.data.get("task")
+            if not asset_doc:
+                continue
 
-        # Get all assets of the local project
-        asset_docs = {
-            asset_doc["name"]: asset_doc
-            for asset_doc in get_assets(project_name)
-        }
+            zou_asset_data = asset_doc["data"].get("zou")
+            if not zou_asset_data:
+                raise AssertionError("Zou asset data not found in OpenPype!")
 
-        # Get asset object
-        asset = asset_docs.get(asset_name)
-        if not asset:
-            raise AssertionError(f"{asset_name} not found in DB")
+            if kitsu_project is None:
+                kitsu_project = gazu.project.get_project(
+                    zou_asset_data["project_id"])
+                if not kitsu_project:
+                    raise AssertionError("Project not found in kitsu!")
 
-        zou_asset_data = asset["data"].get("zou")
-        if not zou_asset_data:
-            raise AssertionError("Zou asset data not found in OpenPype!")
-        self.log.debug(f"Collected zou asset data: {zou_asset_data}")
+            entity_type = zou_asset_data["type"]
+            kitsu_id = zou_asset_data["id"]
+            kitsu_entity = kitsu_entities_by_id.get(kitsu_id)
+            if not kitsu_entity:
+                if entity_type == "Shot":
+                    kitsu_entity = gazu.shot.get_shot(kitsu_id)
+                else:
+                    kitsu_entity = gazu.asset.get_asset(kitsu_id)
+                kitsu_entities_by_id[kitsu_id] = kitsu_entity
 
-        kitsu_project = gazu.project.get_project(zou_asset_data["project_id"])
-        if not kitsu_project:
-            raise AssertionError("Project not found in kitsu!")
-        context.data["kitsu_project"] = kitsu_project
-        self.log.debug(f"Collect kitsu project: {kitsu_project}")
+            if not kitsu_entity:
+                raise AssertionError(
+                    "{} not found in kitsu!".format(entity_type))
+            instance.data["kitsu_entity"] = kitsu_entity
 
-        entity_type = zou_asset_data["type"]
-        if entity_type == "Shot":
-            kitsu_entity = gazu.shot.get_shot(zou_asset_data["id"])
-        else:
-            kitsu_entity = gazu.asset.get_asset(zou_asset_data["id"])
-        if not kitsu_entity:
-            raise AssertionError(f"{entity_type} not found in kitsu!")
-        context.data["kitsu_entity"] = kitsu_entity
-        self.log.debug(f"Collect kitsu {entity_type}: {kitsu_entity}")
-
-        if task_name:
-            zou_task_data = asset["data"]["tasks"][task_name].get("zou")
-            self.log.debug(f"Collected zou task data: {zou_task_data}")
-            if zou_task_data:
-                kitsu_task = gazu.task.get_task(zou_task_data["id"])
-                if not kitsu_task:
-                    raise AssertionError("Task not found in kitsu!")
-                context.data["kitsu_task"] = kitsu_task
-                self.log.debug(f"Collect kitsu task: {kitsu_task}")
-            else:
+            if not task_name:
+                continue
+            zou_task_data = asset_doc["data"]["tasks"][task_name].get("zou")
+            self.log.debug(
+                "Collected zou task data: {}".format(zou_task_data))
+            if not zou_task_data:
                 kitsu_task_type = gazu.task.get_task_type_by_name(task_name)
                 if not kitsu_task_type:
                     raise AssertionError(
-                        f"Task type {task_name} not found in Kitsu!"
+                        "Task type {} not found in Kitsu!".format(task_name)
                     )
+                continue
+            kitsu_task_id = zou_task_data["id"]
+            kitsu_task = kitsu_entities_by_id.get(kitsu_task_id)
+            if not kitsu_task:
+                kitsu_task = gazu.task.get_task(zou_task_data["id"])
+                kitsu_entities_by_id[kitsu_task_id] = kitsu_task
 
-                kitsu_task = gazu.task.get_task_by_name(
-                    kitsu_entity, kitsu_task_type
-                )
-                if not kitsu_task:
-                    raise AssertionError("Task not found in kitsu!")
-                context.data["kitsu_task"] = kitsu_task
-                self.log.debug(f"Collect kitsu task: {kitsu_task}")
+            if not kitsu_task:
+                raise AssertionError("Task not found in kitsu!")
+            instance.data["kitsu_task"] = kitsu_task
+            self.log.debug("Collect kitsu task: {}".format(kitsu_task))
+
+        context.data["kitsu_project"] = kitsu_project
