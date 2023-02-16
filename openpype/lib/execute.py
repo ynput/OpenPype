@@ -74,18 +74,23 @@ def execute(args,
     return popen.returncode
 
 
-def run_subprocess(*args, **kwargs):
+def run_subprocess(*args, creationflags=None, **kwargs):
     """Convenience method for getting output errors for subprocess.
 
     Output logged when process finish.
 
     Entered arguments and keyword arguments are passed to subprocess Popen.
 
+    Set 'creationflags' to '0' (int) if auto-fix for creation of new window
+    should be ignored.
+
     Args:
-        *args: Variable length arument list passed to Popen.
+        *args: Variable length argument list passed to Popen.
+        creationflags (int): Creation flags for 'subprocess.Popen'.
+            Differentiate on OS.
         **kwargs : Arbitrary keyword arguments passed to Popen. Is possible to
-            pass `logging.Logger` object under "logger" if want to use
-            different than lib's logger.
+            pass `logging.Logger` object under "logger" to use custom logger
+            for output.
 
     Returns:
         str: Full output of subprocess concatenated stdout and stderr.
@@ -94,6 +99,21 @@ def run_subprocess(*args, **kwargs):
         RuntimeError: Exception is raised if process finished with nonzero
             return code.
     """
+
+    # Modify creation flags on windows to hide console window if in UI mode
+    if (
+        sys.__stdout__ is None
+        and platform.system().lower() == "windows"
+        and creationflags is None
+    ):
+        creationflags = (
+            subprocess.CREATE_NEW_PROCESS_GROUP
+            | subprocess.DETACHED_PROCESS
+        )
+
+    # Ignore if creation flags is set to '0' or 'None'
+    if creationflags:
+        kwargs["creationflags"] = creationflags
 
     # Get environents from kwarg or use current process environments if were
     # not passed.
