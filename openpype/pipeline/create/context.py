@@ -21,6 +21,7 @@ from openpype.lib.attribute_definitions import (
 )
 from openpype.host import IPublishHost
 from openpype.pipeline import legacy_io
+from openpype.pipeline.plugin_discover import DiscoverResult
 
 from .creator_plugins import (
     Creator,
@@ -1620,8 +1621,7 @@ class CreateContext:
 
         from openpype.pipeline import OpenPypePyblishPluginMixin
         from openpype.pipeline.publish import (
-            publish_plugins_discover,
-            DiscoverResult
+            publish_plugins_discover
         )
 
         # Reset publish plugins
