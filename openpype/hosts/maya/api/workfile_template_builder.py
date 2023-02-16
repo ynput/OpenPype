@@ -2,7 +2,7 @@ import json
 
 from maya import cmds
 
-from openpype.pipeline import registered_host, legacy_io
+from openpype.pipeline import registered_host, get_current_asset_name
 from openpype.pipeline.workfile.workfile_template_builder import (
     TemplateAlreadyImported,
     AbstractTemplateBuilder,
