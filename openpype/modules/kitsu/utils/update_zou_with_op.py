@@ -174,7 +174,8 @@ def sync_zou_from_op_project(
                 doc["name"],
                 frame_in=doc["data"]["frameStart"],
                 frame_out=doc["data"]["frameEnd"],
-                nb_frames=doc["data"]["frameEnd"] - doc["data"]["frameStart"],
+                nb_frames=(
+                    doc["data"]["frameEnd"] - doc["data"]["frameStart"] + 1),
             )
 
         elif match.group(2):  # Sequence
@@ -229,7 +230,7 @@ def sync_zou_from_op_project(
                             "frame_in": frame_in,
                             "frame_out": frame_out,
                         },
-                        "nb_frames": frame_out - frame_in,
+                        "nb_frames": frame_out - frame_in + 1,
                     }
                 )
             entity = gazu.raw.update("entities", zou_id, entity_data)
