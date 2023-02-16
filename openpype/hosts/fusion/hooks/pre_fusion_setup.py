@@ -53,14 +53,21 @@ class FusionPrelaunch(PreLaunchHook):
 
     def get_copy_fusion_prefs_settings(self):
         """Get copy prefserences options from the global application settings"""
-        copy_status = copy_path = None
-        try:
-            copy_status, copy_path, force_sync = get_system_settings()["applications"]["fusion"][
-            "copy_fusion_settings"].values()            
-        except ValueError:
-            self.log.error('Copy prefs settings not found')
-        finally:
-            return copy_status, Path(copy_path).expanduser(), force_sync
+        copy_fusion_settings = (
+            self.data
+            ["system_settings"]
+            ["applications"]
+            ["fusion"]
+            .get("copy_fusion_settings", {})
+        )
+        if not copy_fusion_settings:
+            self.log.error("Copy prefs settings not found")
+        copy_status = copy_fusion_settings.get("copy_status", False)
+        force_sync = copy_fusion_settings.get("force_sync", False)
+        copy_path = copy_fusion_settings.get("copy_path") or None
+        if copy_path:
+            copy_path = Path(copy_path).expanduser()
+        return copy_status, copy_path, force_sync
 
     def copy_existing_prefs(self, copy_from: Path, copy_to: Path, force_sync: bool) -> None:
         """On the first Fusion launch copy the Fusion profile to the working directory.
