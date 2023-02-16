@@ -36,6 +36,17 @@ BL_TYPE_ICON = {
 BL_OUTLINER_TYPES = frozenset((bpy.types.Collection, bpy.types.Object))
 
 
+def build_op_basename(
+    asset: str, subset: str, namespace: Optional[str] = None
+) -> str:
+    """Return a consistent name for an asset."""
+    name = f"{asset}"
+    if namespace:
+        name = f"{name}_{namespace}"
+    name = f"{name}_{subset}"
+    return name
+
+
 def get_children_recursive(
     entity: Union[bpy.types.Collection, bpy.types.Object]
 ) -> Iterator[Union[bpy.types.Collection, bpy.types.Object]]:
