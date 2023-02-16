@@ -15,7 +15,6 @@ Open-source pipeline for visual effects and animation built on top of the [Avalo
 
 OpenPype provides a robust platform for your studio, without the worry of a vendor lock. You will always have full access to the source-code and your project database will run locally or in the cloud of your choice.
 
-
 To get all the information about the project, go to [OpenPype.io](http://openpype.io)
 
 Requirements
