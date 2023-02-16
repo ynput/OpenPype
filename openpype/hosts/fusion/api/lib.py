@@ -68,8 +68,8 @@ def set_asset_framerange():
     asset_doc = get_current_project_asset()
     start = asset_doc["data"]["frameStart"]
     end = asset_doc["data"]["frameEnd"]
-    handle_start = asset_doc["data"].get("handleStart")
-    handle_end = asset_doc["data"].get("handleEnd")
+    handle_start = asset_doc["data"]["handleStart"]
+    handle_end = asset_doc["data"]["handleEnd"]
     update_frame_range(start, end, set_render_range=True,
                        handle_start=handle_start,
                        handle_end=handle_end)
@@ -210,7 +210,8 @@ def switch_item(container,
     if any(not x for x in [asset_name, subset_name, representation_name]):
         repre_id = container["representation"]
         representation = get_representation_by_id(project_name, repre_id)
-        repre_parent_docs = get_representation_parents(representation)
+        repre_parent_docs = get_representation_parents(
+            project_name, representation)
         if repre_parent_docs:
             version, subset, asset, _ = repre_parent_docs
         else:
