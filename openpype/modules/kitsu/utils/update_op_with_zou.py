@@ -279,7 +279,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
     project_name = project["name"]
     project_doc = get_project(project_name)
     if not project_doc:
-        log.info(f"Project created: {project_name}")
+        log.info("Project created: {}".format(project_name))
         project_doc = create_project(project_name, project_name)
 
     # Project data and tasks
@@ -373,7 +373,7 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     if not project:
         project = gazu.project.get_project_by_name(project["name"])
 
-    log.info(f"Synchronizing {project['name']}...")
+    log.info("Synchronizing {}...".format(project['name']))
 
     # Get all assets from zou
     all_assets = gazu.asset.all_assets_for_project(project)
