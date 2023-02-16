@@ -1,6 +1,9 @@
-from subprocess import Popen
+from concurrent.futures import Future, ThreadPoolExecutor
+from functools import partial
+import subprocess
 
 import bpy
+from bson.objectid import ObjectId
 import pyblish
 
 from openpype.hosts.blender.api.utils import BL_TYPE_DATAPATH
@@ -8,6 +11,7 @@ from openpype.hosts.blender.utility_scripts import (
     make_paths_relative,
     update_representations,
 )
+from openpype.modules.base import ModulesManager
 from openpype.plugins.publish.integrate_hero_version import (
     IntegrateHeroVersion,
 )
@@ -34,40 +38,53 @@ class IntegrateBlenderAsset(pyblish.api.InstancePlugin):
             "use_paths_management"
         )
 
+        # Prepare pool for commands
+        pool = ThreadPoolExecutor()
+
+        # Get sites to sync with
+        manager = ModulesManager()
+        sync_server_module = manager.modules_by_name["sync_server"]
+        site = sync_server_module.get_remote_site(project_name)
+
         # Get published and hero representations
         representations = instance.data.get("published_representations")
         representations.update(instance.data.get("hero_representations", {}))
 
+        # Run commands for all published representations
         for representation in representations.values():
             representation = representation["representation"]
             published_path = representation.get("data", {}).get("path")
 
-            # Set main commands
-            main_commands = [bpy.app.binary_path, published_path, "-b", "-P"]
+            # Set main command
+            main_command = [bpy.app.binary_path, published_path, "-b"]
 
             # If not workfile, it is a blend and there is a published file
             if representation.get("name") == "blend" and published_path:
+                repre_id = representation["_id"]
+
+                # Pause representation on site
+                sync_server_module.pause_representation(
+                    project_name, repre_id, site
+                )
+                
                 if use_path_management:
                     self.log.info(
                         f"Running {make_paths_relative.__file__}"
                         f"to {published_path}..."
                     )
-                    # Run in subprocess
-                    Popen(
-                        [
-                            *main_commands,
-                            make_paths_relative.__file__,
-                        ]
-                    ).wait()
+                    # Make paths relative
+                    main_command.extend([
+                        "-P",
+                        make_paths_relative.__file__,
+                    ])
 
                 self.log.info(
                     f"Running {update_representations.__file__}"
                     f"to {published_path}..."
                 )
-                # Run in subprocess
-                Popen(
+                main_command.extend(
                     [
-                        *main_commands,
+                        "-P",
                         update_representations.__file__,
                         "--",
                         instance.data["subset"],
@@ -80,6 +97,23 @@ class IntegrateBlenderAsset(pyblish.api.InstancePlugin):
                             if BL_TYPE_DATAPATH.get(type(d)) is not None
                         },
                         "--id",
-                        str(representation["_id"]),
+                        str(repre_id),
                     ]
-                ).wait()
+                )
+                main_command.extend(["--published_time", instance.context.data["time"]])
+
+                # Build function to callback
+                def callback(id: ObjectId, future: Future):
+                    if future.exception() is not None:
+                        raise future.exception()
+                    else:
+                        sync_server_module.unpause_representation(
+                            project_name, id, site
+                        )
+
+                # Submit command to pool
+                f = pool.submit(subprocess.check_call, main_command, shell=False)
+                f.add_done_callback(partial(callback, repre_id))
+
+        # Go asynchrone
+        pool.shutdown(wait=False)
