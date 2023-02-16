@@ -1,7 +1,6 @@
 from collections import defaultdict
 import logging
 import os
-import re
 
 import maya.cmds as cmds
 
