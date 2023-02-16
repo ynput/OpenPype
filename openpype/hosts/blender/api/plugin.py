@@ -23,6 +23,7 @@ from openpype.hosts.blender.api.utils import (
     get_children_recursive,
     get_parent_collection,
     link_to_collection,
+    transfer_stack,
     unlink_from_collection,
 )
 from openpype.pipeline import (
@@ -1257,6 +1258,25 @@ class AssetLoader(Loader):
                         new_datablock.animation_data.action = (
                             old_datablock.animation_data.action
                         )
+
+                    # Ensure modifiers reassignation
+                    if hasattr(old_datablock, "modifiers"):
+                        transfer_stack(
+                            old_datablock, "modifiers", new_datablock
+                        )
+
+                    # Ensure constraints reassignation
+                    if hasattr(old_datablock, "constraints"):
+                        transfer_stack(
+                            old_datablock, "constraints", new_datablock
+                        )
+
+                    # Ensure bones constraints reassignation
+                    if hasattr(old_datablock, "pose") and old_datablock.pose:
+                        for bone in old_datablock.pose.bones:
+                            new_bone = new_datablock.pose.bones.get(bone.name)
+                            if new_bone:
+                                transfer_stack(bone, "constraints", new_bone)
 
             # Restore parent collection if existing
             if parent_collection:

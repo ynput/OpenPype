@@ -250,3 +250,52 @@ def assign_loader_to_datablocks(datablocks: List[bpy.types.ID]):
         container = bpy.context.scene.openpype_containers.get(datablock.name)
         if container and container.get(AVALON_PROPERTY):
             container[AVALON_PROPERTY]["loader"] = loader_name
+
+
+def transfer_stack(
+    source_datablock: bpy.types.ID,
+    stack_name: str,
+    target_datablock: bpy.types.ID,
+):
+    """Transfer stack of modifiers or constraints from a datablock to another one.
+
+    New stack entities are created for each source stack entity.
+    If a stack entity in the target datablock has the same name of one
+    from the source datablock, it is skipped. No duplicate created, neither
+    attribute update.
+
+    Args:
+        src_datablock (bpy.types.ID): Datablock to get stack from.
+        stack_name (str): Stack name to transfer (eg 'modifiers', 'constraints'...)
+        target_datablock (bpy.types.ID): Datablock to create stack entities to
+    """
+    src_col = getattr(source_datablock, stack_name)
+    for stack_datablock in src_col:
+        target_col = getattr(target_datablock, stack_name)
+        target_data = target_col.get(stack_datablock.name)
+        if not target_data:
+            if stack_name == "modifiers":
+                target_data = target_col.new(
+                    stack_datablock.name, stack_datablock.type
+                )
+            else:
+                target_data = target_col.new(stack_datablock.type)
+
+            # Transfer attributes
+            attributes = {
+                a
+                for a in dir(stack_datablock)
+                if not a.startswith("_")
+                and a
+                not in {
+                    "type",
+                    "error_location",
+                    "rna_type",
+                    "error_rotation",
+                    "bl_rna",
+                    "is_valid",
+                    "is_override_data",
+                }
+            }
+            for attr in attributes:
+                setattr(target_data, attr, getattr(stack_datablock, attr))
