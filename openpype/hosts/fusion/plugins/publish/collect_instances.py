@@ -80,6 +80,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "outputDir": os.path.dirname(path),
                 "ext": ext,  # todo: should be redundant
                 "label": label,
+                "task": context.data["task"],
                 "frameStart": context.data["frameStart"],
                 "frameEnd": context.data["frameEnd"],
                 "frameStartHandle": context.data["frameStartHandle"],
