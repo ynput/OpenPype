@@ -113,14 +113,22 @@ class ExtractArnoldSceneSource(publish.Extractor):
         instance.data["representations"].append(representation)
 
     def _extract(self, nodes, attribute_data, kwargs):
-        self.log.info("Writing: " + kwargs["filename"])
+        self.log.info(
+            "Writing {} with:\n{}".format(kwargs["filename"], kwargs)
+        )
         filenames = []
         # Duplicating nodes so they are direct children of the world. This
         # makes the hierarchy of any exported ass file the same.
         with delete_after() as delete_bin:
             duplicate_nodes = []
             for node in nodes:
+                parent = cmds.ls(
+                    cmds.listRelatives(node, parent=True)[0], long=True
+                )[0]
                 duplicate_transform = cmds.duplicate(node)[0]
+                duplicate_transform = "{}|{}".format(
+                    parent, duplicate_transform
+                )
 
                 # Discard the children.
                 shapes = cmds.listRelatives(duplicate_transform, shapes=True)
@@ -133,8 +141,9 @@ class ExtractArnoldSceneSource(publish.Extractor):
                     duplicate_transform, world=True
                 )[0]
 
-                cmds.rename(duplicate_transform, node.split("|")[-1])
-                duplicate_transform = "|" + node.split("|")[-1]
+                basename = node.split("|")[-1].split(":")[-1]
+                cmds.rename(duplicate_transform, basename)
+                duplicate_transform = "|" + basename
 
                 duplicate_nodes.append(duplicate_transform)
                 delete_bin.append(duplicate_transform)
