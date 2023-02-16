@@ -148,19 +148,23 @@ class CreateRender(UnrealAssetCreator):
 
             # Get the master sequence and the master level.
             # There should be only one sequence and one level in the directory.
-            ar_filter = unreal.ARFilter(
-                class_names=["LevelSequence"],
-                package_paths=[search_path],
-                recursive_paths=False)
-            sequences = ar.get_assets(ar_filter)
-            master_seq = sequences[0].get_asset().get_path_name()
-            master_seq_obj = sequences[0].get_asset()
-            ar_filter = unreal.ARFilter(
-                class_names=["World"],
-                package_paths=[search_path],
-                recursive_paths=False)
-            levels = ar.get_assets(ar_filter)
-            master_lvl = levels[0].get_asset().get_path_name()
+            try:
+                ar_filter = unreal.ARFilter(
+                    class_names=["LevelSequence"],
+                    package_paths=[search_path],
+                    recursive_paths=False)
+                sequences = ar.get_assets(ar_filter)
+                master_seq = sequences[0].get_asset().get_path_name()
+                master_seq_obj = sequences[0].get_asset()
+                ar_filter = unreal.ARFilter(
+                    class_names=["World"],
+                    package_paths=[search_path],
+                    recursive_paths=False)
+                levels = ar.get_assets(ar_filter)
+                master_lvl = levels[0].get_asset().get_path_name()
+            except IndexError:
+                raise RuntimeError(
+                    f"Could not find the hierarchy for the selected sequence.")
 
             # If the selected asset is the master sequence, we get its data
             # and then we create the instance for the master sequence.
