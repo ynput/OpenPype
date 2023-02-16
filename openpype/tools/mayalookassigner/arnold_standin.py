@@ -81,6 +81,31 @@ def get_standin_path(node):
     return path
 
 
+def shading_engine_assignments(shading_engine, attr, nodes, assignments):
+    shader_inputs = cmds.listConnections(
+        shading_engine + "." + attr, source=True)
+    if not shader_inputs:
+        log.info(
+            "Shading engine \"{}\" missing input \"{}\"".format(
+                shading_engine, attr
+            )
+        )
+
+    # Strip off component assignments
+    for i, node in enumerate(nodes):
+        if "." in node:
+            log.warning(
+                ("Converting face assignment to full object "
+                 "assignment. This conversion can be lossy: "
+                 "{}").format(node))
+            nodes[i] = node.split(".")[0]
+
+    shader_type = "shader" if attr == "surfaceShader" else "disp_map"
+    assignment = "{}='{}'".format(shader_type, shader_inputs[0])
+    for node in nodes:
+        assignments[node].append(assignment)
+
+
 def assign_look(standin, subset):
     log.info("Assigning {} to {}.".format(subset, standin))
 
@@ -177,25 +202,18 @@ def assign_look(standin, subset):
                     log.info("Skipping non-shader: %s" % edit["shader"])
                     continue
 
-                inputs = cmds.listConnections(
-                    edit["shader"] + ".surfaceShader", source=True)
-                if not inputs:
-                    log.info(
-                        "Shading engine missing material: %s" % edit["shader"]
-                    )
-
-                # Strip off component assignments
-                for i, node in enumerate(edit["nodes"]):
-                    if "." in node:
-                        log.warning(
-                            ("Converting face assignment to full object "
-                             "assignment. This conversion can be lossy: "
-                             "{}").format(node))
-                        edit["nodes"][i] = node.split(".")[0]
-
-                assignment = "shader='{}'".format(inputs[0])
-                for node in edit["nodes"]:
-                    node_assignments[node].append(assignment)
+                shading_engine_assignments(
+                    edit["shader"],
+                    "surfaceShader",
+                    edit["nodes"],
+                    node_assignments
+                )
+                shading_engine_assignments(
+                    edit["shader"],
+                    "displacementShader",
+                    edit["nodes"],
+                    node_assignments
+                )
 
             if edit["action"] == "setattr":
                 for attr, value in edit["attributes"].items():
