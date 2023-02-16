@@ -238,7 +238,7 @@ class SettingsHandler(object):
     @abstractmethod
     def save_change_log(self, project_name, changes, settings_type):
         """Stores changes to settings to separate logging collection.
-        
+
         Args:
             project_name(str, null): Project name for which overrides are
                 or None for global settings.
