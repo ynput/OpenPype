@@ -4,7 +4,6 @@ import platform
 from pathlib import Path
 from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
 from openpype.hosts.fusion import FUSION_HOST_DIR
-from openpype.settings import get_system_settings
 
 
 class FusionPrelaunch(PreLaunchHook):
@@ -39,11 +38,10 @@ class FusionPrelaunch(PreLaunchHook):
             self.log.info(f"Local Fusion prefs environment is set to {fusion_prefs_dir}")
             fusion_prefs_filepath = fusion_prefs_dir / "Fusion.prefs"
             return fusion_prefs_filepath
-        
         # otherwise get the profile from default prefs location 
         fusion_prefs_path = f"Blackmagic Design/Fusion/Profiles/{fusion_profile}/Fusion.prefs"
         if platform.system() == "Windows":
-            prefs_source = Path(os.getenv("AppData")) / fusion_prefs_path
+            prefs_source = Path(os.getenv("AppData"), fusion_prefs_path)
         elif platform.system() == "Darwin":
             prefs_source = Path("~/Library/Application Support/", fusion_prefs_path).expanduser()
         elif platform.system() == "Linux":
@@ -55,8 +53,7 @@ class FusionPrelaunch(PreLaunchHook):
         """Get copy prefserences options from the global application settings"""
         copy_fusion_settings = (
             self.data
-            ["system_settings"]
-            ["applications"]
+            ["project_settings"]
             ["fusion"]
             .get("copy_fusion_settings", {})
         )
@@ -73,7 +70,7 @@ class FusionPrelaunch(PreLaunchHook):
         """On the first Fusion launch copy the Fusion profile to the working directory.
         If the Openpype profile folder exists, skip copying, unless Force sync is checked.
         If the prefs were not copied on the first launch, clean Fusion profile 
-        will be created in openpype_fusion_profile_dir.
+        will be created in fusion_profile_dir.
         """
         if copy_to.exists() and not force_sync:
             self.log.info("Local Fusion preferences folder exists, skipping profile copy")
@@ -127,14 +124,14 @@ class FusionPrelaunch(PreLaunchHook):
         self.log.info(f"Setting OPENPYPE_FUSION: {FUSION_HOST_DIR}")
         self.launch_context.env["OPENPYPE_FUSION"] = FUSION_HOST_DIR
 
-        copy_status, openpype_fusion_profile_dir, force_sync = self.get_copy_fusion_prefs_settings()
+        copy_status, fusion_profile_dir, force_sync = self.get_copy_fusion_prefs_settings()
         if copy_status:
             prefs_source = self.get_profile_source()
-            self.copy_existing_prefs(prefs_source, openpype_fusion_profile_dir, force_sync)
+            self.copy_existing_prefs(prefs_source, fusion_profile_dir, force_sync)
         fusion_profile_dir_variable = f"FUSION{self.PROFILE_NUMBER}_PROFILE_DIR"
         master_prefs_variable = f"FUSION{self.PROFILE_NUMBER}_MasterPrefs"
-        openpype_master_prefs = Path(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
-        self.log.info(f"Setting {fusion_profile_dir_variable}: {openpype_fusion_profile_dir}")
-        self.launch_context.env[fusion_profile_dir_variable] = str(openpype_fusion_profile_dir)
-        self.log.info(f"Setting {master_prefs_variable}: {openpype_master_prefs}")
-        self.launch_context.env[master_prefs_variable] = str(openpype_master_prefs)
+        master_prefs = Path(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
+        self.log.info(f"Setting {fusion_profile_dir_variable}: {fusion_profile_dir}")
+        self.launch_context.env[fusion_profile_dir_variable] = str(fusion_profile_dir)
+        self.log.info(f"Setting {master_prefs_variable}: {master_prefs}")
+        self.launch_context.env[master_prefs_variable] = str(master_prefs)

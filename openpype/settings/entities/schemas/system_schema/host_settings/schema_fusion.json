@@ -20,36 +20,6 @@
             "type": "raw-json"
         },
         {
-            "type": "splitter"
-        },
-        {
-            "type": "dict",
-            "key": "copy_fusion_settings",
-            "collapsible": true,
-            "checkbox_key": "copy_prefs",
-            "label": "Copy Fusion settings when launched from OpenPype",
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "copy_prefs",
-                    "label": "Enabled"
-                },
-                {
-                    "key": "prefs_path",
-                    "type": "path",
-                    "label": "Local prefs directory"
-                },
-                {
-                    "key":"force_sync",
-                    "type": "boolean",
-                    "label": "Always sync preferences on launch"
-                }
-            ]
-        },
-        {
-            "type": "splitter"
-        },
-        {
             "type": "dict-modifiable",
             "key": "variants",
             "collapsible_key": true,
