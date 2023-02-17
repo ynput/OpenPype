@@ -5,8 +5,10 @@ import getpass
 import requests
 import pyblish.api
 
-
+from pymxs import runtme as rt
 from openpype.pipeline import legacy_io
+from openpype.hosts.max.api.lib import get_current_renderer
+from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 
 
 class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
@@ -26,6 +28,7 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
     group = None
     deadline_pool = None
     deadline_pool_secondary = None
+    framePerTask = 1
 
     def process(self, instance):
         context = instance.context
@@ -55,10 +58,30 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
                     anatomy_filled = anatomy_data.format(template_data)
                     template_filled = anatomy_filled["publish"]["path"]
                     filepath = os.path.normpath(template_filled)
-
+                    filepath = filepath.replace("\\", "/")
                     self.log.info(
                         "Using published scene for render {}".format(filepath)
                     )
+            if not os.path.exists(filepath):
+                self.log.error("published scene does not exist!")
+
+            new_scene = self._clean_name(filepath)
+            # use the anatomy data for setting up the path of the files
+            orig_scene = self._clean_name(instance.context.data["currentFile"])
+            expected_files = instance.data.get("expectedFiles")
+
+            new_exp = []
+            for file in expected_files:
+                new_file = str(file).replace(orig_scene, new_scene)
+                new_exp.append(new_file)
+
+                instance.data["expectedFiles"] = new_exp
+
+            metadata_folder = instance.data.get("publishRenderMetadataFolder")
+            if metadata_folder:
+                metadata_folder = metadata_folder.replace(orig_scene,
+                                                          new_scene)
+                instance.data["publishRenderMetadataFolder"] = metadata_folder
 
         payload = {
             "JobInfo": {
@@ -78,7 +101,8 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
                 "Frames": frames,
                 "ChunkSize": self.chunk_size,
                 "Priority": instance.data.get("priority", self.priority),
-                "Comment": comment
+                "Comment": comment,
+                "FramesPerTask": self.framePerTask
             },
             "PluginInfo": {
                 # Input
@@ -131,8 +155,37 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
             self.log.info("Ensuring output directory exists: %s" %
                           dirname)
             os.makedirs(dirname)
+        plugin_data = {}
+        if self.use_published:
+            old_output_dir = os.path.dirname(expected_files[0])
+            output_beauty = RenderSettings().get_renderoutput(instance.name,
+                                                              old_output_dir)
+            output_beauty = output_beauty.replace(orig_scene, new_scene)
+            output_beauty = output_beauty.replace("\\", "/")
+            plugin_data["RenderOutput"] = output_beauty
+
+            renderer_class = get_current_renderer()
+            renderer = str(renderer_class).split(":")[0]
+            if (
+                renderer == "ART_Renderer" or
+                renderer == "Redshift_Renderer" or
+                renderer == "V_Ray_6_Hotfix_3" or
+                renderer == "V_Ray_GPU_6_Hotfix_3" or
+                renderer == "Default_Scanline_Renderer" or
+                renderer == "Quicksilver_Hardware_Renderer"
+            ):
+                render_elem_list = RenderSettings().get_render_element()
+                for i, render_element in enumerate(render_elem_list):
+                    render_element = render_element.replace(orig_scene, new_scene)
+                    plugin_data["RenderElementOutputFilename%d" % i] = render_element
+
+            self.log.debug("plugin data:{}".format(plugin_data))
+            self.log.info("Scene name was switched {} -> {}".format(
+                orig_scene, new_scene
+            ))
 
         payload["JobInfo"].update(output_data)
+        payload["PluginInfo"].update(plugin_data)
 
         self.submit(instance, payload)
 
@@ -158,8 +211,13 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
             raise Exception(response.text)
         # Store output dir for unified publisher (expectedFilesequence)
         expected_files = instance.data["expectedFiles"]
-        self.log.info("exp:{}".format(expected_files))
         output_dir = os.path.dirname(expected_files[0])
         instance.data["toBeRenderedOn"] = "deadline"
         instance.data["outputDir"] = output_dir
         instance.data["deadlineSubmissionJob"] = response.json()
+
+    def rename_render_element(self):
+        pass
+
+    def _clean_name(self, path):
+        return os.path.splitext(os.path.basename(path))[0]

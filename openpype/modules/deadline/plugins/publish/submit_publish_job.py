@@ -293,8 +293,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "Group": self.deadline_group,
                 "Pool": instance.data.get("primaryPool"),
                 "SecondaryPool": instance.data.get("secondaryPool"),
-
-                "OutputDirectory0": output_dir
+                # ensure the outputdirectory with correct slashes
+                "OutputDirectory0": output_dir.replace("\\", "/")
             },
             "PluginInfo": {
                 "Version": self.plugin_pype_version,
@@ -1000,6 +1000,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "FTRACK_SERVER": os.environ.get("FTRACK_SERVER"),
             }
 
+        submission_type = instance.data["toBeRenderedOn"]
         if submission_type == "deadline":
             # get default deadline webservice url from deadline module
             self.deadline_url = instance.context.data["defaultDeadline"]

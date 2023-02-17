@@ -44,11 +44,15 @@ class RenderSettings(object):
     def set_renderoutput(self, container):
         folder = rt.maxFilePath
         # hard-coded, should be customized in the setting
+        file = rt.maxFileName
         folder = folder.replace("\\", "/")
         # hard-coded, set the renderoutput path
         setting = self._project_settings
         render_folder = get_default_render_folder(setting)
-        output_dir = os.path.join(folder, render_folder)
+        filename, ext = os.path.splitext(file)
+        output_dir = os.path.join(folder,
+                                  render_folder,
+                                  filename)
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         # hard-coded, should be customized in the setting
@@ -139,3 +143,22 @@ class RenderSettings(object):
             target, renderpass = str(renderlayer_name).split(":")
             aov_name = "{0}_{1}..{2}".format(dir, renderpass, ext)
             render_elem.SetRenderElementFileName(i, aov_name)
+
+    def get_renderoutput(self, container, output_dir):
+        output = os.path.join(output_dir, container)
+        img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa
+        outputFilename = "{0}..{1}".format(output, img_fmt)
+        return outputFilename
+
+    def get_render_element(self):
+        orig_render_elem = list()
+        render_elem = rt.maxOps.GetCurRenderElementMgr()
+        render_elem_num = render_elem.NumRenderElements()
+        if render_elem_num < 0:
+            return
+
+        for i in range(render_elem_num):
+           render_element = render_elem.GetRenderElementFilename(i)
+           orig_render_elem.append(render_element)
+
+        return orig_render_elem

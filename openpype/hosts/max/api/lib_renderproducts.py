@@ -25,11 +25,17 @@ class RenderProducts(object):
 
     def render_product(self, container):
         folder = rt.maxFilePath
+        file = rt.maxFileName
         folder = folder.replace("\\", "/")
         setting = self._project_settings
         render_folder = get_default_render_folder(setting)
+        filename, ext = os.path.splitext(file)
 
-        output_file = os.path.join(folder, render_folder, container)
+        output_file = os.path.join(folder,
+                                   render_folder,
+                                   filename,
+                                   container)
+
         context = get_current_project_asset()
         startFrame = context["data"].get("frameStart")
         endFrame = context["data"].get("frameEnd") + 1
