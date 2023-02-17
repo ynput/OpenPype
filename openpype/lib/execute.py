@@ -126,10 +126,10 @@ def run_subprocess(*args, creationflags=None, **kwargs):
         logger = Logger.get_logger("run_subprocess")
 
     # set overrides
-    kwargs['stdout'] = kwargs.get('stdout', subprocess.PIPE)
-    kwargs['stderr'] = kwargs.get('stderr', subprocess.PIPE)
-    kwargs['stdin'] = kwargs.get('stdin', subprocess.PIPE)
-    kwargs['env'] = filtered_env
+    kwargs["stdout"] = kwargs.get("stdout", subprocess.PIPE)
+    kwargs["stderr"] = kwargs.get("stderr", subprocess.PIPE)
+    kwargs["stdin"] = kwargs.get("stdin", subprocess.PIPE)
+    kwargs["env"] = filtered_env
 
     proc = subprocess.Popen(*args, **kwargs)
 
