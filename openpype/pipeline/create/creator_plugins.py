@@ -107,7 +107,11 @@ class SubsetConvertorPlugin(object):
 
     @property
     def create_context(self):
-        """Quick access to create context."""
+        """Quick access to create context.
+
+        Returns:
+            CreateContext: Context which initialized the plugin.
+        """
 
         return self._create_context
 
@@ -149,6 +153,12 @@ class BaseCreator:
     Single object should be used for multiple instances instead of single
     instance per one creator object. Do not store temp data or mid-process data
     to `self` if it's not Plugin specific.
+
+    Args:
+        project_settings (Dict[str, Any]): Project settings.
+        system_settings (Dict[str, Any]): System settings.
+        create_context (CreateContext): Context which initialized creator.
+        headless (bool): Running in headless mode.
     """
 
     # Label shown in UI
@@ -156,6 +166,10 @@ class BaseCreator:
     group_label = None
     # Cached group label after first call 'get_group_label'
     _cached_group_label = None
+
+    # Order in which will be plugin executed (collect & update instances)
+    #   less == earlier -> Order '90' will be processed before '100'
+    order = 100
 
     # Variable to store logger
     _log = None
@@ -425,8 +439,8 @@ class BaseCreator:
         keys/values when plugin attributes change.
 
         Returns:
-            List[AbtractAttrDef]: Attribute definitions that can be tweaked for
-                created instance.
+            List[AbstractAttrDef]: Attribute definitions that can be tweaked
+                for created instance.
         """
 
         return self.instance_attr_defs
@@ -488,6 +502,17 @@ class Creator(BaseCreator):
     # Precreate attribute definitions showed before creation
     # - similar to instance attribute definitions
     pre_create_attr_defs = []
+
+    @property
+    def show_order(self):
+        """Order in which is creator shown in UI.
+
+        Returns:
+            int: Order in which is creator shown (less == earlier). By default
+                is using Creator's 'order' or processing.
+        """
+
+        return self.order
 
     @abstractmethod
     def create(self, subset_name, instance_data, pre_create_data):
@@ -563,8 +588,8 @@ class Creator(BaseCreator):
             updating keys/values when plugin attributes change.
 
         Returns:
-            List[AbtractAttrDef]: Attribute definitions that can be tweaked for
-                created instance.
+            List[AbstractAttrDef]: Attribute definitions that can be tweaked
+                for created instance.
         """
         return self.pre_create_attr_defs
 
@@ -586,12 +611,12 @@ class AutoCreator(BaseCreator):
         pass
 
 
-def discover_creator_plugins():
-    return discover(BaseCreator)
+def discover_creator_plugins(*args, **kwargs):
+    return discover(BaseCreator, *args, **kwargs)
 
 
-def discover_convertor_plugins():
-    return discover(SubsetConvertorPlugin)
+def discover_convertor_plugins(*args, **kwargs):
+    return discover(SubsetConvertorPlugin, *args, **kwargs)
 
 
 def discover_legacy_creator_plugins():
