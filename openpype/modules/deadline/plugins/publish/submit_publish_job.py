@@ -339,7 +339,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         self.log.info("Submitting Deadline job ...")
 
         url = "{}/api/jobs".format(self.deadline_url)
-        response = requests.post(url, json=payload, timeout=10)
+        response = requests.post(url, json=payload, timeout=10, verify=False)
         if not response.ok:
             raise Exception(response.text)
 
@@ -1000,7 +1000,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "FTRACK_SERVER": os.environ.get("FTRACK_SERVER"),
             }
 
-        submission_type = instance.data["toBeRenderedOn"]
         if submission_type == "deadline":
             # get default deadline webservice url from deadline module
             self.deadline_url = instance.context.data["defaultDeadline"]

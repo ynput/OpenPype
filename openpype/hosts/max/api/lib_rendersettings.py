@@ -158,7 +158,7 @@ class RenderSettings(object):
             return
 
         for i in range(render_elem_num):
-           render_element = render_elem.GetRenderElementFilename(i)
-           orig_render_elem.append(render_element)
+            render_element = render_elem.GetRenderElementFilename(i)
+            orig_render_elem.append(render_element)
 
         return orig_render_elem

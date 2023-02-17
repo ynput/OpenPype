@@ -5,7 +5,6 @@ import getpass
 import requests
 import pyblish.api
 
-from pymxs import runtme as rt
 from openpype.pipeline import legacy_io
 from openpype.hosts.max.api.lib import get_current_renderer
 from openpype.hosts.max.api.lib_rendersettings import RenderSettings
@@ -175,9 +174,9 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
                 renderer == "Quicksilver_Hardware_Renderer"
             ):
                 render_elem_list = RenderSettings().get_render_element()
-                for i, render_element in enumerate(render_elem_list):
-                    render_element = render_element.replace(orig_scene, new_scene)
-                    plugin_data["RenderElementOutputFilename%d" % i] = render_element
+                for i, element in enumerate(render_elem_list):
+                    element = element.replace(orig_scene, new_scene)
+                    plugin_data["RenderElementOutputFilename%d" % i] = element   # noqa
 
             self.log.debug("plugin data:{}".format(plugin_data))
             self.log.info("Scene name was switched {} -> {}".format(
