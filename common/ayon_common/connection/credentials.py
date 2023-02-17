@@ -8,6 +8,7 @@ import contextlib
 from typing import Optional, Union, Any
 
 import ayon_api
+
 from ayon_api.exceptions import UrlError
 from ayon_api.utils import (
     validate_url,
@@ -15,7 +16,7 @@ from ayon_api.utils import (
     logout_from_server,
 )
 
-from ayon_common.utils import get_ayon_appdirs
+from ayon_common.utils import get_ayon_appdirs, get_local_site_id
 
 
 class ChangeUserResult:
@@ -403,6 +404,20 @@ def set_environments(url: str, token: str):
     ayon_api.set_environments(url, token)
 
 
+def create_global_connection():
+    """Create global connection with site id and client version.
+
+
+    Make sure the global connection in 'ayon_api' have entered site id and
+    client version.
+    """
+
+    if hasattr(ayon_api, "create_connection"):
+        ayon_api.create_connection(
+            get_local_site_id(), os.environ.get("AYON_VERSION")
+        )
+
+
 def need_server_or_login() -> bool:
     """Check if server url or login to the server are needed.
 
@@ -428,3 +443,20 @@ def need_server_or_login() -> bool:
 
     token = load_token(server_url)
     return not is_token_valid(server_url, token)
+
+
+def confirm_server_login(url, token, username):
+    """Confirm login of user and do necessary stepts to apply changes.
+
+    This should not be used on "change" of user but on first login.
+
+    Args:
+        url (str): Server url where user authenticated.
+        token (str): API token used for authentication to server.
+        username (Union[str, None]): Username related to API token.
+    """
+
+    add_server(url, username)
+    store_token(url, token)
+    set_environments(url, token)
+    create_global_connection()
