@@ -81,8 +81,8 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
         for mesh in meshes:
             # create glsl shader
             glsl = cmds.createNode('GLSLShader')
-            glsl_shading_grp  = cmds.sets(name=glsl + "SG", empty=True,
-                                        renderable=True, noSurfaceShader=True)
+            glsl_shading_grp = cmds.sets(name=glsl + "SG", empty=True,
+                                         renderable=True, noSurfaceShader=True)
             cmds.connectAttr(glsl + ".outColor",
                              glsl_shading_grp  + ".surfaceShader")
 
