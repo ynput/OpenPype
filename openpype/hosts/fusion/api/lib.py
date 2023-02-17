@@ -316,13 +316,6 @@ def get_current_comp():
         return comp
 
 
-def get_comp_filename():
-    """Get comp's Filename"""
-    comp = get_current_comp()
-    if comp:
-        return comp.GetAttrs()["COMPS_FileName"]
-
-
 @contextlib.contextmanager
 def comp_lock_and_undo_chunk(comp, undo_queue_name="Script CMD"):
     """Lock comp and open an undo chunk during the context"""

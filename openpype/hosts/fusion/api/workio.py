@@ -25,7 +25,8 @@ def open_file(filepath):
 
 
 def current_file():
-    current_filepath = get_comp_filename()
+    comp = get_current_comp()
+    current_filepath = comp.GetAttrs()["COMPS_FileName"]
     return current_filepath or None
 
 
