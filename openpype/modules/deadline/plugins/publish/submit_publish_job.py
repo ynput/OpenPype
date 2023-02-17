@@ -126,7 +126,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     aov_filter = {"maya": [r".*([Bb]eauty).*"],
                   "aftereffects": [r".*"],  # for everything from AE
                   "harmony": [r".*"],  # for everything from AE
-                  "celaction": [r".*"]}
+                  "celaction": [r".*"],
+                  "max": [r".*"]}
 
     environ_job_filter = [
         "OPENPYPE_METADATA_FILE"

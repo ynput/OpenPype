@@ -44,6 +44,11 @@
                     {"tga":  "tga"},
                     {"dds":  "dds"}
                   ]
+                },
+                {
+                    "type": "boolean",
+                    "key": "multipass",
+                    "label": "multipass"
                 }
             ]
         }

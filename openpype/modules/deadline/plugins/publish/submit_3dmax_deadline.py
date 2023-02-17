@@ -6,7 +6,11 @@ import requests
 import pyblish.api
 
 from openpype.pipeline import legacy_io
-from openpype.hosts.max.api.lib import get_current_renderer
+from openpype.settings import get_project_settings
+from openpype.hosts.max.api.lib import (
+    get_current_renderer,
+    get_multipass_setting
+)
 from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 
 
@@ -154,7 +158,18 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
             self.log.info("Ensuring output directory exists: %s" %
                           dirname)
             os.makedirs(dirname)
+
         plugin_data = {}
+        project_setting = get_project_settings(
+                legacy_io.Session["AVALON_PROJECT"]
+            )
+
+        multipass = get_multipass_setting(project_setting)
+        if multipass:
+            plugin_data["DisableMultipass"] = 0
+        else:
+            plugin_data["DisableMultipass"] = 1
+
         if self.use_published:
             old_output_dir = os.path.dirname(expected_files[0])
             output_beauty = RenderSettings().get_renderoutput(instance.name,

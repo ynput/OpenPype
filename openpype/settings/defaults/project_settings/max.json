@@ -2,6 +2,7 @@
     "RenderSettings": {
         "default_render_image_folder": "renders/3dsmax",
         "aov_separator": "underscore",
-        "image_format": "exr"
+        "image_format": "exr",
+        "multipass": true
     }
 }
