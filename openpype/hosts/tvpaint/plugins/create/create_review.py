@@ -9,12 +9,16 @@ class TVPaintReviewCreator(TVPaintAutoCreator):
     label = "Review"
     icon = "ei.video"
 
+    # Settings
+    active_on_create = True
+
     def apply_settings(self, project_settings, system_settings):
         plugin_settings = (
             project_settings["tvpaint"]["create"]["create_review"]
         )
         self.default_variant = plugin_settings["default_variant"]
         self.default_variants = plugin_settings["default_variants"]
+        self.active_on_create = plugin_settings["active_on_create"]
 
     def create(self):
         existing_instance = None
