@@ -113,6 +113,7 @@ class ExtractAlembic(publish.Extractor):
 
         # Extract proxy.
         if not instance.data.get("proxy"):
+            self.log.info("No proxy nodes found. Skipping proxy extraction.")
             return
 
         path = path.replace(".abc", "_proxy.abc")
