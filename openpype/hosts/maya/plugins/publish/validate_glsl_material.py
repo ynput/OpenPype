@@ -84,7 +84,7 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
             glsl_shading_grp = cmds.sets(name=glsl + "SG", empty=True,
                                          renderable=True, noSurfaceShader=True)
             cmds.connectAttr(glsl + ".outColor",
-                             glsl_shading_grp  + ".surfaceShader")
+                             glsl_shading_grp + ".surfaceShader")
 
             # load the maya2gltf shader
             ogsfx_path = instance.context.data["project_settings"]["maya"]["publish"]["ExtractGLB"]["ogsfx_path"]  # noqa
@@ -152,4 +152,4 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                             glsl_nrm = glsl + ".u_NormalTexture"
                             cmds.connectAttr(nrm_output, glsl_nrm)
 
-            cmds.sets(mesh, forceElement=str(glsl_shading_grp ))
+            cmds.sets(mesh, forceElement=str(glsl_shading_grp))
