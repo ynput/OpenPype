@@ -102,8 +102,7 @@ def run_subprocess(*args, creationflags=None, **kwargs):
 
     # Modify creation flags on windows to hide console window if in UI mode
     if (
-        sys.__stdout__ is None
-        and platform.system().lower() == "windows"
+        platform.system().lower() == "windows"
         and creationflags is None
     ):
         creationflags = (
