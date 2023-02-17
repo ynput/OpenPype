@@ -27,11 +27,11 @@ class IntegrateShotgridPublish(pyblish.api.InstancePlugin):
             local_path = get_publish_repre_path(
                 instance, representation, False
             )
-            code = os.path.basename(local_path)
 
             if representation.get("tags", []):
                 continue
 
+            code = os.path.basename(local_path)
             published_file = self._find_existing_publish(
                 code, context, shotgrid_version
             )
