@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.15.0" # OpenPype
+version = "3.15.1" # OpenPype
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -114,15 +114,15 @@ build-backend = "poetry.core.masonry.api"
 # https://pip.pypa.io/en/stable/cli/pip_install/#requirement-specifiers
 [openpype.qtbinding.windows]
 package = "PySide2"
-version = "5.15.2"
+version = "3.15.1"
 
 [openpype.qtbinding.darwin]
 package = "PySide6"
-version = "6.4.1"
+version = "3.15.1"
 
 [openpype.qtbinding.linux]
 package = "PySide2"
-version = "5.15.2"
+version = "3.15.1"
 
 # TODO: we will need to handle different linux flavours here and
 #       also different macos versions too.
