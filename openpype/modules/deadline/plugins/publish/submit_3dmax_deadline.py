@@ -161,8 +161,8 @@ class MaxSubmitRenderDeadline(pyblish.api.InstancePlugin):
 
         plugin_data = {}
         project_setting = get_project_settings(
-                legacy_io.Session["AVALON_PROJECT"]
-            )
+            legacy_io.Session["AVALON_PROJECT"]
+        )
 
         multipass = get_multipass_setting(project_setting)
         if multipass:

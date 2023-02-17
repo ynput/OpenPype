@@ -152,6 +152,7 @@ def set_framerange(startFrame, endFrame):
         frameRange = "{0}-{1}".format(startFrame, endFrame)
     rt.rendPickupFrames = frameRange
 
+
 def get_multipass_setting(project_setting=None):
     return (project_setting["max"]
                            ["RenderSettings"]
