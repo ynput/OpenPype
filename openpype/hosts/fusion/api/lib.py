@@ -302,7 +302,7 @@ def get_frame_path(path):
     return filename, padding, ext
 
 
-def get_fusion():
+def get_fusion_module():
     """Get current Fusion instance"""
     fusion = getattr(sys.modules["__main__"], "fusion", None)
     return fusion
@@ -310,7 +310,7 @@ def get_fusion():
 
 def get_current_comp():
     """Get current comp in this session"""
-    fusion = get_fusion()
+    fusion = get_fusion_module()
     if fusion:
         comp = fusion.CurrentComp
         return comp

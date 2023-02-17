@@ -2,7 +2,7 @@
 import sys
 import os
 
-from .lib import get_fusion, get_current_comp, get_comp_filename
+from .lib import get_fusion_module, get_current_comp, get_comp_filename
 
 
 def file_extensions():
@@ -20,7 +20,7 @@ def save_file(filepath):
 
 
 def open_file(filepath):
-    fusion = get_fusion()
+    fusion = get_fusion_module()
     return fusion.LoadComp(filepath)
 
 
