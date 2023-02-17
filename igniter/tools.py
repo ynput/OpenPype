@@ -21,6 +21,11 @@ class OpenPypeVersionNotFound(Exception):
     pass
 
 
+class OpenPypeVersionIncompatible(Exception):
+    """OpenPype version is not compatible with the installed one (build)."""
+    pass
+
+
 def should_add_certificate_path_to_mongo_url(mongo_url):
     """Check if should add ca certificate to mongo url.
 
@@ -148,7 +153,8 @@ def get_openpype_global_settings(url: str) -> dict:
         # Create mongo connection
         client = MongoClient(url, **kwargs)
         # Access settings collection
-        col = client["openpype"]["settings"]
+        openpype_db = os.environ.get("OPENPYPE_DATABASE_NAME") or "openpype"
+        col = client[openpype_db]["settings"]
         # Query global settings
         global_settings = col.find_one({"type": "global_settings"}) or {}
         # Close Mongo connection
@@ -179,11 +185,7 @@ def get_openpype_path_from_settings(settings: dict) -> Union[str, None]:
     if paths and isinstance(paths, str):
         paths = [paths]
 
-    # Loop over paths and return only existing
-    for path in paths:
-        if os.path.exists(path):
-            return path
-    return None
+    return next((path for path in paths if os.path.exists(path)), None)
 
 
 def get_expected_studio_version_str(
@@ -201,10 +203,7 @@ def get_expected_studio_version_str(
     mongo_url = os.environ.get("OPENPYPE_MONGO")
     if global_settings is None:
         global_settings = get_openpype_global_settings(mongo_url)
-    if staging:
-        key = "staging_version"
-    else:
-        key = "production_version"
+    key = "staging_version" if staging else "production_version"
     return global_settings.get(key) or ""
 
 

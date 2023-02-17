@@ -1,7 +1,9 @@
-from avalon import style
-from Qt import QtWidgets, QtCore
-import collections
 import re
+import collections
+
+from qtpy import QtWidgets
+
+from openpype import style
 
 
 class ConsoleDialog(QtWidgets.QDialog):

@@ -1,6 +1,6 @@
 import os
-from uuid import uuid4
 
+from openpype.client import get_project
 from openpype_modules.ftrack.lib import BaseAction
 from openpype.lib.applications import (
     ApplicationManager,
@@ -8,7 +8,6 @@ from openpype.lib.applications import (
     ApplictionExecutableNotFound,
     CUSTOM_LAUNCH_APP_GROUPS
 )
-from avalon.api import AvalonMongoDB
 
 
 class AppplicationsAction(BaseAction):
@@ -26,7 +25,6 @@ class AppplicationsAction(BaseAction):
         super(AppplicationsAction, self).__init__(*args, **kwargs)
 
         self.application_manager = ApplicationManager()
-        self.dbcon = AvalonMongoDB()
 
     @property
     def discover_identifier(self):
@@ -111,12 +109,7 @@ class AppplicationsAction(BaseAction):
             if avalon_project_doc is None:
                 ft_project = self.get_project_from_entity(entity)
                 project_name = ft_project["full_name"]
-                if not self.dbcon.is_installed():
-                    self.dbcon.install()
-                self.dbcon.Session["AVALON_PROJECT"] = project_name
-                avalon_project_doc = self.dbcon.find_one({
-                    "type": "project"
-                }) or False
+                avalon_project_doc = get_project(project_name) or False
                 event["data"]["avalon_project_doc"] = avalon_project_doc
 
             if not avalon_project_doc:

@@ -266,7 +266,7 @@ class AssetLoader(LoaderPlugin):
         # Only containerise if it's not already a collection from a .blend file.
         # representation = context["representation"]["name"]
         # if representation != "blend":
-        #     from avalon.blender.pipeline import containerise
+        #     from openpype.hosts.blender.api.pipeline import containerise
         #     return containerise(
         #         name=name,
         #         namespace=namespace,

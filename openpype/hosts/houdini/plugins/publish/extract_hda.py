@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 import os
-
 from pprint import pformat
-
 import pyblish.api
-import openpype.api
+from openpype.pipeline import publish
+import hou
 
 
-class ExtractHDA(openpype.api.Extractor):
+class ExtractHDA(publish.Extractor):
 
     order = pyblish.api.ExtractorOrder
     label = "Extract HDA"
@@ -16,7 +15,7 @@ class ExtractHDA(openpype.api.Extractor):
 
     def process(self, instance):
         self.log.info(pformat(instance.data))
-        hda_node = instance[0]
+        hda_node = hou.node(instance.data.get("instance_node"))
         hda_def = hda_node.type().definition()
         hda_options = hda_def.options()
         hda_options.setSaveInitialParmsAndContents(True)

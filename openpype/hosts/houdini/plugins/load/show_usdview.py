@@ -1,3 +1,7 @@
+import os
+import subprocess
+
+from openpype.lib.vendor_bin_utils import find_executable
 from openpype.pipeline import load
 
 
@@ -14,12 +18,7 @@ class ShowInUsdview(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
 
-        import os
-        import subprocess
-
-        import avalon.lib as lib
-
-        usdview = lib.which("usdview")
+        usdview = find_executable("usdview")
 
         filepath = os.path.normpath(self.fname)
         filepath = filepath.replace("\\", "/")

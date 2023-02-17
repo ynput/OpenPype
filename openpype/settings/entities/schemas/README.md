@@ -46,8 +46,7 @@
     }, {
         "type": "raw-json",
         "label": "{host_label} Environments",
-        "key": "{host_name}_environments",
-        "env_group_key": "{host_name}"
+        "key": "{host_name}_environments"
     }, {
         "type": "path",
         "key": "{host_name}_executables",
@@ -745,6 +744,7 @@ How output of the schema could look like on save:
 ### label
 - add label with note or explanations
 - it is possible to use html tags inside the label
+- set `work_wrap` to `true`/`false` if you want to enable word wrapping in UI (default: `false`)
 
 ```
 {

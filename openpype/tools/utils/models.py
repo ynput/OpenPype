@@ -1,8 +1,9 @@
 import re
 import logging
 
-import Qt
-from Qt import QtCore, QtGui
+import qtpy
+from qtpy import QtCore, QtGui
+from openpype.client import get_projects
 from .constants import (
     PROJECT_IS_ACTIVE_ROLE,
     PROJECT_NAME_ROLE,
@@ -68,7 +69,7 @@ class TreeModel(QtCore.QAbstractItemModel):
                 item[key] = value
 
                 # passing `list()` for PyQt5 (see PYSIDE-462)
-                if Qt.__binding__ in ("PyQt4", "PySide"):
+                if qtpy.API in ("pyqt4", "pyside"):
                     self.dataChanged.emit(index, index)
                 else:
                     self.dataChanged.emit(index, index, [role])
@@ -202,8 +203,13 @@ class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
         the filter string but first checks if any children does.
     """
     def filterAcceptsRow(self, row, parent_index):
-        regex = self.filterRegExp()
-        if not regex.isEmpty():
+        if hasattr(self, "filterRegularExpression"):
+            regex = self.filterRegularExpression()
+        else:
+            regex = self.filterRegExp()
+
+        pattern = regex.pattern()
+        if pattern:
             model = self.sourceModel()
             source_index = model.index(
                 row, self.filterKeyColumn(), parent_index
@@ -296,29 +302,29 @@ class ProjectModel(QtGui.QStandardItemModel):
             self._default_item = item
 
         project_names = set()
-        if self.dbcon is not None:
-            for project_doc in self.dbcon.projects(
-                projection={"name": 1, "data.active": 1},
-                only_active=self._only_active
-            ):
-                project_name = project_doc["name"]
-                project_names.add(project_name)
-                if project_name in self._items_by_name:
-                    item = self._items_by_name[project_name]
-                else:
-                    item = QtGui.QStandardItem(project_name)
+        project_docs = get_projects(
+            inactive=not self._only_active,
+            fields=["name", "data.active"]
+        )
+        for project_doc in project_docs:
+            project_name = project_doc["name"]
+            project_names.add(project_name)
+            if project_name in self._items_by_name:
+                item = self._items_by_name[project_name]
+            else:
+                item = QtGui.QStandardItem(project_name)
 
-                    self._items_by_name[project_name] = item
-                    new_items.append(item)
+                self._items_by_name[project_name] = item
+                new_items.append(item)
 
-                is_active = project_doc.get("data", {}).get("active", True)
-                item.setData(project_name, PROJECT_NAME_ROLE)
-                item.setData(is_active, PROJECT_IS_ACTIVE_ROLE)
+            is_active = project_doc.get("data", {}).get("active", True)
+            item.setData(project_name, PROJECT_NAME_ROLE)
+            item.setData(is_active, PROJECT_IS_ACTIVE_ROLE)
 
-                if not is_active:
-                    font = item.font()
-                    font.setItalic(True)
-                    item.setFont(font)
+            if not is_active:
+                font = item.font()
+                font.setItalic(True)
+                item.setFont(font)
 
         root_item = self.invisibleRootItem()
         for project_name in tuple(self._items_by_name.keys()):
@@ -329,11 +335,26 @@ class ProjectModel(QtGui.QStandardItemModel):
         if new_items:
             root_item.appendRows(new_items)
 
+    def find_project(self, project_name):
+        """
+            Get index of 'project_name' value.
+
+            Args:
+                project_name (str):
+            Returns:
+                (QModelIndex)
+        """
+        val = self._items_by_name.get(project_name)
+        if val:
+            return self.indexFromItem(val)
+
 
 class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
     def __init__(self, *args, **kwargs):
         super(ProjectSortFilterProxy, self).__init__(*args, **kwargs)
         self._filter_enabled = True
+        # Disable case sensitivity
+        self.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
     def lessThan(self, left_index, right_index):
         if left_index.data(PROJECT_NAME_ROLE) is None:
@@ -355,10 +376,14 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
 
     def filterAcceptsRow(self, source_row, source_parent):
         index = self.sourceModel().index(source_row, 0, source_parent)
+        string_pattern = self.filterRegularExpression().pattern()
         if self._filter_enabled:
             result = self._custom_index_filter(index)
             if result is not None:
-                return result
+                project_name = index.data(PROJECT_NAME_ROLE)
+                if project_name is None:
+                    return result
+                return string_pattern.lower() in project_name.lower()
 
         return super(ProjectSortFilterProxy, self).filterAcceptsRow(
             source_row, source_parent

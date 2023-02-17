@@ -3,13 +3,15 @@ from typing import List
 import bpy
 
 import pyblish.api
+
+from openpype.pipeline.publish import ValidateContentsOrder
 import openpype.hosts.blender.api.action
 
 
 class ValidateMeshNoNegativeScale(pyblish.api.Validator):
     """Ensure that meshes don't have a negative scale."""
 
-    order = pyblish.api.ValidatorOrder
+    order = ValidateContentsOrder
     hosts = ["blender"]
     families = ["model"]
     label = "Mesh No Negative Scale"
@@ -18,13 +20,10 @@ class ValidateMeshNoNegativeScale(pyblish.api.Validator):
     @staticmethod
     def get_invalid(instance) -> List:
         invalid = []
-        # TODO (jasper): only check objects in the collection that will be published?
-        for obj in [
-            obj for obj in bpy.data.objects if obj.type == 'MESH'
-        ]:
-            if any(v < 0 for v in obj.scale):
-                invalid.append(obj)
-
+        for obj in instance:
+            if isinstance(obj, bpy.types.Object) and obj.type == 'MESH':
+                if any(v < 0 for v in obj.scale):
+                    invalid.append(obj)
         return invalid
 
     def process(self, instance):

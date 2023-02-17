@@ -3,6 +3,8 @@
 import ast
 import unreal  # noqa
 import pyblish.api
+from openpype.hosts.unreal.api.pipeline import UNREAL_VERSION
+from openpype.pipeline.publish import KnownPublishError
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -17,14 +19,20 @@ class CollectInstances(pyblish.api.ContextPlugin):
     """
 
     label = "Collect Instances"
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder - 0.1
     hosts = ["unreal"]
 
     def process(self, context):
 
         ar = unreal.AssetRegistryHelpers.get_asset_registry()
-        instance_containers = ar.get_assets_by_class(
-            "OpenPypePublishInstance", True)
+        class_name = [
+            "/Script/OpenPype",
+            "OpenPypePublishInstance"
+        ] if (
+            UNREAL_VERSION.major == 5
+            and UNREAL_VERSION.minor > 0
+        ) else "OpenPypePublishInstance"  # noqa
+        instance_containers = ar.get_assets_by_class(class_name, True)
 
         for container_data in instance_containers:
             asset = container_data.get_asset()
@@ -32,9 +40,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
             data["objectName"] = container_data.asset_name
             # convert to strings
             data = {str(key): str(value) for (key, value) in data.items()}
-            assert data.get("family"), (
-                "instance has no family"
-            )
+            if not data.get("family"):
+                raise KnownPublishError("instance has no family")
 
             # content of container
             members = ast.literal_eval(data.get("members"))

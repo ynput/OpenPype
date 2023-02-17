@@ -301,24 +301,6 @@
                 },
                 {
                     "type": "dict",
-                    "key": "first_version_status",
-                    "label": "Set status on first created version",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "text",
-                            "key": "status",
-                            "label": "Status"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
                     "key": "next_task_update",
                     "is_group": true,
                     "label": "Update status on next task",
@@ -367,6 +349,97 @@
                             "label": "Name sorting",
                             "type": "boolean",
                             "key": "name_sorting"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "transfer_values_of_hierarchical_attributes",
+                    "label": "Action to transfer hierarchical attribute values",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "key": "create_daily_review_session",
+                    "label": "Create daily review session",
+                    "type": "dict",
+                    "is_group": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text",
+                            "use_label_wrap": true
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "cycle_enabled",
+                            "label": "Run automatically every day"
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "list-strict",
+                            "key": "cycle_hour_start",
+                            "label": "Create daily review session at",
+                            "tooltip": "This may take affect on next day",
+                            "object_types": [
+                                {
+                                    "label": "H:",
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 23,
+                                    "decimal": 0
+                                }, {
+                                    "label": "M:",
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 59,
+                                    "decimal": 0
+                                }, {
+                                    "label": "S:",
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 59,
+                                    "decimal": 0
+                                }
+                            ]
+                        },
+                        {
+                            "type": "label",
+                            "label": "This can't be overriden per project and any change will take effect on the next day or on restart of event server."
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "text",
+                            "key": "review_session_template",
+                            "label": "ReviewSession template",
+                            "placeholder": "Default: {yy}{mm}{dd}"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Possible formatting keys in template:<br/>- \"project_name\" - &lt;Name of project&gt;<br/>- \"d\" - &lt;Day of month number&gt; in shortest possible way.<br/>- \"dd\" - &lt;Day of month number&gt; with 2 digits.<br/>- \"ddd\" - &lt;Week day name&gt; shortened week day. e.g.: `Mon`, ...<br/>- \"dddd\" - &lt;Week day name&gt; full name of week day. e.g.: `Monday`, ...<br/>- \"m\" - &lt;Month number&gt; in shortest possible way. e.g.: `1` if January<br/>- \"mm\" - &lt;Month number&gt; with 2 digits.<br/>- \"mmm\" - &lt;Month name&gt; shortened month name. e.g.: `Jan`, ...<br/>- \"mmmm\" -&lt;Month name&gt; full month name. e.g.: `January`, ...<br/>- \"yy\" - &lt;Year number&gt; shortened year. e.g.: `19`, `20`, ...<br/>- \"yyyy\" - &lt;Year number&gt; full year. e.g.: `2019`, `2020`, ..."
                         }
                     ]
                 }
@@ -729,6 +802,69 @@
                     "type": "dict",
                     "collapsible": true,
                     "checkbox_key": "enabled",
+                    "key": "CollectFtrackCustomAttributeData",
+                    "label": "Collect Custom Attribute Data",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Collect custom attributes from ftrack for ftrack entities that can be used in some templates during publishing."
+                        },
+                        {
+                            "type": "list",
+                            "key": "custom_attribute_keys",
+                            "label": "Custom attribute keys",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "IntegrateHierarchyToFtrack",
+                    "label": "Integrate Hierarchy to ftrack",
+                    "is_group": true,
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Set task status on new task creation. Ftrack's default status is used otherwise."
+                        },
+                        {
+                            "type": "list",
+                            "key": "create_task_status_profiles",
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "task_types",
+                                        "label": "Task types",
+                                        "type": "task-types-enum"
+                                    },
+                                    {
+                                        "key": "task_names",
+                                        "label": "Task names",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "status_name",
+                                        "label": "Status name"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
                     "key": "IntegrateFtrackNote",
                     "label": "IntegrateFtrackNote",
                     "is_group": true,
@@ -739,15 +875,58 @@
                             "label": "Enabled"
                         },
                         {
+                            "type": "label",
+                            "label": "Template may contain formatting keys <b>intent</b>, <b>comment</b>, <b>host_name</b>, <b>app_name</b>, <b>app_label</b>, <b>published_paths</b> and <b>source</b>."
+                        },
+                        {
                             "type": "text",
-                            "key": "note_with_intent_template",
-                            "label": "Note with intent template"
+                            "key": "note_template",
+                            "label": "Note template",
+                            "multiline": true
                         },
                         {
                             "type": "list",
                             "object_type": "text",
                             "key": "note_labels",
                             "label": "Note labels"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "IntegrateFtrackDescription",
+                    "label": "Integrate Ftrack Description",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Add description to integrated AssetVersion."
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Template may contain formatting keys <b>intent</b> and <b>comment</b>."
+                        },
+                        {
+                            "type": "text",
+                            "key": "description_template",
+                            "label": "Description template"
                         }
                     ]
                 },
@@ -773,8 +952,23 @@
                 },
                 {
                     "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "IntegrateFtrackComponentOverwrite",
+                    "label": "IntegrateFtrackComponentOverwrite",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
                     "key": "IntegrateFtrackInstance",
-                    "label": "IntegrateFtrackInstance",
+                    "label": "Integrate Ftrack Instance",
                     "is_group": true,
                     "children": [
                         {
@@ -783,6 +977,125 @@
                             "label": "Family Mapping",
                             "object_type": {
                                 "type": "text"
+                            }
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "keep_first_subset_name_for_review",
+                            "label": "Make subset name as first asset name",
+                            "default": true
+                        },
+                        {
+                            "type": "list",
+                            "collapsible": true,
+                            "key": "asset_versions_status_profiles",
+                            "label": "AssetVersion status on publish",
+                            "use_label_wrap": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "hosts",
+                                        "label": "Host names",
+                                        "type": "hosts-enum",
+                                        "multiselection": true
+                                    },
+                                    {
+                                        "key": "task_types",
+                                        "label": "Task types",
+                                        "type": "task-types-enum"
+                                    },
+                                    {
+                                        "key": "family",
+                                        "label": "Family",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "type": "separator"
+                                    },
+                                    {
+                                        "key": "status",
+                                        "label": "Status name",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "key": "additional_metadata_keys",
+                            "label": "Additional metadata keys on components",
+                            "type": "enum",
+                            "multiselection": true,
+                            "enum_items": [
+                                {"openpype_version": "OpenPype version"},
+                                {"frame_start": "Frame start"},
+                                {"frame_end": "Frame end"},
+                                {"duration": "Duration"},
+                                {"width": "Resolution width"},
+                                {"height": "Resolution height"},
+                                {"fps": "FPS"},
+                                {"code": "Codec"}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "IntegrateFtrackFarmStatus",
+                    "label": "Integrate Ftrack Farm Status",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Change status of task when it's subset is submitted to farm"
+                        },
+                        {
+                            "type": "list",
+                            "collapsible": true,
+                            "key": "farm_status_profiles",
+                            "label": "Farm status profiles",
+                            "use_label_wrap": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "hosts",
+                                        "label": "Host names",
+                                        "type": "hosts-enum",
+                                        "multiselection": true
+                                    },
+                                    {
+                                        "key": "task_types",
+                                        "label": "Task types",
+                                        "type": "task-types-enum"
+                                    },
+                                    {
+                                        "key": "task_names",
+                                        "label": "Task names",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "key": "families",
+                                        "label": "Families",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "key": "subsets",
+                                        "label": "Subset names",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "type": "separator"
+                                    },
+                                    {
+                                        "key": "status_name",
+                                        "label": "Status name",
+                                        "type": "text"
+                                    }
+                                ]
                             }
                         }
                     ]

@@ -28,6 +28,9 @@ class AEItem(object):
     workAreaDuration = attr.ib(default=None)
     frameRate = attr.ib(default=None)
     file_name = attr.ib(default=None)
+    instance_id = attr.ib(default=None)  # New Publisher
+    width = attr.ib(default=None)
+    height = attr.ib(default=None)
 
 
 class AfterEffectsServerStub():
@@ -110,11 +113,11 @@ class AfterEffectsServerStub():
 
         self.log.debug("Couldn't find layer metadata")
 
-    def imprint(self, item, data, all_items=None, items_meta=None):
+    def imprint(self, item_id, data, all_items=None, items_meta=None):
         """
             Save item metadata to Label field of metadata of active document
         Args:
-            item (AEItem):
+            item_id (int|str): id of FootageItem or instance_id for workfiles
             data(string): json representation for single layer
             all_items (list of item): for performance, could be
                 injected for usage in loop, if not, single call will be
@@ -132,8 +135,9 @@ class AfterEffectsServerStub():
         is_new = True
 
         for item_meta in items_meta:
-            if item_meta.get('members') \
-                    and str(item.id) == str(item_meta.get('members')[0]):
+            if ((item_meta.get('members') and
+                    str(item_id) == str(item_meta.get('members')[0])) or
+                    item_meta.get("instance_id") == item_id):
                 is_new = False
                 if data:
                     item_meta.update(data)
@@ -153,10 +157,12 @@ class AfterEffectsServerStub():
         item_ids = [int(item.id) for item in all_items]
         cleaned_data = []
         for meta in result_meta:
-            # for creation of instance OR loaded container
-            if 'instance' in meta.get('id') or \
-                    int(meta.get('members')[0]) in item_ids:
-                cleaned_data.append(meta)
+            # do not added instance with nonexistend item id
+            if meta.get("members"):
+                if int(meta["members"][0]) not in item_ids:
+                    continue
+
+            cleaned_data.append(meta)
 
         payload = json.dumps(cleaned_data, indent=4)
 
@@ -167,7 +173,7 @@ class AfterEffectsServerStub():
 
     def get_active_document_full_name(self):
         """
-            Returns just a name of active document via ws call
+            Returns absolute path of active document via ws call
         Returns(string): file name
         """
         res = self.websocketserver.call(self.client.call(
@@ -314,15 +320,13 @@ class AfterEffectsServerStub():
             Keep matching item in file though.
 
             Args:
-                instance_id(string): instance uuid
+                instance_id(string): instance id
         """
         cleaned_data = []
 
         for instance in self.get_metadata():
-            uuid_val = instance.get("uuid")
-            if not uuid_val:
-                uuid_val = instance.get("members")[0]  # legacy
-            if uuid_val != instance_id:
+            inst_id = instance.get("instance_id") or instance.get("uuid")
+            if inst_id != instance_id:
                 cleaned_data.append(instance)
 
         payload = json.dumps(cleaned_data, indent=4)
@@ -357,7 +361,7 @@ class AfterEffectsServerStub():
                 item_id (int):
 
             Returns:
-                (namedtuple)
+                (AEItem)
 
         """
         res = self.websocketserver.call(self.client.call
@@ -414,18 +418,18 @@ class AfterEffectsServerStub():
 
         return self._handle_return(res)
 
-    def get_render_info(self):
+    def get_render_info(self, comp_id):
         """ Get render queue info for render purposes
 
             Returns:
-                (namedtuple): with 'file_name' field
+               (list) of (AEItem): with 'file_name' field
         """
         res = self.websocketserver.call(self.client.call
-                                        ('AfterEffects.get_render_info'))
+                                        ('AfterEffects.get_render_info',
+                                         comp_id=comp_id))
 
         records = self._to_records(self._handle_return(res))
-        if records:
-            return records.pop()
+        return records
 
     def get_audio_url(self, item_id):
         """ Get audio layer absolute url for comp
@@ -518,7 +522,7 @@ class AfterEffectsServerStub():
         if records:
             return records.pop()
 
-    def render(self, folder_url):
+    def render(self, folder_url, comp_id):
         """
             Render all renderqueueitem to 'folder_url'
         Args:
@@ -527,7 +531,8 @@ class AfterEffectsServerStub():
         """
         res = self.websocketserver.call(self.client.call
                                         ('AfterEffects.render',
-                                         folder_url=folder_url))
+                                         folder_url=folder_url,
+                                         comp_id=comp_id))
         return self._handle_return(res)
 
     def get_extension_version(self):
@@ -606,7 +611,10 @@ class AfterEffectsServerStub():
                           d.get('workAreaStart'),
                           d.get('workAreaDuration'),
                           d.get('frameRate'),
-                          d.get('file_name'))
+                          d.get('file_name'),
+                          d.get("instance_id"),
+                          d.get("width"),
+                          d.get("height"))
 
             ret.append(item)
         return ret

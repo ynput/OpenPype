@@ -1,7 +1,9 @@
 import pyblish.api
 
-import openpype.api
-from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishXmlValidationError,
+)
 
 
 class ValidateTextureHasWorkfile(pyblish.api.InstancePlugin):
@@ -12,7 +14,7 @@ class ValidateTextureHasWorkfile(pyblish.api.InstancePlugin):
     """
     label = "Validate Texture Has Workfile"
     hosts = ["standalonepublisher"]
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     families = ["textures"]
     optional = True
 

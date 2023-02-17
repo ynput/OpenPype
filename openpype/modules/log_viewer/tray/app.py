@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 from .widgets import LogsWidget, OutputWidget
 from openpype import style
 
@@ -27,11 +27,11 @@ class LogsWindow(QtWidgets.QWidget):
 
         self.setStyleSheet(style.load_stylesheet())
 
-        self._frist_show = True
+        self._first_show = True
 
     def showEvent(self, event):
         super(LogsWindow, self).showEvent(event)
 
-        if self._frist_show:
-            self._frist_show = False
+        if self._first_show:
+            self._first_show = False
             self.logs_widget.refresh()

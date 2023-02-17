@@ -2,20 +2,24 @@ import os
 import types
 
 import maya.cmds as cmds
+from mtoa.core import createOptions
 
 import pyblish.api
-import openpype.api
-import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import (
+    RepairAction,
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
     """Ensure exporting ass file has set relative texture paths"""
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ['maya']
     families = ['ass']
     label = "ASS has relative texture paths"
-    actions = [openpype.api.RepairAction]
+    actions = [RepairAction]
 
     def process(self, instance):
         # we cannot ask this until user open render settings as
@@ -32,8 +36,9 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
                 "defaultArnoldRenderOptions.pspath"
             )
         except ValueError:
-            assert False, ("Can not validate, render setting were not opened "
-                           "yet so Arnold setting cannot be validate")
+            raise PublishValidationError(
+                "Default Arnold options has not been created yet."
+            )
 
         scene_dir, scene_basename = os.path.split(cmds.file(q=True, loc=True))
         scene_name, _ = os.path.splitext(scene_basename)
@@ -64,6 +69,8 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
 
     @classmethod
     def repair(cls, instance):
+        createOptions()
+
         texture_path = cmds.getAttr("defaultArnoldRenderOptions.tspath")
         procedural_path = cmds.getAttr("defaultArnoldRenderOptions.pspath")
 

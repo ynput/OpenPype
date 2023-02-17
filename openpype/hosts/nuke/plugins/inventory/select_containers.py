@@ -1,5 +1,5 @@
 from openpype.pipeline import InventoryAction
-from openpype.hosts.nuke.api.commands import viewer_update_and_undo_stop
+from openpype.hosts.nuke.api.command import viewer_update_and_undo_stop
 
 
 class SelectContainers(InventoryAction):

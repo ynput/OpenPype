@@ -1,9 +1,10 @@
 import os
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline import publish
 
 
-class ExtractThumnail(openpype.api.Extractor):
+class ExtractThumnail(publish.Extractor):
     """
     Extractor for track item's tumnails
     """
@@ -40,7 +41,7 @@ class ExtractThumnail(openpype.api.Extractor):
             track_item_name, thumb_frame, ".png")
         thumb_path = os.path.join(staging_dir, thumb_file)
 
-        thumbnail = track_item.thumbnail(thumb_frame).save(
+        thumbnail = track_item.thumbnail(thumb_frame, "colour").save(
             thumb_path,
             format='png'
         )

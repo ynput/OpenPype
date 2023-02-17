@@ -22,4 +22,6 @@ class CreateLook(plugin.Creator):
         self.data["maketx"] = self.make_tx
 
         # Enable users to force a copy.
+        # - on Windows is "forceCopy" always changed to `True` because of
+        #   windows implementation of hardlinks
         self.data["forceCopy"] = False

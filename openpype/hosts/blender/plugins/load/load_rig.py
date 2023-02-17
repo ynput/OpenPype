@@ -6,12 +6,12 @@ from typing import Dict, List, Optional
 
 import bpy
 
-from openpype import lib
 from openpype.pipeline import (
     legacy_create,
     get_representation_path,
     AVALON_CONTAINER_ID,
 )
+from openpype.pipeline.create import get_legacy_creator_by_name
 from openpype.hosts.blender.api import (
     plugin,
     get_selection,
@@ -244,7 +244,7 @@ class BlendRigLoader(plugin.AssetLoader):
         objects = self._process(libpath, asset_group, group_name, action)
 
         if create_animation:
-            creator_plugin = lib.get_creator_by_name("CreateAnimation")
+            creator_plugin = get_legacy_creator_by_name("CreateAnimation")
             if not creator_plugin:
                 raise ValueError("Creator plugin \"CreateAnimation\" was "
                                  "not found.")

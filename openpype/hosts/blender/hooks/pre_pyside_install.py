@@ -1,6 +1,7 @@
 import os
 import re
 import subprocess
+from platform import system
 from openpype.lib import PreLaunchHook
 
 
@@ -13,12 +14,9 @@ class InstallPySideToBlender(PreLaunchHook):
 
     For pipeline implementation is required to have Qt binding installed in
     blender's python packages.
-
-    Prelaunch hook can work only on Windows right now.
     """
 
     app_groups = ["blender"]
-    platforms = ["windows"]
 
     def execute(self):
         # Prelaunch hook is not crucial
@@ -34,25 +32,28 @@ class InstallPySideToBlender(PreLaunchHook):
         # Get blender's python directory
         version_regex = re.compile(r"^[2-3]\.[0-9]+$")
 
+        platform = system().lower()
         executable = self.launch_context.executable.executable_path
-        if os.path.basename(executable).lower() != "blender.exe":
+        expected_executable = "blender"
+        if platform == "windows":
+            expected_executable += ".exe"
+
+        if os.path.basename(executable).lower() != expected_executable:
             self.log.info((
-                "Executable does not lead to blender.exe file. Can't determine"
-                " blender's python to check/install PySide2."
+                f"Executable does not lead to {expected_executable} file."
+                "Can't determine blender's python to check/install PySide2."
             ))
             return
 
-        executable_dir = os.path.dirname(executable)
+        versions_dir = os.path.dirname(executable)
+        if platform == "darwin":
+            versions_dir = os.path.join(
+                os.path.dirname(versions_dir), "Resources"
+            )
         version_subfolders = []
-        for name in os.listdir(executable_dir):
-            fullpath = os.path.join(name, executable_dir)
-            if not os.path.isdir(fullpath):
-                continue
-
-            if not version_regex.match(name):
-                continue
-
-            version_subfolders.append(name)
+        for dir_entry in os.scandir(versions_dir):
+            if dir_entry.is_dir() and version_regex.match(dir_entry.name):
+                version_subfolders.append(dir_entry.name)
 
         if not version_subfolders:
             self.log.info(
@@ -72,16 +73,21 @@ class InstallPySideToBlender(PreLaunchHook):
 
         version_subfolder = version_subfolders[0]
 
-        pythond_dir = os.path.join(
-            os.path.dirname(executable),
-            version_subfolder,
-            "python"
-        )
+        python_dir = os.path.join(versions_dir, version_subfolder, "python")
+        python_lib = os.path.join(python_dir, "lib")
+        python_version = "python"
+
+        if platform != "windows":
+            for dir_entry in os.scandir(python_lib):
+                if dir_entry.is_dir() and dir_entry.name.startswith("python"):
+                    python_lib = dir_entry.path
+                    python_version = dir_entry.name
+                    break
 
         # Change PYTHONPATH to contain blender's packages as first
         python_paths = [
-            os.path.join(pythond_dir, "lib"),
-            os.path.join(pythond_dir, "lib", "site-packages"),
+            python_lib,
+            os.path.join(python_lib, "site-packages"),
         ]
         python_path = self.launch_context.env.get("PYTHONPATH") or ""
         for path in python_path.split(os.pathsep):
@@ -91,7 +97,15 @@ class InstallPySideToBlender(PreLaunchHook):
         self.launch_context.env["PYTHONPATH"] = os.pathsep.join(python_paths)
 
         # Get blender's python executable
-        python_executable = os.path.join(pythond_dir, "bin", "python.exe")
+        python_bin = os.path.join(python_dir, "bin")
+        if platform == "windows":
+            python_executable = os.path.join(python_bin, "python.exe")
+        else:
+            python_executable = os.path.join(python_bin, python_version)
+            # Check for python with enabled 'pymalloc'
+            if not os.path.exists(python_executable):
+                python_executable += "m"
+
         if not os.path.exists(python_executable):
             self.log.warning(
                 "Couldn't find python executable for blender. {}".format(
@@ -106,7 +120,15 @@ class InstallPySideToBlender(PreLaunchHook):
             return
 
         # Install PySide2 in blender's python
-        self.install_pyside_windows(python_executable)
+        if platform == "windows":
+            result = self.install_pyside_windows(python_executable)
+        else:
+            result = self.install_pyside(python_executable)
+
+        if result:
+            self.log.info("Successfully installed PySide2 module to blender.")
+        else:
+            self.log.warning("Failed to install PySide2 module to blender.")
 
     def install_pyside_windows(self, python_executable):
         """Install PySide2 python module to blender's python.
@@ -144,19 +166,41 @@ class InstallPySideToBlender(PreLaunchHook):
                 lpDirectory=os.path.dirname(python_executable)
             )
             process_handle = process_info["hProcess"]
-            obj = win32event.WaitForSingleObject(
-                process_handle, win32event.INFINITE
-            )
+            win32event.WaitForSingleObject(process_handle, win32event.INFINITE)
             returncode = win32process.GetExitCodeProcess(process_handle)
-            if returncode == 0:
-                self.log.info(
-                    "Successfully installed PySide2 module to blender."
-                )
-                return
+            return returncode == 0
         except pywintypes.error:
             pass
 
-        self.log.warning("Failed to install PySide2 module to blender.")
+    def install_pyside(self, python_executable):
+        """Install PySide2 python module to blender's python."""
+        try:
+            # Parameters
+            # - use "-m pip" as module pip to install PySide2 and argument
+            #   "--ignore-installed" is to force install module to blender's
+            #   site-packages and make sure it is binary compatible
+            args = [
+                python_executable,
+                "-m",
+                "pip",
+                "install",
+                "--ignore-installed",
+                "PySide2",
+            ]
+            process = subprocess.Popen(
+                args, stdout=subprocess.PIPE, universal_newlines=True
+            )
+            process.communicate()
+            return process.returncode == 0
+        except PermissionError:
+            self.log.warning(
+                "Permission denied with command:"
+                "\"{}\".".format(" ".join(args))
+            )
+        except OSError as error:
+            self.log.warning(f"OS error has occurred: \"{error}\".")
+        except subprocess.SubprocessError:
+            pass
 
     def is_pyside_installed(self, python_executable):
         """Check if PySide2 module is in blender's pip list.
@@ -169,7 +213,7 @@ class InstallPySideToBlender(PreLaunchHook):
         args = [python_executable, "-m", "pip", "list"]
         process = subprocess.Popen(args, stdout=subprocess.PIPE)
         stdout, _ = process.communicate()
-        lines = stdout.decode().split("\r\n")
+        lines = stdout.decode().split(os.linesep)
         # Second line contain dashes that define maximum length of module name.
         #   Second column of dashes define maximum length of module version.
         package_dashes, *_ = lines[1].split(" ")

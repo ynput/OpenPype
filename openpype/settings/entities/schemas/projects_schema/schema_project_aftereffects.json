@@ -6,6 +6,46 @@
     "is_file": true,
     "children": [
         {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (ImageIO)",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_config"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_file_rules"
+                }
+
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "create",
+            "label": "Creator plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "RenderCreator",
+                    "label": "Create render",
+                    "children": [
+                        {
+                            "type": "list",
+                            "key": "defaults",
+                            "label": "Default Variants",
+                            "object_type": "text",
+                            "docstring": "Fill default variant(s) (like 'Main' or 'Default') used in subset name creation."
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "publish",

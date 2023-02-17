@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 """OpenPype script commands to be used directly in Maya."""
 from maya import cmds
-from avalon import api, io
+
+from openpype.client import get_asset_by_name, get_project
+from openpype.pipeline import legacy_io
+from . import lib
 
 
 class ToolWindows:
@@ -37,7 +40,7 @@ class ToolWindows:
 
 
 def edit_shader_definitions():
-    from Qt import QtWidgets
+    from qtpy import QtWidgets
     from openpype.hosts.maya.api.shader_definition_editor import (
         ShaderDefinitionsEditor
     )
@@ -57,29 +60,16 @@ def edit_shader_definitions():
 
 def reset_frame_range():
     """Set frame range to current asset"""
-    # Set FPS first
-    fps = {15: 'game',
-           24: 'film',
-           25: 'pal',
-           30: 'ntsc',
-           48: 'show',
-           50: 'palf',
-           60: 'ntscf',
-           23.98: '23.976fps',
-           23.976: '23.976fps',
-           29.97: '29.97fps',
-           47.952: '47.952fps',
-           47.95: '47.952fps',
-           59.94: '59.94fps',
-           44100: '44100fps',
-           48000: '48000fps'
-           }.get(float(api.Session.get("AVALON_FPS", 25)), "pal")
 
-    cmds.currentUnit(time=fps)
+    fps = lib.convert_to_maya_fps(
+        float(legacy_io.Session.get("AVALON_FPS", 25))
+    )
+    lib.set_scene_fps(fps)
 
     # Set frame start/end
-    asset_name = api.Session["AVALON_ASSET"]
-    asset = io.find_one({"name": asset_name, "type": "asset"})
+    project_name = legacy_io.active_project()
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    asset = get_asset_by_name(project_name, asset_name)
 
     frame_start = asset["data"].get("frameStart")
     frame_end = asset["data"].get("frameEnd")
@@ -144,8 +134,9 @@ def reset_resolution():
     resolution_height = 1080
 
     # Get resolution from asset
-    asset_name = api.Session["AVALON_ASSET"]
-    asset_doc = io.find_one({"name": asset_name, "type": "asset"})
+    project_name = legacy_io.active_project()
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    asset_doc = get_asset_by_name(project_name, asset_name)
     resolution = _resolution_from_document(asset_doc)
     # Try get resolution from project
     if resolution is None:
@@ -154,7 +145,7 @@ def reset_resolution():
             "Asset \"{}\" does not have set resolution."
             " Trying to get resolution from project"
         ).format(asset_name))
-        project_doc = io.find_one({"type": "project"})
+        project_doc = get_project(project_name)
         resolution = _resolution_from_document(project_doc)
 
     if resolution is None:

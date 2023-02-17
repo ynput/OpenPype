@@ -44,27 +44,30 @@ $art = @"
 
 "@
 
+$current_dir = Get-Location
+$script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+$openpype_root = (Get-Item $script_dir).parent.FullName
+
+# Install PSWriteColor to support colorized output to terminal
+$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\tools\modules\powershell"
+
 Write-Host $art -ForegroundColor DarkGreen
 
-Write-Host ">>> " -NoNewline -ForegroundColor Green
-Write-Host "Reading Poetry ... " -NoNewline
+Write-Color -Text ">>> ", "Reading Poetry ... " -Color Green, Gray -NoNewline
 if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
-    Write-Host "NOT FOUND" -ForegroundColor Yellow
-    Write-Host "*** " -NoNewline -ForegroundColor Yellow
-    Write-Host "We need to install Poetry create virtual env first ..."
-    & "$openpype_root\tools\create_env.ps1"
+    Write-Color -Text "NOT FOUND" -Color Yellow
+    Install-Poetry
+    Write-Color -Text "INSTALLED" -Color Cyan
 } else {
-    Write-Host "OK" -ForegroundColor Green
+    Write-Color -Text "OK" -Color Green
 }
 
-Write-Host "This will not overwrite existing source rst files, only scan and add new."
+Write-Color -Text "... ", "This will not overwrite existing source rst files, only scan and add new." -Color Yellow, Gray
 Set-Location -Path $openpype_root
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Running apidoc ..."
+Write-Color -Text ">>> ", "Running apidoc ..." -Color Green, Gray
 & "$env:POETRY_HOME\bin\poetry" run sphinx-apidoc -M -e -d 10  --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$($openpype_root)\docs\source" igniter
 & "$env:POETRY_HOME\bin\poetry" run sphinx-apidoc.exe -M -e -d 10 --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$($openpype_root)\docs\source" openpype vendor, openpype\vendor
 
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Building html ..."
+Write-Color -Text ">>> ", "Building html ..." -Color Green, Gray
 & "$env:POETRY_HOME\bin\poetry" run python "$($openpype_root)\setup.py" build_sphinx
 Set-Location -Path $current_dir

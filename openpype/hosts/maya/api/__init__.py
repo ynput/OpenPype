@@ -5,11 +5,11 @@ Anything that isn't defined here is INTERNAL and unreliable for external use.
 """
 
 from .pipeline import (
-    install,
     uninstall,
 
     ls,
     containerise,
+    MayaHost,
 )
 from .plugin import (
     Creator,
@@ -26,7 +26,6 @@ from .workio import (
 )
 
 from .lib import (
-    export_alembic,
     lsattr,
     lsattrs,
     read,
@@ -40,11 +39,11 @@ from .lib import (
 
 
 __all__ = [
-    "install",
     "uninstall",
 
     "ls",
     "containerise",
+    "MayaHost",
 
     "Creator",
     "Loader",
@@ -58,7 +57,6 @@ __all__ = [
     "work_root",
 
     # Utility functions
-    "export_alembic",
     "lsattr",
     "lsattrs",
     "read",

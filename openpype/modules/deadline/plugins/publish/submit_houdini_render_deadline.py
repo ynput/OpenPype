@@ -1,13 +1,15 @@
 import os
 import json
 import getpass
+from datetime import datetime
 
 import requests
-from avalon import api
-
 import pyblish.api
 
-import hou
+# import hou  ???
+
+from openpype.pipeline import legacy_io
+from openpype.tests.lib import is_in_tests
 
 
 class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
@@ -45,6 +47,9 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
         if code:
             batch_name = "{0} - {1}".format(code, batch_name)
 
+        if is_in_tests():
+            batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
+
         # Output driver to render
         driver = instance[0]
 
@@ -71,7 +76,8 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
                 "UserName": deadline_user,
 
                 "Plugin": "Houdini",
-                "Pool": "houdini_redshift",  # todo: remove hardcoded pool
+                "Pool": instance.data.get("primaryPool"),
+                "secondaryPool": instance.data.get("secondaryPool"),
                 "Frames": frames,
 
                 "ChunkSize": instance.data.get("chunkSize", 10),
@@ -100,13 +106,14 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
             # this application with so the Render Slave can build its own
             # similar environment using it, e.g. "maya2018;vray4.x;yeti3.1.9"
             "AVALON_TOOLS",
+            "OPENPYPE_VERSION"
         ]
         # Add mongo url if it's enabled
         if context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
 
         environment = dict({key: os.environ[key] for key in keys
-                            if key in os.environ}, **api.Session)
+                            if key in os.environ}, **legacy_io.Session)
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
@@ -140,7 +147,7 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
 
     def submit(self, instance, payload):
 
-        AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
+        AVALON_DEADLINE = legacy_io.Session.get("AVALON_DEADLINE",
                                           "http://localhost:8082")
         assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
 

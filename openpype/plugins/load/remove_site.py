@@ -3,7 +3,10 @@ from openpype.pipeline import load
 
 
 class RemoveSyncSite(load.LoaderPlugin):
-    """Remove sync site and its files on representation"""
+    """Remove sync site and its files on representation.
+
+    Removes files only on local site!
+    """
     representations = ["*"]
     families = ["*"]
 
@@ -12,21 +15,30 @@ class RemoveSyncSite(load.LoaderPlugin):
     icon = "download"
     color = "#999999"
 
-    def load(self, context, name=None, namespace=None, data=None):
-        self.log.info("Removing {} on representation: {}".format(
-            data["site_name"], data["_id"]))
-        self.remove_site_on_representation(data["project_name"],
-                                           data["_id"],
-                                           data["site_name"])
-        self.log.debug("Site added.")
+    _sync_server = None
+    is_remove_site_loader = True
 
-    @staticmethod
-    def remove_site_on_representation(project_name, representation_id,
-                                      site_name):
-        manager = ModulesManager()
-        sync_server = manager.modules_by_name["sync_server"]
-        sync_server.remove_site(project_name, representation_id,
-                                site_name, True)
+    @property
+    def sync_server(self):
+        if not self._sync_server:
+            manager = ModulesManager()
+            self._sync_server = manager.modules_by_name["sync_server"]
+
+        return self._sync_server
+
+    def load(self, context, name=None, namespace=None, data=None):
+        project_name = context["project"]["name"]
+        repre_doc = context["representation"]
+        repre_id = repre_doc["_id"]
+        site_name = data["site_name"]
+
+        print("Removing {} on representation: {}".format(site_name, repre_id))
+
+        self.sync_server.remove_site(project_name,
+                                     repre_id,
+                                     site_name,
+                                     True)
+        self.log.debug("Site removed.")
 
     def filepath_from_context(self, context):
         """No real file loading"""

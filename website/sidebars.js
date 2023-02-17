@@ -8,7 +8,24 @@ module.exports = {
                 "artist_getting_started",
                 "artist_concepts",
                 "artist_publish",
-                "artist_tools",
+                {
+                    type: "category",
+                    collapsed: true,
+                    label: "Tools",
+                    link: {type: 'doc', id: 'artist_tools'},
+                    items: [
+                        "artist_tools_context_manager",
+                        "artist_tools_creator",
+                        "artist_tools_loader",
+                        "artist_tools_library_loader",
+                        "artist_tools_publisher",
+                        "artist_tools_inventory",
+                        "artist_tools_workfiles",
+                        "artist_tools_look_assigner",
+                        "artist_tools_subset_manager",
+                        "artist_tools_sync_queue"
+                    ],
+                },
                 "artist_install"
             ],
         },
@@ -19,8 +36,21 @@ module.exports = {
             items: [
                 "artist_hosts_hiero",
                 "artist_hosts_nuke_tut",
-                "artist_hosts_maya",
+                {
+                    type: "category",
+                    label: "Maya",
+                    items: [
+                        "artist_hosts_maya",
+                        "artist_hosts_maya_multiverse",
+                        "artist_hosts_maya_yeti",
+                        "artist_hosts_maya_xgen",
+                        "artist_hosts_maya_arnold",
+                        "artist_hosts_maya_vray",
+                        "artist_hosts_maya_redshift",
+                    ],
+                },
                 "artist_hosts_blender",
+                "artist_hosts_3dsmax",
                 "artist_hosts_harmony",
                 "artist_hosts_houdini",
                 "artist_hosts_aftereffects",
@@ -28,6 +58,7 @@ module.exports = {
                 "artist_hosts_photoshop",
                 "artist_hosts_tvpaint",
                 "artist_hosts_unreal",
+                "artist_kitsu",
                 {
                     type: "category",
                     label: "Ftrack",
@@ -56,6 +87,7 @@ module.exports = {
             type: "category",
             label: "Configuration",
             items: [
+                "admin_environment",
                 "admin_settings",
                 "admin_settings_system",
                 "admin_settings_project_anatomy",
@@ -75,6 +107,7 @@ module.exports = {
             label: "Modules",
             items: [
                 "module_ftrack",
+                "module_kitsu",
                 "module_site_sync",
                 "module_deadline",
                 "module_muster",
@@ -87,18 +120,17 @@ module.exports = {
             label: "Integrations",
             items: [
                 "admin_hosts_blender",
+                "admin_hosts_hiero",
+                "admin_hosts_houdini",
                 "admin_hosts_maya",
+                "admin_hosts_nuke",
                 "admin_hosts_resolve",
                 "admin_hosts_harmony",
                 "admin_hosts_aftereffects",
                 "admin_hosts_tvpaint"
             ],
         },
-        {
-            type: "category",
-            label: "Releases",
-            items: ["changelog", "update_notes"],
-        },
+        "admin_releases",
         {
             type: "category",
             collapsed: false,
@@ -131,11 +163,22 @@ module.exports = {
             ],
         },
     ],
-     Dev: [
+    Dev: [
         "dev_introduction",
         "dev_requirements",
         "dev_build",
         "dev_testing",
-        "dev_contribute"
-     ]
+        "dev_contribute",
+        "dev_settings",
+        {
+            type: "category",
+            label: "Hosts integrations",
+            items: [
+                "dev_host_implementation",
+                "dev_publishing"
+            ]
+        },
+        "dev_deadline",
+        "dev_colorspace"
+    ]
 };

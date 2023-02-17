@@ -17,6 +17,9 @@ from .vendor_bin_utils import (
 
 # Max length of string that is supported by ffmpeg
 MAX_FFMPEG_STRING_LEN = 8196
+# Not allowed symbols in attributes for ffmpeg
+NOT_ALLOWED_FFMPEG_CHARS = ("\"", )
+
 # OIIO known xml tags
 STRING_TAGS = {
     "format"
@@ -39,6 +42,28 @@ XML_CHAR_REF_REGEX_HEX = re.compile(r"&#x?[0-9a-fA-F]+;")
 # Regex to parse array attributes
 ARRAY_TYPE_REGEX = re.compile(r"^(int|float|string)\[\d+\]$")
 
+IMAGE_EXTENSIONS = {
+    ".ani", ".anim", ".apng", ".art", ".bmp", ".bpg", ".bsave", ".cal",
+    ".cin", ".cpc", ".cpt", ".dds", ".dpx", ".ecw", ".exr", ".fits",
+    ".flic", ".flif", ".fpx", ".gif", ".hdri", ".hevc", ".icer",
+    ".icns", ".ico", ".cur", ".ics", ".ilbm", ".jbig", ".jbig2",
+    ".jng", ".jpeg", ".jpeg-ls", ".jpeg", ".2000", ".jpg", ".xr",
+    ".jpeg", ".xt", ".jpeg-hdr", ".kra", ".mng", ".miff", ".nrrd",
+    ".ora", ".pam", ".pbm", ".pgm", ".ppm", ".pnm", ".pcx", ".pgf",
+    ".pictor", ".png", ".psb", ".psp", ".qtvr", ".ras",
+    ".rgbe", ".logluv", ".tiff", ".sgi", ".tga", ".tiff", ".tiff/ep",
+    ".tiff/it", ".ufo", ".ufp", ".wbmp", ".webp", ".xbm", ".xcf",
+    ".xpm", ".xwd"
+}
+
+VIDEO_EXTENSIONS = {
+    ".3g2", ".3gp", ".amv", ".asf", ".avi", ".drc", ".f4a", ".f4b",
+    ".f4p", ".f4v", ".flv", ".gif", ".gifv", ".m2v", ".m4p", ".m4v",
+    ".mkv", ".mng", ".mov", ".mp2", ".mp4", ".mpe", ".mpeg", ".mpg",
+    ".mpv", ".mxf", ".nsv", ".ogg", ".ogv", ".qt", ".rm", ".rmvb",
+    ".roq", ".svi", ".vob", ".webm", ".wmv", ".yuv"
+}
+
 
 def get_transcode_temp_directory():
     """Creates temporary folder for transcoding.
@@ -52,26 +77,38 @@ def get_transcode_temp_directory():
     )
 
 
-def get_oiio_info_for_input(filepath, logger=None):
+def get_oiio_info_for_input(filepath, logger=None, subimages=False):
     """Call oiiotool to get information about input and return stdout.
 
     Stdout should contain xml format string.
     """
     args = [
-        get_oiio_tools_path(), "--info", "-v", "-i:infoformat=xml", filepath
+        get_oiio_tools_path(),
+        "--info",
+        "-v"
     ]
+    if subimages:
+        args.append("-a")
+
+    args.extend(["-i:infoformat=xml", filepath])
+
     output = run_subprocess(args, logger=logger)
     output = output.replace("\r\n", "\n")
 
     xml_started = False
+    subimages_lines = []
     lines = []
     for line in output.split("\n"):
         if not xml_started:
             if not line.startswith("<"):
                 continue
             xml_started = True
+
         if xml_started:
             lines.append(line)
+            if line == "</ImageSpec>":
+                subimages_lines.append(lines)
+                lines = []
 
     if not xml_started:
         raise ValueError(
@@ -80,12 +117,19 @@ def get_oiio_info_for_input(filepath, logger=None):
             )
         )
 
-    xml_text = "\n".join(lines)
-    return parse_oiio_xml_output(xml_text, logger=logger)
+    output = []
+    for subimage_lines in subimages_lines:
+        xml_text = "\n".join(subimage_lines)
+        output.append(parse_oiio_xml_output(xml_text, logger=logger))
+
+    if subimages:
+        return output
+    return output[0]
 
 
 class RationalToInt:
     """Rational value stored as division of 2 integers using string."""
+
     def __init__(self, string_value):
         parts = string_value.split("/")
         top = float(parts[0])
@@ -132,16 +176,16 @@ def convert_value_by_type_name(value_type, value, logger=None):
     if value_type == "int":
         return int(value)
 
-    if value_type == "float":
+    if value_type in ("float", "double"):
         return float(value)
 
     # Vectors will probably have more types
-    if value_type == "vec2f":
+    if value_type in ("vec2f", "float2", "float2d"):
         return [float(item) for item in value.split(",")]
 
     # Matrix should be always have square size of element 3x3, 4x4
     # - are returned as list of lists
-    if value_type == "matrix":
+    if value_type in ("matrix", "matrixd"):
         output = []
         current_index = -1
         parts = value.split(",")
@@ -151,7 +195,7 @@ def convert_value_by_type_name(value_type, value, logger=None):
         elif parts_len == 4:
             divisor = 2
         elif parts_len == 9:
-            divisor == 3
+            divisor = 3
         elif parts_len == 16:
             divisor = 4
         else:
@@ -173,7 +217,7 @@ def convert_value_by_type_name(value_type, value, logger=None):
     if value_type == "rational2i":
         return RationalToInt(value)
 
-    if value_type == "vector":
+    if value_type in ("vector", "vectord"):
         parts = [part.strip() for part in value.split(",")]
         output = []
         for part in parts:
@@ -201,8 +245,8 @@ def convert_value_by_type_name(value_type, value, logger=None):
             )
         return output
 
-    logger.info((
-        "MISSING IMPLEMENTATION:"
+    logger.debug((
+        "Dev note (missing implementation):"
         " Unknown attrib type \"{}\". Value: {}"
     ).format(value_type, value))
     return value
@@ -260,8 +304,8 @@ def parse_oiio_xml_output(xml_string, logger=None):
         # - feel free to add more tags
         else:
             value = child.text
-            logger.info((
-                "MISSING IMPLEMENTATION:"
+            logger.debug((
+                "Dev note (missing implementation):"
                 " Unknown tag \"{}\". Value \"{}\""
             ).format(tag_name, value))
 
@@ -355,6 +399,10 @@ def should_convert_for_ffmpeg(src_filepath):
     if not input_info:
         return None
 
+    subimages = input_info.get("subimages")
+    if subimages is not None and subimages > 1:
+        return True
+
     # Check compression
     compression = input_info["attribs"].get("compression")
     if compression in ("dwaa", "dwab"):
@@ -367,14 +415,23 @@ def should_convert_for_ffmpeg(src_filepath):
         return None
 
     for attr_value in input_info["attribs"].values():
-        if (
-            isinstance(attr_value, str)
-            and len(attr_value) > MAX_FFMPEG_STRING_LEN
-        ):
+        if not isinstance(attr_value, str):
+            continue
+
+        if len(attr_value) > MAX_FFMPEG_STRING_LEN:
             return True
+
+        for char in NOT_ALLOWED_FFMPEG_CHARS:
+            if char in attr_value:
+                return True
     return False
 
 
+# Deprecated since 2022 4 20
+# - Reason - Doesn't convert sequences right way: Can't handle gaps, reuse
+#       first frame for all frames and changes filenames when input
+#       is sequence.
+# - use 'convert_input_paths_for_ffmpeg' instead
 def convert_for_ffmpeg(
     first_input_path,
     output_dir,
@@ -402,6 +459,12 @@ def convert_for_ffmpeg(
     if logger is None:
         logger = logging.getLogger(__name__)
 
+    logger.warning((
+        "DEPRECATED: 'openpype.lib.transcoding.convert_for_ffmpeg' is"
+        " deprecated function of conversion for FFMpeg. Please replace usage"
+        " with 'openpype.lib.transcoding.convert_input_paths_for_ffmpeg'"
+    ))
+
     ext = os.path.splitext(first_input_path)[1].lower()
     if ext != ".exr":
         raise ValueError((
@@ -413,7 +476,7 @@ def convert_for_ffmpeg(
     if input_frame_start is not None and input_frame_end is not None:
         is_sequence = int(input_frame_end) != int(input_frame_start)
 
-    input_info = get_oiio_info_for_input(first_input_path)
+    input_info = get_oiio_info_for_input(first_input_path, logger=logger)
 
     # Change compression only if source compression is "dwaa" or "dwab"
     #   - they're not supported in ffmpeg
@@ -422,7 +485,12 @@ def convert_for_ffmpeg(
         compression = "none"
 
     # Prepare subprocess arguments
-    oiio_cmd = [get_oiio_tools_path()]
+    oiio_cmd = [
+        get_oiio_tools_path(),
+
+        # Don't add any additional attributes
+        "--nosoftwareattrib",
+    ]
     # Add input compression if available
     if compression:
         oiio_cmd.extend(["--compression", compression])
@@ -443,13 +511,21 @@ def convert_for_ffmpeg(
         input_channels.append(alpha)
     input_channels_str = ",".join(input_channels)
 
-    oiio_cmd.extend([
+    subimages = input_info.get("subimages")
+    input_arg = "-i"
+    if subimages is None or subimages == 1:
         # Tell oiiotool which channels should be loaded
         # - other channels are not loaded to memory so helps to avoid memory
         #       leak issues
-        "-i:ch={}".format(input_channels_str), first_input_path,
+        # - this option is crashing if used on multipart/subimages exrs
+        input_arg += ":ch={}".format(input_channels_str)
+
+    oiio_cmd.extend([
+        input_arg, first_input_path,
         # Tell oiiotool which channels should be put to top stack (and output)
-        "--ch", channels_arg
+        "--ch", channels_arg,
+        # Use first subimage
+        "--subimage", "0"
     ])
 
     # Add frame definitions to arguments
@@ -458,34 +534,185 @@ def convert_for_ffmpeg(
             "--frames", "{}-{}".format(input_frame_start, input_frame_end)
         ])
 
-    ignore_attr_changes_added = False
     for attr_name, attr_value in input_info["attribs"].items():
         if not isinstance(attr_value, str):
             continue
 
         # Remove attributes that have string value longer than allowed length
-        #   for ffmpeg
+        #   for ffmpeg or when containt unallowed symbols
+        erase_reason = "Missing reason"
+        erase_attribute = False
         if len(attr_value) > MAX_FFMPEG_STRING_LEN:
-            if not ignore_attr_changes_added:
-                # Attrite changes won't be added to attributes itself
-                ignore_attr_changes_added = True
-                oiio_cmd.append("--sansattrib")
+            erase_reason = "has too long value ({} chars).".format(
+                len(attr_value)
+            )
+            erase_attribute = True
+
+        if not erase_attribute:
+            for char in NOT_ALLOWED_FFMPEG_CHARS:
+                if char in attr_value:
+                    erase_attribute = True
+                    erase_reason = (
+                        "contains unsupported character \"{}\"."
+                    ).format(char)
+                    break
+
+        if erase_attribute:
             # Set attribute to empty string
             logger.info((
-                "Removed attribute \"{}\" from metadata"
-                " because has too long value ({} chars)."
-            ).format(attr_name, len(attr_value)))
+                "Removed attribute \"{}\" from metadata because {}."
+            ).format(attr_name, erase_reason))
             oiio_cmd.extend(["--eraseattrib", attr_name])
 
     # Add last argument - path to output
-    base_file_name = os.path.basename(first_input_path)
-    output_path = os.path.join(output_dir, base_file_name)
+    if is_sequence:
+        ext = os.path.splitext(first_input_path)[1]
+        base_filename = "tmp.%{:0>2}d{}".format(
+            len(str(input_frame_end)), ext
+        )
+    else:
+        base_filename = os.path.basename(first_input_path)
+    output_path = os.path.join(output_dir, base_filename)
     oiio_cmd.extend([
         "-o", output_path
     ])
 
     logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
     run_subprocess(oiio_cmd, logger=logger)
+
+
+def convert_input_paths_for_ffmpeg(
+    input_paths,
+    output_dir,
+    logger=None
+):
+    """Convert source file to format supported in ffmpeg.
+
+    Currently can convert only exrs. The input filepaths should be files
+    with same type. Information about input is loaded only from first found
+    file.
+
+    Filenames of input files are kept so make sure that output directory
+    is not the same directory as input files have.
+    - This way it can handle gaps and can keep input filenames without handling
+        frame template
+
+    Args:
+        input_paths (str): Paths that should be converted. It is expected that
+            contains single file or image sequence of samy type.
+        output_dir (str): Path to directory where output will be rendered.
+            Must not be same as input's directory.
+        logger (logging.Logger): Logger used for logging.
+
+    Raises:
+        ValueError: If input filepath has extension not supported by function.
+            Currently is supported only ".exr" extension.
+    """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
+    first_input_path = input_paths[0]
+    ext = os.path.splitext(first_input_path)[1].lower()
+    if ext != ".exr":
+        raise ValueError((
+            "Function 'convert_for_ffmpeg' currently support only"
+            " \".exr\" extension. Got \"{}\"."
+        ).format(ext))
+
+    input_info = get_oiio_info_for_input(first_input_path, logger=logger)
+
+    # Change compression only if source compression is "dwaa" or "dwab"
+    #   - they're not supported in ffmpeg
+    compression = input_info["attribs"].get("compression")
+    if compression in ("dwaa", "dwab"):
+        compression = "none"
+
+    # Collect channels to export
+    channel_names = input_info["channelnames"]
+    review_channels = get_convert_rgb_channels(channel_names)
+    if review_channels is None:
+        raise ValueError(
+            "Couldn't find channels that can be used for conversion."
+        )
+
+    red, green, blue, alpha = review_channels
+    input_channels = [red, green, blue]
+    # TODO find subimage inder where rgba is available for multipart exrs
+    channels_arg = "R={},G={},B={}".format(red, green, blue)
+    if alpha is not None:
+        channels_arg += ",A={}".format(alpha)
+        input_channels.append(alpha)
+    input_channels_str = ",".join(input_channels)
+
+    subimages = input_info.get("subimages")
+    input_arg = "-i"
+    if subimages is None or subimages == 1:
+        # Tell oiiotool which channels should be loaded
+        # - other channels are not loaded to memory so helps to avoid memory
+        #       leak issues
+        # - this option is crashing if used on multipart exrs
+        input_arg += ":ch={}".format(input_channels_str)
+
+    for input_path in input_paths:
+        # Prepare subprocess arguments
+        oiio_cmd = [
+            get_oiio_tools_path(),
+
+            # Don't add any additional attributes
+            "--nosoftwareattrib",
+        ]
+        # Add input compression if available
+        if compression:
+            oiio_cmd.extend(["--compression", compression])
+
+        oiio_cmd.extend([
+            input_arg, input_path,
+            # Tell oiiotool which channels should be put to top stack
+            #   (and output)
+            "--ch", channels_arg,
+            # Use first subimage
+            "--subimage", "0"
+        ])
+
+        for attr_name, attr_value in input_info["attribs"].items():
+            if not isinstance(attr_value, str):
+                continue
+
+            # Remove attributes that have string value longer than allowed
+            #   length for ffmpeg or when containt unallowed symbols
+            erase_reason = "Missing reason"
+            erase_attribute = False
+            if len(attr_value) > MAX_FFMPEG_STRING_LEN:
+                erase_reason = "has too long value ({} chars).".format(
+                    len(attr_value)
+                )
+                erase_attribute = True
+
+            if not erase_attribute:
+                for char in NOT_ALLOWED_FFMPEG_CHARS:
+                    if char in attr_value:
+                        erase_attribute = True
+                        erase_reason = (
+                            "contains unsupported character \"{}\"."
+                        ).format(char)
+                        break
+
+            if erase_attribute:
+                # Set attribute to empty string
+                logger.info((
+                    "Removed attribute \"{}\" from metadata because {}."
+                ).format(attr_name, erase_reason))
+                oiio_cmd.extend(["--eraseattrib", attr_name])
+
+        # Add last argument - path to output
+        base_filename = os.path.basename(input_path)
+        output_path = os.path.join(output_dir, base_filename)
+        oiio_cmd.extend([
+            "-o", output_path
+        ])
+
+        logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
+        run_subprocess(oiio_cmd, logger=logger)
 
 
 # FFMPEG functions
@@ -564,9 +791,9 @@ def get_ffmpeg_format_args(ffprobe_data, source_ffmpeg_cmd=None):
 def _ffmpeg_mxf_format_args(ffprobe_data, source_ffmpeg_cmd):
     input_format = ffprobe_data["format"]
     format_tags = input_format.get("tags") or {}
-    product_name = format_tags.get("product_name") or ""
+    operational_pattern_ul = format_tags.get("operational_pattern_ul") or ""
     output = []
-    if "opatom" in product_name.lower():
+    if operational_pattern_ul == "060e2b34.04010102.0d010201.10030000":
         output.extend(["-f", "mxf_opatom"])
     return output
 
@@ -773,3 +1000,40 @@ def convert_ffprobe_fps_value(str_value):
         fps = int(fps)
 
     return str(fps)
+
+
+def convert_ffprobe_fps_to_float(value):
+    """Convert string value of frame rate to float.
+
+    Copy of 'convert_ffprobe_fps_value' which raises exceptions on invalid
+    value, does not convert value to string and does not return "Unknown"
+    string.
+
+    Args:
+        value (str): Value to be converted.
+
+    Returns:
+        Float: Converted frame rate in float. If divisor in value is '0' then
+            '0.0' is returned.
+
+    Raises:
+        ValueError: Passed value is invalid for conversion.
+    """
+
+    if not value:
+        raise ValueError("Got empty value.")
+
+    items = value.split("/")
+    if len(items) == 1:
+        return float(items[0])
+
+    if len(items) > 2:
+        raise ValueError((
+            "FPS expression contains multiple dividers \"{}\"."
+        ).format(value))
+
+    dividend = float(items.pop(0))
+    divisor = float(items.pop(0))
+    if divisor == 0.0:
+        return 0.0
+    return dividend / divisor

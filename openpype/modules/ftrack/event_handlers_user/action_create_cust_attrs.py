@@ -18,7 +18,7 @@ from openpype_modules.ftrack.lib import (
     tool_definitions_from_app_manager
 )
 
-from openpype.api import get_system_settings
+from openpype.settings import get_system_settings
 from openpype.lib import ApplicationManager
 
 """
@@ -140,9 +140,9 @@ class CustomAttributes(BaseAction):
     identifier = 'create.update.attributes'
     #: Action label.
     label = "OpenPype Admin"
-    variant = '- Create/Update Avalon Attributes'
+    variant = '- Create/Update Custom Attributes'
     #: Action description.
-    description = 'Creates Avalon/Mongo ID for double check'
+    description = 'Creates required custom attributes in ftrack'
     icon = statics_icon("ftrack", "action_icons", "OpenPypeAdmin.svg")
     settings_key = "create_update_attributes"
 

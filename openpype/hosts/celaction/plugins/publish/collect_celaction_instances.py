@@ -1,6 +1,6 @@
 import os
-from avalon import api
 import pyblish.api
+from openpype.pipeline import legacy_io
 
 
 class CollectCelactionInstances(pyblish.api.ContextPlugin):
@@ -10,7 +10,7 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.1
 
     def process(self, context):
-        task = api.Session["AVALON_TASK"]
+        task = legacy_io.Session["AVALON_TASK"]
         current_file = context.data["currentFile"]
         staging_dir = os.path.dirname(current_file)
         scene_file = os.path.basename(current_file)
@@ -36,7 +36,8 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
             "version": version
         }
 
-        celaction_kwargs = context.data.get("kwargs", {})
+        celaction_kwargs = context.data.get(
+            "passingKwargs", {})
 
         if celaction_kwargs:
             shared_instance_data.update(celaction_kwargs)
@@ -52,8 +53,8 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
             "subset": subset,
             "label": scene_file,
             "family": family,
-            "families": [family, "ftrack"],
-            "representations": list()
+            "families": [],
+            "representations": []
         })
 
         # adding basic script data
@@ -72,7 +73,6 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
         self.log.info('Publishing Celaction workfile')
 
         # render instance
-        family = "render.farm"
         subset = f"render{task}Main"
         instance = context.create_instance(name=subset)
         # getting instance state
@@ -81,8 +81,8 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
         # add assetEntity data into instance
         instance.data.update({
             "label": "{} - farm".format(subset),
-            "family": family,
-            "families": [family],
+            "family": "render.farm",
+            "families": [],
             "subset": subset
         })
 

@@ -1,4 +1,21 @@
 {
+    "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        }
+    },
+    "create": {
+        "RenderCreator": {
+            "defaults": [
+                "Main"
+            ]
+        }
+    },
     "publish": {
         "ValidateSceneSettings": {
             "enabled": true,

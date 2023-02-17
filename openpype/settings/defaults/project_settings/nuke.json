@@ -1,11 +1,209 @@
 {
     "general": {
         "menu": {
-            "create": "ctrl+shift+alt+c",
+            "create": "ctrl+alt+c",
             "publish": "ctrl+alt+p",
             "load": "ctrl+alt+l",
             "manage": "ctrl+alt+m",
             "build_workfile": "ctrl+alt+b"
+        }
+    },
+    "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        },
+        "viewer": {
+            "viewerProcess": "sRGB"
+        },
+        "baking": {
+            "viewerProcess": "rec709"
+        },
+        "workfile": {
+            "colorManagement": "Nuke",
+            "OCIO_config": "nuke-default",
+            "customOCIOConfigPath": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "workingSpaceLUT": "linear",
+            "monitorLut": "sRGB",
+            "int8Lut": "sRGB",
+            "int16Lut": "sRGB",
+            "logLut": "Cineon",
+            "floatLut": "linear"
+        },
+        "nodes": {
+            "requiredNodes": [
+                {
+                    "plugins": [
+                        "CreateWriteRender"
+                    ],
+                    "nukeNodeClass": "Write",
+                    "knobs": [
+                        {
+                            "type": "text",
+                            "name": "file_type",
+                            "value": "exr"
+                        },
+                        {
+                            "type": "text",
+                            "name": "datatype",
+                            "value": "16 bit half"
+                        },
+                        {
+                            "type": "text",
+                            "name": "compression",
+                            "value": "Zip (1 scanline)"
+                        },
+                        {
+                            "type": "bool",
+                            "name": "autocrop",
+                            "value": true
+                        },
+                        {
+                            "type": "color_gui",
+                            "name": "tile_color",
+                            "value": [
+                                186,
+                                35,
+                                35,
+                                255
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "name": "channels",
+                            "value": "rgb"
+                        },
+                        {
+                            "type": "text",
+                            "name": "colorspace",
+                            "value": "linear"
+                        },
+                        {
+                            "type": "bool",
+                            "name": "create_directories",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "plugins": [
+                        "CreateWritePrerender"
+                    ],
+                    "nukeNodeClass": "Write",
+                    "knobs": [
+                        {
+                            "type": "text",
+                            "name": "file_type",
+                            "value": "exr"
+                        },
+                        {
+                            "type": "text",
+                            "name": "datatype",
+                            "value": "16 bit half"
+                        },
+                        {
+                            "type": "text",
+                            "name": "compression",
+                            "value": "Zip (1 scanline)"
+                        },
+                        {
+                            "type": "bool",
+                            "name": "autocrop",
+                            "value": true
+                        },
+                        {
+                            "type": "color_gui",
+                            "name": "tile_color",
+                            "value": [
+                                171,
+                                171,
+                                10,
+                                255
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "name": "channels",
+                            "value": "rgb"
+                        },
+                        {
+                            "type": "text",
+                            "name": "colorspace",
+                            "value": "linear"
+                        },
+                        {
+                            "type": "bool",
+                            "name": "create_directories",
+                            "value": true
+                        }
+                    ]
+                },
+                {
+                    "plugins": [
+                        "CreateWriteStill"
+                    ],
+                    "nukeNodeClass": "Write",
+                    "knobs": [
+                        {
+                            "type": "text",
+                            "name": "file_type",
+                            "value": "tiff"
+                        },
+                        {
+                            "type": "text",
+                            "name": "datatype",
+                            "value": "16 bit"
+                        },
+                        {
+                            "type": "text",
+                            "name": "compression",
+                            "value": "Deflate"
+                        },
+                        {
+                            "type": "color_gui",
+                            "name": "tile_color",
+                            "value": [
+                                56,
+                                162,
+                                7,
+                                255
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "name": "channels",
+                            "value": "rgb"
+                        },
+                        {
+                            "type": "text",
+                            "name": "colorspace",
+                            "value": "sRGB"
+                        },
+                        {
+                            "type": "bool",
+                            "name": "create_directories",
+                            "value": true
+                        }
+                    ]
+                }
+            ],
+            "overrideNodes": []
+        },
+        "regexInputs": {
+            "inputs": [
+                {
+                    "regex": "(beauty).*(?=.exr)",
+                    "colorspace": "linear"
+                }
+            ]
         }
     },
     "nuke-dirmap": {
@@ -15,38 +213,129 @@
             "destination-path": []
         }
     },
+    "scriptsmenu": {
+        "name": "OpenPype Tools",
+        "definition": [
+            {
+                "type": "action",
+                "sourcetype": "python",
+                "title": "OpenPype Docs",
+                "command": "import webbrowser;webbrowser.open(url='https://openpype.io/docs/artist_hosts_nuke_tut')",
+                "tooltip": "Open the OpenPype Nuke user doc page"
+            }
+        ]
+    },
+    "gizmo": [
+        {
+            "toolbar_menu_name": "OpenPype Gizmo",
+            "gizmo_source_dir": {
+                "windows": [],
+                "darwin": [],
+                "linux": []
+            },
+            "toolbar_icon_path": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            },
+            "gizmo_definition": [
+                {
+                    "gizmo_toolbar_path": "/path/to/menu",
+                    "sub_gizmo_list": [
+                        {
+                            "sourcetype": "python",
+                            "title": "Gizmo Note",
+                            "command": "nuke.nodes.StickyNote(label='You can create your own toolbar menu in the Nuke GizmoMenu of OpenPype')",
+                            "icon": "",
+                            "shortcut": ""
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
     "create": {
         "CreateWriteRender": {
-            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
-            "defaults": [
+            "temp_rendering_path_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
+            "default_variants": [
                 "Main",
                 "Mask"
-            ]
+            ],
+            "instance_attributes": [
+                "reviewable",
+                "farm_rendering"
+            ],
+            "prenodes": {
+                "Reformat01": {
+                    "nodeclass": "Reformat",
+                    "dependent": "",
+                    "knobs": [
+                        {
+                            "type": "text",
+                            "name": "resize",
+                            "value": "none"
+                        },
+                        {
+                            "type": "bool",
+                            "name": "black_outside",
+                            "value": true
+                        }
+                    ]
+                }
+            }
         },
         "CreateWritePrerender": {
-            "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}",
-            "use_range_limit": true,
-            "defaults": [
+            "temp_rendering_path_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
+            "default_variants": [
                 "Key01",
                 "Bg01",
                 "Fg01",
                 "Branch01",
                 "Part01"
             ],
-            "reviewable": false
+            "instance_attributes": [
+                "farm_rendering",
+                "use_range_limit"
+            ],
+            "prenodes": {}
+        },
+        "CreateWriteImage": {
+            "temp_rendering_path_template": "{work}/renders/nuke/{subset}/{subset}.{ext}",
+            "default_variants": [
+                "StillFrame",
+                "MPFrame",
+                "LayoutFrame"
+            ],
+            "instance_attributes": [
+                "use_range_limit"
+            ],
+            "prenodes": {
+                "FrameHold01": {
+                    "nodeclass": "FrameHold",
+                    "dependent": "",
+                    "knobs": [
+                        {
+                            "type": "expression",
+                            "name": "first_frame",
+                            "expression": "parent.first"
+                        }
+                    ]
+                }
+            }
         }
     },
     "publish": {
-        "PreCollectNukeInstances": {
+        "CollectInstanceData": {
             "sync_workfile_version_on_families": [
                 "nukenodes",
                 "camera",
                 "gizmo",
                 "source",
-                "render"
+                "render",
+                "write"
             ]
         },
-        "ValidateInstanceInContext": {
+        "ValidateCorrectAssetName": {
             "enabled": true,
             "optional": true,
             "active": true
@@ -81,6 +370,9 @@
         },
         "ExtractThumbnail": {
             "enabled": true,
+            "use_rendered": true,
+            "bake_viewer_process": true,
+            "bake_viewer_input_process": true,
             "nodes": {
                 "Reformat": [
                     [
@@ -106,6 +398,9 @@
                 ]
             }
         },
+        "ExtractReviewData": {
+            "enabled": false
+        },
         "ExtractReviewDataLut": {
             "enabled": false
         },
@@ -117,27 +412,26 @@
                     "filter": {
                         "task_types": [],
                         "families": [],
-                        "sebsets": []
+                        "subsets": []
                     },
-                    "extension": "mov",
+                    "read_raw": false,
                     "viewer_process_override": "",
                     "bake_viewer_process": true,
                     "bake_viewer_input_process": true,
-                    "add_tags": [],
                     "reformat_node_add": false,
                     "reformat_node_config": [
                         {
-                            "type": "string",
+                            "type": "text",
                             "name": "type",
                             "value": "to format"
                         },
                         {
-                            "type": "string",
+                            "type": "text",
                             "name": "format",
                             "value": "HD_1080"
                         },
                         {
-                            "type": "string",
+                            "type": "text",
                             "name": "filter",
                             "value": "Lanczos6"
                         },
@@ -151,12 +445,28 @@
                             "name": "pbb",
                             "value": false
                         }
-                    ]
+                    ],
+                    "extension": "mov",
+                    "add_custom_tags": []
                 }
             }
         },
         "ExtractSlateFrame": {
-            "viewer_lut_raw": false
+            "viewer_lut_raw": false,
+            "key_value_mapping": {
+                "f_submission_note": [
+                    true,
+                    "{comment}"
+                ],
+                "f_submitting_for": [
+                    true,
+                    "{intent[value]}"
+                ],
+                "f_vfx_scope_of_work": [
+                    false,
+                    ""
+                ]
+            }
         },
         "IncrementScriptVersion": {
             "enabled": true,
@@ -181,7 +491,11 @@
         "LoadClip": {
             "enabled": true,
             "_representations": [],
-            "node_name_template": "{class_name}_{ext}"
+            "node_name_template": "{class_name}_{ext}",
+            "options_defaults": {
+                "start_at_workfile": true,
+                "add_retime": true
+            }
         }
     },
     "workfile_builder": {
@@ -202,17 +516,21 @@
                         "repre_names": [
                             "exr",
                             "dpx",
-                            "mov"
+                            "mov",
+                            "mp4",
+                            "h264"
                         ],
                         "loaders": [
-                            "LoadSequence",
-                            "LoadMov"
+                            "LoadClip"
                         ]
                     }
                 ],
                 "linked_assets": []
             }
         ]
+    },
+    "templated_workfile_build": {
+        "profiles": []
     },
     "filters": {}
 }

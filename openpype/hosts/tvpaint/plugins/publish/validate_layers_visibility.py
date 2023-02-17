@@ -8,7 +8,7 @@ class ValidateLayersVisiblity(pyblish.api.InstancePlugin):
 
     label = "Validate Layers Visibility"
     order = pyblish.api.ValidatorOrder
-    families = ["review", "renderPass", "renderLayer"]
+    families = ["review", "renderPass", "renderLayer", "renderScene"]
 
     def process(self, instance):
         layer_names = set()

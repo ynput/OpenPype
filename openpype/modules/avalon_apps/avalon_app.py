@@ -1,7 +1,6 @@
 import os
-import openpype
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import ITrayModule
+
+from openpype.modules import OpenPypeModule, ITrayModule
 
 
 class AvalonModule(OpenPypeModule, ITrayModule):
@@ -26,7 +25,8 @@ class AvalonModule(OpenPypeModule, ITrayModule):
         self.avalon_mongo_timeout = avalon_mongo_timeout
 
         # Tray attributes
-        self.libraryloader = None
+        self._library_loader_imported = None
+        self._library_loader_window = None
         self.rest_api_obj = None
 
     def get_global_environments(self):
@@ -41,21 +41,11 @@ class AvalonModule(OpenPypeModule, ITrayModule):
 
     def tray_init(self):
         # Add library tool
+        self._library_loader_imported = False
         try:
-            from Qt import QtCore
             from openpype.tools.libraryloader import LibraryLoaderWindow
 
-            libraryloader = LibraryLoaderWindow(
-                show_projects=True,
-                show_libraries=True
-            )
-            # Remove always on top flag for tray
-            window_flags = libraryloader.windowFlags()
-            if window_flags | QtCore.Qt.WindowStaysOnTopHint:
-                window_flags ^= QtCore.Qt.WindowStaysOnTopHint
-                libraryloader.setWindowFlags(window_flags)
-            self.libraryloader = libraryloader
-
+            self._library_loader_imported = True
         except Exception:
             self.log.warning(
                 "Couldn't load Library loader tool for tray.",
@@ -64,10 +54,10 @@ class AvalonModule(OpenPypeModule, ITrayModule):
 
     # Definition of Tray menu
     def tray_menu(self, tray_menu):
-        if self.libraryloader is None:
+        if not self._library_loader_imported:
             return
 
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
         # Actions
         action_library_loader = QtWidgets.QAction(
             "Loader", tray_menu
@@ -84,17 +74,31 @@ class AvalonModule(OpenPypeModule, ITrayModule):
         return
 
     def show_library_loader(self):
-        if self.libraryloader is None:
-            return
+        if self._library_loader_window is None:
+            from qtpy import QtCore
+            from openpype.tools.libraryloader import LibraryLoaderWindow
+            from openpype.pipeline import install_openpype_plugins
 
-        self.libraryloader.show()
+            libraryloader = LibraryLoaderWindow(
+                show_projects=True,
+                show_libraries=True
+            )
+            # Remove always on top flag for tray
+            window_flags = libraryloader.windowFlags()
+            if window_flags | QtCore.Qt.WindowStaysOnTopHint:
+                window_flags ^= QtCore.Qt.WindowStaysOnTopHint
+                libraryloader.setWindowFlags(window_flags)
+            self._library_loader_window = libraryloader
+
+            install_openpype_plugins()
+
+        self._library_loader_window.show()
 
         # Raise and activate the window
         # for MacOS
-        self.libraryloader.raise_()
+        self._library_loader_window.raise_()
         # for Windows
-        self.libraryloader.activateWindow()
-        self.libraryloader.refresh()
+        self._library_loader_window.activateWindow()
 
     # Webserver module implementation
     def webserver_initialization(self, server_manager):

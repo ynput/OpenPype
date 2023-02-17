@@ -5,13 +5,15 @@ from pathlib import Path
 from collections import OrderedDict
 from zipfile import ZipFile, is_zipfile
 import re
+from datetime import datetime
 
 import attr
 import pyblish.api
-from avalon import api
 
+from openpype.pipeline import legacy_io
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+from openpype.tests.lib import is_in_tests
 
 
 class _ZipFile(ZipFile):
@@ -238,11 +240,10 @@ class HarmonySubmitDeadline(
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["harmony"]
     families = ["render.farm"]
+    targets = ["local"]
 
     optional = True
     use_published = False
-    primary_pool = ""
-    secondary_pool = ""
     priority = 50
     chunk_size = 1000000
     group = "none"
@@ -259,10 +260,13 @@ class HarmonySubmitDeadline(
         # for now, get those from presets. Later on it should be
         # configurable in Harmony UI directly.
         job_info.Priority = self.priority
-        job_info.Pool = self.primary_pool
-        job_info.SecondaryPool = self.secondary_pool
+        job_info.Pool = self._instance.data.get("primaryPool")
+        job_info.SecondaryPool = self._instance.data.get("secondaryPool")
         job_info.ChunkSize = self.chunk_size
-        job_info.BatchName = os.path.basename(self._instance.data["source"])
+        batch_name = os.path.basename(self._instance.data["source"])
+        if is_in_tests:
+            batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
+        job_info.BatchName = batch_name
         job_info.Department = self.department
         job_info.Group = self.group
 
@@ -275,23 +279,23 @@ class HarmonySubmitDeadline(
             "AVALON_TASK",
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
-            "OPENPYPE_LOG_NO_COLORS"
+            "OPENPYPE_LOG_NO_COLORS",
+            "OPENPYPE_VERSION",
+            "IS_TEST"
         ]
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
 
         environment = dict({key: os.environ[key] for key in keys
-                            if key in os.environ}, **api.Session)
+                            if key in os.environ}, **legacy_io.Session)
         for key in keys:
-            val = environment.get(key)
-            if val:
-                job_info.EnvironmentKeyValue = "{key}={value}".format(
-                    key=key,
-                    value=val)
+            value = environment.get(key)
+            if value:
+                job_info.EnvironmentKeyValue[key] = value
 
         # to recognize job from PYPE for turning Event On/Off
-        job_info.EnvironmentKeyValue = "OPENPYPE_RENDER_JOB=1"
+        job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
 
         return job_info
 
@@ -323,7 +327,9 @@ class HarmonySubmitDeadline(
         )
         unzip_dir = (published_scene.parent / published_scene.stem)
         with _ZipFile(published_scene, "r") as zip_ref:
-            zip_ref.extractall(unzip_dir.as_posix())
+            # UNC path (//?/) added to minimalize risk with extracting
+            # to large file paths
+            zip_ref.extractall("//?/" + str(unzip_dir.as_posix()))
 
         # find any xstage files in directory, prefer the one with the same name
         # as directory (plus extension)

@@ -1,5 +1,4 @@
 import pyblish.api
-import avalon.api as avalon
 
 
 class CollectHierarchy(pyblish.api.ContextPlugin):
@@ -19,7 +18,7 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
 
     def process(self, context):
         temp_context = {}
-        project_name = avalon.Session["AVALON_PROJECT"]
+        project_name = context.data["projectName"]
         final_context = {}
         final_context[project_name] = {}
         final_context[project_name]['entity_type'] = 'Project'
@@ -29,14 +28,11 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
 
             # shot data dict
             shot_data = {}
-            family = instance.data.get("family")
-
-            # filter out all unepropriate instances
-            if not instance.data["publish"]:
-                continue
+            family = instance.data["family"]
+            families = instance.data["families"]
 
             # exclude other families then self.families with intersection
-            if not set(self.families).intersection([family]):
+            if not set(self.families).intersection(set(families + [family])):
                 continue
 
             # exclude if not masterLayer True
@@ -60,7 +56,7 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
                 "frameEnd": instance.data["frameEnd"],
                 "clipIn": instance.data["clipIn"],
                 "clipOut": instance.data["clipOut"],
-                'fps': instance.context.data["fps"],
+                "fps": instance.data["fps"],
                 "resolutionWidth": instance.data["resolutionWidth"],
                 "resolutionHeight": instance.data["resolutionHeight"],
                 "pixelAspect": instance.data["pixelAspect"]

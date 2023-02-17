@@ -34,11 +34,15 @@
             "key": "environment",
             "label": "Environment",
             "type": "raw-json",
-            "env_group_key": "global",
             "require_restart": true
         },
         {
             "type": "splitter"
+        },
+        {
+            "type": "boolean",
+            "key": "log_to_server",
+            "label": "Log to mongo"
         },
         {
             "type": "dict",
@@ -111,6 +115,17 @@
             "type": "splitter"
         },
         {
+            "type": "list",
+            "key": "local_env_white_list",
+            "label": "Local overrides of environment variable keys",
+            "tooltip": "Environment variable keys that can be changed per machine using Local settings UI.\nKey changes are applied only on applications and tools environments.",
+            "use_label_wrap": true,
+            "object_type": "text"
+        },
+        {
+            "type": "splitter"
+        },
+        {
             "type": "collapsible-wrap",
             "label": "OpenPype deployment control",
             "collapsible": false,
@@ -131,12 +146,12 @@
                     "label": "Define explicit OpenPype version that should be used. Keep empty to use latest available version."
                 },
                 {
-                    "type": "production-versions-text",
+                    "type": "versions-text",
                     "key": "production_version",
                     "label": "Production version"
                 },
                 {
-                    "type": "staging-versions-text",
+                    "type": "versions-text",
                     "key": "staging_version",
                     "label": "Staging version"
                 },

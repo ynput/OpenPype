@@ -3,17 +3,15 @@ from datetime import datetime
 import logging
 import numbers
 
-import Qt
-from Qt import QtWidgets, QtGui, QtCore
+from qtpy import QtWidgets, QtGui, QtCore
 
+from openpype.client import (
+    get_versions,
+    get_hero_versions,
+)
 from openpype.pipeline import HeroVersionType
 from .models import TreeModel
 from . import lib
-
-if Qt.__binding__ == "PySide":
-    from PySide.QtGui import QStyleOptionViewItemV4
-elif Qt.__binding__ == "PyQt4":
-    from PyQt4.QtGui import QStyleOptionViewItemV4
 
 log = logging.getLogger(__name__)
 
@@ -56,7 +54,10 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
             style = QtWidgets.QApplication.style()
 
         style.drawControl(
-            style.CE_ItemViewItem, option, painter, option.widget
+            QtWidgets.QStyle.CE_ItemViewItem,
+            option,
+            painter,
+            option.widget
         )
 
         painter.save()
@@ -68,9 +69,12 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
         pen.setColor(fg_color)
         painter.setPen(pen)
 
-        text_rect = style.subElementRect(style.SE_ItemViewItemText, option)
+        text_rect = style.subElementRect(
+            QtWidgets.QStyle.SE_ItemViewItemText,
+            option
+        )
         text_margin = style.proxy().pixelMetric(
-            style.PM_FocusFrameHMargin, option, option.widget
+            QtWidgets.QStyle.PM_FocusFrameHMargin, option, option.widget
         ) + 1
 
         painter.drawText(
@@ -114,26 +118,24 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
                 "Version is not integer"
             )
 
+        project_name = self.dbcon.active_project()
         # Add all available versions to the editor
         parent_id = item["version_document"]["parent"]
-        version_docs = list(self.dbcon.find(
-            {
-                "type": "version",
-                "parent": parent_id
-            },
-            sort=[("name", 1)]
+        version_docs = list(sorted(
+            get_versions(project_name, subset_ids=[parent_id]),
+            key=lambda item: item["name"]
         ))
 
-        hero_version_doc = self.dbcon.find_one(
-            {
-                "type": "hero_version",
-                "parent": parent_id
-            }, {
-                "name": 1,
-                "data.tags": 1,
-                "version_id": 1
-            }
+        hero_versions = list(
+            get_hero_versions(
+                project_name,
+                subset_ids=[parent_id],
+                fields=["name", "data.tags", "version_id"]
+            )
         )
+        hero_version_doc = None
+        if hero_versions:
+            hero_version_doc = hero_versions[0]
 
         doc_for_hero_version = None
 

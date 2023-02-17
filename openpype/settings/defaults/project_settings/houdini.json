@@ -1,4 +1,15 @@
 {
+    "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        }
+    },
+    "shelves": [],
     "create": {
         "CreateArnoldAss": {
             "enabled": true,
@@ -47,6 +58,18 @@
         }
     },
     "publish": {
+        "ValidateWorkfilePaths": {
+            "enabled": true,
+            "optional": true,
+            "node_types": [
+                "file",
+                "alembic"
+            ],
+            "prohibited_vars": [
+                "$HIP",
+                "$JOB"
+            ]
+        },
         "ValidateContainers": {
             "enabled": true,
             "optional": true,

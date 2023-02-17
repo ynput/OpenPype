@@ -2,10 +2,10 @@ import os
 import re
 import nuke
 import pyblish.api
-from avalon import io, api
+from openpype.client import get_asset_by_name
+from openpype.pipeline import legacy_io
 
 
-@pyblish.api.log
 class CollectNukeReads(pyblish.api.InstancePlugin):
     """Collect all read nodes."""
 
@@ -15,14 +15,16 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
     families = ["source"]
 
     def process(self, instance):
-        asset_data = io.find_one({"type": "asset",
-                                  "name": api.Session["AVALON_ASSET"]})
+        node = instance.data["transientData"]["node"]
 
-        self.log.debug("asset_data: {}".format(asset_data["data"]))
+        project_name = legacy_io.active_project()
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        asset_doc = get_asset_by_name(project_name, asset_name)
+
+        self.log.debug("asset_doc: {}".format(asset_doc["data"]))
 
         self.log.debug("checking instance: {}".format(instance))
 
-        node = instance[0]
         if node.Class() != "Read":
             return
 
@@ -96,10 +98,7 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
         }
         instance.data["representations"].append(representation)
 
-        transfer = False
-        if "publish" in node.knobs():
-            transfer = node["publish"]
-
+        transfer = node["publish"] if "publish" in node.knobs() else False
         instance.data['transfer'] = transfer
 
         # Add version data to instance
@@ -124,7 +123,7 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
             "frameStart": first_frame,
             "frameEnd": last_frame,
             "colorspace": colorspace,
-            "handles": int(asset_data["data"].get("handles", 0)),
+            "handles": int(asset_doc["data"].get("handles", 0)),
             "step": 1,
             "fps": int(nuke.root()['fps'].value())
         })

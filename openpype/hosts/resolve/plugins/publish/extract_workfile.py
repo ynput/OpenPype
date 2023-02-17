@@ -1,10 +1,11 @@
 import os
 import pyblish.api
-import openpype.api
-from openpype.hosts import resolve
+
+from openpype.pipeline import publish
+from openpype.hosts.resolve.api.lib import get_project_manager
 
 
-class ExtractWorkfile(openpype.api.Extractor):
+class ExtractWorkfile(publish.Extractor):
     """
     Extractor export DRP workfile file representation
     """
@@ -29,7 +30,7 @@ class ExtractWorkfile(openpype.api.Extractor):
             os.path.join(staging_dir, drp_file_name))
 
         # write out the drp workfile
-        resolve.get_project_manager().ExportProject(
+        get_project_manager().ExportProject(
             project.GetName(), drp_file_path)
 
         # create drp workfile representation

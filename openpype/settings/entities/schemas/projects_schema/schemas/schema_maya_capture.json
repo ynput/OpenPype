@@ -94,18 +94,6 @@
                         }
                     ]
                 },
-
-                {
-                    "type": "dict",
-                    "key": "PanZoom",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "pan_zoom",
-                            "label": "              Pan Zoom"
-                        }
-                    ]
-                },
                 {
                     "type": "splitter"
                 },
@@ -153,19 +141,6 @@
                             "decimal": 0,
                             "minimum": 0,
                             "maximum": 99999
-                        },
-                        {
-                            "type": "number",
-                            "key": "percent",
-                            "label": "percent",
-                            "decimal": 1,
-                            "minimum": 0,
-                            "maximum": 200
-                        },
-                        {
-                            "type": "text",
-                            "key": "mode",
-                            "label": "Mode"
                         }
                     ]
                 },
@@ -196,10 +171,44 @@
                             ]
                         },
                         {
+                            "type": "boolean",
+                            "key": "displayTextures",
+                            "label": "Display Textures"
+                        },
+                        {
                             "type": "number",
                             "key": "textureMaxResolution",
                             "label": "Texture Clamp Resolution",
                             "decimal": 0
+                        },
+                        {
+                            "type": "splitter"
+                        },
+                        {
+                            "type":"boolean",
+                            "key": "renderDepthOfField",
+                            "label": "Depth of Field"
+                        },
+                        {
+                            "type": "splitter"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "shadows",
+                            "label": "Display Shadows"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "twoSidedLighting",
+                            "label": "Two Sided Lighting"
+                        },
+                        {
+                            "type": "splitter"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "lineAAEnable",
+                            "label": "Enable Anti-Aliasing"
                         },
                         {
                             "type": "number",
@@ -210,19 +219,7 @@
                             "maximum": 32
                         },
                         {
-                            "type": "boolean",
-                            "key": "shadows",
-                            "label": "Display Shadows"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "textures",
-                            "label": "Display Textures"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "twoSidedLighting",
-                            "label": "Two Sided Lighting"
+                            "type": "splitter"
                         },
                         {
                             "type": "boolean",
@@ -230,122 +227,231 @@
                             "label": "Screen Space Ambient Occlusion"
                         },
                         {
+                            "type": "number",
+                            "key": "ssaoAmount",
+                            "label": "SSAO Amount"
+                        },
+                        {
+                            "type": "number",
+                            "key": "ssaoRadius",
+                            "label": "SSAO Radius"
+                        },
+                        {
+                            "type": "number",
+                            "key": "ssaoFilterRadius",
+                            "label": "SSAO Filter Radius",
+                            "decimal": 0,
+                            "minimum": 1,
+                            "maximum": 32
+                        },
+                        {
+                            "type": "number",
+                            "key": "ssaoSamples",
+                            "label": "SSAO Samples",
+                            "decimal": 0,
+                            "minimum": 8,
+                            "maximum": 32
+                        },
+                        {
                             "type": "splitter"
                         },
                         {
                             "type": "boolean",
+                            "key": "fogging",
+                            "label": "Enable Hardware Fog"
+                        },
+                        {
+                            "type": "enum",
+                            "key": "hwFogFalloff",
+                            "label": "Hardware Falloff",
+                            "enum_items": [
+                                { "0": "Linear"},
+                                { "1": "Exponential"},
+                                { "2": "Exponential Squared"}
+                            ]
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogDensity",
+                            "label": "Fog Density",
+                            "decimal": 2,
+                            "minimum": 0,
+                            "maximum": 1
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogStart",
+                            "label": "Fog Start"
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogEnd",
+                            "label": "Fog End"
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogAlpha",
+                            "label": "Fog Alpha"
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogColorR",
+                            "label": "Fog Color R",
+                            "decimal": 2,
+                            "minimum": 0,
+                            "maximum": 1
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogColorG",
+                            "label": "Fog Color G",
+                            "decimal": 2,
+                            "minimum": 0,
+                            "maximum": 1
+                        },
+                        {
+                            "type": "number",
+                            "key": "hwFogColorB",
+                            "label": "Fog Color B",
+                            "decimal": 2,
+                            "minimum": 0,
+                            "maximum": 1
+                        },
+                        {
+                            "type": "splitter"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "motionBlurEnable",
+                            "label": "Enable Motion Blur"
+                        },
+                        {
+                            "type": "number",
+                            "key": "motionBlurSampleCount",
+                            "label": "Motion Blur Sample Count",
+                            "decimal": 0,
+                            "minimum": 8,
+                            "maximum": 32
+                        },
+                        {
+                            "type": "number",
+                            "key": "motionBlurShutterOpenFraction",
+                            "label": "Shutter Open Fraction",
+                            "decimal": 3,
+                            "minimum": 0.01,
+                            "maximum": 32
+                        },
+                        {
+                            "type": "splitter"
+                        },
+                        {
+                            "type": "label",
+                            "label": "<b>Show</b>"
+                        },
+                        {
+                            "type": "boolean",
                             "key": "cameras",
-                            "label": "cameras"
+                            "label": "Cameras"
                         },
                         {
                             "type": "boolean",
                             "key": "clipGhosts",
-                            "label": "clipGhosts"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "controlVertices",
-                            "label": "controlVertices"
+                            "label": "Clip Ghosts"
                         },
                         {
                             "type": "boolean",
                             "key": "deformers",
-                            "label": "deformers"
+                            "label": "Deformers"
                         },
                         {
                             "type": "boolean",
                             "key": "dimensions",
-                            "label": "dimensions"
+                            "label": "Dimensions"
                         },
                         {
                             "type": "boolean",
                             "key": "dynamicConstraints",
-                            "label": "dynamicConstraints"
+                            "label": "Dynamic Constraints"
                         },
                         {
                             "type": "boolean",
                             "key": "dynamics",
-                            "label": "dynamics"
+                            "label": "Dynamics"
                         },
                         {
                             "type": "boolean",
                             "key": "fluids",
-                            "label": "fluids"
+                            "label": "Fluids"
                         },
                         {
                             "type": "boolean",
                             "key": "follicles",
-                            "label": "follicles"
+                            "label": "Follicles"
                         },
                         {
                             "type": "boolean",
                             "key": "gpuCacheDisplayFilter",
-                            "label": "gpuCacheDisplayFilter"
+                            "label": "GPU Cache"
                         },
                         {
                             "type": "boolean",
                             "key": "greasePencils",
-                            "label": "greasePencils"
+                            "label": "Grease Pencil"
                         },
                         {
                             "type": "boolean",
                             "key": "grid",
-                            "label": "grid"
+                            "label": "Grid"
                         },
                         {
                             "type": "boolean",
                             "key": "hairSystems",
-                            "label": "hairSystems"
+                            "label": "Hair Systems"
                         },
                         {
                             "type": "boolean",
                             "key": "handles",
-                            "label": "handles"
+                            "label": "Handles"
                         },
                         {
                             "type": "boolean",
-                            "key": "hud",
-                            "label": "hud"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "hulls",
-                            "label": "hulls"
+                            "key": "headsUpDisplay",
+                            "label": "HUD"
                         },
                         {
                             "type": "boolean",
                             "key": "ikHandles",
-                            "label": "ikHandles"
+                            "label": "IK Handles"
                         },
                         {
                             "type": "boolean",
                             "key": "imagePlane",
-                            "label": "imagePlane"
+                            "label": "Image Planes"
                         },
                         {
                             "type": "boolean",
                             "key": "joints",
-                            "label": "joints"
+                            "label": "Joints"
                         },
                         {
                             "type": "boolean",
                             "key": "lights",
-                            "label": "lights"
+                            "label": "Lights"
                         },
                         {
                             "type": "boolean",
                             "key": "locators",
-                            "label": "locators"
+                            "label": "Locators"
                         },
                         {
                             "type": "boolean",
                             "key": "manipulators",
-                            "label": "manipulators"
+                            "label": "Manipulators"
                         },
                         {
                             "type": "boolean",
                             "key": "motionTrails",
-                            "label": "motionTrails"
+                            "label": "Motion Trails"
                         },
                         {
                             "type": "boolean",
@@ -364,48 +470,63 @@
                         },
                         {
                             "type": "boolean",
+                            "key": "controlVertices",
+                            "label": "NURBS CVs"
+                        },
+                        {
+                            "type": "boolean",
                             "key": "nurbsCurves",
-                            "label": "nurbsCurves"
+                            "label": "NURBS Curves"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "hulls",
+                            "label": "NURBS Hulls"
                         },
                         {
                             "type": "boolean",
                             "key": "nurbsSurfaces",
-                            "label": "nurbsSurfaces"
+                            "label": "NURBS Surfaces"
                         },
                         {
                             "type": "boolean",
                             "key": "particleInstancers",
-                            "label": "particleInstancers"
+                            "label": "Particle Instancers"
                         },
                         {
                             "type": "boolean",
                             "key": "pivots",
-                            "label": "pivots"
+                            "label": "Pivots"
                         },
                         {
                             "type": "boolean",
                             "key": "planes",
-                            "label": "planes"
+                            "label": "Planes"
                         },
                         {
                             "type": "boolean",
                             "key": "pluginShapes",
-                            "label": "pluginShapes"
+                            "label": "Plugin Shapes"
                         },
                         {
                             "type": "boolean",
                             "key": "polymeshes",
-                            "label": "polymeshes"
+                            "label": "Polygons"
                         },
                         {
                             "type": "boolean",
                             "key": "strokes",
-                            "label": "strokes"
+                            "label": "Strokes"
                         },
                         {
                             "type": "boolean",
                             "key": "subdivSurfaces",
-                            "label": "subdivSurfaces"
+                            "label": "Subdiv Surfaces"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "textures",
+                            "label": "Texture Placements"
                         }
                     ]
                 },
@@ -418,47 +539,47 @@
                         {
                             "type": "boolean",
                             "key": "displayGateMask",
-                            "label": "displayGateMask"
+                            "label": "Display Gate Mask"
                         },
                         {
                             "type": "boolean",
                             "key": "displayResolution",
-                            "label": "displayResolution"
+                            "label": "Display Resolution"
                         },
                         {
                             "type": "boolean",
                             "key": "displayFilmGate",
-                            "label": "displayFilmGate"
+                            "label": "Display Film Gate"
                         },
                         {
                             "type": "boolean",
                             "key": "displayFieldChart",
-                            "label": "displayFieldChart"
+                            "label": "Display Field Chart"
                         },
                         {
                             "type": "boolean",
                             "key": "displaySafeAction",
-                            "label": "displaySafeAction"
+                            "label": "Display Safe Action"
                         },
                         {
                             "type": "boolean",
                             "key": "displaySafeTitle",
-                            "label": "displaySafeTitle"
+                            "label": "Display Safe Title"
                         },
                         {
                             "type": "boolean",
                             "key": "displayFilmPivot",
-                            "label": "displayFilmPivot"
+                            "label": "Display Film Pivot"
                         },
                         {
                             "type": "boolean",
                             "key": "displayFilmOrigin",
-                            "label": "displayFilmOrigin"
+                            "label": "Display Film Origin"
                         },
                         {
                             "type": "number",
                             "key": "overscan",
-                            "label": "overscan",
+                            "label": "Overscan",
                             "decimal": 1,
                             "minimum": 0,
                             "maximum": 10

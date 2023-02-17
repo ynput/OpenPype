@@ -1,6 +1,6 @@
 import os
 
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 from openpype.pipeline import (
     load,
     get_representation_path
@@ -74,6 +74,7 @@ def _fix_duplicate_vvg_callbacks():
 
 
 class LoadVDBtoVRay(load.LoaderPlugin):
+    """Load OpenVDB in a V-Ray Volume Grid"""
 
     families = ["vdbcache"]
     representations = ["vdb"]

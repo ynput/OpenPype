@@ -1,21 +1,29 @@
+# -*- coding: utf-8 -*-
+import sys
+import os
 import uuid
 import logging
 from contextlib import contextmanager
+import json
 
 import six
 
-from avalon import api, io
-from openpype.api import get_asset
-
+from openpype.client import get_asset_by_name
+from openpype.pipeline import legacy_io
+from openpype.pipeline.context_tools import get_current_project_asset
 
 import hou
 
+
+self = sys.modules[__name__]
+self._parent = None
 log = logging.getLogger(__name__)
+JSON_PREFIX = "JSON:::"
 
 
 def get_asset_fps():
     """Return current asset fps."""
-    return get_asset()["data"].get("fps")
+    return get_current_project_asset()["data"].get("fps")
 
 
 def set_id(node, unique_id, overwrite=False):
@@ -28,23 +36,18 @@ def set_id(node, unique_id, overwrite=False):
 
 
 def get_id(node):
-    """
-    Get the `cbId` attribute of the given node
+    """Get the `cbId` attribute of the given node.
+
     Args:
         node (hou.Node): the name of the node to retrieve the attribute from
 
     Returns:
-        str
+        str: cbId attribute of the node.
 
     """
 
-    if node is None:
-        return
-
-    id = node.parm("id")
-    if node is None:
-        return
-    return id
+    if node is not None:
+        return node.parm("id")
 
 
 def generate_ids(nodes, asset_id=None):
@@ -74,12 +77,13 @@ def generate_ids(nodes, asset_id=None):
     """
 
     if asset_id is None:
+        project_name = legacy_io.active_project()
+        asset_name = legacy_io.Session["AVALON_ASSET"]
         # Get the asset ID from the database for the asset of current context
-        asset_data = io.find_one({"type": "asset",
-                                  "name": api.Session["AVALON_ASSET"]},
-                                 projection={"_id": True})
-        assert asset_data, "No current asset found in Session"
-        asset_id = asset_data['_id']
+        asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
+
+        assert asset_doc, "No current asset found in Session"
+        asset_id = asset_doc['_id']
 
     node_ids = []
     for node in nodes:
@@ -126,6 +130,8 @@ def get_output_parameter(node):
     elif node_type == "arnold":
         if node.evalParm("ar_ass_export_enable"):
             return node.parm("ar_ass_file")
+    elif node_type == "Redshift_Proxy_Output":
+        return node.parm("RS_archive_file")
 
     raise TypeError("Node type '%s' not supported" % node_type)
 
@@ -155,7 +161,7 @@ def validate_fps():
         if parent is None:
             pass
         else:
-            dialog = popup.Popup(parent=parent)
+            dialog = popup.PopupUpdateKeys(parent=parent)
             dialog.setModal(True)
             dialog.setWindowTitle("Houdini scene does not match project FPS")
             dialog.setMessage("Scene %i FPS does not match project %i FPS" %
@@ -163,7 +169,7 @@ def validate_fps():
             dialog.setButtonText("Fix")
 
             # on_show is the Fix button clicked callback
-            dialog.on_clicked.connect(lambda: set_scene_fps(fps))
+            dialog.on_clicked_state.connect(lambda: set_scene_fps(fps))
 
             dialog.show()
 
@@ -277,7 +283,7 @@ def render_rop(ropnode):
         raise RuntimeError("Render failed: {0}".format(exc))
 
 
-def imprint(node, data):
+def imprint(node, data, update=False):
     """Store attributes with value on a node
 
     Depending on the type of attribute it creates the correct parameter
@@ -286,48 +292,75 @@ def imprint(node, data):
 
     http://www.sidefx.com/docs/houdini/hom/hou/ParmTemplate.html
 
+    Because of some update glitch where you cannot overwrite existing
+    ParmTemplates on node using:
+        `setParmTemplates()` and `parmTuplesInFolder()`
+    update is done in another pass.
+
     Args:
         node(hou.Node): node object from Houdini
         data(dict): collection of attributes and their value
+        update (bool, optional): flag if imprint should update
+            already existing data or leave them untouched and only
+            add new.
 
     Returns:
         None
 
     """
+    if not data:
+        return
+    if not node:
+        self.log.error("Node is not set, calling imprint on invalid data.")
+        return
 
-    parm_group = node.parmTemplateGroup()
+    current_parms = {p.name(): p for p in node.spareParms()}
+    update_parms = []
+    templates = []
 
-    parm_folder = hou.FolderParmTemplate("folder", "Extra")
     for key, value in data.items():
         if value is None:
             continue
 
-        if isinstance(value, float):
-            parm = hou.FloatParmTemplate(name=key,
-                                         label=key,
-                                         num_components=1,
-                                         default_value=(value,))
-        elif isinstance(value, bool):
-            parm = hou.ToggleParmTemplate(name=key,
-                                          label=key,
-                                          default_value=value)
-        elif isinstance(value, int):
-            parm = hou.IntParmTemplate(name=key,
-                                       label=key,
-                                       num_components=1,
-                                       default_value=(value,))
-        elif isinstance(value, six.string_types):
-            parm = hou.StringParmTemplate(name=key,
-                                          label=key,
-                                          num_components=1,
-                                          default_value=(value,))
-        else:
-            raise TypeError("Unsupported type: %r" % type(value))
+        parm = get_template_from_value(key, value)
 
-        parm_folder.addParmTemplate(parm)
+        if key in current_parms:
+            if node.evalParm(key) == data[key]:
+                continue
+            if not update:
+                log.debug(f"{key} already exists on {node}")
+            else:
+                log.debug(f"replacing {key}")
+                update_parms.append(parm)
+            continue
 
-    parm_group.append(parm_folder)
+        templates.append(parm)
+
+    parm_group = node.parmTemplateGroup()
+    parm_folder = parm_group.findFolder("Extra")
+
+    # if folder doesn't exist yet, create one and append to it,
+    # else append to existing one
+    if not parm_folder:
+        parm_folder = hou.FolderParmTemplate("folder", "Extra")
+        parm_folder.setParmTemplates(templates)
+        parm_group.append(parm_folder)
+    else:
+        for template in templates:
+            parm_group.appendToFolder(parm_folder, template)
+            # this is needed because the pointer to folder
+            # is for some reason lost every call to `appendToFolder()`
+            parm_folder = parm_group.findFolder("Extra")
+
     node.setParmTemplateGroup(parm_group)
+
+    # TODO: Updating is done here, by calling probably deprecated functions.
+    #       This needs to be addressed in the future.
+    if not update_parms:
+        return
+
+    for parm in update_parms:
+        node.replaceSpareParmTuple(parm.name(), parm)
 
 
 def lsattr(attr, value=None, root="/"):
@@ -393,8 +426,22 @@ def read(node):
 
     """
     # `spareParms` returns a tuple of hou.Parm objects
-    return {parameter.name(): parameter.eval() for
-            parameter in node.spareParms()}
+    data = {}
+    if not node:
+        return data
+    for parameter in node.spareParms():
+        value = parameter.eval()
+        # test if value is json encoded dict
+        if isinstance(value, six.string_types) and \
+                value.startswith(JSON_PREFIX):
+            try:
+                value = json.loads(value[len(JSON_PREFIX):])
+            except json.JSONDecodeError:
+                # not a json
+                pass
+        data[parameter.name()] = value
+
+    return data
 
 
 @contextmanager
@@ -424,26 +471,29 @@ def maintained_selection():
 def reset_framerange():
     """Set frame range to current asset"""
 
-    asset_name = api.Session["AVALON_ASSET"]
-    asset = io.find_one({"name": asset_name, "type": "asset"})
+    project_name = legacy_io.active_project()
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    # Get the asset ID from the database for the asset of current context
+    asset_doc = get_asset_by_name(project_name, asset_name)
+    asset_data = asset_doc["data"]
 
-    frame_start = asset["data"].get("frameStart")
-    frame_end = asset["data"].get("frameEnd")
+    frame_start = asset_data.get("frameStart")
+    frame_end = asset_data.get("frameEnd")
     # Backwards compatibility
     if frame_start is None or frame_end is None:
-        frame_start = asset["data"].get("edit_in")
-        frame_end = asset["data"].get("edit_out")
+        frame_start = asset_data.get("edit_in")
+        frame_end = asset_data.get("edit_out")
 
     if frame_start is None or frame_end is None:
         log.warning("No edit information found for %s" % asset_name)
         return
 
-    handles = asset["data"].get("handles") or 0
-    handle_start = asset["data"].get("handleStart")
+    handles = asset_data.get("handles") or 0
+    handle_start = asset_data.get("handleStart")
     if handle_start is None:
         handle_start = handles
 
-    handle_end = asset["data"].get("handleEnd")
+    handle_end = asset_data.get("handleEnd")
     if handle_end is None:
         handle_end = handles
 
@@ -453,3 +503,89 @@ def reset_framerange():
     hou.playbar.setFrameRange(frame_start, frame_end)
     hou.playbar.setPlaybackRange(frame_start, frame_end)
     hou.setFrame(frame_start)
+
+
+def get_main_window():
+    """Acquire Houdini's main window"""
+    if self._parent is None:
+        self._parent = hou.ui.mainQtWindow()
+    return self._parent
+
+
+def get_template_from_value(key, value):
+    if isinstance(value, float):
+        parm = hou.FloatParmTemplate(name=key,
+                                     label=key,
+                                     num_components=1,
+                                     default_value=(value,))
+    elif isinstance(value, bool):
+        parm = hou.ToggleParmTemplate(name=key,
+                                      label=key,
+                                      default_value=value)
+    elif isinstance(value, int):
+        parm = hou.IntParmTemplate(name=key,
+                                   label=key,
+                                   num_components=1,
+                                   default_value=(value,))
+    elif isinstance(value, six.string_types):
+        parm = hou.StringParmTemplate(name=key,
+                                      label=key,
+                                      num_components=1,
+                                      default_value=(value,))
+    elif isinstance(value, (dict, list, tuple)):
+        parm = hou.StringParmTemplate(name=key,
+                                      label=key,
+                                      num_components=1,
+                                      default_value=(
+                                          JSON_PREFIX + json.dumps(value),))
+    else:
+        raise TypeError("Unsupported type: %r" % type(value))
+
+    return parm
+
+
+def get_frame_data(node):
+    """Get the frame data: start frame, end frame and steps.
+
+    Args:
+        node(hou.Node)
+
+    Returns:
+        dict: frame data for star, end and steps.
+
+    """
+    data = {}
+
+    if node.parm("trange") is None:
+
+        return data
+
+    if node.evalParm("trange") == 0:
+        self.log.debug("trange is 0")
+        return data
+
+    data["frameStart"] = node.evalParm("f1")
+    data["frameEnd"] = node.evalParm("f2")
+    data["steps"] = node.evalParm("f3")
+
+    return data
+
+
+def splitext(name, allowed_multidot_extensions):
+    # type: (str, list) -> tuple
+    """Split file name to name and extension.
+
+    Args:
+        name (str): File name to split.
+        allowed_multidot_extensions (list of str): List of allowed multidot
+            extensions.
+
+    Returns:
+        tuple: Name and extension.
+    """
+
+    for ext in allowed_multidot_extensions:
+        if name.endswith(ext):
+            return name[:-len(ext)], ext
+
+    return os.path.splitext(name)

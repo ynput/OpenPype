@@ -1,15 +1,22 @@
 from copy import deepcopy
-from importlib import reload
 
-from avalon import io
-from openpype.hosts import resolve
-from openpype.pipeline import get_representation_path
+from openpype.client import (
+    get_version_by_id,
+    get_last_version_by_subset_id,
+)
+# from openpype.hosts import resolve
+from openpype.pipeline import (
+    get_representation_path,
+    legacy_io,
+)
 from openpype.hosts.resolve.api import lib, plugin
-reload(plugin)
-reload(lib)
+from openpype.hosts.resolve.api.pipeline import (
+    containerise,
+    update_container,
+)
 
 
-class LoadClip(resolve.TimelineItemLoader):
+class LoadClip(plugin.TimelineItemLoader):
     """Load a subset to timeline as clip
 
     Place clip to timeline on its asset origin timings collected
@@ -17,7 +24,7 @@ class LoadClip(resolve.TimelineItemLoader):
     """
 
     families = ["render2d", "source", "plate", "render", "review"]
-    representations = ["exr", "dpx", "jpg", "jpeg", "png", "h264", ".mov"]
+    representations = ["exr", "dpx", "jpg", "jpeg", "png", "h264", "mov"]
 
     label = "Load as clip"
     order = -10
@@ -40,7 +47,7 @@ class LoadClip(resolve.TimelineItemLoader):
             })
 
         # load clip to timeline and get main variables
-        timeline_item = resolve.ClipLoader(
+        timeline_item = plugin.ClipLoader(
             self, context, **options).load()
         namespace = namespace or timeline_item.GetName()
         version = context['version']
@@ -74,7 +81,7 @@ class LoadClip(resolve.TimelineItemLoader):
 
         self.log.info("Loader done: `{}`".format(name))
 
-        return resolve.containerise(
+        return containerise(
             timeline_item,
             name, namespace, context,
             self.__class__.__name__,
@@ -92,12 +99,10 @@ class LoadClip(resolve.TimelineItemLoader):
         context.update({"representation": representation})
         name = container['name']
         namespace = container['namespace']
-        timeline_item_data = resolve.get_pype_timeline_item_by_name(namespace)
+        timeline_item_data = lib.get_pype_timeline_item_by_name(namespace)
         timeline_item = timeline_item_data["clip"]["item"]
-        version = io.find_one({
-            "type": "version",
-            "_id": representation["parent"]
-        })
+        project_name = legacy_io.active_project()
+        version = get_version_by_id(project_name, representation["parent"])
         version_data = version.get("data", {})
         version_name = version.get("name", None)
         colorspace = version_data.get("colorspace", None)
@@ -105,7 +110,7 @@ class LoadClip(resolve.TimelineItemLoader):
         self.fname = get_representation_path(representation)
         context["version"] = {"data": version_data}
 
-        loader = resolve.ClipLoader(self, context)
+        loader = plugin.ClipLoader(self, context)
         timeline_item = loader.update(timeline_item)
 
         # add additional metadata from the version to imprint Avalon knob
@@ -132,23 +137,26 @@ class LoadClip(resolve.TimelineItemLoader):
         # update color of clip regarding the version order
         self.set_item_color(timeline_item, version)
 
-        return resolve.update_container(timeline_item, data_imprint)
+        return update_container(timeline_item, data_imprint)
 
     @classmethod
     def set_item_color(cls, timeline_item, version):
-
         # define version name
         version_name = version.get("name", None)
         # get all versions in list
-        versions = io.find({
-            "type": "version",
-            "parent": version["parent"]
-        }).distinct('name')
-
-        max_version = max(versions)
+        project_name = legacy_io.active_project()
+        last_version_doc = get_last_version_by_subset_id(
+            project_name,
+            version["parent"],
+            fields=["name"]
+        )
+        if last_version_doc:
+            last_version = last_version_doc["name"]
+        else:
+            last_version = None
 
         # set clip colour
-        if version_name == max_version:
+        if version_name == last_version:
             timeline_item.SetClipColor(cls.clip_color_last)
         else:
             timeline_item.SetClipColor(cls.clip_color)

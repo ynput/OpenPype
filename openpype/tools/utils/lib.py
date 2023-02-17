@@ -2,32 +2,80 @@ import os
 import sys
 import contextlib
 import collections
+import traceback
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
-import avalon.api
-
-from openpype.style import get_default_entity_icon_color
-from openpype.api import (
-    get_project_settings,
-    Logger
+from openpype.client import (
+    get_project,
+    get_asset_by_name,
 )
-from openpype.lib import filter_profiles
-from openpype.style import get_objected_colors
+from openpype.style import (
+    get_default_entity_icon_color,
+    get_objected_colors,
+)
 from openpype.resources import get_image_path
+from openpype.lib import filter_profiles, Logger
+from openpype.settings import get_project_settings
+from openpype.pipeline import registered_host
+
+from .constants import CHECKED_INT, UNCHECKED_INT
+
+log = Logger.get_logger(__name__)
+
+
+def checkstate_int_to_enum(state):
+    if not isinstance(state, int):
+        return state
+    if state == CHECKED_INT:
+        return QtCore.Qt.Checked
+
+    if state == UNCHECKED_INT:
+        return QtCore.Qt.Unchecked
+    return QtCore.Qt.PartiallyChecked
+
+
+def checkstate_enum_to_int(state):
+    if isinstance(state, int):
+        return state
+    if state == QtCore.Qt.Checked:
+        return 0
+    if state == QtCore.Qt.PartiallyChecked:
+        return 1
+    return 2
+
 
 
 def center_window(window):
     """Move window to center of it's screen."""
-    desktop = QtWidgets.QApplication.desktop()
-    screen_idx = desktop.screenNumber(window)
-    screen_geo = desktop.screenGeometry(screen_idx)
+
+    if hasattr(QtWidgets.QApplication, "desktop"):
+        desktop = QtWidgets.QApplication.desktop()
+        screen_idx = desktop.screenNumber(window)
+        screen_geo = desktop.screenGeometry(screen_idx)
+    else:
+        screen = window.screen()
+        screen_geo = screen.geometry()
+
     geo = window.frameGeometry()
     geo.moveCenter(screen_geo.center())
     if geo.y() < screen_geo.y():
         geo.setY(screen_geo.y())
     window.move(geo.topLeft())
+
+
+def html_escape(text):
+    """Basic escape of html syntax symbols in text."""
+
+    return (
+        text
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+        .replace("'", "&#x27;")
+    )
 
 
 def set_style_property(widget, property_name, property_value):
@@ -61,6 +109,15 @@ def paint_image_with_color(image, color):
     pixmap.fill(QtCore.Qt.transparent)
 
     painter = QtGui.QPainter(pixmap)
+    render_hints = (
+        QtGui.QPainter.Antialiasing
+        | QtGui.QPainter.SmoothPixmapTransform
+    )
+    # Deprecated since 5.14
+    if hasattr(QtGui.QPainter, "HighQualityAntialiasing"):
+        render_hints |= QtGui.QPainter.HighQualityAntialiasing
+    painter.setRenderHints(render_hints)
+
     painter.setClipRegion(alpha_region)
     painter.setPen(QtCore.Qt.NoPen)
     painter.setBrush(color)
@@ -111,12 +168,22 @@ def get_qta_icon_by_name_and_color(icon_name, icon_color):
         variants.append("{0}.{1}".format(key, icon_name))
 
     icon = None
+    used_variant = None
     for variant in variants:
         try:
             icon = qtawesome.icon(variant, color=icon_color)
+            used_variant = variant
             break
         except Exception:
             pass
+
+    if used_variant is None:
+        log.info("Didn't find icon \"{}\"".format(icon_name))
+
+    elif used_variant != icon_name:
+        log.debug("Icon \"{}\" was not found \"{}\" is used instead".format(
+            icon_name, used_variant
+        ))
 
     SharedObjects.icons[full_icon_name] = icon
     return icon
@@ -135,20 +202,52 @@ def get_project_icon(project_doc):
 
 
 def get_asset_icon_name(asset_doc, has_children=True):
-    icon_name = asset_doc["data"].get("icon")
+    icon_name = get_asset_icon_name_from_doc(asset_doc)
     if icon_name:
         return icon_name
-
-    if has_children:
-        return "folder"
-    return "folder-o"
+    return get_default_asset_icon_name(has_children)
 
 
 def get_asset_icon_color(asset_doc):
-    icon_color = asset_doc["data"].get("color")
+    icon_color = get_asset_icon_color_from_doc(asset_doc)
     if icon_color:
         return icon_color
     return get_default_entity_icon_color()
+
+
+def get_default_asset_icon_name(has_children):
+    if has_children:
+        return "fa.folder"
+    return "fa.folder-o"
+
+
+def get_asset_icon_name_from_doc(asset_doc):
+    if asset_doc:
+        return asset_doc["data"].get("icon")
+    return None
+
+
+def get_asset_icon_color_from_doc(asset_doc):
+    if asset_doc:
+        return asset_doc["data"].get("color")
+    return None
+
+
+def get_asset_icon_by_name(icon_name, icon_color, has_children=False):
+    if not icon_name:
+        icon_name = get_default_asset_icon_name(has_children)
+
+    if icon_color:
+        icon_color = QtGui.QColor(icon_color)
+    else:
+        icon_color = get_default_entity_icon_color()
+    icon = get_qta_icon_by_name_and_color(icon_name, icon_color)
+    if icon is not None:
+        return icon
+    return get_qta_icon_by_name_and_color(
+        get_default_asset_icon_name(has_children),
+        icon_color
+    )
 
 
 def get_asset_icon(asset_doc, has_children=False):
@@ -296,7 +395,10 @@ def preserve_selection(tree_view, column=0, role=None, current_index=True):
         role = QtCore.Qt.DisplayRole
     model = tree_view.model()
     selection_model = tree_view.selectionModel()
-    flags = selection_model.Select | selection_model.Rows
+    flags = (
+        QtCore.QItemSelectionModel.Select
+        | QtCore.QItemSelectionModel.Rows
+    )
 
     if current_index:
         current_index_value = tree_view.currentIndex().data(role)
@@ -390,13 +492,14 @@ class FamilyConfigCache:
 
         self.family_configs.clear()
         # Skip if we're not in host context
-        if not avalon.api.registered_host():
+        if not registered_host():
             return
 
         # Update the icons from the project configuration
         project_name = os.environ.get("AVALON_PROJECT")
         asset_name = os.environ.get("AVALON_ASSET")
         task_name = os.environ.get("AVALON_TASK")
+        host_name = os.environ.get("AVALON_APP")
         if not all((project_name, asset_name, task_name)):
             return
 
@@ -410,15 +513,16 @@ class FamilyConfigCache:
             ["family_filter_profiles"]
         )
         if profiles:
-            asset_doc = self.dbcon.find_one(
-                {"type": "asset", "name": asset_name},
-                {"data.tasks": True}
-            )
+            # Make sure connection is installed
+            # - accessing attribute which does not have auto-install
+            asset_doc = get_asset_by_name(
+                project_name, asset_name, fields=["data.tasks"]
+            ) or {}
             tasks_info = asset_doc.get("data", {}).get("tasks") or {}
             task_type = tasks_info.get(task_name, {}).get("type")
             profiles_filter = {
                 "task_types": task_type,
-                "hosts": os.environ["AVALON_APP"]
+                "hosts": host_name
             }
             matching_item = filter_profiles(profiles, profiles_filter)
 
@@ -480,10 +584,7 @@ class GroupsConfig:
         project_name = self.dbcon.Session.get("AVALON_PROJECT")
         if project_name:
             # Get pre-defined group name and appearance from project config
-            project_doc = self.dbcon.find_one(
-                {"type": "project"},
-                projection={"config.groups": True}
-            )
+            project_doc = get_project(project_name, fields=["config.groups"])
 
             if project_doc:
                 group_configs = project_doc["config"].get("groups") or []
@@ -614,7 +715,11 @@ class DynamicQThread(QtCore.QThread):
 def create_qthread(func, *args, **kwargs):
     class Thread(QtCore.QThread):
         def run(self):
-            func(*args, **kwargs)
+            try:
+                func(*args, **kwargs)
+            except BaseException:
+                traceback.print_exception(*sys.exc_info())
+                raise
     return Thread()
 
 
@@ -707,11 +812,11 @@ def is_sync_loader(loader):
 
 
 def is_remove_site_loader(loader):
-    return hasattr(loader, "remove_site_on_representation")
+    return hasattr(loader, "is_remove_site_loader")
 
 
 def is_add_site_loader(loader):
-    return hasattr(loader, "add_site_to_representation")
+    return hasattr(loader, "is_add_site_loader")
 
 
 class WrappedCallbackItem:
@@ -788,8 +893,6 @@ def get_warning_pixmap(color=None):
     src_image_path = get_image_path("warning.png")
     src_image = QtGui.QImage(src_image_path)
     if color is None:
-        colors = get_objected_colors()
-        color_value = colors["delete-btn-bg"]
-        color = color_value.get_qcolor()
+        color = get_objected_colors("delete-btn-bg").get_qcolor()
 
     return paint_image_with_color(src_image, color)

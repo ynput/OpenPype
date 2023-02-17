@@ -1,5 +1,8 @@
-import avalon.api as api
+from bson.objectid import ObjectId
+
 import pyblish.api
+
+from openpype.pipeline import registered_host
 
 
 def collect_input_containers(nodes):
@@ -18,7 +21,7 @@ def collect_input_containers(nodes):
     lookup = frozenset(nodes)
 
     containers = []
-    host = api.registered_host()
+    host = registered_host()
     for container in host.ls():
 
         node = container["node"]
@@ -103,7 +106,7 @@ class CollectUpstreamInputs(pyblish.api.InstancePlugin):
             # If no valid output node is set then ignore it as validation
             # will be checking those cases.
             self.log.debug(
-                "No output node found, skipping " "collecting of inputs.."
+                "No output node found, skipping collecting of inputs.."
             )
             return
 
@@ -114,7 +117,7 @@ class CollectUpstreamInputs(pyblish.api.InstancePlugin):
         # Collect containers for the given set of nodes
         containers = collect_input_containers(nodes)
 
-        inputs = [c["representation"] for c in containers]
-        instance.data["inputs"] = inputs
+        inputs = [ObjectId(c["representation"]) for c in containers]
+        instance.data["inputRepresentations"] = inputs
 
         self.log.info("Collected inputs: %s" % inputs)

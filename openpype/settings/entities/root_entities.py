@@ -52,7 +52,6 @@ from openpype.settings.lib import (
     get_available_studio_project_settings_overrides_versions,
     get_available_studio_project_anatomy_overrides_versions,
 
-    find_environments,
     apply_overrides
 )
 
@@ -422,11 +421,6 @@ class RootEntity(BaseItemEntity):
         """
         pass
 
-    @abstractmethod
-    def _validate_defaults_to_save(self, value):
-        """Validate default values before save."""
-        pass
-
     def _save_default_values(self):
         """Save default values.
 
@@ -435,7 +429,6 @@ class RootEntity(BaseItemEntity):
         DEFAULTS.
         """
         settings_value = self.settings_value()
-        self._validate_defaults_to_save(settings_value)
 
         defaults_dir = self.defaults_dir()
         for file_path, value in settings_value.items():
@@ -604,37 +597,12 @@ class SystemSettings(RootEntity):
     def _save_studio_values(self):
         settings_value = self.settings_value()
 
-        self._validate_duplicated_env_group(settings_value)
-
         self.log.debug("Saving system settings: {}".format(
             json.dumps(settings_value, indent=4)
         ))
         save_studio_settings(settings_value)
         # Reset source version after restart
         self._source_version = None
-
-    def _validate_defaults_to_save(self, value):
-        """Valiations of default values before save."""
-        self._validate_duplicated_env_group(value)
-
-    def _validate_duplicated_env_group(self, value, override_state=None):
-        """ Validate duplicated environment groups.
-
-        Raises:
-            DuplicatedEnvGroups: When value contain duplicated env groups.
-        """
-        value = copy.deepcopy(value)
-        if override_state is None:
-            override_state = self._override_state
-
-        if override_state is OverrideState.STUDIO:
-            default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
-            final_value = apply_overrides(default_values, value)
-        else:
-            final_value = value
-
-        # Check if final_value contain duplicated environment groups
-        find_environments(final_value)
 
     def _save_project_values(self):
         """System settings can't have project overrides.
@@ -910,10 +878,6 @@ class ProjectSettings(RootEntity):
 
         if warnings:
             raise SaveWarningExc(warnings)
-
-    def _validate_defaults_to_save(self, value):
-        """Valiations of default values before save."""
-        pass
 
     def _validate_values_to_save(self, value):
         pass

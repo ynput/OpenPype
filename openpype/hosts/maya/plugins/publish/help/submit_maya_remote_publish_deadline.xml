@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Errors found</title>
+<description>
+## Publish process has errors
+
+At least one plugin failed before this plugin, job won't be sent to Deadline for processing before all issues are fixed.
+
+### How to repair?
+
+Check all failing plugins (should be highlighted in red) and fix issues if possible.
+</description>
+
+</error>
+</root>

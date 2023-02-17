@@ -2,8 +2,6 @@
 import os
 import shutil
 
-from openpype.pipeline import HOST_WORKFILE_EXTENSIONS
-
 from .lib import (
     ProcessContext,
     get_local_harmony_path,
@@ -16,7 +14,7 @@ save_disabled = False
 
 
 def file_extensions():
-    return HOST_WORKFILE_EXTENSIONS["harmony"]
+    return [".zip"]
 
 
 def has_unsaved_changes():

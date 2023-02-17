@@ -1,5 +1,8 @@
+import os
 import signal
 import time
+import tempfile
+import shutil
 import asyncio
 
 from openpype.hosts.tvpaint.api.communication_server import (
@@ -36,8 +39,28 @@ class TVPaintWorkerCommunicator(BaseCommunicator):
 
         super()._start_webserver()
 
+    def _open_init_file(self):
+        """Open init TVPaint file.
+
+        File triggers dialog missing path to audio file which must be closed
+        once and is ignored for rest of running process.
+        """
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        init_filepath = os.path.join(current_dir, "init_file.tvpp")
+        with tempfile.NamedTemporaryFile(
+            mode="w", prefix="a_tvp_", suffix=".tvpp"
+        ) as tmp_file:
+            tmp_filepath = tmp_file.name.replace("\\", "/")
+
+        shutil.copy(init_filepath, tmp_filepath)
+        george_script = "tv_LoadProject '\"'\"{}\"'\"'".format(tmp_filepath)
+        self.execute_george_through_file(george_script)
+        self.execute_george("tv_projectclose")
+        os.remove(tmp_filepath)
+
     def _on_client_connect(self, *args, **kwargs):
         super()._on_client_connect(*args, **kwargs)
+        self._open_init_file()
         # Register as "ready to work" worker
         self._worker_connection.register_as_worker()
 

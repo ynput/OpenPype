@@ -7,6 +7,8 @@ from abc import ABCMeta, abstractmethod
 import six
 
 import openpype.version
+from openpype.client.mongo import OpenPypeMongoConnection
+from openpype.client.entities import get_project_connection, get_project
 
 from .constants import (
     GLOBAL_SETTINGS_KEY,
@@ -20,8 +22,175 @@ from .constants import (
 )
 
 
+class SettingsStateInfo:
+    """Helper state information about some settings state.
+
+    Is used to hold information about last saved and last opened UI. Keep
+    information about the time when that happened and on which machine under
+    which user and on which openpype version.
+
+    To create currrent machine and time information use 'create_new' method.
+    """
+
+    timestamp_format = "%Y-%m-%d %H:%M:%S.%f"
+
+    def __init__(
+        self,
+        openpype_version,
+        settings_type,
+        project_name,
+        timestamp,
+        hostname,
+        hostip,
+        username,
+        system_name,
+        local_id
+    ):
+        self.openpype_version = openpype_version
+        self.settings_type = settings_type
+        self.project_name = project_name
+
+        timestamp_obj = None
+        if timestamp:
+            timestamp_obj = datetime.datetime.strptime(
+                timestamp, self.timestamp_format
+            )
+        self.timestamp = timestamp
+        self.timestamp_obj = timestamp_obj
+        self.hostname = hostname
+        self.hostip = hostip
+        self.username = username
+        self.system_name = system_name
+        self.local_id = local_id
+
+    def copy(self):
+        return self.from_data(self.to_data())
+
+    @classmethod
+    def create_new(
+        cls, openpype_version, settings_type=None, project_name=None
+    ):
+        """Create information about this machine for current time."""
+
+        from openpype.lib.pype_info import get_workstation_info
+
+        now = datetime.datetime.now()
+        workstation_info = get_workstation_info()
+
+        return cls(
+            openpype_version,
+            settings_type,
+            project_name,
+            now.strftime(cls.timestamp_format),
+            workstation_info["hostname"],
+            workstation_info["hostip"],
+            workstation_info["username"],
+            workstation_info["system_name"],
+            workstation_info["local_id"]
+        )
+
+    @classmethod
+    def from_data(cls, data):
+        """Create object from data."""
+
+        return cls(
+            data["openpype_version"],
+            data["settings_type"],
+            data["project_name"],
+            data["timestamp"],
+            data["hostname"],
+            data["hostip"],
+            data["username"],
+            data["system_name"],
+            data["local_id"]
+        )
+
+    def to_data(self):
+        data = self.to_document_data()
+        data.update({
+            "openpype_version": self.openpype_version,
+            "settings_type": self.settings_type,
+            "project_name": self.project_name
+        })
+        return data
+
+    @classmethod
+    def create_new_empty(cls, openpype_version, settings_type=None):
+        return cls(
+            openpype_version,
+            settings_type,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None
+        )
+
+    @classmethod
+    def from_document(cls, openpype_version, settings_type, document):
+        document = document or {}
+        project_name = document.get("project_name")
+        last_saved_info = document.get("last_saved_info")
+        if last_saved_info:
+            copy_last_saved_info = copy.deepcopy(last_saved_info)
+            copy_last_saved_info.update({
+                "openpype_version": openpype_version,
+                "settings_type": settings_type,
+                "project_name": project_name,
+            })
+            return cls.from_data(copy_last_saved_info)
+        return cls(
+            openpype_version,
+            settings_type,
+            project_name,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None
+        )
+
+    def to_document_data(self):
+        return {
+            "timestamp": self.timestamp,
+            "hostname": self.hostname,
+            "hostip": self.hostip,
+            "username": self.username,
+            "system_name": self.system_name,
+            "local_id": self.local_id,
+        }
+
+    def __eq__(self, other):
+        if not isinstance(other, SettingsStateInfo):
+            return False
+
+        if other.timestamp_obj != self.timestamp_obj:
+            return False
+
+        return (
+            self.openpype_version == other.openpype_version
+            and self.hostname == other.hostname
+            and self.hostip == other.hostip
+            and self.username == other.username
+            and self.system_name == other.system_name
+            and self.local_id == other.local_id
+        )
+
+
 @six.add_metaclass(ABCMeta)
-class SettingsHandler:
+class SettingsHandler(object):
+    global_keys = {
+        "openpype_path",
+        "admin_password",
+        "log_to_server",
+        "disk_mapping",
+        "production_version",
+        "staging_version"
+    }
+
     @abstractmethod
     def save_studio_settings(self, data):
         """Save studio overrides of system settings.
@@ -168,6 +337,19 @@ class SettingsHandler:
         """
         pass
 
+    @abstractmethod
+    def get_global_settings(self):
+        """Studio global settings available across versions.
+
+        Output must contain all keys from 'global_keys'. If value is not set
+        the output value should be 'None'.
+
+        Returns:
+            Dict[str, Any]: Global settings same across versions.
+        """
+
+        pass
+
     # Clear methods - per version
     # - clearing may be helpfull when a version settings were created for
     #   testing purposes
@@ -224,7 +406,7 @@ class SettingsHandler:
         """OpenPype versions that have any studio project anatomy overrides.
 
         Returns:
-            list<str>: OpenPype versions strings.
+            List[str]: OpenPype versions strings.
         """
         pass
 
@@ -235,7 +417,7 @@ class SettingsHandler:
         """OpenPype versions that have any studio project settings overrides.
 
         Returns:
-            list<str>: OpenPype versions strings.
+            List[str]: OpenPype versions strings.
         """
         pass
 
@@ -249,8 +431,87 @@ class SettingsHandler:
             project_name(str): Name of project.
 
         Returns:
-            list<str>: OpenPype versions strings.
+            List[str]: OpenPype versions strings.
         """
+
+        pass
+
+    @abstractmethod
+    def get_system_last_saved_info(self):
+        """State of last system settings overrides at the moment when called.
+
+        This method must provide most recent data so using cached data is not
+        the way.
+
+        Returns:
+            SettingsStateInfo: Information about system settings overrides.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_project_last_saved_info(self, project_name):
+        """State of last project settings overrides at the moment when called.
+
+        This method must provide most recent data so using cached data is not
+        the way.
+
+        Args:
+            project_name (Union[None, str]): Project name for which state
+                should be returned.
+
+        Returns:
+            SettingsStateInfo: Information about project settings overrides.
+        """
+
+        pass
+
+    # UI related calls
+    @abstractmethod
+    def get_last_opened_info(self):
+        """Get information about last opened UI.
+
+        Last opened UI is empty if there is noone who would have opened UI at
+        the moment when called.
+
+        Returns:
+            Union[None, SettingsStateInfo]: Information about machine who had
+                opened Settings UI.
+        """
+
+        pass
+
+    @abstractmethod
+    def opened_settings_ui(self):
+        """Callback called when settings UI is opened.
+
+        Information about this machine must be available when
+        'get_last_opened_info' is called from anywhere until
+        'closed_settings_ui' is called again.
+
+        Returns:
+            SettingsStateInfo: Object representing information about this
+                machine. Must be passed to 'closed_settings_ui' when finished.
+        """
+
+        pass
+
+    @abstractmethod
+    def closed_settings_ui(self, info_obj):
+        """Callback called when settings UI is closed.
+
+        From the moment this method is called the information about this
+        machine is removed and no more available when 'get_last_opened_info'
+        is called.
+
+        Callback should validate if this machine is still stored as opened ui
+        before changing any value.
+
+        Args:
+            info_obj (SettingsStateInfo): Object created when
+                'opened_settings_ui' was called.
+        """
+
         pass
 
 
@@ -283,19 +544,22 @@ class CacheValues:
         self.data = None
         self.creation_time = None
         self.version = None
+        self.last_saved_info = None
 
     def data_copy(self):
         if not self.data:
             return {}
         return copy.deepcopy(self.data)
 
-    def update_data(self, data, version=None):
+    def update_data(self, data, version):
         self.data = data
         self.creation_time = datetime.datetime.now()
-        if version is not None:
-            self.version = version
+        self.version = version
 
-    def update_from_document(self, document, version=None):
+    def update_last_saved_info(self, last_saved_info):
+        self.last_saved_info = last_saved_info
+
+    def update_from_document(self, document, version):
         data = {}
         if document:
             if "data" in document:
@@ -304,9 +568,9 @@ class CacheValues:
                 value = document["value"]
                 if value:
                     data = json.loads(value)
+
         self.data = data
-        if version is not None:
-            self.version = version
+        self.version = version
 
     def to_json_string(self):
         return json.dumps(self.data or {})
@@ -318,27 +582,18 @@ class CacheValues:
         delta = (datetime.datetime.now() - self.creation_time).seconds
         return delta > self.cache_lifetime
 
+    def set_outdated(self):
+        self.create_time = None
+
 
 class MongoSettingsHandler(SettingsHandler):
     """Settings handler that use mongo for storing and loading of settings."""
-    global_general_keys = (
-        "openpype_path",
-        "admin_password",
-        "disk_mapping",
-        "production_version",
-        "staging_version"
-    )
     key_suffix = "_versioned"
     _version_order_key = "versions_order"
     _all_versions_keys = "all_versions"
-    _production_versions_key = "production_versions"
-    _staging_versions_key = "staging_versions"
 
     def __init__(self):
         # Get mongo connection
-        from openpype.lib import OpenPypeMongoConnection
-        from avalon.api import AvalonMongoDB
-
         settings_collection = OpenPypeMongoConnection.get_mongo_client()
 
         self._anatomy_keys = None
@@ -361,8 +616,8 @@ class MongoSettingsHandler(SettingsHandler):
         self.collection_name = collection_name
 
         self.collection = settings_collection[database_name][collection_name]
-        self.avalon_db = AvalonMongoDB()
 
+        self.global_settings_cache = CacheValues()
         self.system_settings_cache = CacheValues()
         self.project_settings_cache = collections.defaultdict(CacheValues)
         self.project_anatomy_cache = collections.defaultdict(CacheValues)
@@ -396,6 +651,23 @@ class MongoSettingsHandler(SettingsHandler):
             self._prepare_project_settings_keys()
         return self._attribute_keys
 
+    def get_global_settings_doc(self):
+        if self.global_settings_cache.is_outdated:
+            global_settings_doc = self.collection.find_one({
+                "type": GLOBAL_SETTINGS_KEY
+            }) or {}
+            self.global_settings_cache.update_data(global_settings_doc, None)
+        return self.global_settings_cache.data_copy()
+
+    def get_global_settings(self):
+        global_settings_doc = self.get_global_settings_doc()
+        global_settings = global_settings_doc.get("data", {})
+        return {
+            key: global_settings[key]
+            for key in self.global_keys
+            if key in global_settings
+        }
+
     def _extract_global_settings(self, data):
         """Extract global settings data from system settings overrides.
 
@@ -412,7 +684,7 @@ class MongoSettingsHandler(SettingsHandler):
         general_data = data["general"]
 
         # Add predefined keys to global settings if are set
-        for key in self.global_general_keys:
+        for key in self.global_keys:
             if key not in general_data:
                 continue
             # Pop key from values
@@ -456,7 +728,7 @@ class MongoSettingsHandler(SettingsHandler):
         # Check if data contain any key from predefined keys
         any_key_found = False
         if globals_data:
-            for key in self.global_general_keys:
+            for key in self.global_keys:
                 if key in globals_data:
                     any_key_found = True
                     break
@@ -483,7 +755,7 @@ class MongoSettingsHandler(SettingsHandler):
             system_settings_data["general"] = system_general
 
         overridden_keys = system_general.get(M_OVERRIDDEN_KEY) or []
-        for key in self.global_general_keys:
+        for key in self.global_keys:
             if key not in globals_data:
                 continue
 
@@ -510,6 +782,14 @@ class MongoSettingsHandler(SettingsHandler):
         # Update cache
         self.system_settings_cache.update_data(data, self._current_version)
 
+        last_saved_info = SettingsStateInfo.create_new(
+            self._current_version,
+            SYSTEM_SETTINGS_KEY
+        )
+        self.system_settings_cache.update_last_saved_info(
+            last_saved_info
+        )
+
         # Get copy of just updated cache
         system_settings_data = self.system_settings_cache.data_copy()
 
@@ -517,20 +797,33 @@ class MongoSettingsHandler(SettingsHandler):
         global_settings = self._extract_global_settings(
             system_settings_data
         )
+        self.global_settings_cache.update_data(
+            global_settings,
+            None
+        )
+
+        system_settings_doc = self.collection.find_one(
+            {
+                "type": self._system_settings_key,
+                "version": self._current_version
+            },
+            {"_id": True}
+        )
 
         # Store system settings
-        self.collection.replace_one(
-            {
-                "type": self._system_settings_key,
-                "version": self._current_version
-            },
-            {
-                "type": self._system_settings_key,
-                "data": system_settings_data,
-                "version": self._current_version
-            },
-            upsert=True
-        )
+        new_system_settings_doc = {
+            "type": self._system_settings_key,
+            "version": self._current_version,
+            "data": system_settings_data,
+            "last_saved_info": last_saved_info.to_document_data()
+        }
+        if not system_settings_doc:
+            self.collection.insert_one(new_system_settings_doc)
+        else:
+            self.collection.update_one(
+                {"_id": system_settings_doc["_id"]},
+                {"$set": new_system_settings_doc}
+            )
 
         # Store global settings
         self.collection.replace_one(
@@ -563,8 +856,19 @@ class MongoSettingsHandler(SettingsHandler):
         data_cache = self.project_settings_cache[project_name]
         data_cache.update_data(overrides, self._current_version)
 
+        last_saved_info = SettingsStateInfo.create_new(
+            self._current_version,
+            PROJECT_SETTINGS_KEY,
+            project_name
+        )
+
+        data_cache.update_last_saved_info(last_saved_info)
+
         self._save_project_data(
-            project_name, self._project_settings_key, data_cache
+            project_name,
+            self._project_settings_key,
+            data_cache,
+            last_saved_info
         )
 
     def save_project_anatomy(self, project_name, anatomy_data):
@@ -582,8 +886,16 @@ class MongoSettingsHandler(SettingsHandler):
             self._save_project_anatomy_data(project_name, data_cache)
 
         else:
+            last_saved_info = SettingsStateInfo.create_new(
+                self._current_version,
+                PROJECT_ANATOMY_KEY,
+                project_name
+            )
             self._save_project_data(
-                project_name, self._project_anatomy_key, data_cache
+                project_name,
+                self._project_anatomy_key,
+                data_cache,
+                last_saved_info
             )
 
     @classmethod
@@ -606,16 +918,14 @@ class MongoSettingsHandler(SettingsHandler):
         new_data = data_cache.data_copy()
 
         # Prepare avalon project document
-        collection = self.avalon_db.database[project_name]
-        project_doc = collection.find_one({
-            "type": "project"
-        })
+        project_doc = get_project(project_name)
         if not project_doc:
             raise ValueError((
                 "Project document of project \"{}\" does not exists."
                 " Create project first."
             ).format(project_name))
 
+        collection = get_project_connection(project_name)
         # Project's data
         update_dict_data = {}
         project_doc_data = project_doc.get("data") or {}
@@ -666,28 +976,39 @@ class MongoSettingsHandler(SettingsHandler):
             {"$set": update_dict}
         )
 
-    def _save_project_data(self, project_name, doc_type, data_cache):
+    def _save_project_data(
+        self, project_name, doc_type, data_cache, last_saved_info
+    ):
         is_default = bool(project_name is None)
-        replace_filter = {
+        query_filter = {
             "type": doc_type,
             "is_default": is_default,
             "version": self._current_version
         }
-        replace_data = {
+
+        new_project_settings_doc = {
             "type": doc_type,
             "data": data_cache.data,
             "is_default": is_default,
-            "version": self._current_version
+            "version": self._current_version,
+            "last_saved_info": last_saved_info.to_data()
         }
-        if not is_default:
-            replace_filter["project_name"] = project_name
-            replace_data["project_name"] = project_name
 
-        self.collection.replace_one(
-            replace_filter,
-            replace_data,
-            upsert=True
+        if not is_default:
+            query_filter["project_name"] = project_name
+            new_project_settings_doc["project_name"] = project_name
+
+        project_settings_doc = self.collection.find_one(
+            query_filter,
+            {"_id": True}
         )
+        if project_settings_doc:
+            self.collection.update_one(
+                {"_id": project_settings_doc["_id"]},
+                {"$set": new_project_settings_doc}
+            )
+        else:
+            self.collection.insert_one(new_project_settings_doc)
 
     def _get_versions_order_doc(self, projection=None):
         # TODO cache
@@ -710,10 +1031,7 @@ class MongoSettingsHandler(SettingsHandler):
             return
         self._version_order_checked = True
 
-        from openpype.lib.openpype_version import (
-            get_OpenPypeVersion,
-            is_running_staging
-        )
+        from openpype.lib.openpype_version import get_OpenPypeVersion
 
         OpenPypeVersion = get_OpenPypeVersion()
         # Skip if 'OpenPypeVersion' is not available
@@ -725,25 +1043,11 @@ class MongoSettingsHandler(SettingsHandler):
         if not doc:
             doc = {"type": self._version_order_key}
 
-        if self._production_versions_key not in doc:
-            doc[self._production_versions_key] = []
-
-        if self._staging_versions_key not in doc:
-            doc[self._staging_versions_key] = []
-
         if self._all_versions_keys not in doc:
             doc[self._all_versions_keys] = []
 
-        if is_running_staging():
-            versions_key = self._staging_versions_key
-        else:
-            versions_key = self._production_versions_key
-
         # Skip if current version is already available
-        if (
-            self._current_version in doc[self._all_versions_keys]
-            and self._current_version in doc[versions_key]
-        ):
+        if self._current_version in doc[self._all_versions_keys]:
             return
 
         if self._current_version not in doc[self._all_versions_keys]:
@@ -758,18 +1062,6 @@ class MongoSettingsHandler(SettingsHandler):
 
             doc[self._all_versions_keys] = [
                 str(version) for version in sorted(all_objected_versions)
-            ]
-
-        if self._current_version not in doc[versions_key]:
-            objected_versions = [
-                OpenPypeVersion(version=self._current_version)
-            ]
-            for version_str in doc[versions_key]:
-                objected_versions.append(OpenPypeVersion(version=version_str))
-
-            # Update versions list and push changes to Mongo
-            doc[versions_key] = [
-                str(version) for version in sorted(objected_versions)
             ]
 
         self.collection.replace_one(
@@ -1011,28 +1303,21 @@ class MongoSettingsHandler(SettingsHandler):
     def get_studio_system_settings_overrides(self, return_version):
         """Studio overrides of system settings."""
         if self.system_settings_cache.is_outdated:
-            globals_document = self.collection.find_one({
-                "type": GLOBAL_SETTINGS_KEY
-            })
-            document = (
-                self._get_studio_system_settings_overrides_for_version()
+            globals_document = self.get_global_settings_doc()
+            document, version = self._get_system_settings_overrides_doc()
+
+            last_saved_info = SettingsStateInfo.from_document(
+                version, SYSTEM_SETTINGS_KEY, document
             )
-            if document is None:
-                document = self._find_closest_system_settings()
-
-            version = None
-            if document:
-                if document["type"] == self._system_settings_key:
-                    version = document["version"]
-                else:
-                    version = LEGACY_SETTINGS_VERSION
-
             merged_document = self._apply_global_settings(
                 document, globals_document
             )
 
             self.system_settings_cache.update_from_document(
                 merged_document, version
+            )
+            self.system_settings_cache.update_last_saved_info(
+                last_saved_info
             )
 
         cache = self.system_settings_cache
@@ -1041,23 +1326,42 @@ class MongoSettingsHandler(SettingsHandler):
             return data, cache.version
         return data
 
+    def _get_system_settings_overrides_doc(self):
+        document = (
+            self._get_studio_system_settings_overrides_for_version()
+        )
+        if document is None:
+            document = self._find_closest_system_settings()
+
+        version = None
+        if document:
+            if document["type"] == self._system_settings_key:
+                version = document["version"]
+            else:
+                version = LEGACY_SETTINGS_VERSION
+
+        return document, version
+
+    def get_system_last_saved_info(self):
+        # Make sure settings are recaches
+        self.system_settings_cache.set_outdated()
+        self.get_studio_system_settings_overrides(False)
+
+        return self.system_settings_cache.last_saved_info.copy()
+
     def _get_project_settings_overrides(self, project_name, return_version):
         if self.project_settings_cache[project_name].is_outdated:
-            document = self._get_project_settings_overrides_for_version(
+            document, version = self._get_project_settings_overrides_doc(
                 project_name
             )
-            if document is None:
-                document = self._find_closest_project_settings(project_name)
-
-            version = None
-            if document:
-                if document["type"] == self._project_settings_key:
-                    version = document["version"]
-                else:
-                    version = LEGACY_SETTINGS_VERSION
-
             self.project_settings_cache[project_name].update_from_document(
                 document, version
+            )
+            last_saved_info = SettingsStateInfo.from_document(
+                version, PROJECT_SETTINGS_KEY, document
+            )
+            self.project_settings_cache[project_name].update_last_saved_info(
+                last_saved_info
             )
 
         cache = self.project_settings_cache[project_name]
@@ -1065,6 +1369,29 @@ class MongoSettingsHandler(SettingsHandler):
         if return_version:
             return data, cache.version
         return data
+
+    def _get_project_settings_overrides_doc(self, project_name):
+        document = self._get_project_settings_overrides_for_version(
+            project_name
+        )
+        if document is None:
+            document = self._find_closest_project_settings(project_name)
+
+        version = None
+        if document:
+            if document["type"] == self._project_settings_key:
+                version = document["version"]
+            else:
+                version = LEGACY_SETTINGS_VERSION
+
+        return document, version
+
+    def get_project_last_saved_info(self, project_name):
+        # Make sure settings are recaches
+        self.project_settings_cache[project_name].set_outdated()
+        self._get_project_settings_overrides(project_name, False)
+
+        return self.project_settings_cache[project_name].last_saved_info.copy()
 
     def get_studio_project_settings_overrides(self, return_version):
         """Studio overrides of default project settings."""
@@ -1143,9 +1470,9 @@ class MongoSettingsHandler(SettingsHandler):
                 self.project_anatomy_cache[project_name].update_from_document(
                     document, version
                 )
+
             else:
-                collection = self.avalon_db.database[project_name]
-                project_doc = collection.find_one({"type": "project"})
+                project_doc = get_project(project_name)
                 self.project_anatomy_cache[project_name].update_data(
                     self.project_doc_to_anatomy_data(project_doc),
                     self._current_version
@@ -1363,6 +1690,64 @@ class MongoSettingsHandler(SettingsHandler):
             return output
         return self._sort_versions(output)
 
+    def get_last_opened_info(self):
+        doc = self.collection.find_one({
+            "type": "last_opened_settings_ui",
+            "version": self._current_version
+        }) or {}
+        info_data = doc.get("info")
+        if not info_data:
+            return None
+
+        # Fill not available information
+        info_data["openpype_version"] = self._current_version
+        info_data["settings_type"] = None
+        info_data["project_name"] = None
+        return SettingsStateInfo.from_data(info_data)
+
+    def opened_settings_ui(self):
+        doc_filter = {
+            "type": "last_opened_settings_ui",
+            "version": self._current_version
+        }
+
+        opened_info = SettingsStateInfo.create_new(self._current_version)
+        new_doc_data = copy.deepcopy(doc_filter)
+        new_doc_data["info"] = opened_info.to_document_data()
+
+        doc = self.collection.find_one(
+            doc_filter,
+            {"_id": True}
+        )
+        if doc:
+            self.collection.update_one(
+                {"_id": doc["_id"]},
+                {"$set": new_doc_data}
+            )
+        else:
+            self.collection.insert_one(new_doc_data)
+        return opened_info
+
+    def closed_settings_ui(self, info_obj):
+        doc_filter = {
+            "type": "last_opened_settings_ui",
+            "version": self._current_version
+        }
+        doc = self.collection.find_one(doc_filter) or {}
+        info_data = doc.get("info")
+        if not info_data:
+            return
+
+        info_data["openpype_version"] = self._current_version
+        info_data["settings_type"] = None
+        info_data["project_name"] = None
+        current_info = SettingsStateInfo.from_data(info_data)
+        if current_info == info_obj:
+            self.collection.update_one(
+                {"_id": doc["_id"]},
+                {"$set": {"info": None}}
+            )
+
 
 class MongoLocalSettingsHandler(LocalSettingsHandler):
     """Settings handler that use mongo for store and load local settings.
@@ -1409,7 +1794,7 @@ class MongoLocalSettingsHandler(LocalSettingsHandler):
         """
         data = data or {}
 
-        self.local_settings_cache.update_data(data)
+        self.local_settings_cache.update_data(data, None)
 
         self.collection.replace_one(
             {
@@ -1432,6 +1817,6 @@ class MongoLocalSettingsHandler(LocalSettingsHandler):
                 "site_id": self.local_site_id
             })
 
-            self.local_settings_cache.update_from_document(document)
+            self.local_settings_cache.update_from_document(document, None)
 
         return self.local_settings_cache.data_copy()

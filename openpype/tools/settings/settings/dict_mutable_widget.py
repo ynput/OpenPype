@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore
 
 from .base import BaseWidget
 from .lib import (
@@ -464,10 +464,6 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
         self.entity_widget.change_key(key, self)
         self.update_style()
-
-    @property
-    def value_is_env_group(self):
-        return self.entity_widget.value_is_env_group
 
     def update_key_label(self):
         if not self.collapsible_key:

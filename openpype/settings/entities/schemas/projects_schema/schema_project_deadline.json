@@ -33,6 +33,24 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "CollectDeadlinePools",
+                    "label": "Default Deadline Pools",
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "primary_pool",
+                            "label": "Primary Pool"
+                        },
+                        {
+                            "type": "text",
+                            "key": "secondary_pool",
+                            "label": "Secondary Pool"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "ValidateExpectedFiles",
                     "label": "Validate Expected Files",
                     "checkbox_key": "enabled",
@@ -114,8 +132,23 @@
                         },
                         {
                             "type": "boolean",
+                            "key": "import_reference",
+                            "label": "Use Scene with Imported Reference"
+                        },
+                        {
+                            "type": "boolean",
                             "key": "asset_dependencies",
                             "label": "Use Asset dependencies"
+                        },
+                        {
+                            "type": "number",
+                            "key": "priority",
+                            "label": "Priority"
+                        },
+                        {
+                            "type": "number",
+                            "key": "tile_priority",
+                            "label": "Tile Assembler Priority"
                         },
                         {
                             "type": "text",
@@ -162,6 +195,12 @@
                                 ]
 
                             }
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "strict_error_checking",
+                            "label": "Strict Error Checking",
+                            "default": true
                         }
                     ]
                 },
@@ -193,6 +232,9 @@
                             "label": "Use Published scene"
                         },
                         {
+                            "type": "splitter"
+                        },
+                        {
                             "type": "number",
                             "key": "priority",
                             "label": "Priority"
@@ -203,19 +245,20 @@
                             "label": "Chunk Size"
                         },
                         {
-                            "type": "text",
-                            "key": "primary_pool",
-                            "label": "Primary Pool"
+                            "type": "number",
+                            "key": "concurrent_tasks",
+                            "label": "Number of concurrent tasks"
                         },
                         {
-                            "type": "text",
-                            "key": "secondary_pool",
-                            "label": "Secondary Pool"
+                            "type": "splitter"
                         },
                         {
                             "type": "text",
                             "key": "group",
                             "label": "Group"
+                        },
+                        {
+                            "type": "splitter"
                         },
                         {
                             "type": "text",
@@ -291,16 +334,6 @@
                         },
                         {
                             "type": "text",
-                            "key": "primary_pool",
-                            "label": "Primary Pool"
-                        },
-                        {
-                            "type": "text",
-                            "key": "secondary_pool",
-                            "label": "Secondary Pool"
-                        },
-                        {
-                            "type": "text",
                             "key": "group",
                             "label": "Group"
                         },
@@ -350,16 +383,6 @@
                         },
                         {
                             "type": "text",
-                            "key": "primary_pool",
-                            "label": "Primary Pool"
-                        },
-                        {
-                            "type": "text",
-                            "key": "secondary_pool",
-                            "label": "Secondary Pool"
-                        },
-                        {
-                            "type": "text",
                             "key": "group",
                             "label": "Group"
                         },
@@ -372,6 +395,56 @@
                             "type": "boolean",
                             "key": "multiprocess",
                             "label": "Multiprocess"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "CelactionSubmitDeadline",
+                    "label": "Celaction Submit Deadline",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_department",
+                            "label": "Deadline apartment"
+                        },
+                        {
+                            "type": "number",
+                            "key": "deadline_priority",
+                            "label": "Deadline priority"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_pool",
+                            "label": "Deadline pool"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_pool_secondary",
+                            "label": "Deadline pool (secondary)"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_group",
+                            "label": "Deadline Group"
+                        },
+                        {
+                            "type": "number",
+                            "key": "deadline_chunk_size",
+                            "label": "Deadline Chunk size"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_job_delay",
+                            "label": "Delay job (timecode dd:hh:mm:ss)"
                         }
                     ]
                 },

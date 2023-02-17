@@ -40,6 +40,7 @@ class Server(threading.Thread):
 
         # Create a TCP/IP socket
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         # Bind the socket to the port
         server_address = ("127.0.0.1", port)
@@ -88,21 +89,31 @@ class Server(threading.Thread):
         """
         current_time = time.time()
         while True:
-
+            self.log.info("wait ttt")
             # Receive the data in small chunks and retransmit it
             request = None
-            header = self.connection.recv(6)
+            try:
+                header = self.connection.recv(10)
+            except OSError:
+                # could happen on MacOS
+                self.log.info("")
+                break
+
             if len(header) == 0:
                 # null data received, socket is closing.
                 self.log.info(f"[{self.timestamp()}] Connection closing.")
                 break
+
             if header[0:2] != b"AH":
                 self.log.error("INVALID HEADER")
-            length = struct.unpack(">I", header[2:])[0]
+            content_length_str = header[2:].decode()
+
+            length = int(content_length_str, 16)
             data = self.connection.recv(length)
             while (len(data) < length):
                 # we didn't received everything in first try, lets wait for
                 # all data.
+                self.log.info("loop")
                 time.sleep(0.1)
                 if self.connection is None:
                     self.log.error(f"[{self.timestamp()}] "
@@ -113,7 +124,7 @@ class Server(threading.Thread):
                     break
 
                 data += self.connection.recv(length - len(data))
-
+            self.log.debug("data:: {} {}".format(data, type(data)))
             self.received += data.decode("utf-8")
             pretty = self._pretty(self.received)
             self.log.debug(

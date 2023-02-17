@@ -1,7 +1,7 @@
 import copy
 import time
 import collections
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
 from openpype.tools.flickcharm import FlickCharm
@@ -173,7 +173,7 @@ class ActionBar(QtWidgets.QWidget):
         view.setResizeMode(QtWidgets.QListView.Adjust)
         view.setSelectionMode(QtWidgets.QListView.NoSelection)
         view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        view.setEditTriggers(QtWidgets.QListView.NoEditTriggers)
+        view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         view.setWrapping(True)
         view.setGridSize(QtCore.QSize(70, 75))
         view.setIconSize(QtCore.QSize(30, 30))
@@ -312,11 +312,12 @@ class ActionBar(QtWidgets.QWidget):
 
         is_group = index.data(GROUP_ROLE)
         is_variant_group = index.data(VARIANT_GROUP_ROLE)
+        force_not_open_workfile = index.data(FORCE_NOT_OPEN_WORKFILE_ROLE)
         if not is_group and not is_variant_group:
             action = index.data(ACTION_ROLE)
             # Change data of application action
             if issubclass(action, ApplicationAction):
-                if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
+                if force_not_open_workfile:
                     action.data["start_last_workfile"] = False
                 else:
                     action.data.pop("start_last_workfile", None)
@@ -385,10 +386,18 @@ class ActionBar(QtWidgets.QWidget):
                 menu.addMenu(sub_menu)
 
         result = menu.exec_(QtGui.QCursor.pos())
-        if result:
-            action = actions_mapping[result]
-            self._start_animation(index)
-            self.action_clicked.emit(action)
+        if not result:
+            return
+
+        action = actions_mapping[result]
+        if issubclass(action, ApplicationAction):
+            if force_not_open_workfile:
+                action.data["start_last_workfile"] = False
+            else:
+                action.data.pop("start_last_workfile", None)
+
+        self._start_animation(index)
+        self.action_clicked.emit(action)
 
 
 class ActionHistory(QtWidgets.QPushButton):
@@ -414,7 +423,7 @@ class ActionHistory(QtWidgets.QPushButton):
             return
 
         widget = QtWidgets.QListWidget()
-        widget.setSelectionMode(widget.NoSelection)
+        widget.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         widget.setStyleSheet("""
         * {
             font-family: "Courier New";

@@ -6,29 +6,46 @@ from .workio import (
     current_file,
     work_root,
 )
-
 from .command import (
-    reset_frame_range,
-    get_handles,
-    reset_resolution,
     viewer_update_and_undo_stop
 )
-
-from .plugin import OpenPypeCreator
+from .plugin import (
+    NukeCreator,
+    NukeWriteCreator,
+    NukeCreatorError,
+    OpenPypeCreator,
+    get_instance_group_node_childs,
+    get_colorspace_from_node
+)
 from .pipeline import (
-    install,
-    uninstall,
+    NukeHost,
 
     ls,
+
+    list_instances,
+    remove_instance,
+    select_instance,
 
     containerise,
     parse_container,
     update_container,
+
+    get_workfile_build_placeholder_plugins,
 )
 from .lib import (
-    maintained_selection
+    INSTANCE_DATA_KNOB,
+    ROOT_DATA_KNOB,
+    maintained_selection,
+    reset_selection,
+    select_nodes,
+    get_view_process_node,
+    duplicate_node,
+    convert_knob_value_to_correct_type,
+    get_node_data,
+    set_node_data,
+    update_node_data,
+    create_write_node
 )
-
 from .utils import (
     colorspace_exists_on_node,
     get_colorspace_list
@@ -42,22 +59,40 @@ __all__ = (
     "current_file",
     "work_root",
 
-    "reset_frame_range",
-    "get_handles",
-    "reset_resolution",
     "viewer_update_and_undo_stop",
 
+    "NukeCreator",
+    "NukeWriteCreator",
+    "NukeCreatorError",
     "OpenPypeCreator",
-    "install",
-    "uninstall",
+    "NukeHost",
+    "get_instance_group_node_childs",
+    "get_colorspace_from_node",
 
     "ls",
+
+    "list_instances",
+    "remove_instance",
+    "select_instance",
 
     "containerise",
     "parse_container",
     "update_container",
 
+    "get_workfile_build_placeholder_plugins",
+
+    "INSTANCE_DATA_KNOB",
+    "ROOT_DATA_KNOB",
     "maintained_selection",
+    "reset_selection",
+    "select_nodes",
+    "get_view_process_node",
+    "duplicate_node",
+    "convert_knob_value_to_correct_type",
+    "get_node_data",
+    "set_node_data",
+    "update_node_data",
+    "create_write_node",
 
     "colorspace_exists_on_node",
     "get_colorspace_list"

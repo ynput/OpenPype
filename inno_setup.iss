@@ -18,7 +18,8 @@ AppPublisher=Orbi Tools s.r.o
 AppPublisherURL=http://pype.club
 AppSupportURL=http://pype.club
 AppUpdatesURL=http://pype.club
-DefaultDirName={autopf}\{#MyAppName}
+DefaultDirName={autopf}\{#MyAppName}\{#AppVer}
+UsePreviousAppDir=no
 DisableProgramGroupPage=yes
 OutputBaseFilename={#MyAppName}-{#AppVer}-install
 AllowCancelDuringInstall=yes
@@ -27,7 +28,7 @@ AllowCancelDuringInstall=yes
 PrivilegesRequiredOverridesAllowed=dialog
 SetupIconFile=igniter\openpype.ico
 OutputDir=build\
-Compression=lzma
+Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 
@@ -37,13 +38,18 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
+[InstallDelete]
+; clean everything in previous installation folder
+Type: filesandordirs; Name: "{app}\*"
+
+
 [Files]
 Source: "build\{#build}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\openpype_gui.exe"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\openpype_gui.exe"; Tasks: desktopicon
+Name: "{autoprograms}\{#MyAppName} {#AppVer}"; Filename: "{app}\openpype_gui.exe"
+Name: "{autodesktop}\{#MyAppName} {#AppVer}"; Filename: "{app}\openpype_gui.exe"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\openpype_gui.exe"; Description: "{cm:LaunchProgram,OpenPype}"; Flags: nowait postinstall skipifsilent

@@ -1,5 +1,8 @@
 """Loads publishing context from json and continues in publish process.
 
+Should run before 'CollectAnatomyContextData' so the user on context is
+changed before it's stored to context anatomy data or instance anatomy data.
+
 Requires:
     anatomy -> context["anatomy"] *(pyblish.api.CollectorOrder - 0.11)
 
@@ -13,7 +16,7 @@ import os
 import pyblish.api
 
 
-class CollectUsername(pyblish.api.ContextPlugin):
+class CollectUsernameForWebpublish(pyblish.api.ContextPlugin):
     """
         Translates user email to Ftrack username.
 
@@ -32,10 +35,8 @@ class CollectUsername(pyblish.api.ContextPlugin):
     hosts = ["webpublisher", "photoshop"]
     targets = ["remotepublish", "filespublish", "tvpaint_worker"]
 
-    _context = None
-
     def process(self, context):
-        self.log.info("CollectUsername")
+        self.log.info("{}".format(self.__class__.__name__))
         os.environ["FTRACK_API_USER"] = os.environ["FTRACK_BOT_API_USER"]
         os.environ["FTRACK_API_KEY"] = os.environ["FTRACK_BOT_API_KEY"]
 
@@ -54,12 +55,14 @@ class CollectUsername(pyblish.api.ContextPlugin):
             return
 
         session = ftrack_api.Session(auto_connect_event_hub=False)
-        user = session.query("User where email like '{}'".format(user_email))
+        user = session.query(
+            "User where email like '{}'".format(user_email)
+        ).first()
 
         if not user:
             raise ValueError(
                 "Couldn't find user with {} email".format(user_email))
-        user = user[0]
+
         username = user.get("username")
         self.log.debug("Resolved ftrack username:: {}".format(username))
         os.environ["FTRACK_API_USER"] = username
@@ -67,5 +70,4 @@ class CollectUsername(pyblish.api.ContextPlugin):
         burnin_name = username
         if '@' in burnin_name:
             burnin_name = burnin_name[:burnin_name.index('@')]
-        os.environ["WEBPUBLISH_OPENPYPE_USERNAME"] = burnin_name
         context.data["user"] = burnin_name

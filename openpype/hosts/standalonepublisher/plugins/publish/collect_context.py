@@ -19,7 +19,8 @@ import copy
 from pprint import pformat
 import clique
 import pyblish.api
-from avalon import io
+
+from openpype.pipeline import legacy_io
 
 
 class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
@@ -37,7 +38,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
     def process(self, context):
         # get json paths from os and load them
-        io.install()
+        legacy_io.install()
 
         # get json file context
         input_json_path = os.environ.get("SAPUBLISH_INPATH")
@@ -247,7 +248,8 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 self.log.debug("collecting sequence: {}".format(collections))
                 instance.data["frameStart"] = int(component["frameStart"])
                 instance.data["frameEnd"] = int(component["frameEnd"])
-                instance.data["fps"] = int(component["fps"])
+                if component.get("fps"):
+                    instance.data["fps"] = int(component["fps"])
 
             ext = component["ext"]
             if ext.startswith("."):

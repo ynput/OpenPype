@@ -42,9 +42,9 @@ def get_image_avalon_container():
 
 
 class ImageLoader(load.LoaderPlugin):
-    """Specific loader of Alembic for the avalon.animation family"""
+    """Load images into COP2"""
 
-    families = ["colorbleed.imagesequence"]
+    families = ["imagesequence"]
     label = "Load Image (COP2)"
     representations = ["*"]
     order = -10
@@ -73,7 +73,7 @@ class ImageLoader(load.LoaderPlugin):
 
         # Imprint it manually
         data = {
-            "schema": "avalon-core:container-2.0",
+            "schema": "openpype:container-2.0",
             "id": AVALON_CONTAINER_ID,
             "name": node_name,
             "namespace": namespace,

@@ -2,7 +2,7 @@
 """Package for handling pype command line arguments."""
 import os
 import sys
-
+import code
 import click
 
 # import sys
@@ -16,17 +16,28 @@ from .pype_commands import PypeCommands
 @click.option("--use-staging", is_flag=True,
               expose_value=False, help="use staging variants")
 @click.option("--list-versions", is_flag=True, expose_value=False,
-              help=("list all detected versions. Use With `--use-staging "
-                    "to list staging versions."))
+              help="list all detected versions.")
 @click.option("--validate-version", expose_value=False,
               help="validate given version integrity")
+@click.option("--debug", is_flag=True, expose_value=False,
+              help="Enable debug")
+@click.option("--verbose", expose_value=False,
+              help=("Change OpenPype log level (debug - critical or 0-50)"))
+@click.option("--automatic-tests", is_flag=True, expose_value=False,
+              help=("Run in automatic tests mode"))
 def main(ctx):
     """Pype is main command serving as entry point to pipeline system.
 
     It wraps different commands together.
     """
+
     if ctx.invoked_subcommand is None:
-        ctx.invoke(tray)
+        # Print help if headless mode is used
+        if os.environ.get("OPENPYPE_HEADLESS_MODE") == "1":
+            print(ctx.get_help())
+            sys.exit(0)
+        else:
+            ctx.invoke(tray)
 
 
 @main.command()
@@ -37,30 +48,13 @@ def settings(dev):
 
 
 @main.command()
-def standalonepublisher():
-    """Show Pype Standalone publisher UI."""
-    PypeCommands().launch_standalone_publisher()
-
-
-@main.command()
-def traypublisher():
-    """Show new OpenPype Standalone publisher UI."""
-    PypeCommands().launch_traypublisher()
-
-
-@main.command()
-@click.option("-d", "--debug",
-              is_flag=True, help=("Run pype tray in debug mode"))
-def tray(debug=False):
+def tray():
     """Launch pype tray.
 
     Default action of pype command is to launch tray widget to control basic
     aspects of pype. See documentation for more information.
-
-    Running pype with `--debug` will result in lot of information useful for
-    debugging to be shown in console.
     """
-    PypeCommands().launch_tray(debug)
+    PypeCommands().launch_tray()
 
 
 @PypeCommands.add_modules
@@ -75,7 +69,6 @@ def module(ctx):
 
 
 @main.command()
-@click.option("-d", "--debug", is_flag=True, help="Print debug messages")
 @click.option("--ftrack-url", envvar="FTRACK_SERVER",
               help="Ftrack server url")
 @click.option("--ftrack-user", envvar="FTRACK_API_USER",
@@ -88,8 +81,7 @@ def module(ctx):
               help="Clockify API key.")
 @click.option("--clockify-workspace", envvar="CLOCKIFY_WORKSPACE",
               help="Clockify workspace")
-def eventserver(debug,
-                ftrack_url,
+def eventserver(ftrack_url,
                 ftrack_user,
                 ftrack_api_key,
                 legacy,
@@ -100,8 +92,6 @@ def eventserver(debug,
     This should be ideally used by system service (such us systemd or upstart
     on linux and window service).
     """
-    if debug:
-        os.environ["OPENPYPE_DEBUG"] = "1"
 
     PypeCommands().launch_eventservercli(
         ftrack_url,
@@ -114,12 +104,11 @@ def eventserver(debug,
 
 
 @main.command()
-@click.option("-d", "--debug", is_flag=True, help="Print debug messages")
 @click.option("-h", "--host", help="Host", default=None)
 @click.option("-p", "--port", help="Port", default=None)
 @click.option("-e", "--executable", help="Executable")
 @click.option("-u", "--upload_dir", help="Upload dir")
-def webpublisherwebserver(debug, executable, upload_dir, host=None, port=None):
+def webpublisherwebserver(executable, upload_dir, host=None, port=None):
     """Starts webserver for communication with Webpublish FR via command line
 
         OP must be congigured on a machine, eg. OPENPYPE_MONGO filled AND
@@ -127,8 +116,6 @@ def webpublisherwebserver(debug, executable, upload_dir, host=None, port=None):
 
         Expect "pype.club" user created on Ftrack.
     """
-    if debug:
-        os.environ["OPENPYPE_DEBUG"] = "1"
 
     PypeCommands().launch_webpublisher_webservercli(
         upload_dir=upload_dir,
@@ -164,38 +151,34 @@ def extractenvironments(output_json_path, project, asset, task, app, envgroup):
 
 @main.command()
 @click.argument("paths", nargs=-1)
-@click.option("-d", "--debug", is_flag=True, help="Print debug messages")
 @click.option("-t", "--targets", help="Targets module", default=None,
               multiple=True)
 @click.option("-g", "--gui", is_flag=True,
               help="Show Publish UI", default=False)
-def publish(debug, paths, targets, gui):
+def publish(paths, targets, gui):
     """Start CLI publishing.
 
     Publish collects json from paths provided as an argument.
     More than one path is allowed.
     """
-    if debug:
-        os.environ["OPENPYPE_DEBUG"] = "1"
+
     PypeCommands.publish(list(paths), targets, gui)
 
 
 @main.command()
 @click.argument("path")
-@click.option("-d", "--debug", is_flag=True, help="Print debug messages")
 @click.option("-h", "--host", help="Host")
 @click.option("-u", "--user", help="User email address")
 @click.option("-p", "--project", help="Project")
 @click.option("-t", "--targets", help="Targets", default=None,
               multiple=True)
-def remotepublishfromapp(debug, project, path, host, user=None, targets=None):
+def remotepublishfromapp(project, path, host, user=None, targets=None):
     """Start CLI publishing.
 
     Publish collects json from paths provided as an argument.
     More than one path is allowed.
     """
-    if debug:
-        os.environ["OPENPYPE_DEBUG"] = "1"
+
     PypeCommands.remotepublishfromapp(
         project, path, host, user, targets=targets
     )
@@ -203,24 +186,21 @@ def remotepublishfromapp(debug, project, path, host, user=None, targets=None):
 
 @main.command()
 @click.argument("path")
-@click.option("-d", "--debug", is_flag=True, help="Print debug messages")
 @click.option("-u", "--user", help="User email address")
 @click.option("-p", "--project", help="Project")
 @click.option("-t", "--targets", help="Targets", default=None,
               multiple=True)
-def remotepublish(debug, project, path, user=None, targets=None):
+def remotepublish(project, path, user=None, targets=None):
     """Start CLI publishing.
 
     Publish collects json from paths provided as an argument.
     More than one path is allowed.
     """
-    if debug:
-        os.environ["OPENPYPE_DEBUG"] = "1"
+
     PypeCommands.remotepublish(project, path, user, targets=targets)
 
 
 @main.command()
-@click.option("-d", "--debug", is_flag=True, help="Print debug messages")
 @click.option("-p", "--project", required=True,
               help="name of project asset is under")
 @click.option("-a", "--asset", required=True,
@@ -228,7 +208,7 @@ def remotepublish(debug, project, path, user=None, targets=None):
 @click.option("--path", required=True,
               help="path where textures are found",
               type=click.Path(exists=True))
-def texturecopy(debug, project, asset, path):
+def texturecopy(project, asset, path):
     """Copy specified textures to provided asset path.
 
     It validates if project and asset exists. Then it will use speedcopy to
@@ -239,8 +219,7 @@ def texturecopy(debug, project, asset, path):
     Result will be copied without directory structure so it will be flat then.
     Nothing is written to database.
     """
-    if debug:
-        os.environ["OPENPYPE_DEBUG"] = "1"
+
     PypeCommands().texture_copy(project, asset, path)
 
 
@@ -303,6 +282,13 @@ def launch(app, project, asset, task,
 @main.command(context_settings={"ignore_unknown_options": True})
 def projectmanager():
     PypeCommands().launch_project_manager()
+
+
+@main.command(context_settings={"ignore_unknown_options": True})
+def publish_report_viewer():
+    from openpype.tools.publisher.publish_report_viewer import main
+
+    sys.exit(main())
 
 
 @main.command()
@@ -389,11 +375,9 @@ def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant,
 
 
 @main.command()
-@click.option("-d", "--debug",
-              is_flag=True, help=("Run process in debug mode"))
 @click.option("-a", "--active_site", required=True,
               help="Name of active stie")
-def syncserver(debug, active_site):
+def syncserver(active_site):
     """Run sync site server in background.
 
         Some Site Sync use cases need to expose site to another one.
@@ -408,8 +392,7 @@ def syncserver(debug, active_site):
         Settings (configured by starting OP Tray with env
         var OPENPYPE_LOCAL_ID set to 'active_site'.
     """
-    if debug:
-        os.environ["OPENPYPE_DEBUG"] = "1"
+
     PypeCommands().syncserver(active_site)
 
 
@@ -443,3 +426,43 @@ def pack_project(project, dirpath):
 def unpack_project(zipfile, root):
     """Create a package of project with all files and database dump."""
     PypeCommands().unpack_project(zipfile, root)
+
+
+@main.command()
+def interactive():
+    """Interactive (Python like) console.
+
+    Helpful command not only for development to directly work with python
+    interpreter.
+
+    Warning:
+        Executable 'openpype_gui' on Windows won't work.
+    """
+
+    from openpype.version import __version__
+
+    banner = f"OpenPype {__version__}\nPython {sys.version} on {sys.platform}"
+    code.interact(banner)
+
+
+@main.command()
+@click.option("--build", help="Print only build version",
+              is_flag=True, default=False)
+def version(build):
+    """Print OpenPype version."""
+
+    from openpype.version import __version__
+    from igniter.bootstrap_repos import BootstrapRepos, OpenPypeVersion
+    from pathlib import Path
+    import os
+
+    if getattr(sys, 'frozen', False):
+        local_version = BootstrapRepos.get_version(
+            Path(os.getenv("OPENPYPE_ROOT")))
+    else:
+        local_version = OpenPypeVersion.get_installed_version_str()
+
+    if build:
+        print(local_version)
+        return
+    print(f"{__version__} (booted: {local_version})")

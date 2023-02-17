@@ -3,7 +3,7 @@ from collections import OrderedDict
 from bson.objectid import ObjectId
 import pyblish.api
 
-from avalon import io
+from openpype.pipeline import legacy_io
 
 
 class IntegrateInputLinks(pyblish.api.ContextPlugin):
@@ -129,5 +129,7 @@ class IntegrateInputLinks(pyblish.api.ContextPlugin):
             if input_links is None:
                 continue
 
-            io.update_one({"_id": version_doc["_id"]},
-                          {"$set": {"data.inputLinks": input_links}})
+            legacy_io.update_one(
+                {"_id": version_doc["_id"]},
+                {"$set": {"data.inputLinks": input_links}}
+            )

@@ -1,53 +1,183 @@
 import os
-from Qt import QtWidgets
-from bson.objectid import ObjectId
+
+from qtpy import QtWidgets
 
 import pyblish.api
-import avalon.api
-from avalon import io
 
-from openpype.api import Logger
-from openpype.lib import register_event_callback
+from openpype.lib import register_event_callback, Logger
 from openpype.pipeline import (
-    LegacyCreator,
+    legacy_io,
     register_loader_plugin_path,
+    register_creator_plugin_path,
     deregister_loader_plugin_path,
+    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
-import openpype.hosts.photoshop
+
+from openpype.host import (
+    HostBase,
+    IWorkfileHost,
+    ILoadHost,
+    IPublishHost
+)
+
+from openpype.pipeline.load import any_outdated_containers
+from openpype.hosts.photoshop import PHOTOSHOP_HOST_DIR
 
 from . import lib
 
 log = Logger.get_logger(__name__)
 
-HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.photoshop.__file__))
-PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PLUGINS_DIR = os.path.join(PHOTOSHOP_HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
+class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
+    name = "photoshop"
+
+    def install(self):
+        """Install Photoshop-specific functionality needed for integration.
+
+        This function is called automatically on calling
+        `api.install(photoshop)`.
+        """
+        log.info("Installing OpenPype Photoshop...")
+        pyblish.api.register_host("photoshop")
+
+        pyblish.api.register_plugin_path(PUBLISH_PATH)
+        register_loader_plugin_path(LOAD_PATH)
+        register_creator_plugin_path(CREATE_PATH)
+        log.info(PUBLISH_PATH)
+
+        pyblish.api.register_callback(
+            "instanceToggled", on_pyblish_instance_toggled
+        )
+
+        register_event_callback("application.launched", on_application_launch)
+
+    def current_file(self):
+        try:
+            full_name = lib.stub().get_active_document_full_name()
+            if full_name and full_name != "null":
+                return os.path.normpath(full_name).replace("\\", "/")
+        except Exception:
+            pass
+
+        return None
+
+    def work_root(self, session):
+        return os.path.normpath(session["AVALON_WORKDIR"]).replace("\\", "/")
+
+    def open_workfile(self, filepath):
+        lib.stub().open(filepath)
+
+        return True
+
+    def save_workfile(self, filepath=None):
+        _, ext = os.path.splitext(filepath)
+        lib.stub().saveAs(filepath, ext[1:], True)
+
+    def get_current_workfile(self):
+        return self.current_file()
+
+    def workfile_has_unsaved_changes(self):
+        if self.current_file():
+            return not lib.stub().is_saved()
+
+        return False
+
+    def get_workfile_extensions(self):
+        return [".psd", ".psb"]
+
+    def get_containers(self):
+        return ls()
+
+    def get_context_data(self):
+        """Get stored values for context (validation enable/disable etc)"""
+        meta = _get_stub().get_layers_metadata()
+        for item in meta:
+            if item.get("id") == "publish_context":
+                item.pop("id")
+                return item
+
+        return {}
+
+    def update_context_data(self, data, changes):
+        """Store value needed for context"""
+        item = data
+        item["id"] = "publish_context"
+        _get_stub().imprint(item["id"], item)
+
+    def get_context_title(self):
+        """Returns title for Creator window"""
+
+        project_name = legacy_io.Session["AVALON_PROJECT"]
+        asset_name = legacy_io.Session["AVALON_ASSET"]
+        task_name = legacy_io.Session["AVALON_TASK"]
+        return "{}/{}/{}".format(project_name, asset_name, task_name)
+
+    def list_instances(self):
+        """List all created instances to publish from current workfile.
+
+        Pulls from File > File Info
+
+        Returns:
+            (list) of dictionaries matching instances format
+        """
+        stub = _get_stub()
+
+        if not stub:
+            return []
+
+        instances = []
+        layers_meta = stub.get_layers_metadata()
+        if layers_meta:
+            for instance in layers_meta:
+                if instance.get("id") == "pyblish.avalon.instance":
+                    instances.append(instance)
+
+        return instances
+
+    def remove_instance(self, instance):
+        """Remove instance from current workfile metadata.
+
+        Updates metadata of current file in File > File Info and removes
+        icon highlight on group layer.
+
+        Args:
+            instance (dict): instance representation from subsetmanager model
+        """
+        stub = _get_stub()
+
+        if not stub:
+            return
+
+        inst_id = instance.get("instance_id") or instance.get("uuid")  # legacy
+        if not inst_id:
+            log.warning("No instance identifier for {}".format(instance))
+            return
+
+        stub.remove_instance(inst_id)
+
+        if instance.get("members"):
+            item = stub.get_layer(instance["members"][0])
+            if item:
+                stub.rename_layer(item.id,
+                                  item.name.replace(stub.PUBLISH_ICON, ''))
+
+
 def check_inventory():
-    if not lib.any_outdated():
+    if not any_outdated_containers():
         return
 
-    host = avalon.api.registered_host()
-    outdated_containers = []
-    for container in host.ls():
-        representation = container['representation']
-        representation_doc = io.find_one(
-            {
-                "_id": ObjectId(representation),
-                "type": "representation"
-            },
-            projection={"parent": True}
-        )
-        if representation_doc and not lib.is_latest(representation_doc):
-            outdated_containers.append(container)
-
     # Warn about outdated containers.
-    print("Starting new QApplication..")
+    _app = QtWidgets.QApplication.instance()
+    if not _app:
+        print("Starting new QApplication..")
+        _app = QtWidgets.QApplication([])
 
     message_box = QtWidgets.QMessageBox()
     message_box.setIcon(QtWidgets.QMessageBox.Warning)
@@ -63,32 +193,6 @@ def on_application_launch():
 def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle layer visibility on instance toggles."""
     instance[0].Visible = new_value
-
-
-def install():
-    """Install Photoshop-specific functionality of avalon-core.
-
-    This function is called automatically on calling `api.install(photoshop)`.
-    """
-    log.info("Installing OpenPype Photoshop...")
-    pyblish.api.register_host("photoshop")
-
-    pyblish.api.register_plugin_path(PUBLISH_PATH)
-    register_loader_plugin_path(LOAD_PATH)
-    avalon.api.register_plugin_path(LegacyCreator, CREATE_PATH)
-    log.info(PUBLISH_PATH)
-
-    pyblish.api.register_callback(
-        "instanceToggled", on_pyblish_instance_toggled
-    )
-
-    register_event_callback("application.launched", on_application_launch)
-
-
-def uninstall():
-    pyblish.api.deregister_plugin_path(PUBLISH_PATH)
-    deregister_loader_plugin_path(LOAD_PATH)
-    avalon.api.deregister_plugin_path(LegacyCreator, CREATE_PATH)
 
 
 def ls():
@@ -128,58 +232,6 @@ def ls():
         data["layer"] = layer
 
         yield data
-
-
-def list_instances():
-    """List all created instances to publish from current workfile.
-
-    Pulls from File > File Info
-
-    For SubsetManager
-
-    Returns:
-        (list) of dictionaries matching instances format
-    """
-    stub = _get_stub()
-
-    if not stub:
-        return []
-
-    instances = []
-    layers_meta = stub.get_layers_metadata()
-    if layers_meta:
-        for key, instance in layers_meta.items():
-            schema = instance.get("schema")
-            if schema and "container" in schema:
-                continue
-
-            instance['uuid'] = key
-            instances.append(instance)
-
-    return instances
-
-
-def remove_instance(instance):
-    """Remove instance from current workfile metadata.
-
-    Updates metadata of current file in File > File Info and removes
-    icon highlight on group layer.
-
-    For SubsetManager
-
-    Args:
-        instance (dict): instance representation from subsetmanager model
-    """
-    stub = _get_stub()
-
-    if not stub:
-        return
-
-    stub.remove_instance(instance.get("uuid"))
-    layer = stub.get_layer(instance.get("uuid"))
-    if layer:
-        stub.rename_layer(instance.get("uuid"),
-                          layer.name.replace(stub.PUBLISH_ICON, ''))
 
 
 def _get_stub():
@@ -231,6 +283,22 @@ def containerise(
         "members": [str(layer.id)]
     }
     stub = lib.stub()
-    stub.imprint(layer, data)
+    stub.imprint(layer.id, data)
 
     return layer
+
+
+def cache_and_get_instances(creator):
+    """Cache instances in shared data.
+
+    Storing all instances as a list as legacy instances might be still present.
+    Args:
+        creator (Creator): Plugin which would like to get instances from host.
+    Returns:
+        List[]: list of all instances stored in metadata
+    """
+    shared_key = "openpype.photoshop.instances"
+    if shared_key not in creator.collection_shared_data:
+        creator.collection_shared_data[shared_key] = \
+            creator.host.list_instances()
+    return creator.collection_shared_data[shared_key]

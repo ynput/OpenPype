@@ -1,9 +1,9 @@
 import traceback
 
 # activate hiero from pype
-import avalon.api
+from openpype.pipeline import install_host
 import openpype.hosts.hiero.api as phiero
-avalon.api.install(phiero)
+install_host(phiero)
 
 try:
     __import__("openpype.hosts.hiero.api")

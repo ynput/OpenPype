@@ -3,14 +3,12 @@ import subprocess
 import sys
 from functools import partial
 
-from Qt import QtWidgets, QtCore, QtGui
-from Qt.QtCore import Qt
+from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
 from openpype.tools.settings import style
 
-from openpype.api import get_local_site_id
-from openpype.lib import PypeLogger
+from openpype.lib import Logger, get_local_site_id
 
 from openpype.tools.utils.delegates import pretty_timestamp
 
@@ -36,7 +34,7 @@ from openpype.tools.utils.constants import (
     TRIES_ROLE
 )
 
-log = PypeLogger().get_logger("SyncServer")
+log = Logger.get_logger("SyncServer")
 
 
 class SyncProjectListWidget(QtWidgets.QWidget):
@@ -47,6 +45,7 @@ class SyncProjectListWidget(QtWidgets.QWidget):
     message_generated = QtCore.Signal(str)
 
     refresh_msec = 10000
+    show_only_enabled = True
 
     def __init__(self, sync_server, parent):
         super(SyncProjectListWidget, self).__init__(parent)
@@ -122,11 +121,15 @@ class SyncProjectListWidget(QtWidgets.QWidget):
         self._model_reset = False
 
         selected_item = None
-        for project_name in self.sync_server.sync_project_settings.\
-                keys():
+        sync_settings = self.sync_server.sync_project_settings
+        for project_name in sync_settings.keys():
             if self.sync_server.is_paused() or \
                self.sync_server.is_project_paused(project_name):
                 icon = self._get_icon("paused")
+            elif not sync_settings[project_name]["enabled"]:
+                if self.show_only_enabled:
+                    continue
+                icon = self._get_icon("disabled")
             else:
                 icon = self._get_icon("synced")
 
@@ -139,11 +142,11 @@ class SyncProjectListWidget(QtWidgets.QWidget):
             if self.current_project == project_name:
                 selected_item = item
 
+        if model.item(0) is None:
+            return
+
         if selected_item:
             selected_index = model.indexFromItem(selected_item)
-
-        if len(self.sync_server.sync_project_settings.keys()) == 0:
-            model.appendRow(QtGui.QStandardItem(lib.DUMMY_PROJECT))
 
         if not self.current_project:
             self.current_project = model.item(0).data(QtCore.Qt.DisplayRole)
@@ -153,8 +156,10 @@ class SyncProjectListWidget(QtWidgets.QWidget):
         if selected_index and \
            selected_index.isValid() and \
            not self._selection_changed:
-            mode = QtCore.QItemSelectionModel.Select | \
-                QtCore.QItemSelectionModel.Rows
+            mode = (
+                QtCore.QItemSelectionModel.Select
+                | QtCore.QItemSelectionModel.Rows
+            )
             self.project_list.selectionModel().select(selected_index, mode)
 
         if self.current_project:
@@ -248,12 +253,15 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
     active_changed = QtCore.Signal()  # active index changed
     message_generated = QtCore.Signal(str)
 
+    def set_project(self, project):
+        self.model.set_project(project)
+
     def _selection_changed(self, _new_selected, _all_selected):
         idxs = self.selection_model.selectedRows()
         self._selected_ids = set()
 
         for index in idxs:
-            self._selected_ids.add(self.model.data(index, Qt.UserRole))
+            self._selected_ids.add(self.model.data(index, QtCore.Qt.UserRole))
 
     def _set_selection(self):
         """
@@ -265,8 +273,10 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
         for selected_id in self._selected_ids:
             index = self.model.get_index(selected_id)
             if index and index.isValid():
-                mode = QtCore.QItemSelectionModel.Select | \
-                    QtCore.QItemSelectionModel.Rows
+                mode = (
+                    QtCore.QItemSelectionModel.Select
+                    | QtCore.QItemSelectionModel.Rows
+                )
                 self.selection_model.select(index, mode)
                 existing_ids.add(selected_id)
 
@@ -284,7 +294,7 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
                 self.table_view.openPersistentEditor(index)
                 return
 
-        _id = self.model.data(index, Qt.UserRole)
+        _id = self.model.data(index, QtCore.Qt.UserRole)
         detail_window = SyncServerDetailWindow(
             self.sync_server, _id, self.model.project, parent=self)
         detail_window.exec()
@@ -581,7 +591,6 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         super(SyncRepresentationSummaryWidget, self).__init__(parent)
 
         self.sync_server = sync_server
-
         self._selected_ids = set()  # keep last selected _id
 
         txt_filter = QtWidgets.QLineEdit()
@@ -609,7 +618,7 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         table_view.setSelectionBehavior(
             QtWidgets.QAbstractItemView.SelectRows)
         table_view.horizontalHeader().setSortIndicator(
-            -1, Qt.AscendingOrder)
+            -1, QtCore.Qt.AscendingOrder)
         table_view.setAlternatingRowColors(True)
         table_view.verticalHeader().hide()
         table_view.viewport().setAttribute(QtCore.Qt.WA_Hover, True)
@@ -625,7 +634,6 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         column = table_view.model().get_header_index("priority")
         priority_delegate = delegates.PriorityDelegate(self)
         table_view.setItemDelegateForColumn(column, priority_delegate)
-
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(top_bar_layout)
@@ -633,21 +641,16 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
 
         self.table_view = table_view
         self.model = model
-
         horizontal_header = HorizontalHeader(self)
-
         table_view.setHorizontalHeader(horizontal_header)
         table_view.setSortingEnabled(True)
-
         for column_name, width in self.default_widths:
             idx = model.get_header_index(column_name)
             table_view.setColumnWidth(idx, width)
-
         table_view.doubleClicked.connect(self._double_clicked)
         self.txt_filter.textChanged.connect(lambda: model.set_word_filter(
             self.txt_filter.text()))
         table_view.customContextMenuRequested.connect(self._on_context_menu)
-
         model.refresh_started.connect(self._save_scrollbar)
         model.refresh_finished.connect(self._set_scrollbar)
         model.modelReset.connect(self._set_selection)
@@ -773,7 +776,8 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
             QtWidgets.QAbstractItemView.ExtendedSelection)
         table_view.setSelectionBehavior(
             QtWidgets.QTableView.SelectRows)
-        table_view.horizontalHeader().setSortIndicator(-1, Qt.AscendingOrder)
+        table_view.horizontalHeader().setSortIndicator(
+            -1, QtCore.Qt.AscendingOrder)
         table_view.horizontalHeader().setSortIndicatorShown(True)
         table_view.setAlternatingRowColors(True)
         table_view.verticalHeader().hide()
@@ -963,7 +967,6 @@ class HorizontalHeader(QtWidgets.QHeaderView):
         super(HorizontalHeader, self).__init__(QtCore.Qt.Horizontal, parent)
         self._parent = parent
         self.checked_values = {}
-
         self.setModel(self._parent.model)
 
         self.setSectionsClickable(True)

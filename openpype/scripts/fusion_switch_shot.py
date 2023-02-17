@@ -3,20 +3,23 @@ import re
 import sys
 import logging
 
+from openpype.client import get_asset_by_name, get_versions
+
 # Pipeline imports
-from avalon import api, io
-import avalon.fusion
+from openpype.hosts.fusion import api
+import openpype.hosts.fusion.api.lib as fusion_lib
 
 # Config imports
-import openpype.lib as pype
-import openpype.hosts.fusion.lib as fusion_lib
+from openpype.lib import version_up
+from openpype.pipeline import (
+    install_host,
+    registered_host,
+    legacy_io,
+)
 
-from openpype.lib.avalon_context import get_workdir_from_session
+from openpype.pipeline.context_tools import get_workdir_from_session
 
 log = logging.getLogger("Update Slap Comp")
-
-self = sys.modules[__name__]
-self._project = None
 
 
 def _format_version_folder(folder):
@@ -79,7 +82,7 @@ def _format_filepath(session):
 
     # Create new unqiue filepath
     if os.path.exists(new_filepath):
-        new_filepath = pype.version_up(new_filepath)
+        new_filepath = version_up(new_filepath)
 
     return new_filepath
 
@@ -102,7 +105,7 @@ def _update_savers(comp, session):
 
     comp.Print("New renders to: %s\n" % renders)
 
-    with avalon.fusion.comp_lock_and_undo_chunk(comp):
+    with api.comp_lock_and_undo_chunk(comp):
         savers = comp.GetToolList(False, "Saver").values()
         for saver in savers:
             filepath = saver.GetAttrs("TOOLST_Clip_Name")[1.0]
@@ -127,8 +130,8 @@ def update_frame_range(comp, representations):
     """
 
     version_ids = [r["parent"] for r in representations]
-    versions = io.find({"type": "version", "_id": {"$in": version_ids}})
-    versions = list(versions)
+    project_name = legacy_io.active_project()
+    versions = list(get_versions(project_name, version_ids=version_ids))
 
     start = min(v["data"]["frameStart"] for v in versions)
     end = max(v["data"]["frameEnd"] for v in versions)
@@ -158,25 +161,20 @@ def switch(asset_name, filepath=None, new=True):
 
     # Assert asset name exists
     # It is better to do this here then to wait till switch_shot does it
-    asset = io.find_one({"type": "asset", "name": asset_name})
+    project_name = legacy_io.active_project()
+    asset = get_asset_by_name(project_name, asset_name)
     assert asset, "Could not find '%s' in the database" % asset_name
-
-    # Get current project
-    self._project = io.find_one({
-        "type": "project",
-        "name": api.Session["AVALON_PROJECT"]
-    })
 
     # Go to comp
     if not filepath:
-        current_comp = avalon.fusion.get_current_comp()
+        current_comp = api.get_current_comp()
         assert current_comp is not None, "Could not find current comp"
     else:
         fusion = _get_fusion_instance()
         current_comp = fusion.LoadComp(filepath, quiet=True)
         assert current_comp is not None, "Fusion could not load '%s'" % filepath
 
-    host = api.registered_host()
+    host = registered_host()
     containers = list(host.ls())
     assert containers, "Nothing to update"
 
@@ -194,7 +192,7 @@ def switch(asset_name, filepath=None, new=True):
     current_comp.Print(message)
 
     # Build the session to switch to
-    switch_to_session = api.Session.copy()
+    switch_to_session = legacy_io.Session.copy()
     switch_to_session["AVALON_ASSET"] = asset['name']
 
     if new:
@@ -203,7 +201,7 @@ def switch(asset_name, filepath=None, new=True):
         # Update savers output based on new session
         _update_savers(current_comp, switch_to_session)
     else:
-        comp_path = pype.version_up(filepath)
+        comp_path = version_up(filepath)
 
     current_comp.Print(comp_path)
 
@@ -234,7 +232,7 @@ if __name__ == '__main__':
 
     args, unknown = parser.parse_args()
 
-    api.install(avalon.fusion)
+    install_host(api)
     switch(args.asset_name, args.file_path)
 
     sys.exit(0)

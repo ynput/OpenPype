@@ -2,13 +2,11 @@ import unreal
 from unreal import EditorAssetLibrary as eal
 from unreal import EditorLevelLibrary as ell
 
-from openpype.hosts.unreal.api.plugin import Creator
-from avalon.unreal import (
-    instantiate,
-)
+from openpype.hosts.unreal.api.pipeline import instantiate
+from openpype.pipeline import LegacyCreator
 
 
-class CreateCamera(Creator):
+class CreateCamera(LegacyCreator):
     """Layout output for character rigs"""
 
     name = "layoutMain"

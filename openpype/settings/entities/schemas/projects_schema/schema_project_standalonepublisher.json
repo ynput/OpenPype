@@ -272,6 +272,11 @@
                     "is_group": true,
                     "children": [
                         {
+                            "type": "boolean",
+                            "key": "shot_rename",
+                            "label": "Shot Rename"
+                        },
+                        {
                             "type": "text",
                             "key": "shot_rename_template",
                             "label": "Shot rename template"
@@ -289,7 +294,13 @@
                             "type": "dict",
                             "key": "shot_add_hierarchy",
                             "label": "Shot hierarchy",
+                            "checkbox_key": "enabled",
                             "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled"
+                                },
                                 {
                                     "type": "text",
                                     "key": "parents_path",
@@ -343,8 +354,8 @@
                             "type": "number",
                             "key": "timeline_frame_start",
                             "label": "Timeline start frame",
-                            "default": 900000,
-                            "minimum": 1,
+                            "default": 90000,
+                            "minimum": 0,
                             "maximum": 10000000
                         },
                         {

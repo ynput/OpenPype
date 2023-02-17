@@ -1,5 +1,6 @@
 import pyblish.api
-import avalon.api
+
+from openpype.pipeline import registered_host
 
 
 class SaveCurrentScene(pyblish.api.ContextPlugin):
@@ -12,14 +13,14 @@ class SaveCurrentScene(pyblish.api.ContextPlugin):
     def process(self, context):
 
         # Filename must not have changed since collecting
-        host = avalon.api.registered_host()
-        current_file = host.current_file()
+        host = registered_host()
+        current_file = host.get_current_workfile()
         assert context.data['currentFile'] == current_file, (
             "Collected filename from current scene name."
         )
 
         if host.has_unsaved_changes():
-            self.log.info("Saving current file..")
-            host.save_file(current_file)
+            self.log.info("Saving current file {}...".format(current_file))
+            host.save_workfile(current_file)
         else:
             self.log.debug("No unsaved changes, skipping file save..")

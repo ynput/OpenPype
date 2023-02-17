@@ -12,6 +12,26 @@
             "LC_ALL": "C"
         },
         "variants": {
+            "2023": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2023\\bin\\maya.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/autodesk/maya2023/bin/maya"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "MAYA_VERSION": "2023"
+                }
+            },
             "2022": {
                 "use_python_2": false,
                 "executables": {
@@ -91,9 +111,35 @@
                 "environment": {
                     "MAYA_VERSION": "2018"
                 }
-            },
-            "__dynamic_keys_labels__": {
-                "2022": "2022"
+            }
+        }
+    },
+    "3dsmax": {
+        "enabled": true,
+        "label": "3ds max",
+        "icon": "{}/app_icons/3dsmax.png",
+        "host_name": "max",
+        "environment": {
+            "ADSK_3DSMAX_STARTUPSCRIPTS_ADDON_DIR": "{OPENPYPE_ROOT}\\openpype\\hosts\\max\\startup"
+        },
+        "variants": {
+            "2023": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\3ds Max 2023\\3dsmax.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "3DSMAX_VERSION": "2023"
+                }
             }
         }
     },
@@ -175,6 +221,24 @@
             ]
         },
         "variants": {
+            "13-2": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.2v1\\Nuke13.2.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.2v1/Nuke13.2"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
             "13-0": {
                 "use_python_2": false,
                 "executables": {
@@ -264,6 +328,7 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
+                "13-2": "13.2",
                 "13-0": "13.0",
                 "12-2": "12.2",
                 "12-0": "12.0",
@@ -275,7 +340,7 @@
     "nukex": {
         "enabled": true,
         "label": "Nuke X",
-        "icon": "{}/app_icons/nuke.png",
+        "icon": "{}/app_icons/nukex.png",
         "host_name": "nuke",
         "environment": {
             "NUKE_PATH": [
@@ -284,6 +349,30 @@
             ]
         },
         "variants": {
+            "13-2": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.2v1\\Nuke13.2.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.2v1/Nuke13.2"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--nukex"
+                    ],
+                    "darwin": [
+                        "--nukex"
+                    ],
+                    "linux": [
+                        "--nukex"
+                    ]
+                },
+                "environment": {}
+            },
             "13-0": {
                 "use_python_2": false,
                 "executables": {
@@ -403,6 +492,7 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
+                "13-2": "13.2",
                 "13-0": "13.0",
                 "12-2": "12.2",
                 "12-0": "12.0",
@@ -414,13 +504,37 @@
     "nukestudio": {
         "enabled": true,
         "label": "Nuke Studio",
-        "icon": "{}/app_icons/nuke.png",
+        "icon": "{}/app_icons/nukestudio.png",
         "host_name": "hiero",
         "environment": {
             "WORKFILES_STARTUP": "0",
             "TAG_ASSETBUILD_STARTUP": "0"
         },
         "variants": {
+            "13-2": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.2v1\\Nuke13.2.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.2v1/Nuke13.2"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--studio"
+                    ],
+                    "darwin": [
+                        "--studio"
+                    ],
+                    "linux": [
+                        "--studio"
+                    ]
+                },
+                "environment": {}
+            },
             "13-0": {
                 "use_python_2": false,
                 "executables": {
@@ -538,6 +652,7 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
+                "13-2": "13.2",
                 "13-0": "13.0",
                 "12-2": "12.2",
                 "12-0": "12.0",
@@ -556,6 +671,30 @@
             "TAG_ASSETBUILD_STARTUP": "0"
         },
         "variants": {
+            "13-2": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.2v1\\Nuke13.2.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.2v1/Nuke13.2"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--hiero"
+                    ],
+                    "darwin": [
+                        "--hiero"
+                    ],
+                    "linux": [
+                        "--hiero"
+                    ]
+                },
+                "environment": {}
+            },
             "13-0": {
                 "use_python_2": false,
                 "executables": {
@@ -675,6 +814,7 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
+                "13-2": "13.2",
                 "13-0": "13.0",
                 "12-2": "12.2",
                 "12-0": "12.0",
@@ -689,30 +829,28 @@
         "icon": "{}/app_icons/fusion.png",
         "host_name": "fusion",
         "environment": {
-            "FUSION_UTILITY_SCRIPTS_SOURCE_DIR": [],
-            "FUSION_UTILITY_SCRIPTS_DIR": {
-                "windows": "{PROGRAMDATA}/Blackmagic Design/Fusion/Scripts/Comp",
-                "darwin": "/Library/Application Support/Blackmagic Design/Fusion/Scripts/Comp",
-                "linux": "/opt/Fusion/Scripts/Comp"
-            },
-            "PYTHON36": {
+            "FUSION_PYTHON3_HOME": {
                 "windows": "{LOCALAPPDATA}/Programs/Python/Python36",
                 "darwin": "~/Library/Python/3.6/bin",
                 "linux": "/opt/Python/3.6/bin"
-            },
-            "PYTHONPATH": [
-                "{PYTHON36}/Lib/site-packages",
-                "{VIRTUAL_ENV}/Lib/site-packages",
-                "{PYTHONPATH}"
-            ],
-            "PATH": [
-                "{PYTHON36}",
-                "{PYTHON36}/Scripts",
-                "{PATH}"
-            ],
-            "OPENPYPE_LOG_NO_COLORS": "Yes"
+            }
         },
         "variants": {
+            "18": {
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Blackmagic Design\\Fusion 18\\Fusion.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
             "17": {
                 "executables": {
                     "windows": [
@@ -767,41 +905,11 @@
         "host_name": "resolve",
         "environment": {
             "RESOLVE_UTILITY_SCRIPTS_SOURCE_DIR": [],
-            "RESOLVE_SCRIPT_API": {
-                "windows": "{PROGRAMDATA}/Blackmagic Design/DaVinci Resolve/Support/Developer/Scripting",
-                "darwin": "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting",
-                "linux": "/opt/resolve/Developer/Scripting"
-            },
-            "RESOLVE_SCRIPT_LIB": {
-                "windows": "C:/Program Files/Blackmagic Design/DaVinci Resolve/fusionscript.dll",
-                "darwin": "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fusionscript.so",
-                "linux": "/opt/resolve/libs/Fusion/fusionscript.so"
-            },
-            "RESOLVE_UTILITY_SCRIPTS_DIR": {
-                "windows": "{PROGRAMDATA}/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp",
-                "darwin": "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp",
-                "linux": "/opt/resolve/Fusion/Scripts/Comp"
-            },
-            "PYTHON36_RESOLVE": {
+            "RESOLVE_PYTHON3_HOME": {
                 "windows": "{LOCALAPPDATA}/Programs/Python/Python36",
                 "darwin": "~/Library/Python/3.6/bin",
                 "linux": "/opt/Python/3.6/bin"
-            },
-            "PYTHONPATH": [
-                "{PYTHON36_RESOLVE}/Lib/site-packages",
-                "{VIRTUAL_ENV}/Lib/site-packages",
-                "{PYTHONPATH}",
-                "{RESOLVE_SCRIPT_API}/Modules",
-                "{PYTHONPATH}"
-            ],
-            "PATH": [
-                "{PYTHON36_RESOLVE}",
-                "{PYTHON36_RESOLVE}/Scripts",
-                "{PATH}"
-            ],
-            "PRE_PYTHON_SCRIPT": "{OPENPYPE_REPOS_ROOT}/openpype/resolve/preload_console.py",
-            "OPENPYPE_LOG_NO_COLORS": "True",
-            "RESOLVE_DEV": "True"
+            }
         },
         "variants": {
             "stable": {
@@ -969,8 +1077,6 @@
         },
         "variants": {
             "21": {
-                "enabled": true,
-                "variant_label": "21",
                 "executables": {
                     "windows": [
                         "c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 21 Premium\\win64\\bin\\HarmonyPremium.exe"
@@ -988,8 +1094,6 @@
                 "environment": {}
             },
             "20": {
-                "enabled": true,
-                "variant_label": "20",
                 "executables": {
                     "windows": [
                         "c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 20 Premium\\win64\\bin\\HarmonyPremium.exe"
@@ -1007,8 +1111,6 @@
                 "environment": {}
             },
             "17": {
-                "enabled": true,
-                "variant_label": "17",
                 "executables": {
                     "windows": [
                         "c:\\Program Files (x86)\\Toon Boom Animation\\Toon Boom Harmony 17 Premium\\win64\\bin\\HarmonyPremium.exe"
@@ -1138,11 +1240,9 @@
         },
         "variants": {
             "2020": {
-                "enabled": true,
-                "variant_label": "2020",
                 "executables": {
                     "windows": [
-                        ""
+                        "C:\\Program Files\\Adobe\\Adobe After Effects 2020\\Support Files\\AfterFX.exe"
                     ],
                     "darwin": [],
                     "linux": []
@@ -1155,8 +1255,6 @@
                 "environment": {}
             },
             "2021": {
-                "enabled": true,
-                "variant_label": "2021",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe After Effects 2021\\Support Files\\AfterFX.exe"
@@ -1172,8 +1270,6 @@
                 "environment": {}
             },
             "2022": {
-                "enabled": true,
-                "variant_label": "2022",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe After Effects 2022\\Support Files\\AfterFX.exe"
@@ -1201,12 +1297,12 @@
             "CELACTION_TEMPLATE": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/celaction/celaction_template_scene.scn"
         },
         "variants": {
-            "local": {
+            "current": {
                 "enabled": true,
-                "variant_label": "Local",
+                "variant_label": "Current",
                 "use_python_2": false,
                 "executables": {
-                    "windows": [],
+                    "windows": ["C:/Program Files/CelAction/CelAction2D Studio/CelAction2D.exe"],
                     "darwin": [],
                     "linux": []
                 },
@@ -1226,9 +1322,19 @@
         "host_name": "unreal",
         "environment": {},
         "variants": {
-            "4-26": {
+            "4-27": {
                 "use_python_2": false,
                 "environment": {}
+            },
+            "5-0": {
+                "use_python_2": false,
+                "environment": {
+                    "UE_PYTHONPATH": "{PYTHONPATH}"
+                }
+            },
+            "__dynamic_keys_labels__": {
+                "4-27": "4.27",
+                "5-0": "5.0"
             }
         }
     },

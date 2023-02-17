@@ -1,4 +1,10 @@
-from avalon import pipeline
+from openpype.pipeline import install_host
 from openpype.hosts.blender import api
 
-pipeline.install(api)
+
+def register():
+    install_host(api)
+
+
+def unregister():
+    pass

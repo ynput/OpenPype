@@ -12,6 +12,8 @@ One of the settings in a scene doesn't match to asset settings in database.
 ### How to repair?
 
 Change values for {invalid_keys_str} in the scene OR change them in the asset database if they are wrong there.
+
+    In the scene it is right mouse click on published composition > `Composition Settings`.
 </description>
 <detail>
 ### __Detailed Info__ (optional)

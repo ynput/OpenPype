@@ -4,7 +4,7 @@ import json
 import clique
 import subprocess
 import openpype.lib
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 from . import DropEmpty, ComponentsList, ComponentItem
 
 
@@ -36,6 +36,10 @@ class DropDataFrame(QtWidgets.QFrame):
         "image_file": image_extensions,
         "video_file": video_extensions
     }
+
+    sequence_types = [
+        ".bgeo", ".vdb", ".bgeosc", ".bgeogz"
+    ]
 
     def __init__(self, parent):
         super().__init__()
@@ -174,9 +178,9 @@ class DropDataFrame(QtWidgets.QFrame):
         paths = self._get_all_paths(in_paths)
         collectionable_paths = []
         non_collectionable_paths = []
-        for path in in_paths:
+        for path in paths:
             ext = os.path.splitext(path)[1]
-            if ext in self.image_extensions:
+            if ext in self.image_extensions or ext in self.sequence_types:
                 collectionable_paths.append(path)
             else:
                 non_collectionable_paths.append(path)
@@ -289,7 +293,7 @@ class DropDataFrame(QtWidgets.QFrame):
     def get_file_data(self, data):
         filepath = data['files'][0]
         ext = data['ext'].lower()
-        output = {}
+        output = {"fps": None}
 
         file_info = None
         if 'file_info' in data:

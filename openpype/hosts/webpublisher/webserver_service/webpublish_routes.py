@@ -2,42 +2,46 @@
 import os
 import json
 import datetime
-from bson.objectid import ObjectId
 import collections
-from aiohttp.web_response import Response
 import subprocess
+from bson.objectid import ObjectId
+from aiohttp.web_response import Response
 
-from avalon.api import AvalonMongoDB
-
-from openpype.lib import OpenPypeMongoConnection
-from openpype_modules.avalon_apps.rest_api import _RestApiEndpoint
+from openpype.client import (
+    get_projects,
+    get_assets,
+)
+from openpype.lib import Logger
 from openpype.settings import get_project_settings
-
-from openpype.lib import PypeLogger
-from openpype.lib.remote_publish import (
+from openpype_modules.webserver.base_routes import RestApiEndpoint
+from openpype_modules.webpublisher import WebpublisherAddon
+from openpype_modules.webpublisher.lib import (
+    get_webpublish_conn,
     get_task_data,
     ERROR_STATUS,
     REPROCESS_STATUS
 )
 
-log = PypeLogger.get_logger("WebServer")
+log = Logger.get_logger("WebpublishRoutes")
 
 
-class RestApiResource:
-    """Resource carrying needed info and Avalon DB connection for publish."""
-    def __init__(self, server_manager, executable, upload_dir,
-                 studio_task_queue=None):
-        self.server_manager = server_manager
-        self.upload_dir = upload_dir
-        self.executable = executable
+class ResourceRestApiEndpoint(RestApiEndpoint):
+    def __init__(self, resource):
+        self.resource = resource
+        super(ResourceRestApiEndpoint, self).__init__()
 
-        if studio_task_queue is None:
-            studio_task_queue = collections.deque().dequeu
-        self.studio_task_queue = studio_task_queue
 
-        self.dbcon = AvalonMongoDB()
-        self.dbcon.install()
+class WebpublishApiEndpoint(ResourceRestApiEndpoint):
+    @property
+    def dbcon(self):
+        return self.resource.dbcon
 
+
+class JsonApiResource:
+    """Resource for json manipulation.
+
+    All resources handling sending output to REST should inherit from
+    """
     @staticmethod
     def json_dump_handler(value):
         if isinstance(value, datetime.datetime):
@@ -57,28 +61,36 @@ class RestApiResource:
         ).encode("utf-8")
 
 
-class OpenPypeRestApiResource(RestApiResource):
+class RestApiResource(JsonApiResource):
+    """Resource carrying needed info and Avalon DB connection for publish."""
+    def __init__(self, server_manager, executable, upload_dir,
+                 studio_task_queue=None):
+        self.server_manager = server_manager
+        self.upload_dir = upload_dir
+        self.executable = executable
+
+        if studio_task_queue is None:
+            studio_task_queue = collections.deque().dequeu
+        self.studio_task_queue = studio_task_queue
+
+
+class WebpublishRestApiResource(JsonApiResource):
     """Resource carrying OP DB connection for storing batch info into DB."""
-    def __init__(self, ):
-        mongo_client = OpenPypeMongoConnection.get_mongo_client()
-        database_name = os.environ["OPENPYPE_DATABASE_NAME"]
-        self.dbcon = mongo_client[database_name]["webpublishes"]
+
+    def __init__(self):
+        self.dbcon = get_webpublish_conn()
 
 
-class ProjectsEndpoint(_RestApiEndpoint):
+class ProjectsEndpoint(ResourceRestApiEndpoint):
     """Returns list of dict with project info (id, name)."""
     async def get(self) -> Response:
         output = []
-        for project_name in self.dbcon.database.collection_names():
-            project_doc = self.dbcon.database[project_name].find_one({
-                "type": "project"
-            })
-            if project_doc:
-                ret_val = {
-                    "id": project_doc["_id"],
-                    "name": project_doc["name"]
-                }
-                output.append(ret_val)
+        for project_doc in get_projects():
+            ret_val = {
+                "id": project_doc["_id"],
+                "name": project_doc["name"]
+            }
+            output.append(ret_val)
         return Response(
             status=200,
             body=self.resource.encode(output),
@@ -86,7 +98,7 @@ class ProjectsEndpoint(_RestApiEndpoint):
         )
 
 
-class HiearchyEndpoint(_RestApiEndpoint):
+class HiearchyEndpoint(ResourceRestApiEndpoint):
     """Returns dictionary with context tree from assets."""
     async def get(self, project_name) -> Response:
         query_projection = {
@@ -98,10 +110,7 @@ class HiearchyEndpoint(_RestApiEndpoint):
             "type": 1,
         }
 
-        asset_docs = self.dbcon.database[project_name].find(
-            {"type": "asset"},
-            query_projection
-        )
+        asset_docs = get_assets(project_name, fields=query_projection.keys())
         asset_docs_by_id = {
             asset_doc["_id"]: asset_doc
             for asset_doc in asset_docs
@@ -185,7 +194,7 @@ class TaskNode(Node):
         self["attributes"] = {}
 
 
-class BatchPublishEndpoint(_RestApiEndpoint):
+class BatchPublishEndpoint(WebpublishApiEndpoint):
     """Triggers headless publishing of batch."""
     async def post(self, request) -> Response:
         # Validate existence of openpype executable
@@ -205,7 +214,7 @@ class BatchPublishEndpoint(_RestApiEndpoint):
             # TVPaint filter
             {
                 "extensions": [".tvpp"],
-                "command": "remotepublish",
+                "command": "publish",
                 "arguments": {
                     "targets": ["tvpaint_worker"]
                 },
@@ -214,13 +223,13 @@ class BatchPublishEndpoint(_RestApiEndpoint):
             # Photoshop filter
             {
                 "extensions": [".psd", ".psb"],
-                "command": "remotepublishfromapp",
+                "command": "publishfromapp",
                 "arguments": {
-                    # Command 'remotepublishfromapp' requires --host argument
+                    # Command 'publishfromapp' requires --host argument
                     "host": "photoshop",
                     # Make sure targets are set to None for cases that default
                     #   would change
-                    # - targets argument is not used in 'remotepublishfromapp'
+                    # - targets argument is not used in 'publishfromapp'
                     "targets": ["remotepublish"]
                 },
                 # does publish need to be handled by a queue, eg. only
@@ -232,7 +241,7 @@ class BatchPublishEndpoint(_RestApiEndpoint):
         batch_dir = os.path.join(self.resource.upload_dir, content["batch"])
 
         # Default command and arguments
-        command = "remotepublish"
+        command = "publish"
         add_args = {
             # All commands need 'project' and 'user'
             "project": content["project_name"],
@@ -263,6 +272,8 @@ class BatchPublishEndpoint(_RestApiEndpoint):
 
         args = [
             openpype_app,
+            "module",
+            WebpublisherAddon.name,
             command,
             batch_dir
         ]
@@ -290,7 +301,7 @@ class BatchPublishEndpoint(_RestApiEndpoint):
         )
 
 
-class TaskPublishEndpoint(_RestApiEndpoint):
+class TaskPublishEndpoint(WebpublishApiEndpoint):
     """Prepared endpoint triggered after each task - for future development."""
     async def post(self, request) -> Response:
         return Response(
@@ -300,8 +311,12 @@ class TaskPublishEndpoint(_RestApiEndpoint):
         )
 
 
-class BatchStatusEndpoint(_RestApiEndpoint):
-    """Returns dict with info for batch_id."""
+class BatchStatusEndpoint(WebpublishApiEndpoint):
+    """Returns dict with info for batch_id.
+
+    Uses 'WebpublishRestApiResource'.
+    """
+
     async def get(self, batch_id) -> Response:
         output = self.dbcon.find_one({"batch_id": batch_id})
 
@@ -320,8 +335,12 @@ class BatchStatusEndpoint(_RestApiEndpoint):
         )
 
 
-class UserReportEndpoint(_RestApiEndpoint):
-    """Returns list of dict with batch info for user (email address)."""
+class UserReportEndpoint(WebpublishApiEndpoint):
+    """Returns list of dict with batch info for user (email address).
+
+    Uses 'WebpublishRestApiResource'.
+    """
+
     async def get(self, user) -> Response:
         output = list(self.dbcon.find({"user": user},
                                       projection={"log": False}))
@@ -340,7 +359,7 @@ class UserReportEndpoint(_RestApiEndpoint):
         )
 
 
-class ConfiguredExtensionsEndpoint(_RestApiEndpoint):
+class ConfiguredExtensionsEndpoint(WebpublishApiEndpoint):
     """Returns dict of extensions which have mapping to family.
 
         Returns:
@@ -380,8 +399,12 @@ class ConfiguredExtensionsEndpoint(_RestApiEndpoint):
         )
 
 
-class BatchReprocessEndpoint(_RestApiEndpoint):
-    """Marks latest 'batch_id' for reprocessing, returns 404 if not found."""
+class BatchReprocessEndpoint(WebpublishApiEndpoint):
+    """Marks latest 'batch_id' for reprocessing, returns 404 if not found.
+
+    Uses 'WebpublishRestApiResource'.
+    """
+
     async def post(self, batch_id) -> Response:
         batches = self.dbcon.find({"batch_id": batch_id,
                                    "status": ERROR_STATUS}).sort("_id", -1)

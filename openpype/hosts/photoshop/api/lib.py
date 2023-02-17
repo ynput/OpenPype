@@ -3,14 +3,13 @@ import sys
 import contextlib
 import traceback
 
-from Qt import QtWidgets
+from qtpy import QtWidgets
 
-import avalon.api
-
-from openpype.api import Logger
+from openpype.lib import env_value_to_bool, Logger
+from openpype.modules import ModulesManager
+from openpype.pipeline import install_host
 from openpype.tools.utils import host_tools
-from openpype.lib.remote_publish import headless_publish
-from openpype.lib import env_value_to_bool
+from openpype.tests.lib import is_in_tests
 
 from .launch_logic import ProcessLauncher, stub
 
@@ -22,9 +21,11 @@ def safe_excepthook(*args):
 
 
 def main(*subprocess_args):
-    from openpype.hosts.photoshop import api
+    from openpype.hosts.photoshop.api import PhotoshopHost
 
-    avalon.api.install(api)
+    host = PhotoshopHost()
+    install_host(host)
+
     sys.excepthook = safe_excepthook
 
     # coloring in StdOutBroker
@@ -36,11 +37,13 @@ def main(*subprocess_args):
     launcher.start()
 
     if env_value_to_bool("HEADLESS_PUBLISH"):
+        manager = ModulesManager()
+        webpublisher_addon = manager["webpublisher"]
         launcher.execute_in_main_thread(
-            headless_publish,
+            webpublisher_addon.headless_publish,
             log,
             "ClosePS",
-            os.environ.get("IS_TEST")
+            is_in_tests()
         )
     elif env_value_to_bool("AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH",
                            default=True):
@@ -64,10 +67,15 @@ def maintained_selection():
 
 
 @contextlib.contextmanager
-def maintained_visibility():
-    """Maintain visibility during context."""
+def maintained_visibility(layers=None):
+    """Maintain visibility during context.
+
+    Args:
+        layers (list) of PSItem (used for caching)
+    """
     visibility = {}
-    layers = stub().get_layers()
+    if not layers:
+        layers = stub().get_layers()
     for layer in layers:
         visibility[layer.id] = layer.visible
     try:

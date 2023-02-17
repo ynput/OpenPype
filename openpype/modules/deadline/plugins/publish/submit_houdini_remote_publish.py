@@ -1,12 +1,14 @@
 import os
 import json
+from datetime import datetime
 
 import requests
 import hou
 
-from avalon import api, io
-
 import pyblish.api
+
+from openpype.pipeline import legacy_io
+from openpype.tests.lib import is_in_tests
 
 
 class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
@@ -35,7 +37,7 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
         ), "Errors found, aborting integration.."
 
         # Deadline connection
-        AVALON_DEADLINE = api.Session.get(
+        AVALON_DEADLINE = legacy_io.Session.get(
             "AVALON_DEADLINE", "http://localhost:8082"
         )
         assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
@@ -55,11 +57,13 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
         scenename = os.path.basename(scene)
 
         # Get project code
-        project = io.find_one({"type": "project"})
+        project = context.data["projectEntity"]
         code = project["data"].get("code", project["name"])
 
         job_name = "{scene} [PUBLISH]".format(scene=scenename)
         batch_name = "{code} - {scene}".format(code=code, scene=scenename)
+        if is_in_tests():
+            batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
         deadline_user = "roy"  # todo: get deadline user dynamically
 
         # Get only major.minor version of Houdini, ignore patch version
@@ -130,6 +134,7 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
             # this application with so the Render Slave can build its own
             # similar environment using it, e.g. "houdini17.5;pluginx2.3"
             "AVALON_TOOLS",
+            "OPENPYPE_VERSION"
         ]
         # Add mongo url if it's enabled
         if context.data.get("deadlinePassMongoUrl"):
@@ -137,7 +142,7 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
 
         environment = dict(
             {key: os.environ[key] for key in keys if key in os.environ},
-            **api.Session
+            **legacy_io.Session
         )
         environment["PYBLISH_ACTIVE_INSTANCES"] = ",".join(instances)
 

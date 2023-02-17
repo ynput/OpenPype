@@ -1,11 +1,9 @@
 import os
-import sys
 import signal
 import datetime
 import subprocess
 import socket
 import json
-import platform
 import getpass
 import atexit
 import time
@@ -13,17 +11,22 @@ import uuid
 
 import ftrack_api
 import pymongo
+from openpype.client.mongo import (
+    OpenPypeMongoConnection,
+    validate_mongo_connection,
+)
 from openpype.lib import (
     get_openpype_execute_args,
-    OpenPypeMongoConnection,
     get_openpype_version,
     get_build_version,
-    validate_mongo_connection
 )
-from openpype_modules.ftrack import FTRACK_MODULE_DIR
+from openpype_modules.ftrack import (
+    FTRACK_MODULE_DIR,
+    resolve_ftrack_url,
+)
 from openpype_modules.ftrack.lib import credentials
-from openpype_modules.ftrack.ftrack_server.lib import check_ftrack_url
 from openpype_modules.ftrack.ftrack_server import socket_thread
+from openpype_modules.ftrack.ftrack_server.lib import get_host_ip
 
 
 class MongoPermissionsError(Exception):
@@ -114,7 +117,7 @@ def legacy_server(ftrack_url):
 
     while True:
         if not ftrack_accessible:
-            ftrack_accessible = check_ftrack_url(ftrack_url)
+            ftrack_accessible = resolve_ftrack_url(ftrack_url)
 
         # Run threads only if Ftrack is accessible
         if not ftrack_accessible and not printed_ftrack_error:
@@ -243,11 +246,13 @@ def main_loop(ftrack_url):
     )
 
     host_name = socket.gethostname()
+    host_ip = get_host_ip()
+
     main_info = [
         ["created_at", datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S")],
         ["Username", getpass.getuser()],
         ["Host Name", host_name],
-        ["Host IP", socket.gethostbyname(host_name)],
+        ["Host IP", host_ip or "N/A"],
         ["OpenPype executable", get_openpype_execute_args()[-1]],
         ["OpenPype version", get_openpype_version() or "N/A"],
         ["OpenPype build version", get_build_version() or "N/A"]
@@ -257,7 +262,7 @@ def main_loop(ftrack_url):
     while True:
         # Check if accessible Ftrack and Mongo url
         if not ftrack_accessible:
-            ftrack_accessible = check_ftrack_url(ftrack_url)
+            ftrack_accessible = resolve_ftrack_url(ftrack_url)
 
         if not mongo_accessible:
             mongo_accessible = check_mongo_url(mongo_uri)
@@ -311,7 +316,7 @@ def main_loop(ftrack_url):
                 statuser_failed_count = 0
 
         # If thread failed test Ftrack and Mongo connection
-        elif not statuser_thread.isAlive():
+        elif not statuser_thread.is_alive():
             statuser_thread.join()
             statuser_thread = None
             ftrack_accessible = False
@@ -354,7 +359,7 @@ def main_loop(ftrack_url):
                 storer_failed_count = 0
 
         # If thread failed test Ftrack and Mongo connection
-        elif not storer_thread.isAlive():
+        elif not storer_thread.is_alive():
             if storer_thread.mongo_error:
                 raise MongoPermissionsError()
             storer_thread.join()
@@ -391,7 +396,7 @@ def main_loop(ftrack_url):
                 processor_failed_count = 0
 
         # If thread failed test Ftrack and Mongo connection
-        elif not processor_thread.isAlive():
+        elif not processor_thread.is_alive():
             if processor_thread.mongo_error:
                 raise Exception(
                     "Exiting because have issue with acces to MongoDB"
@@ -441,7 +446,7 @@ def run_event_server(
         os.environ["CLOCKIFY_API_KEY"] = clockify_api_key
 
     # Check url regex and accessibility
-    ftrack_url = check_ftrack_url(ftrack_url)
+    ftrack_url = resolve_ftrack_url(ftrack_url)
     if not ftrack_url:
         print('Exiting! < Please enter Ftrack server url >')
         return 1

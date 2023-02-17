@@ -1,6 +1,6 @@
 import pyblish.api
 
-from openpype import action
+from openpype.pipeline.publish import RepairAction
 
 
 class ValidateCreateFolderChecked(pyblish.api.InstancePlugin):
@@ -11,7 +11,7 @@ class ValidateCreateFolderChecked(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder
-    actions = [action.RepairAction]
+    actions = [RepairAction]
     label = "Validate Create Folder Checked"
     families = ["render"]
     hosts = ["fusion"]

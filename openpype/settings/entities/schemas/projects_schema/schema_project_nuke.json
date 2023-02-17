@@ -47,6 +47,10 @@
             ]
         },
         {
+            "type": "schema",
+            "name": "schema_nuke_imageio"
+        },
+        {
            "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
@@ -80,6 +84,14 @@
             ]
         },
         {
+            "type": "schema",
+            "name": "schema_scriptsmenu"
+        },
+        {
+            "type": "schema",
+            "name": "schema_nuke_scriptsgizmo"
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "create",
@@ -87,55 +99,172 @@
             "children": [
                 {
                     "type": "dict",
-                    "collapsible": false,
+                    "collapsible": true,
                     "key": "CreateWriteRender",
                     "label": "CreateWriteRender",
                     "is_group": true,
                     "children": [
                         {
                             "type": "text",
-                            "key": "fpath_template",
-                            "label": "Path template"
+                            "key": "temp_rendering_path_template",
+                            "label": "Temporary rendering path template"
                         },
                         {
                             "type": "list",
-                            "key": "defaults",
-                            "label": "Subset name defaults",
+                            "key": "default_variants",
+                            "label": "Default variants",
                             "object_type": {
                                 "type": "text"
+                            }
+                        },
+                        {
+                            "type": "schema_template",
+                            "name": "template_nuke_write_attrs"
+                        },
+                        {
+                            "key": "prenodes",
+                            "label": "Pre write nodes",
+                            "type": "dict-modifiable",
+                            "highlight_content": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "nodeclass",
+                                        "label": "Node class",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "dependent",
+                                        "label": "Outside node dependency",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "type": "schema_template",
+                                        "name": "template_nuke_knob_inputs",
+                                        "template_data": [
+                                            {
+                                                "label": "Node knobs",
+                                                "key": "knobs"
+                                            }
+                                        ]
+                                    }
+                                ]
                             }
                         }
                     ]
                 },
                 {
                     "type": "dict",
-                    "collapsible": false,
+                    "collapsible": true,
                     "key": "CreateWritePrerender",
                     "label": "CreateWritePrerender",
                     "is_group": true,
                     "children": [
                         {
                             "type": "text",
-                            "key": "fpath_template",
-                            "label": "Path template"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "use_range_limit",
-                            "label": "Use Frame range limit by default"
+                            "key": "temp_rendering_path_template",
+                            "label": "Temporary rendering path template"
                         },
                         {
                             "type": "list",
-                            "key": "defaults",
-                            "label": "Subset name defaults",
+                            "key": "default_variants",
+                            "label": "Default variants",
                             "object_type": {
                                 "type": "text"
                             }
                         },
                         {
-                            "type": "boolean",
-                            "key": "reviewable",
-                            "label": "Add reviewable toggle"
+                            "type": "schema_template",
+                            "name": "template_nuke_write_attrs"
+                        },
+                        {
+                            "key": "prenodes",
+                            "label": "Pre write nodes",
+                            "type": "dict-modifiable",
+                            "highlight_content": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "nodeclass",
+                                        "label": "Node class",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "dependent",
+                                        "label": "Outside node dependency",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "type": "schema_template",
+                                        "name": "template_nuke_knob_inputs",
+                                        "template_data": [
+                                            {
+                                                "label": "Node knobs",
+                                                "key": "knobs"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CreateWriteImage",
+                    "label": "CreateWriteImage",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "temp_rendering_path_template",
+                            "label": "Temporary rendering path template"
+                        },
+                        {
+                            "type": "list",
+                            "key": "default_variants",
+                            "label": "Default variants",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        },
+                        {
+                            "type": "schema_template",
+                            "name": "template_nuke_write_attrs"
+                        },
+                        {
+                            "key": "prenodes",
+                            "label": "Pre write nodes",
+                            "type": "dict-modifiable",
+                            "highlight_content": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "nodeclass",
+                                        "label": "Node class",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "dependent",
+                                        "label": "Outside node dependency",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "type": "schema_template",
+                                        "name": "template_nuke_knob_inputs",
+                                        "template_data": [
+                                            {
+                                                "label": "Node knobs",
+                                                "key": "knobs"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
                         }
                     ]
                 }
@@ -154,6 +283,10 @@
         {
             "type": "schema_template",
             "name": "template_workfile_options"
+        },
+        {
+            "type": "schema",
+            "name": "schema_templated_workfile_build"
         },
         {
             "type": "schema",

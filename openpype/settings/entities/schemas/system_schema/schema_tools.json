@@ -25,7 +25,30 @@
                         "key": "variants",
                         "collapsible_key": true,
                         "object_type": {
-                            "type": "raw-json"
+                            "type": "dict",
+                            "children": [
+                                {
+                                    "key": "host_names",
+                                    "label": "Hosts",
+                                    "type": "hosts-enum",
+                                    "multiselection": true
+                                },
+                                {
+                                    "key": "app_variants",
+                                    "label": "Applications",
+                                    "type": "apps-enum",
+                                    "multiselection": true,
+                                    "tooltip": "Applications are not \"live\" and may require to Save and refresh settings UI to update values."
+                                },
+                                {
+                                    "type": "separator"
+                                },
+                                {
+                                    "key": "environment",
+                                    "label": "Environments",
+                                    "type": "raw-json"
+                                }
+                            ]
                         }
                     }
                 ]

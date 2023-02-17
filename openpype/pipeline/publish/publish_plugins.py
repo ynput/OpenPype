@@ -1,5 +1,31 @@
+import inspect
+from abc import ABCMeta
+from pprint import pformat
+import pyblish.api
+from pyblish.plugin import MetaPlugin, ExplicitMetaPlugin
+
 from openpype.lib import BoolDef
-from .lib import load_help_content_from_plugin
+
+from .lib import (
+    load_help_content_from_plugin,
+    get_errored_instances_from_context,
+    get_errored_plugins_from_context,
+    get_instance_staging_dir,
+)
+
+from openpype.pipeline.colorspace import (
+    get_imageio_colorspace_from_filepath,
+    get_imageio_config,
+    get_imageio_file_rules
+)
+
+
+class AbstractMetaInstancePlugin(ABCMeta, MetaPlugin):
+    pass
+
+
+class AbstractMetaContextPlugin(ABCMeta, ExplicitMetaPlugin):
+    pass
 
 
 class PublishValidationError(Exception):
@@ -16,6 +42,7 @@ class PublishValidationError(Exception):
         description(str): Detailed description of an error. It is possible
             to use Markdown syntax.
     """
+
     def __init__(self, message, title=None, description=None, detail=None):
         self.message = message
         self.title = title or "< Missing title >"
@@ -49,6 +76,7 @@ class KnownPublishError(Exception):
 
     Message will be shown in UI for artist.
     """
+
     pass
 
 
@@ -90,8 +118,9 @@ class OpenPypePyblishPluginMixin:
 
         Attributes available for all families in plugin's `families` attribute.
         Returns:
-            list<AbtractAttrDef>: Attribute definitions for plugin.
+            list<AbstractAttrDef>: Attribute definitions for plugin.
         """
+
         return []
 
     @classmethod
@@ -110,17 +139,33 @@ class OpenPypePyblishPluginMixin:
                 )
         return attribute_values
 
+    @staticmethod
+    def get_attr_values_from_data_for_plugin(plugin, data):
+        """Get attribute values for attribute definitions from data.
+
+        Args:
+            plugin (Union[publish.api.Plugin, Type[publish.api.Plugin]]): The
+                plugin for which attributes are extracted.
+            data(dict): Data from instance or context.
+        """
+
+        if not inspect.isclass(plugin):
+            plugin = plugin.__class__
+
+        return (
+            data
+            .get("publish_attributes", {})
+            .get(plugin.__name__, {})
+        )
+
     def get_attr_values_from_data(self, data):
         """Get attribute values for attribute definitions from data.
 
         Args:
             data(dict): Data from instance or context.
         """
-        return (
-            data
-            .get("publish_attributes", {})
-            .get(self.__class__.__name__, {})
-        )
+
+        return self.get_attr_values_from_data_for_plugin(self.__class__, data)
 
 
 class OptionalPyblishPluginMixin(OpenPypePyblishPluginMixin):
@@ -170,3 +215,214 @@ class OptionalPyblishPluginMixin(OpenPypePyblishPluginMixin):
         if active is None:
             active = getattr(self, "active", True)
         return active
+
+
+class RepairAction(pyblish.api.Action):
+    """Repairs the action
+
+    To process the repairing this requires a static `repair(instance)` method
+    is available on the plugin.
+    """
+
+    label = "Repair"
+    on = "failed"  # This action is only available on a failed plug-in
+    icon = "wrench"  # Icon from Awesome Icon
+
+    def process(self, context, plugin):
+        if not hasattr(plugin, "repair"):
+            raise RuntimeError("Plug-in does not have repair method.")
+
+        # Get the errored instances
+        self.log.info("Finding failed instances..")
+        errored_instances = get_errored_instances_from_context(context)
+
+        # Apply pyblish.logic to get the instances for the plug-in
+        instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
+        for instance in instances:
+            plugin.repair(instance)
+
+
+class RepairContextAction(pyblish.api.Action):
+    """Repairs the action
+
+    To process the repairing this requires a static `repair(instance)` method
+    is available on the plugin.
+    """
+
+    label = "Repair"
+    on = "failed"  # This action is only available on a failed plug-in
+
+    def process(self, context, plugin):
+        if not hasattr(plugin, "repair"):
+            raise RuntimeError("Plug-in does not have repair method.")
+
+        # Get the failed instances
+        self.log.info("Finding failed instances..")
+        failed_plugins = get_errored_plugins_from_context(context)
+
+        # Apply pyblish.logic to get the instances for the plug-in
+        if plugin in failed_plugins:
+            self.log.info("Attempting fix ...")
+            plugin.repair(context)
+
+
+class Extractor(pyblish.api.InstancePlugin):
+    """Extractor base class.
+
+    The extractor base class implements a "staging_dir" function used to
+    generate a temporary directory for an instance to extract to.
+
+    This temporary directory is generated through `tempfile.mkdtemp()`
+
+    """
+
+    order = 2.0
+
+    def staging_dir(self, instance):
+        """Provide a temporary directory in which to store extracted files
+
+        Upon calling this method the staging directory is stored inside
+        the instance.data['stagingDir']
+        """
+
+        return get_instance_staging_dir(instance)
+
+
+class ExtractorColormanaged(Extractor):
+    """Extractor base for color managed image data.
+
+    Each Extractor intended to export pixel data representation
+    should inherit from this class to allow color managed data.
+    Class implements "get_colorspace_settings" and
+    "set_representation_colorspace" functions used
+    for injecting colorspace data to representation data for farther
+    integration into db document.
+
+    """
+
+    allowed_ext = [
+        "cin", "dpx", "avi", "dv", "gif", "flv", "mkv", "mov", "mpg", "mpeg",
+        "mp4", "m4v", "mxf", "iff", "z", "ifl", "jpeg", "jpg", "jfif", "lut",
+        "1dl", "exr", "pic", "png", "ppm", "pnm", "pgm", "pbm", "rla", "rpf",
+        "sgi", "rgba", "rgb", "bw", "tga", "tiff", "tif", "img"
+    ]
+
+    @staticmethod
+    def get_colorspace_settings(context):
+        """Retuns solved settings for the host context.
+
+        Args:
+            context (publish.Context): publishing context
+
+        Returns:
+            tuple | bool: config, file rules or None
+        """
+        if "imageioSettings" in context.data:
+            return context.data["imageioSettings"]
+
+        project_name = context.data["projectName"]
+        host_name = context.data["hostName"]
+        anatomy_data = context.data["anatomyData"]
+        project_settings_ = context.data["project_settings"]
+
+        config_data = get_imageio_config(
+            project_name, host_name,
+            project_settings=project_settings_,
+            anatomy_data=anatomy_data
+        )
+        file_rules = get_imageio_file_rules(
+            project_name, host_name,
+            project_settings=project_settings_
+        )
+
+        # caching settings for future instance processing
+        context.data["imageioSettings"] = (config_data, file_rules)
+
+        return config_data, file_rules
+
+    def set_representation_colorspace(
+        self, representation, context,
+        colorspace=None,
+        colorspace_settings=None
+    ):
+        """Sets colorspace data to representation.
+
+        Args:
+            representation (dict): publishing representation
+            context (publish.Context): publishing context
+            config_data (dict): host resolved config data
+            file_rules (dict): host resolved file rules data
+            colorspace (str, optional): colorspace name. Defaults to None.
+            colorspace_settings (tuple[dict, dict], optional):
+                Settings for config_data and file_rules.
+                Defaults to None.
+
+        Example:
+            ```
+            {
+                # for other publish plugins and loaders
+                "colorspace": "linear",
+                "config": {
+                    # for future references in case need
+                    "path": "/abs/path/to/config.ocio",
+                    # for other plugins within remote publish cases
+                    "template": "{project[root]}/path/to/config.ocio"
+                }
+            }
+            ```
+
+        """
+        ext = representation["ext"]
+        # check extension
+        self.log.debug("__ ext: `{}`".format(ext))
+        if ext.lower() not in self.allowed_ext:
+            return
+
+        if colorspace_settings is None:
+            colorspace_settings = self.get_colorspace_settings(context)
+
+        # unpack colorspace settings
+        config_data, file_rules = colorspace_settings
+
+        if not config_data:
+            # warn in case no colorspace path was defined
+            self.log.warning("No colorspace management was defined")
+            return
+
+        self.log.info("Config data is : `{}`".format(
+            config_data))
+
+        project_name = context.data["projectName"]
+        host_name = context.data["hostName"]
+        project_settings = context.data["project_settings"]
+
+        # get one filename
+        filename = representation["files"]
+        if isinstance(filename, list):
+            filename = filename[0]
+
+        self.log.debug("__ filename: `{}`".format(
+            filename))
+
+        # get matching colorspace from rules
+        colorspace = colorspace or get_imageio_colorspace_from_filepath(
+            filename, host_name, project_name,
+            config_data=config_data,
+            file_rules=file_rules,
+            project_settings=project_settings
+        )
+        self.log.debug("__ colorspace: `{}`".format(
+            colorspace))
+
+        # infuse data to representation
+        if colorspace:
+            colorspace_data = {
+                "colorspace": colorspace,
+                "config": config_data
+            }
+
+            # update data key
+            representation["colorspaceData"] = colorspace_data
+
+            self.log.debug("__ colorspace_data: `{}`".format(
+                pformat(colorspace_data)))

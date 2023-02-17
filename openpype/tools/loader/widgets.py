@@ -5,10 +5,20 @@ import pprint
 import traceback
 import collections
 
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
-from openpype.api import Anatomy
-from openpype.pipeline import HeroVersionType
+from openpype.client import (
+    get_subset_families,
+    get_subset_by_id,
+    get_subsets,
+    get_version_by_id,
+    get_versions,
+    get_representations,
+    get_thumbnail_id_from_source,
+    get_thumbnail,
+)
+from openpype.client.operations import OperationsSession, REMOVED_VALUE
+from openpype.pipeline import HeroVersionType, Anatomy
 from openpype.pipeline.thumbnail import get_thumbnail_binary
 from openpype.pipeline.load import (
     discover_loader_plugins,
@@ -19,12 +29,14 @@ from openpype.pipeline.load import (
     load_with_repre_context,
     load_with_subset_context,
     load_with_subset_contexts,
+    LoadError,
     IncompatibleLoaderError,
 )
 from openpype.tools.utils import (
     ErrorMessageBox,
     lib as tools_lib
 )
+from openpype.tools.utils.lib import checkstate_int_to_enum
 from openpype.tools.utils.delegates import (
     VersionDelegate,
     PrettyTimeDelegate
@@ -37,6 +49,12 @@ from openpype.tools.utils.views import (
     TreeViewSpinner,
     DeselectableTreeView
 )
+from openpype.tools.utils.constants import (
+    LOCAL_PROVIDER_ROLE,
+    REMOTE_PROVIDER_ROLE,
+    LOCAL_AVAILABILITY_ROLE,
+    REMOTE_AVAILABILITY_ROLE,
+)
 from openpype.tools.assetlinks.widgets import SimpleLinkView
 
 from .model import (
@@ -48,13 +66,7 @@ from .model import (
     ITEM_ID_ROLE
 )
 from . import lib
-
-from openpype.tools.utils.constants import (
-    LOCAL_PROVIDER_ROLE,
-    REMOTE_PROVIDER_ROLE,
-    LOCAL_AVAILABILITY_ROLE,
-    REMOTE_AVAILABILITY_ROLE
-)
+from .delegates import LoadedInSceneDelegate
 
 
 class OverlayFrame(QtWidgets.QFrame):
@@ -159,6 +171,7 @@ class SubsetWidget(QtWidgets.QWidget):
         ("duration", 60),
         ("handles", 55),
         ("step", 10),
+        ("loaded_in_scene", 25),
         ("repre_info", 65)
     )
 
@@ -224,6 +237,10 @@ class SubsetWidget(QtWidgets.QWidget):
         column = model.Columns.index("repre_info")
         view.setItemDelegateForColumn(column, avail_delegate)
 
+        loaded_in_scene_delegate = LoadedInSceneDelegate(view)
+        column = model.Columns.index("loaded_in_scene")
+        view.setItemDelegateForColumn(column, loaded_in_scene_delegate)
+
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(top_bar_layout)
@@ -237,8 +254,7 @@ class SubsetWidget(QtWidgets.QWidget):
         self.model = model
         self.view = view
 
-        actual_project = dbcon.Session["AVALON_PROJECT"]
-        self.on_project_change(actual_project)
+        self.on_project_change(dbcon.current_project())
 
         view.customContextMenuRequested.connect(self.on_context_menu)
 
@@ -249,8 +265,8 @@ class SubsetWidget(QtWidgets.QWidget):
 
         group_checkbox.stateChanged.connect(self.set_grouping)
 
-        subset_filter.textChanged.connect(proxy.setFilterRegExp)
-        subset_filter.textChanged.connect(view.expandAll)
+        subset_filter.textChanged.connect(self._subset_changed)
+
         model.refreshed.connect(self.refreshed)
 
         self.proxy = proxy
@@ -278,6 +294,13 @@ class SubsetWidget(QtWidgets.QWidget):
                                           current_index=False):
             self.model.set_grouping(state)
 
+    def _subset_changed(self, text):
+        if hasattr(self.proxy, "setFilterRegularExpression"):
+            self.proxy.setFilterRegularExpression(text)
+        else:
+            self.proxy.setFilterRegExp(text)
+        self.view.expandAll()
+
     def set_loading_state(self, loading, empty):
         view = self.view
 
@@ -302,33 +325,23 @@ class SubsetWidget(QtWidgets.QWidget):
                 item["version_document"]
             )
 
-        subset_docs = list(self.dbcon.find(
-            {
-                "_id": {"$in": list(version_docs_by_subset_id.keys())},
-                "type": "subset"
-            },
-            {
-                "schema": 1,
-                "data.families": 1
-            }
+        project_name = self.dbcon.active_project()
+        subset_docs = list(get_subsets(
+            project_name,
+            subset_ids=version_docs_by_subset_id.keys(),
+            fields=["schema", "data.families"]
         ))
         subset_docs_by_id = {
             subset_doc["_id"]: subset_doc
             for subset_doc in subset_docs
         }
         version_ids = list(version_docs_by_id.keys())
-        repre_docs = self.dbcon.find(
-            # Query all representations for selected versions at once
-            {
-                "type": "representation",
-                "parent": {"$in": version_ids}
-            },
-            # Query only name and parent from representation
-            {
-                "name": 1,
-                "parent": 1
-            }
+        repre_docs = get_representations(
+            project_name,
+            version_ids=version_ids,
+            fields=["name", "parent"]
         )
+
         repre_docs_by_version_id = {
             version_id: []
             for version_id in version_ids
@@ -356,9 +369,10 @@ class SubsetWidget(QtWidgets.QWidget):
         enabled = False
         if project_name:
             self.model.reset_sync_server(project_name)
-            if self.model.sync_server:
-                enabled_proj = self.model.sync_server.get_enabled_projects()
-                enabled = project_name in enabled_proj
+            sync_server = self.model.sync_server
+            if sync_server:
+                enabled = sync_server.is_project_enabled(project_name,
+                                                         single=True)
 
         lib.change_visibility(self.model, self.view, "repre_info", enabled)
 
@@ -435,7 +449,8 @@ class SubsetWidget(QtWidgets.QWidget):
 
         # Get all representation->loader combinations available for the
         # index under the cursor, so we can list the user the options.
-        available_loaders = discover_loader_plugins()
+        project_name = self.dbcon.active_project()
+        available_loaders = discover_loader_plugins(project_name)
         if self.tool_name:
             available_loaders = lib.remove_tool_name_from_loaders(
                 available_loaders, self.tool_name
@@ -444,6 +459,8 @@ class SubsetWidget(QtWidgets.QWidget):
         repre_loaders = []
         subset_loaders = []
         for loader in available_loaders:
+            if not loader.enabled:
+                continue
             # Skip if its a SubsetLoader.
             if issubclass(loader, SubsetLoaderPlugin):
                 subset_loaders.append(loader)
@@ -508,7 +525,7 @@ class SubsetWidget(QtWidgets.QWidget):
         if not one_item_selected:
             # Filter loaders from first subset by intersected combinations
             for repre, loader in first_loaders:
-                if (repre["name"], loader) not in found_combinations:
+                if (repre["name"].lower(), loader) not in found_combinations:
                     continue
 
                 loaders.append((repre, loader))
@@ -566,28 +583,43 @@ class SubsetWidget(QtWidgets.QWidget):
             # same representation available
 
             # Trigger
-            repre_ids = []
+            project_name = self.dbcon.active_project()
+            subset_name_by_version_id = dict()
             for item in items:
-                representation = self.dbcon.find_one(
-                    {
-                        "type": "representation",
-                        "name": representation_name,
-                        "parent": item["version_document"]["_id"]
-                    },
-                    {"_id": 1}
-                )
-                if not representation:
-                    self.echo("Subset '{}' has no representation '{}'".format(
-                        item["subset"], representation_name
-                    ))
-                    continue
-                repre_ids.append(representation["_id"])
+                version_id = item["version_document"]["_id"]
+                subset_name_by_version_id[version_id] = item["subset"]
+
+            version_ids = set(subset_name_by_version_id.keys())
+            repre_docs = get_representations(
+                project_name,
+                representation_names=[representation_name],
+                version_ids=version_ids,
+                fields=["_id", "parent"]
+            )
+
+            repre_ids = []
+            for repre_doc in repre_docs:
+                repre_ids.append(repre_doc["_id"])
+
+                # keep only version ids without representation with that name
+                version_id = repre_doc["parent"]
+                version_ids.discard(version_id)
+
+            if version_ids:
+                # report versions that didn't have valid representation
+                joined_subset_names = ", ".join([
+                    '"{}"'.format(subset_name_by_version_id[version_id])
+                    for version_id in version_ids
+                ])
+                self.echo("Subsets {} don't have representation '{}'".format(
+                    joined_subset_names, representation_name
+                ))
 
             # get contexts only for selected menu option
             repre_contexts = get_repres_contexts(repre_ids, self.dbcon)
-            options = lib.get_options(action, loader, self,
-                                      list(repre_contexts.values()))
-
+            options = lib.get_options(
+                action, loader, self, list(repre_contexts.values())
+            )
             error_info = _load_representations_by_loader(
                 loader, repre_contexts, options=options
             )
@@ -599,26 +631,30 @@ class SubsetWidget(QtWidgets.QWidget):
             box.show()
 
     def group_subsets(self, name, asset_ids, items):
-        field = "data.subsetGroup"
+        subset_ids = {
+            item["_id"]
+            for item in items
+            if item.get("_id")
+        }
+        if not subset_ids:
+            return
 
         if name:
-            update = {"$set": {field: name}}
             self.echo("Group subsets to '%s'.." % name)
         else:
-            update = {"$unset": {field: ""}}
             self.echo("Ungroup subsets..")
 
-        subsets = list()
-        for item in items:
-            subsets.append(item["subset"])
+        project_name = self.dbcon.active_project()
+        op_session = OperationsSession()
+        for subset_id in subset_ids:
+            op_session.update_entity(
+                project_name,
+                "subset",
+                subset_id,
+                {"data.subsetGroup": name or REMOVED_VALUE}
+            )
 
-        for asset_id in asset_ids:
-            filtr = {
-                "type": "subset",
-                "parent": asset_id,
-                "name": {"$in": subsets},
-            }
-            self.dbcon.update_many(filtr, update)
+        op_session.commit()
 
     def echo(self, message):
         print(message)
@@ -661,27 +697,21 @@ class VersionTextEdit(QtWidgets.QTextEdit):
 
         print("Querying..")
 
+        project_name = self.dbcon.active_project()
         if not version_doc:
-            version_doc = self.dbcon.find_one({
-                "_id": version_id,
-                "type": {"$in": ["version", "hero_version"]}
-            })
+            version_doc = get_version_by_id(project_name, version_id)
             assert version_doc, "Not a valid version id"
 
         if version_doc["type"] == "hero_version":
-            _version_doc = self.dbcon.find_one({
-                "_id": version_doc["version_id"],
-                "type": "version"
-            })
+            _version_doc = get_version_by_id(
+                project_name, version_doc["version_id"]
+            )
             version_doc["data"] = _version_doc["data"]
             version_doc["name"] = HeroVersionType(
                 _version_doc["name"]
             )
 
-        subset = self.dbcon.find_one({
-            "_id": version_doc["parent"],
-            "type": "subset"
-        })
+        subset = get_subset_by_id(project_name, version_doc["parent"])
         assert subset, "No valid subset parent for version"
 
         # Define readable creation timestamp
@@ -752,7 +782,7 @@ class VersionTextEdit(QtWidgets.QTextEdit):
         if not source:
             return
 
-        project_name = self.dbcon.Session["AVALON_PROJECT"]
+        project_name = self.dbcon.current_project()
         if self._anatomy is None or self._anatomy.project_name != project_name:
             self._anatomy = Anatomy(project_name)
 
@@ -833,24 +863,19 @@ class ThumbnailWidget(QtWidgets.QLabel):
             QtCore.Qt.SmoothTransformation
         )
 
-    def set_thumbnail(self, doc_id=None):
-        if not doc_id:
+    def set_thumbnail(self, src_type, doc_ids):
+        if not doc_ids:
             self.set_pixmap()
             return
 
-        if isinstance(doc_id, (list, tuple)):
-            if len(doc_id) < 1:
-                self.set_pixmap()
-                return
-            doc_id = doc_id[0]
+        src_id = doc_ids[0]
 
-        doc = self.dbcon.find_one(
-            {"_id": doc_id},
-            {"data.thumbnail_id"}
+        project_name = self.dbcon.active_project()
+        thumbnail_id = get_thumbnail_id_from_source(
+            project_name,
+            src_type,
+            src_id,
         )
-        thumbnail_id = None
-        if doc:
-            thumbnail_id = doc.get("data", {}).get("thumbnail_id")
         if thumbnail_id == self.current_thumb_id:
             if self.current_thumbnail is None:
                 self.set_pixmap()
@@ -861,9 +886,7 @@ class ThumbnailWidget(QtWidgets.QLabel):
             self.set_pixmap()
             return
 
-        thumbnail_ent = self.dbcon.find_one(
-            {"type": "thumbnail", "_id": thumbnail_id}
-        )
+        thumbnail_ent = get_thumbnail(project_name, thumbnail_id)
         if not thumbnail_ent:
             return
 
@@ -917,21 +940,9 @@ class FamilyModel(QtGui.QStandardItemModel):
 
     def refresh(self):
         families = set()
-        if self.dbcon.Session.get("AVALON_PROJECT"):
-            result = list(self.dbcon.aggregate([
-                {"$match": {
-                    "type": "subset"
-                }},
-                {"$project": {
-                    "family": {"$arrayElemAt": ["$data.families", 0]}
-                }},
-                {"$group": {
-                    "_id": "family_group",
-                    "families": {"$addToSet": "$family"}
-                }}
-            ]))
-            if result:
-                families = set(result[0]["families"])
+        project_name = self.dbcon.current_project()
+        if project_name:
+            families = get_subset_families(project_name)
 
         root_item = self.invisibleRootItem()
 
@@ -1058,7 +1069,10 @@ class FamilyListView(QtWidgets.QListView):
         checked_families = []
         for row in range(model.rowCount()):
             index = model.index(row, 0)
-            if index.data(QtCore.Qt.CheckStateRole) == QtCore.Qt.Checked:
+            checked = checkstate_int_to_enum(
+                index.data(QtCore.Qt.CheckStateRole)
+            )
+            if checked == QtCore.Qt.Checked:
                 family = index.data(QtCore.Qt.DisplayRole)
                 checked_families.append(family)
 
@@ -1092,13 +1106,15 @@ class FamilyListView(QtWidgets.QListView):
         self.blockSignals(True)
 
         for index in indexes:
-            index_state = index.data(QtCore.Qt.CheckStateRole)
+            index_state = checkstate_int_to_enum(
+                index.data(QtCore.Qt.CheckStateRole)
+            )
             if index_state == state:
                 continue
 
             new_state = state
             if new_state is None:
-                if index_state == QtCore.Qt.Checked:
+                if index_state in QtCore.Qt.Checked:
                     new_state = QtCore.Qt.Unchecked
                 else:
                     new_state = QtCore.Qt.Checked
@@ -1176,7 +1192,7 @@ class RepresentationWidget(QtWidgets.QWidget):
 
         headers = [item[0] for item in self.default_widths]
 
-        model = RepresentationModel(self.dbcon, headers, [])
+        model = RepresentationModel(self.dbcon, headers)
 
         proxy_model = RepresentationSortProxyModel(self)
         proxy_model.setSourceModel(model)
@@ -1213,8 +1229,8 @@ class RepresentationWidget(QtWidgets.QWidget):
         self.proxy_model = proxy_model
 
         self.sync_server_enabled = False
-        actual_project = dbcon.Session["AVALON_PROJECT"]
-        self.on_project_change(actual_project)
+
+        self.on_project_change(dbcon.current_project())
 
         self.model.refresh()
 
@@ -1228,9 +1244,10 @@ class RepresentationWidget(QtWidgets.QWidget):
         enabled = False
         if project_name:
             self.model.reset_sync_server(project_name)
-            if self.model.sync_server:
-                enabled_proj = self.model.sync_server.get_enabled_projects()
-                enabled = project_name in enabled_proj
+            sync_server = self.model.sync_server
+            if sync_server:
+                enabled = sync_server.is_project_enabled(project_name,
+                                                         single=True)
 
         self.sync_server_enabled = enabled
         lib.change_visibility(self.model, self.tree_view,
@@ -1243,23 +1260,22 @@ class RepresentationWidget(QtWidgets.QWidget):
         for item in items:
             repre_ids.append(item["_id"])
 
-        repre_docs = list(self.dbcon.find(
-            {
-                "type": "representation",
-                "_id": {"$in": repre_ids}
-            },
-            {
-                "name": 1,
-                "parent": 1
-            }
+        project_name = self.dbcon.active_project()
+        repre_docs = list(get_representations(
+            project_name,
+            representation_ids=repre_ids,
+            fields=["name", "parent"]
         ))
+
         version_ids = [
             repre_doc["parent"]
             for repre_doc in repre_docs
         ]
-        version_docs = self.dbcon.find({
-            "_id": {"$in": version_ids}
-        })
+        version_docs = get_versions(
+            project_name,
+            version_ids=version_ids,
+            hero=True
+        )
 
         version_docs_by_id = {}
         version_docs_by_subset_id = collections.defaultdict(list)
@@ -1269,15 +1285,10 @@ class RepresentationWidget(QtWidgets.QWidget):
             version_docs_by_id[version_id] = version_doc
             version_docs_by_subset_id[subset_id].append(version_doc)
 
-        subset_docs = list(self.dbcon.find(
-            {
-                "_id": {"$in": list(version_docs_by_subset_id.keys())},
-                "type": "subset"
-            },
-            {
-                "schema": 1,
-                "data.families": 1
-            }
+        subset_docs = list(get_subsets(
+            project_name,
+            subset_ids=version_docs_by_subset_id.keys(),
+            fields=["schema", "data.families"]
         ))
         subset_docs_by_id = {
             subset_doc["_id"]: subset_doc
@@ -1351,10 +1362,13 @@ class RepresentationWidget(QtWidgets.QWidget):
         selected_side = self._get_selected_side(point_index, rows)
         # Get all representation->loader combinations available for the
         # index under the cursor, so we can list the user the options.
-        available_loaders = discover_loader_plugins()
+        project_name = self.dbcon.active_project()
+        available_loaders = discover_loader_plugins(project_name)
 
         filtered_loaders = []
         for loader in available_loaders:
+            if not loader.enabled:
+                continue
             # Skip subset loaders
             if issubclass(loader, SubsetLoaderPlugin):
                 continue
@@ -1446,13 +1460,12 @@ class RepresentationWidget(QtWidgets.QWidget):
         self._process_action(items, menu, point)
 
     def _process_action(self, items, menu, point):
-        """
-            Show the context action menu and process selected
+        """Show the context action menu and process selected
 
-            Args:
-                items(dict): menu items
-                menu(OptionalMenu)
-                point(PointIndex)
+        Args:
+            items(dict): menu items
+            menu(OptionalMenu)
+            point(PointIndex)
         """
         global_point = self.tree_view.mapToGlobal(point)
         action = menu.exec_(global_point)
@@ -1467,22 +1480,22 @@ class RepresentationWidget(QtWidgets.QWidget):
         repre_ids = []
         data_by_repre_id = {}
         selected_side = action_representation.get("selected_side")
+        site_name = "{}_site_name".format(selected_side)
 
+        is_sync_loader = tools_lib.is_sync_loader(loader)
         for item in items:
-            if tools_lib.is_sync_loader(loader):
-                site_name = "{}_site_name".format(selected_side)
-                data = {
-                    "_id": item.get("_id"),
-                    "site_name": item.get(site_name),
-                    "project_name": self.dbcon.Session["AVALON_PROJECT"]
-                }
+            repre_id = item["_id"]
+            repre_ids.append(repre_id)
+            if not is_sync_loader:
+                continue
 
-                if not data["site_name"]:
-                    continue
+            data_site_name = item.get(site_name)
+            if not data_site_name:
+                continue
 
-                data_by_repre_id[data["_id"]] = data
-
-            repre_ids.append(item.get("_id"))
+            data_by_repre_id[repre_id] = {
+                "site_name": data_site_name
+            }
 
         repre_contexts = get_repres_contexts(repre_ids, self.dbcon)
         options = lib.get_options(action, loader, self,
@@ -1564,16 +1577,22 @@ def _load_representations_by_loader(loader, repre_contexts,
         return
 
     for repre_context in repre_contexts.values():
+        version_doc = repre_context["version"]
+        if version_doc["type"] == "hero_version":
+            version_name = "Hero"
+        else:
+            version_name = version_doc.get("name")
         try:
             if data_by_repre_id:
-                _id = repre_context["representation"]["_id"]
-                data = data_by_repre_id.get(_id)
+                repre_id = repre_context["representation"]["_id"]
+                data = data_by_repre_id.get(repre_id)
                 options.update(data)
             load_with_repre_context(
                 loader,
                 repre_context,
                 options=options
             )
+
         except IncompatibleLoaderError as exc:
             print(exc)
             error_info.append((
@@ -1581,20 +1600,23 @@ def _load_representations_by_loader(loader, repre_contexts,
                 None,
                 repre_context["representation"]["name"],
                 repre_context["subset"]["name"],
-                repre_context["version"]["name"]
+                version_name
             ))
 
         except Exception as exc:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            formatted_traceback = "".join(traceback.format_exception(
-                exc_type, exc_value, exc_traceback
-            ))
+            formatted_traceback = None
+            if not isinstance(exc, LoadError):
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                formatted_traceback = "".join(traceback.format_exception(
+                    exc_type, exc_value, exc_traceback
+                ))
+
             error_info.append((
                 str(exc),
                 formatted_traceback,
                 repre_context["representation"]["name"],
                 repre_context["subset"]["name"],
-                repre_context["version"]["name"]
+                version_name
             ))
     return error_info
 
@@ -1613,7 +1635,7 @@ def _load_subsets_by_loader(loader, subset_contexts, options,
     error_info = []
 
     if options is None:  # not load when cancelled
-        return
+        return error_info
 
     if loader.is_multiple_contexts_compatible:
         subset_names = []
@@ -1628,13 +1650,14 @@ def _load_subsets_by_loader(loader, subset_contexts, options,
                 subset_contexts,
                 options=options
             )
+
         except Exception as exc:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            formatted_traceback = "".join(
-                traceback.format_exception(
+            formatted_traceback = None
+            if not isinstance(exc, LoadError):
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                formatted_traceback = "".join(traceback.format_exception(
                     exc_type, exc_value, exc_traceback
-                )
-            )
+                ))
             error_info.append((
                 str(exc),
                 formatted_traceback,
@@ -1654,13 +1677,15 @@ def _load_subsets_by_loader(loader, subset_contexts, options,
                     subset_context,
                     options=options
                 )
+
             except Exception as exc:
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                formatted_traceback = "\n".join(
-                    traceback.format_exception(
+                formatted_traceback = None
+                if not isinstance(exc, LoadError):
+                    exc_type, exc_value, exc_traceback = sys.exc_info()
+                    formatted_traceback = "".join(traceback.format_exception(
                         exc_type, exc_value, exc_traceback
-                    )
-                )
+                    ))
+
                 error_info.append((
                     str(exc),
                     formatted_traceback,

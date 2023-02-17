@@ -118,19 +118,6 @@
             ]
         },
         {
-            "key": "env_group_test",
-            "label": "EnvGroup Test",
-            "type": "dict",
-            "children": [
-                {
-                    "key": "key_to_store_in_system_settings",
-                    "label": "Testing environment group",
-                    "type": "raw-json",
-                    "env_group_key": "test_group"
-                }
-            ]
-        },
-        {
             "key": "dict_wrapper",
             "type": "dict",
             "children": [

@@ -1,32 +1,39 @@
 import os
-from bson.objectid import ObjectId
+import sys
+import time
 from datetime import datetime
 import threading
 import platform
 import copy
-from collections import deque
+import signal
+from collections import deque, defaultdict
 
-from avalon.api import AvalonMongoDB
+import click
+from bson.objectid import ObjectId
 
-from openpype.modules import OpenPypeModule
-from openpype_interfaces import ITrayModule
-from openpype.api import (
-    Anatomy,
+from openpype.client import (
+    get_projects,
+    get_representations,
+    get_representation_by_id,
+)
+from openpype.modules import OpenPypeModule, ITrayModule
+from openpype.settings import (
     get_project_settings,
     get_system_settings,
-    get_local_site_id)
-from openpype.lib import PypeLogger
+)
+from openpype.lib import Logger, get_local_site_id
+from openpype.pipeline import AvalonMongoDB, Anatomy
 from openpype.settings.lib import (
     get_default_anatomy_settings,
-    get_anatomy_settings)
+    get_anatomy_settings
+)
 
 from .providers.local_drive import LocalDriveHandler
 from .providers import lib
 
-from .utils import time_function, SyncStatus
+from .utils import time_function, SyncStatus, SiteAlreadyPresentError
 
-
-log = PypeLogger().get_logger("SyncServer")
+log = Logger.get_logger("SyncServer")
 
 
 class SyncServerModule(OpenPypeModule, ITrayModule):
@@ -117,7 +124,6 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         self.action_show_widget = None
         self._paused = False
         self._paused_projects = set()
-        self._paused_representations = set()
         self._anatomies = {}
 
         self._connection = None
@@ -128,44 +134,55 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         self.projects_processed = set()
 
     """ Start of Public API """
-    def add_site(self, collection, representation_id, site_name=None,
-                 force=False):
+    def add_site(self, project_name, representation_id, site_name=None,
+                 force=False, priority=None, reset_timer=False):
         """
-            Adds new site to representation to be synced.
+        Adds new site to representation to be synced.
 
-            'collection' must have synchronization enabled (globally or
-            project only)
+        'project_name' must have synchronization enabled (globally or
+        project only)
 
-            Used as a API endpoint from outside applications (Loader etc)
+        Used as an API endpoint from outside applications (Loader etc).
 
-            Args:
-                collection (string): project name (must match DB)
-                representation_id (string): MongoDB _id value
-                site_name (string): name of configured and active site
-                force (bool): reset site if exists
+        Use 'force' to reset existing site.
 
-            Returns:
-                throws ValueError if any issue
+        Args:
+            project_name (string): project name (must match DB)
+            representation_id (string): MongoDB _id value
+            site_name (string): name of configured and active site
+            force (bool): reset site if exists
+            priority (int): set priority
+            reset_timer (bool): if delay timer should be reset, eg. user mark
+                some representation to be synced manually
+
+        Throws:
+            SiteAlreadyPresentError - if adding already existing site and
+                not 'force'
+            ValueError - other errors (repre not found, misconfiguration)
         """
-        if not self.get_sync_project_setting(collection):
+        if not self.get_sync_project_setting(project_name):
             raise ValueError("Project not configured")
 
         if not site_name:
             site_name = self.DEFAULT_SITE
 
-        self.reset_site_on_representation(collection,
+        self.reset_site_on_representation(project_name,
                                           representation_id,
-                                          site_name=site_name, force=force)
+                                          site_name=site_name,
+                                          force=force,
+                                          priority=priority)
 
-    # public facing API
-    def remove_site(self, collection, representation_id, site_name,
+        if reset_timer:
+            self.reset_timer()
+
+    def remove_site(self, project_name, representation_id, site_name,
                     remove_local_files=False):
         """
             Removes 'site_name' for particular 'representation_id' on
-            'collection'
+            'project_name'
 
             Args:
-                collection (string): project name (must match DB)
+                project_name (string): project name (must match DB)
                 representation_id (string): MongoDB _id value
                 site_name (string): name of configured and active site
                 remove_local_files (bool): remove only files for 'local_id'
@@ -174,19 +191,164 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             Returns:
                 throws ValueError if any issue
         """
-        if not self.get_sync_project_setting(collection):
+        if not self.get_sync_project_setting(project_name):
             raise ValueError("Project not configured")
 
-        self.reset_site_on_representation(collection,
+        self.reset_site_on_representation(project_name,
                                           representation_id,
                                           site_name=site_name,
                                           remove=True)
         if remove_local_files:
-            self._remove_local_file(collection, representation_id, site_name)
+            self._remove_local_file(project_name, representation_id, site_name)
 
-    def clear_project(self, collection, site_name):
+    def compute_resource_sync_sites(self, project_name):
+        """Get available resource sync sites state for publish process.
+
+        Returns dict with prepared state of sync sites for 'project_name'.
+        It checks if Site Sync is enabled, handles alternative sites.
+        Publish process stores this dictionary as a part of representation
+        document in DB.
+
+        Example:
+        [
+            {
+                'name': '42abbc09-d62a-44a4-815c-a12cd679d2d7',
+                'created_dt': datetime.datetime(2022, 3, 30, 12, 16, 9, 778637)
+            },
+            {'name': 'studio'},
+            {'name': 'SFTP'}
+        ] -- representation is published locally, artist or Settings have set
+        remote site as 'studio'. 'SFTP' is alternate site to 'studio'. Eg.
+        whenever file is on 'studio', it is also on 'SFTP'.
         """
-            Clear 'collection' of 'site_name' and its local files
+
+        def create_metadata(name, created=True):
+            """Create sync site metadata for site with `name`"""
+            metadata = {"name": name}
+            if created:
+                metadata["created_dt"] = datetime.now()
+            return metadata
+
+        if (
+                not self.sync_system_settings["enabled"] or
+                not self.sync_project_settings[project_name]["enabled"]):
+            return [create_metadata(self.DEFAULT_SITE)]
+
+        local_site = self.get_active_site(project_name)
+        remote_site = self.get_remote_site(project_name)
+
+        # Attached sites metadata by site name
+        # That is the local site, remote site, the always accesible sites
+        # and their alternate sites (alias of sites with different protocol)
+        attached_sites = dict()
+        attached_sites[local_site] = create_metadata(local_site)
+
+        if remote_site and remote_site not in attached_sites:
+            attached_sites[remote_site] = create_metadata(remote_site,
+                                                          created=False)
+
+        attached_sites = self._add_alternative_sites(attached_sites)
+        # add skeleton for sites where it should be always synced to
+        # usually it would be a backup site which is handled by separate
+        # background process
+        for site in self._get_always_accessible_sites(project_name):
+            if site not in attached_sites:
+                attached_sites[site] = create_metadata(site, created=False)
+
+        return list(attached_sites.values())
+
+    def _get_always_accessible_sites(self, project_name):
+        """Sites that synced to as a part of background process.
+
+        Artist machine doesn't handle those, explicit Tray with that site name
+        as a local id must be running.
+        Example is dropbox site serving as a backup solution
+        """
+        always_accessible_sites = (
+            self.get_sync_project_setting(project_name)["config"].
+            get("always_accessible_on", [])
+        )
+        return [site.strip() for site in always_accessible_sites]
+
+    def _add_alternative_sites(self, attached_sites):
+        """Add skeleton document for alternative sites
+
+        Each new configured site in System Setting could serve as a alternative
+        site, it's a kind of alias. It means that files on 'a site' are
+        physically accessible also on 'a alternative' site.
+        Example is sftp site serving studio files via sftp protocol, physically
+        file is only in studio, sftp server has this location mounted.
+        """
+        additional_sites = self.sync_system_settings.get("sites", {})
+
+        alt_site_pairs = self._get_alt_site_pairs(additional_sites)
+
+        for site_name in additional_sites.keys():
+            # Get alternate sites (stripped names) for this site name
+            alt_sites = alt_site_pairs.get(site_name)
+            alt_sites = [site.strip() for site in alt_sites]
+            alt_sites = set(alt_sites)
+
+            # If no alternative sites we don't need to add
+            if not alt_sites:
+                continue
+
+            # Take a copy of data of the first alternate site that is already
+            # defined as an attached site to match the same state.
+            match_meta = next((attached_sites[site] for site in alt_sites
+                               if site in attached_sites), None)
+            if not match_meta:
+                continue
+
+            alt_site_meta = copy.deepcopy(match_meta)
+            alt_site_meta["name"] = site_name
+
+            # Note: We change mutable `attached_site` dict in-place
+            attached_sites[site_name] = alt_site_meta
+
+        return attached_sites
+
+    def _get_alt_site_pairs(self, conf_sites):
+        """Returns dict of site and its alternative sites.
+
+        If `site` has alternative site, it means that alt_site has 'site' as
+        alternative site
+        Args:
+            conf_sites (dict)
+        Returns:
+            (dict): {'site': [alternative sites]...}
+        """
+        alt_site_pairs = defaultdict(set)
+        for site_name, site_info in conf_sites.items():
+            alt_sites = set(site_info.get("alternative_sites", []))
+            alt_site_pairs[site_name].update(alt_sites)
+
+            for alt_site in alt_sites:
+                alt_site_pairs[alt_site].add(site_name)
+
+        for site_name, alt_sites in alt_site_pairs.items():
+            sites_queue = deque(alt_sites)
+            while sites_queue:
+                alt_site = sites_queue.popleft()
+
+                # safety against wrong config
+                # {"SFTP": {"alternative_site": "SFTP"}
+                if alt_site == site_name or alt_site not in alt_site_pairs:
+                    continue
+
+                for alt_alt_site in alt_site_pairs[alt_site]:
+                    if (
+                            alt_alt_site != site_name
+                            and alt_alt_site not in alt_sites
+                    ):
+                        alt_sites.add(alt_alt_site)
+                        sites_queue.append(alt_alt_site)
+
+        return alt_site_pairs
+
+    def clear_project(self, project_name, site_name):
+        """
+            Clear 'project_name' of 'site_name' and its local files
 
             Works only on real local sites, not on 'studio'
         """
@@ -195,170 +357,180 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             "files.sites.name": site_name
         }
 
+        # TODO currently not possible to replace with get_representations
         representations = list(
-            self.connection.database[collection].find(query))
+            self.connection.database[project_name].find(query))
         if not representations:
             self.log.debug("No repre found")
             return
 
         for repre in representations:
-            self.remove_site(collection, repre.get("_id"), site_name, True)
+            self.remove_site(project_name, repre.get("_id"), site_name, True)
 
-    def create_validate_project_task(self, collection, site_name):
+    def create_validate_project_task(self, project_name, site_name):
         """Adds metadata about project files validation on a queue.
 
-            This process will loop through all representation and check if
-            their files actually exist on an active site.
+        This process will loop through all representation and check if
+        their files actually exist on an active site.
 
-            This might be useful for edge cases when artists is switching
-            between sites, remote site is actually physically mounted and
-            active site has same file urls etc.
+        It also checks if site is set in DB, but file is physically not
+        present
 
-            Task will run on a asyncio loop, shouldn't be blocking.
+        This might be useful for edge cases when artists is switching
+        between sites, remote site is actually physically mounted and
+        active site has same file urls etc.
+
+        Task will run on a asyncio loop, shouldn't be blocking.
         """
         task = {
             "type": "validate",
-            "project_name": collection,
-            "func": lambda: self.validate_project(collection, site_name)
+            "project_name": project_name,
+            "func": lambda: self.validate_project(project_name, site_name,
+                                                  reset_missing=True)
         }
-        self.projects_processed.add(collection)
+        self.projects_processed.add(project_name)
         self.long_running_tasks.append(task)
 
-    def validate_project(self, collection, site_name, remove_missing=False):
-        """
-            Validate 'collection' of 'site_name' and its local files
+    def validate_project(self, project_name, site_name, reset_missing=False):
+        """Validate 'project_name' of 'site_name' and its local files
 
-            If file present and not marked with a 'site_name' in DB, DB is
-            updated with site name and file modified date.
+        If file present and not marked with a 'site_name' in DB, DB is
+        updated with site name and file modified date.
 
-            Args:
-                module (SyncServerModule)
-                collection (string): project name
-                site_name (string): active site name
-                remove_missing (bool): if True remove sites in DB if missing
-                    physically
+        Args:
+            project_name (string): project name
+            site_name (string): active site name
+            reset_missing (bool): if True reset site in DB if missing
+                physically
         """
-        self.log.debug("Validation of {} for {} started".format(collection,
+        self.log.debug("Validation of {} for {} started".format(project_name,
                                                                 site_name))
-        query = {
-            "type": "representation"
-        }
-
-        representations = list(
-            self.connection.database[collection].find(query))
+        representations = list(get_representations(project_name))
         if not representations:
             self.log.debug("No repre found")
             return
 
         sites_added = 0
-        sites_removed = 0
+        sites_reset = 0
         for repre in representations:
             repre_id = repre["_id"]
             for repre_file in repre.get("files", []):
                 try:
-                    has_site = site_name in [site["name"]
-                                             for site in repre_file["sites"]]
-                except TypeError:
+                    is_on_site = site_name in [site["name"]
+                                               for site in repre_file["sites"]
+                                               if (site.get("created_dt") and
+                                               not site.get("error"))]
+                except (TypeError, AttributeError):
                     self.log.debug("Structure error in {}".format(repre_id))
                     continue
 
-                if has_site and not remove_missing:
-                    continue
-
                 file_path = repre_file.get("path", "")
-                local_file_path = self.get_local_file_path(collection,
+                local_file_path = self.get_local_file_path(project_name,
                                                            site_name,
                                                            file_path)
 
-                if local_file_path and os.path.exists(local_file_path):
-                    self.log.debug("Adding site {} for {}".format(site_name,
-                                                                  repre_id))
-                    if not has_site:
-                        query = {
-                            "_id": repre_id
-                        }
+                file_exists = (local_file_path and
+                               os.path.exists(local_file_path))
+                if not is_on_site:
+                    if file_exists:
+                        self.log.debug(
+                            "Adding site {} for {}".format(site_name,
+                                                           repre_id))
+
                         created_dt = datetime.fromtimestamp(
                             os.path.getmtime(local_file_path))
                         elem = {"name": site_name,
                                 "created_dt": created_dt}
-                        self._add_site(collection, query, [repre], elem,
+                        self._add_site(project_name, repre, elem,
                                        site_name=site_name,
-                                       file_id=repre_file["_id"])
+                                       file_id=repre_file["_id"],
+                                       force=True)
                         sites_added += 1
                 else:
-                    if has_site and remove_missing:
-                        self.log.debug("Removing site {} for {}".
+                    if not file_exists and reset_missing:
+                        self.log.debug("Resetting site {} for {}".
                                        format(site_name, repre_id))
-                        self.reset_provider_for_file(collection,
-                                                     repre_id,
-                                                     file_id=repre_file["_id"],
-                                                     remove=True)
-                        sites_removed += 1
+                        self.reset_site_on_representation(
+                            project_name, repre_id, site_name=site_name,
+                            file_id=repre_file["_id"])
+                        sites_reset += 1
 
         if sites_added % 100 == 0:
             self.log.debug("Sites added {}".format(sites_added))
 
-        self.log.debug("Validation of {} for {} ended".format(collection,
+        self.log.debug("Validation of {} for {} ended".format(project_name,
                                                               site_name))
-        self.log.info("Sites added {}, sites removed {}".format(sites_added,
-                                                                sites_removed))
+        self.log.info("Sites added {}, sites reset {}".format(sites_added,
+                                                              reset_missing))
 
-    def pause_representation(self, collection, representation_id, site_name):
+    def pause_representation(self, project_name, representation_id, site_name):
         """
             Sets 'representation_id' as paused, eg. no syncing should be
             happening on it.
 
             Args:
-                collection (string): project name
+                project_name (string): project name
                 representation_id (string): MongoDB objectId value
                 site_name (string): 'gdrive', 'studio' etc.
         """
-        log.info("Pausing SyncServer for {}".format(representation_id))
-        self._paused_representations.add(representation_id)
-        self.reset_site_on_representation(collection, representation_id,
+        self.log.info("Pausing SyncServer for {}".format(representation_id))
+        self.reset_site_on_representation(project_name, representation_id,
                                           site_name=site_name, pause=True)
 
-    def unpause_representation(self, collection, representation_id, site_name):
+    def unpause_representation(self, project_name,
+                               representation_id, site_name):
         """
             Sets 'representation_id' as unpaused.
 
             Does not fail or warn if repre wasn't paused.
 
             Args:
-                collection (string): project name
+                project_name (string): project name
                 representation_id (string): MongoDB objectId value
                 site_name (string): 'gdrive', 'studio' etc.
         """
-        log.info("Unpausing SyncServer for {}".format(representation_id))
-        try:
-            self._paused_representations.remove(representation_id)
-        except KeyError:
-            pass
-        # self.paused_representations is not persistent
-        self.reset_site_on_representation(collection, representation_id,
+        self.log.info("Unpausing SyncServer for {}".format(representation_id))
+        self.reset_site_on_representation(project_name, representation_id,
                                           site_name=site_name, pause=False)
 
-    def is_representation_paused(self, representation_id,
-                                 check_parents=False, project_name=None):
+    def is_representation_paused(self, project_name, representation_id,
+                                 site_name, check_parents=False):
         """
-            Returns if 'representation_id' is paused or not.
+            Returns if 'representation_id' is paused or not for site.
 
             Args:
-                representation_id (string): MongoDB objectId value
+                project_name (str): project to check if paused
+                representation_id (str): MongoDB objectId value
+                site (str): site to check representation is paused for
                 check_parents (bool): check if parent project or server itself
                     are not paused
-                project_name (string): project to check if paused
 
-                if 'check_parents', 'project_name' should be set too
             Returns:
                 (bool)
         """
-        condition = representation_id in self._paused_representations
-        if check_parents and project_name:
-            condition = condition or \
-                self.is_project_paused(project_name) or \
-                self.is_paused()
-        return condition
+        # Check parents are paused
+        if check_parents and (
+            self.is_project_paused(project_name)
+            or self.is_paused()
+        ):
+            return True
+
+        # Get representation
+        representation = get_representation_by_id(project_name,
+                                                  representation_id,
+                                                  fields=["files.sites"])
+        if not representation:
+            return False
+
+        # Check if representation is paused
+        for file_info in representation.get("files", []):
+            for site in file_info.get("sites", []):
+                if site["name"] != site_name:
+                    continue
+
+                return site.get("paused", False)
+
+        return False
 
     def pause_project(self, project_name):
         """
@@ -366,9 +538,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             happening on all representation inside.
 
             Args:
-                project_name (string): collection name
+                project_name (string): project_name name
         """
-        log.info("Pausing SyncServer for {}".format(project_name))
+        self.log.info("Pausing SyncServer for {}".format(project_name))
         self._paused_projects.add(project_name)
 
     def unpause_project(self, project_name):
@@ -378,9 +550,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             Does not fail or warn if project wasn't paused.
 
             Args:
-                project_name (string): collection name
+                project_name (string):
         """
-        log.info("Unpausing SyncServer for {}".format(project_name))
+        self.log.info("Unpausing SyncServer for {}".format(project_name))
         try:
             self._paused_projects.remove(project_name)
         except KeyError:
@@ -391,7 +563,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             Returns if 'project_name' is paused or not.
 
             Args:
-                project_name (string): collection name
+                project_name (string):
                 check_parents (bool): check if server itself
                     is not paused
             Returns:
@@ -408,14 +580,14 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
             It won't check anything, not uploading/downloading...
         """
-        log.info("Pausing SyncServer")
+        self.log.info("Pausing SyncServer")
         self._paused = True
 
     def unpause_server(self):
         """
             Unpause server
         """
-        log.info("Unpausing SyncServer")
+        self.log.info("Unpausing SyncServer")
         self._paused = False
 
     def is_paused(self):
@@ -726,7 +898,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
     #                             val = val[platform.system().lower()]
     #                     except KeyError:
     #                         st = "{}'s field value {} should be".format(key, val)  # noqa: E501
-    #                         log.error(st + " multiplatform dict")
+    #                         self.log.error(st + " multiplatform dict")
     #
     #                 item["namespace"] = item["namespace"].replace('{site}',
     #                                                               site_name)
@@ -756,23 +928,94 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
             In case of user's involvement (reset site), start that right away.
         """
-        self.sync_server_thread.reset_timer()
+
+        if not self.enabled:
+            return
+
+        if self.sync_server_thread is None:
+            self._reset_timer_with_rest_api()
+        else:
+            self.sync_server_thread.reset_timer()
+
+    def is_representation_on_site(
+        self, project_name, representation_id, site_name
+    ):
+        """Checks if 'representation_id' has all files avail. on 'site_name'"""
+        representation = get_representation_by_id(project_name,
+                                                  representation_id,
+                                                  fields=["_id", "files"])
+        if not representation:
+            return False
+
+        on_site = False
+        for file_info in representation.get("files", []):
+            for site in file_info.get("sites", []):
+                if site["name"] != site_name:
+                    continue
+
+                if (site.get("progress") or site.get("error") or
+                        not site.get("created_dt")):
+                    return False
+                on_site = True
+
+        return on_site
+
+    def _reset_timer_with_rest_api(self):
+        # POST to webserver sites to add to representations
+        webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
+        if not webserver_url:
+            self.log.warning("Couldn't find webserver url")
+            return
+
+        rest_api_url = "{}/sync_server/reset_timer".format(
+            webserver_url
+        )
+
+        try:
+            import requests
+        except Exception:
+            self.log.warning(
+                "Couldn't add sites to representations "
+                "('requests' is not available)"
+            )
+            return
+
+        requests.post(rest_api_url)
 
     def get_enabled_projects(self):
         """Returns list of projects which have SyncServer enabled."""
         enabled_projects = []
 
         if self.enabled:
-            for project in self.connection.projects(projection={"name": 1}):
+            for project in get_projects(fields=["name"]):
                 project_name = project["name"]
-                project_settings = self.get_sync_project_setting(project_name)
-                if project_settings and project_settings.get("enabled"):
+                if self.is_project_enabled(project_name):
                     enabled_projects.append(project_name)
 
         return enabled_projects
 
-    def handle_alternate_site(self, collection, representation, processed_site,
-                              file_id, synced_file_id):
+    def is_project_enabled(self, project_name, single=False):
+        """Checks if 'project_name' is enabled for syncing.
+        'get_sync_project_setting' is potentially expensive operation (pulls
+        settings for all projects if cached version is not available), using
+        project_settings for specific project should be faster.
+        Args:
+            project_name (str)
+            single (bool): use 'get_project_settings' method
+        """
+        if self.enabled:
+            if single:
+                project_settings = get_project_settings(project_name)
+                project_settings = \
+                    self._parse_sync_settings_from_settings(project_settings)
+            else:
+                project_settings = self.get_sync_project_setting(project_name)
+            if project_settings and project_settings.get("enabled"):
+                return True
+        return False
+
+    def handle_alternate_site(self, project_name, representation,
+                              processed_site, file_id, synced_file_id):
         """
             For special use cases where one site vendors another.
 
@@ -785,7 +1028,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             same location >> file is accesible on 'sftp' site right away.
 
             Args:
-                collection (str): name of project
+                project_name (str): name of project
                 representation (dict)
                 processed_site (str): real site_name of published/uploaded file
                 file_id (ObjectId): DB id of file handled
@@ -809,26 +1052,112 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         alternate_sites = set(alternate_sites)
 
         for alt_site in alternate_sites:
-            query = {
-                "_id": representation["_id"]
-            }
             elem = {"name": alt_site,
                     "created_dt": datetime.now(),
                     "id": synced_file_id}
 
             self.log.debug("Adding alternate {} to {}".format(
                 alt_site, representation["_id"]))
-            self._add_site(collection, query,
-                           [representation], elem,
+            self._add_site(project_name,
+                           representation, elem,
                            alt_site, file_id=file_id, force=True)
+
+    def get_repre_info_for_versions(self, project_name, version_ids,
+                                    active_site, remote_site):
+        """Returns representation documents for versions and sites combi
+
+        Args:
+            project_name (str)
+            version_ids (list): of version[_id]
+            active_site (string): 'local', 'studio' etc
+            remote_site (string): dtto
+        Returns:
+
+        """
+        self.connection.Session["AVALON_PROJECT"] = project_name
+        query = [
+            {"$match": {"parent": {"$in": version_ids},
+                        "type": "representation",
+                        "files.sites.name": {"$exists": 1}}},
+            {"$unwind": "$files"},
+            {'$addFields': {
+                'order_local': {
+                    '$filter': {
+                        'input': '$files.sites', 'as': 'p',
+                        'cond': {'$eq': ['$$p.name', active_site]}
+                    }
+                }
+            }},
+            {'$addFields': {
+                'order_remote': {
+                    '$filter': {
+                        'input': '$files.sites', 'as': 'p',
+                        'cond': {'$eq': ['$$p.name', remote_site]}
+                    }
+                }
+            }},
+            {'$addFields': {
+                'progress_local': {"$arrayElemAt": [{
+                    '$cond': [
+                        {'$size': "$order_local.progress"},
+                        "$order_local.progress",
+                        # if exists created_dt count is as available
+                        {'$cond': [
+                            {'$size': "$order_local.created_dt"},
+                            [1],
+                            [0]
+                        ]}
+                    ]},
+                    0
+                ]}
+            }},
+            {'$addFields': {
+                'progress_remote': {"$arrayElemAt": [{
+                    '$cond': [
+                        {'$size': "$order_remote.progress"},
+                        "$order_remote.progress",
+                        # if exists created_dt count is as available
+                        {'$cond': [
+                            {'$size': "$order_remote.created_dt"},
+                            [1],
+                            [0]
+                        ]}
+                    ]},
+                    0
+                ]}
+            }},
+            {'$group': {  # first group by repre
+                '_id': '$_id',
+                'parent': {'$first': '$parent'},
+                'avail_ratio_local': {
+                    '$first': {
+                        '$divide': [{'$sum': "$progress_local"}, {'$sum': 1}]
+                    }
+                },
+                'avail_ratio_remote': {
+                    '$first': {
+                        '$divide': [{'$sum': "$progress_remote"}, {'$sum': 1}]
+                    }
+                }
+            }},
+            {'$group': {  # second group by parent, eg version_id
+                '_id': '$parent',
+                'repre_count': {'$sum': 1},  # total representations
+                # fully available representation for site
+                'avail_repre_local': {'$sum': "$avail_ratio_local"},
+                'avail_repre_remote': {'$sum': "$avail_ratio_remote"},
+            }},
+        ]
+        # docs = list(self.connection.aggregate(query))
+        return self.connection.aggregate(query)
 
     """ End of Public API """
 
-    def get_local_file_path(self, collection, site_name, file_path):
+    def get_local_file_path(self, project_name, site_name, file_path):
         """
             Externalized for app
         """
-        handler = LocalDriveHandler(collection, site_name)
+        handler = LocalDriveHandler(project_name, site_name)
         local_file_path = handler.resolve_path(file_path)
 
         return local_file_path
@@ -848,6 +1177,11 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if self.enabled and sync_settings.get('enabled'):
             sites.append(self.LOCAL_SITE)
 
+        active_site = sync_settings["config"]["active_site"]
+        # for Tray running background process
+        if active_site not in sites and active_site == get_local_site_id():
+            sites.append(active_site)
+
         return sites
 
     def tray_init(self):
@@ -859,21 +1193,13 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         """
         self.server_init()
 
-        from .tray.app import SyncServerWindow
-        self.widget = SyncServerWindow(self)
-
     def server_init(self):
         """Actual initialization of Sync Server."""
         # import only in tray or Python3, because of Python2 hosts
-        from .sync_server import SyncServerThread
-
         if not self.enabled:
             return
 
-        enabled_projects = self.get_enabled_projects()
-        if not enabled_projects:
-            self.enabled = False
-            return
+        from .sync_server import SyncServerThread
 
         self.lock = threading.Lock()
 
@@ -893,10 +1219,10 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         self.server_start()
 
     def server_start(self):
-        if self.sync_project_settings and self.enabled:
+        if self.enabled:
             self.sync_server_thread.start()
         else:
-            log.info("No presets or active providers. " +
+            self.log.info("No presets or active providers. " +
                      "Synchronization not possible.")
 
     def tray_exit(self):
@@ -914,12 +1240,12 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if not self.is_running:
             return
         try:
-            log.info("Stopping sync server server")
+            self.log.info("Stopping sync server server")
             self.sync_server_thread.is_running = False
             self.sync_server_thread.stop()
-            log.info("Sync server stopped")
+            self.log.info("Sync server stopped")
         except Exception:
-            log.warning(
+            self.log.warning(
                 "Error has happened during Killing sync server",
                 exc_info=True
             )
@@ -928,7 +1254,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if not self.enabled:
             return
 
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
         """Add menu or action to Tray(or parent)'s menu"""
         action = QtWidgets.QAction(self.label, parent_menu)
         action.triggered.connect(self.show_widget)
@@ -990,10 +1316,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
     def _prepare_sync_project_settings(self, exclude_locals):
         sync_project_settings = {}
         system_sites = self.get_all_site_configs()
-        project_docs = self.connection.projects(
-            projection={"name": 1},
-            only_active=True
-        )
+        project_docs = get_projects(fields=["name"])
         for project_doc in project_docs:
             project_name = project_doc["name"]
             sites = copy.deepcopy(system_sites)  # get all configured sites
@@ -1007,7 +1330,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
             sync_project_settings[project_name] = proj_settings
         if not sync_project_settings:
-            log.info("No enabled and configured projects for sync.")
+            self.log.info("No enabled and configured projects for sync.")
         return sync_project_settings
 
     def get_sync_project_setting(self, project_name, exclude_locals=False,
@@ -1055,13 +1378,19 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         """
         sync_sett = self.sync_system_settings
         project_enabled = True
+        project_settings = None
         if project_name:
             project_enabled = project_name in self.get_enabled_projects()
+            project_settings = self.get_sync_project_setting(project_name)
         sync_enabled = sync_sett["enabled"] and project_enabled
 
         system_sites = {}
         if sync_enabled:
             for site, detail in sync_sett.get("sites", {}).items():
+                if project_settings:
+                    site_settings = project_settings["sites"].get(site)
+                    if site_settings:
+                        detail.update(site_settings)
                 system_sites[site] = detail
 
         system_sites.update(self._get_default_site_configs(sync_enabled,
@@ -1083,14 +1412,22 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                                                 exclude_locals=True)
         roots = {}
         for root, config in anatomy_sett["roots"].items():
-            roots[root] = config[platform.system().lower()]
+            roots[root] = config
         studio_config = {
+            'enabled': True,
             'provider': 'local_drive',
             "root": roots
         }
         all_sites = {self.DEFAULT_SITE: studio_config}
         if sync_enabled:
-            all_sites[get_local_site_id()] = {'provider': 'local_drive'}
+            all_sites[get_local_site_id()] = {'enabled': True,
+                                              'provider': 'local_drive',
+                                              "root": roots}
+            # duplicate values for normalized local name
+            all_sites["local"] = {
+                'enabled': True,
+                'provider': 'local_drive',
+                "root": roots}
         return all_sites
 
     def get_provider_for_site(self, project_name=None, site=None):
@@ -1118,7 +1455,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         return sites.get(site, 'N/A')
 
     @time_function
-    def get_sync_representations(self, collection, active_site, remote_site):
+    def get_sync_representations(self, project_name, active_site, remote_site):
         """
             Get representations that should be synced, these could be
             recognised by presence of document in 'files.sites', where key is
@@ -1129,8 +1466,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             better performance. Goal is to get as few representations as
             possible.
         Args:
-            collection (string): name of collection (in most cases matches
-                project name
+            project_name (string):
             active_site (string): identifier of current active site (could be
                 'local_0' when working from home, 'studio' when working in the
                 studio (default)
@@ -1139,10 +1475,10 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         Returns:
             (list) of dictionaries
         """
-        log.debug("Check representations for : {}".format(collection))
-        self.connection.Session["AVALON_PROJECT"] = collection
+        self.log.debug("Check representations for : {}".format(project_name))
+        self.connection.Session["AVALON_PROJECT"] = project_name
         # retry_cnt - number of attempts to sync specific file before giving up
-        retries_arr = self._get_retries_arr(collection)
+        retries_arr = self._get_retries_arr(project_name)
         match = {
             "type": "representation",
             "$or": [
@@ -1158,7 +1494,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                             "$elemMatch": {
                                 "name": {"$in": [remote_site]},
                                 "created_dt": {"$exists": False},
-                                "tries": {"$in": retries_arr}
+                                "tries": {"$in": retries_arr},
+                                "paused": {"$exists": False}
                             }
                         }
                     }]},
@@ -1168,7 +1505,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                             "$elemMatch": {
                                 "name": active_site,
                                 "created_dt": {"$exists": False},
-                                "tries": {"$in": retries_arr}
+                                "tries": {"$in": retries_arr},
+                                "paused": {"$exists": False}
                             }
                         }}, {
                         "files.sites": {
@@ -1218,9 +1556,10 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             }},
             {"$sort": {'priority': -1, '_id': 1}},
         ]
-        log.debug("active_site:{} - remote_site:{}".format(active_site,
-                                                           remote_site))
-        log.debug("query: {}".format(aggr))
+        self.log.debug("active_site:{} - remote_site:{}".format(
+            active_site, remote_site
+        ))
+        self.log.debug("query: {}".format(aggr))
         representations = self.connection.aggregate(aggr)
 
         return representations
@@ -1255,7 +1594,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         if get_local_site_id() not in (local_site, remote_site):
             # don't do upload/download for studio sites
-            log.debug("No local site {} - {}".format(local_site, remote_site))
+            self.log.debug(
+                "No local site {} - {}".format(local_site, remote_site)
+            )
             return SyncStatus.DO_NOTHING
 
         _, remote_rec = self._get_site_rec(sites, remote_site) or {}
@@ -1279,21 +1620,21 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         return SyncStatus.DO_NOTHING
 
-    def update_db(self, collection, new_file_id, file, representation,
+    def update_db(self, project_name, new_file_id, file, representation,
                   site, error=None, progress=None, priority=None):
         """
             Update 'provider' portion of records in DB with success (file_id)
             or error (exception)
 
         Args:
-            collection (string): name of project - force to db connection as
+            project_name (string): name of project - force to db connection as
               each file might come from different collection
-            new_file_id (string):
+            new_file_id (string): only present if file synced successfully
             file (dictionary): info about processed file (pulled from DB)
             representation (dictionary): parent repr of file (from DB)
             site (string): label ('gdrive', 'S3')
             error (string): exception message
-            progress (float): 0-1 of progress of upload/download
+            progress (float): 0-0.99 of progress of upload/download
             priority (int): 0-100 set priority
 
         Returns:
@@ -1329,7 +1670,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if file_id:
             arr_filter.append({'f._id': ObjectId(file_id)})
 
-        self.connection.database[collection].update_one(
+        self.connection.database[project_name].update_one(
             query,
             update,
             upsert=True,
@@ -1346,11 +1687,16 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             error_str = ''
 
         source_file = file.get("path", "")
-        log.debug("File for {} - {source_file} process {status} {error_str}".
-                  format(representation_id,
-                         status=status,
-                         source_file=source_file,
-                         error_str=error_str))
+        self.log.debug(
+            (
+                "File for {} - {source_file} process {status} {error_str}"
+            ).format(
+                representation_id,
+                status=status,
+                source_file=source_file,
+                error_str=error_str
+            )
+        )
 
     def _get_file_info(self, files, _id):
         """
@@ -1392,9 +1738,10 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         return -1, None
 
-    def reset_site_on_representation(self, collection, representation_id,
+    def reset_site_on_representation(self, project_name, representation_id,
                                      side=None, file_id=None, site_name=None,
-                                     remove=False, pause=None, force=False):
+                                     remove=False, pause=None, force=False,
+                                     priority=None):
         """
             Reset information about synchronization for particular 'file_id'
             and provider.
@@ -1409,7 +1756,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             Should be used when repre should be synced to new site.
 
         Args:
-            collection (string): name of project (eg. collection) in DB
+            project_name (string): name of project (eg. collection) in DB
             representation_id(string): _id of representation
             file_id (string):  file _id in representation
             side (string): local or remote side
@@ -1417,24 +1764,25 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             remove (bool): if True remove site altogether
             pause (bool or None): if True - pause, False - unpause
             force (bool): hard reset - currently only for add_site
+            priority (int): set priority
 
-        Returns:
-            throws ValueError
+        Raises:
+            SiteAlreadyPresentError - if adding already existing site and
+                not 'force'
+            ValueError - other errors (repre not found, misconfiguration)
         """
-        query = {
-            "_id": ObjectId(representation_id)
-        }
-
-        representation = list(self.connection.database[collection].find(query))
+        representation = get_representation_by_id(project_name,
+                                                  representation_id)
         if not representation:
             raise ValueError("Representation {} not found in {}".
-                             format(representation_id, collection))
+                             format(representation_id, project_name))
+
         if side and site_name:
             raise ValueError("Misconfiguration, only one of side and " +
                              "site_name arguments should be passed.")
 
-        local_site = self.get_active_site(collection)
-        remote_site = self.get_remote_site(collection)
+        local_site = self.get_active_site(project_name)
+        remote_site = self.get_remote_site(project_name)
 
         if side:
             if side == 'local':
@@ -1444,38 +1792,48 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         elem = {"name": site_name}
 
+        # Add priority
+        if priority:
+            elem["priority"] = priority
+
         if file_id:  # reset site for particular file
-            self._reset_site_for_file(collection, query,
+            self._reset_site_for_file(project_name, representation_id,
                                       elem, file_id, site_name)
         elif side:  # reset site for whole representation
-            self._reset_site(collection, query, elem, site_name)
+            self._reset_site(project_name, representation_id, elem, site_name)
         elif remove:  # remove site for whole representation
-            self._remove_site(collection, query, representation, site_name)
+            self._remove_site(project_name,
+                              representation, site_name)
         elif pause is not None:
-            self._pause_unpause_site(collection, query,
+            self._pause_unpause_site(project_name,
                                      representation, site_name, pause)
         else:  # add new site to all files for representation
-            self._add_site(collection, query, representation, elem, site_name,
-                           force)
+            self._add_site(project_name, representation, elem, site_name,
+                           force=force)
 
-    def _update_site(self, collection, query, update, arr_filter):
+    def _update_site(self, project_name, representation_id,
+                     update, arr_filter):
         """
             Auxiliary method to call update_one function on DB
 
             Used for refactoring ugly reset_provider_for_file
         """
-        self.connection.database[collection].update_one(
+        query = {
+            "_id": ObjectId(representation_id)
+        }
+
+        self.connection.database[project_name].update_one(
             query,
             update,
             upsert=True,
             array_filters=arr_filter
         )
 
-    def _reset_site_for_file(self, collection, query,
+    def _reset_site_for_file(self, project_name, representation_id,
                              elem, file_id, site_name):
         """
             Resets 'site_name' for 'file_id' on representation in 'query' on
-            'collection'
+            'project_name'
         """
         update = {
             "$set": {"files.$[f].sites.$[s]": elem}
@@ -1488,9 +1846,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             {'f._id': file_id}
         ]
 
-        self._update_site(collection, query, update, arr_filter)
+        self._update_site(project_name, representation_id, update, arr_filter)
 
-    def _reset_site(self, collection, query, elem, site_name):
+    def _reset_site(self, project_name, representation_id, elem, site_name):
         """
             Resets 'site_name' for all files of representation in 'query'
         """
@@ -1502,23 +1860,23 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             {'s.name': site_name}
         ]
 
-        self._update_site(collection, query, update, arr_filter)
+        self._update_site(project_name, representation_id, update, arr_filter)
 
-    def _remove_site(self, collection, query, representation, site_name):
+    def _remove_site(self, project_name, representation, site_name):
         """
             Removes 'site_name' for 'representation' in 'query'
 
             Throws ValueError if 'site_name' not found on 'representation'
         """
         found = False
-        for repre_file in representation.pop().get("files"):
+        for repre_file in representation.get("files"):
             for site in repre_file.get("sites"):
                 if site.get("name") == site_name:
                     found = True
                     break
         if not found:
             msg = "Site {} not found".format(site_name)
-            log.info(msg)
+            self.log.info(msg)
             raise ValueError(msg)
 
         update = {
@@ -1526,10 +1884,11 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         }
         arr_filter = []
 
-        self._update_site(collection, query, update, arr_filter)
+        self._update_site(project_name, representation["_id"],
+                          update, arr_filter)
 
-    def _pause_unpause_site(self, collection, query,
-                            representation, site_name, pause):
+    def _pause_unpause_site(self, project_name, representation,
+                            site_name, pause):
         """
             Pauses/unpauses all files for 'representation' based on 'pause'
 
@@ -1537,14 +1896,14 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         """
         found = False
         site = None
-        for repre_file in representation.pop().get("files"):
+        for repre_file in representation.get("files"):
             for site in repre_file.get("sites"):
                 if site["name"] == site_name:
                     found = True
                     break
         if not found:
             msg = "Site {} not found".format(site_name)
-            log.info(msg)
+            self.log.info(msg)
             raise ValueError(msg)
 
         if pause:
@@ -1561,37 +1920,45 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             {'s.name': site_name}
         ]
 
-        self._update_site(collection, query, update, arr_filter)
+        self._update_site(project_name, representation["_id"],
+                          update, arr_filter)
 
-    def _add_site(self, collection, query, representation, elem, site_name,
+    def _add_site(self, project_name, representation, elem, site_name,
                   force=False, file_id=None):
         """
-            Adds 'site_name' to 'representation' on 'collection'
+            Adds 'site_name' to 'representation' on 'project_name'
 
             Args:
-                representation (list of 1 dict)
+                representation (dict)
                 file_id (ObjectId)
 
             Use 'force' to remove existing or raises ValueError
         """
-        reseted_existing = False
-        for repre_file in representation.pop().get("files"):
+        representation_id = representation["_id"]
+        reset_existing = False
+        files = representation.get("files", [])
+        if not files:
+            self.log.debug("No files for {}".format(representation_id))
+            return
+
+        for repre_file in files:
             if file_id and file_id != repre_file["_id"]:
                 continue
 
             for site in repre_file.get("sites"):
                 if site["name"] == site_name:
-                    if force:
-                        self._reset_site_for_file(collection, query,
+                    if force or site.get("error"):
+                        self._reset_site_for_file(project_name,
+                                                  representation_id,
                                                   elem, repre_file["_id"],
                                                   site_name)
-                        reseted_existing = True
+                        reset_existing = True
                     else:
                         msg = "Site {} already present".format(site_name)
-                        log.info(msg)
-                        raise ValueError(msg)
+                        self.log.info(msg)
+                        raise SiteAlreadyPresentError(msg)
 
-        if reseted_existing:
+        if reset_existing:
             return
 
         if not file_id:
@@ -1608,14 +1975,15 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                 {'f._id': file_id}
             ]
 
-        self._update_site(collection, query, update, arr_filter)
+        self._update_site(project_name, representation_id,
+                          update, arr_filter)
 
-    def _remove_local_file(self, collection, representation_id, site_name):
+    def _remove_local_file(self, project_name, representation_id, site_name):
         """
             Removes all local files for 'site_name' of 'representation_id'
 
             Args:
-                collection (string): project name (must match DB)
+                project_name (string): project name (must match DB)
                 representation_id (string): MongoDB _id value
                 site_name (string): name of configured and active site
 
@@ -1631,21 +1999,17 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         provider_name = self.get_provider_for_site(site=site_name)
 
         if provider_name == 'local_drive':
-            query = {
-                "_id": ObjectId(representation_id)
-            }
-
-            representation = list(
-                self.connection.database[collection].find(query))
+            representation = get_representation_by_id(project_name,
+                                                      representation_id,
+                                                      fields=["files"])
             if not representation:
                 self.log.debug("No repre {} found".format(
                     representation_id))
                 return
 
-            representation = representation.pop()
             local_file_path = ''
             for file in representation.get("files"):
-                local_file_path = self.get_local_file_path(collection,
+                local_file_path = self.get_local_file_path(project_name,
                                                            site_name,
                                                            file.get("path", "")
                                                            )
@@ -1677,6 +2041,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         Returns:
             (int): in seconds
         """
+        if not project_name:
+            return 60
+
         ld = self.sync_project_settings[project_name]["config"]["loop_delay"]
         return int(ld)
 
@@ -1688,16 +2055,19 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             self.widget = SyncServerWindow(self)
             no_errors = True
         except ValueError:
-            log.info("No system setting for sync. Not syncing.", exc_info=True)
+            self.log.info(
+                "No system setting for sync. Not syncing.", exc_info=True
+            )
         except KeyError:
-            log.info((
+            self.log.info((
                 "There are not set presets for SyncServer OR "
                 "Credentials provided are invalid, "
                 "no syncing possible").
                 format(str(self.sync_project_settings)), exc_info=True)
         except:
-            log.error("Uncaught exception durin start of SyncServer",
-                      exc_info=True)
+            self.log.error(
+                "Uncaught exception durin start of SyncServer",
+                exc_info=True)
         self.enabled = no_errors
         self.widget.show()
 
@@ -1755,7 +2125,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             (int) - number of failed attempts
         """
         _, rec = self._get_site_rec(file.get("sites", []), provider)
-        return rec.get("tries", 0)
+        return self._get_tries_count_from_rec(rec)
 
     def _get_progress_dict(self, progress):
         """
@@ -1806,3 +2176,55 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             settings ('presets')
         """
         return presets[project_name]['sites'][site_name]['root']
+
+    def cli(self, click_group):
+        click_group.add_command(cli_main)
+
+    # Webserver module implementation
+    def webserver_initialization(self, server_manager):
+        """Add routes for syncs."""
+        if self.tray_initialized:
+            from .rest_api import SyncServerModuleRestApi
+            self.rest_api_obj = SyncServerModuleRestApi(
+                self, server_manager
+            )
+
+
+@click.group(SyncServerModule.name, help="SyncServer module related commands.")
+def cli_main():
+    pass
+
+
+@cli_main.command()
+@click.option(
+    "-a",
+    "--active_site",
+    required=True,
+    help="Name of active stie")
+def syncservice(active_site):
+    """Launch sync server under entered site.
+
+    This should be ideally used by system service (such us systemd or upstart
+    on linux and window service).
+    """
+
+    from openpype.modules import ModulesManager
+
+    os.environ["OPENPYPE_LOCAL_ID"] = active_site
+
+    def signal_handler(sig, frame):
+        print("You pressed Ctrl+C. Process ended.")
+        sync_server_module.server_exit()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    manager = ModulesManager()
+    sync_server_module = manager.modules_by_name["sync_server"]
+
+    sync_server_module.server_init()
+    sync_server_module.server_start()
+
+    while True:
+        time.sleep(1.0)

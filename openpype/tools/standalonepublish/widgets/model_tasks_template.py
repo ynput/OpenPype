@@ -1,4 +1,4 @@
-from Qt import QtCore
+from qtpy import QtCore
 import qtawesome
 
 from openpype.style import get_default_entity_icon_color

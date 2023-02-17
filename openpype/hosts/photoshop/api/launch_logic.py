@@ -8,12 +8,11 @@ from wsrpc_aiohttp import (
     WebSocketAsync
 )
 
-from Qt import QtCore
+from qtpy import QtCore
 
-from openpype.api import Logger
+from openpype.lib import Logger
+from openpype.pipeline import legacy_io
 from openpype.tools.utils import host_tools
-
-from avalon import api
 from openpype.tools.adobe_webserver.app import WebServerTool
 
 from .ws_stub import PhotoshopServerStub
@@ -320,13 +319,13 @@ class PhotoshopRoute(WebSocketRoute):
         log.info("Setting context change")
         log.info("project {} asset {} ".format(project, asset))
         if project:
-            api.Session["AVALON_PROJECT"] = project
+            legacy_io.Session["AVALON_PROJECT"] = project
             os.environ["AVALON_PROJECT"] = project
         if asset:
-            api.Session["AVALON_ASSET"] = asset
+            legacy_io.Session["AVALON_ASSET"] = asset
             os.environ["AVALON_ASSET"] = asset
         if task:
-            api.Session["AVALON_TASK"] = task
+            legacy_io.Session["AVALON_TASK"] = task
             os.environ["AVALON_TASK"] = task
 
     async def read(self):
@@ -335,9 +334,6 @@ class PhotoshopRoute(WebSocketRoute):
         return await self.socket.call('photoshop.read')
 
     # panel routes for tools
-    async def creator_route(self):
-        self._tool_route("creator")
-
     async def workfiles_route(self):
         self._tool_route("workfiles")
 
@@ -345,13 +341,10 @@ class PhotoshopRoute(WebSocketRoute):
         self._tool_route("loader")
 
     async def publish_route(self):
-        self._tool_route("publish")
+        self._tool_route("publisher")
 
     async def sceneinventory_route(self):
         self._tool_route("sceneinventory")
-
-    async def subsetmanager_route(self):
-        self._tool_route("subsetmanager")
 
     async def experimental_tools_route(self):
         self._tool_route("experimental_tools")

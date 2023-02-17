@@ -1,7 +1,29 @@
 {
+    "imageio": {
+        "ocio_config": {
+            "filepath": [
+                "{OPENPYPE_ROOT}/vendor/bin/ocioconfig/OpenColorIOConfigs/aces_1.2/config.ocio",
+                "{OPENPYPE_ROOT}/vendor/bin/ocioconfig/OpenColorIOConfigs/nuke-default/config.ocio"
+            ]
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {
+                "example": {
+                    "pattern": ".*(beauty).*",
+                    "colorspace": "ACES - ACEScg",
+                    "ext": "exr"
+                }
+            }
+        }
+    },
     "publish": {
         "CollectAnatomyInstanceData": {
             "follow_workfile_version": false
+        },
+        "CollectAudio": {
+            "enabled": false,
+            "audio_subset_name": "audioMain"
         },
         "CollectSceneVersion": {
             "hosts": [
@@ -20,6 +42,10 @@
             ],
             "skip_hosts_headless_publish": []
         },
+        "collect_comment_per_instance": {
+            "enabled": false,
+            "families": []
+        },
         "ValidateEditorialAssetName": {
             "enabled": true,
             "optional": false
@@ -33,21 +59,7 @@
             "enabled": false,
             "profiles": []
         },
-        "IntegrateHeroVersion": {
-            "enabled": true,
-            "optional": true,
-            "families": [
-                "model",
-                "rig",
-                "look",
-                "pointcache",
-                "animation",
-                "setdress",
-                "layout",
-                "mayaScene"
-            ]
-        },
-        "ExtractJpegEXR": {
+        "ExtractThumbnail": {
             "enabled": true,
             "ffmpeg_args": {
                 "input": [
@@ -63,6 +75,62 @@
                     "families": [],
                     "hosts": [],
                     "outputs": {
+                        "png": {
+                            "ext": "png",
+                            "tags": [
+                                "ftrackreview"
+                            ],
+                            "burnins": [],
+                            "ffmpeg_args": {
+                                "video_filters": [],
+                                "audio_filters": [],
+                                "input": [],
+                                "output": []
+                            },
+                            "filter": {
+                                "families": [
+                                    "render",
+                                    "review",
+                                    "ftrack"
+                                ],
+                                "subsets": [],
+                                "custom_tags": [],
+                                "single_frame_filter": "single_frame"
+                            },
+                            "overscan_crop": "",
+                            "overscan_color": [
+                                0,
+                                0,
+                                0,
+                                255
+                            ],
+                            "width": 1920,
+                            "height": 1080,
+                            "scale_pixel_aspect": true,
+                            "bg_color": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "letter_box": {
+                                "enabled": false,
+                                "ratio": 0.0,
+                                "fill_color": [
+                                    0,
+                                    0,
+                                    0,
+                                    255
+                                ],
+                                "line_thickness": 0,
+                                "line_color": [
+                                    255,
+                                    0,
+                                    0,
+                                    255
+                                ]
+                            }
+                        },
                         "h264": {
                             "ext": "mp4",
                             "tags": [
@@ -88,7 +156,9 @@
                                     "review",
                                     "ftrack"
                                 ],
-                                "subsets": []
+                                "subsets": [],
+                                "custom_tags": [],
+                                "single_frame_filter": "multi_frame"
                             },
                             "overscan_crop": "",
                             "overscan_color": [
@@ -99,6 +169,7 @@
                             ],
                             "width": 0,
                             "height": 0,
+                            "scale_pixel_aspect": true,
                             "bg_color": [
                                 0,
                                 0,
@@ -156,6 +227,9 @@
                 {
                     "families": [],
                     "hosts": [],
+                    "task_types": [],
+                    "task_names": [],
+                    "subsets": [],
                     "burnins": {
                         "burnin": {
                             "TOP_LEFT": "{yy}-{mm}-{dd}",
@@ -173,7 +247,31 @@
                 }
             ]
         },
+        "PreIntegrateThumbnails": {
+            "enabled": true,
+            "integrate_profiles": []
+        },
+        "IntegrateSubsetGroup": {
+            "subset_grouping_profiles": [
+                {
+                    "families": [],
+                    "hosts": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": ""
+                }
+            ]
+        },
         "IntegrateAssetNew": {
+            "subset_grouping_profiles": [
+                {
+                    "families": [],
+                    "hosts": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": ""
+                }
+            ],
             "template_name_profiles": [
                 {
                     "families": [],
@@ -192,15 +290,72 @@
                     "task_types": [],
                     "tasks": [],
                     "template_name": "render"
-                }
-            ],
-            "subset_grouping_profiles": [
+                },
                 {
-                    "families": [],
-                    "hosts": [],
+                    "families": [
+                        "simpleUnrealTexture"
+                    ],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
                     "task_types": [],
                     "tasks": [],
-                    "template": ""
+                    "template_name": "simpleUnrealTexture"
+                },
+                {
+                    "families": [
+                        "staticMesh",
+                        "skeletalMesh"
+                    ],
+                    "hosts": [
+                        "maya"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template_name": "maya2unreal"
+                },
+                {
+                    "families": [
+                        "online"
+                    ],
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template_name": "online"
+                }
+            ]
+        },
+        "IntegrateAsset": {
+            "skip_host_families": []
+        },
+        "IntegrateHeroVersion": {
+            "enabled": true,
+            "optional": true,
+            "active": true,
+            "families": [
+                "model",
+                "rig",
+                "look",
+                "pointcache",
+                "animation",
+                "setdress",
+                "layout",
+                "mayaScene",
+                "simpleUnrealTexture"
+            ],
+            "template_name_profiles": [
+                {
+                    "families": [
+                        "simpleUnrealTexture"
+                    ],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "simpleUnrealTextureHero"
                 }
             ]
         },
@@ -243,6 +398,15 @@
                 },
                 {
                     "families": [
+                        "workfile"
+                    ],
+                    "hosts": [],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": "{family}{Task}"
+                },
+                {
+                    "families": [
                         "render"
                     ],
                     "hosts": [],
@@ -260,7 +424,7 @@
                     ],
                     "task_types": [],
                     "tasks": [],
-                    "template": "{family}{Task}_{Render_layer}_{Render_pass}"
+                    "template": "{family}{Task}_{Renderlayer}_{Renderpass}"
                 },
                 {
                     "families": [
@@ -268,6 +432,7 @@
                         "workfile"
                     ],
                     "hosts": [
+                        "aftereffects",
                         "tvpaint"
                     ],
                     "task_types": [],
@@ -276,18 +441,18 @@
                 },
                 {
                     "families": [
-                        "renderLocal"
+                        "render"
                     ],
                     "hosts": [
                         "aftereffects"
                     ],
                     "task_types": [],
                     "tasks": [],
-                    "template": "render{Task}{Variant}"
+                    "template": "{family}{Task}{Composition}{Variant}"
                 },
                 {
                     "families": [
-                        "unrealStaticMesh"
+                        "staticMesh"
                     ],
                     "hosts": [
                         "maya"
@@ -295,6 +460,17 @@
                     "task_types": [],
                     "tasks": [],
                     "template": "S_{asset}{variant}"
+                },
+                {
+                    "families": [
+                        "skeletalMesh"
+                    ],
+                    "hosts": [
+                        "maya"
+                    ],
+                    "task_types": [],
+                    "tasks": [],
+                    "template": "SK_{asset}{variant}"
                 }
             ]
         },
@@ -304,6 +480,13 @@
                     "task_types": [],
                     "hosts": [],
                     "workfile_template": "work"
+                },
+                {
+                    "task_types": [],
+                    "hosts": [
+                        "unreal"
+                    ],
+                    "workfile_template": "unreal"
                 }
             ],
             "last_workfile_on_startup": [
@@ -311,7 +494,8 @@
                     "hosts": [],
                     "task_types": [],
                     "tasks": [],
-                    "enabled": true
+                    "enabled": true,
+                    "use_last_published_workfile": false
                 }
             ],
             "open_workfile_tool_on_startup": [
@@ -322,7 +506,8 @@
                     "enabled": false
                 }
             ],
-            "extra_folders": []
+            "extra_folders": [],
+            "workfile_lock_profiles": []
         },
         "loader": {
             "family_filter_profiles": [
@@ -333,9 +518,78 @@
                     "filter_families": []
                 }
             ]
+        },
+        "publish": {
+            "template_name_profiles": [
+                {
+                    "families": [],
+                    "hosts": [],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "publish"
+                },
+                {
+                    "families": [
+                        "review",
+                        "render",
+                        "prerender"
+                    ],
+                    "hosts": [],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "render"
+                },
+                {
+                    "families": [
+                        "simpleUnrealTexture"
+                    ],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "simpleUnrealTexture"
+                },
+                {
+                    "families": [
+                        "staticMesh",
+                        "skeletalMesh"
+                    ],
+                    "hosts": [
+                        "maya"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "maya2unreal"
+                },
+                {
+                    "families": [
+                        "online"
+                    ],
+                    "hosts": [
+                        "traypublisher"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "online"
+                }
+            ],
+            "hero_template_name_profiles": [
+                {
+                    "families": [
+                        "simpleUnrealTexture"
+                    ],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "simpleUnrealTextureHero"
+                }
+            ]
         }
     },
-    "project_folder_structure": "{\"__project_root__\": {\"prod\": {}, \"resources\": {\"footage\": {\"plates\": {}, \"offline\": {}}, \"audio\": {}, \"art_dept\": {}}, \"editorial\": {}, \"assets[ftrack.Library]\": {\"characters[ftrack]\": {}, \"locations[ftrack]\": {}}, \"shots[ftrack.Sequence]\": {\"scripts\": {}, \"editorial[ftrack.Folder]\": {}}}}",
+    "project_folder_structure": "{\"__project_root__\": {\"prod\": {}, \"resources\": {\"footage\": {\"plates\": {}, \"offline\": {}}, \"audio\": {}, \"art_dept\": {}}, \"editorial\": {}, \"assets\": {\"characters\": {}, \"locations\": {}}, \"shots\": {}}}",
     "sync_server": {
         "enabled": false,
         "config": {

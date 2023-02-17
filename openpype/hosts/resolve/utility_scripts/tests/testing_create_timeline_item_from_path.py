@@ -1,11 +1,16 @@
 #! python3
 import os
 import sys
-import avalon.api as avalon
-import openpype
-from openpype.hosts.resolve import TestGUI
-import openpype.hosts.resolve as bmdvr
+
 import clique
+
+from openpype.pipeline import install_host
+from openpype.hosts.resolve.api.testing_utils import TestGUI
+import openpype.hosts.resolve.api as bmdvr
+from openpype.hosts.resolve.api.lib import (
+    create_media_pool_item,
+    create_timeline_item,
+)
 
 
 class ThisTestGUI(TestGUI):
@@ -13,10 +18,8 @@ class ThisTestGUI(TestGUI):
 
     def __init__(self):
         super(ThisTestGUI, self).__init__()
-        # Registers openpype's Global pyblish plugins
-        openpype.install()
         # activate resolve from openpype
-        avalon.install(bmdvr)
+        install_host(bmdvr)
 
     def _open_dir_button_pressed(self, event):
         # selected_path = self.fu.RequestFile(os.path.expanduser("~"))
@@ -57,10 +60,10 @@ class ThisTestGUI(TestGUI):
         # skip if unwanted extension
         if ext not in self.extensions:
             return
-        media_pool_item = bmdvr.create_media_pool_item(fpath)
+        media_pool_item = create_media_pool_item(fpath)
         print(media_pool_item)
 
-        track_item = bmdvr.create_timeline_item(media_pool_item)
+        track_item = create_timeline_item(media_pool_item)
         print(track_item)
 
 

@@ -6,7 +6,7 @@ from openpype.pipeline import load
 
 
 class SetFrameRangeLoader(load.LoaderPlugin):
-    """Set Houdini frame range"""
+    """Set frame range excluding pre- and post-handles"""
 
     families = [
         "animation",
@@ -44,7 +44,7 @@ class SetFrameRangeLoader(load.LoaderPlugin):
 
 
 class SetFrameRangeWithHandlesLoader(load.LoaderPlugin):
-    """Set Maya frame range including pre- and post-handles"""
+    """Set frame range including pre- and post-handles"""
 
     families = [
         "animation",

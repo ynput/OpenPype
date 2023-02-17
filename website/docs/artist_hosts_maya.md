@@ -6,13 +6,13 @@ sidebar_label: Maya
 
 ## OpenPype global tools
 
--   [Set Context](artist_tools.md#set-context)
--   [Work Files](artist_tools.md#workfiles)
--   [Create](artist_tools.md#creator)
--   [Load](artist_tools.md#loader)
--   [Manage (Inventory)](artist_tools.md#inventory)
--   [Publish](artist_tools.md#publisher)
--   [Library Loader](artist_tools.md#library-loader)
+-   [Set Context](artist_tools_context_manager)
+-   [Work Files](artist_tools_workfiles)
+-   [Create](artist_tools_creator)
+-   [Load](artist_tools_loader)
+-   [Manage (Inventory)](artist_tools_inventory)
+-   [Publish](artist_tools_publisher)
+-   [Library Loader](artist_tools_library_loader)
 
 ## Working with OpenPype in Maya
 
@@ -55,7 +55,7 @@ low resolution stuff. See [Subset](artist_concepts.md#subset).
 :::note LOD support
 By changing subset name you can take advantage of _LOD support_ in OpenPype. Your
 asset can contain various resolution defined by different subsets. You can then
-switch between them very easy using [Inventory (Manage)](artist_tools.md#inventory).
+switch between them very easy using [Inventory (Manage)](artist_tools_inventory).
 There LODs are conveniently grouped so they don't clutter Inventory view.
 
 Name your subset like `main_LOD1`. Important part is that `_LOD1`. You can have as many LODs as you need.
@@ -85,7 +85,7 @@ Now let's publish it. Go **OpenPype → Publish...**. You will be presented with
 ![Model publish](assets/maya-model_pre_publish.jpg)
 
 Note that content of this window can differs by your pipeline configuration.
-For more detail see [Publisher](artist_tools.md#publisher).
+For more detail see [Publisher](artist_tools_publisher).
 
 Items in left column are instances you will be publishing. You can disable them
 by clicking on square next to them. Green square indicate they are ready for
@@ -139,7 +139,7 @@ it can take a while. You should end up with everything green and message
 **Finished successfully ...** You can now close publisher window.
 
 To check for yourself that model is published, open
-[Asset Loader](artist_tools.md#loader) - **OpenPype → Load...**.
+[Asset Loader](artist_tools_loader) - **OpenPype → Load...**.
 There you should see your model, named `modelMain`.
 
 ## Look development
@@ -200,8 +200,8 @@ there are few yellow icons in left shelf:
 
 ![Maya - shortcut icons](assets/maya-shortcut_buttons.jpg)
 
-Those are shortcuts for **Look Manager**, [Work Files](artist_tools.md#workfiles),
-[Load](artist_tools.md#loader), and [Manage (Inventory)](artist_tools.md#inventory).
+Those are shortcuts for **Look Manager**, [Work Files](artist_tools_workfiles),
+[Load](artist_tools_loader), and [Manage (Inventory)](artist_tools_inventory).
 
 Those can be found even in top menu, but that depends on your studio setup.
 
@@ -294,7 +294,7 @@ have any missing dependencies.
 
 ### Loading rigs
 
-You can load rig with [Loader](artist_tools.md#loader). Go **OpenPype → Load...**,
+You can load rig with [Loader](artist_tools_loader). Go **OpenPype → Load...**,
 select your rig, right click on it and **Reference** it.
 
 ## Point caches
@@ -308,9 +308,16 @@ Select its root and Go **OpenPype → Create...** and select **Point Cache**.
 
 After that, publishing will create corresponding **abc** files.
 
+When creating the instance, a objectset child `proxy` will be created. Meshes in the `proxy` objectset will be the viewport representation where loading supports proxies. Proxy representations are stored as `resources` of the subset.
+
 Example setup:
 
 ![Maya - Point Cache Example](assets/maya-pointcache_setup.png)
+
+:::note Publish on farm
+If your studio has Deadline configured, artists could choose to offload potentially long running export of pointache and publish it to the farm.
+Only thing that is necessary is to toggle `Farm` property in created pointcache instance to True.
+:::
 
 ### Loading Point Caches
 
@@ -328,7 +335,7 @@ OpenPype allows to version and manage those sets.
 ### Publishing Set dress / Layout
 
 Working with Set dresses is very easy. Just load your assets into scene with
-[Loader](artist_tools.md#loader) (**OpenPype → Load...**). Populate your scene as
+[Loader](artist_tools_loader) (**OpenPype → Load...**). Populate your scene as
 you wish, translate each piece to fit your need. When ready, select all imported
 stuff and go **OpenPype → Create...** and select **Set Dress** or **Layout**.
 This will create set containing your selection and marking it for publishing.
@@ -341,7 +348,7 @@ Now you can publish is with **OpenPype → Publish**.
 
 ### Loading Set dress / Layout
 
-You can load Set dress / Layout using [Loader](artist_tools.md#loader)
+You can load Set dress / Layout using [Loader](artist_tools_loader)
 (**OpenPype → Load...**). Select you layout or set dress, right click on it and
 select **Reference Maya Ascii (ma)**. This will populate your scene with all those
 models you've put into layout.
@@ -598,192 +605,19 @@ about customizing review process refer to [admin section](project_settings/setti
 If you don't move `modelMain` into `reviewMain`, review will be generated but it will
 be published as separate entity.
 
-## Working with Yeti in OpenPype
 
-OpenPype can work with [Yeti](https://peregrinelabs.com/yeti/) in two data modes.
-It can handle Yeti caches and Yeti rigs.
+## Inventory Actions
 
-### Creating and publishing Yeti caches
+### Connect Geometry
 
-Let start by creating simple Yeti setup, just one object and Yeti node. Open new
-empty scene in Maya and create sphere. Then select sphere and go **Yeti → Create Yeti Node on Mesh**
-Open Yeti node graph **Yeti → Open Graph Editor** and create setup like this:
+This action will connect geometries between containers.
 
-![Maya - Yeti Basic Graph](assets/maya-yeti_basic_setup.jpg)
+#### Usage
 
-It doesn't matter what setting you use now, just select proper shape in first
-*Import* node. Select your Yeti node and create *Yeti Cache instance* - **OpenPype → Create...**
-and select **Yeti Cache**. Leave `Use selection` checked. You should end up with this setup:
+Select 1 container of type `animation` or `pointcache`, then 1+ container of any type.
 
-![Maya - Yeti Basic Setup](assets/maya-yeti_basic_setup_outline.jpg)
+#### Details
 
-You can see there is `yeticacheDefault` set. Instead of *Default* it could be named with
-whatever name you've entered in `subset` field during instance creation.
+The action searches the selected containers for 1 animation container of type `animation` or `pointcache`. This animation container will be connected to the rest of the selected containers. Matching geometries between containers is done by comparing the attribute `cbId`.
 
-We are almost ready for publishing cache. You can check basic settings by selecting
-Yeti cache set and opening *Extra attributes* in Maya **Attribute Editor**.
-
-![Maya - Yeti Basic Setup](assets/maya-yeti_cache_attributes.jpg)
-
-Those attributes there are self-explanatory, but:
-
-- `Preroll` is number of frames simulation will run before cache frames are stored.
-This is useful to "steady" simulation for example.
-- `Frame Start` from what frame we start to store cache files
-- `Frame End` to what frame we are storing cache files
-- `Fps` of cache
-- `Samples` how many time samples we take during caching
-
-You can now publish Yeti cache as any other types. **OpenPype → Publish**. It will
-create sequence of `.fur` files and `.fursettings` metadata file with Yeti node
-setting.
-
-### Loading Yeti caches
-
-You can load Yeti cache by **OpenPype → Load ...**. Select your cache, right+click on
-it and select **Load Yeti cache**. This will create Yeti node in scene and set its
-cache path to point to your published cache files. Note that this Yeti node will
-be named with same name as the one you've used to publish cache. Also notice that
-when you open graph on this Yeti node, all nodes are as they were in publishing node.
-
-### Creating and publishing Yeti Rig
-
-Yeti Rigs are working in similar way as caches, but are more complex and they deal with
-other data used by Yeti, like geometry and textures.
-
-Let's start by [loading](artist_hosts_maya.md#loading-model) into new scene some model.
-I've loaded my Buddha model.
-
-Create select model mesh, create Yeti node - **Yeti → Create Yeti Node on Mesh** and
-setup similar Yeti graph as in cache example above.
-
-Then select this Yeti node (mine is called with default name `pgYetiMaya1`) and
-create *Yeti Rig instance* - **OpenPype → Create...** and select **Yeti Cache**.
-Leave `Use selection` checked.
-
-Last step is to add our model geometry to rig instance, so middle+drag its
-geometry to `input_SET` under `yetiRigDefault` set representing rig instance.
-Note that its name can differ and is based on your subset name.
-
-![Maya - Yeti Rig Setup](assets/maya-yeti_rig.jpg)
-
-Save your scene and ready for publishing our new simple Yeti Rig!
-
-Go to publish **OpenPype → Publish** and run. This will publish rig with its geometry
-as `.ma` scene, save Yeti node settings and export one frame of Yeti cache from
-the beginning of your timeline. It will also collect all textures used in Yeti
-node, copy them to publish folder `resource` directory and set *Image search path*
-of published node to this location.
-
-:::note Collect Yeti Cache failure
-If you encounter **Collect Yeti Cache** failure during collecting phase, and the error is like
-```fix
-No object matches name: pgYetiMaya1Shape.cbId
-```
-then it is probably caused by scene not being saved before publishing.
-:::
-
-### Loading Yeti Rig
-
-You can load published Yeti Rigs as any other thing in OpenPype - **OpenPype → Load ...**,
-select you Yeti rig and right+click on it. In context menu you should see
-**Load Yeti Cache** and **Load Yeti Rig** items (among others). First one will
-load that one frame cache. The other one will load whole rig.
-
-Notice that although we put only geometry into `input_SET`, whole hierarchy was
-pulled inside also. This allows you to store complex scene element along Yeti
-node.
-
-:::tip auto-connecting rig mesh to existing one
-If you select some objects before loading rig it will try to find shapes
-under selected hierarchies and match them with shapes loaded with rig (published
-under `input_SET`). This mechanism uses *cbId* attribute on those shapes.
-If match is found shapes are connected using their `outMesh` and `outMesh`. Thus you can easily connect existing animation to loaded rig.
-:::
-
-## Working with Xgen in OpenPype
-
-OpenPype support publishing and loading of Xgen interactive grooms. You can publish 
-them as mayaAscii files with scalps that can be loaded into another maya scene, or as
-alembic caches. 
-
-### Publishing Xgen Grooms
-
-To prepare xgen for publishing just select all the descriptions that should be published together and the create Xgen Subset in the scene using - **OpenPype menu** → **Create**... and select **Xgen Interactive**. Leave Use selection checked.
-
-For actual publishing of your groom to go **OpenPype → Publish** and then press ▶ to publish. This will export `.ma` file containing your grooms with any geometries they are attached to and also a baked cache in `.abc` format 
-
-
-:::tip adding more descriptions
-You can add multiple xgen description into the subset you are about to publish, simply by
-adding them to the maya set that was created for you. Please make sure that only xgen description nodes are present inside of the set and not the scalp geometry. 
-:::
-
-### Loading Xgen
-
-You can use published xgens by loading them using OpenPype Publisher. You can choose to reference or import xgen. We don't have any automatic mesh linking at the moment and it is expected, that groom is published with a scalp, that can then be manually attached to your animated mesh for example. 
-
-The alembic representation can be loaded too and it contains the groom converted to curves. Keep in mind that the density of the alembic directly depends on your viewport xgen density at the point of export.
-
-
-
-## Using Redshift Proxies
-
-OpenPype supports working with Redshift Proxy files. You can create  Redshift Proxy from almost
-any hierarchy in Maya and it will be included there. Redshift can export animation
-proxy file per frame.
-
-### Creating Redshift Proxy
-
-To mark data to publish as Redshift Proxy, select them in Maya and - **OpenPype → Create ...** and
-then select **Redshift Proxy**. You can name your subset and hit **Create** button.
-
-You can enable animation in Attribute Editor:
-
-![Maya - Yeti Rig Setup](assets/maya-create_rs_proxy.jpg)
-
-### Publishing Redshift Proxies
-
-Once data are marked as Redshift Proxy instance, they can be published - **OpenPype → Publish ...**
-
-### Using Redshift Proxies
-
-Published proxy files can be loaded with OpenPype Loader. It will create mesh and attach Redshift Proxy
-parameters to it - Redshift will then represent proxy with bounding box.
-
-## Using VRay Proxies
-
-OpenPype support publishing, loading and using of VRay Proxy in look management. Their underlying format
-can be either vrmesh or alembic.
-
-:::warning vrmesh or alembic and look management
-Be aware that **vrmesh** cannot be used with looks as it doesn't retain IDs necessary to map shaders to geometry.
-:::
-
-### Creating VRay Proxy
-
-To create VRay Proxy, select geometry you want and - **OpenPype → Create ...** select **VRay Proxy**. Name your
-subset as you want and press **Create** button.
-
-This will create `vrayproxy` set for your subset. You can set some options in Attribute editor, mainly if you want
-export animation instead of single frame.
-
-![Maya - VRay Proxy Creation](assets/maya-vray_proxy.jpg)
-
-### Publishing VRay Proxies
-
-VRay Proxy can be published - **OpenPype → Publish ...**. It will publish data as VRays `vrmesh` format and as
-Alembic file.
-
-## Using VRay Proxies
-
-You can load VRay Proxy using loader - **OpenPype → Loader ...**
-
-![Maya - VRay Proxy Creation](assets/maya-vray_proxy-loader.jpg)
-
-Select your subset and right-click. Select **Import VRay Proxy (vrmesh)** to import it.
-
-:::note
-Note that even if it states `vrmesh` in descriptions, if loader finds Alembic published along (default behavior) it will
-use abc file instead of vrmesh as it is more flexible and without it looks doesn't work.
-:::
+The connection between geometries is done with a live blendshape.

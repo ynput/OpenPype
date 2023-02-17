@@ -1,12 +1,31 @@
 {
+    "imageio": {
+        "ocio_config": {
+            "enabled": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "enabled": false,
+            "rules": {}
+        }
+    },
     "stop_timer_on_application_exit": false,
     "publish": {
+        "CollectRenderScene": {
+            "enabled": false,
+            "render_layer": "Main"
+        },
         "ExtractSequence": {
             "review_bg": [
                 255,
                 255,
                 255,
                 255
+            ],
+            "families_to_review": [
+                "review",
+                "renderlayer",
+                "renderscene"
             ]
         },
         "ValidateProjectSettings": {
@@ -28,6 +47,11 @@
             "enabled": true,
             "optional": true,
             "active": true
+        },
+        "ExtractConvertToEXR": {
+            "enabled": false,
+            "replace_pngs": true,
+            "exr_compression": "ZIP"
         }
     },
     "load": {

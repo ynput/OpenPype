@@ -12,16 +12,20 @@ import os
 import copy
 
 import pyblish.api
-from avalon import api
 
 
 class CollectResourcesPath(pyblish.api.InstancePlugin):
-    """Generate directory path where the files and resources will be stored"""
+    """Generate directory path where the files and resources will be stored.
+
+    Collects folder name and file name from files, if exists, for in-situ
+    publishing.
+    """
 
     label = "Collect Resources Path"
     order = pyblish.api.CollectorOrder + 0.495
     families = ["workfile",
                 "pointcache",
+                "proxyAbc",
                 "camera",
                 "animation",
                 "model",
@@ -40,6 +44,7 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 "rig",
                 "plate",
                 "look",
+                "mvLook",
                 "yetiRig",
                 "yeticache",
                 "nukenodes",
@@ -50,10 +55,14 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 "source",
                 "assembly",
                 "fbx",
+                "gltf",
                 "textures",
                 "action",
                 "background",
-                "effect"
+                "effect",
+                "staticMesh",
+                "skeletalMesh",
+                "xgen"
                 ]
 
     def process(self, instance):
@@ -81,11 +90,10 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
         else:
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
-            project_name = api.Session["AVALON_PROJECT"]
             self.log.warning((
                 "Deprecation warning: Anatomy does not have set `folder`"
                 " key underneath `publish` (in global of for project `{}`)."
-            ).format(project_name))
+            ).format(anatomy.project_name))
 
             file_path = anatomy_filled["publish"]["path"]
             # Directory

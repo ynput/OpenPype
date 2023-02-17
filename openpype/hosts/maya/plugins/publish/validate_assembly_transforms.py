@@ -1,9 +1,9 @@
 import pyblish.api
-import openpype.api
 
 from maya import cmds
 
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import RepairAction
 
 
 class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
@@ -29,7 +29,7 @@ class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
     label = "Assembly Model Transforms"
     families = ["assembly"]
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
-               openpype.api.RepairAction]
+               RepairAction]
 
     prompt_message = ("You are about to reset the matrix to the default values."
                       " This can alter the look of your scene. "
@@ -47,7 +47,7 @@ class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
         from openpype.hosts.maya.api import lib
 
         # Get all transforms in the loaded containers
-        container_roots = cmds.listRelatives(instance.data["hierarchy"],
+        container_roots = cmds.listRelatives(instance.data["nodesHierarchy"],
                                              children=True,
                                              type="transform",
                                              fullPath=True)
@@ -89,16 +89,16 @@ class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
 
         """
 
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
         from openpype.hosts.maya.api import lib
 
         # Store namespace in variable, cosmetics thingy
-        messagebox = QtWidgets.QMessageBox
-        mode = messagebox.StandardButton.Ok | messagebox.StandardButton.Cancel
-        choice = messagebox.warning(None,
-                                    "Matrix reset",
-                                    cls.prompt_message,
-                                    mode)
+        choice = QtWidgets.QMessageBox.warning(
+            None,
+            "Matrix reset",
+            cls.prompt_message,
+            QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel
+        )
 
         invalid = cls.get_invalid(instance)
         if not invalid:

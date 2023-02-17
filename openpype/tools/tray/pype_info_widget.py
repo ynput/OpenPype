@@ -2,10 +2,10 @@ import os
 import json
 import collections
 
-from Qt import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 from openpype import style
-from openpype.api import resources
+from openpype import resources
 from openpype.settings.lib import get_local_settings
 from openpype.lib.pype_info import (
     get_all_current_info,

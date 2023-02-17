@@ -98,6 +98,7 @@ install_requires = [
     "jinxed",
     "blessed",
     "Qt",
+    "qtpy",
     "speedcopy",
     "googleapiclient",
     "httplib2",
@@ -106,7 +107,9 @@ install_requires = [
     "dns",
     # Python defaults (cx_Freeze skip them by default)
     "dbm",
-    "sqlite3"
+    "sqlite3",
+    "dataclasses",
+    "timeit"
 ]
 
 includes = []
@@ -123,7 +126,6 @@ bin_includes = [
 include_files = [
     "igniter",
     "openpype",
-    "repos",
     "schema",
     "LICENSE",
     "README.md"
@@ -151,7 +153,7 @@ build_exe_options = dict(
 )
 
 bdist_mac_options = dict(
-    bundle_name="OpenPype",
+    bundle_name=f"OpenPype {__version__}",
     iconfile=mac_icon_path
 )
 
@@ -187,5 +189,6 @@ setup(
             "build_dir": (openpype_root / "docs" / "build").as_posix()
         }
     },
-    executables=executables
+    executables=executables,
+    packages=[]
 )

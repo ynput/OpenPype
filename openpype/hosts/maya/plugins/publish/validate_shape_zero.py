@@ -1,9 +1,13 @@
 from maya import cmds
 
 import pyblish.api
-import openpype.api
+
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    RepairAction,
+)
 
 
 class ValidateShapeZero(pyblish.api.Validator):
@@ -13,13 +17,13 @@ class ValidateShapeZero(pyblish.api.Validator):
 
     """
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["maya"]
     families = ["model"]
     label = "Shape Zero (Freeze)"
     actions = [
         openpype.hosts.maya.api.action.SelectInvalidAction,
-        openpype.api.RepairAction
+        RepairAction
     ]
 
     @staticmethod

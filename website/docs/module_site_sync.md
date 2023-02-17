@@ -123,6 +123,10 @@ To get working connection to Google Drive there are some necessary steps:
 - add new site back in OpenPype Settings, name as you want, provider needs to be 'gdrive'
 - distribute credentials file via shared mounted disk location
 
+:::note
+If you are using regular personal GDrive for testing don't forget adding `/My Drive` as the prefix in root configuration. Business accounts and share drives don't need this.
+:::
+
 ### SFTP
 
 SFTP provider is used to connect to SFTP server. Currently authentication with `user:password` or `user:ssh key` is implemented.

@@ -1,4 +1,11 @@
 import logging
+from openpype.pipeline.plugin_discover import (
+    discover,
+    register_plugin,
+    register_plugin_path,
+    deregister_plugin,
+    deregister_plugin_path
+)
 
 
 class LauncherAction(object):
@@ -90,28 +97,20 @@ class InventoryAction(object):
 
 # Launcher action
 def discover_launcher_actions():
-    import avalon.api
-
-    return avalon.api.discover(LauncherAction)
+    return discover(LauncherAction)
 
 
 def register_launcher_action(plugin):
-    import avalon.api
-
-    return avalon.api.register_plugin(LauncherAction, plugin)
+    return register_plugin(LauncherAction, plugin)
 
 
 def register_launcher_action_path(path):
-    import avalon.api
-
-    return avalon.api.register_plugin_path(LauncherAction, path)
+    return register_plugin_path(LauncherAction, path)
 
 
 # Inventory action
 def discover_inventory_actions():
-    import avalon.api
-
-    actions = avalon.api.discover(InventoryAction)
+    actions = discover(InventoryAction)
     filtered_actions = []
     for action in actions:
         if action is not InventoryAction:
@@ -121,24 +120,16 @@ def discover_inventory_actions():
 
 
 def register_inventory_action(plugin):
-    import avalon.api
-
-    return avalon.api.register_plugin(InventoryAction, plugin)
+    return register_plugin(InventoryAction, plugin)
 
 
 def deregister_inventory_action(plugin):
-    import avalon.api
-
-    avalon.api.deregister_plugin(InventoryAction, plugin)
+    deregister_plugin(InventoryAction, plugin)
 
 
 def register_inventory_action_path(path):
-    import avalon.api
-
-    return avalon.api.register_plugin_path(InventoryAction, path)
+    return register_plugin_path(InventoryAction, path)
 
 
 def deregister_inventory_action_path(path):
-    import avalon.api
-
-    return avalon.api.deregister_plugin_path(InventoryAction, path)
+    return deregister_plugin_path(InventoryAction, path)

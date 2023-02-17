@@ -1,7 +1,8 @@
-import pyblish.api
-import avalon.api
 import os
+import pyblish.api
+
 from maya import cmds
+from openpype.pipeline import legacy_io
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -19,7 +20,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         folder, file = os.path.split(current_file)
         filename, ext = os.path.splitext(file)
 
-        task = avalon.api.Session["AVALON_TASK"]
+        task = legacy_io.Session["AVALON_TASK"]
 
         data = {}
 

@@ -135,7 +135,7 @@ def query_custom_attributes(
         output.extend(
             session.query(
                 (
-                    "select value, entity_id from {}"
+                    "select value, entity_id, configuration_id from {}"
                     " where entity_id in ({}) and configuration_id in ({})"
                 ).format(
                     table_name,

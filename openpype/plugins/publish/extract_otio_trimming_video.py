@@ -6,17 +6,24 @@ Requires:
 """
 
 import os
-from pyblish import api
-import openpype
 from copy import deepcopy
 
+import pyblish.api
 
-class ExtractOTIOTrimmingVideo(openpype.api.Extractor):
+from openpype.lib import (
+    get_ffmpeg_tool_path,
+    run_subprocess,
+)
+from openpype.pipeline import publish
+from openpype.pipeline.editorial import frames_to_seconds
+
+
+class ExtractOTIOTrimmingVideo(publish.Extractor):
     """
     Trimming video file longer then required lenght
 
     """
-    order = api.ExtractorOrder
+    order = pyblish.api.ExtractorOrder
     label = "Extract OTIO trim longer video"
     families = ["trim"]
     hosts = ["resolve", "hiero", "flame"]
@@ -69,7 +76,7 @@ class ExtractOTIOTrimmingVideo(openpype.api.Extractor):
 
         """
         # get rendering app path
-        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
         # create path to destination
         output_path = self._get_ffmpeg_output(input_file_path)
@@ -80,9 +87,9 @@ class ExtractOTIOTrimmingVideo(openpype.api.Extractor):
         video_path = input_file_path
         frame_start = otio_range.start_time.value
         input_fps = otio_range.start_time.rate
-        frame_duration = (otio_range.duration.value + 1)
-        sec_start = openpype.lib.frames_to_secons(frame_start, input_fps)
-        sec_duration = openpype.lib.frames_to_secons(frame_duration, input_fps)
+        frame_duration = otio_range.duration.value - 1
+        sec_start = frames_to_seconds(frame_start, input_fps)
+        sec_duration = frames_to_seconds(frame_duration, input_fps)
 
         # form command for rendering gap files
         command.extend([
@@ -95,7 +102,7 @@ class ExtractOTIOTrimmingVideo(openpype.api.Extractor):
 
         # execute
         self.log.debug("Executing: {}".format(" ".join(command)))
-        output = openpype.api.run_subprocess(
+        output = run_subprocess(
             command, logger=self.log
         )
         self.log.debug("Output: {}".format(output))

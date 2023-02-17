@@ -1,10 +1,9 @@
 import os
 import pyblish.api
-from openpype.api import ValidationException
 import clique
+from openpype.pipeline import PublishXmlValidationError
 
 
-@pyblish.api.log
 class RepairActionBase(pyblish.api.Action):
     on = "failed"
     icon = "wrench"
@@ -23,6 +22,7 @@ class RepairActionBase(pyblish.api.Action):
 
     def repair_knob(self, instances, state):
         for instance in instances:
+            node = instance.data["transientData"]["node"]
             files_remove = [os.path.join(instance.data["outputDir"], f)
                             for r in instance.data.get("representations", [])
                             for f in r.get("files", [])
@@ -31,12 +31,12 @@ class RepairActionBase(pyblish.api.Action):
             for f in files_remove:
                 os.remove(f)
                 self.log.debug("removing file: {}".format(f))
-            instance[0]["render"].setValue(state)
+            node["render"].setValue(state)
             self.log.info("Rendering toggled to `{}`".format(state))
 
 
 class RepairCollectionActionToLocal(RepairActionBase):
-    label = "Repair > rerender with `Local` machine"
+    label = "Repair - rerender with \"Local\""
 
     def process(self, context, plugin):
         instances = self.get_instance(context, plugin)
@@ -44,7 +44,7 @@ class RepairCollectionActionToLocal(RepairActionBase):
 
 
 class RepairCollectionActionToFarm(RepairActionBase):
-    label = "Repair > rerender `On farm` with remote machines"
+    label = "Repair - rerender with \"On farm\""
 
     def process(self, context, plugin):
         instances = self.get_instance(context, plugin)
@@ -62,6 +62,11 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
     actions = [RepairCollectionActionToLocal, RepairCollectionActionToFarm]
 
     def process(self, instance):
+        node = instance.data["transientData"]["node"]
+
+        f_data = {
+            "node_name": node.name()
+        }
 
         for repre in instance.data["representations"]:
 
@@ -71,7 +76,8 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
                        "Check properties of write node (group) and"
                        "select 'Local' option in 'Publish' dropdown.")
                 self.log.error(msg)
-                raise ValidationException(msg)
+                raise PublishXmlValidationError(
+                    self, msg, formatting_data=f_data)
 
             if isinstance(repre["files"], str):
                 return
@@ -82,30 +88,33 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
 
             collection = collections[0]
 
-            fstartH = instance.data["frameStartHandle"]
-            fendH = instance.data["frameEndHandle"]
+            f_start_h = instance.data["frameStartHandle"]
+            f_end_h = instance.data["frameEndHandle"]
 
-            frame_length = int(fendH - fstartH + 1)
+            frame_length = int(f_end_h - f_start_h + 1)
 
             if frame_length != 1:
                 if len(collections) != 1:
                     msg = "There are multiple collections in the folder"
                     self.log.error(msg)
-                    raise ValidationException(msg)
+                    raise PublishXmlValidationError(
+                        self, msg, formatting_data=f_data)
 
                 if not collection.is_contiguous():
                     msg = "Some frames appear to be missing"
                     self.log.error(msg)
-                    raise ValidationException(msg)
+                    raise PublishXmlValidationError(
+                        self, msg, formatting_data=f_data)
 
-            collected_frames_len = int(len(collection.indexes))
+            collected_frames_len = len(collection.indexes)
             coll_start = min(collection.indexes)
             coll_end = max(collection.indexes)
 
             self.log.info("frame_length: {}".format(frame_length))
             self.log.info("collected_frames_len: {}".format(
                 collected_frames_len))
-            self.log.info("fstartH-fendH: {}-{}".format(fstartH, fendH))
+            self.log.info("f_start_h-f_end_h: {}-{}".format(
+                f_start_h, f_end_h))
             self.log.info(
                 "coll_start-coll_end: {}-{}".format(coll_start, coll_end))
 
@@ -116,13 +125,19 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
             if ("slate" in instance.data["families"]) \
                     and (frame_length != collected_frames_len):
                 collected_frames_len -= 1
-                fstartH += 1
+                f_start_h += 1
 
-            assert ((collected_frames_len >= frame_length)
-                    and (coll_start <= fstartH)
-                    and (coll_end >= fendH)), (
-                "{} missing frames. Use repair to render all frames"
-            ).format(__name__)
+            if (
+                collected_frames_len != frame_length
+                and coll_start <= f_start_h
+                and coll_end >= f_end_h
+            ):
+                raise PublishXmlValidationError(
+                    self, (
+                        "{} missing frames. Use repair to "
+                        "render all frames"
+                    ).format(__name__), formatting_data=f_data
+                )
 
             instance.data["collection"] = collection
 

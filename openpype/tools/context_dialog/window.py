@@ -1,10 +1,10 @@
 import os
 import json
 
-from Qt import QtWidgets, QtCore, QtGui
-from avalon.api import AvalonMongoDB
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype import style
+from openpype.pipeline import AvalonMongoDB
 from openpype.tools.utils.lib import center_window
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.constants import (

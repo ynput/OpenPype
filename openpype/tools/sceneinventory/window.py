@@ -1,11 +1,12 @@
 import os
 import sys
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 import qtawesome
-from avalon import io, api
 
 from openpype import style
+from openpype.client import get_projects
+from openpype.pipeline import legacy_io
 from openpype.tools.utils.delegates import VersionDelegate
 from openpype.tools.utils.lib import (
     qt_app_context,
@@ -39,8 +40,6 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         project_name = os.getenv("AVALON_PROJECT") or "<Project not set>"
         self.setWindowTitle("Scene Inventory 1.0 - {}".format(project_name))
         self.setObjectName("SceneInventory")
-        # Maya only property
-        self.setProperty("saveWindowPref", True)
 
         self.resize(1100, 480)
 
@@ -72,7 +71,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         control_layout.addWidget(refresh_button)
 
         # endregion control
-        family_config_cache = FamilyConfigCache(io)
+        family_config_cache = FamilyConfigCache(legacy_io)
 
         model = InventoryModel(family_config_cache)
         proxy = FilterProxyModel()
@@ -88,10 +87,11 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         view.setColumnWidth(1, 55)   # version
         view.setColumnWidth(2, 55)   # count
         view.setColumnWidth(3, 150)  # family
-        view.setColumnWidth(4, 100)  # namespace
+        view.setColumnWidth(4, 120)  # group
+        view.setColumnWidth(5, 150)  # loader
 
         # apply delegates
-        version_delegate = VersionDelegate(io, self)
+        version_delegate = VersionDelegate(legacy_io, self)
         column = model.Columns.index("version")
         view.setItemDelegateForColumn(column, version_delegate)
 
@@ -160,7 +160,10 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         self._model.set_hierarchy_view(enabled)
 
     def _on_text_filter_change(self, text_filter):
-        self._proxy.setFilterRegExp(text_filter)
+        if hasattr(self._proxy, "setFilterRegularExpression"):
+            self._proxy.setFilterRegularExpression(text_filter)
+        else:
+            self._proxy.setFilterRegExp(text_filter)
 
     def _on_outdated_state_change(self):
         self._proxy.set_filter_outdated(
@@ -191,17 +194,17 @@ def show(root=None, debug=False, parent=None, items=None):
         pass
 
     if debug is True:
-        io.install()
+        legacy_io.install()
 
         if not os.environ.get("AVALON_PROJECT"):
             any_project = next(
-                project for project in io.projects()
-                if project.get("active", True) is not False
+                project for project in get_projects()
             )
 
-            api.Session["AVALON_PROJECT"] = any_project["name"]
+            project_name = any_project["name"]
         else:
-            api.Session["AVALON_PROJECT"] = os.environ.get("AVALON_PROJECT")
+            project_name = os.environ.get("AVALON_PROJECT")
+        legacy_io.Session["AVALON_PROJECT"] = project_name
 
     with qt_app_context():
         window = SceneInventoryWindow(parent)

@@ -1,26 +1,26 @@
 """
 Basic avalon integration
 """
+from copy import deepcopy
 import os
 import contextlib
 from collections import OrderedDict
 
-from avalon import api as avalon
-from avalon import schema
 from pyblish import api as pyblish
-from openpype.api import Logger
+from openpype.lib import Logger
 from openpype.pipeline import (
-    LegacyCreator,
+    schema,
+    register_creator_plugin_path,
     register_loader_plugin_path,
+    deregister_creator_plugin_path,
     deregister_loader_plugin_path,
     AVALON_CONTAINER_ID,
 )
 from openpype.tools.utils import host_tools
 from . import lib, menu, events
+import hiero
 
-log = Logger().get_logger(__name__)
-
-AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
+log = Logger.get_logger(__name__)
 
 # plugin paths
 API_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -34,14 +34,7 @@ AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
 
 def install():
-    """
-    Installing Hiero integration for avalon
-
-    Args:
-        config (obj): avalon config module `pype` in our case, it is not
-        used but required by avalon.api.install()
-
-    """
+    """Installing Hiero integration."""
 
     # adding all events
     events.register_events()
@@ -50,13 +43,14 @@ def install():
     pyblish.register_host("hiero")
     pyblish.register_plugin_path(PUBLISH_PATH)
     register_loader_plugin_path(LOAD_PATH)
-    avalon.register_plugin_path(LegacyCreator, CREATE_PATH)
+    register_creator_plugin_path(CREATE_PATH)
 
     # register callback for switching publishable
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
 
     # install menu
     menu.menu_install()
+    menu.add_scripts_menu()
 
     # register hiero events
     events.register_hiero_events()
@@ -71,7 +65,7 @@ def uninstall():
     pyblish.deregister_host("hiero")
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     deregister_loader_plugin_path(LOAD_PATH)
-    avalon.deregister_plugin_path(LegacyCreator, CREATE_PATH)
+    deregister_creator_plugin_path(CREATE_PATH)
 
     # register callback for switching publishable
     pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
@@ -114,7 +108,7 @@ def containerise(track_item,
             data_imprint.update({k: v})
 
     log.debug("_ data_imprint: {}".format(data_imprint))
-    lib.set_track_item_pype_tag(track_item, data_imprint)
+    lib.set_trackitem_openpype_tag(track_item, data_imprint)
 
     return track_item
 
@@ -131,74 +125,131 @@ def ls():
     """
 
     # get all track items from current timeline
-    all_track_items = lib.get_track_items()
+    all_items = lib.get_track_items()
 
-    for track_item in all_track_items:
-        container = parse_container(track_item)
-        if container:
-            yield container
+    # append all video tracks
+    for track in lib.get_current_sequence():
+        if type(track) != hiero.core.VideoTrack:
+            continue
+        all_items.append(track)
+
+    for item in all_items:
+        container_data = parse_container(item)
+
+        if isinstance(container_data, list):
+            for _c in container_data:
+                yield _c
+        elif container_data:
+            yield container_data
 
 
-def parse_container(track_item, validate=True):
+def parse_container(item, validate=True):
     """Return container data from track_item's pype tag.
 
     Args:
-        track_item (hiero.core.TrackItem): A containerised track item.
+        item (hiero.core.TrackItem or hiero.core.VideoTrack):
+            A containerised track item.
         validate (bool)[optional]: validating with avalon scheme
 
     Returns:
         dict: The container schema data for input containerized track item.
 
     """
+    def data_to_container(item, data):
+        if (
+            not data
+            or data.get("id") != "pyblish.avalon.container"
+        ):
+            return
+
+        if validate and data and data.get("schema"):
+            schema.validate(data)
+
+        if not isinstance(data, dict):
+            return
+
+        # If not all required data return the empty container
+        required = ['schema', 'id', 'name',
+                    'namespace', 'loader', 'representation']
+
+        if any(key not in data for key in required):
+            return
+
+        container = {key: data[key] for key in required}
+
+        container["objectName"] = item.name()
+
+        # Store reference to the node object
+        container["_item"] = item
+
+        return container
+
     # convert tag metadata to normal keys names
-    data = lib.get_track_item_pype_data(track_item)
+    if type(item) == hiero.core.VideoTrack:
+        return_list = []
+        _data = lib.get_track_openpype_data(item)
 
-    if validate and data and data.get("schema"):
-        schema.validate(data)
+        if not _data:
+            return
+        # convert the data to list and validate them
+        for _, obj_data in _data.items():
+            cotnainer = data_to_container(item, obj_data)
+            return_list.append(cotnainer)
+        return return_list
+    else:
+        _data = lib.get_trackitem_openpype_data(item)
+        return data_to_container(item, _data)
 
-    if not isinstance(data, dict):
-        return
 
-    # If not all required data return the empty container
-    required = ['schema', 'id', 'name',
-                'namespace', 'loader', 'representation']
-
-    if not all(key in data for key in required):
-        return
-
-    container = {key: data[key] for key in required}
-
-    container["objectName"] = track_item.name()
-
-    # Store reference to the node object
-    container["_track_item"] = track_item
-
+def _update_container_data(container, data):
+    for key in container:
+        try:
+            container[key] = data[key]
+        except KeyError:
+            pass
     return container
 
 
-def update_container(track_item, data=None):
-    """Update container data to input track_item's pype tag.
+def update_container(item, data=None):
+    """Update container data to input track_item or track's
+    openpype tag.
 
     Args:
-        track_item (hiero.core.TrackItem): A containerised track item.
+        item (hiero.core.TrackItem or hiero.core.VideoTrack):
+            A containerised track item.
         data (dict)[optional]: dictionery with data to be updated
 
     Returns:
         bool: True if container was updated correctly
 
     """
-    data = data or dict()
 
-    container = lib.get_track_item_pype_data(track_item)
+    data = data or {}
+    data = deepcopy(data)
 
-    for _key, _value in container.items():
-        try:
-            container[_key] = data[_key]
-        except KeyError:
-            pass
+    if type(item) == hiero.core.VideoTrack:
+        # form object data for test
+        object_name = data["objectName"]
 
-    log.info("Updating container: `{}`".format(track_item.name()))
-    return bool(lib.set_track_item_pype_tag(track_item, container))
+        # get all available containers
+        containers = lib.get_track_openpype_data(item)
+        container = lib.get_track_openpype_data(item, object_name)
+
+        containers = deepcopy(containers)
+        container = deepcopy(container)
+
+        # update data in container
+        updated_container = _update_container_data(container, data)
+        # merge updated container back to containers
+        containers.update({object_name: updated_container})
+
+        return bool(lib.set_track_openpype_tag(item, containers))
+    else:
+        container = lib.get_trackitem_openpype_data(item)
+        updated_container = _update_container_data(container, data)
+
+        log.info("Updating container: `{}`".format(item.name()))
+        return bool(lib.set_trackitem_openpype_tag(item, updated_container))
 
 
 def launch_workfiles_app(*args):
@@ -254,15 +305,9 @@ def reload_config():
     import importlib
 
     for module in (
-        "avalon",
-        "avalon.lib",
-        "avalon.pipeline",
-        "pyblish",
-        "pypeapp",
-        "{}.api".format(AVALON_CONFIG),
-        "{}.hosts.hiero.lib".format(AVALON_CONFIG),
-        "{}.hosts.hiero.menu".format(AVALON_CONFIG),
-        "{}.hosts.hiero.tags".format(AVALON_CONFIG)
+        "openpype.hosts.hiero.lib",
+        "openpype.hosts.hiero.menu",
+        "openpype.hosts.hiero.tags"
     ):
         log.info("Reloading module: {}...".format(module))
         try:
@@ -281,11 +326,11 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
         instance, old_value, new_value))
 
     from openpype.hosts.hiero.api import (
-        get_track_item_pype_tag,
+        get_trackitem_openpype_tag,
         set_publish_attribute
     )
 
     # Whether instances should be passthrough based on new value
     track_item = instance.data["item"]
-    tag = get_track_item_pype_tag(track_item)
+    tag = get_trackitem_openpype_tag(track_item)
     set_publish_attribute(tag, new_value)

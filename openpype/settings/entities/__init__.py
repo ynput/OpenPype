@@ -107,6 +107,7 @@ from .enum_entity import (
     TaskTypeEnumEntity,
     DeadlineUrlEnumEntity,
     AnatomyTemplatesEnumEntity,
+    ShotgridUrlEnumEntity
 )
 
 from .list_entity import ListEntity
@@ -122,10 +123,7 @@ from .dict_conditional import (
 )
 
 from .anatomy_entities import AnatomyEntity
-from .op_version_entity import (
-    ProductionVersionsInputEntity,
-    StagingVersionsInputEntity
-)
+from .op_version_entity import VersionsInputEntity
 
 __all__ = (
     "DefaultsNotDefined",
@@ -171,6 +169,7 @@ __all__ = (
     "ToolsEnumEntity",
     "TaskTypeEnumEntity",
     "DeadlineUrlEnumEntity",
+    "ShotgridUrlEnumEntity",
     "AnatomyTemplatesEnumEntity",
 
     "ListEntity",
@@ -186,6 +185,5 @@ __all__ = (
 
     "AnatomyEntity",
 
-    "ProductionVersionsInputEntity",
-    "StagingVersionsInputEntity"
+    "VersionsInputEntity",
 )

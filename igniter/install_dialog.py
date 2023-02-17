@@ -5,9 +5,7 @@ import sys
 import re
 import collections
 
-from Qt import QtCore, QtGui, QtWidgets  # noqa
-from Qt.QtGui import QValidator  # noqa
-from Qt.QtCore import QTimer  # noqa
+from qtpy import QtCore, QtGui, QtWidgets
 
 from .install_thread import InstallThread
 from .tools import (
@@ -388,8 +386,11 @@ class InstallDialog(QtWidgets.QDialog):
         install_thread.start()
 
     def _installation_finished(self):
+        # TODO we should find out why status can be set to 'None'?
+        # - 'InstallThread.run' should handle all cases so not sure where
+        #       that come from
         status = self._install_thread.result()
-        if status >= 0:
+        if status is not None and status >= 0:
             self._update_progress(100)
             QtWidgets.QApplication.processEvents()
             self.done(3)

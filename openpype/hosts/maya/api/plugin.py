@@ -4,13 +4,15 @@ from maya import cmds
 
 import qargparse
 
+from openpype.lib import Logger
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
     get_representation_path,
     AVALON_CONTAINER_ID,
+    Anatomy,
 )
-
+from openpype.settings import get_project_settings
 from .pipeline import containerise
 from . import lib
 
@@ -49,9 +51,7 @@ def get_reference_node(members, log=None):
     # Warn the user when we're taking the highest reference node
     if len(references) > 1:
         if not log:
-            from openpype.lib import PypeLogger
-
-            log = PypeLogger().get_logger(__name__)
+            log = Logger.get_logger(__name__)
 
         log.warning("More than one reference node found in "
                     "container, using highest reference node: "
@@ -207,7 +207,8 @@ class ReferenceLoader(Loader):
         file_type = {
             "ma": "mayaAscii",
             "mb": "mayaBinary",
-            "abc": "Alembic"
+            "abc": "Alembic",
+            "fbx": "FBX"
         }.get(representation["name"])
 
         assert file_type, "Unsupported representation: %s" % representation
@@ -216,7 +217,7 @@ class ReferenceLoader(Loader):
 
         # Need to save alembic settings and reapply, cause referencing resets
         # them to incoming data.
-        alembic_attrs = ["speed", "offset", "cycleType"]
+        alembic_attrs = ["speed", "offset", "cycleType", "time"]
         alembic_data = {}
         if representation["name"] == "abc":
             alembic_nodes = cmds.ls(
@@ -225,11 +226,20 @@ class ReferenceLoader(Loader):
             if alembic_nodes:
                 for attr in alembic_attrs:
                     node_attr = "{}.{}".format(alembic_nodes[0], attr)
-                    alembic_data[attr] = cmds.getAttr(node_attr)
+                    data = {
+                        "input": lib.get_attribute_input(node_attr),
+                        "value": cmds.getAttr(node_attr)
+                    }
+
+                    alembic_data[attr] = data
             else:
                 self.log.debug("No alembic nodes found in {}".format(members))
 
         try:
+            path = self.prepare_root_value(path,
+                                           representation["context"]
+                                                         ["project"]
+                                                         ["name"])
             content = cmds.file(path,
                                 loadReference=reference_node,
                                 type=file_type,
@@ -258,8 +268,19 @@ class ReferenceLoader(Loader):
                 "{}:*".format(namespace), type="AlembicNode"
             )
             if alembic_nodes:
-                for attr, value in alembic_data.items():
-                    cmds.setAttr("{}.{}".format(alembic_nodes[0], attr), value)
+                alembic_node = alembic_nodes[0]  # assume single AlembicNode
+                for attr, data in alembic_data.items():
+                    node_attr = "{}.{}".format(alembic_node, attr)
+                    input = lib.get_attribute_input(node_attr)
+                    if data["input"]:
+                        if data["input"] != input:
+                            cmds.connectAttr(
+                                data["input"], node_attr, force=True
+                            )
+                    else:
+                        if input:
+                            cmds.disconnectAttr(input, node_attr)
+                        cmds.setAttr(node_attr, data["value"])
 
         # Fix PLN-40 for older containers created with Avalon that had the
         # `.verticesOnlySet` set to True.
@@ -278,6 +299,39 @@ class ReferenceLoader(Loader):
         cmds.setAttr("{}.representation".format(node),
                      str(representation["_id"]),
                      type="string")
+
+        # When an animation or pointcache gets connected to an Xgen container,
+        # the compound attribute "xgenContainers" gets created. When animation
+        # containers gets updated we also need to update the cacheFileName on
+        # the Xgen collection.
+        compound_name = "xgenContainers"
+        if cmds.objExists("{}.{}".format(node, compound_name)):
+            import xgenm
+            container_amount = cmds.getAttr(
+                "{}.{}".format(node, compound_name), size=True
+            )
+            # loop through all compound children
+            for i in range(container_amount):
+                attr = "{}.{}[{}].container".format(node, compound_name, i)
+                objectset = cmds.listConnections(attr)[0]
+                reference_node = cmds.sets(objectset, query=True)[0]
+                palettes = cmds.ls(
+                    cmds.referenceQuery(reference_node, nodes=True),
+                    type="xgmPalette"
+                )
+                for palette in palettes:
+                    for description in xgenm.descriptions(palette):
+                        xgenm.setAttr(
+                            "cacheFileName",
+                            path.replace("\\", "/"),
+                            palette,
+                            description,
+                            "SplinePrimitive"
+                        )
+
+            # Refresh UI and viewport.
+            de = xgenm.xgGlobal.DescriptionEditor
+            de.refresh("Full")
 
     def remove(self, container):
         """Remove an existing `container` from Maya scene
@@ -318,6 +372,29 @@ class ReferenceLoader(Loader):
                            deleteNamespaceContent=True)
         except RuntimeError:
             pass
+
+    def prepare_root_value(self, file_url, project_name):
+        """Replace root value with env var placeholder.
+
+        Use ${OPENPYPE_ROOT_WORK} (or any other root) instead of proper root
+        value when storing referenced url into a workfile.
+        Useful for remote workflows with SiteSync.
+
+        Args:
+            file_url (str)
+            project_name (dict)
+        Returns:
+            (str)
+        """
+        settings = get_project_settings(project_name)
+        use_env_var_as_root = (settings["maya"]
+                                       ["maya-dirmap"]
+                                       ["use_env_var_as_root"])
+        if use_env_var_as_root:
+            anatomy = Anatomy(project_name)
+            file_url = anatomy.replace_root_with_env_key(file_url, '${{{}}}')
+
+        return file_url
 
     @staticmethod
     def _organize_containers(nodes, container):

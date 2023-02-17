@@ -1,7 +1,8 @@
 import time
 import sys
 import json
-import traceback
+
+import ftrack_api
 
 from openpype_modules.ftrack.lib import ServerAction
 from openpype_modules.ftrack.lib.avalon_sync import SyncEntitiesFactory
@@ -179,6 +180,13 @@ class SyncToAvalonServer(ServerAction):
             self.log.debug(
                 "* Total time: {}".format(time_7 - time_start)
             )
+
+            if self.entities_factory.project_created:
+                event = ftrack_api.event.base.Event(
+                    topic="openpype.project.created",
+                    data={"project_name": project_name}
+                )
+                self.session.event_hub.publish(event)
 
             report = self.entities_factory.report()
             if report and report.get("items"):
