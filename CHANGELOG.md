@@ -1,5 +1,81 @@
 # Changelog
 
+
+## [3.15.1](https://github.com/ynput/OpenPype/tree/3.15.1)
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.1...3.15.0)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Maya: Xgen (<i><font color='#367F6C';>3d</font> </i> <i><font style='color:#365E7F';>/ maya</font></i> ) - <a href="https://github.com/ynput/OpenPype/pull/4256">#4256</a></summary>
+
+
+___
+
+
+## Brief description
+Initial Xgen implementation.
+
+## Description
+Client request of Xgen pipeline.
+
+
+
+
+___
+
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Adding path validator for non-maya nodes (<i><font color='#367F6C';>3d</font> </i> <i><font style='color:#365E7F';>/ maya</font></i> ) - <a href="https://github.com/ynput/OpenPype/pull/4271">#4271</a></summary>
+
+
+___
+
+
+## Brief description
+Adding a path validator for filepaths from non-maya nodes, which are created by plugins such as Renderman, Yeti and abcImport.
+
+## Description
+As File Path Editor cannot catch the wrong filenpaths from non-maya nodes such as AlembicNodes, It is neccessary to have a new validator to ensure the existence of the filepaths from the nodes.
+
+
+
+
+___
+
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Fix features for gizmo menu (<i><font color='#367F6C';>2d</font> </i> <i><font style='color:#365E7F';>/ nuke</font></i> ) - <a href="https://github.com/ynput/OpenPype/pull/4280">#4280</a></summary>
+
+
+___
+
+
+## Brief description
+Fix features for the Gizmo Menu project settings (shortcut for python type of usage and file type of usage functionality)
+
+
+
+
+___
+
+
+</details>
+
+
+
 ## [3.15.0](https://github.com/ynput/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/ynput/OpenPype/compare/3.14.10...HEAD)
