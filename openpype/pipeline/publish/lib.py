@@ -691,6 +691,12 @@ def get_publish_repre_path(instance, repre, only_published=False):
     staging_dir = repre.get("stagingDir")
     if not staging_dir:
         staging_dir = get_instance_staging_dir(instance)
+
+    # Expand the staging dir path in case it's been stored with the root
+    # template syntax
+    anatomy = instance.context.data.get("anatomy")
+    staging_dir = anatomy.fill_root(staging_dir)
+
     src_path = os.path.normpath(os.path.join(staging_dir, filename))
     if os.path.exists(src_path):
         return src_path
