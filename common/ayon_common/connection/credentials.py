@@ -1,4 +1,12 @@
-""""""
+"""Handle credentials and connection to server for client application.
+
+Cache and store used server urls. Store/load API keys to/from keyring if
+needed. Store metadata about used urls, usernames for the urls and when was
+the connection with the username established.
+
+On bootstrap is created global connection with information about site and
+client version. The connection object lives in 'ayon_api'.
+"""
 
 import os
 import json
