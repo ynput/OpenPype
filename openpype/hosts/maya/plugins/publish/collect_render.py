@@ -322,7 +322,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "colorspaceDisplay": colorspace_data["display"],
                 "colorspaceView": colorspace_data["view"],
                 "strict_error_checking": render_instance.data.get(
-                    "strict_error_checking"
+                    "strict_error_checking", True
                 )
             }
 
