@@ -250,21 +250,25 @@ class PublishReportBtn(PublishIconBtn):
         self._actions = []
 
     def add_action(self, label, identifier):
-        action = QtWidgets.QAction(label)
-        action.setData(identifier)
-        action.triggered.connect(
-            functools.partial(self._on_action_trigger, action)
+        self._actions.append(
+            (label, identifier)
         )
-        self._actions.append(action)
 
-    def _on_action_trigger(self, action):
-        identifier = action.data()
+    def _on_action_trigger(self, identifier):
         self.triggered.emit(identifier)
 
     def mouseReleaseEvent(self, event):
         super(PublishReportBtn, self).mouseReleaseEvent(event)
         menu = QtWidgets.QMenu(self)
-        menu.addActions(self._actions)
+        actions = []
+        for item in self._actions:
+            label, identifier = item
+            action = QtWidgets.QAction(label, menu)
+            action.triggered.connect(
+                functools.partial(self._on_action_trigger, identifier)
+            )
+            actions.append(action)
+        menu.addActions(actions)
         menu.exec_(event.globalPos())
 
 
