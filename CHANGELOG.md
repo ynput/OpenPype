@@ -3,82 +3,455 @@
 
 ## [3.15.1](https://github.com/ynput/OpenPype/tree/3.15.1)
 
-[Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.1...3.15.0)
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.15.0...3.15.1)
 
 ### **🆕 New features**
+
+
 
 
 <details>
 <summary>Maya: Xgen (<i><font color='#367F6C';>3d</font> </i> <i><font style='color:#365E7F';>/ maya</font></i> ) - <a href="https://github.com/ynput/OpenPype/pull/4256">#4256</a></summary>
 
 
+
 ___
 
 
+
 ## Brief description
+
 Initial Xgen implementation.
 
+
+
 ## Description
+
 Client request of Xgen pipeline.
 
 
 
 
+
+
+
 ___
+
 
 
 </details>
 
+
 ### **🚀 Enhancements**
+
+
 
 
 <details>
 <summary>Adding path validator for non-maya nodes (<i><font color='#367F6C';>3d</font> </i> <i><font style='color:#365E7F';>/ maya</font></i> ) - <a href="https://github.com/ynput/OpenPype/pull/4271">#4271</a></summary>
 
 
+
 ___
 
 
+
 ## Brief description
+
 Adding a path validator for filepaths from non-maya nodes, which are created by plugins such as Renderman, Yeti and abcImport.
 
+
+
 ## Description
+
 As File Path Editor cannot catch the wrong filenpaths from non-maya nodes such as AlembicNodes, It is neccessary to have a new validator to ensure the existence of the filepaths from the nodes.
 
 
 
 
+
+
+
 ___
+
 
 
 </details>
 
+
+
+<details>
+<summary>Deadline: Allow disabling strict error check in Maya submissions (<i><font color='#367F6C';>3d</font> </i> <i><font style='color:#365E7F';>/ maya</font></i> <i><font style='color:#1E1B7B';>/ deadline</font></i> ) - <a href="https://github.com/ynput/OpenPype/pull/4420">#4420</a></summary>
+
+
+
+___
+
+
+
+## Brief description
+
+DL by default has Strict error checking, but some errors are not fatal.
+
+
+
+## Description
+
+This allows to set profile based on Task and Subset values to temporarily disable Strict Error Checks.Subset and task names should support regular expressions. (not wildcard notation though).
+
+
+
+
+
+
+
+___
+
+
+
+</details>
+
+
+
+<details>
+<summary>Houdini: New publisher code tweak (<i><font color='#367F6C';>3d</font> </i> <i><font style='color:#365E7F';>/ houdini</font></i> ) - <a href="https://github.com/ynput/OpenPype/pull/4374">#4374</a></summary>
+
+
+
+___
+
+
+
+## Brief description
+
+This is cosmetics only - the previous code to me felt quite unreadable due to the lengthy strings being used.
+
+
+
+## Description
+
+Code should do roughly the same, but just be reformatted.
+
+
+
+
+
+
+
+___
+
+
+
+</details>
+
+
+
+<details>
+<summary>Houdini: Do not visualize the hidden OpenPypeContext node (<i><font color='#367F6C';>3d</font> </i> <i><font style='color:#365E7F';>/ houdini</font></i> ) - <a href="https://github.com/ynput/OpenPype/pull/4382">#4382</a></summary>
+
+
+
+___
+
+
+
+## Brief description
+
+Using the new publisher UI would generate a visible 'null' locator at the origin. It's confusing to the user since it's supposed to be 'hidden'.
+
+
+
+## Description
+
+Before this PR the user would see a locator/null at the origin which was the 'hidden' `/obj/OpenPypeContext` node. This null would suddenly appear if the user would've ever opened the Publisher UI once.After this PR it will not show:Nice and tidy.
+
+
+
+
+
+
+
+___
+
+
+
+</details>
+
+
+
+<details>
+<summary>Global: supporting `OPENPYPE_TMPDIR` in staging dir maker (<i><font color='#367F6C';>editorial</font> </i> <i><font style='color:#365E7F';>/ hiero</font></i> ) - <a href="https://github.com/ynput/OpenPype/pull/4398">#4398</a></summary>
+
+
+
+___
+
+
+
+## Brief description
+
+Productions can use OPENPYPE_TMPDIR for staging temp publishing directory
+
+
+
+## Description
+
+Studios were demanding to be able to configure their own shared storages as temporary staging directories. Template formatting is also supported with optional keys formatting and following anatomy keys:    - root[work | <root name key>]    - project[name | code]
+
+
+
+
+
+
+
+___
+
+
+
+</details>
+
+
 ### **🐛 Bug fixes**
+
+
+
+
+<details>
+<summary>Maya: Fix Validate Attributes plugin (<i><font color='#367F6C';>3d</font> </i> <i><font style='color:#365E7F';>/ maya</font></i> ) - <a href="https://github.com/ynput/OpenPype/pull/4401">#4401</a></summary>
+
+
+
+___
+
+
+
+## Brief description
+
+Code was broken. So either plug-in was unused or it had gone unnoticed.
+
+
+
+## Description
+
+Looking at the commit history of the plug-in itself it seems this might have been broken somewhere between two to three years. I think it's broken since two years since this commit.Should this plug-in be removed completely?@tokejepsen Is there still a use case where we should have this plug-in? (You created the original one)
+
+
+
+
+
+
+
+___
+
+
+
+</details>
+
+
+
+<details>
+<summary>Maya: Ignore workfile lock in Untitled scene (<i><font color='#367F6C';>3d</font> </i> <i><font style='color:#365E7F';>/ maya</font></i> ) - <a href="https://github.com/ynput/OpenPype/pull/4414">#4414</a></summary>
+
+
+
+___
+
+
+
+## Brief description
+
+Skip workfile lock check if current scene is 'Untitled'.
+
+
+
+
+
+
+
+___
+
+
+
+</details>
+
+
+
+<details>
+<summary>Maya: fps rounding - OP-2549 (<i><font color='#367F6C';>3d</font> </i> <i><font style='color:#365E7F';>/ maya</font></i> ) - <a href="https://github.com/ynput/OpenPype/pull/4424">#4424</a></summary>
+
+
+
+___
+
+
+
+## Brief description
+
+When FPS is registered in for example Ftrack and round either down or up (floor/ceil), comparing to Maya FPS can fail. Example:23.97 (Ftrack/Mongo) != 23.976023976023978 (Maya)
+
+
+
+## Description
+
+Since Maya only has a select number of supported framerates, I've taken the approach of converting any fps to supported framerates in Maya. We validate the input fps to make sure they are supported in Maya in two ways:Whole Numbers - are validated straight against the supported framerates in Maya.Demical Numbers - we find the closest supported framerate in Maya. If the difference to the closest supported framerate, is more than 0.5 we'll throw an error.If Maya ever supports arbitrary framerates, then we might have a problem but I'm not holding my breath...
+
+
+
+
+
+
+
+___
+
+
+
+</details>
+
+
+
+<details>
+<summary>Strict Error Checking Default (<i><font color='#367F6C';>3d</font> </i> <i><font style='color:#365E7F';>/ maya</font></i> ) - <a href="https://github.com/ynput/OpenPype/pull/4457">#4457</a></summary>
+
+
+
+___
+
+
+
+## Brief description
+
+Provide default of strict error checking for instances created prior to PR.
+
+
+
+
+
+
+
+___
+
+
+
+</details>
+
+
+
+<details>
+<summary>Create: Enhance instance & context changes (<i><font color='#367F6C';>3d</font> </i> <i><font style='color:#365E7F';>/ houdini,after effects,3dsmax</font></i> ) - <a href="https://github.com/ynput/OpenPype/pull/4375">#4375</a></summary>
+
+
+
+___
+
+
+
+## Brief description
+
+Changes of instances and context have complex, hard to get structure. The structure did not change but instead of complex dictionaries are used objected data.
+
+
+
+## Description
+
+This is poposal of changes data improvement for creators. Implemented `TrackChangesItem` which handles the changes for us. The item is creating changes based on old and new value and can provide information about changed keys or access to full old or new value. Can give the values on any "sub-dictionary".Used this new approach to fix change in houdini and 3ds max and also modified one aftereffects plugin using changes.
+
+
+
+
+
+
+
+___
+
+
+
+</details>
+
+
+
+<details>
+<summary>Houdini: hotfix condition (<i><font color='#367F6C';>3d</font> </i> <i><font style='color:#365E7F';>/ houdini</font></i> ) - <a href="https://github.com/ynput/OpenPype/pull/4391">#4391</a></summary>
+
+
+
+___
+
+
+
+## Hotfix
+
+
+
+This is fixing bug introduced int #4374
+
+
+
+___
+
+
+
+</details>
+
+
+
+<details>
+<summary>Houdini: Houdini shelf tools fixes (<i><font color='#367F6C';>3d</font> </i> <i><font style='color:#365E7F';>/ houdini</font></i> ) - <a href="https://github.com/ynput/OpenPype/pull/4428">#4428</a></summary>
+
+
+
+___
+
+
+
+## Brief description
+
+Fix Houdini shelf tools.
+
+
+
+## Description
+
+Use `label` as mandatory key instead of `name`. Changed how shelves are created. If the script is empty it is gracefully skipping it instead of crashing.
+
+
+
+
+
+
+
+___
+
+
+
+</details>
+
 
 
 <details>
 <summary>Fix features for gizmo menu (<i><font color='#367F6C';>2d</font> </i> <i><font style='color:#365E7F';>/ nuke</font></i> ) - <a href="https://github.com/ynput/OpenPype/pull/4280">#4280</a></summary>
 
 
+
 ___
+
 
 
 ## Brief description
+
 Fix features for the Gizmo Menu project settings (shortcut for python type of usage and file type of usage functionality)
 
 
-
-
 ___
+
 
 
 </details>
 
 
 
-## [3.15.0](https://github.com/ynput/OpenPype/tree/HEAD)
+## [3.15.0](https://github.com/ynput/OpenPype/tree/3.15.0)
 
-[Full Changelog](https://github.com/ynput/OpenPype/compare/3.14.10...HEAD)
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.14.10...3.15.0)
 
 **Deprecated:**
 
