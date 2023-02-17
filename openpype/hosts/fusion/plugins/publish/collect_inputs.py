@@ -97,10 +97,15 @@ class CollectUpstreamInputs(pyblish.api.InstancePlugin):
     label = "Collect Inputs"
     order = pyblish.api.CollectorOrder + 0.2
     hosts = ["fusion"]
+    families = ["render"]
 
     def process(self, instance):
 
         # Get all upstream and include itself
+        if not any(instance[:]):
+            self.log.debug("No tool found in instance, skipping..")
+            return
+
         tool = instance[0]
         nodes = list(iter_upstream(tool))
         nodes.append(tool)

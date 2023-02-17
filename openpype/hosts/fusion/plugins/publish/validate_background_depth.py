@@ -1,6 +1,9 @@
 import pyblish.api
 
 from openpype.pipeline.publish import RepairAction
+from openpype.pipeline import PublishValidationError
+
+from openpype.hosts.fusion.api.action import SelectInvalidAction
 
 
 class ValidateBackgroundDepth(pyblish.api.InstancePlugin):
@@ -12,6 +15,8 @@ class ValidateBackgroundDepth(pyblish.api.InstancePlugin):
     hosts = ["fusion"]
     families = ["render"]
     optional = True
+
+    actions = [SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):
@@ -29,8 +34,10 @@ class ValidateBackgroundDepth(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Found %i nodes which are not set to float32"
-                               % len(invalid))
+            raise PublishValidationError(
+                "Found {} Backgrounds tools which"
+                " are not set to float32".format(len(invalid)),
+                title=self.label)
 
     @classmethod
     def repair(cls, instance):
