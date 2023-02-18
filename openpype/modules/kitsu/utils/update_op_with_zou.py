@@ -146,7 +146,8 @@ def update_op_assets(
                 "resolutionWidth")
             item_data["resolutionHeight"] = project_doc["data"].get(
                 "resolutionHeight")
-        # Properties that doesn't fully exist in Kitsu. Guessing the property name
+        # Properties that doesn't fully exist in Kitsu.
+        # Guessing those property names below:
         # Pixel Aspect Ratio
         item_data["pixelAspect"] = item_data.get(
             "pixel_aspect", project_doc["data"].get("pixelAspect"))
@@ -452,7 +453,8 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         [
             UpdateOne({"_id": id}, update)
             for id, update in update_op_assets(
-                dbcon, project, project_doc, all_entities, zou_ids_and_asset_docs
+                dbcon, project, project_doc,
+                all_entities, zou_ids_and_asset_docs
             )
         ]
     )
