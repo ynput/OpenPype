@@ -311,7 +311,7 @@ def get_fusion_module():
 def get_current_comp():
     """Get current comp in this session"""
     fusion = get_fusion_module()
-    if fusion:
+    if fusion is not None:
         comp = fusion.CurrentComp
         return comp
 
