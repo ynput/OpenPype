@@ -10,11 +10,18 @@ import six
 import pyblish.plugin
 import pyblish.api
 
-from openpype.lib import Logger, filter_profiles
+from openpype.lib import (
+    Logger,
+    filter_profiles
+)
 from openpype.settings import (
     get_project_settings,
     get_system_settings,
 )
+from openpype.pipeline import (
+    tempdir
+)
+from openpype.pipeline.plugin_discover import DiscoverResult
 
 from .contants import (
     DEFAULT_PUBLISH_TEMPLATE,
@@ -285,7 +292,7 @@ def publish_plugins_discover(paths=None):
     """
 
     # The only difference with `pyblish.api.discover`
-    result = DiscoverResult()
+    result = DiscoverResult(pyblish.api.Plugin)
 
     plugins = dict()
     plugin_names = []
@@ -595,7 +602,7 @@ def context_plugin_should_run(plugin, context):
 
     Args:
         plugin (pyblish.api.Plugin): Plugin with filters.
-        context (pyblish.api.Context): Pyblish context with insances.
+        context (pyblish.api.Context): Pyblish context with instances.
 
     Returns:
         bool: Context plugin should run based on valid instances.
@@ -609,12 +616,21 @@ def context_plugin_should_run(plugin, context):
 def get_instance_staging_dir(instance):
     """Unified way how staging dir is stored and created on instances.
 
-    First check if 'stagingDir' is already set in instance data. If there is
-    not create new in tempdir.
+    First check if 'stagingDir' is already set in instance data.
+    In case there already is new tempdir will not be created.
+
+    It also supports `OPENPYPE_TMPDIR`, so studio can define own temp
+    shared repository per project or even per more granular context.
+    Template formatting is supported also with optional keys. Folder is
+    created in case it doesn't exists.
+
+    Available anatomy formatting keys:
+        - root[work | <root name key>]
+        - project[name | code]
 
     Note:
-        Staging dir does not have to be necessarily in tempdir so be carefull
-            about it's usage.
+        Staging dir does not have to be necessarily in tempdir so be careful
+        about its usage.
 
     Args:
         instance (pyblish.lib.Instance): Instance for which we want to get
@@ -623,18 +639,33 @@ def get_instance_staging_dir(instance):
     Returns:
         str: Path to staging dir of instance.
     """
+    staging_dir = instance.data.get('stagingDir')
+    if staging_dir:
+        return staging_dir
 
-    staging_dir = instance.data.get("stagingDir")
-    if not staging_dir:
+    anatomy = instance.context.data.get("anatomy")
+
+    # get customized tempdir path from `OPENPYPE_TMPDIR` env var
+    custom_temp_dir = tempdir.create_custom_tempdir(
+        anatomy.project_name, anatomy)
+
+    if custom_temp_dir:
+        staging_dir = os.path.normpath(
+            tempfile.mkdtemp(
+                prefix="pyblish_tmp_",
+                dir=custom_temp_dir
+            )
+        )
+    else:
         staging_dir = os.path.normpath(
             tempfile.mkdtemp(prefix="pyblish_tmp_")
         )
-        instance.data["stagingDir"] = staging_dir
+    instance.data['stagingDir'] = staging_dir
 
     return staging_dir
 
 
-def get_publish_repre_path(instance, repre, only_published):
+def get_publish_repre_path(instance, repre, only_published=False):
     """Get representation path that can be used for integration.
 
     When 'only_published' is set to true the validation of path is not

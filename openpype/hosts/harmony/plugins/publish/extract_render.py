@@ -108,9 +108,9 @@ class ExtractRender(pyblish.api.InstancePlugin):
         output = process.communicate()[0]
 
         if process.returncode != 0:
-            raise ValueError(output.decode("utf-8"))
+            raise ValueError(output.decode("utf-8", errors="backslashreplace"))
 
-        self.log.debug(output.decode("utf-8"))
+        self.log.debug(output.decode("utf-8", errors="backslashreplace"))
 
         # Generate representations.
         extension = collection.tail[1:]

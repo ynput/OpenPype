@@ -13,6 +13,34 @@ from openpype.lib.attribute_definitions import AbstractAttrDef
 log = logging.getLogger(__name__)
 
 
+class FocusSpinBox(QtWidgets.QSpinBox):
+    """QSpinBox which allow scroll wheel changes only in active state."""
+
+    def __init__(self, *args, **kwargs):
+        super(FocusSpinBox, self).__init__(*args, **kwargs)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+    def wheelEvent(self, event):
+        if not self.hasFocus():
+            event.ignore()
+        else:
+            super(FocusSpinBox, self).wheelEvent(event)
+
+
+class FocusDoubleSpinBox(QtWidgets.QDoubleSpinBox):
+    """QDoubleSpinBox which allow scroll wheel changes only in active state."""
+
+    def __init__(self, *args, **kwargs):
+        super(FocusDoubleSpinBox, self).__init__(*args, **kwargs)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+    def wheelEvent(self, event):
+        if not self.hasFocus():
+            event.ignore()
+        else:
+            super(FocusDoubleSpinBox, self).wheelEvent(event)
+
+
 class CustomTextComboBox(QtWidgets.QComboBox):
     """Combobox which can have different text showed."""
 
