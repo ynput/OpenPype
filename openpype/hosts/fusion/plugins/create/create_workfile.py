@@ -2,7 +2,9 @@ import collections
 
 import qtawesome
 
-import openpype.hosts.fusion.api as api
+from openpype.hosts.fusion.api import (
+    get_current_comp
+)
 from openpype.client import get_asset_by_name
 from openpype.pipeline import (
     AutoCreator,
@@ -35,7 +37,7 @@ class FusionWorkfileCreator(AutoCreator):
 
     def collect_instances(self):
 
-        comp = api.get_current_comp()
+        comp = get_current_comp()
         data = comp.GetData(self.data_key)
         if not data:
             return
@@ -69,7 +71,7 @@ class FusionWorkfileCreator(AutoCreator):
 
     def create(self, options=None):
 
-        comp = api.get_current_comp()
+        comp = get_current_comp()
         if not comp:
             self.log.error("Unable to find current comp")
             return
