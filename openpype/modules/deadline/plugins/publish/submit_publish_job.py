@@ -249,7 +249,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # add environments from self.environ_keys
         for env_key in self.environ_keys:
-            self.log.info("Adding environment key %s", env_key)
             if os.getenv(env_key):
                 environment[env_key] = os.environ[env_key]
 
