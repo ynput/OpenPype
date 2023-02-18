@@ -45,8 +45,9 @@ class CreateSaver(Creator):
                 )
 
             # Set file format attributes
-            saver[file_format]["Depth"] = 1  # int8 | int16 | float32 | other
-            saver[file_format]["SaveAlpha"] = 0
+            saver[file_format]["Depth"] = 0  # Auto | float16 | float32
+            # TODO Is this needed?
+            saver[file_format]["SaveAlpha"] = 1
 
         self._imprint(saver, instance_data)
 
