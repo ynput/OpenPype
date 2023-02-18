@@ -40,8 +40,9 @@ class CreateSaver(Creator):
 
             # Check file format settings are available
             if saver[file_format] is None:
-                raise RuntimeError("File format is not set to {}, "
-                                   "this is a bug".format(file_format))
+                raise RuntimeError(
+                    f"File format is not set to {file_format}, this is a bug"
+                )
 
             # Set file format attributes
             saver[file_format]["Depth"] = 1  # int8 | int16 | float32 | other
@@ -111,7 +112,7 @@ class CreateSaver(Creator):
     def _imprint(self, tool, data):
         # Save all data in a "openpype.{key}" = value data
         for key, value in data.items():
-            tool.SetData("openpype.{}".format(key), value)
+            tool.SetData(f"openpype.{key}", value)
 
     def _update_tool_with_data(self, tool, data):
         """Update tool node name and output path based on subset data"""
@@ -124,7 +125,7 @@ class CreateSaver(Creator):
             # Subset change detected
             # Update output filepath
             workdir = os.path.normpath(legacy_io.Session["AVALON_WORKDIR"])
-            filename = "{}..exr".format(subset)
+            filename = f"{subset}..exr"
             filepath = os.path.join(workdir, "render", subset, filename)
             tool["Clip"] = filepath
 
