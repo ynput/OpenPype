@@ -922,7 +922,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "display": instance.data["colorspaceDisplay"],
             "view": instance.data["colorspaceView"],
             "colorspaceTemplate": instance.data["colorspaceConfig"].replace(
-                context.data["anatomy"].roots["work"], "{root[work]}"
+                str(context.data["anatomy"].roots["work"]), "{root[work]}"
             )
         }
 
