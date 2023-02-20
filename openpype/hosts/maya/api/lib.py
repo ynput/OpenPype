@@ -1998,7 +1998,7 @@ def set_scene_fps(fps, update=True):
         '48000': '48000fps'
     }
 
-    unit = fps_mapping.get(str(fps), None)
+    unit = fps_mapping.get(str(convert_to_maya_fps(fps)), None)
     if unit is None:
         raise ValueError("Unsupported FPS value: `%s`" % fps)
 
@@ -3407,11 +3407,11 @@ def convert_to_maya_fps(fps):
     # If input fps is a whole number we'll return.
     if float(fps).is_integer():
         # Validate fps is part of Maya's fps selection.
-        if fps not in int_framerates:
+        if int(fps) not in int_framerates:
             raise ValueError(
                 "Framerate \"{}\" is not supported in Maya".format(fps)
             )
-        return fps
+        return int(fps)
     else:
         # Differences to supported float frame rates.
         differences = []
