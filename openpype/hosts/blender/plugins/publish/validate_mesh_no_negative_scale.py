@@ -3,17 +3,17 @@ from typing import List
 import bpy
 
 import pyblish.api
-import openpype.api
+
+from openpype.pipeline.publish import ValidateContentsOrder
 import openpype.hosts.blender.api.action
 
 
 class ValidateMeshNoNegativeScale(pyblish.api.Validator):
     """Ensure that meshes don't have a negative scale."""
 
-    order = openpype.api.ValidateContentsOrder
+    order = ValidateContentsOrder
     hosts = ["blender"]
     families = ["model"]
-    category = "geometry"
     label = "Mesh No Negative Scale"
     actions = [openpype.hosts.blender.api.action.SelectInvalidAction]
 

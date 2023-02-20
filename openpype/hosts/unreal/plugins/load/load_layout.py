@@ -24,7 +24,7 @@ from openpype.pipeline import (
     legacy_io,
 )
 from openpype.pipeline.context_tools import get_current_project_asset
-from openpype.api import get_current_project_settings
+from openpype.settings import get_current_project_settings
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
 

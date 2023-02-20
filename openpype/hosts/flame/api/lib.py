@@ -12,6 +12,9 @@ import xml.etree.cElementTree as cET
 from copy import deepcopy, copy
 from xml.etree import ElementTree as ET
 from pprint import pformat
+
+from openpype.lib import Logger, run_subprocess
+
 from .constants import (
     MARKER_COLOR,
     MARKER_DURATION,
@@ -20,9 +23,7 @@ from .constants import (
     MARKER_PUBLISH_DEFAULT
 )
 
-import openpype.api as openpype
-
-log = openpype.Logger.get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 FRAME_PATTERN = re.compile(r"[\._](\d+)[\.]")
 
@@ -1016,7 +1017,7 @@ class MediaInfoFile(object):
 
         try:
             # execute creation of clip xml template data
-            openpype.run_subprocess(cmd_args)
+            run_subprocess(cmd_args)
         except TypeError as error:
             raise TypeError(
                 "Error creating `{}` due: {}".format(fpath, error))

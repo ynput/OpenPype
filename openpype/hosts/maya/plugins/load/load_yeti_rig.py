@@ -1,7 +1,7 @@
 import os
 from collections import defaultdict
 
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 import openpype.hosts.maya.api.plugin
 from openpype.hosts.maya.api import lib
 

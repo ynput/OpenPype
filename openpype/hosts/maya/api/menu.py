@@ -1,7 +1,7 @@
 import os
 import logging
 
-from Qt import QtWidgets, QtGui
+from qtpy import QtWidgets, QtGui
 
 import maya.utils
 import maya.cmds as cmds
@@ -50,7 +50,6 @@ def install():
             parent="MayaWindow"
         )
 
-        renderer = cmds.getAttr('defaultRenderGlobals.currentRenderer').lower()
         # Create context menu
         context_label = "{}, {}".format(
             legacy_io.Session["AVALON_ASSET"],

@@ -3,16 +3,17 @@ import json
 import tempfile
 import contextlib
 import socket
+from pprint import pformat
+
 from openpype.lib import (
     PreLaunchHook,
-    get_openpype_username
+    get_openpype_username,
+    run_subprocess,
 )
 from openpype.lib.applications import (
     ApplicationLaunchFailed
 )
 from openpype.hosts import flame as opflame
-import openpype
-from pprint import pformat
 
 
 class FlamePrelaunch(PreLaunchHook):
@@ -42,17 +43,9 @@ class FlamePrelaunch(PreLaunchHook):
         volume_name = _env.get("FLAME_WIRETAP_VOLUME")
 
         # get image io
-        project_anatomy = self.data["anatomy"]
+        project_settings = self.data["project_settings"]
 
-        # make sure anatomy settings are having flame key
-        if not project_anatomy["imageio"].get("flame"):
-            raise ApplicationLaunchFailed((
-                "Anatomy project settings are missing `flame` key. "
-                "Please make sure you remove project overides on "
-                "Anatomy Image io")
-            )
-
-        imageio_flame = project_anatomy["imageio"]["flame"]
+        imageio_flame = project_settings["flame"]["imageio"]
 
         # get user name and host name
         user_name = get_openpype_username()
@@ -135,7 +128,6 @@ class FlamePrelaunch(PreLaunchHook):
                 except OSError as exc:
                     self.log.warning("Not able to open files: {}".format(exc))
 
-
     def _get_flame_fps(self, fps_num):
         fps_table = {
             float(23.976): "23.976 fps",
@@ -187,7 +179,7 @@ class FlamePrelaunch(PreLaunchHook):
                 "env": self.launch_context.env
             }
 
-            openpype.api.run_subprocess(args, **process_kwargs)
+            run_subprocess(args, **process_kwargs)
 
             # process returned json file to pass launch args
             return_json_data = open(tmp_json_path).read()

@@ -1,5 +1,5 @@
 from math import ceil
-from Qt import QtWidgets, QtCore, QtGui
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.widgets.nice_checkbox import NiceCheckbox
 
@@ -26,6 +26,9 @@ class PluginLoadReportModel(QtGui.QStandardItemModel):
     def set_report(self, report):
         parent = self.invisibleRootItem()
         parent.removeRows(0, parent.rowCount())
+
+        if report is None:
+            return
 
         new_items = []
         new_items_by_filepath = {}
@@ -73,11 +76,11 @@ class PluginLoadReportWidget(QtWidgets.QWidget):
         super(PluginLoadReportWidget, self).__init__(parent)
 
         view = QtWidgets.QTreeView(self)
-        view.setEditTriggers(view.NoEditTriggers)
+        view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         view.setTextElideMode(QtCore.Qt.ElideLeft)
         view.setHeaderHidden(True)
         view.setAlternatingRowColors(True)
-        view.setVerticalScrollMode(view.ScrollPerPixel)
+        view.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
 
         model = PluginLoadReportModel()
         view.setModel(model)
@@ -139,6 +142,9 @@ class PluginLoadReportWidget(QtWidgets.QWidget):
 
 
 class ZoomPlainText(QtWidgets.QPlainTextEdit):
+    min_point_size = 1.0
+    max_point_size = 200.0
+
     def __init__(self, *args, **kwargs):
         super(ZoomPlainText, self).__init__(*args, **kwargs)
 
@@ -148,12 +154,12 @@ class ZoomPlainText(QtWidgets.QPlainTextEdit):
         anim_timer.timeout.connect(self._scaling_callback)
 
         self._anim_timer = anim_timer
-        self._zoom_enabled = False
         self._scheduled_scalings = 0
         self._point_size = None
 
     def wheelEvent(self, event):
-        if not self._zoom_enabled:
+        modifiers = QtWidgets.QApplication.keyboardModifiers()
+        if modifiers != QtCore.Qt.ControlModifier:
             super(ZoomPlainText, self).wheelEvent(event)
             return
 
@@ -172,32 +178,39 @@ class ZoomPlainText(QtWidgets.QPlainTextEdit):
 
         factor = 1.0 + (self._scheduled_scalings / 300)
         font = self.font()
+
         if self._point_size is None:
-            self._point_size = font.pointSizeF()
+            point_size = font.pointSizeF()
+        else:
+            point_size = self._point_size
 
-        self._point_size *= factor
-        if self._point_size < 1:
-            self._point_size = 1.0
+        point_size *= factor
+        min_hit = False
+        max_hit = False
+        if point_size < self.min_point_size:
+            point_size = self.min_point_size
+            min_hit = True
+        elif point_size > self.max_point_size:
+            point_size = self.max_point_size
+            max_hit = True
 
-        font.setPointSizeF(self._point_size)
+        self._point_size = point_size
+
+        font.setPointSizeF(point_size)
         # Using 'self.setFont(font)' would not be propagated when stylesheets
         #   are applied on this widget
         self.setStyleSheet("font-size: {}pt".format(font.pointSize()))
 
-        if self._scheduled_scalings > 0:
+        if (
+            (max_hit and self._scheduled_scalings > 0)
+            or (min_hit and self._scheduled_scalings < 0)
+        ):
+            self._scheduled_scalings = 0
+
+        elif self._scheduled_scalings > 0:
             self._scheduled_scalings -= 1
         else:
             self._scheduled_scalings += 1
-
-    def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Control:
-            self._zoom_enabled = True
-        super(ZoomPlainText, self).keyPressEvent(event)
-
-    def keyReleaseEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Control:
-            self._zoom_enabled = False
-        super(ZoomPlainText, self).keyReleaseEvent(event)
 
 
 class DetailsWidget(QtWidgets.QWidget):
@@ -331,7 +344,7 @@ class DetailsPopup(QtWidgets.QDialog):
         self.closed.emit()
 
 
-class PublishReportViewerWidget(QtWidgets.QWidget):
+class PublishReportViewerWidget(QtWidgets.QFrame):
     def __init__(self, parent=None):
         super(PublishReportViewerWidget, self).__init__(parent)
 
@@ -359,8 +372,10 @@ class PublishReportViewerWidget(QtWidgets.QWidget):
         instances_view.setModel(instances_proxy)
         instances_view.setIndentation(0)
         instances_view.setHeaderHidden(True)
-        instances_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
-        instances_view.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
+        instances_view.setEditTriggers(
+            QtWidgets.QAbstractItemView.NoEditTriggers)
+        instances_view.setSelectionMode(
+            QtWidgets.QAbstractItemView.ExtendedSelection)
         instances_view.setExpandsOnDoubleClick(False)
 
         instances_delegate = GroupItemDelegate(instances_view)
@@ -380,8 +395,10 @@ class PublishReportViewerWidget(QtWidgets.QWidget):
         plugins_view.setModel(plugins_proxy)
         plugins_view.setIndentation(0)
         plugins_view.setHeaderHidden(True)
-        plugins_view.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
-        plugins_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
+        plugins_view.setSelectionMode(
+            QtWidgets.QAbstractItemView.ExtendedSelection)
+        plugins_view.setEditTriggers(
+            QtWidgets.QAbstractItemView.NoEditTriggers)
         plugins_view.setExpandsOnDoubleClick(False)
 
         plugins_delegate = GroupItemDelegate(plugins_view)

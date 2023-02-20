@@ -14,6 +14,7 @@ class SetFrameRangeLoader(load.LoaderPlugin):
 
     families = ["animation",
                 "camera",
+                "proxyAbc",
                 "pointcache"]
     representations = ["abc"]
 
@@ -48,6 +49,7 @@ class SetFrameRangeWithHandlesLoader(load.LoaderPlugin):
 
     families = ["animation",
                 "camera",
+                "proxyAbc",
                 "pointcache"]
     representations = ["abc"]
 
@@ -90,8 +92,21 @@ class ImportMayaLoader(load.LoaderPlugin):
         so you could also use it as a new base.
 
     """
-    representations = ["ma", "mb"]
-    families = ["*"]
+    representations = ["ma", "mb", "obj"]
+    families = [
+        "model",
+        "pointcache",
+        "proxyAbc",
+        "animation",
+        "mayaAscii",
+        "mayaScene",
+        "setdress",
+        "layout",
+        "camera",
+        "rig",
+        "camerarig",
+        "staticMesh"
+    ]
 
     label = "Import"
     order = 10
@@ -151,7 +166,7 @@ class ImportMayaLoader(load.LoaderPlugin):
 
         """
 
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
 
         accept = QtWidgets.QMessageBox.Ok
         buttons = accept | QtWidgets.QMessageBox.Cancel

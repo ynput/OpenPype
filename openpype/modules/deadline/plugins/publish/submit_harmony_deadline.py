@@ -5,6 +5,7 @@ from pathlib import Path
 from collections import OrderedDict
 from zipfile import ZipFile, is_zipfile
 import re
+from datetime import datetime
 
 import attr
 import pyblish.api
@@ -12,6 +13,7 @@ import pyblish.api
 from openpype.pipeline import legacy_io
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+from openpype.tests.lib import is_in_tests
 
 
 class _ZipFile(ZipFile):
@@ -261,7 +263,10 @@ class HarmonySubmitDeadline(
         job_info.Pool = self._instance.data.get("primaryPool")
         job_info.SecondaryPool = self._instance.data.get("secondaryPool")
         job_info.ChunkSize = self.chunk_size
-        job_info.BatchName = os.path.basename(self._instance.data["source"])
+        batch_name = os.path.basename(self._instance.data["source"])
+        if is_in_tests:
+            batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
+        job_info.BatchName = batch_name
         job_info.Department = self.department
         job_info.Group = self.group
 
@@ -275,7 +280,8 @@ class HarmonySubmitDeadline(
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
             "OPENPYPE_LOG_NO_COLORS",
-            "OPENPYPE_VERSION"
+            "OPENPYPE_VERSION",
+            "IS_TEST"
         ]
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):

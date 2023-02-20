@@ -2,10 +2,10 @@ from openpype.pipeline import CreatorError
 from openpype.lib import prepare_template_data
 from openpype.hosts.tvpaint.api import (
     plugin,
-    pipeline,
-    lib,
     CommunicationWrapper
 )
+from openpype.hosts.tvpaint.api.lib import get_layers_data
+from openpype.hosts.tvpaint.api.pipeline import list_instances
 
 
 class CreateRenderPass(plugin.Creator):
@@ -54,7 +54,7 @@ class CreateRenderPass(plugin.Creator):
         # Validate that communication is initialized
         if CommunicationWrapper.communicator:
             # Get currently selected layers
-            layers_data = lib.layers_data()
+            layers_data = get_layers_data()
 
             selected_layers = [
                 layer
@@ -72,8 +72,8 @@ class CreateRenderPass(plugin.Creator):
 
     def process(self):
         self.log.debug("Query data from workfile.")
-        instances = pipeline.list_instances()
-        layers_data = lib.layers_data()
+        instances = list_instances()
+        layers_data = get_layers_data()
 
         self.log.debug("Checking selection.")
         # Get all selected layers and their group ids

@@ -4,14 +4,13 @@ import click
 
 from openpype.lib import get_openpype_execute_args
 from openpype.lib.execute import run_detached_process
-from openpype.modules import OpenPypeModule
-from openpype.modules.interfaces import ITrayAction, IHostAddon
+from openpype.modules import OpenPypeModule, ITrayAction, IHostAddon
 
 STANDALONEPUBLISH_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class StandAlonePublishAddon(OpenPypeModule, ITrayAction, IHostAddon):
-    label = "Publish"
+    label = "Publisher (legacy)"
     name = "standalonepublisher"
     host_name = "standalonepublisher"
 

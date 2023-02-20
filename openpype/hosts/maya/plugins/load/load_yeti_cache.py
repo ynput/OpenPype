@@ -6,7 +6,7 @@ from collections import defaultdict
 import clique
 from maya import cmds
 
-from openpype.api import get_project_settings
+from openpype.settings import get_project_settings
 from openpype.pipeline import (
     load,
     get_representation_path
@@ -73,8 +73,8 @@ class YetiCacheLoader(load.LoaderPlugin):
 
         c = colors.get(family)
         if c is not None:
-            cmds.setAttr(group_name + ".useOutlinerColor", 1)
-            cmds.setAttr(group_name + ".outlinerColor",
+            cmds.setAttr(group_node + ".useOutlinerColor", 1)
+            cmds.setAttr(group_node + ".outlinerColor",
                 (float(c[0])/255),
                 (float(c[1])/255),
                 (float(c[2])/255)
@@ -250,7 +250,7 @@ class YetiCacheLoader(load.LoaderPlugin):
         """
 
         name = node_name.replace(":", "_")
-        pattern = r"^({name})(\.[0-4]+)?(\.fur)$".format(name=re.escape(name))
+        pattern = r"^({name})(\.[0-9]+)?(\.fur)$".format(name=re.escape(name))
 
         files = [fname for fname in os.listdir(root) if re.match(pattern,
                                                                  fname)]
