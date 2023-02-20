@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import unreal
 
+from openpype.pipeline import CreatorError
 from openpype.hosts.unreal.api.pipeline import (
     create_folder
 )
@@ -25,7 +26,7 @@ class CreateLook(UnrealAssetCreator):
         selection = [a.get_path_name() for a in sel_objects]
 
         if len(selection) != 1:
-            raise RuntimeError("Please select only one asset.")
+            raise CreatorError("Please select only one asset.")
 
         selected_asset = selection[0]
 
