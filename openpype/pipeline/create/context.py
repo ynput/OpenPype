@@ -8,6 +8,9 @@ import inspect
 from uuid import uuid4
 from contextlib import contextmanager
 
+import pyblish.logic
+import pyblish.api
+
 from openpype.client import get_assets, get_asset_by_name
 from openpype.settings import (
     get_system_settings,
@@ -21,6 +24,7 @@ from openpype.lib.attribute_definitions import (
 )
 from openpype.host import IPublishHost
 from openpype.pipeline import legacy_io
+from openpype.pipeline.plugin_discover import DiscoverResult
 
 from .creator_plugins import (
     Creator,
@@ -1378,6 +1382,8 @@ class CreateContext:
         # Instances by their ID
         self._instances_by_id = {}
 
+        self.creator_discover_result = None
+        self.convertor_discover_result = None
         # Discovered creators
         self.creators = {}
         # Prepare categories of creators
@@ -1616,18 +1622,15 @@ class CreateContext:
         self._reset_convertor_plugins()
 
     def _reset_publish_plugins(self, discover_publish_plugins):
-        import pyblish.logic
-
         from openpype.pipeline import OpenPypePyblishPluginMixin
         from openpype.pipeline.publish import (
-            publish_plugins_discover,
-            DiscoverResult
+            publish_plugins_discover
         )
 
         # Reset publish plugins
         self._attr_plugins_by_family = {}
 
-        discover_result = DiscoverResult()
+        discover_result = DiscoverResult(pyblish.api.Plugin)
         plugins_with_defs = []
         plugins_by_targets = []
         plugins_mismatch_targets = []
@@ -1666,7 +1669,9 @@ class CreateContext:
         creators = {}
         autocreators = {}
         manual_creators = {}
-        for creator_class in discover_creator_plugins():
+        report = discover_creator_plugins(return_report=True)
+        self.creator_discover_result = report
+        for creator_class in report.plugins:
             if inspect.isabstract(creator_class):
                 self.log.info(
                     "Skipping abstract Creator {}".format(str(creator_class))
@@ -1711,7 +1716,9 @@ class CreateContext:
 
     def _reset_convertor_plugins(self):
         convertors_plugins = {}
-        for convertor_class in discover_convertor_plugins():
+        report = discover_convertor_plugins(return_report=True)
+        self.convertor_discover_result = report
+        for convertor_class in report.plugins:
             if inspect.isabstract(convertor_class):
                 self.log.info(
                     "Skipping abstract Creator {}".format(str(convertor_class))
