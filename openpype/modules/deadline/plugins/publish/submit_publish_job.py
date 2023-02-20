@@ -514,6 +514,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # toggle preview on if multipart is on
 
             if instance_data.get("multipartExr"):
+                self.log.debug("Adding preview tag because its multipartExr")
                 preview = True
             self.log.debug("preview:{}".format(preview))
             new_instance = deepcopy(instance_data)
@@ -593,6 +594,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if instance["useSequenceForReview"]:
                 # toggle preview on if multipart is on
                 if instance.get("multipartExr", False):
+                    self.log.debug(
+                        "Adding preview tag because its multipartExr"
+                    )
                     preview = True
                 else:
                     render_file_name = list(collection)[0]
@@ -700,8 +704,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if preview:
             if "ftrack" not in families:
                 if os.environ.get("FTRACK_SERVER"):
+                    self.log.debug(
+                        "Adding \"ftrack\" to families because of preview tag."
+                    )
                     families.append("ftrack")
             if "review" not in families:
+                self.log.debug(
+                    "Adding \"review\" to families because of preview tag."
+                )
                 families.append("review")
             instance["families"] = families
 
