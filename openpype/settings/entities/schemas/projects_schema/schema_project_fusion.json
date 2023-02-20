@@ -50,23 +50,22 @@
             "type": "dict",
             "key": "copy_fusion_settings",
             "collapsible": true,
-            "checkbox_key": "copy_status",
-            "label": "Copy Fusion settings on launch",
+            "label": "Local Fusion profile settings",
             "children": [
-                {
-                    "type": "boolean",
-                    "key": "copy_status",
-                    "label": "Enabled"
-                },
                 {
                     "key": "copy_path",
                     "type": "path",
-                    "label": "Local prefs directory"
+                    "label": "Local Fusion profile directory"
+                },
+                {
+                    "type": "boolean",
+                    "key": "copy_status",
+                    "label": "Copy profile on first launch"
                 },
                 {
                     "key":"force_sync",
                     "type": "boolean",
-                    "label": "Force sync preferences"
+                    "label": "Resync profile on each launch"
                 }
             ]
         }
