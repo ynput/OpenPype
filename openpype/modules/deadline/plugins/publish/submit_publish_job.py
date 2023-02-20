@@ -20,6 +20,7 @@ from openpype.pipeline import (
 )
 from openpype.tests.lib import is_in_tests
 from openpype.pipeline.farm.patterning import match_aov_pattern
+from openpype.lib import is_running_from_build
 
 
 def get_resources(project_name, version, extension=None):
@@ -136,9 +137,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_API_KEY",
         "FTRACK_SERVER",
         "AVALON_APP_NAME",
-        "OPENPYPE_USERNAME",
-        "OPENPYPE_VERSION"
+        "OPENPYPE_USERNAME"
     ]
+
+    # Add OpenPype version if we are running from build.
+    if is_running_from_build():
+        environ_keys.append("OPENPYPE_VERSION")
 
     # custom deadline attributes
     deadline_department = ""
