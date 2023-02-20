@@ -195,13 +195,13 @@ class CreateRenderlayer(TVPaintCreator):
 
         new_group_name = pre_create_data.get("group_name")
         if not new_group_name or not group_id:
-            return
+            return new_instance
 
         self.log.debug("Changing name of the group.")
 
         new_group_name = pre_create_data.get("group_name")
         if not new_group_name or group_item["name"] == new_group_name:
-            return
+            return new_instance
         # Rename TVPaint group (keep color same)
         # - groups can't contain spaces
         rename_script = self.rename_script_template.format(
@@ -218,6 +218,7 @@ class CreateRenderlayer(TVPaintCreator):
             f"Name of group with index {group_id}"
             f" was changed to \"{new_group_name}\"."
         ))
+        return new_instance
 
     def _get_groups_enum(self):
         groups_enum = []
@@ -496,6 +497,8 @@ class CreateRenderPass(TVPaintCreator):
         self.host.write_instances(instances_data)
         self._add_instance_to_context(new_instance)
         self._change_layers_group(selected_layers, group_id)
+
+        return new_instance
 
     def _change_layers_group(self, layers, group_id):
         filtered_layers = [
