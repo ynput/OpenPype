@@ -144,7 +144,7 @@ def set_framerange(startFrame, endFrame):
     * `1` - Single frame.
     * `2` - Active time segment ( animationRange ).
     * `3` - User specified Range.
-	* `4`-User specified Frame pickup string (for example `1,3,5-12`).
+    * `4` - User specified Frame pickup string (for example `1,3,5-12`).
     TODO:
         Current type is hard-coded, there should be a custom setting for this.
     """
