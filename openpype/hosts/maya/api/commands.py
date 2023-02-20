@@ -4,6 +4,7 @@ from maya import cmds
 
 from openpype.client import get_asset_by_name, get_project
 from openpype.pipeline import legacy_io
+from . import lib
 
 
 class ToolWindows:
@@ -59,25 +60,11 @@ def edit_shader_definitions():
 
 def reset_frame_range():
     """Set frame range to current asset"""
-    # Set FPS first
-    fps = {15: 'game',
-           24: 'film',
-           25: 'pal',
-           30: 'ntsc',
-           48: 'show',
-           50: 'palf',
-           60: 'ntscf',
-           23.98: '23.976fps',
-           23.976: '23.976fps',
-           29.97: '29.97fps',
-           47.952: '47.952fps',
-           47.95: '47.952fps',
-           59.94: '59.94fps',
-           44100: '44100fps',
-           48000: '48000fps'
-           }.get(float(legacy_io.Session.get("AVALON_FPS", 25)), "pal")
 
-    cmds.currentUnit(time=fps)
+    fps = lib.convert_to_maya_fps(
+        float(legacy_io.Session.get("AVALON_FPS", 25))
+    )
+    lib.set_scene_fps(fps)
 
     # Set frame start/end
     project_name = legacy_io.active_project()

@@ -1,4 +1,5 @@
 import os
+import copy
 
 from maya import cmds
 
@@ -9,6 +10,7 @@ from openpype.hosts.maya.api.lib import (
     maintained_selection,
     iter_visible_nodes_in_range
 )
+from openpype.lib import StringTemplate
 
 
 class ExtractAlembic(publish.Extractor):
@@ -23,9 +25,7 @@ class ExtractAlembic(publish.Extractor):
 
     label = "Extract Pointcache (Alembic)"
     hosts = ["maya"]
-    families = ["pointcache",
-                "model",
-                "vrayproxy"]
+    families = ["pointcache", "model", "vrayproxy"]
     targets = ["local", "remote"]
 
     def process(self, instance):
@@ -87,6 +87,7 @@ class ExtractAlembic(publish.Extractor):
                                                      end=end))
 
         suspend = not instance.data.get("refresh", False)
+        self.log.info(nodes)
         with suspended_refresh(suspend=suspend):
             with maintained_selection():
                 cmds.select(nodes, noExpand=True)
@@ -101,9 +102,9 @@ class ExtractAlembic(publish.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            'name': 'abc',
-            'ext': 'abc',
-            'files': filename,
+            "name": "abc",
+            "ext": "abc",
+            "files": filename,
             "stagingDir": dirname
         }
         instance.data["representations"].append(representation)
@@ -111,6 +112,48 @@ class ExtractAlembic(publish.Extractor):
         instance.context.data["cleanupFullPaths"].append(path)
 
         self.log.info("Extracted {} to {}".format(instance, dirname))
+
+        # Extract proxy.
+        if not instance.data.get("proxy"):
+            return
+
+        path = path.replace(".abc", "_proxy.abc")
+        if not instance.data.get("includeParentHierarchy", True):
+            # Set the root nodes if we don't want to include parents
+            # The roots are to be considered the ones that are the actual
+            # direct members of the set
+            options["root"] = instance.data["proxyRoots"]
+
+        with suspended_refresh(suspend=suspend):
+            with maintained_selection():
+                cmds.select(instance.data["proxy"])
+                extract_alembic(
+                    file=path,
+                    startFrame=start,
+                    endFrame=end,
+                    **options
+                )
+
+        template_data = copy.deepcopy(instance.data["anatomyData"])
+        template_data.update({"ext": "abc"})
+        templates = instance.context.data["anatomy"].templates["publish"]
+        published_filename_without_extension = StringTemplate(
+            templates["file"]
+        ).format(template_data).replace(".abc", "_proxy")
+        transfers = []
+        destination = os.path.join(
+            instance.data["resourcesDir"],
+            filename.replace(
+                filename.split(".")[0],
+                published_filename_without_extension
+            )
+        )
+        transfers.append((path, destination))
+
+        for source, destination in transfers:
+            self.log.debug("Transfer: {} > {}".format(source, destination))
+
+        instance.data["transfers"] = transfers
 
     def get_members_and_roots(self, instance):
         return instance[:], instance.data.get("setMembers")

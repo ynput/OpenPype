@@ -15,7 +15,10 @@ from openpype.hosts.max.api import lib
 class AbcLoader(load.LoaderPlugin):
     """Alembic loader."""
 
-    families = ["model", "animation", "pointcache"]
+    families = ["model",
+                "camera",
+                "animation",
+                "pointcache"]
     label = "Load Alembic"
     representations = ["abc"]
     order = -10

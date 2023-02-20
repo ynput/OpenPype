@@ -117,12 +117,12 @@ def run_subprocess(*args, **kwargs):
     full_output = ""
     _stdout, _stderr = proc.communicate()
     if _stdout:
-        _stdout = _stdout.decode("utf-8")
+        _stdout = _stdout.decode("utf-8", errors="backslashreplace")
         full_output += _stdout
         logger.debug(_stdout)
 
     if _stderr:
-        _stderr = _stderr.decode("utf-8")
+        _stderr = _stderr.decode("utf-8", errors="backslashreplace")
         # Add additional line break if output already contains stdout
         if full_output:
             full_output += "\n"
