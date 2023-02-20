@@ -35,6 +35,7 @@ Todos:
 """
 
 import collections
+from typing import Any
 
 from openpype.client import get_asset_by_name
 from openpype.lib import (
@@ -602,6 +603,201 @@ class CreateRenderPass(TVPaintCreator):
 
     def get_instance_attr_defs(self):
         return self.get_pre_create_attr_defs()
+
+
+class TVPaintAutoDetectRenderCreator(TVPaintCreator):
+    """Create Render Layer and Render Pass instances based on scene data.
+
+    This is auto-detection creator which can be triggered by user to create
+    instances based on information in scene. Each used color group in scene
+    will be created as Render Layer where group name is used as variant and
+    each TVPaint layer as Render Pass where layer name is used as variant.
+    """
+
+    family = "render"
+    label = "Auto detect renders"
+    identifier = "render.auto.detect.creator"
+
+    # Settings
+    enabled = False
+
+    def apply_settings(self, project_settings, system_settings):
+        plugin_settings = (
+            project_settings
+            ["tvpaint"]
+            ["create"]
+            ["auto_detect_render_create"]
+        )
+        self.enabled = plugin_settings["enabled"]
+
+    def create(self, subset_name, instance_data, pre_create_data):
+        project_name: str = self.create_context.get_current_project_name()
+        asset_name: str = instance_data["asset"]
+        task_name: str = instance_data["task"]
+        asset_doc: dict[str, Any] = get_asset_by_name(project_name, asset_name)
+
+        render_layers_by_group_id: dict[int, CreatedInstance] = {}
+        render_passes_by_render_layer_id: dict[int, CreatedInstance] = (
+            collections.defaultdict(list)
+        )
+        for instance in self.create_context.instances:
+            if instance.creator_identifier == CreateRenderlayer.identifier:
+                group_id = instance["creator_attributes"]["group_id"]
+                render_layers_by_group_id[group_id] = instance
+            elif instance.creator_identifier == CreateRenderPass.identifier:
+                render_layer_id = (
+                    instance
+                    ["creator_attributes"]
+                    ["render_layer_instance_id"]
+                )
+                render_passes_by_render_layer_id[render_layer_id].append(
+                    instance
+                )
+
+        layers_by_group_id: dict[int, list[dict[str, Any]]] = (
+            collections.defaultdict(list)
+        )
+        scene_layers: list[dict[str, Any]] = get_layers_data()
+        scene_groups: list[dict[str, Any]] = get_groups_data()
+        for layer in scene_layers:
+            group_id: int = layer["group_id"]
+            layers_by_group_id[group_id].append(layer)
+
+        # Remove '0' (default) group
+        layers_by_group_id.pop(0, None)
+
+        # Make sure  all render layers are created
+        for group_id in layers_by_group_id.keys():
+            render_layer_instance: CreatedInstance | None = (
+                render_layers_by_group_id.get(group_id)
+            )
+
+            instance: CreatedInstance | None = self._prepare_render_layer(
+                project_name,
+                asset_doc,
+                task_name,
+                group_id,
+                scene_groups,
+                render_layer_instance
+            )
+            if instance is not None:
+                render_layers_by_group_id[group_id] = instance
+
+        for group_id, layers in layers_by_group_id.items():
+            render_layer_instance: CreatedInstance | None = (
+                render_layers_by_group_id.get(group_id)
+            )
+            if render_layer_instance is not None:
+                continue
+
+            self._prepare_render_passes(
+                project_name,
+                asset_doc,
+                task_name,
+                render_layer_instance,
+                layers,
+                render_passes_by_render_layer_id[render_layer_instance.id]
+            )
+
+    def _prepare_render_layer(
+        self,
+        project_name: str,
+        asset_doc: dict[str, Any],
+        task_name: str,
+        group_id: int,
+        groups: list[dict[str, Any]],
+        existing_instance: CreatedInstance | None=None
+    ) -> CreatedInstance | None:
+        match_group: dict[str, Any] | None = next(
+            (
+                for group in groups
+                if group["group_id"] == group_id
+            ),
+            None
+        )
+        if not match_group:
+            return None
+
+        variant: str = match_group["name"]
+        creator: CreateRenderlayer = (
+            self.create_context.creators[CreateRenderlayer.identifier]
+        )
+
+        subset_name: str = creator.get_subset_name(
+            variant,
+            task_name,
+            asset_doc,
+            project_name,
+            host_name=self.create_context.host_name,
+        )
+        if existing_instance is not None:
+            existing_instance["asset"] = asset_doc["name"]
+            existing_instance["task"] = task_name
+            existing_instance["subset"] = subset_name
+            return existing_instance
+
+        instance_data: dict[str, str] = {
+            "asset": asset_doc["name"],
+            "task": task_name,
+            "family": creator.family,
+            "variant": variant
+        }
+        pre_create_data: dict[str, str] = {
+            "group_id": group_id
+        }
+        return creator.create(subset_name, instance_data, pre_create_data)
+
+    def _prepare_render_passes(
+        self,
+        project_name: str,
+        asset_doc: dict[str, Any],
+        task_name: str,
+        render_layer_instance: CreatedInstance,
+        layers: list[dict[str, Any]],
+        existing_render_passes: list[CreatedInstance]
+    ):
+        creator: CreateRenderPass = (
+            self.create_context.creators[CreateRenderPass.identifier]
+        )
+        render_pass_by_layer_name = {}
+        for render_pass in existing_render_passes:
+            for layer_name in render_pass["layer_names"]:
+                render_pass_by_layer_name[layer_name] = render_pass
+
+        for layer in layers:
+            layer_name = layer["name"]
+            variant = layer_name
+            render_pass = render_pass_by_layer_name.get(layer_name)
+            if render_pass is not None:
+                if (render_pass["layer_names"]) > 1:
+                    variant = render_pass["variant"]
+
+            subset_name = creator.get_subset_name(
+                variant,
+                task_name,
+                asset_doc,
+                project_name,
+                host_name=self.create_context.host_name,
+                instance=render_pass
+            )
+
+            if render_pass is not None:
+                render_pass["asset"] = asset_doc["name"]
+                render_pass["task"] = task_name
+                render_pass["subset"] = subset_name
+                continue
+
+            instance_data: dict[str, str] = {
+                "asset": asset_doc["name"],
+                "task": task_name,
+                "family": creator.family,
+                "variant": variant
+            }
+            pre_create_data: dict[str, Any] = {
+                "render_layer_instance_id": render_layer_instance.id,
+                "layer_names": [layer_name]
+            }
+            creator.create(subset_name, instance_data, pre_create_data)
 
 
 class TVPaintSceneRenderCreator(TVPaintAutoCreator):
