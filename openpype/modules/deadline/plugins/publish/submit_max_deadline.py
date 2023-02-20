@@ -128,8 +128,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         plugin_info = MaxPluginInfo(
             SceneFile=self.scene_path,
             Version=instance.data["maxversion"],
-            SaveFile = True,
-            IgnoreInputs = True
+            SaveFile=True,
+            IgnoreInputs=True
         )
 
         plugin_payload = attr.asdict(plugin_info)
@@ -143,7 +143,6 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
     def process_submission(self):
 
         instance = self._instance
-        context = instance.context
         filepath = self.scene_path
 
         expected_files = instance.data["expectedFiles"]
@@ -187,8 +186,10 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         output_beauty = RenderSettings().get_render_output(instance.name,
                                                            old_output_dir)
         filepath = self.from_published_scene()
+
         def _clean_name(path):
             return os.path.splitext(os.path.basename(path))[0]
+
         new_scene = _clean_name(filepath)
         orig_scene = _clean_name(instance.context.data["currentFile"])
 

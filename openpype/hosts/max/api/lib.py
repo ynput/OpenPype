@@ -136,18 +136,17 @@ def get_default_render_folder(project_setting=None):
 def set_framerange(startFrame, endFrame):
     """
     Args:
-    	start_frame (int): Start frame number.
-    	end_frame (int): End frame number.
+        start_frame (int): Start frame number.
+        end_frame (int): End frame number.
     Note:
-    	Frame range can be specified in different types. Possible values are:
+        Frame range can be specified in different types. Possible values are:
 
-    	* `1` - Single frame.
-	* `2` - Active time segment ( animationRange ).
-    	* `3` - User specified Range.
-	* `4` - User specified Frame pickup string (for example `1,3,5-12`).
-
-    Todo:
-    	Current type is hard-coded, there should be a custom setting for this.
+    * `1` - Single frame.
+    * `2` - Active time segment ( animationRange ).
+    * `3` - User specified Range.
+	* `4`-User specified Frame pickup string (for example `1,3,5-12`).
+    TODO:
+        Current type is hard-coded, there should be a custom setting for this.
     """
     rt.rendTimeType = 4
     if startFrame is not None and endFrame is not None:
@@ -159,6 +158,7 @@ def get_multipass_setting(project_setting=None):
     return (project_setting["max"]
                            ["RenderSettings"]
                            ["multipass"])
+
 
 def get_max_version():
     """

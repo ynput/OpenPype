@@ -8,7 +8,6 @@ from openpype.hosts.max.api.lib import (
     get_current_renderer,
     get_default_render_folder
 )
-from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.settings import get_project_settings
 from openpype.pipeline import legacy_io
 
@@ -74,6 +73,7 @@ class RenderProducts(object):
         beauty_output = f"{folder}.####.{fmt}"
         beauty_output = beauty_output.replace("\\", "/")
         return beauty_output
+
     # TODO: Get the arnold render product
     def arnold_render_product(self, folder, fmt):
         """Get all the Arnold AOVs"""
