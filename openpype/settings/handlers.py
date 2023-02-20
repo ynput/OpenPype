@@ -9,6 +9,7 @@ import six
 import openpype.version
 from openpype.client.mongo import OpenPypeMongoConnection
 from openpype.client.entities import get_project_connection, get_project
+from openpype.lib.pype_info import get_workstation_info
 
 from .constants import (
     GLOBAL_SETTINGS_KEY,
@@ -930,13 +931,17 @@ class MongoSettingsHandler(SettingsHandler):
         if not changes:
             return
 
-        from openpype.lib import get_local_site_id
-
         if settings_type == "project" and not project_name:
             project_name = "default"
 
+        host_info = get_workstation_info()
+
         document = {
-            "user": get_local_site_id(),
+            "local_id": host_info["local_id"],
+            "username": host_info["username"],
+            "hostname": host_info["hostname"],
+            "hostip": host_info["hostip"],
+            "system_name": host_info["system_name"],
             "date_created": datetime.datetime.now(),
             "project": project_name,
             "settings_type": settings_type,
