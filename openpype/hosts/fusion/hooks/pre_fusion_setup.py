@@ -17,9 +17,15 @@ class FusionPrelaunch(PreLaunchHook):
     as set in openpype/hosts/fusion/deploy/fusion_shared.prefs to enable
     the OpenPype menu and force Python 3 over Python 2.
 
+    PROFILE_NUMBER is used because from the Fusion v16 the profile folder 
+    is project-specific, but then it was abandoned by devs,
+    and despite it is already Fusion version 18, still FUSION16_PROFILE_DIR is used.
+    The variable is added in case the version number will be updated or deleted
+    so we could easily change the version or disable it.
     """
     app_groups = ["fusion"]
     PROFILE_NUMBER = 16
+
 
     def get_fusion_profile_name(self) -> str:
         """usually set to 'Default', unless FUSION16_PROFILE is set"""
@@ -27,25 +33,24 @@ class FusionPrelaunch(PreLaunchHook):
 
     def get_profile_source(self) -> Path:
         """Get the Fusion preferences (profile) location.
-        Check https://www.steakunderwater.com/VFXPedia/96.0.243.189/indexad6a.html?title=Per-User_Preferences_and_Paths for reference.
+        Check Per-User_Preferences_and_Paths on VFXpedia for reference.
         """
         fusion_profile = self.get_fusion_profile_name()
         fusion_var_prefs_dir = os.getenv(f"FUSION{self.PROFILE_NUMBER}_PROFILE_DIR")
 
-        # if FUSION16_PROFILE_DIR variable exists, return the profile filepath
+        # if FUSION16_PROFILE_DIR variable exists
         if fusion_var_prefs_dir and Path(fusion_var_prefs_dir).is_dir():
             fusion_prefs_dir = Path(fusion_var_prefs_dir, fusion_profile)
             self.log.info(f"Local Fusion prefs environment is set to {fusion_prefs_dir}")
-            fusion_prefs_filepath = fusion_prefs_dir / "Fusion.prefs"
-            return fusion_prefs_filepath
-        # otherwise get the profile from default prefs location 
-        fusion_prefs_path = f"Blackmagic Design/Fusion/Profiles/{fusion_profile}/Fusion.prefs"
+            return fusion_prefs_dir
+        # otherwise get the profile folder from default location
+        fusion_prefs_dir = f"Blackmagic Design/Fusion/Profiles/{fusion_profile}"
         if platform.system() == "Windows":
-            prefs_source = Path(os.getenv("AppData"), fusion_prefs_path)
+            prefs_source = Path(os.getenv("AppData"), fusion_prefs_dir)
         elif platform.system() == "Darwin":
-            prefs_source = Path("~/Library/Application Support/", fusion_prefs_path).expanduser()
+            prefs_source = Path("~/Library/Application Support/", fusion_prefs_dir).expanduser()
         elif platform.system() == "Linux":
-            prefs_source = Path("~/.fusion", fusion_prefs_path).expanduser()
+            prefs_source = Path("~/.fusion", fusion_prefs_dir).expanduser()
         self.log.info(f"Got Fusion prefs file: {prefs_source}")
         return prefs_source
 
@@ -67,10 +72,11 @@ class FusionPrelaunch(PreLaunchHook):
         return copy_status, copy_path, force_sync
 
     def copy_existing_prefs(self, copy_from: Path, copy_to: Path, force_sync: bool) -> None:
-        """On the first Fusion launch copy the Fusion profile to the working directory.
-        If the Openpype profile folder exists, skip copying, unless Force sync is checked.
-        If the prefs were not copied on the first launch, clean Fusion profile 
-        will be created in fusion_profile_dir.
+        """On the first Fusion launch copy the contents of Fusion profile directory
+        to the working predefined location. If the Openpype profile folder exists,
+        skip copying, unless re-sync is checked.
+        If the prefs were not copied on the first launch,
+        clean Fusion profile will be created in fusion_profile_dir.
         """
         if copy_to.exists() and not force_sync:
             self.log.info("Local Fusion preferences folder exists, skipping profile copy")
@@ -82,7 +88,10 @@ class FusionPrelaunch(PreLaunchHook):
         if not copy_from.exists():
             self.log.warning(f"Fusion preferences file not found in {copy_from}")
             return
-        shutil.copy(str(copy_from), str(dest_folder)) # compatible with Python >= 3.6
+        for file in copy_from.iterdir():
+            if file.suffix in (".prefs", ".def", ".blocklist", "fu"):
+                # convert Path to str to be compatible with Python 3.6 and above
+                shutil.copy(str(file), str(dest_folder)) 
         self.log.info(f"successfully copied preferences:\n {copy_from} to {dest_folder}")
         
     def execute(self):
@@ -93,8 +102,9 @@ class FusionPrelaunch(PreLaunchHook):
         fusion_python3_home = self.launch_context.env.get(py3_var, "")
 
         for path in fusion_python3_home.split(os.pathsep):
-            # Allow defining multiple paths, separated by os.pathsep, to allow "fallback" to other
-            # path. But make to set only a single path as final variable.
+            # Allow defining multiple paths, separated by os.pathsep, 
+            # to allow "fallback" to other path.
+            # But make to set only a single path as final variable.
             py3_dir = os.path.normpath(path)
             if os.path.isdir(py3_dir):
                 self.log.info(f"Looking for Python 3 in: {py3_dir}")
@@ -119,8 +129,9 @@ class FusionPrelaunch(PreLaunchHook):
         # TODO: Detect Fusion version to only set for specific Fusion build
         self.launch_context.env[f"FUSION{self.PROFILE_NUMBER}_PYTHON36_HOME"] = py3_dir
 
-        # Add custom Fusion Master Prefs and the temporary profile directory variables
-        # to customize Fusion to define where it can read custom scripts and tools from
+        # Add custom Fusion Master Prefs and the temporary
+        # profile directory variables to customize Fusion
+        # to define where it can read custom scripts and tools from
         self.log.info(f"Setting OPENPYPE_FUSION: {FUSION_HOST_DIR}")
         self.launch_context.env["OPENPYPE_FUSION"] = FUSION_HOST_DIR
 
