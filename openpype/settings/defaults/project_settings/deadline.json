@@ -36,7 +36,7 @@
             "scene_patches": [],
             "strict_error_checking": true
         },
-        "MaxSubmitRenderDeadline": {
+        "MaxSubmitDeadline": {
             "enabled": true,
             "optional": false,
             "active": true,

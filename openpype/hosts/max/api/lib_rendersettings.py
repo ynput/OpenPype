@@ -22,7 +22,6 @@ class RenderSettings(object):
         "underscore": "_"
     }
 
-    @classmethod
     def __init__(self, project_settings=None):
         self._project_settings = project_settings
         if not self._project_settings:
@@ -41,7 +40,7 @@ class RenderSettings(object):
             if not found:
                 raise RuntimeError("Camera not found")
 
-    def set_renderoutput(self, container):
+    def render_output(self, container):
         folder = rt.maxFilePath
         # hard-coded, should be customized in the setting
         file = rt.maxFileName
@@ -144,7 +143,7 @@ class RenderSettings(object):
             aov_name = "{0}_{1}..{2}".format(dir, renderpass, ext)
             render_elem.SetRenderElementFileName(i, aov_name)
 
-    def get_renderoutput(self, container, output_dir):
+    def get_render_output(self, container, output_dir):
         output = os.path.join(output_dir, container)
         img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa
         outputFilename = "{0}..{1}".format(output, img_fmt)

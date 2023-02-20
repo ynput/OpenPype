@@ -15,7 +15,6 @@ from openpype.pipeline import legacy_io
 
 class RenderProducts(object):
 
-    @classmethod
     def __init__(self, project_settings=None):
         self._project_settings = project_settings
         if not self._project_settings:
@@ -36,15 +35,11 @@ class RenderProducts(object):
                                    filename,
                                    container)
 
-        context = get_current_project_asset()
-        startFrame = context["data"].get("frameStart")
-        endFrame = context["data"].get("frameEnd") + 1
-
         img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa
-        full_render_list = self.beauty_render_product(output_file,
-                                                      startFrame,
-                                                      endFrame,
-                                                      img_fmt)
+        full_render_list = []
+        beauty = self.beauty_render_product(output_file, img_fmt)
+        full_render_list.append(beauty)
+
         renderer_class = get_current_renderer()
         renderer = str(renderer_class).split(":")[0]
 
@@ -60,41 +55,29 @@ class RenderProducts(object):
             renderer == "Quicksilver_Hardware_Renderer"
         ):
             render_elem_list = self.render_elements_product(output_file,
-                                                            startFrame,
-                                                            endFrame,
                                                             img_fmt)
-            for render_elem in render_elem_list:
-                full_render_list.append(render_elem)
+            if render_elem_list:
+                for render_elem in render_elem_list:
+                    full_render_list.append(render_elem)
 
             return full_render_list
 
         if renderer == "Arnold":
             aov_list = self.arnold_render_product(output_file,
-                                                  startFrame,
-                                                  endFrame,
                                                   img_fmt)
             if aov_list:
                 for aov in aov_list:
                     full_render_list.append(aov)
             return full_render_list
 
-    def beauty_render_product(self, folder, startFrame, endFrame, fmt):
-        # get the beauty
-        beauty_frame_range = list()
-
-        for f in range(startFrame, endFrame):
-            beauty = "{0}.{1}.{2}".format(folder,
-                                          str(f),
-                                          fmt)
-            beauty = beauty.replace("\\", "/")
-            beauty_frame_range.append(beauty)
-
-        return beauty_frame_range
-
+    def beauty_render_product(self, folder, fmt):
+        beauty_output = f"{folder}.####.{fmt}"
+        beauty_output = beauty_output.replace("\\", "/")
+        return beauty_output
     # TODO: Get the arnold render product
-    def arnold_render_product(self, folder, startFrame, endFrame, fmt):
+    def arnold_render_product(self, folder, fmt):
         """Get all the Arnold AOVs"""
-        aovs = list()
+        aovs = []
 
         amw = rt.MaxtoAOps.AOVsManagerWindow()
         aov_mgr = rt.renderers.current.AOVManager
@@ -105,21 +88,17 @@ class RenderProducts(object):
         for i in range(aov_group_num):
             # get the specific AOV group
             for aov in aov_mgr.drivers[i].aov_list:
-                for f in range(startFrame, endFrame):
-                    render_element = "{0}_{1}.{2}.{3}".format(folder,
-                                                              str(aov.name),
-                                                              str(f),
-                                                              fmt)
-                    render_element = render_element.replace("\\", "/")
-                    aovs.append(render_element)
+                render_element = f"{folder}_{aov.name}.####.{fmt}"
+                render_element = render_element.replace("\\", "/")
+                aovs.append(render_element)
         # close the AOVs manager window
         amw.close()
 
         return aovs
 
-    def render_elements_product(self, folder, startFrame, endFrame, fmt):
+    def render_elements_product(self, folder, fmt):
         """Get all the render element output files. """
-        render_dirname = list()
+        render_dirname = []
 
         render_elem = rt.maxOps.GetCurRenderElementMgr()
         render_elem_num = render_elem.NumRenderElements()
@@ -128,16 +107,11 @@ class RenderProducts(object):
             renderlayer_name = render_elem.GetRenderElement(i)
             target, renderpass = str(renderlayer_name).split(":")
             if renderlayer_name.enabled:
-                for f in range(startFrame, endFrame):
-                    render_element = "{0}_{1}.{2}.{3}".format(folder,
-                                                              renderpass,
-                                                              str(f),
-                                                              fmt)
-                    render_element = render_element.replace("\\", "/")
-                    render_dirname.append(render_element)
+                render_element = f"{folder}_{renderpass}.####.{fmt}"
+                render_element = render_element.replace("\\", "/")
+                render_dirname.append(render_element)
 
         return render_dirname
 
     def image_format(self):
-        img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa
-        return img_fmt
+        return self._project_settings["max"]["RenderSettings"]["image_format"]  # noqa

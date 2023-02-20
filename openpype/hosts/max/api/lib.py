@@ -134,19 +134,21 @@ def get_default_render_folder(project_setting=None):
 
 
 def set_framerange(startFrame, endFrame):
-    """Get/set the type of time range to be rendered.
-
-    Possible values are:
-
-    1 -Single frame.
-
-    2 -Active time segment ( animationRange ).
-
-    3 -User specified Range.
-
-    4 -User specified Frame pickup string (for example "1,3,5-12").
     """
-    # hard-code, there should be a custom setting for this
+    Args:
+    	start_frame (int): Start frame number.
+    	end_frame (int): End frame number.
+    Note:
+    	Frame range can be specified in different types. Possible values are:
+
+    	* `1` - Single frame.
+	* `2` - Active time segment ( animationRange ).
+    	* `3` - User specified Range.
+	* `4` - User specified Frame pickup string (for example `1,3,5-12`).
+
+    Todo:
+    	Current type is hard-coded, there should be a custom setting for this.
+    """
     rt.rendTimeType = 4
     if startFrame is not None and endFrame is not None:
         frameRange = "{0}-{1}".format(startFrame, endFrame)
@@ -157,3 +159,15 @@ def get_multipass_setting(project_setting=None):
     return (project_setting["max"]
                            ["RenderSettings"]
                            ["multipass"])
+
+def get_max_version():
+    """
+    Args:
+    get max version date for deadline
+
+    Returns:
+        #(25000, 62, 0, 25, 0, 0, 997, 2023, "")
+        max_info[7] = max version date
+    """
+    max_info = rt.maxversion()
+    return max_info[7]

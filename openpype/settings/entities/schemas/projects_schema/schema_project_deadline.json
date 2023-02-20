@@ -207,7 +207,7 @@
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "MaxSubmitRenderDeadline",
+                    "key": "MaxSubmitDeadline",
                     "label": "3dsMax Submit to Deadline",
                     "checkbox_key": "enabled",
                     "children": [

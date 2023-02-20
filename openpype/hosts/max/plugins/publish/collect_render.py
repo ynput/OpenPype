@@ -4,7 +4,8 @@ import os
 import pyblish.api
 
 from pymxs import runtime as rt
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_asset_name
+from openpype.hosts.max.api.lib import get_max_version
 from openpype.hosts.max.api.lib_renderproducts import RenderProducts
 from openpype.client import get_last_version_by_subset_name
 
@@ -25,7 +26,7 @@ class CollectRender(pyblish.api.InstancePlugin):
         filepath = current_file.replace("\\", "/")
 
         context.data['currentFile'] = current_file
-        asset = legacy_io.Session["AVALON_ASSET"]
+        asset = get_current_asset_name()
 
         render_layer_files = RenderProducts().render_product(instance.name)
         folder = folder.replace("\\", "/")
@@ -51,6 +52,7 @@ class CollectRender(pyblish.api.InstancePlugin):
             "subset": instance.name,
             "asset": asset,
             "publish": True,
+            "maxversion": str(get_max_version()),
             "imageFormat": imgFormat,
             "family": 'maxrender',
             "families": ['maxrender'],
