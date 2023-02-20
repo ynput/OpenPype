@@ -2,7 +2,7 @@
 import sys
 import os
 
-from .lib import get_fusion_module, get_current_comp, get_comp_filename
+from .lib import get_fusion_module, get_current_comp
 
 
 def file_extensions():
