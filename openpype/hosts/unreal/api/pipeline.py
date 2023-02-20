@@ -152,7 +152,7 @@ def ls():
         yield data
 
 
-def lsinst():
+def ls_inst():
     ar = unreal.AssetRegistryHelpers.get_asset_registry()
     # UE 5.1 changed how class name is specified
     class_name = [

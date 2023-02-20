@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import unreal
 
+from openpype.pipeline import CreatorError
 from openpype.hosts.unreal.api.pipeline import (
     get_subsequences
 )
@@ -26,8 +27,8 @@ class CreateRender(UnrealAssetCreator):
             a.get_path_name() for a in sel_objects
             if a.get_class().get_name() == "LevelSequence"]
 
-        if len(selection) == 0:
-            raise RuntimeError("Please select at least one Level Sequence.")
+        if not selection:
+            raise CreatorError("Please select at least one Level Sequence.")
 
         seq_data = None
 
@@ -41,7 +42,7 @@ class CreateRender(UnrealAssetCreator):
                     f"Skipping {selected_asset.get_name()}. It isn't a Level "
                     "Sequence.")
 
-            # The asset name is the the third element of the path which
+            # The asset name is the third element of the path which
             # contains the map.
             # To take the asset name, we remove from the path the prefix
             # "/Game/OpenPype/" and then we split the path by "/".
