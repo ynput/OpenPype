@@ -219,15 +219,30 @@ class CreateRenderlayer(TVPaintCreator):
             f" was changed to \"{new_group_name}\"."
         ))
 
-    def get_pre_create_attr_defs(self):
-        groups_enum = [
-            {
-                "label": group["name"],
+    def _get_groups_enum(self):
+        groups_enum = []
+        empty_groups = []
+        for group in get_groups_data():
+            group_name = group["name"]
+            item = {
+                "label": group_name,
                 "value": group["group_id"]
             }
-            for group in get_groups_data()
-            if group["name"]
-        ]
+            # TVPaint have defined how many color groups is available, but
+            #   the count is not consistent across versions. It is not possible
+            #   to know how many groups there is.
+            #
+            if group_name and group_name != "0":
+                if empty_groups:
+                    groups_enum.extend(empty_groups)
+                    empty_groups = []
+                groups_enum.append(item)
+            else:
+                empty_groups.append(item)
+        return groups_enum
+
+    def get_pre_create_attr_defs(self):
+        groups_enum = self._get_groups_enum()
         groups_enum.insert(0, {"label": "<Use selection>", "value": -1})
 
         return [
@@ -249,14 +264,7 @@ class CreateRenderlayer(TVPaintCreator):
         ]
 
     def get_instance_attr_defs(self):
-        groups_enum = [
-            {
-                "label": group["name"],
-                "value": group["group_id"]
-            }
-            for group in get_groups_data()
-            if group["name"]
-        ]
+        groups_enum = self._get_groups_enum()
         return [
             EnumDef(
                 "group_id",
