@@ -431,25 +431,40 @@ class CreateRenderPass(TVPaintCreator):
 
         self.log.debug("Checking selection.")
         # Get all selected layers and their group ids
-        selected_layers = [
-            layer
-            for layer in layers_data
-            if layer["selected"]
-        ]
+        marked_layer_names = pre_create_data.get("layer_names")
+        if marked_layer_names is not None:
+            layers_by_name = {layer["name"]: layer for layer in layers_data}
+            marked_layers = []
+            for layer_name in marked_layer_names:
+                layer = layers_by_name.get(layer_name)
+                if layer is None:
+                    raise CreatorError(
+                        f"Layer with name \"{layer_name}\" was not found")
+                marked_layers.append(layer)
 
-        # Raise if nothing is selected
-        if not selected_layers:
-            raise CreatorError("Nothing is selected. Please select layers.")
+        else:
+            marked_layers = [
+                layer
+                for layer in layers_data
+                if layer["selected"]
+            ]
 
-        selected_layer_names = {layer["name"] for layer in selected_layers}
+            # Raise if nothing is selected
+            if not marked_layers:
+                raise CreatorError("Nothing is selected. Please select layers.")
+
+            marked_layer_names = {layer["name"] for layer in marked_layers}
+
+        marked_layer_names = set(marked_layer_names)
+
         instances_to_remove = []
         for instance in self.create_context.instances:
             if instance.creator_identifier != self.identifier:
                 continue
-            layer_names = set(instance["layer_names"])
-            if not layer_names.intersection(selected_layer_names):
+            cur_layer_names = set(instance["layer_names"])
+            if not cur_layer_names.intersection(marked_layer_names):
                 continue
-            new_layer_names = layer_names - selected_layer_names
+            new_layer_names = cur_layer_names - marked_layer_names
             if new_layer_names:
                 instance["layer_names"] = list(new_layer_names)
             else:
@@ -470,7 +485,7 @@ class CreateRenderPass(TVPaintCreator):
         self.log.info(f"New subset name is \"{label}\".")
         instance_data["label"] = label
         instance_data["group"] = f"{self.get_group_label()} ({render_layer})"
-        instance_data["layer_names"] = list(selected_layer_names)
+        instance_data["layer_names"] = list(marked_layer_names)
         if "creator_attributes" not in instance_data:
             instance_data["creator_attribtues"] = {}
 
@@ -496,7 +511,7 @@ class CreateRenderPass(TVPaintCreator):
 
         self.host.write_instances(instances_data)
         self._add_instance_to_context(new_instance)
-        self._change_layers_group(selected_layers, group_id)
+        self._change_layers_group(marked_layers, group_id)
 
         return new_instance
 
