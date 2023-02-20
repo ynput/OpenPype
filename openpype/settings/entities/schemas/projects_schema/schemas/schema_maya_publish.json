@@ -426,7 +426,7 @@
                 },
                 {
                     "key": "ValidateRenderLayerAOVs",
-                    "label": "Validate Render Passes / AOVs Are Regigistered"
+                    "label": "Validate Render Passes / AOVs Are Registered"
                 },
                 {
                     "key": "ValidateStepSize",
