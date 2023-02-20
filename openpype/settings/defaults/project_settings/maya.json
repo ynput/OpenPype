@@ -407,7 +407,7 @@
             "active": true
         },
         "ValidateGLSLMaterial": {
-            "enabled": false,
+            "enabled": true,
             "optional": false,
             "active": true
         },
