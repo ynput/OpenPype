@@ -591,6 +591,7 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
     family = "render"
     label = "Auto detect renders"
     identifier = "render.auto.detect.creator"
+    order = CreateRenderPass.order + 10
 
     # Settings
     enabled = False
@@ -600,7 +601,7 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
             project_settings
             ["tvpaint"]
             ["create"]
-            ["auto_detect_render_create"]
+            ["auto_detect_render"]
         )
         self.enabled = plugin_settings["enabled"]
 

@@ -195,6 +195,20 @@
                             }
                         }
                     ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "auto_detect_render",
+                    "label": "Auto-Detect Create Render",
+                    "is_group": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled"
+                        }
+                    ]
                 }
             ]
         },

@@ -40,6 +40,9 @@
             "mark_for_review": true,
             "default_variant": "Main",
             "default_variants": []
+        },
+        "auto_detect_render": {
+            "enabled": false
         }
     },
     "publish": {
