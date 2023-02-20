@@ -21,16 +21,18 @@ class LoaderPlugin(list):
 
     Arguments:
         context (dict): avalon-core:context-1.0
-        name (str, optional): Use pre-defined name
-        namespace (str, optional): Use pre-defined namespace
 
     .. versionadded:: 4.0
        This class was introduced
 
     """
 
-    families = list()
-    representations = list()
+    families = []
+    representations = []
+    # Extensions filtering was not available until 20/2/2023
+    # - filtering by extensions is not enabled if is set to 'None'
+    #       which is to keep backwards compatibility
+    extensions = None
     order = 0
     is_multiple_contexts_compatible = False
     enabled = True
@@ -83,19 +85,71 @@ class LoaderPlugin(list):
             setattr(cls, option, value)
 
     @classmethod
+    def has_valid_extension(cls, repre_doc):
+        """Has representation document valid extension for loader.
+
+        Args:
+            repre_doc (dict[str, Any]): Representation document.
+
+        Returns:
+             bool: Representation has valid extension
+        """
+
+        # Empty list of extensions is considered as all representations are
+        #   invalid -> use '["*"]' to support all extensions
+        valid_extensions = cls.extensions
+        if not valid_extensions:
+            return False
+
+        # Get representation main file extension from 'context'
+        repre_context = repre_doc.get("context") or {}
+        ext = repre_context.get("ext")
+        if not ext:
+            # Legacy way how to get extensions
+            path = repre_doc["data"].get("path")
+            if not path:
+                cls.log.info(
+                    "Representation doesn't have known source of extension"
+                    " information."
+                )
+                return False
+
+            cls.log.info("Using legacy source of extension on representation.")
+            ext = os.path.splitext(path)[-1]
+            while ext.startswith("."):
+                ext = ext[1:]
+
+        # If representation does not have extension then can't be valid
+        if not ext:
+            return False
+
+        if "*" in valid_extensions:
+            return True
+
+        valid_extensions_low = {ext.lower() for ext in valid_extensions}
+        return ext.lower() in valid_extensions_low
+
+
+    @classmethod
     def is_compatible_loader(cls, context):
         """Return whether a loader is compatible with a context.
 
+        On override make sure it is overriden as class or static method.
+
         This checks the version's families and the representation for the given
-        Loader.
+        loader plugin.
+
+        Args:
+            context (dict[str, Any]): Documents of context for which should
+                be loader used.
 
         Returns:
-            bool
+            bool: Is loader compatible for context.
         """
 
         plugin_repre_names = cls.get_representations()
         plugin_families = cls.families
-        if not plugin_repre_names or not plugin_families:
+        if not plugin_repre_names or not plugin_families or not cls.extensions:
             return False
 
         repre_doc = context.get("representation")
@@ -109,11 +163,19 @@ class LoaderPlugin(list):
         ):
             return False
 
-        maj_version, _ = schema.get_schema_version(context["subset"]["schema"])
+        if (
+            cls.extensions is not None
+            and not cls.has_valid_extension(repre_doc)
+        ):
+            return False
+
+        verison_doc = context["version"]
+        subset_doc = context["subset"]
+        maj_version, _ = schema.get_schema_version(subset_doc["schema"])
         if maj_version < 3:
-            families = context["version"]["data"].get("families", [])
+            families = verison_doc["data"].get("families", [])
         else:
-            families = context["subset"]["data"]["families"]
+            families = subset_doc["families"]
 
         plugin_families = set(plugin_families)
         return (
