@@ -4,12 +4,12 @@ import clique
 import bpy
 
 import pyblish.api
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.blender.api import capture
 from openpype.hosts.blender.api.lib import maintained_time
 
 
-class ExtractPlayblast(openpype.api.Extractor):
+class ExtractPlayblast(publish.Extractor):
     """
     Extract viewport playblast.
 
@@ -27,7 +27,6 @@ class ExtractPlayblast(openpype.api.Extractor):
         self.log.info("Extracting capture..")
 
         self.log.info(instance.data)
-        print(instance.context.data)
 
         # get scene fps
         fps = instance.data.get("fps")

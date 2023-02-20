@@ -2,14 +2,14 @@ import os
 import glob
 
 import pyblish.api
-import openpype.api
+from openpype.pipeline import publish
 from openpype.hosts.blender.api import capture
 from openpype.hosts.blender.api.lib import maintained_time
 
 import bpy
 
 
-class ExtractThumbnail(openpype.api.Extractor):
+class ExtractThumbnail(publish.Extractor):
     """Extract viewport thumbnail.
 
     Takes review camera and creates a thumbnail based on viewport
