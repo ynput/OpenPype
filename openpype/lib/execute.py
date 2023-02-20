@@ -103,9 +103,11 @@ def run_subprocess(*args, **kwargs):
         platform.system().lower() == "windows"
         and "creationflags" not in kwargs
     ):
+        no_window = getattr(subprocess, "CREATE_NO_WINDOW", 0)
         kwargs["creationflags"] = (
             subprocess.CREATE_NEW_PROCESS_GROUP
             | subprocess.DETACHED_PROCESS
+            | no_window
         )
 
     # Get environents from kwarg or use current process environments if were
