@@ -12,7 +12,6 @@
 	"SupportURL": "https://pype.club/",
 	"EngineVersion": "4.27",
 	"CanContainContent": true,
-	"IsBetaVersion": true,
 	"Installed": true,
 	"Modules": [
 		{

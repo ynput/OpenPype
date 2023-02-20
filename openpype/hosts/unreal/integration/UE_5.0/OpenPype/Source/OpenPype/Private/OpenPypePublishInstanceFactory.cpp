@@ -1,3 +1,4 @@
+// Copyright 2023, Ayon, All rights reserved.
 #include "OpenPypePublishInstanceFactory.h"
 #include "OpenPypePublishInstance.h"
 

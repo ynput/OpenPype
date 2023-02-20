@@ -127,6 +127,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
 
         # Set "OPENPYPE_UNREAL_PLUGIN" to current process environment for
         # execution of `create_unreal_project`
+
         if self.launch_context.env.get("OPENPYPE_UNREAL_PLUGIN"):
             self.log.info((
                 f"{self.signature} using OpenPype plugin from "
@@ -138,7 +139,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
 
         engine_path = detected[engine_version]
 
-        unreal_lib.try_installing_plugin(Path(engine_path), engine_version)
+        unreal_lib.try_installing_plugin(Path(engine_path), os.environ)
 
         project_file = project_path / unreal_project_filename
         if not project_file.is_file():

@@ -1,5 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// Copyright 2023, Ayon, All rights reserved.
 
 #include "Commandlets/OPActionResult.h"
 #include "Logging/OP_Log.h"

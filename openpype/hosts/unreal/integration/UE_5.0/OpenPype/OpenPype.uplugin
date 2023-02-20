@@ -12,9 +12,8 @@
 	"SupportURL": "https://pype.club/",
 	"CanContainContent": true,
 	"EngineVersion": "5.0",
-	"IsBetaVersion": true,
 	"IsExperimentalVersion": false,
-	"Installed": false,
+	"Installed": true,
 	"Modules": [
 		{
 			"Name": "OpenPype",
