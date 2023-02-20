@@ -1,3 +1,4 @@
+// Copyright 2023, Ayon, All rights reserved.
 #include "OpenPypeStyle.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Styling/SlateStyle.h"
