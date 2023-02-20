@@ -114,15 +114,15 @@ build-backend = "poetry.core.masonry.api"
 # https://pip.pypa.io/en/stable/cli/pip_install/#requirement-specifiers
 [openpype.qtbinding.windows]
 package = "PySide2"
-version = "3.15.1"
+version = "5.15.2"
 
 [openpype.qtbinding.darwin]
 package = "PySide6"
-version = "3.15.1"
+version = "6.4.1"
 
 [openpype.qtbinding.linux]
 package = "PySide2"
-version = "3.15.1"
+version = "5.15.2"
 
 # TODO: we will need to handle different linux flavours here and
 #       also different macos versions too.
