@@ -4,6 +4,7 @@ import nuke
 from openpype import resources
 from .lib import maintained_selection
 
+ASSIST = bool(os.getenv("NUKEASSIST"))
 
 def set_context_favorites(favorites=None):
     """ Adding favorite folders to nuke's browser
