@@ -50,7 +50,7 @@ from openpype.pipeline.colorspace import (
 from openpype.pipeline.workfile import BuildWorkfile
 
 from . import gizmo_menu
-from .utils import ASSIST
+from .constants import ASSIST
 
 from .workio import (
     save_file,
