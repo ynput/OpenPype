@@ -53,7 +53,7 @@ Plugin expects instances with filled dictionary `colorspaceData` on a representa
 Notable parameters:
 - **`Delete Original Representation`** - keep or remove original representation. If old representation is kept, but there is new transcoded representation with 'Create review' tag, original representation looses its 'review' tag if present.
 - **`Extension`** - target extension. If left empty, original extension is used.
-- **`Colorspace`** - target colorspace - must be available in used color config
+- **`Colorspace`** - target colorspace, which must be available in used color config.
 - **`Display & View`** - transcoding into colorspace OR into display and viewer space could be used. (It is disjunctive: Colorspace & nothing in Display and View or opposite)
 - **`Arguments`** - special additional command line arguments for `oiiotool`
 
