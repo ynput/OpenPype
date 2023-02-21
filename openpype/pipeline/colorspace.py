@@ -438,13 +438,14 @@ def get_imageio_file_rules(project_name, host_name, project_settings=None):
 
     # get file rules from global and host_name
     frules_global = imageio_global["file_rules"]
-    frules_host = imageio_host["file_rules"]
+    # host is optional, some might not have any settings
+    frules_host = imageio_host.get("file_rules", {})
 
     # compile file rules dictionary
     file_rules = {}
     if frules_global["enabled"]:
         file_rules.update(frules_global["rules"])
-    if frules_host["enabled"]:
+    if frules_host and frules_host["enabled"]:
         file_rules.update(frules_host["rules"])
 
     return file_rules
@@ -455,7 +456,7 @@ def _get_imageio_settings(project_settings, host_name):
 
     Args:
         project_settings (dict): project settings.
-                                           Defaults to None.
+                                 Defaults to None.
         host_name (str): host name
 
     Returns:
@@ -463,6 +464,7 @@ def _get_imageio_settings(project_settings, host_name):
     """
     # get image io from global and host_name
     imageio_global = project_settings["global"]["imageio"]
-    imageio_host = project_settings[host_name]["imageio"]
+    # host is optional, some might not have any settings
+    imageio_host = project_settings.get(host_name, {}).get("imageio", {})
 
     return imageio_global, imageio_host

@@ -116,8 +116,8 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                                                   type="StingrayPBS")
                 if pbs_shader:
                     cls.pbs_shader_conversion(pbs_shader, glsl)
-            #setting up to relink the texture if
-            # the mesh is with aiStandardSurface
+                #setting up to relink the texture if
+                # the mesh is with aiStandardSurface
                 arnold_shader = cmds.listConnections(material,
                                                      destination=True,
                                                      type="aiStandardSurface")
@@ -133,7 +133,7 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                      "-> Can do texture conversion")
 
         for shader in main_shader:
-                    # get the file textures related to the PBS Shader
+            # get the file textures related to the PBS Shader
             albedo = cmds.listConnections(shader +
                                           ".TEX_color_map")
             if albedo:
@@ -171,7 +171,7 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                      "-> Can do texture conversion")
 
         for shader in main_shader:
-                    # get the file textures related to the PBS Shader
+            # get the file textures related to the PBS Shader
             albedo = cmds.listConnections(shader +
                                           ".baseColor")
             if albedo:
@@ -195,8 +195,8 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                 cmds.connectAttr(orm_output, rough)
 
             # connect nrm map if there is one
-            bump_node = cmds.lisConnections(shader +
-                                            ".normalCamera")
+            bump_node = cmds.listConnections(shader +
+                                             ".normalCamera")
             if not bump_node:
                 return
             for bump in bump_node:

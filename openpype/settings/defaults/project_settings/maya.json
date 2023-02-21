@@ -1,4 +1,5 @@
 {
+    "open_workfile_post_initialization": false,
     "imageio": {
         "ocio_config": {
             "enabled": false,

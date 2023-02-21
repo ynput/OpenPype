@@ -19,7 +19,6 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin):
     order = ValidateMeshOrder
     hosts = ["maya"]
     families = ["model"]
-    category = "geometry"
     label = "Mesh Arnold Attributes"
     actions = [
         openpype.hosts.maya.api.action.SelectInvalidAction,
