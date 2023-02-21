@@ -13,6 +13,7 @@ import pyblish.api
 
 from openpype.lib import (
     Logger,
+    import_filepath,
     filter_profiles
 )
 from openpype.settings import (
@@ -302,19 +303,8 @@ def publish_plugins_discover(paths=None):
             if not mod_ext == ".py":
                 continue
 
-            module = types.ModuleType(mod_name)
-            module.__file__ = abspath
-
             try:
-                if six.PY3:
-                    # Use loader so module has full specs
-                    module_loader = importlib.machinery.SourceFileLoader(
-                        mod_name, abspath
-                    )
-                    module_loader.exec_module(module)
-                else:
-                    with open(abspath, "rb") as f:
-                        six.exec_(f.read(), module.__dict__)
+                module = import_filepath(abspath)
 
                 # Store reference to original module, to avoid
                 # garbage collection from collecting it's global
