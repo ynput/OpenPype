@@ -116,8 +116,8 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                                                   type="StingrayPBS")
                 if pbs_shader:
                     cls.pbs_shader_conversion(pbs_shader, glsl)
-
                     cmds.sets(mesh, forceElement=str(glsl_shading_grp))
+
                 # setting up to relink the texture if
                 # the mesh is with aiStandardSurface
                 arnold_shader = cmds.listConnections(material,
@@ -125,7 +125,6 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                                                      type="aiStandardSurface")
                 if arnold_shader:
                     cls.arnold_shader_conversion(arnold_shader, glsl)
-
                     cmds.sets(mesh, forceElement=str(glsl_shading_grp))
 
     @classmethod
