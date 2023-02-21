@@ -42,7 +42,7 @@ You can start your work.
 In TVPaint you can find the Tools in OpenPype menu extension. The OpenPype Tools menu should be available in your work area. However, sometimes it happens that the Tools menu is hidden. You can display the extension panel by going to `Windows -> Plugins -> OpenPype`.
 
 ## Create & Publish
-As you might already know, to be able to publish, you have to mark what should be published. The marking part is called **Create**. In TVPaint you can create and publish **[Reviews](#review)**, **[Workfile](#workfile)**, **[Render Layers](#render-layer)** and **[Render Passes](#render-pass)**.
+To be able to publish, you have to mark what should be published. The marking part is called **Create**. In TVPaint you can create and publish **[Reviews](#review)**, **[Workfile](#workfile)**, **[Render Layers](#render-layer)** and **[Render Passes](#render-pass)**.
 
 :::important
 TVPaint integration tries to not guess what you want to publish from the scene. Therefore, you should tell what you want to publish.
@@ -74,7 +74,7 @@ Render Layer bakes all the animation layers of one particular color group togeth
   - or select a layer of a particular color and set combobox to **&ltUse selection&gt**
 - Hit `Create` button
 
-You have just created Render Layer. Now choose any amount of animation layers that need to be rendered together and assign them the color group.
+After creating a RenderLayer, choose any amount of animation layers that need to be rendered together and assign them the color group.
 
 You can change `variant` later in **Publish** tab.
 
@@ -107,20 +107,20 @@ The timeline's animation layer can be marked by the color you pick from your Col
 Render Passes are smaller individual elements of a [Render Layer](artist_hosts_tvpaint.md#render-layer). A `character` render layer might
 consist of multiple render passes such as `Line`, `Color` and `Shadow`.
 
-Render Passes are specific because they have to belong to a particular Render Layer. You have to select to which Render Layer the pass belongs. Try to refresh if you don't see demanded Render Layer in the options.
+Render Passes are specific because they have to belong to a particular Render Layer. You have to select to which Render Layer the pass belongs. Try to refresh if you don't see a specific Render Layer in the options.
 
 <div class="row markdown">
 <div class="col col--6 markdown">
 
 When you want to create Render Pass
-- choose one or several TVPaint layers
-- In the **Create** tab, pick `Render Pass`
-- Fill the `variant` with desired name of pass, e.g. `Color`.
-- Select Render Layer to which belongs in Render Layer combobox
-  - If you don't see new Render Layer try refresh first
+- choose one or several TVPaint layers.
+- in the **Create** tab, pick `Render Pass`.
+- fill the `variant` with desired name of pass, e.g. `Color`.
+- select the Render Layer you want the Render Pass to belong to from the combobox.
+  - if you don't see new Render Layer try refresh first.
 - Press `Create`
 
-You have just created Render Pass. Selected TVPaint layers should be marked with color group of Render Layer.
+After creating a Render Pass, selected the TVPaint layers that should be marked with color group of Render Layer.
 
 You can change `variant` or Render Layer later in **Publish** tab.
 
@@ -143,11 +143,11 @@ In this example, OpenPype will render selected animation layers within the given
 ![renderpass](assets/tvp_timeline_color2.png)
 
 Now that you have created the required instances, you can publish them.
-- Fill the comment on the bottom of the window
-- Double check enabled instance and their context
-- Press `Publish`
-- Wait to finish
-- Once the `Publisher` turns gets green your renders have been published.
+- Fill the comment on the bottom of the window.
+- Double check enabled instance and their context.
+- Press `Publish`.
+- Wait to finish.
+- Once the `Publisher` turns turns green your renders have been published.
 
 ---
 
