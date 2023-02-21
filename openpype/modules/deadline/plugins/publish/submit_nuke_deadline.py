@@ -266,6 +266,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             "NUKE_PATH",
             "TOOL_ENV",
             "FOUNDRY_LICENSE",
+            "OPENPYPE_SG_USER",
             "OPENPYPE_VERSION"
         ]
         # Add mongo url if it's enabled
