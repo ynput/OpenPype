@@ -6,37 +6,35 @@ sidebar_label: TVPaint
 
 -   [Work Files](artist_tools_workfiles)
 -   [Load](artist_tools_loader)
--   [Create](artist_tools_creator)
--   [Subset Manager](artist_tools_subset_manager)
 -   [Scene Inventory](artist_tools_inventory)
 -   [Publish](artist_tools_publisher)
 -   [Library](artist_tools_library)
 
 
 ## Setup
-When you launch TVPaint with OpenPype for the very first time it is necessary to do some additional steps. Right after the TVPaint launching a few system windows will pop up. 
+When you launch TVPaint with OpenPype for the very first time it is necessary to do some additional steps. Right after the TVPaint launching a few system windows will pop up.
 
 ![permission](assets/tvp_permission.png)
 
-Choose `Replace the file in the destination`. Then another window shows up. 
+Choose `Replace the file in the destination`. Then another window shows up.
 
 ![permission2](assets/tvp_permission2.png)
 
 Click on `Continue`.
 
-After opening TVPaint go to the menu bar: `Windows → Plugins → OpenPype`. 
+After opening TVPaint go to the menu bar: `Windows → Plugins → OpenPype`.
 
 ![pypewindow](assets/tvp_hidden_window.gif)
 
-Another TVPaint window pop up. Please press `Yes`. This window will be presented in every single TVPaint launching. Unfortunately, there is no other way how to workaround it. 
+Another TVPaint window pop up. Please press `Yes`. This window will be presented in every single TVPaint launching. Unfortunately, there is no other way how to workaround it.
 
 ![writefile](assets/tvp_write_file.png)
 
-Now OpenPype Tools menu is in your TVPaint work area. 
+Now OpenPype Tools menu is in your TVPaint work area.
 
 ![openpypetools](assets/tvp_openpype_menu.png)
 
-You can start your work. 
+You can start your work.
 
 ---
 
@@ -67,7 +65,7 @@ TVPaint integration tries to not guess what you want to publish from the scene. 
 <div class="row markdown">
 <div class="col col--6 markdown">
 
-Render Layer bakes all the animation layers of one particular color group together. 
+Render Layer bakes all the animation layers of one particular color group together.
 
 - In the **Create** tab, pick `Render Layer`
 - Fill `variant`, type in the name that the final published RenderLayer should have according to the naming convention in your studio. *(L10, BG, Hero, etc.)*
@@ -95,11 +93,11 @@ In the bottom left corner of your timeline, you will note a **Color group** butt
 
 ![colorgroups](assets/tvp_color_groups.png)
 
-It allows you to choose a group by checking one of the colors of the color list. 
+It allows you to choose a group by checking one of the colors of the color list.
 
 ![colorgroups](assets/tvp_color_groups2.png)
 
-The timeline's animation layer can be marked by the color you pick from your Color group. Layers in the timeline with the same color are gathered into a group represents one render layer. 
+The timeline's animation layer can be marked by the color you pick from your Color group. Layers in the timeline with the same color are gathered into a group represents one render layer.
 
 ![timeline](assets/tvp_timeline_color.png)
 
@@ -135,25 +133,25 @@ You can change `variant` or Render Layer later in **Publish** tab.
 </div>
 
 :::warning
-You cannot change TVPaint layer name once you mark it as part of Render Pass. You would have to remove created Render Pass and create it again with new TVPaint layer name. 
+You cannot change TVPaint layer name once you mark it as part of Render Pass. You would have to remove created Render Pass and create it again with new TVPaint layer name.
 :::
 
 <br></br>
 
-In this example, OpenPype will render selected animation layers within the given color group. E.i. the layers *L020_colour_fx*, *L020_colour_mouth*, and *L020_colour_eye* will be rendered as one pass belonging to the yellow RenderLayer.  
+In this example, OpenPype will render selected animation layers within the given color group. E.i. the layers *L020_colour_fx*, *L020_colour_mouth*, and *L020_colour_eye* will be rendered as one pass belonging to the yellow RenderLayer.
 
 ![renderpass](assets/tvp_timeline_color2.png)
 
-Now that you have created the required instances, you can publish them. 
+Now that you have created the required instances, you can publish them.
 - Fill the comment on the bottom of the window
-- Double check enabled instance and their context 
+- Double check enabled instance and their context
 - Press `Publish`
 - Wait to finish
-- Once the `Publisher` turns gets green your renders have been published. 
+- Once the `Publisher` turns gets green your renders have been published.
 
 ---
 
-## Load 
+## Load
 When you want to load existing published work you can reach the `Loader` through the OpenPype Tools `Load` button.
 
 The supported families for TVPaint are:
@@ -174,4 +172,4 @@ Scene Inventory shows you everything that you have loaded into your scene using 
 
 ![sceneinventory](assets/tvp_scene_inventory.png)
 
-You can switch to a previous version of the file or update it to the latest or delete items. 
+You can switch to a previous version of the file or update it to the latest or delete items.
