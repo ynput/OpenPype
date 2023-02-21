@@ -673,7 +673,7 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
             ):
                 continue
             group_index_value = (
-                "{{:0<{}}}"
+                "{{:0>{}}}"
                 .format(self.group_idx_padding)
                 .format(group_idx * self.group_idx_offset)
             )
@@ -707,7 +707,7 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
             group["name"] = group_name
 
         if grg_lines:
-            execute_george_through_file(grg_lines)
+            execute_george_through_file("\n".join(grg_lines))
 
     def _prepare_render_layer(
         self,
@@ -853,6 +853,8 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
             if group_id not in groups_order:
                 groups_order.append(group_id)
 
+        groups_order.reverse()
+
         mark_layers_for_review = pre_create_data.get(
             "mark_layers_for_review", False
         )
@@ -891,7 +893,7 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
             render_layer_instance: CreatedInstance | None = (
                 render_layers_by_group_id.get(group_id)
             )
-            if render_layer_instance is not None:
+            if render_layer_instance is None:
                 continue
 
             self._prepare_render_passes(
