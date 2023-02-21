@@ -454,7 +454,8 @@ class CreateRenderPass(TVPaintCreator):
 
             # Raise if nothing is selected
             if not marked_layers:
-                raise CreatorError("Nothing is selected. Please select layers.")
+                raise CreatorError(
+                    "Nothing is selected. Please select layers.")
 
             marked_layer_names = {layer["name"] for layer in marked_layers}
 
