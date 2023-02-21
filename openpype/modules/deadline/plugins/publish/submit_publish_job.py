@@ -192,7 +192,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         metadata_path = os.path.join(output_dir, metadata_filename)
 
         # Convert output dir to `{root}/rest/of/path/...` with Anatomy
-        success, roothless_mtdt_p = self.anatomy.find_root_template_from_path(
+        success, rootless_mtdt_p = self.anatomy.find_root_template_from_path(
             metadata_path)
         if not success:
             # `rootless_path` is not set to `output_dir` if none of roots match
@@ -200,9 +200,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "Could not find root path for remapping \"{}\"."
                 " This may cause issues on farm."
             ).format(output_dir))
-            roothless_mtdt_p = metadata_path
+            rootless_mtdt_p = metadata_path
 
-        return metadata_path, roothless_mtdt_p
+        return metadata_path, rootless_mtdt_p
 
     def _submit_deadline_post_job(self, instance, job, instances):
         """Submit publish job to Deadline.
@@ -235,7 +235,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
-        metadata_path, roothless_metadata_path = \
+        metadata_path, rootless_metadata_path = \
             self._create_metadata_path(instance)
 
         environment = {
@@ -272,7 +272,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         args = [
             "--headless",
             'publish',
-            roothless_metadata_path,
+            rootless_metadata_path,
             "--targets", "deadline",
             "--targets", "farm"
         ]
@@ -586,7 +586,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         host_name = os.environ.get("AVALON_APP", "")
         collections, remainders = clique.assemble(exp_files)
 
-        # create representation for every collected sequento ce
+        # create representation for every collected sequence
         for collection in collections:
             ext = collection.tail.lstrip(".")
             preview = False
@@ -654,7 +654,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             self._solve_families(instance, preview)
 
-        # add reminders as representations
+        # add remainders as representations
         for remainder in remainders:
             ext = remainder.split(".")[-1]
 
@@ -1057,7 +1057,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             }
             publish_job.update({"ftrack": ftrack})
 
-        metadata_path, roothless_metadata_path = self._create_metadata_path(
+        metadata_path, rootless_metadata_path = self._create_metadata_path(
             instance)
 
         self.log.info("Writing json file: {}".format(metadata_path))
