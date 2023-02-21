@@ -163,8 +163,7 @@ class ExtractPlayblast(publish.Extractor):
             path = capture.capture(log=self.log, **preset)
 
         # Restoring viewport options.
-        for key, value in viewport_defaults.items():
-            cmds.modelEditor(panel, edit=True, **{key: value})
+        cmds.modelEditor(panel, edit=True, **viewport_defaults)
 
         cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
 
