@@ -148,6 +148,7 @@ class CreateRenderlayer(TVPaintCreator):
     def create(self, subset_name, instance_data, pre_create_data):
         self.log.debug("Query data from workfile.")
 
+        group_name = instance_data["variant"]
         group_id = pre_create_data.get("group_id")
         # This creator should run only on one group
         if group_id is None or group_id == -1:
@@ -196,15 +197,10 @@ class CreateRenderlayer(TVPaintCreator):
         )
         self._store_new_instance(new_instance)
 
-        new_group_name = pre_create_data.get("group_name")
-        if not new_group_name or not group_id:
+        if not group_id or group_item["name"] == group_name:
             return new_instance
 
         self.log.debug("Changing name of the group.")
-
-        new_group_name = pre_create_data.get("group_name")
-        if not new_group_name or group_item["name"] == new_group_name:
-            return new_instance
         # Rename TVPaint group (keep color same)
         # - groups can't contain spaces
         rename_script = self.rename_script_template.format(
@@ -213,13 +209,13 @@ class CreateRenderlayer(TVPaintCreator):
             r=group_item["red"],
             g=group_item["green"],
             b=group_item["blue"],
-            name=new_group_name
+            name=group_name
         )
         execute_george_through_file(rename_script)
 
         self.log.info((
             f"Name of group with index {group_id}"
-            f" was changed to \"{new_group_name}\"."
+            f" was changed to \"{group_name}\"."
         ))
         return new_instance
 
@@ -255,11 +251,6 @@ class CreateRenderlayer(TVPaintCreator):
                 label="Group",
                 items=groups_enum
             ),
-            TextDef(
-                "group_name",
-                label="New group name",
-                placeholder="< Keep unchanged >"
-            ),
             BoolDef(
                 "mark_for_review",
                 label="Review",
@@ -283,9 +274,43 @@ class CreateRenderlayer(TVPaintCreator):
         ]
 
     def update_instances(self, update_list):
+        self._update_color_groups()
         self._update_renderpass_groups()
 
         super().update_instances(update_list)
+
+    def _update_color_groups(self):
+        render_layer_instances = []
+        for instance in self.create_context.instances:
+            if instance.creator_identifier == self.identifier:
+                render_layer_instances.append(instance)
+
+        if not render_layer_instances:
+            return
+
+        groups_by_id = {
+            group["group_id"]: group
+            for group in get_groups_data()
+        }
+        grg_script_lines = []
+        for instance in render_layer_instances:
+            group_id = instance["creator_attributes"]["group_id"]
+            variant = instance["variant"]
+            group = groups_by_id[group_id]
+            if group["name"] == variant:
+                continue
+
+            grg_script_lines.append(self.rename_script_template.format(
+                clip_id=group["clip_id"],
+                group_id=group["group_id"],
+                r=group["red"],
+                g=group["green"],
+                b=group["blue"],
+                name=variant
+            ))
+
+        if grg_script_lines:
+            execute_george_through_file("\n".join(grg_script_lines))
 
     def _update_renderpass_groups(self):
         render_layer_instances = {}
