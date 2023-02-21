@@ -20,6 +20,9 @@ class ValidateLayersGroup(pyblish.api.InstancePlugin):
         duplicated_layer_names = []
         for layer_name in layer_names:
             layers = layers_by_name.get(layer_name)
+            # It is not job of this validator to handle missing layers
+            if layers is None:
+                continue
             if len(layers) > 1:
                 duplicated_layer_names.append(layer_name)
 
