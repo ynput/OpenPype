@@ -1100,7 +1100,7 @@ def convert_colorspace(
         raise ValueError("Both screen and display must be set.")
 
     if additional_command_args:
-        oiio_cmd.extend(additional_command_args)
+        oiio_cmd.extend(split_cmd_args(additional_command_args))
 
     if target_colorspace:
         oiio_cmd.extend(["--colorconvert",
@@ -1114,3 +1114,21 @@ def convert_colorspace(
 
     logger.debug("Conversion command: {}".format(" ".join(oiio_cmd)))
     run_subprocess(oiio_cmd, logger=logger)
+
+
+def split_cmd_args(in_args):
+    """Makes sure all entered arguments are separated in individual items.
+
+    Split each argument string with " -" to identify if string contains
+    one or more arguments.
+    Args:
+        in_args (list): of arguments ['-n', '-d uint10']
+    Returns
+        (list): ['-n', '-d', 'unint10']
+    """
+    splitted_args = []
+    for arg in in_args:
+        if not arg.strip():
+            continue
+        splitted_args.extend(arg.split(" "))
+    return splitted_args
