@@ -22,6 +22,7 @@ from openpype.lib.transcoding import (
     should_convert_for_ffmpeg,
     convert_input_paths_for_ffmpeg,
     get_transcode_temp_directory,
+    split_cmd_args
 )
 
 
@@ -670,7 +671,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         res_filters = self.rescaling_filters(temp_data, output_def, new_repre)
         ffmpeg_video_filters.extend(res_filters)
 
-        ffmpeg_input_args = self.split_ffmpeg_args(ffmpeg_input_args)
+        ffmpeg_input_args = split_cmd_args(ffmpeg_input_args)
 
         lut_filters = self.lut_filters(new_repre, instance, ffmpeg_input_args)
         ffmpeg_video_filters.extend(lut_filters)
@@ -723,28 +724,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
             ffmpeg_output_args
         )
 
-    def split_ffmpeg_args(self, in_args):
-        """Makes sure all entered arguments are separated in individual items.
-
-        Split each argument string with " -" to identify if string contains
-        one or more arguments.
-        """
-        splitted_args = []
-        for arg in in_args:
-            sub_args = arg.split(" -")
-            if len(sub_args) == 1:
-                if arg and arg not in splitted_args:
-                    splitted_args.append(arg)
-                continue
-
-            for idx, arg in enumerate(sub_args):
-                if idx != 0:
-                    arg = "-" + arg
-
-                if arg and arg not in splitted_args:
-                    splitted_args.append(arg)
-        return splitted_args
-
     def ffmpeg_full_args(
         self, input_args, video_filters, audio_filters, output_args
     ):
@@ -764,7 +743,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         Returns:
             list: Containing all arguments ready to run in subprocess.
         """
-        output_args = self.split_ffmpeg_args(output_args)
+        output_args = split_cmd_args(output_args)
 
         video_args_dentifiers = ["-vf", "-filter:v"]
         audio_args_dentifiers = ["-af", "-filter:a"]
