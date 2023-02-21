@@ -119,6 +119,24 @@ class ExtractPlayblast(publish.Extractor):
         pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
         cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), False)
 
+        # Need to explicitly enable some viewport changes so the viewport is
+        # refreshed ahead of playblasting.
+        panel = cmds.getPanel(withFocus=True)
+        keys = [
+            "useDefaultMaterial",
+            "wireframeOnShaded",
+            "xray",
+            "jointXray",
+            "backfaceCulling"
+        ]
+        viewport_defaults = {}
+        for key in keys:
+            viewport_defaults[key] = cmds.modelEditor(
+                panel, query=True, **{key: True}
+            )
+            if preset["viewport_options"][key]:
+                cmds.modelEditor(panel, edit=True, **{key: True})
+
         with lib.maintained_time():
             filename = preset.get("filename", "%TEMP%")
 
@@ -138,6 +156,10 @@ class ExtractPlayblast(publish.Extractor):
                 cmds.setFocus(panel)
 
             path = capture.capture(log=self.log, **preset)
+
+        # Restoring viewport options.
+        for key, value in viewport_defaults.items():
+            cmds.modelEditor(panel, edit=True, **{key: value})
 
         cmds.setAttr("{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
 
