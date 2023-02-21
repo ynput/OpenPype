@@ -137,9 +137,9 @@ def set_framerange(startFrame, endFrame):
     """
     Note:
         Frame range can be specified in different types. Possible values are:
-   	    * `1` - Single frame.
-    	* `2` - Active time segment ( animationRange ).
-    	* `3` - User specified Range.
+        * `1` - Single frame.
+        * `2` - Active time segment ( animationRange ).
+        * `3` - User specified Range.
         * `4` - User specified Frame pickup string (for example `1,3,5-12`).
 
     Todo:

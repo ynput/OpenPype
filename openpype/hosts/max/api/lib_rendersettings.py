@@ -85,7 +85,7 @@ class RenderSettings(object):
             aov_separator = "."
         output_filename = "{0}..{1}".format(output, img_fmt)
         output_filename = output_filename.replace("{aov_separator}",
-                                                aov_separator)
+                                                  aov_separator)
         rt.rendOutputFilename = output_filename
         if renderer == "VUE_File_Renderer":
             return
