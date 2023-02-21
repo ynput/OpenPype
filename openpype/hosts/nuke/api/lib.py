@@ -49,7 +49,7 @@ from openpype.pipeline.colorspace import (
 )
 from openpype.pipeline.workfile import BuildWorkfile
 
-from . import gizmo_menu
+from . import gizmo_menu, ASSIST
 
 from .workio import (
     save_file,
@@ -2263,14 +2263,17 @@ class WorkfileSettings(object):
             node['frame_range'].setValue(range)
             node['frame_range_lock'].setValue(True)
 
-        set_node_data(
-            self._root_node,
-            INSTANCE_DATA_KNOB,
-            {
-                "handleStart": int(handle_start),
-                "handleEnd": int(handle_end)
-            }
-        )
+        if not ASSIST:
+            set_node_data(
+                self._root_node,
+                INSTANCE_DATA_KNOB,
+                {
+                    "handleStart": int(handle_start),
+                    "handleEnd": int(handle_end)
+                }
+            )
+        else:
+            log.warning("NukeAssist mode is not allowing updating custom knobs...")
 
     def reset_resolution(self):
         """Set resolution to project resolution."""
