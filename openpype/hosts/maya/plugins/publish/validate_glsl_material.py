@@ -111,95 +111,45 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
 
             # get the materials related to the selected assets
             for material in shading_grp:
-                pbs_shader = cmds.listConnections(material,
-                                                  destination=True,
-                                                  type="StingrayPBS")
-                if pbs_shader:
-                    cls.pbs_shader_conversion(pbs_shader, glsl)
-                # setting up to relink the texture if
-                # the mesh is with aiStandardSurface
-                arnold_shader = cmds.listConnections(material,
-                                                     destination=True,
-                                                     type="aiStandardSurface")
-                if arnold_shader:
-                    cls.arnold_shader_conversion(arnold_shader, glsl)
+                main_shader = cmds.listConnections(material,
+                                                   destination=True,
+                                                   type="StingrayPBS")
+
+                cls.log.info("StringrayPBS detected "
+                             "-> Can do texture conversion")
+
+                if main_shader:
+                    for shader in main_shader:
+                        # get the file textures related to the PBS Shader
+                        albedo = cmds.listConnections(shader +
+                                                      ".TEX_color_map")
+                        if albedo:
+                            dif_output = albedo[0] + ".outColor"
+                            # get the glsl_shader input
+                            # reconnect the file nodes to maya2gltf shader
+                            glsl_dif = glsl + ".u_BaseColorTexture"
+                            cmds.connectAttr(dif_output, glsl_dif)
+
+                        # connect orm map if there is one
+                        orm_packed = cmds.listConnections(shader +
+                                                          ".TEX_ao_map")
+                        if orm_packed:
+                            orm_output = orm_packed[0] + ".outColor"
+
+                            mtl = glsl + ".u_MetallicTexture"
+                            ao = glsl + ".u_OcclusionTexture"
+                            rough = glsl + ".u_RoughnessTexture"
+
+                            cmds.connectAttr(orm_output, mtl)
+                            cmds.connectAttr(orm_output, ao)
+                            cmds.connectAttr(orm_output, rough)
+
+                        # connect nrm map if there is one
+                        nrm = cmds.listConnections(shader +
+                                                   ".TEX_normal_map")
+                        if nrm:
+                            nrm_output = nrm[0] + ".outColor"
+                            glsl_nrm = glsl + ".u_NormalTexture"
+                            cmds.connectAttr(nrm_output, glsl_nrm)
 
             cmds.sets(mesh, forceElement=str(glsl_shading_grp))
-
-    def pbs_shader_conversion(cls, main_shader, glsl):
-
-        cls.log.info("StringrayPBS detected "
-                     "-> Can do texture conversion")
-
-        for shader in main_shader:
-            # get the file textures related to the PBS Shader
-            albedo = cmds.listConnections(shader +
-                                          ".TEX_color_map")
-            if albedo:
-                dif_output = albedo[0] + ".outColor"
-                # get the glsl_shader input
-                # reconnect the file nodes to maya2gltf shader
-                glsl_dif = glsl + ".u_BaseColorTexture"
-                cmds.connectAttr(dif_output, glsl_dif)
-
-            # connect orm map if there is one
-            orm_packed = cmds.listConnections(shader +
-                                              ".TEX_ao_map")
-            if orm_packed:
-                orm_output = orm_packed[0] + ".outColor"
-
-                mtl = glsl + ".u_MetallicTexture"
-                ao = glsl + ".u_OcclusionTexture"
-                rough = glsl + ".u_RoughnessTexture"
-
-                cmds.connectAttr(orm_output, mtl)
-                cmds.connectAttr(orm_output, ao)
-                cmds.connectAttr(orm_output, rough)
-
-            # connect nrm map if there is one
-            nrm = cmds.listConnections(shader +
-                                       ".TEX_normal_map")
-            if nrm:
-                nrm_output = nrm[0] + ".outColor"
-                glsl_nrm = glsl + ".u_NormalTexture"
-                cmds.connectAttr(nrm_output, glsl_nrm)
-
-    @classmethod
-    def arnold_shader_conversion(cls, main_shader, glsl):
-        cls.log.info("aiStandardSurface detected "
-                     "-> Can do texture conversion")
-
-        for shader in main_shader:
-            # get the file textures related to the PBS Shader
-            albedo = cmds.listConnections(shader + ".baseColor")
-            if albedo:
-                dif_output = albedo[0] + ".outColor"
-                # get the glsl_shader input
-                # reconnect the file nodes to maya2gltf shader
-                glsl_dif = glsl + ".u_BaseColorTexture"
-                cmds.connectAttr(dif_output, glsl_dif)
-
-            orm_packed = cmds.listConnections(shader +
-                                              ".specularRoughness")
-            if orm_packed:
-                orm_output = orm_packed[0] + ".outColor"
-
-                mtl = glsl + ".u_MetallicTexture"
-                ao = glsl + ".u_OcclusionTexture"
-                rough = glsl + ".u_RoughnessTexture"
-
-                cmds.connectAttr(orm_output, mtl)
-                cmds.connectAttr(orm_output, ao)
-                cmds.connectAttr(orm_output, rough)
-
-            # connect nrm map if there is one
-            bump_node = cmds.listConnections(shader +
-                                             ".normalCamera")
-            if bump_node:
-                for bump in bump_node:
-                    nrm = cmds.listConnections(bump +
-                                               ".bumpValue")
-                    if nrm:
-                        nrm_output = nrm[0] + ".outColor"
-                        glsl_nrm = glsl + ".u_NormalTexture"
-                        cmds.connectAttr(nrm_output, glsl_nrm)
