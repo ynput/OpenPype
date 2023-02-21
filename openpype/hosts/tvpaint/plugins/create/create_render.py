@@ -35,7 +35,7 @@ Todos:
 """
 
 import collections
-from typing import Any
+from typing import Any, Optional, Union
 
 from openpype.client import get_asset_by_name
 from openpype.lib import (
@@ -719,8 +719,9 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
         mark_for_review: bool,
         existing_instance: CreatedInstance | None=None,
     ) -> CreatedInstance | None:
-        match_group: dict[str, Any] | None = next(
+        match_group: Union[dict[str, Any], None] = next(
             (
+                group
                 for group in groups
                 if group["group_id"] == group_id
             ),
