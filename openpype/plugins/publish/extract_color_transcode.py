@@ -273,7 +273,7 @@ class ExtractOIIOTranscode(publish.Extractor):
             "families": family,
             "task_names": task_name,
             "task_types": task_type,
-            "subset": subset
+            "subsets": subset
         }
         profile = filter_profiles(self.profiles, filtering_criteria,
                                   logger=self.log)
