@@ -646,37 +646,19 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
     def _rename_groups(
         self,
         groups_order: list[int],
-        scene_groups: list[dict[str, Any]],
-        layers_by_group_id: dict[int, dict[str, Any]],
-        rename_only_visible: bool,
-    ) -> set[int]:
-        valid_group_ids: set[int] = set()
+        scene_groups: list[dict[str, Any]]
+    ):
         new_group_name_by_id: dict[int, str] = {}
         groups_by_id: dict[int, dict[str, Any]] = {
             group["group_id"]: group
             for group in scene_groups
         }
         # Count only renamed groups
-        group_idx: int = 1
-        for group_id in groups_order:
-            layers: list[dict[str, Any]] = layers_by_group_id[group_id]
-            if not layers:
-                continue
-
-            if (
-                rename_only_visible
-                and not any(
-                    layer
-                    for layer in layers
-                    if layer["visible"]
-                )
-            ):
-                continue
-            valid_group_ids.add(group_id)
+        for idx, group_id in enumerate(groups_order):
             group_index_value: str = (
                 "{{:0>{}}}"
                 .format(self.group_idx_padding)
-                .format(group_idx * self.group_idx_offset)
+                .format((idx + 1) * self.group_idx_offset)
             )
             group_name_fill_values: dict[str, str] = {
                 "groupIdx": group_index_value,
@@ -691,7 +673,6 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
             group: dict[str, Any] = groups_by_id[group_id]
             if group["name"] != group_name:
                 new_group_name_by_id[group_id] = group_name
-            group_idx += 1
 
         grg_lines: list[str] = []
         for group_id, group_name in new_group_name_by_id.items():
@@ -709,7 +690,6 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
 
         if grg_lines:
             execute_george_through_file("\n".join(grg_lines))
-        return valid_group_ids
 
     def _prepare_render_layer(
         self,
@@ -816,6 +796,30 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
             }
             creator.create(subset_name, instance_data, pre_create_data)
 
+    def _filter_groups(
+        self,
+        layers_by_group_id,
+        groups_order,
+        only_visible_groups
+    ):
+        new_groups_order = []
+        for group_id in groups_order:
+            layers: list[dict[str, Any]] = layers_by_group_id[group_id]
+            if not layers:
+                continue
+
+            if (
+                only_visible_groups
+                and not any(
+                    layer
+                    for layer in layers
+                    if layer["visible"]
+                )
+            ):
+                continue
+            new_groups_order.append(group_id)
+        return new_groups_order
+
     def create(self, subset_name, instance_data, pre_create_data):
         project_name: str = self.create_context.get_current_project_name()
         asset_name: str = instance_data["asset"]
@@ -865,42 +869,40 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
             "mark_passes_for_review", False
         )
         rename_groups = pre_create_data.get("rename_groups", False)
-        rename_only_visible = pre_create_data.get("rename_only_visible", False)
+        only_visible_groups = pre_create_data.get("only_visible_groups", False)
+        groups_order = self._filter_groups(
+            layers_by_group_id,
+            groups_order,
+            only_visible_groups
+        )
+        if not groups_order:
+            return
+
         if rename_groups:
-            valid_group_ids: set[int] = self._rename_groups(
-                groups_order,
-                scene_groups,
-                layers_by_group_id,
-                rename_only_visible
-            )
-        else:
-            valid_group_ids: set[int] = set(groups_order)
+            self._rename_groups(groups_order, scene_groups)
 
         # Make sure  all render layers are created
-        for group_id in layers_by_group_id.keys():
-            if group_id not in valid_group_ids:
-                continue
-            render_layer_instance: Union[CreatedInstance, None] = (
-                render_layers_by_group_id.get(group_id)
-            )
-
-            instance: Union[CreatedInstance, None] = self._prepare_render_layer(
-                project_name,
-                asset_doc,
-                task_name,
-                group_id,
-                scene_groups,
-                mark_layers_for_review,
-                render_layer_instance,
+        for group_id in groups_order:
+            instance: Union[CreatedInstance, None] = (
+                self._prepare_render_layer(
+                    project_name,
+                    asset_doc,
+                    task_name,
+                    group_id,
+                    scene_groups,
+                    mark_layers_for_review,
+                    render_layers_by_group_id.get(group_id),
+                )
             )
             if instance is not None:
                 render_layers_by_group_id[group_id] = instance
 
-        for group_id, layers in layers_by_group_id.items():
+        for group_id in groups_order:
+            layers: list[dict[str, Any]] = layers_by_group_id[group_id]
             render_layer_instance: Union[CreatedInstance, None] = (
                 render_layers_by_group_id.get(group_id)
             )
-            if render_layer_instance is None:
+            if not layers or render_layer_instance is None:
                 continue
 
             self._prepare_render_passes(
@@ -930,11 +932,11 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
                     default=True
                 ),
                 BoolDef(
-                    "rename_only_visible",
+                    "only_visible_groups",
                     label="Only visible color groups",
                     tooltip=(
-                        "Rename of groups will affect only groups with visible"
-                        " layers."
+                        "Render Layers and rename will happen only on color"
+                        " groups with visible layers."
                     ),
                     default=True
                 ),
