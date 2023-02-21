@@ -42,7 +42,11 @@
             "default_variants": []
         },
         "auto_detect_render": {
-            "enabled": false
+            "enabled": false,
+            "allow_group_rename": true,
+            "group_name_template": "L{group_index}",
+            "group_idx_offset": 10,
+            "group_idx_padding": 3
         }
     },
     "publish": {
