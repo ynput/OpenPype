@@ -6,6 +6,7 @@ from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder
 )
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
@@ -24,11 +25,11 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
     def process(self, instance):
         shading_grp = self.get_material_from_shapes(instance)
         if not shading_grp:
-            raise RuntimeError("No shading group found")
+            raise PublishValidationError("No shading group found")
         invalid = self.get_texture_shader_invalid(instance)
         if invalid:
-            raise RuntimeError("Non GLSL Shader found: "
-                               "{0}".format(invalid))
+            raise PublishValidationError("Non GLSL Shader found: "
+                                         "{0}".format(invalid))
 
     def get_material_from_shapes(self, instance):
         shapes = cmds.ls(instance, type="mesh", long=True)
@@ -100,8 +101,8 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                 # re-direct to search the ogsfx path in maya_dir
                 ogsfx_path = os.getenv("MAYA_APP_DIR") + ogsfx_path
                 if not os.path.exists(ogsfx_path):
-                    raise RuntimeError("The ogsfx shader file does not "
-                                       "exist: {}".format(ogsfx_path))
+                    raise PublishValidationError("The ogsfx shader file does not "
+                                                 "exist: {}".format(ogsfx_path))
 
             cmds.setAttr(glsl + ".shader", ogsfx_path, typ="string")
             # list the materials used for the assets
