@@ -7,7 +7,7 @@ from openpype.pipeline.publish import get_publish_repre_path
 class IntegrateShotgridPublish(pyblish.api.InstancePlugin):
     """
     Create published Files from representations and add it to version. If
-    representation is tagged add shotgrid review, it will add it in
+    representation is tagged as shotgrid review, it will add it in
     path to movie for a movie file or path to frame for an image sequence.
     """
 
