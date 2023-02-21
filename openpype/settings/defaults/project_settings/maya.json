@@ -412,6 +412,11 @@
             "optional": false,
             "active": true
         },
+        "ValidateGLSLPlugin": {
+            "enabled": true,
+            "optional": false,
+            "active": true
+        },
         "ValidateRenderImageRule": {
             "enabled": true,
             "optional": false,

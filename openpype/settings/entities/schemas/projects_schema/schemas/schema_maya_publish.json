@@ -413,6 +413,10 @@
                     "label": "Validate GLSL Material"
                 },
                 {
+                    "key": "ValidateGLSLPlugin",
+                    "label": "Validate GLSL Plugin"
+                },
+                {
                     "key": "ValidateRenderImageRule",
                     "label": "Validate Images File Rule (Workspace)"
                 },
