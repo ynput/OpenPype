@@ -412,7 +412,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             assert fn is not None, "padding string wasn't found"
             # list of tuples (source, destination)
             staging = representation.get("stagingDir")
-            staging = self.anatomy.fill_roots(staging)
+            staging = self.anatomy.fill_root(staging)
             resource_files.append(
                 (frame,
                  os.path.join(staging,
