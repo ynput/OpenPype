@@ -304,7 +304,7 @@ def publish_plugins_discover(paths=None):
                 continue
 
             try:
-                module = import_filepath(abspath)
+                module = import_filepath(abspath, mod_name)
 
                 # Store reference to original module, to avoid
                 # garbage collection from collecting it's global
