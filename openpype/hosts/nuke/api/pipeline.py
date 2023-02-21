@@ -71,7 +71,7 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 MENU_LABEL = os.environ["AVALON_LABEL"]
-
+ASSIST = bool(os.getenv("NUKEASSIST"))
 
 # registering pyblish gui regarding settings in presets
 if os.getenv("PYBLISH_GUI", None):
@@ -208,6 +208,7 @@ def get_workfile_build_placeholder_plugins():
 
 
 def _install_menu():
+
     # uninstall original avalon menu
     main_window = get_main_window()
     menubar = nuke.menu("Nuke")
@@ -218,7 +219,9 @@ def _install_menu():
     )
     Context.context_label = label
     context_action = menu.addCommand(label)
-    context_action.setEnabled(False)
+
+    if not ASSIST:
+        context_action.setEnabled(False)
 
     menu.addSeparator()
     menu.addCommand(
@@ -227,18 +230,20 @@ def _install_menu():
     )
 
     menu.addSeparator()
-    menu.addCommand(
-        "Create...",
-        lambda: host_tools.show_publisher(
-            tab="create"
+    if not ASSIST:
+        menu.addCommand(
+            "Create...",
+            lambda: host_tools.show_publisher(
+                tab="create"
+            )
         )
-    )
-    menu.addCommand(
-        "Publish...",
-        lambda: host_tools.show_publisher(
-            tab="publish"
+        menu.addCommand(
+            "Publish...",
+            lambda: host_tools.show_publisher(
+                tab="publish"
+            )
         )
-    )
+
     menu.addCommand(
         "Load...",
         lambda: host_tools.show_loader(
@@ -286,15 +291,18 @@ def _install_menu():
         "Build Workfile from template",
         lambda: build_workfile_template()
     )
-    menu_template.addSeparator()
-    menu_template.addCommand(
-        "Create Place Holder",
-        lambda: create_placeholder()
-    )
-    menu_template.addCommand(
-        "Update Place Holder",
-        lambda: update_placeholder()
-    )
+
+    if not ASSIST:
+        menu_template.addSeparator()
+        menu_template.addCommand(
+            "Create Place Holder",
+            lambda: create_placeholder()
+        )
+        menu_template.addCommand(
+            "Update Place Holder",
+            lambda: update_placeholder()
+        )
+
     menu.addSeparator()
     menu.addCommand(
         "Experimental tools...",
