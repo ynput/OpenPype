@@ -5,6 +5,7 @@ import logging
 from typing import List
 from contextlib import contextmanager
 import semver
+import time
 
 import pyblish.api
 
@@ -63,12 +64,21 @@ class UnrealHost(HostBase, ILoadHost, IPublishHost):
         show_tools_dialog()
 
     def update_context_data(self, data, changes):
-        unreal.log_warning("update_context_data")
-        unreal.log_warning(data)
         content_path = unreal.Paths.project_content_dir()
         op_ctx = content_path + CONTEXT_CONTAINER
-        with open(op_ctx, "w+") as f:
-            json.dump(data, f)
+        attempts = 3
+        for i in range(attempts):
+            try:
+                with open(op_ctx, "w+") as f:
+                    json.dump(data, f)
+                break
+            except IOError:
+                if i == attempts - 1:
+                    raise Exception("Failed to write context data. Aborting.")
+                unreal.log_warning("Failed to write context data. Retrying...")
+                i += 1
+                time.sleep(3)
+                continue
 
     def get_context_data(self):
         content_path = unreal.Paths.project_content_dir()
