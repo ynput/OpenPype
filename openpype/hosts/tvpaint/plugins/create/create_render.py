@@ -645,22 +645,21 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
 
     def _rename_groups(
         self,
-        groups_order,
-        scene_groups,
-        layers_by_group_id,
-        rename_only_visible,
-
-    ):
-        new_group_name_by_id = {}
-        groups_by_id = {
+        groups_order: list[int],
+        scene_groups: list[dict[str, Any]],
+        layers_by_group_id: dict[int, dict[str, Any]],
+        rename_only_visible: bool,
+    ) -> set[int]:
         valid_group_ids: set[int] = set()
+        new_group_name_by_id: dict[int, str] = {}
+        groups_by_id: dict[int, dict[str, Any]] = {
             group["group_id"]: group
             for group in scene_groups
         }
         # Count only renamed groups
-        group_idx = 1
+        group_idx: int = 1
         for group_id in groups_order:
-            layers = layers_by_group_id[group_id]
+            layers: list[dict[str, Any]] = layers_by_group_id[group_id]
             if not layers:
                 continue
 
@@ -679,25 +678,25 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
                 .format(self.group_idx_padding)
                 .format(group_idx * self.group_idx_offset)
             )
-            group_name_fill_values = {
+            group_name_fill_values: dict[str, str] = {
                 "groupIdx": group_index_value,
                 "groupidx": group_index_value,
                 "group_idx": group_index_value,
                 "group_index": group_index_value,
             }
 
-            group_name = self.group_name_template.format(
+            group_name: str = self.group_name_template.format(
                 **group_name_fill_values
             )
-            group = groups_by_id[group_id]
+            group: dict[str, Any] = groups_by_id[group_id]
             if group["name"] != group_name:
                 new_group_name_by_id[group_id] = group_name
             group_idx += 1
 
-        grg_lines = []
+        grg_lines: list[str] = []
         for group_id, group_name in new_group_name_by_id.items():
-            group = groups_by_id[group_id]
-            grg_line = "tv_layercolor \"setcolor\" {} {} {} {} {}".format(
+            group: dict[str, Any] = groups_by_id[group_id]
+            grg_line: str = "tv_layercolor \"setcolor\" {} {} {} {} {}".format(
                 group["clip_id"],
                 group_id,
                 group["red"],
@@ -720,8 +719,8 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
         group_id: int,
         groups: list[dict[str, Any]],
         mark_for_review: bool,
-        existing_instance: CreatedInstance | None=None,
-    ) -> CreatedInstance | None:
+        existing_instance: Optional[CreatedInstance]=None,
+    ) -> Union[CreatedInstance, None]:
         match_group: Union[dict[str, Any], None] = next(
             (
                 group
@@ -885,7 +884,7 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
                 render_layers_by_group_id.get(group_id)
             )
 
-            instance: CreatedInstance | None = self._prepare_render_layer(
+            instance: Union[CreatedInstance, None] = self._prepare_render_layer(
                 project_name,
                 asset_doc,
                 task_name,
@@ -898,7 +897,7 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
                 render_layers_by_group_id[group_id] = instance
 
         for group_id, layers in layers_by_group_id.items():
-            render_layer_instance: CreatedInstance | None = (
+            render_layer_instance: Union[CreatedInstance, None] = (
                 render_layers_by_group_id.get(group_id)
             )
             if render_layer_instance is None:
