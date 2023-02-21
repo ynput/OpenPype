@@ -204,6 +204,28 @@ def get_publish_template_name(
     return template or default_template
 
 
+class DiscoverResult:
+    """Hold result of publish plugins discovery.
+
+    Stores discovered plugins duplicated plugins and file paths which
+    crashed on execution of file.
+    """
+    def __init__(self):
+        self.plugins = []
+        self.crashed_file_paths = {}
+        self.duplicated_plugins = []
+
+    def __iter__(self):
+        for plugin in self.plugins:
+            yield plugin
+
+    def __getitem__(self, item):
+        return self.plugins[item]
+
+    def __setitem__(self, item, value):
+        self.plugins[item] = value
+
+
 class HelpContent:
     def __init__(self, title, description, detail=None):
         self.title = title
