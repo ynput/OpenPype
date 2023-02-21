@@ -55,7 +55,7 @@ Notable parameters:
 - **`Extension`** - target extension. If left empty, original extension is used.
 - **`Colorspace`** - target colorspace, which must be available in used color config.
 - **`Display & View`** - transcoding into colorspace or into display and viewer space could be used. Cannot use both `Colorspace` and `Display & View` at the same time.
-- **`Arguments`** - special additional command line arguments for `oiiotool`
+- **`Arguments`** - special additional command line arguments for `oiiotool`.
 
 
 Example here describes use case for creation of new color coded review of png image sequence. Original representation's files are kept intact, review is created from transcoded files, but these files are removed in cleanup process.
