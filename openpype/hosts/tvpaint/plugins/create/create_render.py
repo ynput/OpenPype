@@ -699,7 +699,7 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
         group_id: int,
         groups: list[dict[str, Any]],
         mark_for_review: bool,
-        existing_instance: Optional[CreatedInstance]=None,
+        existing_instance: Optional[CreatedInstance] = None,
     ) -> Union[CreatedInstance, None]:
         match_group: Union[dict[str, Any], None] = next(
             (
