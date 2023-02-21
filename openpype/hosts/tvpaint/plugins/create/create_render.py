@@ -40,6 +40,8 @@ from typing import Any
 from openpype.client import get_asset_by_name
 from openpype.lib import (
     prepare_template_data,
+    AbstractAttrDef,
+    UISeparatorDef,
     EnumDef,
     TextDef,
     BoolDef,
@@ -612,6 +614,8 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
     instances based on information in scene. Each used color group in scene
     will be created as Render Layer where group name is used as variant and
     each TVPaint layer as Render Pass where layer name is used as variant.
+
+    Never will have any instances, all instances belong to different creators.
     """
 
     family = "render"
@@ -621,6 +625,10 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
 
     # Settings
     enabled = False
+    allow_group_rename = True
+    group_name_template = "L{group_index}"
+    group_idx_offset = 10
+    group_idx_padding = 3
 
     def apply_settings(self, project_settings, system_settings):
         plugin_settings = (
@@ -630,75 +638,73 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
             ["auto_detect_render"]
         )
         self.enabled = plugin_settings["enabled"]
+        self.allow_group_rename = plugin_settings["allow_group_rename"]
 
-    def create(self, subset_name, instance_data, pre_create_data):
-        project_name: str = self.create_context.get_current_project_name()
-        asset_name: str = instance_data["asset"]
-        task_name: str = instance_data["task"]
-        asset_doc: dict[str, Any] = get_asset_by_name(project_name, asset_name)
+    def _rename_groups(
+        self,
+        groups_order,
+        scene_groups,
+        layers_by_group_id,
+        rename_only_visible,
 
-        render_layers_by_group_id: dict[int, CreatedInstance] = {}
-        render_passes_by_render_layer_id: dict[int, CreatedInstance] = (
-            collections.defaultdict(list)
-        )
-        for instance in self.create_context.instances:
-            if instance.creator_identifier == CreateRenderlayer.identifier:
-                group_id = instance["creator_attributes"]["group_id"]
-                render_layers_by_group_id[group_id] = instance
-            elif instance.creator_identifier == CreateRenderPass.identifier:
-                render_layer_id = (
-                    instance
-                    ["creator_attributes"]
-                    ["render_layer_instance_id"]
-                )
-                render_passes_by_render_layer_id[render_layer_id].append(
-                    instance
-                )
-
-        layers_by_group_id: dict[int, list[dict[str, Any]]] = (
-            collections.defaultdict(list)
-        )
-        scene_layers: list[dict[str, Any]] = get_layers_data()
-        scene_groups: list[dict[str, Any]] = get_groups_data()
-        for layer in scene_layers:
-            group_id: int = layer["group_id"]
-            layers_by_group_id[group_id].append(layer)
-
-        # Remove '0' (default) group
-        layers_by_group_id.pop(0, None)
-
-        # Make sure  all render layers are created
-        for group_id in layers_by_group_id.keys():
-            render_layer_instance: CreatedInstance | None = (
-                render_layers_by_group_id.get(group_id)
-            )
-
-            instance: CreatedInstance | None = self._prepare_render_layer(
-                project_name,
-                asset_doc,
-                task_name,
-                group_id,
-                scene_groups,
-                render_layer_instance
-            )
-            if instance is not None:
-                render_layers_by_group_id[group_id] = instance
-
-        for group_id, layers in layers_by_group_id.items():
-            render_layer_instance: CreatedInstance | None = (
-                render_layers_by_group_id.get(group_id)
-            )
-            if render_layer_instance is not None:
+    ):
+        new_group_name_by_id = {}
+        groups_by_id = {
+            group["group_id"]: group
+            for group in scene_groups
+        }
+        # Count only renamed groups
+        group_idx = 1
+        for group_id in groups_order:
+            layers = layers_by_group_id[group_id]
+            if not layers:
                 continue
 
-            self._prepare_render_passes(
-                project_name,
-                asset_doc,
-                task_name,
-                render_layer_instance,
-                layers,
-                render_passes_by_render_layer_id[render_layer_instance.id]
+            if (
+                rename_only_visible
+                and not any(
+                    layer
+                    for layer in layers
+                    if layer["visible"]
+                )
+            ):
+                continue
+            group_index_value = (
+                "{{:0<{}}}"
+                .format(self.group_idx_padding)
+                .format(group_idx * self.group_idx_offset)
             )
+            group_name_fill_values = {
+                "groupIdx": group_index_value,
+                "groupidx": group_index_value,
+                "group_idx": group_index_value,
+                "group_index": group_index_value,
+            }
+
+            group_name = self.group_name_template.format(
+                **group_name_fill_values
+            )
+            group = groups_by_id[group_id]
+            if group["name"] != group_name:
+                new_group_name_by_id[group_id] = group_name
+            group_idx += 1
+
+        grg_lines = []
+        for group_id, group_name in new_group_name_by_id.items():
+            group = groups_by_id[group_id]
+            grg_line = "tv_layercolor \"setcolor\" {} {} {} {} {}".format(
+                group["clip_id"],
+                group_id,
+                group["red"],
+                group["green"],
+                group["blue"],
+                group_name
+            )
+            grg_lines.append(grg_line)
+            group["name"] = group_name
+
+        if grg_lines:
+            execute_george_through_file(grg_lines)
 
     def _prepare_render_layer(
         self,
@@ -707,7 +713,8 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
         task_name: str,
         group_id: int,
         groups: list[dict[str, Any]],
-        existing_instance: CreatedInstance | None=None
+        mark_for_review: bool,
+        existing_instance: CreatedInstance | None=None,
     ) -> CreatedInstance | None:
         match_group: dict[str, Any] | None = next(
             (
@@ -744,7 +751,8 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
             "variant": variant
         }
         pre_create_data: dict[str, str] = {
-            "group_id": group_id
+            "group_id": group_id,
+            "mark_for_review": mark_for_review
         }
         return creator.create(subset_name, instance_data, pre_create_data)
 
@@ -755,6 +763,7 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
         task_name: str,
         render_layer_instance: CreatedInstance,
         layers: list[dict[str, Any]],
+        mark_for_review: bool,
         existing_render_passes: list[CreatedInstance]
     ):
         creator: CreateRenderPass = (
@@ -796,9 +805,142 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
             }
             pre_create_data: dict[str, Any] = {
                 "render_layer_instance_id": render_layer_instance.id,
-                "layer_names": [layer_name]
+                "layer_names": [layer_name],
+                "mark_for_review": mark_for_review
             }
             creator.create(subset_name, instance_data, pre_create_data)
+
+    def create(self, subset_name, instance_data, pre_create_data):
+        project_name: str = self.create_context.get_current_project_name()
+        asset_name: str = instance_data["asset"]
+        task_name: str = instance_data["task"]
+        asset_doc: dict[str, Any] = get_asset_by_name(project_name, asset_name)
+
+        render_layers_by_group_id: dict[int, CreatedInstance] = {}
+        render_passes_by_render_layer_id: dict[int, list[CreatedInstance]] = (
+            collections.defaultdict(list)
+        )
+        for instance in self.create_context.instances:
+            if instance.creator_identifier == CreateRenderlayer.identifier:
+                group_id = instance["creator_attributes"]["group_id"]
+                render_layers_by_group_id[group_id] = instance
+            elif instance.creator_identifier == CreateRenderPass.identifier:
+                render_layer_id = (
+                    instance
+                    ["creator_attributes"]
+                    ["render_layer_instance_id"]
+                )
+                render_passes_by_render_layer_id[render_layer_id].append(
+                    instance
+                )
+
+        layers_by_group_id: dict[int, list[dict[str, Any]]] = (
+            collections.defaultdict(list)
+        )
+        scene_layers: list[dict[str, Any]] = get_layers_data()
+        scene_groups: list[dict[str, Any]] = get_groups_data()
+        groups_order: list[int] = []
+        for layer in scene_layers:
+            group_id: int = layer["group_id"]
+            # Skip 'default' group
+            if group_id == 0:
+                continue
+
+            layers_by_group_id[group_id].append(layer)
+            if group_id not in groups_order:
+                groups_order.append(group_id)
+
+        mark_layers_for_review = pre_create_data.get(
+            "mark_layers_for_review", False
+        )
+        mark_passes_for_review = pre_create_data.get(
+            "mark_passes_for_review", False
+        )
+        rename_groups = pre_create_data.get("rename_groups", False)
+        rename_only_visible = pre_create_data.get("rename_only_visible", False)
+        if rename_groups:
+            self._rename_groups(
+                groups_order,
+                scene_groups,
+                layers_by_group_id,
+                rename_only_visible
+            )
+
+        # Make sure  all render layers are created
+        for group_id in layers_by_group_id.keys():
+            render_layer_instance: CreatedInstance | None = (
+                render_layers_by_group_id.get(group_id)
+            )
+
+            instance: CreatedInstance | None = self._prepare_render_layer(
+                project_name,
+                asset_doc,
+                task_name,
+                group_id,
+                scene_groups,
+                mark_layers_for_review,
+                render_layer_instance,
+            )
+            if instance is not None:
+                render_layers_by_group_id[group_id] = instance
+
+        for group_id, layers in layers_by_group_id.items():
+            render_layer_instance: CreatedInstance | None = (
+                render_layers_by_group_id.get(group_id)
+            )
+            if render_layer_instance is not None:
+                continue
+
+            self._prepare_render_passes(
+                project_name,
+                asset_doc,
+                task_name,
+                render_layer_instance,
+                layers,
+                mark_passes_for_review,
+                render_passes_by_render_layer_id[render_layer_instance.id]
+            )
+
+    def get_pre_create_attr_defs(self) -> list[AbstractAttrDef]:
+        render_layer_creator: CreateRenderlayer = (
+            self.create_context.creators[CreateRenderlayer.identifier]
+        )
+        render_pass_creator: CreateRenderPass = (
+            self.create_context.creators[CreateRenderPass.identifier]
+        )
+        output = []
+        if self.allow_group_rename:
+            output.extend([
+                BoolDef(
+                    "rename_groups",
+                    label="Rename color groups",
+                    tooltip="Will rename color groups using studio template",
+                    default=True
+                ),
+                BoolDef(
+                    "rename_only_visible",
+                    label="Only visible color groups",
+                    tooltip=(
+                        "Rename of groups will affect only groups with visible"
+                        " layers."
+                    ),
+                    default=True
+                ),
+                UISeparatorDef()
+            ])
+        output.extend([
+            BoolDef(
+                "mark_layers_for_review",
+                label="Mark RenderLayers for review",
+                default=render_layer_creator.mark_for_review
+            ),
+            BoolDef(
+                "mark_passes_for_review",
+                label="Mark RenderPasses for review",
+                default=render_pass_creator.mark_for_review
+            )
+        ])
+        return output
 
 
 class TVPaintSceneRenderCreator(TVPaintAutoCreator):
