@@ -101,9 +101,8 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                 # re-direct to search the ogsfx path in maya_dir
                 ogsfx_path = os.getenv("MAYA_APP_DIR") + ogsfx_path
                 if not os.path.exists(ogsfx_path):
-                    raise PublishValidationError("The ogsfx shader "
-                                                 "file does not "
-                                                 "exist: {}".format(ogsfx_path))
+                    raise PublishValidationError("The ogsfx shader file does not "      # noqa
+                                                 "exist: {}".format(ogsfx_path))        # noqa
 
             cmds.setAttr(glsl + ".shader", ogsfx_path, typ="string")
             # list the materials used for the assets
