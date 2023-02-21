@@ -39,7 +39,7 @@ class ExtractCamera(publish.Extractor):
             data = ar.get_asset_by_object_path(member)
             if UNREAL_VERSION.major == 5:
                 is_level_sequence = (
-                        data.asset_class_path.asset_name == "LevelSequence")
+                    data.asset_class_path.asset_name == "LevelSequence")
             else:
                 is_level_sequence = (data.asset_class == "LevelSequence")
 
