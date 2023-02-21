@@ -116,7 +116,9 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                                                   type="StingrayPBS")
                 if pbs_shader:
                     cls.pbs_shader_conversion(pbs_shader, glsl)
-                #setting up to relink the texture if
+
+                    cmds.sets(mesh, forceElement=str(glsl_shading_grp))
+                # setting up to relink the texture if
                 # the mesh is with aiStandardSurface
                 arnold_shader = cmds.listConnections(material,
                                                      destination=True,
@@ -124,7 +126,7 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                 if arnold_shader:
                     cls.arnold_shader_conversion(arnold_shader, glsl)
 
-            cmds.sets(mesh, forceElement=str(glsl_shading_grp))
+                    cmds.sets(mesh, forceElement=str(glsl_shading_grp))
 
     @classmethod
     def pbs_shader_conversion(cls, main_shader, glsl):
@@ -172,8 +174,7 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
 
         for shader in main_shader:
             # get the file textures related to the PBS Shader
-            albedo = cmds.listConnections(shader +
-                                          ".baseColor")
+            albedo = cmds.listConnections(shader + ".baseColor")
             if albedo:
                 dif_output = albedo[0] + ".outColor"
                 # get the glsl_shader input
@@ -197,12 +198,11 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
             # connect nrm map if there is one
             bump_node = cmds.listConnections(shader +
                                              ".normalCamera")
-            if not bump_node:
-                return
-            for bump in bump_node:
-                nrm = cmds.listConnections(bump +
-                                           ".bumpValue")
-                if nrm:
-                    nrm_output = nrm[0] + ".outColor"
-                    glsl_nrm = glsl + ".u_NormalTexture"
-                    cmds.connectAttr(nrm_output, glsl_nrm)
+            if bump_node:
+                for bump in bump_node:
+                    nrm = cmds.listConnections(bump +
+                                            ".bumpValue")
+                    if nrm:
+                        nrm_output = nrm[0] + ".outColor"
+                        glsl_nrm = glsl + ".u_NormalTexture"
+                        cmds.connectAttr(nrm_output, glsl_nrm)
