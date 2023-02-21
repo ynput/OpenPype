@@ -694,7 +694,7 @@ def get_publish_repre_path(instance, repre, only_published=False):
 
     # Expand the staging dir path in case it's been stored with the root
     # template syntax
-    anatomy = instance.context.data.get("anatomy")
+    anatomy = instance.context.data["anatomy"]
     staging_dir = anatomy.fill_root(staging_dir)
 
     src_path = os.path.normpath(os.path.join(staging_dir, filename))
