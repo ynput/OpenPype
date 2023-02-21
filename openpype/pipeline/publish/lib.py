@@ -5,6 +5,7 @@ import inspect
 import copy
 import tempfile
 import xml.etree.ElementTree
+import importlib
 
 import six
 import pyblish.plugin
@@ -305,8 +306,15 @@ def publish_plugins_discover(paths=None):
             module.__file__ = abspath
 
             try:
-                with open(abspath, "rb") as f:
-                    six.exec_(f.read(), module.__dict__)
+                if six.PY3:
+                    # Use loader so module has full specs
+                    module_loader = importlib.machinery.SourceFileLoader(
+                        mod_name, abspath
+                    )
+                    module_loader.exec_module(module)
+                else:
+                    with open(abspath, "rb") as f:
+                        six.exec_(f.read(), module.__dict__)
 
                 # Store reference to original module, to avoid
                 # garbage collection from collecting it's global
