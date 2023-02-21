@@ -46,7 +46,7 @@ The **colorspace name** value is a raw string input and no validation is run aft
 :::
 
 ### Extract OIIO Transcode
-There is profile configurable (see lower) plugin which allows to transcode any incoming representation to one or multiple new representations (configured in `Output Definitions`) with different target colorspaces.
+There is profile configurable plugin which allows to transcode any incoming representation to one or multiple new representations (configured in `Output Definitions`) with different target colorspaces.
 Plugin expects instances with filled dictionary `colorspaceData` on a representation. This data contains information about source colorspace and must be collected for transcoding.
 `oiiotool` is used for transcoding, eg. `oiiotool` must be present in `vendor/bin/oiio` or environment variable `OPENPYPE_OIIO_PATHS` must be provided for custom oiio installation.
 
