@@ -217,12 +217,9 @@ class UnrealActorCreator(UnrealBaseCreator):
             # Check if instance data has members, filled by the plugin.
             # If not, use selection.
             if not instance_data.get("members"):
-                selection = []
-
-                if pre_create_data.get("use_selection"):
-                    utility_lib = unreal.EditorUtilityLibrary
-                    sel_objects = utility_lib.get_selected_assets()
-                    selection = [a.get_path_name() for a in sel_objects]
+                actor_subsystem = unreal.EditorActorSubsystem()
+                sel_actors = actor_subsystem.get_selected_level_actors()
+                selection = [a.get_path_name() for a in sel_actors]
 
                 instance_data["members"] = selection
 
