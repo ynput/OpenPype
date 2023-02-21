@@ -1,3 +1,4 @@
+import os
 from .workio import (
     file_extensions,
     has_unsaved_changes,
@@ -51,6 +52,8 @@ from .utils import (
     get_colorspace_list
 )
 
+ASSIST = bool(os.getenv("NUKEASSIST"))
+
 __all__ = (
     "file_extensions",
     "has_unsaved_changes",
@@ -95,5 +98,7 @@ __all__ = (
     "create_write_node",
 
     "colorspace_exists_on_node",
-    "get_colorspace_list"
+    "get_colorspace_list",
+
+    "ASSIST"
 )

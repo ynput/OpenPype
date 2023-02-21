@@ -60,6 +60,7 @@ from .workio import (
     work_root,
     current_file
 )
+from . import ASSIST
 
 log = Logger.get_logger(__name__)
 
@@ -71,7 +72,6 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 MENU_LABEL = os.environ["AVALON_LABEL"]
-ASSIST = bool(os.getenv("NUKEASSIST"))
 
 # registering pyblish gui regarding settings in presets
 if os.getenv("PYBLISH_GUI", None):
