@@ -14,7 +14,7 @@ class CollectRender(pyblish.api.InstancePlugin):
     """Collect Render for Deadline"""
 
     order = pyblish.api.CollectorOrder + 0.01
-    label = "Collect 3dmax Render Layers"
+    label = "Collect 3dsmax Render Layers"
     hosts = ['max']
     families = ["maxrender"]
 

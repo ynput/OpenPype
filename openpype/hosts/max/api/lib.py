@@ -135,17 +135,14 @@ def get_default_render_folder(project_setting=None):
 
 def set_framerange(startFrame, endFrame):
     """
-    Args:
-        start_frame (int): Start frame number.
-        end_frame (int): End frame number.
     Note:
         Frame range can be specified in different types. Possible values are:
+   	    * `1` - Single frame.
+    	* `2` - Active time segment ( animationRange ).
+    	* `3` - User specified Range.
+        * `4` - User specified Frame pickup string (for example `1,3,5-12`).
 
-    * `1` - Single frame.
-    * `2` - Active time segment ( animationRange ).
-    * `3` - User specified Range.
-    * `4` - User specified Frame pickup string (for example `1,3,5-12`).
-    TODO:
+    Todo:
         Current type is hard-coded, there should be a custom setting for this.
     """
     rt.rendTimeType = 4

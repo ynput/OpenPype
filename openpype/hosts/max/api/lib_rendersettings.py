@@ -23,6 +23,11 @@ class RenderSettings(object):
     }
 
     def __init__(self, project_settings=None):
+        """
+        Set up the naming convention for the render
+        elements for the deadline submission
+        """
+
         self._project_settings = project_settings
         if not self._project_settings:
             self._project_settings = get_project_settings(
@@ -61,9 +66,9 @@ class RenderSettings(object):
         width = context["data"].get("resolutionWidth")
         height = context["data"].get("resolutionHeight")
         # Set Frame Range
-        startFrame = context["data"].get("frameStart")
-        endFrame = context["data"].get("frameEnd")
-        set_framerange(startFrame, endFrame)
+        frame_start = context["data"].get("frame_start")
+        frame_end = context["data"].get("frame_end")
+        set_framerange(frame_start, frame_end)
         # get the production render
         renderer_class = get_current_renderer()
         renderer = str(renderer_class).split(":")[0]
@@ -78,24 +83,24 @@ class RenderSettings(object):
             )]
         except KeyError:
             aov_separator = "."
-        outputFilename = "{0}..{1}".format(output, img_fmt)
-        outputFilename = outputFilename.replace("{aov_separator}",
+        output_filename = "{0}..{1}".format(output, img_fmt)
+        output_filename = output_filename.replace("{aov_separator}",
                                                 aov_separator)
-        rt.rendOutputFilename = outputFilename
+        rt.rendOutputFilename = output_filename
         if renderer == "VUE_File_Renderer":
             return
         # TODO: Finish the arnold render setup
         if renderer == "Arnold":
             self.arnold_setup()
 
-        if (
-            renderer == "ART_Renderer" or
-            renderer == "Redshift_Renderer" or
-            renderer == "V_Ray_6_Hotfix_3" or
-            renderer == "V_Ray_GPU_6_Hotfix_3" or
-            renderer == "Default_Scanline_Renderer" or
-            renderer == "Quicksilver_Hardware_Renderer"
-        ):
+        if renderer in [
+            "ART_Renderer",
+            "Redshift_Renderer",
+            "V_Ray_6_Hotfix_3",
+            "V_Ray_GPU_6_Hotfix_3",
+            "Default_Scanline_Renderer",
+            "Quicksilver_Hardware_Renderer",
+        ]:
             self.render_element_layer(output, width, height, img_fmt)
 
         rt.rendSaveFile = True
@@ -146,11 +151,11 @@ class RenderSettings(object):
     def get_render_output(self, container, output_dir):
         output = os.path.join(output_dir, container)
         img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa
-        outputFilename = "{0}..{1}".format(output, img_fmt)
-        return outputFilename
+        output_filename = "{0}..{1}".format(output, img_fmt)
+        return output_filename
 
     def get_render_element(self):
-        orig_render_elem = list()
+        orig_render_elem = []
         render_elem = rt.maxOps.GetCurRenderElementMgr()
         render_elem_num = render_elem.NumRenderElements()
         if render_elem_num < 0:

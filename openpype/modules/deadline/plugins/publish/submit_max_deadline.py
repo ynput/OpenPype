@@ -160,11 +160,11 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         }
 
         self.log.debug("Submitting 3dsMax render..")
-        payload = self._use_puhlished_name(payload_data)
+        payload = self._use_published_name(payload_data)
         job_info, plugin_info = payload
         self.submit(self.assemble_payload(job_info, plugin_info))
 
-    def _use_puhlished_name(self, data):
+    def _use_published_name(self, data):
         instance = self._instance
         job_info = copy.deepcopy(self.job_info)
         plugin_info = copy.deepcopy(self.plugin_info)
@@ -199,14 +199,14 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         renderer_class = get_current_renderer()
         renderer = str(renderer_class).split(":")[0]
-        if (
-            renderer == "ART_Renderer" or
-            renderer == "Redshift_Renderer" or
-            renderer == "V_Ray_6_Hotfix_3" or
-            renderer == "V_Ray_GPU_6_Hotfix_3" or
-            renderer == "Default_Scanline_Renderer" or
-            renderer == "Quicksilver_Hardware_Renderer"
-        ):
+        if renderer in [
+            "ART_Renderer",
+            "Redshift_Renderer",
+            "V_Ray_6_Hotfix_3",
+            "V_Ray_GPU_6_Hotfix_3",
+            "Default_Scanline_Renderer",
+            "Quicksilver_Hardware_Renderer",
+        ]:
             render_elem_list = RenderSettings().get_render_element()
             for i, element in enumerate(render_elem_list):
                 element = element.replace(orig_scene, new_scene)

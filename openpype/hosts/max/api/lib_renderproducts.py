@@ -45,28 +45,25 @@ class RenderProducts(object):
         if renderer == "VUE_File_Renderer":
             return full_render_list
 
-        if (
-            renderer == "ART_Renderer" or
-            renderer == "Redshift_Renderer" or
-            renderer == "V_Ray_6_Hotfix_3" or
-            renderer == "V_Ray_GPU_6_Hotfix_3" or
-            renderer == "Default_Scanline_Renderer" or
-            renderer == "Quicksilver_Hardware_Renderer"
-        ):
+        if renderer in [
+            "ART_Renderer",
+            "Redshift_Renderer",
+            "V_Ray_6_Hotfix_3",
+            "V_Ray_GPU_6_Hotfix_3",
+            "Default_Scanline_Renderer",
+            "Quicksilver_Hardware_Renderer",
+        ]:
             render_elem_list = self.render_elements_product(output_file,
                                                             img_fmt)
             if render_elem_list:
-                for render_elem in render_elem_list:
-                    full_render_list.append(render_elem)
-
+                full_render_list.extend(iter(render_elem_list))
             return full_render_list
 
         if renderer == "Arnold":
             aov_list = self.arnold_render_product(output_file,
                                                   img_fmt)
             if aov_list:
-                for aov in aov_list:
-                    full_render_list.append(aov)
+                full_render_list.extend(iter(aov_list))
             return full_render_list
 
     def beauty_render_product(self, folder, fmt):
