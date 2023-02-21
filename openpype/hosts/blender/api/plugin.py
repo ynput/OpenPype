@@ -122,8 +122,10 @@ def remove_container_datablocks(container: OpenpypeContainer):
     for d_ref in container.datablock_refs:
         if d_ref.datablock:
             datapath = getattr(
-                bpy.data, BL_TYPE_DATAPATH.get(type(d_ref.datablock))
+                bpy.data, BL_TYPE_DATAPATH.get(type(d_ref.datablock), ""), None
             )
+            if not datapath:
+                continue
             d_ref.datablock.use_fake_user = False
             datapath.remove(d_ref.datablock)
 
@@ -1175,11 +1177,12 @@ class AssetLoader(Loader):
 
             # Substitute library to keep reference
             # if purged because duplicate references
-            container.library = (
-                container.outliner_entity.override_library.reference.library
-                if self.load_type == "LINK"
-                else container.outliner_entity.instance_collection.library
-            )
+            if container.outliner_entity:
+                container.library = (
+                    container.outliner_entity.override_library.reference.library
+                    if self.load_type == "LINK"
+                    else container.outliner_entity.instance_collection.library
+                )
 
             datablocks = [
                 d_ref.datablock for d_ref in container.datablock_refs
