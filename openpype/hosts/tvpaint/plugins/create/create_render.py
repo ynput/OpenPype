@@ -513,9 +513,9 @@ class CreateRenderPass(TVPaintCreator):
         instance_data["group"] = f"{self.get_group_label()} ({render_layer})"
         instance_data["layer_names"] = list(marked_layer_names)
         if "creator_attributes" not in instance_data:
-            instance_data["creator_attribtues"] = {}
+            instance_data["creator_attributes"] = {}
 
-        creator_attributes = instance_data["creator_attribtues"]
+        creator_attributes = instance_data["creator_attributes"]
         mark_for_review = pre_create_data.get("mark_for_review")
         if mark_for_review is None:
             mark_for_review = self.mark_for_review
