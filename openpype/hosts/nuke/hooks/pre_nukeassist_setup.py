@@ -7,4 +7,4 @@ class PrelaunchNukeAssistHook(PreLaunchHook):
     app_groups = ["nukeassist"]
 
     def execute(self):
-        self.launch_context.env["NUKEASSIST"] = True
+        self.launch_context.env["NUKEASSIST"] = "1"
