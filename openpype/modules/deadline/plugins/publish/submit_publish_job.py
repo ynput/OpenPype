@@ -677,7 +677,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "name": ext,
                 "ext": ext,
                 "files": os.path.basename(remainder),
-                "stagingDir": os.path.dirname(remainder),
+                "stagingDir": staging,
             }
 
             preview = match_aov_pattern(
