@@ -294,7 +294,7 @@
                                             "children": [
                                                 {
                                                     "key": "additional_command_args",
-                                                    "label": "Additional command line arguments",
+                                                    "label": "Arguments",
                                                     "type": "list",
                                                     "object_type": "text"
                                                 }
