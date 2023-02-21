@@ -22,6 +22,8 @@ class ExtractGLB(publish.Extractor):
 
         self.log.info("Extracting GLB to: {}".format(path))
 
+        cmds.loadPlugin("maya2glTF", quiet=True)
+
         nodes = instance[:]
 
         self.log.info("Instance: {0}".format(nodes))
