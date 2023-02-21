@@ -653,6 +653,7 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
     ):
         new_group_name_by_id = {}
         groups_by_id = {
+        valid_group_ids: set[int] = set()
             group["group_id"]: group
             for group in scene_groups
         }
@@ -672,7 +673,8 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
                 )
             ):
                 continue
-            group_index_value = (
+            valid_group_ids.add(group_id)
+            group_index_value: str = (
                 "{{:0>{}}}"
                 .format(self.group_idx_padding)
                 .format(group_idx * self.group_idx_offset)
@@ -708,6 +710,7 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
 
         if grg_lines:
             execute_george_through_file("\n".join(grg_lines))
+        return valid_group_ids
 
     def _prepare_render_layer(
         self,
@@ -865,16 +868,20 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
         rename_groups = pre_create_data.get("rename_groups", False)
         rename_only_visible = pre_create_data.get("rename_only_visible", False)
         if rename_groups:
-            self._rename_groups(
+            valid_group_ids: set[int] = self._rename_groups(
                 groups_order,
                 scene_groups,
                 layers_by_group_id,
                 rename_only_visible
             )
+        else:
+            valid_group_ids: set[int] = set(groups_order)
 
         # Make sure  all render layers are created
         for group_id in layers_by_group_id.keys():
-            render_layer_instance: CreatedInstance | None = (
+            if group_id not in valid_group_ids:
+                continue
+            render_layer_instance: Union[CreatedInstance, None] = (
                 render_layers_by_group_id.get(group_id)
             )
 
