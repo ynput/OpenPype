@@ -49,7 +49,8 @@ from openpype.pipeline.colorspace import (
 )
 from openpype.pipeline.workfile import BuildWorkfile
 
-from . import gizmo_menu, ASSIST
+from . import gizmo_menu
+from .utils import ASSIST
 
 from .workio import (
     save_file,

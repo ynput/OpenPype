@@ -60,7 +60,7 @@ from .workio import (
     work_root,
     current_file
 )
-from . import ASSIST
+from .utils import ASSIST
 
 log = Logger.get_logger(__name__)
 
