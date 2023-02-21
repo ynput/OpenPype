@@ -200,7 +200,7 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
             if bump_node:
                 for bump in bump_node:
                     nrm = cmds.listConnections(bump +
-                                            ".bumpValue")
+                                               ".bumpValue")
                     if nrm:
                         nrm_output = nrm[0] + ".outColor"
                         glsl_nrm = glsl + ".u_NormalTexture"
