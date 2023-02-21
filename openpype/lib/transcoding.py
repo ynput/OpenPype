@@ -1100,7 +1100,7 @@ def convert_colorspace(
         raise ValueError("Both screen and display must be set.")
 
     if additional_command_args:
-        oiio_cmd.extend(split_cmd_args(additional_command_args))
+        oiio_cmd.extend(additional_command_args)
 
     if target_colorspace:
         oiio_cmd.extend(["--colorconvert",
@@ -1132,3 +1132,4 @@ def split_cmd_args(in_args):
             continue
         splitted_args.extend(arg.split(" "))
     return splitted_args
+
