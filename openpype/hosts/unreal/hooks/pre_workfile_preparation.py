@@ -79,9 +79,9 @@ class UnrealPrelaunchHook(PreLaunchHook):
         unreal_project_name = os.path.splitext(unreal_project_filename)[0]
         # Unreal is sensitive about project names longer then 20 chars
         if len(unreal_project_name) > 20:
-            self.log.warning((
-                f"Project name exceed 20 characters ({unreal_project_name})!"
-            ))
+            raise ApplicationLaunchFailed(
+                f"Project name exceeds 20 characters ({unreal_project_name})!"
+            )
 
         # Unreal doesn't accept non alphabet characters at the start
         # of the project name. This is because project name is then used
