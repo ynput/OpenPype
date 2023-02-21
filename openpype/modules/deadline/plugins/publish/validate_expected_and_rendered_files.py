@@ -89,11 +89,11 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
         else:  # fallback
             render_job_ids = [original_job_id]
 
-        for job_id in render_job_ids:
-            job_info = self._get_job_info(job_id)
-            frame_list = job_info["Props"]["Frames"]
-            if frame_list:
-                all_frame_lists.extend(frame_list.split(','))
+        # for job_id in render_job_ids:
+        #     job_info = self._get_job_info(job_id)
+        #     frame_list = job_info["Props"]["Frames"]
+        #     if frame_list:
+        #         all_frame_lists.extend(frame_list.split(','))
 
         return all_frame_lists
 
