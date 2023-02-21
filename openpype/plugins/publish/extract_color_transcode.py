@@ -161,12 +161,12 @@ class ExtractOIIOTranscode(publish.Extractor):
 
                 custom_tags = output_def.get("custom_tags")
                 if custom_tags:
-                    if not new_repre.get("custom_tags"):
+                    if new_repre.get("custom_tags") is None:
                         new_repre["custom_tags"] = []
                     new_repre["custom_tags"].extend(custom_tags)
 
                 # Add additional tags from output definition to representation
-                if not new_repre.get("tags"):
+                if new_repre.get("tags") is None:
                     new_repre["tags"] = []
                 for tag in output_def["tags"]:
                     if tag not in new_repre["tags"]:
