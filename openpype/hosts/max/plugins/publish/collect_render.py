@@ -31,7 +31,7 @@ class CollectRender(pyblish.api.InstancePlugin):
         render_layer_files = RenderProducts().render_product(instance.name)
         folder = folder.replace("\\", "/")
 
-        imgFormat = RenderProducts().image_format()
+        img_format = RenderProducts().image_format()
         project_name = context.data["projectName"]
         asset_doc = context.data["assetEntity"]
         asset_id = asset_doc["_id"]
@@ -53,7 +53,7 @@ class CollectRender(pyblish.api.InstancePlugin):
             "asset": asset,
             "publish": True,
             "maxversion": str(get_max_version()),
-            "imageFormat": imgFormat,
+            "imageFormat": img_format,
             "family": 'maxrender',
             "families": ['maxrender'],
             "source": filepath,

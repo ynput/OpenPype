@@ -62,7 +62,7 @@ class RenderSettings(object):
         # hard-coded, should be customized in the setting
         context = get_current_project_asset()
 
-        # get project reoslution
+        # get project resolution
         width = context["data"].get("resolutionWidth")
         height = context["data"].get("resolutionHeight")
         # Set Frame Range

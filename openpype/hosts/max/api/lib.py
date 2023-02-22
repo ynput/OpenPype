@@ -133,7 +133,7 @@ def get_default_render_folder(project_setting=None):
                            ["default_render_image_folder"])
 
 
-def set_framerange(startFrame, endFrame):
+def set_framerange(start_frame, end_frame):
     """
     Note:
         Frame range can be specified in different types. Possible values are:
@@ -146,9 +146,9 @@ def set_framerange(startFrame, endFrame):
         Current type is hard-coded, there should be a custom setting for this.
     """
     rt.rendTimeType = 4
-    if startFrame is not None and endFrame is not None:
-        frameRange = "{0}-{1}".format(startFrame, endFrame)
-    rt.rendPickupFrames = frameRange
+    if start_frame is not None and end_frame is not None:
+        frame_range = "{0}-{1}".format(start_frame, end_frame)
+        rt.rendPickupFrames = frame_range
 
 
 def get_multipass_setting(project_setting=None):
