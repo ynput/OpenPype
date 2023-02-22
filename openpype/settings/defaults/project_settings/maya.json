@@ -1,4 +1,5 @@
 {
+    "open_workfile_post_initialization": false,
     "imageio": {
         "ocio_config": {
             "enabled": false,
@@ -814,6 +815,11 @@
                     "twoSidedLighting": true,
                     "lineAAEnable": true,
                     "multiSample": 8,
+                    "useDefaultMaterial": false,
+                    "wireframeOnShaded": false,
+                    "xray": false,
+                    "jointXray": false,
+                    "backfaceCulling": false,
                     "ssaoEnable": false,
                     "ssaoAmount": 1,
                     "ssaoRadius": 16,

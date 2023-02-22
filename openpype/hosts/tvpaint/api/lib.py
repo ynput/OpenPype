@@ -202,8 +202,9 @@ def get_groups_data(communicator=None):
         # Variable containing full path to output file
         "output_path = \"{}\"".format(output_filepath),
         "empty = 0",
-        # Loop over 100 groups
-        "FOR idx = 1 TO 100",
+        # Loop over 26 groups which is ATM maximum possible (in 11.7)
+        # - ref: https://www.tvpaint.com/forum/viewtopic.php?t=13880
+        "FOR idx = 1 TO 26",
         # Receive information about groups
         "tv_layercolor \"getcolor\" 0 idx",
         "PARSE result clip_id group_index c_red c_green c_blue group_name",

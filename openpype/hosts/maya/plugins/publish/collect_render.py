@@ -42,7 +42,6 @@ Provides:
 import re
 import os
 import platform
-import json
 
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
@@ -318,6 +317,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "aovSeparator": layer_render_products.layer_data.aov_separator,  # noqa: E501
                 "renderSetupIncludeLights": render_instance.data.get(
                     "renderSetupIncludeLights"
+                ),
+                "strict_error_checking": render_instance.data.get(
+                    "strict_error_checking", True
                 )
             }
 
