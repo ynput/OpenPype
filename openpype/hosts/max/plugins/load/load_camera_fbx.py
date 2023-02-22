@@ -49,7 +49,7 @@ importFile @"{filepath}" #noPrompt using:FBXIMP
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
 
-        fbx_objects = self.get_container_children(node, "AlembicObject")
+        fbx_objects = self.get_container_children(node)
         for fbx_object in fbx_objects:
             fbx_object.source = path
 
