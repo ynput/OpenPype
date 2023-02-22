@@ -118,10 +118,17 @@ class ExtractOIIOTranscode(publish.Extractor):
                                                output_name,
                                                output_extension)
 
-                target_colorspace = output_def["colorspace"]
-                view = output_def["view"] or colorspace_data.get("view")
-                display = (output_def["display"] or
-                           colorspace_data.get("display"))
+                transcoding_type = output_def["transcoding_type"]
+
+                target_colorspace = view = display = None
+                if transcoding_type == "colorspace":
+                    target_colorspace = (output_def["colorspace"] or
+                                         colorspace_data.get("colorspace"))
+                else:
+                    view = output_def["view"] or colorspace_data.get("view")
+                    display = (output_def["display"] or
+                               colorspace_data.get("display"))
+
                 # both could be already collected by DCC,
                 # but could be overwritten
                 if view:
