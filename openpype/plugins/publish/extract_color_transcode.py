@@ -118,8 +118,7 @@ class ExtractOIIOTranscode(publish.Extractor):
                                                output_name,
                                                output_extension)
 
-                target_colorspace = (output_def["colorspace"] or
-                                     colorspace_data.get("colorspace"))
+                target_colorspace = output_def["colorspace"]
                 view = output_def["view"] or colorspace_data.get("view")
                 display = (output_def["display"] or
                            colorspace_data.get("display"))
