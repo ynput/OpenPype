@@ -962,7 +962,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "s" if len(instances) > 1 else ""))
 
         else:
-            #Need to inject colorspace here.
             representations = self._get_representations(
                 instance_skeleton_data,
                 data.get("expectedFiles")
