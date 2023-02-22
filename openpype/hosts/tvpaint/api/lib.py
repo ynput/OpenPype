@@ -43,7 +43,7 @@ def parse_layers_data(data):
             layer_id, group_id, visible, position, opacity, name,
             layer_type,
             frame_start, frame_end, prelighttable, postlighttable,
-            selected, editable, sencil_state
+            selected, editable, sencil_state, is_current
         ) = layer_raw.split("|")
         layer = {
             "layer_id": int(layer_id),
@@ -60,7 +60,8 @@ def parse_layers_data(data):
             "postlighttable": postlighttable == "1",
             "selected": selected == "1",
             "editable": editable == "1",
-            "sencil_state": sencil_state
+            "sencil_state": sencil_state,
+            "is_current": is_current == "1"
         }
         layers.append(layer)
     return layers
@@ -88,15 +89,17 @@ def get_layers_data_george_script(output_filepath, layer_ids=None):
             " selected editable sencilState"
         ),
         # Check if layer ID match `tv_LayerCurrentID`
+        "is_current=0",
         "IF CMP(current_layer_id, layer_id)==1",
         # - mark layer as selected if layer id match to current layer id
+        "is_current=1",
         "selected=1",
         "END",
         # Prepare line with data separated by "|"
         (
             "line = layer_id'|'group_id'|'visible'|'position'|'opacity'|'"
             "name'|'type'|'startFrame'|'endFrame'|'prelighttable'|'"
-            "postlighttable'|'selected'|'editable'|'sencilState"
+            "postlighttable'|'selected'|'editable'|'sencilState'|'is_current"
         ),
         # Write data to output file
         "tv_writetextfile \"strict\" \"append\" '\"'output_path'\"' line",
