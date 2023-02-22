@@ -8,3 +8,4 @@ class PrelaunchNukeAssistHook(PreLaunchHook):
 
     def execute(self):
         self.launch_context.env["NUKEASSIST"] = "1"
+
