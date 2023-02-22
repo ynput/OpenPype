@@ -20,6 +20,7 @@ from openpype.pipeline import (
 )
 from openpype.tests.lib import is_in_tests
 from openpype.pipeline.farm.patterning import match_aov_pattern
+from openpype.lib import is_running_from_build
 
 
 def get_resources(project_name, version, extension=None):
@@ -117,15 +118,17 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     deadline_plugin = "OpenPype"
     targets = ["local"]
 
-    hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects", "harmony"]
+    hosts = ["fusion", "max", "maya", "nuke",
+             "celaction", "aftereffects", "harmony"]
 
     families = ["render.farm", "prerender.farm",
-                "renderlayer", "imagesequence", "vrayscene"]
+                "renderlayer", "imagesequence", "maxrender", "vrayscene"]
 
     aov_filter = {"maya": [r".*([Bb]eauty).*"],
                   "aftereffects": [r".*"],  # for everything from AE
                   "harmony": [r".*"],  # for everything from AE
-                  "celaction": [r".*"]}
+                  "celaction": [r".*"],
+                  "max": [r".*"]}
 
     environ_job_filter = [
         "OPENPYPE_METADATA_FILE"
@@ -136,9 +139,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_API_KEY",
         "FTRACK_SERVER",
         "AVALON_APP_NAME",
-        "OPENPYPE_USERNAME",
-        "OPENPYPE_VERSION"
+        "OPENPYPE_USERNAME"
     ]
+
+    # Add OpenPype version if we are running from build.
+    if is_running_from_build():
+        environ_keys.append("OPENPYPE_VERSION")
 
     # custom deadline attributes
     deadline_department = ""
@@ -292,8 +298,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "Group": self.deadline_group,
                 "Pool": instance.data.get("primaryPool"),
                 "SecondaryPool": instance.data.get("secondaryPool"),
-
-                "OutputDirectory0": output_dir
+                # ensure the outputdirectory with correct slashes
+                "OutputDirectory0": output_dir.replace("\\", "/")
             },
             "PluginInfo": {
                 "Version": self.plugin_pype_version,
@@ -970,6 +976,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         '''
 
         render_job = None
+        submission_type = ""
         if instance.data.get("toBeRenderedOn") == "deadline":
             render_job = data.pop("deadlineSubmissionJob", None)
             submission_type = "deadline"
