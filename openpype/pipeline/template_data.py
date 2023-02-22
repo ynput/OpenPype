@@ -93,7 +93,10 @@ def get_asset_template_data(asset_doc, project_name):
         parent_name = project_name
 
     return {
-        "asset": asset_doc["name"],
+        "asset": {
+            "name": asset_doc["name"],
+            "type": asset_doc["data"].get("asset_type", None)
+        },
         "hierarchy": hierarchy,
         "parent": parent_name
     }
