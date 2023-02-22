@@ -376,6 +376,8 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                                 src_file_name, dst_file
                             )
 
+                repre["context"]["asset"] = repre["context"]["asset"]["name"]
+
                 schema.validate(repre)
 
                 repre_name_low = repre["name"].lower()
