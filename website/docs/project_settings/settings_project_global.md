@@ -45,6 +45,21 @@ The _input pattern_ matching uses REGEX expression syntax (try [regexr.com](http
 The **colorspace name** value is a raw string input and no validation is run after saving project settings. We recommend to open the specified `config.ocio` file and copy pasting the exact colorspace names.
 :::
 
+### Extract OIIO Transcode
+OIIOTools transcoder plugin with configurable output presets. Any incoming representation with `colorspaceData` is convertable to single or multiple representations with different target colorspaces or display and viewer names found in linked **config.ocio** file.
+
+`oiiotool` is used for transcoding, eg. `oiiotool` must be present in `vendor/bin/oiio` or environment variable `OPENPYPE_OIIO_PATHS` must be provided for custom oiio installation.
+
+Notable parameters:
+- **`Delete Original Representation`** - keep or remove original representation. If old representation is kept, but there is new transcoded representation with 'Create review' tag, original representation looses its 'review' tag if present.
+- **`Extension`** - target extension. If left empty, original extension is used.
+- **`Colorspace`** - target colorspace, which must be available in used color config.
+- **`Display & View`** - transcoding into colorspace or into display and viewer space could be used. Cannot use both `Colorspace` and `Display & View` at the same time.
+- **`Arguments`** - special additional command line arguments for `oiiotool`.
+
+
+Example here describes use case for creation of new color coded review of png image sequence. Original representation's files are kept intact, review is created from transcoded files, but these files are removed in cleanup process.
+![global_oiio_transcode](assets/global_oiio_transcode.png)
 
 ## Profile filters
 

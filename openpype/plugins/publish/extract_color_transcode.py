@@ -82,7 +82,8 @@ class ExtractOIIOTranscode(publish.Extractor):
         if not profile:
             return
 
-        repres = instance.data.get("representations") or []
+        new_representations = []
+        repres = instance.data["representations"]
         for idx, repre in enumerate(list(repres)):
             self.log.debug("repre ({}): `{}`".format(idx + 1, repre["name"]))
             if not self._repre_is_valid(repre):
@@ -117,7 +118,8 @@ class ExtractOIIOTranscode(publish.Extractor):
                                                output_name,
                                                output_extension)
 
-                target_colorspace = output_def["colorspace"]
+                target_colorspace = (output_def["colorspace"] or
+                                     colorspace_data.get("colorspace"))
                 view = output_def["view"] or colorspace_data.get("view")
                 display = (output_def["display"] or
                            colorspace_data.get("display"))
@@ -127,6 +129,9 @@ class ExtractOIIOTranscode(publish.Extractor):
                     new_repre["colorspaceData"]["view"] = view
                 if display:
                     new_repre["colorspaceData"]["display"] = display
+
+                additional_command_args = (output_def["oiiotool_args"]
+                                           ["additional_command_args"])
 
                 files_to_convert = self._translate_to_sequence(
                     files_to_convert)
@@ -144,6 +149,7 @@ class ExtractOIIOTranscode(publish.Extractor):
                         target_colorspace,
                         view,
                         display,
+                        additional_command_args,
                         self.log
                     )
 
@@ -156,12 +162,12 @@ class ExtractOIIOTranscode(publish.Extractor):
 
                 custom_tags = output_def.get("custom_tags")
                 if custom_tags:
-                    if not new_repre.get("custom_tags"):
+                    if new_repre.get("custom_tags") is None:
                         new_repre["custom_tags"] = []
                     new_repre["custom_tags"].extend(custom_tags)
 
                 # Add additional tags from output definition to representation
-                if not new_repre.get("tags"):
+                if new_repre.get("tags") is None:
                     new_repre["tags"] = []
                 for tag in output_def["tags"]:
                     if tag not in new_repre["tags"]:
@@ -170,9 +176,7 @@ class ExtractOIIOTranscode(publish.Extractor):
                     if tag == "review":
                         added_review = True
 
-                new_repre["tags"].append("newly_added")
-
-                instance.data["representations"].append(new_repre)
+                new_representations.append(new_repre)
                 added_representations = True
 
             if added_representations:
@@ -181,14 +185,10 @@ class ExtractOIIOTranscode(publish.Extractor):
 
         for repre in tuple(instance.data["representations"]):
             tags = repre.get("tags") or []
-            # TODO implement better way, for now do not delete new repre
-            # new repre might have 'delete' tag to removed, but it first must
-            # be there for review to be created
-            if "newly_added" in tags:
-                tags.remove("newly_added")
-                continue
             if "delete" in tags and "thumbnail" not in tags:
                 instance.data["representations"].remove(repre)
+
+        instance.data["representations"].extend(new_representations)
 
     def _rename_in_representation(self, new_repre, files_to_convert,
                                   output_name, output_extension):
@@ -274,7 +274,7 @@ class ExtractOIIOTranscode(publish.Extractor):
             "families": family,
             "task_names": task_name,
             "task_types": task_type,
-            "subset": subset
+            "subsets": subset
         }
         profile = filter_profiles(self.profiles, filtering_criteria,
                                   logger=self.log)
