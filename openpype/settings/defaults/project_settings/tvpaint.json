@@ -10,11 +10,39 @@
         }
     },
     "stop_timer_on_application_exit": false,
-    "publish": {
-        "CollectRenderScene": {
-            "enabled": false,
-            "render_layer": "Main"
+    "create": {
+        "create_workfile": {
+            "enabled": true,
+            "default_variant": "Main",
+            "default_variants": []
         },
+        "create_review": {
+            "enabled": true,
+            "active_on_create": true,
+            "default_variant": "Main",
+            "default_variants": []
+        },
+        "create_render_scene": {
+            "enabled": true,
+            "active_on_create": false,
+            "mark_for_review": true,
+            "default_pass_name": "beauty",
+            "default_variant": "Main",
+            "default_variants": []
+        },
+        "create_render_layer": {
+            "mark_for_review": true,
+            "default_pass_name": "beauty",
+            "default_variant": "Main",
+            "default_variants": []
+        },
+        "create_render_pass": {
+            "mark_for_review": true,
+            "default_variant": "Main",
+            "default_variants": []
+        }
+    },
+    "publish": {
         "ExtractSequence": {
             "review_bg": [
                 255,
