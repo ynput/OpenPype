@@ -4,7 +4,6 @@ import pyblish.api
 
 import openpype.hosts.maya.api.lib as mayalib
 from openpype.pipeline.context_tools import get_current_project_asset
-from math import ceil
 from openpype.pipeline.publish import (
     RepairContextAction,
     ValidateSceneOrder,

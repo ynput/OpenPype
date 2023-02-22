@@ -50,10 +50,6 @@
         }
     },
     "publish": {
-        "CollectRenderScene": {
-            "enabled": false,
-            "render_layer": "Main"
-        },
         "ExtractSequence": {
             "review_bg": [
                 255,
