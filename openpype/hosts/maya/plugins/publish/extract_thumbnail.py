@@ -134,8 +134,8 @@ class ExtractThumbnail(publish.Extractor):
 
             # Update preset with current panel setting
             # if override_viewport_options is turned off
-            if not override_viewport_options:
-                panel = cmds.getPanel(withFocus=True)
+            panel = cmds.getPanel(withFocus=True) or ""
+            if not override_viewport_options and "modelPanel" in panel:
                 panel_preset = capture.parse_active_view()
                 preset.update(panel_preset)
                 cmds.setFocus(panel)
