@@ -49,6 +49,9 @@
         }
     },
     "publish": {
+        "CollectRenderInstances": {
+            "ignore_render_pass_transparency": true
+        },
         "ExtractSequence": {
             "review_bg": [
                 255,
