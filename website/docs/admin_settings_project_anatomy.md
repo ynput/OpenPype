@@ -8,9 +8,9 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 
-Project Anatomy is the most important configuration piece for each project you work on with openPype. 
+Project Anatomy is the most important configuration piece for each project you work on with openPype.
 
-It defines: 
+It defines:
 - Project Root folders
 - File naming conventions
 - Folder structure templates
@@ -18,7 +18,7 @@ It defines:
 - Task Types
 - Applications and Tool versions
 - Colour Management
-- File Formats 
+- File Formats
 
 Anatomy is the only configuration that is always saved as an project override. This is to make sure that any updates to OpenPype or Studio default values, don't affect currently running productions.
 
@@ -40,7 +40,7 @@ Note how multiple roots are used here, to push different types of files to diffe
 
 ## Templates
 
-Templates define the project's folder structure and filenames. 
+Templates define the project's folder structure and filenames.
 
 We have a few required anatomy templates for OpenPype to work properly, however we keep adding more when needed.
 
@@ -56,7 +56,8 @@ We have a few required anatomy templates for OpenPype to work properly, however 
 | `project[name]` | Project's full name |
 | `project[code]` | Project's code |
 | `hierarchy` | All hierarchical parents as subfolders |
-| `asset` | Name of asset or shot |
+| `asset[name]` | Name of asset or shot |
+| `asset[type]` | Type of asset from AssetBuild ftrack data (like Prop, Character, Vehicle...) |
 | `task[name]` | Name of task |
 | `task[type]` | Type of task |
 | `task[short]` | Short name of task type (eg. 'Modeling' > 'mdl') |
