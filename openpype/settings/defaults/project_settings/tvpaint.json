@@ -31,13 +31,13 @@
             "default_variants": []
         },
         "create_render_layer": {
-            "mark_for_review": true,
+            "mark_for_review": false,
             "default_pass_name": "beauty",
             "default_variant": "Main",
             "default_variants": []
         },
         "create_render_pass": {
-            "mark_for_review": true,
+            "mark_for_review": false,
             "default_variant": "Main",
             "default_variants": []
         }
