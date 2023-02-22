@@ -1935,6 +1935,17 @@ class SyncEntitiesFactory:
                         avalon_id
                     )
                 )
+
+            # Add asset build type to entity
+            asset_build_type = None
+            if self.entities_dict[ftrack_id]["entity_type"] == "assetbuild":
+                asset_build_type = self.entities_dict[ftrack_id][
+                    'entity']['type']['name']
+
+                if asset_build_type:
+                    self.entities_dict[ftrack_id]['final_entity']['data'][
+                        'asset_type'] = asset_build_type
+
             # Prepare task changes as they have to be stored as one key
             final_doc = self.entities_dict[ftrack_id]["final_entity"]
             final_doc_tasks = final_doc["data"].pop("tasks", None) or {}
