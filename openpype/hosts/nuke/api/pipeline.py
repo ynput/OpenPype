@@ -208,22 +208,25 @@ def get_workfile_build_placeholder_plugins():
 
 
 def _install_menu():
+    """Install Avalon menu into Nuke's main menu bar."""
 
     # uninstall original avalon menu
     main_window = get_main_window()
     menubar = nuke.menu("Nuke")
     menu = menubar.addMenu(MENU_LABEL)
 
-    label = "{0}, {1}".format(
-        os.environ["AVALON_ASSET"], os.environ["AVALON_TASK"]
-    )
-    Context.context_label = label
-    context_action = menu.addCommand(label)
 
     if not ASSIST:
+        label = "{0}, {1}".format(
+            os.environ["AVALON_ASSET"], os.environ["AVALON_TASK"]
+        )
+        Context.context_label = label
+        context_action = menu.addCommand(label)
         context_action.setEnabled(False)
 
-    menu.addSeparator()
+        # add separator after context label
+        menu.addSeparator()
+
     menu.addCommand(
         "Work Files...",
         _show_workfiles
