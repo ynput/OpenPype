@@ -50,7 +50,8 @@ def parse_layers_data(data):
             "group_id": int(group_id),
             "visible": visible == "ON",
             "position": int(position),
-            "opacity": int(opacity),
+            # Opacity from 'tv_layerinfo' is always set to '0' so it's unusable
+            # "opacity": int(opacity),
             "name": name,
             "type": layer_type,
             "frame_start": int(frame_start),
