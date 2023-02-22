@@ -214,8 +214,9 @@ def update_node_data(node, knobname, data):
     knob.setValue(knob_value)
 
 
+@deprecated
 class Knobby(object):
-    """[DEPRICATED] For creating knob which it's type isn't
+    """[DEPRECATED] For creating knob which it's type isn't
                     mapped in `create_knobs`
 
     Args:
@@ -248,8 +249,9 @@ class Knobby(object):
         return " ".join(words)
 
 
+@deprecated
 def create_knobs(data, tab=None):
-    """[DEPRICATED] Create knobs by data
+    """[DEPRECATED] Create knobs by data
 
     Depending on the type of each dict value and creates the correct Knob.
 
@@ -342,8 +344,9 @@ def create_knobs(data, tab=None):
     return knobs
 
 
+@deprecated
 def imprint(node, data, tab=None):
-    """[DEPRICATED] Store attributes with value on node
+    """[DEPRECATED] Store attributes with value on node
 
     Parse user data into Node knobs.
     Use `collections.OrderedDict` to ensure knob order.
@@ -398,8 +401,9 @@ def imprint(node, data, tab=None):
         node.addKnob(knob)
 
 
+@deprecated
 def add_publish_knob(node):
-    """[DEPRICATED] Add Publish knob to node
+    """[DEPRECATED] Add Publish knob to node
 
     Arguments:
         node (nuke.Node): nuke node to be processed
@@ -416,8 +420,9 @@ def add_publish_knob(node):
     return node
 
 
+@deprecated
 def set_avalon_knob_data(node, data=None, prefix="avalon:"):
-    """[DEPRICATED] Sets data into nodes's avalon knob
+    """[DEPRECATED] Sets data into nodes's avalon knob
 
     Arguments:
         node (nuke.Node): Nuke node to imprint with data,
@@ -478,8 +483,9 @@ def set_avalon_knob_data(node, data=None, prefix="avalon:"):
     return node
 
 
+@deprecated
 def get_avalon_knob_data(node, prefix="avalon:", create=True):
-    """[DEPRICATED]  Gets a data from nodes's avalon knob
+    """[DEPRECATED]  Gets a data from nodes's avalon knob
 
     Arguments:
         node (obj): Nuke node to search for data,
@@ -521,8 +527,9 @@ def get_avalon_knob_data(node, prefix="avalon:", create=True):
     return data
 
 
+@deprecated
 def fix_data_for_node_create(data):
-    """[DEPRICATED] Fixing data to be used for nuke knobs
+    """[DEPRECATED] Fixing data to be used for nuke knobs
     """
     for k, v in data.items():
         if isinstance(v, six.text_type):
@@ -532,8 +539,9 @@ def fix_data_for_node_create(data):
     return data
 
 
+@deprecated
 def add_write_node_legacy(name, **kwarg):
-    """[DEPRICATED] Adding nuke write node
+    """[DEPRECATED] Adding nuke write node
     Arguments:
         name (str): nuke node name
         kwarg (attrs): data for nuke knobs
@@ -697,7 +705,7 @@ def get_nuke_imageio_settings():
 
 @deprecated("openpype.hosts.nuke.api.lib.get_nuke_imageio_settings")
 def get_created_node_imageio_setting_legacy(nodeclass, creator, subset):
-    '''[DEPRICATED]  Get preset data for dataflow (fileType, compression, bitDepth)
+    '''[DEPRECATED]  Get preset data for dataflow (fileType, compression, bitDepth)
     '''
 
     assert any([creator, nodeclass]), nuke.message(
