@@ -5,6 +5,7 @@ import json
 import collections
 import tempfile
 import subprocess
+import platform
 
 import xml.etree.ElementTree
 
@@ -745,11 +746,18 @@ def get_ffprobe_data(path_to_file, logger=None):
     logger.debug("FFprobe command: {}".format(
         subprocess.list2cmdline(args)
     ))
-    popen = subprocess.Popen(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
+    kwargs = {
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.PIPE,
+    }
+    if platform.system().lower() == "windows":
+        kwargs["creationflags"] = (
+            subprocess.CREATE_NEW_PROCESS_GROUP
+            | getattr(subprocess, "DETACHED_PROCESS", 0)
+            | getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        )
+
+    popen = subprocess.Popen(args, **kwargs)
 
     popen_stdout, popen_stderr = popen.communicate()
     if popen_stdout:
