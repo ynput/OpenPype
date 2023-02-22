@@ -50,7 +50,7 @@
     },
     "publish": {
         "CollectRenderInstances": {
-            "ignore_render_pass_transparency": true
+            "ignore_render_pass_transparency": false
         },
         "ExtractSequence": {
             "review_bg": [
