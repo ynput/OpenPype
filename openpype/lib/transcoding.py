@@ -1052,7 +1052,7 @@ def convert_colorspace(
     output_path,
     config_path,
     source_colorspace,
-    target_colorspace,
+    target_colorspace=None,
     view=None,
     display=None,
     additional_command_args=None,

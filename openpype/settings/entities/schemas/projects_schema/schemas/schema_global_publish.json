@@ -272,6 +272,15 @@
                                             "type": "text"
                                         },
                                         {
+                                            "type": "enum",
+                                            "key": "transcoding_type",
+                                            "label": "Transcoding type",
+                                            "enum_items": [
+                                                { "colorspace": "Use Colorspace" },
+                                                { "display": "Use Display&View" }
+                                            ]
+                                        },
+                                        {
                                             "key": "colorspace",
                                             "label": "Colorspace",
                                             "type": "text"
