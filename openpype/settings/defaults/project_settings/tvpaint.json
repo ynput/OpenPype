@@ -40,6 +40,12 @@
             "mark_for_review": false,
             "default_variant": "Main",
             "default_variants": []
+        },
+        "auto_detect_render": {
+            "allow_group_rename": true,
+            "group_name_template": "L{group_index}",
+            "group_idx_offset": 10,
+            "group_idx_padding": 3
         }
     },
     "publish": {
