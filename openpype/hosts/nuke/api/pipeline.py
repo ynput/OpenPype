@@ -215,7 +215,6 @@ def _install_menu():
     menubar = nuke.menu("Nuke")
     menu = menubar.addMenu(MENU_LABEL)
 
-
     if not ASSIST:
         label = "{0}, {1}".format(
             os.environ["AVALON_ASSET"], os.environ["AVALON_TASK"]

@@ -1,5 +1,6 @@
 from openpype.lib import PreLaunchHook
 
+
 class PrelaunchNukeAssistHook(PreLaunchHook):
     """
     Adding flag when nukeassist
