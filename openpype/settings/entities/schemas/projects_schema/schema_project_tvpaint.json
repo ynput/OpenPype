@@ -244,6 +244,20 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "CollectRenderInstances",
+                    "label": "Collect Render Instances",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "ignore_render_pass_transparency",
+                            "label": "Ignore Render Pass opacity"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "ExtractSequence",
                     "label": "ExtractSequence",
                     "is_group": true,
