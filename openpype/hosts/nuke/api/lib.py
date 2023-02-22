@@ -2274,7 +2274,10 @@ class WorkfileSettings(object):
                 }
             )
         else:
-            log.warning("NukeAssist mode is not allowing updating custom knobs...")
+            log.warning(
+                "NukeAssist mode is not allowing "
+                "updating custom knobs..."
+            )
 
     def reset_resolution(self):
         """Set resolution to project resolution."""
