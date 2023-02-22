@@ -63,7 +63,7 @@ RENDER_LAYER_DETAILED_DESCRIPTIONS = (
 Be aware Render Layer <b>is not</b> TVPaint layer.
 
 All TVPaint layers in the scene with the color group id are rendered in the
-beauty pass. To create sub passes use Render Layer creator which is
+beauty pass. To create sub passes use Render Pass creator which is
 dependent on existence of render layer instance.
 
 The group can represent an asset (tree) or different part of scene that consist
@@ -79,8 +79,8 @@ could be Render Layer which has 'Arm', 'Head' and 'Body' as Render Passes.
 RENDER_PASS_DETAILED_DESCRIPTIONS = (
     """Render Pass is sub part of Render Layer.
 
-Render Pass can consist of one or more TVPaint layers. Render Layers must
-belong to a Render Layer. Marker TVPaint layers will change it's group color
+Render Pass can consist of one or more TVPaint layers. Render Pass must
+belong to a Render Layer. Marked TVPaint layers will change it's group color
 to match group color of Render Layer.
 """
 )
