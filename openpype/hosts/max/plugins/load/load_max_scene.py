@@ -47,9 +47,9 @@ class MaxSceneLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
 
-        alembic_objects = self.get_container_children(node, "AlembicObject")
-        for alembic_object in alembic_objects:
-            alembic_object.source = path
+        max_objects = self.get_container_children(node, "AlembicObject")
+        for max_object in max_objects:
+            max_object.source = path
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])

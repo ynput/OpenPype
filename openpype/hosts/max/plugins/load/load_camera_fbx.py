@@ -49,9 +49,9 @@ importFile @"{filepath}" #noPrompt using:FBXIMP
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
 
-        alembic_objects = self.get_container_children(node, "AlembicObject")
-        for alembic_object in alembic_objects:
-            alembic_object.source = path
+        fbx_objects = self.get_container_children(node, "AlembicObject")
+        for fbx_object in fbx_objects:
+            fbx_object.source = path
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
