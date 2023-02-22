@@ -101,6 +101,12 @@ class NukeHost(
     def get_workfile_extensions(self):
         return file_extensions()
 
+    def get_workfile_build_placeholder_plugins(self):
+        return [
+            NukePlaceholderLoadPlugin,
+            NukePlaceholderCreatePlugin
+        ]
+
     def get_containers(self):
         return ls()
 
@@ -198,13 +204,6 @@ def _show_workfiles():
     #   avoid issues with reopening
     # - it is possible to explicitly change on top flag of the tool
     host_tools.show_workfiles(parent=None, on_top=False)
-
-
-def get_workfile_build_placeholder_plugins():
-    return [
-        NukePlaceholderLoadPlugin,
-        NukePlaceholderCreatePlugin
-    ]
 
 
 def _install_menu():
