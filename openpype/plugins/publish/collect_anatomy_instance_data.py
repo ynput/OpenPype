@@ -202,7 +202,10 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                     version_number += int(latest_version)
 
             anatomy_updates = {
-                "asset": instance.data["asset"],
+                "asset": {
+                    "name": instance.data["asset"],
+                    "type": instance.data["assetEntity"]["data"].get("asset_type")  # noqa
+                },
                 "family": instance.data["family"],
                 "subset": instance.data["subset"],
                 "version": version_number
