@@ -89,6 +89,25 @@ to match group color of Render Layer.
 )
 
 
+AUTODETECT_RENDER_DETAILED_DESCRIPTION = (
+    """Semi-automated Render Layer and Render Pass creation.
+
+Based on information in TVPaint scene will be created Render Layers and Render
+Passes. All color groups used in scene will be used for Render Layer creation.
+Name of the group is used as a variant.
+
+All TVPaint layers under the color group will be created as Render Pass where
+layer name is used as variant.
+
+The plugin will use all used color groups and layers, or can skip those that
+are not visible.
+
+There is option to auto-rename color groups before Render Layer creation. That
+is based on settings template where is filled index of used group from bottom
+to top.
+"""
+)
+
 class CreateRenderlayer(TVPaintCreator):
     """Mark layer group as Render layer instance.
 
@@ -619,9 +638,13 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
     """
 
     family = "render"
-    label = "Auto detect renders"
+    label = "Render Layer/Passes"
     identifier = "render.auto.detect.creator"
     order = CreateRenderPass.order + 10
+    description = (
+        "Create Render Layers and Render Passes based on scene setup"
+    )
+    detailed_description = AUTODETECT_RENDER_DETAILED_DESCRIPTION
 
     # Settings
     enabled = False
