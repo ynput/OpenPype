@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline import PublishValidationError
 
 
 class ValidateMayaColorSpace(pyblish.api.InstancePlugin):
@@ -22,4 +23,4 @@ class ValidateMayaColorSpace(pyblish.api.InstancePlugin):
         maketx = instance.data["maketx"]
 
         if ocio_maya and maketx:
-            raise RuntimeError("Maya is color managed and maketx option is on. OpenPype doesn't support this combination yet.") # noqa
+            raise PublishValidationError("Maya is color managed and maketx option is on. OpenPype doesn't support this combination yet.") # noqa

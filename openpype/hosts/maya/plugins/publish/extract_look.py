@@ -16,7 +16,7 @@ import pyblish.api
 from openpype.lib import source_hash, run_subprocess
 from openpype.pipeline import legacy_io, publish
 from openpype.hosts.maya.api import lib
-from openpype.hosts.maya.api.lib import imageInfo, guess_colorspace
+from openpype.hosts.maya.api.lib import image_info, guess_colorspace
 
 # Modes for transfer
 COPY = 1
@@ -369,7 +369,7 @@ class ExtractLook(publish.Extractor):
 
             linearize = False
             # if OCIO color management enabled
-            # it wont take the condition of the files_metadata
+            # it won't take the condition of the files_metadata
 
             ocio_maya = cmds.colorManagementPrefs(q=True,
                                                   cmConfigFileEnabled=True,
@@ -542,14 +542,14 @@ class ExtractLook(publish.Extractor):
                         color_space = cmds.getAttr(color_space_attr)
                     except ValueError:
                         # node doesn't have color space attribute
-                        img_info = imageInfo(filepath)
+                        img_info = image_info(filepath)
                         color_space = guess_colorspace(img_info)
                     self.log.info("tx: converting {0} -> {1}".format(color_space, render_colorspace))  # noqa
                     additional_args.extend(["--colorconvert",
                                             color_space,
                                             render_colorspace])
                 else:
-                    img_info = imageInfo(filepath)
+                    img_info = image_info(filepath)
                     color_space = guess_colorspace(img_info)
                     if color_space == "sRGB":
                         self.log.info("tx: converting sRGB -> linear")
