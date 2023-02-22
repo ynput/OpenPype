@@ -1001,6 +1001,20 @@ class RenderProductsRedshift(ARenderProducts):
     renderer = "redshift"
     unmerged_aovs = {"Cryptomatte"}
 
+    def get_files(self, product):
+        # When outputting AOVs we need to replace Redshift specific AOV tokens
+        # with Maya render tokens for generating file sequences. We validate to
+        # a specific AOV fileprefix so we only need to accout for one
+        # replacement.
+        if not product.multipart and product.driver:
+            file_prefix = self._get_attr(product.driver + ".filePrefix")
+            self.layer_data.filePrefix = file_prefix.replace(
+                "<BeautyPath>/<BeautyFile>",
+                "<Scene>/<RenderLayer>/<RenderLayer>"
+            )
+
+        return super(RenderProductsRedshift, self).get_files(product)
+
     def get_multipart(self):
         # For Redshift we don't directly return upon forcing multilayer
         # due to some AOVs still being written into separate files,
@@ -1009,7 +1023,7 @@ class RenderProductsRedshift(ARenderProducts):
         multipart = False
         force_layer = bool(self._get_attr("redshiftOptions.exrForceMultilayer")) # noqa
         exMultipart = bool(self._get_attr("redshiftOptions.exrMultipart"))
-        if exMultipart or force_layer:
+        if exMultipart and force_layer:
             multipart = True
 
         return multipart
@@ -1109,8 +1123,9 @@ class RenderProductsRedshift(ARenderProducts):
                             productName=aov_light_group_name,
                             aov=aov_name,
                             ext=ext,
-                            multipart=self.multipart,
-                            camera=camera)
+                            multipart=False,
+                            camera=camera,
+                            driver=aov)
                         products.append(product)
 
             if light_groups:
@@ -1123,8 +1138,9 @@ class RenderProductsRedshift(ARenderProducts):
                 product = RenderProduct(productName=aov_name,
                                         aov=aov_name,
                                         ext=ext,
-                                        multipart=self.multipart,
-                                        camera=camera)
+                                        multipart=False,
+                                        camera=camera,
+                                        driver=aov)
                 products.append(product)
 
         # When a Beauty AOV is added manually, it will be rendered as
