@@ -839,6 +839,11 @@ class RenderProductsVray(ARenderProducts):
         if default_ext in {"exr (multichannel)", "exr (deep)"}:
             default_ext = "exr"
 
+        # Define multipart.
+        multipart = False
+        if image_format_str == "exr (multichannel)":
+            multipart = True
+
         products = []
 
         # add beauty as default when not disabled
@@ -850,7 +855,8 @@ class RenderProductsVray(ARenderProducts):
                         productName="",
                         ext=default_ext,
                         camera=camera,
-                        colorspace=lib.get_color_management_output_transform()
+                        colorspace=lib.get_color_management_output_transform(),
+                        multipart=multipart
                     )
                 )
 
@@ -859,14 +865,15 @@ class RenderProductsVray(ARenderProducts):
         if separate_alpha:
             for camera in cameras:
                 products.append(
-                    RenderProduct(productName="Alpha",
-                                  ext=default_ext,
-                                  camera=camera)
+                    RenderProduct(
+                        productName="Alpha",
+                        ext=default_ext,
+                        camera=camera,
+                        multipart=multipart
+                    )
                 )
-
-        if image_format_str == "exr (multichannel)":
+        if multipart:
             # AOVs are merged in m-channel file, only main layer is rendered
-            self.multipart = True
             return products
 
         # handle aovs from references

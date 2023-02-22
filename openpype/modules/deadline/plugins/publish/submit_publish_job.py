@@ -20,6 +20,7 @@ from openpype.pipeline import (
 )
 from openpype.tests.lib import is_in_tests
 from openpype.pipeline.farm.patterning import match_aov_pattern
+from openpype.lib import is_running_from_build
 
 
 def get_resources(project_name, version, extension=None):
@@ -136,9 +137,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_API_KEY",
         "FTRACK_SERVER",
         "AVALON_APP_NAME",
-        "OPENPYPE_USERNAME",
-        "OPENPYPE_VERSION"
+        "OPENPYPE_USERNAME"
     ]
+
+    # Add OpenPype version if we are running from build.
+    if is_running_from_build():
+        environ_keys.append("OPENPYPE_VERSION")
 
     # custom deadline attributes
     deadline_department = ""
@@ -516,6 +520,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # toggle preview on if multipart is on
 
             if instance_data.get("multipartExr"):
+                self.log.debug("Adding preview tag because its multipartExr")
                 preview = True
             self.log.debug("preview:{}".format(preview))
             new_instance = deepcopy(instance_data)
@@ -612,6 +617,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if instance["useSequenceForReview"]:
                 # toggle preview on if multipart is on
                 if instance.get("multipartExr", False):
+                    self.log.debug(
+                        "Adding preview tag because its multipartExr"
+                    )
                     preview = True
                 else:
                     render_file_name = list(collection)[0]
@@ -719,8 +727,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if preview:
             if "ftrack" not in families:
                 if os.environ.get("FTRACK_SERVER"):
+                    self.log.debug(
+                        "Adding \"ftrack\" to families because of preview tag."
+                    )
                     families.append("ftrack")
             if "review" not in families:
+                self.log.debug(
+                    "Adding \"review\" to families because of preview tag."
+                )
                 families.append("review")
             instance["families"] = families
 
