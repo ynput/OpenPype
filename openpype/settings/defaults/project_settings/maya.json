@@ -407,6 +407,16 @@
             "optional": false,
             "active": true
         },
+        "ValidateGLSLMaterial": {
+            "enabled": true,
+            "optional": false,
+            "active": true
+        },
+        "ValidateGLSLPlugin": {
+            "enabled": true,
+            "optional": false,
+            "active": true
+        },
         "ValidateRenderImageRule": {
             "enabled": true,
             "optional": false,
@@ -898,6 +908,11 @@
             "optional": true,
             "active": true,
             "bake_attributes": []
+        },
+        "ExtractGLB": {
+            "enabled": true,
+            "active": true,
+            "ogsfx_path": "/maya2glTF/PBR/shaders/glTF_PBR.ogsfx"
         }
     },
     "load": {
