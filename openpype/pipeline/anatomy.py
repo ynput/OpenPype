@@ -23,7 +23,6 @@ from openpype.lib.path_templates import (
     FormatObject,
 )
 from openpype.lib.log import Logger
-from openpype.lib import get_local_site_id
 from openpype.modules import ModulesManager
 
 log = Logger.get_logger(__name__)
@@ -517,7 +516,6 @@ class Anatomy(BaseAnatomy):
         # - to avoid slowdowns 'get_local_settings' is not called until it's
         #   really needed
         local_settings = None
-        local_site_id = get_local_site_id()
 
         # First check if sync server is available and enabled
         sync_server = cls.get_sync_server_addon()
@@ -536,15 +534,6 @@ class Anatomy(BaseAnatomy):
                     )
                 )
             site_name = project_cache.data
-
-        elif site_name not in ("studio", "local"):
-            # Validate that site name is valid
-            if site_name != local_site_id:
-                raise RuntimeError((
-                    "Anatomy could be created only for"
-                    " default local sites not for {}"
-                ).format(site_name))
-            site_name = "local"
 
         site_cache = cls._root_overrides_cache[project_name][site_name]
         if site_cache.is_outdated:
