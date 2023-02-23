@@ -7,7 +7,8 @@
     "publish": {
         "IntegrateKitsuNote": {
             "set_status_note": false,
-            "note_status_shortname": "wfa"
+            "note_status_shortname": "wfa",
+            "status_exceptions": []
         }
     }
 }

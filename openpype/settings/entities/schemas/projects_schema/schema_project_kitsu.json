@@ -52,6 +52,12 @@
                             "type": "text",
                             "key": "note_status_shortname",
                             "label": "Note shortname"
+                        },
+                        {
+                            "type": "list",
+                            "object_type": "text",
+                            "key": "status_exceptions",
+                            "label": "Status exceptions shortnames"
                         }
                     ]
                 }
