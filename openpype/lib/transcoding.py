@@ -5,6 +5,7 @@ import json
 import collections
 import tempfile
 import subprocess
+import platform
 
 import xml.etree.ElementTree
 
@@ -745,11 +746,18 @@ def get_ffprobe_data(path_to_file, logger=None):
     logger.debug("FFprobe command: {}".format(
         subprocess.list2cmdline(args)
     ))
-    popen = subprocess.Popen(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
+    kwargs = {
+        "stdout": subprocess.PIPE,
+        "stderr": subprocess.PIPE,
+    }
+    if platform.system().lower() == "windows":
+        kwargs["creationflags"] = (
+            subprocess.CREATE_NEW_PROCESS_GROUP
+            | getattr(subprocess, "DETACHED_PROCESS", 0)
+            | getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        )
+
+    popen = subprocess.Popen(args, **kwargs)
 
     popen_stdout, popen_stderr = popen.communicate()
     if popen_stdout:
@@ -1044,7 +1052,7 @@ def convert_colorspace(
     output_path,
     config_path,
     source_colorspace,
-    target_colorspace,
+    target_colorspace=None,
     view=None,
     display=None,
     additional_command_args=None,
@@ -1092,7 +1100,7 @@ def convert_colorspace(
         raise ValueError("Both screen and display must be set.")
 
     if additional_command_args:
-        oiio_cmd.extend(split_cmd_args(additional_command_args))
+        oiio_cmd.extend(additional_command_args)
 
     if target_colorspace:
         oiio_cmd.extend(["--colorconvert",

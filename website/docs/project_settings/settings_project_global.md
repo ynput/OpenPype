@@ -51,15 +51,19 @@ OIIOTools transcoder plugin with configurable output presets. Any incoming repre
 `oiiotool` is used for transcoding, eg. `oiiotool` must be present in `vendor/bin/oiio` or environment variable `OPENPYPE_OIIO_PATHS` must be provided for custom oiio installation.
 
 Notable parameters:
-- **`Delete Original Representation`** - keep or remove original representation. If old representation is kept, but there is new transcoded representation with 'Create review' tag, original representation looses its 'review' tag if present.
+- **`Delete Original Representation`** - keep or remove original representation. If old representation is kept, but there is new transcoded representation with 'Create review' tag, original representation loses its 'review' tag if present.
 - **`Extension`** - target extension. If left empty, original extension is used.
-- **`Colorspace`** - target colorspace, which must be available in used color config.
-- **`Display & View`** - transcoding into colorspace or into display and viewer space could be used. Cannot use both `Colorspace` and `Display & View` at the same time.
+- **`Transcoding type`** - transcoding into colorspace or into display and viewer space could be used. Cannot use both at the same time.
+- **`Colorspace`** - target colorspace, which must be available in used color config. (If `Transcoding type` is `Use Colorspace` value in configuration is used OR if empty value collected on instance from DCC).
+- **`Display & View`** - display and viewer colorspace. (If `Transcoding type` is `Use Display&View` values in configuration is used OR if empty values collected on instance from DCC).
 - **`Arguments`** - special additional command line arguments for `oiiotool`.
 
 
 Example here describes use case for creation of new color coded review of png image sequence. Original representation's files are kept intact, review is created from transcoded files, but these files are removed in cleanup process.
 ![global_oiio_transcode](assets/global_oiio_transcode.png)
+
+Another use case is to transcode in Maya only `beauty` render layers and use collected `Display` and `View` colorspaces from DCC.
+![global_oiio_transcode_in_Maya](assets/global_oiio_transcode.png)n
 
 ## Profile filters
 

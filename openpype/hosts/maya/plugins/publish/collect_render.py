@@ -42,6 +42,7 @@ Provides:
 import re
 import os
 import platform
+import json
 
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
@@ -183,7 +184,11 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             self.log.info("multipart: {}".format(
                 multipart))
             assert exp_files, "no file names were generated, this is bug"
-            self.log.info(exp_files)
+            self.log.info(
+                "expected files: {}".format(
+                    json.dumps(exp_files, indent=4, sort_keys=True)
+                )
+            )
 
             # if we want to attach render to subset, check if we have AOV's
             # in expectedFiles. If so, raise error as we cannot attach AOV
