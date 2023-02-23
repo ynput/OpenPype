@@ -342,7 +342,7 @@ def inject_openpype_environment(deadlinePlugin):
             "app": job.GetJobEnvironmentKeyValue("AVALON_APP_NAME"),
             "envgroup": "farm"
         }
-        
+
         if job.GetJobEnvironmentKeyValue('IS_TEST'):
             args.append("--automatic-tests")
 
