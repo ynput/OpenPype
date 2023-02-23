@@ -284,6 +284,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             args.append("--automatic-tests")
 
         # Generate the payload for Deadline submission
+        secondary_pool = (
+            self.deadline_pool_secondary or instance.data.get("secondaryPool")
+        )
         payload = {
             "JobInfo": {
                 "Plugin": self.deadline_plugin,
@@ -297,8 +300,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "Priority": priority,
 
                 "Group": self.deadline_group,
-                "Pool": instance.data.get("primaryPool"),
-                "SecondaryPool": instance.data.get("secondaryPool"),
+                "Pool": self.deadline_pool or instance.data.get("primaryPool"),
+                "SecondaryPool": secondary_pool,
                 # ensure the outputdirectory with correct slashes
                 "OutputDirectory0": output_dir.replace("\\", "/")
             },
