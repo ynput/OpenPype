@@ -38,6 +38,7 @@ from openpype.hosts.maya.api.lib import get_attr_in_layer
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 from openpype.tests.lib import is_in_tests
+from openpype.lib import is_running_from_build
 
 
 def _validate_deadline_bool_value(instance, attribute, value):
@@ -165,10 +166,14 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "AVALON_ASSET",
             "AVALON_TASK",
             "AVALON_APP_NAME",
-            "OPENPYPE_DEV",
-            "OPENPYPE_VERSION",
+            "OPENPYPE_DEV"
             "IS_TEST"
         ]
+
+        # Add OpenPype version if we are running from build.
+        if is_running_from_build():
+            keys.append("OPENPYPE_VERSION")
+
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
