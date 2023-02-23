@@ -601,13 +601,16 @@ class CreateRenderPass(TVPaintCreator):
         ]
 
     def get_pre_create_attr_defs(self):
+        # Find available Render Layers
+        # - instances are created after creators reset
+        current_instances = self.host.list_instances()
         render_layers = [
             {
-                "value": instance.id,
-                "label": instance.label
+                "value": instance["instance_id"],
+                "label": instance["subset"]
             }
-            for instance in self.create_context.instances
-            if instance.creator_identifier == CreateRenderlayer.identifier
+            for instance in current_instances
+            if instance["creator_identifier"] == CreateRenderlayer.identifier
         ]
         if not render_layers:
             render_layers.append({"value": None, "label": "N/A"})
