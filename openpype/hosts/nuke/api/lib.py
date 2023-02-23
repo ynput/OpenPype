@@ -214,7 +214,6 @@ def update_node_data(node, knobname, data):
     knob.setValue(knob_value)
 
 
-@deprecated
 class Knobby(object):
     """[DEPRECATED] For creating knob which it's type isn't
                     mapped in `create_knobs`
@@ -249,9 +248,8 @@ class Knobby(object):
         return " ".join(words)
 
 
-@deprecated
 def create_knobs(data, tab=None):
-    """[DEPRECATED] Create knobs by data
+    """Create knobs by data
 
     Depending on the type of each dict value and creates the correct Knob.
 
@@ -344,9 +342,8 @@ def create_knobs(data, tab=None):
     return knobs
 
 
-@deprecated
 def imprint(node, data, tab=None):
-    """[DEPRECATED] Store attributes with value on node
+    """Store attributes with value on node
 
     Parse user data into Node knobs.
     Use `collections.OrderedDict` to ensure knob order.
@@ -1249,7 +1246,7 @@ def create_write_node(
             nodes to be created before write with dependency
         review (bool)[optional]: adding review knob
         farm (bool)[optional]: rendering workflow target
-        kwargs (dict)[optional]: additional key arguments for formating
+        kwargs (dict)[optional]: additional key arguments for formatting
 
     Example:
         prenodes = {
