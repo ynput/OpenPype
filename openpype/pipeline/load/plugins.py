@@ -149,7 +149,7 @@ class LoaderPlugin(list):
 
         plugin_repre_names = cls.get_representations()
         plugin_families = cls.families
-        if not plugin_repre_names or not plugin_families or not cls.extensions:
+        if not plugin_repre_names or not plugin_families:
             return False
 
         repre_doc = context.get("representation")
@@ -173,14 +173,21 @@ class LoaderPlugin(list):
         subset_doc = context["subset"]
         maj_version, _ = schema.get_schema_version(subset_doc["schema"])
         if maj_version < 3:
-            families = verison_doc["data"].get("families", [])
+            families = verison_doc["data"].get("families")
         else:
-            families = subset_doc["families"]
+            families = context["subset"]["data"].get("families")
+            if families is None:
+                family = context["subset"]["data"].get("family")
+                if family:
+                    families = [family]
 
         plugin_families = set(plugin_families)
         return (
             "*" in plugin_families
-            or any(family in plugin_families for family in families)
+            or any(
+                family in plugin_families
+                for family in (families or [])
+            )
         )
 
     @classmethod
