@@ -29,10 +29,7 @@ class LoaderPlugin(list):
 
     families = []
     representations = []
-    # Extensions filtering was not available until 20/2/2023
-    # - filtering by extensions is not enabled if is set to 'None'
-    #       which is to keep backwards compatibility
-    extensions = None
+    extensions = {"*"}
     order = 0
     is_multiple_contexts_compatible = False
     enabled = True
@@ -95,11 +92,8 @@ class LoaderPlugin(list):
              bool: Representation has valid extension
         """
 
-        # Empty list of extensions is considered as all representations are
-        #   invalid -> use '["*"]' to support all extensions
-        valid_extensions = cls.extensions
-        if not valid_extensions:
-            return False
+        if "*" in cls.extensions:
+            return True
 
         # Get representation main file extension from 'context'
         repre_context = repre_doc.get("context") or {}
@@ -114,21 +108,15 @@ class LoaderPlugin(list):
                 )
                 return False
 
-            cls.log.info("Using legacy source of extension on representation.")
-            ext = os.path.splitext(path)[-1]
-            while ext.startswith("."):
-                ext = ext[1:]
+            cls.log.info("Using legacy source of extension from path.")
+            ext = os.path.splitext(path)[-1].lstrip(".")
 
         # If representation does not have extension then can't be valid
         if not ext:
             return False
 
-        if "*" in valid_extensions:
-            return True
-
-        valid_extensions_low = {ext.lower() for ext in valid_extensions}
+        valid_extensions_low = {ext.lower() for ext in cls.extensions}
         return ext.lower() in valid_extensions_low
-
 
     @classmethod
     def is_compatible_loader(cls, context):
@@ -149,7 +137,11 @@ class LoaderPlugin(list):
 
         plugin_repre_names = cls.get_representations()
         plugin_families = cls.families
-        if not plugin_repre_names or not plugin_families:
+        if (
+            not plugin_repre_names
+            or not plugin_families
+            or not cls.extensions
+        ):
             return False
 
         repre_doc = context.get("representation")
@@ -163,32 +155,27 @@ class LoaderPlugin(list):
         ):
             return False
 
-        if (
-            cls.extensions is not None
-            and not cls.has_valid_extension(repre_doc)
-        ):
+        if not cls.has_valid_extension(repre_doc):
             return False
 
-        verison_doc = context["version"]
+        plugin_families = set(plugin_families)
+        if "*" in plugin_families:
+            return True
+
         subset_doc = context["subset"]
         maj_version, _ = schema.get_schema_version(subset_doc["schema"])
         if maj_version < 3:
-            families = verison_doc["data"].get("families")
+            families = context["version"]["data"].get("families")
         else:
-            families = context["subset"]["data"].get("families")
+            families = subset_doc["data"].get("families")
             if families is None:
-                family = context["subset"]["data"].get("family")
+                family = subset_doc["data"].get("family")
                 if family:
                     families = [family]
 
-        plugin_families = set(plugin_families)
-        return (
-            "*" in plugin_families
-            or any(
-                family in plugin_families
-                for family in (families or [])
-            )
-        )
+        if not families:
+            return False
+        return any(family in plugin_families for family in families)
 
     @classmethod
     def get_representations(cls):
