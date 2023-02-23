@@ -5,6 +5,7 @@ import sys
 import platform
 import uuid
 import math
+import re
 
 import json
 import logging
@@ -33,7 +34,6 @@ from openpype.pipeline import (
     registered_host,
 )
 from openpype.pipeline.context_tools import get_current_project_asset
-from .commands import reset_frame_range
 
 
 self = sys.modules[__name__]
@@ -252,11 +252,6 @@ def read(node):
         data[attr] = value
 
     return data
-
-
-def _get_mel_global(name):
-    """Return the value of a mel global variable"""
-    return mel.eval("$%s = $%s;" % (name, name))
 
 
 def matrix_equals(a, b, tolerance=1e-10):
@@ -624,13 +619,13 @@ class delete_after(object):
             cmds.delete(self._nodes)
 
 
+def get_current_renderlayer():
+    return cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)
+
+
 def get_renderer(layer):
     with renderlayer(layer):
         return cmds.getAttr("defaultRenderGlobals.currentRenderer")
-
-
-def get_current_renderlayer():
-    return cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)
 
 
 @contextlib.contextmanager
@@ -1373,27 +1368,6 @@ def set_id(node, unique_id, overwrite=False):
         cmds.setAttr(attr, unique_id, type="string")
 
 
-# endregion ID
-def get_reference_node(path):
-    """
-    Get the reference node when the path is found being used in a reference
-    Args:
-        path (str): the file path to check
-
-    Returns:
-        node (str): name of the reference node in question
-    """
-    try:
-        node = cmds.file(path, query=True, referenceNode=True)
-    except RuntimeError:
-        log.debug('File is not referenced : "{}"'.format(path))
-        return
-
-    reference_path = cmds.referenceQuery(path, filename=True)
-    if os.path.normpath(path) == os.path.normpath(reference_path):
-        return node
-
-
 def set_attribute(attribute, value, node):
     """Adjust attributes based on the value from the attribute data
 
@@ -1995,8 +1969,6 @@ def get_id_from_sibling(node, history_only=True):
             return first_id
 
 
-
-# Project settings
 def set_scene_fps(fps, update=True):
     """Set FPS from project configuration
 
@@ -2009,30 +1981,23 @@ def set_scene_fps(fps, update=True):
 
     """
 
-    fps_mapping = {'15': 'game',
-                   '24': 'film',
-                   '25': 'pal',
-                   '30': 'ntsc',
-                   '48': 'show',
-                   '50': 'palf',
-                   '60': 'ntscf',
-                   '23.98': '23.976fps',
-                   '23.976': '23.976fps',
-                   '29.97': '29.97fps',
-                   '47.952': '47.952fps',
-                   '47.95': '47.952fps',
-                   '59.94': '59.94fps',
-                   '44100': '44100fps',
-                   '48000': '48000fps'}
+    fps_mapping = {
+        '15': 'game',
+        '24': 'film',
+        '25': 'pal',
+        '30': 'ntsc',
+        '48': 'show',
+        '50': 'palf',
+        '60': 'ntscf',
+        '23.976023976023978': '23.976fps',
+        '29.97002997002997': '29.97fps',
+        '47.952047952047955': '47.952fps',
+        '59.94005994005994': '59.94fps',
+        '44100': '44100fps',
+        '48000': '48000fps'
+    }
 
-    # pull from mapping
-    # this should convert float string to float and int to int
-    # so 25.0 is converted to 25, but 23.98 will be still float.
-    dec, ipart = math.modf(fps)
-    if dec == 0.0:
-        fps = int(ipart)
-
-    unit = fps_mapping.get(str(fps), None)
+    unit = fps_mapping.get(str(convert_to_maya_fps(fps)), None)
     if unit is None:
         raise ValueError("Unsupported FPS value: `%s`" % fps)
 
@@ -2099,6 +2064,54 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 
+def reset_frame_range():
+    """Set frame range to current asset"""
+
+    fps = convert_to_maya_fps(
+        float(legacy_io.Session.get("AVALON_FPS", 25))
+    )
+    set_scene_fps(fps)
+
+    # Set frame start/end
+    project_name = legacy_io.active_project()
+    asset_name = legacy_io.Session["AVALON_ASSET"]
+    asset = get_asset_by_name(project_name, asset_name)
+
+    frame_start = asset["data"].get("frameStart")
+    frame_end = asset["data"].get("frameEnd")
+    # Backwards compatibility
+    if frame_start is None or frame_end is None:
+        frame_start = asset["data"].get("edit_in")
+        frame_end = asset["data"].get("edit_out")
+
+    if frame_start is None or frame_end is None:
+        cmds.warning("No edit information found for %s" % asset_name)
+        return
+
+    handles = asset["data"].get("handles") or 0
+    handle_start = asset["data"].get("handleStart")
+    if handle_start is None:
+        handle_start = handles
+
+    handle_end = asset["data"].get("handleEnd")
+    if handle_end is None:
+        handle_end = handles
+
+    frame_start -= int(handle_start)
+    frame_end += int(handle_end)
+
+    cmds.playbackOptions(minTime=frame_start)
+    cmds.playbackOptions(maxTime=frame_end)
+    cmds.playbackOptions(animationStartTime=frame_start)
+    cmds.playbackOptions(animationEndTime=frame_end)
+    cmds.playbackOptions(minTime=frame_start)
+    cmds.playbackOptions(maxTime=frame_end)
+    cmds.currentTime(frame_start)
+
+    cmds.setAttr("defaultRenderGlobals.startFrame", frame_start)
+    cmds.setAttr("defaultRenderGlobals.endFrame", frame_end)
+
+
 def reset_scene_resolution():
     """Apply the scene resolution  from the project definition
 
@@ -2150,7 +2163,9 @@ def set_context_settings():
     asset_data = asset_doc.get("data", {})
 
     # Set project fps
-    fps = asset_data.get("fps", project_data.get("fps", 25))
+    fps = convert_to_maya_fps(
+        asset_data.get("fps", project_data.get("fps", 25))
+    )
     legacy_io.Session["AVALON_FPS"] = str(fps)
     set_scene_fps(fps)
 
@@ -2172,15 +2187,12 @@ def validate_fps():
 
     """
 
-    fps = get_current_project_asset(fields=["data.fps"])["data"]["fps"]
-    # TODO(antirotor): This is hack as for framerates having multiple
-    # decimal places. FTrack is ceiling decimal values on
-    # fps to two decimal places but Maya 2019+ is reporting those fps
-    # with much higher resolution. As we currently cannot fix Ftrack
-    # rounding, we have to round those numbers coming from Maya.
-    current_fps = float_round(mel.eval('currentTimeUnitToFPS()'), 2)
+    expected_fps = convert_to_maya_fps(
+        get_current_project_asset(fields=["data.fps"])["data"]["fps"]
+    )
+    current_fps = mel.eval('currentTimeUnitToFPS()')
 
-    fps_match = current_fps == fps
+    fps_match = current_fps == expected_fps
     if not fps_match and not IS_HEADLESS:
         from openpype.widgets import popup
 
@@ -2189,14 +2201,19 @@ def validate_fps():
         dialog = popup.PopupUpdateKeys(parent=parent)
         dialog.setModal(True)
         dialog.setWindowTitle("Maya scene does not match project FPS")
-        dialog.setMessage("Scene %i FPS does not match project %i FPS" %
-                          (current_fps, fps))
+        dialog.setMessage(
+            "Scene {} FPS does not match project {} FPS".format(
+                current_fps, expected_fps
+            )
+        )
         dialog.setButtonText("Fix")
 
         # Set new text for button (add optional argument for the popup?)
         toggle = dialog.widgets["toggle"]
         update = toggle.isChecked()
-        dialog.on_clicked_state.connect(lambda: set_scene_fps(fps, update))
+        dialog.on_clicked_state.connect(
+            lambda: set_scene_fps(expected_fps, update)
+        )
 
         dialog.show()
 
@@ -3379,3 +3396,116 @@ def iter_visible_nodes_in_range(nodes, start, end):
 def get_attribute_input(attr):
     connections = cmds.listConnections(attr, plugs=True, destination=False)
     return connections[0] if connections else None
+
+
+def convert_to_maya_fps(fps):
+    """Convert any fps to supported Maya framerates."""
+    float_framerates = [
+        23.976023976023978,
+        # WTF is 29.97 df vs fps?
+        29.97002997002997,
+        47.952047952047955,
+        59.94005994005994
+    ]
+    # 44100 fps evaluates as 41000.0. Why? Omitting for now.
+    int_framerates = [
+        2,
+        3,
+        4,
+        5,
+        6,
+        8,
+        10,
+        12,
+        15,
+        16,
+        20,
+        24,
+        25,
+        30,
+        40,
+        48,
+        50,
+        60,
+        75,
+        80,
+        90,
+        100,
+        120,
+        125,
+        150,
+        200,
+        240,
+        250,
+        300,
+        375,
+        400,
+        500,
+        600,
+        750,
+        1200,
+        1500,
+        2000,
+        3000,
+        6000,
+        48000
+    ]
+
+    # If input fps is a whole number we'll return.
+    if float(fps).is_integer():
+        # Validate fps is part of Maya's fps selection.
+        if int(fps) not in int_framerates:
+            raise ValueError(
+                "Framerate \"{}\" is not supported in Maya".format(fps)
+            )
+        return int(fps)
+    else:
+        # Differences to supported float frame rates.
+        differences = []
+        for i in float_framerates:
+            differences.append(abs(i - fps))
+
+        # Validate difference does not stray too far from supported framerates.
+        min_difference = min(differences)
+        min_index = differences.index(min_difference)
+        supported_framerate = float_framerates[min_index]
+        if min_difference > 0.1:
+            raise ValueError(
+                "Framerate \"{}\" strays too far from any supported framerate"
+                " in Maya. Closest supported framerate is \"{}\"".format(
+                    fps, supported_framerate
+                )
+            )
+
+        return supported_framerate
+
+
+def write_xgen_file(data, filepath):
+    """Overwrites data in .xgen files.
+
+    Quite naive approach to mainly overwrite "xgDataPath" and "xgProjectPath".
+
+    Args:
+        data (dict): Dictionary of key, value. Key matches with xgen file.
+        For example:
+            {"xgDataPath": "some/path"}
+        filepath (string): Absolute path of .xgen file.
+    """
+    # Generate regex lookup for line to key basically
+    # match any of the keys in `\t{key}\t\t`
+    keys = "|".join(re.escape(key) for key in data.keys())
+    re_keys = re.compile("^\t({})\t\t".format(keys))
+
+    lines = []
+    with open(filepath, "r") as f:
+        for line in f:
+            match = re_keys.match(line)
+            if match:
+                key = match.group(1)
+                value = data[key]
+                line = "\t{}\t\t{}\n".format(key, value)
+
+            lines.append(line)
+
+    with open(filepath, "w") as f:
+        f.writelines(lines)
