@@ -452,7 +452,7 @@ class Anatomy(BaseAnatomy):
         if cls._sync_server_addon_cache.is_outdated:
             manager = ModulesManager()
             cls._sync_server_addon_cache.update_data(
-                manager.enabled_modules.get("sync_server")
+                manager.get_enabled_module("sync_server")
             )
         return cls._sync_server_addon_cache.data
 
