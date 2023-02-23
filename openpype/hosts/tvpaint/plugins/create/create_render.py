@@ -461,7 +461,10 @@ class CreateRenderPass(TVPaintCreator):
             "render_layer_instance_id"
         )
         if not render_layer_instance_id:
-            raise CreatorError("Missing RenderLayer instance")
+            raise CreatorError((
+                "You cannot create a Render Pass without a Render Layer."
+                " Please select one first"
+            ))
 
         render_layer_instance = self.create_context.instances_by_id.get(
             render_layer_instance_id
