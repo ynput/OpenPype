@@ -545,7 +545,7 @@ class Anatomy(BaseAnatomy):
                 )
             else:
                 # Ask sync server to get roots overrides
-                roots_overrides = sync_server.get_local_site_root_overrides(
+                roots_overrides = sync_server.get_site_root_overrides(
                     project_name, site_name, local_settings
                 )
             site_cache.update_data(roots_overrides)
