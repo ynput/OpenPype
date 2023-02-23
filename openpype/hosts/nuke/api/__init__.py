@@ -30,7 +30,6 @@ from .pipeline import (
     parse_container,
     update_container,
 
-    get_workfile_build_placeholder_plugins,
 )
 from .lib import (
     INSTANCE_DATA_KNOB,
@@ -78,8 +77,6 @@ __all__ = (
     "containerise",
     "parse_container",
     "update_container",
-
-    "get_workfile_build_placeholder_plugins",
 
     "INSTANCE_DATA_KNOB",
     "ROOT_DATA_KNOB",
