@@ -956,6 +956,30 @@
                     "is_list": true
                 }
             ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractGLB",
+            "label": "Extract GLB",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "text",
+                    "key": "ogsfx_path",
+                    "label": "GLSL Shader Directory"
+                }
+            ]
         }
     ]
 }

@@ -898,6 +898,11 @@
             "optional": true,
             "active": true,
             "bake_attributes": []
+        },
+        "ExtractGLB": {
+            "enabled": true,
+            "active": true,
+            "ogsfx_path": "/maya2glTF/PBR/shaders/glTF_PBR.ogsfx"
         }
     },
     "load": {
