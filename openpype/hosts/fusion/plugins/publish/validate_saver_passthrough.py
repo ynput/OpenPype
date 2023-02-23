@@ -1,4 +1,7 @@
 import pyblish.api
+from openpype.pipeline import PublishValidationError
+
+from openpype.hosts.fusion.api.action import SelectInvalidAction
 
 
 class ValidateSaverPassthrough(pyblish.api.ContextPlugin):
@@ -8,6 +11,7 @@ class ValidateSaverPassthrough(pyblish.api.ContextPlugin):
     label = "Validate Saver Passthrough"
     families = ["render"]
     hosts = ["fusion"]
+    actions = [SelectInvalidAction]
 
     def process(self, context):
 
@@ -27,8 +31,9 @@ class ValidateSaverPassthrough(pyblish.api.ContextPlugin):
         if invalid_instances:
             self.log.info("Reset pyblish to collect your current scene state, "
                           "that should fix error.")
-            raise RuntimeError("Invalid instances: "
-                               "{0}".format(invalid_instances))
+            raise PublishValidationError(
+                "Invalid instances: {0}".format(invalid_instances),
+                title=self.label)
 
     def is_invalid(self, instance):
 
@@ -36,7 +41,7 @@ class ValidateSaverPassthrough(pyblish.api.ContextPlugin):
         attr = saver.GetAttrs()
         active = not attr["TOOLB_PassThrough"]
 
-        if active != instance.data["publish"]:
+        if active != instance.data.get("publish", True):
             self.log.info("Saver has different passthrough state than "
                           "Pyblish: {} ({})".format(instance, saver.Name))
             return [saver]
