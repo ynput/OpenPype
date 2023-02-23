@@ -20,9 +20,12 @@ class RenderFarmSettings:
     _creator_farm_keys: list = [
         "chunk_size", "priority", "concurrent_tasks"]
 
-    def __init__(self, project_settings=None):
+    def __init__(self, project_settings=None, log=None):
         """ Get project settings and active farm module
         """
+        if log:
+            self.log = log
+
         self._project_settings = (
             project_settings or get_current_project_settings()
         )
@@ -61,8 +64,9 @@ class RenderFarmSettings:
         '''
         return_dict = {}
         farm_plugin = self._farm_plugins.get(self.active_farm_module)
+        self.log.debug("Farm plugin: \"{}\"".format(farm_plugin))
 
-        if farm_plugin:
+        if not farm_plugin:
             raise ValueError((
                 "Farm plugin \"{}\" not found in farm plugins."
             ).format(farm_plugin))
@@ -73,6 +77,8 @@ class RenderFarmSettings:
         # Get farm plugin settings
         farm_plugin_settings = (
             module_settings["publish"][farm_plugin])
+        self.log.debug(
+            "Farm plugin settings: \"{}\"".format(farm_plugin_settings))
 
         # Get all keys from farm_plugin_settings
         for key in self._creator_farm_keys:

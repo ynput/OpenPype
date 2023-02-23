@@ -51,7 +51,9 @@ class CreateWritePrerender(napi.NukeWriteCreator):
             self._get_reviewable_bool()
         ]
         if "farm_rendering" in self.instance_attributes:
-            render_farm_settings = RenderFarmSettings().get_rendering_attributes()
+            render_farm_settings = RenderFarmSettings(
+                log=self.log).get_rendering_attributes()
+
 
             attr_defs.extend([
                 UISeparatorDef(),
