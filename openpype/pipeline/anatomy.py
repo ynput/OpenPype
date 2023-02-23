@@ -500,7 +500,6 @@ class Anatomy(BaseAnatomy):
         roots_locals.update_data(roots_project_locals.get("studio") or {})
         return roots_locals
 
-
     @classmethod
     def _get_site_root_overrides(cls, project_name, site_name):
         """Get root overrides for site.
