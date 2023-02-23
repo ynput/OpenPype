@@ -660,7 +660,6 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
             ["create"]
             ["auto_detect_render"]
         )
-        self.enabled = plugin_settings["enabled"]
         self.allow_group_rename = plugin_settings["allow_group_rename"]
         self.group_name_template = plugin_settings["group_name_template"]
         self.group_idx_offset = plugin_settings["group_idx_offset"]
