@@ -23,7 +23,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
-    hosts = ["nuke", "nukestudio"]
+    hosts = ["nuke"]
     families = ["render.farm", "prerender.farm"]
     optional = True
     targets = ["local"]
@@ -141,7 +141,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         exe_node_name,
         start_frame,
         end_frame,
-        responce_data=None
+        response_data=None
     ):
         render_dir = os.path.normpath(os.path.dirname(render_path))
         batch_name = os.path.basename(script_path)
@@ -152,8 +152,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
         output_filename_0 = self.preview_fname(render_path)
 
-        if not responce_data:
-            responce_data = {}
+        if not response_data:
+            response_data = {}
 
         try:
             # Ensure render folder exists
@@ -244,11 +244,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             "AuxFiles": []
         }
 
-        if responce_data.get("_id"):
+        if response_data.get("_id"):
             payload["JobInfo"].update({
                 "JobType": "Normal",
-                "BatchName": responce_data["Props"]["Batch"],
-                "JobDependency0": responce_data["_id"],
+                "BatchName": response_data["Props"]["Batch"],
+                "JobDependency0": response_data["_id"],
                 "ChunkSize": 99999999
             })
 
