@@ -9,7 +9,6 @@ import six
 import time
 
 from openpype.settings.lib import (
-    get_project_settings,
     get_local_settings,
 )
 from openpype.settings.constants import (
@@ -25,6 +24,7 @@ from openpype.lib.path_templates import (
 )
 from openpype.lib.log import Logger
 from openpype.lib import get_local_site_id
+from openpype.modules import ModulesManager
 
 log = Logger.get_logger(__name__)
 
@@ -436,73 +436,131 @@ class Anatomy(BaseAnatomy):
             ))
 
         project_doc = self.get_project_doc_from_cache(project_name)
-        local_settings = get_local_settings()
-        if not site_name:
-            site_name = self.get_site_name_from_cache(
-                project_name, local_settings
-            )
+        root_overrides = self._get_site_root_overrides(project_name, site_name)
 
-        super(Anatomy, self).__init__(
-            project_doc,
-            local_settings,
-            site_name
-        )
+        super(Anatomy, self).__init__(project_doc, root_overrides)
 
     @classmethod
     def get_project_doc_from_cache(cls, project_name):
-        project_cache = cls._project_cache.get(project_name)
-        if project_cache is not None:
-            if time.time() - project_cache["start"] > 10:
-                cls._project_cache.pop(project_name)
-                project_cache = None
-
-        if project_cache is None:
-            project_cache = {
-                "project_doc": get_project(project_name),
-                "start": time.time()
-            }
-            cls._project_cache[project_name] = project_cache
-
-        return copy.deepcopy(
-            cls._project_cache[project_name]["project_doc"]
-        )
+        project_cache = cls._project_cache[project_name]
+        if project_cache.is_outdated:
+            project_cache.update_data(get_project(project_name))
+        return copy.deepcopy(project_cache.data)
 
     @classmethod
-    def get_site_name_from_cache(cls, project_name, local_settings):
-        site_cache = cls._site_cache.get(project_name)
-        if site_cache is not None:
-            if time.time() - site_cache["start"] > 10:
-                cls._site_cache.pop(project_name)
-                site_cache = None
+    def get_sync_server_addon(cls):
+        if cls._sync_server_addon_cache.is_outdated:
+            manager = ModulesManager()
+            cls._sync_server_addon_cache.update_data(
+                manager.enabled_modules.get("sync_server")
+            )
+        return cls._sync_server_addon_cache.data
 
-        if site_cache:
-            return site_cache["site_name"]
+    @classmethod
+    def _get_studio_roots_overrides(cls, project_name, local_settings=None):
+        """This would return 'studio' site override by local settings.
 
-        local_project_settings = local_settings.get("projects")
+        Notes:
+            This logic handles local overrides of studio site which may be
+                available even when sync server is not enabled.
+            Handling of 'studio' and 'local' site was separated as preparation
+                for AYON development where that will be received from
+                separated sources.
+
+        Args:
+            project_name (str): Name of project.
+            local_settings (Optional[dict[str, Any]]): Prepared local settings.
+
+        Returns:
+            Union[Dict[str, str], None]): Local root overrides.
+        """
+
+        if local_settings is None:
+            local_settings = get_local_settings()
+
+        local_project_settings = local_settings.get("projects") or {}
         if not local_project_settings:
+            return None
+
+        # Check for roots existence in local settings first
+        roots_project_locals = (
+            local_project_settings
+            .get(project_name, {})
+        )
+        roots_default_locals = (
+            local_project_settings
+            .get(DEFAULT_PROJECT_KEY, {})
+        )
+
+        # Skip rest of processing if roots are not set
+        if not roots_project_locals and not roots_default_locals:
             return
 
-        project_locals = local_project_settings.get(project_name) or {}
-        default_locals = local_project_settings.get(DEFAULT_PROJECT_KEY) or {}
-        active_site = (
-            project_locals.get("active_site")
-            or default_locals.get("active_site")
-        )
-        if not active_site:
-            project_settings = get_project_settings(project_name)
-            active_site = (
-                project_settings
-                ["global"]
-                ["sync_server"]
-                ["config"]
-                ["active_site"]
-            )
+        # Combine roots from local settings
+        roots_locals = roots_default_locals.get("studio") or {}
+        roots_locals.update_data(roots_project_locals.get("studio") or {})
+        return roots_locals
 
-        cls._site_cache[project_name] = {
-            "site_name": active_site,
-            "start": time.time()
-        }
-        return active_site
+
+    @classmethod
+    def _get_site_root_overrides(cls, project_name, site_name):
+        """Get root overrides for site.
+
+        Args:
+            project_name (str): Project name for which root overrides should be
+                received.
+            site_name (Union[str, None]): Name of site for which root overrides
+                should be returned.
+        """
+
+        # Local settings may be used more than once or may not be used at all
+        # - to avoid slowdowns 'get_local_settings' is not called until it's
+        #   really needed
+        local_settings = None
+        local_site_id = get_local_site_id()
+
+        # First check if sync server is available and enabled
+        sync_server = cls.get_sync_server_addon()
+        if sync_server is None or not sync_server.enabled:
+            # QUESTION is ok to force 'studio' when site sync is not enabled?
+            site_name = "studio"
+
+        elif not site_name:
+            # Use sync server to receive active site name
+            project_cache = cls._default_site_id_cache[project_name]
+            if project_cache.is_outdated:
+                local_settings = get_local_settings()
+                project_cache.update_data(
+                    sync_server.get_active_site_type(
+                        project_name, local_settings
+                    )
+                )
+            site_name = project_cache.data
+
+        elif site_name not in ("studio", "local"):
+            # Validate that site name is valid
+            if site_name != local_site_id:
+                raise RuntimeError((
+                    "Anatomy could be created only for"
+                    " default local sites not for {}"
+                ).format(site_name))
+            site_name = "local"
+
+        site_cache = cls._root_overrides_cache[project_name][site_name]
+        if site_cache.is_outdated:
+            if site_name == "studio":
+                # Handle studio root overrides without sync server
+                # - studio root overrides can be done even without sync server
+                roots_overrides = cls._get_studio_roots_overrides(
+                    project_name, local_settings
+                )
+            else:
+                # Ask sync server to get roots overrides
+                roots_overrides = sync_server.get_local_site_root_overrides(
+                    project_name, site_name, local_settings
+                )
+            site_cache.update_data(roots_overrides)
+        return site_cache.data
 
 
 class AnatomyTemplateUnsolved(TemplateUnsolved):
