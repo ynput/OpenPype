@@ -1021,9 +1021,10 @@ class RenderProductsRedshift(ARenderProducts):
         # like Cryptomatte.
         # AOVs are merged in multi-channel file
         multipart = False
-        force_layer = bool(self._get_attr("redshiftOptions.exrForceMultilayer")) # noqa
-        exMultipart = bool(self._get_attr("redshiftOptions.exrMultipart"))
-        if exMultipart and force_layer:
+        force_layer = bool(
+            self._get_attr("redshiftOptions.exrForceMultilayer")
+        )
+        if force_layer:
             multipart = True
 
         return multipart
