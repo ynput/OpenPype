@@ -59,6 +59,10 @@ class ExtractSequence(pyblish.api.Extractor):
             )
         )
 
+        ignore_layers_transparency = instance.data.get(
+            "ignoreLayersTransparency", False
+        )
+
         family_lowered = instance.data["family"].lower()
         mark_in = instance.context.data["sceneMarkIn"]
         mark_out = instance.context.data["sceneMarkOut"]
@@ -114,7 +118,11 @@ class ExtractSequence(pyblish.api.Extractor):
         else:
             # Render output
             result = self.render(
-                output_dir, mark_in, mark_out, filtered_layers
+                output_dir,
+                mark_in,
+                mark_out,
+                filtered_layers,
+                ignore_layers_transparency
             )
 
         output_filepaths_by_frame_idx, thumbnail_fullpath = result
@@ -274,7 +282,9 @@ class ExtractSequence(pyblish.api.Extractor):
 
         return output_filepaths_by_frame_idx, thumbnail_filepath
 
-    def render(self, output_dir, mark_in, mark_out, layers):
+    def render(
+        self, output_dir, mark_in, mark_out, layers, ignore_layer_opacity
+    ):
         """ Export images from TVPaint.
 
         Args:
@@ -282,6 +292,7 @@ class ExtractSequence(pyblish.api.Extractor):
             mark_in (int): Starting frame index from which export will begin.
             mark_out (int): On which frame index export will end.
             layers (list): List of layers to be exported.
+            ignore_layer_opacity (bool): Layer's opacity will be ignored.
 
         Returns:
             tuple: With 2 items first is list of filenames second is path to
@@ -323,7 +334,7 @@ class ExtractSequence(pyblish.api.Extractor):
         for layer_id, render_data in extraction_data_by_layer_id.items():
             layer = layers_by_id[layer_id]
             filepaths_by_layer_id[layer_id] = self._render_layer(
-                render_data, layer, output_dir
+                render_data, layer, output_dir, ignore_layer_opacity
             )
 
         # Prepare final filepaths where compositing should store result
@@ -380,7 +391,9 @@ class ExtractSequence(pyblish.api.Extractor):
                 red, green, blue = self.review_bg
         return (red, green, blue)
 
-    def _render_layer(self, render_data, layer, output_dir):
+    def _render_layer(
+        self, render_data, layer, output_dir, ignore_layer_opacity
+    ):
         frame_references = render_data["frame_references"]
         filenames_by_frame_index = render_data["filenames_by_frame_index"]
 
@@ -389,6 +402,12 @@ class ExtractSequence(pyblish.api.Extractor):
             "tv_layerset {}".format(layer_id),
             "tv_SaveMode \"PNG\""
         ]
+        # Set density to 100 and store previous opacity
+        if ignore_layer_opacity:
+            george_script_lines.extend([
+                "tv_layerdensity 100",
+                "orig_opacity = result",
+            ])
 
         filepaths_by_frame = {}
         frames_to_render = []
@@ -408,6 +427,10 @@ class ExtractSequence(pyblish.api.Extractor):
             george_script_lines.append("tv_layerImage {}".format(frame_idx))
             # Store image to output
             george_script_lines.append("tv_saveimage \"{}\"".format(dst_path))
+
+        # Set density back to origin opacity
+        if ignore_layer_opacity:
+            george_script_lines.append("tv_layerdensity orig_opacity")
 
         self.log.debug("Rendering Exposure frames {} of layer {} ({})".format(
             ",".join(frames_to_render), layer_id, layer["name"]
