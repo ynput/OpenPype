@@ -162,16 +162,16 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             pass
 
         # define chunk and priority
-        chunk_size = instance.data["deadlineChunkSize"]
-        if chunk_size == 0 and self.chunk_size:
+        chunk_size = instance.data.get("farm_chunk")
+        if not chunk_size:
             chunk_size = self.chunk_size
 
         # define chunk and priority
-        concurrent_tasks = instance.data["deadlineConcurrentTasks"]
-        if concurrent_tasks == 0 and self.concurrent_tasks:
+        concurrent_tasks = instance.data.get("farm_concurrency")
+        if not concurrent_tasks:
             concurrent_tasks = self.concurrent_tasks
 
-        priority = instance.data["deadlinePriority"]
+        priority = instance.data.get("farm_priority")
         if not priority:
             priority = self.priority
 
