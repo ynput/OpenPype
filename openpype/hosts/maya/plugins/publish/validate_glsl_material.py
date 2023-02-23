@@ -116,15 +116,22 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                                                   type="StingrayPBS")
                 if pbs_shader:
                     cls.pbs_shader_conversion(pbs_shader, glsl)
+<<<<<<< HEAD
             #setting up to relink the texture if
             # the mesh is with aiStandardSurface
+=======
+
+                    cmds.sets(mesh, forceElement=str(glsl_shading_grp))
+                # setting up to relink the texture if
+                # the mesh is with aiStandardSurface
+>>>>>>> 9622fbec7 (fix the bug of not being able to assign the material to the mesh)
                 arnold_shader = cmds.listConnections(material,
                                                      destination=True,
                                                      type="aiStandardSurface")
                 if arnold_shader:
                     cls.arnold_shader_conversion(arnold_shader, glsl)
 
-            cmds.sets(mesh, forceElement=str(glsl_shading_grp))
+                    cmds.sets(mesh, forceElement=str(glsl_shading_grp))
 
     @classmethod
     def pbs_shader_conversion(cls, main_shader, glsl):
@@ -171,9 +178,14 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                      "-> Can do texture conversion")
 
         for shader in main_shader:
+<<<<<<< HEAD
                     # get the file textures related to the PBS Shader
             albedo = cmds.listConnections(shader +
                                           ".baseColor")
+=======
+            # get the file textures related to the PBS Shader
+            albedo = cmds.listConnections(shader + ".baseColor")
+>>>>>>> 9622fbec7 (fix the bug of not being able to assign the material to the mesh)
             if albedo:
                 dif_output = albedo[0] + ".outColor"
                 # get the glsl_shader input
@@ -195,6 +207,7 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                 cmds.connectAttr(orm_output, rough)
 
             # connect nrm map if there is one
+<<<<<<< HEAD
             bump_node = cmds.lisConnections(shader +
                                             ".normalCamera")
             if not bump_node:
@@ -206,3 +219,15 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                     nrm_output = nrm[0] + ".outColor"
                     glsl_nrm = glsl + ".u_NormalTexture"
                     cmds.connectAttr(nrm_output, glsl_nrm)
+=======
+            bump_node = cmds.listConnections(shader +
+                                             ".normalCamera")
+            if bump_node:
+                for bump in bump_node:
+                    nrm = cmds.listConnections(bump +
+                                            ".bumpValue")
+                    if nrm:
+                        nrm_output = nrm[0] + ".outColor"
+                        glsl_nrm = glsl + ".u_NormalTexture"
+                        cmds.connectAttr(nrm_output, glsl_nrm)
+>>>>>>> 9622fbec7 (fix the bug of not being able to assign the material to the mesh)
