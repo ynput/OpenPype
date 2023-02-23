@@ -12,6 +12,7 @@ from openpype.lib import (
     UILabelDef
 )
 from openpype.hosts.nuke import api as napi
+from openpype.hosts.nuke.api.lib_rendersettings import RenderFarmSettings
 
 
 class CreateWritePrerender(napi.NukeWriteCreator):
@@ -50,6 +51,8 @@ class CreateWritePrerender(napi.NukeWriteCreator):
             self._get_reviewable_bool()
         ]
         if "farm_rendering" in self.instance_attributes:
+            render_farm_settings = RenderFarmSettings().get_rendering_attributes()
+
             attr_defs.extend([
                 UISeparatorDef(),
                 UILabelDef("Farm rendering attributes"),
@@ -59,21 +62,21 @@ class CreateWritePrerender(napi.NukeWriteCreator):
                     label="Priority",
                     minimum=1,
                     maximum=99,
-                    default=50
+                    default=render_farm_settings.get("priority", 50)
                 ),
                 NumberDef(
                     "farm_chunk",
                     label="Chunk size",
                     minimum=1,
                     maximum=99,
-                    default=10
+                    default=render_farm_settings.get("chunk_size", 10)
                 ),
                 NumberDef(
-                    "farm_concurency",
-                    label="Concurent tasks",
+                    "farm_concurrency",
+                    label="Concurrent tasks",
                     minimum=1,
                     maximum=10,
-                    default=1
+                    default=render_farm_settings.get("concurrent_tasks", 1)
                 )
             ])
         return attr_defs

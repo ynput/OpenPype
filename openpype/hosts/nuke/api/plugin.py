@@ -1236,7 +1236,7 @@ def convert_to_valid_instaces():
                     creator_attr["farm_chunk"] = (
                         node["deadlineChunkSize"].value())
                 if "deadlineConcurrentTasks" in node.knobs():
-                    creator_attr["farm_concurency"] = (
+                    creator_attr["farm_concurrency"] = (
                         node["deadlineConcurrentTasks"].value())
 
         _remove_old_knobs(node)
