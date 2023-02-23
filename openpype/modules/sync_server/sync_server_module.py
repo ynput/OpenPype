@@ -691,7 +691,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             return active_site
         return project_active_site
 
-    def get_local_site_root_overrides(
+    def get_site_root_overrides(
         self, project_name, site_name, local_settings=None
     ):
         """Get root overrides for project on a site.
