@@ -114,13 +114,17 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
             for material in shading_grp:
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> e81674c9f (fix the commit)
+=======
+>>>>>>> 34482912598e7c6bf18d9095682ecbf488153b75
                 pbs_shader = cmds.listConnections(material,
                                                   destination=True,
                                                   type="StingrayPBS")
                 if pbs_shader:
                     cls.pbs_shader_conversion(pbs_shader, glsl)
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -142,11 +146,16 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                 # setting up to relink the texture if
                 # the mesh is with aiStandardSurface
 >>>>>>> e81674c9f (fix the commit)
+=======
+                # setting up to relink the texture if
+                # the mesh is with aiStandardSurface
+>>>>>>> 34482912598e7c6bf18d9095682ecbf488153b75
                 arnold_shader = cmds.listConnections(material,
                                                      destination=True,
                                                      type="aiStandardSurface")
                 if arnold_shader:
                     cls.arnold_shader_conversion(arnold_shader, glsl)
+<<<<<<< HEAD
 <<<<<<< HEAD
 
             cmds.sets(mesh, forceElement=str(glsl_shading_grp))
@@ -293,6 +302,8 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
             cmds.sets(mesh, forceElement=str(glsl_shading_grp))
 >>>>>>> a9ea10fbe (add back missing @classmethod)
 =======
+=======
+>>>>>>> 34482912598e7c6bf18d9095682ecbf488153b75
 
             cmds.sets(mesh, forceElement=str(glsl_shading_grp))
 
@@ -374,4 +385,7 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                         nrm_output = nrm[0] + ".outColor"
                         glsl_nrm = glsl + ".u_NormalTexture"
                         cmds.connectAttr(nrm_output, glsl_nrm)
+<<<<<<< HEAD
 >>>>>>> e81674c9f (fix the commit)
+=======
+>>>>>>> 34482912598e7c6bf18d9095682ecbf488153b75
