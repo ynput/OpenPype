@@ -57,20 +57,13 @@ class BaseAnatomy(object):
     root_key_regex = re.compile(r"{(root?[^}]+)}")
     root_name_regex = re.compile(r"root\[([^]]+)\]")
 
-    def __init__(self, project_doc, local_settings, site_name):
+    def __init__(self, project_doc, root_overrides=None):
         project_name = project_doc["name"]
         self.project_name = project_name
         self.project_code = project_doc["data"]["code"]
 
-        if (site_name and
-                site_name not in ["studio", "local", get_local_site_id()]):
-            raise RuntimeError("Anatomy could be created only for default "
-                               "local sites not for {}".format(site_name))
-
-        self._site_name = site_name
-
         self._data = self._prepare_anatomy_data(
-            project_doc, local_settings, site_name
+            project_doc, root_overrides
         )
         self._templates_obj = AnatomyTemplates(self)
         self._roots_obj = Roots(self)
@@ -92,28 +85,18 @@ class BaseAnatomy(object):
     def items(self):
         return copy.deepcopy(self._data).items()
 
-    def _prepare_anatomy_data(self, project_doc, local_settings, site_name):
+    def _prepare_anatomy_data(self, project_doc, root_overrides):
         """Prepare anatomy data for further processing.
 
         Method added to replace `{task}` with `{task[name]}` in templates.
         """
-        project_name = project_doc["name"]
+
         anatomy_data = self._project_doc_to_anatomy_data(project_doc)
 
-        templates_data = anatomy_data.get("templates")
-        if templates_data:
-            # Replace `{task}` with `{task[name]}` in templates
-            value_queue = collections.deque()
-            value_queue.append(templates_data)
-            while value_queue:
-                item = value_queue.popleft()
-                if not isinstance(item, dict):
-                    continue
-
-        self._apply_local_settings_on_anatomy_data(anatomy_data,
-                                                   local_settings,
-                                                   project_name,
-                                                   site_name)
+        self._apply_local_settings_on_anatomy_data(
+            anatomy_data,
+            root_overrides
+        )
 
         return anatomy_data
 
@@ -347,7 +330,7 @@ class BaseAnatomy(object):
         return output
 
     def _apply_local_settings_on_anatomy_data(
-        self, anatomy_data, local_settings, project_name, site_name
+        self, anatomy_data, root_overrides
     ):
         """Apply local settings on anatomy data.
 
@@ -366,40 +349,18 @@ class BaseAnatomy(object):
 
         Args:
             anatomy_data (dict): Data for anatomy.
-            local_settings (dict): Data of local settings.
-            project_name (str): Name of project for which anatomy data are.
+            root_overrides (dict): Data of local settings.
         """
-        if not local_settings:
-            return
 
-        local_project_settings = local_settings.get("projects") or {}
-
-        # Check for roots existence in local settings first
-        roots_project_locals = (
-            local_project_settings
-            .get(project_name, {})
-        )
-        roots_default_locals = (
-            local_project_settings
-            .get(DEFAULT_PROJECT_KEY, {})
-        )
-
-        # Skip rest of processing if roots are not set
-        if not roots_project_locals and not roots_default_locals:
-            return
-
-        # Combine roots from local settings
-        roots_locals = roots_default_locals.get(site_name) or {}
-        roots_locals.update(roots_project_locals.get(site_name) or {})
         # Skip processing if roots for current active site are not available in
         #   local settings
-        if not roots_locals:
+        if not root_overrides:
             return
 
         current_platform = platform.system().lower()
 
         root_data = anatomy_data["roots"]
-        for root_name, path in roots_locals.items():
+        for root_name, path in root_overrides.items():
             if root_name not in root_data:
                 continue
             anatomy_data["roots"][root_name][current_platform] = (
