@@ -633,7 +633,34 @@ class CreateRenderPass(TVPaintCreator):
         ]
 
     def get_instance_attr_defs(self):
-        return self.get_pre_create_attr_defs()
+        # Find available Render Layers
+        current_instances = self.create_context.instances
+        render_layers = [
+            {
+                "value": instance.id,
+                "label": instance.label
+            }
+            for instance in current_instances
+            if instance.creator_identifier == CreateRenderlayer.identifier
+        ]
+        if not render_layers:
+            render_layers.append({"value": None, "label": "N/A"})
+
+        return [
+            EnumDef(
+                "render_layer_instance_id",
+                label="Render Layer",
+                items=render_layers
+            ),
+            UILabelDef(
+                "NOTE: Try to hit refresh if you don't see a Render Layer"
+            ),
+            BoolDef(
+                "mark_for_review",
+                label="Review",
+                default=self.mark_for_review
+            )
+        ]
 
 
 class TVPaintAutoDetectRenderCreator(TVPaintCreator):
