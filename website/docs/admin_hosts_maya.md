@@ -174,14 +174,25 @@ These options are set on the camera shape when publishing the review. They corre
 ## Load Plugins
 
 ### Reference Loader > Namespace
-Here you can create your own custom naming for the reference loader. <br>
+Here you can create your own custom naming for the reference loader.
+
 The custom naming is split into two parts separated by a ":" symbol. The first half is the namespace and the second half is the group name of the reference. If you don't set the namespace or the group name (or both), the default namespace and group name will be applied.
-Here's the different variables you can use: <br>
-Asset name: {asset[name]} <br>
-Asset type: {asset[type]} <br>
-Subset name: {subset[name]} <br>
-Subset family: {subset[data][family]} <br>
-Example: {asset[name]}_{subset[name]}:GRP
+Here's the different variables you can use:
+
+<div class="row markdown">
+<div class="col col--5 markdown">
+
+| Token | Description |
+|---|---|
+|`{asset[name]}` | Asset name |
+|`{asset[type]}` | Asset type |
+|`{subset[name]}` | Subset name |
+|`{subset[data][family]}` | Subset family |
+
+</div>
+</div>
+
+Example: `{asset[name]}_{subset[name]}:GRP`
 
 ## Custom Menu
 You can add your custom tools menu into Maya by extending definitions in **Maya -> Scripts Menu Definition**.
