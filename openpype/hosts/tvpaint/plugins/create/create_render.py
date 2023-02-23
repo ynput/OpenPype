@@ -41,6 +41,7 @@ from openpype.client import get_asset_by_name
 from openpype.lib import (
     prepare_template_data,
     AbstractAttrDef,
+    UILabelDef,
     UISeparatorDef,
     EnumDef,
     TextDef,
@@ -620,6 +621,9 @@ class CreateRenderPass(TVPaintCreator):
                 "render_layer_instance_id",
                 label="Render Layer",
                 items=render_layers
+            ),
+            UILabelDef(
+                "NOTE: Try to hit refresh if you don't see a Render Layer"
             ),
             BoolDef(
                 "mark_for_review",
