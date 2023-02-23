@@ -1132,4 +1132,3 @@ def split_cmd_args(in_args):
             continue
         splitted_args.extend(arg.split(" "))
     return splitted_args
-
