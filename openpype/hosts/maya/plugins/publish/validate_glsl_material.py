@@ -117,11 +117,15 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                 if pbs_shader:
                     cls.pbs_shader_conversion(pbs_shader, glsl)
 <<<<<<< HEAD
+<<<<<<< HEAD
             #setting up to relink the texture if
             # the mesh is with aiStandardSurface
 =======
 
+=======
+>>>>>>> 055e90e8a (style fix)
                     cmds.sets(mesh, forceElement=str(glsl_shading_grp))
+
                 # setting up to relink the texture if
                 # the mesh is with aiStandardSurface
 >>>>>>> 9622fbec7 (fix the bug of not being able to assign the material to the mesh)
@@ -130,7 +134,6 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                                                      type="aiStandardSurface")
                 if arnold_shader:
                     cls.arnold_shader_conversion(arnold_shader, glsl)
-
                     cmds.sets(mesh, forceElement=str(glsl_shading_grp))
 
     @classmethod
