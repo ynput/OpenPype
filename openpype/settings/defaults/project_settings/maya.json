@@ -1,4 +1,5 @@
 {
+    "open_workfile_post_initialization": false,
     "imageio": {
         "ocio_config": {
             "enabled": false,
@@ -92,6 +93,16 @@
             "multilayer_exr": true,
             "force_combine": true,
             "aov_list": [],
+            "additional_options": []
+        },
+        "renderman_renderer": {
+            "image_prefix": "<layer>{aov_separator}<aov>.<f4>.<ext>",
+            "image_dir": "<scene>/<layer>",
+            "display_filters": [],
+            "imageDisplay_dir": "<imagedir>/<layer>{aov_separator}imageDisplayFilter.<f4>.<ext>",
+            "sample_filters": [],
+            "cryptomatte_dir": "<imagedir>/<layer>{aov_separator}cryptomatte.<f4>.<ext>",
+            "watermark_dir": "<imagedir>/<layer>{aov_separator}watermarkFilter.<f4>.<ext>",
             "additional_options": []
         }
     },
@@ -804,6 +815,11 @@
                     "twoSidedLighting": true,
                     "lineAAEnable": true,
                     "multiSample": 8,
+                    "useDefaultMaterial": false,
+                    "wireframeOnShaded": false,
+                    "xray": false,
+                    "jointXray": false,
+                    "backfaceCulling": false,
                     "ssaoEnable": false,
                     "ssaoAmount": 1,
                     "ssaoRadius": 16,

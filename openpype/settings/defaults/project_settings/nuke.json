@@ -246,6 +246,7 @@
                             "sourcetype": "python",
                             "title": "Gizmo Note",
                             "command": "nuke.nodes.StickyNote(label='You can create your own toolbar menu in the Nuke GizmoMenu of OpenPype')",
+                            "icon": "",
                             "shortcut": ""
                         }
                     ]

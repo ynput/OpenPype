@@ -506,6 +506,43 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         return version_doc
 
+    def _validate_repre_files(self, files, is_sequence_representation):
+        """Validate representation files before transfer preparation.
+
+        Check if files contain only filenames instead of full paths and check
+        if sequence don't contain more than one sequence or has remainders.
+
+        Args:
+            files (Union[str, List[str]]): Files from representation.
+            is_sequence_representation (bool): Files are for sequence.
+
+        Raises:
+            KnownPublishError: If validations don't pass.
+        """
+
+        if not files:
+            return
+
+        if not is_sequence_representation:
+            files = [files]
+
+        if any(os.path.isabs(fname) for fname in files):
+            raise KnownPublishError("Given file names contain full paths")
+
+        if not is_sequence_representation:
+            return
+
+        src_collections, remainders = clique.assemble(files)
+        if len(files) < 2 or len(src_collections) != 1 or remainders:
+            raise KnownPublishError((
+                "Files of representation does not contain proper"
+                " sequence files.\nCollected collections: {}"
+                "\nCollected remainders: {}"
+            ).format(
+                ", ".join([str(col) for col in src_collections]),
+                ", ".join([str(rem) for rem in remainders])
+            ))
+
     def prepare_representation(self, repre,
                                template_name,
                                existing_repres_by_name,
@@ -533,6 +570,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         files = repre["files"]
         template_data["representation"] = repre["name"]
         template_data["ext"] = repre["ext"]
+
+        # allow overwriting existing version
+        template_data["version"] = version["name"]
 
         # add template data for colorspaceData
         if repre.get("colorspaceData"):
@@ -584,7 +624,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         is_udim = bool(repre.get("udim"))
 
         # handle publish in place
-        if "originalDirname" in template:
+        if "{originalDirname}" in template:
             # store as originalDirname only original value without project root
             # if instance collected originalDirname is present, it should be
             # used for all represe
@@ -603,24 +643,64 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             template_data["originalDirname"] = without_root
 
         is_sequence_representation = isinstance(files, (list, tuple))
-        if is_sequence_representation:
-            # Collection of files (sequence)
-            if any(os.path.isabs(fname) for fname in files):
-                raise KnownPublishError("Given file names contain full paths")
+        self._validate_repre_files(files, is_sequence_representation)
 
+        # Output variables of conditions below:
+        # - transfers (List[Tuple[str, str]]): src -> dst filepaths to copy
+        # - repre_context (Dict[str, Any]): context data used to fill template
+        # - template_data (Dict[str, Any]): source data used to fill template
+        #   - to add required data to 'repre_context' not used for
+        #       formatting
+        # - anatomy_filled (Dict[str, Any]): filled anatomy of last file
+        #   - to fill 'publishDir' on instance.data -> not ideal
+
+        # Treat template with 'orignalBasename' in special way
+        if "{originalBasename}" in template:
+            # Remove 'frame' from template data
+            template_data.pop("frame", None)
+
+            # Find out first frame string value
+            first_index_padded = None
+            if not is_udim and is_sequence_representation:
+                col = clique.assemble(files)[0][0]
+                sorted_frames = tuple(sorted(col.indexes))
+                # First frame used for end value
+                first_frame = sorted_frames[0]
+                # Get last frame for padding
+                last_frame = sorted_frames[-1]
+                # Use padding from collection of length of last frame as string
+                padding = max(col.padding, len(str(last_frame)))
+                first_index_padded = get_frame_padded(
+                    frame=first_frame,
+                    padding=padding
+                )
+
+            # Convert files to list for single file as remaining part is only
+            #   transfers creation (iteration over files)
+            if not is_sequence_representation:
+                files = [files]
+
+            repre_context = None
+            transfers = []
+            for src_file_name in files:
+                template_data["originalBasename"], _ = os.path.splitext(
+                    src_file_name)
+
+                anatomy_filled = anatomy.format(template_data)
+                dst = anatomy_filled[template_name]["path"]
+                src = os.path.join(stagingdir, src_file_name)
+                transfers.append((src, dst))
+                if repre_context is None:
+                    repre_context = dst.used_values
+
+            if not is_udim and first_index_padded is not None:
+                repre_context["frame"] = first_index_padded
+
+        elif is_sequence_representation:
+            # Collection of files (sequence)
             src_collections, remainders = clique.assemble(files)
-            if len(files) < 2 or len(src_collections) != 1 or remainders:
-                raise KnownPublishError((
-                    "Files of representation does not contain proper"
-                    " sequence files.\nCollected collections: {}"
-                    "\nCollected remainders: {}"
-                ).format(
-                    ", ".join([str(col) for col in src_collections]),
-                    ", ".join([str(rem) for rem in remainders])
-                ))
 
             src_collection = src_collections[0]
-            template_data["originalBasename"] = src_collection.head[:-1]
             destination_indexes = list(src_collection.indexes)
             # Use last frame for minimum padding
             #   - that should cover both 'udim' and 'frame' minimum padding
@@ -642,11 +722,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 # In case source are published in place we need to
                 # skip renumbering
                 repre_frame_start = repre.get("frameStart")
-                if (
-                    "originalBasename" not in template
-                    and repre_frame_start is not None
-                ):
-                    index_frame_start = int(repre["frameStart"])
+                if repre_frame_start is not None:
+                    index_frame_start = int(repre_frame_start)
                     # Shift destination sequence to the start frame
                     destination_indexes = [
                         index_frame_start + idx
@@ -702,15 +779,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         else:
             # Single file
-            fname = files
-            if os.path.isabs(fname):
-                self.log.error(
-                    "Filename in representation is filepath {}".format(fname)
-                )
-                raise KnownPublishError(
-                    "This is a bug. Representation file name is full path"
-                )
-            template_data["originalBasename"], _ = os.path.splitext(fname)
             # Manage anatomy template data
             template_data.pop("frame", None)
             if is_udim:
@@ -722,7 +790,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             dst = os.path.normpath(template_filled)
 
             # Single file transfer
-            src = os.path.join(stagingdir, fname)
+            src = os.path.join(stagingdir, files)
             transfers = [(src, dst)]
 
         # todo: Are we sure the assumption each representation

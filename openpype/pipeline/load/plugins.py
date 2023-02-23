@@ -2,7 +2,10 @@ import os
 import logging
 
 from openpype.settings import get_system_settings, get_project_settings
-from openpype.pipeline import legacy_io
+from openpype.pipeline import (
+    schema,
+    legacy_io,
+)
 from openpype.pipeline.plugin_discover import (
     discover,
     register_plugin,
@@ -78,6 +81,45 @@ class LoaderPlugin(list):
             else:
                 print("  - setting `{}`: `{}`".format(option, value))
             setattr(cls, option, value)
+
+    @classmethod
+    def is_compatible_loader(cls, context):
+        """Return whether a loader is compatible with a context.
+
+        This checks the version's families and the representation for the given
+        Loader.
+
+        Returns:
+            bool
+        """
+
+        plugin_repre_names = cls.get_representations()
+        plugin_families = cls.families
+        if not plugin_repre_names or not plugin_families:
+            return False
+
+        repre_doc = context.get("representation")
+        if not repre_doc:
+            return False
+
+        plugin_repre_names = set(plugin_repre_names)
+        if (
+            "*" not in plugin_repre_names
+            and repre_doc["name"] not in plugin_repre_names
+        ):
+            return False
+
+        maj_version, _ = schema.get_schema_version(context["subset"]["schema"])
+        if maj_version < 3:
+            families = context["version"]["data"].get("families", [])
+        else:
+            families = context["subset"]["data"]["families"]
+
+        plugin_families = set(plugin_families)
+        return (
+            "*" in plugin_families
+            or any(family in plugin_families for family in families)
+        )
 
     @classmethod
     def get_representations(cls):

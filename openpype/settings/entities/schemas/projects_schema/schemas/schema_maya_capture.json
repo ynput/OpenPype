@@ -185,6 +185,10 @@
                             "type": "splitter"
                         },
                         {
+                            "type": "label",
+                            "label": "<b>Display</b>"
+                        },
+                        {
                             "type":"boolean",
                             "key": "renderDepthOfField",
                             "label": "Depth of Field"
@@ -220,6 +224,31 @@
                         },
                         {
                             "type": "splitter"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "useDefaultMaterial",
+                            "label": "Use Default Material"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "wireframeOnShaded",
+                            "label": "Wireframe On Shaded"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "xray",
+                            "label": "X-Ray"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "jointXray",
+                            "label": "X-Ray Joints"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "backfaceCulling",
+                            "label": "Backface Culling"
                         },
                         {
                             "type": "boolean",

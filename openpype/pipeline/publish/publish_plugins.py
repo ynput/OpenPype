@@ -118,7 +118,7 @@ class OpenPypePyblishPluginMixin:
 
         Attributes available for all families in plugin's `families` attribute.
         Returns:
-            list<AbtractAttrDef>: Attribute definitions for plugin.
+            list<AbstractAttrDef>: Attribute definitions for plugin.
         """
 
         return []
@@ -372,6 +372,12 @@ class ExtractorColormanaged(Extractor):
             ```
 
         """
+        ext = representation["ext"]
+        # check extension
+        self.log.debug("__ ext: `{}`".format(ext))
+        if ext.lower() not in self.allowed_ext:
+            return
+
         if colorspace_settings is None:
             colorspace_settings = self.get_colorspace_settings(context)
 
@@ -385,12 +391,6 @@ class ExtractorColormanaged(Extractor):
 
         self.log.info("Config data is : `{}`".format(
             config_data))
-
-        ext = representation["ext"]
-        # check extension
-        self.log.debug("__ ext: `{}`".format(ext))
-        if ext.lower() not in self.allowed_ext:
-            return
 
         project_name = context.data["projectName"]
         host_name = context.data["hostName"]
