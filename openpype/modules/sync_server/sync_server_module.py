@@ -709,6 +709,16 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             Union[dict[str, Any], None]: Root overrides for this machine.
         """
 
+        # Validate that site name is valid
+        if site_name not in ("studio", "local"):
+            # Considure local site id as 'local'
+            if site_name != get_local_site_id():
+                raise RuntimeError((
+                    "Anatomy could be created only for"
+                    " default local sites not for {}"
+                ).format(site_name))
+            site_name = "local"
+
         if local_settings is None:
             local_settings = get_local_settings()
 
