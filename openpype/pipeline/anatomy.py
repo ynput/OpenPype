@@ -368,9 +368,62 @@ class BaseAnatomy(object):
             )
 
 
+class CacheItem:
+    """Helper to cache data.
+
+    Helper does not handle refresh of data and does not mark data as outdated.
+    Who uses the object should check of outdated state on his own will.
+    """
+
+    default_lifetime = 10
+
+    def __init__(self, lifetime=None):
+        self._data = None
+        self._cached = None
+        self._lifetime = lifetime or self.default_lifetime
+
+    @property
+    def data(self):
+        """Cached data/object.
+
+        Returns:
+            Any: Whatever was cached.
+        """
+
+        return self._data
+
+    @property
+    def is_outdated(self):
+        """Item has outdated cache.
+
+        Lifetime of cache item expired or was not yet set.
+
+        Returns:
+            bool: Item is outdated.
+        """
+
+        if self._cached is None:
+            return True
+        return (time.time() - self._cached) > self._lifetime
+
+    def update_data(self, data):
+        """Update cache of data.
+
+        Args:
+            data (Any): Data to cache.
+        """
+
+        self._data = data
+        self._cached = time.time()
+
+
 class Anatomy(BaseAnatomy):
-    _project_cache = {}
-    _site_cache = {}
+    _sync_server_addon_cache = CacheItem()
+    _project_cache = collections.defaultdict(CacheItem)
+    _default_site_id_cache = collections.defaultdict(CacheItem)
+    _root_overrides_cache = collections.defaultdict(
+        lambda: collections.defaultdict(CacheItem)
+    )
 
     def __init__(self, project_name=None, site_name=None):
         if not project_name:
