@@ -842,9 +842,9 @@ class ExporterReviewMov(ExporterReview):
         # warning if reformat_nodes_config is not set
         if not reformat_nodes_config:
             self.log.warning(
-                "Please set `reformat_nodes_config` in settings.")
-            self.log.warning(
-                "Using `reformat_node_config` instead.")
+                "Please set `reformat_nodes_config` in settings. "
+                "Using `reformat_node_config` instead."
+            )
             reformat_nodes_config = {
                 "enabled": reformat_node_add,
                 "reposition_nodes": [
