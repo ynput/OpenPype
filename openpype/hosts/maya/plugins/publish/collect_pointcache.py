@@ -47,11 +47,8 @@ class CollectPointcache(pyblish.api.InstancePlugin):
         if not instance.data.get("includeUserDefinedAttributes", False):
             return
 
-        all_nodes = (
-            instance.data["setMembers"] + instance.data.get("proxy", [])
-        )
         user_defined_attributes = set()
-        for node in all_nodes:
+        for node in instance:
             attrs = cmds.listAttr(node, userDefined=True) or list()
             shapes = cmds.listRelatives(node, shapes=True) or list()
             for shape in shapes:
