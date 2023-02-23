@@ -39,8 +39,7 @@ class ExtractAlembic(publish.Extractor):
         start = float(instance.data.get("frameStartHandle", 1))
         end = float(instance.data.get("frameEndHandle", 1))
 
-        attrs = instance.data.get("attr", "").split(";")
-        attrs = [value for value in attrs if value.strip()]
+        attrs = instance.data.get("userDefinedAttributes", [])
         attrs += ["cbId"]
 
         attr_prefixes = instance.data.get("attrPrefix", "").split(";")

@@ -33,6 +33,7 @@ class CreatePointCache(plugin.Creator):
         self.data["refresh"] = False       # Default to suspend refresh.
 
         # Add options for custom attributes
+        self.data["includeUserDefinedAttributes"] = True
         self.data["attr"] = ""
         self.data["attrPrefix"] = ""
 
