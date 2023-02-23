@@ -99,8 +99,12 @@ class FusionWorkfileCreator(AutoCreator):
             "variant": self.default_variant
         }
         data.update(self.get_dynamic_data(
-            self.default_variant, task_name, asset_doc,
-            project_name, host_name
+            self.default_variant,
+            task_name,
+            asset_doc,
+            project_name,
+            host_name,
+            data
         ))
 
         instance = CreatedInstance(
