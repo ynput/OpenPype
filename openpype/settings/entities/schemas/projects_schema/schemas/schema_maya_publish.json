@@ -409,6 +409,10 @@
                     "label": "Validate Current Render Layer Has Renderable Camera"
                 },
                 {
+                    "key": "ValidateGLSLMaterial",
+                    "label": "Validate GLSL Material"
+                },
+                {
                     "key": "ValidateRenderImageRule",
                     "label": "Validate Images File Rule (Workspace)"
                 },
@@ -422,7 +426,7 @@
                 },
                 {
                     "key": "ValidateRenderLayerAOVs",
-                    "label": "Validate Render Passes / AOVs Are Registered"
+                    "label": "Validate Render Passes / AOVs Are Regigistered"
                 },
                 {
                     "key": "ValidateStepSize",

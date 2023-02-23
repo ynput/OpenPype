@@ -407,6 +407,11 @@
             "optional": false,
             "active": true
         },
+        "ValidateGLSLMaterial": {
+            "enabled": false,
+            "optional": false,
+            "active": true
+        },
         "ValidateRenderImageRule": {
             "enabled": true,
             "optional": false,

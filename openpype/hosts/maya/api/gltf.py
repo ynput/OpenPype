@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tools to work with GLTF."""
+import os
 import logging
 
 from maya import cmds, mel  # noqa
