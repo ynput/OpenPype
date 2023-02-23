@@ -713,9 +713,9 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         if site_name not in ("studio", "local"):
             # Considure local site id as 'local'
             if site_name != get_local_site_id():
-                raise RuntimeError((
-                    "Anatomy could be created only for"
-                    " default local sites not for {}"
+                raise ValueError((
+                    "Root overrides are available only for"
+                    " default sites not for \"{}\""
                 ).format(site_name))
             site_name = "local"
 
