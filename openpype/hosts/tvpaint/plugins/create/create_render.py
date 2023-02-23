@@ -41,6 +41,7 @@ from openpype.client import get_asset_by_name
 from openpype.lib import (
     prepare_template_data,
     AbstractAttrDef,
+    UILabelDef,
     UISeparatorDef,
     EnumDef,
     TextDef,
@@ -66,7 +67,7 @@ RENDER_LAYER_DETAILED_DESCRIPTIONS = (
 Be aware Render Layer <b>is not</b> TVPaint layer.
 
 All TVPaint layers in the scene with the color group id are rendered in the
-beauty pass. To create sub passes use Render Layer creator which is
+beauty pass. To create sub passes use Render Pass creator which is
 dependent on existence of render layer instance.
 
 The group can represent an asset (tree) or different part of scene that consist
@@ -82,8 +83,8 @@ could be Render Layer which has 'Arm', 'Head' and 'Body' as Render Passes.
 RENDER_PASS_DETAILED_DESCRIPTIONS = (
     """Render Pass is sub part of Render Layer.
 
-Render Pass can consist of one or more TVPaint layers. Render Layers must
-belong to a Render Layer. Marker TVPaint layers will change it's group color
+Render Pass can consist of one or more TVPaint layers. Render Pass must
+belong to a Render Layer. Marked TVPaint layers will change it's group color
 to match group color of Render Layer.
 """
 )
@@ -461,7 +462,10 @@ class CreateRenderPass(TVPaintCreator):
             "render_layer_instance_id"
         )
         if not render_layer_instance_id:
-            raise CreatorError("Missing RenderLayer instance")
+            raise CreatorError((
+                "You cannot create a Render Pass without a Render Layer."
+                " Please select one first"
+            ))
 
         render_layer_instance = self.create_context.instances_by_id.get(
             render_layer_instance_id
@@ -598,12 +602,45 @@ class CreateRenderPass(TVPaintCreator):
         ]
 
     def get_pre_create_attr_defs(self):
+        # Find available Render Layers
+        # - instances are created after creators reset
+        current_instances = self.host.list_instances()
+        render_layers = [
+            {
+                "value": instance["instance_id"],
+                "label": instance["subset"]
+            }
+            for instance in current_instances
+            if instance["creator_identifier"] == CreateRenderlayer.identifier
+        ]
+        if not render_layers:
+            render_layers.append({"value": None, "label": "N/A"})
+
+        return [
+            EnumDef(
+                "render_layer_instance_id",
+                label="Render Layer",
+                items=render_layers
+            ),
+            UILabelDef(
+                "NOTE: Try to hit refresh if you don't see a Render Layer"
+            ),
+            BoolDef(
+                "mark_for_review",
+                label="Review",
+                default=self.mark_for_review
+            )
+        ]
+
+    def get_instance_attr_defs(self):
+        # Find available Render Layers
+        current_instances = self.create_context.instances
         render_layers = [
             {
                 "value": instance.id,
                 "label": instance.label
             }
-            for instance in self.create_context.instances
+            for instance in current_instances
             if instance.creator_identifier == CreateRenderlayer.identifier
         ]
         if not render_layers:
@@ -615,15 +652,15 @@ class CreateRenderPass(TVPaintCreator):
                 label="Render Layer",
                 items=render_layers
             ),
+            UILabelDef(
+                "NOTE: Try to hit refresh if you don't see a Render Layer"
+            ),
             BoolDef(
                 "mark_for_review",
                 label="Review",
                 default=self.mark_for_review
             )
         ]
-
-    def get_instance_attr_defs(self):
-        return self.get_pre_create_attr_defs()
 
 
 class TVPaintAutoDetectRenderCreator(TVPaintCreator):
@@ -660,7 +697,6 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
             ["create"]
             ["auto_detect_render"]
         )
-        self.enabled = plugin_settings["enabled"]
         self.allow_group_rename = plugin_settings["allow_group_rename"]
         self.group_name_template = plugin_settings["group_name_template"]
         self.group_idx_offset = plugin_settings["group_idx_offset"]
