@@ -1320,6 +1320,7 @@ class RenderProductsMayaHardware(ARenderProducts):
     ]
 
     def get_multipart(self):
+        # MayaHardware does not support multipart EXRs.
         return False
 
     def _get_extension(self, value):
