@@ -51,7 +51,7 @@ OIIOTools transcoder plugin with configurable output presets. Any incoming repre
 `oiiotool` is used for transcoding, eg. `oiiotool` must be present in `vendor/bin/oiio` or environment variable `OPENPYPE_OIIO_PATHS` must be provided for custom oiio installation.
 
 Notable parameters:
-- **`Delete Original Representation`** - keep or remove original representation. If old representation is kept, but there is new transcoded representation with 'Create review' tag, original representation looses its 'review' tag if present.
+- **`Delete Original Representation`** - keep or remove original representation. If old representation is kept, but there is new transcoded representation with 'Create review' tag, original representation loses its 'review' tag if present.
 - **`Extension`** - target extension. If left empty, original extension is used.
 - **`Transcoding type`** - transcoding into colorspace or into display and viewer space could be used. Cannot use both at the same time.
 - **`Colorspace`** - target colorspace, which must be available in used color config. (If `Transcoding type` is `Use Colorspace` value in configuration is used OR if empty value collected on instance from DCC).
