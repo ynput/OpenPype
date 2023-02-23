@@ -33,6 +33,7 @@ class CreateSaver(Creator):
             args = (-32768, -32768)  # Magical position numbers
             saver = comp.AddTool("Saver", *args)
 
+            instance_data["subset"] = subset_name
             self._update_tool_with_data(saver, data=instance_data)
 
             saver["OutputFormat"] = file_format
