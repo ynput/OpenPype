@@ -135,9 +135,6 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             file_url = self.prepare_root_value(self.fname,
                                                context["project"]["name"])
 
-            if not cmds.namespace(exists=namespace):
-                cmds.namespace(add=namespace)
-
             nodes = cmds.file(file_url,
                               namespace=namespace,
                               sharedReferenceFile=False,
