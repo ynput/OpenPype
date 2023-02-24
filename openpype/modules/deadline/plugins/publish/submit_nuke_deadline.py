@@ -266,7 +266,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             "PYBLISHPLUGINPATH",
             "NUKE_PATH",
             "TOOL_ENV",
-            "FOUNDRY_LICENSE"
+            "FOUNDRY_LICENSE",
+            "OPENPYPE_SG_USER",
         ]
 
         # Add OpenPype version if we are running from build.

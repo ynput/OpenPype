@@ -9,6 +9,8 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
     hosts = ["tvpaint"]
     families = ["render", "review"]
 
+    ignore_render_pass_transparency = False
+
     def process(self, instance):
         context = instance.context
         creator_identifier = instance.data["creator_identifier"]
@@ -63,6 +65,9 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
             for layer in layers_data
             if layer["name"] in layer_names
         ]
+        instance.data["ignoreLayersTransparency"] = (
+            self.ignore_render_pass_transparency
+        )
 
         render_layer_data = None
         render_layer_id = creator_attributes["render_layer_instance_id"]
