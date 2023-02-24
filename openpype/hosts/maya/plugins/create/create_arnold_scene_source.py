@@ -6,7 +6,7 @@ from openpype.hosts.maya.api import (
 from maya import cmds
 
 
-class CreateAss(plugin.Creator):
+class CreateArnoldSceneSource(plugin.Creator):
     """Arnold Scene Source"""
 
     name = "ass"
@@ -29,7 +29,7 @@ class CreateAss(plugin.Creator):
     maskOperator = False
 
     def __init__(self, *args, **kwargs):
-        super(CreateAss, self).__init__(*args, **kwargs)
+        super(CreateArnoldSceneSource, self).__init__(*args, **kwargs)
 
         # Add animation data
         self.data.update(lib.collect_animation_data())
@@ -52,7 +52,7 @@ class CreateAss(plugin.Creator):
         self.data["maskOperator"] = self.maskOperator
 
     def process(self):
-        instance = super(CreateAss, self).process()
+        instance = super(CreateArnoldSceneSource, self).process()
 
         nodes = []
 
@@ -61,6 +61,6 @@ class CreateAss(plugin.Creator):
 
         cmds.sets(nodes, rm=instance)
 
-        assContent = cmds.sets(name="content_SET")
-        assProxy = cmds.sets(name="proxy_SET", empty=True)
+        assContent = cmds.sets(name=instance + "_content_SET")
+        assProxy = cmds.sets(name=instance + "_proxy_SET", empty=True)
         cmds.sets([assContent, assProxy], forceElement=instance)
