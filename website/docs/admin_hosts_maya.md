@@ -176,7 +176,7 @@ These options are set on the camera shape when publishing the review. They corre
 ### Reference Loader > Namespace
 Here you can create your own custom naming for the reference loader.
 
-The custom naming is split into two parts separated by a ":" symbol. The first half is the namespace and the second half is the group name of the reference. If you don't set the namespace or the group name (or both), the default namespace and group name will be applied.
+The custom naming is split into two parts separated by a ":" symbol. The first half is the namespace and the second half is the group name of the reference. If you don't set the namespace or the group name, an error will occur.
 Here's the different variables you can use:
 
 <div class="row markdown">
