@@ -323,7 +323,7 @@ Example setup:
 - **Step**: frequency of sampling the export. For example when dealing with quick movements for motion blur, a step size of less than 1 might be better.
 - **Refresh**: refresh the viewport when exporting the pointcache. For performance is best to leave off, but certain situations can require to refresh the viewport, for example using the Bullet plugin.
 - **Attr**: specific attributes to publish separated by `;`.
-- **AttrPrefix**: Prefix filter for determining which geometric attributes to write out, separated by `;`.
+- **AttrPrefix**: specific attributes which start with this prefix to publish separated by `;`.
 - **Include User Defined Attribudes**: include all user defined attributes in the publish.
 - **Farm**: if your studio has Deadline configured, artists could choose to offload potentially long running export of pointache and publish it to the farm. Only thing that is necessary is to toggle this attribute in created pointcache instance to True.
 - **Priority**: Farm priority.
