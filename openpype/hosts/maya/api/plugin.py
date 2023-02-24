@@ -1,4 +1,3 @@
-from curses.ascii import isdigit
 import os
 
 from maya import cmds
