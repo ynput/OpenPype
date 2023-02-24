@@ -142,11 +142,10 @@ class SceneInventoryView(QtWidgets.QTreeView):
         switch_to_versioned = None
         if has_loaded_hero_versions:
             def _on_switch_to_versioned(items):
-                repre_ids = set()
-                for item in items:
-                    item_id = item["representation"]
-                    if item_id not in repre_ids:
-                        repre_ids.add(item_id)
+                repre_ids = {
+                    item["representation"]
+                    for item in items
+                }
 
                 repre_docs = get_representations(
                     project_name,
@@ -168,10 +167,10 @@ class SceneInventoryView(QtWidgets.QTreeView):
                     fields=["version_id"]
                 )
 
-                version_ids = set()
+                hero_src_version_ids = set()
                 for hero_version in hero_versions:
                     version_id = hero_version["version_id"]
-                    version_ids.add(version_id)
+                    hero_src_version_ids.add(version_id)
                     hero_version_id = hero_version["_id"]
                     for _repre_id, current_version_id in (
                         version_id_by_repre_id.items()
@@ -181,7 +180,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
 
                 version_docs = get_versions(
                     project_name,
-                    version_ids=version_ids,
+                    version_ids=hero_src_version_ids,
                     fields=["name"]
                 )
                 version_name_by_id = {}

@@ -195,7 +195,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         versions = get_versions(
             project_name,
-            version_ids=set(version_ids),
+            version_ids=version_ids,
             hero=True
         )
         content_versions = {}
