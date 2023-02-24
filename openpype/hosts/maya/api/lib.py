@@ -16,15 +16,6 @@ from six import string_types
 
 from maya import cmds, mel
 import maya.api.OpenMaya as om
-from arnold import (
-    AiTextureGetBitDepth,
-    AiTextureGetFormat,
-    AiTextureInvalidate,
-    # types
-    AI_TYPE_BYTE,
-    AI_TYPE_INT,
-    AI_TYPE_UINT
-)
 
 from openpype.client import (
     get_project,
@@ -3532,6 +3523,10 @@ def image_info(file_path):
     Returns:
         dict: Dictionary with the information about the texture file.
     """
+    from arnold import (
+    AiTextureGetBitDepth,
+    AiTextureGetFormat
+)
     # Get Texture Information
     img_info = {'filename': file_path}
     if os.path.isfile(file_path):
@@ -3554,6 +3549,13 @@ def guess_colorspace(img_info):
         str: color space name use in the `--colorconvert`
              option of maketx.
     """
+    from arnold import (
+    AiTextureInvalidate,
+    # types
+    AI_TYPE_BYTE,
+    AI_TYPE_INT,
+    AI_TYPE_UINT
+)
     try:
         if img_info['bit_depth'] <= 16:
             if img_info['format'] in (AI_TYPE_BYTE, AI_TYPE_INT, AI_TYPE_UINT): # noqa

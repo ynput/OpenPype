@@ -537,33 +537,44 @@ class ExtractLook(publish.Extractor):
             if linearize:
                 if cmds.colorManagementPrefs(query=True, cmEnabled=True):
                     render_colorspace = cmds.colorManagementPrefs(query=True, renderingSpaceName=True)  # noqa
+                    config_path = cmds.colorManagementPrefs(query=True,
+                                                            configFilePath=True)
+                    if not os.path.exists(config_path):
+                        raise RuntimeError("No OCIO config path found!")
+
                     color_space_attr = resource["node"] + ".colorSpace"
                     try:
                         color_space = cmds.getAttr(color_space_attr)
                     except ValueError:
                         # node doesn't have color space attribute
-                        img_info = image_info(filepath)
-                        color_space = guess_colorspace(img_info)
+                        if cmds.loadPlugin("mtoa", quiet=True):
+                            img_info = image_info(filepath)
+                            color_space = guess_colorspace(img_info)
+                        else:
+                            color_space = "Raw"
                     self.log.info("tx: converting {0} -> {1}".format(color_space, render_colorspace))  # noqa
+
                     additional_args.extend(["--colorconvert",
                                             color_space,
                                             render_colorspace])
                 else:
-                    img_info = image_info(filepath)
-                    color_space = guess_colorspace(img_info)
-                    if color_space == "sRGB":
-                        self.log.info("tx: converting sRGB -> linear")
-                        additional_args.extend(["--colorconvert",
-                                                "sRGB",
-                                                "Raw"])
-                    else:
-                        self.log.info("tx: texture's colorspace "
-                                      "is already linear")
 
-            config_path = cmds.colorManagementPrefs(query=True,
-                                                    configFilePath=True)
-            if not os.path.exists(config_path):
-                raise RuntimeError("No OCIO config path found!")
+                    if cmds.loadPlugin("mtoa", quiet=True):
+                        img_info = image_info(filepath)
+                        color_space = guess_colorspace(img_info)
+                        if color_space == "sRGB":
+                            self.log.info("tx: converting sRGB -> linear")
+                            additional_args.extend(["--colorconvert",
+                                                    "sRGB",
+                                                    "Raw"])
+                        else:
+                            self.log.info("tx: texture's colorspace "
+                                          "is already linear")
+                    else:
+                        self.log.warning("cannot guess the colorspace"
+                                         "color conversion won't be available!")
+
+
             additional_args.extend(["--colorconfig", config_path])
             # Ensure folder exists
             if not os.path.exists(os.path.dirname(converted)):
