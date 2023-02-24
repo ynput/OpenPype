@@ -29,13 +29,13 @@ class ExtractLook(publish.Extractor):
 
         for member in instance:
             asset = ar.get_asset_by_object_path(member)
-            object = asset.get_asset()
+            obj = asset.get_asset()
 
             name = asset.get_editor_property('asset_name')
 
             json_element = {'material': str(name)}
 
-            material_obj = object.get_editor_property('static_materials')[0]
+            material_obj = obj.get_editor_property('static_materials')[0]
             material = material_obj.material_interface
 
             base_color = mat_lib.get_material_property_input_node(

@@ -164,7 +164,6 @@ def get_linked_representation_id(
         # Recursive graph lookup for inputs
         {"$graphLookup": graph_lookup}
     ]
-
     conn = get_project_connection(project_name)
     result = conn.aggregate(query_pipeline)
     referenced_version_ids = _process_referenced_pipeline_result(
@@ -213,7 +212,7 @@ def _process_referenced_pipeline_result(result, link_type):
 
         for output in sorted(outputs_recursive, key=lambda o: o["depth"]):
             output_links = output.get("data", {}).get("inputLinks")
-            if not output_links:
+            if not output_links and output["type"] != "hero_version":
                 continue
 
             # Leaf
@@ -232,6 +231,9 @@ def _process_referenced_pipeline_result(result, link_type):
 
 
 def _filter_input_links(input_links, link_type, correctly_linked_ids):
+    if not input_links:  # to handle hero versions
+        return
+
     for input_link in input_links:
         if link_type and input_link["type"] != link_type:
             continue
