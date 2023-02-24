@@ -1264,7 +1264,7 @@ class RepresentationWidget(QtWidgets.QWidget):
         repre_docs = list(get_representations(
             project_name,
             representation_ids=repre_ids,
-            fields=["name", "parent"]
+            fields=["name", "parent", "data", "context"]
         ))
 
         version_ids = [
