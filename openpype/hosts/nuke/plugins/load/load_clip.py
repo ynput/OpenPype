@@ -43,7 +43,6 @@ class LoadClip(plugin.NukeLoader):
         "review"
     ]
     representations = ["*"]
-
     extensions = set(
         ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
     )
