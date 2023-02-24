@@ -54,6 +54,15 @@
                             "label": "Note shortname"
                         },
                         {
+                            "type": "enum",
+                            "key": "exceptions_equality",
+                            "label": "Exceptions equality",
+                            "enum_items": [
+                                {"equal": "Equal"},
+                                {"not_equal": "Not equal"}
+                            ]
+                        },
+                        {
                             "type": "list",
                             "object_type": "text",
                             "key": "status_exceptions",
