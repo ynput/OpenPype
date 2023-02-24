@@ -269,7 +269,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             self.log.info(full_exp_files)
             self.log.info("collecting layer: {}".format(layer_name))
             # Get layer specific settings, might be overrides
-
+            colorspace_data = lib.get_color_management_preferences()
             data = {
                 "subset": expected_layer_name,
                 "attachTo": attach_to,
@@ -323,6 +323,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "renderSetupIncludeLights": render_instance.data.get(
                     "renderSetupIncludeLights"
                 ),
+                "colorspaceConfig": colorspace_data["config"],
+                "colorspaceDisplay": colorspace_data["display"],
+                "colorspaceView": colorspace_data["view"],
                 "strict_error_checking": render_instance.data.get(
                     "strict_error_checking", True
                 )
