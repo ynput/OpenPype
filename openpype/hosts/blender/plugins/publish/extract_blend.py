@@ -40,12 +40,21 @@ class ExtractBlend(publish.Extractor):
         # Perform extraction
         self.log.info("Performing extraction..")
 
+        # Make camera visible in viewport
+        camera = bpy.context.scene.camera
+        is_camera_hidden_viewport = camera.hide_viewport
+        camera.hide_viewport = False
+
         # Set object mode
         with plugin.context_override(
             active=bpy.context.scene.objects[0],
             selected=bpy.context.scene.objects,
         ):
             bpy.ops.object.mode_set()
+
+        # Set camera hide in viewport back to its original value
+        if is_camera_hidden_viewport:
+            camera.hide_viewport = True
 
         plugin.deselect_all()
 
