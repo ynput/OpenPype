@@ -15,6 +15,7 @@ class FusionSetFrameRangeLoader(load.LoaderPlugin):
                 "pointcache",
                 "render"]
     representations = ["*"]
+    extensions = {"*"}
 
     label = "Set frame range"
     order = 11
