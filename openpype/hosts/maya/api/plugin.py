@@ -1,3 +1,4 @@
+from curses.ascii import isdigit
 import os
 
 from maya import cmds
@@ -148,31 +149,41 @@ class ReferenceLoader(Loader):
         loaded_containers = []
 
         count = options.get("count") or 1
-        for c in range(0, count):
-            namespace = namespace or lib.unique_namespace(
-                "{}_{}_".format(asset["name"], context["subset"]["name"]),
-                prefix="_" if asset["name"][0].isdigit() else "",
-                suffix="_",
-            )
 
+        for c in range(0, count):
             custom_naming = settings['maya']['load']['reference_loader']['naming']  # noqa
             group_name = None
 
-            if custom_naming:
-                custom_naming = custom_naming.format(
-                    asset=asset,
-                    subset=subset
+            if ':' not in custom_naming:
+                raise ValueError(
+                    "Wrong format for namespace, missing ':' separator"
                 )
-                if ':' in custom_naming:
-                    if custom_naming[0] == ':':
-                        group_name = "{}{}".format(namespace, custom_naming)
-                    elif custom_naming[-1] == ':':
-                        namespace = custom_naming.split(':')[0]
-                    else:
-                        namespace = custom_naming.split(':')[0]
-                        group_name = custom_naming
-                else:
-                    namespace = custom_naming
+            elif custom_naming.strip()[0] == ':':
+                raise ValueError(
+                    "Wrong format for namespace, \
+missing content before ':' separator"
+                )
+            elif custom_naming.strip()[-1] == ':':
+                raise ValueError(
+                    "Wrong format for namespace, \
+missing content after ':' separator"
+                )
+
+            custom_naming = custom_naming.format(
+                asset=asset,
+                subset=subset
+            )
+
+            namespace = custom_naming.split(':')[0]
+            namespace = lib.unique_namespace(
+                namespace,
+                prefix="_" if namespace[0].isdigit() else "",
+                suffix="_"
+            )
+            group_name = "{}:{}".format(
+                namespace,
+                custom_naming.split(":")[-1]
+            )
 
             # Offset loaded subset
             if "offset" in options:
@@ -209,7 +220,7 @@ class ReferenceLoader(Loader):
 
         return loaded_containers
 
-    def process_reference(self, context, name, namespace, data):
+    def process_reference(self, context, name, namespace, data, group_name=None):  # noqa
         """To be implemented by subclass"""
         raise NotImplementedError("Must be implemented by subclass")
 
