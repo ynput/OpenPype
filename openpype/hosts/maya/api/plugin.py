@@ -177,7 +177,7 @@ missing content after ':' separator"
             namespace = lib.unique_namespace(
                 namespace,
                 prefix="_" if namespace[0].isdigit() else "",
-                suffix="_"
+                suffix=""
             )
             group_name = "{}:{}".format(
                 namespace,
