@@ -71,7 +71,7 @@ def get_folders_with_tasks(
         Filter 'active' don't have direct filter in GraphQl.
 
     Args:
-        con (ServerAPIBase): Connection to server.
+        con (ServerAPI): Connection to server.
         project_name (str): Name of project where folders are.
         folder_ids (Iterable[str]): Folder ids to filter.
         folder_paths (Iterable[str]): Folder paths used for filtering.
