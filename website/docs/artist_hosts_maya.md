@@ -308,6 +308,8 @@ Select its root and Go **OpenPype → Create...** and select **Point Cache**.
 
 After that, publishing will create corresponding **abc** files.
 
+When creating the instance, a objectset child `proxy` will be created. Meshes in the `proxy` objectset will be the viewport representation where loading supports proxies. Proxy representations are stored as `resources` of the subset.
+
 Example setup:
 
 ![Maya - Point Cache Example](assets/maya-pointcache_setup.png)
@@ -315,6 +317,7 @@ Example setup:
 :::note Publish on farm
 If your studio has Deadline configured, artists could choose to offload potentially long running export of pointache and publish it to the farm.
 Only thing that is necessary is to toggle `Farm` property in created pointcache instance to True.
+:::
 
 ### Loading Point Caches
 

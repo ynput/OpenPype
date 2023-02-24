@@ -2,8 +2,7 @@ import openpype.hosts.photoshop.api as api
 from openpype.client import get_asset_by_name
 from openpype.pipeline import (
     AutoCreator,
-    CreatedInstance,
-    legacy_io
+    CreatedInstance
 )
 from openpype.hosts.photoshop.api.pipeline import cache_and_get_instances
 
@@ -38,10 +37,11 @@ class PSWorkfileCreator(AutoCreator):
                 existing_instance = instance
                 break
 
-        project_name = legacy_io.Session["AVALON_PROJECT"]
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-        task_name = legacy_io.Session["AVALON_TASK"]
-        host_name = legacy_io.Session["AVALON_APP"]
+        context = self.create_context
+        project_name = context.get_current_project_name()
+        asset_name = context.get_current_asset_name()
+        task_name = context.get_current_task_name()
+        host_name = context.host_name
         if existing_instance is None:
             asset_doc = get_asset_by_name(project_name, asset_name)
             subset_name = self.get_subset_name(
