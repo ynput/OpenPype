@@ -536,9 +536,10 @@ class ExtractLook(publish.Extractor):
             ]
             if linearize:
                 if cmds.colorManagementPrefs(query=True, cmEnabled=True):
-                    render_colorspace = cmds.colorManagementPrefs(query=True, renderingSpaceName=True)  # noqa
+                    render_colorspace = cmds.colorManagementPrefs(query=True,
+                                                                  renderingSpaceName=True)  # noqa
                     config_path = cmds.colorManagementPrefs(query=True,
-                                                            configFilePath=True)
+                                                            configFilePath=True) # noqa
                     if not os.path.exists(config_path):
                         raise RuntimeError("No OCIO config path found!")
 
@@ -572,7 +573,7 @@ class ExtractLook(publish.Extractor):
                                           "is already linear")
                     else:
                         self.log.warning("cannot guess the colorspace"
-                                         "color conversion won't be available!")
+                                         "color conversion won't be available!")    # noqa
 
 
             additional_args.extend(["--colorconfig", config_path])
