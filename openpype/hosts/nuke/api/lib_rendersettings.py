@@ -41,7 +41,7 @@ class RenderFarmSettings:
 
     @property
     def system_settings(self):
-        """ returning cached project settings or getting new one
+        """ returning cached system settings or getting new one
         """
         if not self._cached_system_settings:
             self._cached_system_settings = get_system_settings()
@@ -91,7 +91,7 @@ class RenderFarmSettings:
             ).format(farm_plugin))
 
         # Get farm module settings
-        module_settings = self._project_settings[self.active_farm_module]
+        module_settings = self.project_settings[self.active_farm_module]
 
         # Get farm plugin settings
         farm_plugin_settings = (
