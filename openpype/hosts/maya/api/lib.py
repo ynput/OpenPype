@@ -15,7 +15,7 @@ from math import ceil
 from six import string_types
 
 from maya import cmds, mel
-import maya.api.OpenMaya as om
+from maya.api import OpenMaya
 
 from openpype.client import (
     get_project,
@@ -3509,3 +3509,56 @@ def write_xgen_file(data, filepath):
 
     with open(filepath, "w") as f:
         f.writelines(lines)
+
+
+def get_color_management_preferences():
+    """Get and resolve OCIO preferences."""
+    data = {
+        # Is color management enabled.
+        "enabled": cmds.colorManagementPrefs(
+            query=True, cmEnabled=True
+        ),
+        "rendering_space": cmds.colorManagementPrefs(
+            query=True, renderingSpaceName=True
+        ),
+        "output_transform": cmds.colorManagementPrefs(
+            query=True, outputTransformName=True
+        ),
+        "output_transform_enabled": cmds.colorManagementPrefs(
+            query=True, outputTransformEnabled=True
+        ),
+        "view_transform": cmds.colorManagementPrefs(
+            query=True, viewTransformName=True
+        )
+    }
+
+    # Split view and display from view_transform. view_transform comes in
+    # format of "{view} ({display})".
+    regex = re.compile(r"^(?P<view>.+) \((?P<display>.+)\)$")
+    match = regex.match(data["view_transform"])
+    data.update({
+        "display": match.group("display"),
+        "view": match.group("view")
+    })
+
+    # Get config absolute path.
+    path = cmds.colorManagementPrefs(
+        query=True, configFilePath=True
+    )
+
+    # The OCIO config supports a custom <MAYA_RESOURCES> token.
+    maya_resources_token = "<MAYA_RESOURCES>"
+    maya_resources_path = OpenMaya.MGlobal.getAbsolutePathToResources()
+    path = path.replace(maya_resources_token, maya_resources_path)
+
+    data["config"] = path
+
+    return data
+
+
+def get_color_management_output_transform():
+    preferences = get_color_management_preferences()
+    colorspace = preferences["rendering_space"]
+    if preferences["output_transform_enabled"]:
+        colorspace = preferences["output_transform"]
+    return colorspace
