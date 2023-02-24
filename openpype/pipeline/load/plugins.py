@@ -100,7 +100,7 @@ class LoaderPlugin(list):
         ext = repre_context.get("ext")
         if not ext:
             # Legacy way how to get extensions
-            path = repre_doc["data"].get("path")
+            path = repre_doc.get("data", {}).get("path")
             if not path:
                 cls.log.info(
                     "Representation doesn't have known source of extension"
