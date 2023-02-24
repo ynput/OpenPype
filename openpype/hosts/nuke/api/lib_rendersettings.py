@@ -12,13 +12,15 @@ class RenderFarmSettings:
     log = Logger.get_logger("RenderFarmSettings")
 
     _active_farm_module: str = None
-    _farm_modules: list = [
-        "deadline", "muster", "royalrender"]
+    _farm_modules: list = ["deadline"]
     _farm_plugins: dict = {
         "deadline": "NukeSubmitDeadline"
     }
     _creator_farm_keys: list = [
         "chunk_size", "priority", "concurrent_tasks"]
+
+    _cached_project_settings = None
+    _cached_system_settings = None
 
     def __init__(self, project_settings=None, log=None):
         """ Get project settings and active farm module
@@ -26,11 +28,24 @@ class RenderFarmSettings:
         if log:
             self.log = log
 
-        self._project_settings = (
-            project_settings or get_current_project_settings()
-        )
-        # Get active farm module from system settings
-        self._get_active_farm_module_from_system_settings()
+        if project_settings:
+            self._cached_project_settings = project_settings
+
+    @property
+    def project_settings(self):
+        """ returning cached project settings or getting new one
+        """
+        if not self._cached_project_settings:
+            self._cached_project_settings = get_current_project_settings()
+        return self._cached_project_settings
+
+    @property
+    def system_settings(self):
+        """ returning cached project settings or getting new one
+        """
+        if not self._cached_system_settings:
+            self._cached_system_settings = get_system_settings()
+        return self._cached_system_settings
 
     def _get_active_farm_module_from_system_settings(self):
         """ Get active farm module from system settings
@@ -38,7 +53,7 @@ class RenderFarmSettings:
         active_modules = [
             module_
             for module_ in self._farm_modules
-            if get_system_settings()["modules"][module_]["enabled"]
+            if self.system_settings["modules"][module_]["enabled"]
         ]
         if not active_modules:
             raise ValueError((
@@ -54,6 +69,10 @@ class RenderFarmSettings:
 
     @property
     def active_farm_module(self):
+        # cache active farm module
+        if self._active_farm_module is None:
+            self._get_active_farm_module_from_system_settings()
+
         return self._active_farm_module
 
     def get_rendering_attributes(self):
