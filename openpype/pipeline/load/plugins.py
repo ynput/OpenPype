@@ -108,7 +108,7 @@ class LoaderPlugin(list):
                 )
                 return False
 
-            cls.log.info("Using legacy source of extension from path.")
+            cls.log.debug("Using legacy source of extension from path.")
             ext = os.path.splitext(path)[-1].lstrip(".")
 
         # If representation does not have extension then can't be valid
