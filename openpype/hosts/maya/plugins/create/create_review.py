@@ -28,13 +28,13 @@ class CreateReview(plugin.Creator):
 
     def __init__(self, *args, **kwargs):
         super(CreateReview, self).__init__(*args, **kwargs)
+        data = OrderedDict(**self.data)
 
         # get basic animation data : start / end / handles / steps
-        data = OrderedDict(**self.data)
-        animation_data = lib.collect_animation_data(fps=True)
-        for key, value in animation_data.items():
+        for key, value in lib.get_frame_range().items():
             data[key] = value
 
+        data["fps"] = lib.collect_animation_data(fps=True)["fps"]
         data["review_width"] = self.Width
         data["review_height"] = self.Height
         data["isolate"] = self.isolate

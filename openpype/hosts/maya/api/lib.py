@@ -4,7 +4,6 @@ import os
 import sys
 import platform
 import uuid
-import math
 import re
 
 import json
@@ -2064,13 +2063,8 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 
-def reset_frame_range():
-    """Set frame range to current asset"""
-
-    fps = convert_to_maya_fps(
-        float(legacy_io.Session.get("AVALON_FPS", 25))
-    )
-    set_scene_fps(fps)
+def get_frame_range():
+    """Get the current assets frame range and handles."""
 
     # Set frame start/end
     project_name = legacy_io.active_project()
@@ -2097,8 +2091,26 @@ def reset_frame_range():
     if handle_end is None:
         handle_end = handles
 
-    frame_start -= int(handle_start)
-    frame_end += int(handle_end)
+    return {
+        "frameStart": frame_start,
+        "frameEnd": frame_end,
+        "handleStart": handle_start,
+        "handleEnd": handle_end
+    }
+
+
+def reset_frame_range():
+    """Set frame range to current asset"""
+
+    fps = convert_to_maya_fps(
+        float(legacy_io.Session.get("AVALON_FPS", 25))
+    )
+    set_scene_fps(fps)
+
+    frame_range = get_frame_range()
+
+    frame_start = frame_range["frameStart"] - int(frame_range["handleStart"])
+    frame_end = frame_range["frameEnd"] + int(frame_range["handleEnd"])
 
     cmds.playbackOptions(minTime=frame_start)
     cmds.playbackOptions(maxTime=frame_end)
