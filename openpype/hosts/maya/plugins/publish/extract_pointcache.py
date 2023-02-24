@@ -41,6 +41,7 @@ class ExtractAlembic(publish.Extractor):
 
         attrs = instance.data.get("attr", "").split(";")
         attrs = [value for value in attrs if value.strip()]
+        attrs += instance.data.get("userDefinedAttributes", [])
         attrs += ["cbId"]
 
         attr_prefixes = instance.data.get("attrPrefix", "").split(";")
