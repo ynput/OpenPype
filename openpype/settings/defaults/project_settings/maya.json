@@ -1049,7 +1049,7 @@
             ]
         },
         "reference_loader": {
-            "naming": ""
+            "naming": "{asset[name]}_{subset[name]}_:_GRP"
         }
     },
     "workfile_build": {
