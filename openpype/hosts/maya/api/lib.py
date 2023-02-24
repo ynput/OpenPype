@@ -3577,8 +3577,8 @@ def image_info(file_path):
         dict: Dictionary with the information about the texture file.
     """
     from arnold import (
-    AiTextureGetBitDepth,
-    AiTextureGetFormat
+        AiTextureGetBitDepth,
+        AiTextureGetFormat
 )
     # Get Texture Information
     img_info = {'filename': file_path}
@@ -3603,11 +3603,11 @@ def guess_colorspace(img_info):
              option of maketx.
     """
     from arnold import (
-    AiTextureInvalidate,
-    # types
-    AI_TYPE_BYTE,
-    AI_TYPE_INT,
-    AI_TYPE_UINT
+        AiTextureInvalidate,
+        # types
+        AI_TYPE_BYTE,
+        AI_TYPE_INT,
+        AI_TYPE_UINT
 )
     try:
         if img_info['bit_depth'] <= 16:
