@@ -28,7 +28,7 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     icon = "code-fork"
     color = "orange"
 
-    def process_reference(self, context, name, namespace, options):
+    def process_reference(self, context, name, namespace, options, group_name=None):  # noqa
         import maya.cmds as cmds
 
         with lib.maintained_selection():

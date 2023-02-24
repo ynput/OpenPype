@@ -14,7 +14,7 @@ class AbcLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     icon = "code-fork"
     color = "orange"
 
-    def process_reference(self, context, name, namespace, data):
+    def process_reference(self, context, name, namespace, data, group_name=None):  # noqa
 
         import maya.cmds as cmds
         from openpype.hosts.maya.api.lib import unique_namespace
