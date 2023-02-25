@@ -91,7 +91,7 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
 
         for job_id in render_job_ids:
             job_info = self._get_job_info(job_id)
-            frame_list = job_info["Props"]["Frames"]
+            frame_list = job_info["Props"].get("Frames")
             if frame_list:
                 all_frame_lists.extend(frame_list.split(','))
 
