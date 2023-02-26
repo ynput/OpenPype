@@ -139,3 +139,13 @@ class CollectReview(pyblish.api.InstancePlugin):
                         "filename": node.filename.get()
                     }
                 )
+
+        # Collect focal length.
+        data = {
+            "cameraFocalLength": cmds.getAttr(camera + ".focalLength")
+        }
+
+        try:
+            instance.data["customData"].update(data)
+        except KeyError:
+            instance.data["customData"] = data
