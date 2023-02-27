@@ -11,7 +11,6 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
     # families = ["kitsu"]
     set_status_note = False
     note_status_shortname = "wfa"
-    exceptions_equality = "equal"
     status_exceptions = list()
 
     def process(self, context):
@@ -26,13 +25,19 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
         # Get note status, by default uses the task status for the note
         # if it is not specified in the configuration
         kitsu_task = context.data["kitsu_task"]
+        shortname = kitsu_task["task_status"]["short_name"]
         note_status = kitsu_task["task_status_id"]
-        if self.set_status_note and (
-            kitsu_task["task_status"]["short_name"]
-            not in self.status_exceptions
-            if self.exceptions_equality == "equal"
-            else kitsu_task["task_status"]["short_name"]
-            in self.status_exceptions
+        if self.set_status_note and next(
+            (
+                False
+                for se in self.status_exceptions
+                if shortname == se["short_name"]
+                and se["equality"].startswith("e")
+                or
+                shortname != se["short_name"]
+                and se["equality"].startswith("n")
+            ),
+            True
         ):
             kitsu_status = gazu.task.get_task_status_by_short_name(
                 self.note_status_shortname
