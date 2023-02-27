@@ -497,7 +497,7 @@ class Anatomy(BaseAnatomy):
 
         # Combine roots from local settings
         roots_locals = roots_default_locals.get("studio") or {}
-        roots_locals.update_data(roots_project_locals.get("studio") or {})
+        roots_locals.update(roots_project_locals.get("studio") or {})
         return roots_locals
 
     @classmethod
