@@ -28,7 +28,6 @@ class ExtractPointCloud(publish.Extractor):
     partition_start = 1
     partition_count = 100
 
-
     def process(self, instance):
         start = str(instance.data.get("frameStartHandle", 1))
         end = str(instance.data.get("frameEndHandle", 1))
