@@ -409,6 +409,14 @@
                     "label": "Validate Current Render Layer Has Renderable Camera"
                 },
                 {
+                    "key": "ValidateGLSLMaterial",
+                    "label": "Validate GLSL Material"
+                },
+                {
+                    "key": "ValidateGLSLPlugin",
+                    "label": "Validate GLSL Plugin"
+                },
+                {
                     "key": "ValidateRenderImageRule",
                     "label": "Validate Images File Rule (Workspace)"
                 },
@@ -954,6 +962,30 @@
                     "key": "bake_attributes",
                     "label": "Bake Attributes",
                     "is_list": true
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractGLB",
+            "label": "Extract GLB",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "text",
+                    "key": "ogsfx_path",
+                    "label": "GLSL Shader Directory"
                 }
             ]
         }

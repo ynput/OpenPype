@@ -198,41 +198,19 @@ def validate_imageio_colorspace_in_config(config_path, colorspace_name):
     return True
 
 
-def get_ocio_config_colorspaces(config_path):
-    """Get all colorspace data
-
-    Wrapper function for aggregating all names and its families.
-    Families can be used for building menu and submenus in gui.
-
-    Args:
-        config_path (str): path leading to config.ocio file
-
-    Returns:
-        dict: colorspace and family in couple
-    """
-    if sys.version_info[0] == 2:
-        return get_colorspace_data_subprocess(config_path)
-
-    from ..scripts.ocio_wrapper import _get_colorspace_data
-    return _get_colorspace_data(config_path)
-
-
-def get_colorspace_data_subprocess(config_path):
-    """Get colorspace data via subprocess
+def get_data_subprocess(config_path, data_type):
+    """Get data via subprocess
 
     Wrapper for Python 2 hosts.
 
     Args:
         config_path (str): path leading to config.ocio file
-
-    Returns:
-        dict: colorspace and family in couple
     """
     with _make_temp_json_file() as tmp_json_path:
         # Prepare subprocess arguments
         args = [
             "run", get_ocio_config_script_path(),
-            "config", "get_colorspace",
+            "config", data_type,
             "--in_path", config_path,
             "--out_path", tmp_json_path
 
@@ -249,6 +227,47 @@ def get_colorspace_data_subprocess(config_path):
         # return all colorspaces
         return_json_data = open(tmp_json_path).read()
         return json.loads(return_json_data)
+
+
+def compatible_python():
+    """Only 3.9 or higher can directly use PyOpenColorIO in ocio_wrapper"""
+    compatible = False
+    if sys.version[0] == 3 and sys.version[1] >= 9:
+        compatible = True
+    return compatible
+
+
+def get_ocio_config_colorspaces(config_path):
+    """Get all colorspace data
+
+    Wrapper function for aggregating all names and its families.
+    Families can be used for building menu and submenus in gui.
+
+    Args:
+        config_path (str): path leading to config.ocio file
+
+    Returns:
+        dict: colorspace and family in couple
+    """
+    if compatible_python():
+        from ..scripts.ocio_wrapper import _get_colorspace_data
+        return _get_colorspace_data(config_path)
+    else:
+        return get_colorspace_data_subprocess(config_path)
+
+
+def get_colorspace_data_subprocess(config_path):
+    """Get colorspace data via subprocess
+
+    Wrapper for Python 2 hosts.
+
+    Args:
+        config_path (str): path leading to config.ocio file
+
+    Returns:
+        dict: colorspace and family in couple
+    """
+    return get_data_subprocess(config_path, "get_colorspace")
 
 
 def get_ocio_config_views(config_path):
@@ -263,11 +282,11 @@ def get_ocio_config_views(config_path):
     Returns:
         dict: `display/viewer` and viewer data
     """
-    if sys.version_info[0] == 2:
+    if compatible_python():
+        from ..scripts.ocio_wrapper import _get_views_data
+        return _get_views_data(config_path)
+    else:
         return get_views_data_subprocess(config_path)
-
-    from ..scripts.ocio_wrapper import _get_views_data
-    return _get_views_data(config_path)
 
 
 def get_views_data_subprocess(config_path):
@@ -281,27 +300,7 @@ def get_views_data_subprocess(config_path):
     Returns:
         dict: `display/viewer` and viewer data
     """
-    with _make_temp_json_file() as tmp_json_path:
-        # Prepare subprocess arguments
-        args = [
-            "run", get_ocio_config_script_path(),
-            "config", "get_views",
-            "--in_path", config_path,
-            "--out_path", tmp_json_path
-
-        ]
-        log.info("Executing: {}".format(" ".join(args)))
-
-        process_kwargs = {
-            "logger": log,
-            "env": {}
-        }
-
-        run_openpype_process(*args, **process_kwargs)
-
-        # return all colorspaces
-        return_json_data = open(tmp_json_path).read()
-        return json.loads(return_json_data)
+    return get_data_subprocess(config_path, "get_views")
 
 
 def get_imageio_config(

@@ -133,6 +133,11 @@
                     "label": "Write Face Sets"
                 },
                 {
+                    "type": "boolean",
+                    "key": "include_user_defined_attributes",
+                    "label": "Include User Defined Attributes"
+                },
+                {
                     "type": "list",
                     "key": "defaults",
                     "label": "Default Subsets",
@@ -191,6 +196,11 @@
                     "type": "boolean",
                     "key": "write_face_sets",
                     "label": "Write Face Sets"
+                },
+                {
+                    "type": "boolean",
+                    "key": "include_user_defined_attributes",
+                    "label": "Include User Defined Attributes"
                 },
                 {
                     "type": "list",
