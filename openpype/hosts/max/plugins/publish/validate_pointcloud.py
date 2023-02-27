@@ -167,8 +167,8 @@ class ValidatePointCloud(pyblish.api.InstancePlugin):
     def validate_export_mode(self, instance):
         invalid = []
         container = instance.data["instance_node"]
-        self.log.info("Validating tyFlow partition "
-                      "value for {}".format(container))
+        self.log.info("Validating tyFlow export "
+                      "mode for {}".format(container))
 
         con = rt.getNodeByName(container)
         selection_list = list(con.Children)
