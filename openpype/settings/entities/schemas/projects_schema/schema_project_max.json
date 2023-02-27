@@ -51,6 +51,28 @@
                     "label": "multipass"
                 }
             ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "PointCloud",
+            "label": "Point Cloud",
+            "children": [
+                {
+                    "type": "label",
+                    "label": "Define the channel attribute names before exporting as PRT"
+                },
+                {
+                    "type": "dict-modifiable",
+                    "collapsible": true,
+                    "key": "attribute",
+                    "label": "Channel Attribute",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "text"
+                    }
+                }
+            ]
         }
     ]
 }
