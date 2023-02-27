@@ -1390,6 +1390,8 @@ class CreateContext:
         self.autocreators = {}
         # Manual creators
         self.manual_creators = {}
+        # Creators that are disabled
+        self.disabled_creators = {}
 
         self.convertors_plugins = {}
         self.convertor_items_by_id = {}
@@ -1667,6 +1669,7 @@ class CreateContext:
 
         # Discover and prepare creators
         creators = {}
+        disabled_creators = {}
         autocreators = {}
         manual_creators = {}
         report = discover_creator_plugins(return_report=True)
@@ -1703,6 +1706,9 @@ class CreateContext:
                 self,
                 self.headless
             )
+            if not creator.enabled:
+                disabled_creators[creator_identifier] = creator
+                continue
             creators[creator_identifier] = creator
             if isinstance(creator, AutoCreator):
                 autocreators[creator_identifier] = creator
@@ -1713,6 +1719,7 @@ class CreateContext:
         self.manual_creators = manual_creators
 
         self.creators = creators
+        self.disabled_creators = disabled_creators
 
     def _reset_convertor_plugins(self):
         convertors_plugins = {}

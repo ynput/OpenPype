@@ -9,6 +9,7 @@ import six
 import openpype.version
 from openpype.client.mongo import OpenPypeMongoConnection
 from openpype.client.entities import get_project_connection, get_project
+from openpype.lib.pype_info import get_workstation_info
 
 from .constants import (
     GLOBAL_SETTINGS_KEY,
@@ -232,6 +233,18 @@ class SettingsHandler(object):
             project_name(str, null): Project name for which overrides are
                 or None for global settings.
             data(dict): Data of project overrides with override metadata.
+        """
+        pass
+
+    @abstractmethod
+    def save_change_log(self, project_name, changes, settings_type):
+        """Stores changes to settings to separate logging collection.
+
+        Args:
+            project_name(str, null): Project name for which overrides are
+                or None for global settings.
+            changes(dict): Data of project overrides with override metadata.
+            settings_type (str): system|project|anatomy
         """
         pass
 
@@ -912,6 +925,32 @@ class MongoSettingsHandler(SettingsHandler):
                 data[new_key] = _value
 
         return data
+
+    def save_change_log(self, project_name, changes, settings_type):
+        """Log all settings changes to separate collection"""
+        if not changes:
+            return
+
+        if settings_type == "project" and not project_name:
+            project_name = "default"
+
+        host_info = get_workstation_info()
+
+        document = {
+            "local_id": host_info["local_id"],
+            "username": host_info["username"],
+            "hostname": host_info["hostname"],
+            "hostip": host_info["hostip"],
+            "system_name": host_info["system_name"],
+            "date_created": datetime.datetime.now(),
+            "project": project_name,
+            "settings_type": settings_type,
+            "changes": changes
+        }
+        collection_name = "settings_log"
+        collection = (self.settings_collection[self.database_name]
+                                              [collection_name])
+        collection.insert_one(document)
 
     def _save_project_anatomy_data(self, project_name, data_cache):
         # Create copy of data as they will be modified during save
