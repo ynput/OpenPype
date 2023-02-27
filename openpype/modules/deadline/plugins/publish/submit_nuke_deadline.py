@@ -16,9 +16,9 @@ from openpype.tests.lib import is_in_tests
 from openpype.lib import (
     is_running_from_build,
     BoolDef,
-    NumberDef,
-    UISeparatorDef
+    NumberDef
 )
+
 
 class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                          OpenPypePyblishPluginMixin):
