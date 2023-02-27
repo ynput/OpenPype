@@ -72,8 +72,6 @@ class ExtractPointCloud(publish.Extractor):
         job_args = []
         opt_list = self.get_operators(container)
         for operator in opt_list:
-            export_mode = "{0}.exportMode=2".format(operator)
-            job_args.append(export_mode)
             start_frame = "{0}.frameStart={1}".format(operator,
                                                       start)
             job_args.append(start_frame)
@@ -153,8 +151,8 @@ class ExtractPointCloud(publish.Extractor):
         filenames = []
         filename = os.path.basename(path)
         orig_name, ext = os.path.splitext(filename)
-        partition_start = str(self.partition_start)
-        partition_count = str(self.partition_count)
+        partition_start = self.partition_start
+        partition_count = self.partition_count
         for frame in range(int(start_frame), int(end_frame) + 1):
             actual_name = "{}__part{:03}of{}_{:05}".format(orig_name,
                                                            partition_start,
