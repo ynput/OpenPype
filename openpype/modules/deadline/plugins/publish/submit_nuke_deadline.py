@@ -9,11 +9,19 @@ import pyblish.api
 
 import nuke
 from openpype.pipeline import legacy_io
+from openpype.pipeline.publish import (
+    OpenPypePyblishPluginMixin
+)
 from openpype.tests.lib import is_in_tests
-from openpype.lib import is_running_from_build
+from openpype.lib import (
+    is_running_from_build,
+    BoolDef,
+    NumberDef,
+    UISeparatorDef
+)
 
-
-class NukeSubmitDeadline(pyblish.api.InstancePlugin):
+class NukeSubmitDeadline(pyblish.api.InstancePlugin,
+                         OpenPypePyblishPluginMixin):
     """Submit write to Deadline
 
     Renders are submitted to a Deadline Web Service as
@@ -21,10 +29,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
     """
 
-    label = "Submit to Deadline"
+    label = "Submit Nuke to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["nuke"]
-    families = ["render.farm", "prerender.farm"]
+    families = ["render", "prerender.farm"]
     optional = True
     targets = ["local"]
 
@@ -39,7 +47,42 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     env_allowed_keys = []
     env_search_replace_values = {}
 
+    @classmethod
+    def get_attribute_defs(cls):
+        return [
+            NumberDef(
+                "priority",
+                label="Priority",
+                default=cls.priority,
+                decimals=0
+            ),
+            NumberDef(
+                "chunk",
+                label="Frames Per Task",
+                default=cls.chunk_size,
+                decimals=0,
+                minimum=1,
+                maximum=1000
+            ),
+            NumberDef(
+                "concurrency",
+                label="Concurency",
+                default=cls.concurrent_tasks,
+                decimals=0,
+                minimum=1,
+                maximum=10
+            ),
+            BoolDef(
+                "use_gpu",
+                default=cls.use_gpu,
+                label="Use GPU"
+            )
+        ]
+
     def process(self, instance):
+        instance.data["attributeValues"] = self.get_attr_values_from_data(
+            instance.data)
+
         instance.data["toBeRenderedOn"] = "deadline"
         families = instance.data["families"]
 
@@ -161,20 +204,6 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         except OSError:
             pass
 
-        # define chunk and priority
-        chunk_size = instance.data.get("farm_chunk")
-        if not chunk_size:
-            chunk_size = self.chunk_size
-
-        # define chunk and priority
-        concurrent_tasks = instance.data.get("farm_concurrency")
-        if not concurrent_tasks:
-            concurrent_tasks = self.concurrent_tasks
-
-        priority = instance.data.get("farm_priority")
-        if not priority:
-            priority = self.priority
-
         # resolve any limit groups
         limit_groups = self.get_limit_groups()
         self.log.info("Limit groups: `{}`".format(limit_groups))
@@ -193,9 +222,14 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 # Arbitrary username, for visualisation in Monitor
                 "UserName": self._deadline_user,
 
-                "Priority": priority,
-                "ChunkSize": chunk_size,
-                "ConcurrentTasks": concurrent_tasks,
+                "Priority": instance.data["attributeValues"].get(
+                    "priority", self.priority),
+                "ChunkSize": instance.data["attributeValues"].get(
+                    "chunk", self.chunk_size),
+                "ConcurrentTasks": instance.data["attributeValues"].get(
+                    "concurrency",
+                    self.concurrent_tasks
+                ),
 
                 "Department": self.department,
 
@@ -234,7 +268,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 "AWSAssetFile0": render_path,
 
                 # using GPU by default
-                "UseGpu": self.use_gpu,
+                "UseGpu": instance.data["attributeValues"].get(
+                    "use_gpu", self.use_gpu),
 
                 # Only the specific write node is rendered.
                 "WriteNode": exe_node_name
