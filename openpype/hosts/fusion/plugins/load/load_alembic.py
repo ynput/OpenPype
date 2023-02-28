@@ -13,7 +13,8 @@ class FusionLoadAlembicMesh(load.LoaderPlugin):
     """Load Alembic mesh into Fusion"""
 
     families = ["pointcache", "model"]
-    representations = ["abc"]
+    representations = ["*"]
+    extensions = {"abc"}
 
     label = "Load alembic mesh"
     order = -10
