@@ -25,13 +25,17 @@ class CreateReview(plugin.Creator):
         "depth peeling",
         "alpha cut"
     ]
+    useMayaTimeline = True
 
     def __init__(self, *args, **kwargs):
         super(CreateReview, self).__init__(*args, **kwargs)
         data = OrderedDict(**self.data)
 
-        # get basic animation data : start / end / handles / steps
-        for key, value in lib.get_frame_range().items():
+        # Option for using Maya or asset frame range in settings.
+        frame_range = lib.get_frame_range()
+        if self.useMayaTimeline:
+            frame_range = lib.collect_animation_data(fps=True)
+        for key, value in frame_range.items():
             data[key] = value
 
         data["fps"] = lib.collect_animation_data(fps=True)["fps"]
