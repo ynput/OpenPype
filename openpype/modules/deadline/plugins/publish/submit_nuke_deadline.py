@@ -10,6 +10,7 @@ import pyblish.api
 import nuke
 from openpype.pipeline import legacy_io
 from openpype.tests.lib import is_in_tests
+from openpype.lib import is_running_from_build
 
 
 class NukeSubmitDeadline(pyblish.api.InstancePlugin):
@@ -266,8 +267,13 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             "NUKE_PATH",
             "TOOL_ENV",
             "FOUNDRY_LICENSE",
-            "OPENPYPE_VERSION"
+            "OPENPYPE_SG_USER",
         ]
+
+        # Add OpenPype version if we are running from build.
+        if is_running_from_build():
+            keys.append("OPENPYPE_VERSION")
+
         # Add mongo url if it's enabled
         if instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")

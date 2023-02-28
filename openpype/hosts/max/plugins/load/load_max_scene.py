@@ -1,7 +1,9 @@
 import os
 from openpype.pipeline import (
-    load
+    load, get_representation_path
 )
+from openpype.hosts.max.api.pipeline import containerise
+from openpype.hosts.max.api import lib
 
 
 class MaxSceneLoader(load.LoaderPlugin):
@@ -35,16 +37,26 @@ class MaxSceneLoader(load.LoaderPlugin):
             self.log.error("Something failed when loading.")
 
         max_container = max_containers.pop()
-        container_name = f"{name}_CON"
-        # rename the container with "_CON"
-        # get the original container
-        container = rt.container(name=container_name)
-        max_container.Parent = container
 
-        return container
+        return containerise(
+            name, [max_container], context, loader=self.__class__.__name__)
+
+    def update(self, container, representation):
+        from pymxs import runtime as rt
+
+        path = get_representation_path(representation)
+        node = rt.getNodeByName(container["instance_node"])
+
+        max_objects = self.get_container_children(node)
+        for max_object in max_objects:
+            max_object.source = path
+
+        lib.imprint(container["instance_node"], {
+            "representation": str(representation["_id"])
+        })
 
     def remove(self, container):
         from pymxs import runtime as rt
 
-        node = container["node"]
+        node = rt.getNodeByName(container["instance_node"])
         rt.delete(node)

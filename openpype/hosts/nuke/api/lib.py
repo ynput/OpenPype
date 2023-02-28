@@ -50,6 +50,7 @@ from openpype.pipeline.colorspace import (
 from openpype.pipeline.workfile import BuildWorkfile
 
 from . import gizmo_menu
+from .constants import ASSIST
 
 from .workio import (
     save_file,
@@ -215,7 +216,7 @@ def update_node_data(node, knobname, data):
 
 
 class Knobby(object):
-    """[DEPRICATED] For creating knob which it's type isn't
+    """[DEPRECATED] For creating knob which it's type isn't
                     mapped in `create_knobs`
 
     Args:
@@ -249,7 +250,7 @@ class Knobby(object):
 
 
 def create_knobs(data, tab=None):
-    """[DEPRICATED] Create knobs by data
+    """Create knobs by data
 
     Depending on the type of each dict value and creates the correct Knob.
 
@@ -343,7 +344,7 @@ def create_knobs(data, tab=None):
 
 
 def imprint(node, data, tab=None):
-    """[DEPRICATED] Store attributes with value on node
+    """Store attributes with value on node
 
     Parse user data into Node knobs.
     Use `collections.OrderedDict` to ensure knob order.
@@ -398,8 +399,9 @@ def imprint(node, data, tab=None):
         node.addKnob(knob)
 
 
+@deprecated
 def add_publish_knob(node):
-    """[DEPRICATED] Add Publish knob to node
+    """[DEPRECATED] Add Publish knob to node
 
     Arguments:
         node (nuke.Node): nuke node to be processed
@@ -416,8 +418,9 @@ def add_publish_knob(node):
     return node
 
 
+@deprecated
 def set_avalon_knob_data(node, data=None, prefix="avalon:"):
-    """[DEPRICATED] Sets data into nodes's avalon knob
+    """[DEPRECATED] Sets data into nodes's avalon knob
 
     Arguments:
         node (nuke.Node): Nuke node to imprint with data,
@@ -478,8 +481,9 @@ def set_avalon_knob_data(node, data=None, prefix="avalon:"):
     return node
 
 
+@deprecated
 def get_avalon_knob_data(node, prefix="avalon:", create=True):
-    """[DEPRICATED]  Gets a data from nodes's avalon knob
+    """[DEPRECATED]  Gets a data from nodes's avalon knob
 
     Arguments:
         node (obj): Nuke node to search for data,
@@ -521,8 +525,9 @@ def get_avalon_knob_data(node, prefix="avalon:", create=True):
     return data
 
 
+@deprecated
 def fix_data_for_node_create(data):
-    """[DEPRICATED] Fixing data to be used for nuke knobs
+    """[DEPRECATED] Fixing data to be used for nuke knobs
     """
     for k, v in data.items():
         if isinstance(v, six.text_type):
@@ -532,8 +537,9 @@ def fix_data_for_node_create(data):
     return data
 
 
+@deprecated
 def add_write_node_legacy(name, **kwarg):
-    """[DEPRICATED] Adding nuke write node
+    """[DEPRECATED] Adding nuke write node
     Arguments:
         name (str): nuke node name
         kwarg (attrs): data for nuke knobs
@@ -697,7 +703,7 @@ def get_nuke_imageio_settings():
 
 @deprecated("openpype.hosts.nuke.api.lib.get_nuke_imageio_settings")
 def get_created_node_imageio_setting_legacy(nodeclass, creator, subset):
-    '''[DEPRICATED]  Get preset data for dataflow (fileType, compression, bitDepth)
+    '''[DEPRECATED]  Get preset data for dataflow (fileType, compression, bitDepth)
     '''
 
     assert any([creator, nodeclass]), nuke.message(
@@ -1241,7 +1247,7 @@ def create_write_node(
             nodes to be created before write with dependency
         review (bool)[optional]: adding review knob
         farm (bool)[optional]: rendering workflow target
-        kwargs (dict)[optional]: additional key arguments for formating
+        kwargs (dict)[optional]: additional key arguments for formatting
 
     Example:
         prenodes = {
@@ -2258,14 +2264,20 @@ class WorkfileSettings(object):
             node['frame_range'].setValue(range)
             node['frame_range_lock'].setValue(True)
 
-        set_node_data(
-            self._root_node,
-            INSTANCE_DATA_KNOB,
-            {
-                "handleStart": int(handle_start),
-                "handleEnd": int(handle_end)
-            }
-        )
+        if not ASSIST:
+            set_node_data(
+                self._root_node,
+                INSTANCE_DATA_KNOB,
+                {
+                    "handleStart": int(handle_start),
+                    "handleEnd": int(handle_end)
+                }
+            )
+        else:
+            log.warning(
+                "NukeAssist mode is not allowing "
+                "updating custom knobs..."
+            )
 
     def reset_resolution(self):
         """Set resolution to project resolution."""

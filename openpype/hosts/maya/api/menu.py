@@ -12,7 +12,6 @@ from openpype.pipeline.workfile import BuildWorkfile
 from openpype.tools.utils import host_tools
 from openpype.hosts.maya.api import lib, lib_rendersettings
 from .lib import get_main_window, IS_HEADLESS
-from .commands import reset_frame_range
 
 from .workfile_template_builder import (
     create_placeholder,
@@ -113,7 +112,7 @@ def install():
 
         cmds.menuItem(
             "Reset Frame Range",
-            command=lambda *args: reset_frame_range()
+            command=lambda *args: lib.reset_frame_range()
         )
 
         cmds.menuItem(

@@ -366,7 +366,7 @@ class PublisherWindow(QtWidgets.QDialog):
 
     def make_sure_is_visible(self):
         if self._window_is_visible:
-            self.setWindowState(QtCore.Qt.ActiveWindow)
+            self.setWindowState(QtCore.Qt.WindowActive)
 
         else:
             self.show()
@@ -561,7 +561,8 @@ class PublisherWindow(QtWidgets.QDialog):
         return self._tabs_widget.is_current_tab(identifier)
 
     def _go_to_create_tab(self):
-        self._set_current_tab("create")
+        if self._create_tab.isEnabled():
+            self._set_current_tab("create")
 
     def _go_to_publish_tab(self):
         self._set_current_tab("publish")
