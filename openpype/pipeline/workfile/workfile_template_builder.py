@@ -505,19 +505,8 @@ class AbstractTemplateBuilder(object):
         """
         Create first version of workfile.
 
-        Should load the content of template into scene so
-        'populate_scene_placeholders' can be started.
-
-        Args:
-            template_path (str): Fullpath for current task and
-                host's template file.
         """
-        last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
-        # Save current scene, continue to open file
-        if isinstance(self.host, IWorkfileHost):
-            self.host.save_workfile(last_workfile_path)
-        else:
-            self.host.save_file(last_workfile_path)
+        pass
 
     def _prepare_placeholders(self, placeholders):
         """Run preparation part for placeholders on plugins.
@@ -702,6 +691,8 @@ class AbstractTemplateBuilder(object):
 
         # switch to remove placeholders after they are used
         keep_placeholder = profile.get("keep_placeholder")
+        create_first_version = profile.get("create_first_version")
+
         # backward compatibility, since default is True
         if keep_placeholder is None:
             keep_placeholder = True
@@ -735,7 +726,8 @@ class AbstractTemplateBuilder(object):
             self.log.info("Found template at: '{}'".format(path))
             return {
                 "path": path,
-                "keep_placeholder": keep_placeholder
+                "keep_placeholder": keep_placeholder,
+                "create_first_version": create_first_version
             }
 
         solved_path = None
@@ -764,7 +756,8 @@ class AbstractTemplateBuilder(object):
 
         return {
             "path": solved_path,
-            "keep_placeholder": keep_placeholder
+            "keep_placeholder": keep_placeholder,
+            "create_first_version": create_first_version
         }
 
 

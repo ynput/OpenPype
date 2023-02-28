@@ -48,7 +48,6 @@ from openpype.pipeline.colorspace import (
     get_imageio_config
 )
 from openpype.pipeline.workfile import BuildWorkfile
-
 from . import gizmo_menu
 from .constants import ASSIST
 
@@ -2676,6 +2675,17 @@ def process_workfile_builder():
     log.info("Opening last workfile...")
     # open workfile
     open_file(last_workfile_path)
+
+
+def start_workfile_template_builder():
+    from .workfile_template_builder import (
+        build_workfile_template
+    )
+
+    # to avoid looping of the callback, remove it!
+    # nuke.removeOnCreate(start_workfile_template_builder, nodeClass="Root")
+    log.info("Starting workfile template builder...")
+    build_workfile_template()
 
 
 @deprecated
