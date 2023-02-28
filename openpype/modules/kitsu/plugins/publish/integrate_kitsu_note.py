@@ -30,12 +30,12 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
         if self.set_status_note and next(
             (
                 False
-                for se in self.status_exceptions
-                if shortname == se["short_name"]
-                and se["equality"].startswith("e")
+                for status_except in self.status_exceptions
+                if shortname == status_except["short_name"]
+                and status_except["equality"] == "equal"
                 or
-                shortname != se["short_name"]
-                and se["equality"].startswith("n")
+                shortname != status_except["short_name"]
+                and status_except["equality"] == "not_equal"
             ),
             True
         ):
