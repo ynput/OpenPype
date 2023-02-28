@@ -322,7 +322,7 @@ def _get_ayon_addons_information():
 
 
 def _load_ayon_addons(openpype_modules, modules_key, log):
-    """Load v4 addons based on information from server.
+    """Load AYON addons based on information from server.
 
     This function should not trigger downloading of any addons but only use
     what is already available on the machine (at least in first stages of
@@ -344,7 +344,7 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
     if not addons_info:
         return v3_addons_to_skip
     addons_dir = os.path.join(
-        appdirs.user_data_dir("openpype", "pypeclub"),
+        appdirs.user_data_dir("ayon", "ynput"),
         "addons"
     )
     if not os.path.exists(addons_dir):
