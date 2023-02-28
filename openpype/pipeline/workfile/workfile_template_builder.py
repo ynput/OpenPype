@@ -1653,15 +1653,11 @@ class PlaceholderCreateMixin(object):
                     asset_name
                 ).process()
             else:
-                creator_instance = creator_plugin.create(
-                    subset_name,
-                    {
-                        "asset": asset_doc["name"],
-                        "task": task_name,
-                        "family": creator_plugin.family,
-                        "variant": create_variant
-                    },
-                    {}
+                creator_instance = self.create_context.create(
+                    creator_plugin.identifier,
+                    create_variant,
+                    asset_doc,
+                    task_name=task_name
                 )
 
         except Exception:
