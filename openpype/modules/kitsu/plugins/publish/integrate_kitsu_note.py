@@ -44,12 +44,12 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
                     )
 
             # Add comment to kitsu task
-            task = kitsu_task["id"]
+            task_id = kitsu_task["id"]
             self.log.debug(
-                "Add new note in taks id {}".format(task)
+                "Add new note in taks id {}".format(task_id)
             )
             kitsu_comment = gazu.task.add_comment(
-                task, note_status, comment=publish_comment
+                task_id, note_status, comment=publish_comment
             )
 
             instance.data["kitsu_comment"] = kitsu_comment
