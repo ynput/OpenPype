@@ -1653,7 +1653,7 @@ class PlaceholderCreateMixin(object):
                     asset_name
                 ).process()
             else:
-                creator_instance = self.create_context.create(
+                creator_instance = self.builder.create_context.create(
                     creator_plugin.identifier,
                     create_variant,
                     asset_doc,
