@@ -107,20 +107,23 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
                 "Scanning for compatible requested "
                 f"version {requested_version}"))
             dir_list = self.GetConfigEntry("OpenPypeInstallationDirs")
+            
             # clean '\ ' for MacOS pasting
             if platform.system().lower() == "darwin":
                 dir_list = dir_list.replace("\\ ", " ")
-            install_dir = DirectoryUtils.SearchDirectoryList(dir_list)
-            if install_dir:
-                sub_dirs = [
-                    f.path for f in os.scandir(install_dir)
-                    if f.is_dir()
-                ]
-                for subdir in sub_dirs:
-                    version = self.get_openpype_version_from_path(subdir)
-                    if not version:
-                        continue
-                    openpype_versions.append((version, subdir))
+
+            for dir_list in dir_list.split(","):
+                install_dir = DirectoryUtils.SearchDirectoryList(dir_list)
+                if install_dir:
+                    sub_dirs = [
+                        f.path for f in os.scandir(install_dir)
+                        if f.is_dir()
+                    ]
+                    for subdir in sub_dirs:
+                        version = self.get_openpype_version_from_path(subdir)
+                        if not version:
+                            continue
+                        openpype_versions.append((version, subdir))
 
         exe_list = self.GetConfigEntry("OpenPypeExecutable")
         # clean '\ ' for MacOS pasting

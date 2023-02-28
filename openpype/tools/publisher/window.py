@@ -366,7 +366,7 @@ class PublisherWindow(QtWidgets.QDialog):
 
     def make_sure_is_visible(self):
         if self._window_is_visible:
-            self.setWindowState(QtCore.Qt.ActiveWindow)
+            self.setWindowState(QtCore.Qt.WindowActive)
 
         else:
             self.show()
@@ -561,16 +561,17 @@ class PublisherWindow(QtWidgets.QDialog):
         return self._tabs_widget.is_current_tab(identifier)
 
     def _go_to_create_tab(self):
-        self._set_current_tab("create")
+        if self._create_tab.isEnabled():
+            self._set_current_tab("create")
 
     def _go_to_publish_tab(self):
         self._set_current_tab("publish")
 
-    def _go_to_details_tab(self):
-        self._set_current_tab("details")
-
     def _go_to_report_tab(self):
         self._set_current_tab("report")
+
+    def _go_to_details_tab(self):
+        self._set_current_tab("details")
 
     def _is_on_create_tab(self):
         return self._is_current_tab("create")
@@ -578,11 +579,11 @@ class PublisherWindow(QtWidgets.QDialog):
     def _is_on_publish_tab(self):
         return self._is_current_tab("publish")
 
-    def _is_on_details_tab(self):
-        return self._is_current_tab("details")
-
     def _is_on_report_tab(self):
         return self._is_current_tab("report")
+
+    def _is_on_details_tab(self):
+        return self._is_current_tab("details")
 
     def _set_publish_overlay_visibility(self, visible):
         if visible:
@@ -647,16 +648,10 @@ class PublisherWindow(QtWidgets.QDialog):
         #   otherwise 'create' is used
         # - this happens only on first show
         if first_reset:
-            if self._overview_widget.has_items():
-                self._go_to_publish_tab()
-            else:
-                self._go_to_create_tab()
+            self._go_to_create_tab()
 
-        elif (
-            not self._is_on_create_tab()
-            and not self._is_on_publish_tab()
-        ):
-            # If current tab is not 'Create' or 'Publish' go to 'Publish'
+        elif self._is_on_report_tab():
+            # Go to 'Publish' tab if is on 'Details' tab
             #   - this can happen when publishing started and was reset
             #       at that moment it doesn't make sense to stay at publish
             #       specific tabs.

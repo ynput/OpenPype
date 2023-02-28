@@ -52,7 +52,16 @@ def _get_ffprobe_data(source):
         "-show_streams",
         source
     ]
-    proc = subprocess.Popen(command, stdout=subprocess.PIPE)
+    kwargs = {
+        "stdout": subprocess.PIPE,
+    }
+    if platform.system().lower() == "windows":
+        kwargs["creationflags"] = (
+            subprocess.CREATE_NEW_PROCESS_GROUP
+            | getattr(subprocess, "DETACHED_PROCESS", 0)
+            | getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        )
+    proc = subprocess.Popen(command, **kwargs)
     out = proc.communicate()[0]
     if proc.returncode != 0:
         raise RuntimeError("Failed to run: %s" % command)
@@ -331,12 +340,18 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         )
         print("Launching command: {}".format(command))
 
-        proc = subprocess.Popen(
-            command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            shell=True
-        )
+        kwargs = {
+            "stdout": subprocess.PIPE,
+            "stderr": subprocess.PIPE,
+            "shell": True,
+        }
+        if platform.system().lower() == "windows":
+            kwargs["creationflags"] = (
+                subprocess.CREATE_NEW_PROCESS_GROUP
+                | getattr(subprocess, "DETACHED_PROCESS", 0)
+                | getattr(subprocess, "CREATE_NO_WINDOW", 0)
+            )
+        proc = subprocess.Popen(command, **kwargs)
 
         _stdout, _stderr = proc.communicate()
         if _stdout:
