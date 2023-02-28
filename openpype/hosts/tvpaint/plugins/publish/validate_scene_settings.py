@@ -42,7 +42,7 @@ class ValidateProjectSettings(pyblish.api.ContextPlugin):
                 "expected_width": expected_data["resolutionWidth"],
                 "expected_height": expected_data["resolutionHeight"],
                 "current_width": scene_data["resolutionWidth"],
-                "current_height": scene_data["resolutionWidth"],
+                "current_height": scene_data["resolutionHeight"],
                 "expected_pixel_ratio": expected_data["pixelAspect"],
                 "current_pixel_ratio": scene_data["pixelAspect"]
             }
